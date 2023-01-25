@@ -2,6 +2,7 @@ import type { DataFunctionArgs } from '@remix-run/node'
 import { json } from '@remix-run/node'
 import {
 	isRouteErrorResponse,
+	Outlet,
 	useLoaderData,
 	useRouteError,
 } from '@remix-run/react'
@@ -25,6 +26,7 @@ export default function StepRoute() {
 		<div>
 			This is a step!
 			<pre>{JSON.stringify(data, null, 2)}</pre>
+			<Outlet />
 		</div>
 	)
 }

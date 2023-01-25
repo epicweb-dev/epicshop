@@ -285,8 +285,9 @@ export async function getAppFromRelativePath(relativePath: string) {
 }
 
 export async function getWorkshopRoot() {
-	const { root: rootDir } = path.parse(process.cwd())
-	let repoRoot = __dirname
+	const context = process.env.KCDSHOP_CONTEXT_CWD ?? process.cwd()
+	const { root: rootDir } = path.parse(context)
+	let repoRoot = context
 	while (repoRoot !== rootDir) {
 		const pkgPath = path.join(repoRoot, 'package.json')
 		if (await exists(pkgPath)) {

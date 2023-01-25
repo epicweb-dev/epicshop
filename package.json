@@ -1,33 +1,13 @@
 {
-  "name": "web-app-fundamentals-workshop",
-  "title": "Web App Fundamentals 🔭",
+  "name": "kcdshop",
   "private": true,
-  "kcd-workshop": {
-    "root": true
-  },
   "scripts": {
-    "start": "cd workshop-app && npm run dev"
+    "build": "npm -w @kentcdodds/workshop-app run build",
+    "dev": "npm -w web-app-fundamentals-workshop run start"
   },
-  "keywords": [],
   "author": "Kent C. Dodds <me@kentcdodds.com> (https://kentcdodds.com/)",
-  "license": "MIT",
-  "devDependencies": {
-    "tsx": "^3.12.2"
-  },
-  "eslintIgnore": [
-    "/node_modules",
-    "/build",
-    "/public/build",
-    "/playwright-report"
-  ],
+  "license": "GPL-3.0-only",
   "workspaces": [
-    "exercise/*",
-    "final/*",
-    "example/*",
-    "workshop-app"
-  ],
-  "dependencies": {
-    "@types/inquirer": "^9.0.3",
-    "inquirer": "^9.1.4"
-  }
+    "packages/*"
+  ]
 }

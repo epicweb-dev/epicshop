@@ -1,5 +1,6 @@
 import type { ChildProcess } from 'child_process'
 import { spawn } from 'child_process'
+import net from 'net'
 import closeWithGrace from 'close-with-grace'
 import waitOn from 'wait-on'
 import type { App } from './misc.server'
@@ -52,6 +53,11 @@ export async function runAppDev(app: App) {
 	}
 
 	const { portNumber } = app
+	if (!(await isPortAvailable(portNumber))) {
+		throw new Error(
+			`Port ${portNumber} is not available. Something else we're not managing is running on that port.`,
+		)
+	}
 	const availableColors = colors.filter(color =>
 		Array.from(devProcesses.values()).every(p => p.color !== color),
 	)
@@ -60,6 +66,9 @@ export async function runAppDev(app: App) {
 		cwd: app.fullPath,
 		env: {
 			...process.env,
+			// TODO: support specifying the env
+			NODE_ENV: 'development',
+			// TODO: support specifying the port
 			PORT: String(portNumber),
 			// let it pick a random port...
 			REMIX_DEV_SERVER_WS_PORT: '',
@@ -101,6 +110,20 @@ export async function waitOnApp(app: App) {
 	return waitOn({
 		resources: [`http://localhost:${app.portNumber}`],
 		timeout: 10000,
+	})
+}
+
+function isPortAvailable(port: number) {
+	return new Promise(resolve => {
+		const server = net.createServer()
+		server.unref()
+		server.on('error', () => resolve(false))
+
+		server.listen(port, () => {
+			server.close(() => {
+				resolve(true)
+			})
+		})
 	})
 }
 
