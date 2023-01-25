@@ -5,6 +5,8 @@
     "typecheck": "npm run typecheck --workspaces --if-present",
     "lint": "npm run lint --workspaces --if-present",
     "build": "npm -w @kentcdodds/workshop-app run build",
+    "prestart": "npm run build -s",
+    "start": "cross-env NODE_ENV=production npm -w web-app-fundamentals-workshop run start",
     "dev": "npm -w web-app-fundamentals-workshop run start"
   },
   "author": "Kent C. Dodds <me@kentcdodds.com> (https://kentcdodds.com/)",
@@ -14,5 +16,13 @@
     "packages/example/exercise/*",
     "packages/example/final/*",
     "packages/example/example/*"
-  ]
+  ],
+  "devDependencies": {
+    "@playwright/test": "^1.30.0",
+    "@remix-run/eslint-config": "^1.11.1",
+    "eslint-config-prettier": "^8.6.0"
+  },
+  "dependencies": {
+    "cross-env": "^7.0.3"
+  }
 }

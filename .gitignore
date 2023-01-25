@@ -12,3 +12,6 @@ scripts/db.json
 # file as well, but since this is for a workshop
 # we're going to keep them around.
 # .env
+/test-results/
+/playwright-report/
+/playwright/.cache/
