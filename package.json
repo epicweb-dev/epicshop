@@ -2,12 +2,16 @@
   "name": "kcdshop",
   "private": true,
   "scripts": {
+    "typecheck": "npm run typecheck --workspaces --if-present",
     "build": "npm -w @kentcdodds/workshop-app run build",
     "dev": "npm -w web-app-fundamentals-workshop run start"
   },
   "author": "Kent C. Dodds <me@kentcdodds.com> (https://kentcdodds.com/)",
   "license": "GPL-3.0-only",
   "workspaces": [
-    "packages/*"
+    "packages/*",
+    "packages/example/exercise/*",
+    "packages/example/final/*",
+    "packages/example/example/*"
   ]
 }

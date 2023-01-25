@@ -1,0 +1,125 @@
+name: validate
+on:
+  push:
+    branches:
+      [
+        '+([0-9])?(.{+([0-9]),x}).x',
+        'main',
+        'next',
+        'next-major',
+        'beta',
+        'alpha',
+        '!all-contributors/**',
+      ]
+  pull_request:
+    branches-ignore: ['all-contributors/**']
+
+jobs:
+  lint:
+    name: ʦ TypeScript
+    runs-on: ubuntu-latest
+    steps:
+      - name: 🛑 Cancel Previous Runs
+        uses: styfle/cancel-workflow-action@0.10.0
+
+      - name: ⬇️ Checkout repo
+        uses: actions/checkout@v3
+
+      - name: ⎔ Setup node
+        uses: actions/setup-node@v3
+        with:
+          node-version: 18
+
+      - name: 📥 Download deps
+        uses: bahmutov/npm-install@v1
+        with:
+          useLockFile: false
+
+      - name: 🔬 Lint
+        run: npm run lint
+
+  typecheck:
+    name: ʦ TypeScript
+    runs-on: ubuntu-latest
+    steps:
+      - name: 🛑 Cancel Previous Runs
+        uses: styfle/cancel-workflow-action@0.10.0
+
+      - name: ⬇️ Checkout repo
+        uses: actions/checkout@v3
+
+      - name: ⎔ Setup node
+        uses: actions/setup-node@v3
+        with:
+          node-version: 18
+
+      - name: 📥 Download deps
+        uses: bahmutov/npm-install@v1
+        with:
+          useLockFile: false
+
+      - name: 🔎 Type check
+        run: npm run typecheck
+
+  build:
+    name: 🏗 Build
+    runs-on: ubuntu-latest
+    steps:
+      - name: 🛑 Cancel Previous Runs
+        uses: styfle/cancel-workflow-action@0.10.0
+
+      - name: ⬇️ Checkout repo
+        uses: actions/checkout@v3
+
+      - name: ⎔ Setup node
+        uses: actions/setup-node@v3
+        with:
+          node-version: 18
+
+      - name: 📥 Download deps
+        uses: bahmutov/npm-install@v1
+        with:
+          useLockFile: false
+
+      - name: 🏗 Build
+        run: npm run build
+
+  release:
+    needs: main
+    runs-on: ubuntu-latest
+    if:
+      ${{ github.repository == 'epicweb-dev/kcdshop' &&
+      contains('refs/heads/main,refs/heads/beta,refs/heads/next,refs/heads/alpha',
+      github.ref) && github.event_name == 'push' }}
+    steps:
+      - name: 🛑 Cancel Previous Runs
+        uses: styfle/cancel-workflow-action@0.10.0
+
+      - name: ⬇️ Checkout repo
+        uses: actions/checkout@v3
+
+      - name: ⎔ Setup node
+        uses: actions/setup-node@v3
+        with:
+          node-version: 18
+
+      - name: 🏗 Run build script
+        run: npm run build
+
+      - name: 🚀 Release
+        run: echo "TODO..."
+        # uses: cycjimmy/semantic-release-action@v2
+        # with:
+        #   semantic_version: 17
+        #   branches: |
+        #     [
+        #       '+([0-9])?(.{+([0-9]),x}).x',
+        #       'main',
+        #       'next',
+        #       'next-major',
+        #       {name: 'beta', prerelease: true},
+        #       {name: 'alpha', prerelease: true}
+        #     ]
+        # env:
+        #   GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        #   NPM_TOKEN: ${{ secrets.NPM_TOKEN }}
