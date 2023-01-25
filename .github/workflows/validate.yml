@@ -85,7 +85,7 @@ jobs:
         run: npm run build
 
   release:
-    needs: main
+    needs: [lint, typecheck, build]
     runs-on: ubuntu-latest
     if:
       ${{ github.repository == 'epicweb-dev/kcdshop' &&
