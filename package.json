@@ -3,6 +3,7 @@
   "private": true,
   "scripts": {
     "typecheck": "npm run typecheck --workspaces --if-present",
+    "lint": "npm run lint --workspaces --if-present",
     "build": "npm -w @kentcdodds/workshop-app run build",
     "dev": "npm -w web-app-fundamentals-workshop run start"
   },

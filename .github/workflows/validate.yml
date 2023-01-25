@@ -16,7 +16,7 @@ on:
 
 jobs:
   lint:
-    name: ʦ TypeScript
+    name: ⬣ ESLint
     runs-on: ubuntu-latest
     steps:
       - name: 🛑 Cancel Previous Runs

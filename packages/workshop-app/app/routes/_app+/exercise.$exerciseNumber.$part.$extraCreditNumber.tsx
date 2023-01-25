@@ -15,8 +15,6 @@ import {
 } from '~/utils/misc.server'
 import { isRunning } from '~/utils/process-manager.server'
 
-type Part = 'exercise' | 'final'
-
 export async function loader({ params }: DataFunctionArgs) {
 	const { exerciseNumber, part = 'exercise', extraCreditNumber = '0' } = params
 	if (part !== 'exercise' && part !== 'final') {
