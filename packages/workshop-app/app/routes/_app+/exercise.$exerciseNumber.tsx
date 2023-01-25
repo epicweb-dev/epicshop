@@ -27,7 +27,7 @@ export default function StepRoute() {
 		<div>
 			<h1>{data.step.title}</h1>
 			<div className="grid grid-cols-2">
-				<div>
+				<div className="prose">
 					{data.step.exercise?.instructionsCode ? (
 						<Mdx code={data.step.exercise?.instructionsCode} />
 					) : (
