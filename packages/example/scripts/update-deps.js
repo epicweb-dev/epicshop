@@ -1,4 +1,4 @@
-const { runInDirs } = require("./utils");
+const { runInDirs } = require('./utils')
 
-const [, , ...dirs] = process.argv;
-runInDirs("npx npm-check-updates --dep prod,dev --upgrade", dirs);
+const [, , ...dirs] = process.argv
+runInDirs('npx npm-check-updates --dep prod,dev --upgrade', dirs)

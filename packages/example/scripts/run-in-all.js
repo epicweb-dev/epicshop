@@ -1,4 +1,4 @@
-const { runInDirs } = require("./utils");
+const { runInDirs } = require('./utils')
 
-const [, , script, ...dirs] = process.argv;
-runInDirs(script, dirs);
+const [, , script, ...dirs] = process.argv
+runInDirs(script, dirs)

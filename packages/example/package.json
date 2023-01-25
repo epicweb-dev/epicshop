@@ -12,7 +12,8 @@
   "author": "Kent C. Dodds <me@kentcdodds.com> (https://kentcdodds.com/)",
   "license": "MIT",
   "devDependencies": {
-    "@kentcdodds/workshop-app": "*"
+    "@kentcdodds/workshop-app": "*",
+    "tsx": "^3.12.2"
   },
   "eslintIgnore": [
     "/node_modules",
