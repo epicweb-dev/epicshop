@@ -108,9 +108,6 @@ jobs:
       - name: 📥 Install Playwright Browsers
         run: npx playwright install --with-deps
 
-      - name: 🏗 Build
-        run: npm run build
-
       - name: 🎭 Playwright tests
         run: npx playwright test
 
