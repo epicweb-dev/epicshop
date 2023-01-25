@@ -7,6 +7,7 @@ import {
 	useRouteError,
 } from '@remix-run/react'
 import invariant from 'tiny-invariant'
+import { Mdx } from '~/utils/mdx'
 import { getErrorMessage } from '~/utils/misc'
 import { getStep } from '~/utils/misc.server'
 
@@ -24,9 +25,17 @@ export default function StepRoute() {
 
 	return (
 		<div>
-			This is a step!
-			<pre>{JSON.stringify(data, null, 2)}</pre>
-			<Outlet />
+			<h1>{data.step.title}</h1>
+			<div className="grid grid-cols-2">
+				<div>
+					{data.step.exercise?.instructionsCode ? (
+						<Mdx code={data.step.exercise?.instructionsCode} />
+					) : (
+						'No instructions yet...'
+					)}
+				</div>
+				<Outlet />
+			</div>
 		</div>
 	)
 }

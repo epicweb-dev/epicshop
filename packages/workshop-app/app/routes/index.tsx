@@ -1,7 +1,7 @@
 import { json } from '@remix-run/node'
 import { Link, useLoaderData } from '@remix-run/react'
 import { getExamples, getSteps, getWorkshopTitle } from '~/utils/misc.server'
-import { isRunning } from '~/utils/process-manager.server'
+import { isAppRunning } from '~/utils/process-manager.server'
 
 export async function loader() {
 	return json({
@@ -13,21 +13,21 @@ export async function loader() {
 				? {
 						relativePath: s.exercise.relativePath,
 						port: s.exercise.portNumber,
-						isRunning: isRunning(s.exercise),
+						isRunning: isAppRunning(s.exercise),
 				  }
 				: null,
 			final: s.final
 				? {
 						relativePath: s.final.relativePath,
 						port: s.final.portNumber,
-						isRunning: isRunning(s.final),
+						isRunning: isAppRunning(s.final),
 				  }
 				: null,
 		})),
 		examples: (await getExamples()).map(e => ({
 			title: e.title,
 			path: e.relativePath,
-			isRunning: isRunning(e),
+			isRunning: isAppRunning(e),
 		})),
 	})
 }

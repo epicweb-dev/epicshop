@@ -4,16 +4,16 @@
 import fs from 'fs'
 import path from 'path'
 import cp from 'child_process'
-import { getReadmeTitle } from './get-readme-title'
 import { typedBoolean } from './misc'
 import invariant from 'tiny-invariant'
+import { compileMdx } from './compile-mdx.server'
 
 type BaseApp = {
 	name: string
 	title: string
 	fullPath: string
 	relativePath: string
-	readme: string
+	instructionsCode?: string
 	portNumber: number
 }
 
@@ -84,11 +84,13 @@ async function readDir(dir: string) {
 	return []
 }
 
-async function readFile(file: string) {
-	if (await exists(file)) {
-		return fs.promises.readFile(file, 'utf8')
+async function compileReadme(appDir: string) {
+	const readmeFilepath = path.join(appDir, 'README.md')
+	if (await exists(readmeFilepath)) {
+		const compiled = await compileMdx(readmeFilepath)
+		return compiled
 	}
-	return ''
+	return null
 }
 
 function extractExtraCreditNumber(dir: string) {
@@ -170,15 +172,15 @@ export async function getExamples(): Promise<ExampleApp[]> {
 				dirs.map(async function getAppFromPath(dir, index) {
 					const relativePath = path.join('example', dir)
 					const fullPath = path.join(workshopRoot, relativePath)
-					const readme = await readFile(path.join(fullPath, 'README.md'))
-					const title = await getReadmeTitle(readme)
+					const compiledReadme = await compileReadme(fullPath)
+					const name = getPkgName(fullPath)
 					return {
-						name: getPkgName(fullPath),
+						name,
 						type: 'example',
 						relativePath,
 						fullPath,
-						readme,
-						title,
+						instructionsCode: compiledReadme?.code,
+						title: compiledReadme?.title ?? name,
 						portNumber: 5000 + index,
 					}
 				}),
@@ -196,31 +198,30 @@ export async function getFinals(): Promise<(FinalApp | ExtraCreditFinalApp)[]> {
 					const relativePath = path.join('final', dir)
 					const exerciseNumber = extractExerciseNumber(dir)
 					const fullPath = path.join(workshopRoot, relativePath)
-					const readme = await readFile(path.join(fullPath, 'README.md'))
-					const title = await getReadmeTitle(readme)
+					const compiledReadme = await compileReadme(fullPath)
+					const name = getPkgName(fullPath)
 					if (dir.includes('.extra-')) {
 						const extraCreditNumber = extractExtraCreditNumber(dir)
 						return {
-							name: getPkgName(fullPath),
+							name,
 							type: 'extra-credit-final',
 							exerciseNumber,
 							extraCreditNumber,
 							relativePath,
 							fullPath,
-							readme,
-							title,
+							instructionsCode: compiledReadme?.code,
+							title: compiledReadme?.title ?? name,
 							portNumber: 5050 + exerciseNumber + extraCreditNumber,
 						}
 					} else {
-						const fullPath = path.join(workshopRoot, relativePath)
 						return {
-							name: getPkgName(fullPath),
+							name,
 							type: 'final',
 							relativePath,
 							exerciseNumber,
 							fullPath,
-							readme,
-							title,
+							instructionsCode: compiledReadme?.code,
+							title: compiledReadme?.title ?? name,
 							portNumber: 5000 + exerciseNumber,
 						}
 					}
@@ -241,30 +242,30 @@ export async function getExercises(): Promise<
 					const relativePath = path.join('exercise', dir)
 					const exerciseNumber = extractExerciseNumber(dir)
 					const fullPath = path.join(workshopRoot, relativePath)
-					const readme = await readFile(path.join(fullPath, 'README.md'))
-					const title = await getReadmeTitle(readme)
+					const compiledReadme = await compileReadme(fullPath)
+					const name = getPkgName(fullPath)
 					if (dir.includes('.extra-')) {
 						const extraCreditNumber = extractExtraCreditNumber(dir)
 						return {
-							name: getPkgName(fullPath),
+							name,
 							type: 'extra-credit-exercise',
 							exerciseNumber,
 							extraCreditNumber,
 							relativePath,
 							fullPath,
-							readme,
-							title,
+							instructionsCode: compiledReadme?.code,
+							title: compiledReadme?.title ?? name,
 							portNumber: 4050 + exerciseNumber + extraCreditNumber,
 						}
 					} else {
 						return {
-							name: getPkgName(fullPath),
+							name,
 							type: 'exercise',
 							relativePath,
 							exerciseNumber,
 							fullPath,
-							readme,
-							title,
+							instructionsCode: compiledReadme?.code,
+							title: compiledReadme?.title ?? name,
 							portNumber: 4000 + exerciseNumber,
 						}
 					}

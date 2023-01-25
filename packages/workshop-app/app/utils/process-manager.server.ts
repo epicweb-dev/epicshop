@@ -49,14 +49,12 @@ export async function runAppDev(app: App) {
 	const key = app.name
 	// if the app is already running, don't start it again
 	if (devProcesses.has(key)) {
-		return key
+		return { status: 'process-running', running: true } as const
 	}
 
 	const { portNumber } = app
 	if (!(await isPortAvailable(portNumber))) {
-		throw new Error(
-			`Port ${portNumber} is not available. Something else we're not managing is running on that port.`,
-		)
+		return { status: 'port-unavailable', running: false, portNumber } as const
 	}
 	const availableColors = colors.filter(color =>
 		Array.from(devProcesses.values()).every(p => p.color !== color),
@@ -93,17 +91,12 @@ export async function runAppDev(app: App) {
 		)
 	})
 	devProcesses.set(key, { color, process: appProcess, port: portNumber })
-	// remove on exit
 	appProcess.on('exit', code => {
 		console.log(`${prefix} exited (${code})`)
 		devProcesses.delete(key)
 	})
-	appProcess.on('close', code => {
-		console.log(`${prefix} closed (${code})`)
-		devProcesses.delete(key)
-	})
 
-	return key
+	return { status: 'process-started', running: true } as const
 }
 
 export async function waitOnApp(app: App) {
@@ -113,13 +106,13 @@ export async function waitOnApp(app: App) {
 	})
 }
 
-function isPortAvailable(port: number) {
+export function isPortAvailable(port: number | string): Promise<boolean> {
 	return new Promise(resolve => {
 		const server = net.createServer()
 		server.unref()
 		server.on('error', () => resolve(false))
 
-		server.listen(port, () => {
+		server.listen(Number(port), () => {
 			server.close(() => {
 				resolve(true)
 			})
@@ -127,7 +120,7 @@ function isPortAvailable(port: number) {
 	})
 }
 
-export function isRunning(app: App) {
+export function isAppRunning(app: App) {
 	return devProcesses.has(app.name)
 }
 
@@ -139,6 +132,28 @@ export async function closeProcess(key: string) {
 	const proc = devProcesses.get(key)
 	if (proc) {
 		proc.process.kill()
+		await stopPort(proc.port) // 🤷‍♂️
 		devProcesses.delete(key)
+	}
+}
+
+const sleep = (t: number) => new Promise(resolve => setTimeout(resolve, t))
+
+export async function stopPort(port: string | number) {
+	const { default: fkill } = await import('fkill')
+	await fkill(`:${port}`, { force: true })
+	await waitForPortToBeAvailable(port)
+}
+
+export async function waitForPortToBeAvailable(port: string | number) {
+	// wait for the port to become available again
+	const timeout = Date.now() + 10_000
+	let portAvailable = false
+	do {
+		portAvailable = await isPortAvailable(port)
+		await sleep(100)
+	} while (!portAvailable && Date.now() < timeout)
+	if (!portAvailable) {
+		console.error('Timed out waiting for the port to become available')
 	}
 }

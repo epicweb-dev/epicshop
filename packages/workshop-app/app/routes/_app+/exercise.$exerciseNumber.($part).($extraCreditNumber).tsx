@@ -13,7 +13,8 @@ import {
 	isExtraCreditFinalApp,
 	isFinalApp,
 } from '~/utils/misc.server'
-import { isRunning } from '~/utils/process-manager.server'
+import { isPortAvailable, isAppRunning } from '~/utils/process-manager.server'
+import { AppStarter, AppStopper, PortStopper } from '../start'
 
 export async function loader({ params }: DataFunctionArgs) {
 	const { exerciseNumber, part = 'exercise', extraCreditNumber = '0' } = params
@@ -52,13 +53,39 @@ export async function loader({ params }: DataFunctionArgs) {
 		throw new Response('Not found', { status: 404 })
 	}
 
-	return json({ isRunning: isRunning(app), app })
+	const isRunning = isAppRunning(app)
+	return json({
+		isRunning,
+		isPortAvailable: isRunning ? null : await isPortAvailable(app.portNumber),
+		title: app.title,
+		port: app.portNumber,
+		relativePath: app.relativePath,
+	})
 }
 
 export default function ExercisePartRoute() {
 	const data = useLoaderData<typeof loader>()
 
-	return <pre>{JSON.stringify(data, null, 2)}</pre>
+	return data.isRunning ? (
+		<div>
+			<AppStopper relativePath={data.relativePath} />
+			<iframe
+				title={data.title}
+				src={`http://localhost:${data.port}`}
+				className="h-full w-full"
+			/>
+		</div>
+	) : data.isPortAvailable === false ? (
+		<div>
+			<div>
+				The port for this app is unavailable. It could be that you're running it
+				elsewhere?
+			</div>
+			<PortStopper port={data.port} />
+		</div>
+	) : (
+		<AppStarter relativePath={data.relativePath} />
+	)
 }
 
 export function ErrorBoundary() {
