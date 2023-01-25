@@ -104,6 +104,11 @@ jobs:
         with:
           node-version: 18
 
+      - name: 📥 Download deps
+        uses: bahmutov/npm-install@v1
+        with:
+          useLockFile: false
+
       - name: 🏗 Run build script
         run: npm run build
 
