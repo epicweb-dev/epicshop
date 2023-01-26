@@ -1,16 +1,20 @@
+import {Counter} from './other/components'
+
 # 01. Start
 
 ## 📝 Notes
 
 ## 🤓 Background
 
+This runs!@!@!!
+
+<Counter />
+
 This is some sweet code:
 
 ```tsx lines=1,3 remove=10-13 add=15,19
 export default function ExercisePartRoute() {
 	const data = useLoaderData<typeof loader>()
-	// prettier-ignore
-	console.log('hi')
 
 	return data.isRunning ? (
 		<div>

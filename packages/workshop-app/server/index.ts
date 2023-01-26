@@ -25,7 +25,7 @@ app.use(
 // more aggressive with this caching.
 app.use(express.static('public', { maxAge: '1h' }))
 
-const isPublished = !fs.existsSync(path.join(__dirname, 'app'))
+const isPublished = !fs.existsSync(path.join(__dirname, '..', 'app'))
 
 if (process.env.NODE_ENV !== 'production' && !isPublished) {
 	app.use(morgan('tiny'))

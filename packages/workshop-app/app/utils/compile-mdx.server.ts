@@ -1,8 +1,16 @@
+import fs from 'fs'
+import fsExtra from 'fs-extra'
+import path from 'path'
 import { bundleMDX } from 'mdx-bundler'
 import type * as U from 'unified'
 import type * as H from 'hast'
 import type * as M from 'mdast'
 import { remarkCodeBlocksShiki } from '@kentcdodds/md-temp'
+
+const cacheDir = path.join(
+	process.env.KCDSHOP_CONTEXT_CWD ?? process.cwd(),
+	'./node_modules/.cache/compile-mdx',
+)
 
 function trimCodeBlocks() {
 	return async function transformer(tree: H.Root) {
@@ -55,9 +63,31 @@ const rehypePlugins: U.PluggableList = [
 	removePreContainerDivs,
 ]
 
+function checkFileExists(file: string) {
+	return fs.promises.access(file, fs.constants.F_OK).then(
+		() => true,
+		() => false,
+	)
+}
+
 export async function compileMdx<
 	FrontmatterType extends Record<string, unknown>,
 >(file: string) {
+	if (!(await checkFileExists(file))) {
+		throw new Error(`File does not exist: ${file}`)
+	}
+	const { default: md5 } = await import('md5-hex')
+	const cacheLocation = path.join(cacheDir, `${md5(file)}.json`)
+	const stat = await fs.promises.stat(file)
+
+	if (await checkFileExists(cacheLocation)) {
+		const cached = require(cacheLocation)
+		if (cached) {
+			if (cached.mtimeMs === stat.mtimeMs) {
+				return cached.value
+			}
+		}
+	}
 	const [{ default: remarkAutolinkHeadings }, { default: gfm }, { visit }] =
 		await Promise.all([
 			import('remark-autolink-headings'),
@@ -69,6 +99,7 @@ export async function compileMdx<
 	try {
 		const { frontmatter, code } = await bundleMDX({
 			file,
+			cwd: path.dirname(file),
 			mdxOptions(options) {
 				options.remarkPlugins = [
 					...(options.remarkPlugins ?? []),
@@ -90,17 +121,26 @@ export async function compileMdx<
 					...(options.rehypePlugins ?? []),
 					...rehypePlugins,
 				]
+				options.mdxExtensions = ['.mdx', '.md']
+				options.format = 'mdx'
+				options.development = false
 				return options
 			},
 		})
 
-		return {
+		const result = {
 			code,
 			title,
 			frontmatter: frontmatter as FrontmatterType,
 		}
+		await fsExtra.ensureDir(cacheDir)
+		await fs.promises.writeFile(
+			cacheLocation,
+			JSON.stringify({ mtimeMs: stat.mtimeMs, value: result }),
+		)
+		return result
 	} catch (error: unknown) {
-		console.error(`Compilation error for file: `, file)
+		console.error(`Compilation error for file: `, file, error)
 		throw error
 	}
 }

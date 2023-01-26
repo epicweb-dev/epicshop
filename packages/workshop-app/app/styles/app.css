@@ -75,12 +75,16 @@ pre {
 	content: attr(data-line-number);
 	text-align: right;
 	display: inline-block;
-	width: 3.5rem;
+	width: 4rem;
 	color: var(--base03);
 	padding-right: 1.5rem;
 	position: sticky;
 	left: 0;
 	background-color: var(--base00);
+}
+
+.prose pre[data-lang] {
+	padding-bottom: 2rem;
 }
 
 .prose
