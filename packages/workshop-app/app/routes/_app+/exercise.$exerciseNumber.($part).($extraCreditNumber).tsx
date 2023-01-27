@@ -8,10 +8,9 @@ import {
 	useRouteError,
 	useSearchParams,
 } from '@remix-run/react'
-import { z } from 'zod'
 import { useEffect, useRef, useState } from 'react'
+import { z } from 'zod'
 import { getErrorMessage } from '~/utils/misc'
-import { createMemoryHistory } from '@remix-run/router'
 import {
 	getApps,
 	isExerciseApp,
@@ -19,7 +18,7 @@ import {
 	isExtraCreditFinalApp,
 	isFinalApp,
 } from '~/utils/misc.server'
-import { isPortAvailable, isAppRunning } from '~/utils/process-manager.server'
+import { isAppRunning, isPortAvailable } from '~/utils/process-manager.server'
 import { AppStarter, AppStopper, PortStopper } from '../start'
 
 export async function loader({ params }: DataFunctionArgs) {
