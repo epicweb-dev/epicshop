@@ -27,14 +27,16 @@ export default function StepRoute() {
 		<div>
 			<h1>{data.step.title}</h1>
 			<div className="grid grid-cols-2">
-				<div className="prose">
+				<div className="prose overflow-y-scroll">
 					{data.step.exercise?.instructionsCode ? (
 						<Mdx code={data.step.exercise?.instructionsCode} />
 					) : (
 						'No instructions yet...'
 					)}
 				</div>
-				<Outlet />
+				<div className="overflow-y-scroll">
+					<Outlet />
+				</div>
 			</div>
 		</div>
 	)

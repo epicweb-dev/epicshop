@@ -6,7 +6,9 @@ export default function Splat() {
 	return (
 		<div>
 			<div>You are at {params['*']}</div>
-			<Link to="/">Go home</Link>
+			<Link to="/" className="text-blue-800 underline">
+				Go home
+			</Link>
 		</div>
 	)
 }
