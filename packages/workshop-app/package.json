@@ -5,6 +5,11 @@
     "kcdshop": "./bin/kcdshop.js"
   },
   "files": [
+    "dist",
+    "index.js",
+    "components.js",
+    "components-build",
+    "server-build",
     "build",
     "public"
   ],
@@ -12,11 +17,13 @@
     "build": "run-s build:*",
     "build:css": "npm run generate:css -- --minify",
     "build:remix": "remix build",
-    "build:server": "tsx ./other/build-server.ts",
+    "build:server": "tsx ./other/build-dir.ts server",
+    "build:components": "tsx ./other/build-dir.ts components && tsc --jsx react-jsx --declaration --emitDeclarationOnly --declarationDir ./components-build ./components/*.tsx",
     "dev": "cross-env NODE_ENV=development run-p dev:*",
     "dev:css": "npm run generate:css -- --watch",
-    "dev:server": "tsx watch --clear-screen=false --ignore \"app/**\" --ignore \"build/**\" --ignore \"node_modules/**\" ./index.js",
     "dev:remix": "remix watch",
+    "dev:server": "tsx watch --clear-screen=false --ignore \"app/**\" --ignore \"build/**\" --ignore \"node_modules/**\" ./index.js",
+    "dev:components": "tsx --watch --watch-preserve-output --watch-path ./components ./other/build-dir.ts components",
     "format": "prettier --write .",
     "generate:css": "tailwindcss -o ./app/styles/tailwind.css",
     "lint": "eslint --cache --cache-location ./node_modules/.cache/eslint .",
@@ -53,7 +60,8 @@
     "tiny-invariant": "^1.3.1",
     "tsx": "^3.12.2",
     "unist-util-visit": "^4.1.2",
-    "wait-on": "^7.0.1"
+    "wait-on": "^7.0.1",
+    "zod": "^3.20.2"
   },
   "devDependencies": {
     "@remix-run/dev": "^1.7.5",
