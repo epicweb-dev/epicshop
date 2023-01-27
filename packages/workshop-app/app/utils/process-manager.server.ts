@@ -25,7 +25,7 @@ function getProcessesMap() {
 
 	closeWithGrace(() => {
 		for (const [name, proc] of procs.entries()) {
-			console.log('killing', name)
+			console.log('closing', name)
 			proc.process.kill()
 		}
 	})

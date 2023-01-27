@@ -4,6 +4,7 @@ import express from 'express'
 import compression from 'compression'
 import morgan from 'morgan'
 import address from 'address'
+import closeWithGrace from 'close-with-grace'
 import { createRequestHandler } from '@remix-run/express'
 
 const BUILD_DIR = path.join(process.cwd(), 'build')
@@ -49,7 +50,7 @@ app.all(
 )
 const port = process.env.PORT || 3000
 
-app.listen(port, async () => {
+const server = app.listen(port, async () => {
 	const { default: chalk } = await import('chalk')
 
 	console.log(`🐨  Let's get learning!`)
@@ -71,6 +72,12 @@ ${lanUrl ? `${chalk.bold('On Your Network:')}  ${chalk.cyan(lanUrl)}` : ''}
 ${chalk.bold('Press Ctrl+C to stop')}
 	`.trim(),
 	)
+})
+
+closeWithGrace(() => {
+	return new Promise(resolve => {
+		server.close(resolve)
+	})
 })
 
 function purgeRequireCache() {
