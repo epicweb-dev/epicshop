@@ -47,7 +47,7 @@ export async function loader({ request }: DataFunctionArgs) {
 			startStatus: result.status,
 			appReady: waitOnApp(app).then(() => {
 				if (isExercisePartApp(app)) {
-					return `/exercise/${app.exerciseNumber}`
+					return `/topic/${app.topicNumber}`
 				} else {
 					return `/example/${app.name}`
 				}

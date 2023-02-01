@@ -2,71 +2,18 @@ import type { DataFunctionArgs } from '@remix-run/node'
 import { json } from '@remix-run/node'
 import {
 	Form,
-	isRouteErrorResponse,
 	useLoaderData,
 	useNavigate,
-	useRouteError,
 	useSearchParams,
 } from '@remix-run/react'
 import { useEffect, useRef, useState } from 'react'
 import { z } from 'zod'
-import { getErrorMessage } from '~/utils/misc'
-import {
-	getApps,
-	isExerciseApp,
-	isStepExerciseApp,
-	isStepFinalApp,
-	isFinalApp,
-} from '~/utils/misc.server'
+import { requireTopicApp } from '~/utils/misc.server'
 import { isAppRunning, isPortAvailable } from '~/utils/process-manager.server'
 import { AppStarter, AppStopper, PortStopper } from '../start'
 
 export async function loader({ params }: DataFunctionArgs) {
-	const {
-		exerciseNumber: exerciseNumberString,
-		part = 'exercise',
-		stepNumber: stepNumberString = '0',
-	} = params
-	if (part !== 'exercise' && part !== 'final') {
-		throw new Response('Not found', { status: 404 })
-	}
-
-	const stepNumber = Number(stepNumberString)
-	const exerciseNumber = Number(exerciseNumberString)
-
-	const isStep = stepNumber > 1
-
-	const apps = await getApps()
-	const app = apps.find(app => {
-		if (part === 'exercise') {
-			if (isStep) {
-				if (isStepExerciseApp(app)) {
-					return (
-						app.exerciseNumber === exerciseNumber &&
-						app.stepNumber === stepNumber
-					)
-				}
-			} else if (isExerciseApp(app)) {
-				return app.exerciseNumber === exerciseNumber
-			}
-		}
-		if (part === 'final') {
-			if (isStep) {
-				if (isStepFinalApp(app)) {
-					return (
-						app.exerciseNumber === exerciseNumber &&
-						app.stepNumber === stepNumber
-					)
-				}
-			} else if (isFinalApp(app)) {
-				return app.exerciseNumber === exerciseNumber
-			}
-		}
-		return false
-	})
-	if (!app) {
-		throw new Response('Not found', { status: 404 })
-	}
+	const app = await requireTopicApp(params)
 
 	const isRunning = isAppRunning(app)
 	return json({
@@ -282,25 +229,5 @@ export default function ExercisePartRoute() {
 		</div>
 	) : (
 		<AppStarter relativePath={data.relativePath} />
-	)
-}
-
-export function ErrorBoundary() {
-	const error = useRouteError()
-
-	if (typeof document !== 'undefined') {
-		console.error(error)
-	}
-
-	return isRouteErrorResponse(error) ? (
-		error.status === 404 ? (
-			<p>Sorry, we couldn't find an app here.</p>
-		) : (
-			<p>
-				{error.status} {error.data}
-			</p>
-		)
-	) : (
-		<p>{getErrorMessage(error)}</p>
 	)
 }

@@ -45,7 +45,7 @@ export default function Index() {
 							<li key={step.stepNumber}>
 								<div className="flex">
 									<Link
-										to={`exercise/${step.stepNumber}`}
+										to={`topic/${step.stepNumber}`}
 										className="text-blue-800 underline"
 									>
 										{step.stepNumber}. {step.title}

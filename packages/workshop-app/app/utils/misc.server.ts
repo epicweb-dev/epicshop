@@ -9,7 +9,9 @@ import invariant from 'tiny-invariant'
 import { compileMdx } from './compile-mdx.server'
 
 type BaseApp = {
+	/** a unique identifier for the app (comes from package.json name prop) */
 	name: string
+	/** the title of the app used for display (comes from the README, or defaults to the name) */
 	title: string
 	fullPath: string
 	relativePath: string
@@ -19,23 +21,23 @@ type BaseApp = {
 
 export type ExerciseApp = BaseApp & {
 	type: 'exercise'
-	exerciseNumber: number
+	topicNumber: number
 	stepNumber: 1
 }
 export type FinalApp = BaseApp & {
 	type: 'final'
-	exerciseNumber: number
+	topicNumber: number
 	stepNumber: 1
 }
 export type ExampleApp = BaseApp & { type: 'example' }
 export type StepExerciseApp = BaseApp & {
 	type: 'step-exercise'
-	exerciseNumber: number
+	topicNumber: number
 	stepNumber: number
 }
 export type StepFinalApp = BaseApp & {
 	type: 'step-final'
-	exerciseNumber: number
+	topicNumber: number
 	stepNumber: number
 }
 
@@ -126,19 +128,19 @@ export async function getTopics() {
 		| undefined
 	> = []
 	for (const exercise of exercises) {
-		topics[exercise.exerciseNumber] = {
-			...topics[exercise.exerciseNumber],
+		topics[exercise.topicNumber] = {
+			...topics[exercise.topicNumber],
 			exercise,
 			title: exercise.title,
-			topicNumber: exercise.exerciseNumber,
+			topicNumber: exercise.topicNumber,
 		}
 	}
 	for (const final of finals) {
-		topics[final.exerciseNumber] = {
+		topics[final.topicNumber] = {
 			title: final.title,
-			...topics[final.exerciseNumber],
+			...topics[final.topicNumber],
 			final,
-			topicNumber: final.exerciseNumber,
+			topicNumber: final.topicNumber,
 		}
 	}
 
@@ -152,6 +154,21 @@ export async function getApps(): Promise<Array<App>> {
 		getExamples(),
 	])
 	return [...exerciseApps, ...finalApps, ...exampleApps]
+	// .sort((a, b) => {
+	// 	if (a.type === 'example') {
+	// 		if (b.type === 'example') return a.name.localeCompare(b.name)
+	// 	}
+	// 	if (a.type === 'exercise') {
+	// 		if (b.type === 'exercise') {
+	// 			if (a.topicNumber === b.topicNumber) {
+	// 				return a.stepNumber - b.stepNumber
+	// 			}
+	// 		}
+	// 		if (b.type === 'final') {
+
+	// 		}
+	// 	}
+	// })
 }
 
 function getPkgName(fullPath: string) {
@@ -197,7 +214,7 @@ export async function getFinals(): Promise<(FinalApp | StepFinalApp)[]> {
 			return Promise.all(
 				dirs.map(async function getAppFromPath(dir) {
 					const relativePath = path.join('final', dir)
-					const exerciseNumber = extractExerciseNumber(dir)
+					const topicNumber = extractExerciseNumber(dir)
 					const fullPath = path.join(workshopRoot, relativePath)
 					const compiledReadme = await compileReadme(fullPath)
 					const name = getPkgName(fullPath)
@@ -209,24 +226,24 @@ export async function getFinals(): Promise<(FinalApp | StepFinalApp)[]> {
 							type: 'final',
 							stepNumber: 1,
 							relativePath,
-							exerciseNumber,
+							topicNumber,
 							fullPath,
 							instructionsCode: compiledReadme?.code,
 							title: compiledReadme?.title ?? name,
-							portNumber: 5000 + exerciseNumber,
+							portNumber: 5000 + topicNumber,
 						}
 					} else {
 						const stepNumber = extractStepNumber(dir)
 						return {
 							name,
 							type: 'step-final',
-							exerciseNumber,
+							topicNumber,
 							stepNumber,
 							relativePath,
 							fullPath,
 							instructionsCode: compiledReadme?.code,
 							title: compiledReadme?.title ?? name,
-							portNumber: 5050 + exerciseNumber + stepNumber,
+							portNumber: 5050 + topicNumber + stepNumber,
 						}
 					}
 				}),
@@ -244,7 +261,7 @@ export async function getExercises(): Promise<
 			return Promise.all(
 				dirs.map(async function getAppFromPath(dir) {
 					const relativePath = path.join('exercise', dir)
-					const exerciseNumber = extractExerciseNumber(dir)
+					const topicNumber = extractExerciseNumber(dir)
 					const fullPath = path.join(workshopRoot, relativePath)
 					const compiledReadme = await compileReadme(fullPath)
 					const name = getPkgName(fullPath)
@@ -253,13 +270,13 @@ export async function getExercises(): Promise<
 						return {
 							name,
 							type: 'step-exercise',
-							exerciseNumber,
+							topicNumber,
 							stepNumber,
 							relativePath,
 							fullPath,
 							instructionsCode: compiledReadme?.code,
 							title: compiledReadme?.title ?? name,
-							portNumber: 4050 + exerciseNumber + stepNumber,
+							portNumber: 4050 + topicNumber + stepNumber,
 						}
 					} else {
 						return {
@@ -267,11 +284,11 @@ export async function getExercises(): Promise<
 							type: 'exercise',
 							stepNumber: 1,
 							relativePath,
-							exerciseNumber,
+							topicNumber,
 							fullPath,
 							instructionsCode: compiledReadme?.code,
 							title: compiledReadme?.title ?? name,
-							portNumber: 4000 + exerciseNumber,
+							portNumber: 4000 + topicNumber,
 						}
 					}
 				}),
@@ -288,6 +305,62 @@ export async function getTopic(topicNumber: number | string) {
 export async function getAppFromRelativePath(relativePath: string) {
 	const apps = await getApps()
 	return apps.find(a => a.relativePath === relativePath)
+}
+
+export async function requireTopicApp({
+	part = 'exercise',
+	topicNumber: topicNumberString,
+	stepNumber: stepNumberString = '1',
+}: {
+	part?: string
+	topicNumber?: string
+	stepNumber?: string
+}) {
+	if ((part !== 'exercise' && part !== 'final') || !topicNumberString) {
+		throw new Response('Not found', { status: 404 })
+	}
+
+	const stepNumber = Number(stepNumberString)
+	const topicNumber = Number(topicNumberString)
+
+	const isStep = stepNumber > 1
+
+	const apps = await getApps()
+	const app = apps.find(app => {
+		if (part === 'exercise') {
+			if (isStep) {
+				if (isStepExerciseApp(app)) {
+					return (
+						app.topicNumber === topicNumber && app.stepNumber === stepNumber
+					)
+				}
+			} else if (isExerciseApp(app)) {
+				return app.topicNumber === topicNumber
+			}
+		}
+		if (part === 'final') {
+			if (isStep) {
+				if (isStepFinalApp(app)) {
+					return (
+						app.topicNumber === topicNumber && app.stepNumber === stepNumber
+					)
+				}
+			} else if (isFinalApp(app)) {
+				return app.topicNumber === topicNumber
+			}
+		}
+		return false
+	})
+	if (!app) {
+		throw new Response('Not found', { status: 404 })
+	}
+	return app
+}
+
+export async function getNextApp(app: App) {}
+
+export async function getDiff(app1: App, app2: App) {
+	// generate a diff between the two apps
 }
 
 export async function getWorkshopRoot() {

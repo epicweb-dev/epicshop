@@ -12,8 +12,8 @@ import { getErrorMessage } from '~/utils/misc'
 import { getTopic } from '~/utils/misc.server'
 
 export async function loader({ params }: DataFunctionArgs) {
-	invariant(params.exerciseNumber, 'exerciseNumber is required')
-	const topic = await getTopic(params.exerciseNumber)
+	invariant(params.topicNumber, 'topicNumber is required')
+	const topic = await getTopic(params.topicNumber)
 	if (!topic) {
 		throw new Response('Not found', { status: 404 })
 	}
