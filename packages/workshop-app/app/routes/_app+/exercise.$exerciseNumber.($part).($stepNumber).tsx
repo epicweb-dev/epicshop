@@ -14,42 +14,52 @@ import { getErrorMessage } from '~/utils/misc'
 import {
 	getApps,
 	isExerciseApp,
-	isExtraCreditExerciseApp,
-	isExtraCreditFinalApp,
+	isStepExerciseApp,
+	isStepFinalApp,
 	isFinalApp,
 } from '~/utils/misc.server'
 import { isAppRunning, isPortAvailable } from '~/utils/process-manager.server'
 import { AppStarter, AppStopper, PortStopper } from '../start'
 
 export async function loader({ params }: DataFunctionArgs) {
-	const { exerciseNumber, part = 'exercise', extraCreditNumber = '0' } = params
+	const {
+		exerciseNumber: exerciseNumberString,
+		part = 'exercise',
+		stepNumber: stepNumberString = '0',
+	} = params
 	if (part !== 'exercise' && part !== 'final') {
 		throw new Response('Not found', { status: 404 })
 	}
 
-	const ec = Number(extraCreditNumber)
-	const en = Number(exerciseNumber)
+	const stepNumber = Number(stepNumberString)
+	const exerciseNumber = Number(exerciseNumberString)
 
-	const isEC = ec > 0
+	const isStep = stepNumber > 1
 
 	const apps = await getApps()
 	const app = apps.find(app => {
 		if (part === 'exercise') {
-			if (isEC) {
-				if (isExtraCreditExerciseApp(app)) {
-					return app.exerciseNumber === en && app.extraCreditNumber === ec
+			if (isStep) {
+				if (isStepExerciseApp(app)) {
+					return (
+						app.exerciseNumber === exerciseNumber &&
+						app.stepNumber === stepNumber
+					)
 				}
 			} else if (isExerciseApp(app)) {
-				return app.exerciseNumber === en
+				return app.exerciseNumber === exerciseNumber
 			}
 		}
 		if (part === 'final') {
-			if (isEC) {
-				if (isExtraCreditFinalApp(app)) {
-					return app.exerciseNumber === en && app.extraCreditNumber === ec
+			if (isStep) {
+				if (isStepFinalApp(app)) {
+					return (
+						app.exerciseNumber === exerciseNumber &&
+						app.stepNumber === stepNumber
+					)
 				}
 			} else if (isFinalApp(app)) {
-				return app.exerciseNumber === en
+				return app.exerciseNumber === exerciseNumber
 			}
 		}
 		return false
@@ -284,7 +294,7 @@ export function ErrorBoundary() {
 
 	return isRouteErrorResponse(error) ? (
 		error.status === 404 ? (
-			<p>Sorry, we couldn't find an exercise here.</p>
+			<p>Sorry, we couldn't find an app here.</p>
 		) : (
 			<p>
 				{error.status} {error.data}

@@ -1,14 +1,8 @@
-import {Counter} from './other/components'
-
 # 01. Start
 
 ## 📝 Notes
 
 ## 🤓 Background
-
-This runs!@!@!!
-
-<Counter />
 
 This is some sweet code:
 
@@ -62,10 +56,3 @@ export function ErrorBoundary() {
 ## 💪 Exercise
 
 ## 🗃 Files
-
-## 🦉 Elaboration and Feedback
-
-After the instruction, if you want to remember what you've just learned, then
-fill out the elaboration and feedback form:
-
-https://ws.kcd.im/?ws=Web%20App%20Fundamentals%20%F0%9F%94%AD&e=01.%20Start&em=

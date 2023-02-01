@@ -6,7 +6,22 @@
       "path": "exercise/01-start"
     },
     {
+      "path": "exercise/02-koala"
+    },
+    {
+      "path": "exercise/02-koala.step-03-duck"
+    },
+    {
       "path": "final/01-start"
+    },
+    {
+      "path": "final/02-koala.step-01-phone"
+    },
+    {
+      "path": "final/02-koala.step-02-post-it"
+    },
+    {
+      "path": "final/02-koala.step-03-duck"
     }
   ]
 }

@@ -1,13 +1,13 @@
 import { json } from '@remix-run/node'
 import { Link, useLoaderData } from '@remix-run/react'
-import { getExamples, getSteps, getWorkshopTitle } from '~/utils/misc.server'
+import { getExamples, getTopics, getWorkshopTitle } from '~/utils/misc.server'
 import { isAppRunning } from '~/utils/process-manager.server'
 
 export async function loader() {
 	return json({
 		title: await getWorkshopTitle(),
-		steps: (await getSteps()).map(s => ({
-			stepNumber: s.stepNumber,
+		steps: (await getTopics()).map(s => ({
+			stepNumber: s.topicNumber,
 			title: s.title,
 			exercise: s.exercise
 				? {
@@ -44,43 +44,12 @@ export default function Index() {
 						{data.steps.map(step => (
 							<li key={step.stepNumber}>
 								<div className="flex">
-									<Link to={`exercise/${step.stepNumber}`}>
+									<Link
+										to={`exercise/${step.stepNumber}`}
+										className="text-blue-800 underline"
+									>
 										{step.stepNumber}. {step.title}
 									</Link>
-									{step.exercise ? (
-										step.exercise.isRunning ? (
-											<a href={`http://localhost:${step.exercise.port}`}>
-												Open Exercise
-											</a>
-										) : (
-											<Link
-												to={`/start?relativePath=${encodeURIComponent(
-													step.exercise.relativePath,
-												)}`}
-											>
-												Start Exercise
-											</Link>
-										)
-									) : (
-										<span>(no exercise)</span>
-									)}
-									{step.final ? (
-										step.final.isRunning ? (
-											<a href={`http://localhost:${step.final.port}`}>
-												Open Final
-											</a>
-										) : (
-											<Link
-												to={`/start?relativePath=${encodeURIComponent(
-													step.final.relativePath,
-												)}`}
-											>
-												Start Exercise
-											</Link>
-										)
-									) : (
-										<span>(no final)</span>
-									)}
 								</div>
 							</li>
 						))}

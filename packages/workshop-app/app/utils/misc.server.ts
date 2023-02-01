@@ -20,25 +20,30 @@ type BaseApp = {
 export type ExerciseApp = BaseApp & {
 	type: 'exercise'
 	exerciseNumber: number
+	stepNumber: 1
 }
-export type FinalApp = BaseApp & { type: 'final'; exerciseNumber: number }
+export type FinalApp = BaseApp & {
+	type: 'final'
+	exerciseNumber: number
+	stepNumber: 1
+}
 export type ExampleApp = BaseApp & { type: 'example' }
-export type ExtraCreditExerciseApp = BaseApp & {
-	type: 'extra-credit-exercise'
+export type StepExerciseApp = BaseApp & {
+	type: 'step-exercise'
 	exerciseNumber: number
-	extraCreditNumber: number
+	stepNumber: number
 }
-export type ExtraCreditFinalApp = BaseApp & {
-	type: 'extra-credit-final'
+export type StepFinalApp = BaseApp & {
+	type: 'step-final'
 	exerciseNumber: number
-	extraCreditNumber: number
+	stepNumber: number
 }
 
 export type ExercisePartApp =
 	| ExerciseApp
 	| FinalApp
-	| ExtraCreditExerciseApp
-	| ExtraCreditFinalApp
+	| StepExerciseApp
+	| StepFinalApp
 
 export type App = ExampleApp | ExercisePartApp
 
@@ -54,22 +59,20 @@ export function isExampleApp(app: App): app is ExampleApp {
 	return app.type === 'example'
 }
 
-export function isExtraCreditExerciseApp(
-	app: App,
-): app is ExtraCreditExerciseApp {
-	return app.type === 'extra-credit-exercise'
+export function isStepExerciseApp(app: App): app is StepExerciseApp {
+	return app.type === 'step-exercise'
 }
 
-export function isExtraCreditFinalApp(app: App): app is ExtraCreditFinalApp {
-	return app.type === 'extra-credit-final'
+export function isStepFinalApp(app: App): app is StepFinalApp {
+	return app.type === 'step-final'
 }
 
 export function isExercisePartApp(app: App): app is ExercisePartApp {
 	return (
 		isExerciseApp(app) ||
 		isFinalApp(app) ||
-		isExtraCreditExerciseApp(app) ||
-		isExtraCreditFinalApp(app)
+		isStepExerciseApp(app) ||
+		isStepFinalApp(app)
 	)
 }
 
@@ -93,13 +96,11 @@ async function compileReadme(appDir: string) {
 	return null
 }
 
-function extractExtraCreditNumber(dir: string) {
-	const regex = /\.extra-(?<number>\d+)/
+function extractStepNumber(dir: string) {
+	const regex = /\.step-(?<number>\d+)/
 	const number = regex.exec(dir)?.groups?.number
 	if (!number) {
-		throw new Error(
-			`Extra credit directory ${dir} does not match regex ${regex}`,
-		)
+		throw new Error(`Step directory ${dir} does not match regex ${regex}`)
 	}
 	return Number(number)
 }
@@ -113,35 +114,35 @@ function extractExerciseNumber(dir: string) {
 	return Number(number)
 }
 
-export async function getSteps() {
+export async function getTopics() {
 	const apps = await getApps()
 	const exercises = apps.filter(isExerciseApp)
 	const finals = apps.filter(isFinalApp)
-	const steps: Array<
-		| ({ stepNumber: number; title: string } & {
+	const topics: Array<
+		| ({ topicNumber: number; title: string } & {
 				exercise?: ExerciseApp
 				final?: FinalApp
 		  })
 		| undefined
 	> = []
 	for (const exercise of exercises) {
-		steps[exercise.exerciseNumber] = {
-			...steps[exercise.exerciseNumber],
+		topics[exercise.exerciseNumber] = {
+			...topics[exercise.exerciseNumber],
 			exercise,
 			title: exercise.title,
-			stepNumber: exercise.exerciseNumber,
+			topicNumber: exercise.exerciseNumber,
 		}
 	}
 	for (const final of finals) {
-		steps[final.exerciseNumber] = {
+		topics[final.exerciseNumber] = {
 			title: final.title,
-			...steps[final.exerciseNumber],
+			...topics[final.exerciseNumber],
 			final,
-			stepNumber: final.exerciseNumber,
+			topicNumber: final.exerciseNumber,
 		}
 	}
 
-	return steps.filter(typedBoolean)
+	return topics.filter(typedBoolean)
 }
 
 export async function getApps(): Promise<Array<App>> {
@@ -189,10 +190,10 @@ export async function getExamples(): Promise<ExampleApp[]> {
 	)
 }
 
-export async function getFinals(): Promise<(FinalApp | ExtraCreditFinalApp)[]> {
+export async function getFinals(): Promise<(FinalApp | StepFinalApp)[]> {
 	const workshopRoot = await getWorkshopRoot()
 	return readDir(path.join(workshopRoot, 'final')).then(
-		(dirs): Promise<Array<FinalApp | ExtraCreditFinalApp>> => {
+		(dirs): Promise<Array<FinalApp | StepFinalApp>> => {
 			return Promise.all(
 				dirs.map(async function getAppFromPath(dir) {
 					const relativePath = path.join('final', dir)
@@ -200,29 +201,32 @@ export async function getFinals(): Promise<(FinalApp | ExtraCreditFinalApp)[]> {
 					const fullPath = path.join(workshopRoot, relativePath)
 					const compiledReadme = await compileReadme(fullPath)
 					const name = getPkgName(fullPath)
-					if (dir.includes('.extra-')) {
-						const extraCreditNumber = extractExtraCreditNumber(dir)
-						return {
-							name,
-							type: 'extra-credit-final',
-							exerciseNumber,
-							extraCreditNumber,
-							relativePath,
-							fullPath,
-							instructionsCode: compiledReadme?.code,
-							title: compiledReadme?.title ?? name,
-							portNumber: 5050 + exerciseNumber + extraCreditNumber,
-						}
-					} else {
+					const isFirstStep =
+						!dir.includes('.step-') || dir.includes('.step-01')
+					if (isFirstStep) {
 						return {
 							name,
 							type: 'final',
+							stepNumber: 1,
 							relativePath,
 							exerciseNumber,
 							fullPath,
 							instructionsCode: compiledReadme?.code,
 							title: compiledReadme?.title ?? name,
 							portNumber: 5000 + exerciseNumber,
+						}
+					} else {
+						const stepNumber = extractStepNumber(dir)
+						return {
+							name,
+							type: 'step-final',
+							exerciseNumber,
+							stepNumber,
+							relativePath,
+							fullPath,
+							instructionsCode: compiledReadme?.code,
+							title: compiledReadme?.title ?? name,
+							portNumber: 5050 + exerciseNumber + stepNumber,
 						}
 					}
 				}),
@@ -232,11 +236,11 @@ export async function getFinals(): Promise<(FinalApp | ExtraCreditFinalApp)[]> {
 }
 
 export async function getExercises(): Promise<
-	(ExerciseApp | ExtraCreditExerciseApp)[]
+	(ExerciseApp | StepExerciseApp)[]
 > {
 	const workshopRoot = await getWorkshopRoot()
 	return readDir(path.join(workshopRoot, 'exercise')).then(
-		(dirs): Promise<Array<ExerciseApp | ExtraCreditExerciseApp>> => {
+		(dirs): Promise<Array<ExerciseApp | StepExerciseApp>> => {
 			return Promise.all(
 				dirs.map(async function getAppFromPath(dir) {
 					const relativePath = path.join('exercise', dir)
@@ -244,23 +248,24 @@ export async function getExercises(): Promise<
 					const fullPath = path.join(workshopRoot, relativePath)
 					const compiledReadme = await compileReadme(fullPath)
 					const name = getPkgName(fullPath)
-					if (dir.includes('.extra-')) {
-						const extraCreditNumber = extractExtraCreditNumber(dir)
+					if (dir.includes('.step-')) {
+						const stepNumber = extractStepNumber(dir)
 						return {
 							name,
-							type: 'extra-credit-exercise',
+							type: 'step-exercise',
 							exerciseNumber,
-							extraCreditNumber,
+							stepNumber,
 							relativePath,
 							fullPath,
 							instructionsCode: compiledReadme?.code,
 							title: compiledReadme?.title ?? name,
-							portNumber: 4050 + exerciseNumber + extraCreditNumber,
+							portNumber: 4050 + exerciseNumber + stepNumber,
 						}
 					} else {
 						return {
 							name,
 							type: 'exercise',
+							stepNumber: 1,
 							relativePath,
 							exerciseNumber,
 							fullPath,
@@ -275,9 +280,9 @@ export async function getExercises(): Promise<
 	)
 }
 
-export async function getStep(stepNumber: number | string) {
-	const steps = await getSteps()
-	return steps.find(s => s.stepNumber === Number(stepNumber))
+export async function getTopic(topicNumber: number | string) {
+	const topics = await getTopics()
+	return topics.find(s => s.topicNumber === Number(topicNumber))
 }
 
 export async function getAppFromRelativePath(relativePath: string) {
