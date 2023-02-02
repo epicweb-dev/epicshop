@@ -138,22 +138,42 @@ export async function getApps(): Promise<Array<App>> {
 		getFinals(),
 		getExamples(),
 	])
-	return [...exerciseApps, ...finalApps, ...exampleApps]
-	// .sort((a, b) => {
-	// 	if (a.type === 'example') {
-	// 		if (b.type === 'example') return a.name.localeCompare(b.name)
-	// 	}
-	// 	if (a.type === 'exercise') {
-	// 		if (b.type === 'exercise') {
-	// 			if (a.topicNumber === b.topicNumber) {
-	// 				return a.stepNumber - b.stepNumber
-	// 			}
-	// 		}
-	// 		if (b.type === 'final') {
+	return [...exerciseApps, ...finalApps, ...exampleApps].sort((a, b) => {
+		// HEY KENT, this is busted!
+		// TODO: fix
+		debugger
+		if (a.type === 'example') {
+			if (b.type === 'example') return a.name.localeCompare(b.name)
+			else return 1
+		}
+		if (b.type === 'example') return -1
 
-	// 		}
-	// 	}
-	// })
+		if (a.type === b.type) {
+			if (a.topicNumber === b.topicNumber) {
+				return a.stepNumber - b.stepNumber
+			} else {
+				return a.topicNumber - b.topicNumber
+			}
+		}
+
+		// at this point, we know that a and b are different types...
+		if (a.type === 'exercise') {
+			if (a.topicNumber === b.topicNumber) {
+				return a.stepNumber <= b.stepNumber ? 1 : -1
+			} else {
+				return a.topicNumber <= b.topicNumber ? 1 : -1
+			}
+		}
+		if (a.type === 'final') {
+			if (a.topicNumber === b.topicNumber) {
+				return a.stepNumber < b.stepNumber ? -1 : 1
+			} else {
+				return a.topicNumber < b.topicNumber ? -1 : 1
+			}
+		}
+		console.error('unhandled sorting case', a, b)
+		return 0
+	})
 }
 
 function getPkgName(fullPath: string) {
@@ -293,7 +313,20 @@ export async function requireTopicApp({
 	return app
 }
 
-export async function getNextApp(app: App) {}
+export async function getAppByName(name: string) {
+	const apps = await getApps()
+	return apps.find(a => a.name === name)
+}
+
+export async function getNextApp(app: App) {
+	const apps = await getApps()
+	const index = apps.findIndex(a => a.relativePath === app.relativePath)
+	if (index === -1) {
+		throw new Error(`Could not find app ${app.relativePath}`)
+	}
+	const nextApp = apps[index + 1]
+	return nextApp ? nextApp : null
+}
 
 export async function getDiff(app1: App, app2: App) {
 	// generate a diff between the two apps
