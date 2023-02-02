@@ -22,30 +22,16 @@ type BaseApp = {
 export type ExerciseApp = BaseApp & {
 	type: 'exercise'
 	topicNumber: number
-	stepNumber: 1
+	stepNumber: number
 }
 export type FinalApp = BaseApp & {
 	type: 'final'
 	topicNumber: number
-	stepNumber: 1
+	stepNumber: number
 }
 export type ExampleApp = BaseApp & { type: 'example' }
-export type StepExerciseApp = BaseApp & {
-	type: 'step-exercise'
-	topicNumber: number
-	stepNumber: number
-}
-export type StepFinalApp = BaseApp & {
-	type: 'step-final'
-	topicNumber: number
-	stepNumber: number
-}
 
-export type ExercisePartApp =
-	| ExerciseApp
-	| FinalApp
-	| StepExerciseApp
-	| StepFinalApp
+export type ExercisePartApp = ExerciseApp | FinalApp
 
 export type App = ExampleApp | ExercisePartApp
 
@@ -57,25 +43,24 @@ export function isFinalApp(app: App): app is FinalApp {
 	return app.type === 'final'
 }
 
+export function isFirstStepExerciseApp(
+	app: App,
+): app is ExerciseApp & { stepNumber: 1 } {
+	return isExerciseApp(app) && app.stepNumber === 1
+}
+
+export function isFirstStepFinalApp(
+	app: App,
+): app is FinalApp & { stepNumber: 1 } {
+	return isFinalApp(app) && app.stepNumber === 1
+}
+
 export function isExampleApp(app: App): app is ExampleApp {
 	return app.type === 'example'
 }
 
-export function isStepExerciseApp(app: App): app is StepExerciseApp {
-	return app.type === 'step-exercise'
-}
-
-export function isStepFinalApp(app: App): app is StepFinalApp {
-	return app.type === 'step-final'
-}
-
 export function isExercisePartApp(app: App): app is ExercisePartApp {
-	return (
-		isExerciseApp(app) ||
-		isFinalApp(app) ||
-		isStepExerciseApp(app) ||
-		isStepFinalApp(app)
-	)
+	return isExerciseApp(app) || isFinalApp(app)
 }
 
 async function exists(dir: string) {
@@ -102,7 +87,7 @@ function extractStepNumber(dir: string) {
 	const regex = /\.step-(?<number>\d+)/
 	const number = regex.exec(dir)?.groups?.number
 	if (!number) {
-		throw new Error(`Step directory ${dir} does not match regex ${regex}`)
+		return null
 	}
 	return Number(number)
 }
@@ -118,8 +103,8 @@ function extractExerciseNumber(dir: string) {
 
 export async function getTopics() {
 	const apps = await getApps()
-	const exercises = apps.filter(isExerciseApp)
-	const finals = apps.filter(isFinalApp)
+	const exercises = apps.filter(isFirstStepExerciseApp)
+	const finals = apps.filter(isFirstStepFinalApp)
 	const topics: Array<
 		| ({ topicNumber: number; title: string } & {
 				exercise?: ExerciseApp
@@ -199,7 +184,7 @@ export async function getExamples(): Promise<ExampleApp[]> {
 						fullPath,
 						instructionsCode: compiledReadme?.code,
 						title: compiledReadme?.title ?? name,
-						portNumber: 5000 + index,
+						portNumber: 3500 + index,
 					}
 				}),
 			)
@@ -207,10 +192,10 @@ export async function getExamples(): Promise<ExampleApp[]> {
 	)
 }
 
-export async function getFinals(): Promise<(FinalApp | StepFinalApp)[]> {
+export async function getFinals(): Promise<Array<FinalApp>> {
 	const workshopRoot = await getWorkshopRoot()
 	return readDir(path.join(workshopRoot, 'final')).then(
-		(dirs): Promise<Array<FinalApp | StepFinalApp>> => {
+		(dirs): Promise<Array<FinalApp>> => {
 			return Promise.all(
 				dirs.map(async function getAppFromPath(dir) {
 					const relativePath = path.join('final', dir)
@@ -218,33 +203,18 @@ export async function getFinals(): Promise<(FinalApp | StepFinalApp)[]> {
 					const fullPath = path.join(workshopRoot, relativePath)
 					const compiledReadme = await compileReadme(fullPath)
 					const name = getPkgName(fullPath)
-					const isFirstStep =
-						!dir.includes('.step-') || dir.includes('.step-01')
-					if (isFirstStep) {
-						return {
-							name,
-							type: 'final',
-							stepNumber: 1,
-							relativePath,
-							topicNumber,
-							fullPath,
-							instructionsCode: compiledReadme?.code,
-							title: compiledReadme?.title ?? name,
-							portNumber: 5000 + topicNumber,
-						}
-					} else {
-						const stepNumber = extractStepNumber(dir)
-						return {
-							name,
-							type: 'step-final',
-							topicNumber,
-							stepNumber,
-							relativePath,
-							fullPath,
-							instructionsCode: compiledReadme?.code,
-							title: compiledReadme?.title ?? name,
-							portNumber: 5050 + topicNumber + stepNumber,
-						}
+					const stepNumber = extractStepNumber(dir) ?? 1
+					const portNumber = Number(`50${topicNumber}${stepNumber}`)
+					return {
+						name,
+						type: 'final',
+						stepNumber,
+						relativePath,
+						topicNumber,
+						fullPath,
+						instructionsCode: compiledReadme?.code,
+						title: compiledReadme?.title ?? name,
+						portNumber,
 					}
 				}),
 			)
@@ -252,12 +222,10 @@ export async function getFinals(): Promise<(FinalApp | StepFinalApp)[]> {
 	)
 }
 
-export async function getExercises(): Promise<
-	(ExerciseApp | StepExerciseApp)[]
-> {
+export async function getExercises(): Promise<Array<ExerciseApp>> {
 	const workshopRoot = await getWorkshopRoot()
 	return readDir(path.join(workshopRoot, 'exercise')).then(
-		(dirs): Promise<Array<ExerciseApp | StepExerciseApp>> => {
+		(dirs): Promise<Array<ExerciseApp>> => {
 			return Promise.all(
 				dirs.map(async function getAppFromPath(dir) {
 					const relativePath = path.join('exercise', dir)
@@ -265,31 +233,18 @@ export async function getExercises(): Promise<
 					const fullPath = path.join(workshopRoot, relativePath)
 					const compiledReadme = await compileReadme(fullPath)
 					const name = getPkgName(fullPath)
-					if (dir.includes('.step-')) {
-						const stepNumber = extractStepNumber(dir)
-						return {
-							name,
-							type: 'step-exercise',
-							topicNumber,
-							stepNumber,
-							relativePath,
-							fullPath,
-							instructionsCode: compiledReadme?.code,
-							title: compiledReadme?.title ?? name,
-							portNumber: 4050 + topicNumber + stepNumber,
-						}
-					} else {
-						return {
-							name,
-							type: 'exercise',
-							stepNumber: 1,
-							relativePath,
-							topicNumber,
-							fullPath,
-							instructionsCode: compiledReadme?.code,
-							title: compiledReadme?.title ?? name,
-							portNumber: 4000 + topicNumber,
-						}
+					const stepNumber = extractStepNumber(dir) ?? 1
+					const portNumber = Number(`40${topicNumber}${stepNumber}`)
+					return {
+						name,
+						type: 'exercise',
+						stepNumber,
+						relativePath,
+						topicNumber,
+						fullPath,
+						instructionsCode: compiledReadme?.code,
+						title: compiledReadme?.title ?? name,
+						portNumber,
 					}
 				}),
 			)
@@ -323,33 +278,14 @@ export async function requireTopicApp({
 	const stepNumber = Number(stepNumberString)
 	const topicNumber = Number(topicNumberString)
 
-	const isStep = stepNumber > 1
-
 	const apps = await getApps()
 	const app = apps.find(app => {
-		if (part === 'exercise') {
-			if (isStep) {
-				if (isStepExerciseApp(app)) {
-					return (
-						app.topicNumber === topicNumber && app.stepNumber === stepNumber
-					)
-				}
-			} else if (isExerciseApp(app)) {
-				return app.topicNumber === topicNumber
-			}
-		}
-		if (part === 'final') {
-			if (isStep) {
-				if (isStepFinalApp(app)) {
-					return (
-						app.topicNumber === topicNumber && app.stepNumber === stepNumber
-					)
-				}
-			} else if (isFinalApp(app)) {
-				return app.topicNumber === topicNumber
-			}
-		}
-		return false
+		if (isExampleApp(app)) return false
+		return (
+			app.topicNumber === topicNumber &&
+			app.stepNumber === stepNumber &&
+			app.type === part
+		)
 	})
 	if (!app) {
 		throw new Response('Not found', { status: 404 })
