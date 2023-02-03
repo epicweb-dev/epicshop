@@ -1,27 +1,32 @@
 {
   "files": [],
-  "exclude": ["node_modules"],
+  "exclude": [
+    "node_modules"
+  ],
   "references": [
     {
-      "path": "exercise/01-start"
+      "path": "exercises/01-nested-routing/problem"
     },
     {
-      "path": "exercise/02-koala"
+      "path": "exercises/01-nested-routing/solution.step-01"
     },
     {
-      "path": "exercise/02-koala.step-03-duck"
+      "path": "exercises/01-nested-routing/solution.step-02-outlet-context"
     },
     {
-      "path": "final/01-start"
+      "path": "exercises/02-styling/problem.step-01"
     },
     {
-      "path": "final/02-koala.step-01-phone"
+      "path": "exercises/02-styling/problem.step-03-tailwind"
     },
     {
-      "path": "final/02-koala.step-02-post-it"
+      "path": "exercises/02-styling/solution.step-01-links"
     },
     {
-      "path": "final/02-koala.step-03-duck"
+      "path": "exercises/02-styling/solution.step-02-css-modules"
+    },
+    {
+      "path": "exercises/02-styling/solution.step-03-tailwind"
     }
   ]
 }

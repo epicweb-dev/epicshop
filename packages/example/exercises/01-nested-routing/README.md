@@ -53,6 +53,16 @@ export function ErrorBoundary() {
 }
 ```
 
-## 💪 Exercise
+## 😈 Problem Step 01. Outlet
 
-## 🗃 Files
+Details about the problem
+
+### 🗃 Files
+
+## 😇 Solution Step 01. Outlet
+
+### 🗃 Files
+
+## 😇 Solution Step 02. Outlet Context
+
+### 🗃 Files

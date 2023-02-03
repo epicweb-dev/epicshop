@@ -1,11 +1,6 @@
 import type { DataFunctionArgs } from '@remix-run/node'
 import { json } from '@remix-run/node'
-import {
-	Form,
-	useLoaderData,
-	useNavigate,
-	useSearchParams,
-} from '@remix-run/react'
+import { Form, useLoaderData, useSearchParams } from '@remix-run/react'
 import type { NavigateFunction } from 'react-router'
 import { useEffect, useRef, useState } from 'react'
 import { z } from 'zod'
@@ -67,7 +62,6 @@ function getNewIndex(prevIndex: number, delta: number, max: number) {
 export default function ExercisePartRoute() {
 	const data = useLoaderData<typeof loader>()
 	const [searchParams] = useSearchParams()
-	const navigate = useNavigate()
 	const searchParamsPathname = searchParams.get('pathname') ?? '/'
 	const [iframeContext, setIFrameContext] = useState({
 		key: 0,
