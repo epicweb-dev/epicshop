@@ -49,6 +49,7 @@
     "express": "^4.18.2",
     "fkill": "^8.1.0",
     "fs-extra": "^11.1.0",
+    "glob": "^8.1.0",
     "isbot": "^3.6.3",
     "lru-cache": "^7.14.1",
     "match-sorter": "^6.3.1",

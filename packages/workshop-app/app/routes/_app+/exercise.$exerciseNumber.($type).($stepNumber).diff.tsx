@@ -11,12 +11,12 @@ import {
 	getApps,
 	getDiff,
 	getNextApp,
-	requireTopicApp,
+	requireExerciseApp,
 } from '~/utils/misc.server'
 
 export async function loader({ request, params }: DataFunctionArgs) {
 	const searchParams = new URL(request.url).searchParams
-	const app = await requireTopicApp(params)
+	const app = await requireExerciseApp(params)
 	const compareName = searchParams.get('compare')
 	const compareApp = compareName
 		? await getAppByName(compareName)

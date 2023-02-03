@@ -8,20 +8,20 @@ import {
 } from '@remix-run/react'
 import { useEffect, useRef, useState } from 'react'
 import { z } from 'zod'
-import { requireTopicApp } from '~/utils/misc.server'
+import { requireExerciseApp } from '~/utils/misc.server'
 import { isAppRunning, isPortAvailable } from '~/utils/process-manager.server'
 import { AppStarter, AppStopper, PortStopper } from '../start'
 
 export async function loader({ params }: DataFunctionArgs) {
-	const app = await requireTopicApp(params)
+	const app = await requireExerciseApp(params)
 
 	const isRunning = isAppRunning(app)
 	return json({
 		isRunning,
 		isPortAvailable: isRunning ? null : await isPortAvailable(app.portNumber),
 		title: app.title,
+		name: app.name,
 		port: app.portNumber,
-		relativePath: app.relativePath,
 	})
 }
 
@@ -169,7 +169,7 @@ export default function ExercisePartRoute() {
 	const atStartOfHistory = iframeContext.index === 0
 	return data.isRunning ? (
 		<div>
-			<AppStopper relativePath={data.relativePath} />
+			<AppStopper name={data.name} />
 			<div className="flex gap-3 px-2">
 				<button
 					type="button"
@@ -228,6 +228,6 @@ export default function ExercisePartRoute() {
 			<PortStopper port={data.port} />
 		</div>
 	) : (
-		<AppStarter relativePath={data.relativePath} />
+		<AppStarter name={data.name} />
 	)
 }

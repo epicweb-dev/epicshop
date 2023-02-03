@@ -4,65 +4,80 @@
 import fs from 'fs'
 import path from 'path'
 import cp from 'child_process'
-import { typedBoolean } from './misc'
+import util from 'util'
 import commonAncestor from 'common-ancestor-path'
 import AnsiToHtml from 'ansi-to-html'
 import invariant from 'tiny-invariant'
+import glob from 'glob'
 import { compileMdx } from './compile-mdx.server'
+
+const globPromise = util.promisify(glob)
+
+type Exercise = {
+	/** a unique identifier for the exercise */
+	exerciseNumber: number
+	/** used when displaying the list of files to match the list of apps in the file system (comes the name of the directory of the app) */
+	dirName: string
+	/** the title of the app used for display (comes from the first h1 in the README) */
+	title: string
+	instructionsCode?: string
+	problems: Array<ProblemApp>
+	solutions: Array<SolutionApp>
+}
 
 type BaseApp = {
 	/** a unique identifier for the app (comes from package.json name prop) */
 	name: string
-	/** the title of the app used for display (comes from the README, or defaults to the name) */
+	/** the title of the app used for display (comes from the package.json title prop) */
 	title: string
+	/** used when displaying the list of files to match the list of apps in the file system (comes the name of the directory of the app) */
+	dirName: string
 	fullPath: string
-	relativePath: string
-	instructionsCode?: string
 	portNumber: number
 }
 
-export type ExerciseApp = BaseApp & {
-	type: 'exercise'
-	topicNumber: number
+export type ProblemApp = BaseApp & {
+	type: 'problem'
+	exerciseNumber: number
 	stepNumber: number
 }
-export type FinalApp = BaseApp & {
-	type: 'final'
-	topicNumber: number
+export type SolutionApp = BaseApp & {
+	type: 'solution'
+	exerciseNumber: number
 	stepNumber: number
 }
 export type ExampleApp = BaseApp & { type: 'example' }
 
-export type ExercisePartApp = ExerciseApp | FinalApp
+export type ExerciseStepApp = ProblemApp | SolutionApp
 
-export type App = ExampleApp | ExercisePartApp
+export type App = ExampleApp | ExerciseStepApp
 
-export function isExerciseApp(app: App): app is ExerciseApp {
-	return app.type === 'exercise'
+export function isProblemApp(app: App): app is ProblemApp {
+	return app.type === 'problem'
 }
 
-export function isFinalApp(app: App): app is FinalApp {
-	return app.type === 'final'
+export function isSolutionApp(app: App): app is SolutionApp {
+	return app.type === 'solution'
 }
 
-export function isFirstStepExerciseApp(
+export function isFirstStepProblemApp(
 	app: App,
-): app is ExerciseApp & { stepNumber: 1 } {
-	return isExerciseApp(app) && app.stepNumber === 1
+): app is ProblemApp & { stepNumber: 1 } {
+	return isProblemApp(app) && app.stepNumber === 1
 }
 
-export function isFirstStepFinalApp(
+export function isFirstStepSolutionApp(
 	app: App,
-): app is FinalApp & { stepNumber: 1 } {
-	return isFinalApp(app) && app.stepNumber === 1
+): app is SolutionApp & { stepNumber: 1 } {
+	return isSolutionApp(app) && app.stepNumber === 1
 }
 
 export function isExampleApp(app: App): app is ExampleApp {
 	return app.type === 'example'
 }
 
-export function isExercisePartApp(app: App): app is ExercisePartApp {
-	return isExerciseApp(app) || isFinalApp(app)
+export function isExerciseStepApp(app: App): app is ExerciseStepApp {
+	return isProblemApp(app) || isSolutionApp(app)
 }
 
 async function exists(dir: string) {
@@ -103,71 +118,67 @@ function extractExerciseNumber(dir: string) {
 	return Number(number)
 }
 
-export async function getTopics() {
+export async function getExercises(): Promise<Array<Exercise>> {
+	const workshopRoot = await getWorkshopRoot()
 	const apps = await getApps()
-	const exercises = apps.filter(isFirstStepExerciseApp)
-	const finals = apps.filter(isFirstStepFinalApp)
-	const topics: Array<
-		| ({ topicNumber: number; title: string } & {
-				exercise?: ExerciseApp
-				final?: FinalApp
-		  })
-		| undefined
-	> = []
-	for (const exercise of exercises) {
-		topics[exercise.topicNumber] = {
-			...topics[exercise.topicNumber],
-			exercise,
-			title: exercise.title,
-			topicNumber: exercise.topicNumber,
-		}
-	}
-	for (const final of finals) {
-		topics[final.topicNumber] = {
-			title: final.title,
-			...topics[final.topicNumber],
-			final,
-			topicNumber: final.topicNumber,
-		}
-	}
-
-	return topics.filter(typedBoolean)
+	const exerciseDirs = await readDir(path.join(workshopRoot, 'exercises'))
+	const exercises: Array<Exercise> = await Promise.all(
+		exerciseDirs.map(async dirName => {
+			const exerciseNumber = extractExerciseNumber(dirName)
+			const compiledReadme = await compileReadme(
+				path.join(workshopRoot, 'exercises', dirName),
+			)
+			return {
+				exerciseNumber,
+				dirName,
+				instructionsCode: compiledReadme?.code,
+				title: compiledReadme?.title ?? dirName,
+				problems: apps
+					.filter(isProblemApp)
+					.filter(app => app.exerciseNumber === exerciseNumber),
+				solutions: apps
+					.filter(isSolutionApp)
+					.filter(app => app.exerciseNumber === exerciseNumber),
+			}
+		}),
+	)
+	return exercises
 }
 
 export async function getApps(): Promise<Array<App>> {
-	const [exerciseApps, finalApps, exampleApps] = await Promise.all([
-		getExercises(),
-		getFinals(),
-		getExamples(),
+	const [problemApps, solutionApps, exampleApps] = await Promise.all([
+		getProblemApps(),
+		getSolutionApps(),
+		getExampleApps(),
 	])
-	return [...exerciseApps, ...finalApps, ...exampleApps].sort((a, b) => {
-		if (a.type === 'example') {
-			if (b.type === 'example') return a.name.localeCompare(b.name)
+	return [...problemApps, ...solutionApps, ...exampleApps].sort((a, b) => {
+		if (isExampleApp(a)) {
+			if (isExampleApp(b)) return a.name.localeCompare(b.name)
 			else return 1
 		}
-		if (b.type === 'example') return -1
+		if (isExampleApp(b)) return -1
 
 		if (a.type === b.type) {
-			if (a.topicNumber === b.topicNumber) {
+			if (a.exerciseNumber === b.exerciseNumber) {
 				return a.stepNumber - b.stepNumber
 			} else {
-				return a.topicNumber - b.topicNumber
+				return a.exerciseNumber - b.exerciseNumber
 			}
 		}
 
 		// at this point, we know that a and b are different types...
-		if (a.type === 'exercise') {
-			if (a.topicNumber === b.topicNumber) {
+		if (isProblemApp(a)) {
+			if (a.exerciseNumber === b.exerciseNumber) {
 				return a.stepNumber <= b.stepNumber ? 1 : -1
 			} else {
-				return a.topicNumber <= b.topicNumber ? 1 : -1
+				return a.exerciseNumber <= b.exerciseNumber ? 1 : -1
 			}
 		}
-		if (a.type === 'final') {
-			if (a.topicNumber === b.topicNumber) {
+		if (isSolutionApp(a)) {
+			if (a.exerciseNumber === b.exerciseNumber) {
 				return a.stepNumber < b.stepNumber ? -1 : 1
 			} else {
-				return a.topicNumber < b.topicNumber ? -1 : 1
+				return a.exerciseNumber < b.exerciseNumber ? -1 : 1
 			}
 		}
 		console.error('unhandled sorting case', a, b)
@@ -175,34 +186,37 @@ export async function getApps(): Promise<Array<App>> {
 	})
 }
 
-function getPkgName(fullPath: string) {
+function getPkgProp(
+	fullPath: string,
+	prop: string,
+	defaultValue?: string,
+): string {
 	const pkg = require(path.join(fullPath, 'package.json'))
 	invariant(pkg, `package.json must exist: ${fullPath}`)
-	const { name } = pkg
-	invariant(
-		typeof name === 'string',
-		`package.json must have a name: ${fullPath}`,
-	)
-	return name
+	const value = pkg[prop]
+	if (value === undefined && defaultValue) {
+		return defaultValue
+	}
+	return value
 }
 
-export async function getExamples(): Promise<ExampleApp[]> {
+export async function getExampleApps(): Promise<Array<ExampleApp>> {
 	const workshopRoot = await getWorkshopRoot()
 	return readDir(path.join(workshopRoot, 'example')).then(
 		(dirs): Promise<Array<ExampleApp>> => {
 			return Promise.all(
-				dirs.map(async function getAppFromPath(dir, index) {
-					const relativePath = path.join('example', dir)
+				dirs.map(async function getAppFromPath(dirName, index) {
+					const relativePath = path.join('example', dirName)
 					const fullPath = path.join(workshopRoot, relativePath)
 					const compiledReadme = await compileReadme(fullPath)
-					const name = getPkgName(fullPath)
+					const name = getPkgProp(fullPath, 'name', dirName)
 					return {
 						name,
 						type: 'example',
 						relativePath,
 						fullPath,
-						instructionsCode: compiledReadme?.code,
 						title: compiledReadme?.title ?? name,
+						dirName,
 						portNumber: 3500 + index,
 					}
 				}),
@@ -211,99 +225,101 @@ export async function getExamples(): Promise<ExampleApp[]> {
 	)
 }
 
-export async function getFinals(): Promise<Array<FinalApp>> {
+export async function getSolutionApps(): Promise<Array<SolutionApp>> {
 	const workshopRoot = await getWorkshopRoot()
-	return readDir(path.join(workshopRoot, 'final')).then(
-		(dirs): Promise<Array<FinalApp>> => {
-			return Promise.all(
-				dirs.map(async function getAppFromPath(dir) {
-					const relativePath = path.join('final', dir)
-					const topicNumber = extractExerciseNumber(dir)
-					const fullPath = path.join(workshopRoot, relativePath)
-					const compiledReadme = await compileReadme(fullPath)
-					const name = getPkgName(fullPath)
-					const stepNumber = extractStepNumber(dir) ?? 1
-					const portNumber = Number(`50${topicNumber}${stepNumber}`)
-					return {
-						name,
-						type: 'final',
-						stepNumber,
-						relativePath,
-						topicNumber,
-						fullPath,
-						instructionsCode: compiledReadme?.code,
-						title: compiledReadme?.title ?? name,
-						portNumber,
-					}
-				}),
-			)
-		},
+	const solutionDirs = await globPromise(
+		path.join(workshopRoot, 'exercises', '**', 'solution*'),
 	)
+	const solutionApps = await Promise.all(
+		solutionDirs.map(async function getAppFromPath(
+			fullPath,
+		): Promise<SolutionApp> {
+			const dirName = path.basename(fullPath)
+			const parentDirName = path.basename(path.dirname(fullPath))
+			const exerciseNumber = extractExerciseNumber(parentDirName)
+			const name = getPkgProp(fullPath, 'name', dirName)
+			const title = getPkgProp(fullPath, 'title', dirName)
+			const stepNumber = extractStepNumber(dirName) ?? 1
+			const portNumber = 5000 + exerciseNumber * 10 + stepNumber
+			return {
+				name,
+				title,
+				type: 'solution',
+				exerciseNumber,
+				stepNumber,
+				portNumber,
+				dirName,
+				fullPath,
+			}
+		}),
+	)
+	return solutionApps
 }
 
-export async function getExercises(): Promise<Array<ExerciseApp>> {
+export async function getProblemApps(): Promise<Array<ProblemApp>> {
 	const workshopRoot = await getWorkshopRoot()
-	return readDir(path.join(workshopRoot, 'exercise')).then(
-		(dirs): Promise<Array<ExerciseApp>> => {
-			return Promise.all(
-				dirs.map(async function getAppFromPath(dir) {
-					const relativePath = path.join('exercise', dir)
-					const topicNumber = extractExerciseNumber(dir)
-					const fullPath = path.join(workshopRoot, relativePath)
-					const compiledReadme = await compileReadme(fullPath)
-					const name = getPkgName(fullPath)
-					const stepNumber = extractStepNumber(dir) ?? 1
-					const portNumber = Number(`40${topicNumber}${stepNumber}`)
-					return {
-						name,
-						type: 'exercise',
-						stepNumber,
-						relativePath,
-						topicNumber,
-						fullPath,
-						instructionsCode: compiledReadme?.code,
-						title: compiledReadme?.title ?? name,
-						portNumber,
-					}
-				}),
-			)
-		},
+	const problemDirs = await globPromise(
+		path.join(workshopRoot, 'exercises', '**', 'problem*'),
 	)
+	const problemApps = await Promise.all(
+		problemDirs.map(async function getAppFromPath(
+			fullPath,
+		): Promise<ProblemApp> {
+			const dirName = path.basename(fullPath)
+			const parentDirName = path.basename(path.dirname(fullPath))
+			const exerciseNumber = extractExerciseNumber(parentDirName)
+			const name = getPkgProp(fullPath, 'name', dirName)
+			const title = getPkgProp(fullPath, 'title', dirName)
+			const stepNumber = extractStepNumber(dirName) ?? 1
+			const portNumber = 5000 + exerciseNumber * 10 + stepNumber
+			return {
+				name,
+				title,
+				type: 'problem',
+				exerciseNumber,
+				stepNumber,
+				portNumber,
+				dirName,
+				fullPath,
+			}
+		}),
+	)
+	return problemApps
 }
 
-export async function getTopic(topicNumber: number | string) {
-	const topics = await getTopics()
-	return topics.find(s => s.topicNumber === Number(topicNumber))
+export async function getExercise(exerciseNumber: number | string) {
+	const exercises = await getExercises()
+	return exercises.find(s => s.exerciseNumber === Number(exerciseNumber))
 }
 
-export async function getAppFromRelativePath(relativePath: string) {
+export async function getAppFromName(name: string) {
 	const apps = await getApps()
-	return apps.find(a => a.relativePath === relativePath)
+	return apps.find(a => a.name === name)
 }
 
-export async function requireTopicApp({
-	part = 'exercise',
-	topicNumber: topicNumberString,
+export async function requireExerciseApp({
+	type = 'problem',
+	exerciseNumber: exerciseNumberString,
 	stepNumber: stepNumberString = '1',
 }: {
-	part?: string
-	topicNumber?: string
+	type?: string
+	exerciseNumber?: string
 	stepNumber?: string
 }) {
-	if ((part !== 'exercise' && part !== 'final') || !topicNumberString) {
+	if ((type !== 'problem' && type !== 'solution') || !exerciseNumberString) {
 		throw new Response('Not found', { status: 404 })
 	}
 
 	const stepNumber = Number(stepNumberString)
-	const topicNumber = Number(topicNumberString)
+	const exerciseNumber = Number(exerciseNumberString)
 
 	const apps = await getApps()
 	const app = apps.find(app => {
 		if (isExampleApp(app)) return false
 		return (
-			app.topicNumber === topicNumber &&
+			app.exerciseNumber === exerciseNumber &&
 			app.stepNumber === stepNumber &&
-			app.type === part
+			app.type === type
 		)
 	})
 	if (!app) {
@@ -319,9 +335,9 @@ export async function getAppByName(name: string) {
 
 export async function getNextApp(app: App) {
 	const apps = await getApps()
-	const index = apps.findIndex(a => a.relativePath === app.relativePath)
+	const index = apps.findIndex(a => a.name === app.name)
 	if (index === -1) {
-		throw new Error(`Could not find app ${app.relativePath}`)
+		throw new Error(`Could not find app ${app.name}`)
 	}
 	const nextApp = apps[index + 1]
 	return nextApp ? nextApp : null

@@ -18,18 +18,18 @@ type BaseApp = {
 
 type ExerciseApp = BaseApp & {
 	type: 'exercise'
-	topicNumber: number
+	exerciseNumber: number
 }
-type FinalApp = BaseApp & { type: 'final'; topicNumber: number }
+type FinalApp = BaseApp & { type: 'final'; exerciseNumber: number }
 type ExampleApp = BaseApp & { type: 'example' }
 type StepExerciseApp = BaseApp & {
 	type: 'step-exercise'
-	topicNumber: number
+	exerciseNumber: number
 	stepNumber: number
 }
 type StepFinalApp = BaseApp & {
 	type: 'step-final'
-	topicNumber: number
+	exerciseNumber: number
 	stepNumber: number
 }
 
@@ -112,7 +112,7 @@ export async function getApps(): Promise<Array<App>> {
 				return Promise.all(
 					dirs.map(async function getAppFromPath(dir) {
 						const relativePath = path.join('exercise', dir)
-						const topicNumber = extractExerciseNumber(dir)
+						const exerciseNumber = extractExerciseNumber(dir)
 						const fullPath = path.join(workshopRoot, relativePath)
 						const readme = await readFile(path.join(fullPath, 'README.md'))
 						const title = await getReadmeTitle(readme)
@@ -120,23 +120,23 @@ export async function getApps(): Promise<Array<App>> {
 							const stepNumber = extractStepNumber(dir)
 							return {
 								type: 'step-exercise',
-								topicNumber,
+								exerciseNumber,
 								stepNumber,
 								relativePath,
 								fullPath,
 								readme,
 								title,
-								portNumber: 4050 + topicNumber + stepNumber,
+								portNumber: 4050 + exerciseNumber + stepNumber,
 							}
 						} else {
 							return {
 								type: 'exercise',
 								relativePath,
-								topicNumber,
+								exerciseNumber,
 								fullPath,
 								readme,
 								title,
-								portNumber: 4000 + topicNumber,
+								portNumber: 4000 + exerciseNumber,
 							}
 						}
 					}),
@@ -148,7 +148,7 @@ export async function getApps(): Promise<Array<App>> {
 				return Promise.all(
 					dirs.map(async function getAppFromPath(dir) {
 						const relativePath = path.join('final', dir)
-						const topicNumber = extractExerciseNumber(dir)
+						const exerciseNumber = extractExerciseNumber(dir)
 						const fullPath = path.join(workshopRoot, relativePath)
 						const readme = await readFile(path.join(fullPath, 'README.md'))
 						const title = await getReadmeTitle(readme)
@@ -156,24 +156,24 @@ export async function getApps(): Promise<Array<App>> {
 							const stepNumber = extractStepNumber(dir)
 							return {
 								type: 'step-final',
-								topicNumber,
+								exerciseNumber,
 								stepNumber,
 								relativePath,
 								fullPath,
 								readme,
 								title,
-								portNumber: 5050 + topicNumber + stepNumber,
+								portNumber: 5050 + exerciseNumber + stepNumber,
 							}
 						} else {
 							const fullPath = path.join(workshopRoot, relativePath)
 							return {
 								type: 'final',
 								relativePath,
-								topicNumber,
+								exerciseNumber,
 								fullPath,
 								readme,
 								title,
-								portNumber: 5000 + topicNumber,
+								portNumber: 5000 + exerciseNumber,
 							}
 						}
 					}),
@@ -296,7 +296,7 @@ export async function guessNextApp(app: App) {
 	if (app.type === 'final' || app.type === 'step-final') {
 		const nextExercise = apps
 			.filter(isExerciseApp)
-			.find(a => a.topicNumber === app.topicNumber + 1)
+			.find(a => a.exerciseNumber === app.exerciseNumber + 1)
 		if (nextExercise) return nextExercise
 	}
 

@@ -13,9 +13,9 @@ import invariant from 'tiny-invariant'
 import { getErrorMessage } from '~/utils/misc'
 import {
 	exec,
-	getAppFromRelativePath,
+	getAppFromName,
 	getWorkshopRoot,
-	isExercisePartApp,
+	isExerciseStepApp,
 } from '~/utils/misc.server'
 import {
 	closeProcess,
@@ -25,12 +25,9 @@ import {
 } from '~/utils/process-manager.server'
 
 export async function loader({ request }: DataFunctionArgs) {
-	const relativePath = new URL(request.url).searchParams.get('relativePath')
-	invariant(typeof relativePath === 'string', 'relativePath is required')
-	if (relativePath.includes('..')) {
-		throw redirect('https://www.youtube.com/watch?v=dQw4w9WgXcQ')
-	}
-	const app = await getAppFromRelativePath(relativePath)
+	const name = new URL(request.url).searchParams.get('name')
+	invariant(typeof name === 'string', 'name is required')
+	const app = await getAppFromName(name)
 	if (!app) {
 		throw new Response('Not found', { status: 404 })
 	}
@@ -46,8 +43,8 @@ export async function loader({ request }: DataFunctionArgs) {
 			),
 			startStatus: result.status,
 			appReady: waitOnApp(app).then(() => {
-				if (isExercisePartApp(app)) {
-					return `/topic/${app.topicNumber}`
+				if (isExerciseStepApp(app)) {
+					return `/exercise/${app.exerciseNumber}`
 				} else {
 					return `/example/${app.name}`
 				}
@@ -72,12 +69,12 @@ export async function action({ request }: DataFunctionArgs) {
 	invariant(typeof intent === 'string', 'intent is required')
 
 	if (intent === 'start' || intent === 'stop') {
-		const relativePath = formData.get('relativePath')
-		invariant(typeof relativePath === 'string', 'relativePath is required')
-		if (relativePath.includes('..')) {
+		const name = formData.get('name')
+		invariant(typeof name === 'string', 'name is required')
+		if (name.includes('..')) {
 			throw redirect('https://www.youtube.com/watch?v=dQw4w9WgXcQ')
 		}
-		const app = await getAppFromRelativePath(relativePath)
+		const app = await getAppFromName(name)
 		if (!app) {
 			throw new Response('Not found', { status: 404 })
 		}
@@ -112,11 +109,11 @@ export async function action({ request }: DataFunctionArgs) {
 	throw new Error(`Unknown intent: ${intent}`)
 }
 
-export function AppStopper({ relativePath }: { relativePath: string }) {
+export function AppStopper({ name }: { name: string }) {
 	const fetcher = useFetcher<typeof action>()
 	return (
 		<fetcher.Form method="post" action="/start">
-			<input type="hidden" name="relativePath" value={relativePath} />
+			<input type="hidden" name="name" value={name} />
 			<button type="submit" name="intent" value="stop">
 				{fetcher.submission ? 'Stopping App' : 'Stop App'}
 			</button>
@@ -137,7 +134,7 @@ export function PortStopper({ port }: { port: number | string }) {
 	)
 }
 
-export function AppStarter({ relativePath }: { relativePath: string }) {
+export function AppStarter({ name }: { name: string }) {
 	const fetcher = useFetcher<typeof action>()
 	if (fetcher.data?.status === 'app-not-started') {
 		if (fetcher.data.error === 'port-unavailable') {
@@ -154,7 +151,7 @@ export function AppStarter({ relativePath }: { relativePath: string }) {
 	}
 	return (
 		<fetcher.Form method="post" action="/start">
-			<input type="hidden" name="relativePath" value={relativePath} />
+			<input type="hidden" name="name" value={name} />
 			<button type="submit" name="intent" value="start">
 				{fetcher.submission ? 'Starting App' : 'Start App'}
 			</button>
