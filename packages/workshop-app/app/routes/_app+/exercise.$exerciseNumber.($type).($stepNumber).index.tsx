@@ -6,6 +6,7 @@ import {
 	useNavigate,
 	useSearchParams,
 } from '@remix-run/react'
+import type { NavigateFunction } from 'react-router'
 import { useEffect, useRef, useState } from 'react'
 import { z } from 'zod'
 import { requireExerciseApp } from '~/utils/misc.server'
@@ -157,7 +158,7 @@ export default function ExercisePartRoute() {
 		}
 	}, [iframePathname])
 
-	function navigateChild(...params: Parameters<typeof navigate>) {
+	const navigateChild: NavigateFunction = (...params) => {
 		iframeRef.current?.contentWindow?.postMessage(
 			{ type: 'kcdshop:navigate-call', params },
 			'*',
@@ -192,13 +193,10 @@ export default function ExercisePartRoute() {
 					replace
 					className="flex flex-1 gap-2"
 					onSubmit={() => {
-						// trigger a reload of the iframe
-						setIFrameContext(prev => ({
-							key: prev.key + 1,
-							pathname: pathnameInputValue,
-							history: [pathnameInputValue],
-							index: 0,
-						}))
+						const currnetPathname = iframeContext.history[iframeContext.index]
+						navigateChild(pathnameInputValue, {
+							replace: currnetPathname === pathnameInputValue,
+						})
 					}}
 				>
 					<input
