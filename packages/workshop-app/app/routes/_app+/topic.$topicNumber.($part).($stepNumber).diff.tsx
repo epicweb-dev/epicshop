@@ -9,6 +9,7 @@ import { getErrorMessage } from '~/utils/misc'
 import {
 	getAppByName,
 	getApps,
+	getDiff,
 	getNextApp,
 	requireTopicApp,
 } from '~/utils/misc.server'
@@ -23,7 +24,7 @@ export async function loader({ request, params }: DataFunctionArgs) {
 	if (!compareApp) {
 		throw new Response('No app to compare to', { status: 404 })
 	}
-	// const diff = await getDiff(app, compareApp)
+	const diffHtml = await getDiff(app, compareApp)
 	const allApps = (await getApps()).map(a => ({
 		name: a.name,
 		title: a.title,
@@ -33,13 +34,22 @@ export async function loader({ request, params }: DataFunctionArgs) {
 		allApps,
 		app: app.name,
 		compareApp: compareApp.name,
+		diffHtml,
 		// diff
 	})
 }
 
 export default function Diff() {
 	const data = useLoaderData<typeof loader>()
-	return <pre>{JSON.stringify(data, null, 2)}</pre>
+	return (
+		<div>
+			<pre
+				className="whitespace-pre-wrap"
+				dangerouslySetInnerHTML={{ __html: data.diffHtml }}
+			/>
+			<pre>{JSON.stringify(data, null, 2)}</pre>
+		</div>
+	)
 }
 
 export function ErrorBoundary() {

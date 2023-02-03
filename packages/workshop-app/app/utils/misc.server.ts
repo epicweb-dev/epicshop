@@ -5,6 +5,8 @@ import fs from 'fs'
 import path from 'path'
 import cp from 'child_process'
 import { typedBoolean } from './misc'
+import commonAncestor from 'common-ancestor-path'
+import AnsiToHtml from 'ansi-to-html'
 import invariant from 'tiny-invariant'
 import { compileMdx } from './compile-mdx.server'
 
@@ -139,9 +141,6 @@ export async function getApps(): Promise<Array<App>> {
 		getExamples(),
 	])
 	return [...exerciseApps, ...finalApps, ...exampleApps].sort((a, b) => {
-		// HEY KENT, this is busted!
-		// TODO: fix
-		debugger
 		if (a.type === 'example') {
 			if (b.type === 'example') return a.name.localeCompare(b.name)
 			else return 1
@@ -329,7 +328,36 @@ export async function getNextApp(app: App) {
 }
 
 export async function getDiff(app1: App, app2: App) {
-	// generate a diff between the two apps
+	const converter = new AnsiToHtml()
+	const cwd = commonAncestor(app1.fullPath, app2.fullPath) ?? '/'
+	const child = cp.spawn(
+		'git',
+		[
+			'diff',
+			'--no-index',
+			path.join(path.relative(cwd, app1.fullPath), 'package.json'),
+			path.join(path.relative(cwd, app2.fullPath), 'package.json'),
+			'--color=never',
+			'--color-moved-ws=allow-indentation-change',
+			'--no-prefix',
+		],
+		{ cwd },
+	)
+	const out = await new Promise<string>((resolve, reject) => {
+		let output = ``
+		child.on('error', reject)
+		child.on('exit', () => resolve(output))
+		child.stdout.on('data', data => {
+			output += data.toString()
+		})
+	})
+	return out
+	// 	const result = await compileMdx(`
+	// \`\`\`
+	// ${out}
+	// \`\`\`
+	// 	`.trim())
+	// return result
 }
 
 export async function getWorkshopRoot() {

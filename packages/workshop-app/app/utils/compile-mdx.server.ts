@@ -144,3 +144,5 @@ export async function compileMdx<
 		throw error
 	}
 }
+
+export async function highlightCode(code: string, language: string) {}
