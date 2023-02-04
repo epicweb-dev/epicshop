@@ -146,7 +146,12 @@ export async function compileMdx<
 	}
 }
 
-const cache = new LRU<string, string>({ max: 1000 })
+declare global {
+	var __compiled_markdown_cache__: LRU<string, string>
+}
+
+const cache = (global.__compiled_markdown_cache__ =
+	global.__compiled_markdown_cache__ ?? new LRU<string, string>({ max: 1000 }))
 
 export async function compileMarkdownString(markdownString: string) {
 	const cached = cache.has(markdownString) ? cache.get(markdownString) : null

@@ -7,12 +7,12 @@ import {
 	useRouteError,
 } from '@remix-run/react'
 import { Suspense } from 'react'
+import { getDiffCode } from '~/utils/diff.server'
 import { Mdx } from '~/utils/mdx'
 import { getErrorMessage } from '~/utils/misc'
 import {
 	getAppByName,
 	getApps,
-	getDiffCode,
 	getNextApp,
 	requireExerciseApp,
 } from '~/utils/misc.server'
