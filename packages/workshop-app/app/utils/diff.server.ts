@@ -5,7 +5,8 @@ import fsExtra from 'fs-extra'
 import parseGitDiff from 'parse-git-diff'
 import { compileMarkdownString } from './compile-mdx.server'
 import { typedBoolean } from './misc'
-import { type App } from './misc.server'
+import { getAppByName, type App } from './misc.server'
+import { z } from 'zod'
 
 const kcdshopTempDir = path.join(os.tmpdir(), 'kcdshop')
 
@@ -89,9 +90,7 @@ async function copyUnignoredFiles(srcDir: string, destDir: string) {
 	})
 }
 
-export async function getDiffCode(app1: App, app2: App) {
-	const { execa } = await import('execa')
-	// copy non-gitignored files from the apps to a temp directory
+async function prepareForDiff(app1: App, app2: App) {
 	const app1CopyPath = path.join(diffTmpDir, app1.dirName)
 	const app2CopyPath = path.join(diffTmpDir, app2.dirName)
 	await Promise.all([
@@ -102,6 +101,44 @@ export async function getDiffCode(app1: App, app2: App) {
 			.emptyDir(app2CopyPath)
 			.then(() => copyUnignoredFiles(app2.fullPath, app2CopyPath)),
 	])
+	return { app1CopyPath, app2CopyPath }
+}
+
+export async function getDiffFiles(app1: App, app2: App) {
+	const { execa } = await import('execa')
+	const { app1CopyPath, app2CopyPath } = await prepareForDiff(app1, app2)
+
+	const { stdout: diffOutput } = await execa(
+		'git',
+		['diff', '--no-index', '--name-status', app1CopyPath, app2CopyPath],
+		{ cwd: diffTmpDir },
+		// --no-index implies --exit-code, so we need to ignore the error
+	).catch(e => e)
+
+	const diffFiles = diffOutput.split('\n').map(line => {
+		const [status, path] = line
+			.split(/\s/)
+			.map(s => s.trim())
+			.filter(typedBoolean)
+		return {
+			status: (status.startsWith('R')
+				? 'renamed'
+				: status === 'M'
+				? 'modified'
+				: status === 'D'
+				? 'deleted'
+				: status === 'A'
+				? 'added'
+				: 'unknown') as 'renamed' | 'moved' | 'deleted' | 'added' | 'unknown',
+			path: path.replace(`${diffTmpDir}/`, ''),
+		}
+	})
+	return diffFiles
+}
+
+export async function getDiffCode(app1: App, app2: App) {
+	const { execa } = await import('execa')
+	const { app1CopyPath, app2CopyPath } = await prepareForDiff(app1, app2)
 
 	const { stdout: diffOutput } = await execa(
 		'git',

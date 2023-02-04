@@ -6,6 +6,7 @@
     "lint": "npm run lint --workspaces --if-present",
     "build": "npm -w @kentcdodds/workshop-app run build",
     "prestart": "npm run build -s",
+    "go": "cross-env NODE_ENV=development KCDSHOP_CONTEXT_CWD=$PWD/packages/example tsx watch $@",
     "start": "cross-env NODE_ENV=production npm -w web-app-fundamentals-workshop run start",
     "dev": "npm -w web-app-fundamentals-workshop run start",
     "test": "playwright test",
