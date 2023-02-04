@@ -92,12 +92,15 @@ async function copyUnignoredFiles(srcDir: string, destDir: string) {
 export async function getDiffCode(app1: App, app2: App) {
 	const { execa } = await import('execa')
 	// copy non-gitignored files from the apps to a temp directory
-	await fsExtra.emptyDir(diffTmpDir)
 	const app1CopyPath = path.join(diffTmpDir, app1.dirName)
 	const app2CopyPath = path.join(diffTmpDir, app2.dirName)
 	await Promise.all([
-		copyUnignoredFiles(app1.fullPath, app1CopyPath),
-		copyUnignoredFiles(app2.fullPath, app2CopyPath),
+		fsExtra
+			.emptyDir(app1CopyPath)
+			.then(() => copyUnignoredFiles(app1.fullPath, app1CopyPath)),
+		fsExtra
+			.emptyDir(app2CopyPath)
+			.then(() => copyUnignoredFiles(app2.fullPath, app2CopyPath)),
 	])
 
 	const { stdout: diffOutput } = await execa(
