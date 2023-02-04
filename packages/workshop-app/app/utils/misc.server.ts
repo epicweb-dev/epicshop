@@ -358,25 +358,6 @@ function getLanguage(ext: string) {
 	)
 }
 
-async function go() {
-	process.env.NODE_ENV = 'development'
-	const result = await compileMarkdownString(`
-# hello
-
-<details>
-
-<summary>Click to expand</summary>
-
-\`\`\`js
-console.log('hi')
-\`\`\`
-
-</details>
-	`)
-	console.log(result)
-}
-// go()
-
 async function copyUnignoredFiles(srcDir: string, destDir: string) {
 	const { execa } = await import('execa')
 	function isIgnored(filepath: string) {
