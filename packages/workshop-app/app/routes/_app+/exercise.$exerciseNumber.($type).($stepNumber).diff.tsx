@@ -1,10 +1,12 @@
 import type { DataFunctionArgs } from '@remix-run/node'
-import { json } from '@remix-run/node'
+import { defer } from '@remix-run/node'
 import {
+	Await,
 	isRouteErrorResponse,
 	useLoaderData,
 	useRouteError,
 } from '@remix-run/react'
+import { Suspense } from 'react'
 import { Mdx } from '~/utils/mdx'
 import { getErrorMessage } from '~/utils/misc'
 import {
@@ -25,18 +27,16 @@ export async function loader({ request, params }: DataFunctionArgs) {
 	if (!compareApp) {
 		throw new Response('No app to compare to', { status: 404 })
 	}
-	const diffCode = await getDiffCode(app, compareApp)
 	const allApps = (await getApps()).map(a => ({
 		name: a.name,
 		title: a.title,
 	}))
 
-	return json({
+	return defer({
 		allApps,
 		app: app.name,
 		compareApp: compareApp.name,
-		diffCode,
-		// diff
+		diffCode: getDiffCode(app, compareApp),
 	})
 }
 
@@ -44,9 +44,15 @@ export default function Diff() {
 	const data = useLoaderData<typeof loader>()
 	return (
 		<div>
-			<div className="prose whitespace-pre-wrap">
-				<Mdx code={data.diffCode} />
-			</div>
+			<Suspense fallback="loading...">
+				<Await resolve={data.diffCode}>
+					{diffCode => (
+						<div className="prose whitespace-pre-wrap">
+							<Mdx code={diffCode} />
+						</div>
+					)}
+				</Await>
+			</Suspense>
 			<pre>{JSON.stringify(data, null, 2)}</pre>
 		</div>
 	)
