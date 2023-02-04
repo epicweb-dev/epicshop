@@ -6,7 +6,8 @@
     "root": true
   },
   "scripts": {
-    "start": "kcdshop start"
+    "start": "kcdshop start",
+    "format": "prettier --write ."
   },
   "keywords": [],
   "author": "Kent C. Dodds <me@kentcdodds.com> (https://kentcdodds.com/)",

@@ -1,5 +1,6 @@
 import fs from 'fs'
 import fsExtra from 'fs-extra'
+import LRU from 'lru-cache'
 import path from 'path'
 import { bundleMDX } from 'mdx-bundler'
 import type * as U from 'unified'
@@ -36,7 +37,7 @@ function trimCodeBlocks() {
 				)
 				return
 			}
-			codeStringNode.value = codeStringNode.value.trim()
+			codeStringNode.value = codeStringNode.value.trimEnd()
 		})
 	}
 }
@@ -145,4 +146,29 @@ export async function compileMdx<
 	}
 }
 
-export async function highlightCode(code: string, language: string) {}
+const cache = new LRU<string, string>({ max: 1000 })
+
+export async function compileMarkdownString(markdownString: string) {
+	const cached = cache.has(markdownString) ? cache.get(markdownString) : null
+	if (cached) return cached
+
+	try {
+		const result = await bundleMDX({
+			source: markdownString,
+			mdxOptions(options) {
+				options.rehypePlugins = [
+					...(options.rehypePlugins ?? []),
+					...rehypePlugins,
+				]
+				options.development = false
+				return options
+			},
+		})
+
+		cache.set(markdownString, result.code)
+		return result.code
+	} catch (error: unknown) {
+		console.error(`Compilation error for code: `, markdownString, error)
+		throw error
+	}
+}

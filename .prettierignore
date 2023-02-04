@@ -1,8 +1,8 @@
 node_modules
 
-/build
-/public/build
+**/build/**
+**/public/build/**
 .env
 
-/app/styles/tailwind.css
+**/app/styles/tailwind.css
 package.json

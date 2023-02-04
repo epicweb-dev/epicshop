@@ -5,11 +5,12 @@ import {
 	useLoaderData,
 	useRouteError,
 } from '@remix-run/react'
+import { Mdx } from '~/utils/mdx'
 import { getErrorMessage } from '~/utils/misc'
 import {
 	getAppByName,
 	getApps,
-	getDiff,
+	getDiffCode,
 	getNextApp,
 	requireExerciseApp,
 } from '~/utils/misc.server'
@@ -24,7 +25,7 @@ export async function loader({ request, params }: DataFunctionArgs) {
 	if (!compareApp) {
 		throw new Response('No app to compare to', { status: 404 })
 	}
-	const diffHtml = await getDiff(app, compareApp)
+	const diffCode = await getDiffCode(app, compareApp)
 	const allApps = (await getApps()).map(a => ({
 		name: a.name,
 		title: a.title,
@@ -34,7 +35,7 @@ export async function loader({ request, params }: DataFunctionArgs) {
 		allApps,
 		app: app.name,
 		compareApp: compareApp.name,
-		diffHtml,
+		diffCode,
 		// diff
 	})
 }
@@ -43,10 +44,9 @@ export default function Diff() {
 	const data = useLoaderData<typeof loader>()
 	return (
 		<div>
-			<pre
-				className="whitespace-pre-wrap"
-				dangerouslySetInnerHTML={{ __html: data.diffHtml }}
-			/>
+			<div className="prose whitespace-pre-wrap">
+				<Mdx code={data.diffCode} />
+			</div>
 			<pre>{JSON.stringify(data, null, 2)}</pre>
 		</div>
 	)

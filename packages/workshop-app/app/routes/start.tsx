@@ -13,7 +13,7 @@ import invariant from 'tiny-invariant'
 import { getErrorMessage } from '~/utils/misc'
 import {
 	exec,
-	getAppFromName,
+	getAppByName,
 	getWorkshopRoot,
 	isExerciseStepApp,
 } from '~/utils/misc.server'
@@ -27,7 +27,7 @@ import {
 export async function loader({ request }: DataFunctionArgs) {
 	const name = new URL(request.url).searchParams.get('name')
 	invariant(typeof name === 'string', 'name is required')
-	const app = await getAppFromName(name)
+	const app = await getAppByName(name)
 	if (!app) {
 		throw new Response('Not found', { status: 404 })
 	}
@@ -74,7 +74,7 @@ export async function action({ request }: DataFunctionArgs) {
 		if (name.includes('..')) {
 			throw redirect('https://www.youtube.com/watch?v=dQw4w9WgXcQ')
 		}
-		const app = await getAppFromName(name)
+		const app = await getAppByName(name)
 		if (!app) {
 			throw new Response('Not found', { status: 404 })
 		}

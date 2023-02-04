@@ -83,6 +83,10 @@ pre {
 	background-color: var(--base00);
 }
 
+.prose pre[data-filename] {
+	padding-top: 2rem;
+}
+
 .prose pre[data-lang] {
 	padding-bottom: 2rem;
 }
@@ -111,8 +115,8 @@ pre {
 }
 
 .codeblock-line[data-highlight='true']:after,
-.prose pre[data-remove] .codeblock-line[data-remove='true']:after,
-.prose pre[data-add] .codeblock-line[data-add='true']:after {
+.prose pre[data-remove] .codeblock-line[data-remove]:after,
+.prose pre[data-add] .codeblock-line[data-add]:after {
 	content: ' ';
 	position: absolute;
 	left: 0;
@@ -130,20 +134,20 @@ pre {
 	background: var(--base0E);
 }
 
-.prose pre[data-remove] .codeblock-line[data-remove='true']:before {
+.prose pre[data-remove] .codeblock-line[data-remove]:before {
 	content: '-';
 }
 
-.prose pre[data-remove] .codeblock-line[data-remove='true']:after {
-	background: var(--color-red-500);
+.prose pre[data-remove] .codeblock-line[data-remove]:after {
+	background: var(--base0F);
 }
 
-.prose pre[data-add] .codeblock-line[data-add='true']:before {
+.prose pre[data-add] .codeblock-line[data-add]:before {
 	content: '+';
 }
 
-.prose pre[data-add] .codeblock-line[data-add='true']:after {
-	background: var(--color-green-500);
+.prose pre[data-add] .codeblock-line[data-add]:after {
+	background: var(--base08);
 }
 
 .prose pre {
