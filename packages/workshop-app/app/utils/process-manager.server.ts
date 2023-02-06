@@ -59,7 +59,8 @@ export async function runAppDev(app: App) {
 	const availableColors = colors.filter(color =>
 		Array.from(devProcesses.values()).every(p => p.color !== color),
 	)
-	const color = availableColors[devProcesses.size % availableColors.length]
+	const color =
+		availableColors[devProcesses.size % availableColors.length] ?? 'blue'
 	const appProcess = spawn('npm', ['run', 'dev'], {
 		cwd: app.fullPath,
 		env: {
@@ -73,7 +74,9 @@ export async function runAppDev(app: App) {
 		},
 	})
 	const { default: chalk } = await import('chalk')
-	const prefix = chalk[color](`[${app.name}:${portNumber}]`)
+	const prefix = chalk[color](
+		`[${app.name.replace(/^exercises\./, '')}:${portNumber}]`,
+	)
 	appProcess.stdout.on('data', data => {
 		console.log(
 			String(data)

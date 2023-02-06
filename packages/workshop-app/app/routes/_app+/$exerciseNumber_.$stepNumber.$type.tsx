@@ -13,10 +13,7 @@ import {
 } from '~/utils/misc.server'
 
 export async function loader({ params }: DataFunctionArgs) {
-	const exerciseStepApp = await requireExerciseApp({
-		...params,
-		type: params.type === 'diff' ? 'problem' : params.type,
-	})
+	const exerciseStepApp = await requireExerciseApp(params)
 	const nextApp = await getNextExerciseApp(exerciseStepApp)
 	const prevApp = await getPrevExerciseApp(exerciseStepApp)
 	const nextStepLink = nextApp
@@ -32,12 +29,13 @@ export async function loader({ params }: DataFunctionArgs) {
 		  }
 		: null
 
-	return json({ exerciseStepApp, prevStepLink, nextStepLink })
+	return json({
+		type: params.type as 'problem' | 'solution',
+		exerciseStepApp,
+		prevStepLink,
+		nextStepLink,
+	} as const)
 }
-
-// /exercise/01/01/problem
-// /exercise/01/01/solution
-// /exercise/01/01/diff
 
 export default function ExercisePartRoute() {
 	const data = useLoaderData<typeof loader>()
@@ -54,6 +52,7 @@ export default function ExercisePartRoute() {
 			<div className="flex justify-around">
 				{data.prevStepLink ? (
 					<Link
+						prefetch="intent"
 						className="text-blue-700 underline"
 						to={data.prevStepLink.to}
 						children={data.prevStepLink.children}
@@ -61,6 +60,7 @@ export default function ExercisePartRoute() {
 				) : null}
 				{data.nextStepLink ? (
 					<Link
+						prefetch="intent"
 						className="text-blue-700 underline"
 						to={data.nextStepLink.to}
 						children={data.nextStepLink.children}
