@@ -1,5 +1,6 @@
 import type { DataFunctionArgs } from '@remix-run/node'
 import { json } from '@remix-run/node'
+import { Link } from '@remix-run/react'
 import {
 	isRouteErrorResponse,
 	Outlet,
@@ -17,27 +18,24 @@ export async function loader({ params }: DataFunctionArgs) {
 	if (!exercise) {
 		throw new Response('Not found', { status: 404 })
 	}
+
 	return json({ exercise })
 }
 
-export default function StepRoute() {
+export default function ExerciseNumberRoute() {
 	const data = useLoaderData<typeof loader>()
 
 	return (
 		<div>
 			<h1>{data.exercise.title}</h1>
-			<div className="grid grid-cols-2">
-				<div className="prose overflow-y-scroll">
-					{data.exercise.instructionsCode ? (
-						<Mdx code={data.exercise?.instructionsCode} />
-					) : (
-						'No instructions yet...'
-					)}
-				</div>
-				<div className="overflow-y-scroll">
-					<Outlet />
-				</div>
+			<div className="prose mx-auto overflow-y-scroll">
+				{data.exercise.instructionsCode ? (
+					<Mdx code={data.exercise?.instructionsCode} />
+				) : (
+					'No instructions yet...'
+				)}
 			</div>
+			<Link to="01/problem">Start</Link>
 		</div>
 	)
 }

@@ -7,6 +7,7 @@ import glob from 'glob'
 import path from 'path'
 import invariant from 'tiny-invariant'
 import util from 'util'
+import { z } from 'zod'
 import { compileMdx } from './compile-mdx.server'
 
 const globPromise = util.promisify(glob)
@@ -32,14 +33,19 @@ type BaseApp = {
 	dirName: string
 	fullPath: string
 	portNumber: number
+	instructionsCode?: string
 }
 
 export type ProblemApp = BaseApp & {
+	/** a unique identifier for the problem app (based on its name + step number) */
+	id: string
 	type: 'problem'
 	exerciseNumber: number
 	stepNumber: number
 }
 export type SolutionApp = BaseApp & {
+	/** a unique identifier for the solution app (based on its name + step number) */
+	id: string
 	type: 'solution'
 	exerciseNumber: number
 	stepNumber: number
@@ -89,8 +95,11 @@ async function readDir(dir: string) {
 	return []
 }
 
-async function compileReadme(appDir: string) {
-	const readmeFilepath = path.join(appDir, 'README.md')
+async function compileReadme(appDir: string, number?: number) {
+	const readmeFile = number
+		? `README.${number.toString().padStart(2, '0')}.md`
+		: 'README.md'
+	const readmeFilepath = path.join(appDir, readmeFile)
 	if (await exists(readmeFilepath)) {
 		const compiled = await compileMdx(readmeFilepath)
 		return compiled
@@ -98,13 +107,31 @@ async function compileReadme(appDir: string) {
 	return null
 }
 
-function extractStepNumber(dir: string) {
-	const regex = /\.step-(?<number>\d+)/
-	const number = regex.exec(dir)?.groups?.number
-	if (!number) {
-		return null
+function getAppDirInfo(appDir: string) {
+	const regex = /^(?<range>(\d+-?)+)\.(problem|solution)(\.(?<subtitle>.*))?$/
+	const match = regex.exec(appDir)
+	if (!match || !match.groups) {
+		throw new Error(`App directory ${appDir} does not match regex ${regex}`)
 	}
-	return Number(number)
+	const { range, subtitle } = match.groups
+	if (!range) {
+		throw new Error(`App directory ${appDir} does not match regex ${regex}`)
+	}
+
+	const [start, end] = range.split('-').map(Number)
+	if (!start || !Number.isFinite(start)) {
+		throw new Error(`App directory ${appDir} does not match regex ${regex}`)
+	}
+
+	if (end && !Number.isFinite(end)) {
+		throw new Error(`App directory ${appDir} does not match regex ${regex}`)
+	}
+
+	const stepNumbers = end
+		? Array.from({ length: end - start + 1 }, (_, i) => i + start)
+		: [start]
+	const type = match[2] as 'problem' | 'solution'
+	return { stepNumbers, type, subtitle }
 }
 
 function extractExerciseNumber(dir: string) {
@@ -216,6 +243,7 @@ export async function getExampleApps(): Promise<Array<ExampleApp>> {
 						title: compiledReadme?.title ?? name,
 						dirName,
 						portNumber: 3500 + index,
+						instructionsCode: compiledReadme?.code,
 					}
 				}),
 			)
@@ -226,63 +254,85 @@ export async function getExampleApps(): Promise<Array<ExampleApp>> {
 export async function getSolutionApps(): Promise<Array<SolutionApp>> {
 	const workshopRoot = await getWorkshopRoot()
 	const solutionDirs = await globPromise(
-		path.join(workshopRoot, 'exercises', '**', 'solution*'),
+		path.join(workshopRoot, 'exercises', '**', '*solution*'),
 	)
 	const solutionApps = await Promise.all(
 		solutionDirs.map(async function getAppFromPath(
 			fullPath,
-		): Promise<SolutionApp> {
+		): Promise<Array<SolutionApp>> {
 			const dirName = path.basename(fullPath)
 			const parentDirName = path.basename(path.dirname(fullPath))
 			const exerciseNumber = extractExerciseNumber(parentDirName)
 			const name = getPkgProp(fullPath, 'name', dirName)
-			const title = getPkgProp(fullPath, 'title', dirName)
-			const stepNumber = extractStepNumber(dirName) ?? 1
-			const portNumber = 5000 + exerciseNumber * 10 + stepNumber
-			return {
-				name,
-				title,
-				type: 'solution',
-				exerciseNumber,
-				stepNumber,
-				portNumber,
-				dirName,
-				fullPath,
+			const appInfo = getAppDirInfo(dirName)
+			const firstStepNumber = appInfo.stepNumbers[0]
+			if (firstStepNumber === undefined) {
+				throw new Error(
+					`invalid solution dir name: ${dirName} (could not find first step number)`,
+				)
 			}
+			const portNumber = 5000 + (exerciseNumber - 1) * 10 + firstStepNumber
+			const compiledReadme = await compileReadme(fullPath)
+			return appInfo.stepNumbers.map(stepNumber => {
+				return {
+					id: `${name}-${stepNumber}`,
+					name,
+					title: compiledReadme?.title ?? name,
+					type: 'solution',
+					exerciseNumber,
+					stepNumber,
+					portNumber,
+					dirName,
+					fullPath,
+					instructionsCode: compiledReadme?.code,
+				}
+			})
 		}),
 	)
-	return solutionApps
+	return solutionApps.flat()
 }
 
 export async function getProblemApps(): Promise<Array<ProblemApp>> {
 	const workshopRoot = await getWorkshopRoot()
 	const problemDirs = await globPromise(
-		path.join(workshopRoot, 'exercises', '**', 'problem*'),
+		path.join(workshopRoot, 'exercises', '**', '*problem*'),
 	)
 	const problemApps = await Promise.all(
 		problemDirs.map(async function getAppFromPath(
 			fullPath,
-		): Promise<ProblemApp> {
+		): Promise<Array<ProblemApp>> {
 			const dirName = path.basename(fullPath)
 			const parentDirName = path.basename(path.dirname(fullPath))
 			const exerciseNumber = extractExerciseNumber(parentDirName)
 			const name = getPkgProp(fullPath, 'name', dirName)
-			const title = getPkgProp(fullPath, 'title', dirName)
-			const stepNumber = extractStepNumber(dirName) ?? 1
-			const portNumber = 5000 + exerciseNumber * 10 + stepNumber
-			return {
-				name,
-				title,
-				type: 'problem',
-				exerciseNumber,
-				stepNumber,
-				portNumber,
-				dirName,
-				fullPath,
+			const appInfo = getAppDirInfo(dirName)
+			const firstStepNumber = appInfo.stepNumbers[0]
+			if (firstStepNumber === undefined) {
+				throw new Error(
+					`invalid problem dir name: ${dirName} (could not find first step number)`,
+				)
 			}
+			const portNumber = 4000 + (exerciseNumber - 1) * 10 + firstStepNumber
+			return Promise.all(
+				appInfo.stepNumbers.map(async stepNumber => {
+					const compiledReadme = await compileReadme(fullPath, stepNumber)
+					return {
+						id: `${name}-${stepNumber}`,
+						name,
+						title: compiledReadme?.title ?? name,
+						type: 'problem',
+						exerciseNumber,
+						stepNumber,
+						portNumber,
+						dirName,
+						fullPath,
+						instructionsCode: compiledReadme?.code,
+					}
+				}),
+			)
 		}),
 	)
-	return problemApps
+	return problemApps.flat()
 }
 
 export async function getExercise(exerciseNumber: number | string) {
@@ -290,23 +340,34 @@ export async function getExercise(exerciseNumber: number | string) {
 	return exercises.find(s => s.exerciseNumber === Number(exerciseNumber))
 }
 
-export async function requireExerciseApp({
-	type = 'problem',
-	exerciseNumber: exerciseNumberString,
-	stepNumber: stepNumberString = '1',
-}: {
+export async function requireExerciseApp(
+	params: Parameters<typeof getExerciseApp>[0],
+) {
+	const app = await getExerciseApp(params)
+	if (!app) {
+		throw new Response('Not found', { status: 404 })
+	}
+	return app
+}
+
+const exerciseAppParams = z.object({
+	type: z.union([z.literal('problem'), z.literal('solution')]),
+	exerciseNumber: z.coerce.number().finite(),
+	stepNumber: z.coerce.number().finite(),
+})
+
+export async function getExerciseApp(params: {
 	type?: string
 	exerciseNumber?: string
 	stepNumber?: string
 }) {
-	if ((type !== 'problem' && type !== 'solution') || !exerciseNumberString) {
-		throw new Response('Not found', { status: 404 })
+	const result = exerciseAppParams.safeParse(params)
+	if (!result.success) {
+		return null
 	}
+	const { type, exerciseNumber, stepNumber } = result.data
 
-	const stepNumber = Number(stepNumberString)
-	const exerciseNumber = Number(exerciseNumberString)
-
-	const apps = await getApps()
+	const apps = (await getApps()).filter(isExerciseStepApp)
 	const app = apps.find(app => {
 		if (isExampleApp(app)) return false
 		return (
@@ -316,7 +377,7 @@ export async function requireExerciseApp({
 		)
 	})
 	if (!app) {
-		throw new Response('Not found', { status: 404 })
+		return null
 	}
 	return app
 }
@@ -326,14 +387,31 @@ export async function getAppByName(name: string) {
 	return apps.find(a => a.name === name)
 }
 
-export async function getNextApp(app: App) {
-	const apps = await getApps()
-	const index = apps.findIndex(a => a.name === app.name)
+export async function getNextExerciseApp(app: ExerciseStepApp) {
+	const apps = (await getApps()).filter(isExerciseStepApp)
+	const index = apps.findIndex(a => a.id === app.id)
 	if (index === -1) {
-		throw new Error(`Could not find app ${app.name}`)
+		throw new Error(`Could not find app ${app.id}`)
 	}
 	const nextApp = apps[index + 1]
 	return nextApp ? nextApp : null
+}
+
+export async function getPrevExerciseApp(app: ExerciseStepApp) {
+	const apps = (await getApps()).filter(isExerciseStepApp)
+
+	const index = apps.findIndex(a => a.id === app.id)
+	if (index === -1) {
+		throw new Error(`Could not find app ${app.id}`)
+	}
+	const prevApp = apps[index - 1]
+	return prevApp ? prevApp : null
+}
+
+export function getAppPateRoute(app: ExerciseStepApp) {
+	const exerciseNumber = app.exerciseNumber.toString().padStart(2, '0')
+	const stepNumber = app.stepNumber.toString().padStart(2, '0')
+	return `/${exerciseNumber}/${stepNumber}/${app.type}`
 }
 
 export async function getWorkshopRoot() {
@@ -363,18 +441,6 @@ export async function getWorkshopTitle() {
 		'workshop root package.json must have a title property.',
 	)
 	return pkg.title
-}
-
-export async function runInDirs(script: string, dirs: Array<string> = []) {
-	if (!dirs.length) {
-		dirs = (await getApps()).map(app => app.fullPath)
-	}
-	console.log(`🏎  "${script}":\n- ${dirs.join('\n- ')}\n`)
-
-	for (const dir of dirs) {
-		console.log(`🏎  ${script} in ${dir}`)
-		cp.execSync(script, { cwd: dir, stdio: 'inherit' })
-	}
 }
 
 export async function exec(command: string) {

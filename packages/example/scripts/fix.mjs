@@ -31,7 +31,7 @@ const apps = (
 		...exercises.flatMap(async exercise => {
 			return (await readDir(here(`../exercises/${exercise}`)))
 				.filter(dir => {
-					return /^(problem|solution)/.test(dir)
+					return /(problem|solution)/.test(dir)
 				})
 				.map(dir => here(`../exercises/${exercise}/${dir}`))
 		}),

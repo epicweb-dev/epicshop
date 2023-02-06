@@ -35,7 +35,7 @@ export default function Index() {
 							<li key={exercise.exerciseNumber}>
 								<div className="flex">
 									<Link
-										to={`exercise/${exercise.exerciseNumber}`}
+										to={`${exercise.exerciseNumber}`}
 										className="text-blue-800 underline"
 									>
 										{exercise.exerciseNumber}. {exercise.title}

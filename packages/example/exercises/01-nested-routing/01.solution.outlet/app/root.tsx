@@ -7,6 +7,7 @@ import {
 	Scripts,
 	ScrollRestoration,
 } from '@remix-run/react'
+import { KCDShopIFrameSync } from '@kentcdodds/workshop-app/components'
 
 import tailwindStylesheetUrl from './styles/tailwind.css'
 
@@ -32,6 +33,7 @@ export default function App() {
 				<ScrollRestoration />
 				<Scripts />
 				<LiveReload />
+				<KCDShopIFrameSync />
 			</body>
 		</html>
 	)

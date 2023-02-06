@@ -8,6 +8,7 @@ import {
 	ScrollRestoration,
 } from '@remix-run/react'
 
+import reachTabsStylesheetUrl from '@reach/tabs/styles.css'
 import appStylesheetUrl from './styles/app.css'
 import tailwindStylesheetUrl from './styles/tailwind.css'
 
@@ -15,6 +16,7 @@ export const links: LinksFunction = () => {
 	return [
 		{ rel: 'stylesheet', href: tailwindStylesheetUrl },
 		{ rel: 'stylesheet', href: appStylesheetUrl },
+		{ rel: 'stylesheet', href: reachTabsStylesheetUrl },
 	]
 }
 

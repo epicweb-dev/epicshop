@@ -1,42 +1,40 @@
 import type { DataFunctionArgs } from '@remix-run/node'
-import { defer } from '@remix-run/node'
+import { json } from '@remix-run/node'
 import {
-	Await,
 	isRouteErrorResponse,
 	useLoaderData,
 	useRouteError,
 } from '@remix-run/react'
-import { Suspense } from 'react'
 import { getDiffCode } from '~/utils/diff.server'
 import { Mdx } from '~/utils/mdx'
 import { getErrorMessage } from '~/utils/misc'
-import {
-	getAppByName,
-	getApps,
-	getNextApp,
-	requireExerciseApp,
-} from '~/utils/misc.server'
+import { getAppByName, getApps, getExerciseApp } from '~/utils/misc.server'
 
 export async function loader({ request, params }: DataFunctionArgs) {
 	const searchParams = new URL(request.url).searchParams
-	const app = await requireExerciseApp(params)
-	const compareName = searchParams.get('compare')
-	const compareApp = compareName
-		? await getAppByName(compareName)
-		: await getNextApp(app)
-	if (!compareApp) {
+	const app1Name = searchParams.get('app1')
+	const app2Name = searchParams.get('app2')
+	const app1 = app1Name
+		? await getAppByName(app1Name)
+		: await getExerciseApp({ ...params, type: 'problem' })
+	const app2 = app2Name
+		? await getAppByName(app2Name)
+		: await getExerciseApp({ ...params, type: 'solution' })
+
+	if (!app1 || !app2) {
 		throw new Response('No app to compare to', { status: 404 })
 	}
+
 	const allApps = (await getApps()).map(a => ({
 		name: a.name,
 		title: a.title,
 	}))
 
-	return defer({
+	return json({
 		allApps,
-		app: app.name,
-		compareApp: compareApp.name,
-		diffCode: getDiffCode(app, compareApp),
+		app1: app1.name,
+		app2: app2.name,
+		diffCode: await getDiffCode(app1, app2),
 	})
 }
 
@@ -44,15 +42,9 @@ export default function Diff() {
 	const data = useLoaderData<typeof loader>()
 	return (
 		<div>
-			<Suspense fallback="loading...">
-				<Await resolve={data.diffCode}>
-					{diffCode => (
-						<div className="prose whitespace-pre-wrap">
-							<Mdx code={diffCode} />
-						</div>
-					)}
-				</Await>
-			</Suspense>
+			<div className="prose whitespace-pre-wrap">
+				<Mdx code={data.diffCode} />
+			</div>
 			<pre>{JSON.stringify(data, null, 2)}</pre>
 		</div>
 	)

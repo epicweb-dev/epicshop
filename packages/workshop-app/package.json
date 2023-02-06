@@ -35,6 +35,7 @@
   },
   "dependencies": {
     "@kentcdodds/md-temp": "^3.1.1",
+    "@reach/tabs": "^0.18.0",
     "@remix-run/express": "^1.7.5",
     "@remix-run/node": "^1.7.5",
     "@remix-run/react": "^1.7.5",
@@ -42,6 +43,7 @@
     "address": "^1.2.2",
     "chalk": "^5.2.0",
     "close-with-grace": "^1.1.0",
+    "clsx": "^1.2.1",
     "common-ancestor-path": "^1.0.1",
     "compression": "^1.7.4",
     "cross-env": "^7.0.3",

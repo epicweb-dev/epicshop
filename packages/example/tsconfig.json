@@ -1,30 +1,32 @@
 {
-	"files": [],
-	"exclude": ["node_modules"],
-	"references": [
-		{
-			"path": "exercises/01-nested-routing/problem"
-		},
-		{
-			"path": "exercises/01-nested-routing/solution.step-01"
-		},
-		{
-			"path": "exercises/01-nested-routing/solution.step-02-outlet-context"
-		},
-		{
-			"path": "exercises/02-styling/problem.step-01"
-		},
-		{
-			"path": "exercises/02-styling/problem.step-03-tailwind"
-		},
-		{
-			"path": "exercises/02-styling/solution.step-01-links"
-		},
-		{
-			"path": "exercises/02-styling/solution.step-02-css-modules"
-		},
-		{
-			"path": "exercises/02-styling/solution.step-03-tailwind"
-		}
-	]
+  "files": [],
+  "exclude": [
+    "node_modules"
+  ],
+  "references": [
+    {
+      "path": "exercises/01-nested-routing/01-02.problem"
+    },
+    {
+      "path": "exercises/01-nested-routing/01.solution.outlet"
+    },
+    {
+      "path": "exercises/01-nested-routing/02.solution.outlet-context"
+    },
+    {
+      "path": "exercises/02-styling/01-02.problem"
+    },
+    {
+      "path": "exercises/02-styling/01.solution.links"
+    },
+    {
+      "path": "exercises/02-styling/02.solution.css-modules"
+    },
+    {
+      "path": "exercises/02-styling/03.problem.tailwind"
+    },
+    {
+      "path": "exercises/02-styling/03.solution.tailwind"
+    }
+  ]
 }

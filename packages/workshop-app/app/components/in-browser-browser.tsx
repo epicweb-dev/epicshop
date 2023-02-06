@@ -1,25 +1,9 @@
-import type { DataFunctionArgs } from '@remix-run/node'
-import { json } from '@remix-run/node'
-import { Form, useLoaderData, useSearchParams } from '@remix-run/react'
-import type { NavigateFunction } from 'react-router'
+import { Form, useSearchParams } from '@remix-run/react'
 import { useEffect, useRef, useState } from 'react'
+import type { NavigateFunction } from 'react-router'
 import { z } from 'zod'
-import { requireExerciseApp } from '~/utils/misc.server'
-import { isAppRunning, isPortAvailable } from '~/utils/process-manager.server'
-import { AppStarter, AppStopper, PortStopper } from '../start'
-
-export async function loader({ params }: DataFunctionArgs) {
-	const app = await requireExerciseApp(params)
-
-	const isRunning = isAppRunning(app)
-	return json({
-		isRunning,
-		isPortAvailable: isRunning ? null : await isPortAvailable(app.portNumber),
-		title: app.title,
-		name: app.name,
-		port: app.portNumber,
-	})
-}
+import { AppStarter, AppStopper, PortStopper } from '~/routes/start'
+import { typedBoolean } from '~/utils/misc'
 
 const historyCallDataSchema = z.intersection(
 	z.object({
@@ -59,8 +43,17 @@ function getNewIndex(prevIndex: number, delta: number, max: number) {
 	return Math.min(Math.max(prevIndex + delta, 0), max)
 }
 
-export default function ExercisePartRoute() {
-	const data = useLoaderData<typeof loader>()
+export function InBrowserBrowser({
+	name,
+	port,
+	portIsAvailable,
+	isRunning,
+}: {
+	name: string
+	port: number
+	portIsAvailable: boolean | null
+	isRunning: boolean
+}) {
 	const [searchParams] = useSearchParams()
 	const searchParamsPathname = searchParams.get('pathname') ?? '/'
 	const [iframeContext, setIFrameContext] = useState({
@@ -75,6 +68,7 @@ export default function ExercisePartRoute() {
 
 	useEffect(() => {
 		function handleMessage(messageEvent: MessageEvent) {
+			if (messageEvent.source !== iframeRef.current?.contentWindow) return
 			if (messageEvent.data.type !== 'kcdshop:history-call') return
 
 			const data = historyCallDataSchema.parse(messageEvent.data, {
@@ -101,7 +95,7 @@ export default function ExercisePartRoute() {
 						const newHistory = [
 							...prevContext.history.slice(0, prevContext.index + 1),
 							pathname,
-						]
+						].filter(typedBoolean)
 						return {
 							...prevContext,
 							history: newHistory,
@@ -116,7 +110,7 @@ export default function ExercisePartRoute() {
 								...prevContext.history.slice(0, prevContext.index),
 								pathname,
 								...prevContext.history.slice(prevContext.index + 1),
-							],
+							].filter(typedBoolean),
 						}
 					}
 					case 'go': {
@@ -134,6 +128,8 @@ export default function ExercisePartRoute() {
 
 	const iframePathname = iframeContext.history[iframeContext.index]
 	useEffect(() => {
+		if (!iframePathname) return
+
 		setPathnameInputValue(iframePathname)
 
 		const newSearchParams = new URLSearchParams(window.location.search)
@@ -162,9 +158,9 @@ export default function ExercisePartRoute() {
 	const atEndOfHistory =
 		iframeContext.index === iframeContext.history.length - 1
 	const atStartOfHistory = iframeContext.index === 0
-	return data.isRunning ? (
+	return isRunning ? (
 		<div>
-			<AppStopper name={data.name} />
+			<AppStopper name={name} />
 			<div className="flex gap-3 px-2">
 				<button
 					type="button"
@@ -204,22 +200,22 @@ export default function ExercisePartRoute() {
 				</Form>
 			</div>
 			<iframe
-				title={data.title}
+				title={name}
 				key={iframeContext.key}
 				ref={iframeRef}
-				src={`http://localhost:${data.port}${iframeContext.pathname}`}
+				src={`http://localhost:${port}${iframeContext.pathname}`}
 				className="h-full w-full border-2 border-stone-400"
 			/>
 		</div>
-	) : data.isPortAvailable === false ? (
+	) : portIsAvailable === false ? (
 		<div>
 			<div>
 				The port for this app is unavailable. It could be that you're running it
 				elsewhere?
 			</div>
-			<PortStopper port={data.port} />
+			<PortStopper port={port} />
 		</div>
 	) : (
-		<AppStarter name={data.name} />
+		<AppStarter name={name} />
 	)
 }

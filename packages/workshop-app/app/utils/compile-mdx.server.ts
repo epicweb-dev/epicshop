@@ -71,9 +71,9 @@ function checkFileExists(file: string) {
 	)
 }
 
-export async function compileMdx<
-	FrontmatterType extends Record<string, unknown>,
->(file: string) {
+export async function compileMdx(
+	file: string,
+): Promise<{ code: string; title: string | null }> {
 	if (!(await checkFileExists(file))) {
 		throw new Error(`File does not exist: ${file}`)
 	}
@@ -98,7 +98,7 @@ export async function compileMdx<
 	let title: string | null = null
 
 	try {
-		const { frontmatter, code } = await bundleMDX({
+		const { code } = await bundleMDX({
 			file,
 			cwd: path.dirname(file),
 			mdxOptions(options) {
@@ -129,11 +129,7 @@ export async function compileMdx<
 			},
 		})
 
-		const result = {
-			code,
-			title,
-			frontmatter: frontmatter as FrontmatterType,
-		}
+		const result = { code, title }
 		await fsExtra.ensureDir(cacheDir)
 		await fs.promises.writeFile(
 			cacheLocation,
