@@ -150,7 +150,7 @@ export async function compileMarkdownString(markdownString: string) {
 		key: markdownString,
 		cache: compiledMarkdownCache,
 		ttl: 1000 * 60 * 60 * 24,
-		getFreshValue() {
+		getFreshValue: async () => {
 			try {
 				const result = await bundleMDX({
 					source: markdownString,
@@ -164,7 +164,6 @@ export async function compileMarkdownString(markdownString: string) {
 					},
 				})
 
-				cache.set(markdownString, result.code)
 				return result.code
 			} catch (error: unknown) {
 				console.error(`Compilation error for code: `, markdownString, error)
