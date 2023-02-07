@@ -77,9 +77,13 @@ ${lines.join('\n')}
 	return markdownLines
 }
 
-const EXTRA_FILES_TO_IGNORE = [/README(\.\d+)?\.md$/]
+const EXTRA_FILES_TO_IGNORE = [/README(\.\d+)?\.md$/, /package-lock\.json$/]
 
-async function copyUnignoredFiles(srcDir: string, destDir: string) {
+async function copyUnignoredFiles(
+	srcDir: string,
+	destDir: string,
+	ignore: Array<string>,
+) {
 	const { isGitIgnored } = await import('globby')
 
 	const isIgnored = await isGitIgnored({ cwd: srcDir })
@@ -87,7 +91,12 @@ async function copyUnignoredFiles(srcDir: string, destDir: string) {
 	await fsExtra.copy(srcDir, destDir, {
 		filter: async file => {
 			if (file === srcDir) return true
-			return !isIgnored(file) && !EXTRA_FILES_TO_IGNORE.some(f => f.test(file))
+			return (
+				!isIgnored(file) &&
+				![...ignore, ...EXTRA_FILES_TO_IGNORE].some(f =>
+					typeof f === 'string' ? file.includes(f) : f.test(file),
+				)
+			)
 		},
 	})
 }
@@ -95,13 +104,29 @@ async function copyUnignoredFiles(srcDir: string, destDir: string) {
 async function prepareForDiff(app1: App, app2: App) {
 	const app1CopyPath = path.join(diffTmpDir, app1.dirName)
 	const app2CopyPath = path.join(diffTmpDir, app2.dirName)
+	// if everything except the `name` property of the `package.json` is the same
+	// the don't bother copying it
+	const comparePkgJson = (pkg1: any, pkg2: any) => {
+		const { name, ...rest1 } = pkg1
+		const { name: name2, ...rest2 } = pkg2
+		return JSON.stringify(rest1) === JSON.stringify(rest2)
+	}
+	const app1PkgJson = await fsExtra.readJSON(
+		path.join(app1.fullPath, 'package.json'),
+	)
+	const app2PkgJson = await fsExtra.readJSON(
+		path.join(app2.fullPath, 'package.json'),
+	)
+	const ignore = comparePkgJson(app1PkgJson, app2PkgJson)
+		? ['package.json']
+		: []
 	await Promise.all([
 		fsExtra
 			.emptyDir(app1CopyPath)
-			.then(() => copyUnignoredFiles(app1.fullPath, app1CopyPath)),
+			.then(() => copyUnignoredFiles(app1.fullPath, app1CopyPath, ignore)),
 		fsExtra
 			.emptyDir(app2CopyPath)
-			.then(() => copyUnignoredFiles(app2.fullPath, app2CopyPath)),
+			.then(() => copyUnignoredFiles(app2.fullPath, app2CopyPath, ignore)),
 	])
 	return { app1CopyPath, app2CopyPath }
 }
@@ -170,6 +195,9 @@ export async function getDiffCode(app1: App, app2: App) {
 \`${app1.name}\` vs \`${app2.name}\`
 `,
 	]
+	if (!parsed.files.length) {
+		markdownLines.push('No changes')
+	}
 	for (const file of parsed.files) {
 		switch (file.type) {
 			case 'ChangedFile': {
