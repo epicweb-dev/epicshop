@@ -1,8 +1,8 @@
 {
   "name": "web-app-fundamentals-workshop",
-  "title": "Web App Fundamentals 🔭",
   "private": true,
   "kcd-workshop": {
+    "title": "Web App Fundamentals 🔭",
     "root": true
   },
   "scripts": {

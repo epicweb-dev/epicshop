@@ -1,6 +1,5 @@
 import fs from 'fs'
 import fsExtra from 'fs-extra'
-import LRU from 'lru-cache'
 import path from 'path'
 import { bundleMDX } from 'mdx-bundler'
 import type * as U from 'unified'

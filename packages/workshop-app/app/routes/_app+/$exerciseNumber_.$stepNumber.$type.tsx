@@ -10,9 +10,11 @@ import {
 	getAppByName,
 	getAppPageRoute,
 	getApps,
+	requireExercise,
 	getExerciseApp,
 	getNextExerciseApp,
 	getPrevExerciseApp,
+	isExerciseStepApp,
 	requireExerciseApp,
 } from '~/utils/misc.server'
 import { isAppRunning, isPortAvailable } from '~/utils/process-manager.server'
@@ -24,6 +26,7 @@ import { InBrowserBrowser } from '~/components/in-browser-browser'
 
 export async function loader({ request, params }: DataFunctionArgs) {
 	const exerciseStepApp = await requireExerciseApp(params)
+	const exercise = await requireExercise(exerciseStepApp.exerciseNumber)
 	const reqUrl = new URL(request.url)
 
 	// delete the preview if it's the same as the type
@@ -55,26 +58,44 @@ export async function loader({ request, params }: DataFunctionArgs) {
 		title: a.title,
 	}))
 
+	const apps = await getApps()
+	const exerciseApps = apps
+		.filter(isExerciseStepApp)
+		.filter(app => app.exerciseNumber === exerciseStepApp.exerciseNumber)
+	const isLastStep =
+		exerciseApps[exerciseApps.length - 1]?.id === exerciseStepApp.id
+	const isFirstStep = exerciseApps[0]?.id === exerciseStepApp.id
+
 	const nextApp = await getNextExerciseApp(exerciseStepApp)
 	const prevApp = await getPrevExerciseApp(exerciseStepApp)
-	const nextStepLink = nextApp
-		? {
-				to: getAppPageRoute(nextApp),
-				children: `${nextApp.title} (${nextApp.type}) ➡️`,
-		  }
-		: null
-	const prevStepLink = prevApp
-		? {
-				to: getAppPageRoute(prevApp),
-				children: `⬅️ ${prevApp.title} (${prevApp.type})`,
-		  }
-		: null
 
 	return json({
 		type: params.type as 'problem' | 'solution',
 		exerciseStepApp,
-		prevStepLink,
-		nextStepLink,
+		prevStepLink: isFirstStep
+			? {
+					to: `/${exerciseStepApp.exerciseNumber.toString().padStart(2, '0')}`,
+					children: `⬅️ ${exercise.title}`,
+			  }
+			: prevApp
+			? {
+					to: getAppPageRoute(prevApp),
+					children: `⬅️ ${prevApp.title} (${prevApp.type})`,
+			  }
+			: null,
+		nextStepLink: isLastStep
+			? {
+					to: `/${exerciseStepApp.exerciseNumber
+						.toString()
+						.padStart(2, '0')}/feedback`,
+					children: `${exercise.title} Feedback ➡️`,
+			  }
+			: nextApp
+			? {
+					to: getAppPageRoute(nextApp),
+					children: `${nextApp.title} (${nextApp.type}) ➡️`,
+			  }
+			: null,
 		problem: problemApp
 			? {
 					isRunning: isProblemRunning,

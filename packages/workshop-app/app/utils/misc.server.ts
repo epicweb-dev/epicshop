@@ -6,7 +6,6 @@ import cp from 'child_process'
 import fs from 'fs'
 import glob from 'glob'
 import path from 'path'
-import invariant from 'tiny-invariant'
 import util from 'util'
 import { z } from 'zod'
 import {
@@ -252,14 +251,24 @@ export async function getApps(): Promise<Array<App>> {
 	return apps
 }
 
-function getPkgProp(
+async function getPkgProp(
 	fullPath: string,
 	prop: string,
 	defaultValue?: string,
-): string {
-	const pkg = require(path.join(fullPath, 'package.json'))
-	invariant(pkg, `package.json must exist: ${fullPath}`)
-	const value = pkg[prop]
+): Promise<string> {
+	const pkg = JSON.parse(
+		(
+			await fs.promises.readFile(path.join(fullPath, 'package.json'))
+		).toString(),
+	)
+	const propPath = prop.split('.')
+	let value = pkg
+	for (const p of propPath) {
+		if (value[p] === undefined) {
+			return defaultValue ?? ''
+		}
+		value = value[p]
+	}
 	if (value === undefined && defaultValue) {
 		return defaultValue
 	}
@@ -272,7 +281,7 @@ async function getExampleAppFromPath(
 ): Promise<ExampleApp> {
 	const dirName = path.basename(fullPath)
 	const compiledReadme = await compileReadme(fullPath)
-	const name = getPkgProp(fullPath, 'name', dirName)
+	const name = await getPkgProp(fullPath, 'name', dirName)
 	return {
 		id: name,
 		name,
@@ -307,7 +316,7 @@ async function getSolutionAppFromPath(
 	const dirName = path.basename(fullPath)
 	const parentDirName = path.basename(path.dirname(fullPath))
 	const exerciseNumber = extractExerciseNumber(parentDirName)
-	const name = getPkgProp(fullPath, 'name', dirName)
+	const name = await getPkgProp(fullPath, 'name', dirName)
 	const appInfo = getAppDirInfo(dirName)
 	const firstStepNumber = appInfo.stepNumbers[0]
 	if (firstStepNumber === undefined) {
@@ -357,7 +366,7 @@ async function getProblemAppFromPath(
 	const dirName = path.basename(fullPath)
 	const parentDirName = path.basename(path.dirname(fullPath))
 	const exerciseNumber = extractExerciseNumber(parentDirName)
-	const name = getPkgProp(fullPath, 'name', dirName)
+	const name = await getPkgProp(fullPath, 'name', dirName)
 	const appInfo = getAppDirInfo(dirName)
 	const firstStepNumber = appInfo.stepNumbers[0]
 	if (firstStepNumber === undefined) {
@@ -406,6 +415,14 @@ export async function getProblemApps(): Promise<Array<ProblemApp>> {
 export async function getExercise(exerciseNumber: number | string) {
 	const exercises = await getExercises()
 	return exercises.find(s => s.exerciseNumber === Number(exerciseNumber))
+}
+
+export async function requireExercise(exerciseNumber: number | string) {
+	const exercise = await getExercise(exerciseNumber)
+	if (!exercise) {
+		throw new Response('Not found', { status: 404 })
+	}
+	return exercise
 }
 
 export async function requireExerciseApp(
@@ -482,6 +499,12 @@ export function getAppPageRoute(app: ExerciseStepApp) {
 	return `/${exerciseNumber}/${stepNumber}/${app.type}`
 }
 
+export async function getWorkshopTitle() {
+	const root = await getWorkshopRoot()
+	const title = await getPkgProp(root, 'kcd-workshop.title')
+	return title
+}
+
 export async function getWorkshopRoot() {
 	const context = process.env.KCDSHOP_CONTEXT_CWD ?? process.cwd()
 	const { root: rootDir } = path.parse(context)
@@ -499,16 +522,6 @@ export async function getWorkshopRoot() {
 	throw new Error(
 		`Workshop Root not found. Make sure the root of the workshop has "kcd-workshop" and "root: true" in the package.json.`,
 	)
-}
-
-export async function getWorkshopTitle() {
-	const workshopRoot = await getWorkshopRoot()
-	const pkg = require(path.join(workshopRoot, 'package.json'))
-	invariant(
-		typeof pkg.title === 'string',
-		'workshop root package.json must have a title property.',
-	)
-	return pkg.title
 }
 
 export async function exec(command: string) {

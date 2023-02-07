@@ -3,7 +3,6 @@ import { json } from '@remix-run/node'
 import { Link } from '@remix-run/react'
 import {
 	isRouteErrorResponse,
-	Outlet,
 	useLoaderData,
 	useRouteError,
 } from '@remix-run/react'
