@@ -7,6 +7,8 @@ import type * as U from 'unified'
 import type * as H from 'hast'
 import type * as M from 'mdast'
 import { remarkCodeBlocksShiki } from '@kentcdodds/md-temp'
+import { cachified } from 'cachified'
+import { compiledMarkdownCache } from './cache.server'
 
 const cacheDir = path.join(
 	process.env.KCDSHOP_CONTEXT_CWD ?? process.cwd(),
@@ -78,16 +80,17 @@ export async function compileMdx(
 		throw new Error(`File does not exist: ${file}`)
 	}
 	const { default: md5 } = await import('md5-hex')
-	const cacheLocation = path.join(cacheDir, `${md5(file)}.json`)
 	const stat = await fs.promises.stat(file)
+	const cacheLocation = path.join(
+		cacheDir,
+		`${md5(`${file}-${stat.mtimeMs}`)}.json`,
+	)
 
 	if (await checkFileExists(cacheLocation)) {
-		const cached = require(cacheLocation)
-		if (cached) {
-			if (cached.mtimeMs === stat.mtimeMs) {
-				return cached.value
-			}
-		}
+		const cached = JSON.parse(
+			await fs.promises.readFile(cacheLocation, 'utf-8'),
+		)
+		return cached.value
 	}
 	const [{ default: remarkAutolinkHeadings }, { default: gfm }, { visit }] =
 		await Promise.all([
@@ -133,7 +136,7 @@ export async function compileMdx(
 		await fsExtra.ensureDir(cacheDir)
 		await fs.promises.writeFile(
 			cacheLocation,
-			JSON.stringify({ mtimeMs: stat.mtimeMs, value: result }),
+			JSON.stringify({ value: result }),
 		)
 		return result
 	} catch (error: unknown) {
@@ -142,34 +145,31 @@ export async function compileMdx(
 	}
 }
 
-declare global {
-	var __compiled_markdown_cache__: LRU<string, string>
-}
-
-const cache = (global.__compiled_markdown_cache__ =
-	global.__compiled_markdown_cache__ ?? new LRU<string, string>({ max: 1000 }))
-
 export async function compileMarkdownString(markdownString: string) {
-	const cached = cache.has(markdownString) ? cache.get(markdownString) : null
-	if (cached) return cached
+	return cachified({
+		key: markdownString,
+		cache: compiledMarkdownCache,
+		ttl: 1000 * 60 * 60 * 24,
+		getFreshValue() {
+			try {
+				const result = await bundleMDX({
+					source: markdownString,
+					mdxOptions(options) {
+						options.rehypePlugins = [
+							...(options.rehypePlugins ?? []),
+							...rehypePlugins,
+						]
+						options.development = false
+						return options
+					},
+				})
 
-	try {
-		const result = await bundleMDX({
-			source: markdownString,
-			mdxOptions(options) {
-				options.rehypePlugins = [
-					...(options.rehypePlugins ?? []),
-					...rehypePlugins,
-				]
-				options.development = false
-				return options
-			},
-		})
-
-		cache.set(markdownString, result.code)
-		return result.code
-	} catch (error: unknown) {
-		console.error(`Compilation error for code: `, markdownString, error)
-		throw error
-	}
+				cache.set(markdownString, result.code)
+				return result.code
+			} catch (error: unknown) {
+				console.error(`Compilation error for code: `, markdownString, error)
+				throw error
+			}
+		},
+	})
 }

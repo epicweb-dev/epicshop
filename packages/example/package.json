@@ -7,7 +7,10 @@
   },
   "scripts": {
     "start": "kcdshop start",
-    "format": "prettier --write ."
+    "format": "prettier --write .",
+    "update:deps": "npx npm-check-updates --dep prod,dev --upgrade",
+    "build": "npm run build --if-present --workspaces",
+    "setup": "npm run setup --if-present --workspaces"
   },
   "keywords": [],
   "author": "Kent C. Dodds <me@kentcdodds.com> (https://kentcdodds.com/)",
@@ -23,8 +26,7 @@
     "/playwright-report"
   ],
   "workspaces": [
-    "exercise/*",
-    "final/*",
+    "exercises/**/*",
     "example/*"
   ]
 }

@@ -35,7 +35,9 @@ export default function Index() {
 							<li key={exercise.exerciseNumber}>
 								<div className="flex">
 									<Link
-										to={`${exercise.exerciseNumber}`}
+										to={`${exercise.exerciseNumber
+											.toString()
+											.padStart(2, '0')}`}
 										className="text-blue-800 underline"
 									>
 										{exercise.exerciseNumber}. {exercise.title}

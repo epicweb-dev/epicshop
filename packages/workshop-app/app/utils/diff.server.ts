@@ -1,11 +1,13 @@
+import { cachified } from 'cachified'
 import fsExtra from 'fs-extra'
 import os from 'os'
 import parseGitDiff from 'parse-git-diff'
 import path from 'path'
 import { BUNDLED_LANGUAGES } from 'shiki'
+import { diffCodeCache } from './cache.server'
 import { compileMarkdownString } from './compile-mdx.server'
 import { typedBoolean } from './misc'
-import { type App } from './misc.server'
+import { getDirMtimeMs, type App } from './misc.server'
 
 const kcdshopTempDir = path.join(os.tmpdir(), 'kcdshop')
 
@@ -160,7 +162,9 @@ export async function getDiffFiles(app1: App, app2: App) {
 					: status === 'A'
 					? 'added'
 					: 'unknown') as 'renamed' | 'moved' | 'deleted' | 'added' | 'unknown',
-				path: path.replace(`${diffTmpDir}/`, ''),
+				path: path
+					.replace(`${app1CopyPath}/`, '')
+					.replace(`${app2CopyPath}/`, ''),
 			}
 		})
 		.filter(typedBoolean)
@@ -168,6 +172,17 @@ export async function getDiffFiles(app1: App, app2: App) {
 }
 
 export async function getDiffCode(app1: App, app2: App) {
+	return cachified({
+		cache: diffCodeCache,
+		key: `${app1.dirName}-${await getDirMtimeMs(app1.fullPath)}-${
+			app2.dirName
+		}-${await getDirMtimeMs(app2.fullPath)}`,
+		getFreshValue: () => getDiffCodeImpl(app1, app2),
+	})
+}
+
+async function getDiffCodeImpl(app1: App, app2: App) {
+	console.log('getting diff code')
 	const { execa } = await import('execa')
 	const { app1CopyPath, app2CopyPath } = await prepareForDiff(app1, app2)
 

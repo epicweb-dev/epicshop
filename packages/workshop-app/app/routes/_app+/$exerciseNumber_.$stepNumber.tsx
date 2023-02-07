@@ -11,7 +11,7 @@ import invariant from 'tiny-invariant'
 import { getErrorMessage } from '~/utils/misc'
 import { getExercise } from '~/utils/misc.server'
 
-export async function loader({ params, request }: DataFunctionArgs) {
+export async function loader({ params }: DataFunctionArgs) {
 	invariant(params.exerciseNumber, 'exerciseNumber is required')
 	const exercise = await getExercise(params.exerciseNumber)
 	if (!exercise) {

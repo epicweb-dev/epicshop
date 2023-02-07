@@ -1,6 +1,7 @@
 // Don't judge this file too harshly. It's the result of a lot of refactorings
 // and I haven't had the chance to clean things up since the last one 😅
 
+import { cachified } from 'cachified'
 import cp from 'child_process'
 import fs from 'fs'
 import glob from 'glob'
@@ -8,6 +9,12 @@ import path from 'path'
 import invariant from 'tiny-invariant'
 import util from 'util'
 import { z } from 'zod'
+import {
+	exampleAppCache,
+	getAppCache,
+	problemAppCache,
+	solutionAppCache,
+} from './cache.server'
 import { compileMdx } from './compile-mdx.server'
 
 const globPromise = util.promisify(glob)
@@ -25,6 +32,8 @@ type Exercise = {
 }
 
 type BaseApp = {
+	/** a unique identifier for the problem app (based on its name + step number for exercise part apps and just the name for examples) */
+	id: string
 	/** a unique identifier for the app (comes from package.json name prop) */
 	name: string
 	/** the title of the app used for display (comes from the package.json title prop) */
@@ -37,15 +46,11 @@ type BaseApp = {
 }
 
 export type ProblemApp = BaseApp & {
-	/** a unique identifier for the problem app (based on its name + step number) */
-	id: string
 	type: 'problem'
 	exerciseNumber: number
 	stepNumber: number
 }
 export type SolutionApp = BaseApp & {
-	/** a unique identifier for the solution app (based on its name + step number) */
-	id: string
 	type: 'solution'
 	exerciseNumber: number
 	stepNumber: number
@@ -88,6 +93,15 @@ async function exists(dir: string) {
 	return Boolean(await fs.promises.stat(dir).catch(() => false))
 }
 
+export async function getDirMtimeMs(dir: string) {
+	const { globby } = await import('globby')
+	const files = await globby('**/*', { cwd: dir, gitignore: true })
+	const stats = await Promise.all(
+		files.map(f => fs.promises.stat(path.join(dir, f))),
+	)
+	return Math.max(...stats.map(s => s.mtimeMs))
+}
+
 async function readDir(dir: string) {
 	if (await exists(dir)) {
 		return fs.promises.readdir(dir)
@@ -95,11 +109,25 @@ async function readDir(dir: string) {
 	return []
 }
 
+export async function getReadmePath({
+	appDir,
+	stepNumber,
+}: {
+	appDir: string
+	stepNumber?: number
+}) {
+	let readmeFile = 'README.md'
+	if (stepNumber) {
+		readmeFile = `README.${stepNumber.toString().padStart(2, '0')}.md`
+		readmeFile = (await exists(path.join(appDir, readmeFile)))
+			? readmeFile
+			: 'README.md'
+	}
+	return path.join(appDir, readmeFile)
+}
+
 async function compileReadme(appDir: string, number?: number) {
-	const readmeFile = number
-		? `README.${number.toString().padStart(2, '0')}.md`
-		: 'README.md'
-	const readmeFilepath = path.join(appDir, readmeFile)
+	const readmeFilepath = await getReadmePath({ appDir, stepNumber: number })
 	if (await exists(readmeFilepath)) {
 		const compiled = await compileMdx(readmeFilepath)
 		return compiled
@@ -171,44 +199,57 @@ export async function getExercises(): Promise<Array<Exercise>> {
 }
 
 export async function getApps(): Promise<Array<App>> {
-	const [problemApps, solutionApps, exampleApps] = await Promise.all([
-		getProblemApps(),
-		getSolutionApps(),
-		getExampleApps(),
-	])
-	return [...problemApps, ...solutionApps, ...exampleApps].sort((a, b) => {
-		if (isExampleApp(a)) {
-			if (isExampleApp(b)) return a.name.localeCompare(b.name)
-			else return 1
-		}
-		if (isExampleApp(b)) return -1
+	const apps = await cachified({
+		key: 'apps',
+		cache: getAppCache,
+		// This entire caceh is to avoid a single request getting a fresh value
+		// multiple times unnecessarily (because getApps is called many times)
+		ttl: 300,
+		getFreshValue: async () => {
+			const [problemApps, solutionApps, exampleApps] = await Promise.all([
+				getProblemApps(),
+				getSolutionApps(),
+				getExampleApps(),
+			])
+			const sortedApps = [...problemApps, ...solutionApps, ...exampleApps].sort(
+				(a, b) => {
+					if (isExampleApp(a)) {
+						if (isExampleApp(b)) return a.name.localeCompare(b.name)
+						else return 1
+					}
+					if (isExampleApp(b)) return -1
 
-		if (a.type === b.type) {
-			if (a.exerciseNumber === b.exerciseNumber) {
-				return a.stepNumber - b.stepNumber
-			} else {
-				return a.exerciseNumber - b.exerciseNumber
-			}
-		}
+					if (a.type === b.type) {
+						if (a.exerciseNumber === b.exerciseNumber) {
+							return a.stepNumber - b.stepNumber
+						} else {
+							return a.exerciseNumber - b.exerciseNumber
+						}
+					}
 
-		// at this point, we know that a and b are different types...
-		if (isProblemApp(a)) {
-			if (a.exerciseNumber === b.exerciseNumber) {
-				return a.stepNumber <= b.stepNumber ? 1 : -1
-			} else {
-				return a.exerciseNumber <= b.exerciseNumber ? 1 : -1
-			}
-		}
-		if (isSolutionApp(a)) {
-			if (a.exerciseNumber === b.exerciseNumber) {
-				return a.stepNumber < b.stepNumber ? -1 : 1
-			} else {
-				return a.exerciseNumber < b.exerciseNumber ? -1 : 1
-			}
-		}
-		console.error('unhandled sorting case', a, b)
-		return 0
+					// at this point, we know that a and b are different types...
+					if (isProblemApp(a)) {
+						if (a.exerciseNumber === b.exerciseNumber) {
+							return a.stepNumber <= b.stepNumber ? 1 : -1
+						} else {
+							return a.exerciseNumber <= b.exerciseNumber ? 1 : -1
+						}
+					}
+					if (isSolutionApp(a)) {
+						if (a.exerciseNumber === b.exerciseNumber) {
+							return a.stepNumber < b.stepNumber ? -1 : 1
+						} else {
+							return a.exerciseNumber < b.exerciseNumber ? -1 : 1
+						}
+					}
+					console.error('unhandled sorting case', a, b)
+					return 0
+				},
+			)
+			return sortedApps
+		},
 	})
+	return apps
 }
 
 function getPkgProp(
@@ -225,30 +266,71 @@ function getPkgProp(
 	return value
 }
 
+async function getExampleAppFromPath(
+	fullPath: string,
+	index: number,
+): Promise<ExampleApp> {
+	const dirName = path.basename(fullPath)
+	const compiledReadme = await compileReadme(fullPath)
+	const name = getPkgProp(fullPath, 'name', dirName)
+	return {
+		id: name,
+		name,
+		type: 'example',
+		fullPath,
+		title: compiledReadme?.title ?? name,
+		dirName,
+		portNumber: 3500 + index,
+		instructionsCode: compiledReadme?.code,
+	}
+}
+
 export async function getExampleApps(): Promise<Array<ExampleApp>> {
 	const workshopRoot = await getWorkshopRoot()
-	return readDir(path.join(workshopRoot, 'example')).then(
-		(dirs): Promise<Array<ExampleApp>> => {
-			return Promise.all(
-				dirs.map(async function getAppFromPath(dirName, index) {
-					const relativePath = path.join('example', dirName)
-					const fullPath = path.join(workshopRoot, relativePath)
-					const compiledReadme = await compileReadme(fullPath)
-					const name = getPkgProp(fullPath, 'name', dirName)
-					return {
-						name,
-						type: 'example',
-						relativePath,
-						fullPath,
-						title: compiledReadme?.title ?? name,
-						dirName,
-						portNumber: 3500 + index,
-						instructionsCode: compiledReadme?.code,
-					}
-				}),
-			)
-		},
+	const exampleDirs = await globPromise(path.join(workshopRoot, 'examples/*'))
+	const exampleApps = await Promise.all(
+		exampleDirs.map(async (exampleDir, index) => {
+			return cachified({
+				key: `${exampleDir}-${index}-${await getDirMtimeMs(exampleDir)}`,
+				cache: exampleAppCache,
+				ttl: 1000 * 60 * 60 * 24,
+				getFreshValue: () => getExampleAppFromPath(exampleDir, index),
+			})
+		}),
 	)
+	return exampleApps.flat()
+}
+
+async function getSolutionAppFromPath(
+	fullPath: string,
+): Promise<Array<SolutionApp>> {
+	const dirName = path.basename(fullPath)
+	const parentDirName = path.basename(path.dirname(fullPath))
+	const exerciseNumber = extractExerciseNumber(parentDirName)
+	const name = getPkgProp(fullPath, 'name', dirName)
+	const appInfo = getAppDirInfo(dirName)
+	const firstStepNumber = appInfo.stepNumbers[0]
+	if (firstStepNumber === undefined) {
+		throw new Error(
+			`invalid solution dir name: ${dirName} (could not find first step number)`,
+		)
+	}
+	const portNumber = 5000 + (exerciseNumber - 1) * 10 + firstStepNumber
+	const compiledReadme = await compileReadme(fullPath)
+	return appInfo.stepNumbers.map(stepNumber => {
+		return {
+			id: `${name}-${stepNumber}`,
+			name,
+			title: compiledReadme?.title ?? name,
+			type: 'solution',
+			exerciseNumber,
+			stepNumber,
+			portNumber,
+			dirName,
+			fullPath,
+			instructionsCode: compiledReadme?.code,
+		}
+	})
 }
 
 export async function getSolutionApps(): Promise<Array<SolutionApp>> {
@@ -257,39 +339,50 @@ export async function getSolutionApps(): Promise<Array<SolutionApp>> {
 		path.join(workshopRoot, 'exercises', '**', '*solution*'),
 	)
 	const solutionApps = await Promise.all(
-		solutionDirs.map(async function getAppFromPath(
-			fullPath,
-		): Promise<Array<SolutionApp>> {
-			const dirName = path.basename(fullPath)
-			const parentDirName = path.basename(path.dirname(fullPath))
-			const exerciseNumber = extractExerciseNumber(parentDirName)
-			const name = getPkgProp(fullPath, 'name', dirName)
-			const appInfo = getAppDirInfo(dirName)
-			const firstStepNumber = appInfo.stepNumbers[0]
-			if (firstStepNumber === undefined) {
-				throw new Error(
-					`invalid solution dir name: ${dirName} (could not find first step number)`,
-				)
-			}
-			const portNumber = 5000 + (exerciseNumber - 1) * 10 + firstStepNumber
-			const compiledReadme = await compileReadme(fullPath)
-			return appInfo.stepNumbers.map(stepNumber => {
-				return {
-					id: `${name}-${stepNumber}`,
-					name,
-					title: compiledReadme?.title ?? name,
-					type: 'solution',
-					exerciseNumber,
-					stepNumber,
-					portNumber,
-					dirName,
-					fullPath,
-					instructionsCode: compiledReadme?.code,
-				}
+		solutionDirs.map(async solutionDir => {
+			return cachified({
+				key: `${solutionDir}-${await getDirMtimeMs(solutionDir)}`,
+				cache: solutionAppCache,
+				ttl: 1000 * 60 * 60 * 24,
+				getFreshValue: () => getSolutionAppFromPath(solutionDir),
 			})
 		}),
 	)
 	return solutionApps.flat()
+}
+
+async function getProblemAppFromPath(
+	fullPath: string,
+): Promise<Array<ProblemApp>> {
+	const dirName = path.basename(fullPath)
+	const parentDirName = path.basename(path.dirname(fullPath))
+	const exerciseNumber = extractExerciseNumber(parentDirName)
+	const name = getPkgProp(fullPath, 'name', dirName)
+	const appInfo = getAppDirInfo(dirName)
+	const firstStepNumber = appInfo.stepNumbers[0]
+	if (firstStepNumber === undefined) {
+		throw new Error(
+			`invalid problem dir name: ${dirName} (could not find first step number)`,
+		)
+	}
+	const portNumber = 4000 + (exerciseNumber - 1) * 10 + firstStepNumber
+	return Promise.all(
+		appInfo.stepNumbers.map(async stepNumber => {
+			const compiledReadme = await compileReadme(fullPath, stepNumber)
+			return {
+				id: `${name}-${stepNumber}`,
+				name,
+				title: compiledReadme?.title ?? name,
+				type: 'problem',
+				exerciseNumber,
+				stepNumber,
+				portNumber,
+				dirName,
+				fullPath,
+				instructionsCode: compiledReadme?.code,
+			}
+		}),
+	)
 }
 
 export async function getProblemApps(): Promise<Array<ProblemApp>> {
@@ -298,38 +391,13 @@ export async function getProblemApps(): Promise<Array<ProblemApp>> {
 		path.join(workshopRoot, 'exercises', '**', '*problem*'),
 	)
 	const problemApps = await Promise.all(
-		problemDirs.map(async function getAppFromPath(
-			fullPath,
-		): Promise<Array<ProblemApp>> {
-			const dirName = path.basename(fullPath)
-			const parentDirName = path.basename(path.dirname(fullPath))
-			const exerciseNumber = extractExerciseNumber(parentDirName)
-			const name = getPkgProp(fullPath, 'name', dirName)
-			const appInfo = getAppDirInfo(dirName)
-			const firstStepNumber = appInfo.stepNumbers[0]
-			if (firstStepNumber === undefined) {
-				throw new Error(
-					`invalid problem dir name: ${dirName} (could not find first step number)`,
-				)
-			}
-			const portNumber = 4000 + (exerciseNumber - 1) * 10 + firstStepNumber
-			return Promise.all(
-				appInfo.stepNumbers.map(async stepNumber => {
-					const compiledReadme = await compileReadme(fullPath, stepNumber)
-					return {
-						id: `${name}-${stepNumber}`,
-						name,
-						title: compiledReadme?.title ?? name,
-						type: 'problem',
-						exerciseNumber,
-						stepNumber,
-						portNumber,
-						dirName,
-						fullPath,
-						instructionsCode: compiledReadme?.code,
-					}
-				}),
-			)
+		problemDirs.map(async problemDir => {
+			return cachified({
+				key: `${problemDir}-${await getDirMtimeMs(problemDir)}`,
+				cache: problemAppCache,
+				ttl: 1000 * 60 * 60 * 24,
+				getFreshValue: () => getProblemAppFromPath(problemDir),
+			})
 		}),
 	)
 	return problemApps.flat()
@@ -408,7 +476,7 @@ export async function getPrevExerciseApp(app: ExerciseStepApp) {
 	return prevApp ? prevApp : null
 }
 
-export function getAppPateRoute(app: ExerciseStepApp) {
+export function getAppPageRoute(app: ExerciseStepApp) {
 	const exerciseNumber = app.exerciseNumber.toString().padStart(2, '0')
 	const stepNumber = app.stepNumber.toString().padStart(2, '0')
 	return `/${exerciseNumber}/${stepNumber}/${app.type}`

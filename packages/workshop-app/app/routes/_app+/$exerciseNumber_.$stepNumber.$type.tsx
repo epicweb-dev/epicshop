@@ -8,7 +8,7 @@ import { getDiffCode } from '~/utils/diff.server'
 import { Mdx } from '~/utils/mdx'
 import {
 	getAppByName,
-	getAppPateRoute,
+	getAppPageRoute,
 	getApps,
 	getExerciseApp,
 	getNextExerciseApp,
@@ -59,13 +59,13 @@ export async function loader({ request, params }: DataFunctionArgs) {
 	const prevApp = await getPrevExerciseApp(exerciseStepApp)
 	const nextStepLink = nextApp
 		? {
-				to: getAppPateRoute(nextApp),
+				to: getAppPageRoute(nextApp),
 				children: `${nextApp.title} (${nextApp.type}) ➡️`,
 		  }
 		: null
 	const prevStepLink = prevApp
 		? {
-				to: getAppPateRoute(prevApp),
+				to: getAppPageRoute(prevApp),
 				children: `⬅️ ${prevApp.title} (${prevApp.type})`,
 		  }
 		: null
