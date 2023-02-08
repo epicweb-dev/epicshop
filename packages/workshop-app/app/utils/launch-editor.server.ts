@@ -6,7 +6,6 @@ import fsExtra from 'fs-extra'
 import path from 'path'
 import child_process from 'child_process'
 import os from 'os'
-import chalk from 'chalk'
 import shellQuote from 'shell-quote'
 
 function isTerminalEditor(editor: string) {
@@ -262,7 +261,11 @@ function guessEditor() {
 	return [null]
 }
 
-function printInstructions(fileName: string, errorMessage: string | null) {
+async function printInstructions(
+	fileName: string,
+	errorMessage: string | null,
+) {
+	const { default: chalk } = await import('chalk')
 	console.log()
 	console.log(
 		chalk.red('Could not open ' + path.basename(fileName) + ' in the editor.'),
@@ -289,11 +292,12 @@ function printInstructions(fileName: string, errorMessage: string | null) {
 }
 
 let _childProcess: ReturnType<typeof child_process.spawn> | null = null
-export function launchEditor(
+export async function launchEditor(
 	fileName: string,
 	lineNumber?: number,
 	colNumber?: number,
 ) {
+	const { default: chalk } = await import('chalk')
 	if (!fs.existsSync(fileName)) {
 		fsExtra.writeFileSync(fileName, '', 'utf8')
 	}
@@ -314,7 +318,7 @@ export function launchEditor(
 	let [editor, ...args] = guessEditor()
 
 	if (!editor) {
-		printInstructions(fileName, null)
+		await printInstructions(fileName, null)
 		return
 	}
 
@@ -394,15 +398,15 @@ export function launchEditor(
 	} else {
 		_childProcess = child_process.spawn(editor, args, { stdio: 'inherit' })
 	}
-	_childProcess.on('exit', function (errorCode) {
+	_childProcess.on('exit', async function (errorCode) {
 		_childProcess = null
 
 		if (errorCode) {
-			printInstructions(fileName, '(code ' + errorCode + ')')
+			await printInstructions(fileName, '(code ' + errorCode + ')')
 		}
 	})
 
-	_childProcess.on('error', function (error) {
-		printInstructions(fileName, error.message)
+	_childProcess.on('error', async function (error) {
+		await printInstructions(fileName, error.message)
 	})
 }
