@@ -1,3 +1,4 @@
+import path from 'path'
 import { type getDiffFiles } from './diff.server'
 import prettier from 'prettier'
 
@@ -6,6 +7,7 @@ import prettier from 'prettier'
 export async function updateFilesSection(
 	readme: string,
 	files: Awaited<ReturnType<typeof getDiffFiles>>,
+	cwd: string,
 ) {
 	const [
 		{ fromMarkdown },
@@ -53,12 +55,16 @@ export async function updateFilesSection(
 
 	const filesMarkdown = files.length
 		? files
-				.map(({ status, path }) => {
-					return `- ${status}: \`${path}\``
+				.map(file => {
+					return `<li className="flex gap-2"><span>${
+						file.status
+					}:</span><LaunchEditor file=${JSON.stringify(
+						path.join(cwd, file.path),
+					)}>\`${file.path}\`</LaunchEditor></li>`
 				})
 				.join('\n')
 		: '- No files changed'
-	const filesAst = fromMarkdown(filesMarkdown, {
+	const filesAst = fromMarkdown(`<ul>${filesMarkdown}</ul>`, {
 		extensions: [mdxjs()],
 		mdastExtensions: [mdxFromMarkdown()],
 	})

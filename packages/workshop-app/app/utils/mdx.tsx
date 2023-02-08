@@ -1,10 +1,12 @@
 import LRU from 'lru-cache'
 import * as mdxBundler from 'mdx-bundler/client'
 import * as React from 'react'
+import { LaunchEditor } from '~/routes/launch-editor'
 import { AnchorOrLink } from './misc'
 
 const mdxComponents = {
 	a: AnchorOrLink,
+	LaunchEditor,
 }
 /**
  * This should be rendered within a useMemo

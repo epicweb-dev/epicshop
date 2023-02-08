@@ -182,7 +182,6 @@ export async function getDiffCode(app1: App, app2: App) {
 }
 
 async function getDiffCodeImpl(app1: App, app2: App) {
-	console.log('getting diff code')
 	const { execa } = await import('execa')
 	const { app1CopyPath, app2CopyPath } = await prepareForDiff(app1, app2)
 
@@ -214,12 +213,20 @@ async function getDiffCodeImpl(app1: App, app2: App) {
 		markdownLines.push('No changes')
 	}
 	for (const file of parsed.files) {
+		const pathToCopy = file.type === 'RenamedFile' ? file.pathBefore : file.path
+		const relativePath = diffPathToRelative(pathToCopy)
+		const [_appDir, ...restOfPath] = relativePath.split(path.sep)
+		const fullPathToFileInApp1 = path.join(app1.fullPath, ...restOfPath)
 		switch (file.type) {
 			case 'ChangedFile': {
 				markdownLines.push(`
 <details>
 
-<summary>➕/➖ \`${diffPathToRelative(file.path)}\`</summary>
+<summary>➕/➖ \`${relativePath}\`</summary>
+
+<LaunchEditor file=${JSON.stringify(
+					fullPathToFileInApp1,
+				)}>\`${relativePath}\`</LaunchEditor>
 
 ${getFileCodeblocks(file).join('\n')}
 
@@ -231,7 +238,11 @@ ${getFileCodeblocks(file).join('\n')}
 				markdownLines.push(`
 <details>
 
-<summary>➖ \`${diffPathToRelative(file.path)}\` (file deleted)</summary>
+<summary>➖ \`${relativePath}\` (file deleted)</summary>
+
+<LaunchEditor file=${JSON.stringify(
+					fullPathToFileInApp1,
+				)}>\`${relativePath}\`</LaunchEditor>
 
 ${getFileCodeblocks(file).join('\n')}
 
@@ -247,6 +258,10 @@ ${getFileCodeblocks(file).join('\n')}
 					file.pathAfter,
 				)}\` (file renamed)</summary>
 
+<LaunchEditor file=${JSON.stringify(
+					fullPathToFileInApp1,
+				)}>\`${relativePath}\`</LaunchEditor>
+
 ${getFileCodeblocks(file).join('\n')}
 
 </details>
@@ -257,7 +272,11 @@ ${getFileCodeblocks(file).join('\n')}
 				markdownLines.push(`
 <details>
 
-<summary>➕ \`${diffPathToRelative(file.path)}\` (file added)</summary>
+<summary>➕ \`${relativePath}\` (file added)</summary>
+
+<LaunchEditor file=${JSON.stringify(
+					fullPathToFileInApp1,
+				)}>\`${relativePath}\`</LaunchEditor>
 
 ${getFileCodeblocks(file).join('\n')}
 
