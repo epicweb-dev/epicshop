@@ -28,6 +28,7 @@ function getLanguage(ext: string) {
 
 function getFileCodeblocks(
 	file: ReturnType<typeof parseGitDiff>['files'][number],
+	launchEditorPath: string,
 ) {
 	if (!file.chunks.length) {
 		return [`No changes`]
@@ -35,6 +36,8 @@ function getFileCodeblocks(
 	const filepath = file.type === 'RenamedFile' ? file.pathAfter : file.path
 	const extension = path.extname(filepath).slice(1)
 	const lang = getLanguage(extension)
+	const pathToCopy = file.type === 'RenamedFile' ? file.pathBefore : file.path
+	const relativePath = diffPathToRelative(pathToCopy)
 	const markdownLines = []
 	for (const chunk of file.chunks) {
 		const removedLineNumbers = []
@@ -59,7 +62,7 @@ function getFileCodeblocks(
 
 		const params = new URLSearchParams(
 			[
-				['filename', diffPathToRelative(filepath)],
+				['filename', relativePath],
 				['start', startLine.toString()],
 				removedLineNumbers.length
 					? ['remove', removedLineNumbers.join(',')]
@@ -71,9 +74,19 @@ function getFileCodeblocks(
 			.replace('&', ' ')
 
 		markdownLines.push(`
+<div className="relative">
+
 \`\`\`${lang} ${params}
 ${lines.join('\n')}
 \`\`\`
+
+<div className="absolute bottom-0 translate-x-4 -translate-y-2 text-gray-300 opacity-75">
+	<LaunchEditor file=${JSON.stringify(
+		launchEditorPath,
+	)} line={${startLine}}>Open</LaunchEditor>
+</div>
+
+</div>
 `)
 	}
 	return markdownLines
@@ -171,9 +184,14 @@ export async function getDiffFiles(app1: App, app2: App) {
 	return diffFiles
 }
 
-export async function getDiffCode(app1: App, app2: App) {
+export async function getDiffCode(
+	app1: App,
+	app2: App,
+	{ forceFresh = false } = {},
+) {
 	return cachified({
 		cache: diffCodeCache,
+		forceFresh,
 		key: `${app1.dirName}-${await getDirMtimeMs(app1.fullPath)}-${
 			app2.dirName
 		}-${await getDirMtimeMs(app2.fullPath)}`,
@@ -215,8 +233,8 @@ async function getDiffCodeImpl(app1: App, app2: App) {
 	for (const file of parsed.files) {
 		const pathToCopy = file.type === 'RenamedFile' ? file.pathBefore : file.path
 		const relativePath = diffPathToRelative(pathToCopy)
-		const [_appDir, ...restOfPath] = relativePath.split(path.sep)
-		const fullPathToFileInApp1 = path.join(app1.fullPath, ...restOfPath)
+		const [, ...restOfPath] = relativePath.split(path.sep)
+		const launchEditorPath = path.join(app1.fullPath, ...restOfPath)
 		switch (file.type) {
 			case 'ChangedFile': {
 				markdownLines.push(`
@@ -224,11 +242,7 @@ async function getDiffCodeImpl(app1: App, app2: App) {
 
 <summary>➕/➖ \`${relativePath}\`</summary>
 
-<LaunchEditor file=${JSON.stringify(
-					fullPathToFileInApp1,
-				)}>\`${relativePath}\`</LaunchEditor>
-
-${getFileCodeblocks(file).join('\n')}
+${getFileCodeblocks(file, launchEditorPath).join('\n')}
 
 </details>
 `)
@@ -240,11 +254,7 @@ ${getFileCodeblocks(file).join('\n')}
 
 <summary>➖ \`${relativePath}\` (file deleted)</summary>
 
-<LaunchEditor file=${JSON.stringify(
-					fullPathToFileInApp1,
-				)}>\`${relativePath}\`</LaunchEditor>
-
-${getFileCodeblocks(file).join('\n')}
+${getFileCodeblocks(file, launchEditorPath).join('\n')}
 
 </details>
 `)
@@ -258,11 +268,7 @@ ${getFileCodeblocks(file).join('\n')}
 					file.pathAfter,
 				)}\` (file renamed)</summary>
 
-<LaunchEditor file=${JSON.stringify(
-					fullPathToFileInApp1,
-				)}>\`${relativePath}\`</LaunchEditor>
-
-${getFileCodeblocks(file).join('\n')}
+${getFileCodeblocks(file, launchEditorPath).join('\n')}
 
 </details>
 `)
@@ -274,11 +280,7 @@ ${getFileCodeblocks(file).join('\n')}
 
 <summary>➕ \`${relativePath}\` (file added)</summary>
 
-<LaunchEditor file=${JSON.stringify(
-					fullPathToFileInApp1,
-				)}>\`${relativePath}\`</LaunchEditor>
-
-${getFileCodeblocks(file).join('\n')}
+${getFileCodeblocks(file, launchEditorPath).join('\n')}
 
 </details>
 `)

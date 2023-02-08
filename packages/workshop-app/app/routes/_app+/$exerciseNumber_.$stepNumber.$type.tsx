@@ -123,7 +123,9 @@ export async function loader({ request, params }: DataFunctionArgs) {
 			allApps,
 			app1: app1.name,
 			app2: app2.name,
-			diffCode: await getDiffCode(app1, app2),
+			diffCode: await getDiffCode(app1, app2, {
+				forceFresh: reqUrl.searchParams.has('forceFresh'),
+			}),
 		},
 	} as const)
 }

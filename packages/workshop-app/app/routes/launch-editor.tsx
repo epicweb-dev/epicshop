@@ -17,7 +17,7 @@ export async function action({ request }: DataFunctionArgs) {
 		line: formData.get('line') ?? undefined,
 		column: formData.get('column') ?? undefined,
 	})
-	launchEditor(file, line, column)
+	await launchEditor(file, line, column)
 	return json({ success: true })
 }
 
