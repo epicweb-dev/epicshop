@@ -2,6 +2,9 @@
   "name": "exercises.01-nested-routing.01-02.problem",
   "private": true,
   "sideEffects": false,
+  "kcd-workshop": {
+    "testRequiresApp": true
+  },
   "scripts": {
     "build": "run-s build:*",
     "build:css": "npm run generate:css -- --minify",
@@ -9,6 +12,8 @@
     "dev": "run-p dev:*",
     "dev:css": "npm run generate:css -- --watch",
     "dev:remix": "remix dev",
+    "test:01": "echo \"\\x1b[36mhello\\x1b[37mworld\" && sleep 0.1 && echo hi && sleep 0.1 && echo hi && sleep 0.1 && echo hi && sleep 0.1 && echo hi && sleep 0.1 && echo hi && sleep 0.1 && echo hi && sleep 0.1 && echo hi && sleep 0.1 && echo hi && sleep 0.1 && echo hi && sleep 0.1 && echo hi && sleep 0.1 && echo hi && sleep 0.1 && echo hi && sleep 0.1 && echo hi && sleep 0.1 && echo hi && sleep 0.1 && echo hi && sleep 0.1 && echo hi && sleep 0.1 && echo hi && sleep 0.1 && echo hi",
+    "test:02": "echo hello",
     "format": "prettier --write .",
     "generate:css": "tailwindcss -o ./app/styles/tailwind.css",
     "lint": "eslint --cache --cache-location ./node_modules/.cache/eslint .",

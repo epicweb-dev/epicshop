@@ -10,11 +10,13 @@ import {
 	getAppByName,
 	getAppPageRoute,
 	getApps,
-	requireExercise,
 	getExerciseApp,
 	getNextExerciseApp,
 	getPrevExerciseApp,
 	isExerciseStepApp,
+	isProblemApp,
+	isSolutionApp,
+	requireExercise,
 	requireExerciseApp,
 } from '~/utils/misc.server'
 import { isAppRunning, isPortAvailable } from '~/utils/process-manager.server'
@@ -23,6 +25,7 @@ import { Tab, TabList, TabPanel, TabPanels, Tabs } from '@reach/tabs'
 import { useSearchParams } from '@remix-run/react'
 import { useParams } from 'react-router'
 import { InBrowserBrowser } from '~/components/in-browser-browser'
+import { TestOutput } from '../test'
 
 export async function loader({ request, params }: DataFunctionArgs) {
 	const exerciseStepApp = await requireExerciseApp(params)
@@ -35,8 +38,13 @@ export async function loader({ request, params }: DataFunctionArgs) {
 		throw redirect(reqUrl.toString())
 	}
 
-	const problemApp = await getExerciseApp({ ...params, type: 'problem' })
-	const solutionApp = await getExerciseApp({ ...params, type: 'solution' })
+	const problemApp = await getExerciseApp({ ...params, type: 'problem' }).then(
+		a => (isProblemApp(a) ? a : null),
+	)
+	const solutionApp = await getExerciseApp({
+		...params,
+		type: 'solution',
+	}).then(a => (isSolutionApp(a) ? a : null))
 	if (!problemApp && !solutionApp) {
 		throw new Response('Not found', { status: 404 })
 	}
@@ -98,6 +106,7 @@ export async function loader({ request, params }: DataFunctionArgs) {
 			: null,
 		problem: problemApp
 			? {
+					id: problemApp.id,
 					isRunning: isProblemRunning,
 					portIsAvailable: isProblemRunning
 						? null
@@ -130,7 +139,7 @@ export async function loader({ request, params }: DataFunctionArgs) {
 	} as const)
 }
 
-const tabs = ['problem', 'solution', 'diff'] as const
+const tabs = ['problem', 'solution', 'tests', 'diff'] as const
 const isValidPreview = (s: string | null): s is typeof tabs[number] =>
 	Boolean(s && tabs.includes(s as typeof tabs[number]))
 
@@ -225,6 +234,20 @@ export default function ExercisePartRoute() {
 							<Link
 								preventScrollReset
 								prefetch="intent"
+								to={`?${withParam(searchParams, 'preview', 'tests')}`}
+								onClick={e => {
+									if (e.metaKey) {
+										e.stopPropagation()
+									}
+								}}
+							>
+								Tests
+							</Link>
+						</Tab>
+						<Tab tabIndex={-1}>
+							<Link
+								preventScrollReset
+								prefetch="intent"
 								to={`?${withParam(searchParams, 'preview', 'diff')}`}
 								onClick={e => {
 									if (e.metaKey) {
@@ -253,6 +276,13 @@ export default function ExercisePartRoute() {
 							)}
 						</TabPanel>
 						<TabPanel hidden={tabIndex !== 2}>
+							{data.problem ? (
+								<TestOutput id={data.problem.id} />
+							) : (
+								<p>No tests here. Sorry.</p>
+							)}
+						</TabPanel>
+						<TabPanel hidden={tabIndex !== 3}>
 							<div>
 								<div className="prose whitespace-pre-wrap">
 									<Mdx code={data.diff.diffCode} />

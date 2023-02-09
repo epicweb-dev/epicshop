@@ -12,14 +12,14 @@ if (argv[0] !== 'start') {
 }
 
 if (process.env.NODE_ENV === 'production' || isPublished) {
-	exec('npm run start -s', {
-		KCDSHOP_CONTEXT_CWD: process.cwd(),
+	exec('npm run start', {
+		KCDSHOP_CONTEXT_CWD: process.env.KCDSHOP_CONTEXT_CWD ?? process.cwd(),
 	}).catch(code => {
 		process.exit(code)
 	})
 } else {
-	exec('npm run dev -s', {
-		KCDSHOP_CONTEXT_CWD: process.cwd(),
+	exec('npm run dev', {
+		KCDSHOP_CONTEXT_CWD: process.env.KCDSHOP_CONTEXT_CWD ?? process.cwd(),
 	}).catch(code => {
 		process.exit(code)
 	})

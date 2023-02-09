@@ -48,6 +48,8 @@ export type ProblemApp = BaseApp & {
 	type: 'problem'
 	exerciseNumber: number
 	stepNumber: number
+	testScriptName: string
+	testRequiresApp: boolean
 }
 export type SolutionApp = BaseApp & {
 	type: 'solution'
@@ -60,12 +62,26 @@ export type ExerciseStepApp = ProblemApp | SolutionApp
 
 export type App = ExampleApp | ExerciseStepApp
 
-export function isProblemApp(app: App): app is ProblemApp {
-	return app.type === 'problem'
+export function isApp(app: any): app is App {
+	return (
+		app &&
+		typeof app === 'object' &&
+		typeof app.id === 'string' &&
+		typeof app.name === 'string' &&
+		typeof app.title === 'string' &&
+		typeof app.dirName === 'string' &&
+		typeof app.fullPath === 'string' &&
+		typeof app.portNumber === 'number' &&
+		typeof app.type === 'string'
+	)
 }
 
-export function isSolutionApp(app: App): app is SolutionApp {
-	return app.type === 'solution'
+export function isProblemApp(app: any): app is ProblemApp {
+	return isApp(app) && app.type === 'problem'
+}
+
+export function isSolutionApp(app: any): app is SolutionApp {
+	return isApp(app) && app.type === 'solution'
 }
 
 export function isFirstStepProblemApp(
@@ -80,11 +96,11 @@ export function isFirstStepSolutionApp(
 	return isSolutionApp(app) && app.stepNumber === 1
 }
 
-export function isExampleApp(app: App): app is ExampleApp {
-	return app.type === 'example'
+export function isExampleApp(app: any): app is ExampleApp {
+	return isApp(app) && app.type === 'example'
 }
 
-export function isExerciseStepApp(app: App): app is ExerciseStepApp {
+export function isExerciseStepApp(app: any): app is ExerciseStepApp {
 	return isProblemApp(app) || isSolutionApp(app)
 }
 
@@ -251,11 +267,11 @@ export async function getApps(): Promise<Array<App>> {
 	return apps
 }
 
-async function getPkgProp(
+async function getPkgProp<Value>(
 	fullPath: string,
 	prop: string,
-	defaultValue?: string,
-): Promise<string> {
+	defaultValue?: Value,
+): Promise<Value> {
 	const pkg = JSON.parse(
 		(
 			await fs.promises.readFile(path.join(fullPath, 'package.json'))
@@ -264,15 +280,15 @@ async function getPkgProp(
 	const propPath = prop.split('.')
 	let value = pkg
 	for (const p of propPath) {
-		if (value[p] === undefined) {
-			return defaultValue ?? ''
-		}
 		value = value[p]
+		if (value === undefined) break
 	}
-	if (value === undefined && defaultValue) {
-		return defaultValue
+	if (value === undefined && defaultValue === undefined) {
+		throw new Error(
+			`Could not find required property ${prop} in package.json of ${fullPath}`,
+		)
 	}
-	return value
+	return value ?? defaultValue
 }
 
 async function getExampleAppFromPath(
@@ -378,6 +394,7 @@ async function getProblemAppFromPath(
 	return Promise.all(
 		appInfo.stepNumbers.map(async stepNumber => {
 			const compiledReadme = await compileReadme(fullPath, stepNumber)
+			const isMultiStep = appInfo.stepNumbers.length > 1
 			return {
 				id: `${name}-${stepNumber}`,
 				name,
@@ -389,6 +406,14 @@ async function getProblemAppFromPath(
 				dirName,
 				fullPath,
 				instructionsCode: compiledReadme?.code,
+				testScriptName: isMultiStep
+					? `test:${stepNumber.toString().padStart(2, '0')}`
+					: 'test',
+				testRequiresApp: await getPkgProp(
+					fullPath,
+					'kcd-workshop.testRequiresApp',
+					false,
+				),
 			}
 		}),
 	)
@@ -470,6 +495,11 @@ export async function getExerciseApp(params: {
 export async function getAppByName(name: string) {
 	const apps = await getApps()
 	return apps.find(a => a.name === name)
+}
+
+export async function getAppById(id: string) {
+	const apps = await getApps()
+	return apps.find(a => a.id === id)
 }
 
 export async function getNextExerciseApp(app: ExerciseStepApp) {

@@ -17,9 +17,8 @@
   "license": "GPL-3.0-only",
   "workspaces": [
     "packages/*",
-    "packages/example/exercise/*",
-    "packages/example/final/*",
-    "packages/example/example/*"
+    "packages/example/exercises/*/*",
+    "packages/example/examples/*"
   ],
   "devDependencies": {
     "@playwright/test": "^1.30.0",

@@ -3,7 +3,7 @@ import { spawn } from 'child_process'
 import net from 'net'
 import closeWithGrace from 'close-with-grace'
 import waitOn from 'wait-on'
-import type { App } from './misc.server'
+import type { App, ProblemApp } from './misc.server'
 
 type DevProcessesMap = Map<
 	string,
@@ -13,20 +13,51 @@ type DevProcessesMap = Map<
 		port: number
 	}
 >
+
+type OutputLine = {
+	type: 'stdout' | 'stderr'
+	content: string
+	timestamp: number
+}
+
+type TestProcessEntry = {
+	process: ChildProcess | null
+	output: Array<OutputLine>
+	exitCode?: number | null
+}
+
+type TestProcessesMap = Map<string, TestProcessEntry>
 declare global {
 	var __dev_processes__: DevProcessesMap
+	var __test_processes__: TestProcessesMap
 }
 
 const devProcesses = (global.__dev_processes__ =
-	global.__dev_processes__ ?? getProcessesMap())
+	global.__dev_processes__ ?? getDevProcessesMap())
+const testProcesses = (global.__test_processes__ =
+	global.__test_processes__ ?? getTestProcessesMap())
 
-function getProcessesMap() {
-	const procs = new Map() as DevProcessesMap
+function getDevProcessesMap() {
+	const procs: DevProcessesMap = new Map()
 
-	closeWithGrace(() => {
+	closeWithGrace(async () => {
 		for (const [name, proc] of procs.entries()) {
 			console.log('closing', name)
 			proc.process.kill()
+		}
+	})
+	return procs
+}
+
+function getTestProcessesMap() {
+	const procs: TestProcessesMap = new Map()
+
+	closeWithGrace(async () => {
+		for (const [id, proc] of procs.entries()) {
+			if (proc.process) {
+				console.log('closing', id)
+				proc.process.kill()
+			}
 		}
 	})
 	return procs
@@ -77,29 +108,77 @@ export async function runAppDev(app: App) {
 	const prefix = chalk[color](
 		`[${app.name.replace(/^exercises\./, '')}:${portNumber}]`,
 	)
-	appProcess.stdout.on('data', data => {
+	function handleStdOutData(data: Buffer) {
 		console.log(
-			String(data)
+			data
+				.toString('utf-8')
 				.split('\n')
 				.map(line => `${prefix} ${line}`)
 				.join('\n'),
 		)
-	})
-	appProcess.stderr.on('data', data => {
+	}
+	appProcess.stdout.on('data', handleStdOutData)
+	function handleStdErrData(data: Buffer) {
 		console.log(
-			String(data)
+			data
+				.toString('utf-8')
 				.split('\n')
 				.map(line => `${prefix} ${line}`)
 				.join('\n'),
 		)
-	})
+	}
+	appProcess.stderr.on('data', handleStdErrData)
 	devProcesses.set(key, { color, process: appProcess, port: portNumber })
 	appProcess.on('exit', code => {
+		appProcess.stdout.off('data', handleStdOutData)
+		appProcess.stderr.off('data', handleStdErrData)
 		console.log(`${prefix} exited (${code})`)
 		devProcesses.delete(key)
 	})
 
 	return { status: 'process-started', running: true } as const
+}
+
+export function runAppTests(app: ProblemApp) {
+	const key = app.id
+
+	const testProcess = spawn('npm', ['run', app.testScriptName, '--silent'], {
+		cwd: app.fullPath,
+		env: {
+			...process.env,
+			// TODO: support specifying the env
+			NODE_ENV: 'development',
+			// TODO: support specifying the port
+			PORT: String(app.portNumber),
+		},
+	})
+	const output: Array<OutputLine> = []
+	const entry: TestProcessEntry = { process: testProcess, output }
+	function handleStdOutData(data: Buffer) {
+		output.push({
+			type: 'stdout',
+			content: data.toString('utf-8'),
+			timestamp: Date.now(),
+		})
+	}
+	testProcess.stdout.on('data', handleStdOutData)
+	function handleStdErrData(data: Buffer) {
+		output.push({
+			type: 'stderr',
+			content: data.toString('utf-8'),
+			timestamp: Date.now(),
+		})
+	}
+	testProcess.stderr.on('data', handleStdErrData)
+	testProcess.on('exit', code => {
+		testProcess.stdout.off('data', handleStdOutData)
+		testProcess.stderr.off('data', handleStdErrData)
+		// don't delete the entry from the map so we can show the output at any time
+		entry.process = null
+		entry.exitCode = code
+	})
+	testProcesses.set(key, entry)
+	return testProcess
 }
 
 export async function waitOnApp(app: App) {
@@ -124,11 +203,39 @@ export function isPortAvailable(port: number | string): Promise<boolean> {
 }
 
 export function isAppRunning(app: App) {
-	return devProcesses.has(app.name)
+	try {
+		const devProcess = devProcesses.get(app.name)
+		if (!devProcess) return false
+		if (devProcess.process === null) return false
+		devProcess.process.kill(0)
+		return true
+	} catch {
+		return false
+	}
+}
+
+export function isTestRunning(app: ProblemApp) {
+	try {
+		const testProcess = testProcesses.get(app.id)
+		if (!testProcess) return false
+		if (testProcess.process === null) return false
+		testProcess.process.kill(0)
+		return true
+	} catch {
+		return false
+	}
+}
+
+export function getTestProcessEntry(app: ProblemApp) {
+	return testProcesses.get(app.id)
+}
+
+export function clearTestProcessEntry(app: ProblemApp) {
+	return testProcesses.delete(app.id)
 }
 
 export function getProcesses() {
-	return devProcesses
+	return { devProcesses, testProcesses }
 }
 
 export async function closeProcess(key: string) {
