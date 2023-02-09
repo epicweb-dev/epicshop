@@ -531,7 +531,12 @@ export function getAppPageRoute(app: ExerciseStepApp) {
 
 export async function getWorkshopTitle() {
 	const root = await getWorkshopRoot()
-	const title = await getPkgProp(root, 'kcd-workshop.title')
+	const title = await getPkgProp<string>(root, 'kcd-workshop.title')
+	if (!title) {
+		throw new Error(
+			`Workshop title not found. Make sure the root of the workshop has "kcd-workshop" and "title" in the package.json. ${root}`,
+		)
+	}
 	return title
 }
 

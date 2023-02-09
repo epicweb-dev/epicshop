@@ -6,8 +6,21 @@ export async function loader() {
 		string,
 		{ port: number; pid?: number; color: string }
 	> = {}
-	for (const [name, { port, process, color }] of getProcesses().entries()) {
+	for (const [
+		name,
+		{ port, process, color },
+	] of getProcesses().devProcesses.entries()) {
 		processes[name] = { port, pid: process.pid, color }
 	}
-	return json({ processes })
+	const testProcesses: Record<
+		string,
+		{ pid?: number; exitCode?: number | null; output?: Array<any> }
+	> = {}
+	for (const [
+		name,
+		{ process, exitCode, output },
+	] of getProcesses().testProcesses.entries()) {
+		testProcesses[name] = { pid: process?.pid, exitCode, output }
+	}
+	return json({ processes, testProcesses })
 }

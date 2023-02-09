@@ -20,12 +20,27 @@ export async function loader() {
 		string,
 		{ port: number; pid?: number; color: string }
 	> = {}
-	for (const [name, { port, process, color }] of getProcesses().entries()) {
+	const testProcesses: Record<
+		string,
+		{ pid?: number; exitCode?: number | null }
+	> = {}
+	for (const [
+		name,
+		{ port, process, color },
+	] of getProcesses().devProcesses.entries()) {
 		processes[name] = { port, pid: process.pid, color }
+	}
+
+	for (const [
+		name,
+		{ process, exitCode },
+	] of getProcesses().testProcesses.entries()) {
+		testProcesses[name] = { pid: process?.pid, exitCode }
 	}
 	return json({
 		apps,
 		processes,
+		testProcesses,
 	})
 }
 
@@ -102,6 +117,18 @@ export default function AdminLayout() {
 							<span>
 								{key} - Port: {process.port} - PID {process.pid} -{' '}
 								{process.color}
+							</span>
+						</li>
+					))}
+				</ul>
+			</div>
+			<div>
+				<h2>Test Processes</h2>
+				<ul className="overflow-y-scroll border-2 p-8">
+					{Object.entries(data.testProcesses).map(([key, process]) => (
+						<li key={key}>
+							<span>
+								{key} - PID {process.pid} - Exit code: {process.exitCode}
 							</span>
 						</li>
 					))}
