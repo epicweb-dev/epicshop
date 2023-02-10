@@ -261,43 +261,13 @@ function guessEditor() {
 	return [null]
 }
 
-async function printInstructions(
-	fileName: string,
-	errorMessage: string | null,
-) {
-	const { default: chalk } = await import('chalk')
-	console.log()
-	console.log(
-		chalk.red('Could not open ' + path.basename(fileName) + ' in the editor.'),
-	)
-	if (errorMessage) {
-		if (errorMessage[errorMessage.length - 1] !== '.') {
-			errorMessage += '.'
-		}
-		console.log(
-			chalk.red('The editor process exited with an error: ' + errorMessage),
-		)
-	}
-	console.log()
-	console.log(
-		'To set up the editor integration, add something like ' +
-			chalk.cyan('KCDSHOP_EDITOR=atom') +
-			' to the ' +
-			// TODO: read the .env.local file
-			chalk.green('.env.local') +
-			' file in your project folder ' +
-			'and restart the development server. (NOTE, the .env.local thing does not work yet... Bug Kent about it.',
-	)
-	console.log()
-}
-
 let _childProcess: ReturnType<typeof child_process.spawn> | null = null
+type Result = { status: 'success' } | { status: 'error'; error: string }
 export async function launchEditor(
 	fileName: string,
 	lineNumber?: number,
 	colNumber?: number,
-) {
-	const { default: chalk } = await import('chalk')
+): Promise<Result> {
 	if (!fs.existsSync(fileName)) {
 		fsExtra.writeFileSync(fileName, '', 'utf8')
 	}
@@ -306,7 +276,7 @@ export async function launchEditor(
 	// via: https://github.com/nodejs/node/blob/c3bb4b1aa5e907d489619fb43d233c3336bfc03d/lib/child_process.js#L333
 	// and it should be a positive integer
 	if (lineNumber && !(Number.isInteger(lineNumber) && lineNumber > 0)) {
-		return
+		return { status: 'error', error: 'lineNumber must be a positive integer' }
 	}
 
 	// colNumber is optional, but should be a positive integer too
@@ -318,12 +288,11 @@ export async function launchEditor(
 	let [editor, ...args] = guessEditor()
 
 	if (!editor) {
-		await printInstructions(fileName, null)
-		return
+		return { status: 'error', error: 'No editor found' }
 	}
 
 	if (editor.toLowerCase() === 'none') {
-		return
+		return { status: 'error', error: 'Editor set to "none"' }
 	}
 
 	if (
@@ -348,21 +317,10 @@ export async function launchEditor(
 		process.platform === 'win32' &&
 		!WINDOWS_FILE_NAME_WHITELIST.test(fileName.trim())
 	) {
-		console.log()
-		console.log(
-			chalk.red(
-				'Could not open ' + path.basename(fileName) + ' in the editor.',
-			),
-		)
-		console.log()
-		console.log(
-			'When running on Windows, file names are checked against a whitelist ' +
-				'to protect against remote code execution attacks. File names may ' +
-				'consist only of alphanumeric characters (all languages), periods, ' +
-				'dashes, slashes, and underscores.',
-		)
-		console.log()
-		return
+		return {
+			status: 'error',
+			error: `Could not open ${fileName} in the editor. When running on Windows, file names are checked against a whitelist to protect against remote code execution attacks. File names may consist only of alphanumeric characters (all languages), periods, dashes, slashes, and underscores.`,
+		}
 	}
 
 	let workspace = null
@@ -387,26 +345,33 @@ export async function launchEditor(
 		_childProcess.kill('SIGKILL')
 	}
 
-	if (process.platform === 'win32') {
-		// On Windows, launch the editor in a shell because spawn can only
-		// launch .exe files.
-		_childProcess = child_process.spawn(
-			'cmd.exe',
-			['/C', editor].concat(args),
-			{ stdio: 'inherit' },
-		)
-	} else {
-		_childProcess = child_process.spawn(editor, args, { stdio: 'inherit' })
-	}
-	_childProcess.on('exit', async function (errorCode) {
-		_childProcess = null
-
-		if (errorCode) {
-			await printInstructions(fileName, '(code ' + errorCode + ')')
+	return new Promise((res, rej) => {
+		if (process.platform === 'win32') {
+			// On Windows, launch the editor in a shell because spawn can only
+			// launch .exe files.
+			_childProcess = child_process.spawn(
+				'cmd.exe',
+				['/C', editor].concat(args),
+				{ stdio: 'inherit' },
+			)
+		} else {
+			_childProcess = child_process.spawn(editor, args, { stdio: 'inherit' })
 		}
-	})
+		_childProcess.on('exit', async function (errorCode) {
+			_childProcess = null
 
-	_childProcess.on('error', async function (error) {
-		await printInstructions(fileName, error.message)
+			if (errorCode) {
+				return res({
+					status: 'error',
+					error: `Could not open ${fileName} in the editor. The editor process exited with an error code (${errorCode}).`,
+				})
+			} else {
+				return res({ status: 'success' })
+			}
+		})
+
+		_childProcess.on('error', async function (error) {
+			return res({ status: 'error', error: error.message })
+		})
 	})
 }

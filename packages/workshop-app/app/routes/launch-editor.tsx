@@ -1,6 +1,6 @@
 import type { DataFunctionArgs } from '@remix-run/node'
 import { json } from '@remix-run/node'
-import { useFetcher } from 'react-router-dom'
+import { useFetcher } from '@remix-run/react'
 import { z } from 'zod'
 import { launchEditor } from '~/utils/launch-editor.server'
 
@@ -17,8 +17,8 @@ export async function action({ request }: DataFunctionArgs) {
 		line: formData.get('line') ?? undefined,
 		column: formData.get('column') ?? undefined,
 	})
-	await launchEditor(file, line, column)
-	return json({ success: true })
+	const result = await launchEditor(file, line, column)
+	return json(result)
 }
 
 export function LaunchEditor({
@@ -32,13 +32,16 @@ export function LaunchEditor({
 	column?: number
 	children: React.ReactNode
 }) {
-	const fetcher = useFetcher()
+	const fetcher = useFetcher<typeof action>()
 	return (
 		<fetcher.Form action="/launch-editor" method="post">
 			<input type="hidden" name="file" value={file} />
 			<input type="hidden" name="line" value={line} />
 			<input type="hidden" name="column" value={column} />
 			<button type="submit">{children}</button>
+			{fetcher.data?.status === 'error' ? (
+				<div className="error">{fetcher.data.error}</div>
+			) : null}
 		</fetcher.Form>
 	)
 }

@@ -14,6 +14,7 @@
     "dev:remix": "remix dev",
     "test:01": "echo \"\\x1b[36mhello\\x1b[37mworld\" && sleep 0.1 && echo hi && sleep 0.1 && echo hi && sleep 0.1 && echo hi && sleep 0.1 && echo hi && sleep 0.1 && echo hi && sleep 0.1 && echo hi && sleep 0.1 && echo hi && sleep 0.1 && echo hi && sleep 0.1 && echo hi && sleep 0.1 && echo hi && sleep 0.1 && echo hi && sleep 0.1 && echo hi && sleep 0.1 && echo hi && sleep 0.1 && echo hi && sleep 0.1 && echo hi && sleep 0.1 && echo hi && sleep 0.1 && echo hi && sleep 0.1 && echo hi",
     "test:02": "echo hello",
+    "test:01:dev": "playwright test",
     "format": "prettier --write .",
     "generate:css": "tailwindcss -o ./app/styles/tailwind.css",
     "lint": "eslint --cache --cache-location ./node_modules/.cache/eslint .",
@@ -35,6 +36,7 @@
     "unist-util-visit": "^4.1.2"
   },
   "devDependencies": {
+    "@playwright/test": "^1.30.0",
     "@remix-run/dev": "^1.7.5",
     "@remix-run/eslint-config": "^1.7.5",
     "@types/eslint": "^8.4.10",
