@@ -15,6 +15,7 @@ import {
 	solutionAppCache,
 } from './cache.server'
 import { compileMdx } from './compile-mdx.server'
+import { typedBoolean } from './misc'
 
 const globPromise = util.promisify(glob)
 
@@ -159,20 +160,20 @@ function getAppDirInfo(appDir: string) {
 	const regex = /^(?<range>(\d+-?)+)\.(problem|solution)(\.(?<subtitle>.*))?$/
 	const match = regex.exec(appDir)
 	if (!match || !match.groups) {
-		throw new Error(`App directory ${appDir} does not match regex ${regex}`)
+		throw new Error(`App directory "${appDir}" does not match regex "${regex}"`)
 	}
 	const { range, subtitle } = match.groups
 	if (!range) {
-		throw new Error(`App directory ${appDir} does not match regex ${regex}`)
+		throw new Error(`App directory "${appDir}" does not match regex "${regex}"`)
 	}
 
 	const [start, end] = range.split('-').map(Number)
 	if (!start || !Number.isFinite(start)) {
-		throw new Error(`App directory ${appDir} does not match regex ${regex}`)
+		throw new Error(`App directory "${appDir}" does not match regex "${regex}"`)
 	}
 
 	if (end && !Number.isFinite(end)) {
-		throw new Error(`App directory ${appDir} does not match regex ${regex}`)
+		throw new Error(`App directory "${appDir}" does not match regex "${regex}"`)
 	}
 
 	const stepNumbers = end
@@ -183,10 +184,10 @@ function getAppDirInfo(appDir: string) {
 }
 
 function extractExerciseNumber(dir: string) {
-	const regex = /^(?<number>\d+)-/
+	const regex = /^(?<number>\d+)\./
 	const number = regex.exec(dir)?.groups?.number
 	if (!number) {
-		throw new Error(`Exercise directory ${dir} does not match regex ${regex}`)
+		return null
 	}
 	return Number(number)
 }
@@ -195,9 +196,10 @@ export async function getExercises(): Promise<Array<Exercise>> {
 	const workshopRoot = await getWorkshopRoot()
 	const apps = await getApps()
 	const exerciseDirs = await readDir(path.join(workshopRoot, 'exercises'))
-	const exercises: Array<Exercise> = await Promise.all(
+	const exercises: Array<Exercise | null> = await Promise.all(
 		exerciseDirs.map(async dirName => {
 			const exerciseNumber = extractExerciseNumber(dirName)
+			if (!exerciseNumber) return null
 			const compiledReadme = await compileReadme(
 				path.join(workshopRoot, 'exercises', dirName),
 			)
@@ -215,7 +217,7 @@ export async function getExercises(): Promise<Array<Exercise>> {
 			}
 		}),
 	)
-	return exercises
+	return exercises.filter(typedBoolean)
 }
 
 export async function getApps(): Promise<Array<App>> {
@@ -344,10 +346,12 @@ export async function getExampleApps(): Promise<Array<ExampleApp>> {
 
 async function getSolutionAppFromPath(
 	fullPath: string,
-): Promise<Array<SolutionApp>> {
+): Promise<Array<SolutionApp> | null> {
 	const dirName = path.basename(fullPath)
 	const parentDirName = path.basename(path.dirname(fullPath))
 	const exerciseNumber = extractExerciseNumber(parentDirName)
+	if (!exerciseNumber) return null
+
 	const name = await getAppName(fullPath)
 	const appInfo = getAppDirInfo(dirName)
 	const firstStepNumber = appInfo.stepNumbers[0]
@@ -393,15 +397,17 @@ export async function getSolutionApps(): Promise<Array<SolutionApp>> {
 			})
 		}),
 	)
-	return solutionApps.flat()
+	return solutionApps.filter(typedBoolean).flat()
 }
 
 async function getProblemAppFromPath(
 	fullPath: string,
-): Promise<Array<ProblemApp>> {
+): Promise<Array<ProblemApp> | null> {
 	const dirName = path.basename(fullPath)
 	const parentDirName = path.basename(path.dirname(fullPath))
 	const exerciseNumber = extractExerciseNumber(parentDirName)
+	if (!exerciseNumber) return null
+
 	const name = await getAppName(fullPath)
 	const appInfo = getAppDirInfo(dirName)
 	const firstStepNumber = appInfo.stepNumbers[0]
@@ -458,7 +464,7 @@ export async function getProblemApps(): Promise<Array<ProblemApp>> {
 			})
 		}),
 	)
-	return problemApps.flat()
+	return problemApps.filter(typedBoolean).flat()
 }
 
 export async function getExercise(exerciseNumber: number | string) {
