@@ -1,16 +1,7 @@
 import type { DataFunctionArgs } from '@remix-run/node'
-import { json } from '@remix-run/node'
-import { redirect, defer } from '@remix-run/node'
-import {
-	Await,
-	useAsyncError,
-	useFetcher,
-	useLoaderData,
-	useNavigate,
-} from '@remix-run/react'
-import { Suspense, useEffect } from 'react'
+import { defer, json, redirect } from '@remix-run/node'
+import { useFetcher } from '@remix-run/react'
 import invariant from 'tiny-invariant'
-import { getErrorMessage } from '~/utils/misc'
 import {
 	exec,
 	getAppByName,
@@ -78,6 +69,11 @@ export async function action({ request }: DataFunctionArgs) {
 		if (!app) {
 			throw new Response('Not found', { status: 404 })
 		}
+		if (!app.hasServer) {
+			throw new Response(`App "${name}" does not have a server`, {
+				status: 400,
+			})
+		}
 
 		switch (intent) {
 			case 'start': {
@@ -85,12 +81,17 @@ export async function action({ request }: DataFunctionArgs) {
 				if (result.running) {
 					await waitOnApp(app)
 					return json({ status: 'app-started' } as const)
-				} else {
+				} else if (result.portNumber) {
 					return json({
 						status: 'app-not-started',
 						error: result.status,
 						port: result.portNumber,
 					} as const)
+				} else {
+					throw new Response(
+						'Tried starting a server for an app that does not have one',
+						{ status: 400 },
+					)
 				}
 			}
 			case 'stop': {
@@ -156,79 +157,5 @@ export function AppStarter({ name }: { name: string }) {
 				{fetcher.submission ? 'Starting App' : 'Start App'}
 			</button>
 		</fetcher.Form>
-	)
-}
-
-export default function StartWaiter() {
-	const data = useLoaderData<typeof loader>()
-	const navigate = useNavigate()
-
-	useEffect(() => {
-		let current = true
-		data.appReady?.then(pathname => {
-			if (current) {
-				navigate(pathname)
-			}
-		})
-		return () => {
-			current = false
-		}
-	}, [data.appReady, navigate])
-
-	return (
-		<div>
-			{data.startStatus === 'port-unavailable' ? (
-				<div>
-					<h1>Port {data.port} is unavailable</h1>
-					<p>
-						If you would like to stop that port and try again, click the button:
-					</p>
-					<PortStopper port={data.port} />
-					<div>
-						Something else is running on the same port as the app you wanted to
-						start. This can happen for a variaty of reasons:
-						<ul>
-							<li>The process failed to exit properly</li>
-							<li>You started it another way</li>
-							<li>Something else has taken the port</li>
-						</ul>
-					</div>
-				</div>
-			) : (
-				<Suspense
-					fallback={
-						<h1>
-							Starting {data.title} on port {data.port}...
-						</h1>
-					}
-				>
-					<Await resolve={data.appReady} errorElement={<ErrorFallback />}>
-						{() => <h1>Ready! Redirecting...</h1>}
-					</Await>
-				</Suspense>
-			)}
-			<Suspense fallback={<h1>Opening VS Code...</h1>}>
-				<Await resolve={data.vsCodeReady} errorElement={<ErrorFallback />}>
-					{() => <h1>VS Code ready!</h1>}
-				</Await>
-			</Suspense>
-		</div>
-	)
-}
-
-function ErrorFallback() {
-	const error = useAsyncError()
-
-	return (
-		<div>
-			<div>
-				Whoops! Sorry, there was an error{' '}
-				<span role="img" aria-label="grimace">
-					😬
-				</span>
-			</div>
-			<hr className="my-2" />
-			<pre className="whitespace-pre-wrap">{getErrorMessage(error)}</pre>
-		</div>
 	)
 }

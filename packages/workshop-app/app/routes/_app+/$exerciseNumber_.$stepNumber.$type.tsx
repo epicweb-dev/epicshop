@@ -1,7 +1,7 @@
 import { isRouteErrorResponse, Link, useRouteError } from '@remix-run/react'
 import { getErrorMessage } from '~/utils/misc'
 
-import type { DataFunctionArgs } from '@remix-run/node'
+import type { DataFunctionArgs, SerializeFrom } from '@remix-run/node'
 import { json, redirect } from '@remix-run/node'
 import { useLoaderData } from '@remix-run/react'
 import { getDiffCode } from '~/utils/diff.server'
@@ -49,8 +49,12 @@ export async function loader({ request, params }: DataFunctionArgs) {
 		throw new Response('Not found', { status: 404 })
 	}
 
-	const isProblemRunning = problemApp ? isAppRunning(problemApp) : false
-	const isSolutionRunning = solutionApp ? isAppRunning(solutionApp) : false
+	const isProblemRunning = problemApp?.hasServer
+		? isAppRunning(problemApp)
+		: false
+	const isSolutionRunning = solutionApp?.hasServer
+		? isAppRunning(solutionApp)
+		: false
 
 	const app1Name = reqUrl.searchParams.get('app1')
 	const app2Name = reqUrl.searchParams.get('app2')
@@ -108,9 +112,12 @@ export async function loader({ request, params }: DataFunctionArgs) {
 			? {
 					id: problemApp.id,
 					isRunning: isProblemRunning,
-					portIsAvailable: isProblemRunning
-						? null
-						: await isPortAvailable(problemApp.portNumber),
+					baseUrl: problemApp.baseUrl,
+					portIsAvailable: problemApp.hasServer
+						? isProblemRunning
+							? null
+							: await isPortAvailable(problemApp.portNumber)
+						: null,
 					title: problemApp.title,
 					name: problemApp.name,
 					port: problemApp.portNumber,
@@ -119,9 +126,12 @@ export async function loader({ request, params }: DataFunctionArgs) {
 		solution: solutionApp
 			? {
 					isRunning: isSolutionRunning,
-					portIsAvailable: isSolutionRunning
-						? null
-						: await isPortAvailable(solutionApp.portNumber),
+					baseUrl: solutionApp.baseUrl,
+					portIsAvailable: solutionApp.hasServer
+						? isSolutionRunning
+							? null
+							: await isPortAvailable(solutionApp.portNumber)
+						: null,
 					title: solutionApp.title,
 					name: solutionApp.name,
 					port: solutionApp.portNumber,
@@ -140,12 +150,12 @@ export async function loader({ request, params }: DataFunctionArgs) {
 }
 
 const tabs = ['problem', 'solution', 'tests', 'diff'] as const
-const isValidPreview = (s: string | null): s is typeof tabs[number] =>
-	Boolean(s && tabs.includes(s as typeof tabs[number]))
+const isValidPreview = (s: string | null): s is (typeof tabs)[number] =>
+	Boolean(s && tabs.includes(s as (typeof tabs)[number]))
 
 const types = ['problem', 'solution'] as const
-const isValidType = (s: string | undefined): s is typeof types[number] =>
-	Boolean(s && types.includes(s as typeof types[number]))
+const isValidType = (s: string | undefined): s is (typeof types)[number] =>
+	Boolean(s && types.includes(s as (typeof types)[number]))
 
 function withParam(
 	searchParams: URLSearchParams,
@@ -262,18 +272,10 @@ export default function ExercisePartRoute() {
 
 					<TabPanels>
 						<TabPanel hidden={tabIndex !== 0}>
-							{data.problem ? (
-								<InBrowserBrowser {...data.problem} />
-							) : (
-								<p>No problem app here. Sorry.</p>
-							)}
+							<Preview appInfo={data.problem} />
 						</TabPanel>
 						<TabPanel hidden={tabIndex !== 1}>
-							{data.solution ? (
-								<InBrowserBrowser {...data.solution} />
-							) : (
-								<p>No solution app here. Sorry.</p>
-							)}
+							<Preview appInfo={data.solution} />
 						</TabPanel>
 						<TabPanel hidden={tabIndex !== 2}>
 							{data.problem ? (
@@ -314,6 +316,33 @@ export default function ExercisePartRoute() {
 			</div>
 		</div>
 	)
+}
+
+function Preview({
+	appInfo,
+}: {
+	appInfo: SerializeFrom<typeof loader>['problem' | 'solution']
+}) {
+	if (!appInfo) return <p>No app here. Sorry.</p>
+	const { port, isRunning, baseUrl, name, portIsAvailable, title } = appInfo
+	if (port) {
+		return (
+			<InBrowserBrowser
+				isRunning={isRunning}
+				name={name}
+				portIsAvailable={portIsAvailable}
+				port={port}
+			/>
+		)
+	} else {
+		return (
+			<iframe
+				title={title}
+				src={baseUrl}
+				className="h-full w-full border-2 border-stone-400"
+			/>
+		)
+	}
 }
 
 export function ErrorBoundary() {

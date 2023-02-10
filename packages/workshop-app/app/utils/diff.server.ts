@@ -126,12 +126,12 @@ async function prepareForDiff(app1: App, app2: App) {
 		const { name: name2, ...rest2 } = pkg2
 		return JSON.stringify(rest1) === JSON.stringify(rest2)
 	}
-	const app1PkgJson = await fsExtra.readJSON(
-		path.join(app1.fullPath, 'package.json'),
-	)
-	const app2PkgJson = await fsExtra.readJSON(
-		path.join(app2.fullPath, 'package.json'),
-	)
+	const app1PkgJson = app1.hasServer
+		? await fsExtra.readJSON(path.join(app1.fullPath, 'package.json'))
+		: {}
+	const app2PkgJson = app1.hasServer
+		? await fsExtra.readJSON(path.join(app2.fullPath, 'package.json'))
+		: {}
 	const ignore = comparePkgJson(app1PkgJson, app2PkgJson)
 		? ['package.json']
 		: []

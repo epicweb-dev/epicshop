@@ -33,16 +33,20 @@ type Exercise = {
 type BaseApp = {
 	/** a unique identifier for the problem app (based on its name + step number for exercise part apps and just the name for examples) */
 	id: string
-	/** a unique identifier for the app (comes from package.json name prop) */
+	/** a unique identifier for the app (comes from the relative path of the app directory (replacing "/" with ".")) */
 	name: string
 	/** the title of the app used for display (comes from the package.json title prop) */
 	title: string
 	/** used when displaying the list of files to match the list of apps in the file system (comes the name of the directory of the app) */
 	dirName: string
 	fullPath: string
-	portNumber: number
+	/** The base path for the iframe to view this app (ends in "/") */
+	baseUrl: string
 	instructionsCode?: string
-}
+} & (
+	| { hasServer: true; portNumber: number }
+	| { hasServer: false; portNumber: null }
+)
 
 export type ProblemApp = BaseApp & {
 	type: 'problem'
@@ -71,7 +75,8 @@ export function isApp(app: any): app is App {
 		typeof app.title === 'string' &&
 		typeof app.dirName === 'string' &&
 		typeof app.fullPath === 'string' &&
-		typeof app.portNumber === 'number' &&
+		typeof app.hasServer === 'boolean' &&
+		typeof app.baseUrl === 'string' &&
 		typeof app.type === 'string'
 	)
 }
@@ -291,13 +296,21 @@ async function getPkgProp<Value>(
 	return value ?? defaultValue
 }
 
+async function getAppName(fullPath: string) {
+	const workshopRoot = await getWorkshopRoot()
+	const relativePath = fullPath.replace(`${workshopRoot}/`, '')
+	return relativePath.split(path.sep).join('.')
+}
+
 async function getExampleAppFromPath(
 	fullPath: string,
 	index: number,
 ): Promise<ExampleApp> {
 	const dirName = path.basename(fullPath)
 	const compiledReadme = await compileReadme(fullPath)
-	const name = await getPkgProp(fullPath, 'name', dirName)
+	const hasPkgJson = await exists(path.join(fullPath, 'package.json'))
+	const name = await getAppName(fullPath)
+	const portNumber = 3500 + index
 	return {
 		id: name,
 		name,
@@ -305,8 +318,11 @@ async function getExampleAppFromPath(
 		fullPath,
 		title: compiledReadme?.title ?? name,
 		dirName,
-		portNumber: 3500 + index,
 		instructionsCode: compiledReadme?.code,
+		baseUrl: hasPkgJson ? `http://localhost:${portNumber}/` : `/app/${name}/`,
+		...(hasPkgJson
+			? { hasServer: true, portNumber }
+			: { hasServer: false, portNumber: null }),
 	}
 }
 
@@ -332,7 +348,7 @@ async function getSolutionAppFromPath(
 	const dirName = path.basename(fullPath)
 	const parentDirName = path.basename(path.dirname(fullPath))
 	const exerciseNumber = extractExerciseNumber(parentDirName)
-	const name = await getPkgProp(fullPath, 'name', dirName)
+	const name = await getAppName(fullPath)
 	const appInfo = getAppDirInfo(dirName)
 	const firstStepNumber = appInfo.stepNumbers[0]
 	if (firstStepNumber === undefined) {
@@ -342,6 +358,7 @@ async function getSolutionAppFromPath(
 	}
 	const portNumber = 5000 + (exerciseNumber - 1) * 10 + firstStepNumber
 	const compiledReadme = await compileReadme(fullPath)
+	const hasPkgJson = await exists(path.join(fullPath, 'package.json'))
 	return appInfo.stepNumbers.map(stepNumber => {
 		return {
 			id: `${name}-${stepNumber}`,
@@ -350,10 +367,13 @@ async function getSolutionAppFromPath(
 			type: 'solution',
 			exerciseNumber,
 			stepNumber,
-			portNumber,
 			dirName,
 			fullPath,
 			instructionsCode: compiledReadme?.code,
+			baseUrl: hasPkgJson ? `http://localhost:${portNumber}/` : `/app/${name}/`,
+			...(hasPkgJson
+				? { hasServer: true, portNumber }
+				: { hasServer: false, portNumber: null }),
 		}
 	})
 }
@@ -382,7 +402,7 @@ async function getProblemAppFromPath(
 	const dirName = path.basename(fullPath)
 	const parentDirName = path.basename(path.dirname(fullPath))
 	const exerciseNumber = extractExerciseNumber(parentDirName)
-	const name = await getPkgProp(fullPath, 'name', dirName)
+	const name = await getAppName(fullPath)
 	const appInfo = getAppDirInfo(dirName)
 	const firstStepNumber = appInfo.stepNumbers[0]
 	if (firstStepNumber === undefined) {
@@ -391,6 +411,7 @@ async function getProblemAppFromPath(
 		)
 	}
 	const portNumber = 4000 + (exerciseNumber - 1) * 10 + firstStepNumber
+	const hasPkgJson = await exists(path.join(fullPath, 'package.json'))
 	return Promise.all(
 		appInfo.stepNumbers.map(async stepNumber => {
 			const compiledReadme = await compileReadme(fullPath, stepNumber)
@@ -402,18 +423,21 @@ async function getProblemAppFromPath(
 				type: 'problem',
 				exerciseNumber,
 				stepNumber,
-				portNumber,
 				dirName,
 				fullPath,
 				instructionsCode: compiledReadme?.code,
+				baseUrl: hasPkgJson
+					? `http://localhost:${portNumber}/`
+					: `/app/${name}/`,
 				testScriptName: isMultiStep
 					? `test:${stepNumber.toString().padStart(2, '0')}`
 					: 'test',
-				testRequiresApp: await getPkgProp(
-					fullPath,
-					'kcd-workshop.testRequiresApp',
-					false,
-				),
+				testRequiresApp: hasPkgJson
+					? await getPkgProp(fullPath, 'kcd-workshop.testRequiresApp', false)
+					: false,
+				...(hasPkgJson
+					? { hasServer: true, portNumber }
+					: { hasServer: false, portNumber: null }),
 			}
 		}),
 	)

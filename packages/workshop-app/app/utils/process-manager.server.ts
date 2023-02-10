@@ -8,7 +8,7 @@ import type { App, ProblemApp } from './misc.server'
 type DevProcessesMap = Map<
 	string,
 	{
-		color: typeof colors[number]
+		color: (typeof colors)[number]
 		process: ChildProcess
 		port: number
 	}
@@ -81,6 +81,10 @@ export async function runAppDev(app: App) {
 	// if the app is already running, don't start it again
 	if (devProcesses.has(key)) {
 		return { status: 'process-running', running: true } as const
+	}
+
+	if (!app.hasServer) {
+		return { status: 'error', error: 'no-server' } as const
 	}
 
 	const { portNumber } = app
