@@ -148,19 +148,19 @@ jobs:
         run: npm run build
 
       - name: 🚀 Release
-        run: echo "TODO..."
-        # uses: cycjimmy/semantic-release-action@v2
-        # with:
-        #   semantic_version: 17
-        #   branches: |
-        #     [
-        #       '+([0-9])?(.{+([0-9]),x}).x',
-        #       'main',
-        #       'next',
-        #       'next-major',
-        #       {name: 'beta', prerelease: true},
-        #       {name: 'alpha', prerelease: true}
-        #     ]
-        # env:
-        #   GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        #   NPM_TOKEN: ${{ secrets.NPM_TOKEN }}
+        uses: cycjimmy/semantic-release-action@v2
+        with:
+          working_directory: ./packages/workshop-app
+          semantic_version: 17
+          branches: |
+            [
+              '+([0-9])?(.{+([0-9]),x}).x',
+              'main',
+              'next',
+              'next-major',
+              {name: 'beta', prerelease: true},
+              {name: 'alpha', prerelease: true}
+            ]
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          NPM_TOKEN: ${{ secrets.NPM_TOKEN }}

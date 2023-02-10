@@ -14,6 +14,7 @@ if (argv[0] !== 'start') {
 if (process.env.NODE_ENV === 'production' || isPublished) {
 	exec('npm run start', {
 		KCDSHOP_CONTEXT_CWD: process.env.KCDSHOP_CONTEXT_CWD ?? process.cwd(),
+		NODE_ENV: 'production',
 	}).catch(code => {
 		process.exit(code)
 	})
