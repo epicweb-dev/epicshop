@@ -43,7 +43,12 @@ function getFileCodeblocks(
 		const removedLineNumbers = []
 		const addedLineNumbers = []
 		const lines = []
-		const startLine = chunk.toFileRange.start
+		const startLine =
+			chunk.type === 'Chunk'
+				? chunk.fromFileRange.start
+				: chunk.type === 'CombinedChunk'
+				? chunk.fromFileRangeA.start
+				: 1
 		for (let lineNumber = 0; lineNumber < chunk.changes.length; lineNumber++) {
 			const change = chunk.changes[lineNumber]
 			if (!change) continue

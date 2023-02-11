@@ -285,11 +285,8 @@ export default function ExercisePartRoute() {
 							)}
 						</TabPanel>
 						<TabPanel hidden={tabIndex !== 3}>
-							<div>
-								<div className="prose whitespace-pre-wrap">
-									<Mdx code={data.diff.diffCode} />
-								</div>
-								<pre>{JSON.stringify(data, null, 2)}</pre>
+							<div className="prose whitespace-pre-wrap">
+								<Mdx code={data.diff.diffCode} />
 							</div>
 						</TabPanel>
 					</TabPanels>

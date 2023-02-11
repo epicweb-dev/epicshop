@@ -34,7 +34,15 @@ export default function ExerciseNumberRoute() {
 					'No instructions yet...'
 				)}
 			</div>
-			<Link to="01/problem">Start</Link>
+			<div className="flex justify-center p-6">
+				<Link
+					to="01/problem"
+					prefetch="intent"
+					className="rounded border-2 border-green-500 bg-green-600 px-3 py-2 text-gray-100 hover:bg-green-500 focus:bg-green-500"
+				>
+					Start
+				</Link>
+			</div>
 		</div>
 	)
 }
