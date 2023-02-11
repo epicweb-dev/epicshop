@@ -35,85 +35,38 @@ export async function loader({ params }: DataFunctionArgs) {
 <ul>
   <li className="flex gap-2">
     <span>modified:</span>
-    <LaunchEditor file="/Users/kentcdodds/code/epicweb-dev/kcdshop/packages/example/exercises/01-nested-routing/01-02.problem/app/entry.server.tsx">
+    <LaunchEditor workshopFile="exercises/01.nested-routing/01-02.problem/app/entry.server.tsx">
       `app/entry.server.tsx`
     </LaunchEditor>
   </li>
   <li className="flex gap-2">
     <span>modified:</span>
-    <LaunchEditor file="/Users/kentcdodds/code/epicweb-dev/kcdshop/packages/example/exercises/01-nested-routing/01-02.problem/app/root.tsx">
+    <LaunchEditor workshopFile="exercises/01.nested-routing/01-02.problem/app/root.tsx">
       `app/root.tsx`
     </LaunchEditor>
   </li>
   <li className="flex gap-2">
     <span>deleted:</span>
-    <LaunchEditor file="/Users/kentcdodds/code/epicweb-dev/kcdshop/packages/example/exercises/01-nested-routing/01-02.problem/app/routes/$.tsx">
+    <LaunchEditor workshopFile="exercises/01.nested-routing/01-02.problem/app/routes/$.tsx">
       `app/routes/$.tsx`
     </LaunchEditor>
   </li>
   <li className="flex gap-2">
     <span>deleted:</span>
-    <LaunchEditor file="/Users/kentcdodds/code/epicweb-dev/kcdshop/packages/example/exercises/01-nested-routing/01-02.problem/app/routes/deleted.tsx">
+    <LaunchEditor workshopFile="exercises/01.nested-routing/01-02.problem/app/routes/deleted.tsx">
       `app/routes/deleted.tsx`
     </LaunchEditor>
   </li>
   <li className="flex gap-2">
     <span>modified:</span>
-    <LaunchEditor file="/Users/kentcdodds/code/epicweb-dev/kcdshop/packages/example/exercises/01-nested-routing/01-02.problem/app/routes/index.tsx">
+    <LaunchEditor workshopFile="exercises/01.nested-routing/01-02.problem/app/routes/index.tsx">
       `app/routes/index.tsx`
     </LaunchEditor>
   </li>
   <li className="flex gap-2">
     <span>modified:</span>
-    <LaunchEditor file="/Users/kentcdodds/code/epicweb-dev/kcdshop/packages/example/exercises/01-nested-routing/01-02.problem/package.json">
+    <LaunchEditor workshopFile="exercises/01.nested-routing/01-02.problem/package.json">
       `package.json`
     </LaunchEditor>
-  </li>
-</ul>
-
-<ul>
-  <li className="flex gap-2">
-    <span>modified:</span>
-
-    <LaunchEditor file="/Users/kentcdodds/code/epicweb-dev/kcdshop/packages/example/exercises/01-nested-routing/01-02.problem/app/entry.server.tsx">
-      `app/entry.server.tsx`
-    </LaunchEditor>
-
-  </li>
-
-  <li className="flex gap-2">
-    <span>modified:</span>
-
-    <LaunchEditor file="/Users/kentcdodds/code/epicweb-dev/kcdshop/packages/example/exercises/01-nested-routing/01-02.problem/app/root.tsx">
-      `app/root.tsx`
-    </LaunchEditor>
-
-  </li>
-
-  <li className="flex gap-2">
-    <span>deleted:</span>
-
-    <LaunchEditor file="/Users/kentcdodds/code/epicweb-dev/kcdshop/packages/example/exercises/01-nested-routing/01-02.problem/app/routes/$.tsx">
-      `app/routes/$.tsx`
-    </LaunchEditor>
-
-  </li>
-
-  <li className="flex gap-2">
-    <span>deleted:</span>
-
-    <LaunchEditor file="/Users/kentcdodds/code/epicweb-dev/kcdshop/packages/example/exercises/01-nested-routing/01-02.problem/app/routes/deleted.tsx">
-      `app/routes/deleted.tsx`
-    </LaunchEditor>
-
-  </li>
-
-  <li className="flex gap-2">
-    <span>modified:</span>
-
-    <LaunchEditor file="/Users/kentcdodds/code/epicweb-dev/kcdshop/packages/example/exercises/01-nested-routing/01-02.problem/app/routes/index.tsx">
-      `app/routes/index.tsx`
-    </LaunchEditor>
-
   </li>
 </ul>

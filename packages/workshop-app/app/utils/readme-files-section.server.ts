@@ -1,6 +1,7 @@
 import path from 'path'
 import { type getDiffFiles } from './diff.server'
 import prettier from 'prettier'
+import { getWorkshopRoot } from './misc.server'
 
 // mostly moved this to its own file because unifieds types are
 // pretty nuts and makes in-editor TypeScript very slow 😅
@@ -53,17 +54,19 @@ export async function updateFilesSection(
 		filesIndex = ast.children.length - 1
 	}
 
+	const workshopRoot = await getWorkshopRoot()
+
 	const filesMarkdown = files.length
 		? files
 				.map(file => {
 					return `<li className="flex gap-2"><span>${
 						file.status
-					}:</span><LaunchEditor file=${JSON.stringify(
-						path.join(cwd, file.path),
+					}:</span><LaunchEditor workshopFile=${JSON.stringify(
+						path.join(cwd, file.path).replace(`${workshopRoot}/`, ''),
 					)}>\`${file.path}\`</LaunchEditor></li>`
 				})
 				.join('\n')
-		: '- No files changed'
+		: '<li>No files changed</li>'
 	const filesAst = fromMarkdown(`<ul>${filesMarkdown}</ul>`, {
 		extensions: [mdxjs()],
 		mdastExtensions: [mdxFromMarkdown()],
@@ -73,7 +76,9 @@ export async function updateFilesSection(
 		throw new Error(`Somehow, the list is empty? ${filesMarkdown}`)
 	}
 
-	const listExistsAlready = ast.children[filesIndex + 1]?.type === 'list'
+	const nextEl = ast.children[filesIndex + 1]
+	const listExistsAlready =
+		nextEl && nextEl.type === 'mdxJsxFlowElement' && nextEl.name === 'ul'
 	ast.children.splice(filesIndex + 1, listExistsAlready ? 1 : 0, list)
 
 	const newReadme = toMarkdown(ast, {

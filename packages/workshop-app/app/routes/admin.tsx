@@ -63,7 +63,9 @@ export async function action({ request }: DataFunctionArgs) {
 					files,
 					app.fullPath,
 				)
-				await fs.promises.writeFile(readmePath, updatedReadme)
+				if (readme !== updatedReadme) {
+					await fs.promises.writeFile(readmePath, updatedReadme)
+				}
 			}
 			return json({ success: true })
 		}

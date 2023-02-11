@@ -123,7 +123,7 @@ export async function runAppDev(app: App) {
 	}
 	appProcess.stdout.on('data', handleStdOutData)
 	function handleStdErrData(data: Buffer) {
-		console.log(
+		console.error(
 			data
 				.toString('utf-8')
 				.split('\n')

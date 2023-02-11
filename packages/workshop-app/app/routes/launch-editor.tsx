@@ -2,6 +2,7 @@ import type { DataFunctionArgs } from '@remix-run/node'
 import { json } from '@remix-run/node'
 import { useFetcher } from '@remix-run/react'
 import { z } from 'zod'
+import { useRootLoaderData } from '~/root'
 import { launchEditor } from '~/utils/launch-editor.server'
 
 const launchSchema = z.object({
@@ -23,6 +24,7 @@ export async function action({ request }: DataFunctionArgs) {
 
 export function LaunchEditor({
 	file,
+	workshopFile,
 	line,
 	column,
 	children,
@@ -31,7 +33,15 @@ export function LaunchEditor({
 	line?: number
 	column?: number
 	children: React.ReactNode
-}) {
+} & (
+	| {
+			file: string
+			workshopFile: never
+	  }
+	| { file: never; workshopFile: string }
+)) {
+	const { workshopRoot } = useRootLoaderData()
+	file = workshopFile ? `${workshopRoot}/${workshopFile}` : file
 	const fetcher = useFetcher<typeof action>()
 	return (
 		<fetcher.Form action="/launch-editor" method="post">

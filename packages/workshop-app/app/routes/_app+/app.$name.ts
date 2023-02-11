@@ -49,6 +49,7 @@ export async function loader({ params }: DataFunctionArgs) {
 		<meta charset="utf-8">
 		<meta name="viewport" content="width=device-width, initial-scale=1">
 		<title>${app.title}</title>
+		<link rel="stylesheet" href="/app-default.css">
 		${indexCss ? `<link rel="stylesheet" href="${indexCss}">` : ''}
 	</head>
 	<body>

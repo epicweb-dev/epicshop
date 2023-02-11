@@ -71,7 +71,6 @@ const server = app.listen(port, async () => {
 		lanUrl = `http://${localIp}:${port}`
 	}
 
-	// draw a box around the output
 	console.log(
 		`
 ${chalk.bold('Local:')}            ${chalk.cyan(localUrl)}
