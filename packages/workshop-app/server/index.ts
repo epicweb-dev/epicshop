@@ -1,4 +1,5 @@
 import fs from 'fs'
+import fsExtra from 'fs-extra'
 import path from 'path'
 import express from 'express'
 import compression from 'compression'
@@ -25,6 +26,12 @@ app.use(
 // Everything else (like favicon.ico) is cached for an hour. You may want to be
 // more aggressive with this caching.
 app.use(express.static('public', { maxAge: '1h' }))
+
+// Everything else (like favicon.ico) is cached for an hour. You may want to be
+// more aggressive with this caching.
+app.use(
+	express.static(path.join(getWorkshopRoot(), 'public'), { maxAge: '1h' }),
+)
 
 const isPublished = !fs.existsSync(path.join(__dirname, '..', 'app'))
 
@@ -91,4 +98,23 @@ function purgeRequireCache() {
 			delete require.cache[key]
 		}
 	}
+}
+
+function getWorkshopRoot() {
+	const context = process.env.KCDSHOP_CONTEXT_CWD ?? process.cwd()
+	const { root: rootDir } = path.parse(context)
+	let repoRoot = context
+	while (repoRoot !== rootDir) {
+		const pkgPath = path.join(repoRoot, 'package.json')
+		if (fsExtra.pathExistsSync(pkgPath)) {
+			const pkg = require(pkgPath)
+			if (pkg['kcd-workshop']?.root) {
+				return repoRoot
+			}
+		}
+		repoRoot = path.dirname(repoRoot)
+	}
+	throw new Error(
+		`Workshop Root not found. Make sure the root of the workshop has "kcd-workshop" and "root: true" in the package.json.`,
+	)
 }

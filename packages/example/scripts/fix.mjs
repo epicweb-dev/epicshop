@@ -4,12 +4,17 @@
 import fs from 'fs'
 import path from 'path'
 
-async function exists(dir) {
-	return Boolean(await fs.promises.stat(dir).catch(() => false))
+function exists(dir) {
+	try {
+		fs.statSync(dir)
+		return true
+	} catch (error) {
+		return false
+	}
 }
 
 async function readDir(dir) {
-	if (await exists(dir)) {
+	if (exists(dir)) {
 		return fs.promises.readdir(dir)
 	}
 	return []
@@ -45,8 +50,11 @@ const apps = (
 
 const relativeToWorkshopRoot = dir => dir.replace(`${workshopRoot}/`, '')
 
-const files = [...examples, ...apps]
-for (const file of files) {
+const appsWithPkgJson = [...examples, ...apps].filter(app => {
+	const pkgjsonPath = path.join(app, 'package.json')
+	return exists(pkgjsonPath)
+})
+for (const file of appsWithPkgJson) {
 	const pkgjsonPath = path.join(file, 'package.json')
 	const pkg = JSON.parse(await fs.promises.readFile(pkgjsonPath, 'utf8'))
 	pkg.name = relativeToWorkshopRoot(file).replace(/\//g, '.')
@@ -56,7 +64,7 @@ for (const file of files) {
 const tsconfig = {
 	files: [],
 	exclude: ['node_modules'],
-	references: apps.map(a => ({ path: relativeToWorkshopRoot(a) })),
+	references: appsWithPkgJson.map(a => ({ path: relativeToWorkshopRoot(a) })),
 }
 await fs.promises.writeFile(
 	path.join(workshopRoot, 'tsconfig.json'),
