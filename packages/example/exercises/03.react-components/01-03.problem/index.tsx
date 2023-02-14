@@ -4,7 +4,7 @@ import * as ReactDOM from 'react-dom/client'
 function Counter() {
 	return (
 		<div>
-			This is a counter!
+			This is a counter!!
 			<button>0</button>
 		</div>
 	)

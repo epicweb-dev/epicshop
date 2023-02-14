@@ -1,7 +1,9 @@
-import { screen, waitFor } from '@testing-library/dom'
+import { within, waitFor } from '@testing-library/dom'
 import assert from 'assert'
 import userEvent from '@testing-library/user-event'
 import '.'
+
+const screen = within(document.body)
 
 const button = await screen.findByRole('button', { name: /0/i })
 await userEvent.click(button)

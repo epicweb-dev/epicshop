@@ -3,25 +3,20 @@ import path from 'path'
 import type { DataFunctionArgs } from '@remix-run/node'
 import { redirect } from '@remix-run/node'
 import invariant from 'tiny-invariant'
-import { getAppByName } from '~/utils/misc.server'
+import { getAppById } from '~/utils/misc.server'
 import { typedBoolean } from '~/utils/misc'
 
-export async function loader({ params, request }: DataFunctionArgs) {
-	const { name: appName } = params
-	const url = new URL(request.url)
-	const test = url.pathname.startsWith('/app/test/') ? 'test' : null
-	invariant(appName, 'App name is required')
-	const app = await getAppByName(appName)
+export async function loader({ params }: DataFunctionArgs) {
+	const { id: appId } = params
+	invariant(appId, 'App id is required')
+	const app = await getAppById(appId)
 	if (!app) {
-		throw new Response(`App "${appName}" not found`, { status: 404 })
+		throw new Response(`App "${appId}" not found`, { status: 404 })
 	}
 	if (app.dev.type === 'script') {
 		return redirect(app.dev.baseUrl)
 	}
-	const htmlFile = path.join(
-		app.fullPath,
-		['index', test, 'html'].filter(Boolean).join('.'),
-	)
+	const htmlFile = path.join(app.fullPath, 'index.html')
 	const hasHtml = await fsExtra.pathExists(htmlFile)
 	if (hasHtml) {
 		const html = await fsExtra.readFile(htmlFile)
@@ -35,18 +30,10 @@ export async function loader({ params, request }: DataFunctionArgs) {
 	const indexFiles = (await fsExtra.readdir(app.fullPath)).filter(
 		(file: string) => file.startsWith('index.'),
 	)
-	const indexCss = indexFiles.find((file: string) =>
-		file.endsWith(['index', test, 'css'].filter(Boolean).join('.')),
-	)
-	const indexJs = indexFiles.find((file: string) =>
-		file.endsWith(['index', test, 'js'].filter(Boolean).join('.')),
-	)
-	const indexTs = indexFiles.find((file: string) =>
-		file.endsWith(['index', test, 'ts'].filter(Boolean).join('.')),
-	)
-	const indexTsx = indexFiles.find((file: string) =>
-		file.endsWith(['index', test, 'tsx'].filter(Boolean).join('.')),
-	)
+	const indexCss = indexFiles.find((file: string) => file.endsWith('index.css'))
+	const indexJs = indexFiles.find((file: string) => file.endsWith('index.js'))
+	const indexTs = indexFiles.find((file: string) => file.endsWith('index.ts'))
+	const indexTsx = indexFiles.find((file: string) => file.endsWith('index.tsx'))
 	const scripts = [indexJs, indexTs, indexTsx].filter(typedBoolean)
 	if (scripts.length > 1) {
 		throw new Response(

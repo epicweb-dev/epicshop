@@ -2,15 +2,15 @@ import { eventStream } from 'remix-utils'
 import { chokidar } from '~/utils/watch.server'
 import type { DataFunctionArgs } from '@remix-run/node'
 import invariant from 'tiny-invariant'
-import { getAppByName } from '~/utils/misc.server'
+import { getAppById } from '~/utils/misc.server'
 import { redirect } from 'react-router'
 
 export async function loader({ request, params }: DataFunctionArgs) {
-	const { name: appName } = params
-	invariant(appName, 'App name is required')
-	const app = await getAppByName(appName)
+	const { id: appId } = params
+	invariant(appId, 'App id is required')
+	const app = await getAppById(appId)
 	if (!app) {
-		throw new Response(`App "${appName}" not found`, { status: 404 })
+		throw new Response(`App "${appId}" not found`, { status: 404 })
 	}
 	if (app.dev.type === 'script') {
 		return redirect(app.dev.baseUrl)

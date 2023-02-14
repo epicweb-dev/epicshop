@@ -1,6 +1,5 @@
 import { isRouteErrorResponse, Link, useRouteError } from '@remix-run/react'
 import { getErrorMessage } from '~/utils/misc'
-
 import type { DataFunctionArgs, SerializeFrom } from '@remix-run/node'
 import { json, redirect } from '@remix-run/node'
 import { useLoaderData } from '@remix-run/react'
@@ -26,6 +25,8 @@ import { useSearchParams } from '@remix-run/react'
 import { useParams } from 'react-router'
 import { InBrowserBrowser } from '~/components/in-browser-browser'
 import { TestOutput } from '../test'
+import { useEffect, useRef, useState, Fragment } from 'react'
+import { z } from 'zod'
 
 export async function loader({ request, params }: DataFunctionArgs) {
 	const exerciseStepApp = await requireExerciseApp(params)
@@ -343,6 +344,7 @@ function Tests({
 }: {
 	appInfo: SerializeFrom<typeof loader>['problem']
 }) {
+	const [inBrowserTestKey, setInBrowserTestKey] = useState(0)
 	if (!appInfo || appInfo.test.type === 'none') {
 		return <p>No tests here. Sorry.</p>
 	}
@@ -350,15 +352,109 @@ function Tests({
 		return <TestOutput id={appInfo.id} />
 	}
 	if (appInfo.test.type === 'browser') {
+		const { baseUrl } = appInfo.test
 		return (
-			<iframe
-				title={`${appInfo.title} tests`}
-				src={appInfo.test.baseUrl}
-				className="h-full w-full border-2 border-stone-400"
-			/>
+			<Fragment key={inBrowserTestKey}>
+				<button onClick={() => setInBrowserTestKey(c => c + 1)}>
+					Rerun Tests
+				</button>
+				{appInfo.test.testFiles.map(testFile => {
+					return (
+						<InBrowserTestRunner
+							key={testFile}
+							baseUrl={baseUrl}
+							testFile={testFile}
+						/>
+					)
+				})}
+			</Fragment>
 		)
 	}
 	return null
+}
+
+const testRunnerDataSchema = z.intersection(
+	z.object({
+		type: z.literal('kcdshop:test-status-update'),
+	}),
+	z.union([
+		z.object({
+			status: z.literal('pending'),
+			testFile: z.string(),
+		}),
+		z.object({
+			status: z.literal('pass'),
+			testFile: z.string(),
+		}),
+		z.object({
+			status: z.literal('fail'),
+			testFile: z.string(),
+			error: z.unknown(),
+		}),
+	]),
+)
+
+type TestRunnerData = z.infer<typeof testRunnerDataSchema>
+
+function InBrowserTestRunner({
+	baseUrl,
+	testFile,
+}: {
+	baseUrl: string
+	testFile: string
+}) {
+	const iframeRef = useRef<HTMLIFrameElement>(null)
+	const [message, setMessage] = useState<TestRunnerData | null>(null)
+
+	useEffect(() => {
+		function handleMessage(messageEvent: MessageEvent) {
+			if (messageEvent.source !== iframeRef.current?.contentWindow) return
+			if (messageEvent.data.type !== 'kcdshop:test-status-update') return
+
+			const data = testRunnerDataSchema.parse(messageEvent.data, {
+				path: ['messageEvent', 'data'],
+			})
+			setMessage(data)
+		}
+		window.addEventListener('message', handleMessage)
+		return () => {
+			window.removeEventListener('message', handleMessage)
+		}
+	}, [])
+
+	const statusEmoji = {
+		pending: '⏳',
+		pass: '✅',
+		fail: '❌',
+		unknown: '🧐',
+	}[message?.status ?? 'unknown']
+
+	return (
+		<details>
+			<summary>
+				{statusEmoji}. {testFile}
+			</summary>
+
+			<button
+				onClick={() => iframeRef.current?.contentWindow?.location.reload()}
+			>
+				Rerun
+			</button>
+
+			{message?.status === 'fail' ? (
+				<pre className="prose max-h-32 overflow-scroll text-red-700">
+					{getErrorMessage(message.error)}
+				</pre>
+			) : null}
+
+			<iframe
+				ref={iframeRef}
+				title={testFile}
+				src={baseUrl + testFile}
+				className="h-full w-full border-2 border-stone-400"
+			/>
+		</details>
+	)
 }
 
 export function ErrorBoundary() {

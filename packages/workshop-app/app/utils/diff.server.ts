@@ -97,7 +97,11 @@ ${lines.join('\n')}
 	return markdownLines
 }
 
-const EXTRA_FILES_TO_IGNORE = [/README(\.\d+)?\.md$/, /package-lock\.json$/]
+const EXTRA_FILES_TO_IGNORE = [
+	/README(\.\d+)?\.md$/,
+	/package-lock\.json$/,
+	/\.*test\.*/,
+]
 
 async function copyUnignoredFiles(
 	srcDir: string,

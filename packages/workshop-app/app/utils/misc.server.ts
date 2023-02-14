@@ -45,7 +45,11 @@ type BaseApp = {
 	fullPath: string
 	instructionsCode?: string
 	test:
-		| { type: 'browser'; baseUrl: `/app/test/${BaseApp['name']}/` }
+		| {
+				type: 'browser'
+				baseUrl: `/app/${BaseApp['name']}/test/`
+				testFiles: Array<string>
+		  }
 		| { type: 'script'; scriptName: string; requiresApp: boolean }
 		| { type: 'none' }
 	dev:
@@ -62,6 +66,7 @@ export type ProblemApp = Prettyify<
 		type: 'problem'
 		exerciseNumber: number
 		stepNumber: number
+		solutionId: string | null
 	}
 >
 
@@ -317,12 +322,40 @@ async function getAppName(fullPath: string) {
 	return relativePath.split(path.sep).join('.')
 }
 
-async function getTestInfo(
-	fullPath: string,
-	testScriptName = 'test',
-): Promise<BaseApp['test']> {
-	const dirList = await fs.promises.readdir(fullPath)
-	const name = await getAppName(fullPath)
+async function findSolutionDir({
+	fullPath,
+	stepNumber,
+}: {
+	fullPath: string
+	stepNumber: number
+}) {
+	if (path.basename(fullPath).includes('.problem')) {
+		const paddedStepNumber = stepNumber.toString().padStart(2, '0')
+		const parentDir = path.dirname(fullPath)
+		const siblingDirs = await fs.promises.readdir(parentDir)
+		const solutionDir = siblingDirs.find(dir =>
+			dir.startsWith(`${paddedStepNumber}.solution`),
+		)
+		if (solutionDir) {
+			return path.join(parentDir, solutionDir)
+		}
+	}
+	return null
+}
+
+async function getTestInfo({
+	fullPath,
+	id,
+	isMultiStep = false,
+	stepNumber = 1,
+}: {
+	fullPath: string
+	id: string
+	isMultiStep?: boolean
+	stepNumber?: number
+}): Promise<BaseApp['test']> {
+	const paddedStepNumber = stepNumber.toString().padStart(2, '0')
+	const testScriptName = isMultiStep ? `test:${paddedStepNumber}` : 'test'
 	const hasPkgJson = await exists(path.join(fullPath, 'package.json'))
 	const hasTestScript = hasPkgJson
 		? Boolean(
@@ -336,19 +369,31 @@ async function getTestInfo(
 			: false
 		return { type: 'script', scriptName: testScriptName, requiresApp }
 	}
-	const hasTestFile = dirList.some(item => item.includes('.test.'))
-	if (hasTestFile) {
-		return { type: 'browser', baseUrl: `/app/test/${name}/` }
+
+	// tests are found in the corresponding solution directory
+	const solutionDir = await findSolutionDir({ fullPath, stepNumber })
+	if (solutionDir) {
+		fullPath = solutionDir
+	}
+
+	const dirList = await fs.promises.readdir(fullPath)
+	const testFiles = dirList.filter(item => item.includes('.test.'))
+	if (testFiles.length) {
+		return { type: 'browser', baseUrl: `/app/${id}/test/`, testFiles }
 	}
 
 	return { type: 'none' }
 }
 
-async function getDevInfo(
-	fullPath: string,
-	portNumber: number,
-): Promise<BaseApp['dev']> {
-	const name = await getAppName(fullPath)
+async function getDevInfo({
+	fullPath,
+	portNumber,
+	id,
+}: {
+	fullPath: string
+	portNumber: number
+	id: string
+}): Promise<BaseApp['dev']> {
 	const hasPkgJson = await exists(path.join(fullPath, 'package.json'))
 	const hasDevScript = hasPkgJson
 		? Boolean(await getPkgProp(fullPath, ['scripts', 'dev'].join('.'), ''))
@@ -361,7 +406,7 @@ async function getDevInfo(
 			portNumber,
 		}
 	}
-	return { type: 'browser', baseUrl: `/app/${name}/` }
+	return { type: 'browser', baseUrl: `/app/${id}/` }
 }
 
 async function getExampleAppFromPath(
@@ -380,8 +425,8 @@ async function getExampleAppFromPath(
 		title: compiledReadme?.title ?? name,
 		dirName,
 		instructionsCode: compiledReadme?.code,
-		test: await getTestInfo(fullPath),
-		dev: await getDevInfo(fullPath, portNumber),
+		test: await getTestInfo({ fullPath, id: name }),
+		dev: await getDevInfo({ fullPath, portNumber, id: name }),
 	}
 }
 
@@ -422,11 +467,9 @@ async function getSolutionAppFromPath(
 	return Promise.all(
 		appInfo.stepNumbers.map(async stepNumber => {
 			const isMultiStep = appInfo.stepNumbers.length > 1
-			const testScriptName = isMultiStep
-				? `test:${stepNumber.toString().padStart(2, '0')}`
-				: 'test'
+			const id = `${name}-${stepNumber}`
 			return {
-				id: `${name}-${stepNumber}`,
+				id,
 				name,
 				title: compiledReadme?.title ?? name,
 				type: 'solution',
@@ -435,8 +478,8 @@ async function getSolutionAppFromPath(
 				dirName,
 				fullPath,
 				instructionsCode: compiledReadme?.code,
-				test: await getTestInfo(fullPath, testScriptName),
-				dev: await getDevInfo(fullPath, portNumber),
+				test: await getTestInfo({ fullPath, isMultiStep, stepNumber, id }),
+				dev: await getDevInfo({ fullPath, portNumber, id }),
 			}
 		}),
 	)
@@ -481,12 +524,16 @@ async function getProblemAppFromPath(
 		appInfo.stepNumbers.map(async stepNumber => {
 			const compiledReadme = await compileReadme(fullPath, stepNumber)
 			const isMultiStep = appInfo.stepNumbers.length > 1
-			const testScriptName = isMultiStep
-				? `test:${stepNumber.toString().padStart(2, '0')}`
-				: 'test'
-
+			const id = `${name}-${stepNumber}`
+			const solutionDir = await findSolutionDir({
+				fullPath,
+				stepNumber,
+			})
+			const solutionName = solutionDir ? await getAppName(solutionDir) : null
+			const solutionId = solutionName ? `${solutionName}-${stepNumber}` : null
 			return {
-				id: `${name}-${stepNumber}`,
+				id,
+				solutionId,
 				name,
 				title: compiledReadme?.title ?? name,
 				type: 'problem',
@@ -495,8 +542,8 @@ async function getProblemAppFromPath(
 				dirName,
 				fullPath,
 				instructionsCode: compiledReadme?.code,
-				test: await getTestInfo(fullPath, testScriptName),
-				dev: await getDevInfo(fullPath, portNumber),
+				test: await getTestInfo({ fullPath, isMultiStep, stepNumber, id }),
+				dev: await getDevInfo({ fullPath, portNumber, id }),
 			}
 		}),
 	)
