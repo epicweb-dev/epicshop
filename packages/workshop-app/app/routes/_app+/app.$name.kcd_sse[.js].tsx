@@ -10,8 +10,8 @@ export async function loader({ params }: DataFunctionArgs) {
 	if (!app) {
 		throw new Response(`App "${appName}" not found`, { status: 404 })
 	}
-	if (app.hasServer) {
-		return redirect(app.baseUrl)
+	if (app.dev.type === 'script') {
+		return redirect(app.dev.baseUrl)
 	}
 	const js = /* javascript */ `
 new EventSource('kcd_sse').addEventListener('reload', () => location.reload());

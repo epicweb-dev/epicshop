@@ -49,12 +49,10 @@ export async function loader({ request, params }: DataFunctionArgs) {
 		throw new Response('Not found', { status: 404 })
 	}
 
-	const isProblemRunning = problemApp?.hasServer
-		? isAppRunning(problemApp)
-		: false
-	const isSolutionRunning = solutionApp?.hasServer
-		? isAppRunning(solutionApp)
-		: false
+	const isProblemRunning =
+		problemApp?.dev.type === 'script' ? isAppRunning(problemApp) : false
+	const isSolutionRunning =
+		solutionApp?.dev.type === 'script' ? isAppRunning(solutionApp) : false
 
 	const app1Name = reqUrl.searchParams.get('app1')
 	const app2Name = reqUrl.searchParams.get('app2')
@@ -112,29 +110,31 @@ export async function loader({ request, params }: DataFunctionArgs) {
 			? {
 					id: problemApp.id,
 					isRunning: isProblemRunning,
-					baseUrl: problemApp.baseUrl,
-					portIsAvailable: problemApp.hasServer
-						? isProblemRunning
-							? null
-							: await isPortAvailable(problemApp.portNumber)
-						: null,
+					dev: problemApp.dev,
+					test: problemApp.test,
+					portIsAvailable:
+						problemApp.dev.type === 'script'
+							? isProblemRunning
+								? null
+								: await isPortAvailable(problemApp.dev.portNumber)
+							: null,
 					title: problemApp.title,
 					name: problemApp.name,
-					port: problemApp.portNumber,
 			  }
 			: null,
 		solution: solutionApp
 			? {
+					id: solutionApp.id,
 					isRunning: isSolutionRunning,
-					baseUrl: solutionApp.baseUrl,
-					portIsAvailable: solutionApp.hasServer
-						? isSolutionRunning
-							? null
-							: await isPortAvailable(solutionApp.portNumber)
-						: null,
+					dev: solutionApp.dev,
+					portIsAvailable:
+						solutionApp.dev.type === 'script'
+							? isSolutionRunning
+								? null
+								: await isPortAvailable(solutionApp.dev.portNumber)
+							: null,
 					title: solutionApp.title,
 					name: solutionApp.name,
-					port: solutionApp.portNumber,
 			  }
 			: null,
 		diff: {
@@ -278,8 +278,10 @@ export default function ExercisePartRoute() {
 							<Preview appInfo={data.solution} />
 						</TabPanel>
 						<TabPanel hidden={tabIndex !== 2}>
-							{data.problem ? (
+							{data.problem?.test.type === 'script' ? (
 								<TestOutput id={data.problem.id} />
+							) : data.problem?.test.type === 'browser' ? (
+								<iframe src={data.problem.dev.baseUrl + `?test`} />
 							) : (
 								<p>No tests here. Sorry.</p>
 							)}
@@ -321,21 +323,21 @@ function Preview({
 	appInfo: SerializeFrom<typeof loader>['problem' | 'solution']
 }) {
 	if (!appInfo) return <p>No app here. Sorry.</p>
-	const { port, isRunning, baseUrl, name, portIsAvailable, title } = appInfo
-	if (port) {
+	const { isRunning, dev, name, portIsAvailable, title } = appInfo
+	if (dev.type === 'script') {
 		return (
 			<InBrowserBrowser
 				isRunning={isRunning}
 				name={name}
 				portIsAvailable={portIsAvailable}
-				port={port}
+				port={dev.portNumber}
 			/>
 		)
 	} else {
 		return (
 			<iframe
 				title={title}
-				src={baseUrl}
+				src={dev.baseUrl}
 				className="h-full w-full border-2 border-stone-400"
 			/>
 		)

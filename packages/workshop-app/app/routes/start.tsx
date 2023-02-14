@@ -22,13 +22,16 @@ export async function loader({ request }: DataFunctionArgs) {
 	if (!app) {
 		throw new Response('Not found', { status: 404 })
 	}
+	if (app.dev.type !== 'script') {
+		throw redirect(app.dev.baseUrl)
+	}
 
 	const result = await runAppDev(app)
 
 	if (result.running) {
 		return defer({
 			title: app.title,
-			port: app.portNumber,
+			port: app.dev.portNumber,
 			vsCodeReady: exec(
 				`code "${await getWorkshopRoot()}" "${app.fullPath}/README.md"`,
 			),
@@ -44,7 +47,7 @@ export async function loader({ request }: DataFunctionArgs) {
 	} else {
 		return defer({
 			title: app.title,
-			port: app.portNumber,
+			port: app.dev.portNumber,
 			vsCodeReady: exec(
 				`code "${await getWorkshopRoot()}" "${app.fullPath}/README.md"`,
 			),
@@ -69,7 +72,7 @@ export async function action({ request }: DataFunctionArgs) {
 		if (!app) {
 			throw new Response('Not found', { status: 404 })
 		}
-		if (!app.hasServer) {
+		if (app.dev.type !== 'script') {
 			throw new Response(`App "${name}" does not have a server`, {
 				status: 400,
 			})

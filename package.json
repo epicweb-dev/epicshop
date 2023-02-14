@@ -7,8 +7,8 @@
     "build": "npm -w @kentcdodds/workshop-app run build",
     "prestart": "npm run build -s",
     "go": "cross-env NODE_ENV=development KCDSHOP_CONTEXT_CWD=$PWD/packages/example tsx watch $@",
-    "start": "cross-env NODE_ENV=production npm -w web-app-fundamentals-workshop run start",
-    "dev": "npm -w web-app-fundamentals-workshop run start",
+    "start": "cross-env NODE_ENV=production npm -w example run start",
+    "dev": "npm -w example run start",
     "test": "playwright test",
     "format": "npm run format --workspaces --if-present",
     "validate": "npm-run-all --parallel --print-label --print-name --continue-on-error typecheck lint test"

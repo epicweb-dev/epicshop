@@ -12,8 +12,8 @@ export async function loader({ request, params }: DataFunctionArgs) {
 	if (!app) {
 		throw new Response(`App "${appName}" not found`, { status: 404 })
 	}
-	if (app.hasServer) {
-		return redirect(app.baseUrl)
+	if (app.dev.type === 'script') {
+		return redirect(app.dev.baseUrl)
 	}
 	return eventStream(request.signal, function setup(send) {
 		const watcher = chokidar

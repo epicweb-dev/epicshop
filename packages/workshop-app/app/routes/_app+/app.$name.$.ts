@@ -18,8 +18,8 @@ export async function loader({ params }: DataFunctionArgs) {
 			{ status: 404 },
 		)
 	}
-	if (app.hasServer) {
-		return redirect(app.baseUrl)
+	if (app.dev.type === 'script') {
+		return redirect(app.dev.baseUrl)
 	}
 	// basically a static file server
 	const filePath = path.join(app.fullPath, splat)
@@ -31,6 +31,9 @@ export async function loader({ params }: DataFunctionArgs) {
 		// compile ts/tsx files
 		const { outputFiles, errors } = await esbuild.build({
 			entryPoints: [filePath],
+			define: {
+				'process.env': JSON.stringify({ NODE_ENV: 'development' }),
+			},
 			bundle: true,
 			write: false,
 			format: 'esm',

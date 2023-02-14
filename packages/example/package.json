@@ -1,5 +1,5 @@
 {
-  "name": "web-app-fundamentals-workshop",
+  "name": "example",
   "private": true,
   "kcd-workshop": {
     "title": "Web App Fundamentals 🔭",
@@ -17,6 +17,8 @@
   "license": "MIT",
   "devDependencies": {
     "@kentcdodds/workshop-app": "*",
+    "@testing-library/react": "^13.4.0",
+    "@testing-library/user-event": "^14.4.3",
     "tsx": "^3.12.2"
   },
   "eslintIgnore": [
@@ -28,5 +30,9 @@
   "workspaces": [
     "exercises/*/*",
     "example/*"
-  ]
+  ],
+  "dependencies": {
+    "@testing-library/dom": "^8.20.0",
+    "assert": "^2.0.0"
+  }
 }

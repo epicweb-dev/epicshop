@@ -6,17 +6,22 @@ import invariant from 'tiny-invariant'
 import { getAppByName } from '~/utils/misc.server'
 import { typedBoolean } from '~/utils/misc'
 
-export async function loader({ params }: DataFunctionArgs) {
+export async function loader({ params, request }: DataFunctionArgs) {
 	const { name: appName } = params
+	const url = new URL(request.url)
+	const test = url.searchParams.has('test') ? 'test' : null
 	invariant(appName, 'App name is required')
 	const app = await getAppByName(appName)
 	if (!app) {
 		throw new Response(`App "${appName}" not found`, { status: 404 })
 	}
-	if (app.hasServer) {
-		return redirect(app.baseUrl)
+	if (app.dev.type === 'script') {
+		return redirect(app.dev.baseUrl)
 	}
-	const htmlFile = path.join(app.fullPath, 'index.html')
+	const htmlFile = path.join(
+		app.fullPath,
+		['index', test, 'html'].filter(Boolean).join('.'),
+	)
 	const hasHtml = await fsExtra.pathExists(htmlFile)
 	if (hasHtml) {
 		const html = await fsExtra.readFile(htmlFile)
@@ -30,10 +35,18 @@ export async function loader({ params }: DataFunctionArgs) {
 	const indexFiles = (await fsExtra.readdir(app.fullPath)).filter(
 		(file: string) => file.startsWith('index.'),
 	)
-	const indexCss = indexFiles.find((file: string) => file.endsWith('.css'))
-	const indexJs = indexFiles.find((file: string) => file.endsWith('.js'))
-	const indexTs = indexFiles.find((file: string) => file.endsWith('.ts'))
-	const indexTsx = indexFiles.find((file: string) => file.endsWith('.tsx'))
+	const indexCss = indexFiles.find((file: string) =>
+		file.endsWith(['index', test, 'css'].filter(Boolean).join('.')),
+	)
+	const indexJs = indexFiles.find((file: string) =>
+		file.endsWith(['index', test, 'js'].filter(Boolean).join('.')),
+	)
+	const indexTs = indexFiles.find((file: string) =>
+		file.endsWith(['index', test, 'ts'].filter(Boolean).join('.')),
+	)
+	const indexTsx = indexFiles.find((file: string) =>
+		file.endsWith(['index', test, 'tsx'].filter(Boolean).join('.')),
+	)
 	const scripts = [indexJs, indexTs, indexTsx].filter(typedBoolean)
 	if (scripts.length > 1) {
 		throw new Response(
@@ -45,7 +58,7 @@ export async function loader({ params }: DataFunctionArgs) {
 <!DOCTYPE html>
 <html>
 	<head>
-		<base href="${app.baseUrl}" />
+		<base href="${app.dev.baseUrl}" />
 		<meta charset="utf-8">
 		<meta name="viewport" content="width=device-width, initial-scale=1">
 		<title>${app.title}</title>

@@ -83,11 +83,11 @@ export async function runAppDev(app: App) {
 		return { status: 'process-running', running: true } as const
 	}
 
-	if (!app.hasServer) {
+	if (app.dev.type !== 'script') {
 		return { status: 'error', error: 'no-server' } as const
 	}
 
-	const { portNumber } = app
+	const { portNumber } = app.dev
 	if (!(await isPortAvailable(portNumber))) {
 		return { status: 'port-unavailable', running: false, portNumber } as const
 	}
@@ -146,14 +146,21 @@ export async function runAppDev(app: App) {
 export function runAppTests(app: ProblemApp) {
 	const key = app.id
 
-	const testProcess = spawn('npm', ['run', app.testScriptName, '--silent'], {
+	if (app.test.type !== 'script') {
+		return { status: 'error', error: 'no-test' } as const
+	}
+	if (app.test.requiresApp && app.dev.type !== 'script') {
+		return { status: 'error', error: 'no server, but requires app' } as const
+	}
+
+	const testProcess = spawn('npm', ['run', app.test.scriptName, '--silent'], {
 		cwd: app.fullPath,
 		env: {
 			...process.env,
 			// TODO: support specifying the env
 			NODE_ENV: 'development',
 			// TODO: support specifying the port
-			PORT: String(app.portNumber),
+			PORT: app.dev.type === 'script' ? String(app.dev.portNumber) : undefined,
 		},
 	})
 	const output: Array<OutputLine> = []
@@ -186,10 +193,12 @@ export function runAppTests(app: ProblemApp) {
 }
 
 export async function waitOnApp(app: App) {
-	return waitOn({
-		resources: [`http://localhost:${app.portNumber}`],
-		timeout: 10000,
-	})
+	if (app.dev.type === 'script') {
+		return waitOn({
+			resources: [`http://localhost:${app.dev.portNumber}`],
+			timeout: 10000,
+		})
+	}
 }
 
 export function isPortAvailable(port: number | string): Promise<boolean> {

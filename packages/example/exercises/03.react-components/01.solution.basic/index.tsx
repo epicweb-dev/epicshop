@@ -10,3 +10,6 @@ function Counter() {
 const rootEl = document.createElement('div')
 document.body.append(rootEl)
 ReactDOM.createRoot(rootEl).render(<Counter />)
+
+// exported for tests
+export { Counter }
