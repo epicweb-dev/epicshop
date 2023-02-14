@@ -9,7 +9,7 @@ import { typedBoolean } from '~/utils/misc'
 export async function loader({ params, request }: DataFunctionArgs) {
 	const { name: appName } = params
 	const url = new URL(request.url)
-	const test = url.searchParams.has('test') ? 'test' : null
+	const test = url.pathname.startsWith('/app/test/') ? 'test' : null
 	invariant(appName, 'App name is required')
 	const app = await getAppByName(appName)
 	if (!app) {

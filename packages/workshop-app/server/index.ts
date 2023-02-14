@@ -8,7 +8,7 @@ import address from 'address'
 import closeWithGrace from 'close-with-grace'
 import { createRequestHandler } from '@remix-run/express'
 
-const BUILD_DIR = path.join(process.cwd(), 'build')
+const BUILD_DIR_FILE = path.join(process.cwd(), 'build/remix.js')
 
 const app = express()
 
@@ -46,12 +46,12 @@ app.all(
 				purgeRequireCache()
 
 				return createRequestHandler({
-					build: require(BUILD_DIR),
+					build: require(BUILD_DIR_FILE),
 					mode: process.env.NODE_ENV,
 				})(req, res, next)
 		  }
 		: createRequestHandler({
-				build: require(BUILD_DIR),
+				build: require(BUILD_DIR_FILE),
 				mode: process.env.NODE_ENV,
 		  }),
 )
@@ -93,7 +93,7 @@ function purgeRequireCache() {
 	// file changes, but then you'll have to reconnect to databases/etc on each
 	// change. We prefer the DX of this, so we've included it for you by default
 	for (const key in require.cache) {
-		if (key.startsWith(BUILD_DIR)) {
+		if (key.startsWith(BUILD_DIR_FILE)) {
 			delete require.cache[key]
 		}
 	}

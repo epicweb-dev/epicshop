@@ -45,13 +45,16 @@ type BaseApp = {
 	fullPath: string
 	instructionsCode?: string
 	test:
-		| { type: 'browser' }
+		| { type: 'browser'; baseUrl: `/app/test/${BaseApp['name']}/` }
 		| { type: 'script'; scriptName: string; requiresApp: boolean }
 		| { type: 'none' }
-	dev: {
-		/** The base path for the iframe to view this app (ends in "/") */
-		baseUrl: string
-	} & ({ type: 'browser' } | { type: 'script'; portNumber: number })
+	dev:
+		| { type: 'browser'; baseUrl: `/app/${BaseApp['name']}/` }
+		| {
+				type: 'script'
+				portNumber: number
+				baseUrl: `http://localhost:${number}/`
+		  }
 }
 
 export type ProblemApp = Prettyify<
@@ -319,6 +322,7 @@ async function getTestInfo(
 	testScriptName = 'test',
 ): Promise<BaseApp['test']> {
 	const dirList = await fs.promises.readdir(fullPath)
+	const name = await getAppName(fullPath)
 	const hasPkgJson = await exists(path.join(fullPath, 'package.json'))
 	const hasTestScript = hasPkgJson
 		? Boolean(
@@ -334,7 +338,7 @@ async function getTestInfo(
 	}
 	const hasTestFile = dirList.some(item => item.includes('.test.'))
 	if (hasTestFile) {
-		return { type: 'browser' }
+		return { type: 'browser', baseUrl: `/app/test/${name}/` }
 	}
 
 	return { type: 'none' }
@@ -349,14 +353,15 @@ async function getDevInfo(
 	const hasDevScript = hasPkgJson
 		? Boolean(await getPkgProp(fullPath, ['scripts', 'dev'].join('.'), ''))
 		: false
-	const baseUrl = hasPkgJson
-		? `http://localhost:${portNumber}/`
-		: `/app/${name}/`
 
 	if (hasDevScript) {
-		return { type: 'script', baseUrl, portNumber }
+		return {
+			type: 'script',
+			baseUrl: `http://localhost:${portNumber}/`,
+			portNumber,
+		}
 	}
-	return { type: 'browser', baseUrl }
+	return { type: 'browser', baseUrl: `/app/${name}/` }
 }
 
 async function getExampleAppFromPath(

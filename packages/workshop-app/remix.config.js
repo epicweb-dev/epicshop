@@ -5,6 +5,7 @@ const { flatRoutes } = require('remix-flat-routes')
  */
 module.exports = {
 	cacheDirectory: './node_modules/.cache/remix',
+	serverBuildPath: './build/remix.js',
 	ignoredRouteFiles: ['**/*'],
 	routes: async defineRoutes => {
 		return flatRoutes('routes', defineRoutes, {

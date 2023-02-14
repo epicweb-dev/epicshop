@@ -278,13 +278,7 @@ export default function ExercisePartRoute() {
 							<Preview appInfo={data.solution} />
 						</TabPanel>
 						<TabPanel hidden={tabIndex !== 2}>
-							{data.problem?.test.type === 'script' ? (
-								<TestOutput id={data.problem.id} />
-							) : data.problem?.test.type === 'browser' ? (
-								<iframe src={data.problem.dev.baseUrl + `?test`} />
-							) : (
-								<p>No tests here. Sorry.</p>
-							)}
+							<Tests appInfo={data.problem} />
 						</TabPanel>
 						<TabPanel hidden={tabIndex !== 3}>
 							<div className="prose whitespace-pre-wrap">
@@ -342,6 +336,29 @@ function Preview({
 			/>
 		)
 	}
+}
+
+function Tests({
+	appInfo,
+}: {
+	appInfo: SerializeFrom<typeof loader>['problem']
+}) {
+	if (!appInfo || appInfo.test.type === 'none') {
+		return <p>No tests here. Sorry.</p>
+	}
+	if (appInfo.test.type === 'script') {
+		return <TestOutput id={appInfo.id} />
+	}
+	if (appInfo.test.type === 'browser') {
+		return (
+			<iframe
+				title={`${appInfo.title} tests`}
+				src={appInfo.test.baseUrl}
+				className="h-full w-full border-2 border-stone-400"
+			/>
+		)
+	}
+	return null
 }
 
 export function ErrorBoundary() {
