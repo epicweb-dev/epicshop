@@ -1,5 +1,5 @@
 if (process.env.NODE_ENV === 'production') {
-	require('./server-build')
+	require('./build/server')
 } else {
 	if (!global.inspectorOpen) {
 		global.inspectorOpen = true
