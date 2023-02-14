@@ -2,7 +2,7 @@ import { eventStream } from 'remix-utils'
 import { chokidar } from '~/utils/watch.server'
 import type { DataFunctionArgs } from '@remix-run/node'
 import invariant from 'tiny-invariant'
-import { getAppById } from '~/utils/misc.server'
+import { getAppById } from '~/utils/apps.server'
 import { redirect } from 'react-router'
 
 export async function loader({ request, params }: DataFunctionArgs) {

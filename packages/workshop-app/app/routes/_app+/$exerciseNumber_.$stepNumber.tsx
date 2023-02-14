@@ -9,7 +9,7 @@ import {
 } from '@remix-run/react'
 import invariant from 'tiny-invariant'
 import { getErrorMessage } from '~/utils/misc'
-import { getExercise } from '~/utils/misc.server'
+import { getExercise } from '~/utils/apps.server'
 
 export async function loader({ params }: DataFunctionArgs) {
 	invariant(params.exerciseNumber, 'exerciseNumber is required')

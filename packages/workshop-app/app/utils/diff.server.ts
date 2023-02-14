@@ -7,7 +7,7 @@ import { BUNDLED_LANGUAGES } from 'shiki'
 import { diffCodeCache } from './cache.server'
 import { compileMarkdownString } from './compile-mdx.server'
 import { typedBoolean } from './misc'
-import { getDirMtimeMs, type App } from './misc.server'
+import { getDirMtimeMs, type App } from './apps.server'
 
 const kcdshopTempDir = path.join(os.tmpdir(), 'kcdshop')
 

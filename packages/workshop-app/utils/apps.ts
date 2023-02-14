@@ -1,8 +1,4 @@
-// Don't judge this file too harshly. It's the result of a lot of refactorings
-// and I haven't had the chance to clean things up since the last one 😅
-
 import { cachified } from 'cachified'
-import cp from 'child_process'
 import fs from 'fs'
 import glob from 'glob'
 import path from 'path'
@@ -13,9 +9,8 @@ import {
 	getAppCache,
 	problemAppCache,
 	solutionAppCache,
-} from './cache.server'
-import { compileMdx } from './compile-mdx.server'
-import { typedBoolean } from './misc'
+} from './cache'
+import { compileMdx } from './compile-mdx'
 
 const globPromise = util.promisify(glob)
 
@@ -689,15 +684,8 @@ export async function getWorkshopRoot() {
 	)
 }
 
-export async function exec(command: string) {
-	const child = cp.spawn(command, { shell: true, stdio: 'inherit' })
-	await new Promise((res, rej) => {
-		child.on('exit', code => {
-			if (code === 0) {
-				res(code)
-			} else {
-				rej()
-			}
-		})
-	})
+export function typedBoolean<T>(
+	value: T,
+): value is Exclude<T, false | null | undefined | '' | 0> {
+	return Boolean(value)
 }

@@ -16,8 +16,9 @@
   "author": "Kent C. Dodds <me@kentcdodds.com> (https://kentcdodds.com/)",
   "license": "MIT",
   "dependencies": {
-    "@testing-library/dom": "^8.20.0",
     "@kentcdodds/workshop-app": "*",
+    "@playwright/test": "^1.30.0",
+    "@testing-library/dom": "^8.20.0",
     "@testing-library/react": "^13.4.0",
     "@testing-library/user-event": "^14.4.3",
     "assert": "^2.0.0",

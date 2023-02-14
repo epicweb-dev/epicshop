@@ -3,7 +3,7 @@ import { spawn } from 'child_process'
 import net from 'net'
 import closeWithGrace from 'close-with-grace'
 import waitOn from 'wait-on'
-import type { App, ProblemApp } from './misc.server'
+import type { App, ProblemApp } from './apps.server'
 
 type DevProcessesMap = Map<
 	string,

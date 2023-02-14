@@ -7,7 +7,7 @@ import {
 	getApps,
 	getWorkshopTitle,
 	isExerciseStepApp,
-} from '~/utils/misc.server'
+} from '~/utils/apps.server'
 
 export async function loader() {
 	const apps = (await getApps()).filter(isExerciseStepApp)

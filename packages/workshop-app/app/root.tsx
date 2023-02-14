@@ -17,7 +17,7 @@ import {
 import reachTabsStylesheetUrl from '@reach/tabs/styles.css'
 import appStylesheetUrl from './styles/app.css'
 import tailwindStylesheetUrl from './styles/tailwind.css'
-import { getWorkshopRoot } from './utils/misc.server'
+import { getWorkshopRoot } from './utils/apps.server'
 
 export const links: LinksFunction = () => {
 	return [

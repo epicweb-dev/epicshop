@@ -6,7 +6,7 @@ import esbuild from 'esbuild'
 import type { DataFunctionArgs } from '@remix-run/node'
 import { redirect } from 'react-router'
 import invariant from 'tiny-invariant'
-import { getAppById } from '~/utils/misc.server'
+import { getAppById } from '~/utils/apps.server'
 
 export async function loader({ params, request }: DataFunctionArgs) {
 	const { id: appId, '*': splat } = params

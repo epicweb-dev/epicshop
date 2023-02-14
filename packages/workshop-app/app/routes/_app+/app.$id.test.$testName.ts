@@ -3,7 +3,7 @@ import path from 'path'
 import type { DataFunctionArgs } from '@remix-run/node'
 import { redirect } from '@remix-run/node'
 import invariant from 'tiny-invariant'
-import { getAppById, isProblemApp } from '~/utils/misc.server'
+import { getAppById, isProblemApp } from '~/utils/apps.server'
 
 export async function loader({ params, request }: DataFunctionArgs) {
 	const { id: appId, testName } = params
@@ -49,11 +49,11 @@ function logStatus(message) {
 	}
 }
 const testFile = ${JSON.stringify(testFile)}
-logStatus({status: 'pending', testFile})
+logStatus({status: 'pending'})
 import(${JSON.stringify(testScriptPath)}).then(() => {
-	logStatus({status: 'pass', testFile})
+	logStatus({status: 'pass'})
 }, (error) => {
-	logStatus({status: 'fail', testFile, error})
+	logStatus({status: 'fail', error})
 })
 `
 

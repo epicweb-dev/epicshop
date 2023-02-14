@@ -3,7 +3,7 @@ import path from 'path'
 import type { DataFunctionArgs } from '@remix-run/node'
 import { redirect } from '@remix-run/node'
 import invariant from 'tiny-invariant'
-import { getAppById } from '~/utils/misc.server'
+import { getAppById } from '~/utils/apps.server'
 import { typedBoolean } from '~/utils/misc'
 
 export async function loader({ params }: DataFunctionArgs) {

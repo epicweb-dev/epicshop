@@ -1,7 +1,7 @@
 import path from 'path'
 import { type getDiffFiles } from './diff.server'
 import prettier from 'prettier'
-import { getWorkshopRoot } from './misc.server'
+import { getWorkshopRoot } from './apps.server'
 
 // mostly moved this to its own file because unifieds types are
 // pretty nuts and makes in-editor TypeScript very slow 😅

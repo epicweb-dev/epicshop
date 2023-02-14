@@ -8,7 +8,7 @@ import {
 	getNextExerciseApp,
 	getReadmePath,
 	isProblemApp,
-} from '~/utils/misc.server'
+} from '~/utils/apps.server'
 import { getProcesses } from '~/utils/process-manager.server'
 import { updateFilesSection } from '~/utils/readme-files-section.server'
 

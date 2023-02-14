@@ -4,7 +4,7 @@ import {
 	getExampleApps,
 	getExercises,
 	getWorkshopTitle,
-} from '~/utils/misc.server'
+} from '~/utils/apps.server'
 import { isAppRunning } from '~/utils/process-manager.server'
 
 export async function loader() {

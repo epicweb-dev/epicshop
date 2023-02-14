@@ -1,61 +1,14 @@
 import type { DataFunctionArgs } from '@remix-run/node'
-import { defer, json, redirect } from '@remix-run/node'
+import { json, redirect } from '@remix-run/node'
 import { useFetcher } from '@remix-run/react'
 import invariant from 'tiny-invariant'
-import {
-	exec,
-	getAppByName,
-	getWorkshopRoot,
-	isExerciseStepApp,
-} from '~/utils/misc.server'
+import { getAppByName } from '~/utils/apps.server'
 import {
 	closeProcess,
 	runAppDev,
 	stopPort,
 	waitOnApp,
 } from '~/utils/process-manager.server'
-
-export async function loader({ request }: DataFunctionArgs) {
-	const name = new URL(request.url).searchParams.get('name')
-	invariant(typeof name === 'string', 'name is required')
-	const app = await getAppByName(name)
-	if (!app) {
-		throw new Response('Not found', { status: 404 })
-	}
-	if (app.dev.type !== 'script') {
-		throw redirect(app.dev.baseUrl)
-	}
-
-	const result = await runAppDev(app)
-
-	if (result.running) {
-		return defer({
-			title: app.title,
-			port: app.dev.portNumber,
-			vsCodeReady: exec(
-				`code "${await getWorkshopRoot()}" "${app.fullPath}/README.md"`,
-			),
-			startStatus: result.status,
-			appReady: waitOnApp(app).then(() => {
-				if (isExerciseStepApp(app)) {
-					return `/exercise/${app.exerciseNumber}`
-				} else {
-					return `/example/${app.name}`
-				}
-			}),
-		})
-	} else {
-		return defer({
-			title: app.title,
-			port: app.dev.portNumber,
-			vsCodeReady: exec(
-				`code "${await getWorkshopRoot()}" "${app.fullPath}/README.md"`,
-			),
-			appReady: null,
-			startStatus: result.status,
-		})
-	}
-}
 
 export async function action({ request }: DataFunctionArgs) {
 	const formData = await request.formData()

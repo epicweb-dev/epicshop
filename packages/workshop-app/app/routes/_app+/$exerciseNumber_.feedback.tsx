@@ -10,7 +10,7 @@ import {
 	getExercise,
 	getWorkshopTitle,
 	isExerciseStepApp,
-} from '~/utils/misc.server'
+} from '~/utils/apps.server'
 
 export async function loader({ params }: DataFunctionArgs) {
 	invariant(params.exerciseNumber, 'exerciseNumber is required')

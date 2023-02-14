@@ -17,7 +17,7 @@ import {
 	isSolutionApp,
 	requireExercise,
 	requireExerciseApp,
-} from '~/utils/misc.server'
+} from '~/utils/apps.server'
 import { isAppRunning, isPortAvailable } from '~/utils/process-manager.server'
 
 import { Tab, TabList, TabPanel, TabPanels, Tabs } from '@reach/tabs'
@@ -378,19 +378,9 @@ const testRunnerDataSchema = z.intersection(
 		type: z.literal('kcdshop:test-status-update'),
 	}),
 	z.union([
-		z.object({
-			status: z.literal('pending'),
-			testFile: z.string(),
-		}),
-		z.object({
-			status: z.literal('pass'),
-			testFile: z.string(),
-		}),
-		z.object({
-			status: z.literal('fail'),
-			testFile: z.string(),
-			error: z.unknown(),
-		}),
+		z.object({ status: z.literal('pending') }),
+		z.object({ status: z.literal('pass') }),
+		z.object({ status: z.literal('fail'), error: z.unknown() }),
 	]),
 )
 

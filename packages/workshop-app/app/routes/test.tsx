@@ -6,7 +6,7 @@ import escapeHtml from 'lodash.escape'
 import { useEffect, useReducer, useRef } from 'react'
 import { eventStream, useEventSource } from 'remix-utils'
 import { z } from 'zod'
-import { getAppById, isProblemApp } from '~/utils/misc.server'
+import { getAppById, isProblemApp } from '~/utils/apps.server'
 import {
 	clearTestProcessEntry,
 	getTestProcessEntry,

@@ -6,3 +6,4 @@ node_modules
 
 **/app/styles/tailwind.css
 package.json
+tsconfig.json
