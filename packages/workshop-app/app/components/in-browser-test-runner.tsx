@@ -10,7 +10,7 @@ const testRunnerStatusDataSchema = z.intersection(
 	z.union([
 		z.object({ status: z.literal('pending') }),
 		z.object({ status: z.literal('pass') }),
-		z.object({ status: z.literal('fail'), error: z.unknown() }),
+		z.object({ status: z.literal('fail'), error: z.string() }),
 	]),
 )
 
@@ -112,7 +112,7 @@ export function InBrowserTestRunner({
 
 			{message?.status === 'fail' ? (
 				<pre className="prose max-h-32 overflow-scroll text-red-700">
-					{getErrorMessage(message.error)}
+					{message.error}
 				</pre>
 			) : null}
 
