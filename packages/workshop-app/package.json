@@ -10,7 +10,9 @@
   },
   "files": [
     "start.js",
+    "utils.d.ts",
     "utils.js",
+    "test.d.ts",
     "test.js",
     "build",
     "public"
