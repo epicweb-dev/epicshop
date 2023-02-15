@@ -22,6 +22,7 @@ export async function getInBrowserTestPages() {
 
 const sleep = (time: number) =>
 	new Promise(resolve => setTimeout(resolve, time))
+
 async function waitFor<ReturnValue>(
 	cb: () => ReturnValue | Promise<ReturnValue>,
 	{ timeout = 1000, interval = 30 } = {},
@@ -72,11 +73,12 @@ export function setupInBrowserTests() {
 			})
 			await page.goto(testPage.path)
 			await page.waitForLoadState()
-			await waitFor(() =>
-				infos.find(info => info.includes('{status: pending}')),
+			await waitFor(
+				() => infos.find(info => info.includes('status: pending')),
+				{ timeout: 10_000 },
 			)
 			const result = await Promise.race([
-				waitFor(() => logs.find(log => log.includes('{status: pass}')), {
+				waitFor(() => logs.find(log => log.includes('status: pass')), {
 					timeout: 10_000,
 				}),
 				waitFor(() => (errors.length > 0 ? errors : null), {
@@ -85,7 +87,7 @@ export function setupInBrowserTests() {
 					throw errors
 				}),
 			])
-			expect(result).toBe('{status: pass}')
+			expect(result).toMatch('status: pass')
 		})
 	}
 }
