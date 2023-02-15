@@ -40,7 +40,6 @@ function logStatus(message) {
 	} else {
 		if (message.status === 'fail') {
 			console.error(message)
-			throw message.error
 		} else if (message.status === 'pending') {
 			console.info(message)
 		} else if (message.status === 'pass') {
@@ -54,6 +53,7 @@ import(${JSON.stringify(testScriptPath)}).then(() => {
 	logStatus({status: 'pass'})
 }, (error) => {
 	logStatus({status: 'fail', error})
+	throw error
 })
 `
 
