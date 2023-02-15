@@ -52,7 +52,13 @@ export async function action({ request }: DataFunctionArgs) {
 			const apps = (await getApps()).filter(isProblemApp)
 			for (const app of apps) {
 				const nextApp = await getNextExerciseApp(app)
-				const files = nextApp ? await getDiffFiles(app, nextApp) : []
+				const app1 =
+					app.stepNumber > 1
+						? apps.find(
+								a => a.name === app.name && a.stepNumber === app.stepNumber - 1,
+						  ) ?? app
+						: app
+				const files = nextApp ? await getDiffFiles(app1, nextApp) : []
 				const readmePath = await getReadmePath({
 					appDir: app.fullPath,
 					stepNumber: isProblemApp(app) ? app.stepNumber : undefined,
