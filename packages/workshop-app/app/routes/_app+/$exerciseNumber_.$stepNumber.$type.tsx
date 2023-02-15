@@ -373,9 +373,10 @@ function Tests({
 	return null
 }
 
-const testRunnerDataSchema = z.intersection(
+const testRunnerStatusDataSchema = z.intersection(
 	z.object({
 		type: z.literal('kcdshop:test-status-update'),
+		timestamp: z.number(),
 	}),
 	z.union([
 		z.object({ status: z.literal('pending') }),
@@ -384,7 +385,20 @@ const testRunnerDataSchema = z.intersection(
 	]),
 )
 
-type TestRunnerData = z.infer<typeof testRunnerDataSchema>
+const testRunnerAlfredDataSchema = z.object({
+	type: z.literal('kcdshop:test-alfred-update'),
+	status: z.literal('pass'),
+	tip: z.string(),
+	timestamp: z.number(),
+})
+
+const testRunnerDataSchema = z.union([
+	testRunnerAlfredDataSchema,
+	testRunnerStatusDataSchema,
+])
+
+type TestRunnerStatusData = z.infer<typeof testRunnerStatusDataSchema>
+type TestRunnerAlfredData = z.infer<typeof testRunnerAlfredDataSchema>
 
 function InBrowserTestRunner({
 	baseUrl,
@@ -394,17 +408,35 @@ function InBrowserTestRunner({
 	testFile: string
 }) {
 	const iframeRef = useRef<HTMLIFrameElement>(null)
-	const [message, setMessage] = useState<TestRunnerData | null>(null)
+	const [message, setMessage] = useState<TestRunnerStatusData | null>(null)
+	const [alfredTips, setAlfredTips] = useState<Array<TestRunnerAlfredData>>([])
 
 	useEffect(() => {
 		function handleMessage(messageEvent: MessageEvent) {
 			if (messageEvent.source !== iframeRef.current?.contentWindow) return
-			if (messageEvent.data.type !== 'kcdshop:test-status-update') return
+			if ('request' in messageEvent.data) return
 
-			const data = testRunnerDataSchema.parse(messageEvent.data, {
+			const result = testRunnerDataSchema.safeParse(messageEvent.data, {
 				path: ['messageEvent', 'data'],
 			})
-			setMessage(data)
+			if (!result.success) {
+				console.error(
+					`Invalid message from test iframe`,
+					messageEvent.data,
+					result.error,
+				)
+				return
+			}
+			const { data } = result
+			if (data.type === 'kcdshop:test-status-update') {
+				if (data.status === 'pending') {
+					setAlfredTips([])
+				}
+				setMessage(data)
+			}
+			if (data.type === 'kcdshop:test-alfred-update') {
+				setAlfredTips(tips => [...tips, data])
+			}
 		}
 		window.addEventListener('message', handleMessage)
 		return () => {
@@ -419,6 +451,13 @@ function InBrowserTestRunner({
 		unknown: '🧐',
 	}[message?.status ?? 'unknown']
 
+	const sortedAlfredTips = alfredTips.sort((a, b) => a.timestamp - b.timestamp)
+	const alfredStatusEmojis = {
+		pass: '✅',
+		fail: '❌',
+		unknown: '🧐',
+	}
+
 	return (
 		<details>
 			<summary>
@@ -430,6 +469,17 @@ function InBrowserTestRunner({
 			>
 				Rerun
 			</button>
+
+			<ul className="list-decimal">
+				{sortedAlfredTips.map(alfredTip => (
+					// sometimes the tips come in so fast that the timestamp is the same
+					<li key={alfredTip.timestamp + alfredTip.tip}>
+						<pre>
+							{alfredStatusEmojis[alfredTip.status]} {alfredTip.tip}
+						</pre>
+					</li>
+				))}
+			</ul>
 
 			{message?.status === 'fail' ? (
 				<pre className="prose max-h-32 overflow-scroll text-red-700">

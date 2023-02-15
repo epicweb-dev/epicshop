@@ -48,11 +48,11 @@ function logStatus(message) {
 	}
 }
 const testFile = ${JSON.stringify(testFile)}
-logStatus({status: 'pending'})
+logStatus({status: 'pending', timestamp: Date.now()})
 import(${JSON.stringify(testScriptPath)}).then(() => {
-	logStatus({status: 'pass'})
+	logStatus({status: 'pass', timestamp: Date.now()})
 }, (error) => {
-	logStatus({status: 'fail', error})
+	logStatus({status: 'fail', error, timestamp: Date.now()})
 	throw error
 })
 `

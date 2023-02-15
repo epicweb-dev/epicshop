@@ -11,20 +11,49 @@ configure({
 
 export const { expect } = chai
 
+function isError(maybeError: any): maybeError is Error {
+	return (
+		maybeError &&
+		typeof maybeError === 'object' &&
+		'message' in maybeError &&
+		typeof maybeError.message === 'string'
+	)
+}
+
 export async function alfredTip<ReturnValue>(
 	get: (() => ReturnValue) | (() => Promise<ReturnValue>),
-	tip: string | ((error: unknown) => string),
+	tip:
+		| string
+		| ((result: { type: 'fail'; error: Error } | { type: 'pass' }) => string),
 	{ displayEl }: { displayEl?: true | ((error: unknown) => HTMLElement) } = {},
 ): Promise<ReturnValue> {
 	let caughtError
 	try {
-		return await get()
+		const result = await get()
+		const tipString = typeof tip === 'function' ? tip({ type: 'pass' }) : tip
+		if (window.parent !== window) {
+			window.parent.postMessage(
+				{
+					type: 'kcdshop:test-alfred-update',
+					status: 'pass',
+					tip: tipString,
+					timestamp: Date.now(),
+				},
+				'*',
+			)
+		} else {
+			console.log(`✅ ${tipString}`)
+		}
+		return result
 	} catch (e: unknown) {
 		caughtError = e
 	}
 
-	const tipString = typeof tip === 'function' ? tip(caughtError) : tip
-	const error = caughtError instanceof Error ? caughtError : new Error()
+	const error = isError(caughtError)
+		? caughtError
+		: new Error(typeof caughtError === 'string' ? caughtError : 'Unknown error')
+	const tipString =
+		typeof tip === 'function' ? tip({ type: 'fail', error }) : tip
 	error.message = `🚨 ${tipString}${
 		error.message ? `\n\n${error.message}` : ''
 	}`

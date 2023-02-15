@@ -1,12 +1,20 @@
-import { screen, waitFor } from '@testing-library/dom'
+import { waitFor, within } from '@testing-library/dom'
 import userEvent from '@testing-library/user-event'
 import { alfredTip, expect } from '@kentcdodds/workshop-app/test'
 import '.'
 
+const screen = within(document.body)
+
 const button = await alfredTip(
-	() => screen.findByRole('button', { name: /0/i }),
-	'Could not find the counter button. It should start at 0',
+	() => screen.findByRole('button'),
+	'The counter button should be rendered',
 )
+
+await alfredTip(
+	() => expect(button).to.have.text('0'),
+	'The counter button should start at 0',
+)
+
 await userEvent.click(button)
 await alfredTip(
 	() => waitFor(() => expect(button).to.have.text('1')),
