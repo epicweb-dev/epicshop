@@ -1,6 +1,5 @@
 import { useEffect, useRef, useState } from 'react'
 import { z } from 'zod'
-import { getErrorMessage } from '~/utils/misc'
 
 const testRunnerStatusDataSchema = z.intersection(
 	z.object({
