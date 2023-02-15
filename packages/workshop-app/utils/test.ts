@@ -1,6 +1,6 @@
 import chai from 'chai'
 import chaiDOM from 'chai-dom'
-import { prettyDOM, configure } from '@testing-library/dom'
+import { configure } from '@testing-library/dom'
 
 chai.use(chaiDOM)
 
@@ -20,29 +20,29 @@ function isError(maybeError: any): maybeError is Error {
 	)
 }
 
-export async function alfredTip<ReturnValue>(
-	get: (() => ReturnValue) | (() => Promise<ReturnValue>),
-	tip:
+export async function testStep<ReturnValue>(
+	title:
 		| string
 		| ((result: { type: 'fail'; error: Error } | { type: 'pass' }) => string),
-	{ displayEl }: { displayEl?: true | ((error: unknown) => HTMLElement) } = {},
+	get: (() => ReturnValue) | (() => Promise<ReturnValue>),
 ): Promise<ReturnValue> {
 	let caughtError
 	try {
 		const result = await get()
-		const tipString = typeof tip === 'function' ? tip({ type: 'pass' }) : tip
+		const titleString =
+			typeof title === 'function' ? title({ type: 'pass' }) : title
 		if (window.parent !== window) {
 			window.parent.postMessage(
 				{
-					type: 'kcdshop:test-alfred-update',
+					type: 'kcdshop:test-step-update',
 					status: 'pass',
-					tip: tipString,
+					tip: titleString,
 					timestamp: Date.now(),
 				},
 				'*',
 			)
 		} else {
-			console.log(`✅ ${tipString}`)
+			console.log(`✅ ${titleString}`)
 		}
 		return result
 	} catch (e: unknown) {
@@ -52,15 +52,10 @@ export async function alfredTip<ReturnValue>(
 	const error = isError(caughtError)
 		? caughtError
 		: new Error(typeof caughtError === 'string' ? caughtError : 'Unknown error')
-	const tipString =
-		typeof tip === 'function' ? tip({ type: 'fail', error }) : tip
-	error.message = `🚨 ${tipString}${
+	const titleString =
+		typeof title === 'function' ? title({ type: 'fail', error }) : title
+	error.message = `🚨 ${titleString}${
 		error.message ? `\n\n${error.message}` : ''
 	}`
-	if (displayEl) {
-		const el =
-			typeof displayEl === 'function' ? displayEl(caughtError) : document.body
-		error.message += `\n\n${prettyDOM(el)}`
-	}
 	throw error
 }

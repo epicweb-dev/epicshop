@@ -1,27 +1,24 @@
 import { waitFor, within } from '@testing-library/dom'
 import userEvent from '@testing-library/user-event'
-import { alfredTip, expect } from '@kentcdodds/workshop-app/test'
+import { testStep, expect } from '@kentcdodds/workshop-app/test'
 import '.'
 
 const screen = within(document.body)
 
-const button = await alfredTip(
-	() => screen.findByRole('button'),
-	'The counter button should be rendered',
+const button = await testStep('The counter button should be rendered', () =>
+	screen.findByRole('button'),
 )
 
-await alfredTip(
-	() => expect(button).to.have.text('0'),
-	'The counter button should start at 0',
+await testStep('The counter button should start at 0', () =>
+	expect(button).to.have.text('0'),
 )
 
 await userEvent.click(button)
-await alfredTip(
-	() => waitFor(() => expect(button).to.have.text('1')),
-	'The button text should be 1 after clicking it once',
+await testStep('The button text should be 1 after clicking it once', () =>
+	waitFor(() => expect(button).to.have.text('1')),
 )
 await userEvent.click(button)
-await alfredTip(
-	() => waitFor(() => expect(button).to.have.text('2')),
+await testStep(
 	'The button text should be 2 after clicking it a second time',
+	() => waitFor(() => expect(button).to.have.text('2')),
 )

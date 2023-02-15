@@ -13,20 +13,20 @@ const testRunnerStatusDataSchema = z.intersection(
 	]),
 )
 
-const testRunnerAlfredDataSchema = z.object({
-	type: z.literal('kcdshop:test-alfred-update'),
+const testRunnerTestStepDataSchema = z.object({
+	type: z.literal('kcdshop:test-step-update'),
 	status: z.literal('pass'),
-	tip: z.string(),
+	title: z.string(),
 	timestamp: z.number(),
 })
 
 const testRunnerDataSchema = z.union([
-	testRunnerAlfredDataSchema,
+	testRunnerTestStepDataSchema,
 	testRunnerStatusDataSchema,
 ])
 
 type TestRunnerStatusData = z.infer<typeof testRunnerStatusDataSchema>
-type TestRunnerAlfredData = z.infer<typeof testRunnerAlfredDataSchema>
+type TestRunnerTestStepData = z.infer<typeof testRunnerTestStepDataSchema>
 
 export function InBrowserTestRunner({
 	baseUrl,
@@ -37,7 +37,7 @@ export function InBrowserTestRunner({
 }) {
 	const iframeRef = useRef<HTMLIFrameElement>(null)
 	const [message, setMessage] = useState<TestRunnerStatusData | null>(null)
-	const [alfredTips, setAlfredTips] = useState<Array<TestRunnerAlfredData>>([])
+	const [testSteps, setTestSteps] = useState<Array<TestRunnerTestStepData>>([])
 
 	useEffect(() => {
 		function handleMessage(messageEvent: MessageEvent) {
@@ -58,12 +58,12 @@ export function InBrowserTestRunner({
 			const { data } = result
 			if (data.type === 'kcdshop:test-status-update') {
 				if (data.status === 'pending') {
-					setAlfredTips([])
+					setTestSteps([])
 				}
 				setMessage(data)
 			}
-			if (data.type === 'kcdshop:test-alfred-update') {
-				setAlfredTips(tips => [...tips, data])
+			if (data.type === 'kcdshop:test-step-update') {
+				setTestSteps(steps => [...steps, data])
 			}
 		}
 		window.addEventListener('message', handleMessage)
@@ -79,8 +79,8 @@ export function InBrowserTestRunner({
 		unknown: '🧐',
 	}[message?.status ?? 'unknown']
 
-	const sortedAlfredTips = alfredTips.sort((a, b) => a.timestamp - b.timestamp)
-	const alfredStatusEmojis = {
+	const sortedTestSteps = testSteps.sort((a, b) => a.timestamp - b.timestamp)
+	const testStepStatusEmojis = {
 		pass: '✅',
 		fail: '❌',
 		unknown: '🧐',
@@ -99,11 +99,11 @@ export function InBrowserTestRunner({
 			</button>
 
 			<ul className="list-decimal">
-				{sortedAlfredTips.map(alfredTip => (
+				{sortedTestSteps.map(testStep => (
 					// sometimes the tips come in so fast that the timestamp is the same
-					<li key={alfredTip.timestamp + alfredTip.tip}>
+					<li key={testStep.timestamp + testStep.title}>
 						<pre>
-							{alfredStatusEmojis[alfredTip.status]} {alfredTip.tip}
+							{testStepStatusEmojis[testStep.status]} {testStep.title}
 						</pre>
 					</li>
 				))}
