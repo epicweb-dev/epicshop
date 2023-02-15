@@ -22,6 +22,6 @@ await alfredTip(
 )
 await userEvent.click(button)
 await alfredTip(
-	() => waitFor(() => expect(button).to.have.text('1')),
+	() => waitFor(() => expect(button).to.have.text('2')),
 	'The button text should be 2 after clicking it a second time',
 )

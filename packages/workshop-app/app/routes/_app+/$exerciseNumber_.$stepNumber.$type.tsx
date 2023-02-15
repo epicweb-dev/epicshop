@@ -1,10 +1,11 @@
-import { isRouteErrorResponse, Link, useRouteError } from '@remix-run/react'
-import { getErrorMessage } from '~/utils/misc'
 import type { DataFunctionArgs, SerializeFrom } from '@remix-run/node'
 import { json, redirect } from '@remix-run/node'
-import { useLoaderData } from '@remix-run/react'
-import { getDiffCode } from '~/utils/diff.server'
-import { Mdx } from '~/utils/mdx'
+import {
+	isRouteErrorResponse,
+	Link,
+	useLoaderData,
+	useRouteError,
+} from '@remix-run/react'
 import {
 	getAppByName,
 	getAppPageRoute,
@@ -18,15 +19,17 @@ import {
 	requireExercise,
 	requireExerciseApp,
 } from '~/utils/apps.server'
+import { getDiffCode } from '~/utils/diff.server'
+import { Mdx } from '~/utils/mdx'
+import { getErrorMessage } from '~/utils/misc'
 import { isAppRunning, isPortAvailable } from '~/utils/process-manager.server'
-
 import { Tab, TabList, TabPanel, TabPanels, Tabs } from '@reach/tabs'
 import { useSearchParams } from '@remix-run/react'
+import { Fragment, useState } from 'react'
 import { useParams } from 'react-router'
 import { InBrowserBrowser } from '~/components/in-browser-browser'
+import { InBrowserTestRunner } from '~/components/in-browser-test-runner'
 import { TestOutput } from '../test'
-import { useEffect, useRef, useState, Fragment } from 'react'
-import { z } from 'zod'
 
 export async function loader({ request, params }: DataFunctionArgs) {
 	const exerciseStepApp = await requireExerciseApp(params)
@@ -57,8 +60,16 @@ export async function loader({ request, params }: DataFunctionArgs) {
 
 	const app1Name = reqUrl.searchParams.get('app1')
 	const app2Name = reqUrl.searchParams.get('app2')
-	const app1 = app1Name ? await getAppByName(app1Name) : problemApp
-	const app2 = app2Name ? await getAppByName(app2Name) : solutionApp
+	const app1 = app1Name
+		? await getAppByName(app1Name)
+		: params.type === 'solution'
+		? solutionApp
+		: problemApp
+	const app2 = app2Name
+		? await getAppByName(app2Name)
+		: params.type === 'solution'
+		? problemApp
+		: solutionApp
 
 	if (!app1 || !app2) {
 		throw new Response('No app to compare to', { status: 404 })
@@ -128,6 +139,7 @@ export async function loader({ request, params }: DataFunctionArgs) {
 					id: solutionApp.id,
 					isRunning: isSolutionRunning,
 					dev: solutionApp.dev,
+					test: solutionApp.test,
 					portIsAvailable:
 						solutionApp.dev.type === 'script'
 							? isSolutionRunning
@@ -279,7 +291,9 @@ export default function ExercisePartRoute() {
 							<Preview appInfo={data.solution} />
 						</TabPanel>
 						<TabPanel hidden={tabIndex !== 2}>
-							<Tests appInfo={data.problem} />
+							<Tests
+								appInfo={type === 'solution' ? data.solution : data.problem}
+							/>
 						</TabPanel>
 						<TabPanel hidden={tabIndex !== 3}>
 							<div className="prose whitespace-pre-wrap">
@@ -321,20 +335,30 @@ function Preview({
 	const { isRunning, dev, name, portIsAvailable, title } = appInfo
 	if (dev.type === 'script') {
 		return (
-			<InBrowserBrowser
-				isRunning={isRunning}
-				name={name}
-				portIsAvailable={portIsAvailable}
-				port={dev.portNumber}
-			/>
+			<div>
+				<a href={dev.baseUrl} target="_blank" rel="noreferrer">
+					Open in isolated tab
+				</a>
+				<InBrowserBrowser
+					isRunning={isRunning}
+					name={name}
+					portIsAvailable={portIsAvailable}
+					port={dev.portNumber}
+				/>
+			</div>
 		)
 	} else {
 		return (
-			<iframe
-				title={title}
-				src={dev.baseUrl}
-				className="h-full w-full border-2 border-stone-400"
-			/>
+			<div>
+				<a href={dev.baseUrl} target="_blank" rel="noreferrer">
+					Open in isolated tab
+				</a>
+				<iframe
+					title={title}
+					src={dev.baseUrl}
+					className="h-full w-full border-2 border-stone-400"
+				/>
+			</div>
 		)
 	}
 }
@@ -360,141 +384,18 @@ function Tests({
 				</button>
 				{appInfo.test.testFiles.map(testFile => {
 					return (
-						<InBrowserTestRunner
-							key={testFile}
-							baseUrl={baseUrl}
-							testFile={testFile}
-						/>
+						<div key={testFile}>
+							<a href={baseUrl + testFile} target="_blank" rel="noreferrer">
+								Open in isolated tab
+							</a>
+							<InBrowserTestRunner baseUrl={baseUrl} testFile={testFile} />
+						</div>
 					)
 				})}
 			</Fragment>
 		)
 	}
 	return null
-}
-
-const testRunnerStatusDataSchema = z.intersection(
-	z.object({
-		type: z.literal('kcdshop:test-status-update'),
-		timestamp: z.number(),
-	}),
-	z.union([
-		z.object({ status: z.literal('pending') }),
-		z.object({ status: z.literal('pass') }),
-		z.object({ status: z.literal('fail'), error: z.unknown() }),
-	]),
-)
-
-const testRunnerAlfredDataSchema = z.object({
-	type: z.literal('kcdshop:test-alfred-update'),
-	status: z.literal('pass'),
-	tip: z.string(),
-	timestamp: z.number(),
-})
-
-const testRunnerDataSchema = z.union([
-	testRunnerAlfredDataSchema,
-	testRunnerStatusDataSchema,
-])
-
-type TestRunnerStatusData = z.infer<typeof testRunnerStatusDataSchema>
-type TestRunnerAlfredData = z.infer<typeof testRunnerAlfredDataSchema>
-
-function InBrowserTestRunner({
-	baseUrl,
-	testFile,
-}: {
-	baseUrl: string
-	testFile: string
-}) {
-	const iframeRef = useRef<HTMLIFrameElement>(null)
-	const [message, setMessage] = useState<TestRunnerStatusData | null>(null)
-	const [alfredTips, setAlfredTips] = useState<Array<TestRunnerAlfredData>>([])
-
-	useEffect(() => {
-		function handleMessage(messageEvent: MessageEvent) {
-			if (messageEvent.source !== iframeRef.current?.contentWindow) return
-			if ('request' in messageEvent.data) return
-
-			const result = testRunnerDataSchema.safeParse(messageEvent.data, {
-				path: ['messageEvent', 'data'],
-			})
-			if (!result.success) {
-				console.error(
-					`Invalid message from test iframe`,
-					messageEvent.data,
-					result.error,
-				)
-				return
-			}
-			const { data } = result
-			if (data.type === 'kcdshop:test-status-update') {
-				if (data.status === 'pending') {
-					setAlfredTips([])
-				}
-				setMessage(data)
-			}
-			if (data.type === 'kcdshop:test-alfred-update') {
-				setAlfredTips(tips => [...tips, data])
-			}
-		}
-		window.addEventListener('message', handleMessage)
-		return () => {
-			window.removeEventListener('message', handleMessage)
-		}
-	}, [])
-
-	const statusEmoji = {
-		pending: '⏳',
-		pass: '✅',
-		fail: '❌',
-		unknown: '🧐',
-	}[message?.status ?? 'unknown']
-
-	const sortedAlfredTips = alfredTips.sort((a, b) => a.timestamp - b.timestamp)
-	const alfredStatusEmojis = {
-		pass: '✅',
-		fail: '❌',
-		unknown: '🧐',
-	}
-
-	return (
-		<details>
-			<summary>
-				{statusEmoji}. {testFile}
-			</summary>
-
-			<button
-				onClick={() => iframeRef.current?.contentWindow?.location.reload()}
-			>
-				Rerun
-			</button>
-
-			<ul className="list-decimal">
-				{sortedAlfredTips.map(alfredTip => (
-					// sometimes the tips come in so fast that the timestamp is the same
-					<li key={alfredTip.timestamp + alfredTip.tip}>
-						<pre>
-							{alfredStatusEmojis[alfredTip.status]} {alfredTip.tip}
-						</pre>
-					</li>
-				))}
-			</ul>
-
-			{message?.status === 'fail' ? (
-				<pre className="prose max-h-32 overflow-scroll text-red-700">
-					{getErrorMessage(message.error)}
-				</pre>
-			) : null}
-
-			<iframe
-				ref={iframeRef}
-				title={testFile}
-				src={baseUrl + testFile}
-				className="h-full w-full border-2 border-stone-400"
-			/>
-		</details>
-	)
 }
 
 export function ErrorBoundary() {
