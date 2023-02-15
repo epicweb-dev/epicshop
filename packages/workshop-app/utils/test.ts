@@ -1,7 +1,13 @@
 import chai from 'chai'
 import chaiDOM from 'chai-dom'
+import { prettyDOM, configure } from '@testing-library/dom'
 
 chai.use(chaiDOM)
+
+// in the browser logging out the element is not necessary
+configure({
+	getElementError: message => new Error(message ?? 'Unknown error'),
+})
 
 export const { expect } = chai
 
@@ -23,7 +29,6 @@ export async function alfredTip<ReturnValue>(
 		error.message ? `\n\n${error.message}` : ''
 	}`
 	if (displayEl) {
-		const { prettyDOM } = await import('@testing-library/dom')
 		const el =
 			typeof displayEl === 'function' ? displayEl(caughtError) : document.body
 		error.message += `\n\n${prettyDOM(el)}`
