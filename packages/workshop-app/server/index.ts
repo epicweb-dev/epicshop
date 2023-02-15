@@ -6,7 +6,7 @@ import compression from 'compression'
 import morgan from 'morgan'
 import address from 'address'
 import closeWithGrace from 'close-with-grace'
-import { chokidar } from '~/utils/watch.server'
+import chokidar from 'chokidar'
 import ws from 'ws'
 import { createRequestHandler } from '@remix-run/express'
 
