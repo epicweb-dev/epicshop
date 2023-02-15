@@ -1,10 +1,12 @@
 import type { DataFunctionArgs, SerializeFrom } from '@remix-run/node'
 import { json, redirect } from '@remix-run/node'
 import {
+	Form,
 	isRouteErrorResponse,
 	Link,
 	useLoaderData,
 	useRouteError,
+	useSubmit,
 } from '@remix-run/react'
 import {
 	getAppByName,
@@ -75,10 +77,13 @@ export async function loader({ request, params }: DataFunctionArgs) {
 		throw new Response('No app to compare to', { status: 404 })
 	}
 
-	const allApps = (await getApps()).map(a => ({
-		name: a.name,
-		title: a.title,
-	}))
+	const allApps = (await getApps())
+		.filter((a, i, ar) => ar.findIndex(b => a.name === b.name) === i)
+		.map(a => ({
+			name: a.name,
+			title: a.title,
+			type: a.type,
+		}))
 
 	const apps = await getApps()
 	const exerciseApps = apps
@@ -188,6 +193,7 @@ export default function ExercisePartRoute() {
 	const data = useLoaderData<typeof loader>()
 	const [searchParams, setSearchParams] = useSearchParams()
 	const params = useParams()
+	const submit = useSubmit()
 
 	const type = isValidType(params.type) ? params.type : null
 
@@ -297,6 +303,37 @@ export default function ExercisePartRoute() {
 						</TabPanel>
 						<TabPanel hidden={tabIndex !== 3}>
 							<div className="prose whitespace-pre-wrap">
+								<Form onChange={e => submit(e.currentTarget)}>
+									<input type="hidden" name="preview" value="diff" />
+									<label>
+										App 1:
+										<select name="app1">
+											{data.diff.allApps.map(app => (
+												<option
+													key={app.name}
+													value={app.name}
+													selected={app.name === data.diff.app1}
+												>
+													{app.title} ({app.type})
+												</option>
+											))}
+										</select>
+									</label>
+									<label>
+										App 2:
+										<select name="app2">
+											{data.diff.allApps.map(app => (
+												<option
+													key={app.name}
+													value={app.name}
+													selected={app.name === data.diff.app2}
+												>
+													{app.title} ({app.type})
+												</option>
+											))}
+										</select>
+									</label>
+								</Form>
 								<Mdx code={data.diff.diffCode} />
 							</div>
 						</TabPanel>
