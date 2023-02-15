@@ -10,7 +10,9 @@ export function typedBoolean<T>(
 
 export function getErrorMessage(error: unknown) {
 	if (typeof error === 'string') return error
-	if (error instanceof Error) return error.message
+	if (error && typeof error === 'object' && 'message' in error) {
+		return error.message
+	}
 	return 'Unknown Error'
 }
 
