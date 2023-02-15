@@ -59,7 +59,9 @@ async function start() {
 
 		if (portUsed !== desiredPort) {
 			console.warn(
-				`🚨  Port ${desiredPort} is not available, using ${portUsed} instead.`,
+				chalk.yellow(
+					`⚠️  Port ${desiredPort} is not available, using ${portUsed} instead.`,
+				),
 			)
 		}
 		console.log(`🐨  Let's get learning!`)
