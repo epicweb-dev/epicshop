@@ -36,7 +36,7 @@ export async function testStep<ReturnValue>(
 				{
 					type: 'kcdshop:test-step-update',
 					status: 'pass',
-					tip: titleString,
+					title: titleString,
 					timestamp: Date.now(),
 				},
 				'*',
