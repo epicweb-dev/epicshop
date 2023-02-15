@@ -9,10 +9,9 @@
     "kcdshop": "./bin/kcdshop.js"
   },
   "files": [
-    "dist",
     "start.js",
     "utils.js",
-    "server-build",
+    "test.js",
     "build",
     "public"
   ],
@@ -46,6 +45,8 @@
     "address": "^1.2.2",
     "ansi-to-html": "^0.7.2",
     "cachified": "^3.1.0",
+    "chai": "^4.3.7",
+    "chai-dom": "^1.11.0",
     "chalk": "^5.2.0",
     "chokidar": "^3.5.3",
     "close-with-grace": "^1.1.0",
@@ -97,6 +98,8 @@
     "@remix-run/dev": "^1.7.5",
     "@remix-run/eslint-config": "^1.7.5",
     "@tailwindcss/typography": "^0.5.9",
+    "@types/chai": "^4.3.4",
+    "@types/chai-dom": "^1.11.0",
     "@types/common-ancestor-path": "^1.0.0",
     "@types/compression": "^1.7.2",
     "@types/eslint": "^8.4.10",

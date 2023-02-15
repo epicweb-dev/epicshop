@@ -1,0 +1,32 @@
+import chai from 'chai'
+import chaiDOM from 'chai-dom'
+
+chai.use(chaiDOM)
+
+export const { expect } = chai
+
+export async function alfredTip<ReturnValue>(
+	get: (() => ReturnValue) | (() => Promise<ReturnValue>),
+	tip: string | ((error: unknown) => string),
+	{ displayEl }: { displayEl?: true | ((error: unknown) => HTMLElement) } = {},
+): Promise<ReturnValue> {
+	let caughtError
+	try {
+		return await get()
+	} catch (e: unknown) {
+		caughtError = e
+	}
+
+	const tipString = typeof tip === 'function' ? tip(caughtError) : tip
+	const error = caughtError instanceof Error ? caughtError : new Error()
+	error.message = `🚨 ${tipString}${
+		error.message ? `\n\n${error.message}` : ''
+	}`
+	if (displayEl) {
+		const { prettyDOM } = await import('@testing-library/dom')
+		const el =
+			typeof displayEl === 'function' ? displayEl(caughtError) : document.body
+		error.message += `\n\n${prettyDOM(el)}`
+	}
+	throw error
+}
