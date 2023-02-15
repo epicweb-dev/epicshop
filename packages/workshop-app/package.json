@@ -94,6 +94,7 @@
     "unified": "^10.1.2",
     "unist-util-visit": "^4.1.2",
     "wait-on": "^7.0.1",
+    "ws": "^8.12.1",
     "zod": "^3.20.2"
   },
   "devDependencies": {
@@ -117,6 +118,7 @@
     "@types/react-dom": "^18.0.8",
     "@types/shell-quote": "^1.7.1",
     "@types/wait-on": "^5.3.1",
+    "@types/ws": "^8.5.4",
     "autoprefixer": "^10.4.13",
     "eslint": "^8.26.0",
     "eslint-config-prettier": "^8.5.0",

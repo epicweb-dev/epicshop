@@ -56,7 +56,7 @@ export async function loader({ params }: DataFunctionArgs) {
 		${scripts
 			.map(script => `<script type="module" src="${script}"></script>`)
 			.join('\n')}
-		<script type="module" src="kcd_sse.js"></script>
+		<script type="module" src="kcd_ws.js"></script>
 	</body>
 </html>
 `

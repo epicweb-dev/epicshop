@@ -6,9 +6,12 @@ import compression from 'compression'
 import morgan from 'morgan'
 import address from 'address'
 import closeWithGrace from 'close-with-grace'
+import { chokidar } from '~/utils/watch.server'
+import ws from 'ws'
 import { createRequestHandler } from '@remix-run/express'
 
 const BUILD_DIR_FILE = path.join(process.cwd(), 'build/remix.js')
+const workshopRoot = getWorkshopRoot()
 
 const app = express()
 
@@ -29,9 +32,7 @@ app.use(express.static('public', { maxAge: '1h' }))
 
 // Everything else (like favicon.ico) is cached for an hour. You may want to be
 // more aggressive with this caching.
-app.use(
-	express.static(path.join(getWorkshopRoot(), 'public'), { maxAge: '1h' }),
-)
+app.use(express.static(path.join(workshopRoot, 'public'), { maxAge: '1h' }))
 
 const isPublished = !fs.existsSync(path.join(__dirname, '..', 'app'))
 
@@ -39,22 +40,6 @@ if (process.env.NODE_ENV !== 'production' && !isPublished) {
 	app.use(morgan('tiny'))
 }
 
-app.all(
-	'*',
-	process.env.NODE_ENV === 'development'
-		? (req, res, next) => {
-				purgeRequireCache()
-
-				return createRequestHandler({
-					build: require(BUILD_DIR_FILE),
-					mode: process.env.NODE_ENV,
-				})(req, res, next)
-		  }
-		: createRequestHandler({
-				build: require(BUILD_DIR_FILE),
-				mode: process.env.NODE_ENV,
-		  }),
-)
 const port = process.env.PORT || 3000
 
 const server = app.listen(port, async () => {
@@ -80,10 +65,58 @@ ${chalk.bold('Press Ctrl+C to stop')}
 	)
 })
 
-closeWithGrace(() => {
-	return new Promise(resolve => {
-		server.close(resolve)
+const wss = new ws.Server({ server, path: '/__ws' })
+
+const watcher = chokidar
+	.watch(workshopRoot, {
+		ignoreInitial: true,
+		ignored: [
+			'**/node_modules/**',
+			'**/build/**',
+			'**/public/build/**',
+			'**/playwright-report/**',
+		],
 	})
+	.on('all', (event, filePath, stats) => {
+		for (const client of wss.clients) {
+			if (client.readyState === ws.OPEN) {
+				client.send(
+					JSON.stringify({
+						type: 'kcdshop:file-change',
+						data: { event, filePath, stats },
+					}),
+				)
+			}
+		}
+	})
+
+app.all(
+	'*',
+	process.env.NODE_ENV === 'development'
+		? (req, res, next) => {
+				purgeRequireCache()
+
+				return createRequestHandler({
+					build: require(BUILD_DIR_FILE),
+					mode: process.env.NODE_ENV,
+				})(req, res, next)
+		  }
+		: createRequestHandler({
+				build: require(BUILD_DIR_FILE),
+				mode: process.env.NODE_ENV,
+		  }),
+)
+
+closeWithGrace(() => {
+	return Promise.all([
+		new Promise((resolve, reject) => {
+			server.close(e => (e ? reject(e) : resolve('ok')))
+		}),
+		new Promise((resolve, reject) => {
+			wss.close(e => (e ? reject(e) : resolve('ok')))
+		}),
+		watcher.close(),
+	])
 })
 
 function purgeRequireCache() {

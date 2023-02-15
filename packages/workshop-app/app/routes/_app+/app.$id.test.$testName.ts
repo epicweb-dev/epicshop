@@ -91,7 +91,7 @@ import(${JSON.stringify(testScriptPath)}).then(() => {
 	</head>
 	<body>
 		${testScriptTag}
-		<script type="module" src="kcd_sse.js"></script>
+		<script type="module" src="kcd_ws.js${testFileQueryString}"></script>
 	</body>
 </html>
 `
