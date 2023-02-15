@@ -1,1 +1,1 @@
-module.exports = require('./build/test')
+module.exports = require('./build/utils/test')
