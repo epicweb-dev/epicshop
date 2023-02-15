@@ -51,6 +51,7 @@ export async function loader({ params, request }: DataFunctionArgs) {
 			write: false,
 			format: 'esm',
 			platform: 'browser',
+			jsx: 'automatic',
 			minify: false,
 			sourcemap: 'inline',
 		})
