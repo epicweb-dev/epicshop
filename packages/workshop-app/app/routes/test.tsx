@@ -241,7 +241,7 @@ export function TestOutput({ id }: { id: string }) {
 	}, [lastMessage])
 
 	return (
-		<div>
+		<div className="w-full p-5">
 			<p>Test Output</p>
 			{isRunning ? (
 				<StopTest id={id} />
@@ -275,7 +275,7 @@ export function TestOutput({ id }: { id: string }) {
 					/>
 				</>
 			)}
-			<pre className="max-h-96 overflow-y-scroll rounded bg-slate-800 p-4 text-gray-200">
+			<pre className="h-full max-h-96 overflow-y-auto rounded bg-slate-800 p-4 text-gray-200">
 				{lines.map(line => (
 					<code
 						key={line.timestamp}

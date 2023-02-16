@@ -2,6 +2,7 @@ import type { DataFunctionArgs } from '@remix-run/node'
 import { json } from '@remix-run/node'
 import { useFetcher } from '@remix-run/react'
 import invariant from 'tiny-invariant'
+import Icon from '~/components/icons'
 import { getAppByName } from '~/utils/apps.server'
 import {
 	closeProcess,
@@ -63,12 +64,18 @@ export async function action({ request }: DataFunctionArgs) {
 	throw new Error(`Unknown intent: ${intent}`)
 }
 
-export function AppStopper({ name }: { name: string }) {
+export function AppStopper({
+	name,
+	className = '',
+}: {
+	name: string
+	className?: string
+}) {
 	const fetcher = useFetcher<typeof action>()
 	return (
 		<fetcher.Form method="post" action="/start">
 			<input type="hidden" name="name" value={name} />
-			<button type="submit" name="intent" value="stop">
+			<button type="submit" name="intent" value="stop" className={className}>
 				{fetcher.submission ? 'Stopping App' : 'Stop App'}
 			</button>
 		</fetcher.Form>
@@ -88,7 +95,13 @@ export function PortStopper({ port }: { port: number | string }) {
 	)
 }
 
-export function AppStarter({ name }: { name: string }) {
+export function AppStarter({
+	name,
+	className = '',
+}: {
+	name: string
+	className?: string
+}) {
 	const fetcher = useFetcher<typeof action>()
 	if (fetcher.data?.status === 'app-not-started') {
 		if (fetcher.data.error === 'port-unavailable') {
@@ -106,9 +119,16 @@ export function AppStarter({ name }: { name: string }) {
 	return (
 		<fetcher.Form method="post" action="/start">
 			<input type="hidden" name="name" value={name} />
-			<button type="submit" name="intent" value="start">
-				{fetcher.submission ? 'Starting App' : 'Start App'}
-			</button>
+			{fetcher.submission ? (
+				<div role="status">
+					<Icon name="Loading" aria-hidden="true" className="h-8 w-8" />
+					<span className="sr-only">Starting App</span>
+				</div>
+			) : (
+				<button type="submit" name="intent" value="start" className={className}>
+					{fetcher.submission ? 'Starting App' : 'Start App'}
+				</button>
+			)}
 		</fetcher.Form>
 	)
 }

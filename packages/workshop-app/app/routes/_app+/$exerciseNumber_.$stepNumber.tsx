@@ -28,9 +28,14 @@ export default function StepRoute() {
 	const data = useLoaderData<typeof loader>()
 
 	return (
-		<div>
+		<div className="flex flex-grow flex-col bg-gray-50 p-5">
 			<h1>
-				<Link to={`/${data.exerciseNumber}`}>{data.exerciseTitle}</Link>
+				<Link
+					className="inline-block pb-3 text-sm font-semibold uppercase text-gray-600 hover:underline"
+					to={`/${data.exerciseNumber}`}
+				>
+					{data.exerciseTitle}
+				</Link>
 			</h1>
 			<Outlet />
 		</div>

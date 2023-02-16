@@ -25,25 +25,27 @@ export default function ExerciseNumberRoute() {
 	const data = useLoaderData<typeof loader>()
 
 	return (
-		<div>
-			<h1>{data.exercise.title}</h1>
-			<div className="prose mx-auto overflow-y-scroll">
-				{data.exercise.instructionsCode ? (
-					<Mdx code={data.exercise?.instructionsCode} />
-				) : (
-					'No instructions yet...'
-				)}
-			</div>
-			<div className="flex justify-center p-6">
+		<main className="flex flex-grow flex-col items-center bg-gray-50">
+			<article className="w-full max-w-4xl bg-white px-5 pt-16 pb-32 shadow-2xl shadow-gray-300/40 md:px-8">
+				<h1>{data.exercise.title}</h1>
+				<div className="prose sm:prose-lg mx-auto max-w-none">
+					{data.exercise.instructionsCode ? (
+						<Mdx code={data.exercise?.instructionsCode} />
+					) : (
+						'No instructions yet...'
+					)}
+				</div>
+			</article>
+			<aside className="fixed bottom-10 z-10 flex w-full max-w-4xl justify-center">
 				<Link
 					to="01/problem"
 					prefetch="intent"
-					className="rounded border-2 border-green-500 bg-green-600 px-3 py-2 text-gray-100 hover:bg-green-500 focus:bg-green-500"
+					className="rounded-full bg-gradient-to-tr from-indigo-500 to-indigo-600 px-6 py-3 text-2xl font-semibold text-white shadow-xl shadow-indigo-700/20"
 				>
 					Start
 				</Link>
-			</div>
-		</div>
+			</aside>
+		</main>
 	)
 }
 

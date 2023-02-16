@@ -1,3 +1,6 @@
+@import './changed-files.css';
+@import './browser-tabs.css';
+
 body {
 	tab-size: 2ch;
 }
@@ -323,11 +326,4 @@ pre {
 }
 .prose callout-success:before {
 	background: #30c85e;
-}
-
-[data-reach-tab] {
-	padding: 0;
-}
-[data-reach-tab] a {
-	padding: 0.5rem 1rem;
 }
