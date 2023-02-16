@@ -264,7 +264,7 @@ const sleep = (t: number) => new Promise(resolve => setTimeout(resolve, t))
 
 export async function stopPort(port: string | number) {
 	const { default: fkill } = await import('fkill')
-	await fkill(`:${port}`, { force: true })
+	await fkill(`:${port}`, { force: true, silent: true })
 	await waitForPortToBeAvailable(port)
 }
 

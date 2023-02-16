@@ -1,4 +1,4 @@
-import { getApps, isProblemApp, typedBoolean } from './apps'
+import { getApps, isProblemApp, typedBoolean } from './apps.server'
 import { test, expect } from '@playwright/test'
 import z from 'zod'
 import cp from 'child_process'

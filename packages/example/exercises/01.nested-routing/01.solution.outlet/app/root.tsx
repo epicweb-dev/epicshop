@@ -7,7 +7,7 @@ import {
 	Scripts,
 	ScrollRestoration,
 } from '@remix-run/react'
-import { KCDShopIFrameSync } from '@kentcdodds/workshop-app/utils'
+import { KCDShopIFrameSync } from '@kentcdodds/workshop-app/iframe-sync'
 
 import tailwindStylesheetUrl from './styles/tailwind.css'
 

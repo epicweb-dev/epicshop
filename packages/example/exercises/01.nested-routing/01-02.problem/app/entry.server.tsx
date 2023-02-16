@@ -18,7 +18,7 @@ export default function handleRequest(
 		const { pipe, abort } = renderToPipeableStream(
 			<RemixServer context={remixContext} url={request.url} />,
 			{
-				onAllReady() {
+				onShellReady() {
 					let body = new PassThrough()
 
 					responseHeaders.set('Content-Type', 'text/html')

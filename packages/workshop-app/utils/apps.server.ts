@@ -9,8 +9,8 @@ import {
 	getAppCache,
 	problemAppCache,
 	solutionAppCache,
-} from './cache'
-import { compileMdx } from './compile-mdx'
+} from './cache.server'
+import { compileMdx } from './compile-mdx.server'
 
 const globPromise = util.promisify(glob)
 

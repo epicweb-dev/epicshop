@@ -7,7 +7,7 @@ import type * as H from 'hast'
 import type * as M from 'mdast'
 import { remarkCodeBlocksShiki } from '@kentcdodds/md-temp'
 import { cachified } from 'cachified'
-import { compiledMarkdownCache } from './cache'
+import { compiledMarkdownCache } from './cache.server'
 
 const cacheDir = path.join(
 	process.env.KCDSHOP_CONTEXT_CWD ?? process.cwd(),

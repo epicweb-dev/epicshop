@@ -8,7 +8,7 @@ import {
 	ScrollRestoration,
 } from '@remix-run/react'
 import tailwindStylesheetUrl from './styles/tailwind.css'
-import { KCDShopIFrameSync } from '@kentcdodds/workshop-app/utils'
+import { KCDShopIFrameSync } from '@kentcdodds/workshop-app/iframe-sync'
 
 export const links: LinksFunction = () => {
 	return [{ rel: 'stylesheet', href: tailwindStylesheetUrl }]

@@ -1,1 +1,1 @@
-export * from '../../utils/compile-mdx'
+export * from '../../utils/compile-mdx.server'

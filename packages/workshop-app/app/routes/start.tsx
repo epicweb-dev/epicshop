@@ -1,5 +1,5 @@
 import type { DataFunctionArgs } from '@remix-run/node'
-import { json, redirect } from '@remix-run/node'
+import { json } from '@remix-run/node'
 import { useFetcher } from '@remix-run/react'
 import invariant from 'tiny-invariant'
 import { getAppByName } from '~/utils/apps.server'
@@ -18,9 +18,6 @@ export async function action({ request }: DataFunctionArgs) {
 	if (intent === 'start' || intent === 'stop') {
 		const name = formData.get('name')
 		invariant(typeof name === 'string', 'name is required')
-		if (name.includes('..')) {
-			throw redirect('https://www.youtube.com/watch?v=dQw4w9WgXcQ')
-		}
 		const app = await getAppByName(name)
 		if (!app) {
 			throw new Response('Not found', { status: 404 })

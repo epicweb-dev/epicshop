@@ -158,6 +158,14 @@ export function InBrowserBrowser({
 	const atEndOfHistory =
 		iframeContext.index === iframeContext.history.length - 1
 	const atStartOfHistory = iframeContext.index === 0
+	const existingSearchParamHiddenInputs: Array<JSX.Element> = []
+	for (const [key, value] of searchParams.entries()) {
+		if (key === 'pathname') continue
+
+		existingSearchParamHiddenInputs.push(
+			<input key={key} type="hidden" name={key} value={value} />,
+		)
+	}
 	return isRunning ? (
 		<div>
 			<AppStopper name={name} />
@@ -189,6 +197,7 @@ export function InBrowserBrowser({
 						})
 					}}
 				>
+					{existingSearchParamHiddenInputs}
 					<input
 						aria-label="pathname"
 						className="flex-1 border-2 border-blue-400"

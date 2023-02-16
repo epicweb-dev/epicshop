@@ -8,7 +8,7 @@ import closeWithGrace from 'close-with-grace'
 import chokidar from 'chokidar'
 import ws from 'ws'
 import { createRequestHandler } from '@remix-run/express'
-import { getWorkshopRoot } from '../utils'
+import { getWorkshopRoot } from '../utils/apps.server'
 
 async function start() {
 	const { default: getPort, portNumbers } = await import('get-port')

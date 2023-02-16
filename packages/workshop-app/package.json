@@ -9,9 +9,13 @@
     "kcdshop": "./bin/kcdshop.js"
   },
   "files": [
+    "apps.server.d.ts",
+    "apps.server.js",
     "start.js",
-    "utils.d.ts",
-    "utils.js",
+    "iframe-sync.d.ts",
+    "iframe-sync.js",
+    "playwright.d.ts",
+    "playwright.js",
     "test.d.ts",
     "test.js",
     "build",

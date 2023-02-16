@@ -1,7 +1,7 @@
 import LRU from 'lru-cache'
 import type { CacheEntry } from 'cachified'
 import { lruCacheAdapter } from 'cachified'
-import type { App, ExampleApp, ProblemApp, SolutionApp } from './apps'
+import type { App, ExampleApp, ProblemApp, SolutionApp } from './apps.server'
 
 declare global {
 	var __solution_app_cache__: ReturnType<typeof getSolutionAppCache>

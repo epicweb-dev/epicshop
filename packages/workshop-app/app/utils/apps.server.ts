@@ -1,1 +1,1 @@
-export * from '../../utils/apps'
+export * from '../../utils/apps.server'
