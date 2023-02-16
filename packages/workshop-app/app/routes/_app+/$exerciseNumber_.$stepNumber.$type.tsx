@@ -1,4 +1,3 @@
-import React from 'react'
 import type { DataFunctionArgs, SerializeFrom } from '@remix-run/node'
 import { json, redirect } from '@remix-run/node'
 import {
@@ -201,11 +200,7 @@ export default function ExercisePartRoute() {
 	const type = isValidType(params.type) ? params.type : null
 
 	const preview = searchParams.get('preview')
-	const tabIndex = isValidPreview(preview)
-		? tabs.indexOf(preview)
-		: type
-		? tabs.indexOf(type)
-		: 0
+
 	const activeTab = isValidPreview(preview) ? preview : type ? type : tabs[0]
 	function handleTabChange(value: string) {
 		if (value) {
@@ -339,7 +334,7 @@ function Preview({
 }) {
 	if (!appInfo) return <p>No app here. Sorry.</p>
 	const { isRunning, dev, name, portIsAvailable, title } = appInfo
-	const [isLoading, setLoading] = React.useState(true)
+
 	if (dev.type === 'script') {
 		return (
 			<InBrowserBrowser
@@ -364,19 +359,7 @@ function Preview({
 					<Icon name="ExternalLink" aria-hidden="true" />
 					<span className="sr-only">Open in New Window</span>
 				</a>
-				{isLoading && (
-					<div
-						role="status"
-						className="flex h-full w-full flex-grow items-center justify-center"
-					>
-						<Icon name="Loading" aria-hidden="true" className="h-8 w-8" />
-						<span className="sr-only">Loading App</span>
-					</div>
-				)}
 				<iframe
-					onLoad={() => {
-						setLoading(false)
-					}}
 					title={title}
 					src={dev.baseUrl}
 					className="h-full w-full flex-grow bg-gray-50 p-3"
