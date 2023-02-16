@@ -307,13 +307,9 @@ export default function ExercisePartRoute() {
 									<input type="hidden" name="preview" value="diff" />
 									<label>
 										App 1:
-										<select name="app1">
+										<select name="app1" defaultValue={data.diff.app1}>
 											{data.diff.allApps.map(app => (
-												<option
-													key={app.name}
-													value={app.name}
-													selected={app.name === data.diff.app1}
-												>
+												<option key={app.name} value={app.name}>
 													{app.title} ({app.type})
 												</option>
 											))}
@@ -321,13 +317,9 @@ export default function ExercisePartRoute() {
 									</label>
 									<label>
 										App 2:
-										<select name="app2">
+										<select name="app2" defaultValue={data.diff.app2}>
 											{data.diff.allApps.map(app => (
-												<option
-													key={app.name}
-													value={app.name}
-													selected={app.name === data.diff.app2}
-												>
+												<option key={app.name} value={app.name}>
 													{app.title} ({app.type})
 												</option>
 											))}
