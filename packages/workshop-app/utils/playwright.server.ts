@@ -1,7 +1,7 @@
 import { getApps, isProblemApp, typedBoolean } from './apps.server'
 import { test, expect } from '@playwright/test'
 import z from 'zod'
-import cp from 'child_process'
+import crossSpawn from 'cross-spawn'
 
 export async function getInBrowserTestPages() {
 	const apps = (await getApps())
@@ -43,11 +43,19 @@ async function waitFor<ReturnValue>(
 
 export function setupInBrowserTests() {
 	// doing this because playwright needs the tests to be registered synchoronously
-	const script = `node --eval "require('@kentcdodds/workshop-app/playwright').getInBrowserTestPages().then(r => console.log(JSON.stringify(r)))"`
-	const scriptOut = cp.execSync(script).toString()
+	const code = `require('@kentcdodds/workshop-app/playwright').getInBrowserTestPages().then(r => console.log(JSON.stringify(r)))`
+	const result = crossSpawn.sync('node', ['--eval', code], {
+		encoding: 'utf-8',
+	})
+	if (result.status !== 0) {
+		console.error(result.output.join('\n'))
+		throw new Error(
+			`Failed to get in-browser test pages. Status: ${result.status}.`,
+		)
+	}
 	const testPages = z
 		.array(z.object({ path: z.string() }))
-		.parse(JSON.parse(scriptOut))
+		.parse(JSON.parse(result.stdout))
 
 	for (const testPage of testPages) {
 		// eslint-disable-next-line no-loop-func
