@@ -3,7 +3,7 @@ import { spawn } from 'child_process'
 import net from 'net'
 import closeWithGrace from 'close-with-grace'
 import waitOn from 'wait-on'
-import type { App, ProblemApp } from './apps.server'
+import type { App } from './apps.server'
 
 type DevProcessesMap = Map<
 	string,
@@ -143,7 +143,7 @@ export async function runAppDev(app: App) {
 	return { status: 'process-started', running: true } as const
 }
 
-export function runAppTests(app: ProblemApp) {
+export function runAppTests(app: App) {
 	const key = app.id
 
 	if (app.test.type !== 'script') {
@@ -227,7 +227,7 @@ export function isAppRunning(app: App) {
 	}
 }
 
-export function isTestRunning(app: ProblemApp) {
+export function isTestRunning(app: App) {
 	try {
 		const testProcess = testProcesses.get(app.id)
 		if (!testProcess) return false
@@ -239,11 +239,11 @@ export function isTestRunning(app: ProblemApp) {
 	}
 }
 
-export function getTestProcessEntry(app: ProblemApp) {
+export function getTestProcessEntry(app: App) {
 	return testProcesses.get(app.id)
 }
 
-export function clearTestProcessEntry(app: ProblemApp) {
+export function clearTestProcessEntry(app: App) {
 	return testProcesses.delete(app.id)
 }
 

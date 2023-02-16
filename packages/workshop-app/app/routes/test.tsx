@@ -6,7 +6,7 @@ import escapeHtml from 'lodash.escape'
 import { useEffect, useReducer, useRef } from 'react'
 import { eventStream, useEventSource } from 'remix-utils'
 import { z } from 'zod'
-import { getAppById, isProblemApp } from '~/utils/apps.server'
+import { getAppById } from '~/utils/apps.server'
 import {
 	clearTestProcessEntry,
 	getTestProcessEntry,
@@ -67,9 +67,6 @@ export async function loader({ request }: DataFunctionArgs) {
 	const app = await getAppById(id)
 	if (!app) {
 		return json({ error: 'App not found' }, { status: 404 })
-	}
-	if (!isProblemApp(app)) {
-		return json({ error: 'App is not a problem app' }, { status: 400 })
 	}
 	const processEntry = getTestProcessEntry(app)
 	if (!processEntry) {
@@ -155,12 +152,6 @@ export async function action({ request }: DataFunctionArgs) {
 	const app = await getAppById(result.data.id)
 	if (!app) {
 		return json({ success: false, error: 'App not found' }, { status: 404 })
-	}
-	if (!isProblemApp(app)) {
-		return json(
-			{ success: false, error: 'App is not a problem app' },
-			{ status: 400 },
-		)
 	}
 	switch (result.data.intent) {
 		case 'run': {

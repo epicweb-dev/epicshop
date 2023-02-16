@@ -220,7 +220,7 @@ export default function ExercisePartRoute() {
 				</article>
 				<Tabs.Root
 					className="flex flex-col overflow-hidden rounded-xl border border-gray-500/10 bg-gray-50"
-					defaultValue={activeTab}
+					value={activeTab}
 					onValueChange={handleTabChange}
 				>
 					<Tabs.List className="bg-gray-200 px-2 pt-2">
