@@ -43,7 +43,7 @@ async function waitFor<ReturnValue>(
 
 export function setupInBrowserTests() {
 	// doing this because playwright needs the tests to be registered synchoronously
-	const script = `node --eval "require('@kentcdodds/workshop-app/utils').getInBrowserTestPages().then(r => console.log(JSON.stringify(r)))"`
+	const script = `node --eval "require('@kentcdodds/workshop-app/playwright').getInBrowserTestPages().then(r => console.log(JSON.stringify(r)))"`
 	const scriptOut = cp.execSync(script).toString()
 	const testPages = z
 		.array(z.object({ path: z.string() }))
