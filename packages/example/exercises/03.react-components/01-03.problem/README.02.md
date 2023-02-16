@@ -2,13 +2,17 @@
 
 Props are great
 
-## Files 🗃
+<section id="files" className="not-prose">
+  <h2>Files</h2>
 
-<ul>
-  <li className="flex gap-2">
-    <span>modified:</span>
-    <LaunchEditor workshopFile="exercises/03.react-components/01-03.problem/index.tsx">
-      `index.tsx`
-    </LaunchEditor>
-  </li>
-</ul>
+  <ul>
+    <li data-state="modified">
+      <span>modified</span>
+
+      <LaunchEditor workshopFile="exercises/03.react-components/01-03.problem/index.tsx">
+        <code>index.tsx</code>
+      </LaunchEditor>
+    </li>
+
+  </ul>
+</section>

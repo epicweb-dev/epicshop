@@ -58,19 +58,26 @@ export async function action({ request }: DataFunctionArgs) {
 								a => a.name === app.name && a.stepNumber === app.stepNumber - 1,
 						  ) ?? app
 						: app
-				const files = nextApp ? await getDiffFiles(app1, nextApp) : []
-				const readmePath = await getReadmePath({
-					appDir: app.fullPath,
-					stepNumber: isProblemApp(app) ? app.stepNumber : undefined,
-				})
-				const readme = await fs.promises.readFile(readmePath, 'utf-8')
-				const updatedReadme = await updateFilesSection(
-					readme,
-					files,
-					app.fullPath,
-				)
-				if (readme !== updatedReadme) {
-					await fs.promises.writeFile(readmePath, updatedReadme)
+				try {
+					const files = nextApp ? await getDiffFiles(app1, nextApp) : []
+					const readmePath = await getReadmePath({
+						appDir: app.fullPath,
+						stepNumber: isProblemApp(app) ? app.stepNumber : undefined,
+					})
+					const readme = await fs.promises.readFile(readmePath, 'utf-8')
+					const updatedReadme = await updateFilesSection(
+						readme,
+						files,
+						app.fullPath,
+					)
+					if (readme !== updatedReadme) {
+						await fs.promises.writeFile(readmePath, updatedReadme)
+					}
+				} catch (error) {
+					console.error(
+						`The error below was triggered when processing ${app.id}`,
+					)
+					throw error
 				}
 			}
 			return json({ success: true })

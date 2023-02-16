@@ -30,43 +30,65 @@ export async function loader({ params }: DataFunctionArgs) {
 }
 ```
 
-## Files 🗃
+<section id="files" className="not-prose">
+  <h2>Files</h2>
 
-<ul>
-  <li className="flex gap-2">
-    <span>modified:</span>
-    <LaunchEditor workshopFile="exercises/01.nested-routing/01-02.problem/app/entry.server.tsx">
-      `app/entry.server.tsx`
-    </LaunchEditor>
-  </li>
-  <li className="flex gap-2">
-    <span>modified:</span>
-    <LaunchEditor workshopFile="exercises/01.nested-routing/01-02.problem/app/root.tsx">
-      `app/root.tsx`
-    </LaunchEditor>
-  </li>
-  <li className="flex gap-2">
-    <span>deleted:</span>
-    <LaunchEditor workshopFile="exercises/01.nested-routing/01-02.problem/app/routes/$.tsx">
-      `app/routes/$.tsx`
-    </LaunchEditor>
-  </li>
-  <li className="flex gap-2">
-    <span>deleted:</span>
-    <LaunchEditor workshopFile="exercises/01.nested-routing/01-02.problem/app/routes/deleted.tsx">
-      `app/routes/deleted.tsx`
-    </LaunchEditor>
-  </li>
-  <li className="flex gap-2">
-    <span>modified:</span>
-    <LaunchEditor workshopFile="exercises/01.nested-routing/01-02.problem/app/routes/index.tsx">
-      `app/routes/index.tsx`
-    </LaunchEditor>
-  </li>
-  <li className="flex gap-2">
-    <span>modified:</span>
-    <LaunchEditor workshopFile="exercises/01.nested-routing/01-02.problem/package.json">
-      `package.json`
-    </LaunchEditor>
-  </li>
-</ul>
+  <ul>
+    <li data-state="modified">
+      <span>modified</span>
+
+      <LaunchEditor workshopFile="exercises/01.nested-routing/01-02.problem/.gitignore">
+        <code>.gitignore</code>
+      </LaunchEditor>
+    </li>
+
+    <li data-state="modified">
+      <span>modified</span>
+
+      <LaunchEditor workshopFile="exercises/01.nested-routing/01-02.problem/app/entry.server.tsx">
+        <code>app/entry.server.tsx</code>
+      </LaunchEditor>
+    </li>
+
+    <li data-state="modified">
+      <span>modified</span>
+
+      <LaunchEditor workshopFile="exercises/01.nested-routing/01-02.problem/app/root.tsx">
+        <code>app/root.tsx</code>
+      </LaunchEditor>
+    </li>
+
+    <li data-state="deleted">
+      <span>deleted</span>
+
+      <LaunchEditor workshopFile="exercises/01.nested-routing/01-02.problem/app/routes/$.tsx">
+        <code>app/routes/$.tsx</code>
+      </LaunchEditor>
+    </li>
+
+    <li data-state="deleted">
+      <span>deleted</span>
+
+      <LaunchEditor workshopFile="exercises/01.nested-routing/01-02.problem/app/routes/deleted.tsx">
+        <code>app/routes/deleted.tsx</code>
+      </LaunchEditor>
+    </li>
+
+    <li data-state="modified">
+      <span>modified</span>
+
+      <LaunchEditor workshopFile="exercises/01.nested-routing/01-02.problem/app/routes/index.tsx">
+        <code>app/routes/index.tsx</code>
+      </LaunchEditor>
+    </li>
+
+    <li data-state="modified">
+      <span>modified</span>
+
+      <LaunchEditor workshopFile="exercises/01.nested-routing/01-02.problem/package.json">
+        <code>package.json</code>
+      </LaunchEditor>
+    </li>
+
+  </ul>
+</section>
