@@ -1,6 +1,5 @@
 body {
 	tab-size: 2ch;
-	@apply text-lg font-bold text-red-900;
 }
 
 /* code syntax highlighting */
