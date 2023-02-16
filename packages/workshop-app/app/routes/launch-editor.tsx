@@ -48,7 +48,9 @@ export function LaunchEditor({
 			<input type="hidden" name="file" value={file} />
 			<input type="hidden" name="line" value={line} />
 			<input type="hidden" name="column" value={column} />
-			<button type="submit">{children}</button>
+			<button type="submit" className="">
+				{children}
+			</button>
 			{fetcher.data?.status === 'error' ? (
 				<div className="error">{fetcher.data.error}</div>
 			) : null}

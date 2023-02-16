@@ -27,7 +27,7 @@ export default function Index() {
 	return (
 		<main className="relative min-h-screen bg-white sm:flex sm:items-center sm:justify-center">
 			<div>
-				<h1></h1>
+				<h1>{data.title}</h1>
 				<div>
 					<p>Here are your exercises:</p>
 					<ul>

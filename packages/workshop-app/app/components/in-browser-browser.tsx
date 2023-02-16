@@ -4,6 +4,8 @@ import type { NavigateFunction } from 'react-router'
 import { z } from 'zod'
 import { AppStarter, AppStopper, PortStopper } from '~/routes/start'
 import { typedBoolean } from '~/utils/misc'
+import Icon from '~/components/icons'
+import clsx from 'clsx'
 
 const historyCallDataSchema = z.intersection(
 	z.object({
@@ -48,11 +50,13 @@ export function InBrowserBrowser({
 	port,
 	portIsAvailable,
 	isRunning,
+	baseUrl,
 }: {
 	name: string
 	port: number
 	portIsAvailable: boolean | null
 	isRunning: boolean
+	baseUrl: string
 }) {
 	const [searchParams] = useSearchParams()
 	const searchParamsPathname = searchParams.get('pathname') ?? '/'
@@ -167,25 +171,40 @@ export function InBrowserBrowser({
 		)
 	}
 	return isRunning ? (
-		<div>
-			<AppStopper name={name} />
-			<div className="flex gap-3 px-2">
-				<button
-					type="button"
-					className={atStartOfHistory ? 'opacity-50' : ''}
-					disabled={atStartOfHistory}
-					onClick={() => navigateChild(-1)}
-				>
-					👈
-				</button>
-				<button
-					type="button"
-					className={atEndOfHistory ? 'opacity-50' : ''}
-					disabled={atEndOfHistory}
-					onClick={() => navigateChild(1)}
-				>
-					👉
-				</button>
+		<div className="h-full flex-grow">
+			<div className="flex items-center justify-between gap-2 py-3 px-2">
+				<div className="flex items-center justify-center gap-1">
+					<button
+						type="button"
+						className={clsx(
+							'flex items-center justify-center rounded-full p-2 transition',
+							{
+								'opacity-30': atStartOfHistory,
+								'hover:bg-gray-200': !atStartOfHistory,
+							},
+						)}
+						disabled={atStartOfHistory}
+						onClick={() => navigateChild(-1)}
+					>
+						<Icon name="ArrowLeft" aria-hidden="true" />
+						<span className="sr-only">Go back</span>
+					</button>
+					<button
+						type="button"
+						className={clsx(
+							'flex items-center justify-center rounded-full p-2 transition',
+							{
+								'opacity-30': atStartOfHistory,
+								'hover:bg-gray-200': !atStartOfHistory,
+							},
+						)}
+						disabled={atEndOfHistory}
+						onClick={() => navigateChild(1)}
+					>
+						<Icon name="ArrowRight" aria-hidden="true" />
+						<span className="sr-only">Go forward</span>
+					</button>
+				</div>
 				<Form
 					method="get"
 					replace
@@ -200,21 +219,39 @@ export function InBrowserBrowser({
 					{existingSearchParamHiddenInputs}
 					<input
 						aria-label="pathname"
-						className="flex-1 border-2 border-blue-400"
+						className="flex-1 rounded-full border-2 border-transparent bg-gray-200 px-3 py-1.5 leading-none"
 						value={pathnameInputValue}
 						name="pathname"
 						onChange={e => setPathnameInputValue(e.currentTarget.value)}
 					/>
-					<button type="submit">Go</button>
+					{/* TODO: Reconsider if this is needed as browsers don't usually have a submit button in address bar */}
+					{/* <button type="submit">Go</button> */}
 				</Form>
+				<AppStopper
+					name={name}
+					className="rounded-full p-2 leading-none transition hover:bg-gray-200"
+				/>
+				<a
+					href={baseUrl}
+					target="_blank"
+					rel="noreferrer"
+					className={clsx(
+						'flex items-center justify-center rounded-full p-2.5 transition hover:bg-gray-200',
+					)}
+				>
+					<Icon name="ExternalLink" aria-hidden="true" />
+					<span className="sr-only">Open in New Window</span>
+				</a>
 			</div>
-			<iframe
-				title={name}
-				key={iframeContext.key}
-				ref={iframeRef}
-				src={`http://localhost:${port}${iframeContext.pathname}`}
-				className="h-full w-full border-2 border-stone-400"
-			/>
+			<div className="h-full w-full flex-grow bg-white p-5">
+				<iframe
+					title={name}
+					key={iframeContext.key}
+					ref={iframeRef}
+					src={baseUrl}
+					className="h-full w-full flex-grow"
+				/>
+			</div>
 		</div>
 	) : portIsAvailable === false ? (
 		<div>
@@ -225,6 +262,9 @@ export function InBrowserBrowser({
 			<PortStopper port={port} />
 		</div>
 	) : (
-		<AppStarter name={name} />
+		<AppStarter
+			name={name}
+			className="rounded-full bg-gradient-to-tr from-indigo-500 to-indigo-600 px-5 py-3 text-lg text-white"
+		/>
 	)
 }
