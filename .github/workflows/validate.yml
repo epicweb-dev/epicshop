@@ -137,6 +137,14 @@ jobs:
         with:
           node-version: 18
 
+      - name: 🏗 Run build script
+        run: npm run build
+
+      - name: 📥 Download deps
+        uses: bahmutov/npm-install@v1
+        with:
+          useLockFile: false
+
       - name: ▶️ Run setup script
         run: node setup.mjs
         working-directory: ./packages/example
