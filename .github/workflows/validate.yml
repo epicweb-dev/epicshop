@@ -138,7 +138,7 @@ jobs:
           node-version: 18
 
       - name: ▶️ Run setup script
-        run: npm run setup
+        run: node setup.mjs
         working-directory: ./packages/example
         continue-on-error: true
 
