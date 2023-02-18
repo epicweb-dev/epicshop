@@ -142,8 +142,21 @@ jobs:
         with:
           useLockFile: false
 
-      - name: 🏗 Run build script
-        run: npm run build
+      - name: 'build:remix'
+        run: npm run build:remix
+        working-directory: ./packages/example
+
+      - name: 'build:server'
+        run: npm run build:server
+        working-directory: ./packages/example
+
+      - name: 'build:utils'
+        run: npm run build:utils
+        working-directory: ./packages/example
+
+      - name: 'build:decs'
+        run: npm run build:decs
+        working-directory: ./packages/example
 
       - name: ▶️ Run setup script
         run: node setup.mjs
