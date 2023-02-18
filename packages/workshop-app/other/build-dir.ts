@@ -10,10 +10,10 @@ if (dir !== 'server' && dir !== 'utils') {
 }
 
 const here = (...s: Array<string>) => path.join(__dirname, ...s)
-const srcDir = here(`../${dir}`)
-const destDir = here(`../build/${dir}`)
+const srcDir = here('..', dir)
+const destDir = here('..', `build`, dir)
 
-const allFiles = glob.sync(path.join(srcDir, `**/*.*`), {
+const allFiles = glob.sync(path.join(srcDir, '**', '*.*'), {
 	ignore: ['**/tsconfig.json', '**/eslint*', '**/__tests__/**'],
 })
 
@@ -29,12 +29,11 @@ for (const file of allFiles) {
 	}
 }
 
-console.log()
-console.log('building...')
+console.log('\nbuilding...')
 
 require('esbuild')
 	.build({
-		entryPoints: glob.sync(path.join(srcDir, `**/*.+(ts|js|tsx|jsx)`)),
+		entryPoints: glob.sync(path.join(srcDir, '**', '*.+(ts|js|tsx|jsx)')),
 		outdir: destDir,
 		target: [`node${pkg.engines.node}`],
 		platform: 'node',
