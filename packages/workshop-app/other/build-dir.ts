@@ -2,6 +2,7 @@ import fsExtra from 'fs-extra'
 import path from 'path'
 import glob from 'glob'
 import pkg from '../package.json'
+import esbuild from 'esbuild'
 
 const dir = process.argv[2]
 
@@ -29,9 +30,18 @@ for (const file of allFiles) {
 	}
 }
 
-console.log('\nbuilding...')
+const config = {
+	entryPoints: glob.sync(path.join(srcDir, '**', '*.+(ts|js|tsx|jsx)')),
+	outdir: destDir,
+	target: [`node${pkg.engines.node}`],
+	platform: 'node',
+	format: 'cjs',
+	logLevel: 'info',
+}
 
-require('esbuild')
+console.log('\nbuilding...', config)
+
+esbuild
 	.build({
 		entryPoints: glob.sync(path.join(srcDir, '**', '*.+(ts|js|tsx|jsx)')),
 		outdir: destDir,
@@ -40,7 +50,25 @@ require('esbuild')
 		format: 'cjs',
 		logLevel: 'info',
 	})
-	.catch((error: unknown) => {
-		console.error(error)
-		process.exit(1)
-	})
+	.then(
+		res => {
+			if (res.warnings.length > 0) {
+				console.warn(`There were warnings`)
+				for (const warning of res.warnings) {
+					console.warn(warning)
+				}
+			}
+			if (res.errors.length > 0) {
+				console.error(`There were errors`)
+				for (const error of res.errors) {
+					console.error(error)
+				}
+				throw new Error('Build failed')
+			}
+			console.log('✅ Build succeeded')
+		},
+		(error: unknown) => {
+			console.error(error)
+			process.exit(1)
+		},
+	)
