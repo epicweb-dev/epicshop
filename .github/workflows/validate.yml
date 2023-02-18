@@ -122,6 +122,26 @@ jobs:
           path: playwright-report/
           retention-days: 30
 
+  example:
+    name: 🤹‍♂️ Example
+    strategy:
+      matrix:
+        os: [ubuntu-latest, windows-latest, macos-latest]
+    runs-on: ${{ matrix.os }}
+    steps:
+      - name: ⬇️ Checkout repo
+        uses: actions/checkout@v3
+
+      - name: ⎔ Setup node
+        uses: actions/setup-node@v3
+        with:
+          node-version: 18
+
+      - name: ▶️ Run setup script
+        run: npm run setup
+        working-directory: ./packages/example
+        continue-on-error: true
+
   release:
     name: 🚀 Release
     needs: [lint, typecheck, build, playwright]

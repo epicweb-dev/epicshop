@@ -14,5 +14,5 @@ await testStep('The button text should be 1 after clicking it once', () =>
 await userEvent.click(button)
 await testStep(
 	'The button text should be 2 after clicking it a second time',
-	() => waitFor(() => expect(button).to.have.text('1')),
+	() => waitFor(() => expect(button).to.have.text('2')),
 )
