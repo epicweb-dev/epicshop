@@ -427,7 +427,7 @@ async function getExampleAppFromPath(
 
 export async function getExampleApps(): Promise<Array<ExampleApp>> {
 	const workshopRoot = await getWorkshopRoot()
-	const exampleDirs = await globPromise(path.join(workshopRoot, 'examples/*'))
+	const exampleDirs = await globPromise('examples/*', { cwd: workshopRoot })
 	const exampleApps = await Promise.all(
 		exampleDirs.map(async (exampleDir, index) => {
 			return cachified({
@@ -482,9 +482,9 @@ async function getSolutionAppFromPath(
 
 export async function getSolutionApps(): Promise<Array<SolutionApp>> {
 	const workshopRoot = await getWorkshopRoot()
-	const solutionDirs = await globPromise(
-		path.join(workshopRoot, 'exercises', '**', '*solution*'),
-	)
+	const solutionDirs = await globPromise('exercises/**/*solution*', {
+		cwd: workshopRoot,
+	})
 	const solutionApps = await Promise.all(
 		solutionDirs.map(async solutionDir => {
 			return cachified({
@@ -546,9 +546,9 @@ async function getProblemAppFromPath(
 
 export async function getProblemApps(): Promise<Array<ProblemApp>> {
 	const workshopRoot = await getWorkshopRoot()
-	const problemDirs = await globPromise(
-		path.join(workshopRoot, 'exercises', '**', '*problem*'),
-	)
+	const problemDirs = await globPromise('exercises/**/*problem*', {
+		cwd: workshopRoot,
+	})
 	const problemApps = await Promise.all(
 		problemDirs.map(async problemDir => {
 			return cachified({
