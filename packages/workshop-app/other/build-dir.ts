@@ -2,6 +2,7 @@ import fsExtra from 'fs-extra'
 import path from 'path'
 import glob from 'glob'
 import pkg from '../package.json'
+import esbuild from 'esbuild'
 
 const dir = process.argv[2]
 
@@ -10,17 +11,20 @@ if (dir !== 'server' && dir !== 'utils') {
 }
 
 const here = (...s: Array<string>) => path.join(__dirname, ...s)
-const srcDir = here(`../${dir}`)
-const destDir = here(`../build/${dir}`)
+const srcDir = here('..', dir)
+const destDir = here('..', `build`, dir)
 
-const allFiles = glob.sync(path.join(srcDir, `**/*.*`), {
-	ignore: ['**/tsconfig.json', '**/eslint*', '**/__tests__/**'],
-})
+const allFiles = glob
+	.sync('**/*.*', {
+		cwd: srcDir,
+		ignore: ['**/tsconfig.json', '**/eslint*', '**/__tests__/**'],
+	})
+	.map(file => path.join(srcDir, file))
 
-const entries = []
+const entryPoints = []
 for (const file of allFiles) {
 	if (/\.(ts|js|tsx|jsx)$/.test(file)) {
-		entries.push(file)
+		entryPoints.push(file)
 	} else {
 		const dest = file.replace(srcDir, destDir)
 		fsExtra.ensureDir(path.parse(dest).dir)
@@ -29,19 +33,36 @@ for (const file of allFiles) {
 	}
 }
 
-console.log()
-console.log('building...')
+console.log('\nbuilding...', { entryPoints })
 
-require('esbuild')
+esbuild
 	.build({
-		entryPoints: glob.sync(path.join(srcDir, `**/*.+(ts|js|tsx|jsx)`)),
+		entryPoints,
 		outdir: destDir,
 		target: [`node${pkg.engines.node}`],
 		platform: 'node',
 		format: 'cjs',
 		logLevel: 'info',
 	})
-	.catch((error: unknown) => {
-		console.error(error)
-		process.exit(1)
-	})
+	.then(
+		res => {
+			if (res.warnings.length > 0) {
+				console.warn(`There were warnings`)
+				for (const warning of res.warnings) {
+					console.warn(warning)
+				}
+			}
+			if (res.errors.length > 0) {
+				console.error(`There were errors`)
+				for (const error of res.errors) {
+					console.error(error)
+				}
+				throw new Error('Build failed')
+			}
+			console.log('✅ Build succeeded')
+		},
+		(error: unknown) => {
+			console.error(error)
+			process.exit(1)
+		},
+	)
