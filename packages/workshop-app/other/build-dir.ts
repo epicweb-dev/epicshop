@@ -30,8 +30,10 @@ for (const file of allFiles) {
 	}
 }
 
+const entryPointGlob = path.join(srcDir, '**', '*.+(ts|js|tsx|jsx)')
+console.log({ entryPointGlob })
 const config = {
-	entryPoints: glob.sync(path.join(srcDir, '**', '*.+(ts|js|tsx|jsx)')),
+	entryPoints: glob.sync(entryPointGlob),
 	outdir: destDir,
 	target: [`node${pkg.engines.node}`],
 	platform: 'node',
