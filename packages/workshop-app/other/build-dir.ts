@@ -14,15 +14,17 @@ const here = (...s: Array<string>) => path.join(__dirname, ...s)
 const srcDir = here('..', dir)
 const destDir = here('..', `build`, dir)
 
-const allFiles = glob.sync('**/*.*', {
-	cwd: srcDir,
-	ignore: ['**/tsconfig.json', '**/eslint*', '**/__tests__/**'],
-})
+const allFiles = glob
+	.sync('**/*.*', {
+		cwd: srcDir,
+		ignore: ['**/tsconfig.json', '**/eslint*', '**/__tests__/**'],
+	})
+	.map(file => path.join(srcDir, file))
 
-const entries = []
+const entryPoints = []
 for (const file of allFiles) {
 	if (/\.(ts|js|tsx|jsx)$/.test(file)) {
-		entries.push(file)
+		entryPoints.push(file)
 	} else {
 		const dest = file.replace(srcDir, destDir)
 		fsExtra.ensureDir(path.parse(dest).dir)
@@ -31,20 +33,11 @@ for (const file of allFiles) {
 	}
 }
 
-const config = {
-	entryPoints: glob.sync('**/*.+(ts|js|tsx|jsx)', { cwd: srcDir }),
-	outdir: destDir,
-	target: [`node${pkg.engines.node}`],
-	platform: 'node',
-	format: 'cjs',
-	logLevel: 'info',
-}
-
-console.log('\nbuilding...', config)
+console.log('\nbuilding...', { entryPoints })
 
 esbuild
 	.build({
-		entryPoints: glob.sync('**/*.+(ts|js|tsx|jsx)', { cwd: srcDir }),
+		entryPoints,
 		outdir: destDir,
 		target: [`node${pkg.engines.node}`],
 		platform: 'node',
