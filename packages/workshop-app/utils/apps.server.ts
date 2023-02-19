@@ -313,7 +313,7 @@ async function getPkgProp<Value>(
 
 async function getAppName(fullPath: string) {
 	const workshopRoot = await getWorkshopRoot()
-	const relativePath = fullPath.replace(`${workshopRoot}/`, '')
+	const relativePath = fullPath.replace(`${workshopRoot}${path.sep}`, '')
 	return relativePath.split(path.sep).join('.')
 }
 
