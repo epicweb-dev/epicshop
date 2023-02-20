@@ -83,6 +83,6 @@ export async function updateFilesSection(
 		extensions: [mdxToMarkdown()],
 	})
 
-	const config = prettier.resolveConfig(workshopRoot)
+	const config = await prettier.resolveConfig(workshopRoot)
 	return prettier.format(newReadme, { ...config, parser: 'mdx' })
 }
