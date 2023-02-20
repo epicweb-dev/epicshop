@@ -30,7 +30,10 @@ export default function ExerciseNumberRoute() {
 				<h1>{data.exercise.title}</h1>
 				<div className="prose sm:prose-lg mx-auto max-w-none">
 					{data.exercise.instructionsCode ? (
-						<Mdx code={data.exercise?.instructionsCode} />
+						<Mdx
+							code={data.exercise?.instructionsCode}
+							components={{ h1: () => null }}
+						/>
 					) : (
 						'No instructions yet...'
 					)}

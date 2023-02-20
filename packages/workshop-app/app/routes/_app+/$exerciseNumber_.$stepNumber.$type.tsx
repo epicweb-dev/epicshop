@@ -215,7 +215,10 @@ export default function ExercisePartRoute() {
 			<div className="grid flex-grow grid-cols-2 gap-5">
 				<article className="prose sm:prose-lg">
 					{data.exerciseStepApp.instructionsCode ? (
-						<Mdx code={data.exerciseStepApp?.instructionsCode} />
+						<Mdx
+							code={data.exerciseStepApp?.instructionsCode}
+							components={{ h1: () => null }}
+						/>
 					) : (
 						<p>No instructions yet...</p>
 					)}

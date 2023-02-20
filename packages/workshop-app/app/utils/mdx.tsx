@@ -1,5 +1,6 @@
 import LRU from 'lru-cache'
 import * as mdxBundler from 'mdx-bundler/client'
+import type { MDXContentProps } from 'mdx-bundler/client'
 import * as React from 'react'
 import { LaunchEditor } from '~/routes/launch-editor'
 import { AnchorOrLink } from './misc'
@@ -44,7 +45,13 @@ export function useMdxComponent(code: string) {
 	}, [code])
 }
 
-export function Mdx({ code }: { code: string }) {
+export function Mdx({
+	code,
+	components,
+}: {
+	code: string
+	components?: MDXContentProps['components']
+}) {
 	const Component = useMdxComponent(code)
-	return <Component />
+	return <Component components={components} />
 }
