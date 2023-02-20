@@ -120,6 +120,9 @@ export default function AdminLayout() {
 	const navigation = useNavigation()
 
 	const isSettingFiles = navigation.formData?.get('intent') === 'set-files'
+	const isStartingInspector = navigation.formData?.get('intent') === 'inspect'
+	const isStoppingInspector =
+		navigation.formData?.get('intent') === 'stop-inspect'
 
 	return (
 		<div className="container mx-auto">
@@ -138,13 +141,17 @@ export default function AdminLayout() {
 						{data.inspectorRunning ? (
 							<Form method="post">
 								<button name="intent" value="stop-inspect">
-									{isSettingFiles ? 'Stopping inspector...' : 'Stop inspector'}
+									{isStartingInspector
+										? 'Stopping inspector...'
+										: 'Stop inspector'}
 								</button>
 							</Form>
 						) : (
 							<Form method="post">
 								<button name="intent" value="inspect">
-									{isSettingFiles ? 'Starting inspector...' : 'Start inspector'}
+									{isStoppingInspector
+										? 'Starting inspector...'
+										: 'Start inspector'}
 								</button>
 							</Form>
 						)}
