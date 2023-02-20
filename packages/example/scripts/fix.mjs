@@ -48,7 +48,8 @@ const apps = (
 // e.g. exercises/01-goo/problem.01-great
 // name: "exercises.01-goo.problem.01-great"
 
-const relativeToWorkshopRoot = dir => dir.replace(`${workshopRoot}/`, '')
+const relativeToWorkshopRoot = dir =>
+	dir.replace(`${workshopRoot}${path.sep}`, '')
 
 const appsWithPkgJson = [...examples, ...apps].filter(app => {
 	const pkgjsonPath = path.join(app, 'package.json')

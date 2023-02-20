@@ -26,7 +26,7 @@ import { Mdx } from '~/utils/mdx'
 import { getErrorMessage } from '~/utils/misc'
 import { isAppRunning, isPortAvailable } from '~/utils/process-manager.server'
 import { useSearchParams } from '@remix-run/react'
-import { useState } from 'react'
+import { useMemo, useState } from 'react'
 import { useParams } from 'react-router'
 import { InBrowserBrowser } from '~/components/in-browser-browser'
 import { InBrowserTestRunner } from '~/components/in-browser-test-runner'
@@ -34,6 +34,7 @@ import { TestOutput } from '../test'
 import * as Tabs from '@radix-ui/react-tabs'
 import clsx from 'clsx'
 import Icon from '~/components/icons'
+import { LaunchEditor } from '../launch-editor'
 
 export async function loader({ request, params }: DataFunctionArgs) {
 	const exerciseStepApp = await requireExerciseApp(params)
@@ -129,6 +130,7 @@ export async function loader({ request, params }: DataFunctionArgs) {
 			? {
 					type: 'problem',
 					id: problemApp.id,
+					fullPath: problemApp.fullPath,
 					isRunning: isProblemRunning,
 					dev: problemApp.dev,
 					test: problemApp.test,
@@ -146,6 +148,7 @@ export async function loader({ request, params }: DataFunctionArgs) {
 			? {
 					type: 'solution',
 					id: solutionApp.id,
+					fullPath: solutionApp.fullPath,
 					isRunning: isSolutionRunning,
 					dev: solutionApp.dev,
 					test: solutionApp.test,
@@ -196,6 +199,26 @@ function withParam(
 export default function ExercisePartRoute() {
 	const data = useLoaderData<typeof loader>()
 	const [searchParams, setSearchParams] = useSearchParams()
+	const InlineFile = useMemo(() => {
+		return function InlineFile({
+			file,
+			type = 'problem',
+		}: {
+			file: string
+			type?: 'solution' | 'problem'
+		}) {
+			const app = data[type]
+			return app ? (
+				<div className="inline-block">
+					<LaunchEditor appFile={file} appName={app.name}>
+						<code>{file}</code>
+					</LaunchEditor>
+				</div>
+			) : (
+				<code>{file}</code>
+			)
+		}
+	}, [data])
 	const params = useParams()
 	const submit = useSubmit()
 
@@ -215,7 +238,10 @@ export default function ExercisePartRoute() {
 			<div className="grid flex-grow grid-cols-2 gap-5">
 				<article className="prose sm:prose-lg">
 					{data.exerciseStepApp.instructionsCode ? (
-						<Mdx code={data.exerciseStepApp?.instructionsCode} />
+						<Mdx
+							code={data.exerciseStepApp?.instructionsCode}
+							components={{ InlineFile }}
+						/>
 					) : (
 						<p>No instructions yet...</p>
 					)}

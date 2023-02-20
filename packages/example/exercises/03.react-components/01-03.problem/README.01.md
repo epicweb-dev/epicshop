@@ -69,9 +69,7 @@ porttitor rhoncus dolor purus non enim praesent elementum.
     <li data-state="modified">
       <span>modified</span>
 
-      <LaunchEditor workshopFile="exercises/03.react-components/01-03.problem/index.tsx">
-        <code>index.tsx</code>
-      </LaunchEditor>
+      <InlineFile file="index.tsx" />
     </li>
 
   </ul>

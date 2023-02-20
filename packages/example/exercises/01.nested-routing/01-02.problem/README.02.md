@@ -37,57 +37,43 @@ export async function loader({ params }: DataFunctionArgs) {
     <li data-state="modified">
       <span>modified</span>
 
-      <LaunchEditor workshopFile="exercises/01.nested-routing/01-02.problem/.gitignore">
-        <code>.gitignore</code>
-      </LaunchEditor>
+      <InlineFile file=".gitignore" />
     </li>
 
     <li data-state="modified">
       <span>modified</span>
 
-      <LaunchEditor workshopFile="exercises/01.nested-routing/01-02.problem/app/entry.server.tsx">
-        <code>app/entry.server.tsx</code>
-      </LaunchEditor>
+      <InlineFile file="app/entry.server.tsx" />
     </li>
 
     <li data-state="modified">
       <span>modified</span>
 
-      <LaunchEditor workshopFile="exercises/01.nested-routing/01-02.problem/app/root.tsx">
-        <code>app/root.tsx</code>
-      </LaunchEditor>
+      <InlineFile file="app/root.tsx" />
     </li>
 
     <li data-state="deleted">
       <span>deleted</span>
 
-      <LaunchEditor workshopFile="exercises/01.nested-routing/01-02.problem/app/routes/$.tsx">
-        <code>app/routes/$.tsx</code>
-      </LaunchEditor>
+      <InlineFile file="app/routes/$.tsx" />
     </li>
 
     <li data-state="deleted">
       <span>deleted</span>
 
-      <LaunchEditor workshopFile="exercises/01.nested-routing/01-02.problem/app/routes/deleted.tsx">
-        <code>app/routes/deleted.tsx</code>
-      </LaunchEditor>
+      <InlineFile file="app/routes/deleted.tsx" />
     </li>
 
     <li data-state="modified">
       <span>modified</span>
 
-      <LaunchEditor workshopFile="exercises/01.nested-routing/01-02.problem/app/routes/index.tsx">
-        <code>app/routes/index.tsx</code>
-      </LaunchEditor>
+      <InlineFile file="app/routes/index.tsx" />
     </li>
 
     <li data-state="modified">
       <span>modified</span>
 
-      <LaunchEditor workshopFile="exercises/01.nested-routing/01-02.problem/package.json">
-        <code>package.json</code>
-      </LaunchEditor>
+      <InlineFile file="package.json" />
     </li>
 
   </ul>

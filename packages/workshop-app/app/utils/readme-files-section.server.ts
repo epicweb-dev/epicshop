@@ -1,4 +1,3 @@
-import path from 'path'
 import { type getDiffFiles } from './diff.server'
 import prettier from 'prettier'
 import { getWorkshopRoot } from './apps.server'
@@ -8,7 +7,6 @@ import { getWorkshopRoot } from './apps.server'
 export async function updateFilesSection(
 	readme: string,
 	files: Awaited<ReturnType<typeof getDiffFiles>>,
-	cwd: string,
 ) {
 	const [
 		{ fromMarkdown },
@@ -47,16 +45,10 @@ export async function updateFilesSection(
 	const workshopRoot = await getWorkshopRoot()
 
 	function getLiForFile(file: (typeof files)[0]) {
-		const { status } = file
-		const workshopFileProp = JSON.stringify(
-			path.join(cwd, file.path).replace(`${workshopRoot}${path.sep}`, ''),
-		)
 		return /* html */ `
-			<li data-state="${status}">
-				<span>${status}</span>
-				<LaunchEditor workshopFile=${workshopFileProp}>
-					<code>${file.path}</code>
-				</LaunchEditor>
+			<li data-state="${file.status}">
+				<span>${file.status}</span>
+				<InlineFile file=${JSON.stringify(file.path)} />
 			</li>
 		`.trim()
 	}

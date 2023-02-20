@@ -29,7 +29,7 @@ for (const file of allFiles) {
 		const dest = file.replace(srcDir, destDir)
 		fsExtra.ensureDir(path.parse(dest).dir)
 		fsExtra.copySync(file, dest)
-		console.log(`copied: ${file.replace(`${srcDir}/`, '')}`)
+		console.log(`copied: ${file.replace(`${srcDir}${path.sep}`, '')}`)
 	}
 }
 

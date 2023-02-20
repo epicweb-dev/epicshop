@@ -14,9 +14,11 @@ const kcdshopTempDir = path.join(os.tmpdir(), 'kcdshop')
 const diffTmpDir = path.join(kcdshopTempDir, 'diff')
 
 function diffPathToRelative(filePath: string) {
-	// for some reason the git diff output has no leading slash on these paths
-	// also, we want to get rid of the leading slash on the resulting filePath.
-	return filePath.replace(`${diffTmpDir.slice(1)}/`, '')
+	// eslint-disable-next-line @typescript-eslint/no-unused-vars
+	const [workshopRootDirname, appId, ...relativePath] = filePath
+		.replace(`${diffTmpDir.slice(1)}${path.sep}`, '')
+		.split(path.sep)
+	return relativePath.join(path.sep)
 }
 
 function getLanguage(ext: string) {
@@ -183,11 +185,11 @@ export async function getDiffFiles(app1: App, app2: App) {
 	const diffFiles = diffOutput
 		.split('\n')
 		.map(line => {
-			const [status, path] = line
+			const [status, filePath] = line
 				.split(/\s/)
 				.map(s => s.trim())
 				.filter(typedBoolean)
-			if (!status || !path) return null
+			if (!status || !filePath) return null
 			return {
 				status: (status.startsWith('R')
 					? 'renamed'
@@ -198,9 +200,9 @@ export async function getDiffFiles(app1: App, app2: App) {
 					: status === 'A'
 					? 'added'
 					: 'unknown') as 'renamed' | 'moved' | 'deleted' | 'added' | 'unknown',
-				path: path
-					.replace(`${app1CopyPath}/`, '')
-					.replace(`${app2CopyPath}/`, ''),
+				path: filePath
+					.replace(`${app1CopyPath}${path.sep}`, '')
+					.replace(`${app2CopyPath}${path.sep}`, ''),
 			}
 		})
 		.filter(typedBoolean)
@@ -261,8 +263,7 @@ async function getDiffCodeImpl(app1: App, app2: App) {
 	for (const file of parsed.files) {
 		const pathToCopy = file.type === 'RenamedFile' ? file.pathBefore : file.path
 		const relativePath = diffPathToRelative(pathToCopy)
-		const [, ...restOfPath] = relativePath.split(path.sep)
-		const launchEditorPath = path.join(app1.fullPath, ...restOfPath)
+		const launchEditorPath = path.join(app1.fullPath, relativePath)
 		switch (file.type) {
 			case 'ChangedFile': {
 				markdownLines.push(`

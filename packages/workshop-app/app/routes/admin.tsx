@@ -70,11 +70,7 @@ export async function action({ request }: DataFunctionArgs) {
 						stepNumber: isProblemApp(app) ? app.stepNumber : undefined,
 					})
 					const readme = await fs.promises.readFile(readmePath, 'utf-8')
-					const updatedReadme = await updateFilesSection(
-						readme,
-						files,
-						app.fullPath,
-					)
+					const updatedReadme = await updateFilesSection(readme, files)
 					if (readme !== updatedReadme) {
 						await fs.promises.writeFile(readmePath, updatedReadme)
 					}

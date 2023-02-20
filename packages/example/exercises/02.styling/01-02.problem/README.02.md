@@ -5,9 +5,7 @@
     <li data-state="modified">
       <span>modified</span>
 
-      <LaunchEditor workshopFile="exercises/02.styling/01-02.problem/package.json">
-        <code>package.json</code>
-      </LaunchEditor>
+      <InlineFile file="package.json" />
     </li>
 
   </ul>
