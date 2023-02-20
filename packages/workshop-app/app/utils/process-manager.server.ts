@@ -196,7 +196,7 @@ export async function waitOnApp(app: App) {
 	if (app.dev.type === 'script') {
 		return waitOn({
 			resources: [`http://localhost:${app.dev.portNumber}`],
-			timeout: 10000,
+			timeout: 10_000,
 		})
 	}
 }
