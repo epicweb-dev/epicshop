@@ -49,7 +49,7 @@ export async function updateFilesSection(
 	function getLiForFile(file: (typeof files)[0]) {
 		const { status } = file
 		const workshopFileProp = JSON.stringify(
-			path.join(cwd, file.path).replace(`${workshopRoot}/`, ''),
+			path.join(cwd, file.path).replace(`${workshopRoot}${path.sep}`, ''),
 		)
 		return /* html */ `
 			<li data-state="${status}">
@@ -90,5 +90,7 @@ export async function updateFilesSection(
 	const newReadme = toMarkdown(ast, {
 		extensions: [mdxToMarkdown()],
 	})
-	return prettier.format(newReadme, { parser: 'mdx' })
+
+	const config = prettier.resolveConfig(workshopRoot)
+	return prettier.format(newReadme, { ...config, parser: 'mdx' })
 }
