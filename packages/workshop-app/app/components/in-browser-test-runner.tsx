@@ -98,7 +98,7 @@ export function InBrowserTestRunner({
 				Rerun
 			</button>
 
-			<ul className="list-decimal">
+			<ul className="list-decimal px-5">
 				{sortedTestSteps.map(testStep => (
 					// sometimes the tips come in so fast that the timestamp is the same
 					<li key={testStep.timestamp + testStep.title}>
@@ -110,7 +110,7 @@ export function InBrowserTestRunner({
 			</ul>
 
 			{message?.status === 'fail' ? (
-				<pre className="prose max-h-32 overflow-scroll text-red-700">
+				<pre className="prose max-h-48 overflow-scroll text-red-700">
 					{message.error}
 				</pre>
 			) : null}
@@ -119,7 +119,7 @@ export function InBrowserTestRunner({
 				ref={iframeRef}
 				title={testFile}
 				src={baseUrl + testFile}
-				className="h-full w-full border-2 border-stone-400"
+				className="min-h-[420px] w-full border-2 border-stone-400"
 			/>
 		</details>
 	)

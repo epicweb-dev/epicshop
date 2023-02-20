@@ -54,10 +54,10 @@ export default function ExerciseFeedback() {
 		['entry.428900931', data.exercise.title],
 	])
 	return (
-		<div className="container mx-auto h-full">
+		<div className="container mx-auto flex flex-grow flex-col">
 			<h1>Submit feedback on this exercise</h1>
 			<iframe
-				className="mx-auto h-full min-w-full max-w-2xl rounded-md border-2 border-gray-200"
+				className="mx-auto min-w-full max-w-2xl flex-grow rounded-md border-2 border-gray-200"
 				title="Feedback"
 				src={`https://docs.google.com/forms/d/e/1FAIpQLSf3o9xyjQepTlOTH5Z7ZwkeSTdXh6YWI_RGc9KiyD3oUN0p6w/viewform?${searchParams.toString()}`}
 			>

@@ -127,6 +127,7 @@ export async function loader({ request, params }: DataFunctionArgs) {
 			: null,
 		problem: problemApp
 			? {
+					type: 'problem',
 					id: problemApp.id,
 					isRunning: isProblemRunning,
 					dev: problemApp.dev,
@@ -143,6 +144,7 @@ export async function loader({ request, params }: DataFunctionArgs) {
 			: null,
 		solution: solutionApp
 			? {
+					type: 'solution',
 					id: solutionApp.id,
 					isRunning: isSolutionRunning,
 					dev: solutionApp.dev,
@@ -372,7 +374,7 @@ function Preview({
 function Tests({
 	appInfo,
 }: {
-	appInfo: SerializeFrom<typeof loader>['problem']
+	appInfo: SerializeFrom<typeof loader>['problem' | 'solution']
 }) {
 	const [inBrowserTestKey, setInBrowserTestKey] = useState(0)
 	if (!appInfo || appInfo.test.type === 'none') {
@@ -385,20 +387,20 @@ function Tests({
 		const { baseUrl } = appInfo.test
 		return (
 			<div
-				className="flex h-full w-full flex-grow flex-col"
+				className="flex h-full w-full flex-grow flex-col px-3"
 				key={inBrowserTestKey}
 			>
-				<div className="px-3 py-4">
+				<div className="py-4">
 					<button onClick={() => setInBrowserTestKey(c => c + 1)}>
 						Rerun Tests
 					</button>
 				</div>
+				{appInfo.type === 'solution' ? (
+					<div>NOTE: these tests are running on the solution</div>
+				) : null}
 				{appInfo.test.testFiles.map(testFile => {
 					return (
-						<div
-							key={testFile}
-							className="relative h-full w-full flex-grow p-3"
-						>
+						<div key={testFile} className="relative py-3">
 							<a
 								href={baseUrl + testFile}
 								target="_blank"
