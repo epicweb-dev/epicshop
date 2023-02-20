@@ -5,6 +5,7 @@ import {
 	Link,
 	Outlet,
 	useLoaderData,
+	useParams,
 	useRouteError,
 } from '@remix-run/react'
 import invariant from 'tiny-invariant'
@@ -26,6 +27,7 @@ export async function loader({ params }: DataFunctionArgs) {
 
 export default function StepRoute() {
 	const data = useLoaderData<typeof loader>()
+	const params = useParams()
 
 	return (
 		<div className="flex flex-grow flex-col bg-gray-50 p-5">
@@ -35,6 +37,11 @@ export default function StepRoute() {
 					to={`/${data.exerciseNumber}`}
 				>
 					{data.exerciseTitle}
+					{params.type === 'solution'
+						? ' (🏁 solution)'
+						: params.type === 'problem'
+						? ' (💪 problem)'
+						: null}
 				</Link>
 			</h1>
 			<Outlet />

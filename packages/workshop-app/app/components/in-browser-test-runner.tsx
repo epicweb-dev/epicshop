@@ -100,7 +100,7 @@ export function InBrowserTestRunner({
 
 			<ul className="list-decimal px-5">
 				{sortedTestSteps.map(testStep => (
-					// sometimes the tips come in so fast that the timestamp is the same
+					// sometimes the steps come in so fast that the timestamp is the same
 					<li key={testStep.timestamp + testStep.title}>
 						<pre>
 							{testStepStatusEmojis[testStep.status]} {testStep.title}
