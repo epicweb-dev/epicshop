@@ -7,7 +7,7 @@ import { BUNDLED_LANGUAGES } from 'shiki'
 import { diffCodeCache } from './cache.server'
 import { compileMarkdownString } from './compile-mdx.server'
 import { typedBoolean } from './misc'
-import { getDirMtimeMs, type App } from './apps.server'
+import { getWorkshopRoot, getDirMtimeMs, type App } from './apps.server'
 
 const kcdshopTempDir = path.join(os.tmpdir(), 'kcdshop')
 
@@ -100,7 +100,7 @@ ${lines.join('\n')}
 const EXTRA_FILES_TO_IGNORE = [
 	/README(\.\d+)?\.md$/,
 	/package-lock\.json$/,
-	/\.*test\.*/,
+	/\..*test\..*/,
 ]
 
 async function copyUnignoredFiles(
@@ -126,8 +126,17 @@ async function copyUnignoredFiles(
 }
 
 async function prepareForDiff(app1: App, app2: App) {
-	const app1CopyPath = path.join(diffTmpDir, app1.dirName)
-	const app2CopyPath = path.join(diffTmpDir, app2.dirName)
+	const workshopRoot = await getWorkshopRoot()
+	const app1CopyPath = path.join(
+		diffTmpDir,
+		path.basename(workshopRoot),
+		app1.id,
+	)
+	const app2CopyPath = path.join(
+		diffTmpDir,
+		path.basename(workshopRoot),
+		app2.id,
+	)
 	// if everything except the `name` property of the `package.json` is the same
 	// the don't bother copying it
 	const comparePkgJson = (pkg1: any, pkg2: any) => {
