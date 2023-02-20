@@ -12,6 +12,10 @@ import {
 import { getProcesses } from '~/utils/process-manager.server'
 import { updateFilesSection } from '~/utils/readme-files-section.server'
 
+declare global {
+	var __inspector_open__: boolean | undefined
+}
+
 export async function loader() {
 	const apps = (await getApps()).filter(
 		(a, i, ar) => ar.findIndex(b => a.name === b.name) === i,
@@ -41,6 +45,7 @@ export async function loader() {
 		apps,
 		processes,
 		testProcesses,
+		inspectorRunning: global.__inspector_open__,
 	})
 }
 
@@ -82,6 +87,28 @@ export async function action({ request }: DataFunctionArgs) {
 			}
 			return json({ success: true })
 		}
+		case 'inspect': {
+			const inspector = await import('inspector')
+			if (!global.__inspector_open__) {
+				global.__inspector_open__ = true
+				inspector.open()
+				return json({ success: true })
+			} else {
+				console.info(`Inspector already running.`)
+				return json({ success: true })
+			}
+		}
+		case 'stop-inspect': {
+			const inspector = await import('inspector')
+			if (global.__inspector_open__) {
+				global.__inspector_open__ = false
+				inspector.close()
+				return json({ success: true })
+			} else {
+				console.info(`Inspector already stopped.`)
+				return json({ success: true })
+			}
+		}
 		default: {
 			throw new Error(`Unknown intent: ${intent}`)
 		}
@@ -106,6 +133,21 @@ export default function AdminLayout() {
 								{isSettingFiles ? 'Setting Files...' : 'Set Files'}
 							</button>
 						</Form>
+					</li>
+					<li>
+						{data.inspectorRunning ? (
+							<Form method="post">
+								<button name="intent" value="stop-inspect">
+									{isSettingFiles ? 'Stopping inspector...' : 'Stop inspector'}
+								</button>
+							</Form>
+						) : (
+							<Form method="post">
+								<button name="intent" value="inspect">
+									{isSettingFiles ? 'Starting inspector...' : 'Start inspector'}
+								</button>
+							</Form>
+						)}
 					</li>
 				</ul>
 			</div>
