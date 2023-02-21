@@ -3,7 +3,14 @@ import path from 'path'
 import type { DataFunctionArgs } from '@remix-run/node'
 import { redirect } from '@remix-run/node'
 import invariant from 'tiny-invariant'
-import { getAppById } from '~/utils/apps.server'
+import {
+	getAppById,
+	isExerciseStepApp,
+	isSolutionApp,
+	isProblemApp,
+	getExercise,
+	getWorkshopTitle,
+} from '~/utils/apps.server'
 import { typedBoolean } from '~/utils/misc'
 
 export async function loader({ params }: DataFunctionArgs) {
@@ -41,6 +48,22 @@ export async function loader({ params }: DataFunctionArgs) {
 			{ status: 400 },
 		)
 	}
+	const appTitle = app?.title ?? 'N/A'
+	const workshopTitle = await getWorkshopTitle()
+	const title = (
+		isExerciseStepApp(app)
+			? [
+					isProblemApp(app) ? '🏃💪' : isSolutionApp(app) ? '🏃🏁' : null,
+					`${app.stepNumber.toString().padStart(2, '0')}. ${app.title}`,
+					`${app.exerciseNumber.toString().padStart(2, '0')}. ${
+						(await getExercise(app.exerciseNumber))?.title ?? 'Unknown'
+					}`,
+					workshopTitle,
+			  ]
+			: ['🏃', appTitle]
+	)
+		.filter(Boolean)
+		.join(' | ')
 	const html = /* html */ `
 <!DOCTYPE html>
 <html>
@@ -48,7 +71,7 @@ export async function loader({ params }: DataFunctionArgs) {
 		<base href="${app.dev.baseUrl}" />
 		<meta charset="utf-8">
 		<meta name="viewport" content="width=device-width, initial-scale=1">
-		<title>${app.title}</title>
+		<title>${title}</title>
 		<link rel="stylesheet" href="/app-default.css">
 		${indexCss ? `<link rel="stylesheet" href="${indexCss}">` : ''}
 	</head>

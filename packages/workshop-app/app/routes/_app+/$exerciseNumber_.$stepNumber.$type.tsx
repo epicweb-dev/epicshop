@@ -1,4 +1,8 @@
-import type { DataFunctionArgs, SerializeFrom } from '@remix-run/node'
+import type {
+	DataFunctionArgs,
+	SerializeFrom,
+	V2_MetaFunction,
+} from '@remix-run/node'
 import { json, redirect } from '@remix-run/node'
 import {
 	Form,
@@ -35,6 +39,29 @@ import * as Tabs from '@radix-ui/react-tabs'
 import clsx from 'clsx'
 import Icon from '~/components/icons'
 import { LaunchEditor } from '../launch-editor'
+import { type loader as rootLoader } from '~/root'
+
+export const meta: V2_MetaFunction<
+	typeof loader,
+	{ root: typeof rootLoader }
+> = ({ data, parentsData }) => {
+	const exerciseNumber = data.exerciseStepApp.exerciseNumber
+		.toString()
+		.padStart(2, '0')
+	const stepNumber = data.exerciseStepApp.stepNumber.toString().padStart(2, '0')
+	const emoji = (
+		{
+			problem: '💪',
+			solution: '🏁',
+		} as const
+	)[data.type]
+	const title = data[data.type]?.title ?? 'N/A'
+	return [
+		{
+			title: `${emoji} | ${stepNumber}. ${title} | ${exerciseNumber}. ${data.exerciseTitle} | ${parentsData.root.workshopTitle}`,
+		},
+	]
+}
 
 export async function loader({ request, params }: DataFunctionArgs) {
 	const exerciseStepApp = await requireExerciseApp(params)
@@ -102,6 +129,7 @@ export async function loader({ request, params }: DataFunctionArgs) {
 	return json({
 		type: params.type as 'problem' | 'solution',
 		exerciseStepApp,
+		exerciseTitle: exercise.title,
 		prevStepLink: isFirstStep
 			? {
 					to: `/${exerciseStepApp.exerciseNumber.toString().padStart(2, '0')}`,

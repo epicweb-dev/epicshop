@@ -1,3 +1,4 @@
+import type { V2_MetaFunction } from '@remix-run/node'
 import { json } from '@remix-run/node'
 import { Link, useLoaderData } from '@remix-run/react'
 import {
@@ -6,6 +7,15 @@ import {
 	getWorkshopTitle,
 	isExerciseStepApp,
 } from '~/utils/apps.server'
+
+import { type loader as rootLoader } from '~/root'
+
+export const meta: V2_MetaFunction<
+	typeof loader,
+	{ root: typeof rootLoader }
+> = ({ parentsData }) => {
+	return [{ title: `🎉 ${parentsData.root.workshopTitle}` }]
+}
 
 export async function loader() {
 	const apps = (await getApps()).filter(isExerciseStepApp)
@@ -28,10 +38,10 @@ export default function ExerciseFeedback() {
 		['entry.2123647600', data.workshopTitle],
 	])
 	return (
-		<div className="container mx-auto h-full">
+		<div className="container mx-auto flex flex-grow flex-col">
 			<h1>You've finished! 🎉</h1>
 			<iframe
-				className="mx-auto h-full min-w-full max-w-2xl rounded-md border-2 border-gray-200"
+				className="mx-auto min-w-full max-w-2xl flex-grow rounded-md border-2 border-gray-200"
 				title="Feedback"
 				src={`https://docs.google.com/forms/d/e/1FAIpQLSdRmj9p8-5zyoqRzxp3UpqSbC3aFkweXvvJIKes0a5s894gzg/viewform?${searchParams.toString()}`}
 			>

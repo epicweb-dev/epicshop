@@ -56,20 +56,21 @@ type BaseApp = {
 		  }
 }
 
+export type BaseExerciseStepApp = BaseApp & {
+	exerciseNumber: number
+	stepNumber: number
+}
+
 export type ProblemApp = Prettyify<
-	BaseApp & {
+	BaseExerciseStepApp & {
 		type: 'problem'
-		exerciseNumber: number
-		stepNumber: number
 		solutionId: string | null
 	}
 >
 
 export type SolutionApp = Prettyify<
-	BaseApp & {
+	BaseExerciseStepApp & {
 		type: 'solution'
-		exerciseNumber: number
-		stepNumber: number
 	}
 >
 

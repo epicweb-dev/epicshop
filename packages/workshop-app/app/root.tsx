@@ -11,12 +11,10 @@ import {
 	Outlet,
 	Scripts,
 	ScrollRestoration,
-	useRouteLoaderData,
 } from '@remix-run/react'
-
 import appStylesheetUrl from './styles/app.css'
 import tailwindStylesheetUrl from './styles/tailwind.css'
-import { getWorkshopRoot } from './utils/apps.server'
+import { getWorkshopTitle } from './utils/apps.server'
 
 export const links: LinksFunction = () => {
 	return [
@@ -26,22 +24,22 @@ export const links: LinksFunction = () => {
 	]
 }
 
-export const meta: V2_MetaFunction = () => {
+export const meta: V2_MetaFunction = ({
+	data,
+}: {
+	data: SerializeFrom<typeof loader>
+}) => {
 	return [
 		{ charSet: 'utf-8' },
+		{ title: data.workshopTitle },
 		{ name: 'viewport', content: 'width=device-width,initial-scale=1' },
-		{ name: 'title', content: 'Remix Workshop App' },
 	]
 }
 
 export async function loader() {
 	return json({
-		workshopRoot: await getWorkshopRoot(),
+		workshopTitle: await getWorkshopTitle(),
 	})
-}
-
-export function useRootLoaderData() {
-	return useRouteLoaderData('root') as SerializeFrom<typeof loader>
 }
 
 export default function App() {

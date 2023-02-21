@@ -1,4 +1,4 @@
-import type { DataFunctionArgs } from '@remix-run/node'
+import type { DataFunctionArgs, V2_MetaFunction } from '@remix-run/node'
 import { json } from '@remix-run/node'
 import { Link, useLoaderData } from '@remix-run/react'
 import invariant from 'tiny-invariant'
@@ -9,6 +9,19 @@ import {
 	getWorkshopTitle,
 	isExerciseStepApp,
 } from '~/utils/apps.server'
+import { type loader as rootLoader } from '~/root'
+
+export const meta: V2_MetaFunction<
+	typeof loader,
+	{ root: typeof rootLoader }
+> = ({ data, parentsData }) => {
+	const number = data.exercise.exerciseNumber.toString().padStart(2, '0')
+	return [
+		{
+			title: `🦉 | ${number}. ${data.exercise.title} | ${parentsData.root.workshopTitle}`,
+		},
+	]
+}
 
 export async function loader({ params }: DataFunctionArgs) {
 	invariant(params.exerciseNumber, 'exerciseNumber is required')

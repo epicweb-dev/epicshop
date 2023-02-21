@@ -34,7 +34,7 @@ export default function StepRoute() {
 			<h1>
 				<Link
 					className="inline-block pb-3 text-sm font-semibold uppercase text-gray-600 hover:underline"
-					to={`/${data.exerciseNumber}`}
+					to={`/${data.exerciseNumber.toString().padStart(2, '0')}`}
 				>
 					{data.exerciseTitle}
 					{params.type === 'solution'

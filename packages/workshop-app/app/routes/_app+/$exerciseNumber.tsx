@@ -1,4 +1,4 @@
-import type { DataFunctionArgs } from '@remix-run/node'
+import type { DataFunctionArgs, V2_MetaFunction } from '@remix-run/node'
 import { json } from '@remix-run/node'
 import {
 	isRouteErrorResponse,
@@ -10,6 +10,19 @@ import invariant from 'tiny-invariant'
 import { Mdx } from '~/utils/mdx'
 import { getErrorMessage } from '~/utils/misc'
 import { getExercise } from '~/utils/apps.server'
+import { type loader as rootLoader } from '~/root'
+
+export const meta: V2_MetaFunction<
+	typeof loader,
+	{ root: typeof rootLoader }
+> = ({ data, parentsData }) => {
+	const number = data.exercise.exerciseNumber.toString().padStart(2, '0')
+	return [
+		{
+			title: `📝 | ${number}. ${data.exercise.title} | ${parentsData.root.workshopTitle}`,
+		},
+	]
+}
 
 export async function loader({ params }: DataFunctionArgs) {
 	invariant(params.exerciseNumber, 'exerciseNumber is required')
@@ -27,7 +40,7 @@ export default function ExerciseNumberRoute() {
 	return (
 		<main className="flex flex-grow flex-col items-center bg-gray-50">
 			<article className="w-full max-w-4xl bg-white px-5 pt-16 pb-32 shadow-2xl shadow-gray-300/40 md:px-8">
-				<h1>{data.exercise.title}</h1>
+				<h1 className="mb-12 text-4xl font-bold">{data.exercise.title}</h1>
 				<div className="prose sm:prose-lg mx-auto max-w-none">
 					{data.exercise.instructionsCode ? (
 						<Mdx

@@ -1,4 +1,4 @@
-import type { DataFunctionArgs } from '@remix-run/node'
+import type { DataFunctionArgs, V2_MetaFunction } from '@remix-run/node'
 import fs from 'fs'
 import { json } from '@remix-run/node'
 import { Form, useLoaderData, useNavigation } from '@remix-run/react'
@@ -11,9 +11,17 @@ import {
 } from '~/utils/apps.server'
 import { getProcesses } from '~/utils/process-manager.server'
 import { updateFilesSection } from '~/utils/readme-files-section.server'
+import { type loader as rootLoader } from '~/root'
 
 declare global {
 	var __inspector_open__: boolean | undefined
+}
+
+export const meta: V2_MetaFunction<
+	typeof loader,
+	{ root: typeof rootLoader }
+> = ({ parentsData }) => {
+	return [{ title: `👷 | ${parentsData.root.workshopTitle}` }]
 }
 
 export async function loader() {
