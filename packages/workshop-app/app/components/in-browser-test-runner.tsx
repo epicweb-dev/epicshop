@@ -102,7 +102,7 @@ export function InBrowserTestRunner({
 				{sortedTestSteps.map(testStep => (
 					// sometimes the steps come in so fast that the timestamp is the same
 					<li key={testStep.timestamp + testStep.title}>
-						<pre>
+						<pre className="whitespace-pre-wrap text-green-700">
 							{testStepStatusEmojis[testStep.status]} {testStep.title}
 						</pre>
 					</li>
@@ -110,7 +110,7 @@ export function InBrowserTestRunner({
 			</ul>
 
 			{message?.status === 'fail' ? (
-				<pre className="prose max-h-48 overflow-scroll text-red-700">
+				<pre className="max-h-48 whitespace-pre-wrap text-red-700">
 					{message.error}
 				</pre>
 			) : null}
