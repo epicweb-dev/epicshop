@@ -197,6 +197,9 @@ export async function loader({ request, params }: DataFunctionArgs) {
 			app2: app2.name,
 			diffCode: await getDiffCode(app1, app2, {
 				forceFresh: reqUrl.searchParams.has('forceFresh'),
+			}).catch(e => {
+				console.error(e)
+				return null
 			}),
 		},
 	} as const)
@@ -355,7 +358,11 @@ export default function ExercisePartRoute() {
 										</select>
 									</label>
 								</Form>
-								<Mdx code={data.diff.diffCode} />
+								{data.diff.diffCode ? (
+									<Mdx code={data.diff.diffCode} />
+								) : (
+									<p>There was a problem generating the diff</p>
+								)}
 							</div>
 						</Tabs.Content>
 					</div>
