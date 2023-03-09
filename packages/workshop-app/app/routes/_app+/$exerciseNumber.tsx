@@ -11,6 +11,13 @@ import { Mdx } from '~/utils/mdx'
 import { getErrorMessage } from '~/utils/misc'
 import { getExercise } from '~/utils/apps.server'
 import { type loader as rootLoader } from '~/root'
+import Navigation from '~/components/navigation'
+import {
+	getExampleApps,
+	getExercises,
+	getWorkshopTitle,
+} from '~/utils/apps.server'
+import { isAppRunning } from '~/utils/process-manager.server'
 
 export const meta: V2_MetaFunction<
 	typeof loader,
@@ -31,36 +38,64 @@ export async function loader({ params }: DataFunctionArgs) {
 		throw new Response('Not found', { status: 404 })
 	}
 
-	return json({ exercise })
+	return json({
+		exercise,
+		exerciseNumber: exercise.exerciseNumber,
+		exerciseTitle: exercise.title,
+		title: await getWorkshopTitle(),
+		exercises: (await getExercises()).map(e => ({
+			exerciseNumber: e.exerciseNumber,
+			title: e.title,
+		})),
+		examples: (await getExampleApps()).map(e => ({
+			name: e.name,
+			title: e.title,
+			isRunning: isAppRunning(e),
+		})),
+	})
 }
 
 export default function ExerciseNumberRoute() {
 	const data = useLoaderData<typeof loader>()
 
 	return (
-		<main className="flex flex-grow flex-col items-center bg-gray-50">
-			<article className="w-full max-w-4xl bg-white px-5 pt-16 pb-32 shadow-2xl shadow-gray-300/40 md:px-8">
-				<h1 className="mb-12 text-4xl font-bold">{data.exercise.title}</h1>
-				<div className="prose sm:prose-lg mx-auto max-w-none">
-					{data.exercise.instructionsCode ? (
-						<Mdx
-							code={data.exercise?.instructionsCode}
-							components={{ h1: () => null }}
-						/>
-					) : (
-						'No instructions yet...'
-					)}
-				</div>
-			</article>
-			<aside className="fixed bottom-10 z-10 flex w-full max-w-4xl justify-center">
-				<Link
-					to="01/problem"
-					prefetch="intent"
-					className="rounded-full bg-gradient-to-tr from-indigo-500 to-indigo-600 px-6 py-3 text-2xl font-semibold text-white shadow-xl shadow-indigo-700/20"
-				>
-					Start
-				</Link>
-			</aside>
+		<main className="flex flex-grow">
+			<Navigation />
+			<div className="grid h-screen w-full flex-grow grid-cols-3 overflow-y-auto">
+				<article className="col-span-2 w-full border-r border-gray-200 pt-16">
+					<div className="px-10">
+						<h1 className="text-[6vw] font-extrabold leading-none">
+							{data.exercise.title}
+						</h1>
+						<Link
+							to="01/problem"
+							prefetch="intent"
+							className="clip-path-button mt-8 inline-flex bg-black px-8 py-4 text-xl font-bold text-white"
+						>
+							Start Learning
+						</Link>
+					</div>
+					<div className="prose sm:prose-lg mt-16 w-full max-w-none border-t border-gray-200 px-10 pt-16">
+						{data.exercise.instructionsCode ? (
+							<Mdx
+								code={data.exercise?.instructionsCode}
+								components={{ h1: () => null }}
+							/>
+						) : (
+							'No instructions yet...'
+						)}
+					</div>
+					<div className="flex w-full items-center p-10 pb-16">
+						<Link
+							to="01/problem"
+							prefetch="intent"
+							className="clip-path-button mt-8 inline-flex bg-black px-8 py-4 text-xl font-bold text-white"
+						>
+							Start Learning
+						</Link>
+					</div>
+				</article>
+			</div>
 		</main>
 	)
 }

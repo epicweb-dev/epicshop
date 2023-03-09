@@ -91,12 +91,17 @@ export async function compileMdx(
 		)
 		return cached.value
 	}
-	const [{ default: remarkAutolinkHeadings }, { default: gfm }, { visit }] =
-		await Promise.all([
-			import('remark-autolink-headings'),
-			import('remark-gfm'),
-			import('unist-util-visit'),
-		])
+	const [
+		{ default: remarkAutolinkHeadings },
+		{ default: gfm },
+		{ visit },
+		{ default: emoji },
+	] = await Promise.all([
+		import('remark-autolink-headings'),
+		import('remark-gfm'),
+		import('unist-util-visit'),
+		import('remark-emoji'),
+	])
 	let title: string | null = null
 
 	try {
@@ -119,6 +124,7 @@ export async function compileMdx(
 						})
 						title = title ? title.replace(/^\d+\. /, '').trim() : null
 					},
+					emoji,
 				]
 				options.rehypePlugins = [
 					...(options.rehypePlugins ?? []),

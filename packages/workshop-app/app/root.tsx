@@ -18,7 +18,11 @@ import { getWorkshopTitle } from './utils/apps.server'
 
 export const links: LinksFunction = () => {
 	return [
-		{ rel: 'stylesheet', href: '/fonts.css' },
+		{ rel: 'stylesheet', href: '/neogrotesk-font.css' },
+		{
+			rel: 'stylesheet',
+			href: 'https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:ital,wght@0,200;0,300;0,400;0,500;0,600;1,700&display=swap',
+		},
 		{ rel: 'stylesheet', href: tailwindStylesheetUrl },
 		{ rel: 'stylesheet', href: appStylesheetUrl },
 	]
@@ -44,7 +48,7 @@ export async function loader() {
 
 export default function App() {
 	return (
-		<html lang="en" className="h-full">
+		<html lang="en" className="h-full" data-theme="light">
 			<head>
 				<Meta />
 				<Links />

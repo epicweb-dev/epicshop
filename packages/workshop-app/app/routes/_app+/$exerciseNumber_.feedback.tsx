@@ -10,6 +10,7 @@ import {
 	isExerciseStepApp,
 } from '~/utils/apps.server'
 import { type loader as rootLoader } from '~/root'
+import Loading from '~/components/loading'
 
 export const meta: V2_MetaFunction<
 	typeof loader,
@@ -74,7 +75,7 @@ export default function ExerciseFeedback() {
 				title="Feedback"
 				src={`https://docs.google.com/forms/d/e/1FAIpQLSf3o9xyjQepTlOTH5Z7ZwkeSTdXh6YWI_RGc9KiyD3oUN0p6w/viewform?${searchParams.toString()}`}
 			>
-				Loading…
+				<Loading />
 			</iframe>
 			<div className="flex justify-around">
 				{data.prevStepLink ? (

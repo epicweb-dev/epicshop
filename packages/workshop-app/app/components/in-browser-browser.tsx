@@ -171,16 +171,16 @@ export function InBrowserBrowser({
 		)
 	}
 	return isRunning ? (
-		<div className="h-full flex-grow">
-			<div className="flex items-center justify-between gap-2 py-3 px-2">
-				<div className="flex items-center justify-center gap-1">
+		<div className="flex h-full flex-grow flex-col">
+			<div className="flex items-center justify-between border-b border-gray-200 pl-1.5">
+				<div className="mr-2 flex items-center justify-center gap-2 px-1">
 					<button
 						type="button"
 						className={clsx(
-							'flex items-center justify-center rounded-full p-2 transition',
+							'flex aspect-square h-full w-full items-center justify-center p-1 transition',
 							{
-								'opacity-30': atStartOfHistory,
-								'hover:bg-gray-200': !atStartOfHistory,
+								'opacity-40': atStartOfHistory,
+								'': !atStartOfHistory,
 							},
 						)}
 						disabled={atStartOfHistory}
@@ -192,10 +192,10 @@ export function InBrowserBrowser({
 					<button
 						type="button"
 						className={clsx(
-							'flex items-center justify-center rounded-full p-2 transition',
+							'flex aspect-square h-full w-full items-center justify-center p-1 transition',
 							{
-								'opacity-30': atStartOfHistory,
-								'hover:bg-gray-200': !atStartOfHistory,
+								'opacity-40': atStartOfHistory,
+								'': !atStartOfHistory,
 							},
 						)}
 						disabled={atEndOfHistory}
@@ -219,7 +219,7 @@ export function InBrowserBrowser({
 					{existingSearchParamHiddenInputs}
 					<input
 						aria-label="pathname"
-						className="flex-1 rounded-full border-2 border-transparent bg-gray-200 px-3 py-1.5 leading-none"
+						className="flex-1 border-x border-gray-200 p-3 leading-none focus-visible:outline-none"
 						value={pathnameInputValue}
 						name="pathname"
 						onChange={e => setPathnameInputValue(e.currentTarget.value)}
@@ -229,21 +229,21 @@ export function InBrowserBrowser({
 				</Form>
 				<AppStopper
 					name={name}
-					className="rounded-full p-2 leading-none transition hover:bg-gray-200"
+					className="h-full border-r border-gray-200 py-4 px-3 font-mono text-xs uppercase leading-none"
 				/>
 				<a
 					href={baseUrl}
 					target="_blank"
 					rel="noreferrer"
 					className={clsx(
-						'flex items-center justify-center rounded-full p-2.5 transition hover:bg-gray-200',
+						'flex aspect-square items-center justify-center px-3.5',
 					)}
 				>
 					<Icon name="ExternalLink" aria-hidden="true" />
 					<span className="sr-only">Open in New Window</span>
 				</a>
 			</div>
-			<div className="h-full w-full flex-grow bg-white p-5">
+			<div className="flex h-full w-full flex-grow overflow-y-scroll bg-white p-5">
 				<iframe
 					title={name}
 					key={iframeContext.key}
@@ -254,17 +254,17 @@ export function InBrowserBrowser({
 			</div>
 		</div>
 	) : portIsAvailable === false ? (
-		<div>
-			<div>
+		<div className="flex flex-col items-center justify-center">
+			<p className="max-w-xs pb-5 text-center" role="status">
 				The port for this app is unavailable. It could be that you're running it
 				elsewhere?
-			</div>
+			</p>
 			<PortStopper port={port} />
 		</div>
 	) : (
 		<AppStarter
 			name={name}
-			className="rounded-full bg-gradient-to-tr from-indigo-500 to-indigo-600 px-5 py-3 text-lg text-white"
+			className="clip-path-button rounded-sm bg-black px-8 py-4 font-mono text-sm uppercase text-white"
 		/>
 	)
 }
