@@ -5,12 +5,10 @@ import type {
 } from '@remix-run/node'
 import { json, redirect } from '@remix-run/node'
 import {
-	Form,
 	isRouteErrorResponse,
 	Link,
 	useLoaderData,
 	useRouteError,
-	useSubmit,
 } from '@remix-run/react'
 import {
 	getAppByName,
@@ -40,6 +38,8 @@ import clsx from 'clsx'
 import Icon from '~/components/icons'
 import { LaunchEditor } from '../launch-editor'
 import { type loader as rootLoader } from '~/root'
+import TouchedFiles from '~/components/touched-files'
+import Diff from '~/components/diff'
 
 export const meta: V2_MetaFunction<
 	typeof loader,
@@ -229,6 +229,7 @@ function withParam(
 
 export default function ExercisePartRoute() {
 	const data = useLoaderData<typeof loader>()
+
 	const [searchParams, setSearchParams] = useSearchParams()
 	const InlineFile = useMemo(() => {
 		return function InlineFile({
@@ -251,7 +252,6 @@ export default function ExercisePartRoute() {
 		}
 	}, [data])
 	const params = useParams()
-	const submit = useSubmit()
 
 	const type = isValidType(params.type) ? params.type : null
 
@@ -266,23 +266,68 @@ export default function ExercisePartRoute() {
 
 	return (
 		<div className="flex flex-grow flex-col">
-			<div className="grid flex-grow grid-cols-2 gap-5">
-				<article className="prose sm:prose-lg">
-					{data.exerciseStepApp.instructionsCode ? (
-						<Mdx
-							code={data.exerciseStepApp?.instructionsCode}
-							components={{ InlineFile }}
-						/>
-					) : (
-						<p>No instructions yet...</p>
-					)}
-				</article>
+			<div className="grid flex-grow grid-cols-2">
+				<div className="relative flex h-screen flex-grow flex-col justify-between border-r border-gray-200">
+					<article className="prose sm:prose-lg scrollbar-thin scrollbar-thumb-gray-200 prose-p:text-black prose-headings:text-black h-full w-full max-w-none overflow-y-auto p-14">
+						{data.exerciseStepApp.instructionsCode ? (
+							<Mdx
+								code={data.exerciseStepApp?.instructionsCode}
+								components={{ InlineFile }}
+							/>
+						) : (
+							<p>No instructions yet...</p>
+						)}
+					</article>
+					<div className="flex h-16 justify-between border-t border-gray-200 bg-white">
+						<TouchedFiles />
+						<div className="relative flex overflow-hidden">
+							{data.prevStepLink ? (
+								<Link
+									prefetch="intent"
+									className="group flex h-full items-center justify-center border-l border-gray-200 px-7"
+									to={data.prevStepLink.to}
+									children={
+										<>
+											<Icon
+												name="ChevronLeft"
+												className="absolute opacity-100 transition duration-300 ease-in-out group-hover:translate-y-10 group-hover:opacity-0"
+											/>
+											<Icon
+												name="ChevronLeft"
+												className="absolute -translate-y-10 opacity-0 transition duration-300 ease-in-out group-hover:translate-y-0 group-hover:opacity-100"
+											/>
+										</>
+									}
+								/>
+							) : null}
+							{data.nextStepLink ? (
+								<Link
+									prefetch="intent"
+									className="group flex h-full items-center justify-center border-l border-gray-200 px-7"
+									to={data.nextStepLink.to}
+									children={
+										<>
+											<Icon
+												name="ChevronRight"
+												className="absolute opacity-100 transition duration-300 ease-in-out group-hover:translate-y-10 group-hover:opacity-0"
+											/>
+											<Icon
+												name="ChevronRight"
+												className="absolute -translate-y-10 opacity-0 transition duration-300 ease-in-out group-hover:translate-y-0 group-hover:opacity-100"
+											/>
+										</>
+									}
+								/>
+							) : null}
+						</div>
+					</div>
+				</div>
 				<Tabs.Root
-					className="flex flex-col overflow-hidden rounded-xl border border-gray-500/10 bg-gray-50"
+					className="relative flex h-screen flex-col"
 					value={activeTab}
 					onValueChange={handleTabChange}
 				>
-					<Tabs.List className="bg-gray-200 px-2 pt-2">
+					<Tabs.List className="border-b border-gray-200">
 						{tabs.map(tab => {
 							return (
 								<Tabs.Trigger
@@ -290,7 +335,7 @@ export default function ExercisePartRoute() {
 									value={tab}
 									asChild
 									className={clsx(
-										'radix-state-active:bg-gray-50 radix-state-active:z-10 radix-state-inactive:hover:bg-gray-100 relative rounded-t-lg px-4 py-2',
+										'radix-state-active:bg-black radix-state-active:text-white radix-state-active:z-10 radix-state-inactive:hover:bg-gray-100 clip-path-button relative px-6 py-4 font-mono text-sm uppercase',
 									)}
 								>
 									<Link
@@ -309,7 +354,7 @@ export default function ExercisePartRoute() {
 							)
 						})}
 					</Tabs.List>
-					<div className="relative z-10 flex flex-grow flex-col bg-gray-50">
+					<div className="relative z-10 flex flex-grow flex-col">
 						<Tabs.Content
 							value={tabs[0]}
 							className="radix-state-inactive:hidden flex flex-grow items-center justify-center"
@@ -324,7 +369,7 @@ export default function ExercisePartRoute() {
 						</Tabs.Content>
 						<Tabs.Content
 							value={tabs[2]}
-							className="radix-state-inactive:hidden flex flex-grow items-start justify-center"
+							className="radix-state-inactive:hidden flex max-h-[calc(100vh-53px)] flex-grow items-start justify-center overflow-hidden"
 						>
 							<Tests
 								appInfo={type === 'solution' ? data.solution : data.problem}
@@ -334,57 +379,10 @@ export default function ExercisePartRoute() {
 							value={tabs[3]}
 							className="radix-state-inactive:hidden flex flex-grow items-start justify-center"
 						>
-							<div className="prose whitespace-pre-wrap p-5">
-								<Form onChange={e => submit(e.currentTarget)}>
-									<input type="hidden" name="preview" value="diff" />
-									<label>
-										App 1:
-										<select name="app1" defaultValue={data.diff.app1}>
-											{data.diff.allApps.map(app => (
-												<option key={app.name} value={app.name}>
-													{app.title} ({app.type})
-												</option>
-											))}
-										</select>
-									</label>
-									<label>
-										App 2:
-										<select name="app2" defaultValue={data.diff.app2}>
-											{data.diff.allApps.map(app => (
-												<option key={app.name} value={app.name}>
-													{app.title} ({app.type})
-												</option>
-											))}
-										</select>
-									</label>
-								</Form>
-								{data.diff.diffCode ? (
-									<Mdx code={data.diff.diffCode} />
-								) : (
-									<p>There was a problem generating the diff</p>
-								)}
-							</div>
+							<Diff />
 						</Tabs.Content>
 					</div>
 				</Tabs.Root>
-			</div>
-			<div className="flex justify-around">
-				{data.prevStepLink ? (
-					<Link
-						prefetch="intent"
-						className="text-blue-700 underline"
-						to={data.prevStepLink.to}
-						children={data.prevStepLink.children}
-					/>
-				) : null}
-				{data.nextStepLink ? (
-					<Link
-						prefetch="intent"
-						className="text-blue-700 underline"
-						to={data.nextStepLink.to}
-						children={data.nextStepLink.children}
-					/>
-				) : null}
 			</div>
 		</div>
 	)
@@ -410,7 +408,7 @@ function Preview({
 		)
 	} else {
 		return (
-			<div className="relative h-full flex-grow">
+			<div className="relative h-full flex-grow overflow-y-auto">
 				<a
 					href={dev.baseUrl}
 					target="_blank"
@@ -425,7 +423,7 @@ function Preview({
 				<iframe
 					title={title}
 					src={dev.baseUrl}
-					className="h-full w-full flex-grow bg-gray-50 p-3"
+					className="h-full w-full flex-grow bg-white p-3"
 				/>
 			</div>
 		)
@@ -448,35 +446,27 @@ function Tests({
 		const { baseUrl } = appInfo.test
 		return (
 			<div
-				className="flex h-full w-full flex-grow flex-col px-3"
+				className="scrollbar-thin scrollbar-thumb-gray-300 flex h-full w-full flex-grow flex-col overflow-y-auto"
 				key={inBrowserTestKey}
 			>
-				<div className="py-4">
-					<button onClick={() => setInBrowserTestKey(c => c + 1)}>
-						Rerun Tests
-					</button>
-				</div>
-				{appInfo.type === 'solution' ? (
-					<div>NOTE: these tests are running on the solution</div>
-				) : null}
 				{appInfo.test.testFiles.map(testFile => {
 					return (
-						<div key={testFile} className="relative py-3">
-							<a
-								href={baseUrl + testFile}
-								target="_blank"
-								rel="noreferrer"
-								className={clsx(
-									'absolute bottom-5 right-5 flex items-center justify-center rounded-full bg-gray-100 p-2.5 transition hover:bg-gray-200',
-								)}
-							>
-								<Icon name="ExternalLink" aria-hidden="true" />
-								<span className="sr-only">Open in New Window</span>
-							</a>
+						<div key={testFile}>
 							<InBrowserTestRunner baseUrl={baseUrl} testFile={testFile} />
 						</div>
 					)
 				})}
+				<div className="px-3 py-[21px]">
+					{appInfo.type === 'solution' ? (
+						<div>NOTE: these tests are running on the solution</div>
+					) : null}
+					<button
+						onClick={() => setInBrowserTestKey(c => c + 1)}
+						className="flex items-center gap-2 font-mono text-sm uppercase leading-none"
+					>
+						<Icon name="Refresh" aria-hidden /> Rerun All Tests
+					</button>
+				</div>
 			</div>
 		)
 	}

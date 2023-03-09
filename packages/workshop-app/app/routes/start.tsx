@@ -2,7 +2,7 @@ import type { DataFunctionArgs } from '@remix-run/node'
 import { json } from '@remix-run/node'
 import { useFetcher } from '@remix-run/react'
 import invariant from 'tiny-invariant'
-import Icon from '~/components/icons'
+import Loading from '~/components/loading'
 import { getAppByName } from '~/utils/apps.server'
 import {
 	closeProcess,
@@ -88,7 +88,12 @@ export function PortStopper({ port }: { port: number | string }) {
 	return (
 		<fetcher.Form method="post" action="/start">
 			<input type="hidden" name="port" value={port} />
-			<button type="submit" name="intent" value="stop-port">
+			<button
+				type="submit"
+				name="intent"
+				value="stop-port"
+				className="clip-path-button bg-black px-5 py-3 font-mono text-sm font-medium uppercase text-white"
+			>
 				{fetcher.submission ? 'Stopping Port' : 'Stop Port'}
 			</button>
 		</fetcher.Form>
@@ -120,9 +125,8 @@ export function AppStarter({
 		<fetcher.Form method="post" action="/start">
 			<input type="hidden" name="name" value={name} />
 			{fetcher.submission ? (
-				<div role="status">
-					<Icon name="Loading" aria-hidden="true" className="h-8 w-8" />
-					<span className="sr-only">Starting App</span>
+				<div>
+					<Loading>Starting App</Loading>
 				</div>
 			) : (
 				<button type="submit" name="intent" value="start" className={className}>

@@ -1,8 +1,29 @@
-@import './changed-files.css';
-@import './browser-tabs.css';
+@import './touched-files.css';
+
+html[data-theme='dark'] {
+	filter: invert(1);
+	img,
+	video,
+	picture,
+	pre,
+	button:before,
+	span[role='img'] {
+		filter: invert(1);
+	}
+}
 
 body {
 	tab-size: 2ch;
+}
+
+.clip-path-button {
+	clip-path: polygon(0 0, 100% 0, 100% 75%, 90% 100%, 0 100%);
+}
+
+.orientation-sideways {
+	text-orientation: sideways;
+	writing-mode: vertical-rl;
+	@apply rotate-180;
 }
 
 /* code syntax highlighting */

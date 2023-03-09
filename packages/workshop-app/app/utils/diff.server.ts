@@ -87,10 +87,10 @@ function getFileCodeblocks(
 ${lines.join('\n')}
 \`\`\`
 
-<div className="absolute bottom-0 translate-x-4 -translate-y-2 text-gray-300 opacity-75">
+<div className="absolute top-3 right-3 bg-white px-1 py-0.5 font-mono text-xs font-semibold text-black">
 	<LaunchEditor file=${JSON.stringify(
 		launchEditorPath,
-	)} line={${startLine}}>Open</LaunchEditor>
+	)} line={${startLine}}>OPEN</LaunchEditor>
 </div>
 
 </div>
@@ -226,13 +226,15 @@ export async function getDiffCode(
 
 async function getDiffCodeImpl(app1: App, app2: App) {
 	const { execa } = await import('execa')
-	let markdownLines = [
-		`
-# Diff
+	let markdownLines = ['']
+	// 	let markdownLines = [
+	// 		`
+	// # Diff
 
-\`${app1.name}\` vs \`${app2.name}\`
-`,
-	]
+	// \`${app1.name}\` vs \`${app2.name}\`
+
+	// `,
+	// 	]
 	if (app1.name === app2.name) {
 		markdownLines.push('You are comparing the same app')
 		const code = await compileMarkdownString(markdownLines.join('\n'))
@@ -258,7 +260,9 @@ async function getDiffCodeImpl(app1: App, app2: App) {
 	const parsed = parseGitDiff(diffOutput)
 
 	if (!parsed.files.length) {
-		markdownLines.push('No changes')
+		markdownLines.push(
+			'<div class="m-5 inline-flex items-center justify-center bg-black px-1 py-0.5 font-mono text-sm uppercase text-white">No changes</div>',
+		)
 	}
 	for (const file of parsed.files) {
 		const pathToCopy = file.type === 'RenamedFile' ? file.pathBefore : file.path
@@ -267,51 +271,46 @@ async function getDiffCodeImpl(app1: App, app2: App) {
 		switch (file.type) {
 			case 'ChangedFile': {
 				markdownLines.push(`
-<details>
 
-<summary>➕/➖ \`${relativePath}\`</summary>
+<Accordion title={\`${relativePath}\`} variant="changed">
 
 ${getFileCodeblocks(file, launchEditorPath).join('\n')}
 
-</details>
+</Accordion>
+
 `)
 				break
 			}
 			case 'DeletedFile': {
 				markdownLines.push(`
-<details>
-
-<summary>➖ \`${relativePath}\` (file deleted)</summary>
+<Accordion title={\`${relativePath}\`} variant="deleted">
 
 ${getFileCodeblocks(file, launchEditorPath).join('\n')}
 
-</details>
+</Accordion>
 `)
 				break
 			}
 			case 'RenamedFile': {
 				markdownLines.push(`
-<details>
-
-<summary>\`${diffPathToRelative(file.pathBefore)}\` ▶️ \`${diffPathToRelative(
-					file.pathAfter,
-				)}\` (file renamed)</summary>
+<Accordion title={\`${diffPathToRelative(
+					file.pathBefore,
+				)} ▶️ ${diffPathToRelative(file.pathAfter)}\`} variant="renamed">
 
 ${getFileCodeblocks(file, launchEditorPath).join('\n')}
 
-</details>
+</Accordion>
+<details>
 `)
 				break
 			}
 			case 'AddedFile': {
 				markdownLines.push(`
-<details>
-
-<summary>➕ \`${relativePath}\` (file added)</summary>
+<Accordion title={\`${relativePath}\`} variant="added">
 
 ${getFileCodeblocks(file, launchEditorPath).join('\n')}
 
-</details>
+</Accordion>
 `)
 				break
 			}

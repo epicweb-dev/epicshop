@@ -4,10 +4,12 @@ import type { MDXContentProps } from 'mdx-bundler/client'
 import * as React from 'react'
 import { LaunchEditor } from '~/routes/launch-editor'
 import { AnchorOrLink } from './misc'
+import Accordion from '~/components/accordion'
 
-const mdxComponents = {
+export const mdxComponents = {
 	a: AnchorOrLink,
 	LaunchEditor,
+	Accordion: (props: any) => <Accordion {...props} />,
 }
 /**
  * This should be rendered within a useMemo

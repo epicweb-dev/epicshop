@@ -1,5 +1,8 @@
 import { useEffect, useRef, useState } from 'react'
 import { z } from 'zod'
+import AccordionComponent from '~/components/accordion'
+import Icon from './icons'
+import * as Accordion from '@radix-ui/react-accordion'
 
 const testRunnerStatusDataSchema = z.intersection(
 	z.object({
@@ -73,54 +76,88 @@ export function InBrowserTestRunner({
 	}, [])
 
 	const statusEmoji = {
-		pending: '⏳',
-		pass: '✅',
-		fail: '❌',
-		unknown: '🧐',
+		pending: <Icon name="AnimatedBars" aria-label="Pending" />,
+		pass: (
+			<Icon
+				name="CheckSmall"
+				aria-label="Passed"
+				className="text-emerald-700"
+			/>
+		),
+		fail: <Icon name="Remove" aria-label="Failed" className="text-rose-700" />,
+		unknown: (
+			<Icon name="Question" aria-label="Unknown" className="animate-pulse" />
+		),
 	}[message?.status ?? 'unknown']
 
 	const sortedTestSteps = testSteps.sort((a, b) => a.timestamp - b.timestamp)
 	const testStepStatusEmojis = {
-		pass: '✅',
-		fail: '❌',
-		unknown: '🧐',
+		pass: <Icon name="CheckSmall" aria-label="Passed" />,
+		fail: <Icon name="Remove" aria-label="Failed" />,
+		unknown: (
+			<Icon name="Question" aria-label="Unknown" className="animate-pulse" />
+		),
 	}
 
 	return (
-		<details>
-			<summary>
-				{statusEmoji}. {testFile}
-			</summary>
-
-			<button
-				onClick={() => iframeRef.current?.contentWindow?.location.reload()}
-			>
-				Rerun
-			</button>
-
-			<ul className="list-decimal px-5">
-				{sortedTestSteps.map(testStep => (
-					// sometimes the steps come in so fast that the timestamp is the same
-					<li key={testStep.timestamp + testStep.title}>
-						<pre className="whitespace-pre-wrap text-green-700">
-							{testStepStatusEmojis[testStep.status]} {testStep.title}
-						</pre>
-					</li>
-				))}
-			</ul>
-
-			{message?.status === 'fail' ? (
-				<pre className="max-h-48 whitespace-pre-wrap text-red-700">
-					{message.error}
-				</pre>
-			) : null}
-
-			<iframe
-				ref={iframeRef}
-				title={testFile}
-				src={baseUrl + testFile}
-				className="min-h-[420px] w-full border-2 border-stone-400"
-			/>
-		</details>
+		<>
+			<Accordion.Root className="w-full" type="multiple">
+				<AccordionComponent
+					icon={statusEmoji}
+					title={testFile}
+					forceMount={true}
+				>
+					<div className="not-prose ">
+						<div className="p-5 pt-3">
+							<ul className="">
+								{sortedTestSteps.map(testStep => (
+									// sometimes the steps come in so fast that the timestamp is the same
+									<li key={testStep.timestamp + testStep.title}>
+										<div className="flex items-baseline gap-2 text-emerald-700">
+											<span>{testStepStatusEmojis[testStep.status]}</span>
+											<pre className="whitespace-pre-wrap">
+												{testStep.title}
+											</pre>
+										</div>
+									</li>
+								))}
+							</ul>
+							{message?.status === 'fail' ? (
+								<div className="flex items-baseline gap-2 text-rose-700">
+									<span>{testStepStatusEmojis['fail']}</span>
+									<pre className="max-h-48 overflow-y-auto text-rose-700">
+										{message.error}
+									</pre>
+								</div>
+							) : null}
+							<iframe
+								ref={iframeRef}
+								title={testFile}
+								src={baseUrl + testFile}
+								className="mt-5 min-h-[420px] w-full border border-gray-200"
+							/>
+						</div>
+						<div className="flex border-y border-gray-200">
+							<button
+								onClick={() =>
+									iframeRef.current?.contentWindow?.location.reload()
+								}
+								className="border-r border-gray-200 p-3"
+							>
+								<Icon name="Refresh" aria-label="Rerun Tests" />
+							</button>
+							<a
+								href={baseUrl + testFile}
+								target="_blank"
+								rel="noreferrer"
+								className="border-r border-gray-200 p-3"
+							>
+								<Icon name="ExternalLink" aria-label="Open in New Window" />
+							</a>
+						</div>
+					</div>
+				</AccordionComponent>
+			</Accordion.Root>
+		</>
 	)
 }

@@ -6,6 +6,7 @@ import escapeHtml from 'lodash.escape'
 import { useEffect, useReducer, useRef } from 'react'
 import { eventStream, useEventSource } from 'remix-utils'
 import { z } from 'zod'
+import Icon from '~/components/icons'
 import { getAppById } from '~/utils/apps.server'
 import {
 	clearTestProcessEntry,
@@ -232,49 +233,68 @@ export function TestOutput({ id }: { id: string }) {
 	}, [lastMessage])
 
 	return (
-		<div className="w-full p-5">
-			<p>Test Output</p>
-			{isRunning ? (
-				<StopTest id={id} />
-			) : (
-				<>
-					{exitCode !== undefined ? (
-						<>
-							<p>Test exited with code {String(exitCode)}</p>
-							<ClearTest
-								id={id}
-								onClear={() => {
-									dispatch(prev => ({
-										...prev,
-										exitCode: undefined,
-										lines: [],
-									}))
-								}}
+		<div className="relative flex h-full w-full flex-col">
+			<div className="flex h-12 w-full items-center justify-between border-b border-gray-200 bg-white">
+				<div className="flex h-full items-center">
+					{!isRunning && (
+						<TestRunner
+							id={id}
+							onRun={() => {
+								dispatch(prev => ({
+									...prev,
+									exitCode: undefined,
+									lines: [],
+									version: prev.version + 1,
+								}))
+							}}
+						/>
+					)}
+					{isRunning && (
+						<div className="flex h-full flex-grow items-center justify-center border-r border-gray-200 px-3.5">
+							<Icon
+								name="AnimatedBars"
+								role="status"
+								aria-label="Running Tests"
 							/>
-						</>
-					) : null}
-					<TestRunner
+						</div>
+					)}
+					{isRunning && <StopTest id={id} />}
+				</div>
+
+				{!isRunning && exitCode !== undefined && (
+					<p className="pr-3.5 leading-none">
+						Test exited with code {String(exitCode)}
+					</p>
+				)}
+				{!isRunning && exitCode !== undefined && (
+					<ClearTest
 						id={id}
-						onRun={() => {
+						onClear={() => {
 							dispatch(prev => ({
 								...prev,
 								exitCode: undefined,
 								lines: [],
-								version: prev.version + 1,
 							}))
 						}}
 					/>
-				</>
-			)}
-			<pre className="h-full max-h-96 overflow-y-auto rounded bg-slate-800 p-4 text-gray-200">
-				{lines.map(line => (
-					<code
-						key={line.timestamp}
-						data-type={line.type}
-						dangerouslySetInnerHTML={{ __html: line.html }}
-					/>
-				))}
-			</pre>
+				)}
+			</div>
+			<div className="scrollbar-thin scrollbar-thumb-gray-300 h-full overflow-y-scroll p-5">
+				<p className="pb-5 font-mono text-sm font-medium uppercase">
+					Test Output
+				</p>
+				<pre>
+					{lines.map(line => (
+						<code
+							key={line.timestamp}
+							data-type={line.type}
+							dangerouslySetInnerHTML={{
+								__html: line.html,
+							}}
+						/>
+					))}
+				</pre>
+			</div>
 		</div>
 	)
 }
@@ -291,10 +311,19 @@ export function TestRunner({ id, onRun }: { id: string; onRun?: () => void }) {
 		}
 	}, [fetcher.data])
 	return (
-		<fetcher.Form method="post" action="/test">
+		<fetcher.Form method="post" action="/test" className="h-full">
 			<input type="hidden" name="id" value={id} />
-			<button type="submit" name="intent" value="run">
-				{fetcher.submission ? 'Running Tests' : 'Run Tests'}
+			<button
+				type="submit"
+				name="intent"
+				value="run"
+				className="flex h-full flex-grow items-center justify-center border-r border-gray-200 px-3.5"
+			>
+				{fetcher.submission ? (
+					<Icon name="AnimatedBars" aria-label="Running Tests" role="status" />
+				) : (
+					<Icon name="TriangleSmall" aria-label="Test Tests" />
+				)}
 			</button>
 		</fetcher.Form>
 	)
@@ -318,10 +347,24 @@ export function ClearTest({
 		}
 	}, [fetcher.data])
 	return (
-		<fetcher.Form method="post" action="/test">
+		<fetcher.Form method="post" action="/test" className="h-full">
 			<input type="hidden" name="id" value={id} />
-			<button type="submit" name="intent" value="clear">
-				{fetcher.submission ? 'Clearing Tests' : 'Clear Tests'}
+			<button
+				type="submit"
+				name="intent"
+				value="clear"
+				className="flex h-full flex-grow items-center justify-center border-l border-gray-200 px-3.5"
+			>
+				{fetcher.submission ? (
+					<Icon
+						name="Clear"
+						className="animate-pulse"
+						role="status"
+						aria-label="Clearing Tests"
+					/>
+				) : (
+					<Icon name="Clear" aria-label="Clear Test" />
+				)}
 			</button>
 		</fetcher.Form>
 	)
@@ -339,10 +382,24 @@ export function StopTest({ id, onStop }: { id: string; onStop?: () => void }) {
 		}
 	}, [fetcher.data])
 	return (
-		<fetcher.Form method="post" action="/test">
+		<fetcher.Form method="post" action="/test" className="h-full">
 			<input type="hidden" name="id" value={id} />
-			<button type="submit" name="intent" value="stop">
-				{fetcher.submission ? 'Stopping Tests' : 'Stop Tests'}
+			<button
+				type="submit"
+				name="intent"
+				value="stop"
+				className="flex h-full flex-grow items-center justify-center border-r border-gray-200 px-3.5"
+			>
+				{fetcher.submission ? (
+					<Icon
+						name="Stop"
+						className="animate-pulse"
+						role="status"
+						aria-label="Stopping Tests"
+					/>
+				) : (
+					<Icon name="Stop" aria-label="Stop Tests" />
+				)}
 			</button>
 		</fetcher.Form>
 	)

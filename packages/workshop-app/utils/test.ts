@@ -54,8 +54,6 @@ export async function testStep<ReturnValue>(
 		: new Error(typeof caughtError === 'string' ? caughtError : 'Unknown error')
 	const titleString =
 		typeof title === 'function' ? title({ type: 'fail', error }) : title
-	error.message = `🚨 ${titleString}${
-		error.message ? `\n\n${error.message}` : ''
-	}`
+	error.message = `${titleString}${error.message ? `\n\n${error.message}` : ''}`
 	throw error
 }
