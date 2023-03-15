@@ -227,19 +227,13 @@ export async function getDiffCode(
 async function getDiffCodeImpl(app1: App, app2: App) {
 	const { execa } = await import('execa')
 	let markdownLines = ['']
-	// 	let markdownLines = [
-	// 		`
-	// # Diff
 
-	// \`${app1.name}\` vs \`${app2.name}\`
-
-	// `,
-	// 	]
 	if (app1.name === app2.name) {
 		markdownLines.push('You are comparing the same app')
 		const code = await compileMarkdownString(markdownLines.join('\n'))
 		return code
 	}
+
 	const { app1CopyPath, app2CopyPath } = await prepareForDiff(app1, app2)
 
 	const { stdout: diffOutput } = await execa(
