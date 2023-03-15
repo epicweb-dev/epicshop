@@ -14,7 +14,10 @@ const kcdshopTempDir = path.join(os.tmpdir(), 'kcdshop')
 const diffTmpDir = path.join(kcdshopTempDir, 'diff')
 
 function diffPathToRelative(filePath: string) {
-	filePath = filePath.replace(/\\\\/g, path.sep).replace(/\\|\//g, path.sep)
+	filePath = filePath
+		.replace(/\\\\/g, path.sep)
+		.replace(/\\|\//g, path.sep)
+		.replace(/^("|')|("|')$/g, '')
 
 	// eslint-disable-next-line @typescript-eslint/no-unused-vars
 	const [workshopRootDirname, appId, ...relativePath] = filePath
@@ -24,7 +27,6 @@ function diffPathToRelative(filePath: string) {
 				: `${diffTmpDir.slice(1)}${path.sep}`,
 			'',
 		)
-		.replace(/'|"/g, '')
 		.split(path.sep)
 
 	return relativePath.join(path.sep)
