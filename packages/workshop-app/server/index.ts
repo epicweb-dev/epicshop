@@ -42,7 +42,7 @@ async function start() {
 		app.use(morgan('tiny'))
 	}
 
-	const desiredPort = Number(process.env.PORT || 3000)
+	const desiredPort = Number(process.env.PORT || 7000)
 	const portToUse = await getPort({
 		port: portNumbers(desiredPort, desiredPort + 100),
 	})

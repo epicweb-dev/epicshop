@@ -412,7 +412,7 @@ async function getExampleAppFromPath(
 	const dirName = path.basename(fullPath)
 	const compiledReadme = await compileReadme(fullPath)
 	const name = await getAppName(fullPath)
-	const portNumber = 3500 + index
+	const portNumber = 6000 + index
 	return {
 		id: name,
 		name,
