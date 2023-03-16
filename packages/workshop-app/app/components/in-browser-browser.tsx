@@ -95,7 +95,7 @@ export function InBrowserBrowser({
 						return { ...prevContext, index: newIndex(-1) }
 					}
 					case 'pushState': {
-						const [, , pathname = currentPathname] = data.args
+						const pathname = data.args[2] ?? currentPathname
 						const newHistory = [
 							...prevContext.history.slice(0, prevContext.index + 1),
 							pathname,
@@ -107,7 +107,7 @@ export function InBrowserBrowser({
 						}
 					}
 					case 'replaceState': {
-						const [, , pathname = currentPathname] = data.args
+						const pathname = data.args[2] ?? currentPathname
 						return {
 							...prevContext,
 							history: [

@@ -18,10 +18,10 @@
     "validate": "run-p \"test -- --run\" lint typecheck"
   },
   "dependencies": {
-    "@remix-run/node": "^1.13.0",
-    "@remix-run/react": "^1.13.0",
-    "@remix-run/serve": "^1.13.0",
-    "@remix-run/server-runtime": "^1.13.0",
+    "@remix-run/node": "^1.14.3",
+    "@remix-run/react": "^1.14.3",
+    "@remix-run/serve": "^1.14.3",
+    "@remix-run/server-runtime": "^1.14.3",
     "isbot": "^3.6.3",
     "match-sorter": "^6.3.1",
     "mdast-util-from-markdown": "^1.2.0",
@@ -32,8 +32,8 @@
   },
   "devDependencies": {
     "@playwright/test": "^1.30.0",
-    "@remix-run/dev": "^1.13.0",
-    "@remix-run/eslint-config": "^1.13.0",
+    "@remix-run/dev": "^1.14.3",
+    "@remix-run/eslint-config": "^1.14.3",
     "@types/eslint": "^8.4.10",
     "@types/node": "^18.11.9",
     "@types/react": "^18.0.25",

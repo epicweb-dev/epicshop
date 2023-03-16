@@ -95,7 +95,7 @@ export function setupInBrowserTests() {
 					throw errors
 				}),
 			])
-			expect(result).toMatch('status: pass')
+			expect(result).toContain('status: pass')
 		})
 	}
 }
