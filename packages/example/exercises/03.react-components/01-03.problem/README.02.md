@@ -2,15 +2,15 @@
 
 Props are great
 
-<section id="files" className="not-prose">
-  <h2>Files</h2>
+<TouchedFiles>
+  <div id="files">
+    <ul>
+      <li data-state="modified">
+        <span>modified</span>
 
-  <ul>
-    <li data-state="modified">
-      <span>modified</span>
+        <InlineFile file="index.tsx" />
+      </li>
+    </ul>
 
-      <InlineFile file="index.tsx" />
-    </li>
-
-  </ul>
-</section>
+  </div>
+</TouchedFiles>

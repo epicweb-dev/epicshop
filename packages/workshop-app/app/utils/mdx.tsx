@@ -11,6 +11,7 @@ export const mdxComponents = {
 	LaunchEditor,
 	Accordion: (props: any) => <Accordion {...props} />,
 }
+
 /**
  * This should be rendered within a useMemo
  * @param code the code to get the component from

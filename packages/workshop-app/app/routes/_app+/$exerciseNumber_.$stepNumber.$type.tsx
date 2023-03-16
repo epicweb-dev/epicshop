@@ -28,7 +28,7 @@ import { Mdx } from '~/utils/mdx'
 import { getErrorMessage } from '~/utils/misc'
 import { isAppRunning, isPortAvailable } from '~/utils/process-manager.server'
 import { useSearchParams } from '@remix-run/react'
-import { useMemo, useState } from 'react'
+import { useEffect, useMemo, useRef, useState } from 'react'
 import { useParams } from 'react-router'
 import { InBrowserBrowser } from '~/components/in-browser-browser'
 import { InBrowserTestRunner } from '~/components/in-browser-test-runner'
@@ -38,8 +38,9 @@ import clsx from 'clsx'
 import Icon from '~/components/icons'
 import { LaunchEditor } from '../launch-editor'
 import { type loader as rootLoader } from '~/root'
-import TouchedFiles from '~/components/touched-files'
-import Diff from '~/components/diff'
+import { Diff } from '~/components/diff'
+import TouchedFiles, { touchedFilesButton } from '~/components/touched-files'
+import { createPortal } from 'react-dom'
 
 export const meta: V2_MetaFunction<
 	typeof loader,
@@ -232,10 +233,20 @@ function withParam(
 	return newSearchParams
 }
 
+function useHydrated() {
+	const [hydrated, setHydrated] = useState(false)
+	useEffect(() => {
+		setHydrated(true)
+	}, [])
+	return hydrated
+}
+
 export default function ExercisePartRoute() {
 	const data = useLoaderData<typeof loader>()
 
 	const [searchParams, setSearchParams] = useSearchParams()
+	const touchedFilesDivRef = useRef<HTMLDivElement>(null)
+	const hydrated = useHydrated()
 	const InlineFile = useMemo(() => {
 		return function InlineFile({
 			file,
@@ -256,6 +267,26 @@ export default function ExercisePartRoute() {
 			)
 		}
 	}, [data])
+
+	// we want to move the TouchedFiles component to the end of the instructions
+	// section, so we make a ref and portal to that. We also render a dummy-version
+	// of the button on the server so that the layout doesn't jump when the
+	// component is hydrated.
+	const RefedTouchedFiles = useMemo(() => {
+		return function RefedTouchedFiles({
+			children,
+		}: {
+			children: React.ReactElement
+		}) {
+			const hydrated = useHydrated()
+			return hydrated && touchedFilesDivRef.current
+				? createPortal(
+						<TouchedFiles>{children}</TouchedFiles>,
+						touchedFilesDivRef.current,
+				  )
+				: null
+		}
+	}, [])
 	const params = useParams()
 
 	const type = isValidType(params.type) ? params.type : null
@@ -277,14 +308,18 @@ export default function ExercisePartRoute() {
 						{data.exerciseStepApp.instructionsCode ? (
 							<Mdx
 								code={data.exerciseStepApp?.instructionsCode}
-								components={{ InlineFile }}
+								components={{ InlineFile, TouchedFiles: RefedTouchedFiles }}
 							/>
 						) : (
 							<p>No instructions yet...</p>
 						)}
 					</article>
 					<div className="flex h-16 justify-between border-t border-gray-200 bg-white">
-						<TouchedFiles />
+						<div>
+							{/* this is just here to make it so the button doesn't flash */}
+							{hydrated ? null : touchedFilesButton}
+							<div className="h-full" ref={touchedFilesDivRef} />
+						</div>
 						<div className="relative flex overflow-hidden">
 							{data.prevStepLink ? (
 								<Link

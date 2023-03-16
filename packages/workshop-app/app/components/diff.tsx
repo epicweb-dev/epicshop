@@ -117,7 +117,7 @@ const AccordionContent: React.FC<any> = React.forwardRef(
 	),
 )
 
-function Diff() {
+export function Diff() {
 	const data = useLoaderData<typeof loader>()
 	const submit = useSubmit()
 
@@ -153,8 +153,6 @@ function Diff() {
 		</div>
 	)
 }
-
-export default Diff
 
 const SelectFileToDiff: React.FC<any> = ({ name, label, className }) => {
 	const data = useLoaderData<typeof loader>()

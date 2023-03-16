@@ -29,15 +29,7 @@ export async function updateFilesSection(
 	visit(ast, 'mdxJsxFlowElement', (node, index) => {
 		if (index === null) return
 		if (filesSectionIndex !== -1) return
-		if (
-			node.name === 'section' &&
-			node.attributes.find(
-				a =>
-					a.type === 'mdxJsxAttribute' &&
-					a.name === 'id' &&
-					a.value === 'files',
-			)
-		) {
+		if (node.name === 'TouchedFiles') {
 			filesSectionIndex = index
 		}
 	})
@@ -54,14 +46,15 @@ export async function updateFilesSection(
 	}
 
 	const filesJxs = /* html */ `
-<section id="files" className="not-prose">
-	<h2>Files</h2>
-	${
-		files.length
-			? `<ul>${files.map(getLiForFile).join('\n')}</ul>`
-			: '<p>No files changed</p>'
-	}
-</section>
+<TouchedFiles>
+	<div id="files">
+		${
+			files.length
+				? `<ul>${files.map(getLiForFile).join('\n')}</ul>`
+				: '<p>No files changed</p>'
+		}
+	</div>
+</TouchedFiles>
 	`
 
 	const filesAst = fromMarkdown(filesJxs, {

@@ -30,51 +30,51 @@ export async function loader({ params }: DataFunctionArgs) {
 }
 ```
 
-<section id="files" className="not-prose">
-  <h2>Files</h2>
+<TouchedFiles>
+  <div id="files">
+    <ul>
+      <li data-state="modified">
+        <span>modified</span>
 
-  <ul>
-    <li data-state="modified">
-      <span>modified</span>
+        <InlineFile file=".gitignore" />
+      </li>
 
-      <InlineFile file=".gitignore" />
-    </li>
+      <li data-state="modified">
+        <span>modified</span>
 
-    <li data-state="modified">
-      <span>modified</span>
+        <InlineFile file="app/entry.server.tsx" />
+      </li>
 
-      <InlineFile file="app/entry.server.tsx" />
-    </li>
+      <li data-state="modified">
+        <span>modified</span>
 
-    <li data-state="modified">
-      <span>modified</span>
+        <InlineFile file="app/root.tsx" />
+      </li>
 
-      <InlineFile file="app/root.tsx" />
-    </li>
+      <li data-state="deleted">
+        <span>deleted</span>
 
-    <li data-state="deleted">
-      <span>deleted</span>
+        <InlineFile file="app/routes/$.tsx" />
+      </li>
 
-      <InlineFile file="app/routes/$.tsx" />
-    </li>
+      <li data-state="deleted">
+        <span>deleted</span>
 
-    <li data-state="deleted">
-      <span>deleted</span>
+        <InlineFile file="app/routes/deleted.tsx" />
+      </li>
 
-      <InlineFile file="app/routes/deleted.tsx" />
-    </li>
+      <li data-state="modified">
+        <span>modified</span>
 
-    <li data-state="modified">
-      <span>modified</span>
+        <InlineFile file="app/routes/index.tsx" />
+      </li>
 
-      <InlineFile file="app/routes/index.tsx" />
-    </li>
+      <li data-state="modified">
+        <span>modified</span>
 
-    <li data-state="modified">
-      <span>modified</span>
+        <InlineFile file="package.json" />
+      </li>
+    </ul>
 
-      <InlineFile file="package.json" />
-    </li>
-
-  </ul>
-</section>
+  </div>
+</TouchedFiles>

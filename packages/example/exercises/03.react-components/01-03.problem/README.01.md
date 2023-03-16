@@ -62,15 +62,15 @@ tempus urna et pharetra pharetra. Id nibh tortor id aliquet. Tellus pellentesque
 eu tincidunt tortor aliquam nulla facilisi cras fermentum. Fringilla urna
 porttitor rhoncus dolor purus non enim praesent elementum.
 
-<section id="files" className="not-prose">
-  <h2>Files</h2>
+<TouchedFiles>
+  <div id="files">
+    <ul>
+      <li data-state="modified">
+        <span>modified</span>
 
-  <ul>
-    <li data-state="modified">
-      <span>modified</span>
+        <InlineFile file="index.tsx" />
+      </li>
+    </ul>
 
-      <InlineFile file="index.tsx" />
-    </li>
-
-  </ul>
-</section>
+  </div>
+</TouchedFiles>
