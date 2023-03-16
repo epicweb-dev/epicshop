@@ -176,33 +176,31 @@ export function InBrowserBrowser({
 				<div className="mr-2 flex items-center justify-center gap-2 px-1">
 					<button
 						type="button"
-						className={clsx(
-							'flex aspect-square h-full w-full items-center justify-center p-1 transition',
-							{
-								'opacity-40': atStartOfHistory,
-								'': !atStartOfHistory,
-							},
-						)}
+						className="flex aspect-square h-full w-full items-center justify-center p-1 transition disabled:opacity-40"
 						disabled={atStartOfHistory}
 						onClick={() => navigateChild(-1)}
 					>
-						<Icon name="ArrowLeft" aria-hidden="true" />
-						<span className="sr-only">Go back</span>
+						<Icon name="ArrowLeft" aria-hidden="true" title="Go back" />
 					</button>
 					<button
 						type="button"
-						className={clsx(
-							'flex aspect-square h-full w-full items-center justify-center p-1 transition',
-							{
-								'opacity-40': atStartOfHistory,
-								'': !atStartOfHistory,
-							},
-						)}
+						className="flex aspect-square h-full w-full items-center justify-center p-1 transition disabled:opacity-40"
 						disabled={atEndOfHistory}
 						onClick={() => navigateChild(1)}
 					>
-						<Icon name="ArrowRight" aria-hidden="true" />
-						<span className="sr-only">Go forward</span>
+						<Icon name="ArrowRight" aria-hidden="true" title="Go forward" />
+					</button>
+					<button
+						type="button"
+						className="flex aspect-square h-full w-full items-center justify-center p-1 transition"
+						onClick={() =>
+							iframeRef.current?.contentWindow?.postMessage(
+								{ type: 'kcdshop:refresh' },
+								'*',
+							)
+						}
+					>
+						<Icon name="Refresh" aria-hidden="true" title="Refresh" />
 					</button>
 				</div>
 				<Form

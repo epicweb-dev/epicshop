@@ -23,6 +23,9 @@ export const meta: V2_MetaFunction<
 	typeof loader,
 	{ root: typeof rootLoader }
 > = ({ data, parentsData }) => {
+	if (!data) {
+		return [{ title: '📝 | Error' }]
+	}
 	const number = data.exercise.exerciseNumber.toString().padStart(2, '0')
 	return [
 		{

@@ -15,7 +15,7 @@ export const meta: V2_MetaFunction<
 	typeof loader,
 	{ root: typeof rootLoader }
 > = ({ parentsData }) => {
-	return [{ title: `🎉 ${parentsData.root.workshopTitle}` }]
+	return [{ title: `🎉 ${parentsData?.root.workshopTitle}` }]
 }
 
 export async function loader() {

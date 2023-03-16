@@ -1,9 +1,9 @@
-import React from 'react'
 import { Link, useLoaderData, useParams } from '@remix-run/react'
-import { AnimationControls, motion, useAnimationControls } from 'framer-motion'
 import clsx from 'clsx'
-import { loader } from '~/routes/_app+/$exerciseNumber_.$stepNumber'
-import Icon from './icons'
+import type { AnimationControls } from 'framer-motion'
+import { motion, useAnimationControls } from 'framer-motion'
+import React from 'react'
+import type { loader } from '~/routes/_app+/$exerciseNumber_.$stepNumber'
 
 const Navigation = () => {
 	const data = useLoaderData<typeof loader>()
@@ -39,6 +39,7 @@ const Navigation = () => {
 	}
 
 	return (
+		// eslint-disable-next-line jsx-a11y/role-supports-aria-props
 		<nav
 			className="flex items-center border-r border-gray-200 bg-white"
 			aria-expanded={isMenuOpened}
@@ -90,27 +91,6 @@ const Navigation = () => {
 									})}
 								</motion.ul>
 							</motion.li>
-							<div className="w-full p-8">
-								<button
-									onClick={() => {
-										// TODO: proper theme support
-										// https://github.com/kentcdodds/kentcdodds.com/blob/main/app/utils/theme-provider.tsx
-										const htmlEl =
-											window.document.getElementsByTagName('html')[0]
-
-										if (htmlEl) {
-											const theme = htmlEl.dataset.theme
-											if (theme === 'dark') {
-												htmlEl.dataset.theme = 'light'
-											} else {
-												htmlEl.dataset.theme = 'dark'
-											}
-										}
-									}}
-								>
-									<Icon name="Moon" />
-								</button>
-							</div>
 						</>
 					)}
 					{!isMenuOpened && (

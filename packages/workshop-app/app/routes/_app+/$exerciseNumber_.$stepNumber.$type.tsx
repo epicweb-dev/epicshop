@@ -45,6 +45,9 @@ export const meta: V2_MetaFunction<
 	typeof loader,
 	{ root: typeof rootLoader }
 > = ({ data, parentsData }) => {
+	if (!data) {
+		return [{ title: 'Error' }]
+	}
 	const exerciseNumber = data.exerciseStepApp.exerciseNumber
 		.toString()
 		.padStart(2, '0')
@@ -110,6 +113,9 @@ export async function loader({ request, params }: DataFunctionArgs) {
 	const allApps = (await getApps())
 		.filter((a, i, ar) => ar.findIndex(b => a.name === b.name) === i)
 		.map(a => ({
+			displayName: isExerciseStepApp(a)
+				? `${a.exerciseNumber}.${a.stepNumber} ${a.title} (${a.type})`
+				: `${a.title} (${a.type})`,
 			name: a.name,
 			title: a.title,
 			type: a.type,
@@ -191,7 +197,6 @@ export async function loader({ request, params }: DataFunctionArgs) {
 			  }
 			: null,
 		diff: {
-			// TODO: decide if we need this...
 			allApps,
 			app1: app1.name,
 			app2: app2.name,

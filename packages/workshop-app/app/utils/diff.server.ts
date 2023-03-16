@@ -7,7 +7,7 @@ import { BUNDLED_LANGUAGES } from 'shiki'
 import { diffCodeCache } from './cache.server'
 import { compileMarkdownString } from './compile-mdx.server'
 import { typedBoolean } from './misc'
-import { getWorkshopRoot, getDirMtimeMs, type App } from './apps.server'
+import { getWorkshopRoot, modifiedTimes, type App } from './apps.server'
 
 const kcdshopTempDir = path.join(os.tmpdir(), 'kcdshop')
 
@@ -139,7 +139,7 @@ async function copyUnignoredFiles(
 }
 
 async function prepareForDiff(app1: App, app2: App) {
-	const workshopRoot = await getWorkshopRoot()
+	const workshopRoot = getWorkshopRoot()
 	const app1CopyPath = path.join(
 		diffTmpDir,
 		path.basename(workshopRoot),
@@ -225,12 +225,20 @@ export async function getDiffCode(
 	app2: App,
 	{ forceFresh = false } = {},
 ) {
+	const key = `${app1.dirName}-${app2.dirName}`
+	const cacheEntry = await diffCodeCache.get(key)
+	const app1Modified = modifiedTimes.get(app1.fullPath) ?? 0
+	const app2Modified = modifiedTimes.get(app2.fullPath) ?? 0
+	const cacheModified = cacheEntry?.metadata.createdTime
+	const cacheOutdated =
+		!cacheModified ||
+		app1Modified > cacheModified ||
+		app2Modified > cacheModified
+
 	return cachified({
+		key,
 		cache: diffCodeCache,
-		forceFresh,
-		key: `${app1.dirName}-${await getDirMtimeMs(app1.fullPath)}-${
-			app2.dirName
-		}-${await getDirMtimeMs(app2.fullPath)}`,
+		forceFresh: forceFresh || cacheOutdated,
 		getFreshValue: () => getDiffCodeImpl(app1, app2),
 	})
 }
@@ -240,7 +248,9 @@ async function getDiffCodeImpl(app1: App, app2: App) {
 	let markdownLines = ['']
 
 	if (app1.name === app2.name) {
-		markdownLines.push('You are comparing the same app')
+		markdownLines.push(
+			'<p className="p-4 text-center">You are comparing the same app</p>',
+		)
 		const code = await compileMarkdownString(markdownLines.join('\n'))
 		return code
 	}

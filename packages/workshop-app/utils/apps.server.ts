@@ -1,4 +1,4 @@
-import { cachified } from 'cachified'
+import { cachified, type CacheEntry } from 'cachified'
 import fs from 'fs'
 import glob from 'glob'
 import path from 'path'
@@ -11,6 +11,8 @@ import {
 	solutionAppCache,
 } from './cache.server'
 import { compileMdx } from './compile-mdx.server'
+import { watcher } from './change-tracker'
+import { requireCachePurgeEmitter } from './purge-require-cache.server'
 
 const globPromise = util.promisify(glob)
 
@@ -128,13 +130,41 @@ async function exists(dir: string) {
 	return Boolean(await fs.promises.stat(dir).catch(() => false))
 }
 
-export async function getDirMtimeMs(dir: string) {
-	const { globby } = await import('globby')
-	const files = await globby('**/*', { cwd: dir, gitignore: true })
-	const stats = await Promise.all(
-		files.map(f => fs.promises.stat(path.join(dir, f))),
-	)
-	return Math.max(...stats.map(s => s.mtimeMs))
+declare global {
+	var __modified_times__: Map<string, number>
+}
+
+export const modifiedTimes = (global.__modified_times__ =
+	global.__modified_times__ ?? new Map<string, number>())
+
+async function handleFileChanges(
+	event: string,
+	filePath: string,
+): Promise<void> {
+	const apps = await getApps()
+	for (const app of apps) {
+		if (filePath.startsWith(app.fullPath)) {
+			modifiedTimes.set(app.fullPath, Date.now())
+			break
+		}
+	}
+}
+watcher.on('all', handleFileChanges)
+requireCachePurgeEmitter.on('purge', () =>
+	watcher.off('all', handleFileChanges),
+)
+
+async function getForceFreshForDir(
+	dir: string,
+	cacheEntry: CacheEntry | null | undefined,
+) {
+	if (!path.isAbsolute(dir)) {
+		throw new Error(`Trying to get force fresh for non-absolute path: ${dir}`)
+	}
+	if (!cacheEntry) return true
+	const modifiedTime = modifiedTimes.get(dir)
+	if (!modifiedTime) return false
+	return modifiedTime > cacheEntry.metadata.createdTime
 }
 
 async function readDir(dir: string) {
@@ -207,7 +237,7 @@ function extractExerciseNumber(dir: string) {
 }
 
 export async function getExercises(): Promise<Array<Exercise>> {
-	const workshopRoot = await getWorkshopRoot()
+	const workshopRoot = getWorkshopRoot()
 	const apps = await getApps()
 	const exerciseDirs = await readDir(path.join(workshopRoot, 'exercises'))
 	const exercises: Array<Exercise | null> = await Promise.all(
@@ -238,7 +268,7 @@ export async function getApps(): Promise<Array<App>> {
 	const apps = await cachified({
 		key: 'apps',
 		cache: getAppCache,
-		// This entire caceh is to avoid a single request getting a fresh value
+		// This entire cache is to avoid a single request getting a fresh value
 		// multiple times unnecessarily (because getApps is called many times)
 		ttl: 300,
 		getFreshValue: async () => {
@@ -313,7 +343,7 @@ async function getPkgProp<Value>(
 }
 
 async function getAppName(fullPath: string) {
-	const workshopRoot = await getWorkshopRoot()
+	const workshopRoot = getWorkshopRoot()
 	const relativePath = fullPath.replace(`${workshopRoot}${path.sep}`, '')
 	return relativePath.split(path.sep).join('.')
 }
@@ -427,16 +457,21 @@ async function getExampleAppFromPath(
 }
 
 export async function getExampleApps(): Promise<Array<ExampleApp>> {
-	const workshopRoot = await getWorkshopRoot()
+	const workshopRoot = getWorkshopRoot()
 	const exampleDirs = (
 		await globPromise('examples/*', { cwd: workshopRoot })
 	).map(p => path.join(workshopRoot, p))
 	const exampleApps = await Promise.all(
 		exampleDirs.map(async (exampleDir, index) => {
+			const key = `${exampleDir}-${index}`
 			return cachified({
-				key: `${exampleDir}-${index}-${await getDirMtimeMs(exampleDir)}`,
+				key,
 				cache: exampleAppCache,
 				ttl: 1000 * 60 * 60 * 24,
+				forceFresh: await getForceFreshForDir(
+					exampleDir,
+					await exampleAppCache.get(key),
+				),
 				getFreshValue: () => getExampleAppFromPath(exampleDir, index),
 			})
 		}),
@@ -484,7 +519,7 @@ async function getSolutionAppFromPath(
 }
 
 export async function getSolutionApps(): Promise<Array<SolutionApp>> {
-	const workshopRoot = await getWorkshopRoot()
+	const workshopRoot = getWorkshopRoot()
 	const solutionDirs = (
 		await globPromise('exercises/**/*solution*', {
 			cwd: workshopRoot,
@@ -493,9 +528,13 @@ export async function getSolutionApps(): Promise<Array<SolutionApp>> {
 	const solutionApps = await Promise.all(
 		solutionDirs.map(async solutionDir => {
 			return cachified({
-				key: `${solutionDir}-${await getDirMtimeMs(solutionDir)}`,
+				key: solutionDir,
 				cache: solutionAppCache,
 				ttl: 1000 * 60 * 60 * 24,
+				forceFresh: await getForceFreshForDir(
+					solutionDir,
+					await solutionAppCache.get(solutionDir),
+				),
 				getFreshValue: () => getSolutionAppFromPath(solutionDir),
 			})
 		}),
@@ -550,7 +589,7 @@ async function getProblemAppFromPath(
 }
 
 export async function getProblemApps(): Promise<Array<ProblemApp>> {
-	const workshopRoot = await getWorkshopRoot()
+	const workshopRoot = getWorkshopRoot()
 	const problemDirs = (
 		await globPromise('exercises/**/*problem*', {
 			cwd: workshopRoot,
@@ -559,9 +598,13 @@ export async function getProblemApps(): Promise<Array<ProblemApp>> {
 	const problemApps = await Promise.all(
 		problemDirs.map(async problemDir => {
 			return cachified({
-				key: `${problemDir}-${await getDirMtimeMs(problemDir)}`,
+				key: problemDir,
 				cache: problemAppCache,
 				ttl: 1000 * 60 * 60 * 24,
+				forceFresh: await getForceFreshForDir(
+					problemDir,
+					await problemAppCache.get(problemDir),
+				),
 				getFreshValue: () => getProblemAppFromPath(problemDir),
 			})
 		}),
@@ -662,7 +705,7 @@ export function getAppPageRoute(app: ExerciseStepApp) {
 }
 
 export async function getWorkshopTitle() {
-	const root = await getWorkshopRoot()
+	const root = getWorkshopRoot()
 	const title = await getPkgProp<string>(root, 'kcd-workshop.title')
 	if (!title) {
 		throw new Error(
@@ -672,23 +715,8 @@ export async function getWorkshopTitle() {
 	return title
 }
 
-export async function getWorkshopRoot() {
-	const context = process.env.KCDSHOP_CONTEXT_CWD ?? process.cwd()
-	const { root: rootDir } = path.parse(context)
-	let repoRoot = context
-	while (repoRoot !== rootDir) {
-		const pkgPath = path.join(repoRoot, 'package.json')
-		if (await exists(pkgPath)) {
-			const pkg = require(pkgPath)
-			if (pkg['kcd-workshop']?.root) {
-				return repoRoot
-			}
-		}
-		repoRoot = path.dirname(repoRoot)
-	}
-	throw new Error(
-		`Workshop Root not found. Make sure the root of the workshop has "kcd-workshop" and "root: true" in the package.json.`,
-	)
+export function getWorkshopRoot() {
+	return process.env.KCDSHOP_CONTEXT_CWD ?? process.cwd()
 }
 
 export function typedBoolean<T>(

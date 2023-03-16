@@ -5,15 +5,16 @@ import compression from 'compression'
 import morgan from 'morgan'
 import address from 'address'
 import closeWithGrace from 'close-with-grace'
-import chokidar from 'chokidar'
 import ws from 'ws'
 import { createRequestHandler } from '@remix-run/express'
 import { getWorkshopRoot } from '../utils/apps.server'
+import { watcher } from '../utils/change-tracker'
+import { purgeRequireCache } from '../utils/purge-require-cache.server'
 
 async function start() {
 	const { default: getPort, portNumbers } = await import('get-port')
 	const BUILD_DIR_FILE = path.join(process.cwd(), 'build/remix.js')
-	const workshopRoot = await getWorkshopRoot()
+	const workshopRoot = getWorkshopRoot()
 
 	const app = express()
 
@@ -86,28 +87,18 @@ ${chalk.bold('Press Ctrl+C to stop')}
 
 	const wss = new ws.Server({ server, path: '/__ws' })
 
-	const watcher = chokidar
-		.watch(workshopRoot, {
-			ignoreInitial: true,
-			ignored: [
-				'**/node_modules/**',
-				'**/build/**',
-				'**/public/build/**',
-				'**/playwright-report/**',
-			],
-		})
-		.on('all', (event, filePath, stats) => {
-			for (const client of wss.clients) {
-				if (client.readyState === ws.OPEN) {
-					client.send(
-						JSON.stringify({
-							type: 'kcdshop:file-change',
-							data: { event, filePath, stats },
-						}),
-					)
-				}
+	watcher.on('all', (event, filePath, stats) => {
+		for (const client of wss.clients) {
+			if (client.readyState === ws.OPEN) {
+				client.send(
+					JSON.stringify({
+						type: 'kcdshop:file-change',
+						data: { event, filePath, stats },
+					}),
+				)
 			}
-		})
+		}
+	})
 
 	app.all(
 		'*',
@@ -134,22 +125,8 @@ ${chalk.bold('Press Ctrl+C to stop')}
 			new Promise((resolve, reject) => {
 				wss.close(e => (e ? reject(e) : resolve('ok')))
 			}),
-			watcher.close(),
 		])
 	})
-
-	function purgeRequireCache() {
-		// purge require cache on requests for "server side HMR" this won't let
-		// you have in-memory objects between requests in development,
-		// alternatively you can set up nodemon/pm2-dev to restart the server on
-		// file changes, but then you'll have to reconnect to databases/etc on each
-		// change. We prefer the DX of this, so we've included it for you by default
-		for (const key in require.cache) {
-			if (key.startsWith(BUILD_DIR_FILE)) {
-				delete require.cache[key]
-			}
-		}
-	}
 }
 
 start()

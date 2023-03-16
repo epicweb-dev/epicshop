@@ -42,7 +42,7 @@ export async function updateFilesSection(
 		}
 	})
 
-	const workshopRoot = await getWorkshopRoot()
+	const workshopRoot = getWorkshopRoot()
 
 	function getLiForFile(file: (typeof files)[0]) {
 		return /* html */ `

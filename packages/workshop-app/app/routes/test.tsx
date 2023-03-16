@@ -263,7 +263,9 @@ export function TestOutput({ id }: { id: string }) {
 
 				{!isRunning && exitCode !== undefined && (
 					<p className="pr-3.5 leading-none">
-						Test exited with code {String(exitCode)}
+						{exitCode === 0
+							? `Tests passed`
+							: `Test failed (exit code ${String(exitCode)})`}
 					</p>
 				)}
 				{!isRunning && exitCode !== undefined && (
@@ -318,11 +320,12 @@ export function TestRunner({ id, onRun }: { id: string; onRun?: () => void }) {
 				name="intent"
 				value="run"
 				className="flex h-full flex-grow items-center justify-center border-r border-gray-200 px-3.5"
+				title="Run Tests"
 			>
 				{fetcher.submission ? (
-					<Icon name="AnimatedBars" aria-label="Running Tests" role="status" />
+					<Icon name="AnimatedBars" title="Running Tests" role="status" />
 				) : (
-					<Icon name="TriangleSmall" aria-label="Test Tests" />
+					<Icon name="TriangleSmall" title="Run Tests" />
 				)}
 			</button>
 		</fetcher.Form>
@@ -354,16 +357,17 @@ export function ClearTest({
 				name="intent"
 				value="clear"
 				className="flex h-full flex-grow items-center justify-center border-l border-gray-200 px-3.5"
+				title="Clear Tests"
 			>
 				{fetcher.submission ? (
 					<Icon
 						name="Clear"
 						className="animate-pulse"
 						role="status"
-						aria-label="Clearing Tests"
+						title="Clearing Tests"
 					/>
 				) : (
-					<Icon name="Clear" aria-label="Clear Test" />
+					<Icon name="Clear" title="Clear Tests" />
 				)}
 			</button>
 		</fetcher.Form>
@@ -395,10 +399,10 @@ export function StopTest({ id, onStop }: { id: string; onStop?: () => void }) {
 						name="Stop"
 						className="animate-pulse"
 						role="status"
-						aria-label="Stopping Tests"
+						title="Stopping Tests"
 					/>
 				) : (
-					<Icon name="Stop" aria-label="Stop Tests" />
+					<Icon name="Stop" title="Stop Tests" />
 				)}
 			</button>
 		</fetcher.Form>

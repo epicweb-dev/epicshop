@@ -4,6 +4,7 @@ import type {
 	V2_MetaFunction,
 } from '@remix-run/node'
 import { json } from '@remix-run/node'
+import { useSpinDelay } from 'spin-delay'
 import {
 	Links,
 	LiveReload,
@@ -11,10 +12,12 @@ import {
 	Outlet,
 	Scripts,
 	ScrollRestoration,
+	useNavigation,
 } from '@remix-run/react'
 import appStylesheetUrl from './styles/app.css'
 import tailwindStylesheetUrl from './styles/tailwind.css'
 import { getWorkshopTitle } from './utils/apps.server'
+import clsx from 'clsx'
 
 export const links: LinksFunction = () => {
 	return [
@@ -35,7 +38,7 @@ export const meta: V2_MetaFunction = ({
 }) => {
 	return [
 		{ charSet: 'utf-8' },
-		{ title: data.workshopTitle },
+		{ title: data?.workshopTitle },
 		{ name: 'viewport', content: 'width=device-width,initial-scale=1' },
 	]
 }
@@ -47,8 +50,17 @@ export async function loader() {
 }
 
 export default function App() {
+	const navigation = useNavigation()
+	const showSpinner = useSpinDelay(navigation.state !== 'idle', {
+		delay: 400,
+		minDuration: 200,
+	})
 	return (
-		<html lang="en" className="h-full" data-theme="light">
+		<html
+			lang="en"
+			className={clsx('h-full', { 'cursor-progress': showSpinner })}
+			data-theme="light"
+		>
 			<head>
 				<Meta />
 				<Links />
@@ -58,7 +70,62 @@ export default function App() {
 				<ScrollRestoration />
 				<Scripts />
 				<LiveReload />
+				<script dangerouslySetInnerHTML={{ __html: getWebsocketJS() }} />
 			</body>
 		</html>
 	)
+}
+
+function getWebsocketJS() {
+	const js = /* javascript */ `
+	function kcdLiveReloadConnect(config) {
+		const protocol = location.protocol === "https:" ? "wss:" : "ws:";
+		const host = location.hostname;
+		const port = location.port;
+		const socketPath = protocol + "//" + host + ":" + port + "/__ws";
+		const ws = new WebSocket(socketPath);
+		ws.onmessage = (message) => {
+			const event = JSON.parse(message.data);
+			if (event.type !== 'kcdshop:file-change') return;
+			const { filePath } = event.data;
+			if (filePath.includes('README')) {
+				console.log(
+					[
+						'🐨 Reloading',
+						window.frameElement?.getAttribute('title'),
+						' window ...',
+					]
+						.filter(Boolean)
+						.join(' '),
+				);
+				setTimeout(() => {
+					window.location.reload();
+				}, 200)
+			}
+		};
+		ws.onopen = () => {
+			if (config && typeof config.onOpen === "function") {
+				config.onOpen();
+			}
+		};
+		ws.onclose = (event) => {
+			if (event.code === 1006) {
+				console.log("KCD dev server web socket closed. Reconnecting...");
+				setTimeout(
+					() =>
+						kcdLiveReloadConnect({
+							onOpen: () => window.location.reload(),
+						}),
+				1000
+				);
+			}
+		};
+		ws.onerror = (error) => {
+			console.log("KCD dev server web socket error:");
+			console.error(error);
+		};
+	}
+	kcdLiveReloadConnect();
+	`
+	return js
 }

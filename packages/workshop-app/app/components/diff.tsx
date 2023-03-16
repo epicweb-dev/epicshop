@@ -4,7 +4,7 @@ import clsx from 'clsx'
 import * as Select from '@radix-ui/react-select'
 import { get } from 'lodash'
 import { Mdx } from '~/utils/mdx'
-import { loader } from '~/routes/_app+/$exerciseNumber_.$stepNumber.$type'
+import { type loader } from '~/routes/_app+/$exerciseNumber_.$stepNumber.$type'
 import Icon from './icons'
 import * as Accordion from '@radix-ui/react-accordion'
 
@@ -117,7 +117,7 @@ const AccordionContent: React.FC<any> = React.forwardRef(
 	),
 )
 
-const Diff = () => {
+function Diff() {
 	const data = useLoaderData<typeof loader>()
 	const submit = useSubmit()
 
@@ -192,10 +192,10 @@ const SelectFileToDiff: React.FC<any> = ({ name, label, className }) => {
 							<Select.Label className="px-5 pb-3 font-mono uppercase">
 								{label}
 							</Select.Label>
-							{data.diff.allApps.map((app: any) => {
+							{data.diff.allApps.map(app => {
 								return (
 									<SelectItem key={app.name} value={app.name}>
-										{app.title} ({app.type})
+										{app.displayName}
 									</SelectItem>
 								)
 							})}
