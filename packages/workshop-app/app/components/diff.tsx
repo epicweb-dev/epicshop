@@ -199,7 +199,6 @@ function SelectFileToDiff({
 					'radix-placeholder:text-gray-500 flex h-full w-full items-center justify-between px-3 text-left focus-visible:outline-none',
 					className,
 				)}
-				aria-label="Food"
 			>
 				<span className="w-80 overflow-hidden text-ellipsis whitespace-nowrap">
 					{label}:{' '}
@@ -216,7 +215,7 @@ function SelectFileToDiff({
 				<Select.Content
 					position="popper"
 					align="start"
-					className="z-20 overflow-hidden bg-black text-white"
+					className="z-20 max-h-96 overflow-scroll bg-black text-white"
 				>
 					<Select.ScrollUpButton className="flex h-5 cursor-default items-center justify-center ">
 						<Icon name="ChevronUp" />
@@ -235,6 +234,9 @@ function SelectFileToDiff({
 							})}
 						</Select.Group>
 					</Select.Viewport>
+					<Select.ScrollDownButton className="flex h-5 cursor-default items-center justify-center ">
+						<Icon name="ChevronDown" />
+					</Select.ScrollDownButton>
 				</Select.Content>
 			</Select.Portal>
 		</Select.Root>
