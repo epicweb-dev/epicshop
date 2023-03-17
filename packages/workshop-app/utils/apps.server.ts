@@ -442,7 +442,7 @@ async function getExampleAppFromPath(
 	const dirName = path.basename(fullPath)
 	const compiledReadme = await compileReadme(fullPath)
 	const name = await getAppName(fullPath)
-	const portNumber = 6000 + index
+	const portNumber = 8000 + index
 	return {
 		id: name,
 		name,
@@ -495,7 +495,7 @@ async function getSolutionAppFromPath(
 			`invalid solution dir name: ${dirName} (could not find first step number)`,
 		)
 	}
-	const portNumber = 5000 + (exerciseNumber - 1) * 10 + firstStepNumber
+	const portNumber = 7000 + (exerciseNumber - 1) * 10 + firstStepNumber
 	const compiledReadme = await compileReadme(fullPath)
 	return Promise.all(
 		appInfo.stepNumbers.map(async stepNumber => {
@@ -558,7 +558,7 @@ async function getProblemAppFromPath(
 			`invalid problem dir name: ${dirName} (could not find first step number)`,
 		)
 	}
-	const portNumber = 4000 + (exerciseNumber - 1) * 10 + firstStepNumber
+	const portNumber = 6000 + (exerciseNumber - 1) * 10 + firstStepNumber
 	return Promise.all(
 		appInfo.stepNumbers.map(async stepNumber => {
 			const compiledReadme = await compileReadme(fullPath, stepNumber)

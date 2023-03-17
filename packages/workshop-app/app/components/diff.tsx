@@ -1,5 +1,5 @@
-import React from 'react'
-import { Form, useLoaderData, useSubmit } from '@remix-run/react'
+import React, { Suspense } from 'react'
+import { Await, Form, useLoaderData, useSubmit } from '@remix-run/react'
 import clsx from 'clsx'
 import * as Select from '@radix-ui/react-select'
 import { get } from 'lodash'
@@ -138,17 +138,36 @@ export function Diff() {
 				</Form>
 			</div>
 			<div className="max-h-[calc(100vh-109px)] overflow-y-auto">
-				{data.diff.diffCode ? (
-					<div>
-						<Accordion.Root className="w-full" type="multiple">
-							<Mdx code={data.diff.diffCode} />
-						</Accordion.Root>
-					</div>
-				) : (
-					<p className="m-5 inline-flex items-center justify-center bg-black px-1 py-0.5 font-mono text-sm uppercase text-white">
-						There was a problem generating the diff
-					</p>
-				)}
+				<Suspense
+					fallback={
+						<div>
+							<Icon name="Refresh" className="animate-spin" />
+						</div>
+					}
+				>
+					<Await
+						resolve={data.diff}
+						errorElement={
+							<p className="p-6 text-rose-700">
+								There was an error calculating the diff. Sorry.
+							</p>
+						}
+					>
+						{diff =>
+							diff.diffCode ? (
+								<div>
+									<Accordion.Root className="w-full" type="multiple">
+										<Mdx code={diff.diffCode} />
+									</Accordion.Root>
+								</div>
+							) : (
+								<p className="m-5 inline-flex items-center justify-center bg-black px-1 py-0.5 font-mono text-sm uppercase text-white">
+									There was a problem generating the diff
+								</p>
+							)
+						}
+					</Await>
+				</Suspense>
 			</div>
 		</div>
 	)
@@ -190,13 +209,26 @@ const SelectFileToDiff: React.FC<any> = ({ name, label, className }) => {
 							<Select.Label className="px-5 pb-3 font-mono uppercase">
 								{label}
 							</Select.Label>
-							{data.diff.allApps.map(app => {
-								return (
-									<SelectItem key={app.name} value={app.name}>
-										{app.displayName}
-									</SelectItem>
-								)
-							})}
+							<Suspense fallback={<Icon name="AnimatedBars" title="Pending" />}>
+								<Await
+									resolve={data.diff}
+									errorElement={
+										<p className="text-rose-700">
+											There was an error loading the diff apps.
+										</p>
+									}
+								>
+									{diff =>
+										diff.allApps.map(app => {
+											return (
+												<SelectItem key={app.name} value={app.name}>
+													{app.displayName}
+												</SelectItem>
+											)
+										})
+									}
+								</Await>
+							</Suspense>
 						</Select.Group>
 					</Select.Viewport>
 				</Select.Content>

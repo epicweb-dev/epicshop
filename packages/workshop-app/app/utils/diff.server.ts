@@ -125,12 +125,12 @@ async function copyUnignoredFiles(
 	await fsExtra.copy(srcDir, destDir, {
 		filter: async file => {
 			if (file === srcDir) return true
-			return (
+			const shouldCopy =
 				!isIgnored(file) &&
 				![...ignore, ...EXTRA_FILES_TO_IGNORE].some(f =>
 					typeof f === 'string' ? file.includes(f) : f.test(file),
 				)
-			)
+			return shouldCopy
 		},
 	})
 }
@@ -165,6 +165,7 @@ async function prepareForDiff(app1: App, app2: App) {
 	const ignore = comparePkgJson(app1PkgJson, app2PkgJson)
 		? ['package.json']
 		: []
+
 	await Promise.all([
 		fsExtra
 			.emptyDir(app1CopyPath)
@@ -173,6 +174,7 @@ async function prepareForDiff(app1: App, app2: App) {
 			.emptyDir(app2CopyPath)
 			.then(() => copyUnignoredFiles(app2.fullPath, app2CopyPath, ignore)),
 	])
+
 	return { app1CopyPath, app2CopyPath }
 }
 
@@ -232,12 +234,13 @@ export async function getDiffCode(
 		app1Modified > cacheModified ||
 		app2Modified > cacheModified
 
-	return cachified({
+	const result = await cachified({
 		key,
 		cache: diffCodeCache,
 		forceFresh: forceFresh || cacheOutdated,
 		getFreshValue: () => getDiffCodeImpl(app1, app2),
 	})
+	return result
 }
 
 async function getDiffCodeImpl(app1: App, app2: App) {
@@ -276,6 +279,7 @@ async function getDiffCodeImpl(app1: App, app2: App) {
 			'<div class="m-5 inline-flex items-center justify-center bg-black px-1 py-0.5 font-mono text-sm uppercase text-white">No changes</div>',
 		)
 	}
+
 	for (const file of parsed.files) {
 		const pathToCopy = file.type === 'RenamedFile' ? file.pathBefore : file.path
 		const relativePath = diffPathToRelative(pathToCopy)
@@ -284,7 +288,7 @@ async function getDiffCodeImpl(app1: App, app2: App) {
 			case 'ChangedFile': {
 				markdownLines.push(`
 
-<Accordion title={\`${relativePath}\`} variant="changed">
+<Accordion title=${JSON.stringify(relativePath)} variant="changed">
 
 ${getFileCodeblocks(file, launchEditorPath).join('\n')}
 
@@ -295,7 +299,7 @@ ${getFileCodeblocks(file, launchEditorPath).join('\n')}
 			}
 			case 'DeletedFile': {
 				markdownLines.push(`
-<Accordion title={\`${relativePath}\`} variant="deleted">
+<Accordion title=${JSON.stringify(relativePath)} variant="deleted">
 
 ${getFileCodeblocks(file, launchEditorPath).join('\n')}
 
@@ -304,10 +308,11 @@ ${getFileCodeblocks(file, launchEditorPath).join('\n')}
 				break
 			}
 			case 'RenamedFile': {
+				const relativeBefore = diffPathToRelative(file.pathBefore)
+				const relativeAfter = diffPathToRelative(file.pathAfter)
+				const title = JSON.stringify(`${relativeBefore} ▶️ ${relativeAfter}`)
 				markdownLines.push(`
-<Accordion title={\`${diffPathToRelative(
-					file.pathBefore,
-				)} ▶️ ${diffPathToRelative(file.pathAfter)}\`} variant="renamed">
+<Accordion title=${title} variant="renamed">
 
 ${getFileCodeblocks(file, launchEditorPath).join('\n')}
 
@@ -318,7 +323,7 @@ ${getFileCodeblocks(file, launchEditorPath).join('\n')}
 			}
 			case 'AddedFile': {
 				markdownLines.push(`
-<Accordion title={\`${relativePath}\`} variant="added">
+<Accordion title=${JSON.stringify(relativePath)} variant="added">
 
 ${getFileCodeblocks(file, launchEditorPath).join('\n')}
 

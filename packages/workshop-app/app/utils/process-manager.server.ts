@@ -98,6 +98,7 @@ export async function runAppDev(app: App) {
 		availableColors[devProcesses.size % availableColors.length] ?? 'blue'
 	const appProcess = spawn('npm', ['run', 'dev'], {
 		cwd: app.fullPath,
+		shell: true,
 		env: {
 			...process.env,
 			// TODO: support specifying the env
@@ -155,6 +156,7 @@ export function runAppTests(app: App) {
 
 	const testProcess = spawn('npm', ['run', app.test.scriptName, '--silent'], {
 		cwd: app.fullPath,
+		shell: true,
 		env: {
 			...process.env,
 			// TODO: support specifying the env

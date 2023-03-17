@@ -7,11 +7,17 @@ import address from 'address'
 import closeWithGrace from 'close-with-grace'
 import ws from 'ws'
 import { createRequestHandler } from '@remix-run/express'
-import { getWorkshopRoot } from '../utils/apps.server'
+import { getApps, getWorkshopRoot } from '../utils/apps.server'
 import { watcher } from '../utils/change-tracker'
 import { purgeRequireCache } from '../utils/purge-require-cache.server'
 
 async function start() {
+	// get some caches warmed up
+	import('globby')
+	import('execa')
+	import('get-port')
+	getApps()
+
 	const { default: getPort, portNumbers } = await import('get-port')
 	const BUILD_DIR_FILE = path.join(process.cwd(), 'build/remix.js')
 	const workshopRoot = getWorkshopRoot()

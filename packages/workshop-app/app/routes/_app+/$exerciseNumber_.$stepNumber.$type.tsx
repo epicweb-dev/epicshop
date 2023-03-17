@@ -3,7 +3,7 @@ import type {
 	SerializeFrom,
 	V2_MetaFunction,
 } from '@remix-run/node'
-import { json, redirect } from '@remix-run/node'
+import { defer, redirect } from '@remix-run/node'
 import {
 	isRouteErrorResponse,
 	Link,
@@ -29,7 +29,7 @@ import { getErrorMessage } from '~/utils/misc'
 import { isAppRunning, isPortAvailable } from '~/utils/process-manager.server'
 import { useSearchParams } from '@remix-run/react'
 import { useEffect, useMemo, useRef, useState } from 'react'
-import { useParams } from 'react-router'
+import { ShouldRevalidateFunction, useParams } from 'react-router'
 import { InBrowserBrowser } from '~/components/in-browser-browser'
 import { InBrowserTestRunner } from '~/components/in-browser-test-runner'
 import { TestOutput } from '../test'
@@ -133,7 +133,21 @@ export async function loader({ request, params }: DataFunctionArgs) {
 	const nextApp = await getNextExerciseApp(exerciseStepApp)
 	const prevApp = await getPrevExerciseApp(exerciseStepApp)
 
-	return json({
+	const getDiffProp = async () => {
+		return {
+			allApps,
+			app1: app1.name,
+			app2: app2.name,
+			diffCode: await getDiffCode(app1, app2, {
+				forceFresh: reqUrl.searchParams.has('forceFresh'),
+			}).catch(e => {
+				console.error(e)
+				return null
+			}),
+		}
+	}
+
+	return defer({
 		type: params.type as 'problem' | 'solution',
 		exerciseStepApp,
 		exerciseTitle: exercise.title,
@@ -197,17 +211,7 @@ export async function loader({ request, params }: DataFunctionArgs) {
 					name: solutionApp.name,
 			  }
 			: null,
-		diff: {
-			allApps,
-			app1: app1.name,
-			app2: app2.name,
-			diffCode: await getDiffCode(app1, app2, {
-				forceFresh: reqUrl.searchParams.has('forceFresh'),
-			}).catch(e => {
-				console.error(e)
-				return null
-			}),
-		},
+		diff: getDiffProp(),
 	} as const)
 }
 

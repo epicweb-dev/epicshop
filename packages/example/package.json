@@ -37,7 +37,7 @@
   ],
   "workspaces": [
     "exercises/*/*",
-    "example/*"
+    "examples/*"
   ],
   "engines": {
     "node": "14 || 16 || 18 || 19",

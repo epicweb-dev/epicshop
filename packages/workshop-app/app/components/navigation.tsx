@@ -5,7 +5,7 @@ import { motion, useAnimationControls } from 'framer-motion'
 import React from 'react'
 import type { loader } from '~/routes/_app+/$exerciseNumber_.$stepNumber'
 
-const Navigation = () => {
+function Navigation() {
 	const data = useLoaderData<typeof loader>()
 	const params = useParams()
 
