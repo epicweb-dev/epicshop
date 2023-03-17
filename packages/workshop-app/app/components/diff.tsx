@@ -215,7 +215,7 @@ function SelectFileToDiff({
 				<Select.Content
 					position="popper"
 					align="start"
-					className="z-20 max-h-96 overflow-scroll bg-black text-white"
+					className="z-20 max-h-[70vh] overflow-scroll bg-black text-white"
 				>
 					<Select.ScrollUpButton className="flex h-5 cursor-default items-center justify-center ">
 						<Icon name="ChevronUp" />
