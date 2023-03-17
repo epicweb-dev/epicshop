@@ -77,6 +77,11 @@ export async function loader({ request, params }: DataFunctionArgs) {
 		reqUrl.searchParams.delete('preview')
 		throw redirect(reqUrl.toString())
 	}
+	const pathnameParam = reqUrl.searchParams.get('pathname')
+	if (pathnameParam === '' || pathnameParam === '/') {
+		reqUrl.searchParams.delete('pathname')
+		throw redirect(reqUrl.toString())
+	}
 
 	const problemApp = await getExerciseApp({ ...params, type: 'problem' }).then(
 		a => (isProblemApp(a) ? a : null),
@@ -115,7 +120,9 @@ export async function loader({ request, params }: DataFunctionArgs) {
 		.filter((a, i, ar) => ar.findIndex(b => a.name === b.name) === i)
 		.map(a => ({
 			displayName: isExerciseStepApp(a)
-				? `${a.exerciseNumber}.${a.stepNumber} ${a.title} (${a.type})`
+				? `${a.exerciseNumber}.${a.stepNumber} ${a.title} (${
+						{ problem: '💪', solution: '🏁' }[a.type]
+				  } ${a.type})`
 				: `${a.title} (${a.type})`,
 			name: a.name,
 			title: a.title,

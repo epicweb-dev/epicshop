@@ -58,7 +58,7 @@ export function InBrowserBrowser({
 	isRunning: boolean
 	baseUrl: string
 }) {
-	const [searchParams] = useSearchParams()
+	const [searchParams, setSearchParams] = useSearchParams()
 	const searchParamsPathname = searchParams.get('pathname') ?? '/'
 	const [iframeContext, setIFrameContext] = useState({
 		key: 0,
@@ -69,6 +69,11 @@ export function InBrowserBrowser({
 	const [pathnameInputValue, setPathnameInputValue] =
 		useState(searchParamsPathname)
 	const iframeRef = useRef<HTMLIFrameElement>(null)
+
+	const appUrl = new URL(baseUrl)
+	appUrl.pathname = searchParamsPathname
+
+	const [initialIframeSrcUrl] = useState(appUrl)
 
 	useEffect(() => {
 		function handleMessage(messageEvent: MessageEvent) {
@@ -144,11 +149,7 @@ export function InBrowserBrowser({
 		}
 		const newSearch = newSearchParams.toString()
 		if (newSearch !== window.location.search) {
-			window.history.replaceState(
-				{},
-				'',
-				`${window.location.pathname}${newSearch ? `?${newSearch}` : ''}`,
-			)
+			setSearchParams(newSearchParams, { replace: true })
 		}
 	}, [iframePathname])
 
@@ -230,7 +231,7 @@ export function InBrowserBrowser({
 					className="h-full border-r border-gray-200 py-4 px-3 font-mono text-xs uppercase leading-none"
 				/>
 				<a
-					href={baseUrl}
+					href={appUrl.toString()}
 					target="_blank"
 					rel="noreferrer"
 					className={clsx(
@@ -246,7 +247,7 @@ export function InBrowserBrowser({
 					title={name}
 					key={iframeContext.key}
 					ref={iframeRef}
-					src={baseUrl}
+					src={initialIframeSrcUrl.toString()}
 					className="h-full w-full flex-grow"
 				/>
 			</div>
