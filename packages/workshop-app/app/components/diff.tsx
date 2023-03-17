@@ -2,7 +2,6 @@ import React, { Suspense } from 'react'
 import { Await, Form, useLoaderData, useSubmit } from '@remix-run/react'
 import clsx from 'clsx'
 import * as Select from '@radix-ui/react-select'
-import { get } from 'lodash'
 import { Mdx } from '~/utils/mdx'
 import { type loader } from '~/routes/_app+/$exerciseNumber_.$stepNumber.$type'
 import Icon from './icons'
@@ -122,39 +121,46 @@ export function Diff() {
 	const submit = useSubmit()
 
 	return (
-		<div className="flex w-full flex-col">
-			<div className="h-14 border-b border-gray-200">
-				<Form
-					onChange={e => submit(e.currentTarget)}
-					className="flex h-full w-full items-center overflow-x-auto"
-				>
-					<input type="hidden" name="preview" value="diff" />
-					<SelectFileToDiff
-						name="app1"
-						label="App 1"
-						className="border-r border-gray-200"
-					/>
-					<SelectFileToDiff name="app2" label="App 2" />
-				</Form>
-			</div>
-			<div className="max-h-[calc(100vh-109px)] overflow-y-auto">
-				<Suspense
-					fallback={
-						<div>
-							<Icon name="Refresh" className="animate-spin" />
+		<Suspense
+			fallback={
+				<div className="p-8">
+					<Icon name="Refresh" className="animate-spin" title="Loading diff" />
+				</div>
+			}
+		>
+			<Await
+				resolve={data.diff}
+				errorElement={
+					<p className="p-6 text-rose-700">
+						There was an error calculating the diff. Sorry.
+					</p>
+				}
+			>
+				{diff => (
+					<div className="flex w-full flex-col">
+						<div className="h-14 border-b border-gray-200">
+							<Form
+								onChange={e => submit(e.currentTarget)}
+								className="flex h-full w-full items-center overflow-x-auto"
+							>
+								<input type="hidden" name="preview" value="diff" />
+								<SelectFileToDiff
+									name="app1"
+									label="App 1"
+									className="border-r border-gray-200"
+									allApps={diff.allApps}
+									defaultValue={diff.app1}
+								/>
+								<SelectFileToDiff
+									name="app2"
+									label="App 2"
+									allApps={diff.allApps}
+									defaultValue={diff.app2}
+								/>
+							</Form>
 						</div>
-					}
-				>
-					<Await
-						resolve={data.diff}
-						errorElement={
-							<p className="p-6 text-rose-700">
-								There was an error calculating the diff. Sorry.
-							</p>
-						}
-					>
-						{diff =>
-							diff.diffCode ? (
+						<div className="max-h-[calc(100vh-109px)] overflow-y-auto">
+							{diff.diffCode ? (
 								<div>
 									<Accordion.Root className="w-full" type="multiple">
 										<Mdx code={diff.diffCode} />
@@ -164,19 +170,30 @@ export function Diff() {
 								<p className="m-5 inline-flex items-center justify-center bg-black px-1 py-0.5 font-mono text-sm uppercase text-white">
 									There was a problem generating the diff
 								</p>
-							)
-						}
-					</Await>
-				</Suspense>
-			</div>
-		</div>
+							)}
+						</div>
+					</div>
+				)}
+			</Await>
+		</Suspense>
 	)
 }
 
-const SelectFileToDiff: React.FC<any> = ({ name, label, className }) => {
-	const data = useLoaderData<typeof loader>()
+function SelectFileToDiff({
+	name,
+	label,
+	className,
+	allApps,
+	defaultValue,
+}: {
+	name: string
+	label: string
+	className?: string
+	allApps: Array<{ name: string; displayName: string }>
+	defaultValue?: string
+}) {
 	return (
-		<Select.Root name={name} defaultValue={get(data.diff, name)}>
+		<Select.Root name={name} defaultValue={defaultValue}>
 			<Select.Trigger
 				className={clsx(
 					'radix-placeholder:text-gray-500 flex h-full w-full items-center justify-between px-3 text-left focus-visible:outline-none',
@@ -209,26 +226,13 @@ const SelectFileToDiff: React.FC<any> = ({ name, label, className }) => {
 							<Select.Label className="px-5 pb-3 font-mono uppercase">
 								{label}
 							</Select.Label>
-							<Suspense fallback={<Icon name="AnimatedBars" title="Pending" />}>
-								<Await
-									resolve={data.diff}
-									errorElement={
-										<p className="text-rose-700">
-											There was an error loading the diff apps.
-										</p>
-									}
-								>
-									{diff =>
-										diff.allApps.map(app => {
-											return (
-												<SelectItem key={app.name} value={app.name}>
-													{app.displayName}
-												</SelectItem>
-											)
-										})
-									}
-								</Await>
-							</Suspense>
+							{allApps.map(app => {
+								return (
+									<SelectItem key={app.name} value={app.name}>
+										{app.displayName}
+									</SelectItem>
+								)
+							})}
 						</Select.Group>
 					</Select.Viewport>
 				</Select.Content>
