@@ -105,6 +105,7 @@ export async function runAppDev(app: App) {
 			NODE_ENV: 'development',
 			// TODO: support specifying the port
 			PORT: String(portNumber),
+			APP_SERVER_PORT: String(portNumber),
 			// let it pick a random port...
 			REMIX_DEV_SERVER_WS_PORT: '',
 		},
@@ -163,6 +164,10 @@ export function runAppTests(app: App) {
 			NODE_ENV: 'development',
 			// TODO: support specifying the port
 			PORT: app.dev.type === 'script' ? String(app.dev.portNumber) : undefined,
+			APP_SERVER_PORT:
+				app.dev.type === 'script' ? String(app.dev.portNumber) : undefined,
+			// let it pick a random port...
+			REMIX_DEV_SERVER_WS_PORT: '',
 		},
 	})
 	const output: Array<OutputLine> = []
