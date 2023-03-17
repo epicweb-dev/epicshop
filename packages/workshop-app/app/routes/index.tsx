@@ -31,19 +31,15 @@ export default function Index() {
 				<div>
 					<ul className="flex flex-col gap-2">
 						{data.exercises.map(exercise => (
-							<li
-								key={exercise.exerciseNumber}
-								className="clip-path-button mr-auto inline-flex min-w-fit max-w-xs bg-black px-8 py-4 font-bold text-white"
-							>
-								<div className="flex flex-wrap">
-									<Link
-										to={`${exercise.exerciseNumber
-											.toString()
-											.padStart(2, '0')}`}
-									>
+							<li key={exercise.exerciseNumber}>
+								<Link
+									to={`${exercise.exerciseNumber.toString().padStart(2, '0')}`}
+									className="clip-path-button mr-auto inline-flex min-w-fit max-w-xs border-2 border-black bg-black px-8 py-4 font-bold text-white outline-none hover:bg-white hover:text-black focus:bg-white focus:text-black"
+								>
+									<div className="flex flex-wrap">
 										{exercise.exerciseNumber}. {exercise.title}
-									</Link>
-								</div>
+									</div>
+								</Link>
 							</li>
 						))}
 					</ul>
