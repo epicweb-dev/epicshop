@@ -44,9 +44,16 @@ export const meta: V2_MetaFunction = ({
 }
 
 export async function loader() {
-	return json({
-		workshopTitle: await getWorkshopTitle(),
-	})
+	return json(
+		{
+			workshopTitle: await getWorkshopTitle(),
+		},
+		{
+			headers: {
+				'Cache-Control': 'public, max-age=300',
+			},
+		},
+	)
 }
 
 export default function App() {

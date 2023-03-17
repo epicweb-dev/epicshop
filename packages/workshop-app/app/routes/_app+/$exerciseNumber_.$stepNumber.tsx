@@ -19,15 +19,22 @@ export async function loader({ params }: DataFunctionArgs) {
 		throw new Response('Not found', { status: 404 })
 	}
 
-	const result = json({
-		exerciseNumber: exercise.exerciseNumber,
-		exerciseTitle: exercise.title,
-		title: workshopTitle,
-		exercises: exercises.map(e => ({
-			exerciseNumber: e.exerciseNumber,
-			title: e.title,
-		})),
-	})
+	const result = json(
+		{
+			exerciseNumber: exercise.exerciseNumber,
+			exerciseTitle: exercise.title,
+			title: workshopTitle,
+			exercises: exercises.map(e => ({
+				exerciseNumber: e.exerciseNumber,
+				title: e.title,
+			})),
+		},
+		{
+			headers: {
+				'Cache-Control': 'public, max-age=300',
+			},
+		},
+	)
 	return result
 }
 

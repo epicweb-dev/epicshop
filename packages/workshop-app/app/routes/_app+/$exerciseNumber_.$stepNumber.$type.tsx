@@ -1,3 +1,4 @@
+import * as Tabs from '@radix-ui/react-tabs'
 import type {
 	DataFunctionArgs,
 	SerializeFrom,
@@ -9,7 +10,18 @@ import {
 	Link,
 	useLoaderData,
 	useRouteError,
+	useSearchParams,
 } from '@remix-run/react'
+import clsx from 'clsx'
+import { useEffect, useMemo, useRef, useState } from 'react'
+import { createPortal } from 'react-dom'
+import { useParams } from 'react-router'
+import { Diff } from '~/components/diff'
+import Icon from '~/components/icons'
+import { InBrowserBrowser } from '~/components/in-browser-browser'
+import { InBrowserTestRunner } from '~/components/in-browser-test-runner'
+import TouchedFiles, { touchedFilesButton } from '~/components/touched-files'
+import { type loader as rootLoader } from '~/root'
 import {
 	getAppByName,
 	getAppPageRoute,
@@ -27,20 +39,8 @@ import { getDiffCode } from '~/utils/diff.server'
 import { Mdx } from '~/utils/mdx'
 import { getErrorMessage } from '~/utils/misc'
 import { isAppRunning, isPortAvailable } from '~/utils/process-manager.server'
-import { useSearchParams } from '@remix-run/react'
-import { useEffect, useMemo, useRef, useState } from 'react'
-import { ShouldRevalidateFunction, useParams } from 'react-router'
-import { InBrowserBrowser } from '~/components/in-browser-browser'
-import { InBrowserTestRunner } from '~/components/in-browser-test-runner'
-import { TestOutput } from '../test'
-import * as Tabs from '@radix-ui/react-tabs'
-import clsx from 'clsx'
-import Icon from '~/components/icons'
 import { LaunchEditor } from '../launch-editor'
-import { type loader as rootLoader } from '~/root'
-import { Diff } from '~/components/diff'
-import TouchedFiles, { touchedFilesButton } from '~/components/touched-files'
-import { createPortal } from 'react-dom'
+import { TestOutput } from '../test'
 
 export const meta: V2_MetaFunction<
 	typeof loader,
@@ -147,72 +147,81 @@ export async function loader({ request, params }: DataFunctionArgs) {
 		}
 	}
 
-	return defer({
-		type: params.type as 'problem' | 'solution',
-		exerciseStepApp,
-		exerciseTitle: exercise.title,
-		prevStepLink: isFirstStep
-			? {
-					to: `/${exerciseStepApp.exerciseNumber.toString().padStart(2, '0')}`,
-					children: `⬅️ ${exercise.title}`,
-			  }
-			: prevApp
-			? {
-					to: getAppPageRoute(prevApp),
-					children: `⬅️ ${prevApp.title} (${prevApp.type})`,
-			  }
-			: null,
-		nextStepLink: isLastStep
-			? {
-					to: `/${exerciseStepApp.exerciseNumber
-						.toString()
-						.padStart(2, '0')}/feedback`,
-					children: `${exercise.title} Feedback ➡️`,
-			  }
-			: nextApp
-			? {
-					to: getAppPageRoute(nextApp),
-					children: `${nextApp.title} (${nextApp.type}) ➡️`,
-			  }
-			: null,
-		problem: problemApp
-			? {
-					type: 'problem',
-					id: problemApp.id,
-					fullPath: problemApp.fullPath,
-					isRunning: isProblemRunning,
-					dev: problemApp.dev,
-					test: problemApp.test,
-					portIsAvailable:
-						problemApp.dev.type === 'script'
-							? isProblemRunning
-								? null
-								: await isPortAvailable(problemApp.dev.portNumber)
-							: null,
-					title: problemApp.title,
-					name: problemApp.name,
-			  }
-			: null,
-		solution: solutionApp
-			? {
-					type: 'solution',
-					id: solutionApp.id,
-					fullPath: solutionApp.fullPath,
-					isRunning: isSolutionRunning,
-					dev: solutionApp.dev,
-					test: solutionApp.test,
-					portIsAvailable:
-						solutionApp.dev.type === 'script'
-							? isSolutionRunning
-								? null
-								: await isPortAvailable(solutionApp.dev.portNumber)
-							: null,
-					title: solutionApp.title,
-					name: solutionApp.name,
-			  }
-			: null,
-		diff: getDiffProp(),
-	} as const)
+	return defer(
+		{
+			type: params.type as 'problem' | 'solution',
+			exerciseStepApp,
+			exerciseTitle: exercise.title,
+			prevStepLink: isFirstStep
+				? {
+						to: `/${exerciseStepApp.exerciseNumber
+							.toString()
+							.padStart(2, '0')}`,
+						children: `⬅️ ${exercise.title}`,
+				  }
+				: prevApp
+				? {
+						to: getAppPageRoute(prevApp),
+						children: `⬅️ ${prevApp.title} (${prevApp.type})`,
+				  }
+				: null,
+			nextStepLink: isLastStep
+				? {
+						to: `/${exerciseStepApp.exerciseNumber
+							.toString()
+							.padStart(2, '0')}/feedback`,
+						children: `${exercise.title} Feedback ➡️`,
+				  }
+				: nextApp
+				? {
+						to: getAppPageRoute(nextApp),
+						children: `${nextApp.title} (${nextApp.type}) ➡️`,
+				  }
+				: null,
+			problem: problemApp
+				? {
+						type: 'problem',
+						id: problemApp.id,
+						fullPath: problemApp.fullPath,
+						isRunning: isProblemRunning,
+						dev: problemApp.dev,
+						test: problemApp.test,
+						portIsAvailable:
+							problemApp.dev.type === 'script'
+								? isProblemRunning
+									? null
+									: await isPortAvailable(problemApp.dev.portNumber)
+								: null,
+						title: problemApp.title,
+						name: problemApp.name,
+				  }
+				: null,
+			solution: solutionApp
+				? {
+						type: 'solution',
+						id: solutionApp.id,
+						fullPath: solutionApp.fullPath,
+						isRunning: isSolutionRunning,
+						dev: solutionApp.dev,
+						test: solutionApp.test,
+						portIsAvailable:
+							solutionApp.dev.type === 'script'
+								? isSolutionRunning
+									? null
+									: await isPortAvailable(solutionApp.dev.portNumber)
+								: null,
+						title: solutionApp.title,
+						name: solutionApp.name,
+				  }
+				: null,
+			diff: getDiffProp(),
+		} as const,
+		{
+			headers: {
+				'Cache-Control': 'public, max-age=5',
+			},
+		},
+	)
 }
 
 const tabs = ['problem', 'solution', 'tests', 'diff'] as const

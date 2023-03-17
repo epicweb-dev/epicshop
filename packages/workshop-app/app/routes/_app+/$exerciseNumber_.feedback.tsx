@@ -42,25 +42,32 @@ export async function loader({ params }: DataFunctionArgs) {
 		.filter(app => app.exerciseNumber === exercise.exerciseNumber)
 	const prevApp = exerciseApps[exerciseApps.length - 1]
 
-	return json({
-		workshopTitle,
-		exercise,
-		prevStepLink: prevApp
-			? {
-					to: getAppPageRoute(prevApp),
-					children: `⬅️ ${prevApp.title} (${prevApp.type})`,
-			  }
-			: null,
-		nextStepLink: nextExercise
-			? {
-					to: `/${nextExercise.exerciseNumber.toString().padStart(2, '0')}`,
-					children: `${nextExercise.title} ➡️`,
-			  }
-			: {
-					to: '/finished',
-					children: 'Finished! 🎉',
-			  },
-	})
+	return json(
+		{
+			workshopTitle,
+			exercise,
+			prevStepLink: prevApp
+				? {
+						to: getAppPageRoute(prevApp),
+						children: `⬅️ ${prevApp.title} (${prevApp.type})`,
+				  }
+				: null,
+			nextStepLink: nextExercise
+				? {
+						to: `/${nextExercise.exerciseNumber.toString().padStart(2, '0')}`,
+						children: `${nextExercise.title} ➡️`,
+				  }
+				: {
+						to: '/finished',
+						children: 'Finished! 🎉',
+				  },
+		},
+		{
+			headers: {
+				'Cache-Control': 'public, max-age=300',
+			},
+		},
+	)
 }
 
 export default function ExerciseFeedback() {

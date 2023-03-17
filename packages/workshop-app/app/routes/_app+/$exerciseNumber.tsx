@@ -36,26 +36,34 @@ export const meta: V2_MetaFunction<
 
 export async function loader({ params }: DataFunctionArgs) {
 	invariant(params.exerciseNumber, 'exerciseNumber is required')
-	const exercise = await getExercise(params.exerciseNumber)
+	const [exercises, workshopTitle] = await Promise.all([
+		getExercises(),
+		getWorkshopTitle(),
+	])
+	const exercise = exercises.find(
+		e => e.exerciseNumber === Number(params.exerciseNumber),
+	)
 	if (!exercise) {
 		throw new Response('Not found', { status: 404 })
 	}
 
-	return json({
-		exercise,
-		exerciseNumber: exercise.exerciseNumber,
-		exerciseTitle: exercise.title,
-		title: await getWorkshopTitle(),
-		exercises: (await getExercises()).map(e => ({
-			exerciseNumber: e.exerciseNumber,
-			title: e.title,
-		})),
-		examples: (await getExampleApps()).map(e => ({
-			name: e.name,
-			title: e.title,
-			isRunning: isAppRunning(e),
-		})),
-	})
+	return json(
+		{
+			exercise,
+			exerciseNumber: exercise.exerciseNumber,
+			exerciseTitle: exercise.title,
+			title: workshopTitle,
+			exercises: exercises.map(e => ({
+				exerciseNumber: e.exerciseNumber,
+				title: e.title,
+			})),
+		},
+		{
+			headers: {
+				'Cache-Control': 'public, max-age=300',
+			},
+		},
+	)
 }
 
 export default function ExerciseNumberRoute() {
