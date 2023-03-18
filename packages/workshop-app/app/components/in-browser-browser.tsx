@@ -254,7 +254,10 @@ export function InBrowserBrowser({
 		<div className="flex flex-col items-center justify-center">
 			<p className="max-w-xs pb-5 text-center" role="status">
 				The port for this app is unavailable. It could be that you're running it
-				elsewhere?
+				<a href={`http://localhost:${port}`} className="underline">
+					elsewhere
+				</a>
+				?
 			</p>
 			<PortStopper port={port} />
 		</div>

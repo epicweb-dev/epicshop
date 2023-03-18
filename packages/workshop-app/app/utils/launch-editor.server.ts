@@ -268,10 +268,6 @@ export async function launchEditor(
 	lineNumber?: number,
 	colNumber?: number,
 ): Promise<Result> {
-	if (!fs.existsSync(fileName)) {
-		fsExtra.writeFileSync(fileName, '', 'utf8')
-	}
-
 	// Sanitize lineNumber to prevent malicious use on win32
 	// via: https://github.com/nodejs/node/blob/c3bb4b1aa5e907d489619fb43d233c3336bfc03d/lib/child_process.js#L333
 	// and it should be a positive integer
@@ -321,6 +317,11 @@ export async function launchEditor(
 			status: 'error',
 			error: `Could not open ${fileName} in the editor. When running on Windows, file names are checked against a whitelist to protect against remote code execution attacks. File names may consist only of alphanumeric characters (all languages), periods, dashes, slashes, and underscores.`,
 		}
+	}
+
+	if (!fs.existsSync(fileName)) {
+		fsExtra.ensureDirSync(path.dirname(fileName))
+		fsExtra.writeFileSync(fileName, '', 'utf8')
 	}
 
 	let workspace = null
