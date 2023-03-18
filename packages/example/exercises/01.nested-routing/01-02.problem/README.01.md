@@ -8,6 +8,8 @@ Sup: `this is some code`
 <InlineFile file="app/entry.server.tsx">Click here to open
 <code>entry.server.tsx</code></InlineFile>
 
+<LinkToApp to="/whatever">Go to whatever</LinkToApp>
+
 <TouchedFiles>
   <div id="files">
     <ul>

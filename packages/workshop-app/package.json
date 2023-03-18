@@ -64,6 +64,7 @@
     "compression": "^1.7.4",
     "cross-env": "^7.0.3",
     "cross-spawn": "^7.0.3",
+    "dotenv": "^16.0.3",
     "esbuild": "^0.17.11",
     "execa": "^7.1.1",
     "express": "^4.18.2",

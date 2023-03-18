@@ -12,6 +12,9 @@ export function KCDShopIFrameSync() {
 		effectSetup = true
 		if (window.parent === window) return
 
+		// send connection established message
+		window.parent.postMessage({ type: 'kcdshop:connected' }, '*')
+
 		const methods = [
 			'pushState',
 			'replaceState',

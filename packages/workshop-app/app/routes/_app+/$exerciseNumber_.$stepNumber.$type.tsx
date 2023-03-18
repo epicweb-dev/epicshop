@@ -9,6 +9,7 @@ import { defer, redirect } from '@remix-run/node'
 import {
 	isRouteErrorResponse,
 	Link,
+	LinkProps,
 	useLoaderData,
 	useRouteError,
 	useSearchParams,
@@ -19,7 +20,10 @@ import { createPortal } from 'react-dom'
 import { useParams } from 'react-router'
 import { Diff } from '~/components/diff'
 import Icon from '~/components/icons'
-import { InBrowserBrowser } from '~/components/in-browser-browser'
+import {
+	InBrowserBrowser,
+	InBrowserBrowserRef,
+} from '~/components/in-browser-browser'
 import { InBrowserTestRunner } from '~/components/in-browser-test-runner'
 import TouchedFiles, { touchedFilesButton } from '~/components/touched-files'
 import { type loader as rootLoader } from '~/root'
@@ -244,7 +248,7 @@ export async function loader({ request, params }: DataFunctionArgs) {
 		} as const,
 		{
 			headers: {
-				'Cache-Control': 'public, max-age=5',
+				'Cache-Control': 'public, max-age=1',
 				'Server-Timing': getServerTimeHeader(timings),
 			},
 		},
@@ -291,6 +295,9 @@ function useHydrated() {
 
 export default function ExercisePartRoute() {
 	const data = useLoaderData<typeof loader>()
+	const appUrl = data[data.type]?.dev.baseUrl
+
+	const inBrowserBrowserRef = useRef<InBrowserBrowserRef>(null)
 
 	const [searchParams] = useSearchParams()
 	const touchedFilesDivRef = useRef<HTMLDivElement>(null)
@@ -337,6 +344,42 @@ export default function ExercisePartRoute() {
 				: null
 		}
 	}, [])
+
+	const LinkToApp = useMemo(() => {
+		return function LinkToApp({ to: appTo, ...props }: LinkProps) {
+			const to = `?${withParam(
+				searchParams,
+				'pathname',
+				appTo.toString(),
+			).toString()}`
+			const href = appUrl ? appUrl.slice(0, -1) + appTo.toString() : null
+			return (
+				<div className="inline-flex items-center justify-between gap-1">
+					<Link
+						to={to}
+						{...props}
+						onClick={event => {
+							props.onClick?.(event)
+							inBrowserBrowserRef.current?.handleExtrnalNavigation(
+								appTo.toString(),
+							)
+						}}
+					/>
+					{href ? (
+						<a
+							href={href}
+							target="_blank"
+							rel="noreferrer"
+							title="Open in new tab"
+							className={clsx('flex aspect-square items-center justify-center')}
+						>
+							<Icon name="ExternalLink" title="Open in new tab" />
+						</a>
+					) : null}
+				</div>
+			)
+		}
+	}, [])
 	const params = useParams()
 
 	const type = isValidType(params.type) ? params.type : null
@@ -353,7 +396,11 @@ export default function ExercisePartRoute() {
 						{data.exerciseStepApp.instructionsCode ? (
 							<Mdx
 								code={data.exerciseStepApp?.instructionsCode}
-								components={{ InlineFile, TouchedFiles: RefedTouchedFiles }}
+								components={{
+									InlineFile,
+									TouchedFiles: RefedTouchedFiles,
+									LinkToApp,
+								}}
 							/>
 						) : (
 							<p>No instructions yet...</p>
@@ -446,13 +493,19 @@ export default function ExercisePartRoute() {
 							value={tabs[0]}
 							className="radix-state-inactive:hidden flex flex-grow items-center justify-center"
 						>
-							<Preview appInfo={data.problem} />
+							<Preview
+								appInfo={data.problem}
+								inBrowserBrowserRef={inBrowserBrowserRef}
+							/>
 						</Tabs.Content>
 						<Tabs.Content
 							value={tabs[1]}
 							className="radix-state-inactive:hidden flex flex-grow items-center justify-center"
 						>
-							<Preview appInfo={data.solution} />
+							<Preview
+								appInfo={data.solution}
+								inBrowserBrowserRef={inBrowserBrowserRef}
+							/>
 						</Tabs.Content>
 						<Tabs.Content
 							value={tabs[2]}
@@ -477,8 +530,10 @@ export default function ExercisePartRoute() {
 
 function Preview({
 	appInfo,
+	inBrowserBrowserRef,
 }: {
 	appInfo: SerializeFrom<typeof loader>['problem' | 'solution']
+	inBrowserBrowserRef: React.RefObject<InBrowserBrowserRef>
 }) {
 	if (!appInfo) return <p>No app here. Sorry.</p>
 	const { isRunning, dev, name, portIsAvailable, title } = appInfo
@@ -486,6 +541,7 @@ function Preview({
 	if (dev.type === 'script') {
 		return (
 			<InBrowserBrowser
+				ref={inBrowserBrowserRef}
 				isRunning={isRunning}
 				name={name}
 				portIsAvailable={portIsAvailable}

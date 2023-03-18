@@ -1,5 +1,12 @@
 import { Form, useSearchParams } from '@remix-run/react'
-import { useEffect, useRef, useState } from 'react'
+import {
+	useEffect,
+	forwardRef,
+	useImperativeHandle,
+	useRef,
+	useState,
+	ForwardedRef,
+} from 'react'
 import type { NavigateFunction } from 'react-router'
 import { z } from 'zod'
 import { AppStarter, AppStopper, PortStopper } from '~/routes/start'
@@ -45,23 +52,30 @@ function getNewIndex(prevIndex: number, delta: number, max: number) {
 	return Math.min(Math.max(prevIndex + delta, 0), max)
 }
 
-export function InBrowserBrowser({
-	name,
-	port,
-	portIsAvailable,
-	isRunning,
-	baseUrl,
-}: {
+type Props = {
 	name: string
 	port: number
 	portIsAvailable: boolean | null
 	isRunning: boolean
 	baseUrl: string
-}) {
+}
+
+export type InBrowserBrowserRef = {
+	handleExtrnalNavigation: (pathname?: string) => void
+}
+
+export const InBrowserBrowser = forwardRef<InBrowserBrowserRef, Props>(
+	InBrowserBrowserImpl,
+)
+
+function InBrowserBrowserImpl(
+	{ name, port, portIsAvailable, isRunning, baseUrl }: Props,
+	ref: ForwardedRef<InBrowserBrowserRef>,
+) {
 	const [searchParams, setSearchParams] = useSearchParams()
 	const searchParamsPathname = searchParams.get('pathname') ?? '/'
+	const [connectionEstablished, setConnectionEstablished] = useState(false)
 	const [iframeContext, setIFrameContext] = useState({
-		key: 0,
 		pathname: searchParamsPathname,
 		history: [searchParamsPathname],
 		index: 0,
@@ -73,16 +87,24 @@ export function InBrowserBrowser({
 	const appUrl = new URL(baseUrl)
 	appUrl.pathname = searchParamsPathname
 
-	const [initialIframeSrcUrl] = useState(appUrl)
+	/** changing the iframeSrcUrl will trigger a reload of the iframe */
+	const [iframeSrcUrl, setIframeSrcUrl] = useState(appUrl)
 
 	useEffect(() => {
 		function handleMessage(messageEvent: MessageEvent) {
 			if (messageEvent.source !== iframeRef.current?.contentWindow) return
+			if (messageEvent.data.type === 'kcdshop:connected') {
+				setConnectionEstablished(true)
+			}
 			if (messageEvent.data.type !== 'kcdshop:history-call') return
 
 			const data = historyCallDataSchema.parse(messageEvent.data, {
 				path: ['messageEvent', 'data'],
 			})
+
+			// just in case... we can safely assume a connection has been established
+			// if we receive a message we're expecting
+			setConnectionEstablished(true)
 
 			const { method } = data
 			setIFrameContext(prevContext => {
@@ -154,11 +176,31 @@ export function InBrowserBrowser({
 	}, [iframePathname])
 
 	const navigateChild: NavigateFunction = (...params) => {
-		iframeRef.current?.contentWindow?.postMessage(
-			{ type: 'kcdshop:navigate-call', params },
-			'*',
-		)
+		if (connectionEstablished) {
+			iframeRef.current?.contentWindow?.postMessage(
+				{ type: 'kcdshop:navigate-call', params },
+				'*',
+			)
+		} else {
+			const [to] = params
+			if (typeof to === 'string') {
+				setIframeSrcUrl(new URL(to, baseUrl))
+			}
+		}
 	}
+
+	function handleExtrnalNavigation(
+		newPathnameInputValue: string = pathnameInputValue,
+	) {
+		setPathnameInputValue(newPathnameInputValue)
+
+		const currentPathname = iframeContext.history[iframeContext.index]
+		navigateChild(newPathnameInputValue, {
+			replace: currentPathname === newPathnameInputValue,
+		})
+	}
+
+	useImperativeHandle(ref, () => ({ handleExtrnalNavigation }))
 
 	const atEndOfHistory =
 		iframeContext.index === iframeContext.history.length - 1
@@ -208,12 +250,7 @@ export function InBrowserBrowser({
 					method="get"
 					replace
 					className="flex flex-1 gap-2"
-					onSubmit={() => {
-						const currnetPathname = iframeContext.history[iframeContext.index]
-						navigateChild(pathnameInputValue, {
-							replace: currnetPathname === pathnameInputValue,
-						})
-					}}
+					onSubmit={() => handleExtrnalNavigation()}
 				>
 					{existingSearchParamHiddenInputs}
 					<input
@@ -236,16 +273,14 @@ export function InBrowserBrowser({
 						'flex aspect-square items-center justify-center px-3.5',
 					)}
 				>
-					<Icon name="ExternalLink" aria-hidden="true" />
-					<span className="sr-only">Open in New Window</span>
+					<Icon name="ExternalLink" title="Open in new tab" />
 				</a>
 			</div>
 			<div className="flex h-full w-full flex-grow overflow-y-scroll bg-white p-5">
 				<iframe
 					title={name}
-					key={iframeContext.key}
 					ref={iframeRef}
-					src={initialIframeSrcUrl.toString()}
+					src={iframeSrcUrl.toString()}
 					className="h-full w-full flex-grow"
 				/>
 			</div>
