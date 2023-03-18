@@ -102,7 +102,7 @@ export default function ExerciseNumberRoute() {
 							{data.exercise.title}
 						</h1>
 						<div className="mt-8">
-							<ButtonLink to="01/problem" prefetch="intent" size="lg">
+							<ButtonLink to="01/problem" prefetch="intent" varient="big">
 								Start Learning
 							</ButtonLink>
 						</div>
@@ -118,7 +118,7 @@ export default function ExerciseNumberRoute() {
 						)}
 					</div>
 					<div className="flex w-full items-center p-10 pb-16">
-						<ButtonLink to="01/problem" prefetch="intent" size="lg">
+						<ButtonLink to="01/problem" prefetch="intent" varient="big">
 							Start Learning
 						</ButtonLink>
 					</div>

@@ -13,21 +13,26 @@ function ErrorState() {
 	return <span>❌</span>
 }
 
-export function getButtonClassName({ size }: { size: 'md' | 'lg' }) {
+export function getButtonClassName({
+	varient,
+}: {
+	varient: 'primary' | 'big' | 'mono'
+}) {
 	const baseClassName =
-		'clip-path-button mr-auto inline-flex min-w-fit max-w-xs border-2 border-black bg-black font-bold text-white outline-none hover:bg-white hover:text-black focus:bg-white focus:text-black'
-	// className="clip-path-button mt-8 inline-flex bg-black text-white"
-	const mdClassName = 'px-8 py-4'
-	const lgClassName = 'px-8 py-4 text-xl'
+		'clip-path-button mr-auto inline-flex min-w-fit max-w-xs border-2 border-black bg-black text-white outline-none hover:bg-white hover:text-black focus:bg-white focus:text-black'
+	const primaryClassName = 'px-8 py-4 font-bold'
+	const bigClassName = 'px-8 py-4 text-xl font-bold'
+	const monoClassName = 'px-8 py-4 font-mono text-sm uppercase'
 	const className = clsx(baseClassName, {
-		[mdClassName]: size === 'md',
-		[lgClassName]: size === 'lg',
+		[primaryClassName]: varient === 'primary',
+		[bigClassName]: varient === 'big',
+		[monoClassName]: varient === 'mono',
 	})
 	return className
 }
 
 export function Button({
-	size,
+	varient,
 	status = 'idle',
 	...props
 }: React.ComponentPropsWithoutRef<'button'> &
@@ -45,7 +50,7 @@ export function Button({
 			{...props}
 			className={clsx(
 				props.className,
-				getButtonClassName({ size }),
+				getButtonClassName({ varient }),
 				'flex justify-center gap-4',
 			)}
 		>
@@ -56,10 +61,15 @@ export function Button({
 }
 
 export function ButtonLink({
-	size,
+	varient,
 	...props
-}: Omit<React.ComponentPropsWithoutRef<typeof Link>, 'className'> &
+}: React.ComponentPropsWithoutRef<typeof Link> &
 	Parameters<typeof getButtonClassName>[0]) {
 	// eslint-disable-next-line jsx-a11y/anchor-has-content
-	return <Link {...props} className={getButtonClassName({ size })} />
+	return (
+		<Link
+			{...props}
+			className={clsx(props.className, getButtonClassName({ varient }))}
+		/>
+	)
 }

@@ -424,6 +424,7 @@ export default function ExercisePartRoute() {
 								>
 									<Link
 										id="tab"
+										className="outline-none focus:bg-gray-100"
 										preventScrollReset
 										prefetch="intent"
 										to={`?${withParam(

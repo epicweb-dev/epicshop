@@ -226,14 +226,12 @@ export function InBrowserBrowser({
 					{/* TODO: Reconsider if this is needed as browsers don't usually have a submit button in address bar */}
 					{/* <button type="submit">Go</button> */}
 				</Form>
-				<AppStopper
-					name={name}
-					className="h-full border-r border-gray-200 py-4 px-3 font-mono text-xs uppercase leading-none"
-				/>
+				<AppStopper name={name} />
 				<a
 					href={appUrl.toString()}
 					target="_blank"
 					rel="noreferrer"
+					title="Open in new tab"
 					className={clsx(
 						'flex aspect-square items-center justify-center px-3.5',
 					)}
@@ -261,9 +259,6 @@ export function InBrowserBrowser({
 			<PortStopper port={port} />
 		</div>
 	) : (
-		<AppStarter
-			name={name}
-			className="clip-path-button rounded-sm bg-black px-8 py-4 font-mono text-sm uppercase text-white"
-		/>
+		<AppStarter name={name} />
 	)
 }

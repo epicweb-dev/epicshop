@@ -2,6 +2,7 @@ import type { DataFunctionArgs } from '@remix-run/node'
 import { json } from '@remix-run/node'
 import { useFetcher } from '@remix-run/react'
 import invariant from 'tiny-invariant'
+import { Button } from '~/components/button'
 import Loading from '~/components/loading'
 import { getAppByName } from '~/utils/apps.server'
 import {
@@ -64,18 +65,17 @@ export async function action({ request }: DataFunctionArgs) {
 	throw new Error(`Unknown intent: ${intent}`)
 }
 
-export function AppStopper({
-	name,
-	className = '',
-}: {
-	name: string
-	className?: string
-}) {
+export function AppStopper({ name }: { name: string }) {
 	const fetcher = useFetcher<typeof action>()
 	return (
 		<fetcher.Form method="post" action="/start">
 			<input type="hidden" name="name" value={name} />
-			<button type="submit" name="intent" value="stop" className={className}>
+			<button
+				type="submit"
+				name="intent"
+				value="stop"
+				className="h-full border-r border-gray-200 py-4 px-3 font-mono text-xs uppercase leading-none"
+			>
 				{fetcher.submission ? 'Stopping App' : 'Stop App'}
 			</button>
 		</fetcher.Form>
@@ -88,25 +88,14 @@ export function PortStopper({ port }: { port: number | string }) {
 	return (
 		<fetcher.Form method="post" action="/start">
 			<input type="hidden" name="port" value={port} />
-			<button
-				type="submit"
-				name="intent"
-				value="stop-port"
-				className="clip-path-button bg-black px-5 py-3 font-mono text-sm font-medium uppercase text-white"
-			>
+			<Button varient="mono" type="submit" name="intent" value="stop-port">
 				{fetcher.submission ? 'Stopping Port' : 'Stop Port'}
-			</button>
+			</Button>
 		</fetcher.Form>
 	)
 }
 
-export function AppStarter({
-	name,
-	className = '',
-}: {
-	name: string
-	className?: string
-}) {
+export function AppStarter({ name }: { name: string }) {
 	const fetcher = useFetcher<typeof action>()
 	if (fetcher.data?.status === 'app-not-started') {
 		if (fetcher.data.error === 'port-unavailable') {
@@ -129,9 +118,9 @@ export function AppStarter({
 					<Loading>Starting App</Loading>
 				</div>
 			) : (
-				<button type="submit" name="intent" value="start" className={className}>
+				<Button type="submit" name="intent" value="start" varient="mono">
 					{fetcher.submission ? 'Starting App' : 'Start App'}
-				</button>
+				</Button>
 			)}
 		</fetcher.Form>
 	)

@@ -59,7 +59,7 @@ export default function Index() {
 						{data.exercises.map(exercise => (
 							<li key={exercise.exerciseNumber}>
 								<ButtonLink
-									size="md"
+									varient="primary"
 									to={`${exercise.exerciseNumber.toString().padStart(2, '0')}`}
 								>
 									<div className="flex flex-wrap">
