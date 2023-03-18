@@ -51,9 +51,9 @@ export const headers: HeadersFunction = ({ loaderHeaders, parentHeaders }) => {
 export default function Index() {
 	const data = useLoaderData<typeof loader>()
 	return (
-		<main className="relative min-h-screen bg-white sm:flex sm:items-center sm:justify-center">
+		<main className="flex min-h-screen items-center justify-center">
 			<div>
-				<h1 className="mb-7 text-4xl font-bold">{data.title}</h1>
+				<h1 className="mb-10 text-4xl font-extrabold">{data.title}</h1>
 				<div>
 					<ul className="flex flex-col gap-2">
 						{data.exercises.map(exercise => (
@@ -62,9 +62,7 @@ export default function Index() {
 									varient="primary"
 									to={`${exercise.exerciseNumber.toString().padStart(2, '0')}`}
 								>
-									<div className="flex flex-wrap">
-										{exercise.exerciseNumber}. {exercise.title}
-									</div>
+									{exercise.exerciseNumber}. {exercise.title}
 								</ButtonLink>
 							</li>
 						))}

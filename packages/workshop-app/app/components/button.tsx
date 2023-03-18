@@ -19,7 +19,7 @@ export function getButtonClassName({
 	varient: 'primary' | 'big' | 'mono'
 }) {
 	const baseClassName =
-		'clip-path-button mr-auto inline-flex min-w-fit max-w-xs border-2 border-black bg-black text-white outline-none hover:bg-white hover:text-black focus:bg-white focus:text-black'
+		'clip-path-button inline-flex border-2 border-black bg-black text-white outline-none hover:bg-white hover:text-black focus:bg-white focus:text-black'
 	const primaryClassName = 'px-8 py-4 font-bold'
 	const bigClassName = 'px-8 py-4 text-xl font-bold'
 	const monoClassName = 'px-8 py-4 font-mono text-sm uppercase'
