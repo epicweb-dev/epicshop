@@ -295,11 +295,16 @@ function useHydrated() {
 
 export default function ExercisePartRoute() {
 	const data = useLoaderData<typeof loader>()
-	const appUrl = data[data.type]?.dev.baseUrl
-
-	const inBrowserBrowserRef = useRef<InBrowserBrowserRef>(null)
-
+	const params = useParams()
 	const [searchParams] = useSearchParams()
+
+	const type = isValidType(params.type) ? params.type : null
+	const preview = searchParams.get('preview')
+	const activeTab = isValidPreview(preview) ? preview : type ? type : tabs[0]
+	const activeApp = preview === 'solution' ? 'solution' : 'problem'
+	const inBrowserBrowserRef = useRef<InBrowserBrowserRef>(null)
+	const previewAppUrl = data[activeApp]?.dev.baseUrl
+
 	const touchedFilesDivRef = useRef<HTMLDivElement>(null)
 	const hydrated = useHydrated()
 	const InlineFile = useMemo(() => {
@@ -352,7 +357,9 @@ export default function ExercisePartRoute() {
 				'pathname',
 				appTo.toString(),
 			).toString()}`
-			const href = appUrl ? appUrl.slice(0, -1) + appTo.toString() : null
+			const href = previewAppUrl
+				? previewAppUrl.slice(0, -1) + appTo.toString()
+				: null
 			return (
 				<div className="inline-flex items-center justify-between gap-1">
 					<Link
@@ -379,14 +386,7 @@ export default function ExercisePartRoute() {
 				</div>
 			)
 		}
-	}, [])
-	const params = useParams()
-
-	const type = isValidType(params.type) ? params.type : null
-
-	const preview = searchParams.get('preview')
-
-	const activeTab = isValidPreview(preview) ? preview : type ? type : tabs[0]
+	}, [searchParams, previewAppUrl])
 
 	return (
 		<div className="flex flex-grow flex-col">

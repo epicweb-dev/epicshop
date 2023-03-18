@@ -220,7 +220,7 @@ function InBrowserBrowserImpl(
 					<button
 						type="button"
 						className="flex aspect-square h-full w-full items-center justify-center p-1 transition disabled:opacity-40"
-						disabled={atStartOfHistory}
+						disabled={atStartOfHistory || !connectionEstablished}
 						onClick={() => navigateChild(-1)}
 					>
 						<Icon name="ArrowLeft" aria-hidden="true" title="Go back" />
@@ -228,14 +228,15 @@ function InBrowserBrowserImpl(
 					<button
 						type="button"
 						className="flex aspect-square h-full w-full items-center justify-center p-1 transition disabled:opacity-40"
-						disabled={atEndOfHistory}
+						disabled={atEndOfHistory || !connectionEstablished}
 						onClick={() => navigateChild(1)}
 					>
 						<Icon name="ArrowRight" aria-hidden="true" title="Go forward" />
 					</button>
 					<button
 						type="button"
-						className="flex aspect-square h-full w-full items-center justify-center p-1 transition"
+						className="flex aspect-square h-full w-full items-center justify-center p-1 transition disabled:opacity-40"
+						disabled={!connectionEstablished}
 						onClick={() =>
 							iframeRef.current?.contentWindow?.postMessage(
 								{ type: 'kcdshop:refresh' },
@@ -276,7 +277,7 @@ function InBrowserBrowserImpl(
 					<Icon name="ExternalLink" title="Open in new tab" />
 				</a>
 			</div>
-			<div className="flex h-full w-full flex-grow overflow-y-scroll bg-white p-5">
+			<div className="flex h-full w-full flex-grow bg-white p-5">
 				<iframe
 					title={name}
 					ref={iframeRef}
