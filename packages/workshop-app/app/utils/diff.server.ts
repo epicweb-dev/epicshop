@@ -1,13 +1,18 @@
-import { cachified } from 'cachified'
 import fsExtra from 'fs-extra'
 import os from 'os'
 import parseGitDiff from 'parse-git-diff'
 import path from 'path'
 import { BUNDLED_LANGUAGES } from 'shiki'
-import { diffCodeCache } from './cache.server'
+import { diffCodeCache, cachified } from './cache.server'
 import { compileMarkdownString } from './compile-mdx.server'
 import { typedBoolean } from './misc'
-import { getWorkshopRoot, modifiedTimes, type App } from './apps.server'
+import {
+	getForceFreshForDir,
+	getWorkshopRoot,
+	modifiedTimes,
+	type App,
+} from './apps.server'
+import { Timings } from './timing.server'
 
 const kcdshopTempDir = path.join(os.tmpdir(), 'kcdshop')
 
@@ -110,6 +115,10 @@ ${lines.join('\n')}
 const EXTRA_FILES_TO_IGNORE = [
 	/README(\.\d+)?\.md$/,
 	/package-lock\.json$/,
+	/\.DS_Store$/,
+	/\.vscode$/,
+	/\.idea$/,
+	/\.git$/,
 	/\..*test\..*/,
 ]
 
@@ -118,19 +127,28 @@ async function copyUnignoredFiles(
 	destDir: string,
 	ignore: Array<string>,
 ) {
-	const { isGitIgnored } = await import('globby')
+	const key = `COPY_${srcDir}__${destDir}__${ignore}`
+	await cachified({
+		key,
+		cache: diffCodeCache,
+		forceFresh: getForceFreshForDir(srcDir, await diffCodeCache.get(key)),
+		async getFreshValue() {
+			const { isGitIgnored } = await import('globby')
 
-	const isIgnored = await isGitIgnored({ cwd: srcDir })
+			const isIgnored = await isGitIgnored({ cwd: srcDir })
 
-	await fsExtra.copy(srcDir, destDir, {
-		filter: async file => {
-			if (file === srcDir) return true
-			const shouldCopy =
-				!isIgnored(file) &&
-				![...ignore, ...EXTRA_FILES_TO_IGNORE].some(f =>
-					typeof f === 'string' ? file.includes(f) : f.test(file),
-				)
-			return shouldCopy
+			await fsExtra.emptyDir(destDir)
+			await fsExtra.copy(srcDir, destDir, {
+				filter: async file => {
+					if (file === srcDir) return true
+					const shouldCopy =
+						!isIgnored(file) &&
+						![...ignore, ...EXTRA_FILES_TO_IGNORE].some(f =>
+							typeof f === 'string' ? file.includes(f) : f.test(file),
+						)
+					return shouldCopy
+				},
+			})
 		},
 	})
 }
@@ -167,12 +185,8 @@ async function prepareForDiff(app1: App, app2: App) {
 		: []
 
 	await Promise.all([
-		fsExtra
-			.emptyDir(app1CopyPath)
-			.then(() => copyUnignoredFiles(app1.fullPath, app1CopyPath, ignore)),
-		fsExtra
-			.emptyDir(app2CopyPath)
-			.then(() => copyUnignoredFiles(app2.fullPath, app2CopyPath, ignore)),
+		copyUnignoredFiles(app1.fullPath, app1CopyPath, ignore),
+		copyUnignoredFiles(app2.fullPath, app2CopyPath, ignore),
 	])
 
 	return { app1CopyPath, app2CopyPath }
@@ -222,9 +236,13 @@ export async function getDiffFiles(app1: App, app2: App) {
 export async function getDiffCode(
 	app1: App,
 	app2: App,
-	{ forceFresh = false } = {},
+	{
+		forceFresh = false,
+		timings,
+		request,
+	}: { forceFresh?: boolean; timings?: Timings; request?: Request } = {},
 ) {
-	const key = `${app1.dirName}-${app2.dirName}`
+	const key = `${app1.relativePath}__vs__${app2.relativePath}`
 	const cacheEntry = await diffCodeCache.get(key)
 	const app1Modified = modifiedTimes.get(app1.fullPath) ?? 0
 	const app2Modified = modifiedTimes.get(app2.fullPath) ?? 0
@@ -238,6 +256,8 @@ export async function getDiffCode(
 		key,
 		cache: diffCodeCache,
 		forceFresh: forceFresh || cacheOutdated,
+		timings,
+		request,
 		getFreshValue: () => getDiffCodeImpl(app1, app2),
 	})
 	return result
@@ -276,7 +296,7 @@ async function getDiffCodeImpl(app1: App, app2: App) {
 
 	if (!parsed.files.length) {
 		markdownLines.push(
-			'<div class="m-5 inline-flex items-center justify-center bg-black px-1 py-0.5 font-mono text-sm uppercase text-white">No changes</div>',
+			'<div className="m-5 inline-flex items-center justify-center bg-black px-1 py-0.5 font-mono text-sm uppercase text-white">No changes</div>',
 		)
 	}
 

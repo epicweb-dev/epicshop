@@ -2,15 +2,15 @@ import chokidar from 'chokidar'
 import closeWithGrace from 'close-with-grace'
 
 declare global {
-	var __change_tracker_watcher__: ReturnType<typeof getWatcher>
+	var __change_tracker_watcher__: ReturnType<typeof chokidar.watch> | undefined
 }
 
-export const watcher = (global.__change_tracker_watcher__ =
-	global.__change_tracker_watcher__ ?? getWatcher())
+let watcher = global.__change_tracker_watcher__
 
-function getWatcher() {
+export function getWatcher() {
+	if (watcher) return watcher
 	const workshopRoot = process.env.KCDSHOP_CONTEXT_CWD ?? process.cwd()
-	const watcher = chokidar.watch(workshopRoot, {
+	watcher = chokidar.watch(workshopRoot, {
 		ignoreInitial: true,
 		ignored: [
 			'**/node_modules/**',
@@ -22,4 +22,4 @@ function getWatcher() {
 	return watcher
 }
 
-closeWithGrace(() => watcher.close())
+closeWithGrace(() => watcher?.close())

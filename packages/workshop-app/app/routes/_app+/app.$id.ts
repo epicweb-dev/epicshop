@@ -12,16 +12,23 @@ import {
 	getWorkshopTitle,
 } from '~/utils/apps.server'
 import { typedBoolean } from '~/utils/misc'
+import { getServerTimeHeader, makeTimings } from '~/utils/timing.server'
 
-export async function loader({ params }: DataFunctionArgs) {
+export async function loader({ request, params }: DataFunctionArgs) {
+	const timings = makeTimings('app')
 	const { id: appId } = params
 	invariant(appId, 'App id is required')
-	const app = await getAppById(appId)
+	const app = await getAppById(appId, { request, timings })
 	if (!app) {
-		throw new Response(`App "${appId}" not found`, { status: 404 })
+		throw new Response(`App "${appId}" not found`, {
+			status: 404,
+			headers: { 'Server-Timing': getServerTimeHeader(timings) },
+		})
 	}
 	if (app.dev.type === 'script') {
-		return redirect(app.dev.baseUrl)
+		return redirect(app.dev.baseUrl, {
+			headers: { 'Server-Timing': getServerTimeHeader(timings) },
+		})
 	}
 	const htmlFile = path.join(app.fullPath, 'index.html')
 	const hasHtml = await fsExtra.pathExists(htmlFile)
@@ -31,6 +38,7 @@ export async function loader({ params }: DataFunctionArgs) {
 			headers: {
 				'Content-Length': Buffer.byteLength(html).toString(),
 				'Content-Type': 'text/html',
+				'Server-Timing': getServerTimeHeader(timings),
 			},
 		})
 	}
@@ -56,7 +64,8 @@ export async function loader({ params }: DataFunctionArgs) {
 					isProblemApp(app) ? '🏃💪' : isSolutionApp(app) ? '🏃🏁' : null,
 					`${app.stepNumber.toString().padStart(2, '0')}. ${app.title}`,
 					`${app.exerciseNumber.toString().padStart(2, '0')}. ${
-						(await getExercise(app.exerciseNumber))?.title ?? 'Unknown'
+						(await getExercise(app.exerciseNumber, { request, timings }))
+							?.title ?? 'Unknown'
 					}`,
 					workshopTitle,
 			  ]
@@ -87,6 +96,7 @@ export async function loader({ params }: DataFunctionArgs) {
 		headers: {
 			'Content-Length': Buffer.byteLength(html).toString(),
 			'Content-Type': 'text/html',
+			'Server-Timing': getServerTimeHeader(timings),
 		},
 	})
 }

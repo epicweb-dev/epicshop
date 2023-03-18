@@ -12,6 +12,7 @@ import {
 import { getProcesses } from '~/utils/process-manager.server'
 import { updateFilesSection } from '~/utils/readme-files-section.server'
 import { type loader as rootLoader } from '~/root'
+import { getServerTimeHeader, makeTimings } from '~/utils/timing.server'
 
 declare global {
 	var __inspector_open__: boolean | undefined
@@ -24,8 +25,9 @@ export const meta: V2_MetaFunction<
 	return [{ title: `👷 | ${parentsData?.root.workshopTitle}` }]
 }
 
-export async function loader() {
-	const apps = (await getApps()).filter(
+export async function loader({ request }: DataFunctionArgs) {
+	const timings = makeTimings('adminLoader')
+	const apps = (await getApps({ request, timings })).filter(
 		(a, i, ar) => ar.findIndex(b => a.name === b.name) === i,
 	)
 	const processes: Record<
@@ -49,20 +51,28 @@ export async function loader() {
 	] of getProcesses().testProcesses.entries()) {
 		testProcesses[name] = { pid: process?.pid, exitCode }
 	}
-	return json({
-		apps,
-		processes,
-		testProcesses,
-		inspectorRunning: global.__inspector_open__,
-	})
+	return json(
+		{
+			apps,
+			processes,
+			testProcesses,
+			inspectorRunning: global.__inspector_open__,
+		},
+		{
+			headers: {
+				'Server-Timing': getServerTimeHeader(timings),
+			},
+		},
+	)
 }
 
 export async function action({ request }: DataFunctionArgs) {
+	const timings = makeTimings('adminAction')
 	const formData = await request.formData()
 	const intent = formData.get('intent')
 	switch (intent) {
 		case 'set-files': {
-			const apps = (await getApps()).filter(isProblemApp)
+			const apps = (await getApps({ request, timings })).filter(isProblemApp)
 			for (const app of apps) {
 				const nextApp = await getNextExerciseApp(app)
 				const app1 =
@@ -89,7 +99,14 @@ export async function action({ request }: DataFunctionArgs) {
 					throw error
 				}
 			}
-			return json({ success: true })
+			return json(
+				{ success: true },
+				{
+					headers: {
+						'Server-Timing': getServerTimeHeader(timings),
+					},
+				},
+			)
 		}
 		case 'inspect': {
 			const inspector = await import('inspector')

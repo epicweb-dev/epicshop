@@ -1,25 +1,51 @@
-import { json } from '@remix-run/node'
+import { DataFunctionArgs, HeadersFunction, json } from '@remix-run/node'
 import { Link, useLoaderData } from '@remix-run/react'
+import { ButtonLink } from '~/components/button'
+import { getExercises, getWorkshopTitle } from '~/utils/apps.server'
 import {
-	getExampleApps,
-	getExercises,
-	getWorkshopTitle,
-} from '~/utils/apps.server'
-import { isAppRunning } from '~/utils/process-manager.server'
+	combineServerTimings,
+	getServerTimeHeader,
+	makeTimings,
+	time,
+} from '~/utils/timing.server'
 
-export async function loader() {
-	return json({
-		title: await getWorkshopTitle(),
-		exercises: (await getExercises()).map(e => ({
-			exerciseNumber: e.exerciseNumber,
-			title: e.title,
-		})),
-		examples: (await getExampleApps()).map(e => ({
-			name: e.name,
-			title: e.title,
-			isRunning: isAppRunning(e),
-		})),
-	})
+export async function loader({ request }: DataFunctionArgs) {
+	const timings = makeTimings('indexLoader')
+	const [title, exercises] = await Promise.all([
+		time(() => getWorkshopTitle(), {
+			timings,
+			type: 'getWorkshopTitle',
+			desc: 'getWorkshopTitle in index',
+		}),
+		time(() => getExercises({ request, timings }), {
+			timings,
+			type: 'getExercises',
+			desc: 'getExercises in index',
+		}),
+	])
+	return json(
+		{
+			title,
+			exercises: exercises.map(e => ({
+				exerciseNumber: e.exerciseNumber,
+				title: e.title,
+			})),
+		},
+		{
+			headers: {
+				'Cache-Control': 'public, max-age=300',
+				'Server-Timing': getServerTimeHeader(timings),
+			},
+		},
+	)
+}
+
+export const headers: HeadersFunction = ({ loaderHeaders, parentHeaders }) => {
+	const headers = {
+		'Cache-Control': loaderHeaders.get('Cache-Control') ?? '',
+		'Server-Timing': combineServerTimings(loaderHeaders, parentHeaders),
+	}
+	return headers
 }
 
 export default function Index() {
@@ -32,14 +58,14 @@ export default function Index() {
 					<ul className="flex flex-col gap-2">
 						{data.exercises.map(exercise => (
 							<li key={exercise.exerciseNumber}>
-								<Link
+								<ButtonLink
+									size="md"
 									to={`${exercise.exerciseNumber.toString().padStart(2, '0')}`}
-									className="clip-path-button mr-auto inline-flex min-w-fit max-w-xs border-2 border-black bg-black px-8 py-4 font-bold text-white outline-none hover:bg-white hover:text-black focus:bg-white focus:text-black"
 								>
 									<div className="flex flex-wrap">
 										{exercise.exerciseNumber}. {exercise.title}
 									</div>
-								</Link>
+								</ButtonLink>
 							</li>
 						))}
 					</ul>

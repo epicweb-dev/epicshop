@@ -4,9 +4,11 @@ import { RemixServer } from '@remix-run/react'
 import { Response } from '@remix-run/node'
 import type { EntryContext, Headers } from '@remix-run/node'
 import isbot from 'isbot'
-import { getApps } from './utils/apps.server'
+import { init } from './utils/apps.server'
 
 const ABORT_DELAY = 15000
+
+init()
 
 export default function handleRequest(
 	request: Request,

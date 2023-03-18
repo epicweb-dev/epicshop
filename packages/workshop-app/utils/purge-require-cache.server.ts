@@ -12,7 +12,7 @@ export const requireCachePurgeEmitter =
 const BUILD_DIR_FILE = path.join(process.cwd(), 'build/remix.js')
 
 export function purgeRequireCache() {
-	requireCachePurgeEmitter.emit('purge')
+	requireCachePurgeEmitter.emit('before:purge')
 	// purge require cache on requests for "server side HMR" this won't let
 	// you have in-memory objects between requests in development,
 	// alternatively you can set up nodemon/pm2-dev to restart the server on

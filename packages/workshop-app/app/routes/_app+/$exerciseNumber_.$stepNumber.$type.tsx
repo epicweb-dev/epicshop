@@ -1,6 +1,7 @@
 import * as Tabs from '@radix-ui/react-tabs'
 import type {
 	DataFunctionArgs,
+	HeadersFunction,
 	SerializeFrom,
 	V2_MetaFunction,
 } from '@remix-run/node'
@@ -39,6 +40,11 @@ import { getDiffCode } from '~/utils/diff.server'
 import { Mdx } from '~/utils/mdx'
 import { getErrorMessage } from '~/utils/misc'
 import { isAppRunning, isPortAvailable } from '~/utils/process-manager.server'
+import {
+	combineServerTimings,
+	getServerTimeHeader,
+	makeTimings,
+} from '~/utils/timing.server'
 import { LaunchEditor } from '../launch-editor'
 import { TestOutput } from '../test'
 
@@ -68,8 +74,12 @@ export const meta: V2_MetaFunction<
 }
 
 export async function loader({ request, params }: DataFunctionArgs) {
-	const exerciseStepApp = await requireExerciseApp(params)
-	const exercise = await requireExercise(exerciseStepApp.exerciseNumber)
+	const timings = makeTimings('exerciseStepTypeLoader')
+	const exerciseStepApp = await requireExerciseApp(params, { request, timings })
+	const exercise = await requireExercise(exerciseStepApp.exerciseNumber, {
+		request,
+		timings,
+	})
 	const reqUrl = new URL(request.url)
 
 	// delete the preview if it's the same as the type
@@ -83,13 +93,15 @@ export async function loader({ request, params }: DataFunctionArgs) {
 		throw redirect(reqUrl.toString())
 	}
 
-	const problemApp = await getExerciseApp({ ...params, type: 'problem' }).then(
-		a => (isProblemApp(a) ? a : null),
-	)
-	const solutionApp = await getExerciseApp({
-		...params,
-		type: 'solution',
-	}).then(a => (isSolutionApp(a) ? a : null))
+	const problemApp = await getExerciseApp(
+		{ ...params, type: 'problem' },
+		{ request, timings },
+	).then(a => (isProblemApp(a) ? a : null))
+	const solutionApp = await getExerciseApp(
+		{ ...params, type: 'solution' },
+		{ request, timings },
+	).then(a => (isSolutionApp(a) ? a : null))
+
 	if (!problemApp && !solutionApp) {
 		throw new Response('Not found', { status: 404 })
 	}
@@ -116,7 +128,7 @@ export async function loader({ request, params }: DataFunctionArgs) {
 		throw new Response('No app to compare to', { status: 404 })
 	}
 
-	const allApps = (await getApps())
+	const allApps = (await getApps({ request, timings }))
 		.filter((a, i, ar) => ar.findIndex(b => a.name === b.name) === i)
 		.map(a => ({
 			displayName: isExerciseStepApp(a)
@@ -129,7 +141,7 @@ export async function loader({ request, params }: DataFunctionArgs) {
 			type: a.type,
 		}))
 
-	const apps = await getApps()
+	const apps = await getApps({ request, timings })
 	const exerciseApps = apps
 		.filter(isExerciseStepApp)
 		.filter(app => app.exerciseNumber === exerciseStepApp.exerciseNumber)
@@ -137,8 +149,14 @@ export async function loader({ request, params }: DataFunctionArgs) {
 		exerciseApps[exerciseApps.length - 1]?.id === exerciseStepApp.id
 	const isFirstStep = exerciseApps[0]?.id === exerciseStepApp.id
 
-	const nextApp = await getNextExerciseApp(exerciseStepApp)
-	const prevApp = await getPrevExerciseApp(exerciseStepApp)
+	const nextApp = await getNextExerciseApp(exerciseStepApp, {
+		request,
+		timings,
+	})
+	const prevApp = await getPrevExerciseApp(exerciseStepApp, {
+		request,
+		timings,
+	})
 
 	const getDiffProp = async () => {
 		return {
@@ -146,7 +164,8 @@ export async function loader({ request, params }: DataFunctionArgs) {
 			app1: app1.name,
 			app2: app2.name,
 			diffCode: await getDiffCode(app1, app2, {
-				forceFresh: reqUrl.searchParams.has('forceFresh'),
+				request,
+				timings,
 			}).catch(e => {
 				console.error(e)
 				return null
@@ -226,9 +245,18 @@ export async function loader({ request, params }: DataFunctionArgs) {
 		{
 			headers: {
 				'Cache-Control': 'public, max-age=5',
+				'Server-Timing': getServerTimeHeader(timings),
 			},
 		},
 	)
+}
+
+export const headers: HeadersFunction = ({ loaderHeaders, parentHeaders }) => {
+	const headers = {
+		'Cache-Control': loaderHeaders.get('Cache-Control') ?? '',
+		'Server-Timing': combineServerTimings(loaderHeaders, parentHeaders),
+	}
+	return headers
 }
 
 const tabs = ['problem', 'solution', 'tests', 'diff'] as const
@@ -264,7 +292,7 @@ function useHydrated() {
 export default function ExercisePartRoute() {
 	const data = useLoaderData<typeof loader>()
 
-	const [searchParams, setSearchParams] = useSearchParams()
+	const [searchParams] = useSearchParams()
 	const touchedFilesDivRef = useRef<HTMLDivElement>(null)
 	const hydrated = useHydrated()
 	const InlineFile = useMemo(() => {
@@ -314,11 +342,6 @@ export default function ExercisePartRoute() {
 	const preview = searchParams.get('preview')
 
 	const activeTab = isValidPreview(preview) ? preview : type ? type : tabs[0]
-	function handleTabChange(value: string) {
-		if (value) {
-			return setSearchParams({ preview: value }, { preventScrollReset: true })
-		}
-	}
 
 	return (
 		<div className="flex flex-grow flex-col">
@@ -385,7 +408,8 @@ export default function ExercisePartRoute() {
 				<Tabs.Root
 					className="relative flex h-screen flex-col"
 					value={activeTab}
-					onValueChange={handleTabChange}
+					// intentially no onValueChange here because the Link will trigger the
+					// change.
 				>
 					<Tabs.List className="border-b border-gray-200">
 						{tabs.map(tab => {

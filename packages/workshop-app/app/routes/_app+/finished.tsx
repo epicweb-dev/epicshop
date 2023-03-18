@@ -1,4 +1,8 @@
-import type { V2_MetaFunction } from '@remix-run/node'
+import type {
+	DataFunctionArgs,
+	HeadersFunction,
+	V2_MetaFunction,
+} from '@remix-run/node'
 import { json } from '@remix-run/node'
 import { Link, useLoaderData } from '@remix-run/react'
 import {
@@ -10,6 +14,11 @@ import {
 
 import { type loader as rootLoader } from '~/root'
 import Loading from '~/components/loading'
+import {
+	combineServerTimings,
+	getServerTimeHeader,
+	makeTimings,
+} from '~/utils/timing.server'
 
 export const meta: V2_MetaFunction<
 	typeof loader,
@@ -18,18 +27,34 @@ export const meta: V2_MetaFunction<
 	return [{ title: `🎉 ${parentsData?.root.workshopTitle}` }]
 }
 
-export async function loader() {
-	const apps = (await getApps()).filter(isExerciseStepApp)
+export async function loader({ request }: DataFunctionArgs) {
+	const timings = makeTimings('finishedLoader')
+	const apps = (await getApps({ request, timings })).filter(isExerciseStepApp)
 	const prevApp = apps[apps.length - 1]
-	return json({
-		workshopTitle: await getWorkshopTitle(),
-		prevStepLink: prevApp
-			? {
-					to: getAppPageRoute(prevApp),
-					children: `⬅️ ${prevApp.title} (${prevApp.type})`,
-			  }
-			: null,
-	})
+	return json(
+		{
+			workshopTitle: await getWorkshopTitle(),
+			prevStepLink: prevApp
+				? {
+						to: getAppPageRoute(prevApp),
+						children: `⬅️ ${prevApp.title} (${prevApp.type})`,
+				  }
+				: null,
+		},
+		{
+			headers: {
+				'Server-Timing': getServerTimeHeader(timings),
+			},
+		},
+	)
+}
+
+export const headers: HeadersFunction = ({ loaderHeaders, parentHeaders }) => {
+	const headers = {
+		'Cache-Control': loaderHeaders.get('Cache-Control') ?? '',
+		'Server-Timing': combineServerTimings(loaderHeaders, parentHeaders),
+	}
+	return headers
 }
 
 export default function ExerciseFeedback() {

@@ -1,4 +1,5 @@
 import type {
+	HeadersFunction,
 	LinksFunction,
 	SerializeFrom,
 	V2_MetaFunction,
@@ -18,6 +19,7 @@ import appStylesheetUrl from './styles/app.css'
 import tailwindStylesheetUrl from './styles/tailwind.css'
 import { getWorkshopTitle } from './utils/apps.server'
 import clsx from 'clsx'
+import { getServerTimeHeader, makeTimings, time } from './utils/timing.server'
 
 export const links: LinksFunction = () => {
 	return [
@@ -44,16 +46,29 @@ export const meta: V2_MetaFunction = ({
 }
 
 export async function loader() {
+	const timings = makeTimings('rootLoader')
+	const workshopTitle = await time(() => getWorkshopTitle(), {
+		type: 'getWorkshopTitle',
+		desc: 'getWorkshopTitle in root',
+		timings,
+	})
 	return json(
-		{
-			workshopTitle: await getWorkshopTitle(),
-		},
+		{ workshopTitle: workshopTitle },
 		{
 			headers: {
 				'Cache-Control': 'public, max-age=300',
+				'Server-Timing': getServerTimeHeader(timings),
 			},
 		},
 	)
+}
+
+export const headers: HeadersFunction = ({ loaderHeaders }) => {
+	const headers = {
+		'Cache-Control': loaderHeaders.get('Cache-Control') ?? '',
+		'Server-Timing': loaderHeaders.get('Server-Timing') ?? '',
+	}
+	return headers
 }
 
 export default function App() {

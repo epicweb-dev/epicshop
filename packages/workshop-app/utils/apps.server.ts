@@ -1,22 +1,26 @@
-import { cachified, type CacheEntry } from 'cachified'
+import { type CacheEntry } from 'cachified'
 import fs from 'fs'
 import glob from 'glob'
 import path from 'path'
 import util from 'util'
 import { z } from 'zod'
 import {
+	cachified,
 	exampleAppCache,
-	getAppCache,
+	appsCache,
 	problemAppCache,
 	solutionAppCache,
 } from './cache.server'
 import { compileMdx } from './compile-mdx.server'
-import { watcher } from './change-tracker'
+import { getWatcher } from './change-tracker'
 import { requireCachePurgeEmitter } from './purge-require-cache.server'
+import { getServerTimeHeader, Timings } from './timing.server'
 
 const globPromise = util.promisify(glob)
 
 type Prettyify<T> = { [K in keyof T]: T[K] } & {}
+
+type CachifiedOptions = { timings?: Timings; request?: Request }
 
 type Exercise = {
 	/** a unique identifier for the exercise */
@@ -40,6 +44,7 @@ type BaseApp = {
 	/** used when displaying the list of files to match the list of apps in the file system (comes the name of the directory of the app) */
 	dirName: string
 	fullPath: string
+	relativePath: string
 	instructionsCode?: string
 	test:
 		| {
@@ -137,24 +142,33 @@ declare global {
 export const modifiedTimes = (global.__modified_times__ =
 	global.__modified_times__ ?? new Map<string, number>())
 
-async function handleFileChanges(
-	event: string,
-	filePath: string,
-): Promise<void> {
-	const apps = await getApps()
-	for (const app of apps) {
-		if (filePath.startsWith(app.fullPath)) {
-			modifiedTimes.set(app.fullPath, Date.now())
-			break
+export function init() {
+	async function handleFileChanges(
+		event: string,
+		filePath: string,
+	): Promise<void> {
+		const apps = await getApps()
+		for (const app of apps) {
+			if (filePath.startsWith(app.fullPath)) {
+				modifiedTimes.set(app.fullPath, Date.now())
+				break
+			}
 		}
 	}
+	getWatcher().on('all', handleFileChanges)
+	requireCachePurgeEmitter.on('before:purge', () =>
+		getWatcher().off('all', handleFileChanges),
+	)
 }
-watcher.on('all', handleFileChanges)
-requireCachePurgeEmitter.on('purge', () =>
-	watcher.off('all', handleFileChanges),
-)
 
-async function getForceFreshForDir(
+function getForceFresh(cacheEntry: CacheEntry | null | undefined) {
+	if (!cacheEntry) return true
+	const latestModifiedTime = Math.max(...Array.from(modifiedTimes.values()))
+	if (!latestModifiedTime) return false
+	return latestModifiedTime > cacheEntry.metadata.createdTime
+}
+
+export function getForceFreshForDir(
 	dir: string,
 	cacheEntry: CacheEntry | null | undefined,
 ) {
@@ -236,12 +250,17 @@ function extractExerciseNumber(dir: string) {
 	return Number(number)
 }
 
-export async function getExercises(): Promise<Array<Exercise>> {
+export async function getExercises({
+	timings,
+	request,
+}: CachifiedOptions = {}): Promise<Array<Exercise>> {
+	const { default: pMap } = await import('p-map')
 	const workshopRoot = getWorkshopRoot()
-	const apps = await getApps()
+	const apps = await getApps({ request, timings })
 	const exerciseDirs = await readDir(path.join(workshopRoot, 'exercises'))
-	const exercises: Array<Exercise | null> = await Promise.all(
-		exerciseDirs.map(async dirName => {
+	const exercises: Array<Exercise | null> = await pMap(
+		exerciseDirs,
+		async dirName => {
 			const exerciseNumber = extractExerciseNumber(dirName)
 			if (!exerciseNumber) return null
 			const compiledReadme = await compileReadme(
@@ -259,23 +278,34 @@ export async function getExercises(): Promise<Array<Exercise>> {
 					.filter(isSolutionApp)
 					.filter(app => app.exerciseNumber === exerciseNumber),
 			}
-		}),
+		},
+		{ concurrency: 1 },
 	)
 	return exercises.filter(typedBoolean)
 }
 
-export async function getApps(): Promise<Array<App>> {
+let appCallCount = 0
+
+export async function getApps({
+	timings,
+	request,
+}: CachifiedOptions = {}): Promise<Array<App>> {
+	const key = 'apps'
 	const apps = await cachified({
-		key: 'apps',
-		cache: getAppCache,
+		key,
+		cache: appsCache,
+		timings,
+		timingKey: `apps_${appCallCount++}`,
+		request,
 		// This entire cache is to avoid a single request getting a fresh value
 		// multiple times unnecessarily (because getApps is called many times)
-		ttl: 300,
+		ttl: 1000 * 60 * 60 * 24,
+		forceFresh: getForceFresh(await appsCache.get(key)),
 		getFreshValue: async () => {
 			const [problemApps, solutionApps, exampleApps] = await Promise.all([
-				getProblemApps(),
-				getSolutionApps(),
-				getExampleApps(),
+				getProblemApps({ request, timings }),
+				getSolutionApps({ request, timings }),
+				getExampleApps({ request, timings }),
 			])
 			const sortedApps = [...problemApps, ...solutionApps, ...exampleApps].sort(
 				(a, b) => {
@@ -324,9 +354,7 @@ async function getPkgProp<Value>(
 	defaultValue?: Value,
 ): Promise<Value> {
 	const pkg = JSON.parse(
-		(
-			await fs.promises.readFile(path.join(fullPath, 'package.json'))
-		).toString(),
+		fs.readFileSync(path.join(fullPath, 'package.json')).toString(),
 	)
 	const propPath = prop.split('.')
 	let value = pkg
@@ -448,6 +476,7 @@ async function getExampleAppFromPath(
 		name,
 		type: 'example',
 		fullPath,
+		relativePath: fullPath.replace(`${getWorkshopRoot()}${path.sep}`, ''),
 		title: compiledReadme?.title ?? name,
 		dirName,
 		instructionsCode: compiledReadme?.code,
@@ -456,25 +485,35 @@ async function getExampleAppFromPath(
 	}
 }
 
-export async function getExampleApps(): Promise<Array<ExampleApp>> {
+async function getExampleApps({
+	timings,
+	request,
+}: CachifiedOptions = {}): Promise<Array<ExampleApp>> {
+	const { default: pMap } = await import('p-map')
 	const workshopRoot = getWorkshopRoot()
-	const exampleDirs = (
-		await globPromise('examples/*', { cwd: workshopRoot })
-	).map(p => path.join(workshopRoot, p))
-	const exampleApps = await Promise.all(
-		exampleDirs.map(async (exampleDir, index) => {
+	const examplesDir = path.join(workshopRoot, 'examples')
+	const exampleDirs = (await globPromise('*', { cwd: examplesDir })).map(p =>
+		path.join(examplesDir, p),
+	)
+	const exampleApps = await pMap(
+		exampleDirs,
+		async (exampleDir, index) => {
 			const key = `${exampleDir}-${index}`
 			return cachified({
 				key,
 				cache: exampleAppCache,
 				ttl: 1000 * 60 * 60 * 24,
-				forceFresh: await getForceFreshForDir(
+				timings,
+				timingKey: exampleDir.replace(`${examplesDir}${path.sep}`, ''),
+				request,
+				forceFresh: getForceFreshForDir(
 					exampleDir,
 					await exampleAppCache.get(key),
 				),
 				getFreshValue: () => getExampleAppFromPath(exampleDir, index),
 			})
-		}),
+		},
+		{ concurrency: 1 },
 	)
 	return exampleApps.flat()
 }
@@ -501,6 +540,10 @@ async function getSolutionAppFromPath(
 		appInfo.stepNumbers.map(async stepNumber => {
 			const isMultiStep = appInfo.stepNumbers.length > 1
 			const id = `${name}-${stepNumber}`
+			const [test, dev] = await Promise.all([
+				getTestInfo({ fullPath, isMultiStep, stepNumber, id }),
+				getDevInfo({ fullPath, portNumber, id }),
+			])
 			return {
 				id,
 				name,
@@ -510,34 +553,43 @@ async function getSolutionAppFromPath(
 				stepNumber,
 				dirName,
 				fullPath,
+				relativePath: fullPath.replace(`${getWorkshopRoot()}${path.sep}`, ''),
 				instructionsCode: compiledReadme?.code,
-				test: await getTestInfo({ fullPath, isMultiStep, stepNumber, id }),
-				dev: await getDevInfo({ fullPath, portNumber, id }),
+				test,
+				dev,
 			}
 		}),
 	)
 }
 
-export async function getSolutionApps(): Promise<Array<SolutionApp>> {
+async function getSolutionApps({
+	timings,
+	request,
+}: CachifiedOptions = {}): Promise<Array<SolutionApp>> {
+	const { default: pMap } = await import('p-map')
 	const workshopRoot = getWorkshopRoot()
+	const exercisesDir = path.join(workshopRoot, 'exercises')
 	const solutionDirs = (
-		await globPromise('exercises/**/*solution*', {
-			cwd: workshopRoot,
-		})
-	).map(p => path.join(workshopRoot, p))
-	const solutionApps = await Promise.all(
-		solutionDirs.map(async solutionDir => {
+		await globPromise('**/*solution*', { cwd: exercisesDir })
+	).map(p => path.join(exercisesDir, p))
+	const solutionApps = await pMap(
+		solutionDirs,
+		async solutionDir => {
 			return cachified({
 				key: solutionDir,
 				cache: solutionAppCache,
+				timings,
+				timingKey: solutionDir.replace(`${exercisesDir}${path.sep}`, ''),
+				request,
 				ttl: 1000 * 60 * 60 * 24,
-				forceFresh: await getForceFreshForDir(
+				forceFresh: getForceFreshForDir(
 					solutionDir,
 					await solutionAppCache.get(solutionDir),
 				),
 				getFreshValue: () => getSolutionAppFromPath(solutionDir),
 			})
-		}),
+		},
+		{ concurrency: 1 },
 	)
 	return solutionApps.filter(typedBoolean).flat()
 }
@@ -570,6 +622,10 @@ async function getProblemAppFromPath(
 			})
 			const solutionName = solutionDir ? await getAppName(solutionDir) : null
 			const solutionId = solutionName ? `${solutionName}-${stepNumber}` : null
+			const [test, dev] = await Promise.all([
+				getTestInfo({ fullPath, isMultiStep, stepNumber, id }),
+				getDevInfo({ fullPath, portNumber, id }),
+			])
 			return {
 				id,
 				solutionId,
@@ -580,55 +636,74 @@ async function getProblemAppFromPath(
 				stepNumber,
 				dirName,
 				fullPath,
+				relativePath: fullPath.replace(`${getWorkshopRoot()}${path.sep}`, ''),
 				instructionsCode: compiledReadme?.code,
-				test: await getTestInfo({ fullPath, isMultiStep, stepNumber, id }),
-				dev: await getDevInfo({ fullPath, portNumber, id }),
+				test,
+				dev,
 			}
 		}),
 	)
 }
 
-export async function getProblemApps(): Promise<Array<ProblemApp>> {
+async function getProblemApps({
+	timings,
+	request,
+}: CachifiedOptions = {}): Promise<Array<ProblemApp>> {
+	const { default: pMap } = await import('p-map')
 	const workshopRoot = getWorkshopRoot()
+	const exercisesDir = path.join(workshopRoot, 'exercises')
 	const problemDirs = (
-		await globPromise('exercises/**/*problem*', {
-			cwd: workshopRoot,
-		})
-	).map(p => path.join(workshopRoot, p))
-	const problemApps = await Promise.all(
-		problemDirs.map(async problemDir => {
+		await globPromise('**/*problem*', { cwd: exercisesDir })
+	).map(p => path.join(exercisesDir, p))
+	const problemApps = await pMap(
+		problemDirs,
+		async problemDir => {
 			return cachified({
 				key: problemDir,
 				cache: problemAppCache,
+				timings,
+				timingKey: problemDir.replace(`${exercisesDir}${path.sep}`, ''),
+				request,
 				ttl: 1000 * 60 * 60 * 24,
-				forceFresh: await getForceFreshForDir(
+				forceFresh: getForceFreshForDir(
 					problemDir,
 					await problemAppCache.get(problemDir),
 				),
 				getFreshValue: () => getProblemAppFromPath(problemDir),
 			})
-		}),
+		},
+		{ concurrency: 1 },
 	)
 	return problemApps.filter(typedBoolean).flat()
 }
 
-export async function getExercise(exerciseNumber: number | string) {
-	const exercises = await getExercises()
+export async function getExercise(
+	exerciseNumber: number | string,
+	{ request, timings }: CachifiedOptions = {},
+) {
+	const exercises = await getExercises({ request, timings })
 	return exercises.find(s => s.exerciseNumber === Number(exerciseNumber))
 }
 
-export async function requireExercise(exerciseNumber: number | string) {
-	const exercise = await getExercise(exerciseNumber)
+export async function requireExercise(
+	exerciseNumber: number | string,
+	{ request, timings }: CachifiedOptions = {},
+) {
+	const exercise = await getExercise(exerciseNumber, { request, timings })
 	if (!exercise) {
-		throw new Response('Not found', { status: 404 })
+		throw new Response('Not found', {
+			status: 404,
+			headers: { 'Server-Timing': getServerTimeHeader(timings) },
+		})
 	}
 	return exercise
 }
 
 export async function requireExerciseApp(
 	params: Parameters<typeof getExerciseApp>[0],
+	{ request, timings }: CachifiedOptions = {},
 ) {
-	const app = await getExerciseApp(params)
+	const app = await getExerciseApp(params, { request, timings })
 	if (!app) {
 		throw new Response('Not found', { status: 404 })
 	}
@@ -641,18 +716,21 @@ const exerciseAppParams = z.object({
 	stepNumber: z.coerce.number().finite(),
 })
 
-export async function getExerciseApp(params: {
-	type?: string
-	exerciseNumber?: string
-	stepNumber?: string
-}) {
+export async function getExerciseApp(
+	params: {
+		type?: string
+		exerciseNumber?: string
+		stepNumber?: string
+	},
+	{ request, timings }: CachifiedOptions = {},
+) {
 	const result = exerciseAppParams.safeParse(params)
 	if (!result.success) {
 		return null
 	}
 	const { type, exerciseNumber, stepNumber } = result.data
 
-	const apps = (await getApps()).filter(isExerciseStepApp)
+	const apps = (await getApps({ request, timings })).filter(isExerciseStepApp)
 	const app = apps.find(app => {
 		if (isExampleApp(app)) return false
 		return (
@@ -667,18 +745,27 @@ export async function getExerciseApp(params: {
 	return app
 }
 
-export async function getAppByName(name: string) {
-	const apps = await getApps()
+export async function getAppByName(
+	name: string,
+	{ request, timings }: CachifiedOptions = {},
+) {
+	const apps = await getApps({ request, timings })
 	return apps.find(a => a.name === name)
 }
 
-export async function getAppById(id: string) {
-	const apps = await getApps()
+export async function getAppById(
+	id: string,
+	{ request, timings }: CachifiedOptions = {},
+) {
+	const apps = await getApps({ request, timings })
 	return apps.find(a => a.id === id)
 }
 
-export async function getNextExerciseApp(app: ExerciseStepApp) {
-	const apps = (await getApps()).filter(isExerciseStepApp)
+export async function getNextExerciseApp(
+	app: ExerciseStepApp,
+	{ request, timings }: CachifiedOptions = {},
+) {
+	const apps = (await getApps({ request, timings })).filter(isExerciseStepApp)
 	const index = apps.findIndex(a => a.id === app.id)
 	if (index === -1) {
 		throw new Error(`Could not find app ${app.id}`)
@@ -687,8 +774,11 @@ export async function getNextExerciseApp(app: ExerciseStepApp) {
 	return nextApp ? nextApp : null
 }
 
-export async function getPrevExerciseApp(app: ExerciseStepApp) {
-	const apps = (await getApps()).filter(isExerciseStepApp)
+export async function getPrevExerciseApp(
+	app: ExerciseStepApp,
+	{ request, timings }: CachifiedOptions = {},
+) {
+	const apps = (await getApps({ request, timings })).filter(isExerciseStepApp)
 
 	const index = apps.findIndex(a => a.id === app.id)
 	if (index === -1) {

@@ -1,13 +1,15 @@
 import LRU from 'lru-cache'
-import type { CacheEntry } from 'cachified'
+import * as C from 'cachified'
+import { CacheEntry, verboseReporter } from 'cachified'
 import { lruCacheAdapter } from 'cachified'
 import type { App, ExampleApp, ProblemApp, SolutionApp } from './apps.server'
+import { time, type Timings } from './timing.server'
 
 declare global {
 	var __solution_app_cache__: ReturnType<typeof getSolutionAppCache>
 	var __problem_app_cache__: ReturnType<typeof getProblemAppCache>
 	var __example_app_cache__: ReturnType<typeof getExampleAppCache>
-	var __get_apps_cache__: ReturnType<typeof getGetAppsCache>
+	var __get_apps_cache__: ReturnType<typeof getAppsCache>
 	var __diff_code_cache__: ReturnType<typeof getDiffCodeCache>
 	var __compiled_markdown_cache__: ReturnType<typeof getCompiledMarkdownCache>
 }
@@ -21,8 +23,8 @@ export const problemAppCache = (global.__problem_app_cache__ =
 export const exampleAppCache = (global.__example_app_cache__ =
 	global.__example_app_cache__ ?? getExampleAppCache())
 
-export const getAppCache = (global.__get_apps_cache__ =
-	global.__get_apps_cache__ ?? getGetAppsCache())
+export const appsCache = (global.__get_apps_cache__ =
+	global.__get_apps_cache__ ?? getAppsCache())
 
 export const diffCodeCache = (global.__diff_code_cache__ =
 	global.__diff_code_cache__ ?? getDiffCodeCache())
@@ -31,27 +33,109 @@ export const compiledMarkdownCache = (global.__compiled_markdown_cache__ =
 	global.__compiled_markdown_cache__ ?? getCompiledMarkdownCache())
 
 function getSolutionAppCache() {
-	return lruCacheAdapter(
-		new LRU<string, CacheEntry<SolutionApp>>({ max: 1000 }),
-	)
+	const cache = new LRU<string, CacheEntry<SolutionApp>>({ max: 1000 })
+	// @ts-expect-error it's fine
+	cache.name = 'SolutionAppCache'
+	return lruCacheAdapter(cache)
 }
 
 function getProblemAppCache() {
-	return lruCacheAdapter(new LRU<string, CacheEntry<ProblemApp>>({ max: 1000 }))
+	const cache = new LRU<string, CacheEntry<ProblemApp>>({ max: 1000 })
+	// @ts-expect-error it's fine
+	cache.name = 'ProblemAppCache'
+	return lruCacheAdapter(cache)
 }
 
 function getExampleAppCache() {
-	return lruCacheAdapter(new LRU<string, CacheEntry<ExampleApp>>({ max: 1000 }))
+	const cache = new LRU<string, CacheEntry<ExampleApp>>({ max: 1000 })
+	// @ts-expect-error it's fine
+	cache.name = 'ExampleAppCache'
+	return lruCacheAdapter(cache)
 }
 
-function getGetAppsCache() {
-	return lruCacheAdapter(new LRU<string, CacheEntry<App>>({ max: 1000 }))
+function getAppsCache() {
+	const cache = new LRU<string, CacheEntry<App>>({ max: 1000 })
+	// @ts-expect-error it's fine
+	cache.name = 'AppsCache'
+	return lruCacheAdapter(cache)
 }
 
 function getDiffCodeCache() {
-	return lruCacheAdapter(new LRU<string, CacheEntry<string>>({ max: 1000 }))
+	const cache = new LRU<string, CacheEntry<string>>({ max: 1000 })
+	// @ts-expect-error it's fine
+	cache.name = 'DiffCodeCache'
+	return lruCacheAdapter(cache)
 }
 
 function getCompiledMarkdownCache() {
-	return lruCacheAdapter(new LRU<string, CacheEntry<string>>({ max: 1000 }))
+	const cache = new LRU<string, CacheEntry<string>>({ max: 1000 })
+	// @ts-expect-error it's fine
+	cache.name = 'CompiledMarkdownCache'
+	return lruCacheAdapter(cache)
+}
+
+export async function cachified<Value>({
+	request,
+	timings,
+	key,
+	timingKey = key.length > 18 ? key.slice(0, 7) + '...' + key.slice(-8) : key,
+	...options
+}: Omit<C.CachifiedOptions<Value>, 'forceFresh'> & {
+	request?: Request
+	timings?: Timings
+	forceFresh?: boolean | string
+	timingKey?: string
+}): Promise<Value> {
+	let cachifiedResolved = false
+	const forceFresh = await shouldForceFresh({
+		forceFresh: options.forceFresh,
+		request,
+		key,
+	})
+	const cachifiedPromise = C.cachified({
+		...options,
+		reporter: process.env.KCDSHOP_DEBUG_CACHE ? verboseReporter() : undefined,
+		key,
+		forceFresh,
+		getFreshValue: async context => {
+			// if we've already retrieved the cached value, then this may be called
+			// after the response has already been sent so there's no point in timing
+			// how long this is going to take
+			if (!cachifiedResolved && timings) {
+				return time(() => options.getFreshValue(context), {
+					timings,
+					type: `getFreshValue:${timingKey}`,
+					desc: `FRESH ${timingKey}`,
+				})
+			}
+			return options.getFreshValue(context)
+		},
+	})
+	const result = await time(cachifiedPromise, {
+		timings,
+		type: `cache:${timingKey}`,
+		desc: `CACHE ${timingKey}`,
+	})
+	cachifiedResolved = true
+	return result
+}
+
+export async function shouldForceFresh({
+	forceFresh,
+	request,
+	key,
+}: {
+	forceFresh?: boolean | string
+	request?: Request
+	key: string
+}) {
+	if (typeof forceFresh === 'boolean') return forceFresh
+	if (typeof forceFresh === 'string') return forceFresh.split(',').includes(key)
+
+	if (!request) return false
+	const fresh = new URL(request.url).searchParams.get('fresh')
+	if (typeof fresh !== 'string') return false
+	if (fresh === '') return true
+
+	return fresh.split(',').includes(key)
 }

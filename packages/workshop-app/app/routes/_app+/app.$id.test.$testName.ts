@@ -11,26 +11,39 @@ import {
 	isProblemApp,
 	isSolutionApp,
 } from '~/utils/apps.server'
+import { getServerTimeHeader, makeTimings } from '~/utils/timing.server'
 
 export async function loader({ params, request }: DataFunctionArgs) {
+	const timings = makeTimings('app_test_loader')
 	const { id: appId, testName } = params
 	invariant(appId, 'App id is required')
 	invariant(testName, 'Test name is required')
-	const app = await getAppById(appId)
+	const app = await getAppById(appId, { request, timings })
 	if (!app) {
-		throw new Response(`App "${appId}" not found`, { status: 404 })
+		throw new Response(`App "${appId}" not found`, {
+			status: 404,
+			headers: { 'Server-Timing': getServerTimeHeader(timings) },
+		})
 	}
 	if (app.test.type !== 'browser') {
-		return redirect(app.dev.baseUrl)
+		return redirect(app.dev.baseUrl, {
+			headers: { 'Server-Timing': getServerTimeHeader(timings) },
+		})
 	}
 
 	const testFile = app.test.testFiles.find(file => file === testName)
 	if (!testFile) {
-		throw new Response(`Test "${testName}" not found`, { status: 404 })
+		throw new Response(`Test "${testName}" not found`, {
+			status: 404,
+			headers: { 'Server-Timing': getServerTimeHeader(timings) },
+		})
 	}
 	if (!/(js|ts|tsx)$/.test(testFile)) {
 		// TODO: support other test file types?
-		throw new Response(`Test "${testName}" is not a script`, { status: 400 })
+		throw new Response(`Test "${testName}" is not a script`, {
+			status: 400,
+			headers: { 'Server-Timing': getServerTimeHeader(timings) },
+		})
 	}
 	const testFileAppId = isProblemApp(app) ? app.solutionId : null
 	const testFileQueryString = testFileAppId
@@ -89,6 +102,7 @@ import(${JSON.stringify(testScriptPath)}).then(
 			headers: {
 				'Content-Length': Buffer.byteLength(testableHtml).toString(),
 				'Content-Type': 'text/html',
+				'Server-Timing': getServerTimeHeader(timings),
 			},
 		})
 	}
@@ -106,7 +120,8 @@ import(${JSON.stringify(testScriptPath)}).then(
 					isProblemApp(app) ? '🧪💪' : isSolutionApp(app) ? '🧪🏁' : null,
 					`${app.stepNumber.toString().padStart(2, '0')}. ${app.title}`,
 					`${app.exerciseNumber.toString().padStart(2, '0')}. ${
-						(await getExercise(app.exerciseNumber))?.title ?? 'Unknown'
+						(await getExercise(app.exerciseNumber, { request, timings }))
+							?.title ?? 'Unknown'
 					}`,
 					workshopTitle,
 			  ]
@@ -135,6 +150,7 @@ import(${JSON.stringify(testScriptPath)}).then(
 		headers: {
 			'Content-Length': Buffer.byteLength(html).toString(),
 			'Content-Type': 'text/html',
+			'Server-Timing': getServerTimeHeader(timings),
 		},
 	})
 }

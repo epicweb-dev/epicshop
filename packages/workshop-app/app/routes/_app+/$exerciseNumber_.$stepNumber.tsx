@@ -1,15 +1,21 @@
-import type { DataFunctionArgs } from '@remix-run/node'
+import type { DataFunctionArgs, HeadersFunction } from '@remix-run/node'
 import { json } from '@remix-run/node'
 import { isRouteErrorResponse, Outlet, useRouteError } from '@remix-run/react'
 import invariant from 'tiny-invariant'
 import Navigation from '~/components/navigation'
 import { getExercises, getWorkshopTitle } from '~/utils/apps.server'
 import { getErrorMessage } from '~/utils/misc'
+import {
+	combineServerTimings,
+	getServerTimeHeader,
+	makeTimings,
+} from '~/utils/timing.server'
 
-export async function loader({ params }: DataFunctionArgs) {
+export async function loader({ request, params }: DataFunctionArgs) {
+	const timings = makeTimings('stepLoader')
 	invariant(params.exerciseNumber, 'exerciseNumber is required')
 	const [exercises, workshopTitle] = await Promise.all([
-		getExercises(),
+		getExercises({ request, timings }),
 		getWorkshopTitle(),
 	])
 	const exercise = exercises.find(
@@ -32,10 +38,19 @@ export async function loader({ params }: DataFunctionArgs) {
 		{
 			headers: {
 				'Cache-Control': 'public, max-age=300',
+				'Server-Timing': getServerTimeHeader(timings),
 			},
 		},
 	)
 	return result
+}
+
+export const headers: HeadersFunction = ({ loaderHeaders, parentHeaders }) => {
+	const headers = {
+		'Cache-Control': loaderHeaders.get('Cache-Control') ?? '',
+		'Server-Timing': combineServerTimings(loaderHeaders, parentHeaders),
+	}
+	return headers
 }
 
 export default function StepRoute() {

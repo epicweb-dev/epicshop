@@ -1,4 +1,8 @@
-import type { DataFunctionArgs, V2_MetaFunction } from '@remix-run/node'
+import type {
+	DataFunctionArgs,
+	HeadersFunction,
+	V2_MetaFunction,
+} from '@remix-run/node'
 import { json } from '@remix-run/node'
 import {
 	isRouteErrorResponse,
@@ -7,17 +11,18 @@ import {
 	useRouteError,
 } from '@remix-run/react'
 import invariant from 'tiny-invariant'
+import { ButtonLink } from '~/components/button'
+import Navigation from '~/components/navigation'
+import { type loader as rootLoader } from '~/root'
+import { getExercises, getWorkshopTitle } from '~/utils/apps.server'
 import { Mdx } from '~/utils/mdx'
 import { getErrorMessage } from '~/utils/misc'
-import { getExercise } from '~/utils/apps.server'
-import { type loader as rootLoader } from '~/root'
-import Navigation from '~/components/navigation'
 import {
-	getExampleApps,
-	getExercises,
-	getWorkshopTitle,
-} from '~/utils/apps.server'
-import { isAppRunning } from '~/utils/process-manager.server'
+	combineServerTimings,
+	getServerTimeHeader,
+	makeTimings,
+	time,
+} from '~/utils/timing.server'
 
 export const meta: V2_MetaFunction<
 	typeof loader,
@@ -34,11 +39,20 @@ export const meta: V2_MetaFunction<
 	]
 }
 
-export async function loader({ params }: DataFunctionArgs) {
+export async function loader({ params, request }: DataFunctionArgs) {
+	const timings = makeTimings('exerciseNumberLoader')
 	invariant(params.exerciseNumber, 'exerciseNumber is required')
 	const [exercises, workshopTitle] = await Promise.all([
-		getExercises(),
-		getWorkshopTitle(),
+		time(() => getExercises({ request, timings }), {
+			timings,
+			type: 'getExercises',
+			desc: 'getExercises in $exerciseNumber.tsx',
+		}),
+		time(() => getWorkshopTitle(), {
+			timings,
+			type: 'getWorkshopTitle',
+			desc: 'getWorkshopTitle in $exerciseNumber.tsx',
+		}),
 	])
 	const exercise = exercises.find(
 		e => e.exerciseNumber === Number(params.exerciseNumber),
@@ -60,10 +74,19 @@ export async function loader({ params }: DataFunctionArgs) {
 		},
 		{
 			headers: {
+				'Server-Timing': getServerTimeHeader(timings),
 				'Cache-Control': 'public, max-age=300',
 			},
 		},
 	)
+}
+
+export const headers: HeadersFunction = ({ loaderHeaders, parentHeaders }) => {
+	const headers = {
+		'Cache-Control': loaderHeaders.get('Cache-Control') ?? '',
+		'Server-Timing': combineServerTimings(loaderHeaders, parentHeaders),
+	}
+	return headers
 }
 
 export default function ExerciseNumberRoute() {
@@ -78,13 +101,11 @@ export default function ExerciseNumberRoute() {
 						<h1 className="text-[6vw] font-extrabold leading-none">
 							{data.exercise.title}
 						</h1>
-						<Link
-							to="01/problem"
-							prefetch="intent"
-							className="clip-path-button mt-8 inline-flex bg-black px-8 py-4 text-xl font-bold text-white"
-						>
-							Start Learning
-						</Link>
+						<div className="mt-8">
+							<ButtonLink to="01/problem" prefetch="intent" size="lg">
+								Start Learning
+							</ButtonLink>
+						</div>
 					</div>
 					<div className="prose sm:prose-lg mt-16 w-full max-w-none border-t border-gray-200 px-10 pt-16">
 						{data.exercise.instructionsCode ? (
@@ -97,13 +118,9 @@ export default function ExerciseNumberRoute() {
 						)}
 					</div>
 					<div className="flex w-full items-center p-10 pb-16">
-						<Link
-							to="01/problem"
-							prefetch="intent"
-							className="clip-path-button mt-8 inline-flex bg-black px-8 py-4 text-xl font-bold text-white"
-						>
+						<ButtonLink to="01/problem" prefetch="intent" size="lg">
 							Start Learning
-						</Link>
+						</ButtonLink>
 					</div>
 				</article>
 			</div>

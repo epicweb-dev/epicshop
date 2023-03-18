@@ -1,4 +1,8 @@
-import type { DataFunctionArgs, V2_MetaFunction } from '@remix-run/node'
+import type {
+	DataFunctionArgs,
+	HeadersFunction,
+	V2_MetaFunction,
+} from '@remix-run/node'
 import { json } from '@remix-run/node'
 import { Link, useLoaderData } from '@remix-run/react'
 import invariant from 'tiny-invariant'
@@ -11,6 +15,11 @@ import {
 } from '~/utils/apps.server'
 import { type loader as rootLoader } from '~/root'
 import Loading from '~/components/loading'
+import {
+	combineServerTimings,
+	getServerTimeHeader,
+	makeTimings,
+} from '~/utils/timing.server'
 
 export const meta: V2_MetaFunction<
 	typeof loader,
@@ -27,16 +36,23 @@ export const meta: V2_MetaFunction<
 	]
 }
 
-export async function loader({ params }: DataFunctionArgs) {
+export async function loader({ params, request }: DataFunctionArgs) {
+	const timings = makeTimings('exerciseFeedbackLoader')
 	invariant(params.exerciseNumber, 'exerciseNumber is required')
-	const exercise = await getExercise(params.exerciseNumber)
+	const exercise = await getExercise(params.exerciseNumber, {
+		timings,
+		request,
+	})
 	if (!exercise) {
 		throw new Response('Not found', { status: 404 })
 	}
 	const workshopTitle = await getWorkshopTitle()
-	const nextExercise = await getExercise(exercise.exerciseNumber + 1)
+	const nextExercise = await getExercise(exercise.exerciseNumber + 1, {
+		timings,
+		request,
+	})
 
-	const apps = await getApps()
+	const apps = await getApps({ request, timings })
 	const exerciseApps = apps
 		.filter(isExerciseStepApp)
 		.filter(app => app.exerciseNumber === exercise.exerciseNumber)
@@ -64,10 +80,19 @@ export async function loader({ params }: DataFunctionArgs) {
 		},
 		{
 			headers: {
+				'Server-Timing': getServerTimeHeader(timings),
 				'Cache-Control': 'public, max-age=300',
 			},
 		},
 	)
+}
+
+export const headers: HeadersFunction = ({ loaderHeaders, parentHeaders }) => {
+	const headers = {
+		'Cache-Control': loaderHeaders.get('Cache-Control') ?? '',
+		'Server-Timing': combineServerTimings(loaderHeaders, parentHeaders),
+	}
+	return headers
 }
 
 export default function ExerciseFeedback() {

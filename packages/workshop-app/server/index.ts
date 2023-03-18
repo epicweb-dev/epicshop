@@ -8,7 +8,7 @@ import closeWithGrace from 'close-with-grace'
 import ws from 'ws'
 import { createRequestHandler } from '@remix-run/express'
 import { getApps, getWorkshopRoot } from '../utils/apps.server'
-import { watcher } from '../utils/change-tracker'
+import { getWatcher } from '../utils/change-tracker'
 import { purgeRequireCache } from '../utils/purge-require-cache.server'
 
 async function start() {
@@ -16,6 +16,7 @@ async function start() {
 	import('globby')
 	import('execa')
 	import('get-port')
+	import('p-map')
 	getApps()
 
 	const { default: getPort, portNumbers } = await import('get-port')
@@ -93,7 +94,7 @@ ${chalk.bold('Press Ctrl+C to stop')}
 
 	const wss = new ws.Server({ server, path: '/__ws' })
 
-	watcher.on('all', (event, filePath, stats) => {
+	getWatcher().on('all', (event, filePath, stats) => {
 		for (const client of wss.clients) {
 			if (client.readyState === ws.OPEN) {
 				client.send(
