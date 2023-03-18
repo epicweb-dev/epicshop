@@ -15,7 +15,7 @@ import {
 	useSearchParams,
 } from '@remix-run/react'
 import clsx from 'clsx'
-import { useEffect, useMemo, useRef, useState } from 'react'
+import { PropsWithChildren, useEffect, useMemo, useRef, useState } from 'react'
 import { createPortal } from 'react-dom'
 import { useParams } from 'react-router'
 import { Diff } from '~/components/diff'
@@ -312,20 +312,20 @@ export default function ExercisePartRoute() {
 			file,
 			type = 'problem',
 			children = <code>{file}</code>,
-		}: {
+			...props
+		}: PropsWithChildren<typeof LaunchEditor> & {
 			file: string
 			type?: 'solution' | 'problem'
-			children?: React.ReactElement
 		}) {
 			const app = data[type]
 			return app ? (
 				<div className="inline-block">
-					<LaunchEditor appFile={file} appName={app.name}>
+					<LaunchEditor appFile={file} appName={app.name} {...props}>
 						{children}
 					</LaunchEditor>
 				</div>
 			) : (
-				children
+				<>children</>
 			)
 		}
 	}, [data])

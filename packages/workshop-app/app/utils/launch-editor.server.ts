@@ -311,7 +311,10 @@ export async function launchEditor(
 	// of valid file names but should cover almost all of them in practice.
 	if (
 		process.platform === 'win32' &&
-		!WINDOWS_FILE_NAME_WHITELIST.test(fileName.trim())
+		!WINDOWS_FILE_NAME_WHITELIST.test(
+			// replacing characters we know are fine (because heck if I'm going to edit that regex above 🙃)
+			fileName.replace(/\+|\$|\[|\]/g, '').trim(),
+		)
 	) {
 		return {
 			status: 'error',
