@@ -299,19 +299,21 @@ export default function ExercisePartRoute() {
 		return function InlineFile({
 			file,
 			type = 'problem',
+			children = <code>{file}</code>,
 		}: {
 			file: string
 			type?: 'solution' | 'problem'
+			children?: React.ReactElement
 		}) {
 			const app = data[type]
 			return app ? (
 				<div className="inline-block">
 					<LaunchEditor appFile={file} appName={app.name}>
-						<code>{file}</code>
+						{children}
 					</LaunchEditor>
 				</div>
 			) : (
-				<code>{file}</code>
+				children
 			)
 		}
 	}, [data])

@@ -3,6 +3,11 @@
 This is some basic route stuff. Here's the problem you're supposed to solve for
 this exercise. 😌
 
+Sup: `this is some code`
+
+<InlineFile file="app/entry.server.tsx">Click here to open
+<code>entry.server.tsx</code></InlineFile>
+
 <TouchedFiles>
   <div id="files">
     <ul>

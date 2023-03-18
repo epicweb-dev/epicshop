@@ -1,17 +1,5 @@
 @import './touched-files.css';
 
-html[data-theme='dark'] {
-	filter: invert(1);
-	img,
-	video,
-	picture,
-	pre,
-	button:before,
-	span[role='img'] {
-		filter: invert(1);
-	}
-}
-
 body {
 	tab-size: 2ch;
 }
@@ -28,7 +16,7 @@ body {
 
 /* code syntax highlighting */
 /* dark is default: */
-pre {
+:root {
 	--base00: #011627; /* editor background */
 	--base01: #2d2d2d; /* unused (currently) */
 	--base02: #424242; /* unused (currently) */
@@ -47,7 +35,8 @@ pre {
 	--base0F: #d3423e; /* "Embedded" (whatever that means) */
 }
 
-.light pre {
+:root [data-theme='light'],
+:root[data-theme='light'] {
 	--base00: #f3f3f3; /* editor background */
 	--base01: #e0e0e0; /* unused (currently) */
 	--base02: #d6d6d6; /* unused (currently) */
@@ -120,6 +109,13 @@ pre {
 	[data-line-number]:before
 	.codeblock-line[data-highlight='true']:before {
 	background: var(--base0E);
+}
+
+.prose *:not(pre) code {
+	background: var(--base00);
+	color: var(--base05);
+	padding: 0.2rem 0.4rem;
+	border-radius: 0.2rem;
 }
 
 .prose pre[data-add]:not([data-lang='sh']) [data-diff-line-number]:before,
