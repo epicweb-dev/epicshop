@@ -351,7 +351,11 @@ export default function ExercisePartRoute() {
 	}, [])
 
 	const LinkToApp = useMemo(() => {
-		return function LinkToApp({ to: appTo, ...props }: LinkProps) {
+		return function LinkToApp({
+			to: appTo,
+			children = <code>{appTo.toString()}</code>,
+			...props
+		}: LinkProps) {
 			const to = `?${withParam(
 				searchParams,
 				'pathname',
