@@ -1,6 +1,9 @@
 const dotenv = require('dotenv')
+const path = require('path')
 
-dotenv.config({ path: process.env.KCDSHOP_CONTEXT_CWD ?? process.cwd() })
+dotenv.config({
+	path: path.join(process.env.KCDSHOP_CONTEXT_CWD ?? process.cwd(), '.env'),
+})
 
 if (process.env.NODE_ENV === 'production') {
 	require('./build/server')
