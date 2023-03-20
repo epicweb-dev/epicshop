@@ -375,7 +375,9 @@ export default function ExercisePartRoute() {
 								appTo.toString(),
 							)
 						}}
-					/>
+					>
+						{children}
+					</Link>
 					{href ? (
 						<a
 							href={href}
