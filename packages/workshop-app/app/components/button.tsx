@@ -19,7 +19,7 @@ export function getButtonClassName({
 	varient: 'primary' | 'big' | 'mono'
 }) {
 	const baseClassName =
-		'clip-path-button inline-flex border-2 border-black bg-black text-white outline-none hover:bg-white hover:text-black focus:bg-white focus:text-black'
+		'clip-path-button inline-flex bg-black text-white outline-none hover:bg-white hover:text-black focus:bg-white focus:text-black'
 	const primaryClassName = 'px-8 py-4 font-bold'
 	const bigClassName = 'px-8 py-4 text-xl font-bold'
 	const monoClassName = 'px-8 py-4 font-mono text-sm uppercase'
@@ -46,7 +46,7 @@ export function Button({
 		idle: null,
 	}[status]
 	return (
-		<div className="clip-path-button-outer bg-black">
+		<div className="clip-path-button-outer border-2 border-black bg-black w-fit">
 			<button
 				{...props}
 				className={clsx(
@@ -69,7 +69,7 @@ export function ButtonLink({
 	Parameters<typeof getButtonClassName>[0]) {
 	// eslint-disable-next-line jsx-a11y/anchor-has-content
 	return (
-		<div className="clip-path-button-outer bg-black">
+		<div className="clip-path-button-outer border-2 border-black bg-black w-fit">
 			<Link
 				{...props}
 				className={clsx(props.className, getButtonClassName({ varient }))}

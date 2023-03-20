@@ -6,12 +6,10 @@ body {
 
 .clip-path-button-outer {
 	clip-path: polygon(0 0, 100% 0, 100% 75%, 90% 100%, 0 100%);
-	max-width: max-content;
-	padding: 1px;
 }
 
 .clip-path-button {
-	clip-path: polygon(0 0, 100% 0, 100% 72%, 89% 100%, 0 100%);
+	clip-path: polygon(0 0, 100% 0, 100% 75%, 90.5% 100%, 0 100%);
 }
 
 .orientation-sideways {
