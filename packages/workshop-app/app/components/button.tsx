@@ -46,17 +46,19 @@ export function Button({
 		idle: null,
 	}[status]
 	return (
-		<button
-			{...props}
-			className={clsx(
-				props.className,
-				getButtonClassName({ varient }),
-				'flex justify-center gap-4',
-			)}
-		>
-			<div>{props.children}</div>
-			{companion}
-		</button>
+		<div className="clip-path-button-outer bg-black">
+			<button
+				{...props}
+				className={clsx(
+					props.className,
+					getButtonClassName({ varient }),
+					'flex justify-center gap-4',
+				)}
+			>
+				<div>{props.children}</div>
+				{companion}
+			</button>
+		</div>
 	)
 }
 
@@ -67,9 +69,11 @@ export function ButtonLink({
 	Parameters<typeof getButtonClassName>[0]) {
 	// eslint-disable-next-line jsx-a11y/anchor-has-content
 	return (
-		<Link
-			{...props}
-			className={clsx(props.className, getButtonClassName({ varient }))}
-		/>
+		<div className="clip-path-button-outer bg-black">
+			<Link
+				{...props}
+				className={clsx(props.className, getButtonClassName({ varient }))}
+			/>
+		</div>
 	)
 }
