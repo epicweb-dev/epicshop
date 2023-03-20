@@ -164,8 +164,8 @@ export function init() {
 function getForceFresh(cacheEntry: CacheEntry | null | undefined) {
 	if (!cacheEntry) return true
 	const latestModifiedTime = Math.max(...Array.from(modifiedTimes.values()))
-	if (!latestModifiedTime) return false
-	return latestModifiedTime > cacheEntry.metadata.createdTime
+	if (!latestModifiedTime) return undefined
+	return latestModifiedTime > cacheEntry.metadata.createdTime ? true : undefined
 }
 
 export function getForceFreshForDir(
@@ -177,8 +177,8 @@ export function getForceFreshForDir(
 	}
 	if (!cacheEntry) return true
 	const modifiedTime = modifiedTimes.get(dir)
-	if (!modifiedTime) return false
-	return modifiedTime > cacheEntry.metadata.createdTime
+	if (!modifiedTime) return undefined
+	return modifiedTime > cacheEntry.metadata.createdTime ? true : undefined
 }
 
 async function readDir(dir: string) {

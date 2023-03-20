@@ -24,7 +24,7 @@ function diffPathToRelative(filePath: string) {
 	// eslint-disable-next-line @typescript-eslint/no-unused-vars
 	const [workshopRootDirname, appId, ...relativePath] = normalizedPath
 		.replace(
-			process.platform === 'win32'
+			process.platform === 'win32' || normalizedPath.startsWith(path.sep)
 				? `${diffTmpDir}${path.sep}`
 				: `${diffTmpDir.slice(1)}${path.sep}`,
 			'',
@@ -255,7 +255,7 @@ export async function getDiffCode(
 	const result = await cachified({
 		key,
 		cache: diffCodeCache,
-		forceFresh: forceFresh || cacheOutdated,
+		forceFresh: forceFresh || cacheOutdated || undefined,
 		timings,
 		request,
 		getFreshValue: () => getDiffCodeImpl(app1, app2),
@@ -337,7 +337,6 @@ ${getFileCodeblocks(file, launchEditorPath).join('\n')}
 ${getFileCodeblocks(file, launchEditorPath).join('\n')}
 
 </Accordion>
-<details>
 `)
 				break
 			}

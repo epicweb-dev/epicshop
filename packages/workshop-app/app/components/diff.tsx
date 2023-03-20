@@ -45,10 +45,13 @@ export const AccordionMDX: React.FC<AccordionMDXProps> = ({
 		}
 	}
 
+	// Somehow on windows we get double backslashes in the title
+	// so we'll just remove those 🤷‍♂️
+	const fixedTitle = title.replace(/\\\\/g, '\\')
 	return (
 		<AccordionItem value={title}>
 			<AccordionTrigger variant={getVariantLabel()}>
-				{icon ? icon : getVariantIcon()} {title}
+				{icon ? icon : getVariantIcon()} {fixedTitle}
 			</AccordionTrigger>
 			<AccordionContent
 				forceMount={forceMount}
