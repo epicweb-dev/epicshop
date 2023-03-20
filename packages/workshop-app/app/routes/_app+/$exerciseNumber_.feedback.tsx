@@ -103,7 +103,7 @@ export default function ExerciseFeedback() {
 		['entry.428900931', data.exercise.title],
 	])
 	return (
-		<div className="container mx-auto flex flex-grow flex-col">
+		<div className="container mx-auto my-8 flex flex-grow flex-col">
 			<h1>Submit feedback on this exercise</h1>
 			<iframe
 				className="mx-auto min-w-full max-w-2xl flex-grow rounded-md border-2 border-gray-200"
@@ -112,7 +112,7 @@ export default function ExerciseFeedback() {
 			>
 				<Loading />
 			</iframe>
-			<div className="flex justify-around">
+			<div className="flex justify-around pt-8">
 				{data.prevStepLink ? (
 					<Link
 						prefetch="intent"

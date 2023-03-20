@@ -4,8 +4,12 @@ body {
 	tab-size: 2ch;
 }
 
-.clip-path-button {
+.clip-path-button-outer {
 	clip-path: polygon(0 0, 100% 0, 100% 75%, 90% 100%, 0 100%);
+}
+
+.clip-path-button {
+	clip-path: polygon(0 0, 100% 0, 100% 75%, 90.5% 100%, 0 100%);
 }
 
 .orientation-sideways {
