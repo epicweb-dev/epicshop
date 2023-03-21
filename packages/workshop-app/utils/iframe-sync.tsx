@@ -46,9 +46,6 @@ export function KCDShopIFrameSync() {
 				// @ts-expect-error - this is fine too 🙃 promise 😅
 				navigate(...params)
 			}
-			if (type === 'kcdshop:refresh') {
-				window.location.reload()
-			}
 		}
 		window.addEventListener('message', handleMessage)
 		return () => window.removeEventListener('message', handleMessage)

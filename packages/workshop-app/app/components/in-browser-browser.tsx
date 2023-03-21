@@ -75,6 +75,7 @@ function InBrowserBrowserImpl(
 	const [searchParams, setSearchParams] = useSearchParams()
 	const searchParamsPathname = searchParams.get('pathname') ?? '/'
 	const [connectionEstablished, setConnectionEstablished] = useState(false)
+	const [iframeKey, setIframeKey] = useState(0)
 	const [iframeContext, setIFrameContext] = useState({
 		pathname: searchParamsPathname,
 		history: [searchParamsPathname],
@@ -236,13 +237,9 @@ function InBrowserBrowserImpl(
 					<button
 						type="button"
 						className="flex aspect-square h-full w-full items-center justify-center p-1 transition disabled:opacity-40"
-						disabled={!connectionEstablished}
-						onClick={() =>
-							iframeRef.current?.contentWindow?.postMessage(
-								{ type: 'kcdshop:refresh' },
-								'*',
-							)
-						}
+						onClick={() => {
+							setIframeKey(iframeKey + 1)
+						}}
 					>
 						<Icon name="Refresh" aria-hidden="true" title="Refresh" />
 					</button>
@@ -280,6 +277,7 @@ function InBrowserBrowserImpl(
 			<div className="flex h-full w-full flex-grow bg-white p-5">
 				<iframe
 					title={name}
+					key={iframeKey}
 					ref={iframeRef}
 					src={iframeSrcUrl.toString()}
 					className="h-full w-full flex-grow"
