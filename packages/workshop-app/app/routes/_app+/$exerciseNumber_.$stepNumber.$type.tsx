@@ -321,7 +321,14 @@ export default function ExercisePartRoute() {
 			return app ? (
 				<div className="inline-block">
 					<LaunchEditor appFile={file} appName={app.name} {...props}>
-						{children}
+						<div className="flex items-center justify-center underline">
+							{children}{' '}
+							<img
+								title="Open in editor"
+								className="!m-0"
+								src="/icons/keyboard-2.svg"
+							/>
+						</div>
 					</LaunchEditor>
 				</div>
 			) : (
@@ -398,7 +405,7 @@ export default function ExercisePartRoute() {
 		<div className="flex flex-grow flex-col">
 			<div className="grid flex-grow grid-cols-2">
 				<div className="relative flex h-screen flex-grow flex-col justify-between border-r border-gray-200">
-					<article className="prose sm:prose-lg scrollbar-thin scrollbar-thumb-gray-200 prose-p:text-black prose-headings:text-black h-full w-full max-w-none overflow-y-auto p-14">
+					<article className="prose sm:prose-lg scrollbar-thin scrollbar-thumb-gray-200 prose-p:text-black prose-headings:text-black h-full w-full max-w-none space-y-6 overflow-y-auto p-14 text-black">
 						{data.exerciseStepApp.instructionsCode ? (
 							<Mdx
 								code={data.exerciseStepApp?.instructionsCode}

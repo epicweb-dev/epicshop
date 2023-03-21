@@ -8,6 +8,9 @@ import Accordion from '~/components/accordion'
 
 export const mdxComponents = {
 	a: AnchorOrLink,
+	// you can't put a <form> inside a <p> so we'll just use a div
+	// if this is a problem, then render the form outside of the MDX and update <LaunchEditor /> to reference that one instead or something.
+	p: (props: any) => <div {...props} />,
 	LaunchEditor,
 	Accordion: (props: any) => <Accordion {...props} />,
 }
