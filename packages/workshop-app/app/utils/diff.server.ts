@@ -12,11 +12,13 @@ import {
 	modifiedTimes,
 	type App,
 } from './apps.server'
-import { Timings } from './timing.server'
+import { type Timings } from './timing.server'
 
 const kcdshopTempDir = path.join(os.tmpdir(), 'kcdshop')
 
 const diffTmpDir = path.join(kcdshopTempDir, 'diff')
+
+const exercisesPath = path.join(getWorkshopRoot(), 'exercises')
 
 function diffPathToRelative(filePath: string) {
 	const normalizedPath = path.normalize(filePath).replace(/^("|')|("|')$/g, '')
@@ -43,7 +45,8 @@ function getLanguage(ext: string) {
 
 function getFileCodeblocks(
 	file: ReturnType<typeof parseGitDiff>['files'][number],
-	launchEditorPath: string,
+	filePathApp1: string,
+	filePathApp2?: string,
 ) {
 	if (!file.chunks.length) {
 		return [`No changes`]
@@ -64,6 +67,7 @@ function getFileCodeblocks(
 				: chunk.type === 'CombinedChunk'
 				? chunk.fromFileRangeA.start
 				: 1
+		const toStartLine = chunk.toFileRange.start
 		for (let lineNumber = 0; lineNumber < chunk.changes.length; lineNumber++) {
 			const change = chunk.changes[lineNumber]
 			if (!change) continue
@@ -93,6 +97,19 @@ function getFileCodeblocks(
 			.toString()
 			.replace('&', ' ')
 
+		const launchEditor = (pathToOPen: string, line: number, label: string) => {
+			const file = JSON.stringify(pathToOPen)
+			const fixedTitle = file
+				.replace(/\\\\/g, '\\')
+				.replace(`${exercisesPath}${path.sep}`, '')
+			const className =
+				'border border-gray-300 rounded bg-white px-2 py-0.5 font-mono text-xs font-semibold text-black'
+			return `
+<LaunchEditor file=${file} line={${line}}>
+	<span	title=${fixedTitle} className="${className}">${label}</span>
+</LaunchEditor>`
+		}
+
 		markdownLines.push(`
 <div className="relative">
 
@@ -100,10 +117,9 @@ function getFileCodeblocks(
 ${lines.join('\n')}
 \`\`\`
 
-<div className="absolute top-3 right-3 bg-white px-1 py-0.5 font-mono text-xs font-semibold text-black">
-	<LaunchEditor file=${JSON.stringify(
-		launchEditorPath,
-	)} line={${startLine}}>OPEN</LaunchEditor>
+<div className="flex gap-4 absolute top-1 right-3">
+	${launchEditor(filePathApp1, startLine, 'OPEN APP 1')}
+	${filePathApp2 ? launchEditor(filePathApp2, toStartLine, 'OPEN APP 2') : ''}
 </div>
 
 </div>
@@ -303,14 +319,19 @@ async function getDiffCodeImpl(app1: App, app2: App) {
 	for (const file of parsed.files) {
 		const pathToCopy = file.type === 'RenamedFile' ? file.pathBefore : file.path
 		const relativePath = diffPathToRelative(pathToCopy)
-		const launchEditorPath = path.join(app1.fullPath, relativePath)
+		const filePathApp1 = path.join(app1.fullPath, relativePath)
+
+		const pathToApp2 = file.type === 'RenamedFile' ? file.pathAfter : file.path
+		const relativePathApp2 = diffPathToRelative(pathToApp2)
+		const filePathApp2 = path.join(app2.fullPath, relativePathApp2)
+
 		switch (file.type) {
 			case 'ChangedFile': {
 				markdownLines.push(`
 
 <Accordion title=${JSON.stringify(relativePath)} variant="changed">
 
-${getFileCodeblocks(file, launchEditorPath).join('\n')}
+${getFileCodeblocks(file, filePathApp1, filePathApp2).join('\n')}
 
 </Accordion>
 
@@ -321,7 +342,7 @@ ${getFileCodeblocks(file, launchEditorPath).join('\n')}
 				markdownLines.push(`
 <Accordion title=${JSON.stringify(relativePath)} variant="deleted">
 
-${getFileCodeblocks(file, launchEditorPath).join('\n')}
+${getFileCodeblocks(file, filePathApp1).join('\n')}
 
 </Accordion>
 `)
@@ -334,7 +355,7 @@ ${getFileCodeblocks(file, launchEditorPath).join('\n')}
 				markdownLines.push(`
 <Accordion title=${title} variant="renamed">
 
-${getFileCodeblocks(file, launchEditorPath).join('\n')}
+${getFileCodeblocks(file, filePathApp1, filePathApp2).join('\n')}
 
 </Accordion>
 `)
@@ -344,7 +365,7 @@ ${getFileCodeblocks(file, launchEditorPath).join('\n')}
 				markdownLines.push(`
 <Accordion title=${JSON.stringify(relativePath)} variant="added">
 
-${getFileCodeblocks(file, launchEditorPath).join('\n')}
+${getFileCodeblocks(file, filePathApp1, filePathApp2).join('\n')}
 
 </Accordion>
 `)
