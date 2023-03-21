@@ -35,6 +35,8 @@ export async function action({ request }: DataFunctionArgs) {
 				const result = await runAppDev(app)
 				if (result.running) {
 					await waitOnApp(app)
+					// wait another 200ms just in case the build output for assets isn't finished
+					await new Promise((resolve) => setTimeout(resolve, 200))
 					return json({ status: 'app-started' } as const)
 				} else if (result.portNumber) {
 					return json({
