@@ -52,12 +52,9 @@ import {
 import { LaunchEditor } from '../launch-editor'
 import { TestOutput } from '../test'
 
-export const meta: V2_MetaFunction<
-	typeof loader,
-	{ root: typeof rootLoader }
-> = ({ data, parentsData }) => {
+function pageTitle(data: SerializeFrom<typeof loader>, workshopTitle?: string) {
 	if (!data) {
-		return [{ title: 'Error' }]
+		return 'Error'
 	}
 	const exerciseNumber = data.exerciseStepApp.exerciseNumber
 		.toString()
@@ -70,11 +67,16 @@ export const meta: V2_MetaFunction<
 		} as const
 	)[data.type]
 	const title = data[data.type]?.title ?? 'N/A'
-	return [
-		{
-			title: `${emoji} | ${stepNumber}. ${title} | ${exerciseNumber}. ${data.exerciseTitle} | ${parentsData.root.workshopTitle}`,
-		},
-	]
+	return workshopTitle
+		? `${emoji} | ${stepNumber}. ${title} | ${exerciseNumber}. ${data.exerciseTitle} | ${workshopTitle}`
+		: `${exerciseNumber}. ${data.exerciseTitle} | ${stepNumber}. ${title} | ${emoji} ${data.type}`
+}
+
+export const meta: V2_MetaFunction<
+	typeof loader,
+	{ root: typeof rootLoader }
+> = ({ data, parentsData }) => {
+	return [{ title: pageTitle(data, parentsData?.root.workshopTitle) }]
 }
 
 export async function loader({ request, params }: DataFunctionArgs) {
@@ -405,6 +407,9 @@ export default function ExercisePartRoute() {
 		<div className="flex flex-grow flex-col">
 			<div className="grid flex-grow grid-cols-2">
 				<div className="relative flex h-screen flex-grow flex-col justify-between border-r border-gray-200">
+					<h4 className="absolute top-9 left-[58px] font-mono text-sm font-medium uppercase leading-none">
+						{pageTitle(data)}
+					</h4>
 					<article className="prose sm:prose-lg scrollbar-thin scrollbar-thumb-gray-200 prose-p:text-black prose-headings:text-black h-full w-full max-w-none space-y-6 overflow-y-auto p-14 text-black">
 						{data.exerciseStepApp.instructionsCode ? (
 							<Mdx
