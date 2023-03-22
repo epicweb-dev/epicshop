@@ -407,10 +407,10 @@ export default function ExercisePartRoute() {
 		<div className="flex flex-grow flex-col">
 			<div className="grid flex-grow grid-cols-2">
 				<div className="relative flex h-screen flex-grow flex-col justify-between border-r border-gray-200">
-					<h4 className="absolute top-9 left-[58px] font-mono text-sm font-medium uppercase leading-none">
+					<h4 className="absolute top-8 left-[58px] font-mono text-sm font-medium uppercase leading-none">
 						{pageTitle(data)}
 					</h4>
-					<article className="prose sm:prose-lg scrollbar-thin scrollbar-thumb-gray-200 prose-p:text-black prose-headings:text-black h-full w-full max-w-none space-y-6 overflow-y-auto p-14 text-black">
+					<article className="prose sm:prose-lg scrollbar-thin scrollbar-thumb-gray-200 prose-p:text-black prose-headings:text-black h-full w-full max-w-none space-y-6 overflow-y-auto p-14 pt-20 text-black">
 						{data.exerciseStepApp.instructionsCode ? (
 							<Mdx
 								code={data.exerciseStepApp?.instructionsCode}
