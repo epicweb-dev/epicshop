@@ -3,7 +3,7 @@ import { Await, Form, useLoaderData, useSubmit } from '@remix-run/react'
 import clsx from 'clsx'
 import * as Select from '@radix-ui/react-select'
 import { Mdx } from '~/utils/mdx'
-import { type loader } from '~/routes/_app+/$exerciseNumber_.$stepNumber.$type'
+import { type loader } from '~/routes/_app+/_exercises+/$exerciseNumber_.$stepNumber.$type'
 import Icon from './icons'
 import * as Accordion from '@radix-ui/react-accordion'
 
