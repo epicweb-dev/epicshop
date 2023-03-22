@@ -14,7 +14,7 @@ import {
 import { compileMdx } from './compile-mdx.server'
 import { getWatcher } from './change-tracker'
 import { requireCachePurgeEmitter } from './purge-require-cache.server'
-import { getServerTimeHeader, Timings } from './timing.server'
+import { getServerTimeHeader, type Timings } from './timing.server'
 
 const globPromise = util.promisify(glob)
 
