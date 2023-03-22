@@ -319,8 +319,9 @@ export default function ExercisePartRoute() {
 		}
 		onScroll()
 		articleRef.current.addEventListener('scroll', onScroll, { passive: true })
+		const article = articleRef.current
 		return () => {
-			articleRef.current?.removeEventListener('scroll', onScroll)
+			article?.removeEventListener('scroll', onScroll)
 		}
 	}, [])
 
