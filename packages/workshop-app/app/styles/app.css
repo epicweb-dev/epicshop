@@ -200,6 +200,10 @@ body {
 	margin-left: -200px;
 }
 
+.pros > div {
+	margin-bottom: 1rem;
+}
+
 .prose callout-muted a,
 .prose callout-info a,
 .prose callout-warning a,

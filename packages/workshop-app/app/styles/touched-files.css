@@ -12,6 +12,12 @@
 		@apply flex flex-col gap-0.5 text-base;
 		li {
 			@apply flex items-center;
+			.launch-editor-button-wrapper {
+				@apply no-underline;
+				img {
+					@apply hidden;
+				}
+			}
 			button {
 				@apply -mx-2 flex items-center rounded px-2 py-1 transition hover:bg-gray-800;
 			}

@@ -321,7 +321,7 @@ export default function ExercisePartRoute() {
 			return app ? (
 				<div className="inline-block">
 					<LaunchEditor appFile={file} appName={app.name} {...props}>
-						<div className="flex items-center justify-center underline">
+						<div className="launch-editor-button-wrapper flex items-center justify-center underline">
 							{children}{' '}
 							<img
 								title="Open in editor"

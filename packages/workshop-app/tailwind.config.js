@@ -16,9 +16,7 @@ module.exports = {
 		},
 	},
 	plugins: [
-		require('@tailwindcss/typography')({
-			skip: ['#files'],
-		}),
+		require('@tailwindcss/typography'),
 		require('tailwindcss-radix'),
 		require('tailwind-scrollbar'),
 	],
