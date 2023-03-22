@@ -70,13 +70,13 @@ body {
 	content: unset;
 }
 
-.dark .prose ol > li::before,
-.dark .prose ul > li::before {
+[data-theme='dark'] .prose ol > li::before,
+[data-theme='dark'] .prose ul > li::before {
 	color: var(--color-gray-300);
 }
 
 /* I think this is a bug in the tailwind/typography thing */
-.dark .dark\:prose-dark thead {
+[data-theme='dark'] .dark\:prose-dark thead {
 	color: var(--color-slate-500);
 }
 
@@ -200,7 +200,7 @@ body {
 	margin-left: -200px;
 }
 
-.pros > div {
+.prose > * {
 	margin-bottom: 1rem;
 }
 
@@ -297,11 +297,11 @@ body {
 }
 
 /* the warning yellow is really inaccessible in light mode, so we have a special case for light mode */
-.light .prose callout-warning,
-.light .prose callout-warning ol > li:before {
+[data-theme='light'] .prose callout-warning,
+[data-theme='light'] .prose callout-warning ol > li:before {
 	color: #676000;
 }
-.light .prose callout-warning:before {
+[data-theme='light'] .prose callout-warning:before {
 	background: #ffd800;
 }
 .prose callout-warning,
@@ -313,8 +313,8 @@ body {
 }
 
 /* the muted gray is really inaccessible in light mode, so we have a special case for light mode */
-.light .prose callout-muted,
-.light .prose callout-muted ol > li:before {
+[data-theme='light'] .prose callout-muted,
+[data-theme='light'] .prose callout-muted ol > li:before {
 	color: #4c4b5e;
 }
 .light .prose callout-muted:before {
