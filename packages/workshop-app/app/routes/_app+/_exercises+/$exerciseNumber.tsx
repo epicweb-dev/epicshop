@@ -11,7 +11,6 @@ import {
 } from '@remix-run/react'
 import invariant from 'tiny-invariant'
 import { ButtonLink } from '~/components/button'
-import Navigation from '~/components/navigation'
 import { type loader as rootLoader } from '~/root'
 import { getExercises, getWorkshopTitle } from '~/utils/apps.server'
 import { Mdx } from '~/utils/mdx'

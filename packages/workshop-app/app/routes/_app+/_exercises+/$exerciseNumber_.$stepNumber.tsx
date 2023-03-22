@@ -2,7 +2,6 @@ import type { DataFunctionArgs, HeadersFunction } from '@remix-run/node'
 import { json } from '@remix-run/node'
 import { isRouteErrorResponse, Outlet, useRouteError } from '@remix-run/react'
 import invariant from 'tiny-invariant'
-import Navigation from '~/components/navigation'
 import { getExercises, getWorkshopTitle } from '~/utils/apps.server'
 import { getErrorMessage } from '~/utils/misc'
 import {
