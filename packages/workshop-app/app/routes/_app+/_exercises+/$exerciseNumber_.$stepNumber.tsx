@@ -54,14 +54,7 @@ export const headers: HeadersFunction = ({ loaderHeaders, parentHeaders }) => {
 }
 
 export default function StepRoute() {
-	return (
-		<div className="flex flex-grow">
-			<Navigation />
-			<div className="flex flex-grow">
-				<Outlet />
-			</div>
-		</div>
-	)
+	return <Outlet />
 }
 
 export function ErrorBoundary() {

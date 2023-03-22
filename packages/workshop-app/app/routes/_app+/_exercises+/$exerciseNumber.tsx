@@ -92,8 +92,7 @@ export default function ExerciseNumberRoute() {
 	const data = useLoaderData<typeof loader>()
 
 	return (
-		<main className="flex flex-grow">
-			<Navigation />
+		<main>
 			<div className="grid h-screen w-full flex-grow grid-cols-3 overflow-y-auto">
 				<article className="col-span-2 w-full border-r border-gray-200 pt-16">
 					<div className="px-10">

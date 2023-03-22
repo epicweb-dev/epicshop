@@ -1,12 +1,78 @@
-import { Link, useLoaderData, useParams } from '@remix-run/react'
+import type { DataFunctionArgs, HeadersFunction } from '@remix-run/node'
+import { json } from '@remix-run/node'
+import { Link, Outlet, useLoaderData, useParams } from '@remix-run/react'
 import clsx from 'clsx'
 import type { AnimationControls } from 'framer-motion'
 import { motion, useAnimationControls } from 'framer-motion'
 import React from 'react'
-import type { loader } from '~/routes/_app+/$exerciseNumber_.$stepNumber'
+import invariant from 'tiny-invariant'
+import { getExercises, getWorkshopTitle } from '~/utils/apps.server'
+import {
+	makeTimings,
+	combineServerTimings,
+	getServerTimeHeader,
+} from '~/utils/timing.server'
+
+export async function loader({ request, params }: DataFunctionArgs) {
+	const timings = makeTimings('stepLoader')
+	invariant(params.exerciseNumber, 'exerciseNumber is required')
+	const [exercises, workshopTitle] = await Promise.all([
+		getExercises({ request, timings }),
+		getWorkshopTitle(),
+	])
+	const exercise = exercises.find(
+		e => e.exerciseNumber === Number(params.exerciseNumber),
+	)
+	if (!exercise) {
+		throw new Response('Not found', { status: 404 })
+	}
+
+	const result = json(
+		{
+			workshopTitle,
+			exerciseNumber: exercise.exerciseNumber,
+			exerciseTitle: exercise.title,
+			exercises: exercises.map(e => ({
+				exerciseNumber: e.exerciseNumber,
+				title: e.title,
+				problems: e.problems.map(({ stepNumber, title }) => ({
+					stepNumber,
+					title,
+				})),
+			})),
+		},
+		{
+			headers: {
+				'Cache-Control': 'public, max-age=300',
+				'Server-Timing': getServerTimeHeader(timings),
+			},
+		},
+	)
+	return result
+}
+
+export const headers: HeadersFunction = ({ loaderHeaders, parentHeaders }) => {
+	const headers = {
+		'Cache-Control': loaderHeaders.get('Cache-Control') ?? '',
+		'Server-Timing': combineServerTimings(loaderHeaders, parentHeaders),
+	}
+	return headers
+}
+
+export default function ExercisesLayout() {
+	return (
+		<div className="flex flex-grow">
+			<Navigation />
+			<div className="flex flex-grow">
+				<Outlet />
+			</div>
+		</div>
+	)
+}
 
 function Navigation() {
-	const data = useLoaderData<typeof loader>()
+	const { workshopTitle, exerciseNumber, exerciseTitle, exercises } =
+		useLoaderData<typeof loader>()
 	const params = useParams()
 
 	const OPENED_MENU_WIDTH = 400
@@ -51,6 +117,7 @@ function Navigation() {
 			>
 				<ul className="flex h-screen flex-col items-center justify-between">
 					<NavToggle
+						title={workshopTitle}
 						menuControls={menuControls}
 						isMenuOpened={isMenuOpened}
 						setMenuOpened={setMenuOpened}
@@ -69,13 +136,16 @@ function Navigation() {
 									animate="visible"
 									className="flex flex-col gap-3"
 								>
-									{data.exercises.map(({ exerciseNumber, title }) => {
+									{exercises.map(({ exerciseNumber, title, problems }) => {
 										const isActive =
 											Number(params.exerciseNumber) === exerciseNumber
+										const exerciseNum = exerciseNumber
+											.toString()
+											.padStart(2, '0')
 										return (
 											<motion.li variants={itemVariants} key={exerciseNumber}>
 												<Link
-													to={`/${exerciseNumber.toString().padStart(2, '0')}`}
+													to={`/${exerciseNum}`}
 													className={clsx(
 														'relative whitespace-nowrap px-2 py-0.5 pr-3 text-2xl font-bold hover:underline',
 														{
@@ -86,6 +156,41 @@ function Navigation() {
 												>
 													{title}
 												</Link>
+												{isActive && (
+													<motion.ul
+														variants={listVariants}
+														initial="hidden"
+														animate="visible"
+														className="ml-4 mt-4 flex flex-col gap-3"
+													>
+														{problems.map(({ stepNumber, title }) => {
+															const isActive =
+																Number(params.stepNumber) === stepNumber
+															const step = stepNumber
+																.toString()
+																.padStart(2, '0')
+															return (
+																<motion.li
+																	variants={itemVariants}
+																	key={stepNumber}
+																>
+																	<Link
+																		to={`/${exerciseNum}/${step}`}
+																		className={clsx(
+																			'whitespace-nowrap px-2 py-0.5 pr-3 text-xl font-medium hover:underline',
+																			{
+																				// TODO: figure out how to make it clip in the corner
+																				'bg-black text-white': isActive,
+																			},
+																		)}
+																	>
+																		{step}. {title}
+																	</Link>
+																</motion.li>
+															)
+														})}
+													</motion.ul>
+												)}
 											</motion.li>
 										)
 									})}
@@ -97,9 +202,9 @@ function Navigation() {
 						<motion.li className="flex h-full flex-grow flex-col justify-center">
 							<Link
 								className="orientation-sideways w-full font-mono text-sm font-medium uppercase leading-none"
-								to={`/${data.exerciseNumber.toString().padStart(2, '0')}`}
+								to={`/${exerciseNumber.toString().padStart(2, '0')}`}
 							>
-								{data.exerciseTitle}
+								{exerciseTitle}
 								{params.type === 'solution'
 									? ' — solution'
 									: params.type === 'problem'
@@ -114,20 +219,17 @@ function Navigation() {
 	)
 }
 
-export default Navigation
-
-type NavToggleProps = {
-	isMenuOpened: boolean
-	setMenuOpened: (value: boolean) => void
-	menuControls: AnimationControls
-}
-
-const NavToggle: React.FC<NavToggleProps> = ({
+function NavToggle({
+	title,
 	isMenuOpened,
 	setMenuOpened,
 	menuControls,
-}) => {
-	const data = useLoaderData<typeof loader>()
+}: {
+	title: string
+	isMenuOpened: boolean
+	setMenuOpened: (value: boolean) => void
+	menuControls: AnimationControls
+}) {
 	const path01Variants = {
 		open: { d: 'M3.06061 2.99999L21.0606 21' },
 		closed: { d: 'M0 9.5L24 9.5' },
@@ -182,7 +284,7 @@ const NavToggle: React.FC<NavToggleProps> = ({
 					animate={{ opacity: 1, y: 0 }}
 					className="absolute right-5 whitespace-nowrap font-mono text-sm uppercase"
 				>
-					<Link to="/">{data.title}</Link>
+					<Link to="/">{title}</Link>
 				</motion.p>
 			)}
 		</div>

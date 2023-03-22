@@ -55,8 +55,8 @@ import {
 	getServerTimeHeader,
 	makeTimings,
 } from '~/utils/timing.server'
-import { LaunchEditor } from '../launch-editor'
-import { TestOutput } from '../test'
+import { LaunchEditor } from '../../launch-editor'
+import { TestOutput } from '../../test'
 
 function pageTitle(data: SerializeFrom<typeof loader>, workshopTitle?: string) {
 	if (!data) {
