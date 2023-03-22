@@ -324,8 +324,6 @@ export default function ExercisePartRoute() {
 		}
 	}, [])
 
-	console.log('isScrolled', isScrolled)
-
 	const InlineFile = useMemo(() => {
 		return function InlineFile({
 			file,
