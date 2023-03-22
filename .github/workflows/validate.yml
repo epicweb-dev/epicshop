@@ -142,9 +142,6 @@ jobs:
         with:
           useLockFile: false
 
-      - name: 🏗 Run build script
-        run: npm run build
-
       - name: ▶️ Run setup script
         run: node setup.mjs
         working-directory: ./packages/example
