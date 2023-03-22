@@ -46,7 +46,8 @@ function getLanguage(ext: string) {
 function getFileCodeblocks(
 	file: ReturnType<typeof parseGitDiff>['files'][number],
 	filePathApp1: string,
-	filePathApp2?: string,
+	filePathApp2: string,
+	type: string,
 ) {
 	if (!file.chunks.length) {
 		return [`No changes`]
@@ -97,8 +98,13 @@ function getFileCodeblocks(
 			.toString()
 			.replace('&', ' ')
 
-		const launchEditor = (pathToOPen: string, line: number, label: string) => {
-			const file = JSON.stringify(pathToOPen)
+		const launchEditor = (appNum: number, line: number) => {
+			const label =
+				(type === 'AddedFile' && appNum === 1) ||
+				(type === 'DeletedFile' && appNum === 2)
+					? `CREATE in APP ${appNum}`
+					: `OPEN in APP ${appNum}`
+			const file = JSON.stringify(appNum === 1 ? filePathApp1 : filePathApp2)
 			const fixedTitle = file
 				.replace(/\\\\/g, '\\')
 				.replace(`${exercisesPath}${path.sep}`, '')
@@ -118,8 +124,8 @@ ${lines.join('\n')}
 \`\`\`
 
 <div className="flex gap-4 absolute top-1 right-3">
-	${launchEditor(filePathApp1, startLine, 'OPEN APP 1')}
-	${filePathApp2 ? launchEditor(filePathApp2, toStartLine, 'OPEN APP 2') : ''}
+	${launchEditor(1, startLine)}
+	${launchEditor(2, toStartLine)}
 </div>
 
 </div>
@@ -331,7 +337,7 @@ async function getDiffCodeImpl(app1: App, app2: App) {
 
 <Accordion title=${JSON.stringify(relativePath)} variant="changed">
 
-${getFileCodeblocks(file, filePathApp1, filePathApp2).join('\n')}
+${getFileCodeblocks(file, filePathApp1, filePathApp2, file.type).join('\n')}
 
 </Accordion>
 
@@ -342,7 +348,7 @@ ${getFileCodeblocks(file, filePathApp1, filePathApp2).join('\n')}
 				markdownLines.push(`
 <Accordion title=${JSON.stringify(relativePath)} variant="deleted">
 
-${getFileCodeblocks(file, filePathApp1).join('\n')}
+${getFileCodeblocks(file, filePathApp1, filePathApp2, file.type).join('\n')}
 
 </Accordion>
 `)
@@ -355,7 +361,7 @@ ${getFileCodeblocks(file, filePathApp1).join('\n')}
 				markdownLines.push(`
 <Accordion title=${title} variant="renamed">
 
-${getFileCodeblocks(file, filePathApp1, filePathApp2).join('\n')}
+${getFileCodeblocks(file, filePathApp1, filePathApp2, file.type).join('\n')}
 
 </Accordion>
 `)
@@ -365,7 +371,7 @@ ${getFileCodeblocks(file, filePathApp1, filePathApp2).join('\n')}
 				markdownLines.push(`
 <Accordion title=${JSON.stringify(relativePath)} variant="added">
 
-${getFileCodeblocks(file, filePathApp1, filePathApp2).join('\n')}
+${getFileCodeblocks(file, filePathApp1, filePathApp2, file.type).join('\n')}
 
 </Accordion>
 `)
