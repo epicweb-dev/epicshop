@@ -158,6 +158,13 @@ function InBrowserBrowserImpl(
 		}
 	}, [])
 
+	// setSearchParams is unstable
+	// https://github.com/remix-run/react-router/issues/9991
+	const setSearchParamsLatestRef = useRef(setSearchParams)
+	useEffect(() => {
+		setSearchParamsLatestRef.current = setSearchParams
+	}, [setSearchParams])
+
 	const iframePathname = iframeContext.history[iframeContext.index]
 	useEffect(() => {
 		if (!iframePathname) return
@@ -172,9 +179,9 @@ function InBrowserBrowserImpl(
 		}
 		const newSearch = newSearchParams.toString()
 		if (newSearch !== window.location.search) {
-			setSearchParams(newSearchParams, { replace: true })
+			setSearchParamsLatestRef.current(newSearchParams, { replace: true })
 		}
-	}, [iframePathname, setSearchParams])
+	}, [iframePathname])
 
 	const navigateChild: NavigateFunction = (...params) => {
 		if (connectionEstablished) {
