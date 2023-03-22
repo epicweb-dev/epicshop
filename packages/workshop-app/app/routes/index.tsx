@@ -1,5 +1,6 @@
-import { DataFunctionArgs, HeadersFunction, json } from '@remix-run/node'
-import { Link, useLoaderData } from '@remix-run/react'
+import type { DataFunctionArgs, HeadersFunction } from '@remix-run/node'
+import { json } from '@remix-run/node'
+import { useLoaderData } from '@remix-run/react'
 import { ButtonLink } from '~/components/button'
 import { getExercises, getWorkshopTitle } from '~/utils/apps.server'
 import {

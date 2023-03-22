@@ -9,20 +9,26 @@ import { defer, redirect } from '@remix-run/node'
 import {
 	isRouteErrorResponse,
 	Link,
-	LinkProps,
+	type LinkProps,
 	useLoaderData,
 	useRouteError,
 	useSearchParams,
 } from '@remix-run/react'
 import clsx from 'clsx'
-import { PropsWithChildren, useEffect, useMemo, useRef, useState } from 'react'
+import {
+	type PropsWithChildren,
+	useEffect,
+	useMemo,
+	useRef,
+	useState,
+} from 'react'
 import { createPortal } from 'react-dom'
 import { useParams } from 'react-router'
 import { Diff } from '~/components/diff'
 import Icon from '~/components/icons'
 import {
 	InBrowserBrowser,
-	InBrowserBrowserRef,
+	type InBrowserBrowserRef,
 } from '~/components/in-browser-browser'
 import { InBrowserTestRunner } from '~/components/in-browser-test-runner'
 import TouchedFiles, { touchedFilesButton } from '~/components/touched-files'
@@ -327,6 +333,7 @@ export default function ExercisePartRoute() {
 							{children}{' '}
 							<img
 								title="Open in editor"
+								alt="Open in editor"
 								className="!m-0"
 								src="/icons/keyboard-2.svg"
 							/>

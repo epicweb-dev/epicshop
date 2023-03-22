@@ -5,7 +5,7 @@ import {
 	useImperativeHandle,
 	useRef,
 	useState,
-	ForwardedRef,
+	type ForwardedRef,
 } from 'react'
 import type { NavigateFunction } from 'react-router'
 import { z } from 'zod'
@@ -174,7 +174,7 @@ function InBrowserBrowserImpl(
 		if (newSearch !== window.location.search) {
 			setSearchParams(newSearchParams, { replace: true })
 		}
-	}, [iframePathname])
+	}, [iframePathname, setSearchParams])
 
 	const navigateChild: NavigateFunction = (...params) => {
 		if (connectionEstablished) {

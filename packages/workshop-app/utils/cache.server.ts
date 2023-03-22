@@ -1,6 +1,6 @@
 import LRU from 'lru-cache'
 import * as C from 'cachified'
-import { CacheEntry, verboseReporter } from 'cachified'
+import { type CacheEntry, verboseReporter } from 'cachified'
 import { lruCacheAdapter } from 'cachified'
 import type { App, ExampleApp, ProblemApp, SolutionApp } from './apps.server'
 import { time, type Timings } from './timing.server'

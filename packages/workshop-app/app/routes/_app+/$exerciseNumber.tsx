@@ -6,7 +6,6 @@ import type {
 import { json } from '@remix-run/node'
 import {
 	isRouteErrorResponse,
-	Link,
 	useLoaderData,
 	useRouteError,
 } from '@remix-run/react'
