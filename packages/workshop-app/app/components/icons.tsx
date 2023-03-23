@@ -3,7 +3,7 @@ import React from 'react'
 const Icons = {
 	TriangleSmall: () => (
 		<g
-			stroke-width={1.5}
+			strokeWidth={1.5}
 			fill="none"
 			stroke="currentColor"
 			strokeMiterlimit="10"

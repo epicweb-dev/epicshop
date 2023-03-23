@@ -92,7 +92,7 @@ export default function ExerciseNumberRoute() {
 
 	return (
 		<main>
-			<div className="grid h-screen w-full flex-grow grid-cols-3 overflow-y-auto">
+			<div className="scrollbar-thin scrollbar-thumb-gray-300 grid h-screen w-full flex-grow grid-cols-3 overflow-y-auto">
 				<article className="col-span-2 w-full border-r border-gray-200 pt-16">
 					<div className="px-10">
 						<h1 className="text-[6vw] font-extrabold leading-none">

@@ -144,7 +144,7 @@ export function Diff() {
 						<div className="h-14 border-b border-gray-200">
 							<Form
 								onChange={e => submit(e.currentTarget)}
-								className="flex h-full w-full items-center overflow-x-auto"
+								className="scrollbar-thin scrollbar-thumb-gray-300 flex h-full w-full items-center overflow-x-auto"
 							>
 								<input type="hidden" name="preview" value="diff" />
 								<SelectFileToDiff
@@ -162,7 +162,7 @@ export function Diff() {
 								/>
 							</Form>
 						</div>
-						<div className="max-h-[calc(100vh-109px)] overflow-y-auto">
+						<div className="scrollbar-thin scrollbar-thumb-gray-300 max-h-[calc(100vh-109px)] overflow-y-auto">
 							{diff.diffCode ? (
 								<div>
 									<Accordion.Root className="w-full" type="multiple">
@@ -203,7 +203,7 @@ function SelectFileToDiff({
 					className,
 				)}
 			>
-				<span className="w-80 overflow-hidden text-ellipsis whitespace-nowrap">
+				<span className="scrollbar-thin scrollbar-thumb-gray-300 w-80 overflow-hidden text-ellipsis whitespace-nowrap">
 					{label}:{' '}
 					<SelectValue
 						placeholder={`Select ${label}`}
