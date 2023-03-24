@@ -13,7 +13,7 @@ import invariant from 'tiny-invariant'
 import { ButtonLink } from '~/components/button'
 import { type loader as rootLoader } from '~/root'
 import { getExercises, getWorkshopTitle } from '~/utils/apps.server'
-import { Mdx } from '~/utils/mdx'
+import { Mdx, preWithCopyToClipboard } from '~/utils/mdx'
 import { getErrorMessage } from '~/utils/misc'
 import {
 	combineServerTimings,
@@ -108,7 +108,10 @@ export default function ExerciseNumberRoute() {
 						{data.exercise.instructionsCode ? (
 							<Mdx
 								code={data.exercise?.instructionsCode}
-								components={{ h1: () => null }}
+								components={{
+									h1: () => null,
+									pre: preWithCopyToClipboard,
+								}}
 							/>
 						) : (
 							'No instructions yet...'

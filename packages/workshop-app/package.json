@@ -62,6 +62,7 @@
     "clsx": "^1.2.1",
     "common-ancestor-path": "^1.0.1",
     "compression": "^1.7.4",
+    "copy-to-clipboard": "^3.3.3",
     "cross-env": "^7.0.3",
     "cross-spawn": "^7.0.3",
     "dotenv": "^16.0.3",

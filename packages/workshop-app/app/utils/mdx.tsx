@@ -1,3 +1,4 @@
+import copyToClipboard from 'copy-to-clipboard'
 import LRU from 'lru-cache'
 import * as mdxBundler from 'mdx-bundler/client'
 import type { MDXContentProps } from 'mdx-bundler/client'
@@ -5,6 +6,35 @@ import * as React from 'react'
 import { LaunchEditor } from '~/routes/launch-editor'
 import { AnchorOrLink } from './misc'
 import Accordion from '~/components/accordion'
+
+function getCode(data: any) {
+	// just in case we are lost in space
+	try {
+		if (typeof data === 'string') return data
+		const { children } = data.props
+		if (typeof children === 'string') return children
+		return children.map(getCode).flat().join('')
+	} catch {}
+	return null
+}
+
+export function preWithCopyToClipboard({ children, ...props }: any) {
+	const showCopyButton = !Object.keys(props).find(att => att === 'data-nocopy')
+	const codeToCopy = showCopyButton && getCode(children)
+	return (
+		<div className="relative">
+			{codeToCopy ? (
+				<button
+					className="absolute top-0 right-0 z-50 m-2 mr-2 rounded border border-gray-300 bg-white px-2 py-0.5 font-mono text-xs font-semibold uppercase text-black transition duration-300 ease-in-out hover:bg-gray-100 active:bg-gray-200"
+					onClick={() => copyToClipboard(codeToCopy)}
+				>
+					copy
+				</button>
+			) : null}
+			<pre {...props}>{children}</pre>
+		</div>
+	)
+}
 
 export const mdxComponents = {
 	a: AnchorOrLink,
