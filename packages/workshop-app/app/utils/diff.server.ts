@@ -135,7 +135,7 @@ ${lines.join('\n')}
 }
 
 const EXTRA_FILES_TO_IGNORE = [
-	/README(\.\d+)?\.md$/,
+	/README(\.\d+)?\.mdx?$/,
 	/package-lock\.json$/,
 	/\.DS_Store$/,
 	/\.vscode$/,

@@ -195,12 +195,12 @@ export async function getReadmePath({
 	appDir: string
 	stepNumber?: number
 }) {
-	let readmeFile = 'README.md'
+	let readmeFile = 'README.mdx'
 	if (stepNumber) {
-		readmeFile = `README.${stepNumber.toString().padStart(2, '0')}.md`
+		readmeFile = `README.${stepNumber.toString().padStart(2, '0')}.mdx`
 		readmeFile = (await exists(path.join(appDir, readmeFile)))
 			? readmeFile
-			: 'README.md'
+			: 'README.mdx'
 	}
 	return path.join(appDir, readmeFile)
 }
