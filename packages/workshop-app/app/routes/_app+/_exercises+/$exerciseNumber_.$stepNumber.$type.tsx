@@ -576,7 +576,7 @@ function Preview({
 		)
 	} else {
 		return (
-			<div className="relative h-full flex-grow overflow-y-auto">
+			<div className="scrollbar-thin scrollbar-thumb-gray-300 relative h-full flex-grow overflow-y-auto">
 				<a
 					href={dev.baseUrl}
 					target="_blank"

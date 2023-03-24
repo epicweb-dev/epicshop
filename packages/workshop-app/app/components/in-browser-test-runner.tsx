@@ -125,7 +125,7 @@ export function InBrowserTestRunner({
 							{message?.status === 'fail' ? (
 								<div className="flex items-baseline gap-2 text-rose-700">
 									<span>{testStepStatusEmojis['fail']}</span>
-									<pre className="max-h-48 overflow-y-auto text-rose-700">
+									<pre className="scrollbar-thin scrollbar-thumb-gray-300 max-h-48 overflow-y-auto text-rose-700">
 										{message.error}
 									</pre>
 								</div>

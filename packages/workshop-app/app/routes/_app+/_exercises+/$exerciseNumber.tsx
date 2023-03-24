@@ -91,9 +91,14 @@ export default function ExerciseNumberRoute() {
 	const data = useLoaderData<typeof loader>()
 
 	return (
-		<main>
-			<div className="grid h-screen w-full flex-grow grid-cols-3 overflow-y-auto">
-				<article className="col-span-2 w-full border-r border-gray-200 pt-16">
+		<main className="relative h-screen w-full pt-16">
+			<h4 className="absolute top-8 left-11 font-mono text-sm font-medium uppercase leading-tight">
+				{`${data.exercise.exerciseNumber.toString().padStart(2, '0')}. ${
+					data.exercise.title
+				} `}
+			</h4>
+			<div className="shadow-on-scrollbox scrollbar-thin scrollbar-thumb-gray-300 h-full w-full overflow-y-auto">
+				<article className="w-2/3 border-r border-gray-200">
 					<div className="px-10">
 						<h1 className="text-[6vw] font-extrabold leading-none">
 							{data.exercise.title}
