@@ -18,18 +18,40 @@ function getCode(data: any) {
 	return null
 }
 
-export function preWithCopyToClipboard({ children, ...props }: any) {
+export function PreWithCopyToClipboard({ children, ...props }: any) {
+	const buttonRef = React.useRef<HTMLButtonElement>(null)
 	const showCopyButton = !Object.keys(props).find(att => att === 'data-nocopy')
 	const codeToCopy = showCopyButton && getCode(children)
+
+	function notification(on: boolean) {
+		const button = buttonRef.current
+		if (button) {
+			const label = button.previousElementSibling
+			if (on) label?.removeAttribute('hidden')
+			else label?.setAttribute('hidden', 'true')
+			button.style.backgroundColor = on ? '#e5e5e5' /* bg-gray-200 */ : ''
+		}
+	}
+
 	return (
 		<div className="relative">
 			{codeToCopy ? (
-				<button
-					className="absolute top-0 right-0 z-50 m-2 mr-2 rounded border border-gray-300 bg-white px-2 py-0.5 font-mono text-xs font-semibold uppercase text-black transition duration-300 ease-in-out hover:bg-gray-100 active:bg-gray-200"
-					onClick={() => copyToClipboard(codeToCopy)}
-				>
-					copy
-				</button>
+				<div className="absolute top-0 right-0 z-50 m-2 mr-2 flex items-center gap-2">
+					<span hidden className="font-mono text-xs uppercase text-black">
+						copied
+					</span>
+					<button
+						ref={buttonRef}
+						className="rounded border border-gray-300 bg-white px-2 py-0.5 font-mono text-xs font-semibold uppercase text-black transition duration-300 ease-in-out hover:bg-gray-100 active:bg-gray-200"
+						onClick={() => {
+							notification(true)
+							setTimeout(notification, 1500)
+							copyToClipboard(codeToCopy)
+						}}
+					>
+						copy
+					</button>
+				</div>
 			) : null}
 			<pre {...props}>{children}</pre>
 		</div>
