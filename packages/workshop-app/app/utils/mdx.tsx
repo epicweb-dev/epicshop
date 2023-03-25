@@ -1,4 +1,3 @@
-import copyToClipboard from 'copy-to-clipboard'
 import LRU from 'lru-cache'
 import * as mdxBundler from 'mdx-bundler/client'
 import type { MDXContentProps } from 'mdx-bundler/client'
@@ -7,46 +6,35 @@ import { LaunchEditor } from '~/routes/launch-editor'
 import { AnchorOrLink } from './misc'
 import Accordion from '~/components/accordion'
 
-function getCode(data: any) {
-	// just in case we are lost in space
-	try {
-		if (typeof data === 'string') return data
-		const { children } = data.props
-		if (typeof children === 'string') return children
-		return children.map(getCode).flat().join('')
-	} catch {}
-	return null
+function notification(button: EventTarget & HTMLButtonElement, on?: boolean) {
+	if (button) {
+		const label = button.previousElementSibling
+		if (on) label?.removeAttribute('hidden')
+		else label?.setAttribute('hidden', 'true')
+		button.style.backgroundColor = on ? '#e5e5e5' /* bg-gray-200 */ : ''
+	}
 }
 
 export function PreWithCopyToClipboard({ children, ...props }: any) {
-	const buttonRef = React.useRef<HTMLButtonElement>(null)
 	const showCopyButton = !Object.keys(props).find(att => att === 'data-nocopy')
-	const codeToCopy = showCopyButton && getCode(children)
-
-	function notification(on: boolean) {
-		const button = buttonRef.current
-		if (button) {
-			const label = button.previousElementSibling
-			if (on) label?.removeAttribute('hidden')
-			else label?.setAttribute('hidden', 'true')
-			button.style.backgroundColor = on ? '#e5e5e5' /* bg-gray-200 */ : ''
-		}
-	}
 
 	return (
-		<div className="relative">
-			{codeToCopy ? (
-				<div className="absolute top-0 right-0 z-50 m-2 mr-2 flex items-center gap-2">
+		<div className="group relative">
+			{showCopyButton ? (
+				<div className="absolute top-0 right-0 z-50 m-2 mr-2 flex items-center gap-2 opacity-0 transition duration-300 ease-in-out group-hover:opacity-100">
 					<span hidden className="font-mono text-xs uppercase text-black">
 						copied
 					</span>
 					<button
-						ref={buttonRef}
 						className="rounded border border-gray-300 bg-white px-2 py-0.5 font-mono text-xs font-semibold uppercase text-black transition duration-300 ease-in-out hover:bg-gray-100 active:bg-gray-200"
-						onClick={() => {
-							notification(true)
-							setTimeout(notification, 1500)
-							copyToClipboard(codeToCopy)
+						onClick={event => {
+							const button = event.currentTarget
+							notification(button, true)
+							setTimeout(() => notification(button), 1500)
+							const code =
+								button.parentElement?.parentElement?.querySelector('pre')
+									?.textContent || ''
+							navigator.clipboard.writeText(code)
 						}}
 					>
 						copy
