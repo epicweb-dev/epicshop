@@ -147,7 +147,7 @@ function Navigation() {
 												<Link
 													to={`/${exerciseNum}`}
 													className={clsx(
-														'relative whitespace-nowrap px-2 py-0.5 pr-3 text-2xl font-bold hover:underline',
+														'relative whitespace-nowrap px-2 py-0.5 pr-3 text-2xl font-bold outline-none hover:underline focus:underline',
 														{
 															'bg-black text-white after:absolute after:-right-2.5 after:-bottom-2.5 after:h-5 after:w-5 after:rotate-45 after:scale-75 after:bg-white after:content-[""]':
 																isActive,
@@ -177,7 +177,7 @@ function Navigation() {
 																	<Link
 																		to={`/${exerciseNum}/${step}`}
 																		className={clsx(
-																			'clip-path-button whitespace-nowrap px-2 py-0.5 pr-3 text-xl font-medium hover:underline',
+																			'relative whitespace-nowrap px-2 py-0.5 pr-3 text-xl font-medium outline-none after:absolute after:-right-2.5 after:-bottom-2.5 after:h-5 after:w-5 after:rotate-45 after:scale-75 after:bg-white after:content-[""] hover:underline focus:underline',
 																			{ 'bg-black text-white': isActive },
 																		)}
 																	>

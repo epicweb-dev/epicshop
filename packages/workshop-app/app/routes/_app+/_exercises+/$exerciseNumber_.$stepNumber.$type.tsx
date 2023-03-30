@@ -485,7 +485,7 @@ export default function ExercisePartRoute() {
 					// intentially no onValueChange here because the Link will trigger the
 					// change.
 				>
-					<Tabs.List className="border-b border-gray-200">
+					<Tabs.List className="inline-flex border-b border-gray-200">
 						{tabs.map(tab => {
 							return (
 								<Tabs.Trigger
