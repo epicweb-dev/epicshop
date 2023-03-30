@@ -177,11 +177,8 @@ function Navigation() {
 																	<Link
 																		to={`/${exerciseNum}/${step}`}
 																		className={clsx(
-																			'whitespace-nowrap px-2 py-0.5 pr-3 text-xl font-medium hover:underline',
-																			{
-																				// TODO: figure out how to make it clip in the corner
-																				'bg-black text-white': isActive,
-																			},
+																			'clip-path-button whitespace-nowrap px-2 py-0.5 pr-3 text-xl font-medium hover:underline',
+																			{ 'bg-black text-white': isActive },
 																		)}
 																	>
 																		{step}. {title}
