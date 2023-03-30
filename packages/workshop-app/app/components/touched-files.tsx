@@ -4,7 +4,7 @@ import Icon from './icons'
 export const touchedFilesButton = (
 	<button
 		className="flex h-full items-center gap-1 border-r border-gray-200 px-6 py-3 font-mono text-sm uppercase"
-		aria-label="Touched Files"
+		aria-label="Relevant Files"
 	>
 		<Icon name="Files" />
 		Files
@@ -22,7 +22,7 @@ function TouchedFiles({ children }: { children: React.ReactElement }) {
 						sideOffset={5}
 					>
 						<strong className="inline-block pb-4 font-semibold uppercase">
-							Touched Files
+							Relevant Files
 						</strong>
 						{children}
 					</Popover.Content>
