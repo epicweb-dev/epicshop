@@ -47,6 +47,13 @@ const historyCallDataSchema = z.intersection(
 	]),
 )
 
+const loadedSchema = z.object({
+	type: z.literal('kcdshop:loaded'),
+	url: z.string(),
+})
+
+const messageSchema = z.union([historyCallDataSchema, loadedSchema])
+
 function getNewIndex(prevIndex: number, delta: number, max: number) {
 	// keep the index bound between 0 and the history length
 	return Math.min(Math.max(prevIndex + delta, 0), max)
@@ -74,10 +81,12 @@ function InBrowserBrowserImpl(
 ) {
 	const [searchParams, setSearchParams] = useSearchParams()
 	const searchParamsPathname = searchParams.get('pathname') ?? '/'
-	const [connectionEstablished, setConnectionEstablished] = useState(false)
 	const [iframeKey, setIframeKey] = useState(0)
+	const lastDirectionRef = useRef<'forward' | 'back' | 'new'>('new')
+	const lastDirectionTimeout = useRef<ReturnType<typeof setTimeout> | null>(
+		null,
+	)
 	const [iframeContext, setIFrameContext] = useState({
-		pathname: searchParamsPathname,
 		history: [searchParamsPathname],
 		index: 0,
 	})
@@ -94,18 +103,40 @@ function InBrowserBrowserImpl(
 	useEffect(() => {
 		function handleMessage(messageEvent: MessageEvent) {
 			if (messageEvent.source !== iframeRef.current?.contentWindow) return
-			if (messageEvent.data.type === 'kcdshop:connected') {
-				setConnectionEstablished(true)
-			}
-			if (messageEvent.data.type !== 'kcdshop:history-call') return
 
-			const data = historyCallDataSchema.parse(messageEvent.data, {
+			const result = messageSchema.safeParse(messageEvent.data, {
 				path: ['messageEvent', 'data'],
 			})
+			if (!result.success) return
+			const { data } = result
 
-			// just in case... we can safely assume a connection has been established
-			// if we receive a message we're expecting
-			setConnectionEstablished(true)
+			if (data.type === 'kcdshop:loaded') {
+				setIFrameContext(prevContext => {
+					const newIndex = (i: number) =>
+						getNewIndex(prevContext.index, i, prevContext.history.length - 1)
+					if (lastDirectionRef.current === 'back') {
+						return { ...prevContext, index: newIndex(-1) }
+					} else if (lastDirectionRef.current === 'forward') {
+						return { ...prevContext, index: newIndex(1) }
+					} else if (lastDirectionRef.current === 'new') {
+						const currentPathname = prevContext.history[prevContext.index]
+						const newPathname = new URL(data.url).pathname
+						if (currentPathname === newPathname) return prevContext
+
+						const newHistory = [
+							...prevContext.history.slice(0, prevContext.index + 1),
+							newPathname,
+						]
+						return {
+							history: newHistory,
+							index: newHistory.length - 1,
+						}
+					} else {
+						throw new Error('Unexpected lastDirectionRef value')
+					}
+				})
+				return
+			}
 
 			const { method } = data
 			setIFrameContext(prevContext => {
@@ -184,17 +215,23 @@ function InBrowserBrowserImpl(
 	}, [iframePathname])
 
 	const navigateChild: NavigateFunction = (...params) => {
-		if (connectionEstablished) {
-			iframeRef.current?.contentWindow?.postMessage(
-				{ type: 'kcdshop:navigate-call', params },
-				'*',
-			)
+		const to = params[0]
+		if (typeof to === 'number') {
+			// this part feels very brittle to me...
+			lastDirectionRef.current = to > 0 ? 'forward' : 'back'
 		} else {
-			const [to] = params
-			if (typeof to === 'string') {
-				setIframeSrcUrl(new URL(to, baseUrl))
-			}
+			lastDirectionRef.current = 'new'
 		}
+		if (lastDirectionTimeout.current) {
+			clearTimeout(lastDirectionTimeout.current)
+		}
+		lastDirectionTimeout.current = setTimeout(() => {
+			lastDirectionRef.current = 'new'
+		}, 100)
+		iframeRef.current?.contentWindow?.postMessage(
+			{ type: 'kcdshop:navigate-call', params },
+			'*',
+		)
 	}
 
 	function handleExtrnalNavigation(
@@ -212,7 +249,7 @@ function InBrowserBrowserImpl(
 
 	const atEndOfHistory =
 		iframeContext.index === iframeContext.history.length - 1
-	const atStartOfHistory = iframeContext.index === 0
+	const atStartOfHistory = iframeContext.index <= 0
 	const existingSearchParamHiddenInputs: Array<JSX.Element> = []
 	for (const [key, value] of searchParams.entries()) {
 		if (key === 'pathname') continue
@@ -228,7 +265,7 @@ function InBrowserBrowserImpl(
 					<button
 						type="button"
 						className="flex aspect-square h-full w-full items-center justify-center p-1 transition disabled:opacity-40"
-						disabled={atStartOfHistory || !connectionEstablished}
+						disabled={atStartOfHistory}
 						onClick={() => navigateChild(-1)}
 					>
 						<Icon name="ArrowLeft" aria-hidden="true" title="Go back" />
@@ -236,7 +273,7 @@ function InBrowserBrowserImpl(
 					<button
 						type="button"
 						className="flex aspect-square h-full w-full items-center justify-center p-1 transition disabled:opacity-40"
-						disabled={atEndOfHistory || !connectionEstablished}
+						disabled={atEndOfHistory}
 						onClick={() => navigateChild(1)}
 					>
 						<Icon name="ArrowRight" aria-hidden="true" title="Go forward" />
@@ -245,7 +282,16 @@ function InBrowserBrowserImpl(
 						type="button"
 						className="flex aspect-square h-full w-full items-center justify-center p-1 transition disabled:opacity-40"
 						onClick={() => {
+							setIframeSrcUrl(appUrl)
 							setIframeKey(iframeKey + 1)
+							// TODO: figure out how we can avoid having to do this...
+							// I stayed up for hours one night trying and couldn't work out
+							// why react router wouldn't update the UI when using back/forward
+							// after a refresh.
+							setIFrameContext({
+								history: [appUrl.pathname],
+								index: 0,
+							})
 						}}
 					>
 						<Icon name="Refresh" aria-hidden="true" title="Refresh" />

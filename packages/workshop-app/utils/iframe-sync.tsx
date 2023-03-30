@@ -12,8 +12,8 @@ export function KCDShopIFrameSync() {
 		effectSetup = true
 		if (window.parent === window) return
 
-		// send connection established message
-		window.parent.postMessage({ type: 'kcdshop:connected' }, '*')
+		// @ts-expect-error - this is fine 🔥
+		window.__kcdshop__?.onHydrated?.()
 
 		const methods = [
 			'pushState',
@@ -51,5 +51,40 @@ export function KCDShopIFrameSync() {
 		return () => window.removeEventListener('message', handleMessage)
 	}, [navigate])
 
-	return null
+	return (
+		<script
+			type="module"
+			dangerouslySetInnerHTML={{ __html: iframeSyncScript }}
+		/>
+	)
 }
+
+const iframeSyncScript = /* javascript */ `
+if (window.parent !== window) {
+	window.__kcdshop__ = window.__kcdshop__ || {};
+	window.parent.postMessage(
+		{ type: 'kcdshop:loaded', url: window.location.href },
+		'*'
+	);
+	function handleMessage(event) {
+		const { type, params } = event.data
+		if (type === 'kcdshop:navigate-call') {
+			const [distanceOrUrl, options] = params
+			if (typeof distanceOrUrl === 'number') {
+				window.history.go(distanceOrUrl)
+			} else {
+				if (options?.replace) {
+					window.location.replace(distanceOrUrl)
+				} else {
+					window.location.assign(distanceOrUrl)
+				}
+			}
+		}
+	}
+
+	window.addEventListener('message', handleMessage)
+	window.__kcdshop__.onHydrated = function() {
+		window.removeEventListener('message', handleMessage)
+	};
+}
+`
