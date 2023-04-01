@@ -31,6 +31,7 @@ import {
 	type InBrowserBrowserRef,
 } from '~/components/in-browser-browser'
 import { InBrowserTestRunner } from '~/components/in-browser-test-runner'
+import { AlertNotification } from '~/components/notification-message'
 import TouchedFiles, { touchedFilesButton } from '~/components/touched-files'
 import { type loader as rootLoader } from '~/root'
 import {
@@ -327,7 +328,7 @@ export default function ExercisePartRoute() {
 		}) {
 			const app = data[type]
 			return app ? (
-				<div className="inline-block">
+				<div className="inline-block grow">
 					<LaunchEditor appFile={file} appName={app.name} {...props}>
 						<div className="launch-editor-button-wrapper flex items-center justify-center underline">
 							{children}{' '}
@@ -359,7 +360,9 @@ export default function ExercisePartRoute() {
 			const hydrated = useHydrated()
 			return hydrated && touchedFilesDivRef.current
 				? createPortal(
-						<TouchedFiles>{children}</TouchedFiles>,
+						<TouchedFiles appName={data[data.type]?.name}>
+							{children}
+						</TouchedFiles>,
 						touchedFilesDivRef.current,
 				  )
 				: null
@@ -437,6 +440,7 @@ export default function ExercisePartRoute() {
 							{hydrated ? null : touchedFilesButton}
 							<div className="h-full" ref={touchedFilesDivRef} />
 						</div>
+						<AlertNotification />
 						<div className="relative flex overflow-hidden">
 							{data.prevStepLink ? (
 								<Link
@@ -482,7 +486,7 @@ export default function ExercisePartRoute() {
 				<Tabs.Root
 					className="relative flex h-screen flex-col"
 					value={activeTab}
-					// intentially no onValueChange here because the Link will trigger the
+					// intentionally no onValueChange here because the Link will trigger the
 					// change.
 				>
 					<Tabs.List className="inline-flex border-b border-gray-200">

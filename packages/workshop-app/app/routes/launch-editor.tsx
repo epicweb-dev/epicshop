@@ -5,6 +5,7 @@ import { useFetcher } from '@remix-run/react'
 import { getAppByName } from '~/utils/apps.server'
 import { z } from 'zod'
 import { launchEditor } from '~/utils/launch-editor.server'
+import type { EventDetail } from '~/utils/misc'
 
 const launchSchema = z.intersection(
 	z.object({
@@ -47,7 +48,9 @@ export async function action({ request }: DataFunctionArgs) {
 			if (!app) {
 				throw new Response(`App "${form.appName}" Not found`, { status: 404 })
 			}
-			file = path.join(app?.fullPath, form.appFile)
+			file = form.appFile
+				.split(',')
+				.map(filePath => path.join(app?.fullPath, filePath))
 			break
 		}
 	}
@@ -69,8 +72,26 @@ export function LaunchEditor({
 } & (
 	| { file: string; appFile?: never; appName?: never }
 	| { file?: never; appFile: string; appName: string }
+	| { file?: never; appFile: string[]; appName: string }
 )) {
 	const fetcher = useFetcher<typeof action>()
+
+	if (fetcher.state === 'loading') {
+		const error = fetcher.data?.status === 'error' ? fetcher.data.error : ''
+		if (error) {
+			const detail: EventDetail = {
+				title: 'Launch Editor Error',
+				content: error,
+			}
+			const event = new CustomEvent('kcdshop-error', {
+				detail,
+			})
+			document.dispatchEvent(event)
+		}
+		const submitted = new CustomEvent('kcdshop-launchEditor-submitted')
+		document.dispatchEvent(submitted)
+	}
+
 	const type = file ? 'file' : appFile ? 'appFile' : ''
 	return (
 		<fetcher.Form action="/launch-editor" method="post">
@@ -81,9 +102,6 @@ export function LaunchEditor({
 			<input type="hidden" name="appFile" value={appFile} />
 			<input type="hidden" name="appName" value={appName} />
 			<button type="submit">{children}</button>
-			{fetcher.data?.status === 'error' ? (
-				<div className="error">{fetcher.data.error}</div>
-			) : null}
 		</fetcher.Form>
 	)
 }

@@ -246,9 +246,8 @@ export async function getDiffFiles(app1: App, app2: App) {
 					: status === 'A'
 					? 'added'
 					: 'unknown') as 'renamed' | 'moved' | 'deleted' | 'added' | 'unknown',
-				path: filePath
-					.replace(`${app1CopyPath}${path.sep}`, '')
-					.replace(`${app2CopyPath}${path.sep}`, ''),
+				// always use forward separator for our README files
+				path: diffPathToRelative(filePath).replace(/\\/g, '/'),
 			}
 		})
 		.filter(typedBoolean)
