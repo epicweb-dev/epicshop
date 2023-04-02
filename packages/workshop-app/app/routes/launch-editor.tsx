@@ -5,7 +5,6 @@ import { useFetcher } from '@remix-run/react'
 import { getAppByName } from '~/utils/apps.server'
 import { z } from 'zod'
 import { launchEditor } from '~/utils/launch-editor.server'
-import type { EventDetail } from '~/utils/misc'
 
 const launchSchema = z.intersection(
 	z.object({
@@ -83,9 +82,7 @@ export function LaunchEditor({
 				title: 'Launch Editor Error',
 				content: error,
 			}
-			const event = new CustomEvent('kcdshop-error', {
-				detail,
-			})
+			const event = new CustomEvent<EventDetail>('kcdshop-error', { detail })
 			document.dispatchEvent(event)
 		}
 		const submitted = new CustomEvent('kcdshop-launchEditor-submitted')

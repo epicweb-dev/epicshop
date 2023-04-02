@@ -78,12 +78,10 @@ export const AnchorOrLink = React.forwardRef<
 	}
 })
 
-export type EventDetail = { title?: string; content?: string }
-
 // base on https://usehooks.com/useEventListener/
 export function useEventListener(
-	eventName: string,
-	handler: EventListener,
+	eventName: keyof CustomEventMap,
+	handler: CustomEventListener<keyof CustomEventMap>,
 	element: HTMLElement | Document | (Window & typeof globalThis) | null,
 ) {
 	const savedHandler = React.useRef<typeof handler>()
@@ -95,9 +93,9 @@ export function useEventListener(
 	React.useEffect(() => {
 		const isSupported = element && element.addEventListener
 		if (!isSupported) return
-		const eventListener = function (event: CustomEvent<EventDetail>) {
+		const eventListener: typeof handler = function (event) {
 			if (savedHandler.current) savedHandler.current(event)
-		} as EventListener
+		}
 		element.addEventListener(eventName, eventListener)
 		return () => element.removeEventListener(eventName, eventListener)
 	}, [eventName, element])

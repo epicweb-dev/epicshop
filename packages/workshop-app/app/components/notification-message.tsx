@@ -3,7 +3,7 @@ import { useSearchParams } from '@remix-run/react'
 import { AnimatePresence, motion } from 'framer-motion'
 import clsx from 'clsx'
 import Icon from './icons'
-import { type EventDetail, useEventListener } from '~/utils/misc'
+import { useEventListener } from '~/utils/misc'
 
 type Varient = 'alert' | 'default'
 
@@ -162,7 +162,7 @@ export function AlertNotification() {
 		setTimeout(() => {
 			setMessage(event.detail)
 		}, 0)
-	}, []) as EventListener
+	}, [])
 	useEventListener('kcdshop-error', notification, hydrated ? document : null)
 
 	useEffect(() => setHydrated(true), [])
