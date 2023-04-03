@@ -38,11 +38,7 @@ export const meta: V2_MetaFunction = ({
 }: {
 	data: SerializeFrom<typeof loader>
 }) => {
-	return [
-		{ charSet: 'utf-8' },
-		{ title: data?.workshopTitle },
-		{ name: 'viewport', content: 'width=device-width,initial-scale=1' },
-	]
+	return [{ title: data?.workshopTitle }]
 }
 
 export async function loader() {
@@ -84,6 +80,8 @@ export default function App() {
 			data-theme="light"
 		>
 			<head>
+				<meta charSet="utf-8" />
+				<meta name="viewport" content="width=device-width,initial-scale=1" />
 				<Meta />
 				<Links />
 			</head>
