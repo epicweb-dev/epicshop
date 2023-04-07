@@ -5,6 +5,11 @@ const colors = require('tailwindcss/colors')
 module.exports = {
 	content: ['./app/**/*.{ts,tsx,jsx,js}', '../example/**/*.md'],
 	theme: {
+		minWidth: {
+			0: '0',
+			md: '28rem',
+			full: '100%',
+		},
 		extend: {
 			fontFamily: {
 				sans: ['Neogrotesk', ...defaultTheme.fontFamily.sans],
@@ -19,5 +24,10 @@ module.exports = {
 		require('@tailwindcss/typography'),
 		require('tailwindcss-radix'),
 		require('tailwind-scrollbar'),
+	],
+	safelist: [
+		{
+			pattern: /(bg|text|border)-(red|green|blue)-500/,
+		},
 	],
 }

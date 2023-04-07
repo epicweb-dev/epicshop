@@ -78,11 +78,25 @@ export const AnchorOrLink = React.forwardRef<
 	}
 })
 
-// base on https://usehooks.com/useEventListener/
+export function useHydrated() {
+	const [hydrated, setHydrated] = React.useState(false)
+	React.useEffect(() => {
+		setHydrated(true)
+	}, [])
+	return hydrated
+}
+
+/**
+ *  base on https://usehooks.com/useEventListener/
+ *
+ *  make sure to use only memoized handler and options (when it is an object)
+ *  to prevents removing and adding the listener on each render
+ */
 export function useEventListener(
-	eventName: keyof CustomEventMap,
+	eventName: keyof CustomEventMap | string,
+	element: EventTargetElement,
 	handler: CustomEventListener<keyof CustomEventMap>,
-	element: HTMLElement | Document | (Window & typeof globalThis) | null,
+	options?: boolean | AddEventListenerOptions,
 ) {
 	const savedHandler = React.useRef<typeof handler>()
 
@@ -96,7 +110,7 @@ export function useEventListener(
 		const eventListener: typeof handler = function (event) {
 			if (savedHandler.current) savedHandler.current(event)
 		}
-		element.addEventListener(eventName, eventListener)
-		return () => element.removeEventListener(eventName, eventListener)
-	}, [eventName, element])
+		element.addEventListener(eventName, eventListener, options)
+		return () => element.removeEventListener(eventName, eventListener, options)
+	}, [eventName, element, options])
 }

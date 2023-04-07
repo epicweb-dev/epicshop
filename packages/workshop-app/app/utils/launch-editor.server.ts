@@ -353,6 +353,7 @@ export async function launchEditor(
 		initArgs,
 	)
 
+	// TODO: figure out how to send error messages as JSX from here...
 	function getErrorMessage() {
 		let error: string
 		if (errorsList.length) {

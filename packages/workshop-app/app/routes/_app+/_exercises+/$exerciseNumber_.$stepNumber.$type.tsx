@@ -15,13 +15,7 @@ import {
 	useSearchParams,
 } from '@remix-run/react'
 import clsx from 'clsx'
-import {
-	type PropsWithChildren,
-	useEffect,
-	useMemo,
-	useRef,
-	useState,
-} from 'react'
+import { type PropsWithChildren, useMemo, useRef, useState } from 'react'
 import { createPortal } from 'react-dom'
 import { useParams } from 'react-router'
 import { Diff } from '~/components/diff'
@@ -31,7 +25,6 @@ import {
 	type InBrowserBrowserRef,
 } from '~/components/in-browser-browser'
 import { InBrowserTestRunner } from '~/components/in-browser-test-runner'
-import { AlertNotification } from '~/components/notification-message'
 import TouchedFiles, { touchedFilesButton } from '~/components/touched-files'
 import { type loader as rootLoader } from '~/root'
 import {
@@ -49,7 +42,7 @@ import {
 } from '~/utils/apps.server'
 import { getDiffCode } from '~/utils/diff.server'
 import { Mdx } from '~/utils/mdx'
-import { getErrorMessage } from '~/utils/misc'
+import { getErrorMessage, useHydrated } from '~/utils/misc'
 import { isAppRunning, isPortAvailable } from '~/utils/process-manager.server'
 import {
 	combineServerTimings,
@@ -294,14 +287,6 @@ function withParam(
 	return newSearchParams
 }
 
-function useHydrated() {
-	const [hydrated, setHydrated] = useState(false)
-	useEffect(() => {
-		setHydrated(true)
-	}, [])
-	return hydrated
-}
-
 export default function ExercisePartRoute() {
 	const data = useLoaderData<typeof loader>()
 	const params = useParams()
@@ -313,6 +298,7 @@ export default function ExercisePartRoute() {
 	const activeApp = preview === 'solution' ? 'solution' : 'problem'
 	const inBrowserBrowserRef = useRef<InBrowserBrowserRef>(null)
 	const previewAppUrl = data[activeApp]?.dev.baseUrl
+	const appName = data[data.type]?.name
 
 	const touchedFilesDivRef = useRef<HTMLDivElement>(null)
 	const hydrated = useHydrated()
@@ -360,14 +346,12 @@ export default function ExercisePartRoute() {
 			const hydrated = useHydrated()
 			return hydrated && touchedFilesDivRef.current
 				? createPortal(
-						<TouchedFiles appName={data[data.type]?.name}>
-							{children}
-						</TouchedFiles>,
+						<TouchedFiles appName={appName}>{children}</TouchedFiles>,
 						touchedFilesDivRef.current,
 				  )
 				: null
 		}
-	}, [])
+	}, [appName])
 
 	const LinkToApp = useMemo(() => {
 		return function LinkToApp({
@@ -440,7 +424,6 @@ export default function ExercisePartRoute() {
 							{hydrated ? null : touchedFilesButton}
 							<div className="h-full" ref={touchedFilesDivRef} />
 						</div>
-						<AlertNotification />
 						<div className="relative flex overflow-hidden">
 							{data.prevStepLink ? (
 								<Link

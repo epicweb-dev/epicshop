@@ -323,6 +323,36 @@ const Icons = {
 			d="M14.348 14.849a1.2 1.2 0 0 1-1.697 0L10 11.819l-2.651 3.029a1.2 1.2 0 1 1-1.697-1.697l2.758-3.15-2.759-3.152a1.2 1.2 0 1 1 1.697-1.697L10 8.183l2.651-3.031a1.2 1.2 0 1 1 1.697 1.697l-2.758 3.152 2.758 3.15a1.2 1.2 0 0 1 0 1.698z"
 		/>
 	),
+	// based on exclamation-circle from https://heroicons.com/
+	Error: () => (
+		<g fill="none" strokeWidth="2" stroke="currentColor">
+			<path
+				strokeLinecap="round"
+				strokeLinejoin="round"
+				d="M12 9v3.75m9-.75a9 9 0 11-18 0 9 9 0 0118 0zm-9 3.75h.008v.008H12v-.008z"
+			/>
+		</g>
+	),
+	// based on bell from https://heroicons.com/
+	Notify: () => (
+		<g fill="none" strokeWidth="2" stroke="currentColor">
+			<path
+				strokeLinecap="round"
+				strokeLinejoin="round"
+				d="M14.857 17.082a23.848 23.848 0 005.454-1.31A8.967 8.967 0 0118 9.75v-.7V9A6 6 0 006 9v.75a8.967 8.967 0 01-2.312 6.022c1.733.64 3.56 1.085 5.455 1.31m5.714 0a24.255 24.255 0 01-5.714 0m5.714 0a3 3 0 11-5.714 0"
+			/>
+		</g>
+	),
+	// based on check from https://heroicons.com/
+	Success: () => (
+		<g fill="none" strokeWidth="2" stroke="currentColor">
+			<path
+				strokeLinecap="round"
+				strokeLinejoin="round"
+				d="M4.5 12.75l6 6 9-13.5"
+			/>
+		</g>
+	),
 } as const
 
 export type IconNames = keyof typeof Icons

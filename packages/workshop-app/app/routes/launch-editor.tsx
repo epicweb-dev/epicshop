@@ -5,6 +5,8 @@ import { useFetcher } from '@remix-run/react'
 import { getAppByName } from '~/utils/apps.server'
 import { z } from 'zod'
 import { launchEditor } from '~/utils/launch-editor.server'
+import { sendLaunchEditorUpdate } from '~/components/touched-files'
+import { showToast } from '~/components/toast'
 
 const launchSchema = z.intersection(
 	z.object({
@@ -18,7 +20,7 @@ const launchSchema = z.intersection(
 		}),
 		z.object({
 			type: z.literal('appFile'),
-			appFile: z.string(),
+			appFile: z.array(z.string()),
 			appName: z.string(),
 		}),
 	]),
@@ -30,7 +32,7 @@ export async function action({ request }: DataFunctionArgs) {
 		type: formData.get('type'),
 		file: formData.get('file'),
 		workshopFile: formData.get('workshopFile'),
-		appFile: formData.get('appFile'),
+		appFile: formData.getAll('appFile'),
 		appName: formData.get('appName'),
 		line: formData.get('line') ?? undefined,
 		column: formData.get('column') ?? undefined,
@@ -47,9 +49,7 @@ export async function action({ request }: DataFunctionArgs) {
 			if (!app) {
 				throw new Response(`App "${form.appName}" Not found`, { status: 404 })
 			}
-			file = form.appFile
-				.split(',')
-				.map(filePath => path.join(app?.fullPath, filePath))
+			file = form.appFile.map(filePath => path.join(app?.fullPath, filePath))
 			break
 		}
 	}
@@ -70,25 +70,30 @@ export function LaunchEditor({
 	children: React.ReactNode
 } & (
 	| { file: string; appFile?: never; appName?: never }
-	| { file?: never; appFile: string; appName: string }
-	| { file?: never; appFile: string[]; appName: string }
+	| { file?: never; appFile: string | string[]; appName: string }
 )) {
 	const fetcher = useFetcher<typeof action>()
 
-	if (fetcher.state === 'loading') {
-		const error = fetcher.data?.status === 'error' ? fetcher.data.error : ''
-		if (error) {
-			const detail: EventDetail = {
-				title: 'Launch Editor Error',
-				content: error,
-			}
-			const event = new CustomEvent<EventDetail>('kcdshop-error', { detail })
-			document.dispatchEvent(event)
+	switch (fetcher.state) {
+		case 'submitting': {
+			sendLaunchEditorUpdate(document, fetcher.state)
+			break
 		}
-		const submitted = new CustomEvent('kcdshop-launchEditor-submitted')
-		document.dispatchEvent(submitted)
+		case 'loading': {
+			const error = fetcher.data?.status === 'error' ? fetcher.data.error : ''
+			if (error) {
+				showToast(document, {
+					title: 'Launch Editor Error',
+					variant: 'Error',
+					content: error,
+				})
+			}
+			sendLaunchEditorUpdate(document, fetcher.state)
+			break
+		}
 	}
 
+	const fileList = typeof appFile === 'string' ? [appFile] : appFile
 	const type = file ? 'file' : appFile ? 'appFile' : ''
 	return (
 		<fetcher.Form action="/launch-editor" method="post">
@@ -96,8 +101,10 @@ export function LaunchEditor({
 			<input type="hidden" name="column" value={column} />
 			<input type="hidden" name="type" value={type} />
 			<input type="hidden" name="file" value={file} />
-			<input type="hidden" name="appFile" value={appFile} />
 			<input type="hidden" name="appName" value={appName} />
+			{fileList?.map(file => (
+				<input type="hidden" name="appFile" key={file} value={file} />
+			))}
 			<button type="submit">{children}</button>
 		</fetcher.Form>
 	)
