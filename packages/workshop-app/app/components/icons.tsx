@@ -68,6 +68,70 @@ const Icons = {
 			/>
 		</>
 	),
+	Unlinked: () => (
+		<>
+			<path
+				d="M17.75 12.25L18 12C19.6569 10.3431 19.6569 7.65685 18 6C16.3431 4.34314 13.6569 4.34314 12 6L11.75 6.25"
+				stroke="currentColor"
+				strokeWidth="1.5"
+				strokeLinecap="round"
+				strokeLinejoin="round"
+			/>
+			<path
+				d="M6.24996 11.75L5.99996 12C4.34311 13.6569 4.34311 16.3431 5.99996 18C7.65682 19.6569 10.3431 19.6569 12 18L12.25 17.75"
+				stroke="currentColor"
+				strokeWidth="1.5"
+				strokeLinecap="round"
+				strokeLinejoin="round"
+			/>
+			<path
+				d="M8.25 4.75V6.25"
+				stroke="currentColor"
+				strokeWidth="1.5"
+				strokeLinecap="round"
+				strokeLinejoin="round"
+			/>
+			<path
+				d="M15.75 17.75V19.25"
+				stroke="currentColor"
+				strokeWidth="1.5"
+				strokeLinecap="round"
+				strokeLinejoin="round"
+			/>
+			<path
+				d="M6.25 8.25H4.75"
+				stroke="currentColor"
+				strokeWidth="1.5"
+				strokeLinecap="round"
+				strokeLinejoin="round"
+			/>
+			<path
+				d="M19.25 15.75H17.75"
+				stroke="currentColor"
+				strokeWidth="1.5"
+				strokeLinecap="round"
+				strokeLinejoin="round"
+			/>
+		</>
+	),
+	Linked: () => (
+		<>
+			<path
+				d="M11 14.25H12.5C15.1234 14.25 17.25 12.1234 17.25 9.5C17.25 6.87665 15.1234 4.75 12.5 4.75H9C6.65279 4.75 4.75 6.65279 4.75 9V10.25"
+				stroke="currentColor"
+				strokeWidth="1.5"
+				strokeLinecap="round"
+				strokeLinejoin="round"
+			/>
+			<path
+				d="M13 9.75H11.5C8.87665 9.75 6.75 11.8766 6.75 14.5C6.75 17.1234 8.87665 19.25 11.5 19.25H15C17.3472 19.25 19.25 17.3472 19.25 15V13.75"
+				stroke="currentColor"
+				strokeWidth="1.5"
+				strokeLinecap="round"
+				strokeLinejoin="round"
+			/>
+		</>
+	),
 	Sun: () => (
 		<g
 			strokeWidth={1}
@@ -327,7 +391,7 @@ interface IconProps<T extends React.ElementType> {
 	viewBox?: string
 	title?: string
 	role?: string
-	size?: '16' | '20' | '24' | '32' | '40'
+	size?: '16' | '20' | '24' | '28' | '32' | '40'
 	name: IconNames
 }
 

@@ -5,6 +5,7 @@ import { useFetcher } from '@remix-run/react'
 import { getAppByName } from '~/utils/apps.server'
 import { z } from 'zod'
 import { launchEditor } from '~/utils/launch-editor.server'
+import clsx from 'clsx'
 
 const launchSchema = z.intersection(
 	z.object({
@@ -80,7 +81,15 @@ export function LaunchEditor({
 			<input type="hidden" name="file" value={file} />
 			<input type="hidden" name="appFile" value={appFile} />
 			<input type="hidden" name="appName" value={appName} />
-			<button type="submit">{children}</button>
+			<button
+				type="submit"
+				className={clsx(
+					fetcher.state !== 'idle' ? 'cursor-progress' : null,
+					fetcher.data?.status === 'error' ? 'cursor-not-allowed' : null,
+				)}
+			>
+				{children}
+			</button>
 			{fetcher.data?.status === 'error' ? (
 				<div className="error">{fetcher.data.error}</div>
 			) : null}

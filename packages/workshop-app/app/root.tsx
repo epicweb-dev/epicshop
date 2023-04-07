@@ -83,6 +83,8 @@ export default function App() {
 				<meta charSet="utf-8" />
 				<meta name="viewport" content="width=device-width,initial-scale=1" />
 				<Meta />
+				<meta name="charset" content="utf-8" />
+				<meta name="viewport" content="width=device-width,initial-scale=1" />
 				<Links />
 			</head>
 			<body className="h-full">
@@ -108,7 +110,7 @@ function getWebsocketJS() {
 			const event = JSON.parse(message.data);
 			if (event.type !== 'kcdshop:file-change') return;
 			const { filePath } = event.data;
-			if (filePath.includes('README')) {
+			if (filePath.includes('README') && !filePath.includes('/playground/README')) {
 				console.log(
 					[
 						'🐨 Reloading',

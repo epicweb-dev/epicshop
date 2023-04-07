@@ -2,13 +2,20 @@ import LRU from 'lru-cache'
 import * as C from 'cachified'
 import { type CacheEntry, verboseReporter } from 'cachified'
 import { lruCacheAdapter } from 'cachified'
-import type { App, ExampleApp, ProblemApp, SolutionApp } from './apps.server'
+import type {
+	App,
+	ExampleApp,
+	PlaygroundApp,
+	ProblemApp,
+	SolutionApp,
+} from './apps.server'
 import { time, type Timings } from './timing.server'
 
 declare global {
 	var __solution_app_cache__: ReturnType<typeof getSolutionAppCache>
 	var __problem_app_cache__: ReturnType<typeof getProblemAppCache>
 	var __example_app_cache__: ReturnType<typeof getExampleAppCache>
+	var __playground_app_cache__: ReturnType<typeof getPlaygroundAppCache>
 	var __get_apps_cache__: ReturnType<typeof getAppsCache>
 	var __diff_code_cache__: ReturnType<typeof getDiffCodeCache>
 	var __compiled_markdown_cache__: ReturnType<typeof getCompiledMarkdownCache>
@@ -22,6 +29,9 @@ export const problemAppCache = (global.__problem_app_cache__ =
 
 export const exampleAppCache = (global.__example_app_cache__ =
 	global.__example_app_cache__ ?? getExampleAppCache())
+
+export const playgroundAppCache = (global.__playground_app_cache__ =
+	global.__playground_app_cache__ ?? getPlaygroundAppCache())
 
 export const appsCache = (global.__get_apps_cache__ =
 	global.__get_apps_cache__ ?? getAppsCache())
@@ -50,6 +60,13 @@ function getExampleAppCache() {
 	const cache = new LRU<string, CacheEntry<ExampleApp>>({ max: 1000 })
 	// @ts-expect-error it's fine
 	cache.name = 'ExampleAppCache'
+	return lruCacheAdapter(cache)
+}
+
+function getPlaygroundAppCache() {
+	const cache = new LRU<string, CacheEntry<PlaygroundApp>>({ max: 1000 })
+	// @ts-expect-error it's fine
+	cache.name = 'PlaygroundAppCache'
 	return lruCacheAdapter(cache)
 }
 

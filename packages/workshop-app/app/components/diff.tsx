@@ -151,13 +151,13 @@ export function Diff() {
 									name="app1"
 									label="App 1"
 									className="border-r border-gray-200"
-									allApps={diff.allApps}
+									allApps={data.allApps}
 									defaultValue={diff.app1}
 								/>
 								<SelectFileToDiff
 									name="app2"
 									label="App 2"
-									allApps={diff.allApps}
+									allApps={data.allApps}
 									defaultValue={diff.app2}
 								/>
 							</Form>

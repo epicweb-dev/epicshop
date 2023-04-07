@@ -149,7 +149,7 @@ async function copyUnignoredFiles(
 	destDir: string,
 	ignore: Array<string>,
 ) {
-	const key = `COPY_${srcDir}__${destDir}__${ignore}`
+	const key = `COPY_${srcDir}__${destDir}__${ignore.join('_')}`
 	await cachified({
 		key,
 		cache: diffCodeCache,

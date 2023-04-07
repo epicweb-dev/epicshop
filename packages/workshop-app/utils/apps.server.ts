@@ -1,5 +1,6 @@
 import { type CacheEntry } from 'cachified'
 import fs from 'fs'
+import fsExtra from 'fs-extra'
 import glob from 'glob'
 import path from 'path'
 import util from 'util'
@@ -10,6 +11,7 @@ import {
 	appsCache,
 	problemAppCache,
 	solutionAppCache,
+	playgroundAppCache,
 } from './cache.server'
 import { compileMdx } from './compile-mdx.server'
 import { getWatcher } from './change-tracker'
@@ -17,6 +19,14 @@ import { requireCachePurgeEmitter } from './purge-require-cache.server'
 import { getServerTimeHeader, type Timings } from './timing.server'
 
 const globPromise = util.promisify(glob)
+
+const playgroundAppNameInfoPath = path.join(
+	getWorkshopRoot(),
+	'node_modules',
+	'.cache',
+	'kcdshop',
+	'playground.json',
+)
 
 type Prettyify<T> = { [K in keyof T]: T[K] } & {}
 
@@ -78,14 +88,21 @@ export type ProblemApp = Prettyify<
 export type SolutionApp = Prettyify<
 	BaseExerciseStepApp & {
 		type: 'solution'
+		problemId: string | null
 	}
 >
 
 export type ExampleApp = BaseApp & { type: 'example' }
 
+export type PlaygroundApp = BaseApp & {
+	type: 'playground'
+	/** the name of the app upon which the playground is based */
+	appName: string
+}
+
 export type ExerciseStepApp = ProblemApp | SolutionApp
 
-export type App = ExampleApp | ExerciseStepApp
+export type App = PlaygroundApp | ExampleApp | ExerciseStepApp
 
 export function isApp(app: any): app is App {
 	return (
@@ -121,6 +138,10 @@ export function isFirstStepSolutionApp(
 	app: App,
 ): app is SolutionApp & { stepNumber: 1 } {
 	return isSolutionApp(app) && app.stepNumber === 1
+}
+
+export function isPlaygroundApp(app: any): app is PlaygroundApp {
+	return isApp(app) && app.type === 'playground'
 }
 
 export function isExampleApp(app: any): app is ExampleApp {
@@ -289,7 +310,8 @@ let appCallCount = 0
 export async function getApps({
 	timings,
 	request,
-}: CachifiedOptions = {}): Promise<Array<App>> {
+	forceFresh,
+}: CachifiedOptions & { forceFresh?: boolean } = {}): Promise<Array<App>> {
 	const key = 'apps'
 	const apps = await cachified({
 		key,
@@ -300,15 +322,29 @@ export async function getApps({
 		// This entire cache is to avoid a single request getting a fresh value
 		// multiple times unnecessarily (because getApps is called many times)
 		ttl: 1000 * 60 * 60 * 24,
-		forceFresh: getForceFresh(await appsCache.get(key)),
+		forceFresh: forceFresh ?? getForceFresh(await appsCache.get(key)),
 		getFreshValue: async () => {
-			const [problemApps, solutionApps, exampleApps] = await Promise.all([
-				getProblemApps({ request, timings }),
-				getSolutionApps({ request, timings }),
-				getExampleApps({ request, timings }),
-			])
-			const sortedApps = [...problemApps, ...solutionApps, ...exampleApps].sort(
-				(a, b) => {
+			const [playgroundApp, problemApps, solutionApps, exampleApps] =
+				await Promise.all([
+					getPlaygroundApp({ request, timings }),
+					getProblemApps({ request, timings }),
+					getSolutionApps({ request, timings }),
+					getExampleApps({ request, timings }),
+				])
+			const sortedApps = [
+				playgroundApp,
+				...problemApps,
+				...solutionApps,
+				...exampleApps,
+			]
+				.filter(typedBoolean)
+				.sort((a, b) => {
+					if (isPlaygroundApp(a)) {
+						if (isPlaygroundApp(b)) return a.name.localeCompare(b.name)
+						else return 1
+					}
+					if (isPlaygroundApp(b)) return 1
+
 					if (isExampleApp(a)) {
 						if (isExampleApp(b)) return a.name.localeCompare(b.name)
 						else return 1
@@ -340,8 +376,7 @@ export async function getApps({
 					}
 					console.error('unhandled sorting case', a, b)
 					return 0
-				},
-			)
+				})
 			return sortedApps
 		},
 	})
@@ -392,6 +427,27 @@ async function findSolutionDir({
 		)
 		if (solutionDir) {
 			return path.join(parentDir, solutionDir)
+		}
+	}
+	return null
+}
+
+async function findProblemDir({
+	fullPath,
+	stepNumber,
+}: {
+	fullPath: string
+	stepNumber: number
+}) {
+	if (path.basename(fullPath).includes('.solution')) {
+		const paddedStepNumber = stepNumber.toString().padStart(2, '0')
+		const parentDir = path.dirname(fullPath)
+		const siblingDirs = await fs.promises.readdir(parentDir)
+		const problemDir = siblingDirs.find(
+			dir => dir.endsWith('problem') && dir.includes(paddedStepNumber),
+		)
+		if (problemDir) {
+			return path.join(parentDir, problemDir)
 		}
 	}
 	return null
@@ -461,6 +517,57 @@ async function getDevInfo({
 		}
 	}
 	return { type: 'browser', baseUrl: `/app/${id}/` }
+}
+
+async function getPlaygroundApp({
+	timings,
+	request,
+}: CachifiedOptions = {}): Promise<PlaygroundApp | null> {
+	const workshopRoot = getWorkshopRoot()
+	const playgroundDir = path.join(workshopRoot, 'playground')
+	const appName = await getPlaygroundAppName()
+	const key = `playground-${appName}`
+	return cachified({
+		key,
+		cache: playgroundAppCache,
+		ttl: 1000 * 60 * 60 * 24,
+		timings,
+		timingKey: playgroundDir.replace(`${playgroundDir}${path.sep}`, ''),
+		request,
+		forceFresh: getForceFreshForDir(
+			playgroundDir,
+			await playgroundAppCache.get(key),
+		),
+		getFreshValue: async () => {
+			if (!(await exists(playgroundDir))) return null
+			if (!appName) return null
+
+			const dirName = path.basename(playgroundDir)
+			const name = await getAppName(playgroundDir)
+			const compiledReadme = await compileReadme(playgroundDir)
+			const portNumber = 4000
+			return {
+				id: name,
+				name,
+				appName,
+				type: 'playground',
+				fullPath: playgroundDir,
+				relativePath: playgroundDir.replace(
+					`${getWorkshopRoot()}${path.sep}`,
+					'',
+				),
+				title: compiledReadme?.title ?? name,
+				dirName,
+				instructionsCode: compiledReadme?.code,
+				test: await getTestInfo({ fullPath: playgroundDir, id: name }),
+				dev: await getDevInfo({
+					fullPath: playgroundDir,
+					portNumber,
+					id: name,
+				}),
+			}
+		},
+	})
 }
 
 async function getExampleAppFromPath(
@@ -540,6 +647,12 @@ async function getSolutionAppFromPath(
 		appInfo.stepNumbers.map(async stepNumber => {
 			const isMultiStep = appInfo.stepNumbers.length > 1
 			const id = `${name}-${stepNumber}`
+			const problemDir = await findProblemDir({
+				fullPath,
+				stepNumber,
+			})
+			const problemName = problemDir ? await getAppName(problemDir) : null
+			const problemId = problemName ? `${problemName}-${stepNumber}` : null
 			const [test, dev] = await Promise.all([
 				getTestInfo({ fullPath, isMultiStep, stepNumber, id }),
 				getDevInfo({ fullPath, portNumber, id }),
@@ -549,6 +662,7 @@ async function getSolutionAppFromPath(
 				name,
 				title: compiledReadme?.title ?? name,
 				type: 'solution',
+				problemId,
 				exerciseNumber,
 				stepNumber,
 				dirName,
@@ -792,6 +906,53 @@ export function getAppPageRoute(app: ExerciseStepApp) {
 	const exerciseNumber = app.exerciseNumber.toString().padStart(2, '0')
 	const stepNumber = app.stepNumber.toString().padStart(2, '0')
 	return `/${exerciseNumber}/${stepNumber}/${app.type}`
+}
+
+export async function setPlayground(srcDir: string) {
+	const { globby } = await import('globby')
+	const destDir = path.join(getWorkshopRoot(), 'playground')
+	// Copy the contents of the source directory to the destination directory recursively
+	await fsExtra.copy(srcDir, destDir, {
+		overwrite: true,
+		preserveTimestamps: true,
+	})
+
+	// Remove files from destDir that were in destDir before but are not in srcDir
+	const srcFiles = (
+		await globby(`${srcDir}/**/*`, { onlyFiles: false, dot: true })
+	).map(f => f.replace(srcDir, ''))
+	const destFiles = (
+		await globby(`${destDir}/**/*`, { onlyFiles: false, dot: true })
+	).map(f => f.replace(destDir, ''))
+
+	const filesToDelete = destFiles.filter(
+		fileName => !srcFiles.includes(fileName),
+	)
+
+	for (const fileToDelete of filesToDelete) {
+		await fsExtra.remove(path.join(destDir, fileToDelete))
+	}
+
+	const appName = await getAppName(srcDir)
+	await fsExtra.ensureDir(path.dirname(playgroundAppNameInfoPath))
+	await fsExtra.writeJSON(playgroundAppNameInfoPath, { appName })
+}
+
+export async function getPlaygroundAppName() {
+	if (!(await exists(playgroundAppNameInfoPath))) {
+		return null
+	}
+	try {
+		const jsonString = await fs.promises.readFile(
+			playgroundAppNameInfoPath,
+			'utf8',
+		)
+		const { appName } = JSON.parse(jsonString)
+		if (typeof appName !== 'string') return null
+		return appName
+	} catch {
+		return null
+	}
 }
 
 export async function getWorkshopTitle() {

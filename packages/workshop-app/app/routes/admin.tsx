@@ -1,17 +1,9 @@
 import type { DataFunctionArgs, V2_MetaFunction } from '@remix-run/node'
-import fs from 'fs'
 import { json } from '@remix-run/node'
 import { Form, useLoaderData, useNavigation } from '@remix-run/react'
-import { getDiffFiles } from '~/utils/diff.server'
-import {
-	getApps,
-	getNextExerciseApp,
-	getReadmePath,
-	isProblemApp,
-} from '~/utils/apps.server'
-import { getProcesses } from '~/utils/process-manager.server'
-import { updateFilesSection } from '~/utils/readme-files-section.server'
 import { type loader as rootLoader } from '~/root'
+import { getApps } from '~/utils/apps.server'
+import { getProcesses } from '~/utils/process-manager.server'
 import { getServerTimeHeader, makeTimings } from '~/utils/timing.server'
 
 declare global {
@@ -67,47 +59,9 @@ export async function loader({ request }: DataFunctionArgs) {
 }
 
 export async function action({ request }: DataFunctionArgs) {
-	const timings = makeTimings('adminAction')
 	const formData = await request.formData()
 	const intent = formData.get('intent')
 	switch (intent) {
-		case 'set-files': {
-			const apps = (await getApps({ request, timings })).filter(isProblemApp)
-			for (const app of apps) {
-				const nextApp = await getNextExerciseApp(app)
-				const app1 =
-					app.stepNumber > 1
-						? apps.find(
-								a => a.name === app.name && a.stepNumber === app.stepNumber - 1,
-						  ) ?? app
-						: app
-				try {
-					const files = nextApp ? await getDiffFiles(app1, nextApp) : []
-					const readmePath = await getReadmePath({
-						appDir: app.fullPath,
-						stepNumber: isProblemApp(app) ? app.stepNumber : undefined,
-					})
-					const readme = await fs.promises.readFile(readmePath, 'utf-8')
-					const updatedReadme = await updateFilesSection(readme, files)
-					if (readme !== updatedReadme) {
-						await fs.promises.writeFile(readmePath, updatedReadme)
-					}
-				} catch (error) {
-					console.error(
-						`The error below was triggered when processing ${app.id}`,
-					)
-					throw error
-				}
-			}
-			return json(
-				{ success: true },
-				{
-					headers: {
-						'Server-Timing': getServerTimeHeader(timings),
-					},
-				},
-			)
-		}
 		case 'inspect': {
 			const inspector = await import('inspector')
 			if (!global.__inspector_open__) {
@@ -140,7 +94,6 @@ export default function AdminLayout() {
 	const data = useLoaderData<typeof loader>()
 	const navigation = useNavigation()
 
-	const isSettingFiles = navigation.formData?.get('intent') === 'set-files'
 	const isStartingInspector = navigation.formData?.get('intent') === 'inspect'
 	const isStoppingInspector =
 		navigation.formData?.get('intent') === 'stop-inspect'
@@ -151,13 +104,6 @@ export default function AdminLayout() {
 			<div>
 				<h2>Commands</h2>
 				<ul className="scrollbar-thin scrollbar-thumb-gray-300 max-h-48 overflow-y-scroll border-2 p-8">
-					<li>
-						<Form method="post">
-							<button name="intent" value="set-files">
-								{isSettingFiles ? 'Setting Files...' : 'Set Files'}
-							</button>
-						</Form>
-					</li>
 					<li>
 						{data.inspectorRunning ? (
 							<Form method="post">
