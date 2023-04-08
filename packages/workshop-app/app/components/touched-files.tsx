@@ -93,7 +93,7 @@ function TouchedFiles({
 				<Popover.Portal>
 					<Popover.Content
 						ref={contentRef}
-						className="mx-10 rounded bg-black px-9 py-8 text-white"
+						className="slidUpContent mx-10 rounded bg-black px-9 py-8 text-white"
 						sideOffset={5}
 					>
 						<div className="launch-editor-wrapper">
