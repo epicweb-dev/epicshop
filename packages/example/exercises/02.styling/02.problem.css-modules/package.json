@@ -1,16 +1,11 @@
 {
-  "name": "exercises.01.nested-routing.01-02.problem",
+  "name": "exercises.02.styling.02.problem.css-modules",
   "private": true,
   "sideEffects": false,
-  "kcd-workshop": {
-    "testRequiresApp": true
-  },
   "scripts": {
     "build": "remix build",
     "dev": "remix dev",
-    "test:01": "echo \"\\x1b[36mhello\\x1b[37mworld\" && sleep 0.1 && echo hi && sleep 0.1 && echo hi && sleep 0.1 && echo hi && sleep 0.1 && echo hi && sleep 0.1 && echo hi && sleep 0.1 && echo hi && sleep 0.1 && echo hi && sleep 0.1 && echo hi && sleep 0.1 && echo hi && sleep 0.1 && echo hi && sleep 0.1 && echo hi && sleep 0.1 && echo hi && sleep 0.1 && echo hi && sleep 0.1 && echo hi && sleep 0.1 && echo hi && sleep 0.1 && echo hi && sleep 0.1 && echo hi && sleep 0.1 && echo hi",
-    "test:02": "echo hello",
-    "test:01:dev": "playwright test",
+    "test": "echo TODO",
     "format": "prettier --write .",
     "lint": "eslint --cache --cache-location ./node_modules/.cache/eslint .",
     "start": "remix-serve build",
@@ -31,7 +26,6 @@
     "unist-util-visit": "^4.1.2"
   },
   "devDependencies": {
-    "@playwright/test": "^1.30.0",
     "@remix-run/dev": "^1.14.3",
     "@remix-run/eslint-config": "^1.14.3",
     "@types/eslint": "^8.4.10",

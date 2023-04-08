@@ -7,17 +7,17 @@ import type {
 } from '@remix-run/node'
 import { defer, redirect } from '@remix-run/node'
 import {
-	isRouteErrorResponse,
+	Await,
 	Link,
-	type LinkProps,
+	isRouteErrorResponse,
 	useLoaderData,
 	useRouteError,
 	useSearchParams,
+	type LinkProps,
 } from '@remix-run/react'
 import clsx from 'clsx'
-import { type PropsWithChildren, useMemo, useRef, useState } from 'react'
-import { createPortal } from 'react-dom'
-import { useParams } from 'react-router'
+import * as React from 'react'
+import { useMemo, useRef, useState, type PropsWithChildren } from 'react'
 import { Diff } from '~/components/diff'
 import Icon from '~/components/icons'
 import {
@@ -25,8 +25,10 @@ import {
 	type InBrowserBrowserRef,
 } from '~/components/in-browser-browser'
 import { InBrowserTestRunner } from '~/components/in-browser-test-runner'
-import TouchedFiles, { touchedFilesButton } from '~/components/touched-files'
+import TouchedFiles from '~/components/touched-files'
 import { type loader as rootLoader } from '~/root'
+import { PlaygroundChooser, SetPlayground } from '~/routes/set-playground'
+import type { App } from '~/utils/apps.server'
 import {
 	getAppByName,
 	getAppPageRoute,
@@ -35,12 +37,13 @@ import {
 	getNextExerciseApp,
 	getPrevExerciseApp,
 	isExerciseStepApp,
+	isPlaygroundApp,
 	isProblemApp,
 	isSolutionApp,
 	requireExercise,
 	requireExerciseApp,
 } from '~/utils/apps.server'
-import { getDiffCode } from '~/utils/diff.server'
+import { getDiffCode, getDiffFiles } from '~/utils/diff.server'
 import { Mdx } from '~/utils/mdx'
 import { getErrorMessage, useHydrated } from '~/utils/misc'
 import { isAppRunning, isPortAvailable } from '~/utils/process-manager.server'
@@ -88,11 +91,6 @@ export async function loader({ request, params }: DataFunctionArgs) {
 	})
 	const reqUrl = new URL(request.url)
 
-	// delete the preview if it's the same as the type
-	if (reqUrl.searchParams.get('preview') === params.type) {
-		reqUrl.searchParams.delete('preview')
-		throw redirect(reqUrl.toString())
-	}
 	const pathnameParam = reqUrl.searchParams.get('pathname')
 	if (pathnameParam === '' || pathnameParam === '/') {
 		reqUrl.searchParams.delete('pathname')
@@ -107,6 +105,7 @@ export async function loader({ request, params }: DataFunctionArgs) {
 		{ ...params, type: 'solution' },
 		{ request, timings },
 	).then(a => (isSolutionApp(a) ? a : null))
+	const playgroundApp = await getApps().then(apps => apps.find(isPlaygroundApp))
 
 	if (!problemApp && !solutionApp) {
 		throw new Response('Not found', { status: 404 })
@@ -116,32 +115,46 @@ export async function loader({ request, params }: DataFunctionArgs) {
 		problemApp?.dev.type === 'script' ? isAppRunning(problemApp) : false
 	const isSolutionRunning =
 		solutionApp?.dev.type === 'script' ? isAppRunning(solutionApp) : false
+	const isPlaygroundRunning =
+		playgroundApp?.dev.type === 'script' ? isAppRunning(playgroundApp) : false
 
 	const app1Name = reqUrl.searchParams.get('app1')
 	const app2Name = reqUrl.searchParams.get('app2')
 	const app1 = app1Name
 		? await getAppByName(app1Name)
-		: params.type === 'solution'
-		? solutionApp
-		: problemApp
-	const app2 = app2Name
-		? await getAppByName(app2Name)
-		: params.type === 'solution'
-		? problemApp
-		: solutionApp
+		: playgroundApp || problemApp
+	const app2 = app2Name ? await getAppByName(app2Name) : solutionApp
 
 	if (!app1 || !app2) {
 		throw new Response('No app to compare to', { status: 404 })
 	}
 
-	const allApps = (await getApps({ request, timings }))
+	const allAppsFull = await getApps({ request, timings })
+
+	function getDisplayName(a: App) {
+		let displayName = `${a.title} (${a.type})`
+		if (isExerciseStepApp(a)) {
+			displayName = `${a.exerciseNumber}.${a.stepNumber} ${a.title} (${
+				{ problem: '💪', solution: '🏁' }[a.type]
+			} ${a.type})`
+		} else if (isPlaygroundApp(a)) {
+			const playgroundAppBasis = allAppsFull.find(
+				otherApp => a.appName === otherApp.name,
+			)
+			if (playgroundAppBasis) {
+				const basisDisplayName = getDisplayName(playgroundAppBasis)
+				displayName = `🛝 Playground: ${basisDisplayName}`
+			} else {
+				displayName = `🛝 Playground: ${a.appName}`
+			}
+		}
+		return displayName
+	}
+
+	const allApps = allAppsFull
 		.filter((a, i, ar) => ar.findIndex(b => a.name === b.name) === i)
 		.map(a => ({
-			displayName: isExerciseStepApp(a)
-				? `${a.exerciseNumber}.${a.stepNumber} ${a.title} (${
-						{ problem: '💪', solution: '🏁' }[a.type]
-				  } ${a.type})`
-				: `${a.title} (${a.type})`,
+			displayName: getDisplayName(a),
 			name: a.name,
 			title: a.title,
 			type: a.type,
@@ -165,17 +178,26 @@ export async function loader({ request, params }: DataFunctionArgs) {
 	})
 
 	const getDiffProp = async () => {
-		return {
-			allApps,
-			app1: app1.name,
-			app2: app2.name,
-			diffCode: await getDiffCode(app1, app2, {
+		const [diffCode, diffFiles] = await Promise.all([
+			getDiffCode(app1, app2, {
 				request,
 				timings,
 			}).catch(e => {
 				console.error(e)
 				return null
 			}),
+			problemApp && solutionApp
+				? getDiffFiles(problemApp, solutionApp).catch(e => {
+						console.error(e)
+						return 'There was a problem generating the diff'
+				  })
+				: 'No diff available',
+		])
+		return {
+			app1: app1.name,
+			app2: app2.name,
+			diffCode,
+			diffFiles,
 		}
 	}
 
@@ -184,6 +206,7 @@ export async function loader({ request, params }: DataFunctionArgs) {
 			type: params.type as 'problem' | 'solution',
 			exerciseStepApp,
 			exerciseTitle: exercise.title,
+			allApps,
 			prevStepLink: isFirstStep
 				? {
 						to: `/${exerciseStepApp.exerciseNumber
@@ -208,6 +231,25 @@ export async function loader({ request, params }: DataFunctionArgs) {
 				? {
 						to: getAppPageRoute(nextApp),
 						children: `${nextApp.title} (${nextApp.type}) ➡️`,
+				  }
+				: null,
+			playground: playgroundApp
+				? {
+						type: 'playground',
+						id: playgroundApp.id,
+						fullPath: playgroundApp.fullPath,
+						isRunning: isPlaygroundRunning,
+						dev: playgroundApp.dev,
+						test: playgroundApp.test,
+						portIsAvailable:
+							playgroundApp.dev.type === 'script'
+								? isPlaygroundRunning
+									? null
+									: await isPortAvailable(playgroundApp.dev.portNumber)
+								: null,
+						title: playgroundApp.title,
+						name: playgroundApp.name,
+						appName: playgroundApp.appName,
 				  }
 				: null,
 			problem: problemApp
@@ -250,7 +292,6 @@ export async function loader({ request, params }: DataFunctionArgs) {
 		} as const,
 		{
 			headers: {
-				'Cache-Control': 'public, max-age=1',
 				'Server-Timing': getServerTimeHeader(timings),
 			},
 		},
@@ -259,19 +300,14 @@ export async function loader({ request, params }: DataFunctionArgs) {
 
 export const headers: HeadersFunction = ({ loaderHeaders, parentHeaders }) => {
 	const headers = {
-		'Cache-Control': loaderHeaders.get('Cache-Control') ?? '',
 		'Server-Timing': combineServerTimings(loaderHeaders, parentHeaders),
 	}
 	return headers
 }
 
-const tabs = ['problem', 'solution', 'tests', 'diff'] as const
+const tabs = ['playground', 'problem', 'solution', 'tests', 'diff'] as const
 const isValidPreview = (s: string | null): s is (typeof tabs)[number] =>
 	Boolean(s && tabs.includes(s as (typeof tabs)[number]))
-
-const types = ['problem', 'solution'] as const
-const isValidType = (s: string | undefined): s is (typeof types)[number] =>
-	Boolean(s && types.includes(s as (typeof types)[number]))
 
 function withParam(
 	searchParams: URLSearchParams,
@@ -289,28 +325,24 @@ function withParam(
 
 export default function ExercisePartRoute() {
 	const data = useLoaderData<typeof loader>()
-	const params = useParams()
 	const [searchParams] = useSearchParams()
 
-	const type = isValidType(params.type) ? params.type : null
 	const preview = searchParams.get('preview')
-	const activeTab = isValidPreview(preview) ? preview : type ? type : tabs[0]
+	const activeTab = isValidPreview(preview) ? preview : tabs[0]
 	const activeApp = preview === 'solution' ? 'solution' : 'problem'
 	const inBrowserBrowserRef = useRef<InBrowserBrowserRef>(null)
 	const previewAppUrl = data[activeApp]?.dev.baseUrl
 	const appName = data[data.type]?.name
 
-	const touchedFilesDivRef = useRef<HTMLDivElement>(null)
-	const hydrated = useHydrated()
 	const InlineFile = useMemo(() => {
 		return function InlineFile({
 			file,
-			type = 'problem',
+			type = 'playground',
 			children = <code>{file}</code>,
 			...props
-		}: PropsWithChildren<typeof LaunchEditor> & {
+		}: Omit<PropsWithChildren<typeof LaunchEditor>, 'appName'> & {
 			file: string
-			type?: 'solution' | 'problem'
+			type?: 'playground' | 'solution' | 'problem'
 		}) {
 			const app = data[type]
 			return app ? (
@@ -332,26 +364,6 @@ export default function ExercisePartRoute() {
 			)
 		}
 	}, [data])
-
-	// we want to move the TouchedFiles component to the end of the instructions
-	// section, so we make a ref and portal to that. We also render a dummy-version
-	// of the button on the server so that the layout doesn't jump when the
-	// component is hydrated.
-	const RefedTouchedFiles = useMemo(() => {
-		return function RefedTouchedFiles({
-			children,
-		}: {
-			children: React.ReactElement
-		}) {
-			const hydrated = useHydrated()
-			return hydrated && touchedFilesDivRef.current
-				? createPortal(
-						<TouchedFiles appName={appName}>{children}</TouchedFiles>,
-						touchedFilesDivRef.current,
-				  )
-				: null
-		}
-	}, [appName])
 
 	const LinkToApp = useMemo(() => {
 		return function LinkToApp({
@@ -402,7 +414,28 @@ export default function ExercisePartRoute() {
 			<div className="grid flex-grow grid-cols-2">
 				<div className="relative flex h-screen flex-grow flex-col justify-between border-r border-gray-200">
 					<h4 className="py-8 pl-[58px] font-mono text-sm font-medium uppercase leading-tight">
-						{pageTitle(data)}
+						<div className="flex flex-wrap items-center justify-start gap-3">
+							{pageTitle(data)}
+							{data.problem &&
+							data.playground?.appName !== data.problem.name ? (
+								<SetPlayground
+									appName={data.problem.name}
+									title="Playground is not set to the right app. Click to set Playground."
+								>
+									<span className="flex items-center justify-center gap-1 text-rose-700">
+										<Icon
+											viewBox="0 0 24 24"
+											size="16"
+											name="Unlinked"
+											className="animate-ping"
+										/>{' '}
+										<span className="uppercase underline">
+											Set to Playground
+										</span>
+									</span>
+								</SetPlayground>
+							) : null}
+						</div>
 					</h4>
 					<article className="shadow-on-scrollbox prose sm:prose-lg scrollbar-thin scrollbar-thumb-gray-200 prose-p:text-black prose-headings:text-black h-full w-full max-w-none space-y-6 overflow-y-auto p-14 pt-0 text-black">
 						{data.exerciseStepApp.instructionsCode ? (
@@ -410,7 +443,6 @@ export default function ExercisePartRoute() {
 								code={data.exerciseStepApp?.instructionsCode}
 								components={{
 									InlineFile,
-									TouchedFiles: RefedTouchedFiles,
 									LinkToApp,
 								}}
 							/>
@@ -420,9 +452,52 @@ export default function ExercisePartRoute() {
 					</article>
 					<div className="flex h-16 justify-between border-t border-gray-200 bg-white">
 						<div>
-							{/* this is just here to make it so the button doesn't flash */}
-							{hydrated ? null : touchedFilesButton}
-							<div className="h-full" ref={touchedFilesDivRef} />
+							<div className="h-full">
+								<TouchedFiles>
+									<div id="files">
+										<React.Suspense
+											fallback={
+												<div className="p-8">
+													<Icon
+														name="Refresh"
+														className="animate-spin"
+														title="Loading diff"
+													/>
+												</div>
+											}
+										>
+											<Await
+												resolve={data.diff}
+												errorElement={
+													<div className="text-rose-300">
+														Something went wrong.
+													</div>
+												}
+											>
+												{diff => {
+													if (typeof diff.diffFiles === 'string') {
+														return (
+															<p className="text-rose-300">{diff.diffFiles}</p>
+														)
+													}
+													return diff.diffFiles?.length ? (
+														<ul>
+															{diff.diffFiles?.map(file => (
+																<li key={file.path} data-state={file.status}>
+																	<span>{file.status}</span>
+																	<InlineFile file={file.path} />
+																</li>
+															))}
+														</ul>
+													) : (
+														<p>No files changed</p>
+													)
+												}}
+											</Await>
+										</React.Suspense>
+									</div>
+								</TouchedFiles>
+							</div>
 						</div>
 						<div className="relative flex overflow-hidden">
 							{data.prevStepLink ? (
@@ -491,7 +566,7 @@ export default function ExercisePartRoute() {
 										to={`?${withParam(
 											searchParams,
 											'preview',
-											type === tab ? null : tab,
+											tab === 'playground' ? null : tab,
 										)}`}
 									>
 										{tab}
@@ -505,13 +580,24 @@ export default function ExercisePartRoute() {
 							value={tabs[0]}
 							className="radix-state-inactive:hidden flex flex-grow items-center justify-center"
 						>
+							<Playground
+								appInfo={data.playground}
+								problemAppName={data.problem?.name}
+								inBrowserBrowserRef={inBrowserBrowserRef}
+								allApps={data.allApps}
+							/>
+						</Tabs.Content>
+						<Tabs.Content
+							value={tabs[1]}
+							className="radix-state-inactive:hidden flex flex-grow items-center justify-center"
+						>
 							<Preview
 								appInfo={data.problem}
 								inBrowserBrowserRef={inBrowserBrowserRef}
 							/>
 						</Tabs.Content>
 						<Tabs.Content
-							value={tabs[1]}
+							value={tabs[2]}
 							className="radix-state-inactive:hidden flex flex-grow items-center justify-center"
 						>
 							<Preview
@@ -520,15 +606,13 @@ export default function ExercisePartRoute() {
 							/>
 						</Tabs.Content>
 						<Tabs.Content
-							value={tabs[2]}
+							value={tabs[3]}
 							className="radix-state-inactive:hidden flex max-h-[calc(100vh-53px)] flex-grow items-start justify-center overflow-hidden"
 						>
-							<Tests
-								appInfo={type === 'solution' ? data.solution : data.problem}
-							/>
+							<Tests appInfo={data.playground} />
 						</Tabs.Content>
 						<Tabs.Content
-							value={tabs[3]}
+							value={tabs[4]}
 							className="radix-state-inactive:hidden flex flex-grow items-start justify-center"
 						>
 							<Diff />
@@ -544,7 +628,7 @@ function Preview({
 	appInfo,
 	inBrowserBrowserRef,
 }: {
-	appInfo: SerializeFrom<typeof loader>['problem' | 'solution']
+	appInfo: SerializeFrom<typeof loader>['problem' | 'solution' | 'playground']
 	inBrowserBrowserRef: React.RefObject<InBrowserBrowserRef>
 }) {
 	if (!appInfo) return <p>No app here. Sorry.</p>
@@ -585,10 +669,63 @@ function Preview({
 	}
 }
 
+function Playground({
+	appInfo: playgroundAppInfo,
+	inBrowserBrowserRef,
+	problemAppName,
+	allApps,
+}: {
+	appInfo: SerializeFrom<typeof loader>['playground']
+	inBrowserBrowserRef: React.RefObject<InBrowserBrowserRef>
+	problemAppName?: string
+	allApps: Array<{ name: string; displayName: string }>
+}) {
+	const playgroundLinkedUI =
+		playgroundAppInfo?.appName === problemAppName ? (
+			<Icon
+				title="Click to reset Playground."
+				viewBox="0 0 24 24"
+				size="28"
+				name="Linked"
+			/>
+		) : (
+			<Icon
+				title="Playground is not set to the right app. Click to set Playground."
+				viewBox="0 0 24 24"
+				size="28"
+				name="Unlinked"
+				className="animate-pulse text-rose-700"
+			/>
+		)
+	return (
+		<div className="flex h-full w-full flex-col justify-between">
+			<div className="flex h-14 items-center justify-start gap-1 border-b border-gray-200 px-3">
+				{problemAppName ? (
+					<SetPlayground appName={problemAppName}>
+						{playgroundLinkedUI}
+					</SetPlayground>
+				) : (
+					<div className="flex">playgroundLinkedUI</div>
+				)}
+				<PlaygroundChooser
+					allApps={allApps}
+					playgroundAppName={playgroundAppInfo?.appName}
+				/>
+			</div>
+			<div className="flex flex-1 flex-grow items-center justify-center">
+				<Preview
+					appInfo={playgroundAppInfo}
+					inBrowserBrowserRef={inBrowserBrowserRef}
+				/>
+			</div>
+		</div>
+	)
+}
+
 function Tests({
 	appInfo,
 }: {
-	appInfo: SerializeFrom<typeof loader>['problem' | 'solution']
+	appInfo: SerializeFrom<typeof loader>['playground']
 }) {
 	const [inBrowserTestKey, setInBrowserTestKey] = useState(0)
 	if (!appInfo || appInfo.test.type === 'none') {

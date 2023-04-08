@@ -15,16 +15,6 @@ export function sendLaunchEditorUpdate(
 	element?.dispatchEvent(event)
 }
 
-export const touchedFilesButton = (
-	<button
-		className="flex h-full items-center gap-1 border-r border-gray-200 px-6 py-3 font-mono text-sm uppercase"
-		aria-label="Relevant Files"
-	>
-		<Icon name="Files" />
-		Files
-	</button>
-)
-
 function TouchedFiles({
 	appName,
 	children,
@@ -91,7 +81,15 @@ function TouchedFiles({
 					setTimeout(getAllFiles, 0)
 				}}
 			>
-				<Popover.Trigger asChild>{touchedFilesButton}</Popover.Trigger>
+				<Popover.Trigger asChild>
+					<button
+						className="flex h-full items-center gap-1 border-r border-gray-200 px-6 py-3 font-mono text-sm uppercase"
+						aria-label="Relevant Files"
+					>
+						<Icon name="Files" />
+						Files
+					</button>
+				</Popover.Trigger>
 				<Popover.Portal>
 					<Popover.Content
 						ref={contentRef}

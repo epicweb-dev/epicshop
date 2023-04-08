@@ -4,46 +4,43 @@ import { Link, Outlet, useLoaderData, useParams } from '@remix-run/react'
 import clsx from 'clsx'
 import type { AnimationControls } from 'framer-motion'
 import { motion, useAnimationControls } from 'framer-motion'
-import React from 'react'
-import invariant from 'tiny-invariant'
+import * as React from 'react'
 import { getExercises, getWorkshopTitle } from '~/utils/apps.server'
 import {
-	makeTimings,
 	combineServerTimings,
 	getServerTimeHeader,
+	makeTimings,
 } from '~/utils/timing.server'
 
-export async function loader({ request, params }: DataFunctionArgs) {
+export async function loader({ request }: DataFunctionArgs) {
 	const timings = makeTimings('stepLoader')
-	invariant(params.exerciseNumber, 'exerciseNumber is required')
 	const [exercises, workshopTitle] = await Promise.all([
 		getExercises({ request, timings }),
 		getWorkshopTitle(),
 	])
-	const exercise = exercises.find(
-		e => e.exerciseNumber === Number(params.exerciseNumber),
-	)
-	if (!exercise) {
-		throw new Response('Not found', { status: 404 })
-	}
 
 	const result = json(
 		{
 			workshopTitle,
-			exerciseNumber: exercise.exerciseNumber,
-			exerciseTitle: exercise.title,
 			exercises: exercises.map(e => ({
 				exerciseNumber: e.exerciseNumber,
 				title: e.title,
-				problems: e.problems.map(({ stepNumber, title }) => ({
+				solutions: e.solutions.map(({ stepNumber, title, name }) => ({
 					stepNumber,
 					title,
+					name,
+				})),
+				problems: e.problems.map(({ stepNumber, title, name }) => ({
+					stepNumber,
+					title,
+					name,
 				})),
 			})),
 		},
 		{
 			headers: {
 				'Cache-Control': 'public, max-age=300',
+				Vary: 'Cookie',
 				'Server-Timing': getServerTimeHeader(timings),
 			},
 		},
@@ -54,6 +51,7 @@ export async function loader({ request, params }: DataFunctionArgs) {
 export const headers: HeadersFunction = ({ loaderHeaders, parentHeaders }) => {
 	const headers = {
 		'Cache-Control': loaderHeaders.get('Cache-Control') ?? '',
+		Vary: 'Cookie',
 		'Server-Timing': combineServerTimings(loaderHeaders, parentHeaders),
 	}
 	return headers
@@ -71,9 +69,20 @@ export default function ExercisesLayout() {
 }
 
 function Navigation() {
-	const { workshopTitle, exerciseNumber, exerciseTitle, exercises } =
-		useLoaderData<typeof loader>()
+	const data = useLoaderData<typeof loader>()
 	const params = useParams()
+
+	const exercise = data.exercises.find(
+		e => e.exerciseNumber === Number(params.exerciseNumber),
+	)
+	const app =
+		params.type === 'solution'
+			? exercise?.solutions.find(
+					s => s.stepNumber === Number(params.stepNumber),
+			  )
+			: params.type === 'problem'
+			? exercise?.problems.find(p => p.stepNumber === Number(params.stepNumber))
+			: null
 
 	const OPENED_MENU_WIDTH = 400
 
@@ -90,9 +99,9 @@ function Navigation() {
 		visible: {
 			opacity: 1,
 			transition: {
-				duration: 0.1,
+				duration: 0.05,
 				when: 'beforeChildren',
-				staggerChildren: 0.1,
+				staggerChildren: 0.03,
 			},
 		},
 		hidden: {
@@ -105,26 +114,22 @@ function Navigation() {
 	}
 
 	return (
-		// eslint-disable-next-line jsx-a11y/role-supports-aria-props
-		<nav
-			className="flex items-center border-r border-gray-200 bg-white"
-			aria-expanded={isMenuOpened}
-		>
+		<nav className="flex items-center border-r border-gray-200 bg-white">
 			<motion.div
 				initial={isMenuOpened ? 'open' : 'close'}
 				variants={menuVariants}
 				animate={menuControls}
 			>
-				<ul className="flex h-screen flex-col items-center justify-between">
+				<div className="flex h-screen flex-col items-center justify-between">
 					<NavToggle
-						title={workshopTitle}
+						title={data.workshopTitle}
 						menuControls={menuControls}
 						isMenuOpened={isMenuOpened}
 						setMenuOpened={setMenuOpened}
 					/>
 					{isMenuOpened && (
-						<>
-							<motion.li
+						<div className="flex h-full flex-col items-center justify-between overflow-y-scroll">
+							<motion.div
 								style={{ width: OPENED_MENU_WIDTH }}
 								className="scrollbar-thin scrollbar-thumb-gray-200 flex h-full flex-grow flex-col justify-start overflow-y-auto p-6"
 								initial={{ opacity: 0 }}
@@ -136,7 +141,7 @@ function Navigation() {
 									animate="visible"
 									className="flex flex-col gap-3"
 								>
-									{exercises.map(({ exerciseNumber, title, problems }) => {
+									{data.exercises.map(({ exerciseNumber, title, problems }) => {
 										const isActive =
 											Number(params.exerciseNumber) === exerciseNumber
 										const exerciseNum = exerciseNumber
@@ -192,25 +197,24 @@ function Navigation() {
 										)
 									})}
 								</motion.ul>
-							</motion.li>
-						</>
+							</motion.div>
+						</div>
 					)}
 					{!isMenuOpened && (
-						<motion.li className="flex h-full flex-grow flex-col justify-center">
+						<div className="flex h-full flex-grow flex-col justify-center">
 							<Link
 								className="orientation-sideways w-full font-mono text-sm font-medium uppercase leading-none"
-								to={`/${exerciseNumber.toString().padStart(2, '0')}`}
+								to={`/${Number(params.exerciseNumber)
+									.toString()
+									.padStart(2, '0')}`}
 							>
-								{exerciseTitle}
-								{params.type === 'solution'
-									? ' — solution'
-									: params.type === 'problem'
-									? ' — problem'
-									: null}
+								{[exercise?.title ?? 'Unknown Exercise', app?.title]
+									.filter(Boolean)
+									.join(' — ')}
 							</Link>
-						</motion.li>
+						</div>
 					)}
-				</ul>
+				</div>
 			</motion.div>
 		</nav>
 	)

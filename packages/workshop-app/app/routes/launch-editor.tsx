@@ -5,6 +5,7 @@ import { useFetcher } from '@remix-run/react'
 import { getAppByName } from '~/utils/apps.server'
 import { z } from 'zod'
 import { launchEditor } from '~/utils/launch-editor.server'
+import clsx from 'clsx'
 import { sendLaunchEditorUpdate } from '~/components/touched-files'
 import { showToast } from '~/components/toast'
 
@@ -105,7 +106,15 @@ export function LaunchEditor({
 			{fileList?.map(file => (
 				<input type="hidden" name="appFile" key={file} value={file} />
 			))}
-			<button type="submit">{children}</button>
+			<button
+				type="submit"
+				className={clsx(
+					fetcher.state !== 'idle' ? 'cursor-progress' : null,
+					fetcher.data?.status === 'error' ? 'cursor-not-allowed' : null,
+				)}
+			>
+				{children}
+			</button>
 		</fetcher.Form>
 	)
 }
