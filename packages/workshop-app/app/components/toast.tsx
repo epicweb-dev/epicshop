@@ -21,7 +21,7 @@ function BaseToast({
 	title,
 	children,
 	visible = Boolean(title || children),
-	duration = 700000,
+	duration = 7000,
 	autoClose,
 	variant,
 	onDismiss,

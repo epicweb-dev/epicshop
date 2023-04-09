@@ -7,12 +7,10 @@ import path from 'path'
 import child_process from 'child_process'
 import os from 'os'
 import shellQuote from 'shell-quote'
-import { getWorkshopRoot } from './apps.server'
-
-const exercisesPath = path.join(getWorkshopRoot(), 'exercises', '/')
+import { getRelativePath } from './apps.server'
 
 function readablePath(filePath: string = '') {
-	const relative = filePath.replace(/\\\\/g, '\\').replace(exercisesPath, '')
+	const relative = getRelativePath(filePath)
 	const name = path.basename(relative)
 	const dir = path.dirname(relative)
 	return `'${name}' from:\n'${dir}'`
