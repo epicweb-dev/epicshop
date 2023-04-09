@@ -26,7 +26,6 @@ declare global {
 	/* extend this list when need to, see EventMap interfaces at lib.dom.d.ts */
 	interface CustomEventMap {
 		'kcdshop-toast-show': CustomEvent<ToastEventProps>
-		'kcdshop-launch-editor-update': CustomEvent<string>
 	}
 
 	interface CustomEventListener<EVENT_TYPE>

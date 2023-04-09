@@ -7,7 +7,6 @@ import type {
 } from '@remix-run/node'
 import { defer, redirect } from '@remix-run/node'
 import {
-	Await,
 	Link,
 	isRouteErrorResponse,
 	useLoaderData,
@@ -45,7 +44,7 @@ import {
 } from '~/utils/apps.server'
 import { getDiffCode, getDiffFiles } from '~/utils/diff.server'
 import { Mdx } from '~/utils/mdx'
-import { getErrorMessage, useHydrated } from '~/utils/misc'
+import { getErrorMessage } from '~/utils/misc'
 import { isAppRunning, isPortAvailable } from '~/utils/process-manager.server'
 import {
 	combineServerTimings,
@@ -332,7 +331,6 @@ export default function ExercisePartRoute() {
 	const activeApp = preview === 'solution' ? 'solution' : 'problem'
 	const inBrowserBrowserRef = useRef<InBrowserBrowserRef>(null)
 	const previewAppUrl = data[activeApp]?.dev.baseUrl
-	const appName = data[data.type]?.name
 
 	const InlineFile = useMemo(() => {
 		return function InlineFile({
@@ -453,50 +451,7 @@ export default function ExercisePartRoute() {
 					<div className="flex h-16 justify-between border-t border-gray-200 bg-white">
 						<div>
 							<div className="h-full">
-								<TouchedFiles>
-									<div id="files">
-										<React.Suspense
-											fallback={
-												<div className="p-8">
-													<Icon
-														name="Refresh"
-														className="animate-spin"
-														title="Loading diff"
-													/>
-												</div>
-											}
-										>
-											<Await
-												resolve={data.diff}
-												errorElement={
-													<div className="text-rose-300">
-														Something went wrong.
-													</div>
-												}
-											>
-												{diff => {
-													if (typeof diff.diffFiles === 'string') {
-														return (
-															<p className="text-rose-300">{diff.diffFiles}</p>
-														)
-													}
-													return diff.diffFiles?.length ? (
-														<ul>
-															{diff.diffFiles?.map(file => (
-																<li key={file.path} data-state={file.status}>
-																	<span>{file.status}</span>
-																	<InlineFile file={file.path} />
-																</li>
-															))}
-														</ul>
-													) : (
-														<p>No files changed</p>
-													)
-												}}
-											</Await>
-										</React.Suspense>
-									</div>
-								</TouchedFiles>
+								<TouchedFiles />
 							</div>
 						</div>
 						<div className="relative flex overflow-hidden">

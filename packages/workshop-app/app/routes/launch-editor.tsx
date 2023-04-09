@@ -6,7 +6,6 @@ import { getAppByName } from '~/utils/apps.server'
 import { z } from 'zod'
 import { launchEditor } from '~/utils/launch-editor.server'
 import clsx from 'clsx'
-import { sendLaunchEditorUpdate } from '~/components/touched-files'
 import { showToast } from '~/components/toast'
 
 const launchSchema = z.intersection(
@@ -65,10 +64,12 @@ export function LaunchEditor({
 	line,
 	column,
 	children,
+	onUpdate,
 }: {
 	line?: number
 	column?: number
 	children: React.ReactNode
+	onUpdate?: (state: string) => void
 } & (
 	| { file: string; appFile?: never; appName?: never }
 	| { file?: never; appFile: string | string[]; appName: string }
@@ -77,8 +78,7 @@ export function LaunchEditor({
 
 	switch (fetcher.state) {
 		case 'submitting': {
-			sendLaunchEditorUpdate(document, fetcher.state)
-			break
+			return onUpdate?.(fetcher.state) ?? null
 		}
 		case 'loading': {
 			const error = fetcher.data?.status === 'error' ? fetcher.data.error : ''
@@ -89,8 +89,7 @@ export function LaunchEditor({
 					content: error,
 				})
 			}
-			sendLaunchEditorUpdate(document, fetcher.state)
-			break
+			return onUpdate?.(fetcher.state) ?? null
 		}
 	}
 
