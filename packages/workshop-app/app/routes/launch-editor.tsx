@@ -78,7 +78,7 @@ export function LaunchEditor({
 
 	switch (fetcher.state) {
 		case 'submitting': {
-			return onUpdate?.(fetcher.state) ?? null
+			onUpdate?.(fetcher.state)
 		}
 		case 'loading': {
 			const error = fetcher.data?.status === 'error' ? fetcher.data.error : ''
@@ -89,7 +89,7 @@ export function LaunchEditor({
 					content: error,
 				})
 			}
-			return onUpdate?.(fetcher.state) ?? null
+			onUpdate?.(fetcher.state)
 		}
 	}
 
@@ -108,6 +108,7 @@ export function LaunchEditor({
 			<button
 				type="submit"
 				className={clsx(
+					'launch_button',
 					fetcher.state !== 'idle' ? 'cursor-progress' : null,
 					fetcher.data?.status === 'error' ? 'cursor-not-allowed' : null,
 				)}

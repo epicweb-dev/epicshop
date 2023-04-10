@@ -205,3 +205,22 @@ export async function useSetPlayground({
 		)
 	}, [enabled, appName])
 }
+
+export function SetAppToPlayground({ appName }: { appName: string }) {
+	return (
+		<SetPlayground
+			appName={appName}
+			title="Playground is not set to the right app. Click to set Playground."
+		>
+			<span className="flex items-center justify-center gap-1 text-rose-700">
+				<Icon
+					viewBox="0 0 24 24"
+					size="16"
+					name="Unlinked"
+					className="animate-ping"
+				/>{' '}
+				<span className="uppercase underline">Set to Playground</span>
+			</span>
+		</SetPlayground>
+	)
+}

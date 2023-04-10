@@ -26,7 +26,11 @@ import {
 import { InBrowserTestRunner } from '~/components/in-browser-test-runner'
 import TouchedFiles from '~/components/touched-files'
 import { type loader as rootLoader } from '~/root'
-import { PlaygroundChooser, SetPlayground } from '~/routes/set-playground'
+import {
+	PlaygroundChooser,
+	SetAppToPlayground,
+	SetPlayground,
+} from '~/routes/set-playground'
 import type { App } from '~/utils/apps.server'
 import {
 	getAppByName,
@@ -343,19 +347,32 @@ export default function ExercisePartRoute() {
 			type?: 'playground' | 'solution' | 'problem'
 		}) {
 			const app = data[type]
+
+			const info = (
+				<div className="launch-editor-button-wrapper flex items-center justify-center underline">
+					{children}{' '}
+					<img
+						title="Open in editor"
+						alt="Open in editor"
+						className="!m-0"
+						src="/icons/keyboard-2.svg"
+					/>
+				</div>
+			)
+
 			return app ? (
 				<div className="inline-block grow">
 					<LaunchEditor appFile={file} appName={app.name} {...props}>
-						<div className="launch-editor-button-wrapper flex items-center justify-center underline">
-							{children}{' '}
-							<img
-								title="Open in editor"
-								alt="Open in editor"
-								className="!m-0"
-								src="/icons/keyboard-2.svg"
-							/>
-						</div>
+						{info}
 					</LaunchEditor>
+				</div>
+			) : type === 'playground' ? (
+				// playground does not exist yet
+				<div
+					className="inline-block grow cursor-not-allowed"
+					title="You must 'Set to Playground' before opening a file"
+				>
+					{info}
 				</div>
 			) : (
 				<>children</>
@@ -416,22 +433,7 @@ export default function ExercisePartRoute() {
 							{pageTitle(data)}
 							{data.problem &&
 							data.playground?.appName !== data.problem.name ? (
-								<SetPlayground
-									appName={data.problem.name}
-									title="Playground is not set to the right app. Click to set Playground."
-								>
-									<span className="flex items-center justify-center gap-1 text-rose-700">
-										<Icon
-											viewBox="0 0 24 24"
-											size="16"
-											name="Unlinked"
-											className="animate-ping"
-										/>{' '}
-										<span className="uppercase underline">
-											Set to Playground
-										</span>
-									</span>
-								</SetPlayground>
+								<SetAppToPlayground appName={data.problem.name} />
 							) : null}
 						</div>
 					</h4>

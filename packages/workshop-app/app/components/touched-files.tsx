@@ -4,6 +4,8 @@ import * as Popover from '@radix-ui/react-popover'
 import { type loader } from '~/routes/_app+/_exercises+/$exerciseNumber_.$stepNumber.$type'
 import { LaunchEditor } from '~/routes/launch-editor'
 import Icon from './icons'
+import { SetAppToPlayground } from '~/routes/set-playground'
+import clsx from 'clsx'
 
 function TouchedFiles() {
 	const data = useLoaderData<typeof loader>()
@@ -39,11 +41,7 @@ function TouchedFiles() {
 	function getFileList() {
 		const appName = data.playground?.appName
 
-		if (!appName || appName !== data.problem?.name) {
-			return <p className="px-2 text-rose-700">You need to set Playground</p>
-		}
-
-		if (fileListRef.current?.name === appName) {
+		if (appName && fileListRef.current?.name === appName) {
 			return fileListRef.current.children
 		}
 
@@ -74,12 +72,19 @@ function TouchedFiles() {
 							const allFiles =
 								diffFiles.length > 1 && diffFiles.map(file => file.path)
 							return (
-								<>
+								<div
+									title={
+										appName
+											? ''
+											: "You must 'Set to Playground' before opening a file"
+									}
+									className={clsx(appName ? '' : 'not-allowed')}
+								>
 									{allFiles ? (
 										<div className="mb-2 border-b border-b-gray-50 border-opacity-50 pb-2 font-sans">
 											<LaunchEditor
 												appFile={allFiles}
-												appName={appName}
+												appName="playground"
 												onUpdate={handleLaunchUpdate}
 											>
 												<p>Open All Files</p>
@@ -92,7 +97,7 @@ function TouchedFiles() {
 												<li key={file.path} data-state={file.status}>
 													<LaunchEditor
 														appFile={file.path}
-														appName={appName}
+														appName="playground"
 														onUpdate={handleLaunchUpdate}
 													>
 														<code>{file.path}</code>
@@ -103,16 +108,18 @@ function TouchedFiles() {
 									) : (
 										<p>No files changed</p>
 									)}
-								</>
+								</div>
 							)
 						}}
 					</Await>
 				</React.Suspense>
 			</div>
 		)
-		fileListRef.current = {
-			name: appName,
-			children: fileList,
+		if (appName) {
+			fileListRef.current = {
+				name: appName,
+				children: fileList,
+			}
 		}
 		return fileList
 	}
@@ -132,7 +139,7 @@ function TouchedFiles() {
 				<Popover.Portal>
 					<Popover.Content
 						ref={contentRef}
-						className="slidUpContent rounded bg-black px-9 py-8 text-white"
+						className="slidUpContent select-none rounded bg-black px-9 py-8 text-white"
 						align="start"
 						sideOffset={5}
 					>
@@ -140,6 +147,12 @@ function TouchedFiles() {
 							<strong className="inline-block px-2 pb-4 font-semibold uppercase">
 								Relevant Files
 							</strong>
+							{data.problem &&
+							data.playground?.appName !== data.problem?.name ? (
+								<div className="mb-2 rounded bg-white p-1 font-mono text-sm font-medium">
+									<SetAppToPlayground appName={data.problem.name} />
+								</div>
+							) : null}
 							{open ? getFileList() : null}
 						</div>
 					</Popover.Content>
