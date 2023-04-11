@@ -313,7 +313,7 @@ export function TestRunner({ id, onRun }: { id: string; onRun?: () => void }) {
 		}
 	}, [fetcher.data])
 	return (
-		<fetcher.Form method="post" action="/test" className="h-full">
+		<fetcher.Form method="POST" action="/test" className="h-full">
 			<input type="hidden" name="id" value={id} />
 			<button
 				type="submit"
@@ -322,10 +322,10 @@ export function TestRunner({ id, onRun }: { id: string; onRun?: () => void }) {
 				className="flex h-full flex-grow items-center justify-center border-r border-gray-200 px-3.5"
 				title="Run Tests"
 			>
-				{fetcher.submission ? (
-					<Icon name="AnimatedBars" title="Running Tests" role="status" />
-				) : (
+				{fetcher.state === 'idle' ? (
 					<Icon name="TriangleSmall" title="Run Tests" />
+				) : (
+					<Icon name="AnimatedBars" title="Running Tests" role="status" />
 				)}
 			</button>
 		</fetcher.Form>
@@ -350,7 +350,7 @@ export function ClearTest({
 		}
 	}, [fetcher.data])
 	return (
-		<fetcher.Form method="post" action="/test" className="h-full">
+		<fetcher.Form method="POST" action="/test" className="h-full">
 			<input type="hidden" name="id" value={id} />
 			<button
 				type="submit"
@@ -359,15 +359,15 @@ export function ClearTest({
 				className="flex h-full flex-grow items-center justify-center border-l border-gray-200 px-3.5"
 				title="Clear Tests"
 			>
-				{fetcher.submission ? (
+				{fetcher.state === 'idle' ? (
+					<Icon name="Clear" title="Clear Tests" />
+				) : (
 					<Icon
 						name="Clear"
 						className="animate-pulse"
 						role="status"
 						title="Clearing Tests"
 					/>
-				) : (
-					<Icon name="Clear" title="Clear Tests" />
 				)}
 			</button>
 		</fetcher.Form>
@@ -386,7 +386,7 @@ export function StopTest({ id, onStop }: { id: string; onStop?: () => void }) {
 		}
 	}, [fetcher.data])
 	return (
-		<fetcher.Form method="post" action="/test" className="h-full">
+		<fetcher.Form method="POST" action="/test" className="h-full">
 			<input type="hidden" name="id" value={id} />
 			<button
 				type="submit"
@@ -394,15 +394,15 @@ export function StopTest({ id, onStop }: { id: string; onStop?: () => void }) {
 				value="stop"
 				className="flex h-full flex-grow items-center justify-center border-r border-gray-200 px-3.5"
 			>
-				{fetcher.submission ? (
+				{fetcher.state === 'idle' ? (
+					<Icon name="Stop" title="Stop Tests" />
+				) : (
 					<Icon
 						name="Stop"
 						className="animate-pulse"
 						role="status"
 						title="Stopping Tests"
 					/>
-				) : (
-					<Icon name="Stop" title="Stop Tests" />
 				)}
 			</button>
 		</fetcher.Form>

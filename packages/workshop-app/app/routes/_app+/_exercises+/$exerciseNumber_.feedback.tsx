@@ -24,14 +24,15 @@ import {
 export const meta: V2_MetaFunction<
 	typeof loader,
 	{ root: typeof rootLoader }
-> = ({ data, parentsData }) => {
+> = ({ data, matches }) => {
 	if (!data) {
 		return [{ title: '🦉 | Error' }]
 	}
 	const number = data.exercise.exerciseNumber.toString().padStart(2, '0')
+	const rootData = matches.find(m => m.id === 'root')?.data
 	return [
 		{
-			title: `🦉 | ${number}. ${data.exercise.title} | ${parentsData.root.workshopTitle}`,
+			title: `🦉 | ${number}. ${data.exercise.title} | ${rootData?.workshopTitle}`,
 		},
 	]
 }

@@ -25,14 +25,15 @@ import {
 export const meta: V2_MetaFunction<
 	typeof loader,
 	{ root: typeof rootLoader }
-> = ({ data, parentsData }) => {
+> = ({ data, matches }) => {
 	if (!data) {
 		return [{ title: '📝 | Error' }]
 	}
 	const number = data.exercise.exerciseNumber.toString().padStart(2, '0')
+	const rootData = matches.find(m => m.id === 'root')?.data
 	return [
 		{
-			title: `📝 | ${number}. ${data.exercise.title} | ${parentsData.root.workshopTitle}`,
+			title: `📝 | ${number}. ${data.exercise.title} | ${rootData?.workshopTitle}`,
 		},
 	]
 }
@@ -92,7 +93,7 @@ export default function ExerciseNumberRoute() {
 
 	return (
 		<main className="relative h-screen w-full pt-16">
-			<h4 className="absolute top-8 left-11 font-mono text-sm font-medium uppercase leading-tight">
+			<h4 className="absolute left-11 top-8 font-mono text-sm font-medium uppercase leading-tight">
 				{`${data.exercise.exerciseNumber.toString().padStart(2, '0')}. ${
 					data.exercise.title
 				} `}

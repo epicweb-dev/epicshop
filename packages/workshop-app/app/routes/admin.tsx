@@ -13,8 +13,9 @@ declare global {
 export const meta: V2_MetaFunction<
 	typeof loader,
 	{ root: typeof rootLoader }
-> = ({ parentsData }) => {
-	return [{ title: `👷 | ${parentsData?.root.workshopTitle}` }]
+> = ({ matches }) => {
+	const rootData = matches.find(m => m.id === 'root')?.data
+	return [{ title: `👷 | ${rootData?.workshopTitle}` }]
 }
 
 export async function loader({ request }: DataFunctionArgs) {
@@ -106,7 +107,7 @@ export default function AdminLayout() {
 				<ul className="scrollbar-thin scrollbar-thumb-gray-300 max-h-48 overflow-y-scroll border-2 p-8">
 					<li>
 						{data.inspectorRunning ? (
-							<Form method="post">
+							<Form method="POST">
 								<button name="intent" value="stop-inspect">
 									{isStartingInspector
 										? 'Stopping inspector...'
@@ -114,7 +115,7 @@ export default function AdminLayout() {
 								</button>
 							</Form>
 						) : (
-							<Form method="post">
+							<Form method="POST">
 								<button name="intent" value="inspect">
 									{isStoppingInspector
 										? 'Starting inspector...'

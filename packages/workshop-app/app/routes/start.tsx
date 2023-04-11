@@ -36,7 +36,7 @@ export async function action({ request }: DataFunctionArgs) {
 				if (result.running) {
 					await waitOnApp(app)
 					// wait another 200ms just in case the build output for assets isn't finished
-					await new Promise((resolve) => setTimeout(resolve, 200))
+					await new Promise(resolve => setTimeout(resolve, 200))
 					return json({ status: 'app-started' } as const)
 				} else if (result.portNumber) {
 					return json({
@@ -70,15 +70,15 @@ export async function action({ request }: DataFunctionArgs) {
 export function AppStopper({ name }: { name: string }) {
 	const fetcher = useFetcher<typeof action>()
 	return (
-		<fetcher.Form method="post" action="/start">
+		<fetcher.Form method="POST" action="/start">
 			<input type="hidden" name="name" value={name} />
 			<button
 				type="submit"
 				name="intent"
 				value="stop"
-				className="h-full border-r border-gray-200 py-4 px-3 font-mono text-xs uppercase leading-none"
+				className="h-full border-r border-gray-200 px-3 py-4 font-mono text-xs uppercase leading-none"
 			>
-				{fetcher.submission ? 'Stopping App' : 'Stop App'}
+				{fetcher.state === 'idle' ? 'Stop App' : 'Stopping App'}
 			</button>
 		</fetcher.Form>
 	)
@@ -88,10 +88,10 @@ export function PortStopper({ port }: { port: number | string }) {
 	const fetcher = useFetcher<typeof action>()
 
 	return (
-		<fetcher.Form method="post" action="/start">
+		<fetcher.Form method="POST" action="/start">
 			<input type="hidden" name="port" value={port} />
 			<Button varient="mono" type="submit" name="intent" value="stop-port">
-				{fetcher.submission ? 'Stopping Port' : 'Stop Port'}
+				{fetcher.state === 'idle' ? 'Stop Port' : 'Stopping Port'}
 			</Button>
 		</fetcher.Form>
 	)
@@ -113,16 +113,16 @@ export function AppStarter({ name }: { name: string }) {
 		}
 	}
 	return (
-		<fetcher.Form method="post" action="/start">
+		<fetcher.Form method="POST" action="/start">
 			<input type="hidden" name="name" value={name} />
-			{fetcher.submission ? (
+			{fetcher.state === 'idle' ? (
+				<Button type="submit" name="intent" value="start" varient="mono">
+					Start App
+				</Button>
+			) : (
 				<div>
 					<Loading>Starting App</Loading>
 				</div>
-			) : (
-				<Button type="submit" name="intent" value="start" varient="mono">
-					{fetcher.submission ? 'Starting App' : 'Start App'}
-				</Button>
 			)}
 		</fetcher.Form>
 	)

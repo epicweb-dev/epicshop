@@ -945,6 +945,20 @@ export async function setPlayground(srcDir: string) {
 	const appName = await getAppName(srcDir)
 	await fsExtra.ensureDir(path.dirname(playgroundAppNameInfoPath))
 	await fsExtra.writeJSON(playgroundAppNameInfoPath, { appName })
+
+	// run fixup-playground script if it exists
+	const fixupPlaygroundPath = path.join(
+		srcDir,
+		'kcdshop',
+		'fixup-playground.js',
+	)
+	if (await exists(fixupPlaygroundPath)) {
+		const { execa } = await import('execa')
+		await execa('node', [fixupPlaygroundPath], {
+			cwd: srcDir,
+			stdio: 'inherit',
+		})
+	}
 }
 
 export async function getPlaygroundAppName() {

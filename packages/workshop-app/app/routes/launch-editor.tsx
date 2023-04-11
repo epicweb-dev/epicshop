@@ -74,7 +74,7 @@ export function LaunchEditor({
 	const fetcher = useFetcher<typeof action>()
 	const type = file ? 'file' : appFile ? 'appFile' : ''
 	return (
-		<fetcher.Form action="/launch-editor" method="post">
+		<fetcher.Form action="/launch-editor" method="POST">
 			<input type="hidden" name="line" value={line} />
 			<input type="hidden" name="column" value={column} />
 			<input type="hidden" name="type" value={type} />
