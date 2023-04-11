@@ -948,14 +948,14 @@ export async function setPlayground(srcDir: string) {
 
 	// run fixup-playground script if it exists
 	const fixupPlaygroundPath = path.join(
-		srcDir,
+		destDir,
 		'kcdshop',
 		'fixup-playground.js',
 	)
 	if (await exists(fixupPlaygroundPath)) {
 		const { execa } = await import('execa')
 		await execa('node', [fixupPlaygroundPath], {
-			cwd: srcDir,
+			cwd: destDir,
 			stdio: 'inherit',
 		})
 	}
