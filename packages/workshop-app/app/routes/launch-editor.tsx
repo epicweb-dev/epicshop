@@ -1,3 +1,4 @@
+import { useEffect } from 'react'
 import path from 'path'
 import type { DataFunctionArgs } from '@remix-run/node'
 import { json } from '@remix-run/node'
@@ -76,22 +77,23 @@ export function LaunchEditor({
 )) {
 	const fetcher = useFetcher<typeof action>()
 
-	switch (fetcher.state) {
-		case 'submitting': {
-			onUpdate?.(fetcher.state)
-		}
-		case 'loading': {
-			const error = fetcher.data?.status === 'error' ? fetcher.data.error : ''
-			if (error) {
-				showToast(document, {
-					title: 'Launch Editor Error',
-					variant: 'Error',
-					content: error,
-				})
+	useEffect(() => {
+		switch (fetcher.state) {
+			case 'loading': {
+				const error = fetcher.data?.status === 'error' ? fetcher.data.error : ''
+				if (error) {
+					showToast(document, {
+						title: 'Launch Editor Error',
+						variant: 'Error',
+						content: error,
+					})
+				}
 			}
-			onUpdate?.(fetcher.state)
+			case 'idle': {
+				if (fetcher.type === 'done') onUpdate?.('fetcher-done')
+			}
 		}
-	}
+	}, [fetcher, onUpdate])
 
 	const fileList = typeof appFile === 'string' ? [appFile] : appFile
 	const type = file ? 'file' : appFile ? 'appFile' : ''

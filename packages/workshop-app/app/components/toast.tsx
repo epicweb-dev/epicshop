@@ -4,7 +4,7 @@ import * as ToastPrimitive from '@radix-ui/react-toast'
 import { AnimatePresence, motion } from 'framer-motion'
 import type { DefaultColors } from 'tailwindcss/types/generated/colors'
 import clsx from 'clsx'
-import { useEventListener, useHydrated } from '~/utils/misc'
+import { useEventListener } from '~/utils/misc'
 import Icon from './icons'
 
 // keys need to match Icon in ./icons, value need to match tailwind color
@@ -87,14 +87,18 @@ function BaseToast({
 						transition={{ ease: 'easeIn', duration: ANIMATION_DURATION }}
 						className={clsx(
 							"grid grid-cols-[40px_1fr_16px] items-center gap-x-[15px] rounded-md bg-white p-[15px] shadow-[hsl(206_22%_7%_/_35%)_0px_10px_38px_-10px,_hsl(206_22%_7%_/_20%)_0px_10px_20px_-15px] [grid-template-areas:_'icon_title_action'_'icon_description_action']",
-							variantColor ? `border-l-8 border-${variantColor}-500` : '',
+							{ 'border-l-8 border-red-500': variantColor === 'red' },
+							{ 'border-l-8 border-green-500': variantColor === 'green' },
+							{ 'border-l-8 border-blue-500': variantColor === 'blue' },
 						)}
 					>
 						{variant && !isAction && (
 							<Icon
 								className={clsx(
 									'h-10 w-10 ',
-									variantColor ? `text-${variantColor}-500` : '',
+									{ 'text-red-500': variantColor === 'red' },
+									{ 'text-green-500': variantColor === 'green' },
+									{ 'text-blue-500': variantColor === 'blue' },
 								)}
 								viewBox="0 0 24 24"
 								name={variant}
@@ -196,8 +200,11 @@ export function NotificationListener() {
 		}, 0)
 	}, [])
 
-	const hydrated = useHydrated()
-	useEventListener(TOAST_EVENT_NAME, hydrated ? document : null, notification)
+	useEventListener(
+		TOAST_EVENT_NAME,
+		typeof document === 'undefined' ? null : document,
+		notification,
+	)
 
 	if (!notifications.length) return null
 
@@ -227,11 +234,11 @@ export function NotificationListener() {
 // display toast on client
 export function Toast(props: ToastEventProps) {
 	const [emitted, setEmitted] = useState(false)
-	const hydrated = useHydrated()
 
-	if (hydrated && !emitted) {
+	const doc = typeof document === 'undefined' ? null : document
+	if (doc && !emitted) {
 		setEmitted(true)
-		showToast(document, props)
+		showToast(doc, props)
 	}
 
 	return null

@@ -78,14 +78,6 @@ export const AnchorOrLink = React.forwardRef<
 	}
 })
 
-export function useHydrated() {
-	const [hydrated, setHydrated] = React.useState(false)
-	React.useEffect(() => {
-		setHydrated(true)
-	}, [])
-	return hydrated
-}
-
 /**
  *  base on https://usehooks.com/useEventListener/
  *

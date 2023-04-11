@@ -5,7 +5,6 @@ import { type loader } from '~/routes/_app+/_exercises+/$exerciseNumber_.$stepNu
 import { LaunchEditor } from '~/routes/launch-editor'
 import Icon from './icons'
 import { SetAppToPlayground } from '~/routes/set-playground'
-import clsx from 'clsx'
 
 function TouchedFiles() {
 	const data = useLoaderData<typeof loader>()
@@ -14,28 +13,8 @@ function TouchedFiles() {
 	const [open, setOpen] = React.useState(false)
 	const contentRef = React.useRef<HTMLDivElement>(null)
 
-	function handleLaunchUpdate(state: string) {
-		const setVisibility = (visible: boolean) => {
-			if (contentRef.current) {
-				contentRef.current.style.visibility = visible ? 'visible' : 'collapse'
-			}
-		}
-		switch (state) {
-			case 'submitting': {
-				setVisibility(false)
-				break
-			}
-			case 'loading': {
-				// we can close the popup once the form in the child LaunchEditor was submitted.
-				// we wait another tick to prevent the warning
-				// Cannot update a component (`TouchedFiles`) while rendering a different component (`LaunchEditor`)
-				setTimeout(() => {
-					setVisibility(true)
-					setOpen(false)
-				}, 0)
-				break
-			}
-		}
+	function handleLaunchUpdate() {
+		setOpen(false)
 	}
 
 	function getFileList() {
@@ -45,83 +24,71 @@ function TouchedFiles() {
 			return fileListRef.current.children
 		}
 
-		const fileList = (
-			<div id="files">
-				<React.Suspense
-					fallback={
-						<div className="p-8">
-							<Icon
-								name="Refresh"
-								className="animate-spin"
-								title="Loading diff"
-							/>
-						</div>
+		const suspense = (
+			<React.Suspense
+				fallback={
+					<div className="p-8">
+						<Icon
+							name="Refresh"
+							className="animate-spin"
+							title="Loading diff"
+						/>
+					</div>
+				}
+			>
+				<Await
+					resolve={data.diff}
+					errorElement={
+						<div className="text-rose-300">Something went wrong.</div>
 					}
 				>
-					<Await
-						resolve={data.diff}
-						errorElement={
-							<div className="text-rose-300">Something went wrong.</div>
+					{({ diffFiles }) => {
+						if (typeof diffFiles === 'string') {
+							return <p className="text-rose-300">{diffFiles}</p>
 						}
-					>
-						{({ diffFiles }) => {
-							if (typeof diffFiles === 'string') {
-								return <p className="text-rose-300">{diffFiles}</p>
-							}
+						if (!diffFiles.length) {
+							return <p>No files changed</p>
+						}
 
-							const allFiles =
-								diffFiles.length > 1 && diffFiles.map(file => file.path)
-							return (
-								<div
-									title={
-										appName
-											? ''
-											: "You must 'Set to Playground' before opening a file"
-									}
-									className={clsx(appName ? '' : 'not-allowed')}
-								>
-									{allFiles ? (
-										<div className="mb-2 border-b border-b-gray-50 border-opacity-50 pb-2 font-sans">
-											<LaunchEditor
-												appFile={allFiles}
-												appName="playground"
-												onUpdate={handleLaunchUpdate}
-											>
-												<p>Open All Files</p>
-											</LaunchEditor>
-										</div>
-									) : null}
-									{diffFiles.length ? (
-										<ul>
-											{diffFiles.map(file => (
-												<li key={file.path} data-state={file.status}>
-													<LaunchEditor
-														appFile={file.path}
-														appName="playground"
-														onUpdate={handleLaunchUpdate}
-													>
-														<code>{file.path}</code>
-													</LaunchEditor>
-												</li>
-											))}
-										</ul>
-									) : (
-										<p>No files changed</p>
-									)}
-								</div>
-							)
-						}}
-					</Await>
-				</React.Suspense>
-			</div>
+						const title = "You must 'Set to Playground' before opening a file"
+						const props = appName ? {} : { title, className: 'not-allowed' }
+						return (
+							<ul {...props}>
+								{diffFiles.length > 1 ? (
+									<div className="mb-2 border-b border-b-gray-50 border-opacity-50 pb-2 font-sans">
+										<LaunchEditor
+											appFile={diffFiles.map(file => file.path)}
+											appName="playground"
+											onUpdate={handleLaunchUpdate}
+										>
+											<p>Open All Files</p>
+										</LaunchEditor>
+									</div>
+								) : null}
+								{diffFiles.map(file => (
+									<li key={file.path} data-state={file.status}>
+										<LaunchEditor
+											appFile={file.path}
+											appName="playground"
+											onUpdate={handleLaunchUpdate}
+										>
+											<code>{file.path}</code>
+										</LaunchEditor>
+									</li>
+								))}
+							</ul>
+						)
+					}}
+				</Await>
+			</React.Suspense>
 		)
 		if (appName) {
 			fileListRef.current = {
 				name: appName,
-				children: fileList,
+				children: suspense,
 			}
 		}
-		return fileList
+		return suspense
 	}
 
 	return (
@@ -153,7 +120,7 @@ function TouchedFiles() {
 									<SetAppToPlayground appName={data.problem.name} />
 								</div>
 							) : null}
-							{open ? getFileList() : null}
+							<div id="files">{getFileList()}</div>
 						</div>
 					</Popover.Content>
 				</Popover.Portal>
