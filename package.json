@@ -21,9 +21,9 @@
     "packages/example/examples/*"
   ],
   "devDependencies": {
-    "@playwright/test": "^1.31.2",
-    "@remix-run/eslint-config": "^1.14.3",
-    "eslint-config-prettier": "^8.7.0"
+    "@playwright/test": "^1.32.3",
+    "@remix-run/eslint-config": "^1.15.0",
+    "eslint-config-prettier": "^8.8.0"
   },
   "dependencies": {
     "cross-env": "^7.0.3",
