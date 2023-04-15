@@ -8,7 +8,6 @@ import { SetAppToPlayground } from '~/routes/set-playground'
 
 function TouchedFiles() {
 	const data = useLoaderData<typeof loader>()
-	const fileListRef = React.useRef<{ name: string; children: JSX.Element }>()
 
 	const [open, setOpen] = React.useState(false)
 	const contentRef = React.useRef<HTMLDivElement>(null)
@@ -17,79 +16,7 @@ function TouchedFiles() {
 		setOpen(false)
 	}
 
-	function getFileList() {
-		const appName = data.playground?.appName
-
-		if (appName && fileListRef.current?.name === appName) {
-			return fileListRef.current.children
-		}
-
-		const suspense = (
-			<React.Suspense
-				fallback={
-					<div className="p-8">
-						<Icon
-							name="Refresh"
-							className="animate-spin"
-							title="Loading diff"
-						/>
-					</div>
-				}
-			>
-				<Await
-					resolve={data.diff}
-					errorElement={
-						<div className="text-rose-300">Something went wrong.</div>
-					}
-				>
-					{({ diffFiles }) => {
-						if (typeof diffFiles === 'string') {
-							return <p className="text-rose-300">{diffFiles}</p>
-						}
-						if (!diffFiles.length) {
-							return <p>No files changed</p>
-						}
-
-						const title = "You must 'Set to Playground' before opening a file"
-						const props = appName ? {} : { title, className: 'not-allowed' }
-						return (
-							<ul {...props}>
-								{diffFiles.length > 1 ? (
-									<div className="mb-2 border-b border-b-gray-50 border-opacity-50 pb-2 font-sans">
-										<LaunchEditor
-											appFile={diffFiles.map(file => file.path)}
-											appName="playground"
-											onUpdate={handleLaunchUpdate}
-										>
-											<p>Open All Files</p>
-										</LaunchEditor>
-									</div>
-								) : null}
-								{diffFiles.map(file => (
-									<li key={file.path} data-state={file.status}>
-										<LaunchEditor
-											appFile={file.path}
-											appName="playground"
-											onUpdate={handleLaunchUpdate}
-										>
-											<code>{file.path}</code>
-										</LaunchEditor>
-									</li>
-								))}
-							</ul>
-						)
-					}}
-				</Await>
-			</React.Suspense>
-		)
-		if (appName) {
-			fileListRef.current = {
-				name: appName,
-				children: suspense,
-			}
-		}
-		return suspense
-	}
+	const appName = data.playground?.appName
 
 	return (
 		<>
@@ -120,7 +47,67 @@ function TouchedFiles() {
 									<SetAppToPlayground appName={data.problem.name} />
 								</div>
 							) : null}
-							<div id="files">{getFileList()}</div>
+							<div id="files">
+								<React.Suspense
+									fallback={
+										<div className="flex justify-center">
+											<Icon
+												name="Refresh"
+												className="h-8 w-8 animate-spin"
+												title="Loading diff"
+											/>
+										</div>
+									}
+								>
+									<Await
+										resolve={data.diff}
+										errorElement={
+											<div className="text-rose-300">Something went wrong.</div>
+										}
+									>
+										{({ diffFiles }) => {
+											if (typeof diffFiles === 'string') {
+												return <p className="text-rose-300">{diffFiles}</p>
+											}
+											if (!diffFiles.length) {
+												return <p>No files changed</p>
+											}
+
+											const title =
+												"You must 'Set to Playground' before opening a file"
+											const props = appName
+												? {}
+												: { title, className: 'not-allowed' }
+											return (
+												<ul {...props}>
+													{diffFiles.length > 1 ? (
+														<div className="mb-2 border-b border-b-gray-50 border-opacity-50 pb-2 font-sans">
+															<LaunchEditor
+																appFile={diffFiles.map(file => file.path)}
+																appName="playground"
+																onUpdate={handleLaunchUpdate}
+															>
+																<p>Open All Files</p>
+															</LaunchEditor>
+														</div>
+													) : null}
+													{diffFiles.map(file => (
+														<li key={file.path} data-state={file.status}>
+															<LaunchEditor
+																appFile={file.path}
+																appName="playground"
+																onUpdate={handleLaunchUpdate}
+															>
+																<code>{file.path}</code>
+															</LaunchEditor>
+														</li>
+													))}
+												</ul>
+											)
+										}}
+									</Await>
+								</React.Suspense>
+							</div>
 						</div>
 					</Popover.Content>
 				</Popover.Portal>

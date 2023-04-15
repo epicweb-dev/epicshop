@@ -2,14 +2,15 @@ import { useCallback, useEffect, useRef, useState } from 'react'
 import { renderToString } from 'react-dom/server'
 import * as ToastPrimitive from '@radix-ui/react-toast'
 import { AnimatePresence, motion } from 'framer-motion'
-import type { DefaultColors } from 'tailwindcss/types/generated/colors'
 import clsx from 'clsx'
+import type { DefaultColors } from 'tailwindcss/types/generated/colors'
 import { useEventListener } from '~/utils/misc'
 import Icon from './icons'
 
+const ANIMATION_DURATION = 250
+
 // keys need to match Icon in ./icons, value need to match tailwind color
 const colors: Record<ToastVariant, keyof DefaultColors> = {
-	action: 'black', // this one don't use an icon
 	Error: 'red',
 	Notify: 'blue',
 	Success: 'green',
@@ -24,47 +25,16 @@ function BaseToast({
 	duration = 7000,
 	autoClose,
 	variant,
-	onDismiss,
+	onOpenChange,
 }: ToastProps) {
-	const hiddenAction = variant === 'action' && !visible
-	const [open, setOpen] = useState(variant === 'action' || visible)
-	const toastRef = useRef<HTMLLIElement>(null)
-
-	const isAction = variant === 'action'
-	useEffect(() => {
-		setTimeout(() => {
-			if (open && toastRef.current) {
-				// Toast.Viewport is 'ol' element
-				const viewport = toastRef.current.closest('ol')
-				window.requestAnimationFrame(() => {
-					if (viewport) {
-						// in case Toast.Viewport is overflows, we need to wait until the new toast
-						// inserted into the DOM before we scroll it to view
-						viewport.lastElementChild?.scrollIntoView({
-							behavior: 'smooth',
-							block: 'end',
-						})
-						// move Close All Notification button to position
-						if (isAction && visible && toastRef.current) {
-							viewport.insertBefore(
-								toastRef.current as unknown as Node,
-								viewport.firstElementChild as unknown as Node,
-							)
-						}
-					}
-				})
-			}
-		}, 0)
-	}, [open, isAction, visible])
+	const [open, setOpen] = useState(visible)
 
 	const variantColor = variant ? colors[variant] : null
-	const ANIMATION_DURATION = 0.3
 
 	return (
 		<AnimatePresence>
-			{open && !hiddenAction ? (
+			{open ? (
 				<ToastPrimitive.Root
-					ref={toastRef}
 					asChild
 					forceMount
 					type="foreground"
@@ -72,30 +42,25 @@ function BaseToast({
 					open={true}
 					onOpenChange={e => {
 						setOpen(e)
-						if (!e && onDismiss) {
-							setTimeout(
-								onDismiss,
-								1000 * ANIMATION_DURATION + (isAction ? 300 : 50),
-							)
-						}
+						onOpenChange?.(e)
 					}}
 				>
 					<motion.li
 						initial={{ y: 150, opacity: 0 }}
 						animate={{ y: 0, opacity: 1 }}
 						exit={{ y: 150, opacity: 0 }}
-						transition={{ ease: 'easeIn', duration: ANIMATION_DURATION }}
+						transition={{ ease: 'easeIn', duration: ANIMATION_DURATION / 1000 }}
 						className={clsx(
-							"grid grid-cols-[40px_1fr_16px] items-center gap-x-[15px] rounded-md bg-white p-[15px] shadow-[hsl(206_22%_7%_/_35%)_0px_10px_38px_-10px,_hsl(206_22%_7%_/_20%)_0px_10px_20px_-15px] [grid-template-areas:_'icon_title_action'_'icon_description_action']",
+							"grid grid-cols-[24px_1fr_16px] items-center gap-y-1 gap-x-2 rounded-md bg-white p-2 shadow-[hsl(206_22%_7%_/_35%)_0px_10px_38px_-10px,_hsl(206_22%_7%_/_20%)_0px_10px_20px_-15px] [grid-template-areas:_'icon_title_close'_'icon_description_description']",
 							{ 'border-l-8 border-red-500': variantColor === 'red' },
 							{ 'border-l-8 border-green-500': variantColor === 'green' },
 							{ 'border-l-8 border-blue-500': variantColor === 'blue' },
 						)}
 					>
-						{variant && !isAction && (
+						{variant && (
 							<Icon
 								className={clsx(
-									'h-10 w-10 ',
+									'h-6 w-6',
 									{ 'text-red-500': variantColor === 'red' },
 									{ 'text-green-500': variantColor === 'green' },
 									{ 'text-blue-500': variantColor === 'blue' },
@@ -105,34 +70,20 @@ function BaseToast({
 								aria-hidden="true"
 							/>
 						)}
-						<ToastPrimitive.Title
-							hidden={isAction}
-							className="mb-[5px] text-lg font-bold [grid-area:_title]"
-						>
+						<ToastPrimitive.Title className="font-bold [grid-area:_title]">
 							{title}
 						</ToastPrimitive.Title>
 						{children && (
 							<ToastPrimitive.Description
-								className="[grid-area:_description]"
+								className="text-sm [grid-area:_description]"
 								asChild
 							>
-								{typeof children === 'string' ? (
-									<div>{splitMessageToRows(children)}</div>
-								) : (
-									children
-								)}
+								{children}
 							</ToastPrimitive.Description>
 						)}
-						<ToastPrimitive.Action
-							hidden={isAction}
-							className="[grid-area:_action]"
-							asChild
-							altText="Close"
-						>
-							<button className="self-start">
-								<Icon name="Close" aria-label="Close" />
-							</button>
-						</ToastPrimitive.Action>
+						<ToastPrimitive.Close className="place-self-center rounded-full [grid-area:_close] hover:border-2 hover:border-current">
+							<Icon name="Close" aria-label="Close" />
+						</ToastPrimitive.Close>
 					</motion.li>
 				</ToastPrimitive.Root>
 			) : null}
@@ -141,8 +92,9 @@ function BaseToast({
 }
 
 // show empty line when the message contain two \n consecutively
-function splitMessageToRows(message: string = '') {
-	return message
+function splitMessageToRows(message: string | ToastProps['children'] = '') {
+	if (typeof message !== 'string') return message
+	const children = message
 		?.split('\n')
 		.map((line, index) =>
 			line ? (
@@ -151,9 +103,10 @@ function splitMessageToRows(message: string = '') {
 				<p key={index} className="block h-2"></p>
 			),
 		)
+	return <div>{children}</div>
 }
 
-interface Notification extends ToastProps {
+interface ToastData extends ToastProps {
 	id: number
 	hash: string
 }
@@ -168,87 +121,96 @@ export function showToast(
 	element?.dispatchEvent(event)
 }
 
-export function NotificationListener() {
-	const [notifications, setNotifications] = useState<Notification[]>([])
-	const msgId = useRef(0)
-
-	const notification = useCallback((event: CustomEvent<ToastEventProps>) => {
-		const { title, variant, children, content, ...props } = event.detail ?? {}
-		if (!title || !variant || (!children && !content)) return
-
-		setTimeout(() => {
-			const newHash =
-				title +
-				(children && typeof children !== 'string'
-					? renderToString(children)
-					: children || content || '')
-
-			setNotifications(prev => [
-				// filter out old notification with the same content in order to trigger
-				// a new notification animation
-				...prev.filter(({ hash }) => hash !== newHash),
-				{
-					id: msgId.current++,
-					hash: newHash,
-					title,
-					// we allow children or content not both
-					children: children || content,
-					variant,
-					...props,
-				},
-			])
-		}, 0)
-	}, [])
-
-	useEventListener(
-		TOAST_EVENT_NAME,
-		typeof document === 'undefined' ? null : document,
-		notification,
-	)
-
-	if (!notifications.length) return null
-
-	return (
-		<>
-			<BaseToast title="" variant="action" visible={notifications.length > 2}>
-				<button
-					className="width-max -my-2 justify-self-center rounded-md bg-gray-200 py-1 px-3"
-					onClick={() => setNotifications([])}
-				>
-					Close All Notifications
-				</button>
-			</BaseToast>
-			{notifications.map(({ id: key, ...props }) => (
-				<BaseToast
-					key={key}
-					onDismiss={() =>
-						setNotifications(prev => prev.filter(({ id }) => id !== key))
-					}
-					{...props}
-				/>
-			))}
-		</>
-	)
-}
-
 // display toast on client
 export function Toast(props: ToastEventProps) {
 	const [emitted, setEmitted] = useState(false)
 
-	const doc = typeof document === 'undefined' ? null : document
-	if (doc && !emitted) {
-		setEmitted(true)
-		showToast(doc, props)
-	}
+	useEffect(() => {
+		if (!emitted && typeof document === 'object') {
+			setEmitted(true)
+			showToast(document, props)
+		}
+	}, [emitted, props])
 
 	return null
 }
 
 export function ToastHub() {
+	const [toasts, setToasts] = useState<ToastData[]>([])
+	const updateScroll = useRef(false)
+	const viewPortRef = useRef<HTMLOListElement>(null)
+	const toastId = useRef(0)
+
+	const handleRemoveToast = useCallback((key: number) => {
+		setToasts(prev => prev.filter(({ id }) => id !== key))
+	}, [])
+
+	const handleAddToast = useCallback((event: CustomEvent<ToastEventProps>) => {
+		const { title, variant, children, content, ...props } = event.detail ?? {}
+		if (!title || !variant || (!children && !content)) return
+		updateScroll.current = true
+
+		const newHash =
+			title +
+			(children && typeof children !== 'string'
+				? renderToString(children)
+				: children || content || '')
+
+		setToasts(prev => [
+			// filter out old toast with the same content in order to trigger
+			// a new toast animation
+			...prev.filter(({ hash }) => hash !== newHash),
+			{
+				id: ++toastId.current,
+				hash: newHash,
+				title,
+				// we allow children or content not both
+				children: splitMessageToRows(children || content),
+				variant,
+				...props,
+			},
+		])
+	}, [])
+
+	const doc = typeof document === 'undefined' ? null : document
+	useEventListener(TOAST_EVENT_NAME, doc, handleAddToast)
+
+	useEffect(() => {
+		if (!updateScroll.current) return
+		updateScroll.current = false
+
+		// start scrolling while toast animation running to make it appear smoother
+		const interval = 50
+		const loops = Math.ceil((ANIMATION_DURATION + interval) / interval)
+		for (let index = 1; index <= loops; index++) {
+			setTimeout(() => {
+				viewPortRef.current?.lastElementChild?.scrollIntoView({ block: 'end' })
+			}, interval * index)
+		}
+	}, [toasts.length, updateScroll])
+
 	return (
 		<ToastPrimitive.Provider>
-			<NotificationListener />
-			<ToastPrimitive.Viewport className="scrollbar-thin scrollbar-thumb-gray-300 min-w-md fixed bottom-0 right-0 z-[2147483647] m-0 flex max-h-full w-[30%] max-w-xl list-none flex-col-reverse gap-[10px] overflow-hidden overflow-y-auto p-[var(--viewport-padding)] outline-none [--viewport-padding:_25px]" />
+			{toasts.length
+				? toasts.map(({ id: key, ...props }, index) => (
+						<BaseToast
+							key={key}
+							onOpenChange={open => {
+								if (!open) {
+									setTimeout(
+										() => handleRemoveToast(key),
+										ANIMATION_DURATION + 50,
+									)
+								}
+							}}
+							{...props}
+						/>
+				  ))
+				: null}
+			<ToastPrimitive.Viewport
+				ref={viewPortRef}
+				className="min-w-md scrollbar-thin scrollbar-thumb-gray-300 fixed bottom-0 right-0 z-[2147483647] m-0 flex max-h-full w-[30%] max-w-xl list-none flex-col-reverse gap-[10px] overflow-y-auto overflow-x-hidden p-[var(--viewport-padding)] outline-none [--viewport-padding:_10px]"
+			/>
 		</ToastPrimitive.Provider>
 	)
 }

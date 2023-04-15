@@ -2,13 +2,13 @@ declare global {
 	// prettier-ignore
 	type EventTargetElement = HTMLElement | Document | (Window & typeof globalThis) | null
 
-	type ToastVariant = 'Error' | 'Notify' | 'Success' | 'action'
+	type ToastVariant = 'Error' | 'Notify' | 'Success'
 
 	type ToastEventProps = {
 		title: string
 		variant: ToastVariant
 		visible?: boolean
-		onDismiss?: () => void
+		onOpenChange?: (open: boolean) => void
 	} & (
 		| { content?: string; children?: never }
 		| {
