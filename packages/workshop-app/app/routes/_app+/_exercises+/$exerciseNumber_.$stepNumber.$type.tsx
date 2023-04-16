@@ -438,6 +438,7 @@ export default function ExercisePartRoute() {
 									prefetch="intent"
 									className="group flex h-full items-center justify-center border-l border-gray-200 px-7"
 									to={data.prevStepLink.to}
+									aria-label="Link to Previous Step"
 									children={
 										<>
 											<Icon
@@ -457,6 +458,7 @@ export default function ExercisePartRoute() {
 									prefetch="intent"
 									className="group flex h-full items-center justify-center border-l border-gray-200 px-7"
 									to={data.nextStepLink.to}
+									aria-label="Link to Next Step"
 									children={
 										<>
 											<Icon
@@ -481,7 +483,7 @@ export default function ExercisePartRoute() {
 					// change.
 				>
 					<Tabs.List className="inline-flex border-b border-gray-200">
-						{tabs.map(tab => {
+						{tabs.map((tab, i) => {
 							return (
 								<Tabs.Trigger
 									key={tab}
@@ -495,7 +497,7 @@ export default function ExercisePartRoute() {
 									)}
 								>
 									<Link
-										id="tab"
+										id={`tab-${i}`}
 										className="outline-none focus:bg-gray-100"
 										preventScrollReset
 										prefetch="intent"

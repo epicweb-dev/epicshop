@@ -266,6 +266,7 @@ function NavToggle({
 		<div className="relative flex w-full items-center justify-between overflow-hidden border-b border-gray-200">
 			<button
 				className="flex h-14 w-14 items-center justify-center"
+				aria-label="Open Navigation menu"
 				onClick={async () => {
 					menuControls.start(isMenuOpened ? 'close' : 'open')
 					setMenuOpened(!isMenuOpened)

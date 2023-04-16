@@ -171,11 +171,11 @@ export function Diff() {
 						</div>
 						<div className="scrollbar-thin scrollbar-thumb-gray-300 max-h-[calc(100vh-109px)] overflow-y-auto">
 							{diff.diffCode ? (
-								<div>
+								<h2>
 									<Accordion.Root className="w-full" type="multiple">
 										<Mdx code={diff.diffCode} components={mdxComponents} />
 									</Accordion.Root>
-								</div>
+								</h2>
 							) : (
 								<p className="m-5 inline-flex items-center justify-center bg-black px-1 py-0.5 font-mono text-sm uppercase text-white">
 									There was a problem generating the diff
@@ -209,6 +209,7 @@ function SelectFileToDiff({
 					'radix-placeholder:text-gray-500 flex h-full w-full items-center justify-between px-3 text-left focus-visible:outline-none',
 					className,
 				)}
+				aria-label={`Select ${label} for git Diff`}
 			>
 				<span className="scrollbar-thin scrollbar-thumb-gray-300 w-80 overflow-hidden text-ellipsis whitespace-nowrap">
 					{label}:{' '}
