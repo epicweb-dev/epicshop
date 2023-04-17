@@ -44,7 +44,7 @@ import {
 	requireExerciseApp,
 } from '~/utils/apps.server'
 import { getDiffCode, getDiffFiles } from '~/utils/diff.server'
-import { Mdx } from '~/utils/mdx'
+import { Mdx, PreWithCopyToClipboard } from '~/utils/mdx'
 import { getErrorMessage } from '~/utils/misc'
 import { isAppRunning, isPortAvailable } from '~/utils/process-manager.server'
 import {
@@ -444,6 +444,7 @@ export default function ExercisePartRoute() {
 								components={{
 									InlineFile,
 									LinkToApp,
+									pre: PreWithCopyToClipboard,
 								}}
 							/>
 						) : (

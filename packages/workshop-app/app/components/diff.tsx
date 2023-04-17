@@ -4,6 +4,7 @@ import clsx from 'clsx'
 import * as Select from '@radix-ui/react-select'
 import { Mdx } from '~/utils/mdx'
 import { type loader } from '~/routes/_app+/_exercises+/$exerciseNumber_.$stepNumber.$type'
+import AccordionComponent from '~/components/accordion'
 import Icon from './icons'
 import * as Accordion from '@radix-ui/react-accordion'
 
@@ -166,7 +167,14 @@ export function Diff() {
 							{diff.diffCode ? (
 								<div>
 									<Accordion.Root className="w-full" type="multiple">
-										<Mdx code={diff.diffCode} />
+										<Mdx
+											code={diff.diffCode}
+											components={{
+												Accordion: (props: any) => (
+													<AccordionComponent {...props} />
+												),
+											}}
+										/>
 									</Accordion.Root>
 								</div>
 							) : (
@@ -251,7 +259,7 @@ const SelectItem: React.FC<any> = React.forwardRef(
 		return (
 			<Select.Item
 				className={clsx(
-					'radix-disabled:text-red-500 radix-highlighted:opacity-100  radix-highlighted:outline-none radix-state-checked:opacity-100 relative flex cursor-pointer select-none items-center rounded py-2 px-10 leading-none opacity-80',
+					'radix-disabled:text-red-500 radix-highlighted:opacity-100  radix-highlighted:outline-none radix-state-checked:opacity-100 relative flex cursor-pointer select-none items-center rounded px-10 py-2 leading-none opacity-80',
 					className,
 				)}
 				{...props}

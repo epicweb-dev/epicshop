@@ -4,7 +4,6 @@ import type { MDXContentProps } from 'mdx-bundler/client'
 import * as React from 'react'
 import { LaunchEditor } from '~/routes/launch-editor'
 import { AnchorOrLink } from './misc'
-import Accordion from '~/components/accordion'
 
 function notification(button: EventTarget & HTMLButtonElement, on?: boolean) {
 	if (button) {
@@ -52,8 +51,6 @@ export const mdxComponents = {
 	// if this is a problem, then render the form outside of the MDX and update <LaunchEditor /> to reference that one instead or something.
 	p: (props: any) => <div {...props} />,
 	LaunchEditor,
-	Accordion: (props: any) => <Accordion {...props} />,
-	pre: PreWithCopyToClipboard,
 }
 
 /**
