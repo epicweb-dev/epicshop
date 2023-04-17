@@ -30,6 +30,10 @@ type TestProcessesMap = Map<string, TestProcessEntry>
 declare global {
 	var __dev_processes__: DevProcessesMap
 	var __test_processes__: TestProcessesMap
+	var __process_dev_close_with_grace_return__: ReturnType<typeof closeWithGrace>
+	var __process_test_close_with_grace_return__: ReturnType<
+		typeof closeWithGrace
+	>
 }
 
 const devProcesses = (global.__dev_processes__ =
@@ -40,7 +44,9 @@ const testProcesses = (global.__test_processes__ =
 function getDevProcessesMap() {
 	const procs: DevProcessesMap = new Map()
 
-	closeWithGrace(async () => {
+	global.__process_dev_close_with_grace_return__?.uninstall()
+
+	global.__process_dev_close_with_grace_return__ = closeWithGrace(async () => {
 		for (const [name, proc] of procs.entries()) {
 			console.log('closing', name)
 			proc.process.kill()
@@ -52,7 +58,9 @@ function getDevProcessesMap() {
 function getTestProcessesMap() {
 	const procs: TestProcessesMap = new Map()
 
-	closeWithGrace(async () => {
+	global.__process_test_close_with_grace_return__?.uninstall()
+
+	global.__process_test_close_with_grace_return__ = closeWithGrace(async () => {
 		for (const [id, proc] of procs.entries()) {
 			if (proc.process) {
 				console.log('closing', id)

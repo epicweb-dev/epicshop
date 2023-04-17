@@ -11,6 +11,10 @@ import { getApps, getWorkshopRoot } from '../utils/apps.server'
 import { getWatcher } from '../utils/change-tracker'
 import { purgeRequireCache } from '../utils/purge-require-cache.server'
 
+declare global {
+	var __server_close_with_grace_return__: ReturnType<typeof closeWithGrace>
+}
+
 async function start() {
 	// get some caches warmed up
 	import('globby')
@@ -124,7 +128,9 @@ ${chalk.bold('Press Ctrl+C to stop')}
 			  }),
 	)
 
-	closeWithGrace(() => {
+	global.__server_close_with_grace_return__?.uninstall()
+
+	global.__server_close_with_grace_return__ = closeWithGrace(() => {
 		return Promise.all([
 			new Promise((resolve, reject) => {
 				server.close(e => (e ? reject(e) : resolve('ok')))
