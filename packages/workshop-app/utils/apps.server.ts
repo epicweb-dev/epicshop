@@ -909,12 +909,21 @@ export function getAppPageRoute(app: ExerciseStepApp) {
 }
 
 export async function setPlayground(srcDir: string) {
-	const { globby } = await import('globby')
+	const { globby, isGitIgnored } = await import('globby')
+	const isIgnored = await isGitIgnored({ cwd: srcDir })
 	const destDir = path.join(getWorkshopRoot(), 'playground')
 	// Copy the contents of the source directory to the destination directory recursively
 	await fsExtra.copy(srcDir, destDir, {
 		overwrite: true,
 		preserveTimestamps: true,
+		filter: async file => {
+			if (file === srcDir) return true
+			// we do want to copy node_modules in this case to avoid issues with
+			// dependencies that are not in the workspace node_modules
+			if (file.includes('node_modules')) return true
+			const shouldCopy = !isIgnored(file)
+			return shouldCopy
+		},
 	})
 
 	// Remove files from destDir that were in destDir before but are not in srcDir
@@ -936,6 +945,20 @@ export async function setPlayground(srcDir: string) {
 	const appName = await getAppName(srcDir)
 	await fsExtra.ensureDir(path.dirname(playgroundAppNameInfoPath))
 	await fsExtra.writeJSON(playgroundAppNameInfoPath, { appName })
+
+	// run fixup-playground script if it exists
+	const fixupPlaygroundPath = path.join(
+		destDir,
+		'kcdshop',
+		'fixup-playground.js',
+	)
+	if (await exists(fixupPlaygroundPath)) {
+		const { execa } = await import('execa')
+		await execa('node', [fixupPlaygroundPath], {
+			cwd: destDir,
+			stdio: 'inherit',
+		})
+	}
 }
 
 export async function getPlaygroundAppName() {

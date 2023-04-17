@@ -81,8 +81,9 @@ function pageTitle(data: SerializeFrom<typeof loader>, workshopTitle?: string) {
 export const meta: V2_MetaFunction<
 	typeof loader,
 	{ root: typeof rootLoader }
-> = ({ data, parentsData }) => {
-	return [{ title: pageTitle(data, parentsData?.root.workshopTitle) }]
+> = ({ data, matches }) => {
+	const rootData = matches.find(m => m.id === 'root')?.data
+	return [{ title: pageTitle(data, rootData?.workshopTitle) }]
 }
 
 export async function loader({ request, params }: DataFunctionArgs) {

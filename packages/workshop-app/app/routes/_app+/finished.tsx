@@ -23,8 +23,9 @@ import {
 export const meta: V2_MetaFunction<
 	typeof loader,
 	{ root: typeof rootLoader }
-> = ({ parentsData }) => {
-	return [{ title: `🎉 ${parentsData?.root.workshopTitle}` }]
+> = ({ matches }) => {
+	const rootData = matches.find(m => m.id === 'root')?.data
+	return [{ title: `🎉 ${rootData?.workshopTitle}` }]
 }
 
 export async function loader({ request }: DataFunctionArgs) {

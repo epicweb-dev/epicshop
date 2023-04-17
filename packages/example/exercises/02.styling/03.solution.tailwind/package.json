@@ -13,10 +13,10 @@
     "validate": "run-p \"test -- --run\" lint typecheck"
   },
   "dependencies": {
-    "@remix-run/node": "^1.14.3",
-    "@remix-run/react": "^1.14.3",
-    "@remix-run/serve": "^1.14.3",
-    "@remix-run/server-runtime": "^1.14.3",
+    "@remix-run/node": "^1.15.0",
+    "@remix-run/react": "^1.15.0",
+    "@remix-run/serve": "^1.15.0",
+    "@remix-run/server-runtime": "^1.15.0",
     "isbot": "^3.6.3",
     "match-sorter": "^6.3.1",
     "mdast-util-from-markdown": "^1.2.0",
@@ -26,8 +26,8 @@
     "unist-util-visit": "^4.1.2"
   },
   "devDependencies": {
-    "@remix-run/dev": "^1.14.3",
-    "@remix-run/eslint-config": "^1.14.3",
+    "@remix-run/dev": "^1.15.0",
+    "@remix-run/eslint-config": "^1.15.0",
     "@types/eslint": "^8.4.10",
     "@types/node": "^18.11.9",
     "@types/react": "^18.0.25",

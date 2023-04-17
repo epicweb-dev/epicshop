@@ -72,7 +72,7 @@ export function SetPlayground({
 	return (
 		<fetcher.Form
 			action="/set-playground"
-			method="post"
+			method="POST"
 			className="flex items-center justify-center"
 		>
 			<input type="hidden" name="appName" value={appName} />
@@ -107,7 +107,7 @@ export function PlaygroundChooser({
 			onValueChange={appName => {
 				fetcher.submit(
 					{ appName: appName },
-					{ method: 'post', action: '/set-playground' },
+					{ method: 'POST', action: '/set-playground' },
 				)
 			}}
 		>
@@ -172,7 +172,7 @@ function SelectItem({
 	return (
 		<Select.Item
 			value={value}
-			className="radix-disabled:text-red-500 radix-highlighted:opacity-100 radix-highlighted:outline-none radix-state-checked:opacity-100 relative flex cursor-pointer select-none items-center rounded py-2 px-10 leading-none opacity-80"
+			className="radix-disabled:text-red-500 radix-highlighted:opacity-100 radix-highlighted:outline-none radix-state-checked:opacity-100 relative flex cursor-pointer select-none items-center rounded px-10 py-2 leading-none opacity-80"
 		>
 			<Select.ItemText>{children}</Select.ItemText>
 			<Select.ItemIndicator className="absolute left-0 inline-flex w-[25px] items-center justify-center">
@@ -201,7 +201,7 @@ export async function useSetPlayground({
 		if (!fetcherRef.current) return
 		fetcherRef.current.submit(
 			{ appName },
-			{ method: 'post', action: '/set-playground' },
+			{ method: 'POST', action: '/set-playground' },
 		)
 	}, [enabled, appName])
 }

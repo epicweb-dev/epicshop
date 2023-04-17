@@ -23,7 +23,7 @@ function diffPathToRelative(filePath: string) {
 	const normalizedPath = path.normalize(filePath).replace(/^("|')|("|')$/g, '')
 
 	// eslint-disable-next-line @typescript-eslint/no-unused-vars
-	const [workshopRootDirname, appId, ...relativePath] = normalizedPath
+	const [workshopRootDirname, appId, id, ...relativePath] = normalizedPath
 		.replace(
 			process.platform === 'win32' || normalizedPath.startsWith(path.sep)
 				? `${diffTmpDir}${path.sep}`
@@ -156,7 +156,7 @@ async function copyUnignoredFiles(
 
 			const isIgnored = await isGitIgnored({ cwd: srcDir })
 
-			await fsExtra.emptyDir(destDir)
+			await fsExtra.remove(destDir)
 			await fsExtra.copy(srcDir, destDir, {
 				filter: async file => {
 					if (file === srcDir) return true
@@ -174,15 +174,18 @@ async function copyUnignoredFiles(
 
 async function prepareForDiff(app1: App, app2: App) {
 	const workshopRoot = getWorkshopRoot()
+	const id = Math.random().toString(36).slice(2)
 	const app1CopyPath = path.join(
 		diffTmpDir,
 		path.basename(workshopRoot),
 		app1.id,
+		id,
 	)
 	const app2CopyPath = path.join(
 		diffTmpDir,
 		path.basename(workshopRoot),
 		app2.id,
+		id,
 	)
 	// if everything except the `name` property of the `package.json` is the same
 	// the don't bother copying it
@@ -224,6 +227,9 @@ export async function getDiffFiles(app1: App, app2: App) {
 		{ cwd: diffTmpDir },
 		// --no-index implies --exit-code, so we need to ignore the error
 	).catch(e => e)
+
+	void fsExtra.remove(app1CopyPath)
+	void fsExtra.remove(app2CopyPath)
 
 	const diffFiles = diffOutput
 		.split('\n')
@@ -309,6 +315,9 @@ async function getDiffCodeImpl(app1: App, app2: App) {
 		{ cwd: diffTmpDir },
 		// --no-index implies --exit-code, so we need to ignore the error
 	).catch(e => e)
+
+	void fsExtra.remove(app1CopyPath)
+	void fsExtra.remove(app2CopyPath)
 
 	const parsed = parseGitDiff(diffOutput)
 
