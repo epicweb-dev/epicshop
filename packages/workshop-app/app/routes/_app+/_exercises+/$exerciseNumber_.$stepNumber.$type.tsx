@@ -330,9 +330,8 @@ export default function ExercisePartRoute() {
 
 	const preview = searchParams.get('preview')
 	const activeTab = isValidPreview(preview) ? preview : tabs[0]
-	const activeApp = preview === 'solution' ? 'solution' : 'problem'
 	const inBrowserBrowserRef = useRef<InBrowserBrowserRef>(null)
-	const previewAppUrl = data[activeApp]?.dev.baseUrl
+	const previewAppUrl = data.playground?.dev.baseUrl
 
 	const InlineFile = useMemo(() => {
 		return function InlineFile({
