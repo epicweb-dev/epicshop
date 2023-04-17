@@ -51,7 +51,7 @@ function BaseToast({
 						exit={{ y: 150, opacity: 0 }}
 						transition={{ ease: 'easeIn', duration: ANIMATION_DURATION / 1000 }}
 						className={clsx(
-							"grid grid-cols-[24px_1fr_16px] items-center gap-y-1 gap-x-2 rounded-md bg-white p-2 shadow-[hsl(206_22%_7%_/_35%)_0px_10px_38px_-10px,_hsl(206_22%_7%_/_20%)_0px_10px_20px_-15px] [grid-template-areas:_'icon_title_close'_'icon_description_description']",
+							"grid grid-cols-[24px_1fr_16px] items-center gap-x-2 gap-y-1 rounded-md bg-white p-2 shadow-[hsl(206_22%_7%_/_35%)_0px_10px_38px_-10px,_hsl(206_22%_7%_/_20%)_0px_10px_20px_-15px] [grid-template-areas:_'icon_title_close'_'icon_description_description']",
 							{ 'border-l-8 border-red-500': variantColor === 'red' },
 							{ 'border-l-8 border-green-500': variantColor === 'green' },
 							{ 'border-l-8 border-blue-500': variantColor === 'blue' },
@@ -119,20 +119,6 @@ export function showToast(
 ) {
 	const event = new CustomEvent(TOAST_EVENT_NAME, { detail })
 	element?.dispatchEvent(event)
-}
-
-// display toast on client
-export function Toast(props: ToastEventProps) {
-	const [emitted, setEmitted] = useState(false)
-
-	useEffect(() => {
-		if (!emitted && typeof document === 'object') {
-			setEmitted(true)
-			showToast(document, props)
-		}
-	}, [emitted, props])
-
-	return null
 }
 
 export function ToastHub() {
