@@ -5,7 +5,11 @@ import clsx from 'clsx'
 import type { AnimationControls } from 'framer-motion'
 import { motion, useAnimationControls } from 'framer-motion'
 import * as React from 'react'
-import { getExercises, getWorkshopTitle } from '~/utils/apps.server'
+import {
+	getExercises,
+	getPlaygroundAppName,
+	getWorkshopTitle,
+} from '~/utils/apps.server'
 import {
 	combineServerTimings,
 	getServerTimeHeader,
@@ -14,9 +18,10 @@ import {
 
 export async function loader({ request }: DataFunctionArgs) {
 	const timings = makeTimings('stepLoader')
-	const [exercises, workshopTitle] = await Promise.all([
+	const [exercises, workshopTitle, playgroundAppName] = await Promise.all([
 		getExercises({ request, timings }),
 		getWorkshopTitle(),
+		getPlaygroundAppName(),
 	])
 
 	const result = json(
@@ -36,6 +41,7 @@ export async function loader({ request }: DataFunctionArgs) {
 					name,
 				})),
 			})),
+			playgroundAppName,
 		},
 		{
 			headers: {
@@ -154,7 +160,7 @@ function Navigation() {
 													className={clsx(
 														'relative whitespace-nowrap px-2 py-0.5 pr-3 text-2xl font-bold outline-none hover:underline focus:underline',
 														{
-															'bg-black text-white after:absolute after:-right-2.5 after:-bottom-2.5 after:h-5 after:w-5 after:rotate-45 after:scale-75 after:bg-white after:content-[""]':
+															'bg-black text-white after:absolute after:-bottom-2.5 after:-right-2.5 after:h-5 after:w-5 after:rotate-45 after:scale-75 after:bg-white after:content-[""]':
 																isActive,
 														},
 													)}
@@ -168,12 +174,14 @@ function Navigation() {
 														animate="visible"
 														className="ml-4 mt-4 flex flex-col gap-3"
 													>
-														{problems.map(({ stepNumber, title }) => {
+														{problems.map(({ name, stepNumber, title }) => {
 															const isActive =
 																Number(params.stepNumber) === stepNumber
 															const step = stepNumber
 																.toString()
 																.padStart(2, '0')
+															const isPlayground =
+																name === data.playgroundAppName
 															return (
 																<motion.li
 																	variants={itemVariants}
@@ -182,11 +190,13 @@ function Navigation() {
 																	<Link
 																		to={`/${exerciseNum}/${step}`}
 																		className={clsx(
-																			'relative whitespace-nowrap px-2 py-0.5 pr-3 text-xl font-medium outline-none after:absolute after:-right-2.5 after:-bottom-2.5 after:h-5 after:w-5 after:rotate-45 after:scale-75 after:bg-white after:content-[""] hover:underline focus:underline',
+																			'relative whitespace-nowrap px-2 py-0.5 pr-3 text-xl font-medium outline-none after:absolute after:-bottom-2.5 after:-right-2.5 after:h-5 after:w-5 after:rotate-45 after:scale-75 after:bg-white after:content-[""] hover:underline focus:underline',
 																			{ 'bg-black text-white': isActive },
 																		)}
 																	>
-																		{step}. {title}
+																		{isPlayground
+																			? `${step}. 🛝 ${title}`
+																			: `${step}. ${title}`}
 																	</Link>
 																</motion.li>
 															)
