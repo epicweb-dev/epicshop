@@ -153,7 +153,7 @@ export async function runAppDev(app: App) {
 	return { status: 'process-started', running: true } as const
 }
 
-export function runAppTests(app: App) {
+export async function runAppTests(app: App) {
 	const key = app.id
 
 	if (app.test.type !== 'script') {
@@ -163,9 +163,12 @@ export function runAppTests(app: App) {
 		return { status: 'error', error: 'no server, but requires app' } as const
 	}
 
-	const testProcess = spawn('npm', ['run', app.test.scriptName, '--silent'], {
+	const { execaCommand } = await import('execa')
+
+	const testProcess = execaCommand(app.test.script, {
 		cwd: app.fullPath,
 		shell: true,
+		stdio: 'pipe',
 		env: {
 			...process.env,
 			// TODO: support specifying the env
@@ -187,7 +190,7 @@ export function runAppTests(app: App) {
 			timestamp: Date.now(),
 		})
 	}
-	testProcess.stdout.on('data', handleStdOutData)
+	testProcess.stdout?.on('data', handleStdOutData)
 	function handleStdErrData(data: Buffer) {
 		output.push({
 			type: 'stderr',
@@ -195,10 +198,10 @@ export function runAppTests(app: App) {
 			timestamp: Date.now(),
 		})
 	}
-	testProcess.stderr.on('data', handleStdErrData)
+	testProcess.stderr?.on('data', handleStdErrData)
 	testProcess.on('exit', code => {
-		testProcess.stdout.off('data', handleStdOutData)
-		testProcess.stderr.off('data', handleStdErrData)
+		testProcess.stdout?.off('data', handleStdOutData)
+		testProcess.stderr?.off('data', handleStdErrData)
 		// don't delete the entry from the map so we can show the output at any time
 		entry.process = null
 		entry.exitCode = code

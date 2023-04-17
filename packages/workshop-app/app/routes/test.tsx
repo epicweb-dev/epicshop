@@ -156,7 +156,7 @@ export async function action({ request }: DataFunctionArgs) {
 	}
 	switch (result.data.intent) {
 		case 'run': {
-			runAppTests(app)
+			void runAppTests(app)
 			return json({ success: true })
 		}
 		case 'stop': {

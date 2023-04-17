@@ -3,12 +3,14 @@
   "private": true,
   "sideEffects": false,
   "kcd-workshop": {
-    "testRequiresApp": true
+    "testRequiresApp": true,
+    "scripts": {
+      "test": "echo \"\\x1b[36mhello\\x1b[37mworld\" && sleep 0.7 && echo hi && sleep 0.7 && echo hi && sleep 0.7 && echo hi && sleep 0.7 && echo hi && sleep 0.7 && echo hi && sleep 0.7 && echo hi && sleep 0.7 && echo hi && sleep 0.7 && echo hi && sleep 0.7 && echo hi && sleep 0.7 && echo hi && sleep 0.7 && echo hi && sleep 0.7 && echo hi && sleep 0.7 && echo hi && sleep 0.7 && echo hi && sleep 0.7 && echo hi && sleep 0.7 && echo hi && sleep 0.7 && echo hi && sleep 0.7 && echo hi"
+    }
   },
   "scripts": {
     "build": "remix build",
     "dev": "remix dev",
-    "test": "echo \"\\x1b[36mhello\\x1b[37mworld\" && sleep 0.1 && echo hi && sleep 0.1 && echo hi && sleep 0.1 && echo hi && sleep 0.1 && echo hi && sleep 0.1 && echo hi && sleep 0.1 && echo hi && sleep 0.1 && echo hi && sleep 0.1 && echo hi && sleep 0.1 && echo hi && sleep 0.1 && echo hi && sleep 0.1 && echo hi && sleep 0.1 && echo hi && sleep 0.1 && echo hi && sleep 0.1 && echo hi && sleep 0.1 && echo hi && sleep 0.1 && echo hi && sleep 0.1 && echo hi && sleep 0.1 && echo hi",
     "format": "prettier --write .",
     "lint": "eslint --cache --cache-location ./node_modules/.cache/eslint .",
     "start": "remix-serve build",

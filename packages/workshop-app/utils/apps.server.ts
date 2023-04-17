@@ -62,7 +62,7 @@ type BaseApp = {
 				baseUrl: `/app/${BaseApp['name']}/test/`
 				testFiles: Array<string>
 		  }
-		| { type: 'script'; scriptName: string; requiresApp: boolean }
+		| { type: 'script'; script: string; requiresApp: boolean }
 		| { type: 'none' }
 	dev:
 		| { type: 'browser'; baseUrl: `/app/${BaseApp['name']}/` }
@@ -467,17 +467,19 @@ async function getTestInfo({
 	const paddedStepNumber = stepNumber.toString().padStart(2, '0')
 	const testScriptName = isMultiStep ? `test:${paddedStepNumber}` : 'test'
 	const hasPkgJson = await exists(path.join(fullPath, 'package.json'))
-	const hasTestScript = hasPkgJson
-		? Boolean(
-				await getPkgProp(fullPath, ['scripts', testScriptName].join('.'), ''),
+	const testScript = hasPkgJson
+		? await getPkgProp(
+				fullPath,
+				['kcd-workshop.scripts', testScriptName].join('.'),
+				'',
 		  )
-		: false
+		: null
 
-	if (hasTestScript) {
+	if (testScript) {
 		const requiresApp = hasPkgJson
 			? await getPkgProp(fullPath, 'kcd-workshop.testRequiresApp', false)
 			: false
-		return { type: 'script', scriptName: testScriptName, requiresApp }
+		return { type: 'script', script: testScript, requiresApp }
 	}
 
 	// tests are found in the corresponding solution directory

@@ -553,6 +553,9 @@ export default function ExercisePartRoute() {
 								<Tabs.Trigger
 									key={tab}
 									value={tab}
+									hidden={
+										tab === 'tests' && data.playground?.test.type === 'none'
+									}
 									asChild
 									className={clsx(
 										'radix-state-active:bg-black radix-state-active:hover:bg-gray-700 radix-state-active:text-white radix-state-active:z-10 radix-state-inactive:hover:bg-gray-100 clip-path-button relative px-6 py-4 font-mono text-sm uppercase',
