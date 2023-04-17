@@ -340,7 +340,7 @@ function InBrowserBrowserImpl(
 	) : portIsAvailable === false ? (
 		<div className="flex flex-col items-center justify-center">
 			<p className="max-w-xs pb-5 text-center" role="status">
-				The port for this app is unavailable. It could be that you're running it
+				{`The port for this app is unavailable. It could be that you're running it `}
 				<a href={`http://localhost:${port}`} className="underline">
 					elsewhere
 				</a>
