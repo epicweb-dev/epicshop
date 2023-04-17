@@ -21,7 +21,7 @@ export function PreWithCopyToClipboard({ children, ...props }: any) {
 	return (
 		<div className="group relative">
 			{showCopyButton ? (
-				<div className="absolute top-0 right-0 z-50 m-2 mr-2 flex items-center gap-2 opacity-0 transition duration-300 ease-in-out focus-within:opacity-100 group-hover:opacity-100">
+				<div className="absolute right-0 top-0 z-50 m-2 mr-2 flex items-center gap-2 opacity-0 transition duration-300 ease-in-out focus-within:opacity-100 group-hover:opacity-100">
 					<span hidden className="font-mono text-xs uppercase text-black">
 						copied
 					</span>
@@ -53,6 +53,7 @@ export const mdxComponents = {
 	p: (props: any) => <div {...props} />,
 	LaunchEditor,
 	Accordion: (props: any) => <Accordion {...props} />,
+	pre: PreWithCopyToClipboard,
 }
 
 /**
