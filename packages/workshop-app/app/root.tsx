@@ -110,12 +110,13 @@ function getWebsocketJS() {
 			const event = JSON.parse(message.data);
 			if (event.type !== 'kcdshop:file-change') return;
 			const { filePath } = event.data;
-			if (filePath.includes('README') && !filePath.includes('/playground/README')) {
+			if (filePath.includes('README') && !filePath.includes('playground')) {
 				console.log(
 					[
 						'🐨 Reloading',
 						window.frameElement?.getAttribute('title'),
 						' window ...',
+						filePath + " changed",
 					]
 						.filter(Boolean)
 						.join(' '),
