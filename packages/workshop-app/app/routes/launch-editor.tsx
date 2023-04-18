@@ -1,3 +1,4 @@
+import { useEffect } from 'react'
 import path from 'path'
 import type { DataFunctionArgs } from '@remix-run/node'
 import { json } from '@remix-run/node'
@@ -6,6 +7,7 @@ import { getAppByName } from '~/utils/apps.server'
 import { z } from 'zod'
 import { launchEditor } from '~/utils/launch-editor.server'
 import clsx from 'clsx'
+import { showToast } from '~/components/toast'
 
 const launchSchema = z.intersection(
 	z.object({
@@ -19,7 +21,7 @@ const launchSchema = z.intersection(
 		}),
 		z.object({
 			type: z.literal('appFile'),
-			appFile: z.string(),
+			appFile: z.array(z.string()),
 			appName: z.string(),
 		}),
 	]),
@@ -31,7 +33,7 @@ export async function action({ request }: DataFunctionArgs) {
 		type: formData.get('type'),
 		file: formData.get('file'),
 		workshopFile: formData.get('workshopFile'),
-		appFile: formData.get('appFile'),
+		appFile: formData.getAll('appFile'),
 		appName: formData.get('appName'),
 		line: formData.get('line') ?? undefined,
 		column: formData.get('column') ?? undefined,
@@ -48,7 +50,7 @@ export async function action({ request }: DataFunctionArgs) {
 			if (!app) {
 				throw new Response(`App "${form.appName}" Not found`, { status: 404 })
 			}
-			file = path.join(app?.fullPath, form.appFile)
+			file = form.appFile.map(filePath => path.join(app?.fullPath, filePath))
 			break
 		}
 	}
@@ -63,15 +65,37 @@ export function LaunchEditor({
 	line,
 	column,
 	children,
+	onUpdate,
 }: {
 	line?: number
 	column?: number
 	children: React.ReactNode
+	onUpdate?: (state: string) => void
 } & (
 	| { file: string; appFile?: never; appName?: never }
-	| { file?: never; appFile: string; appName: string }
+	| { file?: never; appFile: string | string[]; appName: string }
 )) {
 	const fetcher = useFetcher<typeof action>()
+
+	useEffect(() => {
+		switch (fetcher.state) {
+			case 'loading': {
+				const error = fetcher.data?.status === 'error' ? fetcher.data.error : ''
+				if (error) {
+					showToast(document, {
+						title: 'Launch Editor Error',
+						variant: 'Error',
+						content: error,
+					})
+				}
+			}
+			case 'idle': {
+				if (fetcher.type === 'done') onUpdate?.('fetcher-done')
+			}
+		}
+	}, [fetcher, onUpdate])
+
+	const fileList = typeof appFile === 'string' ? [appFile] : appFile
 	const type = file ? 'file' : appFile ? 'appFile' : ''
 	return (
 		<fetcher.Form action="/launch-editor" method="POST">
@@ -79,20 +103,20 @@ export function LaunchEditor({
 			<input type="hidden" name="column" value={column} />
 			<input type="hidden" name="type" value={type} />
 			<input type="hidden" name="file" value={file} />
-			<input type="hidden" name="appFile" value={appFile} />
 			<input type="hidden" name="appName" value={appName} />
+			{fileList?.map(file => (
+				<input type="hidden" name="appFile" key={file} value={file} />
+			))}
 			<button
 				type="submit"
 				className={clsx(
+					'launch_button',
 					fetcher.state !== 'idle' ? 'cursor-progress' : null,
 					fetcher.data?.status === 'error' ? 'cursor-not-allowed' : null,
 				)}
 			>
 				{children}
 			</button>
-			{fetcher.data?.status === 'error' ? (
-				<div className="error">{fetcher.data.error}</div>
-			) : null}
 		</fetcher.Form>
 	)
 }

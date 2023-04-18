@@ -7,7 +7,6 @@ import type {
 } from '@remix-run/node'
 import { defer, redirect } from '@remix-run/node'
 import {
-	Await,
 	Link,
 	isRouteErrorResponse,
 	useLoaderData,
@@ -27,7 +26,11 @@ import {
 import { InBrowserTestRunner } from '~/components/in-browser-test-runner'
 import TouchedFiles from '~/components/touched-files'
 import { type loader as rootLoader } from '~/root'
-import { PlaygroundChooser, SetPlayground } from '~/routes/set-playground'
+import {
+	PlaygroundChooser,
+	SetAppToPlayground,
+	SetPlayground,
+} from '~/routes/set-playground'
 import type { App } from '~/utils/apps.server'
 import {
 	getAppByName,
@@ -344,19 +347,32 @@ export default function ExercisePartRoute() {
 			type?: 'playground' | 'solution' | 'problem'
 		}) {
 			const app = data[type]
+
+			const info = (
+				<div className="launch-editor-button-wrapper flex items-center justify-center underline">
+					{children}{' '}
+					<img
+						title="Open in editor"
+						alt="Open in editor"
+						className="!m-0"
+						src="/icons/keyboard-2.svg"
+					/>
+				</div>
+			)
+
 			return app ? (
-				<div className="inline-block">
+				<div className="inline-block grow">
 					<LaunchEditor appFile={file} appName={app.name} {...props}>
-						<div className="launch-editor-button-wrapper flex items-center justify-center underline">
-							{children}{' '}
-							<img
-								title="Open in editor"
-								alt="Open in editor"
-								className="!m-0"
-								src="/icons/keyboard-2.svg"
-							/>
-						</div>
+						{info}
 					</LaunchEditor>
+				</div>
+			) : type === 'playground' ? (
+				// playground does not exist yet
+				<div
+					className="inline-block grow cursor-not-allowed"
+					title="You must 'Set to Playground' before opening a file"
+				>
+					{info}
 				</div>
 			) : (
 				<>children</>
@@ -417,22 +433,7 @@ export default function ExercisePartRoute() {
 							{pageTitle(data)}
 							{data.problem &&
 							data.playground?.appName !== data.problem.name ? (
-								<SetPlayground
-									appName={data.problem.name}
-									title="Playground is not set to the right app. Click to set Playground."
-								>
-									<span className="flex items-center justify-center gap-1 text-rose-700">
-										<Icon
-											viewBox="0 0 24 24"
-											size="16"
-											name="Unlinked"
-											className="animate-ping"
-										/>{' '}
-										<span className="uppercase underline">
-											Set to Playground
-										</span>
-									</span>
-								</SetPlayground>
+								<SetAppToPlayground appName={data.problem.name} />
 							) : null}
 						</div>
 					</h4>
@@ -453,50 +454,7 @@ export default function ExercisePartRoute() {
 					<div className="flex h-16 justify-between border-t border-gray-200 bg-white">
 						<div>
 							<div className="h-full">
-								<TouchedFiles>
-									<div id="files">
-										<React.Suspense
-											fallback={
-												<div className="p-8">
-													<Icon
-														name="Refresh"
-														className="animate-spin"
-														title="Loading diff"
-													/>
-												</div>
-											}
-										>
-											<Await
-												resolve={data.diff}
-												errorElement={
-													<div className="text-rose-300">
-														Something went wrong.
-													</div>
-												}
-											>
-												{diff => {
-													if (typeof diff.diffFiles === 'string') {
-														return (
-															<p className="text-rose-300">{diff.diffFiles}</p>
-														)
-													}
-													return diff.diffFiles?.length ? (
-														<ul>
-															{diff.diffFiles?.map(file => (
-																<li key={file.path} data-state={file.status}>
-																	<span>{file.status}</span>
-																	<InlineFile file={file.path} />
-																</li>
-															))}
-														</ul>
-													) : (
-														<p>No files changed</p>
-													)
-												}}
-											</Await>
-										</React.Suspense>
-									</div>
-								</TouchedFiles>
+								<TouchedFiles />
 							</div>
 						</div>
 						<div className="relative flex overflow-hidden">
@@ -544,7 +502,7 @@ export default function ExercisePartRoute() {
 				<Tabs.Root
 					className="relative flex h-screen flex-col"
 					value={activeTab}
-					// intentially no onValueChange here because the Link will trigger the
+					// intentionally no onValueChange here because the Link will trigger the
 					// change.
 				>
 					<Tabs.List className="inline-flex border-b border-gray-200">

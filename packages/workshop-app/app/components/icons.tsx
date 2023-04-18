@@ -381,6 +381,42 @@ const Icons = {
 			/>
 		</>
 	),
+	Close: () => (
+		<path
+			stroke="currentColor"
+			d="M11.7816 4.03157C12.0062 3.80702 12.0062 3.44295 11.7816 3.2184C11.5571 2.99385 11.193 2.99385 10.9685 3.2184L7.50005 6.68682L4.03164 3.2184C3.80708 2.99385 3.44301 2.99385 3.21846 3.2184C2.99391 3.44295 2.99391 3.80702 3.21846 4.03157L6.68688 7.49999L3.21846 10.9684C2.99391 11.193 2.99391 11.557 3.21846 11.7816C3.44301 12.0061 3.80708 12.0061 4.03164 11.7816L7.50005 8.31316L10.9685 11.7816C11.193 12.0061 11.5571 12.0061 11.7816 11.7816C12.0062 11.557 12.0062 11.193 11.7816 10.9684L8.31322 7.49999L11.7816 4.03157Z"
+		/>
+	),
+	// based on exclamation-circle from https://heroicons.com/
+	Error: () => (
+		<g fill="none" strokeWidth="2" stroke="currentColor">
+			<path
+				strokeLinecap="round"
+				strokeLinejoin="round"
+				d="M12 9v3.75m9-.75a9 9 0 11-18 0 9 9 0 0118 0zm-9 3.75h.008v.008H12v-.008z"
+			/>
+		</g>
+	),
+	// based on bell from https://heroicons.com/
+	Notify: () => (
+		<g fill="none" strokeWidth="2" stroke="currentColor">
+			<path
+				strokeLinecap="round"
+				strokeLinejoin="round"
+				d="M14.857 17.082a23.848 23.848 0 005.454-1.31A8.967 8.967 0 0118 9.75v-.7V9A6 6 0 006 9v.75a8.967 8.967 0 01-2.312 6.022c1.733.64 3.56 1.085 5.455 1.31m5.714 0a24.255 24.255 0 01-5.714 0m5.714 0a3 3 0 11-5.714 0"
+			/>
+		</g>
+	),
+	// based on check from https://heroicons.com/
+	Success: () => (
+		<g fill="none" strokeWidth="2" stroke="currentColor">
+			<path
+				strokeLinecap="round"
+				strokeLinejoin="round"
+				d="M4.5 12.75l6 6 9-13.5"
+			/>
+		</g>
+	),
 } as const
 
 export type IconNames = keyof typeof Icons

@@ -1000,3 +1000,13 @@ export function typedBoolean<T>(
 ): value is Exclude<T, false | null | undefined | '' | 0> {
 	return Boolean(value)
 }
+
+const workshopRoot = getWorkshopRoot()
+const exercisesPath = path.join(workshopRoot, 'exercises/')
+const playgroundPath = path.join(workshopRoot, 'playground/')
+export function getRelativePath(filePath: string) {
+	return path
+		.normalize(filePath)
+		.replace(playgroundPath, `playground${path.sep}`)
+		.replace(exercisesPath, '')
+}

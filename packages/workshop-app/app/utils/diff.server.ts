@@ -8,6 +8,7 @@ import { compileMarkdownString } from './compile-mdx.server'
 import { typedBoolean } from './misc'
 import {
 	getForceFreshForDir,
+	getRelativePath,
 	getWorkshopRoot,
 	modifiedTimes,
 	type App,
@@ -17,8 +18,6 @@ import { type Timings } from './timing.server'
 const kcdshopTempDir = path.join(os.tmpdir(), 'kcdshop')
 
 const diffTmpDir = path.join(kcdshopTempDir, 'diff')
-
-const exercisesPath = path.join(getWorkshopRoot(), 'exercises')
 
 function diffPathToRelative(filePath: string) {
 	const normalizedPath = path.normalize(filePath).replace(/^("|')|("|')$/g, '')
@@ -105,9 +104,8 @@ function getFileCodeblocks(
 					? `CREATE in APP ${appNum}`
 					: `OPEN in APP ${appNum}`
 			const file = JSON.stringify(appNum === 1 ? filePathApp1 : filePathApp2)
-			const fixedTitle = file
-				.replace(/\\\\/g, '\\')
-				.replace(`${exercisesPath}${path.sep}`, '')
+			const fixedTitle = getRelativePath(file)
+
 			const className =
 				'border border-gray-300 rounded bg-white px-2 py-0.5 font-mono text-xs font-semibold text-black'
 			return `
@@ -251,9 +249,8 @@ export async function getDiffFiles(app1: App, app2: App) {
 					: status === 'A'
 					? 'added'
 					: 'unknown') as 'renamed' | 'moved' | 'deleted' | 'added' | 'unknown',
-				path: filePath
-					.replace(`${app1CopyPath}${path.sep}`, '')
-					.replace(`${app2CopyPath}${path.sep}`, ''),
+				// always use forward separator for our README files
+				path: diffPathToRelative(filePath).replace(/\\/g, '/'),
 			}
 		})
 		.filter(typedBoolean)

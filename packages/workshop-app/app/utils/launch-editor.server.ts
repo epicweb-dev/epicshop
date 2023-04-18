@@ -7,6 +7,14 @@ import path from 'path'
 import child_process from 'child_process'
 import os from 'os'
 import shellQuote from 'shell-quote'
+import { getRelativePath } from './apps.server'
+
+function readablePath(filePath: string = '') {
+	const relative = getRelativePath(filePath)
+	const name = path.basename(relative)
+	const dir = path.dirname(relative)
+	return `'${name}' from:\n'${dir}'`
+}
 
 function isTerminalEditor(editor: string) {
 	switch (editor) {
@@ -264,7 +272,7 @@ function guessEditor() {
 let _childProcess: ReturnType<typeof child_process.spawn> | null = null
 type Result = { status: 'success' } | { status: 'error'; error: string }
 export async function launchEditor(
-	fileName: string,
+	pathList: string[] | string,
 	lineNumber?: number,
 	colNumber?: number,
 ): Promise<Result> {
@@ -291,44 +299,80 @@ export async function launchEditor(
 		return { status: 'error', error: 'Editor set to "none"' }
 	}
 
-	if (
-		process.platform === 'linux' &&
-		fileName.startsWith('/mnt/') &&
-		/Microsoft/i.test(os.release())
-	) {
-		// Assume WSL / "Bash on Ubuntu on Windows" is being used, and
-		// that the file exists on the Windows file system.
-		// `os.release()` is "4.4.0-43-Microsoft" in the current release
-		// build of WSL, see: https://github.com/Microsoft/BashOnWindows/issues/423#issuecomment-221627364
-		// When a Windows editor is specified, interop functionality can
-		// handle the path translation, but only if a relative path is used.
-		fileName = path.relative('', fileName)
+	if (typeof pathList === 'string') {
+		pathList = [pathList]
 	}
 
-	// cmd.exe on Windows is vulnerable to RCE attacks given a file name of the
-	// form "C:\Users\myusername\Downloads\& curl 172.21.93.52". Use a whitelist
-	// to validate user-provided file names. This doesn't cover the entire range
-	// of valid file names but should cover almost all of them in practice.
-	if (
-		process.platform === 'win32' &&
-		!WINDOWS_FILE_NAME_WHITELIST.test(
-			// replacing characters we know are fine (because heck if I'm going to edit that regex above 🙃)
-			fileName.replace(/\+|\$|\[|\]/g, '').trim(),
-		)
-	) {
+	type accumulator = {
+		fileList: string[]
+		errorsList: string[]
+	}
+
+	const initArgs: accumulator = { fileList: [], errorsList: [] }
+
+	const { fileList, errorsList } = pathList.reduce(
+		(acc: accumulator, fileName: string) => {
+			if (
+				process.platform === 'linux' &&
+				fileName.startsWith('/mnt/') &&
+				/Microsoft/i.test(os.release())
+			) {
+				// Assume WSL / "Bash on Ubuntu on Windows" is being used, and
+				// that the file exists on the Windows file system.
+				// `os.release()` is "4.4.0-43-Microsoft" in the current release
+				// build of WSL, see: https://github.com/Microsoft/BashOnWindows/issues/423#issuecomment-221627364
+				// When a Windows editor is specified, interop functionality can
+				// handle the path translation, but only if a relative path is used.
+				fileName = path.relative('', fileName)
+			}
+
+			// cmd.exe on Windows is vulnerable to RCE attacks given a file name of the
+			// form "C:\Users\myusername\Downloads\& curl 172.21.93.52". Use a whitelist
+			// to validate user-provided file names. This doesn't cover the entire range
+			// of valid file names but should cover almost all of them in practice.
+			if (
+				process.platform === 'win32' &&
+				!WINDOWS_FILE_NAME_WHITELIST.test(
+					// replacing characters we know are fine (because heck if I'm going to edit that regex above 🙃)
+					fileName.replace(/\+|\$|\[|\]/g, '').trim(),
+				)
+			) {
+				acc.errorsList.push(fileName)
+			} else {
+				if (!fs.existsSync(fileName)) {
+					fsExtra.ensureDirSync(path.dirname(fileName))
+					fsExtra.writeFileSync(fileName, '', 'utf8')
+				}
+
+				acc.fileList.push(fileName.trim())
+			}
+			return acc
+		},
+		initArgs,
+	)
+
+	// TODO: figure out how to send error messages as JSX from here...
+	function getErrorMessage() {
+		let error: string
+		if (errorsList.length) {
+			const readableName =
+				errorsList.length === 1 ? readablePath(errorsList[0]) : 'some files'
+			error = `Could not open ${readableName} in the editor.\n\nWhen running on Windows, file names are checked against a whitelist to protect against remote code execution attacks.\nFile names may consist only of alphanumeric characters (all languages), periods, dashes, slashes, and underscores.`
+		} else {
+			error = 'pathList must contain at least one valid file path'
+		}
 		return {
 			status: 'error',
-			error: `Could not open ${fileName} in the editor. When running on Windows, file names are checked against a whitelist to protect against remote code execution attacks. File names may consist only of alphanumeric characters (all languages), periods, dashes, slashes, and underscores.`,
-		}
-	}
-
-	if (!fs.existsSync(fileName)) {
-		fsExtra.ensureDirSync(path.dirname(fileName))
-		fsExtra.writeFileSync(fileName, '', 'utf8')
+			error,
+		} as Result
 	}
 
 	let workspace = null
-	if (lineNumber) {
+	if (lineNumber && fileList.length === 1) {
+		const fileName = fileList[0]
+		if (!fileName) {
+			return getErrorMessage()
+		}
 		args = args.concat(
 			getArgumentsForLineNumber(
 				editor,
@@ -339,7 +383,11 @@ export async function launchEditor(
 			),
 		)
 	} else {
-		args.push(fileName)
+		const argList = fileList.filter(Boolean)
+		if (!argList.length) {
+			return getErrorMessage()
+		}
+		args.push(...argList)
 	}
 
 	if (_childProcess && isTerminalEditor(editor)) {
@@ -365,10 +413,16 @@ export async function launchEditor(
 			_childProcess = null
 
 			if (errorCode) {
+				const readableName =
+					fileList.length === 1 ? readablePath(fileList[0]) : 'some files'
 				return res({
 					status: 'error',
-					error: `Could not open ${fileName} in the editor. The editor process exited with an error code (${errorCode}).`,
+					error: `Could not open ${readableName} in the editor.\n\nThe editor process exited with an error code (${errorCode}).`,
 				})
+			} else if (errorsList.length) {
+				// show error message even when the editor was opened successfully,
+				// if some file path was not valid in windows
+				return res(getErrorMessage())
 			} else {
 				return res({ status: 'success' })
 			}
