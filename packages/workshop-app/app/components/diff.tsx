@@ -1,4 +1,4 @@
-import React, { Suspense } from 'react'
+import React, { Suspense, useMemo } from 'react'
 import { Await, Form, useLoaderData, useSubmit } from '@remix-run/react'
 import clsx from 'clsx'
 import * as Select from '@radix-ui/react-select'
@@ -124,6 +124,12 @@ export function Diff() {
 	const data = useLoaderData<typeof loader>()
 	const submit = useSubmit()
 
+	const mdxComponents = useMemo(() => {
+		return {
+			Accordion: (props: any) => <AccordionComponent {...props} />,
+		}
+	}, [])
+
 	return (
 		<Suspense
 			fallback={
@@ -167,14 +173,7 @@ export function Diff() {
 							{diff.diffCode ? (
 								<div>
 									<Accordion.Root className="w-full" type="multiple">
-										<Mdx
-											code={diff.diffCode}
-											components={{
-												Accordion: (props: any) => (
-													<AccordionComponent {...props} />
-												),
-											}}
-										/>
+										<Mdx code={diff.diffCode} components={mdxComponents} />
 									</Accordion.Root>
 								</div>
 							) : (
