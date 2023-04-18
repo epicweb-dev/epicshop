@@ -51,7 +51,20 @@ async function start() {
 	const isPublished = !fs.existsSync(path.join(__dirname, '..', 'app'))
 
 	if (process.env.NODE_ENV !== 'production' && !isPublished) {
-		app.use(morgan('tiny'))
+		app.use(
+			// tiny -  :method :url :status :res[content-length] - :response-time ms
+			morgan((tokens, req, res) => {
+				return [
+					tokens.method?.(req, res),
+					decodeURIComponent(tokens.url?.(req, res) ?? ''),
+					tokens.status?.(req, res),
+					tokens.res?.(req, res, 'content-length'),
+					'-',
+					tokens['response-time']?.(req, res),
+					'ms',
+				].join(' ')
+			}),
+		)
 	}
 
 	const desiredPort = Number(process.env.PORT || 5639)
