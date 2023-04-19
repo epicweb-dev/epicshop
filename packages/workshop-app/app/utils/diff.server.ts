@@ -14,6 +14,7 @@ import {
 	type App,
 } from './apps.server'
 import { type Timings } from './timing.server'
+import { CacheEntry } from 'cachified'
 
 const kcdshopTempDir = path.join(os.tmpdir(), 'kcdshop')
 
@@ -214,6 +215,23 @@ async function prepareForDiff(app1: App, app2: App) {
 	return { app1CopyPath, app2CopyPath }
 }
 
+function getForceFreshForDiff(
+	app1: App,
+	app2: App,
+	cacheEntry: CacheEntry | null | undefined,
+) {
+	if (!cacheEntry) return true
+	const app1Modified = modifiedTimes.get(app1.fullPath) ?? 0
+	const app2Modified = modifiedTimes.get(app2.fullPath) ?? 0
+	const cacheModified = cacheEntry.metadata.createdTime
+	return (
+		!cacheModified ||
+		app1Modified > cacheModified ||
+		app2Modified > cacheModified ||
+		undefined
+	)
+}
+
 export async function getDiffFiles(
 	app1: App,
 	app2: App,
@@ -228,7 +246,7 @@ export async function getDiffFiles(
 	const result = await cachified({
 		key,
 		cache: diffFilesCache,
-		forceFresh: forceFresh || !cacheEntry,
+		forceFresh: forceFresh || getForceFreshForDiff(app1, app2, cacheEntry),
 		timings,
 		request,
 		getFreshValue: () => getDiffFilesImpl(app1, app2),
@@ -285,18 +303,10 @@ export async function getDiffCode(
 ) {
 	const key = `${app1.relativePath}__vs__${app2.relativePath}`
 	const cacheEntry = await diffCodeCache.get(key)
-	const app1Modified = modifiedTimes.get(app1.fullPath) ?? 0
-	const app2Modified = modifiedTimes.get(app2.fullPath) ?? 0
-	const cacheModified = cacheEntry?.metadata.createdTime
-	const cacheOutdated =
-		!cacheModified ||
-		app1Modified > cacheModified ||
-		app2Modified > cacheModified
-
 	const result = await cachified({
 		key,
 		cache: diffCodeCache,
-		forceFresh: forceFresh || cacheOutdated || undefined,
+		forceFresh: forceFresh || getForceFreshForDiff(app1, app2, cacheEntry),
 		timings,
 		request,
 		getFreshValue: () => getDiffCodeImpl(app1, app2),
