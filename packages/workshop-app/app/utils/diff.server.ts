@@ -14,7 +14,7 @@ import {
 	type App,
 } from './apps.server'
 import { type Timings } from './timing.server'
-import { CacheEntry } from 'cachified'
+import { type CacheEntry } from 'cachified'
 
 const kcdshopTempDir = path.join(os.tmpdir(), 'kcdshop')
 
