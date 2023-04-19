@@ -18,6 +18,7 @@ declare global {
 	var __playground_app_cache__: ReturnType<typeof getPlaygroundAppCache>
 	var __get_apps_cache__: ReturnType<typeof getAppsCache>
 	var __diff_code_cache__: ReturnType<typeof getDiffCodeCache>
+	var __diff_files_cache__: ReturnType<typeof getDiffFilesCache>
 	var __compiled_markdown_cache__: ReturnType<typeof getCompiledMarkdownCache>
 }
 
@@ -38,6 +39,9 @@ export const appsCache = (global.__get_apps_cache__ =
 
 export const diffCodeCache = (global.__diff_code_cache__ =
 	global.__diff_code_cache__ ?? getDiffCodeCache())
+
+export const diffFilesCache = (global.__diff_files_cache__ =
+	global.__diff_files_cache__ ?? getDiffFilesCache())
 
 export const compiledMarkdownCache = (global.__compiled_markdown_cache__ =
 	global.__compiled_markdown_cache__ ?? getCompiledMarkdownCache())
@@ -81,6 +85,13 @@ function getDiffCodeCache() {
 	const cache = new LRU<string, CacheEntry<string>>({ max: 1000 })
 	// @ts-expect-error it's fine
 	cache.name = 'DiffCodeCache'
+	return lruCacheAdapter(cache)
+}
+
+function getDiffFilesCache() {
+	const cache = new LRU<string, CacheEntry<string>>({ max: 1000 })
+	// @ts-expect-error it's fine
+	cache.name = 'DiffFilesCache'
 	return lruCacheAdapter(cache)
 }
 

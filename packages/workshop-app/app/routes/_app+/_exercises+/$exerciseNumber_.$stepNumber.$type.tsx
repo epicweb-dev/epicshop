@@ -191,7 +191,10 @@ export async function loader({ request, params }: DataFunctionArgs) {
 				return null
 			}),
 			problemApp && solutionApp
-				? getDiffFiles(problemApp, solutionApp).catch(e => {
+				? getDiffFiles(problemApp, solutionApp, {
+						request,
+						timings,
+				  }).catch(e => {
 						console.error(e)
 						return 'There was a problem generating the diff'
 				  })

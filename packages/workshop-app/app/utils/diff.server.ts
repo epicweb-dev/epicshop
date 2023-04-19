@@ -3,7 +3,7 @@ import os from 'os'
 import parseGitDiff from 'parse-git-diff'
 import path from 'path'
 import { BUNDLED_LANGUAGES } from 'shiki'
-import { diffCodeCache, cachified } from './cache.server'
+import { diffCodeCache, diffFilesCache, cachified } from './cache.server'
 import { compileMarkdownString } from './compile-mdx.server'
 import { typedBoolean } from './misc'
 import {
@@ -14,6 +14,7 @@ import {
 	type App,
 } from './apps.server'
 import { type Timings } from './timing.server'
+import { type CacheEntry } from 'cachified'
 
 const kcdshopTempDir = path.join(os.tmpdir(), 'kcdshop')
 
@@ -214,7 +215,46 @@ async function prepareForDiff(app1: App, app2: App) {
 	return { app1CopyPath, app2CopyPath }
 }
 
-export async function getDiffFiles(app1: App, app2: App) {
+function getForceFreshForDiff(
+	app1: App,
+	app2: App,
+	cacheEntry: CacheEntry | null | undefined,
+) {
+	if (!cacheEntry) return true
+	const app1Modified = modifiedTimes.get(app1.fullPath) ?? 0
+	const app2Modified = modifiedTimes.get(app2.fullPath) ?? 0
+	const cacheModified = cacheEntry.metadata.createdTime
+	return (
+		!cacheModified ||
+		app1Modified > cacheModified ||
+		app2Modified > cacheModified ||
+		undefined
+	)
+}
+
+export async function getDiffFiles(
+	app1: App,
+	app2: App,
+	{
+		forceFresh = false,
+		timings,
+		request,
+	}: { forceFresh?: boolean; timings?: Timings; request?: Request } = {},
+) {
+	const key = `${app1.relativePath}__vs__${app2.relativePath}`
+	const cacheEntry = await diffFilesCache.get(key)
+	const result = await cachified({
+		key,
+		cache: diffFilesCache,
+		forceFresh: forceFresh || getForceFreshForDiff(app1, app2, cacheEntry),
+		timings,
+		request,
+		getFreshValue: () => getDiffFilesImpl(app1, app2),
+	})
+	return result
+}
+
+export async function getDiffFilesImpl(app1: App, app2: App) {
 	const { execa } = await import('execa')
 	if (app1.name === app2.name) {
 		return []
@@ -223,7 +263,7 @@ export async function getDiffFiles(app1: App, app2: App) {
 
 	const { stdout: diffOutput } = await execa(
 		'git',
-		['diff', '--no-index', '--name-status', app1CopyPath, app2CopyPath],
+		['diff', '--no-index', '--ignore-blank-lines', app1CopyPath, app2CopyPath],
 		{ cwd: diffTmpDir },
 		// --no-index implies --exit-code, so we need to ignore the error
 	).catch(e => e)
@@ -231,30 +271,24 @@ export async function getDiffFiles(app1: App, app2: App) {
 	void fsExtra.remove(app1CopyPath)
 	void fsExtra.remove(app2CopyPath)
 
-	const diffFiles = diffOutput
-		.split('\n')
-		.map(line => {
-			const [status, filePath] = line
-				.split(/\s/)
-				.map(s => s.trim())
-				.filter(typedBoolean)
-			if (!status || !filePath) return null
-			return {
-				status: (status.startsWith('R')
-					? 'renamed'
-					: status === 'M'
-					? 'modified'
-					: status === 'D'
-					? 'deleted'
-					: status === 'A'
-					? 'added'
-					: 'unknown') as 'renamed' | 'moved' | 'deleted' | 'added' | 'unknown',
-				// always use forward separator for our README files
-				path: diffPathToRelative(filePath).replace(/\\/g, '/'),
-			}
-		})
+	const typesMap = {
+		ChangedFile: 'modified',
+		AddedFile: 'added',
+		DeletedFile: 'deleted',
+		RenamedFile: 'renamed',
+	}
+
+	const parsed = parseGitDiff(diffOutput)
+
+	return parsed.files
+		.map(file => ({
+			// prettier-ignore
+			status: (typesMap[file.type] ?? 'unknown') as 'renamed' | 'modified' | 'deleted' | 'added' | 'unknown',
+			path: diffPathToRelative(
+				file.type === 'RenamedFile' ? file.pathBefore : file.path,
+			),
+		}))
 		.filter(typedBoolean)
-	return diffFiles
 }
 
 export async function getDiffCode(
@@ -268,18 +302,10 @@ export async function getDiffCode(
 ) {
 	const key = `${app1.relativePath}__vs__${app2.relativePath}`
 	const cacheEntry = await diffCodeCache.get(key)
-	const app1Modified = modifiedTimes.get(app1.fullPath) ?? 0
-	const app2Modified = modifiedTimes.get(app2.fullPath) ?? 0
-	const cacheModified = cacheEntry?.metadata.createdTime
-	const cacheOutdated =
-		!cacheModified ||
-		app1Modified > cacheModified ||
-		app2Modified > cacheModified
-
 	const result = await cachified({
 		key,
 		cache: diffCodeCache,
-		forceFresh: forceFresh || cacheOutdated || undefined,
+		forceFresh: forceFresh || getForceFreshForDiff(app1, app2, cacheEntry),
 		timings,
 		request,
 		getFreshValue: () => getDiffCodeImpl(app1, app2),
@@ -311,6 +337,7 @@ async function getDiffCodeImpl(app1: App, app2: App) {
 			'--color=never',
 			'--color-moved-ws=allow-indentation-change',
 			'--no-prefix',
+			'--ignore-blank-lines',
 		],
 		{ cwd: diffTmpDir },
 		// --no-index implies --exit-code, so we need to ignore the error
