@@ -3,7 +3,7 @@ import os from 'os'
 import parseGitDiff from 'parse-git-diff'
 import path from 'path'
 import { BUNDLED_LANGUAGES } from 'shiki'
-import { diffCodeCache, cachified } from './cache.server'
+import { diffCodeCache, diffFilesCache, cachified } from './cache.server'
 import { compileMarkdownString } from './compile-mdx.server'
 import { typedBoolean } from './misc'
 import {
@@ -214,7 +214,29 @@ async function prepareForDiff(app1: App, app2: App) {
 	return { app1CopyPath, app2CopyPath }
 }
 
-export async function getDiffFiles(app1: App, app2: App) {
+export async function getDiffFiles(
+	app1: App,
+	app2: App,
+	{
+		forceFresh = false,
+		timings,
+		request,
+	}: { forceFresh?: boolean; timings?: Timings; request?: Request } = {},
+) {
+	const key = `${app1.relativePath}__vs__${app2.relativePath}`
+	const cacheEntry = await diffFilesCache.get(key)
+	const result = await cachified({
+		key,
+		cache: diffFilesCache,
+		forceFresh: forceFresh || !cacheEntry,
+		timings,
+		request,
+		getFreshValue: () => getDiffFilesImpl(app1, app2),
+	})
+	return result
+}
+
+export async function getDiffFilesImpl(app1: App, app2: App) {
 	const { execa } = await import('execa')
 	if (app1.name === app2.name) {
 		return []
@@ -223,7 +245,7 @@ export async function getDiffFiles(app1: App, app2: App) {
 
 	const { stdout: diffOutput } = await execa(
 		'git',
-		['diff', '--no-index', '--name-status', app1CopyPath, app2CopyPath],
+		['diff', '--no-index', '--ignore-blank-lines', app1CopyPath, app2CopyPath],
 		{ cwd: diffTmpDir },
 		// --no-index implies --exit-code, so we need to ignore the error
 	).catch(e => e)
@@ -231,30 +253,25 @@ export async function getDiffFiles(app1: App, app2: App) {
 	void fsExtra.remove(app1CopyPath)
 	void fsExtra.remove(app2CopyPath)
 
-	const diffFiles = diffOutput
-		.split('\n')
-		.map(line => {
-			const [status, filePath] = line
-				.split(/\s/)
-				.map(s => s.trim())
-				.filter(typedBoolean)
-			if (!status || !filePath) return null
-			return {
-				status: (status.startsWith('R')
-					? 'renamed'
-					: status === 'M'
-					? 'modified'
-					: status === 'D'
-					? 'deleted'
-					: status === 'A'
-					? 'added'
-					: 'unknown') as 'renamed' | 'moved' | 'deleted' | 'added' | 'unknown',
-				// always use forward separator for our README files
-				path: diffPathToRelative(filePath).replace(/\\/g, '/'),
-			}
-		})
+	const typesMap = {
+		ChangedFile: 'modified',
+		AddedFile: 'added',
+		DeletedFile: 'deleted',
+		RenamedFile: 'renamed',
+	}
+
+	const parsed = parseGitDiff(diffOutput)
+
+	return parsed.files
+		.map(file => ({
+			//  prettier-ignore
+			status: (typesMap[file.type]??'unknown') as 'renamed'|'modified'|'deleted'|'added'|'unknown',
+			// always use forward separator for our README files
+			path: diffPathToRelative(
+				file.type === 'RenamedFile' ? file.pathBefore : file.path,
+			).replace(/\\/g, '/'),
+		}))
 		.filter(typedBoolean)
-	return diffFiles
 }
 
 export async function getDiffCode(
@@ -311,6 +328,7 @@ async function getDiffCodeImpl(app1: App, app2: App) {
 			'--color=never',
 			'--color-moved-ws=allow-indentation-change',
 			'--no-prefix',
+			'--ignore-blank-lines',
 		],
 		{ cwd: diffTmpDir },
 		// --no-index implies --exit-code, so we need to ignore the error
