@@ -282,8 +282,8 @@ export async function getDiffFilesImpl(app1: App, app2: App) {
 
 	return parsed.files
 		.map(file => ({
-			//  prettier-ignore
-			status: (typesMap[file.type]??'unknown') as 'renamed'|'modified'|'deleted'|'added'|'unknown',
+			// prettier-ignore
+			status: (typesMap[file.type] ?? 'unknown') as 'renamed' | 'modified' | 'deleted' | 'added' | 'unknown',
 			path: diffPathToRelative(
 				file.type === 'RenamedFile' ? file.pathBefore : file.path,
 			),
