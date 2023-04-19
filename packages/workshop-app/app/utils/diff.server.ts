@@ -284,10 +284,9 @@ export async function getDiffFilesImpl(app1: App, app2: App) {
 		.map(file => ({
 			//  prettier-ignore
 			status: (typesMap[file.type]??'unknown') as 'renamed'|'modified'|'deleted'|'added'|'unknown',
-			// always use forward separator for our README files
 			path: diffPathToRelative(
 				file.type === 'RenamedFile' ? file.pathBefore : file.path,
-			).replace(/\\/g, '/'),
+			),
 		}))
 		.filter(typedBoolean)
 }
