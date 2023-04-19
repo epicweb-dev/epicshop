@@ -51,6 +51,7 @@ async function start() {
 	const isPublished = !fs.existsSync(path.join(__dirname, '..', 'app'))
 
 	if (process.env.NODE_ENV !== 'production' && !isPublished) {
+		morgan.token('url', (req, res) => decodeURIComponent(req.url ?? ''))
 		app.use(morgan('tiny'))
 	}
 
