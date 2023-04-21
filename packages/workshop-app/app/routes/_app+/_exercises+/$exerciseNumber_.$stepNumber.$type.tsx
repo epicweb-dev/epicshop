@@ -41,8 +41,6 @@ import {
 	getPrevExerciseApp,
 	isExerciseStepApp,
 	isPlaygroundApp,
-	isProblemApp,
-	isSolutionApp,
 	requireExercise,
 	requireExerciseApp,
 } from '~/utils/apps.server'
@@ -88,11 +86,12 @@ export const meta: V2_MetaFunction<
 
 export async function loader({ request, params }: DataFunctionArgs) {
 	const timings = makeTimings('exerciseStepTypeLoader')
-	const exerciseStepApp = await requireExerciseApp(params, { request, timings })
-	const exercise = await requireExercise(exerciseStepApp.exerciseNumber, {
-		request,
-		timings,
-	})
+	const cacheOptions = { request, timings }
+	const exerciseStepApp = await requireExerciseApp(params, cacheOptions)
+	const exercise = await requireExercise(
+		exerciseStepApp.exerciseNumber,
+		cacheOptions,
+	)
 	const reqUrl = new URL(request.url)
 
 	const pathnameParam = reqUrl.searchParams.get('pathname')
@@ -103,17 +102,19 @@ export async function loader({ request, params }: DataFunctionArgs) {
 
 	const problemApp = await getExerciseApp(
 		{ ...params, type: 'problem' },
-		{ request, timings },
-	).then(a => (isProblemApp(a) ? a : null))
+		cacheOptions,
+	)
 	const solutionApp = await getExerciseApp(
 		{ ...params, type: 'solution' },
-		{ request, timings },
-	).then(a => (isSolutionApp(a) ? a : null))
-	const playgroundApp = await getApps().then(apps => apps.find(isPlaygroundApp))
+		cacheOptions,
+	)
 
 	if (!problemApp && !solutionApp) {
 		throw new Response('Not found', { status: 404 })
 	}
+
+	const allAppsFull = await getApps(cacheOptions)
+	const playgroundApp = allAppsFull.find(isPlaygroundApp)
 
 	const isProblemRunning =
 		problemApp?.dev.type === 'script' ? isAppRunning(problemApp) : false
@@ -132,8 +133,6 @@ export async function loader({ request, params }: DataFunctionArgs) {
 	if (!app1 || !app2) {
 		throw new Response('No app to compare to', { status: 404 })
 	}
-
-	const allAppsFull = await getApps({ request, timings })
 
 	function getDisplayName(a: App) {
 		let displayName = `${a.title} (${a.type})`
@@ -164,37 +163,24 @@ export async function loader({ request, params }: DataFunctionArgs) {
 			type: a.type,
 		}))
 
-	const apps = await getApps({ request, timings })
-	const exerciseApps = apps
+	const exerciseApps = allAppsFull
 		.filter(isExerciseStepApp)
 		.filter(app => app.exerciseNumber === exerciseStepApp.exerciseNumber)
 	const isLastStep =
 		exerciseApps[exerciseApps.length - 1]?.id === exerciseStepApp.id
 	const isFirstStep = exerciseApps[0]?.id === exerciseStepApp.id
 
-	const nextApp = await getNextExerciseApp(exerciseStepApp, {
-		request,
-		timings,
-	})
-	const prevApp = await getPrevExerciseApp(exerciseStepApp, {
-		request,
-		timings,
-	})
+	const nextApp = await getNextExerciseApp(exerciseStepApp, cacheOptions)
+	const prevApp = await getPrevExerciseApp(exerciseStepApp, cacheOptions)
 
 	const getDiffProp = async () => {
 		const [diffCode, diffFiles] = await Promise.all([
-			getDiffCode(app1, app2, {
-				request,
-				timings,
-			}).catch(e => {
+			getDiffCode(app1, app2, cacheOptions).catch(e => {
 				console.error(e)
 				return null
 			}),
 			problemApp && solutionApp
-				? getDiffFiles(problemApp, solutionApp, {
-						request,
-						timings,
-				  }).catch(e => {
+				? getDiffFiles(problemApp, solutionApp, cacheOptions).catch(e => {
 						console.error(e)
 						return 'There was a problem generating the diff'
 				  })
