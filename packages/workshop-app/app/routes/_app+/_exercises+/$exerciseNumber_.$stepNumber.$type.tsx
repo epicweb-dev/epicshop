@@ -116,13 +116,6 @@ export async function loader({ request, params }: DataFunctionArgs) {
 	const allAppsFull = await getApps(cacheOptions)
 	const playgroundApp = allAppsFull.find(isPlaygroundApp)
 
-	const isProblemRunning =
-		problemApp?.dev.type === 'script' ? isAppRunning(problemApp) : false
-	const isSolutionRunning =
-		solutionApp?.dev.type === 'script' ? isAppRunning(solutionApp) : false
-	const isPlaygroundRunning =
-		playgroundApp?.dev.type === 'script' ? isAppRunning(playgroundApp) : false
-
 	const app1Name = reqUrl.searchParams.get('app1')
 	const app2Name = reqUrl.searchParams.get('app2')
 	const app1 = app1Name
@@ -152,6 +145,16 @@ export async function loader({ request, params }: DataFunctionArgs) {
 			}
 		}
 		return displayName
+	}
+
+	async function getAppRunningState(a: App) {
+		if (a?.dev.type !== 'script')
+			return { isRunning: false, portIsAvailable: null }
+		const isRunning = isAppRunning(a)
+		const portIsAvailable = isRunning
+			? null
+			: await isPortAvailable(a.dev.portNumber)
+		return { isRunning, portIsAvailable }
 	}
 
 	const allApps = allAppsFull
@@ -231,18 +234,12 @@ export async function loader({ request, params }: DataFunctionArgs) {
 						type: 'playground',
 						id: playgroundApp.id,
 						fullPath: playgroundApp.fullPath,
-						isRunning: isPlaygroundRunning,
 						dev: playgroundApp.dev,
 						test: playgroundApp.test,
-						portIsAvailable:
-							playgroundApp.dev.type === 'script'
-								? isPlaygroundRunning
-									? null
-									: await isPortAvailable(playgroundApp.dev.portNumber)
-								: null,
 						title: playgroundApp.title,
 						name: playgroundApp.name,
 						appName: playgroundApp.appName,
+						...(await getAppRunningState(playgroundApp)),
 				  }
 				: null,
 			problem: problemApp
@@ -250,17 +247,11 @@ export async function loader({ request, params }: DataFunctionArgs) {
 						type: 'problem',
 						id: problemApp.id,
 						fullPath: problemApp.fullPath,
-						isRunning: isProblemRunning,
 						dev: problemApp.dev,
 						test: problemApp.test,
-						portIsAvailable:
-							problemApp.dev.type === 'script'
-								? isProblemRunning
-									? null
-									: await isPortAvailable(problemApp.dev.portNumber)
-								: null,
 						title: problemApp.title,
 						name: problemApp.name,
+						...(await getAppRunningState(problemApp)),
 				  }
 				: null,
 			solution: solutionApp
@@ -268,17 +259,11 @@ export async function loader({ request, params }: DataFunctionArgs) {
 						type: 'solution',
 						id: solutionApp.id,
 						fullPath: solutionApp.fullPath,
-						isRunning: isSolutionRunning,
 						dev: solutionApp.dev,
 						test: solutionApp.test,
-						portIsAvailable:
-							solutionApp.dev.type === 'script'
-								? isSolutionRunning
-									? null
-									: await isPortAvailable(solutionApp.dev.portNumber)
-								: null,
 						title: solutionApp.title,
 						name: solutionApp.name,
+						...(await getAppRunningState(solutionApp)),
 				  }
 				: null,
 			diff: getDiffProp(),
