@@ -10,11 +10,7 @@ import {
 	getPlaygroundAppName,
 	getWorkshopTitle,
 } from '~/utils/apps.server'
-import {
-	combineServerTimings,
-	getServerTimeHeader,
-	makeTimings,
-} from '~/utils/timing.server'
+import { combineServerTimings, makeTimings } from '~/utils/timing.server'
 
 export async function loader({ request }: DataFunctionArgs) {
 	const timings = makeTimings('stepLoader')
@@ -24,33 +20,30 @@ export async function loader({ request }: DataFunctionArgs) {
 		getPlaygroundAppName(),
 	])
 
-	const result = json(
-		{
-			workshopTitle,
-			exercises: exercises.map(e => ({
-				exerciseNumber: e.exerciseNumber,
-				title: e.title,
-				solutions: e.solutions.map(({ stepNumber, title, name }) => ({
-					stepNumber,
-					title,
-					name,
-				})),
-				problems: e.problems.map(({ stepNumber, title, name }) => ({
-					stepNumber,
-					title,
-					name,
-				})),
+	const [, match] = playgroundAppName?.match(/exercises\.(\d*)/) ?? []
+	const playground = {
+		appName: playgroundAppName,
+		exerciseNumber: Number(match),
+	}
+
+	const result = json({
+		workshopTitle,
+		exercises: exercises.map(e => ({
+			exerciseNumber: e.exerciseNumber,
+			title: e.title,
+			solutions: e.solutions.map(({ stepNumber, title, name }) => ({
+				stepNumber,
+				title,
+				name,
 			})),
-			playgroundAppName,
-		},
-		{
-			headers: {
-				'Cache-Control': 'public, max-age=300',
-				Vary: 'Cookie',
-				'Server-Timing': getServerTimeHeader(timings),
-			},
-		},
-	)
+			problems: e.problems.map(({ stepNumber, title, name }) => ({
+				stepNumber,
+				title,
+				name,
+			})),
+		})),
+		playground,
+	})
 	return result
 }
 
@@ -150,6 +143,9 @@ function Navigation() {
 									{data.exercises.map(({ exerciseNumber, title, problems }) => {
 										const isActive =
 											Number(params.exerciseNumber) === exerciseNumber
+										const showPlayground =
+											!isActive &&
+											data.playground.exerciseNumber === exerciseNumber
 										const exerciseNum = exerciseNumber
 											.toString()
 											.padStart(2, '0')
@@ -166,6 +162,7 @@ function Navigation() {
 													)}
 												>
 													{title}
+													{showPlayground ? ' 🛝' : null}
 												</Link>
 												{isActive && (
 													<motion.ul
@@ -181,7 +178,7 @@ function Navigation() {
 																.toString()
 																.padStart(2, '0')
 															const isPlayground =
-																name === data.playgroundAppName
+																name === data.playground.appName
 															return (
 																<motion.li
 																	variants={itemVariants}
