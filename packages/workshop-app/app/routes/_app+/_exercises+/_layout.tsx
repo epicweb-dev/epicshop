@@ -10,7 +10,11 @@ import {
 	getPlaygroundAppName,
 	getWorkshopTitle,
 } from '~/utils/apps.server'
-import { combineServerTimings, makeTimings } from '~/utils/timing.server'
+import {
+	combineServerTimings,
+	getServerTimeHeader,
+	makeTimings,
+} from '~/utils/timing.server'
 
 export async function loader({ request }: DataFunctionArgs) {
 	const timings = makeTimings('stepLoader')
@@ -26,24 +30,32 @@ export async function loader({ request }: DataFunctionArgs) {
 		exerciseNumber: Number(match),
 	}
 
-	const result = json({
-		workshopTitle,
-		exercises: exercises.map(e => ({
-			exerciseNumber: e.exerciseNumber,
-			title: e.title,
-			solutions: e.solutions.map(({ stepNumber, title, name }) => ({
-				stepNumber,
-				title,
-				name,
+	const result = json(
+		{
+			workshopTitle,
+			exercises: exercises.map(e => ({
+				exerciseNumber: e.exerciseNumber,
+				title: e.title,
+				solutions: e.solutions.map(({ stepNumber, title, name }) => ({
+					stepNumber,
+					title,
+					name,
+				})),
+				problems: e.problems.map(({ stepNumber, title, name }) => ({
+					stepNumber,
+					title,
+					name,
+				})),
 			})),
-			problems: e.problems.map(({ stepNumber, title, name }) => ({
-				stepNumber,
-				title,
-				name,
-			})),
-		})),
-		playground,
-	})
+			playground,
+		},
+		{
+			headers: {
+				Vary: 'Cookie',
+				'Server-Timing': getServerTimeHeader(timings),
+			},
+		},
+	)
 	return result
 }
 
