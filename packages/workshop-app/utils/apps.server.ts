@@ -951,7 +951,7 @@ export async function setPlayground(srcDir: string) {
 	}
 
 	setPlaygroundActive = false
-	modifiedTimes.set(srcDir, Date.now())
+	modifiedTimes.set(destDir, Date.now())
 
 	const appName = await getAppName(srcDir)
 	await fsExtra.ensureDir(path.dirname(playgroundAppNameInfoPath))
