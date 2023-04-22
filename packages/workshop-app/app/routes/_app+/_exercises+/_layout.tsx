@@ -24,6 +24,12 @@ export async function loader({ request }: DataFunctionArgs) {
 		getPlaygroundAppName(),
 	])
 
+	const [, match] = playgroundAppName?.match(/exercises\.(\d*)/) ?? []
+	const playground = {
+		appName: playgroundAppName,
+		exerciseNumber: Number(match),
+	}
+
 	const result = json(
 		{
 			workshopTitle,
@@ -41,11 +47,10 @@ export async function loader({ request }: DataFunctionArgs) {
 					name,
 				})),
 			})),
-			playgroundAppName,
+			playground,
 		},
 		{
 			headers: {
-				'Cache-Control': 'public, max-age=300',
 				Vary: 'Cookie',
 				'Server-Timing': getServerTimeHeader(timings),
 			},
@@ -150,6 +155,9 @@ function Navigation() {
 									{data.exercises.map(({ exerciseNumber, title, problems }) => {
 										const isActive =
 											Number(params.exerciseNumber) === exerciseNumber
+										const showPlayground =
+											!isActive &&
+											data.playground.exerciseNumber === exerciseNumber
 										const exerciseNum = exerciseNumber
 											.toString()
 											.padStart(2, '0')
@@ -166,6 +174,7 @@ function Navigation() {
 													)}
 												>
 													{title}
+													{showPlayground ? ' 🛝' : null}
 												</Link>
 												{isActive && (
 													<motion.ul
@@ -181,7 +190,7 @@ function Navigation() {
 																.toString()
 																.padStart(2, '0')
 															const isPlayground =
-																name === data.playgroundAppName
+																name === data.playground.appName
 															return (
 																<motion.li
 																	variants={itemVariants}
