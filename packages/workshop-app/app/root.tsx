@@ -83,8 +83,6 @@ export default function App() {
 				<meta charSet="utf-8" />
 				<meta name="viewport" content="width=device-width,initial-scale=1" />
 				<Meta />
-				<meta name="charset" content="utf-8" />
-				<meta name="viewport" content="width=device-width,initial-scale=1" />
 				<Links />
 			</head>
 			<body className="scrollbar-thin scrollbar-thumb-gray-300 h-full">
