@@ -148,8 +148,9 @@ export async function loader({ request, params }: DataFunctionArgs) {
 	}
 
 	async function getAppRunningState(a: App) {
-		if (a?.dev.type !== 'script')
+		if (a?.dev.type !== 'script') {
 			return { isRunning: false, portIsAvailable: null }
+		}
 		const isRunning = isAppRunning(a)
 		const portIsAvailable = isRunning
 			? null
