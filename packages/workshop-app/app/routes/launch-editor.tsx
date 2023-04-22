@@ -90,7 +90,7 @@ export function LaunchEditor({
 				}
 			}
 			case 'idle': {
-				if (fetcher.type === 'done') onUpdate?.('fetcher-done')
+				if (fetcher.data != null) onUpdate?.('fetcher-done')
 			}
 		}
 	}, [fetcher, onUpdate])
