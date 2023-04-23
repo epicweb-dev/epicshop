@@ -20,6 +20,8 @@ import { getServerTimeHeader, type Timings } from './timing.server'
 
 const globPromise = util.promisify(glob)
 
+const workshopRoot = getWorkshopRoot()
+
 const playgroundAppNameInfoPath = path.join(
 	getWorkshopRoot(),
 	'node_modules',
@@ -276,7 +278,6 @@ export async function getExercises({
 	request,
 }: CachifiedOptions = {}): Promise<Array<Exercise>> {
 	const { default: pMap } = await import('p-map')
-	const workshopRoot = getWorkshopRoot()
 	const apps = await getApps({ request, timings })
 	const exerciseDirs = await readDir(path.join(workshopRoot, 'exercises'))
 	const exercises: Array<Exercise | null> = await pMap(
@@ -406,7 +407,6 @@ async function getPkgProp<Value>(
 }
 
 async function getAppName(fullPath: string) {
-	const workshopRoot = getWorkshopRoot()
 	const relativePath = fullPath.replace(`${workshopRoot}${path.sep}`, '')
 	return relativePath.split(path.sep).join('.')
 }
@@ -525,7 +525,6 @@ async function getPlaygroundApp({
 	timings,
 	request,
 }: CachifiedOptions = {}): Promise<PlaygroundApp | null> {
-	const workshopRoot = getWorkshopRoot()
 	const playgroundDir = path.join(workshopRoot, 'playground')
 	const appName = await getPlaygroundAppName()
 	const key = `playground-${appName}`
@@ -599,7 +598,6 @@ async function getExampleApps({
 	request,
 }: CachifiedOptions = {}): Promise<Array<ExampleApp>> {
 	const { default: pMap } = await import('p-map')
-	const workshopRoot = getWorkshopRoot()
 	const examplesDir = path.join(workshopRoot, 'examples')
 	const exampleDirs = (await globPromise('*', { cwd: examplesDir })).map(p =>
 		path.join(examplesDir, p),
@@ -683,7 +681,6 @@ async function getSolutionApps({
 	request,
 }: CachifiedOptions = {}): Promise<Array<SolutionApp>> {
 	const { default: pMap } = await import('p-map')
-	const workshopRoot = getWorkshopRoot()
 	const exercisesDir = path.join(workshopRoot, 'exercises')
 	const solutionDirs = (
 		await globPromise('**/*solution*', { cwd: exercisesDir })
@@ -766,7 +763,6 @@ async function getProblemApps({
 	request,
 }: CachifiedOptions = {}): Promise<Array<ProblemApp>> {
 	const { default: pMap } = await import('p-map')
-	const workshopRoot = getWorkshopRoot()
 	const exercisesDir = path.join(workshopRoot, 'exercises')
 	const problemDirs = (
 		await globPromise('**/*problem*', { cwd: exercisesDir })
@@ -847,7 +843,7 @@ export async function getExerciseApp(
 	const { type, exerciseNumber, stepNumber } = result.data
 
 	const apps = (await getApps({ request, timings })).filter(isExerciseStepApp)
-	const app = apps.find(app => {
+	const exerciseApp = apps.find(app => {
 		if (isExampleApp(app)) return false
 		return (
 			app.exerciseNumber === exerciseNumber &&
@@ -855,10 +851,10 @@ export async function getExerciseApp(
 			app.type === type
 		)
 	})
-	if (!app) {
+	if (!exerciseApp) {
 		return null
 	}
-	return app
+	return exerciseApp
 }
 
 export async function getAppByName(
@@ -986,11 +982,10 @@ export async function getPlaygroundAppName() {
 }
 
 export async function getWorkshopTitle() {
-	const root = getWorkshopRoot()
-	const title = await getPkgProp<string>(root, 'kcd-workshop.title')
+	const title = await getPkgProp<string>(workshopRoot, 'kcd-workshop.title')
 	if (!title) {
 		throw new Error(
-			`Workshop title not found. Make sure the root of the workshop has "kcd-workshop" and "title" in the package.json. ${root}`,
+			`Workshop title not found. Make sure the root of the workshop has "kcd-workshop" and "title" in the package.json. ${workshopRoot}`,
 		)
 	}
 	return title
@@ -1006,7 +1001,6 @@ export function typedBoolean<T>(
 	return Boolean(value)
 }
 
-const workshopRoot = getWorkshopRoot()
 const exercisesPath = path.join(workshopRoot, 'exercises/')
 const playgroundPath = path.join(workshopRoot, 'playground/')
 export function getRelativePath(filePath: string) {
@@ -1015,3 +1009,5 @@ export function getRelativePath(filePath: string) {
 		.replace(playgroundPath, `playground${path.sep}`)
 		.replace(exercisesPath, '')
 }
+
+/* eslint no-shadow: [2, {hoist: "all"}] */
