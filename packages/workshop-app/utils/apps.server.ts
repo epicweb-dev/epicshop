@@ -168,9 +168,6 @@ export function init() {
 		event: string,
 		filePath: string,
 	): Promise<void> {
-		if (setPlaygroundActive && filePath.includes('playground')) {
-			return
-		}
 		const apps = await getApps()
 		for (const app of apps) {
 			if (filePath.startsWith(app.fullPath)) {
@@ -913,13 +910,12 @@ export function getAppPageRoute(app: ExerciseStepApp) {
 	return `/${exerciseNumber}/${stepNumber}/${app.type}`
 }
 
-let setPlaygroundActive = false
-
 export async function setPlayground(srcDir: string) {
-	setPlaygroundActive = true
 	const { globby, isGitIgnored } = await import('globby')
 	const isIgnored = await isGitIgnored({ cwd: srcDir })
 	const destDir = path.join(getWorkshopRoot(), 'playground')
+	const playgroundFiles = path.join(destDir, '**')
+	getWatcher().unwatch(playgroundFiles)
 	// Copy the contents of the source directory to the destination directory recursively
 	await fsExtra.copy(srcDir, destDir, {
 		overwrite: true,
@@ -950,9 +946,6 @@ export async function setPlayground(srcDir: string) {
 		await fsExtra.remove(path.join(destDir, fileToDelete))
 	}
 
-	setPlaygroundActive = false
-	modifiedTimes.set(destDir, Date.now())
-
 	const appName = await getAppName(srcDir)
 	await fsExtra.ensureDir(path.dirname(playgroundAppNameInfoPath))
 	await fsExtra.writeJSON(playgroundAppNameInfoPath, { appName })
@@ -970,6 +963,9 @@ export async function setPlayground(srcDir: string) {
 			stdio: 'inherit',
 		})
 	}
+
+	getWatcher().add(playgroundFiles)
+	modifiedTimes.set(destDir, Date.now())
 }
 
 export async function getPlaygroundAppName() {

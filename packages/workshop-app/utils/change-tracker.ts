@@ -22,6 +22,7 @@ export function getWatcher() {
 			'**/playwright-report/**',
 		],
 	})
+	global.__change_tracker_watcher__ = watcher
 	return watcher
 }
 
