@@ -914,6 +914,8 @@ export async function setPlayground(srcDir: string) {
 	const { globby, isGitIgnored } = await import('globby')
 	const isIgnored = await isGitIgnored({ cwd: srcDir })
 	const destDir = path.join(getWorkshopRoot(), 'playground')
+	const playgroundFiles = path.join(destDir, '**')
+	getWatcher().unwatch(playgroundFiles)
 	// Copy the contents of the source directory to the destination directory recursively
 	await fsExtra.copy(srcDir, destDir, {
 		overwrite: true,
@@ -961,6 +963,9 @@ export async function setPlayground(srcDir: string) {
 			stdio: 'inherit',
 		})
 	}
+
+	getWatcher().add(playgroundFiles)
+	modifiedTimes.set(destDir, Date.now())
 }
 
 export async function getPlaygroundAppName() {
