@@ -1009,5 +1009,3 @@ export function getRelativePath(filePath: string) {
 		.replace(playgroundPath, `playground${path.sep}`)
 		.replace(exercisesPath, '')
 }
-
-/* eslint no-shadow: [2, {hoist: "all"}] */
