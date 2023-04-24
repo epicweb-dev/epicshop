@@ -107,6 +107,7 @@ export async function runAppDev(app: App) {
 	const appProcess = spawn('npm', ['run', 'dev'], {
 		cwd: app.fullPath,
 		shell: true,
+		stdio: ['ignore', 'pipe', 'pipe'],
 		env: {
 			...process.env,
 			// TODO: support specifying the env
@@ -168,7 +169,7 @@ export async function runAppTests(app: App) {
 	const testProcess = execaCommand(app.test.script, {
 		cwd: app.fullPath,
 		shell: true,
-		stdio: 'pipe',
+		stdio: ['ignore', 'pipe', 'pipe'],
 		env: {
 			...process.env,
 			// TODO: support specifying the env
