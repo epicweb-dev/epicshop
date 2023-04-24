@@ -483,7 +483,7 @@ export default function ExercisePartRoute() {
 					// change.
 				>
 					<Tabs.List className="inline-flex border-b border-gray-200">
-						{tabs.map((tab, i) => {
+						{tabs.map(tab => {
 							return (
 								<Tabs.Trigger
 									key={tab}
@@ -497,7 +497,7 @@ export default function ExercisePartRoute() {
 									)}
 								>
 									<Link
-										id={`tab-${i}`}
+										id={`${tab}-tab`}
 										className="outline-none focus:bg-gray-100"
 										preventScrollReset
 										prefetch="intent"
