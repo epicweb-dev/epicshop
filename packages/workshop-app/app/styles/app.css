@@ -14,19 +14,43 @@ body {
 
 .shadow-on-scrollbox {
 	background:
-		/* Shadow covers */
-		linear-gradient(white 30%, rgba(255, 255, 255, 0)),
+		/* Shadow covers */ linear-gradient(
+			white 30%,
+			rgba(255, 255, 255, 0)
+		),
 		linear-gradient(rgba(255, 255, 255, 0), white 70%) 0 100%,
 		/* Shadows */
-		radial-gradient(50% 0, farthest-side, rgba(0, 0, 0, 0.2), rgba(0, 0, 0, 0)),
-		radial-gradient(50% 100%, farthest-side, rgba(0, 0, 0, 0.2), rgba(0, 0, 0, 0)) 0 100%;
+			radial-gradient(
+				50% 0,
+				farthest-side,
+				rgba(0, 0, 0, 0.2),
+				rgba(0, 0, 0, 0)
+			),
+		radial-gradient(
+				50% 100%,
+				farthest-side,
+				rgba(0, 0, 0, 0.2),
+				rgba(0, 0, 0, 0)
+			)
+			0 100%;
 	background:
-		/* Shadow covers */
-		linear-gradient(white 30%, rgba(255, 255, 255, 0)),
+		/* Shadow covers */ linear-gradient(
+			white 30%,
+			rgba(255, 255, 255, 0)
+		),
 		linear-gradient(rgba(255, 255, 255, 0), white 70%) 0 100%,
 		/* Shadows */
-		radial-gradient(farthest-side at 50% 0, rgba(0, 0, 0, 0.2), rgba(0, 0, 0, 0)),
-		radial-gradient(farthest-side at 50% 100%, rgba(0, 0, 0, 0.2), rgba(0, 0, 0, 0)) 0 100%;
+			radial-gradient(
+				farthest-side at 50% 0,
+				rgba(0, 0, 0, 0.2),
+				rgba(0, 0, 0, 0)
+			),
+		radial-gradient(
+				farthest-side at 50% 100%,
+				rgba(0, 0, 0, 0.2),
+				rgba(0, 0, 0, 0)
+			)
+			0 100%;
 	background-repeat: no-repeat;
 	background-color: white;
 	background-size: 100% 40px, 100% 40px, 100% 14px, 100% 14px;
@@ -274,7 +298,7 @@ body {
 .prose callout-warning *,
 .prose callout-danger *,
 .prose callout-success * {
-	font-size: 1.2rem;
+	font-size: 1rem;
 }
 
 .prose callout-muted.aside,
@@ -300,7 +324,7 @@ body {
 .prose callout-warning.important *,
 .prose callout-danger.important *,
 .prose callout-success.important * {
-	font-size: 1.4rem;
+	font-size: 1.25rem;
 	font-weight: bold;
 }
 
