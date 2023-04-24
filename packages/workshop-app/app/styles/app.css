@@ -150,7 +150,7 @@ body {
 	padding-top: 2rem;
 }
 
-.prose pre[data-lang] {
+.prose pre[data-lang]:not([data-nolang]) {
 	padding-bottom: 2rem;
 }
 
@@ -233,7 +233,7 @@ body {
 	opacity: 0.7;
 }
 
-.prose pre[data-lang]:after {
+.prose pre[data-lang]:not([data-nolang]):after {
 	content: attr(data-lang);
 	position: sticky;
 	right: 0;
