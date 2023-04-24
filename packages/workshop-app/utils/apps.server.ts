@@ -912,11 +912,19 @@ export async function setPlayground(srcDir: string) {
 	const destDir = path.join(getWorkshopRoot(), 'playground')
 	const playgroundFiles = path.join(destDir, '**')
 	getWatcher().unwatch(playgroundFiles)
+
+	const basename = path.basename(srcDir)
 	// Copy the contents of the source directory to the destination directory recursively
 	await fsExtra.copy(srcDir, destDir, {
 		overwrite: true,
 		preserveTimestamps: true,
 		filter: async file => {
+			if (
+				file.includes(`${basename}${path.sep}build`) ||
+				file.includes(`${basename}${path.sep}public${path.sep}build`)
+			) {
+				return false
+			}
 			if (file === srcDir) return true
 			// we do want to copy node_modules in this case to avoid issues with
 			// dependencies that are not in the workspace node_modules
@@ -926,14 +934,19 @@ export async function setPlayground(srcDir: string) {
 		},
 	})
 
-	// Remove files from destDir that were in destDir before but are not in srcDir
-	const srcFiles = (
-		await globby(`${srcDir}/**/*`, { onlyFiles: false, dot: true })
-	).map(f => f.replace(srcDir, ''))
-	const destFiles = (
-		await globby(`${destDir}/**/*`, { onlyFiles: false, dot: true })
-	).map(f => f.replace(destDir, ''))
+	async function getFiles(dir: string) {
+		// make globby friendly to windows
+		const dirPath = dir.replace(/\\/g, '/')
+		const files = await globby([`${dirPath}/**/*`, '!**/build/**/*'], {
+			onlyFiles: false,
+			dot: true,
+		})
+		return files.map(f => f.replace(dirPath, ''))
+	}
 
+	// Remove files from destDir that were in destDir before but are not in srcDir
+	const srcFiles = await getFiles(srcDir)
+	const destFiles = await getFiles(destDir)
 	const filesToDelete = destFiles.filter(
 		fileName => !srcFiles.includes(fileName),
 	)
