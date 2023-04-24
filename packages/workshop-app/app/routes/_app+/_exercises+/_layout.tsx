@@ -139,85 +139,79 @@ function Navigation() {
 						setMenuOpened={setMenuOpened}
 					/>
 					{isMenuOpened && (
-						<div className="flex h-full flex-col items-center justify-between overflow-y-scroll">
-							<motion.div
-								style={{ width: OPENED_MENU_WIDTH }}
-								className="scrollbar-thin scrollbar-thumb-gray-200 flex h-full flex-grow flex-col justify-start overflow-y-auto p-6"
-								initial={{ opacity: 0 }}
-								animate={{ opacity: 1 }}
+						<motion.div
+							style={{ width: OPENED_MENU_WIDTH }}
+							className="scrollbar-thin scrollbar-thumb-gray-200 flex h-full flex-grow flex-col justify-start overflow-y-auto p-6"
+							initial={{ opacity: 0 }}
+							animate={{ opacity: 1 }}
+						>
+							<motion.ul
+								variants={listVariants}
+								initial="hidden"
+								animate="visible"
+								className="flex flex-col gap-3"
 							>
-								<motion.ul
-									variants={listVariants}
-									initial="hidden"
-									animate="visible"
-									className="flex flex-col gap-3"
-								>
-									{data.exercises.map(({ exerciseNumber, title, problems }) => {
-										const isActive =
-											Number(params.exerciseNumber) === exerciseNumber
-										const showPlayground =
-											!isActive &&
-											data.playground.exerciseNumber === exerciseNumber
-										const exerciseNum = exerciseNumber
-											.toString()
-											.padStart(2, '0')
-										return (
-											<motion.li variants={itemVariants} key={exerciseNumber}>
-												<Link
-													to={`/${exerciseNum}`}
-													className={clsx(
-														'relative whitespace-nowrap px-2 py-0.5 pr-3 text-2xl font-bold outline-none hover:underline focus:underline',
-														{
-															'bg-black text-white after:absolute after:-bottom-2.5 after:-right-2.5 after:h-5 after:w-5 after:rotate-45 after:scale-75 after:bg-white after:content-[""]':
-																isActive,
-														},
-													)}
-												>
-													{title}
-													{showPlayground ? ' 🛝' : null}
-												</Link>
-												{isActive && (
-													<motion.ul
-														variants={listVariants}
-														initial="hidden"
-														animate="visible"
-														className="ml-4 mt-4 flex flex-col gap-3"
-													>
-														{problems.map(({ name, stepNumber, title }) => {
-															const isActive =
-																Number(params.stepNumber) === stepNumber
-															const step = stepNumber
-																.toString()
-																.padStart(2, '0')
-															const isPlayground =
-																name === data.playground.appName
-															return (
-																<motion.li
-																	variants={itemVariants}
-																	key={stepNumber}
-																>
-																	<Link
-																		to={`/${exerciseNum}/${step}`}
-																		className={clsx(
-																			'relative whitespace-nowrap px-2 py-0.5 pr-3 text-xl font-medium outline-none after:absolute after:-bottom-2.5 after:-right-2.5 after:h-5 after:w-5 after:rotate-45 after:scale-75 after:bg-white after:content-[""] hover:underline focus:underline',
-																			{ 'bg-black text-white': isActive },
-																		)}
-																	>
-																		{isPlayground
-																			? `${step}. 🛝 ${title}`
-																			: `${step}. ${title}`}
-																	</Link>
-																</motion.li>
-															)
-														})}
-													</motion.ul>
+								{data.exercises.map(({ exerciseNumber, title, problems }) => {
+									const isActive =
+										Number(params.exerciseNumber) === exerciseNumber
+									const showPlayground =
+										!isActive &&
+										data.playground.exerciseNumber === exerciseNumber
+									const exerciseNum = exerciseNumber.toString().padStart(2, '0')
+									return (
+										<motion.li variants={itemVariants} key={exerciseNumber}>
+											<Link
+												to={`/${exerciseNum}`}
+												className={clsx(
+													'relative whitespace-nowrap px-2 py-0.5 pr-3 text-2xl font-bold outline-none hover:underline focus:underline',
+													{
+														'bg-black text-white after:absolute after:-bottom-2.5 after:-right-2.5 after:h-5 after:w-5 after:rotate-45 after:scale-75 after:bg-white after:content-[""]':
+															isActive,
+													},
 												)}
-											</motion.li>
-										)
-									})}
-								</motion.ul>
-							</motion.div>
-						</div>
+											>
+												{title}
+												{showPlayground ? ' 🛝' : null}
+											</Link>
+											{isActive && (
+												<motion.ul
+													variants={listVariants}
+													initial="hidden"
+													animate="visible"
+													className="ml-4 mt-4 flex flex-col gap-3"
+												>
+													{problems.map(({ name, stepNumber, title }) => {
+														const isActive =
+															Number(params.stepNumber) === stepNumber
+														const step = stepNumber.toString().padStart(2, '0')
+														const isPlayground =
+															name === data.playground.appName
+														return (
+															<motion.li
+																variants={itemVariants}
+																key={stepNumber}
+															>
+																<Link
+																	to={`/${exerciseNum}/${step}`}
+																	className={clsx(
+																		'relative whitespace-nowrap px-2 py-0.5 pr-3 text-xl font-medium outline-none after:absolute after:-bottom-2.5 after:-right-2.5 after:h-5 after:w-5 after:rotate-45 after:scale-75 after:bg-white after:content-[""] hover:underline focus:underline',
+																		{ 'bg-black text-white': isActive },
+																	)}
+																>
+																	{isPlayground
+																		? `${step}. 🛝 ${title}`
+																		: `${step}. ${title}`}
+																</Link>
+															</motion.li>
+														)
+													})}
+												</motion.ul>
+											)}
+										</motion.li>
+									)
+								})}
+							</motion.ul>
+						</motion.div>
 					)}
 					{!isMenuOpened && (
 						<div className="flex h-full flex-grow flex-col justify-center">
