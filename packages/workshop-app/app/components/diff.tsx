@@ -171,11 +171,11 @@ export function Diff() {
 						</div>
 						<div className="scrollbar-thin scrollbar-thumb-gray-300 max-h-[calc(100vh-109px)] overflow-y-auto">
 							{diff.diffCode ? (
-								<h2>
+								<div>
 									<Accordion.Root className="w-full" type="multiple">
 										<Mdx code={diff.diffCode} components={mdxComponents} />
 									</Accordion.Root>
-								</h2>
+								</div>
 							) : (
 								<p className="m-5 inline-flex items-center justify-center bg-black px-1 py-0.5 font-mono text-sm uppercase text-white">
 									There was a problem generating the diff

@@ -438,7 +438,7 @@ export default function ExercisePartRoute() {
 									prefetch="intent"
 									className="group flex h-full items-center justify-center border-l border-gray-200 px-7"
 									to={data.prevStepLink.to}
-									aria-label="Link to Previous Step"
+									aria-label="Previous Step"
 									children={
 										<>
 											<Icon
@@ -458,7 +458,7 @@ export default function ExercisePartRoute() {
 									prefetch="intent"
 									className="group flex h-full items-center justify-center border-l border-gray-200 px-7"
 									to={data.nextStepLink.to}
-									aria-label="Link to Next Step"
+									aria-label="Next Step"
 									children={
 										<>
 											<Icon
