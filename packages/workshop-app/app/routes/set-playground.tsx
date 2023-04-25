@@ -112,6 +112,7 @@ export function PlaygroundChooser({
 			}}
 		>
 			<Select.Trigger
+				aria-label="Select app for playground"
 				className={clsx(
 					'radix-placeholder:text-gray-500 flex h-full w-full items-center justify-between px-3 text-left focus-visible:outline-none',
 					fetcher.state !== 'idle' ? 'cursor-progress' : null,

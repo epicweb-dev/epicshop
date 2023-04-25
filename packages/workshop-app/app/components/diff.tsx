@@ -209,6 +209,7 @@ function SelectFileToDiff({
 					'radix-placeholder:text-gray-500 flex h-full w-full items-center justify-between px-3 text-left focus-visible:outline-none',
 					className,
 				)}
+				aria-label={`Select ${label} for git Diff`}
 			>
 				<span className="scrollbar-thin scrollbar-thumb-gray-300 w-80 overflow-hidden text-ellipsis whitespace-nowrap">
 					{label}:{' '}

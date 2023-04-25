@@ -80,7 +80,7 @@ const AccordionItem: React.FC<any> = React.forwardRef(
 
 const AccordionTrigger: React.FC<any> = React.forwardRef(
 	({ children, className, variant, ...props }, forwardedRef) => (
-		<Accordion.Header className="flex">
+		<Accordion.Header className="flex" asChild>
 			<Accordion.Trigger
 				className={clsx(
 					'group flex w-full items-center justify-between border-b border-gray-200 p-4 pr-3 font-mono text-sm font-medium leading-none hover:bg-gray-100',

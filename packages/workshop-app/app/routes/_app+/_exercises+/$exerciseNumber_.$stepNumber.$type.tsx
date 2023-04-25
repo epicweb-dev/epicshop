@@ -412,7 +412,7 @@ export default function ExercisePartRoute() {
 							) : null}
 						</div>
 					</h4>
-					<article className="shadow-on-scrollbox prose sm:prose-lg scrollbar-thin scrollbar-thumb-gray-200 prose-p:text-black prose-headings:text-black h-full w-full max-w-none space-y-6 overflow-y-auto p-14 pt-0 text-black">
+					<article className="shadow-on-scrollbox prose sm:prose-lg scrollbar-thin scrollbar-thumb-gray-200 prose-p:text-black prose-headings:text-black h-full w-full max-w-none space-y-6 overflow-y-auto p-10 pt-0 text-black">
 						{data.exerciseStepApp.instructionsCode ? (
 							<Mdx
 								code={data.exerciseStepApp?.instructionsCode}
@@ -438,6 +438,7 @@ export default function ExercisePartRoute() {
 									prefetch="intent"
 									className="group flex h-full items-center justify-center border-l border-gray-200 px-7"
 									to={data.prevStepLink.to}
+									aria-label="Previous Step"
 									children={
 										<>
 											<Icon
@@ -457,6 +458,7 @@ export default function ExercisePartRoute() {
 									prefetch="intent"
 									className="group flex h-full items-center justify-center border-l border-gray-200 px-7"
 									to={data.nextStepLink.to}
+									aria-label="Next Step"
 									children={
 										<>
 											<Icon
@@ -495,7 +497,7 @@ export default function ExercisePartRoute() {
 									)}
 								>
 									<Link
-										id="tab"
+										id={`${tab}-tab`}
 										className="outline-none focus:bg-gray-100"
 										preventScrollReset
 										prefetch="intent"
