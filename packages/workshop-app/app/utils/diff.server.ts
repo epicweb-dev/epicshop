@@ -52,7 +52,9 @@ function getFileCodeblocks(
 	if (!file.chunks.length) {
 		return [`No changes`]
 	}
-	const filepath = file.type === 'RenamedFile' ? file.pathAfter : file.path
+	const filepath = diffPathToRelative(
+		file.type === 'RenamedFile' ? file.pathAfter : file.path,
+	)
 	const extension = path.extname(filepath).slice(1)
 	const lang = getLanguage(extension)
 	const pathToCopy = file.type === 'RenamedFile' ? file.pathBefore : file.path
