@@ -406,6 +406,12 @@ async function getPkgProp<Value>(
 	return value ?? defaultValue
 }
 
+export function extractNumbersFromAppName(fullPath: string) {
+	const regex = /(?<exerciseNumber>\d+)([^\d]*)(?<stepNumber>\d+)/g
+	const { exerciseNumber, stepNumber } = regex.exec(fullPath)?.groups ?? {}
+	return { exerciseNumber, stepNumber }
+}
+
 function getAppName(fullPath: string) {
 	const relativePath = fullPath.replace(`${workshopRoot}${path.sep}`, '')
 	return relativePath.split(path.sep).join('__sep__')
