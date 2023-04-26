@@ -49,7 +49,7 @@ type Exercise = {
 type BaseApp = {
 	/** a unique identifier for the problem app (based on its name + step number for exercise part apps and just the name for examples) */
 	id: string
-	/** a unique identifier for the app (comes from the relative path of the app directory (replacing "/" with ".")) */
+	/** a unique identifier for the app (comes from the relative path of the app directory (replacing "/" with "__sep__")) */
 	name: string
 	/** the title of the app used for display (comes from the package.json title prop) */
 	title: string
@@ -406,9 +406,14 @@ async function getPkgProp<Value>(
 	return value ?? defaultValue
 }
 
-async function getAppName(fullPath: string) {
+function getAppName(fullPath: string) {
 	const relativePath = fullPath.replace(`${workshopRoot}${path.sep}`, '')
-	return relativePath.split(path.sep).join('.')
+	return relativePath.split(path.sep).join('__sep__')
+}
+
+function getFullPathFromAppName(appName: string) {
+	const relativePath = appName.replaceAll('__sep__', path.sep)
+	return path.join(workshopRoot, relativePath)
 }
 
 async function findSolutionDir({
@@ -417,7 +422,7 @@ async function findSolutionDir({
 }: {
 	fullPath: string
 	stepNumber: number
-}) {
+}): Promise<string | null> {
 	if (path.basename(fullPath).includes('.problem')) {
 		const paddedStepNumber = stepNumber.toString().padStart(2, '0')
 		const parentDir = path.dirname(fullPath)
@@ -427,6 +432,14 @@ async function findSolutionDir({
 		)
 		if (solutionDir) {
 			return path.join(parentDir, solutionDir)
+		}
+	} else if (fullPath.endsWith('playground')) {
+		const appName = await getPlaygroundAppName()
+		if (appName) {
+			return findSolutionDir({
+				fullPath: getFullPathFromAppName(appName),
+				stepNumber,
+			})
 		}
 	}
 	return null
@@ -438,7 +451,7 @@ async function findProblemDir({
 }: {
 	fullPath: string
 	stepNumber: number
-}) {
+}): Promise<string | null> {
 	if (path.basename(fullPath).includes('.solution')) {
 		const paddedStepNumber = stepNumber.toString().padStart(2, '0')
 		const parentDir = path.dirname(fullPath)
@@ -448,6 +461,14 @@ async function findProblemDir({
 		)
 		if (problemDir) {
 			return path.join(parentDir, problemDir)
+		}
+	} else if (fullPath.endsWith('playground')) {
+		const appName = await getPlaygroundAppName()
+		if (appName) {
+			return findProblemDir({
+				fullPath: getFullPathFromAppName(appName),
+				stepNumber,
+			})
 		}
 	}
 	return null
@@ -544,9 +565,13 @@ async function getPlaygroundApp({
 			if (!appName) return null
 
 			const dirName = path.basename(playgroundDir)
-			const name = await getAppName(playgroundDir)
-			const compiledReadme = await compileReadme(playgroundDir)
+			const name = getAppName(playgroundDir)
 			const portNumber = 4000
+			const [compiledReadme, test, dev] = await Promise.all([
+				compileReadme(playgroundDir),
+				getTestInfo({ fullPath: playgroundDir, id: name }),
+				getDevInfo({ fullPath: playgroundDir, portNumber, id: name }),
+			])
 			return {
 				id: name,
 				name,
@@ -560,12 +585,8 @@ async function getPlaygroundApp({
 				title: compiledReadme?.title ?? name,
 				dirName,
 				instructionsCode: compiledReadme?.code,
-				test: await getTestInfo({ fullPath: playgroundDir, id: name }),
-				dev: await getDevInfo({
-					fullPath: playgroundDir,
-					portNumber,
-					id: name,
-				}),
+				test,
+				dev,
 			}
 		},
 	})
@@ -577,7 +598,7 @@ async function getExampleAppFromPath(
 ): Promise<ExampleApp> {
 	const dirName = path.basename(fullPath)
 	const compiledReadme = await compileReadme(fullPath)
-	const name = await getAppName(fullPath)
+	const name = getAppName(fullPath)
 	const portNumber = 8000 + index
 	return {
 		id: name,
@@ -633,7 +654,7 @@ async function getSolutionAppFromPath(
 	const exerciseNumber = extractExerciseNumber(parentDirName)
 	if (!exerciseNumber) return null
 
-	const name = await getAppName(fullPath)
+	const name = getAppName(fullPath)
 	const appInfo = getAppDirInfo(dirName)
 	const firstStepNumber = appInfo.stepNumbers[0]
 	if (firstStepNumber === undefined) {
@@ -651,7 +672,7 @@ async function getSolutionAppFromPath(
 				fullPath,
 				stepNumber,
 			})
-			const problemName = problemDir ? await getAppName(problemDir) : null
+			const problemName = problemDir ? getAppName(problemDir) : null
 			const problemId = problemName ? `${problemName}-${stepNumber}` : null
 			const [test, dev] = await Promise.all([
 				getTestInfo({ fullPath, isMultiStep, stepNumber, id }),
@@ -715,7 +736,7 @@ async function getProblemAppFromPath(
 	const exerciseNumber = extractExerciseNumber(parentDirName)
 	if (!exerciseNumber) return null
 
-	const name = await getAppName(fullPath)
+	const name = getAppName(fullPath)
 	const appInfo = getAppDirInfo(dirName)
 	const firstStepNumber = appInfo.stepNumbers[0]
 	if (firstStepNumber === undefined) {
@@ -733,7 +754,7 @@ async function getProblemAppFromPath(
 				fullPath,
 				stepNumber,
 			})
-			const solutionName = solutionDir ? await getAppName(solutionDir) : null
+			const solutionName = solutionDir ? getAppName(solutionDir) : null
 			const solutionId = solutionName ? `${solutionName}-${stepNumber}` : null
 			const [test, dev] = await Promise.all([
 				getTestInfo({ fullPath, isMultiStep, stepNumber, id }),
@@ -955,7 +976,7 @@ export async function setPlayground(srcDir: string) {
 		await fsExtra.remove(path.join(destDir, fileToDelete))
 	}
 
-	const appName = await getAppName(srcDir)
+	const appName = getAppName(srcDir)
 	await fsExtra.ensureDir(path.dirname(playgroundAppNameInfoPath))
 	await fsExtra.writeJSON(playgroundAppNameInfoPath, { appName })
 
