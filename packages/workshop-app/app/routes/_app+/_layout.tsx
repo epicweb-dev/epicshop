@@ -7,6 +7,7 @@ import { motion, useAnimationControls } from 'framer-motion'
 import * as React from 'react'
 import { ToastHub } from '~/components/toast'
 import {
+	extractNumbersFromAppName,
 	getExercises,
 	getPlaygroundAppName,
 	getWorkshopTitle,
@@ -25,10 +26,11 @@ export async function loader({ request }: DataFunctionArgs) {
 		getPlaygroundAppName(),
 	])
 
-	const [, match] = playgroundAppName?.match(/exercises\.(\d*)/) ?? []
 	const playground = {
 		appName: playgroundAppName,
-		exerciseNumber: Number(match),
+		exerciseNumber: Number(
+			extractNumbersFromAppName(playgroundAppName ?? '').exerciseNumber,
+		),
 	}
 
 	const result = json(
