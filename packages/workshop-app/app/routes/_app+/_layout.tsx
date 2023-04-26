@@ -147,7 +147,7 @@ function Navigation() {
 					{isMenuOpened && (
 						<motion.div
 							style={{ width: OPENED_MENU_WIDTH }}
-							className="scrollbar-thin scrollbar-thumb-gray-200 flex h-full flex-grow flex-col justify-start overflow-y-auto p-6"
+							className="scrollbar-thin scrollbar-thumb-gray-200 flex flex-grow flex-col justify-start overflow-y-auto p-6"
 							initial={{ opacity: 0 }}
 							animate={{ opacity: 1 }}
 						>
@@ -220,7 +220,7 @@ function Navigation() {
 						</motion.div>
 					)}
 					{!isMenuOpened && (
-						<div className="flex h-full flex-grow flex-col justify-center">
+						<div className="flex flex-grow flex-col justify-center">
 							<Link
 								className="orientation-sideways w-full font-mono text-sm font-medium uppercase leading-none"
 								to={`/${Number(params.exerciseNumber)
@@ -261,9 +261,9 @@ function NavToggle({
 	const path02Controls = useAnimationControls()
 
 	return (
-		<div className="relative flex w-full items-center justify-between overflow-hidden border-b border-gray-200">
+		<div className="relative inline-flex h-14 w-full items-center justify-between overflow-hidden border-b border-gray-200">
 			<button
-				className="flex h-14 w-14 items-center justify-center"
+				className="flex w-14 items-center justify-center"
 				aria-label="Open Navigation menu"
 				onClick={async () => {
 					menuControls.start(isMenuOpened ? 'close' : 'open')
