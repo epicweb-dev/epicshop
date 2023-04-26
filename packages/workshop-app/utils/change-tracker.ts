@@ -26,6 +26,10 @@ export function getWatcher() {
 	return watcher
 }
 
+export function getOptionalWatcher() {
+	return watcher
+}
+
 global.__change_tracker_close_with_grace_return__?.uninstall()
 global.__change_tracker_close_with_grace_return__ = closeWithGrace(() =>
 	watcher?.close(),

@@ -14,7 +14,7 @@ import {
 	playgroundAppCache,
 } from './cache.server'
 import { compileMdx } from './compile-mdx.server'
-import { getWatcher } from './change-tracker'
+import { getOptionalWatcher, getWatcher } from './change-tracker'
 import { requireCachePurgeEmitter } from './purge-require-cache.server'
 import { getServerTimeHeader, type Timings } from './timing.server'
 
@@ -938,7 +938,7 @@ export async function setPlayground(srcDir: string) {
 	const isIgnored = await isGitIgnored({ cwd: srcDir })
 	const destDir = path.join(getWorkshopRoot(), 'playground')
 	const playgroundFiles = path.join(destDir, '**')
-	getWatcher().unwatch(playgroundFiles)
+	getOptionalWatcher()?.unwatch(playgroundFiles)
 
 	const basename = path.basename(srcDir)
 	// Copy the contents of the source directory to the destination directory recursively
@@ -1000,7 +1000,7 @@ export async function setPlayground(srcDir: string) {
 		})
 	}
 
-	getWatcher().add(playgroundFiles)
+	getOptionalWatcher()?.add(playgroundFiles)
 	modifiedTimes.set(destDir, Date.now())
 }
 
