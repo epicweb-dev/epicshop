@@ -55,6 +55,7 @@ import {
 } from '~/utils/timing.server'
 import { LaunchEditor } from '../../launch-editor'
 import { TestOutput } from '../../test'
+import { NavChevrons } from '~/components/nav-chevrons'
 
 function pageTitle(data: SerializeFrom<typeof loader>, workshopTitle?: string) {
 	if (!data) {
@@ -432,48 +433,24 @@ export default function ExercisePartRoute() {
 								<TouchedFiles />
 							</div>
 						</div>
-						<div className="relative flex overflow-hidden">
-							{data.prevStepLink ? (
-								<Link
-									prefetch="intent"
-									className="group flex h-full items-center justify-center border-l border-gray-200 px-7"
-									to={data.prevStepLink.to}
-									aria-label="Previous Step"
-									children={
-										<>
-											<Icon
-												name="ChevronLeft"
-												className="absolute opacity-100 transition duration-300 ease-in-out group-hover:translate-y-10 group-hover:opacity-0"
-											/>
-											<Icon
-												name="ChevronLeft"
-												className="absolute -translate-y-10 opacity-0 transition duration-300 ease-in-out group-hover:translate-y-0 group-hover:opacity-100"
-											/>
-										</>
-									}
-								/>
-							) : null}
-							{data.nextStepLink ? (
-								<Link
-									prefetch="intent"
-									className="group flex h-full items-center justify-center border-l border-gray-200 px-7"
-									to={data.nextStepLink.to}
-									aria-label="Next Step"
-									children={
-										<>
-											<Icon
-												name="ChevronRight"
-												className="absolute opacity-100 transition duration-300 ease-in-out group-hover:translate-y-10 group-hover:opacity-0"
-											/>
-											<Icon
-												name="ChevronRight"
-												className="absolute -translate-y-10 opacity-0 transition duration-300 ease-in-out group-hover:translate-y-0 group-hover:opacity-100"
-											/>
-										</>
-									}
-								/>
-							) : null}
-						</div>
+						<NavChevrons
+							prev={
+								data.prevStepLink
+									? {
+											to: data.prevStepLink.to,
+											'aria-label': 'Previous Step',
+									  }
+									: null
+							}
+							next={
+								data.nextStepLink
+									? {
+											to: data.nextStepLink.to,
+											'aria-label': 'Next Step',
+									  }
+									: null
+							}
+						/>
 					</div>
 				</div>
 				<Tabs.Root

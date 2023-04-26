@@ -4,7 +4,7 @@ import type {
 	V2_MetaFunction,
 } from '@remix-run/node'
 import { json } from '@remix-run/node'
-import { Link, useLoaderData } from '@remix-run/react'
+import { useLoaderData } from '@remix-run/react'
 import invariant from 'tiny-invariant'
 import {
 	getAppPageRoute,
@@ -20,6 +20,7 @@ import {
 	getServerTimeHeader,
 	makeTimings,
 } from '~/utils/timing.server'
+import { NavChevrons } from '~/components/nav-chevrons'
 
 export const meta: V2_MetaFunction<
 	typeof loader,
@@ -66,17 +67,17 @@ export async function loader({ params, request }: DataFunctionArgs) {
 			prevStepLink: prevApp
 				? {
 						to: getAppPageRoute(prevApp),
-						children: `⬅️ ${prevApp.title} (${prevApp.type})`,
+						'aria-label': `${prevApp.title} (${prevApp.type})`,
 				  }
 				: null,
 			nextStepLink: nextExercise
 				? {
 						to: `/${nextExercise.exerciseNumber.toString().padStart(2, '0')}`,
-						children: `${nextExercise.title} ➡️`,
+						'aria-label': `${nextExercise.title}`,
 				  }
 				: {
 						to: '/finished',
-						children: 'Finished! 🎉',
+						'aria-label': 'Finished! 🎉',
 				  },
 		},
 		{
@@ -104,33 +105,28 @@ export default function ExerciseFeedback() {
 		['entry.428900931', data.exercise.title],
 	])
 	return (
-		<div className="container mx-auto my-8 flex flex-grow flex-col">
-			<h1>Submit feedback on this exercise</h1>
-			<iframe
-				className="mx-auto min-w-full max-w-2xl flex-grow rounded-md border-2 border-gray-200"
-				title="Feedback"
-				src={`https://docs.google.com/forms/d/e/1FAIpQLSf3o9xyjQepTlOTH5Z7ZwkeSTdXh6YWI_RGc9KiyD3oUN0p6w/viewform?${searchParams.toString()}`}
-			>
-				<Loading />
-			</iframe>
-			<div className="flex justify-around pt-8">
-				{data.prevStepLink ? (
-					<Link
-						prefetch="intent"
-						className="text-blue-700 underline"
-						to={data.prevStepLink.to}
-						children={data.prevStepLink.children}
-					/>
-				) : null}
-				{data.nextStepLink ? (
-					<Link
-						prefetch="intent"
-						className="text-blue-700 underline"
-						to={data.nextStepLink.to}
-						children={data.nextStepLink.children}
-					/>
-				) : null}
+		<main className="flex h-screen w-full flex-col">
+			<div className="grid w-full flex-grow grid-cols-2 overflow-y-auto">
+				<div className="flex flex-grow flex-col border-r border-t border-gray-200">
+					<h4 className="border-b border-gray-200 py-8 pl-[58px] font-mono text-sm font-medium uppercase leading-tight">
+						{`${data.exercise.exerciseNumber.toString().padStart(2, '0')}. ${
+							data.exercise.title
+						} `}{' '}
+						| Feedback
+					</h4>
+					<iframe
+						className="flex-grow pt-4"
+						title="Feedback"
+						src={`https://docs.google.com/forms/d/e/1FAIpQLSf3o9xyjQepTlOTH5Z7ZwkeSTdXh6YWI_RGc9KiyD3oUN0p6w/viewform?${searchParams.toString()}`}
+					>
+						<Loading />
+					</iframe>
+					<div className="flex h-16 justify-end border-t border-gray-200 bg-white">
+						<NavChevrons prev={data.prevStepLink} next={data.nextStepLink} />
+					</div>
+				</div>
+				<div></div>
 			</div>
-		</div>
+		</main>
 	)
 }
