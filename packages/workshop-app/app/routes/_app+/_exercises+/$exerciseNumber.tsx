@@ -91,21 +91,28 @@ export const headers: HeadersFunction = ({ loaderHeaders, parentHeaders }) => {
 export default function ExerciseNumberRoute() {
 	const data = useLoaderData<typeof loader>()
 
+	const firstExerciseNumber =
+		data.exercises[0]?.exerciseNumber.toString().padStart(2, '0') ?? '01'
+	const firstExercisePath = `${firstExerciseNumber}/problem`
 	return (
-		<main className="relative h-screen w-full pt-16">
+		<main className="relative h-screen w-full">
 			<h4 className="absolute left-11 top-8 font-mono text-sm font-medium uppercase leading-tight">
 				{`${data.exercise.exerciseNumber.toString().padStart(2, '0')}. ${
 					data.exercise.title
 				} `}
 			</h4>
 			<div className="shadow-on-scrollbox scrollbar-thin scrollbar-thumb-gray-300 h-full w-full overflow-y-auto">
-				<article className="w-2/3 border-r border-gray-200">
-					<div className="px-10">
+				<article className="min-h-full w-full border-r border-gray-200 md:w-3/4 lg:w-2/3">
+					<div className="px-10 pt-16">
 						<h1 className="text-[6vw] font-extrabold leading-none">
 							{data.exercise.title}
 						</h1>
 						<div className="mt-8">
-							<ButtonLink to="01/problem" prefetch="intent" varient="big">
+							<ButtonLink
+								to={firstExercisePath}
+								prefetch="intent"
+								varient="big"
+							>
 								Start Learning
 							</ButtonLink>
 						</div>
@@ -124,7 +131,7 @@ export default function ExerciseNumberRoute() {
 						)}
 					</div>
 					<div className="flex w-full items-center p-10 pb-16">
-						<ButtonLink to="01/problem" prefetch="intent" varient="big">
+						<ButtonLink to={firstExercisePath} prefetch="intent" varient="big">
 							Start Learning
 						</ButtonLink>
 					</div>
