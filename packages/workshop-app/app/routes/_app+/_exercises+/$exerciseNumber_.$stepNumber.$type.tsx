@@ -404,8 +404,9 @@ export default function ExercisePartRoute() {
 		<div className="flex flex-grow flex-col">
 			<div className="grid flex-grow grid-cols-2">
 				<div className="relative flex h-screen flex-grow flex-col justify-between border-r border-gray-200">
-					<h4 className="py-8 pl-[58px] font-mono text-sm font-medium uppercase leading-tight">
-						<div className="flex flex-wrap items-center justify-start gap-3">
+					<h4 className="pl-10 font-mono text-sm font-medium uppercase leading-tight">
+						{/* For some unknown reason, this looks best at 54px instead of h-14 */}
+						<div className="flex h-[54px] flex-wrap items-center justify-start gap-3">
 							{pageTitle(data)}
 							{data.problem &&
 							data.playground?.appName !== data.problem.name ? (
@@ -413,7 +414,7 @@ export default function ExercisePartRoute() {
 							) : null}
 						</div>
 					</h4>
-					<article className="shadow-on-scrollbox prose sm:prose-lg scrollbar-thin scrollbar-thumb-gray-200 prose-p:text-black prose-headings:text-black h-full w-full max-w-none space-y-6 overflow-y-auto p-10 pt-0 text-black">
+					<article className="shadow-on-scrollbox prose sm:prose-lg scrollbar-thin scrollbar-thumb-gray-200 prose-p:text-black prose-headings:text-black h-full w-full max-w-none space-y-6 overflow-y-auto p-10 pt-8 text-black">
 						{data.exerciseStepApp.instructionsCode ? (
 							<Mdx
 								code={data.exerciseStepApp?.instructionsCode}
@@ -459,7 +460,7 @@ export default function ExercisePartRoute() {
 					// intentionally no onValueChange here because the Link will trigger the
 					// change.
 				>
-					<Tabs.List className="inline-flex border-b border-gray-200">
+					<Tabs.List className="inline-flex h-14 border-b border-gray-200">
 						{tabs.map(tab => {
 							return (
 								<Tabs.Trigger
