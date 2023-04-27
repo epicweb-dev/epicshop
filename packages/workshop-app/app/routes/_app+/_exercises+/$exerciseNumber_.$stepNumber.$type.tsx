@@ -405,8 +405,7 @@ export default function ExercisePartRoute() {
 			<div className="grid flex-grow grid-cols-2">
 				<div className="relative flex h-screen flex-grow flex-col justify-between border-r border-gray-200">
 					<h4 className="pl-10 font-mono text-sm font-medium uppercase leading-tight">
-						{/* For some unknown reason, this looks best at 54px instead of h-14 */}
-						<div className="flex h-[54px] flex-wrap items-center justify-start gap-3">
+						<div className="flex h-14 flex-wrap items-center justify-start gap-x-3 py-2">
 							{pageTitle(data)}
 							{data.problem &&
 							data.playground?.appName !== data.problem.name ? (
