@@ -1,6 +1,12 @@
 import type { DataFunctionArgs, HeadersFunction } from '@remix-run/node'
 import { json } from '@remix-run/node'
-import { Link, Outlet, useLoaderData, useParams } from '@remix-run/react'
+import {
+	Link,
+	NavLink,
+	Outlet,
+	useLoaderData,
+	useParams,
+} from '@remix-run/react'
 import clsx from 'clsx'
 import type { AnimationControls } from 'framer-motion'
 import { motion, useAnimationControls } from 'framer-motion'
@@ -147,7 +153,7 @@ function Navigation() {
 					{isMenuOpened && (
 						<motion.div
 							style={{ width: OPENED_MENU_WIDTH }}
-							className="scrollbar-thin scrollbar-thumb-gray-200 flex flex-grow flex-col justify-start overflow-y-auto p-6"
+							className="scrollbar-thin scrollbar-thumb-gray-200 flex flex-grow flex-col justify-between overflow-y-auto p-6"
 							initial={{ opacity: 0 }}
 							animate={{ opacity: 1 }}
 						>
@@ -167,6 +173,7 @@ function Navigation() {
 									return (
 										<motion.li variants={itemVariants} key={exerciseNumber}>
 											<Link
+												prefetch="intent"
 												to={`/${exerciseNum}`}
 												className={clsx(
 													'relative whitespace-nowrap px-2 py-0.5 pr-3 text-2xl font-bold outline-none hover:underline focus:underline',
@@ -199,24 +206,55 @@ function Navigation() {
 															>
 																<Link
 																	to={`/${exerciseNum}/${step}`}
+																	prefetch="intent"
 																	className={clsx(
 																		'relative whitespace-nowrap px-2 py-0.5 pr-3 text-xl font-medium outline-none after:absolute after:-bottom-2.5 after:-right-2.5 after:h-5 after:w-5 after:rotate-45 after:scale-75 after:bg-white after:content-[""] hover:underline focus:underline',
 																		{ 'bg-black text-white': isActive },
 																	)}
 																>
 																	{isPlayground
-																		? `${step}. 🛝 ${title}`
+																		? `${step}. ${title} 🛝`
 																		: `${step}. ${title}`}
 																</Link>
 															</motion.li>
 														)
 													})}
+													<motion.li variants={itemVariants}>
+														<NavLink
+															to={`/${exerciseNum}/finished`}
+															prefetch="intent"
+															className={({ isActive }) =>
+																clsx(
+																	'relative whitespace-nowrap px-2 py-0.5 pr-3 text-base font-medium outline-none after:absolute after:-bottom-2.5 after:-right-2.5 after:h-5 after:w-5 after:rotate-45 after:scale-75 after:bg-white after:content-[""] hover:underline focus:underline',
+																	{ 'bg-black text-white': isActive },
+																)
+															}
+														>
+															📝 Elaboration
+														</NavLink>
+													</motion.li>
 												</motion.ul>
 											)}
 										</motion.li>
 									)
 								})}
 							</motion.ul>
+							<div>
+								<NavLink
+									to="/finished"
+									className={({ isActive }) =>
+										clsx(
+											'relative whitespace-nowrap px-2 py-0.5 pr-3 text-lg font-bold outline-none hover:underline focus:underline',
+											{
+												'bg-black text-white after:absolute after:-bottom-2.5 after:-right-2.5 after:h-5 after:w-5 after:rotate-45 after:scale-75 after:bg-white after:content-[""]':
+													isActive,
+											},
+										)
+									}
+								>
+									📝 Workshop Feedback
+								</NavLink>
+							</div>
 						</motion.div>
 					)}
 					{!isMenuOpened && (

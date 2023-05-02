@@ -96,11 +96,6 @@ export default function ExerciseNumberRoute() {
 	const firstExercisePath = `${firstExerciseNumber}/problem`
 	return (
 		<main className="relative h-screen w-full">
-			<h4 className="absolute left-11 top-8 font-mono text-sm font-medium uppercase leading-tight">
-				{`${data.exercise.exerciseNumber.toString().padStart(2, '0')}. ${
-					data.exercise.title
-				} `}
-			</h4>
 			<div className="shadow-on-scrollbox scrollbar-thin scrollbar-thumb-gray-300 h-full w-full overflow-y-auto">
 				<article className="min-h-full w-full border-r border-gray-200 md:w-3/4 lg:w-2/3">
 					<div className="px-10 pt-16">

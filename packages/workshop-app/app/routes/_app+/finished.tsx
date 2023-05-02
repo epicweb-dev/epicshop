@@ -1,19 +1,11 @@
-import type {
-	DataFunctionArgs,
-	HeadersFunction,
-	V2_MetaFunction,
-} from '@remix-run/node'
+import type { HeadersFunction, V2_MetaFunction } from '@remix-run/node'
 import { json } from '@remix-run/node'
-import { Link, useLoaderData } from '@remix-run/react'
-import {
-	getAppPageRoute,
-	getApps,
-	getWorkshopTitle,
-	isExerciseStepApp,
-} from '~/utils/apps.server'
+import { useLoaderData } from '@remix-run/react'
+import { getWorkshopTitle } from '~/utils/apps.server'
 
-import { type loader as rootLoader } from '~/root'
+import { ButtonLink } from '~/components/button'
 import Loading from '~/components/loading'
+import { type loader as rootLoader } from '~/root'
 import {
 	combineServerTimings,
 	getServerTimeHeader,
@@ -28,20 +20,10 @@ export const meta: V2_MetaFunction<
 	return [{ title: `🎉 ${rootData?.workshopTitle}` }]
 }
 
-export async function loader({ request }: DataFunctionArgs) {
+export async function loader() {
 	const timings = makeTimings('finishedLoader')
-	const apps = (await getApps({ request, timings })).filter(isExerciseStepApp)
-	const prevApp = apps[apps.length - 1]
 	return json(
-		{
-			workshopTitle: await getWorkshopTitle(),
-			prevStepLink: prevApp
-				? {
-						to: getAppPageRoute(prevApp),
-						children: `⬅️ ${prevApp.title} (${prevApp.type})`,
-				  }
-				: null,
-		},
+		{ workshopTitle: await getWorkshopTitle() },
 		{
 			headers: {
 				'Server-Timing': getServerTimeHeader(timings),
@@ -58,32 +40,34 @@ export const headers: HeadersFunction = ({ loaderHeaders, parentHeaders }) => {
 	return headers
 }
 
-export default function ExerciseFeedback() {
+export default function ExerciseFinished() {
 	const data = useLoaderData<typeof loader>()
 	const searchParams = new URLSearchParams([
 		['embedded', 'true'],
 		['entry.2123647600', data.workshopTitle],
 	])
 	return (
-		<div className="container mx-auto my-8 flex flex-grow flex-col">
-			<h1>You've finished! 🎉</h1>
-			<iframe
-				className="mx-auto min-w-full max-w-2xl flex-grow rounded-md border-2 border-gray-200"
-				title="Feedback"
-				src={`https://docs.google.com/forms/d/e/1FAIpQLSdRmj9p8-5zyoqRzxp3UpqSbC3aFkweXvvJIKes0a5s894gzg/viewform?${searchParams.toString()}`}
-			>
-				<Loading />
-			</iframe>
-			<div className="flex justify-around pt-8">
-				{data.prevStepLink ? (
-					<Link
-						prefetch="intent"
-						className="text-blue-700 underline"
-						to={data.prevStepLink.to}
-						children={data.prevStepLink.children}
-					/>
-				) : null}
+		<main className="flex h-screen w-full flex-col">
+			<div className="grid w-full flex-grow grid-cols-2 overflow-y-auto">
+				<div className="flex flex-grow flex-col border-r border-t border-gray-200">
+					<h4 className="border-b border-gray-200 py-8 pl-[58px] font-mono text-sm font-medium uppercase leading-tight">
+						{`${data.workshopTitle} | Finished`}
+					</h4>
+					<iframe
+						className="flex-grow pt-4"
+						title="Elaboration"
+						src={`https://docs.google.com/forms/d/e/1FAIpQLSdRmj9p8-5zyoqRzxp3UpqSbC3aFkweXvvJIKes0a5s894gzg/viewform?${searchParams.toString()}`}
+					>
+						<Loading />
+					</iframe>
+					<div className="flex h-16 justify-end border-t border-gray-200 bg-white">
+						<ButtonLink varient="primary" prefetch="intent" to="/">
+							Home
+						</ButtonLink>
+					</div>
+				</div>
+				<div></div>
 			</div>
-		</div>
+		</main>
 	)
 }

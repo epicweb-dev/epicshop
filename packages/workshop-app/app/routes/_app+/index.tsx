@@ -73,6 +73,20 @@ export const headers: HeadersFunction = ({ loaderHeaders, parentHeaders }) => {
 export default function Index() {
 	const data = useLoaderData<typeof loader>()
 
+	const exerciseLinks = (
+		<ul className="flex flex-wrap gap-4">
+			{data.exercises.map(exercise => (
+				<li key={exercise.exerciseNumber}>
+					<ButtonLink
+						varient="primary"
+						to={`${exercise.exerciseNumber.toString().padStart(2, '0')}`}
+					>
+						{exercise.exerciseNumber}. {exercise.title}
+					</ButtonLink>
+				</li>
+			))}
+		</ul>
+	)
 	return (
 		<main className="relative h-screen w-full">
 			<div className="shadow-on-scrollbox scrollbar-thin scrollbar-thumb-gray-300 h-full w-full overflow-y-auto">
@@ -81,20 +95,7 @@ export default function Index() {
 						<h1 className="text-[6vw] font-extrabold leading-none">
 							{data.title}
 						</h1>
-						<ul className="mt-8 flex flex-wrap gap-4">
-							{data.exercises.map(exercise => (
-								<li key={exercise.exerciseNumber}>
-									<ButtonLink
-										varient="primary"
-										to={`${exercise.exerciseNumber
-											.toString()
-											.padStart(2, '0')}`}
-									>
-										{exercise.exerciseNumber}. {exercise.title}
-									</ButtonLink>
-								</li>
-							))}
-						</ul>
+						<div className="mt-8">{exerciseLinks}</div>
 					</div>
 					<div className="prose sm:prose-lg mt-16 w-full max-w-none border-t border-gray-200 px-10 pt-16">
 						{data.workshopReadme.code ? (
@@ -108,6 +109,9 @@ export default function Index() {
 						) : (
 							'No instructions yet...'
 						)}
+					</div>
+					<div className="mb-10 p-10">
+						{data.workshopReadme.code?.length > 500 ? exerciseLinks : null}
 					</div>
 				</article>
 			</div>

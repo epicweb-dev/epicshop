@@ -4,7 +4,7 @@ import type {
 	V2_MetaFunction,
 } from '@remix-run/node'
 import { json } from '@remix-run/node'
-import { useLoaderData } from '@remix-run/react'
+import { Link, useLoaderData } from '@remix-run/react'
 import invariant from 'tiny-invariant'
 import {
 	getAppPageRoute,
@@ -39,7 +39,7 @@ export const meta: V2_MetaFunction<
 }
 
 export async function loader({ params, request }: DataFunctionArgs) {
-	const timings = makeTimings('exerciseFeedbackLoader')
+	const timings = makeTimings('exerciseFinishedLoader')
 	invariant(params.exerciseNumber, 'exerciseNumber is required')
 	const exercise = await getExercise(params.exerciseNumber, {
 		timings,
@@ -97,26 +97,29 @@ export const headers: HeadersFunction = ({ loaderHeaders, parentHeaders }) => {
 	return headers
 }
 
-export default function ExerciseFeedback() {
+export default function ExerciseFinished() {
 	const data = useLoaderData<typeof loader>()
 	const searchParams = new URLSearchParams([
 		['embedded', 'true'],
 		['entry.1836176234', data.workshopTitle],
 		['entry.428900931', data.exercise.title],
 	])
+	const exerciseNumber = data.exercise.exerciseNumber
+		.toString()
+		.padStart(2, '0')
 	return (
 		<main className="flex h-screen w-full flex-col">
 			<div className="grid w-full flex-grow grid-cols-2 overflow-y-auto">
 				<div className="flex flex-grow flex-col border-r border-t border-gray-200">
 					<h4 className="border-b border-gray-200 py-8 pl-[58px] font-mono text-sm font-medium uppercase leading-tight">
-						{`${data.exercise.exerciseNumber.toString().padStart(2, '0')}. ${
-							data.exercise.title
-						} `}{' '}
-						| Feedback
+						<Link to={`/${exerciseNumber}`} className="underline">
+							{`${exerciseNumber}. ${data.exercise.title}`}
+						</Link>
+						{` | Elaboration`}
 					</h4>
 					<iframe
 						className="flex-grow pt-4"
-						title="Feedback"
+						title="Elaboration"
 						src={`https://docs.google.com/forms/d/e/1FAIpQLSf3o9xyjQepTlOTH5Z7ZwkeSTdXh6YWI_RGc9KiyD3oUN0p6w/viewform?${searchParams.toString()}`}
 					>
 						<Loading />

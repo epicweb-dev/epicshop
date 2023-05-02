@@ -222,13 +222,11 @@ export async function loader({ request, params }: DataFunctionArgs) {
 				? {
 						to: `/${exerciseStepApp.exerciseNumber
 							.toString()
-							.padStart(2, '0')}/feedback`,
-						children: `${exercise.title} Feedback ➡️`,
+							.padStart(2, '0')}/finished`,
 				  }
 				: nextApp
 				? {
 						to: getAppPageRoute(nextApp),
-						children: `${nextApp.title} (${nextApp.type}) ➡️`,
 				  }
 				: null,
 			playground: playgroundApp
