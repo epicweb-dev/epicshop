@@ -4,12 +4,13 @@ import type { DataFunctionArgs } from '@remix-run/node'
 import { redirect } from '@remix-run/node'
 import invariant from 'tiny-invariant'
 import {
-	getAppById,
+	getAppByName,
 	getExercise,
 	getWorkshopTitle,
 	isExerciseStepApp,
 	isProblemApp,
 	isSolutionApp,
+	isPlaygroundApp,
 } from '~/utils/apps.server'
 import { getServerTimeHeader, makeTimings } from '~/utils/timing.server'
 
@@ -18,7 +19,7 @@ export async function loader({ params, request }: DataFunctionArgs) {
 	const { id: appId, testName } = params
 	invariant(appId, 'App id is required')
 	invariant(testName, 'Test name is required')
-	const app = await getAppById(appId, { request, timings })
+	const app = await getAppByName(appId, { request, timings })
 	if (!app) {
 		throw new Response(`App "${appId}" not found`, {
 			status: 404,
@@ -45,9 +46,16 @@ export async function loader({ params, request }: DataFunctionArgs) {
 			headers: { 'Server-Timing': getServerTimeHeader(timings) },
 		})
 	}
-	const testFileAppId = isProblemApp(app) ? app.solutionId : null
-	const testFileQueryString = testFileAppId
-		? `?fileAppId=${encodeURIComponent(testFileAppId)}`
+	let testFileAppName: string | null = app.name
+	if (isProblemApp(app)) {
+		testFileAppName = isProblemApp(app) ? app.solutionName : null
+	}
+	if (isPlaygroundApp(app)) {
+		const appBasis = await getAppByName(app.appName)
+		testFileAppName = isProblemApp(appBasis) ? appBasis.solutionName : null
+	}
+	const testFileQueryString = testFileAppName
+		? `?fileAppName=${encodeURIComponent(testFileAppName)}`
 		: ''
 	const testScriptPath = `${app.dev.baseUrl}${testFile}${testFileQueryString}`
 	const testScriptSrc = /* javascript */ `

@@ -155,7 +155,7 @@ export async function runAppDev(app: App) {
 }
 
 export async function runAppTests(app: App) {
-	const key = app.id
+	const key = app.name
 
 	if (app.test.type !== 'script') {
 		return { status: 'error', error: 'no-test' } as const
@@ -248,7 +248,7 @@ export function isAppRunning(app: App) {
 
 export function isTestRunning(app: App) {
 	try {
-		const testProcess = testProcesses.get(app.id)
+		const testProcess = testProcesses.get(app.name)
 		if (!testProcess) return false
 		if (testProcess.process === null) return false
 		testProcess.process.kill(0)
@@ -259,11 +259,11 @@ export function isTestRunning(app: App) {
 }
 
 export function getTestProcessEntry(app: App) {
-	return testProcesses.get(app.id)
+	return testProcesses.get(app.name)
 }
 
 export function clearTestProcessEntry(app: App) {
-	return testProcesses.delete(app.id)
+	return testProcesses.delete(app.name)
 }
 
 export function getProcesses() {

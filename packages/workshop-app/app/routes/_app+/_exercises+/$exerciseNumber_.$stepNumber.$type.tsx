@@ -172,8 +172,8 @@ export async function loader({ request, params }: DataFunctionArgs) {
 		.filter(isExerciseStepApp)
 		.filter(app => app.exerciseNumber === exerciseStepApp.exerciseNumber)
 	const isLastStep =
-		exerciseApps[exerciseApps.length - 1]?.id === exerciseStepApp.id
-	const isFirstStep = exerciseApps[0]?.id === exerciseStepApp.id
+		exerciseApps[exerciseApps.length - 1]?.name === exerciseStepApp.name
+	const isFirstStep = exerciseApps[0]?.name === exerciseStepApp.name
 
 	const nextApp = await getNextExerciseApp(exerciseStepApp, cacheOptions)
 	const prevApp = await getPrevExerciseApp(exerciseStepApp, cacheOptions)
@@ -234,7 +234,6 @@ export async function loader({ request, params }: DataFunctionArgs) {
 			playground: playgroundApp
 				? {
 						type: 'playground',
-						id: playgroundApp.id,
 						fullPath: playgroundApp.fullPath,
 						dev: playgroundApp.dev,
 						test: playgroundApp.test,
@@ -247,7 +246,6 @@ export async function loader({ request, params }: DataFunctionArgs) {
 			problem: problemApp
 				? {
 						type: 'problem',
-						id: problemApp.id,
 						fullPath: problemApp.fullPath,
 						dev: problemApp.dev,
 						test: problemApp.test,
@@ -259,7 +257,6 @@ export async function loader({ request, params }: DataFunctionArgs) {
 			solution: solutionApp
 				? {
 						type: 'solution',
-						id: solutionApp.id,
 						fullPath: solutionApp.fullPath,
 						dev: solutionApp.dev,
 						test: solutionApp.test,
@@ -524,7 +521,11 @@ export default function ExercisePartRoute() {
 							value={tabs[3]}
 							className="radix-state-inactive:hidden flex max-h-[calc(100vh-53px)] flex-grow items-start justify-center overflow-hidden"
 						>
-							<Tests appInfo={data.playground} />
+							<Tests
+								appInfo={data.playground}
+								problemAppName={data.problem?.name}
+								allApps={data.allApps}
+							/>
 						</Tabs.Content>
 						<Tabs.Content
 							value={tabs[4]}
@@ -595,6 +596,31 @@ function Playground({
 	problemAppName?: string
 	allApps: Array<{ name: string; displayName: string }>
 }) {
+	return (
+		<PlaygroundWindow
+			appInfo={playgroundAppInfo}
+			problemAppName={problemAppName}
+			allApps={allApps}
+		>
+			<Preview
+				appInfo={playgroundAppInfo}
+				inBrowserBrowserRef={inBrowserBrowserRef}
+			/>
+		</PlaygroundWindow>
+	)
+}
+
+function PlaygroundWindow({
+	appInfo: playgroundAppInfo,
+	problemAppName,
+	allApps,
+	children,
+}: {
+	appInfo: SerializeFrom<typeof loader>['playground']
+	problemAppName?: string
+	allApps: Array<{ name: string; displayName: string }>
+	children: React.ReactNode
+}) {
 	const playgroundLinkedUI =
 		playgroundAppInfo?.appName === problemAppName ? (
 			<Icon
@@ -628,35 +654,34 @@ function Playground({
 				/>
 			</div>
 			<div className="flex flex-1 flex-grow items-center justify-center">
-				<Preview
-					appInfo={playgroundAppInfo}
-					inBrowserBrowserRef={inBrowserBrowserRef}
-				/>
+				{children}
 			</div>
 		</div>
 	)
 }
 
 function Tests({
-	appInfo,
+	appInfo: playgroundAppInfo,
+	problemAppName,
+	allApps,
 }: {
 	appInfo: SerializeFrom<typeof loader>['playground']
+	problemAppName?: string
+	allApps: Array<{ name: string; displayName: string }>
 }) {
 	const [inBrowserTestKey, setInBrowserTestKey] = useState(0)
-	if (!appInfo || appInfo.test.type === 'none') {
-		return <p>No tests here. Sorry.</p>
+	let testUI = <p>No tests here. Sorry.</p>
+	if (playgroundAppInfo?.test.type === 'script') {
+		testUI = <TestOutput name={playgroundAppInfo.name} />
 	}
-	if (appInfo.test.type === 'script') {
-		return <TestOutput id={appInfo.id} />
-	}
-	if (appInfo.test.type === 'browser') {
-		const { baseUrl } = appInfo.test
-		return (
+	if (playgroundAppInfo?.test.type === 'browser') {
+		const { baseUrl } = playgroundAppInfo.test
+		testUI = (
 			<div
 				className="scrollbar-thin scrollbar-thumb-gray-300 flex h-full w-full flex-grow flex-col overflow-y-auto"
 				key={inBrowserTestKey}
 			>
-				{appInfo.test.testFiles.map(testFile => {
+				{playgroundAppInfo.test.testFiles.map(testFile => {
 					return (
 						<div key={testFile}>
 							<InBrowserTestRunner baseUrl={baseUrl} testFile={testFile} />
@@ -664,7 +689,7 @@ function Tests({
 					)
 				})}
 				<div className="px-3 py-[21px]">
-					{appInfo.type === 'solution' ? (
+					{playgroundAppInfo.type === 'solution' ? (
 						<div>NOTE: these tests are running on the solution</div>
 					) : null}
 					<button
@@ -677,7 +702,15 @@ function Tests({
 			</div>
 		)
 	}
-	return null
+	return (
+		<PlaygroundWindow
+			appInfo={playgroundAppInfo}
+			problemAppName={problemAppName}
+			allApps={allApps}
+		>
+			{testUI}
+		</PlaygroundWindow>
+	)
 }
 
 export function ErrorBoundary() {

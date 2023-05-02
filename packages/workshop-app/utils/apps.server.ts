@@ -47,8 +47,6 @@ type Exercise = {
 }
 
 type BaseApp = {
-	/** a unique identifier for the problem app (based on its name + step number for exercise part apps and just the name for examples) */
-	id: string
 	/** a unique identifier for the app (comes from the relative path of the app directory (replacing "/" with "__sep__")) */
 	name: string
 	/** the title of the app used for display (comes from the package.json title prop) */
@@ -83,14 +81,14 @@ export type BaseExerciseStepApp = BaseApp & {
 export type ProblemApp = Prettyify<
 	BaseExerciseStepApp & {
 		type: 'problem'
-		solutionId: string | null
+		solutionName: string | null
 	}
 >
 
 export type SolutionApp = Prettyify<
 	BaseExerciseStepApp & {
 		type: 'solution'
-		problemId: string | null
+		problemName: string | null
 	}
 >
 
@@ -110,7 +108,6 @@ export function isApp(app: any): app is App {
 	return (
 		app &&
 		typeof app === 'object' &&
-		typeof app.id === 'string' &&
 		typeof app.name === 'string' &&
 		typeof app.title === 'string' &&
 		typeof app.dirName === 'string' &&
@@ -238,30 +235,21 @@ async function compileReadme(appDir: string, number?: number) {
 }
 
 function getAppDirInfo(appDir: string) {
-	const regex = /^(?<range>(\d+-?)+)\.(problem|solution)(\.(?<subtitle>.*))?$/
+	const regex = /^(?<stepNumber>\d+)\.(problem|solution)(\.(?<subtitle>.*))?$/
 	const match = regex.exec(appDir)
 	if (!match || !match.groups) {
 		throw new Error(`App directory "${appDir}" does not match regex "${regex}"`)
 	}
-	const { range, subtitle } = match.groups
-	if (!range) {
-		throw new Error(`App directory "${appDir}" does not match regex "${regex}"`)
+	const { stepNumber: stepNumberString, subtitle } = match.groups
+	const stepNumber = Number(stepNumberString)
+	if (!stepNumber || !Number.isFinite(stepNumber)) {
+		throw new Error(
+			`Cannot identify the stepNumber for app directory "${appDir}" with regex "${regex}"`,
+		)
 	}
 
-	const [start, end] = range.split('-').map(Number)
-	if (!start || !Number.isFinite(start)) {
-		throw new Error(`App directory "${appDir}" does not match regex "${regex}"`)
-	}
-
-	if (end && !Number.isFinite(end)) {
-		throw new Error(`App directory "${appDir}" does not match regex "${regex}"`)
-	}
-
-	const stepNumbers = end
-		? Array.from({ length: end - start + 1 }, (_, i) => i + start)
-		: [start]
 	const type = match[2] as 'problem' | 'solution'
-	return { stepNumbers, type, subtitle }
+	return { stepNumber: stepNumber, type, subtitle }
 }
 
 function extractExerciseNumber(dir: string) {
@@ -424,12 +412,12 @@ function getFullPathFromAppName(appName: string) {
 
 async function findSolutionDir({
 	fullPath,
-	stepNumber,
 }: {
 	fullPath: string
-	stepNumber: number
 }): Promise<string | null> {
-	if (path.basename(fullPath).includes('.problem')) {
+	const dirName = path.basename(fullPath)
+	if (dirName.includes('.problem')) {
+		const { stepNumber } = getAppDirInfo(dirName)
 		const paddedStepNumber = stepNumber.toString().padStart(2, '0')
 		const parentDir = path.dirname(fullPath)
 		const siblingDirs = await fs.promises.readdir(parentDir)
@@ -442,10 +430,10 @@ async function findSolutionDir({
 	} else if (fullPath.endsWith('playground')) {
 		const appName = await getPlaygroundAppName()
 		if (appName) {
-			return findSolutionDir({
+			const solDir = await findSolutionDir({
 				fullPath: getFullPathFromAppName(appName),
-				stepNumber,
 			})
+			return solDir
 		}
 	}
 	return null
@@ -453,12 +441,12 @@ async function findSolutionDir({
 
 async function findProblemDir({
 	fullPath,
-	stepNumber,
 }: {
 	fullPath: string
-	stepNumber: number
 }): Promise<string | null> {
-	if (path.basename(fullPath).includes('.solution')) {
+	const dirName = path.basename(fullPath)
+	if (dirName.includes('.solution')) {
+		const { stepNumber } = getAppDirInfo(dirName)
 		const paddedStepNumber = stepNumber.toString().padStart(2, '0')
 		const parentDir = path.dirname(fullPath)
 		const siblingDirs = await fs.promises.readdir(parentDir)
@@ -473,7 +461,6 @@ async function findProblemDir({
 		if (appName) {
 			return findProblemDir({
 				fullPath: getFullPathFromAppName(appName),
-				stepNumber,
 			})
 		}
 	}
@@ -482,17 +469,10 @@ async function findProblemDir({
 
 async function getTestInfo({
 	fullPath,
-	id,
-	isMultiStep = false,
-	stepNumber = 1,
 }: {
 	fullPath: string
-	id: string
-	isMultiStep?: boolean
-	stepNumber?: number
 }): Promise<BaseApp['test']> {
-	const paddedStepNumber = stepNumber.toString().padStart(2, '0')
-	const testScriptName = isMultiStep ? `test:${paddedStepNumber}` : 'test'
+	const testScriptName = 'test'
 	const hasPkgJson = await exists(path.join(fullPath, 'package.json'))
 	const testScript = hasPkgJson
 		? await getPkgProp(
@@ -510,15 +490,13 @@ async function getTestInfo({
 	}
 
 	// tests are found in the corresponding solution directory
-	const solutionDir = await findSolutionDir({ fullPath, stepNumber })
-	if (solutionDir) {
-		fullPath = solutionDir
-	}
+	const testAppFullPath = (await findSolutionDir({ fullPath })) ?? fullPath
 
-	const dirList = await fs.promises.readdir(fullPath)
+	const dirList = await fs.promises.readdir(testAppFullPath)
 	const testFiles = dirList.filter(item => item.includes('.test.'))
 	if (testFiles.length) {
-		return { type: 'browser', baseUrl: `/app/${id}/test/`, testFiles }
+		const name = getAppName(fullPath)
+		return { type: 'browser', baseUrl: `/app/${name}/test/`, testFiles }
 	}
 
 	return { type: 'none' }
@@ -527,11 +505,9 @@ async function getTestInfo({
 async function getDevInfo({
 	fullPath,
 	portNumber,
-	id,
 }: {
 	fullPath: string
 	portNumber: number
-	id: string
 }): Promise<BaseApp['dev']> {
 	const hasPkgJson = await exists(path.join(fullPath, 'package.json'))
 	const hasDevScript = hasPkgJson
@@ -545,7 +521,8 @@ async function getDevInfo({
 			portNumber,
 		}
 	}
-	return { type: 'browser', baseUrl: `/app/${id}/` }
+	const name = getAppName(fullPath)
+	return { type: 'browser', baseUrl: `/app/${name}/` }
 }
 
 async function getPlaygroundApp({
@@ -559,6 +536,7 @@ async function getPlaygroundApp({
 		key,
 		cache: playgroundAppCache,
 		ttl: 1000 * 60 * 60 * 24,
+
 		timings,
 		timingKey: playgroundDir.replace(`${playgroundDir}${path.sep}`, ''),
 		request,
@@ -575,11 +553,10 @@ async function getPlaygroundApp({
 			const portNumber = 4000
 			const [compiledReadme, test, dev] = await Promise.all([
 				compileReadme(playgroundDir),
-				getTestInfo({ fullPath: playgroundDir, id: name }),
-				getDevInfo({ fullPath: playgroundDir, portNumber, id: name }),
+				getTestInfo({ fullPath: playgroundDir }),
+				getDevInfo({ fullPath: playgroundDir, portNumber }),
 			])
 			return {
-				id: name,
 				name,
 				appName,
 				type: 'playground',
@@ -593,8 +570,11 @@ async function getPlaygroundApp({
 				instructionsCode: compiledReadme?.code,
 				test,
 				dev,
-			}
+			} as const
 		},
+	}).catch(error => {
+		console.error(error)
+		return null
 	})
 }
 
@@ -607,7 +587,6 @@ async function getExampleAppFromPath(
 	const name = getAppName(fullPath)
 	const portNumber = 8000 + index
 	return {
-		id: name,
 		name,
 		type: 'example',
 		fullPath,
@@ -615,8 +594,8 @@ async function getExampleAppFromPath(
 		title: compiledReadme?.title ?? name,
 		dirName,
 		instructionsCode: compiledReadme?.code,
-		test: await getTestInfo({ fullPath, id: name }),
-		dev: await getDevInfo({ fullPath, portNumber, id: name }),
+		test: await getTestInfo({ fullPath }),
+		dev: await getDevInfo({ fullPath, portNumber }),
 	}
 }
 
@@ -637,6 +616,7 @@ async function getExampleApps({
 				key,
 				cache: exampleAppCache,
 				ttl: 1000 * 60 * 60 * 24,
+
 				timings,
 				timingKey: exampleDir.replace(`${examplesDir}${path.sep}`, ''),
 				request,
@@ -644,63 +624,52 @@ async function getExampleApps({
 					exampleDir,
 					await exampleAppCache.get(key),
 				),
-				getFreshValue: () => getExampleAppFromPath(exampleDir, index),
+				getFreshValue: () =>
+					getExampleAppFromPath(exampleDir, index).catch(error => {
+						console.error(error)
+						return null
+					}),
 			})
 		},
 		{ concurrency: 1 },
 	)
-	return exampleApps.flat()
+	return exampleApps.filter(typedBoolean)
 }
 
 async function getSolutionAppFromPath(
 	fullPath: string,
-): Promise<Array<SolutionApp> | null> {
+): Promise<SolutionApp | null> {
 	const dirName = path.basename(fullPath)
 	const parentDirName = path.basename(path.dirname(fullPath))
 	const exerciseNumber = extractExerciseNumber(parentDirName)
 	if (!exerciseNumber) return null
 
 	const name = getAppName(fullPath)
-	const appInfo = getAppDirInfo(dirName)
-	const firstStepNumber = appInfo.stepNumbers[0]
-	if (firstStepNumber === undefined) {
-		throw new Error(
-			`invalid solution dir name: ${dirName} (could not find first step number)`,
-		)
-	}
-	const portNumber = 7000 + (exerciseNumber - 1) * 10 + firstStepNumber
+	const { stepNumber } = getAppDirInfo(dirName)
+	const portNumber = 7000 + (exerciseNumber - 1) * 10 + stepNumber
 	const compiledReadme = await compileReadme(fullPath)
-	return Promise.all(
-		appInfo.stepNumbers.map(async stepNumber => {
-			const isMultiStep = appInfo.stepNumbers.length > 1
-			const id = `${name}-${stepNumber}`
-			const problemDir = await findProblemDir({
-				fullPath,
-				stepNumber,
-			})
-			const problemName = problemDir ? getAppName(problemDir) : null
-			const problemId = problemName ? `${problemName}-${stepNumber}` : null
-			const [test, dev] = await Promise.all([
-				getTestInfo({ fullPath, isMultiStep, stepNumber, id }),
-				getDevInfo({ fullPath, portNumber, id }),
-			])
-			return {
-				id,
-				name,
-				title: compiledReadme?.title ?? name,
-				type: 'solution',
-				problemId,
-				exerciseNumber,
-				stepNumber,
-				dirName,
-				fullPath,
-				relativePath: fullPath.replace(`${getWorkshopRoot()}${path.sep}`, ''),
-				instructionsCode: compiledReadme?.code,
-				test,
-				dev,
-			}
-		}),
-	)
+	const problemDir = await findProblemDir({
+		fullPath,
+	})
+	const problemName = problemDir ? getAppName(problemDir) : null
+	const [test, dev] = await Promise.all([
+		getTestInfo({ fullPath }),
+		getDevInfo({ fullPath, portNumber }),
+	])
+	return {
+		name,
+		title: compiledReadme?.title ?? name,
+		type: 'solution',
+		problemName,
+		exerciseNumber,
+		stepNumber,
+		dirName,
+		fullPath,
+		relativePath: fullPath.replace(`${getWorkshopRoot()}${path.sep}`, ''),
+		instructionsCode: compiledReadme?.code,
+		test,
+		dev,
+	}
 }
 
 async function getSolutionApps({
@@ -722,67 +691,57 @@ async function getSolutionApps({
 				timingKey: solutionDir.replace(`${exercisesDir}${path.sep}`, ''),
 				request,
 				ttl: 1000 * 60 * 60 * 24,
+
 				forceFresh: getForceFreshForDir(
 					solutionDir,
 					await solutionAppCache.get(solutionDir),
 				),
-				getFreshValue: () => getSolutionAppFromPath(solutionDir),
+				getFreshValue: () =>
+					getSolutionAppFromPath(solutionDir).catch(error => {
+						console.error(error)
+						return null
+					}),
 			})
 		},
 		{ concurrency: 1 },
 	)
-	return solutionApps.filter(typedBoolean).flat()
+	return solutionApps.filter(typedBoolean)
 }
 
 async function getProblemAppFromPath(
 	fullPath: string,
-): Promise<Array<ProblemApp> | null> {
+): Promise<ProblemApp | null> {
 	const dirName = path.basename(fullPath)
 	const parentDirName = path.basename(path.dirname(fullPath))
 	const exerciseNumber = extractExerciseNumber(parentDirName)
 	if (!exerciseNumber) return null
 
 	const name = getAppName(fullPath)
-	const appInfo = getAppDirInfo(dirName)
-	const firstStepNumber = appInfo.stepNumbers[0]
-	if (firstStepNumber === undefined) {
-		throw new Error(
-			`invalid problem dir name: ${dirName} (could not find first step number)`,
-		)
+	const { stepNumber } = getAppDirInfo(dirName)
+	const portNumber = 6000 + (exerciseNumber - 1) * 10 + stepNumber
+	const compiledReadme = await compileReadme(fullPath, stepNumber)
+	const solutionDir = await findSolutionDir({
+		fullPath,
+	})
+	const solutionName = solutionDir ? getAppName(solutionDir) : null
+	const [test, dev] = await Promise.all([
+		getTestInfo({ fullPath }),
+		getDevInfo({ fullPath, portNumber }),
+	])
+	return {
+		solutionName,
+		name,
+		title: compiledReadme?.title ?? name,
+		type: 'problem',
+		exerciseNumber,
+		stepNumber,
+		dirName,
+		fullPath,
+		relativePath: fullPath.replace(`${getWorkshopRoot()}${path.sep}`, ''),
+		instructionsCode: compiledReadme?.code,
+		test,
+		dev,
 	}
-	const portNumber = 6000 + (exerciseNumber - 1) * 10 + firstStepNumber
-	return Promise.all(
-		appInfo.stepNumbers.map(async stepNumber => {
-			const compiledReadme = await compileReadme(fullPath, stepNumber)
-			const isMultiStep = appInfo.stepNumbers.length > 1
-			const id = `${name}-${stepNumber}`
-			const solutionDir = await findSolutionDir({
-				fullPath,
-				stepNumber,
-			})
-			const solutionName = solutionDir ? getAppName(solutionDir) : null
-			const solutionId = solutionName ? `${solutionName}-${stepNumber}` : null
-			const [test, dev] = await Promise.all([
-				getTestInfo({ fullPath, isMultiStep, stepNumber, id }),
-				getDevInfo({ fullPath, portNumber, id }),
-			])
-			return {
-				id,
-				solutionId,
-				name,
-				title: compiledReadme?.title ?? name,
-				type: 'problem',
-				exerciseNumber,
-				stepNumber,
-				dirName,
-				fullPath,
-				relativePath: fullPath.replace(`${getWorkshopRoot()}${path.sep}`, ''),
-				instructionsCode: compiledReadme?.code,
-				test,
-				dev,
-			}
-		}),
-	)
 }
 
 async function getProblemApps({
@@ -804,11 +763,16 @@ async function getProblemApps({
 				timingKey: problemDir.replace(`${exercisesDir}${path.sep}`, ''),
 				request,
 				ttl: 1000 * 60 * 60 * 24,
+
 				forceFresh: getForceFreshForDir(
 					problemDir,
 					await problemAppCache.get(problemDir),
 				),
-				getFreshValue: () => getProblemAppFromPath(problemDir),
+				getFreshValue: () =>
+					getProblemAppFromPath(problemDir).catch(error => {
+						console.error(error)
+						return null
+					}),
 			})
 		},
 		{ concurrency: 1 },
@@ -892,22 +856,14 @@ export async function getAppByName(
 	return apps.find(a => a.name === name)
 }
 
-export async function getAppById(
-	id: string,
-	{ request, timings }: CachifiedOptions = {},
-) {
-	const apps = await getApps({ request, timings })
-	return apps.find(a => a.id === id)
-}
-
 export async function getNextExerciseApp(
 	app: ExerciseStepApp,
 	{ request, timings }: CachifiedOptions = {},
 ) {
 	const apps = (await getApps({ request, timings })).filter(isExerciseStepApp)
-	const index = apps.findIndex(a => a.id === app.id)
+	const index = apps.findIndex(a => a.name === app.name)
 	if (index === -1) {
-		throw new Error(`Could not find app ${app.id}`)
+		throw new Error(`Could not find app ${app.name}`)
 	}
 	const nextApp = apps[index + 1]
 	return nextApp ? nextApp : null
@@ -919,9 +875,9 @@ export async function getPrevExerciseApp(
 ) {
 	const apps = (await getApps({ request, timings })).filter(isExerciseStepApp)
 
-	const index = apps.findIndex(a => a.id === app.id)
+	const index = apps.findIndex(a => a.name === app.name)
 	if (index === -1) {
-		throw new Error(`Could not find app ${app.id}`)
+		throw new Error(`Could not find app ${app.name}`)
 	}
 	const prevApp = apps[index - 1]
 	return prevApp ? prevApp : null

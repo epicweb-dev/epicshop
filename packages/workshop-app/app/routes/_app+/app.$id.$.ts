@@ -6,19 +6,19 @@ import esbuild from 'esbuild'
 import type { DataFunctionArgs } from '@remix-run/node'
 import { redirect } from 'react-router'
 import invariant from 'tiny-invariant'
-import { getAppById } from '~/utils/apps.server'
+import { getAppByName } from '~/utils/apps.server'
 
 export async function loader({ params, request }: DataFunctionArgs) {
 	const { id: appId, '*': splat } = params
 	const url = new URL(request.url)
-	const fileAppId = url.searchParams.get('fileAppId')
+	const fileAppName = url.searchParams.get('fileAppName')
 	invariant(appId, 'App id is required')
 	invariant(splat, 'Splat is required')
-	const app = await getAppById(appId)
-	const fileApp = fileAppId ? await getAppById(fileAppId) : app
+	const app = await getAppByName(appId)
+	const fileApp = fileAppName ? await getAppByName(fileAppName) : app
 	if (!fileApp || !app) {
 		throw new Response(
-			`Apps with ids "${fileAppId}" (resolveDir) and "${appId}" (app) for resource "${splat}" not found`,
+			`Apps with ids "${fileAppName}" (resolveDir) and "${appId}" (app) for resource "${splat}" not found`,
 			{ status: 404 },
 		)
 	}
@@ -37,7 +37,7 @@ export async function loader({ params, request }: DataFunctionArgs) {
 			stdin: {
 				contents: await fs.promises.readFile(filePath, 'utf-8'),
 
-				// NOTE: if the fileAppId is specified, then we're resolving to a different
+				// NOTE: if the fileAppName is specified, then we're resolving to a different
 				// app than the one we're serving the file from. We do this so the tests
 				// can live in the solution directory, but be run against the problem
 				resolveDir: app.fullPath,

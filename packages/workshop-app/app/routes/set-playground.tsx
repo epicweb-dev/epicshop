@@ -7,7 +7,6 @@ import {
 	getApps,
 	isPlaygroundApp,
 	setPlayground,
-	getAppById,
 	isProblemApp,
 	isSolutionApp,
 } from '~/utils/apps.server'
@@ -42,10 +41,10 @@ export async function action({ request }: DataFunctionArgs) {
 		)
 	}
 	const converseApp =
-		isProblemApp(app) && app.solutionId
-			? await getAppById(app.solutionId)
-			: isSolutionApp(app) && app.problemId
-			? await getAppById(app.problemId)
+		isProblemApp(app) && app.solutionName
+			? await getAppByName(app.solutionName)
+			: isSolutionApp(app) && app.problemName
+			? await getAppByName(app.problemName)
 			: undefined
 	try {
 		await setPlayground(app.fullPath)
@@ -114,7 +113,7 @@ export function PlaygroundChooser({
 			<Select.Trigger
 				aria-label="Select app for playground"
 				className={clsx(
-					'radix-placeholder:text-gray-500 flex h-full w-full items-center justify-between px-3 text-left focus-visible:outline-none',
+					'radix-placeholder:text-gray-500 flex h-full w-full items-center justify-between text-left focus-visible:outline-none',
 					fetcher.state !== 'idle' ? 'cursor-progress' : null,
 					fetcher.data?.status === 'error' ? 'cursor-not-allowed' : null,
 				)}

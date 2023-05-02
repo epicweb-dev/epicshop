@@ -7,7 +7,7 @@ import { useEffect, useReducer, useRef } from 'react'
 import { eventStream, useEventSource } from 'remix-utils'
 import { z } from 'zod'
 import Icon from '~/components/icons'
-import { getAppById } from '~/utils/apps.server'
+import { getAppByName } from '~/utils/apps.server'
 import {
 	clearTestProcessEntry,
 	getTestProcessEntry,
@@ -18,15 +18,15 @@ import {
 const testActionSchema = z.union([
 	z.object({
 		intent: z.literal('run'),
-		id: z.string(),
+		name: z.string(),
 	}),
 	z.object({
 		intent: z.literal('stop'),
-		id: z.string(),
+		name: z.string(),
 	}),
 	z.object({
 		intent: z.literal('clear'),
-		id: z.string(),
+		name: z.string(),
 	}),
 ])
 
@@ -61,11 +61,11 @@ type TestEventQueue = z.infer<typeof testEventQueueSchema>
 
 export async function loader({ request }: DataFunctionArgs) {
 	const url = new URL(request.url)
-	const id = url.searchParams.get('id')
-	if (!id) {
-		return json({ error: 'Missing id' }, { status: 400 })
+	const name = url.searchParams.get('name')
+	if (!name) {
+		return json({ error: 'Missing name' }, { status: 400 })
 	}
-	const app = await getAppById(id)
+	const app = await getAppByName(name)
 	if (!app) {
 		return json({ error: 'App not found' }, { status: 404 })
 	}
@@ -142,7 +142,7 @@ export async function action({ request }: DataFunctionArgs) {
 	const formData = await request.formData()
 	const result = testActionSchema.safeParse({
 		intent: formData.get('intent'),
-		id: formData.get('id'),
+		name: formData.get('name'),
 	})
 	if (!result.success) {
 		return json(
@@ -150,7 +150,7 @@ export async function action({ request }: DataFunctionArgs) {
 			{ status: 400 },
 		)
 	}
-	const app = await getAppById(result.data.id)
+	const app = await getAppByName(result.data.name)
 	if (!app) {
 		return json({ success: false, error: 'App not found' }, { status: 404 })
 	}
@@ -177,7 +177,7 @@ function simpleReducer<State>(prev: State, getNext: (prev: State) => State) {
 	return getNext(prev)
 }
 
-export function TestOutput({ id }: { id: string }) {
+export function TestOutput({ name }: { name: string }) {
 	type State = {
 		/** version is used to trigger an unsubscribe and resubscribe to the event source */
 		version: number
@@ -193,7 +193,7 @@ export function TestOutput({ id }: { id: string }) {
 	})
 	const { version, isRunning, exitCode, lines } = state
 	const lastMessage = useEventSource(
-		`/test?${new URLSearchParams({ id })}&v=${version}`,
+		`/test?${new URLSearchParams({ name })}&v=${version}`,
 	)
 	useEffect(() => {
 		if (!lastMessage) return
@@ -238,7 +238,7 @@ export function TestOutput({ id }: { id: string }) {
 				<div className="flex h-full items-center">
 					{!isRunning && (
 						<TestRunner
-							id={id}
+							name={name}
 							onRun={() => {
 								dispatch(prev => ({
 									...prev,
@@ -258,7 +258,7 @@ export function TestOutput({ id }: { id: string }) {
 							/>
 						</div>
 					)}
-					{isRunning && <StopTest id={id} />}
+					{isRunning && <StopTest name={name} />}
 				</div>
 
 				{!isRunning && exitCode !== undefined && (
@@ -270,7 +270,7 @@ export function TestOutput({ id }: { id: string }) {
 				)}
 				{!isRunning && exitCode !== undefined && (
 					<ClearTest
-						id={id}
+						name={name}
 						onClear={() => {
 							dispatch(prev => ({
 								...prev,
@@ -301,7 +301,13 @@ export function TestOutput({ id }: { id: string }) {
 	)
 }
 
-export function TestRunner({ id, onRun }: { id: string; onRun?: () => void }) {
+export function TestRunner({
+	name,
+	onRun,
+}: {
+	name: string
+	onRun?: () => void
+}) {
 	const fetcher = useFetcher<typeof action>()
 	const latestOnRun = useRef(onRun)
 	useEffect(() => {
@@ -314,7 +320,7 @@ export function TestRunner({ id, onRun }: { id: string; onRun?: () => void }) {
 	}, [fetcher.data])
 	return (
 		<fetcher.Form method="POST" action="/test" className="h-full">
-			<input type="hidden" name="id" value={id} />
+			<input type="hidden" name="name" value={name} />
 			<button
 				type="submit"
 				name="intent"
@@ -333,10 +339,10 @@ export function TestRunner({ id, onRun }: { id: string; onRun?: () => void }) {
 }
 
 export function ClearTest({
-	id,
+	name,
 	onClear,
 }: {
-	id: string
+	name: string
 	onClear?: () => void
 }) {
 	const fetcher = useFetcher<typeof action>()
@@ -351,7 +357,7 @@ export function ClearTest({
 	}, [fetcher.data])
 	return (
 		<fetcher.Form method="POST" action="/test" className="h-full">
-			<input type="hidden" name="id" value={id} />
+			<input type="hidden" name="name" value={name} />
 			<button
 				type="submit"
 				name="intent"
@@ -374,7 +380,13 @@ export function ClearTest({
 	)
 }
 
-export function StopTest({ id, onStop }: { id: string; onStop?: () => void }) {
+export function StopTest({
+	name,
+	onStop,
+}: {
+	name: string
+	onStop?: () => void
+}) {
 	const fetcher = useFetcher<typeof action>()
 	const latestOnStop = useRef(onStop)
 	useEffect(() => {
@@ -387,7 +399,7 @@ export function StopTest({ id, onStop }: { id: string; onStop?: () => void }) {
 	}, [fetcher.data])
 	return (
 		<fetcher.Form method="POST" action="/test" className="h-full">
-			<input type="hidden" name="id" value={id} />
+			<input type="hidden" name="name" value={name} />
 			<button
 				type="submit"
 				name="intent"

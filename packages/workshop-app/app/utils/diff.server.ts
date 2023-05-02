@@ -181,13 +181,13 @@ async function prepareForDiff(app1: App, app2: App) {
 	const app1CopyPath = path.join(
 		diffTmpDir,
 		path.basename(workshopRoot),
-		app1.id,
+		app1.name,
 		id,
 	)
 	const app2CopyPath = path.join(
 		diffTmpDir,
 		path.basename(workshopRoot),
-		app2.id,
+		app2.name,
 		id,
 	)
 	// if everything except the `name` property of the `package.json` is the same

@@ -1,18 +1,18 @@
 import type { DataFunctionArgs } from '@remix-run/node'
 import invariant from 'tiny-invariant'
-import { getAppById } from '~/utils/apps.server'
+import { getAppByName } from '~/utils/apps.server'
 import { redirect } from 'react-router'
 
 export async function loader({ params, request }: DataFunctionArgs) {
 	const { id: appId } = params
 	const url = new URL(request.url)
-	const fileAppId = url.searchParams.get('fileAppId')
+	const fileAppName = url.searchParams.get('fileAppName')
 	invariant(appId, 'App id is required')
-	const app = await getAppById(appId)
-	const fileApp = fileAppId ? await getAppById(fileAppId) : app
+	const app = await getAppByName(appId)
+	const fileApp = fileAppName ? await getAppByName(fileAppName) : app
 	if (!app || !fileApp) {
 		throw new Response(
-			`Apps with ids "${fileAppId}" (resolveDir) or "${appId}" (app) not found`,
+			`Apps with ids "${fileAppName}" (resolveDir) or "${appId}" (app) not found`,
 			{ status: 404 },
 		)
 	}

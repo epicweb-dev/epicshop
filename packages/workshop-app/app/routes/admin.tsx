@@ -130,7 +130,7 @@ export default function AdminLayout() {
 				<h2>Apps</h2>
 				<ul className="scrollbar-thin scrollbar-thumb-gray-300 max-h-48 list-none overflow-y-scroll border-2 p-8">
 					{data.apps.map(app => (
-						<li key={app.id} className="flex items-center gap-2 py-1">
+						<li key={app.name} className="flex items-center gap-2 py-1">
 							{data.processes[app.name] ? (
 								<Pinger status="running" />
 							) : (

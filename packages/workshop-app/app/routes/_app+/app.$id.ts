@@ -4,7 +4,7 @@ import type { DataFunctionArgs } from '@remix-run/node'
 import { redirect } from '@remix-run/node'
 import invariant from 'tiny-invariant'
 import {
-	getAppById,
+	getAppByName,
 	isExerciseStepApp,
 	isSolutionApp,
 	isProblemApp,
@@ -18,7 +18,7 @@ export async function loader({ request, params }: DataFunctionArgs) {
 	const timings = makeTimings('app')
 	const { id: appId } = params
 	invariant(appId, 'App id is required')
-	const app = await getAppById(appId, { request, timings })
+	const app = await getAppByName(appId, { request, timings })
 	if (!app) {
 		throw new Response(`App "${appId}" not found`, {
 			status: 404,
