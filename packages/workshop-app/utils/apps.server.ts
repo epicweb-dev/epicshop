@@ -17,6 +17,12 @@ import { compileMdx } from './compile-mdx.server'
 import { getOptionalWatcher, getWatcher } from './change-tracker'
 import { requireCachePurgeEmitter } from './purge-require-cache.server'
 import { getServerTimeHeader, type Timings } from './timing.server'
+import {
+	closeProcess,
+	isAppRunning,
+	runAppDev,
+	waitOnApp,
+} from './process-manager.server'
 
 const globPromise = util.promisify(glob)
 
@@ -895,6 +901,13 @@ export async function setPlayground(srcDir: string) {
 	const destDir = path.join(getWorkshopRoot(), 'playground')
 	const playgroundFiles = path.join(destDir, '**')
 	getOptionalWatcher()?.unwatch(playgroundFiles)
+	const playgroundApp = await getAppByName('playground')
+	const playgroundIsRunning = playgroundApp
+		? isAppRunning(playgroundApp)
+		: false
+	if (playgroundApp && playgroundIsRunning) {
+		await closeProcess(playgroundApp.name)
+	}
 
 	const basename = path.basename(srcDir)
 	// Copy the contents of the source directory to the destination directory recursively
@@ -955,9 +968,13 @@ export async function setPlayground(srcDir: string) {
 			stdio: 'inherit',
 		})
 	}
-
 	getOptionalWatcher()?.add(playgroundFiles)
 	modifiedTimes.set(destDir, Date.now())
+
+	if (playgroundApp && playgroundIsRunning) {
+		await runAppDev(playgroundApp)
+		await waitOnApp(playgroundApp)
+	}
 }
 
 export async function getPlaygroundAppName() {

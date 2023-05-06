@@ -16,6 +16,8 @@
     "iframe-sync.js",
     "playwright.d.ts",
     "playwright.js",
+    "process-manager.server.d.ts",
+    "process-manager.server.js",
     "test.d.ts",
     "test.js",
     "build",
