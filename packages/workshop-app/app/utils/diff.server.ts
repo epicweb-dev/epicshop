@@ -256,6 +256,10 @@ export async function getDiffFiles(
 	return result
 }
 
+function getAppTestFiles(app: App) {
+	return app.test.type === 'browser' ? app.test.testFiles : []
+}
+
 export async function getDiffFilesImpl(app1: App, app2: App) {
 	const { execa } = await import('execa')
 	if (app1.name === app2.name) {
@@ -282,6 +286,10 @@ export async function getDiffFilesImpl(app1: App, app2: App) {
 
 	const parsed = parseGitDiff(diffOutput)
 
+	const testFiles = Array.from(
+		new Set([...getAppTestFiles(app1), ...getAppTestFiles(app2)]),
+	)
+
 	return parsed.files
 		.map(file => ({
 			// prettier-ignore
@@ -290,7 +298,7 @@ export async function getDiffFilesImpl(app1: App, app2: App) {
 				file.type === 'RenamedFile' ? file.pathBefore : file.path,
 			),
 		}))
-		.filter(typedBoolean)
+		.filter(file => !testFiles.includes(file.path))
 }
 
 export async function getDiffCode(
@@ -356,13 +364,18 @@ async function getDiffCodeImpl(app1: App, app2: App) {
 		)
 	}
 
+	const app1TestFiles = getAppTestFiles(app1)
+	const app2TestFiles = getAppTestFiles(app2)
+
 	for (const file of parsed.files) {
 		const pathToCopy = file.type === 'RenamedFile' ? file.pathBefore : file.path
 		const relativePath = diffPathToRelative(pathToCopy)
+		if (app1TestFiles.includes(relativePath)) continue
 		const filePathApp1 = path.join(app1.fullPath, relativePath)
 
 		const pathToApp2 = file.type === 'RenamedFile' ? file.pathAfter : file.path
 		const relativePathApp2 = diffPathToRelative(pathToApp2)
+		if (app2TestFiles.includes(relativePathApp2)) continue
 		const filePathApp2 = path.join(app2.fullPath, relativePathApp2)
 
 		switch (file.type) {
