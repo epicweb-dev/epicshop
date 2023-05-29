@@ -7,11 +7,17 @@ import compression from 'compression'
 import morgan from 'morgan'
 import address from 'address'
 import closeWithGrace from 'close-with-grace'
+import { WebSocket, WebSocketServer } from 'ws'
 import { createRequestHandler } from '@remix-run/express'
 import { type ServerBuild, broadcastDevReady } from '@remix-run/node'
 import { getApps, getWorkshopRoot } from '../utils/apps.server.ts'
+import { getWatcher } from 'utils/change-tracker.ts'
 import getPort, { portNumbers } from 'get-port'
 import chalk from 'chalk'
+
+declare global {
+	var __server_close_with_grace_return__: ReturnType<typeof closeWithGrace>
+}
 
 /*
 // FIXME:
@@ -142,46 +148,33 @@ ${chalk.bold('Press Ctrl+C to stop')}
 	}
 })
 
-closeWithGrace(async () => {
-	await new Promise((resolve, reject) => {
-		server.close(e => (e ? reject(e) : resolve('ok')))
-	})
+const wss = new WebSocketServer({ server, path: '/__ws' })
+
+getWatcher().on('all', (event, filePath, stats) => {
+	for (const client of wss.clients) {
+		if (client.readyState === WebSocket.OPEN) {
+			client.send(
+				JSON.stringify({
+					type: 'kcdshop:file-change',
+					data: { event, filePath, stats },
+				}),
+			)
+		}
+	}
 })
 
-// FIXME:
-// let me know if we need this now that remix have livereload
+global.__server_close_with_grace_return__?.uninstall()
 
-// declare global {
-// 	var __server_close_with_grace_return__: ReturnType<typeof closeWithGrace>
-// }
-
-// const wss = new ws.Server({ server, path: '/__ws' })
-
-// getWatcher().on('all', (event, filePath, stats) => {
-// 	for (const client of wss.clients) {
-// 		if (client.readyState === ws.OPEN) {
-// 			client.send(
-// 				JSON.stringify({
-// 					type: 'kcdshop:file-change',
-// 					data: { event, filePath, stats },
-// 				}),
-// 			)
-// 		}
-// 	}
-// })
-
-// global.__server_close_with_grace_return__?.uninstall()
-
-// global.__server_close_with_grace_return__ = closeWithGrace(() => {
-// 	return Promise.all([
-// 		new Promise((resolve, reject) => {
-// 			server.close(e => (e ? reject(e) : resolve('ok')))
-// 		}),
-// 		new Promise((resolve, reject) => {
-// 			wss.close(e => (e ? reject(e) : resolve('ok')))
-// 		}),
-// 	])
-// })
+global.__server_close_with_grace_return__ = closeWithGrace(() => {
+	return Promise.all([
+		new Promise((resolve, reject) => {
+			server.close(e => (e ? reject(e) : resolve('ok')))
+		}),
+		new Promise((resolve, reject) => {
+			wss.close(e => (e ? reject(e) : resolve('ok')))
+		}),
+	])
+})
 
 // during dev, we'll keep the build module up to date with the changes
 if (process.env.NODE_ENV === 'development') {

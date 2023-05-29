@@ -96,16 +96,12 @@ export default function App() {
 				<ScrollRestoration />
 				<Scripts />
 				<LiveReload />
-				{/*
-				 FIXME: let me know if we need this now that remix have livereload
-				<script dangerouslySetInnerHTML={{ __html: getWebsocketJS() }} /> */}
+				<script dangerouslySetInnerHTML={{ __html: getWebsocketJS() }} />
 			</body>
 		</html>
 	)
 }
 
-// FIXME:
-// let me know if we need this now that remix have livereload
 function getWebsocketJS() {
 	const js = /* javascript */ `
 	function kcdLiveReloadConnect(config) {
