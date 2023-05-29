@@ -8,8 +8,8 @@ import type {
 	PlaygroundApp,
 	ProblemApp,
 	SolutionApp,
-} from './apps.server'
-import { time, type Timings } from './timing.server'
+} from './apps.server.ts'
+import { time, type Timings } from './timing.server.ts'
 
 declare global {
 	var __solution_app_cache__: ReturnType<typeof getSolutionAppCache>

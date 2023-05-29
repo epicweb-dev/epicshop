@@ -1,5 +1,5 @@
 import { Link, type LinkProps } from '@remix-run/react'
-import Icon from './icons'
+import Icon from './icons.tsx'
 
 export function NavChevrons({
 	prev,

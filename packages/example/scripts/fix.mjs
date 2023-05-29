@@ -3,6 +3,7 @@
 
 import fs from 'fs'
 import path from 'path'
+import { fileURLToPath } from 'url'
 
 function exists(dir) {
 	try {
@@ -20,7 +21,7 @@ async function readDir(dir) {
 	return []
 }
 
-const __dirname = new URL('.', import.meta.url).pathname
+const __dirname = path.dirname(fileURLToPath(import.meta.url))
 const here = (...p) => path.join(__dirname, ...p)
 
 const workshopRoot = here('..')
@@ -34,7 +35,12 @@ const apps = (
 			await readDir(here('../examples'))
 		).map(dir => here(`../examples/${dir}`)),
 		...exercises.flatMap(async exercise => {
-			return (await readDir(here(`../exercises/${exercise}`)))
+			const exerciseDir = here(`../exercises/${exercise}`)
+			// if it is just a file instead of a directory, skip it
+			if (!(await fs.promises.stat(exerciseDir)).isDirectory()) {
+				return []
+			}
+			return (await readDir(exerciseDir))
 				.filter(dir => {
 					return /(problem|solution)/.test(dir)
 				})
@@ -58,14 +64,16 @@ const appsWithPkgJson = [...examples, ...apps].filter(app => {
 for (const file of appsWithPkgJson) {
 	const pkgjsonPath = path.join(file, 'package.json')
 	const pkg = JSON.parse(await fs.promises.readFile(pkgjsonPath, 'utf8'))
-	pkg.name = relativeToWorkshopRoot(file).replace(/\//g, '.')
+	pkg.name = relativeToWorkshopRoot(file).replace(/\\|\//g, '.')
 	await fs.promises.writeFile(pkgjsonPath, JSON.stringify(pkg, null, 2))
 }
 
 const tsconfig = {
 	files: [],
 	exclude: ['node_modules'],
-	references: appsWithPkgJson.map(a => ({ path: relativeToWorkshopRoot(a) })),
+	references: appsWithPkgJson.map(a => ({
+		path: relativeToWorkshopRoot(a).replace(/\\/g, '/'),
+	})),
 }
 await fs.promises.writeFile(
 	path.join(workshopRoot, 'tsconfig.json'),

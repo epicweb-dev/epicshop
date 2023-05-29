@@ -12,17 +12,19 @@ import {
 	problemAppCache,
 	solutionAppCache,
 	playgroundAppCache,
-} from './cache.server'
-import { compileMdx } from './compile-mdx.server'
-import { getOptionalWatcher, getWatcher } from './change-tracker'
-import { requireCachePurgeEmitter } from './purge-require-cache.server'
-import { getServerTimeHeader, type Timings } from './timing.server'
+} from './cache.server.ts'
+import { compileMdx } from './compile-mdx.server.ts'
+import { getOptionalWatcher, getWatcher } from './change-tracker.ts'
+import { getServerTimeHeader, type Timings } from './timing.server.ts'
 import {
 	closeProcess,
 	isAppRunning,
 	runAppDev,
 	waitOnApp,
-} from './process-manager.server'
+} from './process-manager.server.ts'
+import { execa } from 'execa'
+import { globby, isGitIgnored } from 'globby'
+import pMap from 'p-map'
 
 const globPromise = util.promisify(glob)
 
@@ -157,8 +159,11 @@ export function isExerciseStepApp(app: any): app is ExerciseStepApp {
 	return isProblemApp(app) || isSolutionApp(app)
 }
 
-async function exists(dir: string) {
-	return Boolean(await fs.promises.stat(dir).catch(() => false))
+function exists(file: string) {
+	return fs.promises.access(file, fs.constants.F_OK).then(
+		() => true,
+		() => false,
+	)
 }
 
 declare global {
@@ -182,9 +187,6 @@ export function init() {
 		}
 	}
 	getWatcher().on('all', handleFileChanges)
-	requireCachePurgeEmitter.on('before:purge', () =>
-		getWatcher().off('all', handleFileChanges),
-	)
 }
 
 function getForceFresh(cacheEntry: CacheEntry | null | undefined) {
@@ -232,7 +234,9 @@ export async function getReadmePath({
 }
 
 async function compileReadme(appDir: string, number?: number) {
-	const readmeFilepath = await getReadmePath({ appDir, stepNumber: number })
+	const readmeFilepath = (
+		await getReadmePath({ appDir, stepNumber: number })
+	).replace(/\\/g, '/')
 	if (await exists(readmeFilepath)) {
 		const compiled = await compileMdx(readmeFilepath)
 		return compiled
@@ -271,7 +275,6 @@ export async function getExercises({
 	timings,
 	request,
 }: CachifiedOptions = {}): Promise<Array<Exercise>> {
-	const { default: pMap } = await import('p-map')
 	const apps = await getApps({ request, timings })
 	const exerciseDirs = await readDir(path.join(workshopRoot, 'exercises'))
 	const exercises: Array<Exercise | null> = await pMap(
@@ -609,11 +612,10 @@ async function getExampleApps({
 	timings,
 	request,
 }: CachifiedOptions = {}): Promise<Array<ExampleApp>> {
-	const { default: pMap } = await import('p-map')
 	const examplesDir = path.join(workshopRoot, 'examples')
-	const exampleDirs = (await globPromise('*', { cwd: examplesDir })).map(p =>
-		path.join(examplesDir, p),
-	)
+	const exampleDirs = (
+		await globPromise('*', { cwd: examplesDir, ignore: 'node_modules/**' })
+	).map(p => path.join(examplesDir, p))
 	const exampleApps = await pMap(
 		exampleDirs,
 		async (exampleDir, index) => {
@@ -682,10 +684,12 @@ async function getSolutionApps({
 	timings,
 	request,
 }: CachifiedOptions = {}): Promise<Array<SolutionApp>> {
-	const { default: pMap } = await import('p-map')
 	const exercisesDir = path.join(workshopRoot, 'exercises')
 	const solutionDirs = (
-		await globPromise('**/*solution*', { cwd: exercisesDir })
+		await globPromise('**/*solution*', {
+			cwd: exercisesDir,
+			ignore: 'node_modules/**',
+		})
 	).map(p => path.join(exercisesDir, p))
 	const solutionApps = await pMap(
 		solutionDirs,
@@ -754,10 +758,12 @@ async function getProblemApps({
 	timings,
 	request,
 }: CachifiedOptions = {}): Promise<Array<ProblemApp>> {
-	const { default: pMap } = await import('p-map')
 	const exercisesDir = path.join(workshopRoot, 'exercises')
 	const problemDirs = (
-		await globPromise('**/*problem*', { cwd: exercisesDir })
+		await globPromise('**/*problem*', {
+			cwd: exercisesDir,
+			ignore: 'node_modules/**',
+		})
 	).map(p => path.join(exercisesDir, p))
 	const problemApps = await pMap(
 		problemDirs,
@@ -896,7 +902,6 @@ export function getAppPageRoute(app: ExerciseStepApp) {
 }
 
 export async function setPlayground(srcDir: string) {
-	const { globby, isGitIgnored } = await import('globby')
 	const isIgnored = await isGitIgnored({ cwd: srcDir })
 	const destDir = path.join(getWorkshopRoot(), 'playground')
 	const playgroundFiles = path.join(destDir, '**')
@@ -962,7 +967,6 @@ export async function setPlayground(srcDir: string) {
 		'fixup-playground.js',
 	)
 	if (await exists(fixupPlaygroundPath)) {
-		const { execa } = await import('execa')
 		await execa('node', [fixupPlaygroundPath], {
 			cwd: destDir,
 			stdio: 'inherit',

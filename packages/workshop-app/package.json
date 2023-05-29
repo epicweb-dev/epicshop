@@ -9,20 +9,33 @@
     "kcdshop": "./bin/kcdshop.js"
   },
   "files": [
-    "apps.server.d.ts",
-    "apps.server.js",
     "start.js",
-    "iframe-sync.d.ts",
-    "iframe-sync.js",
-    "playwright.d.ts",
-    "playwright.js",
-    "process-manager.server.d.ts",
-    "process-manager.server.js",
-    "test.d.ts",
-    "test.js",
     "build",
     "public"
   ],
+  "type": "module",
+  "exports": {
+    "./apps.server": {
+      "types": "./build/utils/apps.server.d.ts",
+      "default": "./build/utils/apps.server.js"
+    },
+    "./iframe-sync": {
+      "types": "./build/utils/iframe-sync.d.ts",
+      "default": "./build/utils/iframe-sync.js"
+    },
+    "./playwright": {
+      "types": "./build/utils/playwright.d.ts",
+      "default": "./build/utils/playwright.js"
+    },
+    "./process-manager.server": {
+      "types": "./build/utils/process-manager.server.d.ts",
+      "default": "./build/utils/process-manager.server.js"
+    },
+    "./test": {
+      "types": "./build/utils/test.d.ts",
+      "default": "./build/utils/test.js"
+    }
+  },
   "scripts": {
     "build": "run-p --print-label --print-name build:*",
     "build:remix": "remix build --sourcemap",
@@ -30,8 +43,8 @@
     "build:utils": "tsx ./other/build-dir.ts utils",
     "build:decs": "tsc --build ./utils/tsconfig.json",
     "dev": "cross-env NODE_ENV=development FORCE_COLOR=true run-p --print-label --print-name dev:*",
-    "dev:remix": "remix watch",
-    "dev:server": "tsx watch --clear-screen=false --ignore \"app/**\" --ignore \"build/**\" --ignore \"node_modules/**\" ./start.js",
+    "dev:remix": "remix dev -c \"npm run start:server\" --no-restart",
+    "start:server": "tsx watch --clear-screen=false --ignore \"app/**\" --ignore \"build/**\" --ignore \"utils/**\" --ignore \"node_modules/**\" ./start.js",
     "dev:utils": "tsx --watch --no-warnings --watch-preserve-output --watch-path ./utils ./other/build-dir.ts utils",
     "dev:decs": "npm run build:decs --silent -- --preserveWatchOutput --watch",
     "format": "prettier --write .",
@@ -42,15 +55,17 @@
   },
   "dependencies": {
     "@kentcdodds/md-temp": "^3.2.1",
-    "@radix-ui/react-accordion": "^1.1.1",
-    "@radix-ui/react-popover": "^1.0.5",
-    "@radix-ui/react-select": "^1.2.1",
-    "@radix-ui/react-tabs": "^1.0.3",
-    "@radix-ui/react-toast": "^1.1.3",
-    "@remix-run/express": "^1.15.0",
-    "@remix-run/node": "^1.15.0",
-    "@remix-run/react": "^1.15.0",
-    "@remix-run/server-runtime": "^1.15.0",
+    "@radix-ui/react-accordion": "^1.1.2",
+    "@radix-ui/react-popover": "^1.0.6",
+    "@radix-ui/react-select": "^1.2.2",
+    "@radix-ui/react-tabs": "^1.0.4",
+    "@radix-ui/react-toast": "^1.1.4",
+    "@remix-run/css-bundle": "^1.16.1",
+    "@remix-run/express": "^1.16.1",
+    "@remix-run/node": "^1.16.1",
+    "@remix-run/react": "^1.16.1",
+    "@remix-run/serve": "^1.16.1",
+    "@remix-run/server-runtime": "^1.16.1",
     "@types/chai": "^4.3.4",
     "@types/chai-dom": "^1.11.0",
     "address": "^1.2.2",
@@ -68,7 +83,7 @@
     "cross-env": "^7.0.3",
     "cross-spawn": "^7.0.3",
     "dotenv": "^16.0.3",
-    "esbuild": "^0.17.16",
+    "esbuild": "^0.17.6",
     "execa": "^7.1.1",
     "express": "^4.18.2",
     "fkill": "^8.1.0",
@@ -90,7 +105,7 @@
     "mime-types": "^2.1.35",
     "morgan": "^1.10.0",
     "p-map": "^5.5.0",
-    "parse-git-diff": "^0.0.8",
+    "parse-git-diff": "^0.0.10",
     "prettier": "^2.8.7",
     "prettier-plugin-tailwindcss": "^0.2.7",
     "react": "^18.2.0",
@@ -116,8 +131,8 @@
     "zod": "^3.21.4"
   },
   "devDependencies": {
-    "@remix-run/dev": "^1.15.0",
-    "@remix-run/eslint-config": "^1.15.0",
+    "@remix-run/dev": "^1.16.1",
+    "@remix-run/eslint-config": "^1.16.1",
     "@tailwindcss/typography": "^0.5.9",
     "@types/common-ancestor-path": "^1.0.0",
     "@types/compression": "^1.7.2",
@@ -140,9 +155,9 @@
     "eslint": "^8.38.0",
     "eslint-config-prettier": "^8.8.0",
     "npm-run-all": "^4.1.5",
-    "postcss": "^8.4.21",
-    "tailwind-scrollbar": "^3.0.0",
-    "tailwindcss": "^3.3.1",
+    "postcss": "^8.4.24",
+    "tailwind-scrollbar": "^3.0.4",
+    "tailwindcss": "^3.3.2",
     "typescript": "^5.0.4"
   },
   "engines": {

@@ -2,6 +2,7 @@ node_modules
 
 /build
 /public/build
+/server-build
 .env
 
 /prisma/data.db

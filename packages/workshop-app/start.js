@@ -1,16 +1,18 @@
-const dotenv = require('dotenv')
-const path = require('path')
+import dotenv from 'dotenv'
+import path from 'path'
 
 dotenv.config({
 	path: path.join(process.env.KCDSHOP_CONTEXT_CWD ?? process.cwd(), '.env'),
 })
 
 if (process.env.NODE_ENV === 'production') {
-	require('./build/server')
+	await import('./build/server/index.js')
 } else {
+	// FIXME: global.__inspector_open__ is always undefined here, even when the inspectore runing
 	if (!global.__inspector_open__) {
 		global.__inspector_open__ = true
-		require('inspector').open()
+		const inspector = await import('inspector')
+		inspector.open()
 	}
-	require('./server')
+	await import('./server/index.ts')
 }

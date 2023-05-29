@@ -1,1 +1,1 @@
-export * from '../../utils/apps.server'
+export * from '../../utils/apps.server.ts'

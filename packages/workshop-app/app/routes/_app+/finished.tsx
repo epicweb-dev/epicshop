@@ -1,16 +1,16 @@
 import type { HeadersFunction, V2_MetaFunction } from '@remix-run/node'
 import { json } from '@remix-run/node'
 import { useLoaderData } from '@remix-run/react'
-import { getWorkshopTitle } from '~/utils/apps.server'
+import { getWorkshopTitle } from '~/utils/apps.server.ts'
 
-import { ButtonLink } from '~/components/button'
-import Loading from '~/components/loading'
-import { type loader as rootLoader } from '~/root'
+import { ButtonLink } from '~/components/button.tsx'
+import Loading from '~/components/loading.tsx'
+import { type loader as rootLoader } from '~/root.tsx'
 import {
 	combineServerTimings,
 	getServerTimeHeader,
 	makeTimings,
-} from '~/utils/timing.server'
+} from '~/utils/timing.server.ts'
 
 export const meta: V2_MetaFunction<
 	typeof loader,

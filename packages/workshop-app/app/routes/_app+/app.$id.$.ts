@@ -1,12 +1,11 @@
 import path from 'path'
-import fs from 'fs'
 import fsExtra from 'fs-extra'
 import mimeTypes from 'mime-types'
-import esbuild from 'esbuild'
 import type { DataFunctionArgs } from '@remix-run/node'
 import { redirect } from 'react-router'
 import invariant from 'tiny-invariant'
-import { getAppByName } from '~/utils/apps.server'
+import { getAppByName } from '~/utils/apps.server.ts'
+import { compileTs } from '~/utils/compile-app.server.ts'
 
 export async function loader({ params, request }: DataFunctionArgs) {
 	const { id: appId, '*': splat } = params
@@ -33,28 +32,7 @@ export async function loader({ params, request }: DataFunctionArgs) {
 	}
 	if (filePath.endsWith('.ts') || filePath.endsWith('.tsx')) {
 		// compile ts/tsx files
-		const { outputFiles, errors } = await esbuild.build({
-			stdin: {
-				contents: await fs.promises.readFile(filePath, 'utf-8'),
-
-				// NOTE: if the fileAppName is specified, then we're resolving to a different
-				// app than the one we're serving the file from. We do this so the tests
-				// can live in the solution directory, but be run against the problem
-				resolveDir: app.fullPath,
-				sourcefile: path.basename(filePath),
-				loader: 'tsx',
-			},
-			define: {
-				'process.env': JSON.stringify({ NODE_ENV: 'development' }),
-			},
-			bundle: true,
-			write: false,
-			format: 'esm',
-			platform: 'browser',
-			jsx: 'automatic',
-			minify: false,
-			sourcemap: 'inline',
-		})
+		const { outputFiles, errors } = await compileTs(filePath, app.fullPath)
 		if (errors.length) {
 			console.error(`Failed to compile file "${filePath}"`)
 			console.error(errors)

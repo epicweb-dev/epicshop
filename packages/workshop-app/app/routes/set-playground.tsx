@@ -9,13 +9,13 @@ import {
 	setPlayground,
 	isProblemApp,
 	isSolutionApp,
-} from '~/utils/apps.server'
+} from '~/utils/apps.server.ts'
 import * as Select from '@radix-ui/react-select'
 import { z } from 'zod'
-import { getErrorMessage } from '~/utils/misc'
-import Icon from '~/components/icons'
-import { getDiffCode } from '~/utils/diff.server'
-import clsx from 'clsx'
+import { getErrorMessage } from '~/utils/misc.tsx'
+import Icon from '~/components/icons.tsx'
+import { getDiffCode } from '~/utils/diff.server.ts'
+import { clsx } from 'clsx'
 
 const setPlaygroundSchema = z.object({
 	appName: z.string(),

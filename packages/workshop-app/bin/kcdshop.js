@@ -1,9 +1,11 @@
 #!/usr/bin/env node
 
-const { spawn } = require('child_process')
-const path = require('path')
-const fs = require('fs')
+import { spawn } from 'child_process'
+import path from 'path'
+import fs from 'fs'
+import { fileURLToPath } from 'url'
 
+const __dirname = path.dirname(fileURLToPath(import.meta.url))
 const isPublished = !fs.existsSync(path.join(__dirname, '..', 'app'))
 const argv = process.argv.slice(2)
 
@@ -37,6 +39,13 @@ async function exec(command, envVars) {
 		},
 	})
 	await new Promise((res, rej) => {
+		// Kill app on Windows after CTRL+C
+		if (process.platform === 'win32') {
+			process.on('SIGINT', () => {
+				spawn('taskkill', ['/pid', child.pid, '/f', '/t'])
+			})
+		}
+		// process.on('SIGINT', child.kill)
 		child.on('exit', code => {
 			if (code === 0) {
 				res(code)

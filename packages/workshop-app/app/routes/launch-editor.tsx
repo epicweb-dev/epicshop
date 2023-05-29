@@ -3,11 +3,11 @@ import path from 'path'
 import type { DataFunctionArgs } from '@remix-run/node'
 import { json } from '@remix-run/node'
 import { useFetcher } from '@remix-run/react'
-import { getAppByName } from '~/utils/apps.server'
+import { getAppByName } from '~/utils/apps.server.ts'
 import { z } from 'zod'
-import { launchEditor } from '~/utils/launch-editor.server'
-import clsx from 'clsx'
-import { showToast } from '~/components/toast'
+import { launchEditor } from '~/utils/launch-editor.server.ts'
+import { clsx } from 'clsx'
+import { showToast } from '~/components/toast.tsx'
 
 const launchSchema = z.intersection(
 	z.object({

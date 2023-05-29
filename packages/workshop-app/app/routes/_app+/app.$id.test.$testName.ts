@@ -11,8 +11,8 @@ import {
 	isProblemApp,
 	isSolutionApp,
 	isPlaygroundApp,
-} from '~/utils/apps.server'
-import { getServerTimeHeader, makeTimings } from '~/utils/timing.server'
+} from '~/utils/apps.server.ts'
+import { getServerTimeHeader, makeTimings } from '~/utils/timing.server.ts'
 
 export async function loader({ params, request }: DataFunctionArgs) {
 	const timings = makeTimings('app_test_loader')

@@ -1,4 +1,4 @@
-import { getApps, isProblemApp, typedBoolean } from './apps.server'
+import { getApps, isProblemApp, typedBoolean } from './apps.server.ts'
 import { test, expect } from '@playwright/test'
 import z from 'zod'
 import crossSpawn from 'cross-spawn'

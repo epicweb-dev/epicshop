@@ -14,24 +14,24 @@ import {
 	useSearchParams,
 	type LinkProps,
 } from '@remix-run/react'
-import clsx from 'clsx'
+import { clsx } from 'clsx'
 import * as React from 'react'
 import { useMemo, useRef, useState, type PropsWithChildren } from 'react'
-import { Diff } from '~/components/diff'
-import Icon from '~/components/icons'
+import { Diff } from '~/components/diff.tsx'
+import Icon from '~/components/icons.tsx'
 import {
 	InBrowserBrowser,
 	type InBrowserBrowserRef,
-} from '~/components/in-browser-browser'
-import { InBrowserTestRunner } from '~/components/in-browser-test-runner'
-import TouchedFiles from '~/components/touched-files'
-import { type loader as rootLoader } from '~/root'
+} from '~/components/in-browser-browser.tsx'
+import { InBrowserTestRunner } from '~/components/in-browser-test-runner.tsx'
+import TouchedFiles from '~/components/touched-files.tsx'
+import { type loader as rootLoader } from '~/root.tsx'
 import {
 	PlaygroundChooser,
 	SetAppToPlayground,
 	SetPlayground,
-} from '~/routes/set-playground'
-import type { App } from '~/utils/apps.server'
+} from '~/routes/set-playground.tsx'
+import type { App } from '~/utils/apps.server.ts'
 import {
 	getAppByName,
 	getAppPageRoute,
@@ -43,21 +43,27 @@ import {
 	isPlaygroundApp,
 	requireExercise,
 	requireExerciseApp,
-} from '~/utils/apps.server'
-import { getDiffCode, getDiffFiles } from '~/utils/diff.server'
-import { Mdx, PreWithCopyToClipboard } from '~/utils/mdx'
-import { getErrorMessage } from '~/utils/misc'
-import { isAppRunning, isPortAvailable } from '~/utils/process-manager.server'
+} from '~/utils/apps.server.ts'
+import { getDiffCode, getDiffFiles } from '~/utils/diff.server.ts'
+import { Mdx, PreWithCopyToClipboard } from '~/utils/mdx.tsx'
+import { getErrorMessage } from '~/utils/misc.tsx'
+import {
+	isAppRunning,
+	isPortAvailable,
+} from '~/utils/process-manager.server.ts'
 import {
 	combineServerTimings,
 	getServerTimeHeader,
 	makeTimings,
-} from '~/utils/timing.server'
-import { LaunchEditor } from '../../launch-editor'
-import { TestOutput } from '../../test'
-import { NavChevrons } from '~/components/nav-chevrons'
+} from '~/utils/timing.server.ts'
+import { LaunchEditor } from '../../launch-editor.tsx'
+import { TestOutput } from '../../test.tsx'
+import { NavChevrons } from '~/components/nav-chevrons.tsx'
 
-function pageTitle(data: SerializeFrom<typeof loader>, workshopTitle?: string) {
+function pageTitle(
+	data: SerializeFrom<typeof loader> | undefined,
+	workshopTitle?: string,
+) {
 	if (!data) {
 		return 'Error'
 	}

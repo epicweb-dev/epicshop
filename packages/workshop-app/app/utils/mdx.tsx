@@ -1,9 +1,9 @@
 import LRU from 'lru-cache'
-import * as mdxBundler from 'mdx-bundler/client'
+import * as mdxBundler from 'mdx-bundler/client/index.js'
 import type { MDXContentProps } from 'mdx-bundler/client'
 import * as React from 'react'
-import { LaunchEditor } from '~/routes/launch-editor'
-import { AnchorOrLink } from './misc'
+import { LaunchEditor } from '~/routes/launch-editor.tsx'
+import { AnchorOrLink } from './misc.tsx'
 
 function notification(button: EventTarget & HTMLButtonElement, on?: boolean) {
 	if (button) {

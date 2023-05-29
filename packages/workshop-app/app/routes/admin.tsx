@@ -1,10 +1,10 @@
 import type { DataFunctionArgs, V2_MetaFunction } from '@remix-run/node'
 import { json } from '@remix-run/node'
 import { Form, useLoaderData, useNavigation } from '@remix-run/react'
-import { type loader as rootLoader } from '~/root'
-import { getApps } from '~/utils/apps.server'
-import { getProcesses } from '~/utils/process-manager.server'
-import { getServerTimeHeader, makeTimings } from '~/utils/timing.server'
+import { type loader as rootLoader } from '~/root.tsx'
+import { getApps } from '~/utils/apps.server.ts'
+import { getProcesses } from '~/utils/process-manager.server.ts'
+import { getServerTimeHeader, makeTimings } from '~/utils/timing.server.ts'
 
 declare global {
 	var __inspector_open__: boolean | undefined

@@ -6,14 +6,14 @@ import escapeHtml from 'lodash.escape'
 import { useEffect, useReducer, useRef } from 'react'
 import { eventStream, useEventSource } from 'remix-utils'
 import { z } from 'zod'
-import Icon from '~/components/icons'
-import { getAppByName } from '~/utils/apps.server'
+import Icon from '~/components/icons.tsx'
+import { getAppByName } from '~/utils/apps.server.ts'
 import {
 	clearTestProcessEntry,
 	getTestProcessEntry,
 	isTestRunning,
 	runAppTests,
-} from '~/utils/process-manager.server'
+} from '~/utils/process-manager.server.ts'
 
 const testActionSchema = z.union([
 	z.object({

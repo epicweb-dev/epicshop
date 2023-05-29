@@ -1,5 +1,9 @@
-const defaultTheme = require('tailwindcss/defaultTheme')
-const colors = require('tailwindcss/colors')
+import type { Config } from 'tailwindcss'
+import defaultTheme from 'tailwindcss/defaultTheme.js'
+import colors from 'tailwindcss/colors.js'
+import typography from '@tailwindcss/typography'
+import cssRadix from 'tailwindcss-radix'
+import scrollbar from 'tailwind-scrollbar'
 
 const removeProseMargin = {
 	'> ul > li > *:first-child': {
@@ -16,8 +20,7 @@ const removeProseMargin = {
 	},
 }
 
-/** @type {import('tailwindcss').Config} */
-module.exports = {
+export default {
 	content: ['./app/**/*.{ts,tsx,jsx,js}', '../example/**/*.md'],
 	theme: {
 		minWidth: {
@@ -43,9 +46,5 @@ module.exports = {
 			},
 		},
 	},
-	plugins: [
-		require('@tailwindcss/typography'),
-		require('tailwindcss-radix'),
-		require('tailwind-scrollbar'),
-	],
-}
+	plugins: [typography, cssRadix, scrollbar],
+} satisfies Config

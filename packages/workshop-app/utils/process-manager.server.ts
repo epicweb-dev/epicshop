@@ -3,7 +3,10 @@ import { spawn } from 'child_process'
 import net from 'net'
 import closeWithGrace from 'close-with-grace'
 import waitOn from 'wait-on'
-import type { App } from './apps.server'
+import type { App } from './apps.server.ts'
+import chalk from 'chalk'
+import { execaCommand } from 'execa'
+import fkill from 'fkill'
 
 type DevProcessesMap = Map<
 	string,
@@ -119,7 +122,6 @@ export async function runAppDev(app: App) {
 			REMIX_DEV_SERVER_WS_PORT: '',
 		},
 	})
-	const { default: chalk } = await import('chalk')
 	const prefix = chalk[color](
 		`[${app.name.replace(/^exercises\./, '')}:${portNumber}]`,
 	)
@@ -163,8 +165,6 @@ export async function runAppTests(app: App) {
 	if (app.test.requiresApp && app.dev.type !== 'script') {
 		return { status: 'error', error: 'no server, but requires app' } as const
 	}
-
-	const { execaCommand } = await import('execa')
 
 	const testProcess = execaCommand(app.test.script, {
 		cwd: app.fullPath,
@@ -282,7 +282,6 @@ export async function closeProcess(key: string) {
 const sleep = (t: number) => new Promise(resolve => setTimeout(resolve, t))
 
 export async function stopPort(port: string | number) {
-	const { default: fkill } = await import('fkill')
 	await fkill(`:${port}`, { force: true, silent: true })
 	await waitForPortToBeAvailable(port)
 }

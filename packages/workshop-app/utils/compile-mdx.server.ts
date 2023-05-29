@@ -7,7 +7,13 @@ import type * as H from 'hast'
 import type * as M from 'mdast'
 import { remarkCodeBlocksShiki } from '@kentcdodds/md-temp'
 import { cachified } from 'cachified'
-import { compiledMarkdownCache } from './cache.server'
+import { compiledMarkdownCache } from './cache.server.ts'
+import { visit } from 'unist-util-visit'
+import md5 from 'md5-hex'
+import remarkAutolinkHeadings from 'remark-autolink-headings'
+import gfm from 'remark-gfm'
+// @ts-ignore - remark-emoji don't have an exports from ESM types
+import emoji from 'remark-emoji'
 
 const cacheDir = path.join(
 	process.env.KCDSHOP_CONTEXT_CWD ?? process.cwd(),
@@ -16,7 +22,6 @@ const cacheDir = path.join(
 
 function trimCodeBlocks() {
 	return async function transformer(tree: H.Root) {
-		const { visit } = await import('unist-util-visit')
 		visit(tree, 'element', (preNode: H.Element) => {
 			if (preNode.tagName !== 'pre' || !preNode.children.length) {
 				return
@@ -45,7 +50,6 @@ function trimCodeBlocks() {
 
 function removePreContainerDivs() {
 	return async function preContainerDivsTransformer(tree: H.Root) {
-		const { visit } = await import('unist-util-visit')
 		visit(
 			tree,
 			{ type: 'element', tagName: 'pre' },
@@ -78,7 +82,6 @@ export async function compileMdx(
 	if (!(await checkFileExists(file))) {
 		throw new Error(`File does not exist: ${file}`)
 	}
-	const { default: md5 } = await import('md5-hex')
 	const stat = await fs.promises.stat(file)
 	const cacheLocation = path.join(
 		cacheDir,
@@ -91,17 +94,6 @@ export async function compileMdx(
 		)
 		return cached.value
 	}
-	const [
-		{ default: remarkAutolinkHeadings },
-		{ default: gfm },
-		{ visit },
-		{ default: emoji },
-	] = await Promise.all([
-		import('remark-autolink-headings'),
-		import('remark-gfm'),
-		import('unist-util-visit'),
-		import('remark-emoji'),
-	])
 	let title: string | null = null
 
 	try {

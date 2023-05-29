@@ -1,3 +1,4 @@
+import { cssBundleHref } from '@remix-run/css-bundle'
 import type {
 	HeadersFunction,
 	LinksFunction,
@@ -17,9 +18,13 @@ import {
 } from '@remix-run/react'
 import appStylesheetUrl from './styles/app.css'
 import tailwindStylesheetUrl from './styles/tailwind.css'
-import { getWorkshopTitle } from './utils/apps.server'
-import clsx from 'clsx'
-import { getServerTimeHeader, makeTimings, time } from './utils/timing.server'
+import { getWorkshopTitle } from './utils/apps.server.ts'
+import { clsx } from 'clsx'
+import {
+	getServerTimeHeader,
+	makeTimings,
+	time,
+} from './utils/timing.server.ts'
 
 export const links: LinksFunction = () => {
 	return [
@@ -30,6 +35,7 @@ export const links: LinksFunction = () => {
 		},
 		{ rel: 'stylesheet', href: tailwindStylesheetUrl },
 		{ rel: 'stylesheet', href: appStylesheetUrl },
+		...(cssBundleHref ? [{ rel: 'stylesheet', href: cssBundleHref }] : []),
 	]
 }
 
@@ -90,12 +96,16 @@ export default function App() {
 				<ScrollRestoration />
 				<Scripts />
 				<LiveReload />
-				<script dangerouslySetInnerHTML={{ __html: getWebsocketJS() }} />
+				{/*
+				 FIXME: let me know if we need this now that remix have livereload
+				<script dangerouslySetInnerHTML={{ __html: getWebsocketJS() }} /> */}
 			</body>
 		</html>
 	)
 }
 
+// FIXME:
+// let me know if we need this now that remix have livereload
 function getWebsocketJS() {
 	const js = /* javascript */ `
 	function kcdLiveReloadConnect(config) {

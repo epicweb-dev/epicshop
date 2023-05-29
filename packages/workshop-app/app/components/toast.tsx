@@ -2,10 +2,10 @@ import { useCallback, useEffect, useRef, useState } from 'react'
 import { renderToString } from 'react-dom/server'
 import * as ToastPrimitive from '@radix-ui/react-toast'
 import { AnimatePresence, motion } from 'framer-motion'
-import clsx from 'clsx'
-import type { DefaultColors } from 'tailwindcss/types/generated/colors'
-import { useEventListener } from '~/utils/misc'
-import Icon from './icons'
+import { clsx } from 'clsx'
+import type { DefaultColors } from 'tailwindcss/types/generated/colors.d.ts'
+import { useEventListener } from '~/utils/misc.tsx'
+import Icon from './icons.tsx'
 
 const ANIMATION_DURATION = 250
 
