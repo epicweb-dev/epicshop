@@ -11,7 +11,7 @@ import { WebSocket, WebSocketServer } from 'ws'
 import { createRequestHandler } from '@remix-run/express'
 import { type ServerBuild, broadcastDevReady } from '@remix-run/node'
 import { getApps, getWorkshopRoot } from '../utils/apps.server.ts'
-import { getWatcher } from 'utils/change-tracker.ts'
+import { getWatcher } from '../utils/change-tracker.ts'
 import getPort, { portNumbers } from 'get-port'
 import chalk from 'chalk'
 
