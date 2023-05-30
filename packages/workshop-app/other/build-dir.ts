@@ -41,6 +41,7 @@ console.log('\nbuilding...', { entryPoints })
 function replacer(_: string, p1: string, p2: string, p3: string) {
 	return p1 + p2.replace(/\.ts(x?)/, '.js$1') + p3
 }
+
 const replaceImportExtension: esbuild.Plugin = {
 	name: 'replace-import-extension',
 	setup(build) {
@@ -51,7 +52,14 @@ const replaceImportExtension: esbuild.Plugin = {
 				/((?:import|export).*\s?(?:{[\s\S]*?\})?\s*from\s*["'`])(.*)(["'`])/g
 			// dynamic import
 			const re2 = /(import\n?\s?\(\n?.*)\.ts(x?["'`]\n?\))/g
-			const contents = source.replace(re1, replacer).replace(re2, '$1.j$2')
+			let contents = source.replace(re1, replacer).replace(re2, '$1.j$2')
+			// import ../build/index.js
+			if (dir === 'server' && /server[\\/]index\.ts/.test(args.path)) {
+				contents = contents.replace(
+					RegExp('../build/index.js', 'g'),
+					'../index.js',
+				)
+			}
 			return { contents, loader: 'default' }
 		})
 	},

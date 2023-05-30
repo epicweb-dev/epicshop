@@ -1,6 +1,6 @@
 import fs from 'fs'
 import path from 'path'
-import { fileURLToPath, pathToFileURL } from 'url'
+import { fileURLToPath } from 'url'
 import express from 'express'
 import chokidar from 'chokidar'
 import compression from 'compression'
@@ -15,9 +15,14 @@ import { getWatcher } from '../utils/change-tracker.ts'
 import getPort, { portNumbers } from 'get-port'
 import chalk from 'chalk'
 
-declare global {
-	var __server_close_with_grace_return__: ReturnType<typeof closeWithGrace>
-}
+// @ts-ignore - this file may not exist if you haven't built yet, but it will
+// definitely exist by the time the dev or prod server actually runs.
+import * as remixBuild from '../build/index.js'
+
+const BUILD_PATH = '../build/index.js'
+
+const build = remixBuild as unknown as ServerBuild
+let devBuild = build
 
 /*
 // FIXME:
@@ -40,19 +45,6 @@ import('globby')
 import('execa')
 import('get-port')
 import('p-map')
-
-// FIXME: (maybe) - we can complie this file (like in epic-stack) to
-// ./server-build/index.js instead of./build/server/remix.js
-
-// we can NOT use `import * as build from '../build/remix.js'`
-// since on prod we run this file from a different location with different
-// relative path to 'build/index.js'
-
-const BUILD_PATH = path.join(process.cwd(), 'build/remix.js')
-const BUILD_PATH_URL = pathToFileURL(BUILD_PATH).href
-
-const build = (await import(BUILD_PATH_URL)) as unknown as ServerBuild
-let devBuild = build
 
 // caches all apps
 getApps()
@@ -163,6 +155,10 @@ getWatcher().on('all', (event, filePath, stats) => {
 	}
 })
 
+declare global {
+	var __server_close_with_grace_return__: ReturnType<typeof closeWithGrace>
+}
+
 global.__server_close_with_grace_return__?.uninstall()
 
 global.__server_close_with_grace_return__ = closeWithGrace(() => {
@@ -179,10 +175,10 @@ global.__server_close_with_grace_return__ = closeWithGrace(() => {
 // during dev, we'll keep the build module up to date with the changes
 if (process.env.NODE_ENV === 'development') {
 	async function reloadBuild() {
-		devBuild = await import(`${BUILD_PATH_URL}?update=${Date.now()}`)
+		devBuild = await import(`${BUILD_PATH}?update=${Date.now()}`)
 		broadcastDevReady(devBuild)
 	}
-	// watch for changes in remix.js and utils
+	// watch for changes in build/index.js and build/utils
 	const watchPath = path.dirname(BUILD_PATH).replace(/\\/g, '/') + '/**.*'
 	const watcher = chokidar.watch(watchPath, {
 		ignored: ['**/**.map'],
