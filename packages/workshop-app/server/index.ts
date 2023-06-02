@@ -155,13 +155,7 @@ getWatcher().on('all', (event, filePath, stats) => {
 	}
 })
 
-declare global {
-	var __server_close_with_grace_return__: ReturnType<typeof closeWithGrace>
-}
-
-global.__server_close_with_grace_return__?.uninstall()
-
-global.__server_close_with_grace_return__ = closeWithGrace(() => {
+closeWithGrace(() => {
 	return Promise.all([
 		new Promise((resolve, reject) => {
 			server.close(e => (e ? reject(e) : resolve('ok')))
@@ -179,7 +173,8 @@ if (process.env.NODE_ENV === 'development') {
 		broadcastDevReady(devBuild)
 	}
 	// watch for changes in build/index.js and build/utils
-	const watchPath = path.dirname(BUILD_PATH).replace(/\\/g, '/') + '/**.*'
+	const watchPath =
+		path.join(__dirname, path.dirname(BUILD_PATH)).replace(/\\/g, '/') + '/**.*'
 	const watcher = chokidar.watch(watchPath, {
 		ignored: ['**/**.map'],
 		ignoreInitial: true,

@@ -44,7 +44,7 @@
     "build:decs": "tsc --build ./utils/tsconfig.json",
     "dev": "cross-env NODE_ENV=development FORCE_COLOR=true run-p --print-label --print-name dev:*",
     "dev:remix": "remix dev -c \"npm run start:server\" --no-restart",
-    "start:server": "tsx watch --clear-screen=false --ignore \"app/**\" --ignore \"build/**\" --ignore \"utils/**\" --ignore \"node_modules/**\" ./start.js",
+    "start:server": "tsx watch --clear-screen=false --ignore \"app/**\" --ignore \"build/**\" --ignore \"utils/**\" --ignore \"node_modules/**\" --inspect ./start.js",
     "dev:utils": "tsx --watch --no-warnings --watch-preserve-output --watch-path ./utils ./other/build-dir.ts utils",
     "dev:decs": "npm run build:decs --silent -- --preserveWatchOutput --watch",
     "format": "prettier --write .",
