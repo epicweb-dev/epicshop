@@ -24,22 +24,6 @@ const BUILD_PATH = '../build/index.js'
 const build = remixBuild as unknown as ServerBuild
 let devBuild = build
 
-/*
-// FIXME:
-	when restarting the server (from tsx watch):
-	  (some time the running port is unavailable when we get here again)
-		save current running port number
-		kill the running port, see kill function from remix.
-		https://github.com/remix-run/remix/blob/main/packages/remix-dev/devServer_unstable/index.ts
-		start the server again on the same port
-
-	do we need to do everithing again?
-		caches already warmed
-		all apps already cached
-
-	do we need to close old watcher?
-*/
-
 // get some caches warmed up
 import('globby')
 import('execa')
