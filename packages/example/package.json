@@ -5,6 +5,7 @@
     "title": "Web App Fundamentals 🔭",
     "root": true
   },
+  "type": "module",
   "scripts": {
     "build": "echo \"No build needed\"",
     "start": "kcdshop start",

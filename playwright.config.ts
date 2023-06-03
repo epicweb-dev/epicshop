@@ -1,11 +1,5 @@
-import type { PlaywrightTestConfig } from '@playwright/test'
-import { devices } from '@playwright/test'
-
-/**
- * Read environment variables from file.
- * https://github.com/motdotla/dotenv
- */
-// require('dotenv').config();
+import { devices, type PlaywrightTestConfig } from '@playwright/test'
+import 'dotenv/config'
 
 const PORT = process.env.PORT || 5639
 

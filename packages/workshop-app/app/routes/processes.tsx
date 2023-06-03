@@ -1,5 +1,5 @@
 import { json } from '@remix-run/node'
-import { getProcesses } from '~/utils/process-manager.server'
+import { getProcesses } from '~/utils/process-manager.server.ts'
 
 export async function loader() {
 	const processes: Record<

@@ -7,22 +7,22 @@ import {
 	useLoaderData,
 	useParams,
 } from '@remix-run/react'
-import clsx from 'clsx'
+import { clsx } from 'clsx'
 import type { AnimationControls } from 'framer-motion'
 import { motion, useAnimationControls } from 'framer-motion'
 import * as React from 'react'
-import { ToastHub } from '~/components/toast'
+import { ToastHub } from '~/components/toast.tsx'
 import {
 	extractNumbersFromAppName,
 	getExercises,
 	getPlaygroundAppName,
 	getWorkshopTitle,
-} from '~/utils/apps.server'
+} from '~/utils/apps.server.ts'
 import {
 	combineServerTimings,
 	getServerTimeHeader,
 	makeTimings,
-} from '~/utils/timing.server'
+} from '~/utils/timing.server.ts'
 
 export async function loader({ request }: DataFunctionArgs) {
 	const timings = makeTimings('stepLoader')

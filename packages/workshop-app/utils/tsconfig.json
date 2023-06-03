@@ -1,14 +1,14 @@
 {
 	"include": ["./**/*.ts", "./**/*.tsx"],
 	"compilerOptions": {
-		"lib": ["DOM", "DOM.Iterable", "ES2021"],
+		"lib": ["DOM", "DOM.Iterable", "ES2022"],
 		"isolatedModules": true,
 		"esModuleInterop": true,
 		"jsx": "react-jsx",
-		"module": "CommonJS",
-		"moduleResolution": "node",
+		"module": "nodenext",
+		"moduleResolution": "nodenext",
 		"resolveJsonModule": true,
-		"target": "ES2021",
+		"target": "ES2022",
 		"strict": true,
 		"allowJs": true,
 		"forceConsistentCasingInFileNames": true,
@@ -16,6 +16,7 @@
 		"skipLibCheck": true,
 		"declaration": true,
 		"emitDeclarationOnly": true,
-		"declarationDir": "../build/utils"
+		"declarationDir": "../build/utils",
+		"allowImportingTsExtensions": true
 	}
 }

@@ -1,10 +1,10 @@
 import * as React from 'react'
 import { Await, useLoaderData } from '@remix-run/react'
 import * as Popover from '@radix-ui/react-popover'
-import { type loader } from '~/routes/_app+/_exercises+/$exerciseNumber_.$stepNumber.$type'
-import { LaunchEditor } from '~/routes/launch-editor'
-import Icon from './icons'
-import { SetAppToPlayground } from '~/routes/set-playground'
+import { type loader } from '~/routes/_app+/_exercises+/$exerciseNumber_.$stepNumber.$type.tsx'
+import { LaunchEditor } from '~/routes/launch-editor.tsx'
+import Icon from './icons.tsx'
+import { SetAppToPlayground } from '~/routes/set-playground.tsx'
 
 function TouchedFiles() {
 	const data = useLoaderData<typeof loader>()

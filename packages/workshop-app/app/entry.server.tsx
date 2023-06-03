@@ -4,7 +4,7 @@ import { RemixServer } from '@remix-run/react'
 import { Response } from '@remix-run/node'
 import type { EntryContext, Headers } from '@remix-run/node'
 import isbot from 'isbot'
-import { init } from './utils/apps.server'
+import { init } from './utils/apps.server.ts'
 
 const ABORT_DELAY = 15000
 

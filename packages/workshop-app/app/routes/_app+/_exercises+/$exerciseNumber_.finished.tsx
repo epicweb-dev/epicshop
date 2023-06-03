@@ -12,15 +12,15 @@ import {
 	getExercise,
 	getWorkshopTitle,
 	isExerciseStepApp,
-} from '~/utils/apps.server'
-import { type loader as rootLoader } from '~/root'
-import Loading from '~/components/loading'
+} from '~/utils/apps.server.ts'
+import { type loader as rootLoader } from '~/root.tsx'
+import Loading from '~/components/loading.tsx'
 import {
 	combineServerTimings,
 	getServerTimeHeader,
 	makeTimings,
-} from '~/utils/timing.server'
-import { NavChevrons } from '~/components/nav-chevrons'
+} from '~/utils/timing.server.ts'
+import { NavChevrons } from '~/components/nav-chevrons.tsx'
 
 export const meta: V2_MetaFunction<
 	typeof loader,

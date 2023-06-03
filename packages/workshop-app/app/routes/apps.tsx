@@ -1,6 +1,6 @@
 import { type DataFunctionArgs, json } from '@remix-run/node'
-import { getServerTimeHeader, makeTimings } from '~/utils/timing.server'
-import { getApps } from '~/utils/apps.server'
+import { getServerTimeHeader, makeTimings } from '~/utils/timing.server.ts'
+import { getApps } from '~/utils/apps.server.ts'
 
 export async function loader({ request }: DataFunctionArgs) {
 	const timings = makeTimings('appsLoader')

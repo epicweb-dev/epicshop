@@ -1,11 +1,11 @@
 import React, { Suspense, useMemo } from 'react'
 import { Await, Form, useLoaderData, useSubmit } from '@remix-run/react'
-import clsx from 'clsx'
+import { clsx } from 'clsx'
 import * as Select from '@radix-ui/react-select'
-import { Mdx } from '~/utils/mdx'
-import { type loader } from '~/routes/_app+/_exercises+/$exerciseNumber_.$stepNumber.$type'
-import AccordionComponent from '~/components/accordion'
-import Icon from './icons'
+import { Mdx } from '~/utils/mdx.tsx'
+import { type loader } from '~/routes/_app+/_exercises+/$exerciseNumber_.$stepNumber.$type.tsx'
+import AccordionComponent from '~/components/accordion.tsx'
+import Icon from './icons.tsx'
 import * as Accordion from '@radix-ui/react-accordion'
 
 export function Diff() {

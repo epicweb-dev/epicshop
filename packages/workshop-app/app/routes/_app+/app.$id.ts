@@ -10,9 +10,9 @@ import {
 	isProblemApp,
 	getExercise,
 	getWorkshopTitle,
-} from '~/utils/apps.server'
-import { typedBoolean } from '~/utils/misc'
-import { getServerTimeHeader, makeTimings } from '~/utils/timing.server'
+} from '~/utils/apps.server.ts'
+import { typedBoolean } from '~/utils/misc.tsx'
+import { getServerTimeHeader, makeTimings } from '~/utils/timing.server.ts'
 
 export async function loader({ request, params }: DataFunctionArgs) {
 	const timings = makeTimings('app')

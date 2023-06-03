@@ -10,17 +10,17 @@ import {
 	useRouteError,
 } from '@remix-run/react'
 import invariant from 'tiny-invariant'
-import { ButtonLink } from '~/components/button'
-import { type loader as rootLoader } from '~/root'
-import { getExercises, getWorkshopTitle } from '~/utils/apps.server'
-import { Mdx, PreWithCopyToClipboard } from '~/utils/mdx'
-import { getErrorMessage } from '~/utils/misc'
+import { ButtonLink } from '~/components/button.tsx'
+import { type loader as rootLoader } from '~/root.tsx'
+import { getExercises, getWorkshopTitle } from '~/utils/apps.server.ts'
+import { Mdx, PreWithCopyToClipboard } from '~/utils/mdx.tsx'
+import { getErrorMessage } from '~/utils/misc.tsx'
 import {
 	combineServerTimings,
 	getServerTimeHeader,
 	makeTimings,
 	time,
-} from '~/utils/timing.server'
+} from '~/utils/timing.server.ts'
 
 export const meta: V2_MetaFunction<
 	typeof loader,

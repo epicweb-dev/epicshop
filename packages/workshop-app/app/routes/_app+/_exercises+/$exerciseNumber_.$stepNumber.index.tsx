@@ -1,5 +1,9 @@
 import { type DataFunctionArgs, redirect } from '@remix-run/node'
-import { getExerciseApp, isProblemApp, isSolutionApp } from 'utils/apps.server'
+import {
+	getExerciseApp,
+	isProblemApp,
+	isSolutionApp,
+} from '~/utils/apps.server.ts'
 
 export async function loader({ params }: DataFunctionArgs) {
 	const problemApp = await getExerciseApp({ ...params, type: 'problem' }).then(

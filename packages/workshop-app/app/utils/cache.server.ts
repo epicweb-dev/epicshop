@@ -1,1 +1,1 @@
-export * from '../../utils/cache.server'
+export * from '../../utils/cache.server.ts'

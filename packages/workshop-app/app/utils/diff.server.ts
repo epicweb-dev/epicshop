@@ -1,20 +1,23 @@
+// import { exec } from 'child_process'
 import fsExtra from 'fs-extra'
 import os from 'os'
 import parseGitDiff from 'parse-git-diff'
 import path from 'path'
 import { BUNDLED_LANGUAGES } from 'shiki'
-import { diffCodeCache, diffFilesCache, cachified } from './cache.server'
-import { compileMarkdownString } from './compile-mdx.server'
-import { typedBoolean } from './misc'
+import { diffCodeCache, diffFilesCache, cachified } from './cache.server.ts'
+import { compileMarkdownString } from './compile-mdx.server.ts'
+import { typedBoolean } from './misc.tsx'
 import {
 	getForceFreshForDir,
 	getRelativePath,
 	getWorkshopRoot,
 	modifiedTimes,
 	type App,
-} from './apps.server'
-import { type Timings } from './timing.server'
+} from './apps.server.ts'
+import { type Timings } from './timing.server.ts'
 import { type CacheEntry } from 'cachified'
+import { execa } from 'execa'
+import { isGitIgnored } from 'globby'
 
 const kcdshopTempDir = path.join(os.tmpdir(), 'kcdshop')
 
@@ -155,8 +158,6 @@ async function copyUnignoredFiles(
 		cache: diffCodeCache,
 		forceFresh: getForceFreshForDir(srcDir, await diffCodeCache.get(key)),
 		async getFreshValue() {
-			const { isGitIgnored } = await import('globby')
-
 			const isIgnored = await isGitIgnored({ cwd: srcDir })
 
 			await fsExtra.remove(destDir)
@@ -261,7 +262,6 @@ function getAppTestFiles(app: App) {
 }
 
 export async function getDiffFilesImpl(app1: App, app2: App) {
-	const { execa } = await import('execa')
 	if (app1.name === app2.name) {
 		return []
 	}
@@ -324,7 +324,6 @@ export async function getDiffCode(
 }
 
 async function getDiffCodeImpl(app1: App, app2: App) {
-	const { execa } = await import('execa')
 	let markdownLines = ['']
 
 	if (app1.name === app2.name) {

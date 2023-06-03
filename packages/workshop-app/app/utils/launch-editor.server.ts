@@ -7,7 +7,7 @@ import path from 'path'
 import child_process from 'child_process'
 import os from 'os'
 import shellQuote from 'shell-quote'
-import { getRelativePath } from './apps.server'
+import { getRelativePath } from './apps.server.ts'
 
 function readablePath(filePath: string = '') {
 	const relative = getRelativePath(filePath)

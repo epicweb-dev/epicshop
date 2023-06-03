@@ -9,10 +9,10 @@ import {
 } from 'react'
 import type { NavigateFunction } from 'react-router'
 import { z } from 'zod'
-import { AppStarter, AppStopper, PortStopper } from '~/routes/start'
-import { typedBoolean } from '~/utils/misc'
-import Icon from '~/components/icons'
-import clsx from 'clsx'
+import { AppStarter, AppStopper, PortStopper } from '~/routes/start.tsx'
+import { typedBoolean } from '~/utils/misc.tsx'
+import Icon from '~/components/icons.tsx'
+import { clsx } from 'clsx'
 
 const historyCallDataSchema = z.intersection(
 	z.object({
