@@ -1,9 +1,8 @@
 import { type CacheEntry } from 'cachified'
 import fs from 'fs'
 import fsExtra from 'fs-extra'
-import glob from 'glob'
+import { glob } from 'glob'
 import path from 'path'
-import util from 'util'
 import { z } from 'zod'
 import {
 	cachified,
@@ -25,8 +24,6 @@ import {
 import { execa } from 'execa'
 import { globby, isGitIgnored } from 'globby'
 import pMap from 'p-map'
-
-const globPromise = util.promisify(glob)
 
 const workshopRoot = getWorkshopRoot()
 
@@ -614,7 +611,7 @@ async function getExampleApps({
 }: CachifiedOptions = {}): Promise<Array<ExampleApp>> {
 	const examplesDir = path.join(workshopRoot, 'examples')
 	const exampleDirs = (
-		await globPromise('*', { cwd: examplesDir, ignore: 'node_modules/**' })
+		await glob('*', { cwd: examplesDir, ignore: 'node_modules/**' })
 	).map(p => path.join(examplesDir, p))
 	const exampleApps = await pMap(
 		exampleDirs,
@@ -686,7 +683,7 @@ async function getSolutionApps({
 }: CachifiedOptions = {}): Promise<Array<SolutionApp>> {
 	const exercisesDir = path.join(workshopRoot, 'exercises')
 	const solutionDirs = (
-		await globPromise('**/*solution*', {
+		await glob('**/*solution*', {
 			cwd: exercisesDir,
 			ignore: 'node_modules/**',
 		})
@@ -760,7 +757,7 @@ async function getProblemApps({
 }: CachifiedOptions = {}): Promise<Array<ProblemApp>> {
 	const exercisesDir = path.join(workshopRoot, 'exercises')
 	const problemDirs = (
-		await globPromise('**/*problem*', {
+		await glob('**/*problem*', {
 			cwd: exercisesDir,
 			ignore: 'node_modules/**',
 		})

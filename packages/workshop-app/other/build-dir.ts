@@ -1,7 +1,7 @@
 import fsExtra from 'fs-extra'
 import path from 'path'
 import { fileURLToPath } from 'url'
-import glob from 'glob'
+import { globSync } from 'glob'
 import esbuild from 'esbuild'
 
 const pkg = fsExtra.readJsonSync(path.join(process.cwd(), 'package.json'))
@@ -17,12 +17,10 @@ const here = (...s: Array<string>) => path.join(__dirname, ...s)
 const srcDir = here('..', dir)
 const destDir = here('..', `build`, dir)
 
-const allFiles = glob
-	.sync('**/*.*', {
-		cwd: srcDir,
-		ignore: ['**/tsconfig.json', '**/eslint*', '**/__tests__/**'],
-	})
-	.map(file => path.join(srcDir, file))
+const allFiles = globSync('**/*.*', {
+	cwd: srcDir,
+	ignore: ['**/tsconfig.json', '**/eslint*', '**/__tests__/**'],
+}).map(file => path.join(srcDir, file))
 
 const entryPoints = []
 for (const file of allFiles) {

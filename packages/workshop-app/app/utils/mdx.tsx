@@ -1,4 +1,4 @@
-import LRU from 'lru-cache'
+import { LRUCache } from 'lru-cache'
 import * as mdxBundler from 'mdx-bundler/client/index.js'
 import type { MDXContentProps } from 'mdx-bundler/client'
 import * as React from 'react'
@@ -74,9 +74,10 @@ function getMdxComponent(code: string) {
 
 // This exists so we don't have to call new Function for the given code
 // for every request for a given blog post/mdx file.
-const mdxComponentCache = new LRU<string, ReturnType<typeof getMdxComponent>>({
-	max: 1000,
-})
+const mdxComponentCache = new LRUCache<
+	string,
+	ReturnType<typeof getMdxComponent>
+>({ max: 1000 })
 
 export function useMdxComponent(code: string) {
 	return React.useMemo(() => {

@@ -1,7 +1,7 @@
-import LRU from 'lru-cache'
+import { LRUCache } from 'lru-cache'
 import * as C from 'cachified'
 import { type CacheEntry, verboseReporter } from 'cachified'
-import { lruCacheAdapter } from 'cachified'
+import { type LRUishCache, lruCacheAdapter } from 'cachified'
 import type {
 	App,
 	ExampleApp,
@@ -47,57 +47,65 @@ export const compiledMarkdownCache = (global.__compiled_markdown_cache__ =
 	global.__compiled_markdown_cache__ ?? getCompiledMarkdownCache())
 
 function getSolutionAppCache() {
-	const cache = new LRU<string, CacheEntry<SolutionApp>>({ max: 1000 })
-	// @ts-expect-error it's fine
+	const cache = new LRUCache<string, CacheEntry<SolutionApp>>({
+		max: 1000,
+	}) as LRUishCache
 	cache.name = 'SolutionAppCache'
 	return lruCacheAdapter(cache)
 }
 
 function getProblemAppCache() {
-	const cache = new LRU<string, CacheEntry<ProblemApp>>({ max: 1000 })
-	// @ts-expect-error it's fine
+	const cache = new LRUCache<string, CacheEntry<ProblemApp>>({
+		max: 1000,
+	}) as LRUishCache
 	cache.name = 'ProblemAppCache'
 	return lruCacheAdapter(cache)
 }
 
 function getExampleAppCache() {
-	const cache = new LRU<string, CacheEntry<ExampleApp>>({ max: 1000 })
-	// @ts-expect-error it's fine
+	const cache = new LRUCache<string, CacheEntry<ExampleApp>>({
+		max: 1000,
+	}) as LRUishCache
 	cache.name = 'ExampleAppCache'
 	return lruCacheAdapter(cache)
 }
 
 function getPlaygroundAppCache() {
-	const cache = new LRU<string, CacheEntry<PlaygroundApp>>({ max: 1000 })
-	// @ts-expect-error it's fine
+	const cache = new LRUCache<string, CacheEntry<PlaygroundApp>>({
+		max: 1000,
+	}) as LRUishCache
 	cache.name = 'PlaygroundAppCache'
 	return lruCacheAdapter(cache)
 }
 
 function getAppsCache() {
-	const cache = new LRU<string, CacheEntry<App>>({ max: 1000 })
-	// @ts-expect-error it's fine
+	const cache = new LRUCache<string, CacheEntry<App>>({
+		max: 1000,
+	}) as LRUishCache
 	cache.name = 'AppsCache'
 	return lruCacheAdapter(cache)
 }
 
 function getDiffCodeCache() {
-	const cache = new LRU<string, CacheEntry<string>>({ max: 1000 })
-	// @ts-expect-error it's fine
+	const cache = new LRUCache<string, CacheEntry<string>>({
+		max: 1000,
+	}) as LRUishCache
 	cache.name = 'DiffCodeCache'
 	return lruCacheAdapter(cache)
 }
 
 function getDiffFilesCache() {
-	const cache = new LRU<string, CacheEntry<string>>({ max: 1000 })
-	// @ts-expect-error it's fine
+	const cache = new LRUCache<string, CacheEntry<string>>({
+		max: 1000,
+	}) as LRUishCache
 	cache.name = 'DiffFilesCache'
 	return lruCacheAdapter(cache)
 }
 
 function getCompiledMarkdownCache() {
-	const cache = new LRU<string, CacheEntry<string>>({ max: 1000 })
-	// @ts-expect-error it's fine
+	const cache = new LRUCache<string, CacheEntry<string>>({
+		max: 1000,
+	}) as LRUishCache
 	cache.name = 'CompiledMarkdownCache'
 	return lruCacheAdapter(cache)
 }
