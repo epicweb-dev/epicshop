@@ -90,7 +90,7 @@
     "framer-motion": "^10.11.5",
     "fs-extra": "^11.1.1",
     "get-port": "^6.1.2",
-    "glob": "^8.1.0",
+    "glob": "^10.2.6",
     "globby": "^13.1.4",
     "isbot": "^3.6.8",
     "lodash.escape": "^4.0.1",
