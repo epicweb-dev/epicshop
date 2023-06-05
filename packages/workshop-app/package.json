@@ -19,6 +19,10 @@
       "types": "./build/utils/apps.server.d.ts",
       "default": "./build/utils/apps.server.js"
     },
+    "./change-tracker": {
+      "types": "./build/utils/change-tracker.d.ts",
+      "default": "./build/utils/change-tracker.js"
+    },
     "./iframe-sync": {
       "types": "./build/utils/iframe-sync.d.ts",
       "default": "./build/utils/iframe-sync.js"
