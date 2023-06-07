@@ -17,10 +17,15 @@ const here = (...s: Array<string>) => path.join(__dirname, ...s)
 const srcDir = here('..', dir)
 const destDir = here('..', `build`, dir)
 
-const allFiles = globSync('**/*.*', {
-	cwd: srcDir,
-	ignore: ['**/tsconfig.json', '**/eslint*', '**/__tests__/**'],
-}).map(file => path.join(srcDir, file))
+const ignore = ['**/tsconfig.json', '**/eslint*', '**/__tests__/**']
+if (dir === 'server') {
+	// for development only
+	ignore.push('dev-server.js')
+}
+
+const allFiles = globSync('**/*.*', { cwd: srcDir, ignore }).map(file =>
+	path.join(srcDir, file),
+)
 
 const entryPoints = []
 for (const file of allFiles) {
