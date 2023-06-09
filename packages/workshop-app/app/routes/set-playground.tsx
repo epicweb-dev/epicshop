@@ -16,6 +16,7 @@ import { getErrorMessage } from '~/utils/misc.tsx'
 import Icon from '~/components/icons.tsx'
 import { getDiffCode } from '~/utils/diff.server.ts'
 import { clsx } from 'clsx'
+import { showToast } from '~/components/toast.tsx'
 
 const setPlaygroundSchema = z.object({
 	appName: z.string(),
@@ -68,6 +69,22 @@ export function SetPlayground({
 	appName: string
 } & JSX.IntrinsicElements['button']) {
 	const fetcher = useFetcher<typeof action>()
+
+	useEffect(() => {
+		switch (fetcher.state) {
+			case 'loading': {
+				const error = fetcher.data?.status === 'error' ? fetcher.data.error : ''
+				if (error) {
+					showToast(document, {
+						title: 'Set Playground Error',
+						variant: 'Error',
+						content: error,
+					})
+				}
+			}
+		}
+	}, [fetcher])
+
 	return (
 		<fetcher.Form
 			action="/set-playground"
@@ -84,9 +101,6 @@ export function SetPlayground({
 					fetcher.data?.status === 'error' ? 'cursor-not-allowed' : null,
 				)}
 			/>
-			{fetcher.data?.status === 'error' ? (
-				<div className="error">{fetcher.data.error}</div>
-			) : null}
 		</fetcher.Form>
 	)
 }
