@@ -273,7 +273,12 @@ export function getProcesses() {
 export async function closeProcess(key: string) {
 	const proc = devProcesses.get(key)
 	if (proc) {
-		proc.process.kill()
+		if (process.platform === 'win32') {
+			const { execa } = await import('execa')
+			await execa('taskkill', ['/pid', String(proc.process.pid), '/f', '/t'])
+		} else {
+			proc.process.kill()
+		}
 		await stopPort(proc.port) // 🤷‍♂️
 		devProcesses.delete(key)
 	}
