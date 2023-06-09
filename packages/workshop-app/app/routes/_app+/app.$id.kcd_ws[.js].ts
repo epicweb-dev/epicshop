@@ -1,7 +1,6 @@
-import type { DataFunctionArgs } from '@remix-run/node'
+import { redirect, type DataFunctionArgs } from '@remix-run/node'
 import invariant from 'tiny-invariant'
 import { getAppByName } from '~/utils/apps.server.ts'
-import { redirect } from 'react-router'
 
 export async function loader({ params, request }: DataFunctionArgs) {
 	const { id: appId } = params

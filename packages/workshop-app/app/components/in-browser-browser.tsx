@@ -1,4 +1,4 @@
-import { Form, useSearchParams } from '@remix-run/react'
+import { type NavigateFunction, Form, useSearchParams } from '@remix-run/react'
 import {
 	useEffect,
 	forwardRef,
@@ -7,7 +7,6 @@ import {
 	useState,
 	type ForwardedRef,
 } from 'react'
-import type { NavigateFunction } from 'react-router'
 import { z } from 'zod'
 import { AppStarter, AppStopper, PortStopper } from '~/routes/start.tsx'
 import { typedBoolean } from '~/utils/misc.tsx'
