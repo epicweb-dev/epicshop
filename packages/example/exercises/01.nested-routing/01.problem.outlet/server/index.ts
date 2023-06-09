@@ -101,13 +101,9 @@ ${chalk.bold('Press Ctrl+C to stop')}
 })
 
 closeWithGrace(async () => {
-	try {
-		await new Promise((resolve, reject) => {
-			server.close(e => (e ? reject(e) : resolve('ok')))
-		})
-	} catch (error) {
-		console.log(error)
-	}
+	await new Promise((resolve, reject) => {
+		server.close(e => (e ? reject(e) : resolve('ok')))
+	})
 })
 
 // during dev, we'll keep the build module up to date with the changes
