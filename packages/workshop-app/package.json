@@ -28,8 +28,8 @@
       "default": "./build/utils/iframe-sync.js"
     },
     "./playwright": {
-      "types": "./build/utils/playwright.d.ts",
-      "default": "./build/utils/playwright.js"
+      "types": "./build/utils/playwright.server.d.ts",
+      "default": "./build/utils/playwright.server.js"
     },
     "./process-manager.server": {
       "types": "./build/utils/process-manager.server.d.ts",
