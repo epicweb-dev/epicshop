@@ -13,7 +13,7 @@ import {
 import * as Select from '@radix-ui/react-select'
 import { z } from 'zod'
 import { getErrorMessage } from '~/utils/misc.tsx'
-import Icon from '~/components/icons.tsx'
+import { Icon } from '~/components/icons.tsx'
 import { getDiffCode } from '~/utils/diff.server.ts'
 import { clsx } from 'clsx'
 import { showToast } from '~/components/toast.tsx'
@@ -89,7 +89,7 @@ export function SetPlayground({
 		<fetcher.Form
 			action="/set-playground"
 			method="POST"
-			className="flex items-center justify-center"
+			className="inline-flex items-center justify-center"
 		>
 			<input type="hidden" name="appName" value={appName} />
 			<button
@@ -132,7 +132,7 @@ export function PlaygroundChooser({
 					fetcher.data?.status === 'error' ? 'cursor-not-allowed' : null,
 				)}
 			>
-				<span className="scrollbar-thin scrollbar-thumb-gray-300 w-80 flex-1 overflow-hidden text-ellipsis whitespace-nowrap">
+				<span className="scrollbar-thin scrollbar-thumb-scrollbar w-80 flex-1 overflow-hidden text-ellipsis whitespace-nowrap">
 					<Select.Value
 						placeholder="Select current app"
 						className="inline-block w-40 text-ellipsis"
@@ -226,13 +226,8 @@ export function SetAppToPlayground({ appName }: { appName: string }) {
 			appName={appName}
 			title="Playground is not set to the right app. Click to set Playground."
 		>
-			<span className="flex items-center justify-center gap-1 text-rose-700">
-				<Icon
-					viewBox="0 0 24 24"
-					size="16"
-					name="Unlinked"
-					className="animate-ping"
-				/>{' '}
+			<span className="text-foreground-danger flex items-center justify-center gap-1">
+				<Icon name="Unlinked" className="animate-ping" />{' '}
 				<span className="uppercase underline">Set to Playground</span>
 			</span>
 		</SetPlayground>

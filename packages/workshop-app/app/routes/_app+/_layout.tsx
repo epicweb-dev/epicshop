@@ -23,6 +23,7 @@ import {
 	getServerTimeHeader,
 	makeTimings,
 } from '~/utils/timing.server.ts'
+import { ThemeSwitch } from '../theme/index.tsx'
 
 export async function loader({ request }: DataFunctionArgs) {
 	const timings = makeTimings('stepLoader')
@@ -79,7 +80,7 @@ export const headers: HeadersFunction = ({ loaderHeaders, parentHeaders }) => {
 
 export default function App() {
 	return (
-		<div className="flex min-h-screen bg-white text-black">
+		<div className="flex min-h-screen">
 			<div className="flex flex-grow">
 				<div className="flex flex-grow">
 					<Navigation />
@@ -137,7 +138,7 @@ function Navigation() {
 	}
 
 	return (
-		<nav className="flex items-center border-r border-gray-200 bg-white">
+		<nav className="border-border flex items-center border-r">
 			<motion.div
 				initial={isMenuOpened ? 'open' : 'close'}
 				variants={menuVariants}
@@ -153,7 +154,7 @@ function Navigation() {
 					{isMenuOpened && (
 						<motion.div
 							style={{ width: OPENED_MENU_WIDTH }}
-							className="scrollbar-thin scrollbar-thumb-gray-200 flex flex-grow flex-col justify-between overflow-y-auto p-6"
+							className="scrollbar-thin scrollbar-thumb-scrollbar flex flex-grow flex-col justify-between overflow-y-auto p-6"
 							initial={{ opacity: 0 }}
 							animate={{ opacity: 1 }}
 						>
@@ -177,10 +178,8 @@ function Navigation() {
 												to={`/${exerciseNum}`}
 												className={clsx(
 													'relative whitespace-nowrap px-2 py-0.5 pr-3 text-2xl font-bold outline-none hover:underline focus:underline',
-													{
-														'bg-black text-white after:absolute after:-bottom-2.5 after:-right-2.5 after:h-5 after:w-5 after:rotate-45 after:scale-75 after:bg-white after:content-[""]':
-															isActive,
-													},
+													'after:bg-background after:absolute after:-bottom-2.5 after:-right-2.5 after:h-5 after:w-5 after:rotate-45 after:scale-75 after:content-[""] hover:underline focus:underline',
+													{ 'bg-foreground text-background': isActive },
 												)}
 											>
 												{title}
@@ -208,8 +207,10 @@ function Navigation() {
 																	to={`/${exerciseNum}/${step}`}
 																	prefetch="intent"
 																	className={clsx(
-																		'relative whitespace-nowrap px-2 py-0.5 pr-3 text-xl font-medium outline-none after:absolute after:-bottom-2.5 after:-right-2.5 after:h-5 after:w-5 after:rotate-45 after:scale-75 after:bg-white after:content-[""] hover:underline focus:underline',
-																		{ 'bg-black text-white': isActive },
+																		'after:bg-background relative whitespace-nowrap px-2 py-0.5 pr-3 text-xl font-medium outline-none after:absolute after:-bottom-2.5 after:-right-2.5 after:h-5 after:w-5 after:rotate-45 after:scale-75 after:content-[""] hover:underline focus:underline',
+																		{
+																			'bg-foreground text-background': isActive,
+																		},
 																	)}
 																>
 																	{isPlayground
@@ -225,8 +226,10 @@ function Navigation() {
 															prefetch="intent"
 															className={({ isActive }) =>
 																clsx(
-																	'relative whitespace-nowrap px-2 py-0.5 pr-3 text-base font-medium outline-none after:absolute after:-bottom-2.5 after:-right-2.5 after:h-5 after:w-5 after:rotate-45 after:scale-75 after:bg-white after:content-[""] hover:underline focus:underline',
-																	{ 'bg-black text-white': isActive },
+																	'after:bg-background relative whitespace-nowrap px-2 py-0.5 pr-3 text-base font-medium outline-none after:absolute after:-bottom-2.5 after:-right-2.5 after:h-5 after:w-5 after:rotate-45 after:scale-75 after:content-[""] hover:underline focus:underline',
+																	{
+																		'bg-foreground text-background': isActive,
+																	},
 																)
 															}
 														>
@@ -244,9 +247,9 @@ function Navigation() {
 									to="/finished"
 									className={({ isActive }) =>
 										clsx(
-											'relative whitespace-nowrap px-2 py-0.5 pr-3 text-lg font-bold outline-none hover:underline focus:underline',
+											'relative whitespace-nowrap text-lg font-bold outline-none hover:underline focus:underline',
 											{
-												'bg-black text-white after:absolute after:-bottom-2.5 after:-right-2.5 after:h-5 after:w-5 after:rotate-45 after:scale-75 after:bg-white after:content-[""]':
+												'after:bg-background bg-black text-white after:absolute after:-bottom-2.5 after:-right-2.5 after:h-5 after:w-5 after:rotate-45 after:scale-75 after:content-[""]':
 													isActive,
 											},
 										)
@@ -269,6 +272,9 @@ function Navigation() {
 							</Link>
 						</div>
 					)}
+					<div className="mb-4 ml-3 self-start">
+						<ThemeSwitch />
+					</div>
 				</div>
 			</motion.div>
 		</nav>
@@ -299,7 +305,7 @@ function NavToggle({
 	const path02Controls = useAnimationControls()
 
 	return (
-		<div className="relative inline-flex h-14 w-full items-center justify-between overflow-hidden border-b border-gray-200">
+		<div className="border-border relative inline-flex h-14 w-full items-center justify-between overflow-hidden border-b">
 			<button
 				className="flex w-14 items-center justify-center"
 				aria-label="Open Navigation menu"

@@ -5,7 +5,7 @@ import { AnimatePresence, motion } from 'framer-motion'
 import { clsx } from 'clsx'
 import type { DefaultColors } from 'tailwindcss/types/generated/colors.d.ts'
 import { useEventListener } from '~/utils/misc.tsx'
-import Icon from './icons.tsx'
+import { Icon } from './icons.tsx'
 
 const ANIMATION_DURATION = 250
 
@@ -51,7 +51,7 @@ function BaseToast({
 						exit={{ y: 150, opacity: 0 }}
 						transition={{ ease: 'easeIn', duration: ANIMATION_DURATION / 1000 }}
 						className={clsx(
-							"grid grid-cols-[24px_1fr_16px] items-center gap-x-2 gap-y-1 rounded-md bg-white p-2 shadow-[hsl(206_22%_7%_/_35%)_0px_10px_38px_-10px,_hsl(206_22%_7%_/_20%)_0px_10px_20px_-15px] [grid-template-areas:_'icon_title_close'_'icon_description_description']",
+							"grid grid-cols-[24px_1fr_16px] items-center gap-x-2 gap-y-1 rounded-md p-2 shadow-[hsl(206_22%_7%_/_35%)_0px_10px_38px_-10px,_hsl(206_22%_7%_/_20%)_0px_10px_20px_-15px] [grid-template-areas:_'icon_title_close'_'icon_description_description']",
 							{ 'border-l-8 border-red-500': variantColor === 'red' },
 							{ 'border-l-8 border-green-500': variantColor === 'green' },
 							{ 'border-l-8 border-blue-500': variantColor === 'blue' },
@@ -195,7 +195,7 @@ export function ToastHub() {
 				: null}
 			<ToastPrimitive.Viewport
 				ref={viewPortRef}
-				className="min-w-md scrollbar-thin scrollbar-thumb-gray-300 fixed bottom-0 right-0 z-[2147483647] m-0 flex max-h-full w-[30%] max-w-xl list-none flex-col-reverse gap-[10px] overflow-y-auto overflow-x-hidden p-[var(--viewport-padding)] outline-none [--viewport-padding:_10px]"
+				className="min-w-md scrollbar-thin scrollbar-thumb-scrollbar fixed bottom-0 right-0 z-[2147483647] m-0 flex max-h-full w-[30%] max-w-xl list-none flex-col-reverse gap-[10px] overflow-y-auto overflow-x-hidden p-[var(--viewport-padding)] outline-none [--viewport-padding:_10px]"
 			/>
 		</ToastPrimitive.Provider>
 	)

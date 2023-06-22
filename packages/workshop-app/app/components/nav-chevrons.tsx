@@ -1,5 +1,5 @@
 import { Link, type LinkProps } from '@remix-run/react'
-import Icon from './icons.tsx'
+import { Icon } from './icons.tsx'
 
 export function NavChevrons({
 	prev,
@@ -14,7 +14,7 @@ export function NavChevrons({
 				<Link
 					prefetch="intent"
 					{...prev}
-					className="group flex h-full items-center justify-center border-l border-gray-200 px-7"
+					className="border-border group flex h-full items-center justify-center border-l px-7"
 					children={
 						<>
 							<Icon
@@ -33,7 +33,7 @@ export function NavChevrons({
 				<Link
 					prefetch="intent"
 					{...next}
-					className="group flex h-full items-center justify-center border-l border-gray-200 px-7"
+					className="border-border group flex h-full items-center justify-center border-l px-7"
 					children={
 						<>
 							<Icon

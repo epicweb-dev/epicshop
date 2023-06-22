@@ -18,7 +18,7 @@ import { clsx } from 'clsx'
 import * as React from 'react'
 import { useMemo, useRef, useState, type PropsWithChildren } from 'react'
 import { Diff } from '~/components/diff.tsx'
-import Icon from '~/components/icons.tsx'
+import { Icon } from '~/components/icons.tsx'
 import {
 	InBrowserBrowser,
 	type InBrowserBrowserRef,
@@ -326,14 +326,11 @@ export default function ExercisePartRoute() {
 			const app = data[type]
 
 			const info = (
-				<div className="launch-editor-button-wrapper flex items-center justify-center underline">
+				<div className="launch-editor-button-wrapper underline">
 					{children}{' '}
-					<img
-						title="Open in editor"
-						alt="Open in editor"
-						className="!m-0"
-						src="/icons/keyboard-2.svg"
-					/>
+					<svg height={24} width={24}>
+						<use href={`/icons.svg#keyboard`} />
+					</svg>
 				</div>
 			)
 
@@ -404,7 +401,7 @@ export default function ExercisePartRoute() {
 	return (
 		<div className="flex flex-grow flex-col">
 			<div className="grid flex-grow grid-cols-2">
-				<div className="relative flex h-screen flex-grow flex-col justify-between border-r border-gray-200">
+				<div className="border-border relative flex h-screen flex-grow flex-col justify-between border-r">
 					<h4 className="pl-10 font-mono text-sm font-medium uppercase leading-tight">
 						<div className="flex h-14 flex-wrap items-center justify-start gap-x-3 py-2">
 							{pageTitle(data)}
@@ -414,7 +411,7 @@ export default function ExercisePartRoute() {
 							) : null}
 						</div>
 					</h4>
-					<article className="shadow-on-scrollbox prose sm:prose-lg scrollbar-thin scrollbar-thumb-gray-200 prose-p:text-black prose-headings:text-black h-full w-full max-w-none space-y-6 overflow-y-auto p-10 pt-8 text-black">
+					<article className="shadow-on-scrollbox prose dark:prose-invert sm:prose-lg scrollbar-thin scrollbar-thumb-scrollbar h-full w-full max-w-none space-y-6 overflow-y-auto p-10 pt-8">
 						{data.exerciseStepApp.instructionsCode ? (
 							<Mdx
 								code={data.exerciseStepApp?.instructionsCode}
@@ -428,7 +425,7 @@ export default function ExercisePartRoute() {
 							<p>No instructions yet...</p>
 						)}
 					</article>
-					<div className="flex h-16 justify-between border-t border-gray-200 bg-white">
+					<div className="border-border flex h-16 justify-between border-t">
 						<div>
 							<div className="h-full">
 								<TouchedFiles />
@@ -460,7 +457,10 @@ export default function ExercisePartRoute() {
 					// intentionally no onValueChange here because the Link will trigger the
 					// change.
 				>
-					<Tabs.List className="inline-flex h-14 border-b border-gray-200">
+					{/* the scrollbar adds 8 pixels to the bottom of the list which looks
+					funny with the border, especially when most of the time the scrollbar
+					shouldn't show up anyway. So we hide that extra space with -8px margin-bottom */}
+					<Tabs.List className="scrollbar-thin scrollbar-thumb-scrollbar mb-[-8px] inline-flex h-14 overflow-x-scroll">
 						{tabs.map(tab => {
 							return (
 								<Tabs.Trigger
@@ -471,12 +471,12 @@ export default function ExercisePartRoute() {
 									}
 									asChild
 									className={clsx(
-										'radix-state-active:bg-black radix-state-active:hover:bg-gray-700 radix-state-active:text-white radix-state-active:z-10 radix-state-inactive:hover:bg-gray-100 clip-path-button relative px-6 py-4 font-mono text-sm uppercase',
+										'radix-state-active:bg-foreground radix-state-active:hover:bg-foreground/80 radix-state-active:hover:text-background/80 radix-state-active:text-background radix-state-active:z-10 radix-state-inactive:hover:bg-foreground/10 clip-path-button relative px-6 py-4 font-mono text-sm uppercase',
 									)}
 								>
 									<Link
 										id={`${tab}-tab`}
-										className="outline-none focus:bg-gray-100"
+										className="focus:bg-foreground/80 focus:text-background/80 outline-none"
 										preventScrollReset
 										prefetch="intent"
 										to={`?${withParam(
@@ -491,7 +491,7 @@ export default function ExercisePartRoute() {
 							)
 						})}
 					</Tabs.List>
-					<div className="relative z-10 flex flex-grow flex-col">
+					<div className="border-border relative z-10 flex flex-grow flex-col border-t">
 						<Tabs.Content
 							value={tabs[0]}
 							className="radix-state-inactive:hidden flex flex-grow items-center justify-center"
@@ -567,7 +567,7 @@ function Preview({
 		)
 	} else {
 		return (
-			<div className="scrollbar-thin scrollbar-thumb-gray-300 relative h-full flex-grow overflow-y-auto">
+			<div className="scrollbar-thin scrollbar-thumb-scrollbar relative h-full flex-grow overflow-y-auto">
 				<a
 					href={dev.baseUrl}
 					target="_blank"
@@ -627,24 +627,18 @@ function PlaygroundWindow({
 }) {
 	const playgroundLinkedUI =
 		playgroundAppInfo?.appName === problemAppName ? (
-			<Icon
-				title="Click to reset Playground."
-				viewBox="0 0 24 24"
-				size="28"
-				name="Linked"
-			/>
+			<Icon size={28} name="Linked" title="Click to reset Playground." />
 		) : (
 			<Icon
 				title="Playground is not set to the right app. Click to set Playground."
-				viewBox="0 0 24 24"
-				size="28"
+				size={28}
 				name="Unlinked"
-				className="animate-pulse text-rose-700"
+				className="text-foreground-danger animate-pulse"
 			/>
 		)
 	return (
 		<div className="flex h-full w-full flex-col justify-between">
-			<div className="flex h-14 items-center justify-start gap-1 border-b border-gray-200 px-3">
+			<div className="border-border flex h-14 items-center justify-start gap-1 border-b px-3">
 				{problemAppName ? (
 					<SetPlayground appName={problemAppName}>
 						{playgroundLinkedUI}
@@ -682,7 +676,7 @@ function Tests({
 		const { baseUrl } = playgroundAppInfo.test
 		testUI = (
 			<div
-				className="scrollbar-thin scrollbar-thumb-gray-300 flex h-full w-full flex-grow flex-col overflow-y-auto"
+				className="scrollbar-thin scrollbar-thumb-scrollbar flex h-full w-full flex-grow flex-col overflow-y-auto"
 				key={inBrowserTestKey}
 			>
 				{playgroundAppInfo.test.testFiles.map(testFile => {

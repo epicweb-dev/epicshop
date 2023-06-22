@@ -110,21 +110,21 @@ export default function ExerciseFinished() {
 	return (
 		<main className="flex h-screen w-full flex-col">
 			<div className="grid w-full flex-grow grid-cols-2 overflow-y-auto">
-				<div className="flex flex-grow flex-col border-r border-t border-gray-200">
-					<h4 className="border-b border-gray-200 py-8 pl-[58px] font-mono text-sm font-medium uppercase leading-tight">
+				<div className="border-border flex flex-grow flex-col border-r border-t">
+					<h4 className="border-border border-b py-8 pl-[58px] font-mono text-sm font-medium uppercase leading-tight">
 						<Link to={`/${exerciseNumber}`} className="underline">
 							{`${exerciseNumber}. ${data.exercise.title}`}
 						</Link>
 						{` | Elaboration`}
 					</h4>
 					<iframe
-						className="flex-grow pt-4"
+						className="flex-grow bg-white pt-4"
 						title="Elaboration"
 						src={`https://docs.google.com/forms/d/e/1FAIpQLSf3o9xyjQepTlOTH5Z7ZwkeSTdXh6YWI_RGc9KiyD3oUN0p6w/viewform?${searchParams.toString()}`}
 					>
 						<Loading />
 					</iframe>
-					<div className="flex h-16 justify-end border-t border-gray-200 bg-white">
+					<div className="border-border flex h-16 justify-end border-t">
 						<NavChevrons prev={data.prevStepLink} next={data.nextStepLink} />
 					</div>
 				</div>

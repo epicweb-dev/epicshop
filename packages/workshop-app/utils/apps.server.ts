@@ -297,7 +297,7 @@ export async function getExercises({
 		},
 		{ concurrency: 1 },
 	)
-	return exercises.filter(typedBoolean)
+	return exercises.filter(Boolean)
 }
 
 let appCallCount = 0
@@ -332,7 +332,7 @@ export async function getApps({
 				...solutionApps,
 				...exampleApps,
 			]
-				.filter(typedBoolean)
+				.filter(Boolean)
 				.sort((a, b) => {
 					if (isPlaygroundApp(a)) {
 						if (isPlaygroundApp(b)) return a.name.localeCompare(b.name)
@@ -385,7 +385,7 @@ async function getPkgProp<Value>(
 ): Promise<Value> {
 	const pkg = JSON.parse(
 		fs.readFileSync(path.join(fullPath, 'package.json')).toString(),
-	)
+	) as any
 	const propPath = prop.split('.')
 	let value = pkg
 	for (const p of propPath) {
@@ -638,7 +638,7 @@ async function getExampleApps({
 		},
 		{ concurrency: 1 },
 	)
-	return exampleApps.filter(typedBoolean)
+	return exampleApps.filter(Boolean)
 }
 
 async function getSolutionAppFromPath(
@@ -712,7 +712,7 @@ async function getSolutionApps({
 		},
 		{ concurrency: 1 },
 	)
-	return solutionApps.filter(typedBoolean)
+	return solutionApps.filter(Boolean)
 }
 
 async function getProblemAppFromPath(
@@ -786,7 +786,7 @@ async function getProblemApps({
 		},
 		{ concurrency: 1 },
 	)
-	return problemApps.filter(typedBoolean).flat()
+	return problemApps.filter(Boolean).flat()
 }
 
 export async function getExercise(
@@ -987,7 +987,7 @@ export async function getPlaygroundAppName() {
 			playgroundAppNameInfoPath,
 			'utf8',
 		)
-		const { appName } = JSON.parse(jsonString)
+		const { appName } = JSON.parse(jsonString) as any
 		if (typeof appName !== 'string') return null
 		return appName
 	} catch {
@@ -1007,12 +1007,6 @@ export async function getWorkshopTitle() {
 
 export function getWorkshopRoot() {
 	return process.env.KCDSHOP_CONTEXT_CWD ?? process.cwd()
-}
-
-export function typedBoolean<T>(
-	value: T,
-): value is Exclude<T, false | null | undefined | '' | 0> {
-	return Boolean(value)
 }
 
 const exercisesPath = path.join(workshopRoot, 'exercises/')

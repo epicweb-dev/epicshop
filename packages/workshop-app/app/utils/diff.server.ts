@@ -6,7 +6,6 @@ import path from 'path'
 import { BUNDLED_LANGUAGES } from 'shiki'
 import { diffCodeCache, diffFilesCache, cachified } from './cache.server.ts'
 import { compileMarkdownString } from './compile-mdx.server.ts'
-import { typedBoolean } from './misc.tsx'
 import {
 	getForceFreshForDir,
 	getRelativePath,
@@ -98,7 +97,7 @@ function getFileCodeblocks(
 					? ['remove', removedLineNumbers.join(',')]
 					: null,
 				addedLineNumbers.length ? ['add', addedLineNumbers.join(',')] : null,
-			].filter(typedBoolean),
+			].filter(Boolean),
 		)
 			.toString()
 			.replace('&', ' ')
@@ -113,7 +112,7 @@ function getFileCodeblocks(
 			const fixedTitle = getRelativePath(file)
 
 			const className =
-				'border border-gray-300 rounded bg-white px-2 py-0.5 font-mono text-xs font-semibold text-black'
+				'border border-border hover:bg-foreground/10 rounded px-2 py-0.5 font-mono text-xs font-semibold'
 			return `
 <LaunchEditor file=${file} line={${line}}>
 	<span	title=${fixedTitle} className="${className}">${label}</span>

@@ -6,7 +6,7 @@ import escapeHtml from 'lodash.escape'
 import { useEffect, useReducer, useRef } from 'react'
 import { eventStream, useEventSource } from 'remix-utils'
 import { z } from 'zod'
-import Icon from '~/components/icons.tsx'
+import { Icon, AnimatedBars } from '~/components/icons.tsx'
 import { getAppByName } from '~/utils/apps.server.ts'
 import {
 	clearTestProcessEntry,
@@ -234,7 +234,7 @@ export function TestOutput({ name }: { name: string }) {
 
 	return (
 		<div className="relative flex h-full w-full flex-col">
-			<div className="flex h-12 w-full items-center justify-between border-b border-gray-200 bg-white">
+			<div className="border-border flex h-12 w-full items-center justify-between border-b">
 				<div className="flex h-full items-center">
 					{!isRunning && (
 						<TestRunner
@@ -249,16 +249,14 @@ export function TestOutput({ name }: { name: string }) {
 							}}
 						/>
 					)}
-					{isRunning && (
-						<div className="flex h-full flex-grow items-center justify-center border-r border-gray-200 px-3.5">
-							<Icon
-								name="AnimatedBars"
-								role="status"
-								aria-label="Running Tests"
-							/>
-						</div>
-					)}
-					{isRunning && <StopTest name={name} />}
+					{isRunning ? (
+						<>
+							<div className="border-border flex h-full flex-grow items-center justify-center border-r px-3.5">
+								<AnimatedBars role="status" aria-label="Running Tests" />
+							</div>
+							<StopTest name={name} />
+						</>
+					) : null}
 				</div>
 
 				{!isRunning && exitCode !== undefined && (
@@ -281,7 +279,7 @@ export function TestOutput({ name }: { name: string }) {
 					/>
 				)}
 			</div>
-			<div className="scrollbar-thin scrollbar-thumb-gray-300 h-full overflow-y-scroll p-5">
+			<div className="scrollbar-thin scrollbar-thumb-scrollbar h-full overflow-y-scroll p-5">
 				<p className="pb-5 font-mono text-sm font-medium uppercase">
 					Test Output
 				</p>
@@ -325,13 +323,13 @@ export function TestRunner({
 				type="submit"
 				name="intent"
 				value="run"
-				className="flex h-full flex-grow items-center justify-center border-r border-gray-200 px-3.5"
+				className="border-border flex h-full flex-grow items-center justify-center border-r px-3.5"
 				title="Run Tests"
 			>
 				{fetcher.state === 'idle' ? (
 					<Icon name="TriangleSmall" title="Run Tests" />
 				) : (
-					<Icon name="AnimatedBars" title="Running Tests" role="status" />
+					<AnimatedBars title="Running Tests" role="status" />
 				)}
 			</button>
 		</fetcher.Form>
@@ -362,7 +360,7 @@ export function ClearTest({
 				type="submit"
 				name="intent"
 				value="clear"
-				className="flex h-full flex-grow items-center justify-center border-l border-gray-200 px-3.5"
+				className="border-border flex h-full flex-grow items-center justify-center border-l px-3.5"
 				title="Clear Tests"
 			>
 				{fetcher.state === 'idle' ? (
@@ -404,7 +402,7 @@ export function StopTest({
 				type="submit"
 				name="intent"
 				value="stop"
-				className="flex h-full flex-grow items-center justify-center border-r border-gray-200 px-3.5"
+				className="border-border flex h-full flex-grow items-center justify-center border-r px-3.5"
 			>
 				{fetcher.state === 'idle' ? (
 					<Icon name="Stop" title="Stop Tests" />

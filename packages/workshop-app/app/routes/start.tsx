@@ -76,7 +76,7 @@ export function AppStopper({ name }: { name: string }) {
 				type="submit"
 				name="intent"
 				value="stop"
-				className="h-full border-r border-gray-200 px-3 py-4 font-mono text-xs uppercase leading-none"
+				className="border-border h-full border-r px-3 py-4 font-mono text-xs uppercase leading-none"
 			>
 				{fetcher.state === 'idle' ? 'Stop App' : 'Stopping App'}
 			</button>

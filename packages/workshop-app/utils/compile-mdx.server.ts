@@ -91,7 +91,7 @@ export async function compileMdx(
 	if (await checkFileExists(cacheLocation)) {
 		const cached = JSON.parse(
 			await fs.promises.readFile(cacheLocation, 'utf-8'),
-		)
+		) as any
 		return cached.value
 	}
 	let title: string | null = null

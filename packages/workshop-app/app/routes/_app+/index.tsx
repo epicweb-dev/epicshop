@@ -89,15 +89,15 @@ export default function Index() {
 	)
 	return (
 		<main className="relative h-screen w-full">
-			<div className="shadow-on-scrollbox scrollbar-thin scrollbar-thumb-gray-300 h-full w-full overflow-y-auto">
-				<article className="min-h-full w-full border-r border-gray-200 md:w-3/4 lg:w-2/3">
+			<div className="shadow-on-scrollbox scrollbar-thin scrollbar-thumb-scrollbar h-full w-full overflow-y-auto">
+				<article className="border-border min-h-full w-full border-r md:w-3/4 lg:w-2/3">
 					<div className="px-10 pt-16">
 						<h1 className="text-[6vw] font-extrabold leading-none">
 							{data.title}
 						</h1>
 						<div className="mt-8">{exerciseLinks}</div>
 					</div>
-					<div className="prose sm:prose-lg mt-16 w-full max-w-none border-t border-gray-200 px-10 pt-16">
+					<div className="prose dark:prose-invert sm:prose-lg border-border mt-16 w-full max-w-none border-t px-10 pt-16">
 						{data.workshopReadme.code ? (
 							<Mdx
 								code={data.workshopReadme.code}

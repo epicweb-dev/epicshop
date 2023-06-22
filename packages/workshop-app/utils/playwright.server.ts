@@ -1,4 +1,4 @@
-import { getApps, isProblemApp, typedBoolean } from './apps.server.ts'
+import { getApps, isProblemApp } from './apps.server.ts'
 import { test, expect } from '@playwright/test'
 import z from 'zod'
 import crossSpawn from 'cross-spawn'
@@ -17,7 +17,7 @@ export async function getInBrowserTestPages() {
 			}
 		})
 	})
-	return pages.filter(typedBoolean).flat()
+	return pages.filter(Boolean).flat()
 }
 
 const sleep = (time: number) =>

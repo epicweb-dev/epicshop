@@ -11,7 +11,6 @@ import {
 	getExercise,
 	getWorkshopTitle,
 } from '~/utils/apps.server.ts'
-import { typedBoolean } from '~/utils/misc.tsx'
 import { getServerTimeHeader, makeTimings } from '~/utils/timing.server.ts'
 
 export async function loader({ request, params }: DataFunctionArgs) {
@@ -49,7 +48,7 @@ export async function loader({ request, params }: DataFunctionArgs) {
 	const indexJs = indexFiles.find((file: string) => file.endsWith('index.js'))
 	const indexTs = indexFiles.find((file: string) => file.endsWith('index.ts'))
 	const indexTsx = indexFiles.find((file: string) => file.endsWith('index.tsx'))
-	const scripts = [indexJs, indexTs, indexTsx].filter(typedBoolean)
+	const scripts = [indexJs, indexTs, indexTsx].filter(Boolean)
 	if (scripts.length > 1) {
 		throw new Response(
 			`Only one index.(js|ts|tsx) file is allowed, found ${scripts.join(', ')}`,

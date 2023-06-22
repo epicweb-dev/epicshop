@@ -3,7 +3,7 @@ import { Await, useLoaderData } from '@remix-run/react'
 import * as Popover from '@radix-ui/react-popover'
 import { type loader } from '~/routes/_app+/_exercises+/$exerciseNumber_.$stepNumber.$type.tsx'
 import { LaunchEditor } from '~/routes/launch-editor.tsx'
-import Icon from './icons.tsx'
+import { Icon } from './icons.tsx'
 import { SetAppToPlayground } from '~/routes/set-playground.tsx'
 
 function TouchedFiles() {
@@ -23,7 +23,7 @@ function TouchedFiles() {
 			<Popover.Root open={open} onOpenChange={setOpen}>
 				<Popover.Trigger asChild>
 					<button
-						className="flex h-full items-center gap-1 border-r border-gray-200 px-6 py-3 font-mono text-sm uppercase"
+						className="border-border flex h-full items-center gap-1 border-r px-6 py-3 font-mono text-sm uppercase"
 						aria-label="Relevant Files"
 					>
 						<Icon name="Files" />
@@ -33,7 +33,7 @@ function TouchedFiles() {
 				<Popover.Portal>
 					<Popover.Content
 						ref={contentRef}
-						className="slidUpContent select-none rounded bg-black px-9 py-8 text-white"
+						className="slideUpContent border-border bg-background text-foreground invert-theme select-none rounded px-9 py-8"
 						align="start"
 						sideOffset={5}
 					>
@@ -43,7 +43,7 @@ function TouchedFiles() {
 							</strong>
 							{data.problem &&
 							data.playground?.appName !== data.problem?.name ? (
-								<div className="mb-2 rounded bg-white p-1 font-mono text-sm font-medium">
+								<div className="mb-2 rounded p-1 font-mono font-medium">
 									<SetAppToPlayground appName={data.problem.name} />
 								</div>
 							) : null}
@@ -62,12 +62,16 @@ function TouchedFiles() {
 									<Await
 										resolve={data.diff}
 										errorElement={
-											<div className="text-rose-300">Something went wrong.</div>
+											<div className="text-foreground-danger">
+												Something went wrong.
+											</div>
 										}
 									>
 										{({ diffFiles }) => {
 											if (typeof diffFiles === 'string') {
-												return <p className="text-rose-300">{diffFiles}</p>
+												return (
+													<p className="text-foreground-danger">{diffFiles}</p>
+												)
 											}
 											if (!diffFiles.length) {
 												return <p>No files changed</p>

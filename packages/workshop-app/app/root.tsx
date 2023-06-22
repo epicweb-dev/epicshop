@@ -1,5 +1,6 @@
 import { cssBundleHref } from '@remix-run/css-bundle'
 import type {
+	DataFunctionArgs,
 	HeadersFunction,
 	LinksFunction,
 	SerializeFrom,
@@ -19,15 +20,19 @@ import {
 import appStylesheetUrl from './styles/app.css'
 import tailwindStylesheetUrl from './styles/tailwind.css'
 import { getWorkshopTitle } from './utils/apps.server.ts'
-import { clsx } from 'clsx'
 import {
 	getServerTimeHeader,
 	makeTimings,
 	time,
 } from './utils/timing.server.ts'
+import { cn } from './utils/misc.tsx'
+import { ClientHintCheck, getHints } from './utils/client-hints.tsx'
+import { getTheme } from './routes/theme/theme-session.server.ts'
+import { useTheme } from './routes/theme/index.tsx'
 
 export const links: LinksFunction = () => {
 	return [
+		{ rel: 'preload', href: '/icons.svg', as: 'image/svg+xml' },
 		{ rel: 'stylesheet', href: '/neogrotesk-font.css' },
 		{
 			rel: 'stylesheet',
@@ -36,6 +41,13 @@ export const links: LinksFunction = () => {
 		{ rel: 'stylesheet', href: tailwindStylesheetUrl },
 		{ rel: 'stylesheet', href: appStylesheetUrl },
 		...(cssBundleHref ? [{ rel: 'stylesheet', href: cssBundleHref }] : []),
+		{ rel: 'mask-icon', href: '/favicons/favicon.svg' },
+		{
+			rel: 'alternate icon',
+			type: 'image/png',
+			href: '/favicon.png',
+		},
+		{ rel: 'icon', type: 'image/svg+xml', href: '/favicon.svg' },
 	]
 }
 
@@ -47,18 +59,25 @@ export const meta: V2_MetaFunction = ({
 	return [{ title: data?.workshopTitle }]
 }
 
-export async function loader() {
+export async function loader({ request }: DataFunctionArgs) {
 	const timings = makeTimings('rootLoader')
 	const workshopTitle = await time(() => getWorkshopTitle(), {
 		type: 'getWorkshopTitle',
 		desc: 'getWorkshopTitle in root',
 		timings,
 	})
+	const theme = await getTheme(request)
 	return json(
-		{ workshopTitle: workshopTitle },
+		{
+			workshopTitle,
+			requestInfo: {
+				hints: getHints(request),
+				path: new URL(request.url).pathname,
+				session: { theme },
+			},
+		},
 		{
 			headers: {
-				'Cache-Control': 'public, max-age=300',
 				'Server-Timing': getServerTimeHeader(timings),
 			},
 		},
@@ -79,19 +98,20 @@ export default function App() {
 		delay: 400,
 		minDuration: 200,
 	})
+	const theme = useTheme()
 	return (
 		<html
 			lang="en"
-			className={clsx('h-full', { 'cursor-progress': showSpinner })}
-			data-theme="light"
+			className={cn('h-full', theme, { 'cursor-progress': showSpinner })}
 		>
 			<head>
+				<ClientHintCheck />
 				<meta charSet="utf-8" />
 				<meta name="viewport" content="width=device-width,initial-scale=1" />
 				<Meta />
 				<Links />
 			</head>
-			<body className="scrollbar-thin scrollbar-thumb-gray-300 h-full">
+			<body className="scrollbar-thin scrollbar-thumb-scrollbar bg-background text-foreground h-full">
 				<Outlet />
 				<ScrollRestoration />
 				<Scripts />

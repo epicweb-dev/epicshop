@@ -15,15 +15,18 @@ function ErrorState() {
 
 export function getButtonClassName({
 	varient,
+	clip = true,
 }: {
 	varient: 'primary' | 'big' | 'mono'
+	clip?: boolean
 }) {
 	const baseClassName =
-		'clip-path-button inline-flex bg-black text-white outline-none hover:bg-white hover:text-black focus:bg-white focus:text-black'
+		'inline-flex bg-foreground text-background outline-none hover:bg-background hover:text-foreground focus:bg-background focus:text-foreground'
 	const primaryClassName = 'px-8 py-4 font-bold'
 	const bigClassName = 'px-8 py-4 text-xl font-bold'
 	const monoClassName = 'px-8 py-4 font-mono text-sm uppercase'
 	const className = clsx(baseClassName, {
+		'clip-path-button': clip,
 		[primaryClassName]: varient === 'primary',
 		[bigClassName]: varient === 'big',
 		[monoClassName]: varient === 'mono',
@@ -46,7 +49,7 @@ export function Button({
 		idle: null,
 	}[status]
 	return (
-		<div className="clip-path-button-outer w-fit border-2 border-black bg-black">
+		<div className="clip-path-button-outer border-background hover:border-foreground w-fit border-2">
 			<button
 				{...props}
 				className={clsx(
@@ -68,11 +71,14 @@ export function ButtonLink({
 }: React.ComponentPropsWithoutRef<typeof Link> &
 	Parameters<typeof getButtonClassName>[0]) {
 	return (
-		<div className="clip-path-button-outer w-fit border-2 border-black bg-black">
+		<div className="clip-path-button-outer border-foreground w-fit border-2">
 			{/* eslint-disable-next-line jsx-a11y/anchor-has-content */}
 			<Link
 				{...props}
-				className={clsx(props.className, getButtonClassName({ varient }))}
+				className={clsx(
+					props.className,
+					getButtonClassName({ varient, clip: false }),
+				)}
 			/>
 		</div>
 	)

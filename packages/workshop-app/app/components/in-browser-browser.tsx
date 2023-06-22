@@ -9,8 +9,7 @@ import {
 } from 'react'
 import { z } from 'zod'
 import { AppStarter, AppStopper, PortStopper } from '~/routes/start.tsx'
-import { typedBoolean } from '~/utils/misc.tsx'
-import Icon from '~/components/icons.tsx'
+import { Icon } from '~/components/icons.tsx'
 import { clsx } from 'clsx'
 
 const historyCallDataSchema = z.intersection(
@@ -157,7 +156,7 @@ function InBrowserBrowserImpl(
 						const newHistory = [
 							...prevContext.history.slice(0, prevContext.index + 1),
 							pathname,
-						].filter(typedBoolean)
+						].filter(Boolean)
 						return {
 							...prevContext,
 							history: newHistory,
@@ -172,7 +171,7 @@ function InBrowserBrowserImpl(
 								...prevContext.history.slice(0, prevContext.index),
 								pathname,
 								...prevContext.history.slice(prevContext.index + 1),
-							].filter(typedBoolean),
+							].filter(Boolean),
 						}
 					}
 					case 'go': {
@@ -259,7 +258,7 @@ function InBrowserBrowserImpl(
 	}
 	return isRunning ? (
 		<div className="flex h-full flex-grow flex-col">
-			<div className="flex items-center justify-between border-b border-gray-200 pl-1.5">
+			<div className="border-border flex items-center justify-between border-b pl-1.5">
 				<div className="mr-2 flex items-center justify-center gap-2 px-1">
 					<button
 						type="button"
@@ -305,7 +304,7 @@ function InBrowserBrowserImpl(
 					{existingSearchParamHiddenInputs}
 					<input
 						aria-label="pathname"
-						className="flex-1 border-x border-gray-200 p-3 leading-none focus-visible:outline-none"
+						className="border-border bg-background text-foreground flex-1 border-x p-3 leading-none focus-visible:outline-none"
 						value={pathnameInputValue}
 						name="pathname"
 						onChange={e => setPathnameInputValue(e.currentTarget.value)}
@@ -326,13 +325,13 @@ function InBrowserBrowserImpl(
 					<Icon name="ExternalLink" title="Open in new tab" />
 				</a>
 			</div>
-			<div className="flex h-full w-full flex-grow bg-white p-5">
+			<div className="flex h-full w-full flex-grow p-5">
 				<iframe
 					title={name}
 					key={iframeKey}
 					ref={iframeRef}
 					src={iframeSrcUrl.toString()}
-					className="h-full w-full flex-grow"
+					className="h-full w-full flex-grow bg-white"
 				/>
 			</div>
 		</div>

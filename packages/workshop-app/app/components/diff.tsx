@@ -5,7 +5,7 @@ import * as Select from '@radix-ui/react-select'
 import { Mdx } from '~/utils/mdx.tsx'
 import { type loader } from '~/routes/_app+/_exercises+/$exerciseNumber_.$stepNumber.$type.tsx'
 import AccordionComponent from '~/components/accordion.tsx'
-import Icon from './icons.tsx'
+import { Icon } from './icons.tsx'
 import * as Accordion from '@radix-ui/react-accordion'
 
 export function Diff() {
@@ -29,23 +29,23 @@ export function Diff() {
 			<Await
 				resolve={data.diff}
 				errorElement={
-					<p className="p-6 text-rose-700">
+					<p className="text-foreground-danger p-6">
 						There was an error calculating the diff. Sorry.
 					</p>
 				}
 			>
 				{diff => (
 					<div className="flex w-full flex-col">
-						<div className="h-14 border-b border-gray-200">
+						<div className="border-border h-14 border-b">
 							<Form
 								onChange={e => submit(e.currentTarget)}
-								className="scrollbar-thin scrollbar-thumb-gray-300 flex h-full w-full items-center overflow-x-auto"
+								className="scrollbar-thin scrollbar-thumb-scrollbar flex h-full w-full items-center overflow-x-auto"
 							>
 								<input type="hidden" name="preview" value="diff" />
 								<SelectFileToDiff
 									name="app1"
 									label="App 1"
-									className="border-r border-gray-200"
+									className="border-border border-r"
 									allApps={data.allApps}
 									defaultValue={diff.app1}
 								/>
@@ -57,7 +57,7 @@ export function Diff() {
 								/>
 							</Form>
 						</div>
-						<div className="scrollbar-thin scrollbar-thumb-gray-300 max-h-[calc(100vh-109px)] overflow-y-auto">
+						<div className="scrollbar-thin scrollbar-thumb-scrollbar max-h-[calc(100vh-109px)] overflow-y-auto">
 							{diff.diffCode ? (
 								<div>
 									<Accordion.Root className="w-full" type="multiple">
@@ -65,7 +65,7 @@ export function Diff() {
 									</Accordion.Root>
 								</div>
 							) : (
-								<p className="m-5 inline-flex items-center justify-center bg-black px-1 py-0.5 font-mono text-sm uppercase text-white">
+								<p className="bg-foreground text-background m-5 inline-flex items-center justify-center px-1 py-0.5 font-mono text-sm uppercase">
 									There was a problem generating the diff
 								</p>
 							)}
@@ -94,12 +94,12 @@ function SelectFileToDiff({
 		<Select.Root name={name} defaultValue={defaultValue}>
 			<Select.Trigger
 				className={clsx(
-					'radix-placeholder:text-gray-500 flex h-full w-full items-center justify-between px-3 text-left focus-visible:outline-none',
+					'radix-placeholder:text-gray-500 flex h-full w-full min-w-[10rem] max-w-[50%] items-center justify-between px-3 text-left focus-visible:outline-none',
 					className,
 				)}
 				aria-label={`Select ${label} for git Diff`}
 			>
-				<span className="scrollbar-thin scrollbar-thumb-gray-300 w-80 overflow-hidden text-ellipsis whitespace-nowrap">
+				<span className="overflow-hidden text-ellipsis whitespace-nowrap">
 					{label}:{' '}
 					<SelectValue
 						placeholder={`Select ${label}`}

@@ -1,6 +1,6 @@
 import React from 'react'
 import { clsx } from 'clsx'
-import Icon from './icons.tsx'
+import { Icon } from './icons.tsx'
 import * as Accordion from '@radix-ui/react-accordion'
 
 type AccordionProps = {
@@ -21,15 +21,41 @@ const AccordionComponent: React.FC<AccordionProps> = ({
 	const getVariantIcon = () => {
 		switch (variant) {
 			case 'changed':
-				return <Icon name="Modified" aria-label="Modified" />
+				return (
+					<Icon
+						name="Modified"
+						aria-label="Modified"
+						className="text-[#fb923c]"
+					/>
+				)
 			case 'renamed':
-				return <Icon name="Renamed" aria-label="Renamed" />
+				return (
+					<Icon
+						name="Renamed"
+						aria-label="Renamed"
+						className="text-[#fb923c]"
+					/>
+				)
 			case 'added':
-				return <Icon name="Added" aria-label="Added" />
+				return (
+					<Icon name="Added" aria-label="Added" className="text-[#10b981]" />
+				)
 			case 'deleted':
-				return <Icon name="Deleted" aria-label="Deleted" />
+				return (
+					<Icon
+						name="Deleted"
+						aria-label="Deleted"
+						className="text-[#ef4444]"
+					/>
+				)
 			default:
-				return <Icon name="Modified" aria-label="Modified" />
+				return (
+					<Icon
+						name="Modified"
+						aria-label="Modified"
+						className="text-[#fb923c]"
+					/>
+				)
 		}
 	}
 	const getVariantLabel = () => {
@@ -52,7 +78,7 @@ const AccordionComponent: React.FC<AccordionProps> = ({
 			<AccordionContent
 				forceMount={forceMount}
 				className={clsx(
-					'prose prose-pre:rounded-none prose-pre:m-0 prose-pre:mb-1 max-w-none whitespace-pre-wrap',
+					'prose dark:prose-invert prose-pre:rounded-none prose-pre:m-0 prose-pre:mb-1 max-w-none whitespace-pre-wrap',
 					{
 						'radix-state-closed:hidden': forceMount,
 					},
@@ -83,7 +109,7 @@ const AccordionTrigger: React.FC<any> = React.forwardRef(
 		<Accordion.Header className="flex" asChild>
 			<Accordion.Trigger
 				className={clsx(
-					'group flex w-full items-center justify-between border-b border-gray-200 p-4 pr-3 font-mono text-sm font-medium leading-none hover:bg-gray-100',
+					'border-border hover:bg-foreground/10 group flex w-full items-center justify-between border-b p-4 pr-3 font-mono text-sm font-medium leading-none',
 					className,
 				)}
 				{...props}
@@ -91,7 +117,7 @@ const AccordionTrigger: React.FC<any> = React.forwardRef(
 			>
 				<div className="flex items-center gap-1.5">{children}</div>
 				<div className="flex items-center gap-2">
-					<span className="font-mono text-xs font-normal uppercase text-gray-500">
+					<span className="text-muted-foreground font-mono text-xs font-normal uppercase">
 						{variant}
 					</span>
 					<Icon

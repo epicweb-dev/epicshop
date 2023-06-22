@@ -10,7 +10,8 @@ function notification(button: EventTarget & HTMLButtonElement, on?: boolean) {
 		const label = button.previousElementSibling
 		if (on) label?.removeAttribute('hidden')
 		else label?.setAttribute('hidden', 'true')
-		button.style.backgroundColor = on ? '#e5e5e5' /* bg-gray-200 */ : ''
+		button.style.backgroundColor = on ? 'hsl(var(--foreground))' : ''
+		button.style.color = on ? 'hsl(var(--background))' : ''
 	}
 }
 
@@ -21,11 +22,11 @@ export function PreWithCopyToClipboard({ children, ...props }: any) {
 		<div className="group relative">
 			{showCopyButton ? (
 				<div className="absolute right-0 top-0 z-50 m-2 mr-2 flex items-center gap-2 opacity-0 transition duration-300 ease-in-out focus-within:opacity-100 group-hover:opacity-100">
-					<span hidden className="font-mono text-xs uppercase text-black">
+					<span hidden className="font-mono text-xs uppercase">
 						copied
 					</span>
 					<button
-						className="rounded border border-gray-300 bg-white px-2 py-0.5 font-mono text-xs font-semibold uppercase text-black transition duration-300 ease-in-out hover:bg-gray-100 active:bg-gray-200"
+						className="border-border hover:bg-foreground/10 active:bg-foreground/20 rounded border-2 px-2 py-0.5 font-mono text-xs font-semibold uppercase outline-none transition duration-300 ease-in-out"
 						onClick={event => {
 							const button = event.currentTarget
 							notification(button, true)

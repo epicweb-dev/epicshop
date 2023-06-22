@@ -5,7 +5,7 @@ body {
 }
 
 .clip-path-button-outer {
-	clip-path: polygon(0 0, 100% 0, 100% 75%, 90% 100%, 0 100%);
+	clip-path: polygon(0 0, 100% 0, 100% 70%, 88% 100%, 0 100%);
 }
 
 .clip-path-button {
@@ -13,49 +13,28 @@ body {
 }
 
 .shadow-on-scrollbox {
-	background:
-		/* Shadow covers */ linear-gradient(
-			white 30%,
-			rgba(255, 255, 255, 0)
+	background: linear-gradient(
+			hsl(var(--background)) 30%,
+			hsl(var(--foreground) / 0)
 		),
-		linear-gradient(rgba(255, 255, 255, 0), white 70%) 0 100%,
-		/* Shadows */
-			radial-gradient(
-				50% 0,
-				farthest-side,
-				rgba(0, 0, 0, 0.2),
-				rgba(0, 0, 0, 0)
-			),
 		radial-gradient(
-				50% 100%,
-				farthest-side,
-				rgba(0, 0, 0, 0.2),
-				rgba(0, 0, 0, 0)
-			)
-			0 100%;
-	background:
-		/* Shadow covers */ linear-gradient(
-			white 30%,
-			rgba(255, 255, 255, 0)
-		),
-		linear-gradient(rgba(255, 255, 255, 0), white 70%) 0 100%,
-		/* Shadows */
-			radial-gradient(
 				farthest-side at 50% 0,
-				rgba(0, 0, 0, 0.2),
-				rgba(0, 0, 0, 0)
-			),
+				hsl(var(--foreground) / 0.2),
+				hsl(var(--foreground) / 0)
+			)
+			0 0,
+		linear-gradient(hsl(var(--foreground) / 0), hsl(var(--background)) 70%) 0
+			100%,
 		radial-gradient(
 				farthest-side at 50% 100%,
-				rgba(0, 0, 0, 0.2),
-				rgba(0, 0, 0, 0)
+				hsl(var(--foreground) / 0.2),
+				hsl(var(--foreground) / 0)
 			)
 			0 100%;
 	background-repeat: no-repeat;
-	background-color: white;
-	background-size: 100% 40px, 100% 40px, 100% 14px, 100% 14px;
-	/* Opera doesn't support this in the shorthand */
-	background-attachment: local, local, scroll, local;
+	background-color: hsl(var(--background));
+	background-size: 100% 40px, 100% 14px, 100% 40px, 100% 14px;
+	background-attachment: local, scroll, local, local;
 }
 
 .orientation-sideways {
@@ -85,8 +64,8 @@ body {
 	--base0F: #d3423e; /* "Embedded" (whatever that means) */
 }
 
-:root [data-theme='light'],
-:root[data-theme='light'] {
+:root .light,
+:root.light {
 	--base00: #f3f3f3; /* editor background */
 	--base01: #e0e0e0; /* unused (currently) */
 	--base02: #d6d6d6; /* unused (currently) */
@@ -116,13 +95,13 @@ body {
 	content: unset;
 }
 
-[data-theme='dark'] .prose ol > li::before,
-[data-theme='dark'] .prose ul > li::before {
+.dark .prose ol > li::before,
+.dark .prose ul > li::before {
 	color: var(--color-gray-300);
 }
 
 /* I think this is a bug in the tailwind/typography thing */
-[data-theme='dark'] .dark\:prose-dark thead {
+.dark .dark\:prose-dark thead {
 	color: var(--color-slate-500);
 }
 
@@ -343,11 +322,11 @@ body {
 }
 
 /* the warning yellow is really inaccessible in light mode, so we have a special case for light mode */
-[data-theme='light'] .prose callout-warning,
-[data-theme='light'] .prose callout-warning ol > li:before {
+.light .prose callout-warning,
+.light .prose callout-warning ol > li:before {
 	color: #676000;
 }
-[data-theme='light'] .prose callout-warning:before {
+.light .prose callout-warning:before {
 	background: #ffd800;
 }
 .prose callout-warning,
@@ -359,8 +338,8 @@ body {
 }
 
 /* the muted gray is really inaccessible in light mode, so we have a special case for light mode */
-[data-theme='light'] .prose callout-muted,
-[data-theme='light'] .prose callout-muted ol > li:before {
+.light .prose callout-muted,
+.light .prose callout-muted ol > li:before {
 	color: #4c4b5e;
 }
 .light .prose callout-muted:before {

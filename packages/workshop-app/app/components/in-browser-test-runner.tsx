@@ -1,7 +1,7 @@
 import { useEffect, useRef, useState } from 'react'
 import { z } from 'zod'
 import AccordionComponent from '~/components/accordion.tsx'
-import Icon from './icons.tsx'
+import { AnimatedBars, Icon } from './icons.tsx'
 import * as Accordion from '@radix-ui/react-accordion'
 
 const testRunnerStatusDataSchema = z.intersection(
@@ -76,7 +76,7 @@ export function InBrowserTestRunner({
 	}, [])
 
 	const statusEmoji = {
-		pending: <Icon name="AnimatedBars" aria-label="Pending" />,
+		pending: <AnimatedBars aria-label="Pending" />,
 		pass: (
 			<Icon
 				name="CheckSmall"
@@ -84,7 +84,13 @@ export function InBrowserTestRunner({
 				className="text-emerald-700"
 			/>
 		),
-		fail: <Icon name="Remove" aria-label="Failed" className="text-rose-700" />,
+		fail: (
+			<Icon
+				name="Remove"
+				aria-label="Failed"
+				className="text-foreground-danger"
+			/>
+		),
 		unknown: (
 			<Icon name="Question" aria-label="Unknown" className="animate-pulse" />
 		),
@@ -107,7 +113,7 @@ export function InBrowserTestRunner({
 					title={testFile}
 					forceMount={true}
 				>
-					<div className="not-prose ">
+					<div className="not-prose">
 						<div className="p-5 pt-3">
 							<ul className="">
 								{sortedTestSteps.map(testStep => (
@@ -123,9 +129,9 @@ export function InBrowserTestRunner({
 								))}
 							</ul>
 							{message?.status === 'fail' ? (
-								<div className="flex items-baseline gap-2 text-rose-700">
+								<div className="text-foreground-danger flex items-baseline gap-2">
 									<span>{testStepStatusEmojis['fail']}</span>
-									<pre className="scrollbar-thin scrollbar-thumb-gray-300 max-h-48 overflow-y-auto text-rose-700">
+									<pre className="scrollbar-thin scrollbar-thumb-scrollbar text-foreground-danger max-h-48 overflow-y-auto">
 										{message.error}
 									</pre>
 								</div>
@@ -134,15 +140,15 @@ export function InBrowserTestRunner({
 								ref={iframeRef}
 								title={testFile}
 								src={baseUrl + testFile}
-								className="mt-5 min-h-[420px] w-full border border-gray-200"
+								className="border-border mt-5 min-h-[420px] w-full border bg-white"
 							/>
 						</div>
-						<div className="flex border-y border-gray-200">
+						<div className="border-border flex border-y">
 							<button
 								onClick={() =>
 									iframeRef.current?.contentWindow?.location.reload()
 								}
-								className="border-r border-gray-200 p-3"
+								className="border-border border-r p-3"
 							>
 								<Icon name="Refresh" aria-label="Rerun Tests" />
 							</button>
@@ -150,7 +156,7 @@ export function InBrowserTestRunner({
 								href={baseUrl + testFile}
 								target="_blank"
 								rel="noreferrer"
-								className="border-r border-gray-200 p-3"
+								className="border-border border-r p-3"
 							>
 								<Icon name="ExternalLink" aria-label="Open in New Window" />
 							</a>

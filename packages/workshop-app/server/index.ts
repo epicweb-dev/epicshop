@@ -23,12 +23,7 @@ const BUILD_PATH = '../build/index.js'
 
 const build = remixBuild as unknown as ServerBuild
 let devBuild = build
-
-// get some caches warmed up
-import('globby')
-import('execa')
-import('get-port')
-import('p-map')
+const isProd = process.env.NODE_ENV === 'production'
 
 // caches all apps
 getApps()
@@ -50,11 +45,15 @@ app.use(
 
 // Everything else (like favicon.ico) is cached for an hour. You may want to be
 // more aggressive with this caching.
-app.use(express.static('public', { maxAge: '1h' }))
+app.use(express.static('public', { maxAge: isProd ? '1h' : 0 }))
 
 // Everything else (like favicon.ico) is cached for an hour. You may want to be
 // more aggressive with this caching.
-app.use(express.static(path.join(workshopRoot, 'public'), { maxAge: '1h' }))
+app.use(
+	express.static(path.join(workshopRoot, 'public'), {
+		maxAge: isProd ? '1h' : 0,
+	}),
+)
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url))
 const isPublished = !fs.existsSync(path.join(__dirname, '..', 'app'))
