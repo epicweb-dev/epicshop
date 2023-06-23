@@ -358,7 +358,7 @@ async function getDiffCodeImpl(app1: App, app2: App) {
 
 	if (!parsed.files.length) {
 		markdownLines.push(
-			'<div className="m-5 inline-flex items-center justify-center bg-black px-1 py-0.5 font-mono text-sm uppercase text-white">No changes</div>',
+			'<div className="m-5 inline-flex items-center justify-center bg-foreground px-1 py-0.5 font-mono text-sm uppercase text-background">No changes</div>',
 		)
 	}
 

@@ -130,10 +130,6 @@ export async function loader({ request, params }: DataFunctionArgs) {
 		: playgroundApp || problemApp
 	const app2 = app2Name ? await getAppByName(app2Name) : solutionApp
 
-	if (!app1 || !app2) {
-		throw new Response('No app to compare to', { status: 404 })
-	}
-
 	function getDisplayName(a: App) {
 		let displayName = `${a.title} (${a.type})`
 		if (isExerciseStepApp(a)) {
@@ -185,6 +181,14 @@ export async function loader({ request, params }: DataFunctionArgs) {
 	const prevApp = await getPrevExerciseApp(exerciseStepApp, cacheOptions)
 
 	const getDiffProp = async () => {
+		if (!app1 || !app2) {
+			return {
+				app1: app1?.name,
+				app2: app2?.name,
+				diffCode: null,
+				diffFiles: null,
+			}
+		}
 		const [diffCode, diffFiles] = await Promise.all([
 			getDiffCode(app1, app2, cacheOptions).catch(e => {
 				console.error(e)

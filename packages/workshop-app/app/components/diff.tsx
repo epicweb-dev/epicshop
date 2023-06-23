@@ -64,9 +64,13 @@ export function Diff() {
 										<Mdx code={diff.diffCode} components={mdxComponents} />
 									</Accordion.Root>
 								</div>
-							) : (
+							) : diff.app1 && diff.app2 ? (
 								<p className="bg-foreground text-background m-5 inline-flex items-center justify-center px-1 py-0.5 font-mono text-sm uppercase">
 									There was a problem generating the diff
+								</p>
+							) : (
+								<p className="bg-foreground text-background m-5 inline-flex items-center justify-center px-1 py-0.5 font-mono text-sm uppercase">
+									Select two apps to compare
 								</p>
 							)}
 						</div>

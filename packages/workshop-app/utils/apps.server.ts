@@ -47,6 +47,13 @@ type Exercise = {
 	/** the title of the app used for display (comes from the first h1 in the README) */
 	title: string
 	instructionsCode?: string
+	steps: Array<
+		{ stepNumber: number } & ( // it'll have both or one, but never neither
+			| { problem: ProblemApp; solution: SolutionApp }
+			| { problem: ProblemApp; solution?: never }
+			| { problem?: never; solution: SolutionApp }
+		)
+	>
 	problems: Array<ProblemApp>
 	solutions: Array<SolutionApp>
 }
@@ -282,11 +289,23 @@ export async function getExercises({
 			const compiledReadme = await compileReadme(
 				path.join(workshopRoot, 'exercises', dirName),
 			)
+			const steps: Exercise['steps'] = []
+			const exerciseApps = apps
+				.filter(isExerciseStepApp)
+				.filter(app => app.exerciseNumber === exerciseNumber)
+			for (const app of exerciseApps) {
+				steps[app.stepNumber - 1] = {
+					...steps[app.stepNumber - 1],
+					[app.type]: app,
+					stepNumber: app.stepNumber,
+				}
+			}
 			return {
 				exerciseNumber,
 				dirName,
 				instructionsCode: compiledReadme?.code,
 				title: compiledReadme?.title ?? dirName,
+				steps,
 				problems: apps
 					.filter(isProblemApp)
 					.filter(app => app.exerciseNumber === exerciseNumber),

@@ -56,6 +56,11 @@ export async function loader({ request }: DataFunctionArgs) {
 					title,
 					name,
 				})),
+				steps: e.steps.map(({ stepNumber, problem, solution }) => ({
+					stepNumber,
+					title: problem?.title ?? solution?.title ?? 'Unknown',
+					name: problem?.name ?? solution?.name ?? 'Unknown',
+				})),
 			})),
 			playground,
 		},
@@ -164,7 +169,7 @@ function Navigation() {
 								animate="visible"
 								className="flex flex-col gap-3"
 							>
-								{data.exercises.map(({ exerciseNumber, title, problems }) => {
+								{data.exercises.map(({ exerciseNumber, title, steps }) => {
 									const isActive =
 										Number(params.exerciseNumber) === exerciseNumber
 									const showPlayground =
@@ -192,7 +197,7 @@ function Navigation() {
 													animate="visible"
 													className="ml-4 mt-4 flex flex-col gap-3"
 												>
-													{problems.map(({ name, stepNumber, title }) => {
+													{steps.map(({ name, stepNumber, title }) => {
 														const isActive =
 															Number(params.stepNumber) === stepNumber
 														const step = stepNumber.toString().padStart(2, '0')
