@@ -294,6 +294,7 @@ export async function getExercises({
 				.filter(isExerciseStepApp)
 				.filter(app => app.exerciseNumber === exerciseNumber)
 			for (const app of exerciseApps) {
+				// @ts-ignore (editor doesn't care, but tsc does 🤷‍♂️)
 				steps[app.stepNumber - 1] = {
 					...steps[app.stepNumber - 1],
 					[app.type]: app,

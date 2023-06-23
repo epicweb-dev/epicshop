@@ -68,6 +68,13 @@ function TouchedFiles() {
 										}
 									>
 										{({ diffFiles }) => {
+											if (!diffFiles) {
+												return (
+													<p className="text-foreground-danger">
+														Unable to determine diff
+													</p>
+												)
+											}
 											if (typeof diffFiles === 'string') {
 												return (
 													<p className="text-foreground-danger">{diffFiles}</p>
