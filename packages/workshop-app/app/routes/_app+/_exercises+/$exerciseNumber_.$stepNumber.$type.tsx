@@ -330,7 +330,7 @@ export default function ExercisePartRoute() {
 			const app = data[type]
 
 			const info = (
-				<div className="launch-editor-button-wrapper underline">
+				<div className="launch-editor-button-wrapper flex underline">
 					{children}{' '}
 					<svg height={24} width={24}>
 						<use href={`/icons.svg#keyboard`} />
