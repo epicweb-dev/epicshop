@@ -9,7 +9,7 @@ body {
 }
 
 .clip-path-button {
-	clip-path: polygon(0 0, 100% 0, 100% 75%, 90.5% 100%, 0 100%);
+	clip-path: polygon(0 0, 100% 0, 100% 70%, 88.5% 100%, 0 100%);
 }
 
 .shadow-on-scrollbox {
