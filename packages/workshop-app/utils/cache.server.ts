@@ -1,7 +1,11 @@
-import { LRUCache } from 'lru-cache'
 import * as C from 'cachified'
-import { type CacheEntry, verboseReporter } from 'cachified'
-import { type LRUishCache, lruCacheAdapter } from 'cachified'
+import {
+	lruCacheAdapter,
+	verboseReporter,
+	type CacheEntry,
+	type LRUishCache,
+} from 'cachified'
+import { LRUCache } from 'lru-cache'
 import type {
 	App,
 	ExampleApp,
