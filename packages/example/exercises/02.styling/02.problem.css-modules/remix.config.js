@@ -17,7 +17,7 @@ export default {
 		v2_meta: true,
 		v2_normalizeFormMethod: true,
 		v2_routeConvention: true,
-		unstable_dev: true,
+		v2_dev: true,
 	},
 	routes: async defineRoutes => {
 		return flatRoutes('routes', defineRoutes, {
