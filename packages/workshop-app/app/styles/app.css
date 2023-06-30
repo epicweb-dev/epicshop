@@ -110,6 +110,21 @@ body {
 	padding-right: 0rem;
 }
 
+/**
+ keep it in separate css rule
+ has() is not supported in all browsers as of 2023-06-30
+*/
+.prose
+	pre:not([data-line-numbers='true']):not([data-lang='sh']):has(
+		[data-highlight]
+	) {
+	padding-left: 0rem;
+	padding-right: 0rem;
+}
+
+.prose
+	pre:not([data-line-numbers='true']):not([data-lang='sh'])
+	[data-highlight]:before,
 .prose
 	pre[data-line-numbers='true']:not([data-lang='sh'])
 	[data-line-number]:before {
@@ -123,6 +138,12 @@ body {
 	position: sticky;
 	left: 0;
 	background-color: var(--base00);
+}
+
+.prose
+	pre:not([data-line-numbers='true']):not([data-lang='sh'])
+	[data-highlight]:before {
+	content: ' ';
 }
 
 .prose pre[data-filename] {
