@@ -404,7 +404,7 @@
     </symbol>
 
     <symbol
-      id="Error" viewBox="0 0 16 16">
+      id="Error" viewBox="0 0 24 24">
       <g fill="none" strokeWidth="2" stroke="currentColor">
         <path
           strokeLinecap="round"
@@ -415,7 +415,7 @@
     </symbol>
 
     <symbol
-      id="Notify" viewBox="0 0 16 16">
+      id="Notify" viewBox="0 0 24 24">
       <g fill="none" strokeWidth="2" stroke="currentColor">
         <path
           strokeLinecap="round"
@@ -426,7 +426,7 @@
     </symbol>
 
     <symbol
-      id="Success" viewBox="0 0 16 16">
+      id="Success" viewBox="0 0 24 24">
       <g fill="none" strokeWidth="2" stroke="currentColor">
         <path
           strokeLinecap="round"
