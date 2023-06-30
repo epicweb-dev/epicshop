@@ -26,7 +26,7 @@ export function PreWithCopyToClipboard({ children, ...props }: any) {
 						copied
 					</span>
 					<button
-						className="border-border hover:bg-foreground/10 active:bg-foreground/20 rounded border-2 px-2 py-0.5 font-mono text-xs font-semibold uppercase outline-none transition duration-300 ease-in-out"
+						className="border-border hover:bg-foreground/20 active:bg-foreground/30 rounded border-2 px-2 py-0.5 font-mono text-xs font-semibold uppercase outline-none transition duration-300 ease-in-out"
 						onClick={event => {
 							const button = event.currentTarget
 							notification(button, true)

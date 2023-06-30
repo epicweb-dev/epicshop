@@ -112,7 +112,7 @@ function getFileCodeblocks(
 			const fixedTitle = getRelativePath(file)
 
 			const className =
-				'border border-border hover:bg-foreground/10 rounded px-2 py-0.5 font-mono text-xs font-semibold'
+				'border border-border hover:bg-foreground/20 rounded px-2 py-0.5 font-mono text-xs font-semibold'
 			return `
 <LaunchEditor file=${file} line={${line}}>
 	<span	title=${fixedTitle} className="${className}">${label}</span>
