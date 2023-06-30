@@ -65,7 +65,7 @@ function BaseToast({
 									{ 'text-green-500': variantColor === 'green' },
 									{ 'text-blue-500': variantColor === 'blue' },
 								)}
-								viewBox="0 0 24 24"
+								size={24}
 								name={variant}
 								aria-hidden="true"
 							/>
