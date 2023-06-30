@@ -475,7 +475,7 @@ export default function ExercisePartRoute() {
 									}
 									asChild
 									className={clsx(
-										'radix-state-active:bg-foreground radix-state-active:hover:bg-foreground/80 radix-state-active:hover:text-background/80 radix-state-active:text-background radix-state-active:z-10 radix-state-inactive:hover:bg-foreground/10 clip-path-button relative px-6 py-4 font-mono text-sm uppercase',
+										'radix-state-active:bg-foreground radix-state-active:hover:bg-foreground/80 radix-state-active:hover:text-background/80 radix-state-active:text-background radix-state-active:z-10 radix-state-inactive:hover:bg-foreground/20 clip-path-button relative px-6 py-4 font-mono text-sm uppercase',
 									)}
 								>
 									<Link
