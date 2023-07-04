@@ -168,15 +168,5 @@
   },
   "engines": {
     "node": "18"
-  },
-  "pkg": {
-    "scripts": [
-      "./bin/*.js",
-      "./build/**/*.js",
-      "./start.js"
-    ],
-    "assets": [
-      "./public/**/*"
-    ]
   }
 }
