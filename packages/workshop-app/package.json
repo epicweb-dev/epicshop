@@ -38,6 +38,9 @@
     "./test": {
       "types": "./build/utils/test.d.ts",
       "default": "./build/utils/test.js"
+    },
+    "./start.js": {
+      "default": "./start.js"
     }
   },
   "scripts": {
@@ -154,6 +157,7 @@
     "hast": "^1.0.0",
     "mdast": "^3.0.0",
     "npm-run-all": "^4.1.5",
+    "pkg": "^5.8.1",
     "postcss": "^8.4.24",
     "prettier": "^2.8.8",
     "prettier-plugin-tailwindcss": "^0.3.0",
@@ -164,5 +168,15 @@
   },
   "engines": {
     "node": "18"
+  },
+  "pkg": {
+    "scripts": [
+      "./bin/*.js",
+      "./build/**/*.js",
+      "./start.js"
+    ],
+    "assets": [
+      "./public/**/*"
+    ]
   }
 }
