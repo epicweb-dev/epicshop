@@ -25,6 +25,13 @@ const build = remixBuild as unknown as ServerBuild
 let devBuild = build
 const isProd = process.env.NODE_ENV === 'production'
 
+const __dirname = path.dirname(fileURLToPath(import.meta.url))
+const isPublished = !fs.existsSync(path.join(__dirname, '..', 'app'))
+const isRunningInBuildDir = path.dirname(__dirname).endsWith('build')
+const kcdshopAppRootDir = isRunningInBuildDir
+	? path.join(__dirname, '..', '..')
+	: path.join(__dirname, '..')
+
 // caches all apps
 getApps()
 
@@ -40,23 +47,25 @@ app.disable('x-powered-by')
 // Remix fingerprints its assets so we can cache forever.
 app.use(
 	'/build',
-	express.static('public/build', { immutable: true, maxAge: '1y' }),
+	express.static(path.join(kcdshopAppRootDir, 'public/build'), {
+		immutable: true,
+		maxAge: '1y',
+	}),
 )
 
 // Everything else (like favicon.ico) is cached for an hour. You may want to be
 // more aggressive with this caching.
-app.use(express.static('public', { maxAge: isProd ? '1h' : 0 }))
+app.use(
+	express.static(path.join(kcdshopAppRootDir, 'public'), {
+		maxAge: isProd ? '1h' : 0,
+	}),
+)
 
-// Everything else (like favicon.ico) is cached for an hour. You may want to be
-// more aggressive with this caching.
 app.use(
 	express.static(path.join(workshopRoot, 'public'), {
 		maxAge: isProd ? '1h' : 0,
 	}),
 )
-
-const __dirname = path.dirname(fileURLToPath(import.meta.url))
-const isPublished = !fs.existsSync(path.join(__dirname, '..', 'app'))
 
 if (process.env.NODE_ENV !== 'production' && !isPublished) {
 	morgan.token('url', (req, res) => decodeURIComponent(req.url ?? ''))

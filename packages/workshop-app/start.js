@@ -6,7 +6,13 @@ dotenv.config({
 })
 
 if (process.env.NODE_ENV === 'production') {
-	await import('./build/server/index.js')
+	await import('./build/server/index.js').catch(err => {
+		console.error(err)
+		process.exit(1)
+	})
 } else {
-	await import('./server/index.ts')
+	await import('./server/index.ts').catch(err => {
+		console.error(err)
+		process.exit(1)
+	})
 }
