@@ -3,7 +3,7 @@ import { json } from '@remix-run/node'
 import { useFetcher } from '@remix-run/react'
 import invariant from 'tiny-invariant'
 import { Button } from '~/components/button.tsx'
-import Loading from '~/components/loading.tsx'
+import { Loading } from '~/components/loading.tsx'
 import { getAppByName } from '~/utils/apps.server.ts'
 import {
 	closeProcess,

@@ -14,7 +14,7 @@ import {
 	isExerciseStepApp,
 } from '~/utils/apps.server.ts'
 import { type loader as rootLoader } from '~/root.tsx'
-import Loading from '~/components/loading.tsx'
+import { Loading } from '~/components/loading.tsx'
 import {
 	combineServerTimings,
 	getServerTimeHeader,

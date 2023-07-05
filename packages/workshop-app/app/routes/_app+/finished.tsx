@@ -4,7 +4,7 @@ import { useLoaderData } from '@remix-run/react'
 import { getWorkshopTitle } from '~/utils/apps.server.ts'
 
 import { ButtonLink } from '~/components/button.tsx'
-import Loading from '~/components/loading.tsx'
+import { Loading } from '~/components/loading.tsx'
 import { type loader as rootLoader } from '~/root.tsx'
 import {
 	combineServerTimings,
