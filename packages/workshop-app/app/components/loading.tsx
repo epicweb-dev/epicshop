@@ -1,3 +1,6 @@
+// originally this was based on baffle-react, but it was unnecessarily bloated
+// and very out-dated. I've replaced it with a simple Characters component that
+// does the same thing we were using baffle-react for
 import { useEffect, useRef, useState } from 'react'
 
 export function Loading({ children }: { children?: React.ReactNode }) {
