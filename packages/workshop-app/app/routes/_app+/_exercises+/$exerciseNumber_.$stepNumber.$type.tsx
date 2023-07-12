@@ -45,7 +45,7 @@ import {
 	requireExerciseApp,
 } from '~/utils/apps.server.ts'
 import { getDiffCode, getDiffFiles } from '~/utils/diff.server.ts'
-import { Mdx, PreWithCopyToClipboard } from '~/utils/mdx.tsx'
+import { Mdx, PreWithButtons } from '~/utils/mdx.tsx'
 import { getErrorMessage } from '~/utils/misc.tsx'
 import {
 	isAppRunning,
@@ -59,6 +59,7 @@ import {
 import { LaunchEditor } from '../../launch-editor.tsx'
 import { TestOutput } from '../../test.tsx'
 import { NavChevrons } from '~/components/nav-chevrons.tsx'
+import { UpdateMdxCache } from '~/routes/update-mdx-cache.tsx'
 
 function pageTitle(
 	data: SerializeFrom<typeof loader> | undefined,
@@ -308,6 +309,23 @@ function withParam(
 	return newSearchParams
 }
 
+type CodeFileNotificationProps = {
+	file: string
+	type?: 'solution' | 'problem'
+	children: React.ReactNode
+} & (
+	| {
+			variant: 'error'
+			cacheLocation?: never
+			embeddedKey?: never
+	  }
+	| {
+			variant: 'warning'
+			cacheLocation: string
+			embeddedKey: string
+	  }
+)
+
 export default function ExercisePartRoute() {
 	const data = useLoaderData<typeof loader>()
 	const [searchParams] = useSearchParams()
@@ -316,6 +334,84 @@ export default function ExercisePartRoute() {
 	const activeTab = isValidPreview(preview) ? preview : tabs[0]
 	const inBrowserBrowserRef = useRef<InBrowserBrowserRef>(null)
 	const previewAppUrl = data.playground?.dev.baseUrl
+
+	const CodeFile = useMemo(() => {
+		return function CodeFile({ file }: { file: string }) {
+			return (
+				<div className="border-4 border-[#ff4545] bg-[#ff454519] p-4 text-lg">
+					Something went wrong compiling <b>CodeFile</b> for file: <u>{file}</u>{' '}
+					to markdown
+				</div>
+			)
+		}
+	}, [])
+
+	const CodeFileNotification = useMemo(() => {
+		return function CodeFileNotification({
+			file,
+			type = 'problem',
+			children,
+			variant,
+			cacheLocation,
+			embeddedKey,
+			...props
+		}: CodeFileNotificationProps) {
+			const [visibility, setVisibility] = useState('visible')
+			const app = data[type]
+
+			const handleClick = () => {
+				if (visibility !== 'visible') return
+				setVisibility('collapse')
+				setTimeout(() => {
+					setVisibility('none')
+				}, 400)
+			}
+
+			const className = clsx(
+				'rounded px-4 py-1 font-mono text-sm font-semibold outline-none transition duration-300 ease-in-out',
+				{
+					'bg-amber-300/70 hover:bg-amber-300/40 active:bg-amber-300/50':
+						variant === 'warning',
+					'bg-red-300/70 hover:bg-red-300/40 active:bg-red-300/50':
+						variant === 'error',
+				},
+			)
+
+			return (
+				<div
+					className={clsx('notification important h-15 relative', {
+						'duration-400 !my-0 !h-0 !py-0 !opacity-0 transition-all ease-out':
+							visibility !== 'visible',
+						hidden: visibility === 'none',
+					})}
+				>
+					<div className="absolute right-3 top-3 z-50 flex gap-4">
+						{app ? (
+							<div className={className} title={`Edit ${file}`}>
+								<LaunchEditor appFile={file} appName={app.name} {...props}>
+									Edit this File
+								</LaunchEditor>
+							</div>
+						) : null}
+						{app && variant === 'warning' ? (
+							<div
+								className={className}
+								title={`Remove the warning from here and from ${file} cache file`}
+							>
+								<UpdateMdxCache
+									handleClick={handleClick}
+									cacheLocation={cacheLocation}
+									embeddedKey={embeddedKey}
+									appFullPath={app.fullPath}
+								/>
+							</div>
+						) : null}
+					</div>
+					{children}
+				</div>
+			)
+		}
+	}, [data])
 
 	const InlineFile = useMemo(() => {
 		return function InlineFile({
@@ -420,9 +516,11 @@ export default function ExercisePartRoute() {
 							<Mdx
 								code={data.exerciseStepApp?.instructionsCode}
 								components={{
+									CodeFile,
+									CodeFileNotification,
 									InlineFile,
 									LinkToApp,
-									pre: PreWithCopyToClipboard,
+									pre: PreWithButtons,
 								}}
 							/>
 						) : (

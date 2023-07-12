@@ -200,6 +200,10 @@ function getForceFresh(cacheEntry: CacheEntry | null | undefined) {
 	return latestModifiedTime > cacheEntry.metadata.createdTime ? true : undefined
 }
 
+export function setModifiedTimesForDir(dir: string) {
+	modifiedTimes.set(dir, Date.now())
+}
+
 export function getForceFreshForDir(
 	dir: string,
 	cacheEntry: CacheEntry | null | undefined,
