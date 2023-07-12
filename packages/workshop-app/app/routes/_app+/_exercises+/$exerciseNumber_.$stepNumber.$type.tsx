@@ -511,7 +511,10 @@ export default function ExercisePartRoute() {
 							) : null}
 						</div>
 					</h4>
-					<article className="shadow-on-scrollbox prose dark:prose-invert sm:prose-lg scrollbar-thin scrollbar-thumb-scrollbar h-full w-full max-w-none space-y-6 overflow-y-auto p-10 pt-8">
+					<article
+						className="shadow-on-scrollbox prose dark:prose-invert sm:prose-lg scrollbar-thin scrollbar-thumb-scrollbar h-full w-full max-w-none space-y-6 overflow-y-auto p-10 pt-8"
+						data-instructions="true"
+					>
 						{data.exerciseStepApp.instructionsCode ? (
 							<Mdx
 								code={data.exerciseStepApp?.instructionsCode}
