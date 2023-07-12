@@ -130,6 +130,21 @@ function getWebsocketJS() {
 		const port = location.port;
 		const socketPath = protocol + "//" + host + ":" + port + "/__ws";
 		const ws = new WebSocket(socketPath);
+		window.addEventListener('DOMContentLoaded', () => {
+			const scrollPosition = localStorage.getItem('kcdshop:scrollPosition');
+			if (scrollPosition) {
+				localStorage.removeItem('kcdshop:scrollPosition');
+				const instructions = document.querySelector('[data-instructions]')
+				if (instructions) {
+					instructions.scrollTop = parseInt(scrollPosition)
+				}
+			}
+		})
+		function reload() {
+			const instructions = document.querySelector('[data-instructions]')
+			localStorage.setItem('kcdshop:scrollPosition', instructions?.scrollTop);
+			window.location.reload();
+		}
 		ws.onmessage = (message) => {
 			const event = JSON.parse(message.data);
 			if (event.type !== 'kcdshop:file-change') return;
@@ -145,9 +160,7 @@ function getWebsocketJS() {
 						.filter(Boolean)
 						.join(' '),
 				);
-				setTimeout(() => {
-					window.location.reload();
-				}, 200)
+				setTimeout(() => reload(), 200)
 			}
 		};
 		ws.onopen = () => {
@@ -161,7 +174,7 @@ function getWebsocketJS() {
 				setTimeout(
 					() =>
 						kcdLiveReloadConnect({
-							onOpen: () => window.location.reload(),
+							onOpen: () => reload(),
 						}),
 				1000
 				);
