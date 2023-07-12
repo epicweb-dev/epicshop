@@ -30,8 +30,10 @@ export async function loader({ params, request }: DataFunctionArgs) {
 		ws.onmessage = (message) => {
 			const event = JSON.parse(message.data);
 			if (event.type !== 'kcdshop:file-change') return;
-			const { filePath } = event.data;
-			if (${JSON.stringify(relevantPaths)}.some(p => filePath.startsWith(p))) {
+			const { filePath, embeddedFile } = event.data;
+			if (embeddedFile || ${JSON.stringify(
+				relevantPaths,
+			)}.some(p => filePath.startsWith(p))) {
 				console.log(
 					[
 						'🐨 Reloading',

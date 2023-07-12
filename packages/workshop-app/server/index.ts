@@ -12,6 +12,7 @@ import { createRequestHandler } from '@remix-run/express'
 import { type ServerBuild, broadcastDevReady } from '@remix-run/node'
 import { getApps, getWorkshopRoot } from '../utils/apps.server.ts'
 import { getWatcher } from '../utils/change-tracker.ts'
+import { isEmbeddedFile } from '../utils/compile-mdx.server.ts'
 import getPort, { portNumbers } from 'get-port'
 import chalk from 'chalk'
 
@@ -134,13 +135,14 @@ ${chalk.bold('Press Ctrl+C to stop')}
 
 const wss = new WebSocketServer({ server, path: '/__ws' })
 
-getWatcher().on('all', (event, filePath, stats) => {
+getWatcher().on('all', async (event, filePath, stats) => {
 	for (const client of wss.clients) {
 		if (client.readyState === WebSocket.OPEN) {
+			const embeddedFile = await isEmbeddedFile(filePath)
 			client.send(
 				JSON.stringify({
 					type: 'kcdshop:file-change',
-					data: { event, filePath, stats },
+					data: { event, filePath, stats, embeddedFile },
 				}),
 			)
 		}

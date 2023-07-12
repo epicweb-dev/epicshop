@@ -150,6 +150,10 @@ body {
 	padding-top: 2rem;
 }
 
+.prose pre[data-filename][data-buttons][data-fullpath] {
+	padding-top: 3rem;
+}
+
 .prose pre[data-lang]:not([data-nolang]) {
 	padding-bottom: 2rem;
 }
@@ -397,4 +401,21 @@ body {
 }
 .prose callout-success:before {
 	background: #30c85e;
+}
+
+.prose callout-warning.notification .title,
+.prose callout-danger.notification .title {
+	font-size: 1.5rem;
+	line-height: 2rem;
+}
+
+.prose callout-danger.notification pre {
+	border: 4px solid #ff4545;
+	padding-block: 1.5rem;
+	margin-block: 0.5rem;
+}
+
+.prose callout-warning.notification,
+.prose callout-danger.notification {
+	margin-bottom: 0 !important;
 }

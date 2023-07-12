@@ -133,8 +133,8 @@ function getWebsocketJS() {
 		ws.onmessage = (message) => {
 			const event = JSON.parse(message.data);
 			if (event.type !== 'kcdshop:file-change') return;
-			const { filePath } = event.data;
-			if (filePath.includes('README') && !filePath.includes('playground')) {
+			const { filePath, embeddedFile } = event.data;
+			if ((embeddedFile || filePath.includes('README')) && !filePath.includes('playground')) {
 				console.log(
 					[
 						'🐨 Reloading',

@@ -24,6 +24,7 @@ declare global {
 	var __diff_code_cache__: ReturnType<typeof getDiffCodeCache>
 	var __diff_files_cache__: ReturnType<typeof getDiffFilesCache>
 	var __compiled_markdown_cache__: ReturnType<typeof getCompiledMarkdownCache>
+	var __embedded_files_cache__: ReturnType<typeof getEmbeddedFilesCache>
 }
 
 export const solutionAppCache = (global.__solution_app_cache__ =
@@ -49,6 +50,9 @@ export const diffFilesCache = (global.__diff_files_cache__ =
 
 export const compiledMarkdownCache = (global.__compiled_markdown_cache__ =
 	global.__compiled_markdown_cache__ ?? getCompiledMarkdownCache())
+
+export const embeddedFilesCache = (global.__embedded_files_cache__ =
+	global.__embedded_files_cache__ ?? getEmbeddedFilesCache())
 
 function getSolutionAppCache() {
 	const cache = new LRUCache<string, CacheEntry<SolutionApp>>({
@@ -111,6 +115,14 @@ function getCompiledMarkdownCache() {
 		max: 1000,
 	}) as LRUishCache
 	cache.name = 'CompiledMarkdownCache'
+	return lruCacheAdapter(cache)
+}
+
+function getEmbeddedFilesCache() {
+	const cache = new LRUCache<string, CacheEntry<Record<string, string[]>>>({
+		max: 1000,
+	}) as LRUishCache
+	cache.name = 'EmbeddedFilesCache'
 	return lruCacheAdapter(cache)
 }
 

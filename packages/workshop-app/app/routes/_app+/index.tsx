@@ -15,7 +15,7 @@ import {
 	makeTimings,
 	time,
 } from '~/utils/timing.server.ts'
-import { Mdx, PreWithCopyToClipboard } from '~/utils/mdx.tsx'
+import { Mdx, PreWithButtons } from '~/utils/mdx.tsx'
 
 export async function loader({ request }: DataFunctionArgs) {
 	const timings = makeTimings('indexLoader')
@@ -103,7 +103,7 @@ export default function Index() {
 								code={data.workshopReadme.code}
 								components={{
 									h1: () => null,
-									pre: PreWithCopyToClipboard,
+									pre: PreWithButtons,
 								}}
 							/>
 						) : (

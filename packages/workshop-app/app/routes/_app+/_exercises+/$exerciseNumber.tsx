@@ -13,7 +13,7 @@ import invariant from 'tiny-invariant'
 import { ButtonLink } from '~/components/button.tsx'
 import { type loader as rootLoader } from '~/root.tsx'
 import { getExercises, getWorkshopTitle } from '~/utils/apps.server.ts'
-import { Mdx, PreWithCopyToClipboard } from '~/utils/mdx.tsx'
+import { Mdx, PreWithButtons } from '~/utils/mdx.tsx'
 import { getErrorMessage } from '~/utils/misc.tsx'
 import {
 	combineServerTimings,
@@ -118,7 +118,7 @@ export default function ExerciseNumberRoute() {
 								code={data.exercise?.instructionsCode}
 								components={{
 									h1: () => null,
-									pre: PreWithCopyToClipboard,
+									pre: PreWithButtons,
 								}}
 							/>
 						) : (
