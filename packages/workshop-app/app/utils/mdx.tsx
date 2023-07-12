@@ -138,15 +138,14 @@ export function PreWithButtons({ children, ...props }: any) {
 	} = props as DataProps
 	const showCopyButton = hideCopyButton === undefined
 
-	const updateFilename = () => {
+	function updateFilename() {
 		if (fullPath && separator) {
 			if (!filename || filename.includes('..')) {
-				props['data-filename'] = getRelativePath(fullPath, separator)
+				return { 'data-filename': getRelativePath(fullPath, separator) }
 			} else {
-				props['data-filename'] = filename.replace(/\//g, separator)
+				return { 'data-filename': filename.replace(/\//g, separator) }
 			}
 		}
-		return props
 	}
 
 	return (
