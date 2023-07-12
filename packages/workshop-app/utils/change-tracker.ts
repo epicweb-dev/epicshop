@@ -31,6 +31,6 @@ export function getOptionalWatcher() {
 }
 
 global.__change_tracker_close_with_grace_return__?.uninstall()
-global.__change_tracker_close_with_grace_return__ = closeWithGrace(() =>
-	watcher?.close(),
+global.__change_tracker_close_with_grace_return__ = closeWithGrace(
+	() => watcher?.close(),
 )

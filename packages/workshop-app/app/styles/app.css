@@ -13,10 +13,8 @@ body {
 }
 
 .shadow-on-scrollbox {
-	background: linear-gradient(
-			hsl(var(--background)) 30%,
-			hsl(var(--foreground) / 0)
-		),
+	background:
+		linear-gradient(hsl(var(--background)) 30%, hsl(var(--foreground) / 0)),
 		radial-gradient(
 				farthest-side at 50% 0,
 				hsl(var(--foreground) / 0.2),
@@ -33,7 +31,11 @@ body {
 			0 100%;
 	background-repeat: no-repeat;
 	background-color: hsl(var(--background));
-	background-size: 100% 40px, 100% 14px, 100% 40px, 100% 14px;
+	background-size:
+		100% 40px,
+		100% 14px,
+		100% 40px,
+		100% 14px;
 	background-attachment: local, scroll, local, local;
 }
 

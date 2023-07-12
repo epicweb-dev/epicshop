@@ -4,7 +4,8 @@
 	font-family: 'Neogrotesk';
 	font-weight: 200;
 	font-style: normal;
-	src: url('/fonts/neogrotesk/5cdbf070-a094-44c8-b8f1-17a00a19c959.woff2')
+	src:
+		url('/fonts/neogrotesk/5cdbf070-a094-44c8-b8f1-17a00a19c959.woff2')
 			format('woff2'),
 		url('/fonts/neogrotesk/3bb44ed4-cf17-469c-8d0d-5946d10fdad1.woff')
 			format('woff');
@@ -13,7 +14,8 @@
 	font-family: 'Neogrotesk';
 	font-weight: 200;
 	font-style: italic;
-	src: url('/fonts/neogrotesk/146d9d20-3e53-4e5d-beb2-1209bba5ac61.woff2')
+	src:
+		url('/fonts/neogrotesk/146d9d20-3e53-4e5d-beb2-1209bba5ac61.woff2')
 			format('woff2'),
 		url('/fonts/neogrotesk/861b65ee-56bd-4057-9af4-3b2903af231e.woff')
 			format('woff');
@@ -22,7 +24,8 @@
 	font-family: 'Neogrotesk';
 	font-weight: 300;
 	font-style: normal;
-	src: url('/fonts/neogrotesk/d1302ad5-ceee-47cb-a0fa-2da6bd0d4d54.woff2')
+	src:
+		url('/fonts/neogrotesk/d1302ad5-ceee-47cb-a0fa-2da6bd0d4d54.woff2')
 			format('woff2'),
 		url('/fonts/neogrotesk/e7e15c31-aad1-4384-abd3-0671ccd03251.woff')
 			format('woff');
@@ -31,7 +34,8 @@
 	font-family: 'Neogrotesk';
 	font-weight: 300;
 	font-style: italic;
-	src: url('/fonts/neogrotesk/1798ef2b-5ee0-4f39-8b2c-ae3e36f07cd1.woff2')
+	src:
+		url('/fonts/neogrotesk/1798ef2b-5ee0-4f39-8b2c-ae3e36f07cd1.woff2')
 			format('woff2'),
 		url('/fonts/neogrotesk/98423f75-c341-4161-8b92-7cd5c05081e5.woff')
 			format('woff');
@@ -40,7 +44,8 @@
 	font-family: 'Neogrotesk';
 	font-weight: 400;
 	font-style: normal;
-	src: url('/fonts/neogrotesk/f480430c-6c50-4ae3-9abb-e92c484f84d6.woff2')
+	src:
+		url('/fonts/neogrotesk/f480430c-6c50-4ae3-9abb-e92c484f84d6.woff2')
 			format('woff2'),
 		url('/fonts/neogrotesk/8cf836d9-a49e-4387-bcbd-4800766e5d24.woff')
 			format('woff');
@@ -49,7 +54,8 @@
 	font-family: 'Neogrotesk';
 	font-weight: 400;
 	font-style: italic;
-	src: url('/fonts/neogrotesk/6d439be9-37df-4912-ac09-388ce938fa46.woff2')
+	src:
+		url('/fonts/neogrotesk/6d439be9-37df-4912-ac09-388ce938fa46.woff2')
 			format('woff2'),
 		url('/fonts/neogrotesk/1eb2cb40-6822-4654-856c-8cbe652366b6.woff')
 			format('woff');
@@ -58,7 +64,8 @@
 	font-family: 'Neogrotesk';
 	font-weight: 700;
 	font-style: normal;
-	src: url('/fonts/neogrotesk/a1456726-ad0d-4f5e-9d8f-ce92e8ce375d.woff2')
+	src:
+		url('/fonts/neogrotesk/a1456726-ad0d-4f5e-9d8f-ce92e8ce375d.woff2')
 			format('woff2'),
 		url('/fonts/neogrotesk/3b64793c-0bdb-4e4f-bf0e-cdf2e974d5f2.woff')
 			format('woff');
@@ -67,7 +74,8 @@
 	font-family: 'Neogrotesk';
 	font-weight: 700;
 	font-style: italic;
-	src: url('/fonts/neogrotesk/8d61128d-534c-4793-9668-b98bcc2e5969.woff2')
+	src:
+		url('/fonts/neogrotesk/8d61128d-534c-4793-9668-b98bcc2e5969.woff2')
 			format('woff2'),
 		url('/fonts/neogrotesk/4bd29470-1701-41fe-94b6-4a147512160c.woff')
 			format('woff');
@@ -76,7 +84,8 @@
 	font-family: 'Neogrotesk';
 	font-weight: 900;
 	font-style: normal;
-	src: url('/fonts/neogrotesk/0b8b755c-fee2-4661-9c8b-c5d1fbea901b.woff2')
+	src:
+		url('/fonts/neogrotesk/0b8b755c-fee2-4661-9c8b-c5d1fbea901b.woff2')
 			format('woff2'),
 		url('/fonts/neogrotesk/7fc2971f-a9c2-4e09-bd24-bfd4ee6e97b3.woff')
 			format('woff');
@@ -85,7 +94,8 @@
 	font-family: 'Neogrotesk';
 	font-weight: 900;
 	font-style: italic;
-	src: url('/fonts/neogrotesk/ec6cb127-161b-469c-9816-69489032a234.woff2')
+	src:
+		url('/fonts/neogrotesk/ec6cb127-161b-469c-9816-69489032a234.woff2')
 			format('woff2'),
 		url('/fonts/neogrotesk/af81e7d2-0bb1-4aa0-bc76-adb78338c568.woff')
 			format('woff');
