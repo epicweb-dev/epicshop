@@ -67,7 +67,7 @@ function OpenInEditor({
 									isDifferentApp
 										? 'Playground is not set to the right app'
 										: isFileFromDifferentApp
-										? 'This file is form different app'
+										? 'This file is from different app'
 										: "You must 'Set to Playground' before opening a file"
 								}
 							>
