@@ -166,7 +166,7 @@ async function validateProps(props: CodeFileProps, appDir: string) {
 			buttons: z
 				.string()
 				.optional()
-				.transform(str => (str ? (str.split(',') as AppTypes) : []))
+				.transform(str => (str ? (str.split(',') as unknown as AppTypes) : []))
 				.refine(arr => arr.every(item => APP_TYPES.includes(item)), {
 					message: `Buttons can only be any of ${APP_TYPES.join(',')}`,
 				}),
