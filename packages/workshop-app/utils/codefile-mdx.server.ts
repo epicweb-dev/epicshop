@@ -13,7 +13,7 @@ import md5 from 'md5-hex'
 
 type CodeFile = {
 	node: MdxJsxFlowElement
-	parent: Parent | null
+	parent: Parent | null | undefined
 }
 
 type RangeArray = [number, number][] | undefined

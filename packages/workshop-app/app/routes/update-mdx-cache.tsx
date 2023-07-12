@@ -4,7 +4,7 @@ import { z } from 'zod'
 import { useFetcher } from '@remix-run/react'
 import { clsx } from 'clsx'
 import { type EmbeddedFile } from '../../utils/codefile-mdx.server.ts'
-import { setModifiedTimesForDir } from 'utils/apps.server.ts'
+import { setModifiedTimesForDir } from '~/utils/apps.server.ts'
 
 const cacheSchema = z.object({
 	cacheLocation: z.string(),
