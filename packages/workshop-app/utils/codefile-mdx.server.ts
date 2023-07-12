@@ -13,7 +13,7 @@ import md5 from 'md5-hex'
 
 type CodeFile = {
 	node: MdxJsxFlowElement
-	parent: Parent | null
+	parent: Parent | null | undefined
 }
 
 type RangeArray = [number, number][] | undefined
@@ -152,10 +152,11 @@ async function validateProps(props: CodeFileProps, appDir: string) {
 				if (!Array.isArray(highlight) || !Array.isArray(validRange)) {
 					return z.NEVER
 				}
-				return highlight.every(([hStart, hEnd]) =>
-					validRange?.some(
-						([rStart, rEnd]) => hStart >= rStart && hEnd <= rEnd,
-					),
+				return highlight.every(
+					([hStart, hEnd]) =>
+						validRange?.some(
+							([rStart, rEnd]) => hStart >= rStart && hEnd <= rEnd,
+						),
 				)
 			}, 'Highlight range must be within defined range').transform(
 				() => props.highlight,

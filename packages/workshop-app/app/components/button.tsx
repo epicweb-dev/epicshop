@@ -75,10 +75,7 @@ export function ButtonLink({
 			{/* eslint-disable-next-line jsx-a11y/anchor-has-content */}
 			<Link
 				{...props}
-				className={clsx(
-					props.className,
-					getButtonClassName({ varient }),
-				)}
+				className={clsx(props.className, getButtonClassName({ varient }))}
 			/>
 		</div>
 	)
