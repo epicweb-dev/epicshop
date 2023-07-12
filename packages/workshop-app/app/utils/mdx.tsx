@@ -168,7 +168,7 @@ export function PreWithButtons({ children, ...props }: any) {
 					<CopyButton />
 				</div>
 			) : null}
-			<pre {...updateFilename()}>{children}</pre>
+			<pre {...props} {...updateFilename()}>{children}</pre>
 		</div>
 	)
 }
