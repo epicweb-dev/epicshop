@@ -45,7 +45,7 @@ function OpenInEditor({
 
 	const validButtons = ['problem', 'solution', 'playground'] as const
 	const buttonList = buttons.split(',')
-	const apps = ['problem', 'solution', 'playground'].filter(button =>
+	const apps = validButtons.filter(button =>
 		buttonList.includes(button),
 	) as (typeof validButtons)[number][]
 
