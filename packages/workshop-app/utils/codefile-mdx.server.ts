@@ -24,7 +24,6 @@ type PathContentMap = Map<string, string[]>
 
 const APP_TYPES = ['problem', 'solution', 'playground'] as const
 type AppTypes = typeof APP_TYPES
-type AppTypesKey = AppTypes[number]
 
 export type EmbeddedFile = {
 	error?: boolean
