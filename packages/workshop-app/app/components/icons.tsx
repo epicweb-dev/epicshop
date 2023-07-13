@@ -62,6 +62,7 @@ export type IconNames =
 	| 'Sun'
 	| 'Moon'
 	| 'Laptop'
+	| 'ScrollToTop'
 
 export function Icon({
 	title,

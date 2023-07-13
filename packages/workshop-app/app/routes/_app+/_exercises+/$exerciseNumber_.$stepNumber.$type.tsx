@@ -60,6 +60,7 @@ import { LaunchEditor } from '../../launch-editor.tsx'
 import { TestOutput } from '../../test.tsx'
 import { NavChevrons } from '~/components/nav-chevrons.tsx'
 import { UpdateMdxCache } from '~/routes/update-mdx-cache.tsx'
+import { ScrollToTop } from '~/components/ScrollToTop.tsx'
 
 function pageTitle(
 	data: SerializeFrom<typeof loader> | undefined,
@@ -329,6 +330,7 @@ type CodeFileNotificationProps = {
 export default function ExercisePartRoute() {
 	const data = useLoaderData<typeof loader>()
 	const [searchParams] = useSearchParams()
+	const articleRef = React.useRef<HTMLElement>(null)
 
 	const preview = searchParams.get('preview')
 	const activeTab = isValidPreview(preview) ? preview : tabs[0]
@@ -513,6 +515,7 @@ export default function ExercisePartRoute() {
 					</h4>
 					<article
 						className="shadow-on-scrollbox prose dark:prose-invert sm:prose-lg scrollbar-thin scrollbar-thumb-scrollbar h-full w-full max-w-none space-y-6 overflow-y-auto p-10 pt-8"
+						ref={articleRef}
 						data-instructions="true"
 					>
 						{data.exerciseStepApp.instructionsCode ? (
@@ -530,6 +533,10 @@ export default function ExercisePartRoute() {
 							<p>No instructions yet...</p>
 						)}
 					</article>
+					<ScrollToTop
+						containerRef={articleRef}
+						className="right-4 bottom-16 text-black/80"
+					/>
 					<div className="border-border flex h-16 justify-between border-t">
 						<div>
 							<div className="h-full">
