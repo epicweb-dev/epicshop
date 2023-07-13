@@ -114,7 +114,7 @@ ${Object.values(clientHints)
 for (const hint of hints) {
 	if (hint.cookie !== hint.actual) {
 		cookieChanged = true;
-		document.cookie = hint.name + '=' + hint.actual;
+		document.cookie = encodeURIComponent(hint.name) + '=' + encodeURIComponent(hint.actual) + ';path=/';
 	}
 }
 if (cookieChanged) {
