@@ -177,6 +177,9 @@
     "@radix-ui/react-tabs",
     "@radix-ui/react-toast",
     "@remix-run/react",
+    "@remix-run/node",
+    "@remix-run/express",
+    "@remix-run/server-runtime",
     "zod"
   ]
 }
