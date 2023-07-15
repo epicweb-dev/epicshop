@@ -53,19 +53,3 @@ summary[data-state='modified']:before {
 	@apply pr-1;
 	content: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' aria-hidden='true' viewBox='0 0 16 16' fill='rgb(251 146 60)' width='16' height='16' %3E%3Cpath d='M13.25 1c.966 0 1.75.784 1.75 1.75v10.5A1.75 1.75 0 0 1 13.25 15H2.75A1.75 1.75 0 0 1 1 13.25V2.75C1 1.784 1.784 1 2.75 1ZM2.75 2.5a.25.25 0 0 0-.25.25v10.5c0 .138.112.25.25.25h10.5a.25.25 0 0 0 .25-.25V2.75a.25.25 0 0 0-.25-.25ZM8 10a2 2 0 1 1-.001-3.999A2 2 0 0 1 8 10Z'%3E%3C/path%3E%3C/svg%3E");
 }
-
-.slideUpContent {
-	transform-origin: var(--radix-popover-content-transform-origin);
-	animation: slideUp 0.25s ease-out;
-}
-
-@keyframes slideUp {
-	from {
-		opacity: 0;
-		transform: translateY(100%);
-	}
-	to {
-		opacity: 1;
-		transform: translateY(0);
-	}
-}

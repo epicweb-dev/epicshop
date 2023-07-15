@@ -102,3 +102,37 @@
 			'calt' 1;
 	}
 }
+
+@layer utilities {
+	.slideRightContent {
+		transform-origin: var(--radix-popover-content-transform-origin);
+		animation: slideRight 0.25s ease-out;
+	}
+
+	.slideUpContent {
+		transform-origin: var(--radix-popover-content-transform-origin);
+		animation: slideUp 0.25s ease-out;
+	}
+}
+
+@keyframes slideRight {
+	from {
+		opacity: 0;
+		transform: translateX(-100%);
+	}
+	to {
+		opacity: 1;
+		transform: translateY(0);
+	}
+}
+
+@keyframes slideUp {
+	from {
+		opacity: 0;
+		transform: translateY(100%);
+	}
+	to {
+		opacity: 1;
+		transform: translateY(0);
+	}
+}

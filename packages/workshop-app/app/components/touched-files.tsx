@@ -33,7 +33,7 @@ function TouchedFiles() {
 				<Popover.Portal>
 					<Popover.Content
 						ref={contentRef}
-						className="slideUpContent border-border bg-background text-foreground invert-theme select-none rounded px-9 py-8"
+						className="slideRightContent lg:slideUpContent z-10 border-border bg-background text-foreground invert-theme select-none rounded px-9 py-8"
 						align="start"
 						sideOffset={5}
 					>

@@ -551,7 +551,7 @@ export default function ExercisePartRoute() {
 							<p>No instructions yet...</p>
 						)}
 					</article>
-					<div className="border-border flex h-16 justify-between border-t border-b">
+					<div className="border-border flex h-16 justify-between border-t border-b-4 lg:border-b-0">
 						<div>
 							<div className="h-full">
 								<TouchedFiles />
