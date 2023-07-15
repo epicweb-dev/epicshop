@@ -156,13 +156,20 @@ jobs:
         with:
           node-version: 18
 
+      # This is *really* not great, but I don't know how to publish a package
+      # in a workspace with bundleDependencies set.
+      - name: ❌ Remove workspace
+        run: rm package.json
+
       - name: 📥 Download deps
         uses: bahmutov/npm-install@v1
         with:
+          working-directory: ./packages/workshop-app
           useLockFile: false
 
       - name: 🏗 Run build script
         run: npm run build
+        working-directory: ./packages/workshop-app
 
       - name: 🚀 Release
         uses: cycjimmy/semantic-release-action@v3.2.0
