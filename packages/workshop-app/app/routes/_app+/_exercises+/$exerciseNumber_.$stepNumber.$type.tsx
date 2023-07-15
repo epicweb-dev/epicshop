@@ -513,8 +513,8 @@ export default function ExercisePartRoute() {
 
 	return (
 		<div className="flex flex-grow flex-col">
-			<div className="grid flex-grow grid-cols-2">
-				<div className="border-border relative flex h-screen flex-grow flex-col justify-between border-r">
+			<div className="grid flex-grow grid-cols-1 lg:grid-cols-2">
+				<div className="border-border relative flex h-[50vh] min-h-[450px] lg:h-screen flex-grow flex-col justify-between border-r">
 					<h4 className="pl-10 font-mono text-sm font-medium uppercase leading-tight">
 						<div className="flex h-14 flex-wrap items-center justify-start gap-x-3 py-2">
 							<Link to={`/${titleBits.exerciseNumber}`}>
@@ -551,7 +551,7 @@ export default function ExercisePartRoute() {
 							<p>No instructions yet...</p>
 						)}
 					</article>
-					<div className="border-border flex h-16 justify-between border-t">
+					<div className="border-border flex h-16 justify-between border-t border-b">
 						<div>
 							<div className="h-full">
 								<TouchedFiles />
@@ -578,7 +578,7 @@ export default function ExercisePartRoute() {
 					</div>
 				</div>
 				<Tabs.Root
-					className="relative flex h-screen flex-col"
+					className="relative flex h-[50vh] min-h-[450px] lg:h-screen flex-col"
 					value={activeTab}
 					// intentionally no onValueChange here because the Link will trigger the
 					// change.
