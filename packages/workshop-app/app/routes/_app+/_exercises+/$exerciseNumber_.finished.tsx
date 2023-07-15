@@ -5,7 +5,6 @@ import type {
 } from '@remix-run/node'
 import { json } from '@remix-run/node'
 import { Link, useLoaderData } from '@remix-run/react'
-import invariant from 'tiny-invariant'
 import {
 	getAppPageRoute,
 	getApps,
@@ -21,6 +20,7 @@ import {
 	makeTimings,
 } from '~/utils/timing.server.ts'
 import { NavChevrons } from '~/components/nav-chevrons.tsx'
+import { invariantResponse } from '~/utils/misc.tsx'
 
 export const meta: V2_MetaFunction<
 	typeof loader,
@@ -40,7 +40,7 @@ export const meta: V2_MetaFunction<
 
 export async function loader({ params, request }: DataFunctionArgs) {
 	const timings = makeTimings('exerciseFinishedLoader')
-	invariant(params.exerciseNumber, 'exerciseNumber is required')
+	invariantResponse(params.exerciseNumber, 'exerciseNumber is required')
 	const exercise = await getExercise(params.exerciseNumber, {
 		timings,
 		request,

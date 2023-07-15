@@ -2,16 +2,16 @@ import path from 'path'
 import fsExtra from 'fs-extra'
 import mimeTypes from 'mime-types'
 import { redirect, type DataFunctionArgs } from '@remix-run/node'
-import invariant from 'tiny-invariant'
 import { getAppByName } from '~/utils/apps.server.ts'
 import { compileTs } from '~/utils/compile-app.server.ts'
+import { invariantResponse } from '~/utils/misc.tsx'
 
 export async function loader({ params, request }: DataFunctionArgs) {
 	const { id: appId, '*': splat } = params
 	const url = new URL(request.url)
 	const fileAppName = url.searchParams.get('fileAppName')
-	invariant(appId, 'App id is required')
-	invariant(splat, 'Splat is required')
+	invariantResponse(appId, 'App id is required')
+	invariantResponse(splat, 'Splat is required')
 	const app = await getAppByName(appId)
 	const fileApp = fileAppName ? await getAppByName(fileAppName) : app
 	if (!fileApp || !app) {

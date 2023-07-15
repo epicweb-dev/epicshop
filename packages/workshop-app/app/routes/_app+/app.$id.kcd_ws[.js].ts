@@ -1,12 +1,12 @@
 import { redirect, type DataFunctionArgs } from '@remix-run/node'
-import invariant from 'tiny-invariant'
 import { getAppByName } from '~/utils/apps.server.ts'
+import { invariantResponse } from '~/utils/misc.tsx'
 
 export async function loader({ params, request }: DataFunctionArgs) {
 	const { id: appId } = params
 	const url = new URL(request.url)
 	const fileAppName = url.searchParams.get('fileAppName')
-	invariant(appId, 'App id is required')
+	invariantResponse(appId, 'App id is required')
 	const app = await getAppByName(appId)
 	const fileApp = fileAppName ? await getAppByName(fileAppName) : app
 	if (!app || !fileApp) {

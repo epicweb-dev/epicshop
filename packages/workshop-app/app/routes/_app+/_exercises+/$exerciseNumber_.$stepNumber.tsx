@@ -1,9 +1,8 @@
 import type { DataFunctionArgs, HeadersFunction } from '@remix-run/node'
 import { json } from '@remix-run/node'
 import { isRouteErrorResponse, Outlet, useRouteError } from '@remix-run/react'
-import invariant from 'tiny-invariant'
 import { getExercises, getWorkshopTitle } from '~/utils/apps.server.ts'
-import { getErrorMessage } from '~/utils/misc.tsx'
+import { getErrorMessage, invariantResponse } from '~/utils/misc.tsx'
 import {
 	combineServerTimings,
 	getServerTimeHeader,
@@ -12,7 +11,7 @@ import {
 
 export async function loader({ request, params }: DataFunctionArgs) {
 	const timings = makeTimings('stepLoader')
-	invariant(params.exerciseNumber, 'exerciseNumber is required')
+	invariantResponse(params.exerciseNumber, 'exerciseNumber is required')
 	const [exercises, workshopTitle] = await Promise.all([
 		getExercises({ request, timings }),
 		getWorkshopTitle(),

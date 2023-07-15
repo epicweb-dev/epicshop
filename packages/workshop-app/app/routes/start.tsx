@@ -1,10 +1,10 @@
 import type { DataFunctionArgs } from '@remix-run/node'
 import { json } from '@remix-run/node'
 import { useFetcher } from '@remix-run/react'
-import invariant from 'tiny-invariant'
 import { Button } from '~/components/button.tsx'
 import { Loading } from '~/components/loading.tsx'
 import { getAppByName } from '~/utils/apps.server.ts'
+import { invariantResponse } from '~/utils/misc.tsx'
 import {
 	closeProcess,
 	runAppDev,
@@ -15,11 +15,11 @@ import {
 export async function action({ request }: DataFunctionArgs) {
 	const formData = await request.formData()
 	const intent = formData.get('intent')
-	invariant(typeof intent === 'string', 'intent is required')
+	invariantResponse(typeof intent === 'string', 'intent is required')
 
 	if (intent === 'start' || intent === 'stop') {
 		const name = formData.get('name')
-		invariant(typeof name === 'string', 'name is required')
+		invariantResponse(typeof name === 'string', 'name is required')
 		const app = await getAppByName(name)
 		if (!app) {
 			throw new Response('Not found', { status: 404 })
@@ -60,7 +60,7 @@ export async function action({ request }: DataFunctionArgs) {
 
 	if (intent === 'stop-port') {
 		const port = formData.get('port')
-		invariant(typeof port === 'string', 'port is required')
+		invariantResponse(typeof port === 'string', 'port is required')
 		await stopPort(port)
 		return json({ status: 'port-stopped' } as const)
 	}

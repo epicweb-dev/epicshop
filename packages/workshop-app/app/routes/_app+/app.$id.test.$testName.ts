@@ -2,7 +2,6 @@ import fsExtra from 'fs-extra'
 import path from 'path'
 import type { DataFunctionArgs } from '@remix-run/node'
 import { redirect } from '@remix-run/node'
-import invariant from 'tiny-invariant'
 import {
 	getAppByName,
 	getExercise,
@@ -13,12 +12,13 @@ import {
 	isPlaygroundApp,
 } from '~/utils/apps.server.ts'
 import { getServerTimeHeader, makeTimings } from '~/utils/timing.server.ts'
+import { invariantResponse } from '~/utils/misc.tsx'
 
 export async function loader({ params, request }: DataFunctionArgs) {
 	const timings = makeTimings('app_test_loader')
 	const { id: appId, testName } = params
-	invariant(appId, 'App id is required')
-	invariant(testName, 'Test name is required')
+	invariantResponse(appId, 'App id is required')
+	invariantResponse(testName, 'Test name is required')
 	const app = await getAppByName(appId, { request, timings })
 	if (!app) {
 		throw new Response(`App "${appId}" not found`, {

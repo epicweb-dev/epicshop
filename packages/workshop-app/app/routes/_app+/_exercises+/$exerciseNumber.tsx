@@ -9,12 +9,11 @@ import {
 	useLoaderData,
 	useRouteError,
 } from '@remix-run/react'
-import invariant from 'tiny-invariant'
 import { ButtonLink } from '~/components/button.tsx'
 import { type loader as rootLoader } from '~/root.tsx'
 import { getExercises, getWorkshopTitle } from '~/utils/apps.server.ts'
 import { Mdx, PreWithButtons } from '~/utils/mdx.tsx'
-import { getErrorMessage } from '~/utils/misc.tsx'
+import { getErrorMessage, invariantResponse } from '~/utils/misc.tsx'
 import {
 	combineServerTimings,
 	getServerTimeHeader,
@@ -40,7 +39,7 @@ export const meta: V2_MetaFunction<
 
 export async function loader({ params, request }: DataFunctionArgs) {
 	const timings = makeTimings('exerciseNumberLoader')
-	invariant(params.exerciseNumber, 'exerciseNumber is required')
+	invariantResponse(params.exerciseNumber, 'exerciseNumber is required')
 	const [exercises, workshopTitle] = await Promise.all([
 		time(() => getExercises({ request, timings }), {
 			timings,

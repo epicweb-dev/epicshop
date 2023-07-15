@@ -6,7 +6,6 @@ import * as React from 'react'
 import { z } from 'zod'
 import { useHints } from '~/utils/client-hints.tsx'
 import { ErrorList } from '~/utils/forms.tsx'
-import { safeRedirect } from '~/utils/misc.tsx'
 import { useRequestInfo } from '~/utils/request-info.ts'
 import {
 	commitSession,
@@ -15,6 +14,7 @@ import {
 	setTheme,
 } from './theme-session.server.ts'
 import { Icon } from '~/components/icons.tsx'
+import { safeRedirect } from 'remix-utils'
 
 const ROUTE_PATH = '/theme'
 
