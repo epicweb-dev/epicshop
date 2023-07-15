@@ -1,7 +1,7 @@
 import fsExtra from 'fs-extra'
 import path from 'path'
 import { fileURLToPath } from 'url'
-import { globSync } from 'glob'
+import { glob } from 'glob'
 import esbuild from 'esbuild'
 
 const pkg = fsExtra.readJsonSync(path.join(process.cwd(), 'package.json'))
@@ -23,7 +23,7 @@ if (dir === 'server') {
 	ignore.push('dev-server.js')
 }
 
-const allFiles = globSync('**/*.*', { cwd: srcDir, ignore }).map(file =>
+const allFiles = glob.sync('**/*.*', { cwd: srcDir, ignore }).map(file =>
 	path.join(srcDir, file),
 )
 
