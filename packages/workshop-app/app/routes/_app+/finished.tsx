@@ -1,11 +1,14 @@
-import type { HeadersFunction, V2_MetaFunction } from '@remix-run/node'
+import type {
+	DataFunctionArgs,
+	HeadersFunction,
+	V2_MetaFunction,
+} from '@remix-run/node'
 import { json } from '@remix-run/node'
 import { useLoaderData } from '@remix-run/react'
-import { getWorkshopTitle } from '~/utils/apps.server.ts'
-
-import { ButtonLink } from '~/components/button.tsx'
 import { Loading } from '~/components/loading.tsx'
+import { NavChevrons } from '~/components/nav-chevrons.tsx'
 import { type loader as rootLoader } from '~/root.tsx'
+import { getExercises, getWorkshopTitle } from '~/utils/apps.server.ts'
 import {
 	combineServerTimings,
 	getServerTimeHeader,
@@ -20,10 +23,19 @@ export const meta: V2_MetaFunction<
 	return [{ title: `🎉 ${rootData?.workshopTitle}` }]
 }
 
-export async function loader() {
+export async function loader({ request }: DataFunctionArgs) {
 	const timings = makeTimings('finishedLoader')
+	const exercises = await getExercises({ request, timings })
+	const lastExercises = exercises[exercises.length - 1]
 	return json(
-		{ workshopTitle: await getWorkshopTitle() },
+		{
+			workshopTitle: await getWorkshopTitle(),
+			prevStepLink: lastExercises
+				? {
+						to: `/${lastExercises.exerciseNumber}/finished`,
+				  }
+				: null,
+		},
 		{
 			headers: {
 				'Server-Timing': getServerTimeHeader(timings),
@@ -61,9 +73,17 @@ export default function ExerciseFinished() {
 						<Loading />
 					</iframe>
 					<div className="border-border flex h-16 justify-end border-t">
-						<ButtonLink varient="primary" prefetch="intent" to="/">
-							Home
-						</ButtonLink>
+						<NavChevrons
+							prev={
+								data.prevStepLink
+									? {
+											to: data.prevStepLink.to,
+											'aria-label': 'Previous Step',
+									  }
+									: null
+							}
+							next={{ to: '/', 'aria-label': 'Home' }}
+						/>
 					</div>
 				</div>
 				<div></div>

@@ -12,6 +12,61 @@ Sup: `this is some code`
 
 <LinkToApp to="/whatever">Go to whatever</LinkToApp>
 
+### code highlight example
+
+```tsx remove=1
+console.log('remove me')
+console.log('what up')
+```
+
+```tsx add=1 nonumber
+console.log('add me')
+console.log('yo')
+```
+
+```tsx
+console.log('numbers yo')
+console.log('and no diff')
+console.log('or highlight')
+```
+
+```tsx lines=1
+console.log('numbers yo')
+console.log('with highlights')
+console.log('yeah')
+```
+
+```tsx nonumber lines=1
+console.log('no numbers yo')
+console.log('with highlights')
+console.log('yeah')
+```
+
+```sh
+echo hello world
+```
+
+```sh remove=1
+echo remove me
+echo hello world
+```
+
+```sh add=1 nonumber
+echo add me
+echo hello world
+```
+
+```sh lines=1
+echo hello world
+echo with highlights
+echo yeah
+```
+
+```sh nonumber
+echo no numbers here
+echo at all
+```
+
 #### CodeFile example
 
 ```tsx nonumber

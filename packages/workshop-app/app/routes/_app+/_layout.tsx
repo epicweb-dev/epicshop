@@ -142,6 +142,8 @@ function Navigation() {
 		visible: { opacity: 1, x: 0 },
 	}
 
+	const exNum = Number(params.exerciseNumber).toString().padStart(2, '0')
+
 	return (
 		<nav className="border-border flex items-center border-r">
 			<motion.div
@@ -267,14 +269,21 @@ function Navigation() {
 					)}
 					{!isMenuOpened && (
 						<div className="flex flex-grow flex-col justify-center">
-							<Link
-								className="orientation-sideways w-full font-mono text-sm font-medium uppercase leading-none"
-								to={`/${Number(params.exerciseNumber)
-									.toString()
-									.padStart(2, '0')}`}
-							>
-								{[exercise?.title, app?.title].filter(Boolean).join(' — ')}
-							</Link>
+							<div className="orientation-sideways w-full font-mono text-sm font-medium uppercase leading-none">
+								{exercise?.title ? (
+									<Link to={`/${exNum}`}>{exercise.title}</Link>
+								) : null}
+								{exercise?.title && app?.title ? ' — ' : null}
+								{app?.title ? (
+									<Link
+										to={`/${exNum}/${app.stepNumber
+											.toString()
+											.padStart(2, '0')}`}
+									>
+										{app.title}
+									</Link>
+								) : null}
+							</div>
 						</div>
 					)}
 					<div className="mb-4 ml-3 self-start">

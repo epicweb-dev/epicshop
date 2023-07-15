@@ -65,23 +65,26 @@ function pageTitle(
 	data: SerializeFrom<typeof loader> | undefined,
 	workshopTitle?: string,
 ) {
-	if (!data) {
-		return 'Error'
-	}
-	const exerciseNumber = data.exerciseStepApp.exerciseNumber
-		.toString()
-		.padStart(2, '0')
-	const stepNumber = data.exerciseStepApp.stepNumber.toString().padStart(2, '0')
+	const exerciseNumber =
+		data?.exerciseStepApp.exerciseNumber.toString().padStart(2, '0') ?? '00'
+	const stepNumber =
+		data?.exerciseStepApp.stepNumber.toString().padStart(2, '0') ?? '00'
 	const emoji = (
 		{
 			problem: '💪',
 			solution: '🏁',
 		} as const
-	)[data.type]
-	const title = data[data.type]?.title ?? 'N/A'
-	return workshopTitle
-		? `${emoji} | ${stepNumber}. ${title} | ${exerciseNumber}. ${data.exerciseTitle} | ${workshopTitle}`
-		: `${exerciseNumber}. ${data.exerciseTitle} | ${stepNumber}. ${title} | ${emoji} ${data.type}`
+	)[data?.type ?? 'problem']
+	const title = data?.[data.type]?.title ?? 'N/A'
+	return {
+		emoji,
+		stepNumber,
+		title,
+		exerciseNumber,
+		exerciseTitle: data?.exerciseTitle ?? 'Unknown exercise',
+		workshopTitle,
+		type: data?.type ?? 'problem',
+	}
 }
 
 export const meta: V2_MetaFunction<
@@ -89,7 +92,15 @@ export const meta: V2_MetaFunction<
 	{ root: typeof rootLoader }
 > = ({ data, matches }) => {
 	const rootData = matches.find(m => m.id === 'root')?.data
-	return [{ title: pageTitle(data, rootData?.workshopTitle) }]
+	const { emoji, stepNumber, title, exerciseNumber, exerciseTitle } =
+		pageTitle(data)
+	return [
+		{
+			title: `${emoji} | ${stepNumber}. ${title} | ${exerciseNumber}. ${exerciseTitle} | ${
+				rootData?.workshopTitle ?? 'KCD Workshop'
+			}`,
+		},
+	]
 }
 
 export async function loader({ request, params }: DataFunctionArgs) {
@@ -498,13 +509,23 @@ export default function ExercisePartRoute() {
 		}
 	}, [searchParams, previewAppUrl])
 
+	const titleBits = pageTitle(data)
+
 	return (
 		<div className="flex flex-grow flex-col">
 			<div className="grid flex-grow grid-cols-2">
 				<div className="border-border relative flex h-screen flex-grow flex-col justify-between border-r">
 					<h4 className="pl-10 font-mono text-sm font-medium uppercase leading-tight">
 						<div className="flex h-14 flex-wrap items-center justify-start gap-x-3 py-2">
-							{pageTitle(data)}
+							<Link to={`/${titleBits.exerciseNumber}`}>
+								{titleBits.exerciseNumber}. {titleBits.exerciseTitle}
+							</Link>
+							{' | '}
+							<Link to=".">
+								{titleBits.stepNumber}. {titleBits.title}
+								{' | '}
+								{titleBits.emoji} {titleBits.type}
+							</Link>
 							{data.problem &&
 							data.playground?.appName !== data.problem.name ? (
 								<SetAppToPlayground appName={data.problem.name} />
@@ -576,7 +597,7 @@ export default function ExercisePartRoute() {
 									}
 									asChild
 									className={clsx(
-										'radix-state-active:bg-foreground radix-state-active:hover:bg-foreground/80 radix-state-active:hover:text-background/80 radix-state-active:text-background radix-state-active:z-10 radix-state-inactive:hover:bg-foreground/20 clip-path-button relative px-6 py-4 font-mono text-sm uppercase',
+										'radix-state-active:bg-foreground radix-state-active:hover:bg-foreground/80 radix-state-active:hover:text-background/80 radix-state-active:text-background radix-state-active:z-10 radix-state-inactive:hover:bg-foreground/20 radix-state-inactive:hover:text-foreground/80 clip-path-button relative px-6 py-4 font-mono text-sm uppercase',
 									)}
 								>
 									<Link

@@ -4,7 +4,7 @@ import * as mdxBundler from 'mdx-bundler/client/index.js'
 import type { MDXContentProps } from 'mdx-bundler/client'
 import * as React from 'react'
 import { LaunchEditor } from '~/routes/launch-editor.tsx'
-import { AnchorOrLink } from './misc.tsx'
+import { AnchorOrLink, cn } from './misc.tsx'
 import { useLoaderData } from '@remix-run/react'
 import { type loader } from '~/routes/_app+/_exercises+/$exerciseNumber_.$stepNumber.$type.tsx'
 import { clsx } from 'clsx'
@@ -17,6 +17,9 @@ function getRelativePath(file: string, separator?: string, type?: string) {
 		.split(`${type === 'playground' ? 'example' : 'exercises'}${separator}`)
 	return relativePath
 }
+
+const buttonClassName =
+	'border-border bg-[var(--base00)] hover:bg-foreground/20 active:bg-foreground/30 box-content block rounded border-2 px-2 py-0.5 font-mono text-xs font-semibold outline-none transition duration-300 ease-in-out'
 
 type DataProps = {
 	'data-buttons'?: string
@@ -49,8 +52,6 @@ function OpenInEditor({
 		buttonList.includes(button),
 	) as (typeof validButtons)[number][]
 
-	const className =
-		'border-border hover:bg-foreground/20 active:bg-foreground/30 box-content block rounded border-2 px-2 py-0.5 font-mono text-xs font-semibold outline-none transition duration-300 ease-in-out'
 	return (
 		<>
 			{apps.map(type => {
@@ -62,7 +63,7 @@ function OpenInEditor({
 						return (
 							<button
 								key={type}
-								className={clsx(className, 'mt-1 cursor-not-allowed')}
+								className={clsx(buttonClassName, 'mt-1 cursor-not-allowed')}
 								title={
 									isDifferentApp
 										? 'Playground is not set to the right app'
@@ -71,7 +72,7 @@ function OpenInEditor({
 										: "You must 'Set to Playground' before opening a file"
 								}
 							>
-								OPEN in {type}
+								<span className="uppercase">Open</span> in {type}
 							</button>
 						)
 					}
@@ -86,8 +87,8 @@ function OpenInEditor({
 				const fixedTitle = getRelativePath(file, separator, type)
 				return (
 					<LaunchEditor key={type} file={file} line={Number(start ?? 1)}>
-						<span title={fixedTitle} className={className}>
-							OPEN in {type}
+						<span title={fixedTitle} className={buttonClassName}>
+							<span className="uppercase">Open</span> in {type}
 						</span>
 					</LaunchEditor>
 				)
@@ -111,7 +112,7 @@ function CopyButton(): React.ReactNode {
 		<>
 			<span className="collapse font-mono text-xs uppercase">copied</span>
 			<button
-				className="border-border hover:bg-foreground/20 active:bg-foreground/30 rounded border-2 px-2 py-0.5 font-mono text-xs font-semibold uppercase outline-none transition duration-300 ease-in-out"
+				className={cn(buttonClassName, 'uppercase')}
 				onClick={event => {
 					const button = event.currentTarget
 					notification(button, true)
@@ -150,24 +151,22 @@ export function PreWithButtons({ children, ...props }: any) {
 
 	return (
 		<div className="group relative">
-			{buttons ? (
-				<div className="absolute right-28 top-4 z-50 m-2 my-0.5 flex items-center gap-4 opacity-0 transition duration-300 ease-in-out focus-within:opacity-100 group-hover:opacity-100">
-					<OpenInEditor {...props} />
-				</div>
-			) : null}
-			{showCopyButton ? (
-				<div
-					className={clsx(
-						'absolute right-0 top-0 z-50 m-2 flex items-center gap-2 opacity-0 transition duration-300 ease-in-out focus-within:opacity-100 group-hover:opacity-100',
-						{
-							'top-0': !buttons,
-							'top-4': buttons,
-						},
-					)}
-				>
-					<CopyButton />
-				</div>
-			) : null}
+			<div className="absolute right-0 top-0 z-50 m-2 flex justify-end items-center gap-4 opacity-0 transition duration-300 ease-in-out focus-within:opacity-100 group-hover:opacity-100">
+				{buttons ? <OpenInEditor {...props} /> : null}
+				{showCopyButton ? (
+					<div
+						className={clsx(
+							'absolute right-0 top-0 z-50 m-2 flex items-center gap-2 opacity-0 transition duration-300 ease-in-out focus-within:opacity-100 group-hover:opacity-100',
+							{
+								'top-0': !buttons,
+								'top-4': buttons,
+							},
+						)}
+					>
+						<CopyButton />
+					</div>
+				) : null}
+			</div>
 			<pre {...props} {...updateFilename()}>
 				{children}
 			</pre>
