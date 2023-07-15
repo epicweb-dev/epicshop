@@ -7,7 +7,6 @@ import type {
 	V2_MetaFunction,
 } from '@remix-run/node'
 import { json } from '@remix-run/node'
-import { useSpinDelay } from 'spin-delay'
 import {
 	Links,
 	LiveReload,
@@ -15,20 +14,24 @@ import {
 	Outlet,
 	Scripts,
 	ScrollRestoration,
+	useBeforeUnload,
+	useLocation,
 	useNavigation,
 } from '@remix-run/react'
+import { useCallback, useEffect } from 'react'
+import { useSpinDelay } from 'spin-delay'
+import { useTheme } from './routes/theme/index.tsx'
+import { getTheme } from './routes/theme/theme-session.server.ts'
 import appStylesheetUrl from './styles/app.css'
 import tailwindStylesheetUrl from './styles/tailwind.css'
 import { getWorkshopTitle } from './utils/apps.server.ts'
+import { ClientHintCheck, getHints } from './utils/client-hints.tsx'
+import { cn } from './utils/misc.tsx'
 import {
 	getServerTimeHeader,
 	makeTimings,
 	time,
 } from './utils/timing.server.ts'
-import { cn } from './utils/misc.tsx'
-import { ClientHintCheck, getHints } from './utils/client-hints.tsx'
-import { getTheme } from './routes/theme/theme-session.server.ts'
-import { useTheme } from './routes/theme/index.tsx'
 
 export const links: LinksFunction = () => {
 	return [
@@ -114,11 +117,102 @@ export default function App() {
 			<body className="scrollbar-thin scrollbar-thumb-scrollbar bg-background text-foreground h-full">
 				<Outlet />
 				<ScrollRestoration />
+				<ElementScrollRestoration elementQuery="[data-restore-scroll='true']" />
 				<Scripts />
 				<LiveReload />
 				<script dangerouslySetInnerHTML={{ __html: getWebsocketJS() }} />
 			</body>
 		</html>
+	)
+}
+
+function ElementScrollRestoration({
+	elementQuery,
+	...props
+}: { elementQuery: string } & React.HTMLProps<HTMLScriptElement>) {
+	const STORAGE_KEY = `position:${elementQuery}`
+	const navigation = useNavigation()
+	const location = useLocation()
+
+	const updatePositions = useCallback(() => {
+		const element = document.querySelector(elementQuery)
+		if (!element) return
+		let positions = {}
+		try {
+			const rawPositions = JSON.parse(
+				sessionStorage.getItem(STORAGE_KEY) || '{}',
+			)
+			if (typeof rawPositions === 'object' && rawPositions !== null) {
+				positions = rawPositions
+			}
+		} catch (error) {
+			console.warn(`Error parsing scroll positions from sessionStorage:`, error)
+		}
+		const newPositions = {
+			...positions,
+			[location.key]: element.scrollTop,
+		}
+		sessionStorage.setItem(STORAGE_KEY, JSON.stringify(newPositions))
+	}, [STORAGE_KEY, elementQuery, location.key])
+
+	useEffect(() => {
+		if (navigation.state === 'idle') {
+			const element = document.querySelector(elementQuery)
+			if (!element) return
+			try {
+				const positions = JSON.parse(
+					sessionStorage.getItem(STORAGE_KEY) || '{}',
+				) as any
+				const storedY = positions[window.history.state.key]
+				if (typeof storedY === 'number') {
+					element.scrollTop = storedY
+				}
+			} catch (error: unknown) {
+				console.error(error)
+				sessionStorage.removeItem(STORAGE_KEY)
+			}
+		} else {
+			updatePositions()
+		}
+	}, [STORAGE_KEY, elementQuery, navigation.state, updatePositions])
+
+	useBeforeUnload(() => {
+		updatePositions()
+	})
+
+	function restoreScroll(storageKey: string, elementQuery: string) {
+		const element = document.querySelector(elementQuery)
+		if (!element) {
+			console.warn(`Element not found: ${elementQuery}. Cannot restore scroll.`)
+			return
+		}
+		if (!window.history.state || !window.history.state.key) {
+			const key = Math.random().toString(32).slice(2)
+			window.history.replaceState({ key }, '')
+		}
+		try {
+			const positions = JSON.parse(
+				sessionStorage.getItem(storageKey) || '{}',
+			) as any
+			const storedY = positions[window.history.state.key]
+			if (typeof storedY === 'number') {
+				element.scrollTop = storedY
+			}
+		} catch (error: unknown) {
+			console.error(error)
+			sessionStorage.removeItem(storageKey)
+		}
+	}
+	return (
+		<script
+			{...props}
+			suppressHydrationWarning
+			dangerouslySetInnerHTML={{
+				__html: `(${restoreScroll})(${JSON.stringify(
+					STORAGE_KEY,
+				)}, ${JSON.stringify(elementQuery)})`,
+			}}
+		/>
 	)
 }
 
@@ -130,21 +224,6 @@ function getWebsocketJS() {
 		const port = location.port;
 		const socketPath = protocol + "//" + host + ":" + port + "/__ws";
 		const ws = new WebSocket(socketPath);
-		window.addEventListener('DOMContentLoaded', () => {
-			const scrollPosition = localStorage.getItem('kcdshop:scrollPosition');
-			if (scrollPosition) {
-				localStorage.removeItem('kcdshop:scrollPosition');
-				const instructions = document.querySelector('[data-instructions]')
-				if (instructions) {
-					instructions.scrollTop = parseInt(scrollPosition)
-				}
-			}
-		})
-		function reload() {
-			const instructions = document.querySelector('[data-instructions]')
-			localStorage.setItem('kcdshop:scrollPosition', instructions?.scrollTop);
-			window.location.reload();
-		}
 		ws.onmessage = (message) => {
 			const event = JSON.parse(message.data);
 			if (event.type !== 'kcdshop:file-change') return;
@@ -160,7 +239,7 @@ function getWebsocketJS() {
 						.filter(Boolean)
 						.join(' '),
 				);
-				setTimeout(() => reload(), 200)
+				setTimeout(() => window.location.reload(), 200)
 			}
 		};
 		ws.onopen = () => {
@@ -174,7 +253,7 @@ function getWebsocketJS() {
 				setTimeout(
 					() =>
 						kcdLiveReloadConnect({
-							onOpen: () => reload(),
+							onOpen: () => window.location.reload(),
 						}),
 				1000
 				);

@@ -117,7 +117,7 @@ for (const hint of hints) {
 		document.cookie = encodeURIComponent(hint.name) + '=' + encodeURIComponent(hint.actual) + ';path=/';
 	}
 }
-if (cookieChanged) {
+if (cookieChanged && navigator.cookieEnabled) {
 	window.location.reload();
 }
 			`,
