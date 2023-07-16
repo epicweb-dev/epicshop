@@ -60,6 +60,7 @@ import { LaunchEditor } from '../../launch-editor.tsx'
 import { TestOutput } from '../../test.tsx'
 import { NavChevrons } from '~/components/nav-chevrons.tsx'
 import { UpdateMdxCache } from '~/routes/update-mdx-cache.tsx'
+import { EditReadme } from '~/components/edit-readme.tsx'
 
 function pageTitle(
 	data: SerializeFrom<typeof loader> | undefined,
@@ -584,6 +585,10 @@ export default function ExercisePartRoute() {
 								<TouchedFiles />
 							</div>
 						</div>
+						<EditReadme
+							name={data.exerciseStepApp.name}
+							stepPath={data.exerciseStepApp.relativePath}
+						/>
 						<NavChevrons
 							prev={
 								data.prevStepLink
