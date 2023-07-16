@@ -63,7 +63,7 @@ function OpenInEditor({
 						return (
 							<button
 								key={type}
-								className={clsx(buttonClassName, 'mt-1 cursor-not-allowed')}
+								className={clsx(buttonClassName, 'cursor-not-allowed')}
 								title={
 									isDifferentApp
 										? 'Playground is not set to the right app'
@@ -97,35 +97,30 @@ function OpenInEditor({
 	)
 }
 
-function notification(button: EventTarget & HTMLButtonElement, on?: boolean) {
-	if (button) {
-		const label = button.previousElementSibling
-		label?.classList[on ? 'add' : 'remove']('visible')
-		label?.classList[on ? 'remove' : 'add']('collapse')
-		button.style.backgroundColor = on ? 'hsl(var(--foreground))' : ''
-		button.style.color = on ? 'hsl(var(--background))' : ''
-	}
-}
-
 function CopyButton(): React.ReactNode {
+	const [copied, setCopied] = React.useState(false)
+
+	React.useEffect(() => {
+		if (copied) {
+			const timeoutId = setTimeout(() => setCopied(false), 1500)
+			return () => clearTimeout(timeoutId)
+		}
+	}, [copied])
+
 	return (
-		<>
-			<span className="collapse font-mono text-xs uppercase">copied</span>
-			<button
-				className={cn(buttonClassName, 'uppercase')}
-				onClick={event => {
-					const button = event.currentTarget
-					notification(button, true)
-					setTimeout(() => notification(button), 1500)
-					const code =
-						button.parentElement?.parentElement?.querySelector('pre')
-							?.textContent || ''
-					navigator.clipboard.writeText(code)
-				}}
-			>
-				copy
-			</button>
-		</>
+		<button
+			className={cn(buttonClassName, 'uppercase w-12')}
+			onClick={event => {
+				setCopied(true)
+				const button = event.currentTarget
+				const code =
+					button.parentElement?.parentElement?.querySelector('pre')
+						?.textContent || ''
+				navigator.clipboard.writeText(code)
+			}}
+		>
+			{copied ? 'copied' : 'copy'}
+		</button>
 	)
 }
 
@@ -151,21 +146,9 @@ export function PreWithButtons({ children, ...props }: any) {
 
 	return (
 		<div className="group relative">
-			<div className="absolute right-0 top-0 z-50 m-2 flex justify-end items-center gap-4 opacity-0 transition duration-300 ease-in-out focus-within:opacity-100 group-hover:opacity-100">
+			<div className="absolute right-0 top-0 z-50 m-2 flex justify-end items-baseline gap-4 opacity-0 transition duration-300 ease-in-out focus-within:opacity-100 group-hover:opacity-100">
 				{buttons ? <OpenInEditor {...props} /> : null}
-				{showCopyButton ? (
-					<div
-						className={clsx(
-							'absolute right-0 top-0 z-50 m-2 flex items-center gap-2 opacity-0 transition duration-300 ease-in-out focus-within:opacity-100 group-hover:opacity-100',
-							{
-								'top-0': !buttons,
-								'top-4': buttons,
-							},
-						)}
-					>
-						<CopyButton />
-					</div>
-				) : null}
+				{showCopyButton ? <CopyButton /> : null}
 			</div>
 			<pre {...props} {...updateFilename()}>
 				{children}
