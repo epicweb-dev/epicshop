@@ -3,6 +3,7 @@ import { json } from '@remix-run/node'
 import { Form, useLoaderData, useNavigation } from '@remix-run/react'
 import { type loader as rootLoader } from '~/root.tsx'
 import { getApps } from '~/utils/apps.server.ts'
+import { ensureUndeployed } from '~/utils/misc.tsx'
 import { getProcesses } from '~/utils/process-manager.server.ts'
 import { getServerTimeHeader, makeTimings } from '~/utils/timing.server.ts'
 
@@ -19,6 +20,7 @@ export const meta: V2_MetaFunction<
 }
 
 export async function loader({ request }: DataFunctionArgs) {
+	ensureUndeployed()
 	const timings = makeTimings('adminLoader')
 	const apps = (await getApps({ request, timings })).filter(
 		(a, i, ar) => ar.findIndex(b => a.name === b.name) === i,
@@ -60,6 +62,7 @@ export async function loader({ request }: DataFunctionArgs) {
 }
 
 export async function action({ request }: DataFunctionArgs) {
+	ensureUndeployed()
 	const formData = await request.formData()
 	const intent = formData.get('intent')
 	switch (intent) {

@@ -8,6 +8,7 @@ import { z } from 'zod'
 import { launchEditor } from '~/utils/launch-editor.server.ts'
 import { clsx } from 'clsx'
 import { showToast } from '~/components/toast.tsx'
+import { ensureUndeployed } from '~/utils/misc.tsx'
 
 const launchSchema = z.intersection(
 	z.object({
@@ -28,6 +29,7 @@ const launchSchema = z.intersection(
 )
 
 export async function action({ request }: DataFunctionArgs) {
+	ensureUndeployed()
 	const formData = await request.formData()
 	const rawData = {
 		type: formData.get('type'),
@@ -58,7 +60,25 @@ export async function action({ request }: DataFunctionArgs) {
 	return json(result)
 }
 
-export function LaunchEditor({
+type LaunchEditorProps = {
+	line?: number
+	column?: number
+	children: React.ReactNode
+	onUpdate?: (state: string) => void
+} & (
+	| {
+			file: string
+			appFile?: never
+			appName?: never
+	  }
+	| {
+			file?: never
+			appFile: string | string[]
+			appName: string
+	  }
+)
+
+function LaunchEditorImpl({
 	file,
 	appFile,
 	appName,
@@ -66,15 +86,7 @@ export function LaunchEditor({
 	column,
 	children,
 	onUpdate,
-}: {
-	line?: number
-	column?: number
-	children: React.ReactNode
-	onUpdate?: (state: string) => void
-} & (
-	| { file: string; appFile?: never; appName?: never }
-	| { file?: never; appFile: string | string[]; appName: string }
-)) {
+}: LaunchEditorProps) {
 	const fetcher = useFetcher<typeof action>()
 
 	useEffect(() => {
@@ -120,3 +132,59 @@ export function LaunchEditor({
 		</fetcher.Form>
 	)
 }
+
+function LaunchGitHub({
+	file,
+	appFile,
+	appName,
+	line,
+	column,
+	children,
+	onUpdate,
+}: LaunchEditorProps) {
+	if (Array.isArray(appFile)) {
+		return <div>Cannot open more than one file</div>
+	}
+	if (file) {
+		return (
+			<a
+				className="launch_button !no-underline"
+				href={
+					file.replace(ENV.KCDSHOP_CONTEXT_CWD, ENV.KCDSHOP_GITHUB_ROOT) +
+					(line ? `#L${line}` : '')
+				}
+				rel="noreferrer"
+				target="_blank"
+			>
+				{children}
+			</a>
+		)
+	}
+	const path = [
+		...(appName?.split('__sep__') ?? []),
+		appFile + (line ? `#L${line}` : ''),
+	].join('/')
+	return (
+		<a
+			className="launch_button no-underline!"
+			href={ENV.KCDSHOP_GITHUB_ROOT + '/' + path}
+			rel="noreferrer"
+			target="_blank"
+		>
+			{children}
+		</a>
+	)
+}
+
+export const LaunchEditor = ENV.KCDSHOP_DEPLOYED
+	? ENV.KCDSHOP_GITHUB_ROOT
+		? LaunchGitHub
+		: ({ children }: LaunchEditorProps) => (
+				<button
+					className="launch_button cursor-not-allowed"
+					title="Cannot open files in deployed app"
+				>
+					{children}
+				</button>
+		  )
+	: LaunchEditorImpl

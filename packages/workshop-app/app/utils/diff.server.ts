@@ -20,6 +20,8 @@ import { isGitIgnored } from 'globby'
 
 const kcdshopTempDir = path.join(os.tmpdir(), 'kcdshop')
 
+const isDeployed = ENV.KCDSHOP_DEPLOYED
+
 const diffTmpDir = path.join(kcdshopTempDir, 'diff')
 
 function diffPathToRelative(filePath: string) {
@@ -103,6 +105,11 @@ function getFileCodeblocks(
 			.replace('&', ' ')
 
 		const launchEditor = (appNum: number, line: number) => {
+			if (isDeployed) {
+				if (type === 'DeletedFile' && appNum === 2) return ''
+				if (type === 'AddedFile' && appNum === 1) return ''
+			}
+
 			const label =
 				(type === 'AddedFile' && appNum === 1) ||
 				(type === 'DeletedFile' && appNum === 2)

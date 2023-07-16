@@ -5,6 +5,7 @@ import { useFetcher } from '@remix-run/react'
 import { clsx } from 'clsx'
 import { type EmbeddedFile } from '../../utils/codefile-mdx.server.ts'
 import { setModifiedTimesForDir } from '~/utils/apps.server.ts'
+import { ensureUndeployed } from '~/utils/misc.tsx'
 
 const cacheSchema = z.object({
 	cacheLocation: z.string(),
@@ -20,6 +21,7 @@ function checkFileExists(file: string) {
 }
 
 export async function action({ request }: DataFunctionArgs) {
+	ensureUndeployed()
 	const formData = await request.formData()
 	const rawData = {
 		cacheLocation: formData.get('cacheLocation'),

@@ -157,3 +157,20 @@ export function useIsSubmitting({
 		navigation.formMethod === formMethod
 	)
 }
+
+export function ensureUndeployed() {
+	if (ENV.KCDSHOP_DEPLOYED) {
+		throw new Response('KCDSHOP_DEPLOYED is true, cannot perform this action', {
+			status: 400,
+		})
+	}
+}
+
+export function ensureDeployed() {
+	if (!ENV.KCDSHOP_DEPLOYED) {
+		throw new Response(
+			'KCDSHOP_DEPLOYED is false, cannot perform this action',
+			{ status: 400 },
+		)
+	}
+}

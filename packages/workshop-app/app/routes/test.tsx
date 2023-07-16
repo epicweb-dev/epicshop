@@ -8,6 +8,7 @@ import { eventStream, useEventSource } from 'remix-utils'
 import { z } from 'zod'
 import { Icon, AnimatedBars } from '~/components/icons.tsx'
 import { getAppByName } from '~/utils/apps.server.ts'
+import { ensureUndeployed } from '~/utils/misc.tsx'
 import {
 	clearTestProcessEntry,
 	getTestProcessEntry,
@@ -60,6 +61,7 @@ type TestEvent = z.infer<typeof testEventSchema>
 type TestEventQueue = z.infer<typeof testEventQueueSchema>
 
 export async function loader({ request }: DataFunctionArgs) {
+	ensureUndeployed()
 	const url = new URL(request.url)
 	const name = url.searchParams.get('name')
 	if (!name) {
@@ -139,6 +141,7 @@ export async function loader({ request }: DataFunctionArgs) {
 }
 
 export async function action({ request }: DataFunctionArgs) {
+	ensureUndeployed()
 	const formData = await request.formData()
 	const result = testActionSchema.safeParse({
 		intent: formData.get('intent'),

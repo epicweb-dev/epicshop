@@ -15,6 +15,7 @@ import {
 	Scripts,
 	ScrollRestoration,
 	useBeforeUnload,
+	useLoaderData,
 	useLocation,
 	useNavigation,
 } from '@remix-run/react'
@@ -32,6 +33,7 @@ import {
 	makeTimings,
 	time,
 } from './utils/timing.server.ts'
+import { getEnv } from './utils/env.server.ts'
 
 export const links: LinksFunction = () => {
 	return [
@@ -73,6 +75,7 @@ export async function loader({ request }: DataFunctionArgs) {
 	return json(
 		{
 			workshopTitle,
+			ENV: getEnv(),
 			requestInfo: {
 				hints: getHints(request),
 				path: new URL(request.url).pathname,
@@ -96,6 +99,7 @@ export const headers: HeadersFunction = ({ loaderHeaders }) => {
 }
 
 export default function App() {
+	const data = useLoaderData<typeof loader>()
 	const navigation = useNavigation()
 	const showSpinner = useSpinDelay(navigation.state !== 'idle', {
 		delay: 400,
@@ -113,6 +117,11 @@ export default function App() {
 				<meta name="viewport" content="width=device-width,initial-scale=1" />
 				<Meta />
 				<Links />
+				<script
+					dangerouslySetInnerHTML={{
+						__html: `window.ENV = ${JSON.stringify(data.ENV)}`,
+					}}
+				/>
 			</head>
 			<body className="scrollbar-thin scrollbar-thumb-scrollbar bg-background text-foreground h-full">
 				<Outlet />

@@ -1,28 +1,29 @@
-import { useEffect, useRef } from 'react'
+import * as Select from '@radix-ui/react-select'
 import type { DataFunctionArgs } from '@remix-run/node'
 import { json } from '@remix-run/node'
 import { useFetcher } from '@remix-run/react'
+import { clsx } from 'clsx'
+import { useEffect } from 'react'
+import { z } from 'zod'
+import { Icon } from '~/components/icons.tsx'
+import { showToast } from '~/components/toast.tsx'
 import {
 	getAppByName,
 	getApps,
 	isPlaygroundApp,
-	setPlayground,
 	isProblemApp,
 	isSolutionApp,
+	setPlayground,
 } from '~/utils/apps.server.ts'
-import * as Select from '@radix-ui/react-select'
-import { z } from 'zod'
-import { getErrorMessage } from '~/utils/misc.tsx'
-import { Icon } from '~/components/icons.tsx'
 import { getDiffCode } from '~/utils/diff.server.ts'
-import { clsx } from 'clsx'
-import { showToast } from '~/components/toast.tsx'
+import { ensureUndeployed, getErrorMessage } from '~/utils/misc.tsx'
 
 const setPlaygroundSchema = z.object({
 	appName: z.string(),
 })
 
 export async function action({ request }: DataFunctionArgs) {
+	ensureUndeployed()
 	const formData = await request.formData()
 	const rawData = {
 		appName: formData.get('appName'),
@@ -196,31 +197,8 @@ function SelectItem({
 	)
 }
 
-export async function useSetPlayground({
-	appName,
-	enabled,
-}: {
-	appName?: string
-	enabled: boolean
-}) {
-	const fetcher = useFetcher<typeof action>()
-	const fetcherRef = useRef(fetcher)
-	useEffect(() => {
-		fetcherRef.current = fetcher
-	}, [fetcher])
-
-	useEffect(() => {
-		if (!enabled) return
-		if (!appName) return
-		if (!fetcherRef.current) return
-		fetcherRef.current.submit(
-			{ appName },
-			{ method: 'POST', action: '/set-playground' },
-		)
-	}, [enabled, appName])
-}
-
 export function SetAppToPlayground({ appName }: { appName: string }) {
+	if (ENV.KCDSHOP_DEPLOYED) return null
 	return (
 		<SetPlayground
 			appName={appName}

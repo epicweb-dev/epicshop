@@ -84,14 +84,17 @@ function TouchedFiles() {
 												return <p>No files changed</p>
 											}
 
-											const title =
-												"You must 'Set to Playground' before opening a file"
-											const props = appName
-												? {}
-												: { title, className: 'not-allowed' }
+											const props =
+												appName || ENV.KCDSHOP_GITHUB_ROOT
+													? {}
+													: {
+															title:
+																"You must 'Set to Playground' before opening a file",
+															className: 'not-allowed',
+													  }
 											return (
 												<ul {...props}>
-													{diffFiles.length > 1 ? (
+													{diffFiles.length > 1 && !ENV.KCDSHOP_DEPLOYED ? (
 														<div className="mb-2 border-b border-b-gray-50 border-opacity-50 pb-2 font-sans">
 															<LaunchEditor
 																appFile={diffFiles.map(file => file.path)}
@@ -106,7 +109,11 @@ function TouchedFiles() {
 														<li key={file.path} data-state={file.status}>
 															<LaunchEditor
 																appFile={file.path}
-																appName="playground"
+																appName={
+																	ENV.KCDSHOP_DEPLOYED
+																		? data.problem?.name ?? 'playground'
+																		: 'playground'
+																}
 																onUpdate={handleLaunchUpdate}
 															>
 																<code>{file.path}</code>

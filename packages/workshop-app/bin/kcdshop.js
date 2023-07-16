@@ -13,16 +13,18 @@ if (argv[0] !== 'start') {
 	throw new Error('Only `start` is supported currently...')
 }
 
+const KCDSHOP_CONTEXT_CWD = process.env.KCDSHOP_CONTEXT_CWD ?? process.cwd()
+
 if (process.env.NODE_ENV === 'production' || isPublished) {
 	exec('node ./start.js', {
-		KCDSHOP_CONTEXT_CWD: process.env.KCDSHOP_CONTEXT_CWD ?? process.cwd(),
+		KCDSHOP_CONTEXT_CWD,
 		NODE_ENV: 'production',
 	}).catch(code => {
 		process.exit(code)
 	})
 } else {
 	exec('npm run dev', {
-		KCDSHOP_CONTEXT_CWD: process.env.KCDSHOP_CONTEXT_CWD ?? process.cwd(),
+		KCDSHOP_CONTEXT_CWD,
 	}).catch(code => {
 		process.exit(code)
 	})

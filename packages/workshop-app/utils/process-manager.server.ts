@@ -9,6 +9,10 @@ import { execaCommand } from 'execa'
 import fkill from 'fkill'
 import { singleton } from './singleton.server.ts'
 
+const isDeployed =
+	process.env.KCDSHOP_DEPLOYED === 'true' ||
+	process.env.KCDSHOP_DEPLOYED === '1'
+
 type DevProcessesMap = Map<
 	string,
 	{
@@ -85,6 +89,7 @@ const colors = [
 ] as const
 
 export async function runAppDev(app: App) {
+	if (isDeployed) throw new Error('cannot run apps in deployed mode')
 	const key = app.name
 	// if the app is already running, don't start it again
 	if (devProcesses.has(key)) {
@@ -154,6 +159,7 @@ export async function runAppDev(app: App) {
 }
 
 export async function runAppTests(app: App) {
+	if (isDeployed) throw new Error('cannot run tests in deployed mode')
 	const key = app.name
 
 	if (app.test.type !== 'script') {
@@ -268,6 +274,7 @@ export function getProcesses() {
 }
 
 export async function closeProcess(key: string) {
+	if (isDeployed) throw new Error('cannot close processes in deployed mode')
 	const proc = devProcesses.get(key)
 	if (proc) {
 		if (process.platform === 'win32') {
@@ -284,6 +291,7 @@ export async function closeProcess(key: string) {
 const sleep = (t: number) => new Promise(resolve => setTimeout(resolve, t))
 
 export async function stopPort(port: string | number) {
+	if (isDeployed) throw new Error('cannot stop ports in deployed mode')
 	await fkill(`:${port}`, { force: true, silent: true })
 	await waitForPortToBeAvailable(port)
 }

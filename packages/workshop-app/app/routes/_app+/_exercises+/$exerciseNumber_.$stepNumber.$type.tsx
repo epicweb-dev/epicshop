@@ -46,7 +46,7 @@ import {
 } from '~/utils/apps.server.ts'
 import { getDiffCode, getDiffFiles } from '~/utils/diff.server.ts'
 import { Mdx, PreWithButtons } from '~/utils/mdx.tsx'
-import { getErrorMessage } from '~/utils/misc.tsx'
+import { cn, getErrorMessage } from '~/utils/misc.tsx'
 import {
 	isAppRunning,
 	isPortAvailable,
@@ -302,7 +302,9 @@ export const headers: HeadersFunction = ({ loaderHeaders, parentHeaders }) => {
 	return headers
 }
 
-const tabs = ['playground', 'problem', 'solution', 'tests', 'diff'] as const
+const tabs = ENV.KCDSHOP_DEPLOYED
+	? (['diff'] as const)
+	: (['playground', 'problem', 'solution', 'tests', 'diff'] as const)
 const isValidPreview = (s: string | null): s is (typeof tabs)[number] =>
 	Boolean(s && tabs.includes(s as (typeof tabs)[number]))
 
@@ -434,7 +436,7 @@ export default function ExercisePartRoute() {
 			file: string
 			type?: 'playground' | 'solution' | 'problem'
 		}) {
-			const app = data[type]
+			const app = data[type] || data[data.type]
 
 			const info = (
 				<div className="launch-editor-button-wrapper flex underline">
@@ -445,7 +447,13 @@ export default function ExercisePartRoute() {
 				</div>
 			)
 
-			return app ? (
+			return ENV.KCDSHOP_DEPLOYED && app ? (
+				<div className="inline-block grow">
+					<LaunchEditor appFile={file} appName={app.name} {...props}>
+						{info}
+					</LaunchEditor>
+				</div>
+			) : app ? (
 				<div className="inline-block grow">
 					<LaunchEditor appFile={file} appName={app.name} {...props}>
 						{info}
@@ -484,7 +492,17 @@ export default function ExercisePartRoute() {
 					<Link
 						to={to}
 						{...props}
+						className={cn(props.className, {
+							'cursor-not-allowed': ENV.KCDSHOP_DEPLOYED,
+						})}
+						title={
+							ENV.KCDSHOP_DEPLOYED
+								? 'Cannot link to app in deployed version'
+								: undefined
+						}
 						onClick={event => {
+							if (ENV.KCDSHOP_DEPLOYED) event.preventDefault()
+
 							props.onClick?.(event)
 							inBrowserBrowserRef.current?.handleExtrnalNavigation(
 								appTo.toString(),
@@ -498,8 +516,17 @@ export default function ExercisePartRoute() {
 							href={href}
 							target="_blank"
 							rel="noreferrer"
-							title="Open in new tab"
-							className={clsx('flex aspect-square items-center justify-center')}
+							className={cn('flex aspect-square items-center justify-center', {
+								'cursor-not-allowed': ENV.KCDSHOP_DEPLOYED,
+							})}
+							title={
+								ENV.KCDSHOP_DEPLOYED
+									? 'Cannot link to app in deployed version'
+									: 'Open in new tab'
+							}
+							onClick={event => {
+								if (ENV.KCDSHOP_DEPLOYED) event.preventDefault()
+							}}
 						>
 							<Icon name="ExternalLink" title="Open in new tab" />
 						</a>
@@ -619,7 +646,7 @@ export default function ExercisePartRoute() {
 					</Tabs.List>
 					<div className="border-border relative z-10 flex flex-grow flex-col border-t">
 						<Tabs.Content
-							value={tabs[0]}
+							value="playground"
 							className="radix-state-inactive:hidden flex flex-grow items-center justify-center"
 						>
 							<Playground
@@ -630,7 +657,7 @@ export default function ExercisePartRoute() {
 							/>
 						</Tabs.Content>
 						<Tabs.Content
-							value={tabs[1]}
+							value="problem"
 							className="radix-state-inactive:hidden flex flex-grow items-center justify-center"
 						>
 							<Preview
@@ -639,7 +666,7 @@ export default function ExercisePartRoute() {
 							/>
 						</Tabs.Content>
 						<Tabs.Content
-							value={tabs[2]}
+							value="solution"
 							className="radix-state-inactive:hidden flex flex-grow items-center justify-center"
 						>
 							<Preview
@@ -648,7 +675,7 @@ export default function ExercisePartRoute() {
 							/>
 						</Tabs.Content>
 						<Tabs.Content
-							value={tabs[3]}
+							value="tests"
 							className="radix-state-inactive:hidden flex max-h-[calc(100vh-53px)] flex-grow items-start justify-center overflow-hidden"
 						>
 							<Tests
@@ -658,7 +685,7 @@ export default function ExercisePartRoute() {
 							/>
 						</Tabs.Content>
 						<Tabs.Content
-							value={tabs[4]}
+							value="diff"
 							className="radix-state-inactive:hidden flex flex-grow items-start justify-center"
 						>
 							<Diff />

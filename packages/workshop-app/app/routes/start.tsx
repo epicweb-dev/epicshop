@@ -4,7 +4,7 @@ import { useFetcher } from '@remix-run/react'
 import { Button } from '~/components/button.tsx'
 import { Loading } from '~/components/loading.tsx'
 import { getAppByName } from '~/utils/apps.server.ts'
-import { invariantResponse } from '~/utils/misc.tsx'
+import { ensureUndeployed, invariantResponse } from '~/utils/misc.tsx'
 import {
 	closeProcess,
 	runAppDev,
@@ -13,6 +13,7 @@ import {
 } from '~/utils/process-manager.server.ts'
 
 export async function action({ request }: DataFunctionArgs) {
+	ensureUndeployed()
 	const formData = await request.formData()
 	const intent = formData.get('intent')
 	invariantResponse(typeof intent === 'string', 'intent is required')

@@ -3,6 +3,7 @@
   "private": true,
   "kcd-workshop": {
     "title": "Web App Fundamentals 🔭",
+    "githubRoot": "https://github.com/epicweb-dev/kcdshop/tree/main/packages/example",
     "root": true
   },
   "type": "module",

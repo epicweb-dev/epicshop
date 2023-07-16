@@ -1,7 +1,9 @@
 import { json } from '@remix-run/node'
+import { ensureUndeployed } from '~/utils/misc.tsx'
 import { getProcesses } from '~/utils/process-manager.server.ts'
 
 export async function loader() {
+	ensureUndeployed()
 	const processes: Record<
 		string,
 		{ port: number; pid?: number; color: string }
