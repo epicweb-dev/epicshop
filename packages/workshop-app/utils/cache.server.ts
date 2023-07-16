@@ -14,116 +14,31 @@ import type {
 	SolutionApp,
 } from './apps.server.ts'
 import { time, type Timings } from './timing.server.ts'
+import { singleton } from './singleton.server.ts'
 
-declare global {
-	var __solution_app_cache__: ReturnType<typeof getSolutionAppCache>
-	var __problem_app_cache__: ReturnType<typeof getProblemAppCache>
-	var __example_app_cache__: ReturnType<typeof getExampleAppCache>
-	var __playground_app_cache__: ReturnType<typeof getPlaygroundAppCache>
-	var __get_apps_cache__: ReturnType<typeof getAppsCache>
-	var __diff_code_cache__: ReturnType<typeof getDiffCodeCache>
-	var __diff_files_cache__: ReturnType<typeof getDiffFilesCache>
-	var __compiled_markdown_cache__: ReturnType<typeof getCompiledMarkdownCache>
-	var __embedded_files_cache__: ReturnType<typeof getEmbeddedFilesCache>
-}
+export const solutionAppCache =
+	makeSingletonCache<SolutionApp>('SolutionAppCache')
+export const problemAppCache = makeSingletonCache<ProblemApp>('ProblemAppCache')
+export const exampleAppCache = makeSingletonCache<ExampleApp>('ExampleAppCache')
+export const playgroundAppCache =
+	makeSingletonCache<PlaygroundApp>('PlaygroundAppCache')
+export const appsCache = makeSingletonCache<App>('AppsCache')
+export const diffCodeCache = makeSingletonCache<string>('DiffCodeCache')
+export const diffFilesCache = makeSingletonCache<string>('DiffFilesCache')
+export const compiledMarkdownCache = makeSingletonCache<string>(
+	'CompiledMarkdownCache',
+)
+export const embeddedFilesCache =
+	makeSingletonCache<Record<string, string[]>>('EmbeddedFilesCache')
 
-export const solutionAppCache = (global.__solution_app_cache__ =
-	global.__solution_app_cache__ ?? getSolutionAppCache())
-
-export const problemAppCache = (global.__problem_app_cache__ =
-	global.__problem_app_cache__ ?? getProblemAppCache())
-
-export const exampleAppCache = (global.__example_app_cache__ =
-	global.__example_app_cache__ ?? getExampleAppCache())
-
-export const playgroundAppCache = (global.__playground_app_cache__ =
-	global.__playground_app_cache__ ?? getPlaygroundAppCache())
-
-export const appsCache = (global.__get_apps_cache__ =
-	global.__get_apps_cache__ ?? getAppsCache())
-
-export const diffCodeCache = (global.__diff_code_cache__ =
-	global.__diff_code_cache__ ?? getDiffCodeCache())
-
-export const diffFilesCache = (global.__diff_files_cache__ =
-	global.__diff_files_cache__ ?? getDiffFilesCache())
-
-export const compiledMarkdownCache = (global.__compiled_markdown_cache__ =
-	global.__compiled_markdown_cache__ ?? getCompiledMarkdownCache())
-
-export const embeddedFilesCache = (global.__embedded_files_cache__ =
-	global.__embedded_files_cache__ ?? getEmbeddedFilesCache())
-
-function getSolutionAppCache() {
-	const cache = new LRUCache<string, CacheEntry<SolutionApp>>({
-		max: 1000,
-	}) as LRUishCache
-	cache.name = 'SolutionAppCache'
-	return lruCacheAdapter(cache)
-}
-
-function getProblemAppCache() {
-	const cache = new LRUCache<string, CacheEntry<ProblemApp>>({
-		max: 1000,
-	}) as LRUishCache
-	cache.name = 'ProblemAppCache'
-	return lruCacheAdapter(cache)
-}
-
-function getExampleAppCache() {
-	const cache = new LRUCache<string, CacheEntry<ExampleApp>>({
-		max: 1000,
-	}) as LRUishCache
-	cache.name = 'ExampleAppCache'
-	return lruCacheAdapter(cache)
-}
-
-function getPlaygroundAppCache() {
-	const cache = new LRUCache<string, CacheEntry<PlaygroundApp>>({
-		max: 1000,
-	}) as LRUishCache
-	cache.name = 'PlaygroundAppCache'
-	return lruCacheAdapter(cache)
-}
-
-function getAppsCache() {
-	const cache = new LRUCache<string, CacheEntry<App>>({
-		max: 1000,
-	}) as LRUishCache
-	cache.name = 'AppsCache'
-	return lruCacheAdapter(cache)
-}
-
-function getDiffCodeCache() {
-	const cache = new LRUCache<string, CacheEntry<string>>({
-		max: 1000,
-	}) as LRUishCache
-	cache.name = 'DiffCodeCache'
-	return lruCacheAdapter(cache)
-}
-
-function getDiffFilesCache() {
-	const cache = new LRUCache<string, CacheEntry<string>>({
-		max: 1000,
-	}) as LRUishCache
-	cache.name = 'DiffFilesCache'
-	return lruCacheAdapter(cache)
-}
-
-function getCompiledMarkdownCache() {
-	const cache = new LRUCache<string, CacheEntry<string>>({
-		max: 1000,
-	}) as LRUishCache
-	cache.name = 'CompiledMarkdownCache'
-	return lruCacheAdapter(cache)
-}
-
-function getEmbeddedFilesCache() {
-	const cache = new LRUCache<string, CacheEntry<Record<string, string[]>>>({
-		max: 1000,
-	}) as LRUishCache
-	cache.name = 'EmbeddedFilesCache'
-	return lruCacheAdapter(cache)
+function makeSingletonCache<CacheEntryType>(name: string) {
+	return singleton(name, () => {
+		const cache = new LRUCache<string, CacheEntry<CacheEntryType>>({
+			max: 1000,
+		}) as LRUishCache
+		cache.name = name
+		return lruCacheAdapter(cache)
+	})
 }
 
 export async function cachified<Value>({

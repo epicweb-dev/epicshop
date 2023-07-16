@@ -19,6 +19,7 @@ import remarkAutolinkHeadings from 'remark-autolink-headings'
 import gfm from 'remark-gfm'
 // @ts-ignore - remark-emoji don't have an exports from ESM types
 import emoji from 'remark-emoji'
+import { singleton } from './singleton.server.ts'
 
 const cacheDir = path.join(
 	process.env.KCDSHOP_CONTEXT_CWD ?? process.cwd(),
@@ -229,12 +230,10 @@ export async function compileMarkdownString(markdownString: string) {
 	})
 }
 
-declare global {
-	var __modified_embedded_files_time__: Map<string, number>
-}
-
-const modifiedEmbeddedFilesTime = (global.__modified_embedded_files_time__ =
-	global.__modified_embedded_files_time__ ?? new Map<string, number>())
+const modifiedEmbeddedFilesTime = singleton(
+	'modified_embedded_files_time',
+	() => new Map<string, number>(),
+)
 
 type CachedEmbeddedFilesList = Record<string, string[]>
 

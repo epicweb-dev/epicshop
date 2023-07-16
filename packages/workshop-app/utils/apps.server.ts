@@ -24,6 +24,7 @@ import {
 import { execa } from 'execa'
 import { globby, isGitIgnored } from 'globby'
 import pMap from 'p-map'
+import { singleton } from './singleton.server.ts'
 
 const workshopRoot = getWorkshopRoot()
 
@@ -170,12 +171,10 @@ function exists(file: string) {
 	)
 }
 
-declare global {
-	var __modified_times__: Map<string, number>
-}
-
-export const modifiedTimes = (global.__modified_times__ =
-	global.__modified_times__ ?? new Map<string, number>())
+export const modifiedTimes = singleton(
+	'modified_times',
+	() => new Map<string, number>(),
+)
 
 export function init() {
 	async function handleFileChanges(

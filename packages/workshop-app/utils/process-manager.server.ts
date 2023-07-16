@@ -7,6 +7,7 @@ import type { App } from './apps.server.ts'
 import chalk from 'chalk'
 import { execaCommand } from 'execa'
 import fkill from 'fkill'
+import { singleton } from './singleton.server.ts'
 
 type DevProcessesMap = Map<
 	string,
@@ -31,18 +32,14 @@ type TestProcessEntry = {
 
 type TestProcessesMap = Map<string, TestProcessEntry>
 declare global {
-	var __dev_processes__: DevProcessesMap
-	var __test_processes__: TestProcessesMap
 	var __process_dev_close_with_grace_return__: ReturnType<typeof closeWithGrace>
 	var __process_test_close_with_grace_return__: ReturnType<
 		typeof closeWithGrace
 	>
 }
 
-const devProcesses = (global.__dev_processes__ =
-	global.__dev_processes__ ?? getDevProcessesMap())
-const testProcesses = (global.__test_processes__ =
-	global.__test_processes__ ?? getTestProcessesMap())
+const devProcesses = singleton('dev_processes', getDevProcessesMap)
+const testProcesses = singleton('test_processes', getTestProcessesMap)
 
 function getDevProcessesMap() {
 	const procs: DevProcessesMap = new Map()
