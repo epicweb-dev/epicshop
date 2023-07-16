@@ -2,7 +2,7 @@ import { useEffect } from 'react'
 import path from 'path'
 import type { DataFunctionArgs } from '@remix-run/node'
 import { json } from '@remix-run/node'
-import { useFetcher } from '@remix-run/react'
+import { Link, useFetcher } from '@remix-run/react'
 import { getAppByName } from '~/utils/apps.server.ts'
 import { z } from 'zod'
 import { launchEditor } from '~/utils/launch-editor.server.ts'
@@ -78,15 +78,7 @@ type LaunchEditorProps = {
 	  }
 )
 
-function LaunchEditorImpl({
-	file,
-	appFile,
-	appName,
-	line,
-	column,
-	children,
-	onUpdate,
-}: LaunchEditorProps) {
+function useLaunchFetcher(onUpdate?: ((state: string) => void) | undefined) {
 	const fetcher = useFetcher<typeof action>()
 
 	useEffect(() => {
@@ -106,6 +98,20 @@ function LaunchEditorImpl({
 			}
 		}
 	}, [fetcher, onUpdate])
+
+	return fetcher
+}
+
+function LaunchEditorImpl({
+	file,
+	appFile,
+	appName,
+	line,
+	column,
+	children,
+	onUpdate,
+}: LaunchEditorProps) {
+	const fetcher = useLaunchFetcher(onUpdate)
 
 	const fileList = typeof appFile === 'string' ? [appFile] : appFile
 	const type = file ? 'file' : appFile ? 'appFile' : ''
@@ -173,6 +179,44 @@ function LaunchGitHub({
 		>
 			{children}
 		</a>
+	)
+}
+
+export function EditFileOnGitHub({
+	appFile = 'README.mdx',
+	appName,
+	stepPath,
+}: {
+	appFile?: string
+	appName: string
+	stepPath: string
+}) {
+	const fetcher = useLaunchFetcher()
+
+	const handleClick = (e: React.MouseEvent<HTMLAnchorElement>) => {
+		if (!e.altKey || ENV.KCDSHOP_DEPLOYED) return
+		e.preventDefault()
+		const formData = new FormData()
+		formData.append('appFile', appFile)
+		formData.append('appName', appName)
+		formData.append('type', 'appFile')
+		fetcher.submit(formData, { method: 'POST', action: '/launch-editor' })
+	}
+
+	const githubPath = ENV.KCDSHOP_GITHUB_ROOT.replace(
+		/\/tree\/|\/blob\//,
+		'/edit/',
+	)
+
+	return (
+		<Link
+			className="self-center text-sm font-mono"
+			onClick={handleClick}
+			target="_blank"
+			to={`${githubPath}/${stepPath}/README.mdx`.replace(/\\/g, '/')}
+		>
+			Edit this page on GitHub
+		</Link>
 	)
 }
 
