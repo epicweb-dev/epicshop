@@ -128,8 +128,10 @@ export default function App() {
 				<ScrollRestoration />
 				<ElementScrollRestoration elementQuery="[data-restore-scroll='true']" />
 				<Scripts />
-				<LiveReload />
-				<script dangerouslySetInnerHTML={{ __html: getWebsocketJS() }} />
+				{ENV.KCDSHOP_DEPLOYED ? null : <LiveReload />}
+				{ENV.KCDSHOP_DEPLOYED ? null : (
+					<script dangerouslySetInnerHTML={{ __html: getWebsocketJS() }} />
+				)}
 			</body>
 		</html>
 	)
