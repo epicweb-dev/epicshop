@@ -56,7 +56,7 @@ import {
 	getServerTimeHeader,
 	makeTimings,
 } from '~/utils/timing.server.ts'
-import { LaunchEditor } from '../../launch-editor.tsx'
+import { EditFileOnGitHub, LaunchEditor } from '~/routes/launch-editor.tsx'
 import { TestOutput } from '../../test.tsx'
 import { NavChevrons } from '~/components/nav-chevrons.tsx'
 import { UpdateMdxCache } from '~/routes/update-mdx-cache.tsx'
@@ -584,6 +584,10 @@ export default function ExercisePartRoute() {
 								<TouchedFiles />
 							</div>
 						</div>
+						<EditFileOnGitHub
+							appName={data.exerciseStepApp.name}
+							stepPath={data.exerciseStepApp.relativePath}
+						/>
 						<NavChevrons
 							prev={
 								data.prevStepLink
