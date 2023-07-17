@@ -181,6 +181,7 @@
     "chai",
     "chai-dom",
     "framer-motion",
+    "remix-utils",
     "tailwind-merge",
     "zod"
   ]
