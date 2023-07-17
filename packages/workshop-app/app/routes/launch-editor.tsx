@@ -152,12 +152,15 @@ function LaunchGitHub({
 		return <div>Cannot open more than one file</div>
 	}
 	if (file) {
+		const safePath = (s: string) => s.replace(/\\/g, '/')
 		return (
 			<a
 				className="launch_button !no-underline"
 				href={
-					file.replace(ENV.KCDSHOP_CONTEXT_CWD, ENV.KCDSHOP_GITHUB_ROOT) +
-					(line ? `#L${line}` : '')
+					safePath(file).replace(
+						safePath(ENV.KCDSHOP_CONTEXT_CWD),
+						ENV.KCDSHOP_GITHUB_ROOT,
+					) + (line ? `#L${line}` : '')
 				}
 				rel="noreferrer"
 				target="_blank"
