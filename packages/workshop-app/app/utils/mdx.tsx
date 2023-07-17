@@ -45,8 +45,9 @@ function OpenInEditor({
 
 	const currentAppFullPath = safePath(data[data.type]?.fullPath ?? '')
 	const isFileFromDifferentApp = !fullPath.startsWith(currentAppFullPath)
-
-	const validButtons = ['problem', 'solution', 'playground'] as const
+	const validButtons = ENV.KCDSHOP_DEPLOYED
+		? (['problem', 'solution'] as const)
+		: (['problem', 'solution', 'playground'] as const)
 	const buttonList = buttons.split(',')
 	const apps = validButtons.filter(button =>
 		buttonList.includes(button),
