@@ -8,7 +8,7 @@ import {
 	ScrollRestoration,
 } from '@remix-run/react'
 import tailwindStylesheetUrl from './styles/tailwind.css'
-import { KCDShopIFrameSync } from '@kentcdodds/workshop-app/iframe-sync'
+import { KCDShop } from './kcdshop.tsx'
 
 export const links: LinksFunction = () => {
 	return [{ rel: 'stylesheet', href: tailwindStylesheetUrl }]
@@ -32,7 +32,7 @@ export default function App() {
 				<ScrollRestoration />
 				<Scripts />
 				<LiveReload />
-				<KCDShopIFrameSync />
+				<KCDShop />
 			</body>
 		</html>
 	)

@@ -1,13 +1,41 @@
-import { useNavigate } from '@remix-run/react'
-import { useEffect } from 'react'
+/*
+This file is kinda weird. KCDShop actually bundles react and react router to
+avoid getting version clashes, but this component is used in the "host"
+application. Anything we use in this file will be this file's version of that
+dependency, which in the case of bundled dependencies would be different from
+the host app's version. We want to avoid shipping two versions of React and
+react-router to the client. So we need to accept React and navigate as props
+rather than just using those things directly.
 
+To reduce the annoyance, we'll have the host applications have a file like this:
+
+// Ignore this file please
+import { KCDShopIFrameSync } from '@kentcdodds/workshop-app/iframe-sync'
+import { useNavigate } from '@remix-run/react'
+import * as React from 'react'
+
+export function KCDShop() {
+	const navigate = useNavigate()
+	return <KCDShopIFrameSync React={React} navigate={navigate} />
+}
+
+ */
 let effectSetup = false
 
-export function KCDShopIFrameSync() {
-	const navigate = useNavigate()
+type CustomReactType = {
+	useEffect: (cb: () => (() => void) | void, deps: Array<any>) => void
+	createElement: (type: string, props: any, ...children: Array<any>) => any
+}
 
+export function KCDShopIFrameSync<ReactType extends CustomReactType>({
+	React,
+	navigate,
+}: {
+	React: ReactType
+	navigate: (...args: Array<any>) => void
+}) {
 	// communicate with parent
-	useEffect(() => {
+	React.useEffect(() => {
 		if (effectSetup) return
 		effectSetup = true
 		if (window.parent === window) return
@@ -39,11 +67,10 @@ export function KCDShopIFrameSync() {
 	}, [])
 
 	// listen for messages from parent
-	useEffect(() => {
+	React.useEffect(() => {
 		function handleMessage(event: MessageEvent) {
 			const { type, params } = event.data
 			if (type === 'kcdshop:navigate-call') {
-				// @ts-expect-error - this is fine too 🙃 promise 😅
 				navigate(...params)
 			}
 		}
@@ -51,12 +78,10 @@ export function KCDShopIFrameSync() {
 		return () => window.removeEventListener('message', handleMessage)
 	}, [navigate])
 
-	return (
-		<script
-			type="module"
-			dangerouslySetInnerHTML={{ __html: iframeSyncScript }}
-		/>
-	)
+	return React.createElement('script', {
+		type: 'module',
+		dangerouslySetInnerHTML: { __html: iframeSyncScript },
+	})
 }
 
 const iframeSyncScript = /* javascript */ `
