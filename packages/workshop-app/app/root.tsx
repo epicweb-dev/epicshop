@@ -123,7 +123,7 @@ export default function App() {
 					}}
 				/>
 			</head>
-			<body className="scrollbar-thin scrollbar-thumb-scrollbar bg-background text-foreground h-full overflow-hidden lg:overflow-auto">
+			<body className="scrollbar-thin scrollbar-thumb-scrollbar bg-background text-foreground h-full">
 				<Outlet />
 				<ScrollRestoration />
 				<ElementScrollRestoration elementQuery="[data-restore-scroll='true']" />
