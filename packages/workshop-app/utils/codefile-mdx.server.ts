@@ -205,11 +205,22 @@ ${content}
   <callout-danger class="notification">
     <div className="title">CodeFile Error: invalid input</div>
     ${errors.map(error => `<div>${error}</div>`).join('')}
-    ${await codeFence()}
+${await codeFence()}
   </callout-danger>
 </CodeFileNotification>`
 
 	return mdxToMdast(mdxSource)
+}
+
+// based on https://github.com/sindresorhus/strip-indent
+function stripIndent(string: string) {
+	const match = string.match(/^[ \t]*(?=\S)/gm)
+	const indent = match?.reduce((r, a) => Math.min(r, a.length), Infinity) ?? 0
+	if (indent === 0) {
+		return string
+	}
+	const regex = new RegExp(`^[ \\t]{${indent}}`, 'gm')
+	return string.replace(regex, '')
 }
 
 function mdxToMdast(mdx: string) {
@@ -305,7 +316,9 @@ export function remarkCodeFile(data: CodeFileData) {
 		const rangesContent = []
 		const preNodes = []
 		for (const [start, end] of fileSections) {
-			const rangeContent = content.slice((start as number) - 1, end).join('\n')
+			const rangeContent = stripIndent(
+				content.slice((start as number) - 1, end).join('\n'),
+			)
 			rangesContent.push(rangeContent)
 			const mdxSource = `
 \`\`\`${language} ${meta.concat(`start=${start}`).join(' ')}
