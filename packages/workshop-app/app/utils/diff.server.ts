@@ -91,18 +91,17 @@ function getFileCodeblocks(
 			}
 		}
 
-		const params = new URLSearchParams(
-			[
-				['filename', relativePath],
-				['start', startLine.toString()],
-				removedLineNumbers.length
-					? ['remove', removedLineNumbers.join(',')]
-					: null,
-				addedLineNumbers.length ? ['add', addedLineNumbers.join(',')] : null,
-			].filter(Boolean),
-		)
-			.toString()
-			.replace('&', ' ')
+		const params = [
+			['filename', relativePath.replace(/\\/g, '\\\\')],
+			['start', startLine.toString()],
+			removedLineNumbers.length
+				? ['remove', removedLineNumbers.join(',')]
+				: null,
+			addedLineNumbers.length ? ['add', addedLineNumbers.join(',')] : null,
+		]
+			.filter(Boolean)
+			.map(([key, value]) => `${key}=${value}`)
+			.join(' ')
 
 		const launchEditor = (appNum: number, line: number) => {
 			if (isDeployed) {
