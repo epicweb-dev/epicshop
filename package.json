@@ -23,7 +23,7 @@
   ],
   "devDependencies": {
     "@playwright/test": "^1.36.1",
-    "@remix-run/eslint-config": "^1.18.1",
+    "@remix-run/eslint-config": "^1.19.0",
     "dotenv": "^16.3.1",
     "eslint-config-prettier": "^8.8.0"
   },
