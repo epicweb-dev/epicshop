@@ -151,7 +151,14 @@ export function PreWithButtons({ children, ...props }: any) {
 				{buttons ? <OpenInEditor {...props} /> : null}
 				{showCopyButton ? <CopyButton /> : null}
 			</div>
-			<pre {...props} {...updateFilename()}>
+			<pre
+				{...props}
+				className={clsx(
+					'scrollbar-thin scrollbar-thumb-scrollbar',
+					props.className ?? '',
+				)}
+				{...updateFilename()}
+			>
 				{children}
 			</pre>
 		</div>
@@ -163,6 +170,15 @@ export const mdxComponents = {
 	// you can't put a <form> inside a <p> so we'll just use a div
 	// if this is a problem, then render the form outside of the MDX and update <LaunchEditor /> to reference that one instead or something.
 	p: (props: any) => <div {...props} />,
+	pre: (props: any) => (
+		<pre
+			{...props}
+			className={clsx(
+				'scrollbar-thin scrollbar-thumb-scrollbar',
+				props.className ?? '',
+			)}
+		/>
+	),
 	LaunchEditor,
 }
 
