@@ -935,6 +935,9 @@ export async function setPlayground(srcDir: string) {
 	}
 
 	const basename = path.basename(srcDir)
+	// If we don't delete the destination node_modules first then copying the new
+	// node_modules has issues.
+	await fsExtra.remove(path.join(destDir, 'node_modules'))
 	// Copy the contents of the source directory to the destination directory recursively
 	await fsExtra.copy(srcDir, destDir, {
 		overwrite: true,
@@ -947,9 +950,10 @@ export async function setPlayground(srcDir: string) {
 				return false
 			}
 			if (file === srcDir) return true
-			// we do want to copy node_modules in this case to avoid issues with
-			// dependencies that are not in the workspace node_modules
+			// we copy node_modules even though it's .gitignored
 			if (file.includes('node_modules')) return true
+			// make sure .env is copied whether it's .gitignored or not
+			if (file.endsWith('.env')) return true
 			const shouldCopy = !isIgnored(file)
 			return shouldCopy
 		},

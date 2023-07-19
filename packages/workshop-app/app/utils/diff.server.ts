@@ -151,6 +151,7 @@ const EXTRA_FILES_TO_IGNORE = [
 	/\.idea$/,
 	/\.git$/,
 	/\.db$/,
+	/fixup-playground\.js$/,
 ]
 
 async function copyUnignoredFiles(
