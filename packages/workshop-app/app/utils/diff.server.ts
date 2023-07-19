@@ -151,6 +151,7 @@ const EXTRA_FILES_TO_IGNORE = [
 	/\.vscode$/,
 	/\.idea$/,
 	/\.git$/,
+	/\.db$/,
 ]
 
 async function copyUnignoredFiles(
