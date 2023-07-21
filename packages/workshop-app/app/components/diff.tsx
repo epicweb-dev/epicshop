@@ -40,7 +40,7 @@ export function Diff({
 	return (
 		<Suspense
 			fallback={
-				<div className="p-8">
+				<div className="flex justify-center items-center p-8">
 					<Icon name="Refresh" className="animate-spin" title="Loading diff" />
 				</div>
 			}
@@ -59,6 +59,7 @@ export function Diff({
 							<Form
 								onChange={e => submit(e.currentTarget)}
 								className="scrollbar-thin scrollbar-thumb-scrollbar flex h-full w-full items-center overflow-x-auto"
+								key={`${diff.app1}${diff.app2}`}
 							>
 								{hiddenInputs}
 								<SelectFileToDiff
@@ -67,14 +68,12 @@ export function Diff({
 									className="border-border border-r"
 									allApps={allApps}
 									defaultValue={diff.app1}
-									key={diff.app1}
 								/>
 								<SelectFileToDiff
 									name="app2"
 									label="App 2"
 									allApps={allApps}
 									defaultValue={diff.app2}
-									key={diff.app2}
 								/>
 							</Form>
 						</div>

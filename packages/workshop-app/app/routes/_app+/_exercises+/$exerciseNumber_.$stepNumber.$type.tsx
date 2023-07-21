@@ -192,7 +192,7 @@ export async function loader({ request, params }: DataFunctionArgs) {
 	const nextApp = await getNextExerciseApp(exerciseStepApp, cacheOptions)
 	const prevApp = await getPrevExerciseApp(exerciseStepApp, cacheOptions)
 
-	const getDiffProp = async () => {
+	async function getDiffProp() {
 		if (!app1 || !app2) {
 			return {
 				app1: app1?.name,
