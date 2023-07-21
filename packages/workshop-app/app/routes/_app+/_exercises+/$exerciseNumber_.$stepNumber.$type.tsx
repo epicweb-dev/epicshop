@@ -617,7 +617,7 @@ export default function ExercisePartRoute() {
 					{/* the scrollbar adds 8 pixels to the bottom of the list which looks
 					funny with the border, especially when most of the time the scrollbar
 					shouldn't show up anyway. So we hide that extra space with -8px margin-bottom */}
-					<Tabs.List className="scrollbar-thin scrollbar-thumb-scrollbar mb-[-8px] inline-flex h-14 overflow-x-scroll">
+					<Tabs.List className="scrollbar-thin scrollbar-thumb-scrollbar mb-[-8px] inline-flex min-h-14 h-14 overflow-x-scroll">
 						{tabs.map(tab => {
 							return (
 								<Tabs.Trigger

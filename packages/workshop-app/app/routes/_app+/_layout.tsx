@@ -145,7 +145,7 @@ function Navigation() {
 	const exNum = Number(params.exerciseNumber).toString().padStart(2, '0')
 
 	return (
-		<nav className="border-border flex items-center border-r">
+		<nav className="border-border flex border-r">
 			<motion.div
 				initial={isMenuOpened ? 'open' : 'close'}
 				variants={menuVariants}
