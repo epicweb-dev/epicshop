@@ -9,7 +9,7 @@ export function NavChevrons({
 	next?: LinkProps | null
 }) {
 	return (
-		<div className="relative flex overflow-hidden">
+		<div className="relative flex overflow-hidden h-full">
 			{prev ? (
 				<Link
 					prefetch="intent"

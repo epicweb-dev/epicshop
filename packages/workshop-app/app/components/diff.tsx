@@ -1,22 +1,41 @@
-import React, { Suspense, useMemo } from 'react'
-import { Await, Form, useLoaderData, useSubmit } from '@remix-run/react'
-import { clsx } from 'clsx'
-import * as Select from '@radix-ui/react-select'
-import { Mdx } from '~/utils/mdx.tsx'
-import { type loader } from '~/routes/_app+/_exercises+/$exerciseNumber_.$stepNumber.$type.tsx'
-import AccordionComponent from '~/components/accordion.tsx'
-import { Icon } from './icons.tsx'
 import * as Accordion from '@radix-ui/react-accordion'
+import * as Select from '@radix-ui/react-select'
+import { Await, Form, useSearchParams, useSubmit } from '@remix-run/react'
+import { clsx } from 'clsx'
+import React, { Suspense, useMemo } from 'react'
+import AccordionComponent from '~/components/accordion.tsx'
+import { Mdx } from '~/utils/mdx.tsx'
+import { Icon } from './icons.tsx'
 
-export function Diff() {
-	const data = useLoaderData<typeof loader>()
+type diffProp = {
+	app1?: string
+	app2?: string
+	diffCode?: string | null
+}
+
+export function Diff({
+	diff,
+	allApps,
+}: {
+	diff: Promise<diffProp> | diffProp
+	allApps: Array<{ name: string; displayName: string }>
+}) {
 	const submit = useSubmit()
+	const [params] = useSearchParams()
 
 	const mdxComponents = useMemo(() => {
 		return {
 			Accordion: (props: any) => <AccordionComponent {...props} />,
 		}
 	}, [])
+
+	const hiddenInputs: Array<React.ReactNode> = []
+	for (const [key, value] of params.entries()) {
+		if (key === 'app1' || key === 'app2') continue
+		hiddenInputs.push(
+			<input key={key} type="hidden" name={key} value={value} />,
+		)
+	}
 
 	return (
 		<Suspense
@@ -27,7 +46,7 @@ export function Diff() {
 			}
 		>
 			<Await
-				resolve={data.diff}
+				resolve={diff}
 				errorElement={
 					<p className="text-foreground-danger p-6">
 						There was an error calculating the diff. Sorry.
@@ -41,19 +60,21 @@ export function Diff() {
 								onChange={e => submit(e.currentTarget)}
 								className="scrollbar-thin scrollbar-thumb-scrollbar flex h-full w-full items-center overflow-x-auto"
 							>
-								<input type="hidden" name="preview" value="diff" />
+								{hiddenInputs}
 								<SelectFileToDiff
 									name="app1"
 									label="App 1"
 									className="border-border border-r"
-									allApps={data.allApps}
+									allApps={allApps}
 									defaultValue={diff.app1}
+									key={diff.app1}
 								/>
 								<SelectFileToDiff
 									name="app2"
 									label="App 2"
-									allApps={data.allApps}
+									allApps={allApps}
 									defaultValue={diff.app2}
+									key={diff.app2}
 								/>
 							</Form>
 						</div>

@@ -1,6 +1,6 @@
 import type { DataFunctionArgs, V2_MetaFunction } from '@remix-run/node'
 import { json } from '@remix-run/node'
-import { Form, useLoaderData, useNavigation } from '@remix-run/react'
+import { Form, Link, useLoaderData, useNavigation } from '@remix-run/react'
 import { type loader as rootLoader } from '~/root.tsx'
 import { getApps } from '~/utils/apps.server.ts'
 import { ensureUndeployed } from '~/utils/misc.tsx'
@@ -105,6 +105,11 @@ export default function AdminLayout() {
 	return (
 		<div className="container mx-auto">
 			<h1>Admin</h1>
+			<div>
+				<Link className="underline" to="/diff">
+					Diff Viewer
+				</Link>
+			</div>
 			<div>
 				<h2>Commands</h2>
 				<ul className="scrollbar-thin scrollbar-thumb-scrollbar max-h-48 overflow-y-scroll border-2 p-8">

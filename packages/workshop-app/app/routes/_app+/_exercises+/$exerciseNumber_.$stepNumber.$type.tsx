@@ -692,7 +692,7 @@ export default function ExercisePartRoute() {
 							value="diff"
 							className="radix-state-inactive:hidden flex flex-grow items-start justify-center"
 						>
-							<Diff />
+							<Diff diff={data.diff} allApps={data.allApps} />
 						</Tabs.Content>
 					</div>
 				</Tabs.Root>
