@@ -9,7 +9,7 @@ part of that 😆).
 Here are all the options:
 
 ````
-```tsx filename=app/filename.tsx nocopy nonumber remove=1,3-5 add=2,6-8 highlight=3,9-12
+```tsx filename=app/filename.tsx nocopy nonumber remove=1,3-5 add=2,6-8 lines=3,9-12
 // line
 // line
 // line
