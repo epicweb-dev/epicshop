@@ -572,6 +572,8 @@ export default function ExercisePartRoute() {
 									InlineFile,
 									LinkToApp,
 									pre: PreWithButtons,
+									// @ts-expect-error 🤷‍♂️ This is fine
+									Link,
 								}}
 							/>
 						) : (

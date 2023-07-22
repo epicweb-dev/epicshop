@@ -121,6 +121,8 @@ export default function ExerciseNumberRoute() {
 								components={{
 									h1: () => null,
 									pre: PreWithButtons,
+									// @ts-expect-error 🤷‍♂️ this is fine
+									Link,
 								}}
 							/>
 						) : (
