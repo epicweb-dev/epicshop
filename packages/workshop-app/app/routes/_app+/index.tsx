@@ -1,21 +1,21 @@
-import path from 'path'
 import type { DataFunctionArgs, HeadersFunction } from '@remix-run/node'
 import { json } from '@remix-run/node'
-import { useLoaderData } from '@remix-run/react'
-import { compileMdx } from '~/utils/compile-mdx.server.ts'
+import { Link, useLoaderData } from '@remix-run/react'
+import path from 'path'
 import { ButtonLink } from '~/components/button.tsx'
 import {
 	getExercises,
 	getWorkshopRoot,
 	getWorkshopTitle,
 } from '~/utils/apps.server.ts'
+import { compileMdx } from '~/utils/compile-mdx.server.ts'
+import { Mdx, PreWithButtons } from '~/utils/mdx.tsx'
 import {
 	combineServerTimings,
 	getServerTimeHeader,
 	makeTimings,
 	time,
 } from '~/utils/timing.server.ts'
-import { Mdx, PreWithButtons } from '~/utils/mdx.tsx'
 
 export async function loader({ request }: DataFunctionArgs) {
 	const timings = makeTimings('indexLoader')

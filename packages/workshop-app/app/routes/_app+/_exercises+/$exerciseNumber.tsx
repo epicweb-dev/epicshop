@@ -5,6 +5,7 @@ import type {
 } from '@remix-run/node'
 import { json } from '@remix-run/node'
 import {
+	Link,
 	isRouteErrorResponse,
 	useLoaderData,
 	useRouteError,
