@@ -588,7 +588,7 @@ export default function ExercisePartRoute() {
 						</div>
 						<EditFileOnGitHub
 							appName={data.exerciseStepApp.name}
-							stepPath={data.exerciseStepApp.relativePath}
+							relativePath={data.exerciseStepApp.relativePath}
 						/>
 						<NavChevrons
 							prev={

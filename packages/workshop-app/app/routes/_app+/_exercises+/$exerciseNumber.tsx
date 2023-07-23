@@ -10,9 +10,15 @@ import {
 	useLoaderData,
 	useRouteError,
 } from '@remix-run/react'
+import path from 'path'
 import { ButtonLink } from '~/components/button.tsx'
 import { type loader as rootLoader } from '~/root.tsx'
-import { getExercises, getWorkshopTitle } from '~/utils/apps.server.ts'
+import { EditFileOnGitHub } from '~/routes/launch-editor.tsx'
+import {
+	getExercises,
+	getWorkshopRoot,
+	getWorkshopTitle,
+} from '~/utils/apps.server.ts'
 import { Mdx, PreWithButtons } from '~/utils/mdx.tsx'
 import { getErrorMessage, invariantResponse } from '~/utils/misc.tsx'
 import {
@@ -60,10 +66,21 @@ export async function loader({ params, request }: DataFunctionArgs) {
 		throw new Response('Not found', { status: 404 })
 	}
 
+	const readmeFilepath = path.join(
+		getWorkshopRoot(),
+		'exercises',
+		exercise.dirName,
+		'README.mdx',
+	)
+
 	return json(
 		{
 			exercise,
 			exerciseNumber: exercise.exerciseNumber,
+			exerciseReadme: {
+				file: readmeFilepath,
+				relativePath: `exercises/${exercise.dirName}`,
+			},
 			exerciseTitle: exercise.title,
 			title: workshopTitle,
 			exercises: exercises.map(e => ({
@@ -134,6 +151,12 @@ export default function ExerciseNumberRoute() {
 						<ButtonLink to={firstExercisePath} prefetch="intent" varient="big">
 							Start Learning
 						</ButtonLink>
+					</div>
+					<div className="flex h-[52px] justify-center border-t border-border">
+						<EditFileOnGitHub
+							file={data.exerciseReadme.file}
+							relativePath={data.exerciseReadme.relativePath}
+						/>
 					</div>
 				</article>
 			</div>
