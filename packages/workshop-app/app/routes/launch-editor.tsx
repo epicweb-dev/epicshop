@@ -188,21 +188,33 @@ function LaunchGitHub({
 export function EditFileOnGitHub({
 	appFile = 'README.mdx',
 	appName,
-	stepPath,
+	file,
+	relativePath,
 }: {
 	appFile?: string
-	appName: string
-	stepPath: string
-}) {
+	relativePath: string
+} & (
+	| {
+			file: string
+			appName?: never
+	  }
+	| {
+			file?: never
+			appName: string
+	  }
+)) {
 	const fetcher = useLaunchFetcher()
 
 	const handleClick = (e: React.MouseEvent<HTMLAnchorElement>) => {
 		if (!e.altKey || ENV.KCDSHOP_DEPLOYED) return
 		e.preventDefault()
 		const formData = new FormData()
-		formData.append('appFile', appFile)
-		formData.append('appName', appName)
-		formData.append('type', 'appFile')
+		const type = file ? 'file' : 'appFile'
+		formData.append(type, file ?? appFile)
+		formData.append('type', type)
+		if (appName) {
+			formData.append('appName', appName)
+		}
 		fetcher.submit(formData, { method: 'POST', action: '/launch-editor' })
 	}
 
@@ -216,7 +228,7 @@ export function EditFileOnGitHub({
 			className="self-center text-sm font-mono"
 			onClick={handleClick}
 			target="_blank"
-			to={`${githubPath}/${stepPath}/README.mdx`.replace(/\\/g, '/')}
+			to={`${githubPath}/${relativePath}/${appFile}`.replace(/\\/g, '/')}
 		>
 			Edit this page on GitHub
 		</Link>

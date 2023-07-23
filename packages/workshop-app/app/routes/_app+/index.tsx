@@ -16,6 +16,7 @@ import {
 	makeTimings,
 	time,
 } from '~/utils/timing.server.ts'
+import { EditFileOnGitHub } from '~/routes/launch-editor.tsx'
 
 export async function loader({ request }: DataFunctionArgs) {
 	const timings = makeTimings('indexLoader')
@@ -39,7 +40,7 @@ export async function loader({ request }: DataFunctionArgs) {
 					'README.mdx',
 				)
 				const compiled = await compileMdx(readmeFilepath)
-				return compiled
+				return { ...compiled, file: readmeFilepath, relativePath: 'exercises' }
 			},
 			{ timings, type: 'compileMdx', desc: 'compileMdx in index' },
 		),
@@ -117,6 +118,12 @@ export default function Index() {
 					</div>
 					<div className="mb-10 p-10">
 						{data.workshopReadme.code?.length > 500 ? exerciseLinks : null}
+					</div>
+					<div className="flex h-[52px] justify-center border-t border-border">
+						<EditFileOnGitHub
+							file={data.workshopReadme.file}
+							relativePath={data.workshopReadme.relativePath}
+						/>
 					</div>
 				</article>
 			</div>
