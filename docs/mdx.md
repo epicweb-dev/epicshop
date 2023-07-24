@@ -117,9 +117,9 @@ Link to diff route or diff preview, to show git diff between two examples app.
   - EXERCISENUMBERSTR/STEPNUMBERSTR.TYPE - `app1="02/02.problem"`
   - offset step - 0, ±1, ±2... `app1={1}` - next step, step are in order of
     problem,solution,problem,solution, `app1={0} app2={4}` if current step is
-    from `01/01.problem` to `01/03.problem``
+    from `01/01.problem` to `01/03.problem`
 
-- `preview`: bollean
+- `preview`: boolean
 
   - when true link to `?preview=diff&...`
   - when false link to diff route

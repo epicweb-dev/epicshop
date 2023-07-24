@@ -444,10 +444,10 @@ export default function ExercisePartRoute() {
 			if (!children) {
 				const msg = (s: string) => s.split('__sep__')[2] ?? ''
 				children = (
-					<div>
+					<span>
 						Go to Diff {preview ? 'Preview' : ''} from:{' '}
 						<code>{msg(app1Name)}</code> to: <code>{msg(app2Name)}</code>
-					</div>
+					</span>
 				)
 			}
 
