@@ -89,35 +89,37 @@ export default function Index() {
 		</ul>
 	)
 	return (
-		<main className="relative h-screen w-full">
+		<main className="relative w-full">
 			<div
 				data-restore-scroll="true"
 				className="shadow-on-scrollbox scrollbar-thin scrollbar-thumb-scrollbar h-full w-full overflow-y-auto"
 			>
-				<article className="border-border min-h-full w-full border-r md:w-3/4 lg:w-2/3">
-					<div className="px-10 pt-16">
-						<h1 className="text-[6vw] font-extrabold leading-none">
-							{data.title}
-						</h1>
-						<div className="mt-8">{exerciseLinks}</div>
-					</div>
-					<div className="prose dark:prose-invert sm:prose-lg border-border mt-16 w-full max-w-none border-t px-10 pt-16">
-						{data.workshopReadme.code ? (
-							<Mdx
-								code={data.workshopReadme.code}
-								components={{
-									h1: () => null,
-									pre: PreWithButtons,
-									// @ts-expect-error 🤷‍♂️ this is fine
-									Link,
-								}}
-							/>
-						) : (
-							'No instructions yet...'
-						)}
-					</div>
-					<div className="mb-10 p-10">
-						{data.workshopReadme.code?.length > 500 ? exerciseLinks : null}
+				<article className="min-h-full w-full border-r border-border md:w-3/4 lg:w-2/3 flex flex-col justify-between">
+					<div>
+						<div className="px-10 pt-16">
+							<h1 className="text-[6vw] font-extrabold leading-none">
+								{data.title}
+							</h1>
+							<div className="mt-8">{exerciseLinks}</div>
+						</div>
+						<div className="prose dark:prose-invert sm:prose-lg border-border mt-16 w-full max-w-none border-t px-10 pt-16">
+							{data.workshopReadme.code ? (
+								<Mdx
+									code={data.workshopReadme.code}
+									components={{
+										h1: () => null,
+										pre: PreWithButtons,
+										// @ts-expect-error 🤷‍♂️ this is fine
+										Link,
+									}}
+								/>
+							) : (
+								'No instructions yet...'
+							)}
+						</div>
+						<div className="mb-10 p-10">
+							{data.workshopReadme.code?.length > 500 ? exerciseLinks : null}
+						</div>
 					</div>
 					<div className="flex h-[52px] justify-center border-t border-border">
 						<EditFileOnGitHub

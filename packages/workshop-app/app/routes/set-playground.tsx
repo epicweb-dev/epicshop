@@ -147,7 +147,7 @@ export function PlaygroundChooser({
 				<Select.Content
 					position="popper"
 					align="start"
-					className="z-20 max-h-[70vh] bg-black text-white"
+					className="z-20 max-h-[50vh] bg-black text-white lg:max-h-[70vh]"
 				>
 					<Select.ScrollUpButton className="flex h-5 cursor-default items-center justify-center ">
 						<Icon name="ChevronUp" />
