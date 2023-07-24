@@ -31,7 +31,7 @@ import {
 	SetAppToPlayground,
 	SetPlayground,
 } from '~/routes/set-playground.tsx'
-import type { App } from '~/utils/apps.server.ts'
+import type { App, ExerciseStepApp } from '~/utils/apps.server.ts'
 import {
 	getAppByName,
 	getAppPageRoute,
@@ -162,6 +162,27 @@ export async function loader({ request, params }: DataFunctionArgs) {
 		return displayName
 	}
 
+	function getStepId(a: ExerciseStepApp) {
+		return (
+			a.exerciseNumber * 1000 +
+			a.stepNumber * 10 +
+			(a.type === 'problem' ? 0 : 1)
+		)
+	}
+
+	function getStepNameAndId(a: App) {
+		if (isExerciseStepApp(a)) {
+			const exerciseNumberStr = String(a.exerciseNumber).padStart(2, '0')
+			const stepNumberStr = String(a.stepNumber).padStart(2, '0')
+
+			return {
+				stepName: `${exerciseNumberStr}/${stepNumberStr}.${a.type}`,
+				stepId: getStepId(a),
+			}
+		}
+		return { stepName: '', stepId: -1 }
+	}
+
 	async function getAppRunningState(a: App) {
 		if (a?.dev.type !== 'script') {
 			return { isRunning: false, portIsAvailable: null }
@@ -180,7 +201,12 @@ export async function loader({ request, params }: DataFunctionArgs) {
 			name: a.name,
 			title: a.title,
 			type: a.type,
+			...getStepNameAndId(a),
 		}))
+
+	allApps.sort((a, b) => a.stepId - b.stepId)
+	const exerciseId = getStepId(exerciseStepApp)
+	const exerciseIndex = allApps.findIndex(step => step.stepId === exerciseId)
 
 	const exerciseApps = allAppsFull
 		.filter(isExerciseStepApp)
@@ -226,6 +252,7 @@ export async function loader({ request, params }: DataFunctionArgs) {
 			type: params.type as 'problem' | 'solution',
 			exerciseStepApp,
 			exerciseTitle: exercise.title,
+			exerciseIndex,
 			allApps,
 			prevStepLink: isFirstStep
 				? {
@@ -347,6 +374,86 @@ export default function ExercisePartRoute() {
 	const activeTab = isValidPreview(preview) ? preview : tabs[0]
 	const inBrowserBrowserRef = useRef<InBrowserBrowserRef>(null)
 	const previewAppUrl = data.playground?.dev.baseUrl
+
+	const DiffLink = useMemo(() => {
+		return function DiffLink({
+			app1,
+			app2,
+			children,
+			preview,
+			to,
+		}: {
+			app1?: string | number | null
+			app2?: string | number | null
+			to?: string
+			preview?: boolean
+			children?: React.ReactNode
+		}) {
+			if (!to && !app1 && !app2) {
+				return (
+					<callout-danger className="notification">
+						<div className="title">DiffLink Error: invalid input</div>
+					</callout-danger>
+				)
+			}
+
+			function getAppName(input: typeof app1) {
+				if (typeof input === 'number') {
+					const stepIndex = data.exerciseIndex + input
+					return data.allApps[stepIndex]?.name
+				}
+				if (!input) return null
+				for (const { name, stepName } of data.allApps) {
+					if (input === name || input === stepName) {
+						return name
+					}
+				}
+				return null
+			}
+
+			if (to) {
+				const params = new URLSearchParams(to)
+				app1 = params.get('app1')
+				app2 = params.get('app2')
+			}
+			const app1Name = getAppName(app1)
+			const app2Name = getAppName(app2)
+			if (!app1Name || !app2Name) {
+				return (
+					<callout-danger className="notification">
+						<div className="title">DiffLink Error: invalid input</div>
+						{!app1Name && <div>app1: "{app1}" is not a valid app name</div>}
+						{!app2Name && <div>app2: "{app2}" is not a valid app name</div>}
+					</callout-danger>
+				)
+			}
+
+			if (!to) {
+				to = `app1=${app1Name}&app2=${app2Name}`
+			}
+			const pathToDiff = preview
+				? `?${decodeURIComponent(
+						withParam(
+							new URLSearchParams(),
+							'preview',
+							`diff&${to}`,
+						).toString(),
+				  )}`
+				: `/diff?${to}`
+
+			if (!children) {
+				const msg = (s: string) => s.split('__sep__')[2] ?? ''
+				children = (
+					<span>
+						Go to Diff {preview ? 'Preview' : ''} from:{' '}
+						<code>{msg(app1Name)}</code> to: <code>{msg(app2Name)}</code>
+					</span>
+				)
+			}
+
+			return <Link to={pathToDiff}>{children}</Link>
+		}
+	}, [data.allApps, data.exerciseIndex])
 
 	const CodeFile = useMemo(() => {
 		return function CodeFile({ file }: { file: string }) {
@@ -569,6 +676,7 @@ export default function ExercisePartRoute() {
 								components={{
 									CodeFile,
 									CodeFileNotification,
+									DiffLink,
 									InlineFile,
 									LinkToApp,
 									pre: PreWithButtons,

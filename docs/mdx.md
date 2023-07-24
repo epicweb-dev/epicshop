@@ -101,3 +101,36 @@ Display contents of a file:
 
 This will keep track of the code in the file and let you know when it changes
 with a callout notification so you can update the props.
+
+### `DiffLink`
+
+Link to diff route or diff preview, to show git diff between two examples app.
+
+#### Props:
+
+- `to`: string - search params on the form:
+  `app1=EXERCISES_NAME&app2=EXERCISES_NAME`
+
+- `app1`, `app2`: string | number - one of this format:
+
+  - EXERCISES_NAME - `exercises__sep__01.nested-routing__sep__01.problem.outlet`
+  - EXERCISENUMBERSTR/STEPNUMBERSTR.TYPE - `app1="02/02.problem"`
+  - offset step - 0, ±1, ±2... `app1={1}` - next step, step are in order of
+    problem,solution,problem,solution, `app1={0} app2={4}` if current step is
+    from `01/01.problem` to `01/03.problem`
+
+- `preview`: boolean
+
+  - when true link to `?preview=diff&...`
+  - when false link to diff route
+
+- `children`: optional - default to
+  `Go to Diff from: <code>APP1_STEP_NAME</code> to: <code>APP2_STEP_NAME</code>`
+
+- `to` or `app1` & `app2` are required.
+
+```
+<DiffLink app1="02/01.solution" app2="02/02.problem">
+  Go to Diff from: <code>01.problem.outlet</code> to: <code>01.solution.outlet</code>
+</DiffLink>
+```
