@@ -54,8 +54,8 @@ export function Diff({
 				}
 			>
 				{diff => (
-					<div className="flex w-full flex-col">
-						<div className="border-border h-14 border-b">
+					<div className="flex h-full w-full flex-col">
+						<div className="h-14 flex-shrink-0 border-b border-border">
 							<Form
 								onChange={e => submit(e.currentTarget)}
 								className="scrollbar-thin scrollbar-thumb-scrollbar flex h-full w-full items-center overflow-x-auto"
@@ -77,7 +77,7 @@ export function Diff({
 								/>
 							</Form>
 						</div>
-						<div className="scrollbar-thin scrollbar-thumb-scrollbar max-h-[calc(100vh-109px)] overflow-y-auto">
+						<div className="scrollbar-thin scrollbar-thumb-scrollbar flex-grow overflow-y-scroll">
 							{diff.diffCode ? (
 								<div>
 									<Accordion.Root className="w-full" type="multiple">

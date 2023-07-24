@@ -89,12 +89,12 @@ export default function Index() {
 		</ul>
 	)
 	return (
-		<main className="relative h-screen w-full">
+		<main className="relative w-full">
 			<div
 				data-restore-scroll="true"
 				className="shadow-on-scrollbox scrollbar-thin scrollbar-thumb-scrollbar h-full w-full overflow-y-auto"
 			>
-				<article className="border-border min-h-full w-full border-r md:w-3/4 lg:w-2/3">
+				<article className="h-full w-full border-r border-border md:w-3/4 lg:w-2/3">
 					<div className="px-10 pt-16">
 						<h1 className="text-[6vw] font-extrabold leading-none">
 							{data.title}

@@ -123,8 +123,17 @@ export default function App() {
 					}}
 				/>
 			</head>
-			<body className="scrollbar-thin scrollbar-thumb-scrollbar bg-background text-foreground h-full">
-				<Outlet />
+			<body className="scrollbar-thin scrollbar-thumb-scrollbar h-screen bg-background text-foreground">
+				{ENV.KCDSHOP_DEPLOYED ? (
+					<div className="h-full pt-10">
+						<h6 className="fixed inset-0 z-10 flex h-10 items-center border-b border-border px-2 font-mono text-sm font-medium uppercase leading-tight">
+							Limited deployed version
+						</h6>
+						<Outlet />
+					</div>
+				) : (
+					<Outlet />
+				)}
 				<ScrollRestoration />
 				<ElementScrollRestoration elementQuery="[data-restore-scroll='true']" />
 				<Scripts />

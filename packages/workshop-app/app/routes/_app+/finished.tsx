@@ -59,10 +59,10 @@ export default function ExerciseFinished() {
 		['entry.2123647600', data.workshopTitle],
 	])
 	return (
-		<main className="flex h-screen w-full flex-col">
+		<main className="flex w-full flex-col">
 			<div className="grid w-full flex-grow grid-cols-2 overflow-y-auto">
-				<div className="border-border flex flex-grow flex-col border-r border-t">
-					<h4 className="border-border border-b py-8 pl-[58px] font-mono text-sm font-medium uppercase leading-tight">
+				<div className="flex flex-grow flex-col border-r border-border">
+					<h4 className="border-b border-border py-[20.5px] pl-[58px] font-mono text-sm font-medium uppercase leading-none">
 						{`${data.workshopTitle} | Finished`}
 					</h4>
 					<iframe
@@ -72,7 +72,7 @@ export default function ExerciseFinished() {
 					>
 						<Loading />
 					</iframe>
-					<div className="border-border flex h-16 justify-end border-t">
+					<div className="flex h-[52px] justify-end border-t border-border">
 						<NavChevrons
 							prev={
 								data.prevStepLink

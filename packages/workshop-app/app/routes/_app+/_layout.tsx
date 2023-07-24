@@ -85,7 +85,7 @@ export const headers: HeadersFunction = ({ loaderHeaders, parentHeaders }) => {
 
 export default function App() {
 	return (
-		<div className="flex min-h-screen">
+		<div className="flex h-full">
 			<div className="flex flex-grow">
 				<div className="flex flex-grow">
 					<Navigation />
@@ -151,7 +151,7 @@ function Navigation() {
 				variants={menuVariants}
 				animate={menuControls}
 			>
-				<div className="flex h-screen flex-col items-center justify-between">
+				<div className="flex h-full flex-col items-center justify-between">
 					<NavToggle
 						title={data.workshopTitle}
 						menuControls={menuControls}

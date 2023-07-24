@@ -540,8 +540,8 @@ export default function ExercisePartRoute() {
 
 	return (
 		<div className="flex flex-grow flex-col">
-			<div className="grid flex-grow grid-cols-1 lg:grid-cols-2">
-				<div className="border-border relative flex h-[50vh] min-h-[450px] lg:h-screen flex-grow flex-col justify-between border-r">
+			<div className="grid h-full flex-grow grid-cols-1 grid-rows-2 lg:grid-cols-2 lg:grid-rows-1">
+				<div className="relative col-span-1 row-span-1 flex h-full flex-col border-r border-border">
 					<h4 className="pl-10 font-mono text-sm font-medium uppercase leading-tight">
 						<div className="flex h-14 flex-wrap items-center justify-start gap-x-3 py-2">
 							<Link to={`/${titleBits.exerciseNumber}`}>
@@ -611,7 +611,7 @@ export default function ExercisePartRoute() {
 					</div>
 				</div>
 				<Tabs.Root
-					className="relative flex h-[50vh] min-h-[450px] lg:h-screen flex-col"
+					className="relative col-span-1 row-span-1 flex flex-col overflow-y-auto"
 					value={activeTab}
 					// intentionally no onValueChange here because the Link will trigger the
 					// change.
@@ -619,7 +619,7 @@ export default function ExercisePartRoute() {
 					{/* the scrollbar adds 8 pixels to the bottom of the list which looks
 					funny with the border, especially when most of the time the scrollbar
 					shouldn't show up anyway. So we hide that extra space with -8px margin-bottom */}
-					<Tabs.List className="scrollbar-thin scrollbar-thumb-scrollbar min-h-14 z-20 mb-[-8px] inline-flex h-14 overflow-x-scroll">
+					<Tabs.List className="scrollbar-thin scrollbar-thumb-scrollbar z-20 mb-[-8px] flex-shrink-0 overflow-x-scroll">
 						{tabs.map(tab => {
 							return (
 								<Tabs.Trigger
@@ -635,7 +635,7 @@ export default function ExercisePartRoute() {
 								>
 									<Link
 										id={`${tab}-tab`}
-										className="focus:bg-foreground/80 focus:text-background/80 outline-none"
+										className="h-14 outline-none focus:bg-foreground/80 focus:text-background/80"
 										preventScrollReset
 										prefetch="intent"
 										to={`?${withParam(
@@ -650,7 +650,7 @@ export default function ExercisePartRoute() {
 							)
 						})}
 					</Tabs.List>
-					<div className="border-border relative z-10 flex flex-grow flex-col border-t">
+					<div className="relative z-10 flex flex-grow flex-col overflow-y-auto border-t border-border">
 						<Tabs.Content
 							value="playground"
 							className="radix-state-inactive:hidden flex flex-grow items-center justify-center"
@@ -682,7 +682,7 @@ export default function ExercisePartRoute() {
 						</Tabs.Content>
 						<Tabs.Content
 							value="tests"
-							className="radix-state-inactive:hidden flex max-h-[calc(100vh-53px)] flex-grow items-start justify-center overflow-hidden"
+							className="flex flex-grow items-start justify-center overflow-hidden radix-state-inactive:hidden"
 						>
 							<Tests
 								appInfo={data.playground}
@@ -692,7 +692,7 @@ export default function ExercisePartRoute() {
 						</Tabs.Content>
 						<Tabs.Content
 							value="diff"
-							className="radix-state-inactive:hidden flex flex-grow items-start justify-center"
+							className="flex h-full flex-grow items-start justify-center radix-state-inactive:hidden"
 						>
 							<Diff diff={data.diff} allApps={data.allApps} />
 						</Tabs.Content>
@@ -797,7 +797,7 @@ function PlaygroundWindow({
 		)
 	return (
 		<div className="flex h-full w-full flex-col justify-between">
-			<div className="border-border flex h-14 items-center justify-start gap-1 border-b px-3">
+			<div className="flex h-14 flex-shrink-0 items-center justify-start gap-1 border-b border-border px-3">
 				{problemAppName ? (
 					<SetPlayground appName={problemAppName}>
 						{playgroundLinkedUI}
