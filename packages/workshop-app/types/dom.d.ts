@@ -53,5 +53,18 @@ declare global {
 		removeEventListener<K extends keyof CustomEventMap>(type: K, listener: CustomEventListener<K>, options?: boolean | EventListenerOptions): void
 		dispatchEvent<K extends keyof CustomEventMap | unknown>(evt: CustomEventMap[K]): void
 	}
+
+	namespace JSX {
+		interface IntrinsicElements {
+			'callout-danger': React.DetailedHTMLProps<
+				React.HTMLAttributes<HTMLElement>,
+				HTMLElement
+			>
+			'callout-warning': React.DetailedHTMLProps<
+				React.HTMLAttributes<HTMLElement>,
+				HTMLElement
+			>
+		}
+	}
 }
 export {} //keep that for TS compiler.
