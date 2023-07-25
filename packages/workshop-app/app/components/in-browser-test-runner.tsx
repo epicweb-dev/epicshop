@@ -129,9 +129,9 @@ export function InBrowserTestRunner({
 								))}
 							</ul>
 							{message?.status === 'fail' ? (
-								<div className="text-foreground-danger flex items-baseline gap-2">
+								<div className="flex items-baseline gap-2 text-foreground-danger">
 									<span>{testStepStatusEmojis['fail']}</span>
-									<pre className="scrollbar-thin scrollbar-thumb-scrollbar text-foreground-danger max-h-48 overflow-y-auto">
+									<pre className="max-h-48 overflow-y-auto text-foreground-danger scrollbar-thin scrollbar-thumb-scrollbar">
 										{message.error}
 									</pre>
 								</div>
@@ -140,15 +140,15 @@ export function InBrowserTestRunner({
 								ref={iframeRef}
 								title={testFile}
 								src={baseUrl + testFile}
-								className="border-border mt-5 min-h-[420px] w-full border bg-white"
+								className="mt-5 min-h-[420px] w-full border border-border bg-white"
 							/>
 						</div>
-						<div className="border-border flex border-y">
+						<div className="flex border-y border-border">
 							<button
 								onClick={() =>
 									iframeRef.current?.contentWindow?.location.reload()
 								}
-								className="border-border border-r p-3"
+								className="border-r border-border p-3"
 							>
 								<Icon name="Refresh" aria-label="Rerun Tests" />
 							</button>
@@ -156,7 +156,7 @@ export function InBrowserTestRunner({
 								href={baseUrl + testFile}
 								target="_blank"
 								rel="noreferrer"
-								className="border-border border-r p-3"
+								className="border-r border-border p-3"
 							>
 								<Icon name="ExternalLink" aria-label="Open in New Window" />
 							</a>

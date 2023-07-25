@@ -41,7 +41,7 @@
 .launch-editor-wrapper {
 	form {
 		.launch_button {
-			@apply hover:bg-foreground/20 focus:bg-foreground/20 flex w-full items-center rounded px-2 py-1 outline-none transition;
+			@apply flex w-full items-center rounded px-2 py-1 outline-none transition hover:bg-foreground/20 focus:bg-foreground/20;
 		}
 	}
 	.not-allowed {

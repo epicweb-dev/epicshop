@@ -92,9 +92,9 @@ export default function Index() {
 		<main className="relative w-full">
 			<div
 				data-restore-scroll="true"
-				className="shadow-on-scrollbox scrollbar-thin scrollbar-thumb-scrollbar h-full w-full overflow-y-auto"
+				className="shadow-on-scrollbox h-full w-full overflow-y-auto scrollbar-thin scrollbar-thumb-scrollbar"
 			>
-				<article className="min-h-full w-full border-r border-border md:w-3/4 lg:w-2/3 flex flex-col justify-between">
+				<article className="flex min-h-full w-full flex-col justify-between border-r border-border md:w-3/4 lg:w-2/3">
 					<div>
 						<div className="px-10 pt-16">
 							<h1 className="text-[6vw] font-extrabold leading-none">
@@ -102,7 +102,7 @@ export default function Index() {
 							</h1>
 							<div className="mt-8">{exerciseLinks}</div>
 						</div>
-						<div className="prose dark:prose-invert sm:prose-lg border-border mt-16 w-full max-w-none border-t px-10 pt-16">
+						<div className="prose mt-16 w-full max-w-none border-t border-border px-10 pt-16 dark:prose-invert sm:prose-lg">
 							{data.workshopReadme.code ? (
 								<Mdx
 									code={data.workshopReadme.code}

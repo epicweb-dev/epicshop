@@ -225,7 +225,7 @@ export function EditFileOnGitHub({
 
 	return (
 		<Link
-			className="self-center text-sm font-mono"
+			className="self-center font-mono text-sm"
 			onClick={handleClick}
 			target="_blank"
 			to={`${githubPath}/${relativePath}/${appFile}`.replace(/\\/g, '/')}
