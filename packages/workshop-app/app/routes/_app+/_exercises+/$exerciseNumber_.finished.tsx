@@ -120,7 +120,7 @@ export default function ExerciseFinished() {
 					<iframe
 						className="flex-grow bg-white pt-4"
 						title="Elaboration"
-						src={`https://docs.google.com/forms/d/e/1FAIpQLSf3o9xyjQepTlOTH5Z7ZwkeSTdXh6YWI_RGc9KiyD3oUN0p6w/viewform?${searchParams.toString()}`}
+						src={`https://docs.google.com/forms/d/e/1FAIpQLSf3o9xyjQepTlOTH5Z7ZwkeSTdXh6YWI_RGc9KiyD3oUN0p6w/viewform?${searchParams.toString()}&hl=en`}
 					>
 						<Loading />
 					</iframe>

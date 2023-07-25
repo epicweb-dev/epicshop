@@ -68,7 +68,7 @@ export default function ExerciseFinished() {
 					<iframe
 						className="flex-grow bg-white pt-4"
 						title="Elaboration"
-						src={`https://docs.google.com/forms/d/e/1FAIpQLSdRmj9p8-5zyoqRzxp3UpqSbC3aFkweXvvJIKes0a5s894gzg/viewform?${searchParams.toString()}`}
+						src={`https://docs.google.com/forms/d/e/1FAIpQLSdRmj9p8-5zyoqRzxp3UpqSbC3aFkweXvvJIKes0a5s894gzg/viewform?${searchParams.toString()}&hl=en`}
 					>
 						<Loading />
 					</iframe>
