@@ -178,6 +178,11 @@ body {
 	padding-bottom: 2rem;
 }
 
+.prose pre:not([data-lang]):not([data-nolang]) {
+	background-color: var(--base00);
+	color: var(--base05);
+}
+
 .prose
 	pre[data-line-numbers='true']
 	[data-line-number]:before
