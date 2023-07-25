@@ -237,7 +237,7 @@ export function TestOutput({ name }: { name: string }) {
 
 	return (
 		<div className="relative flex h-full w-full flex-col">
-			<div className="border-border flex h-12 w-full items-center justify-between border-b">
+			<div className="flex h-12 w-full items-center justify-between border-b border-border">
 				<div className="flex h-full items-center">
 					{!isRunning && (
 						<TestRunner
@@ -254,7 +254,7 @@ export function TestOutput({ name }: { name: string }) {
 					)}
 					{isRunning ? (
 						<>
-							<div className="border-border flex h-full flex-grow items-center justify-center border-r px-3.5">
+							<div className="flex h-full flex-grow items-center justify-center border-r border-border px-3.5">
 								<AnimatedBars role="status" aria-label="Running Tests" />
 							</div>
 							<StopTest name={name} />
@@ -282,7 +282,7 @@ export function TestOutput({ name }: { name: string }) {
 					/>
 				)}
 			</div>
-			<div className="scrollbar-thin scrollbar-thumb-scrollbar h-full overflow-y-scroll p-5">
+			<div className="h-full overflow-y-scroll p-5 scrollbar-thin scrollbar-thumb-scrollbar">
 				<p className="pb-5 font-mono text-sm font-medium uppercase">
 					Test Output
 				</p>
@@ -326,7 +326,7 @@ export function TestRunner({
 				type="submit"
 				name="intent"
 				value="run"
-				className="border-border flex h-full flex-grow items-center justify-center border-r px-3.5"
+				className="flex h-full flex-grow items-center justify-center border-r border-border px-3.5"
 				title="Run Tests"
 			>
 				{fetcher.state === 'idle' ? (
@@ -363,7 +363,7 @@ export function ClearTest({
 				type="submit"
 				name="intent"
 				value="clear"
-				className="border-border flex h-full flex-grow items-center justify-center border-l px-3.5"
+				className="flex h-full flex-grow items-center justify-center border-l border-border px-3.5"
 				title="Clear Tests"
 			>
 				{fetcher.state === 'idle' ? (
@@ -405,7 +405,7 @@ export function StopTest({
 				type="submit"
 				name="intent"
 				value="stop"
-				className="border-border flex h-full flex-grow items-center justify-center border-r px-3.5"
+				className="flex h-full flex-grow items-center justify-center border-r border-border px-3.5"
 			>
 				{fetcher.state === 'idle' ? (
 					<Icon name="Stop" title="Stop Tests" />

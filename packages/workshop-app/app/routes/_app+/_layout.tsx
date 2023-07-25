@@ -145,7 +145,7 @@ function Navigation() {
 	const exNum = Number(params.exerciseNumber).toString().padStart(2, '0')
 
 	return (
-		<nav className="border-border flex border-r">
+		<nav className="flex border-r border-border">
 			<motion.div
 				initial={isMenuOpened ? 'open' : 'close'}
 				variants={menuVariants}
@@ -161,7 +161,7 @@ function Navigation() {
 					{isMenuOpened && (
 						<motion.div
 							style={{ width: OPENED_MENU_WIDTH }}
-							className="scrollbar-thin scrollbar-thumb-scrollbar flex flex-grow flex-col justify-between overflow-y-auto p-6"
+							className="flex flex-grow flex-col justify-between overflow-y-auto p-6 scrollbar-thin scrollbar-thumb-scrollbar"
 							initial={{ opacity: 0 }}
 							animate={{ opacity: 1 }}
 						>
@@ -185,7 +185,7 @@ function Navigation() {
 												to={`/${exerciseNum}`}
 												className={clsx(
 													'relative whitespace-nowrap px-2 py-0.5 pr-3 text-2xl font-bold outline-none hover:underline focus:underline',
-													'after:bg-background after:absolute after:-bottom-2.5 after:-right-2.5 after:h-5 after:w-5 after:rotate-45 after:scale-75 after:content-[""] hover:underline focus:underline',
+													'after:absolute after:-bottom-2.5 after:-right-2.5 after:h-5 after:w-5 after:rotate-45 after:scale-75 after:bg-background after:content-[""] hover:underline focus:underline',
 													{ 'bg-foreground text-background': isActive },
 												)}
 											>
@@ -214,7 +214,7 @@ function Navigation() {
 																	to={`/${exerciseNum}/${step}`}
 																	prefetch="intent"
 																	className={clsx(
-																		'after:bg-background relative whitespace-nowrap px-2 py-0.5 pr-3 text-xl font-medium outline-none after:absolute after:-bottom-2.5 after:-right-2.5 after:h-5 after:w-5 after:rotate-45 after:scale-75 after:content-[""] hover:underline focus:underline',
+																		'relative whitespace-nowrap px-2 py-0.5 pr-3 text-xl font-medium outline-none after:absolute after:-bottom-2.5 after:-right-2.5 after:h-5 after:w-5 after:rotate-45 after:scale-75 after:bg-background after:content-[""] hover:underline focus:underline',
 																		{
 																			'bg-foreground text-background': isActive,
 																		},
@@ -233,7 +233,7 @@ function Navigation() {
 															prefetch="intent"
 															className={({ isActive }) =>
 																clsx(
-																	'after:bg-background relative whitespace-nowrap px-2 py-0.5 pr-3 text-base font-medium outline-none after:absolute after:-bottom-2.5 after:-right-2.5 after:h-5 after:w-5 after:rotate-45 after:scale-75 after:content-[""] hover:underline focus:underline',
+																	'relative whitespace-nowrap px-2 py-0.5 pr-3 text-base font-medium outline-none after:absolute after:-bottom-2.5 after:-right-2.5 after:h-5 after:w-5 after:rotate-45 after:scale-75 after:bg-background after:content-[""] hover:underline focus:underline',
 																	{
 																		'bg-foreground text-background': isActive,
 																	},
@@ -256,7 +256,7 @@ function Navigation() {
 										clsx(
 											'relative whitespace-nowrap text-lg font-bold outline-none hover:underline focus:underline',
 											{
-												'after:bg-background bg-black text-white after:absolute after:-bottom-2.5 after:-right-2.5 after:h-5 after:w-5 after:rotate-45 after:scale-75 after:content-[""]':
+												'bg-black text-white after:absolute after:-bottom-2.5 after:-right-2.5 after:h-5 after:w-5 after:rotate-45 after:scale-75 after:bg-background after:content-[""]':
 													isActive,
 											},
 										)
@@ -319,7 +319,7 @@ function NavToggle({
 	const path02Controls = useAnimationControls()
 
 	return (
-		<div className="border-border relative inline-flex h-14 w-full items-center justify-between overflow-hidden border-b">
+		<div className="relative inline-flex h-14 w-full items-center justify-between overflow-hidden border-b border-border">
 			<button
 				className="flex w-14 items-center justify-center"
 				aria-label="Open Navigation menu"

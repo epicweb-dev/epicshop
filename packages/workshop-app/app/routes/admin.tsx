@@ -112,7 +112,7 @@ export default function AdminLayout() {
 			</div>
 			<div>
 				<h2>Commands</h2>
-				<ul className="scrollbar-thin scrollbar-thumb-scrollbar max-h-48 overflow-y-scroll border-2 p-8">
+				<ul className="max-h-48 overflow-y-scroll border-2 p-8 scrollbar-thin scrollbar-thumb-scrollbar">
 					<li>
 						{data.inspectorRunning ? (
 							<Form method="POST">
@@ -136,7 +136,7 @@ export default function AdminLayout() {
 			</div>
 			<div>
 				<h2>Apps</h2>
-				<ul className="scrollbar-thin scrollbar-thumb-scrollbar max-h-48 list-none overflow-y-scroll border-2 p-8">
+				<ul className="max-h-48 list-none overflow-y-scroll border-2 p-8 scrollbar-thin scrollbar-thumb-scrollbar">
 					{data.apps.map(app => (
 						<li key={app.name} className="flex items-center gap-2 py-1">
 							{data.processes[app.name] ? (
@@ -151,7 +151,7 @@ export default function AdminLayout() {
 			</div>
 			<div>
 				<h2>Processes</h2>
-				<ul className="scrollbar-thin scrollbar-thumb-scrollbar overflow-y-scroll border-2 p-8">
+				<ul className="overflow-y-scroll border-2 p-8 scrollbar-thin scrollbar-thumb-scrollbar">
 					{Object.entries(data.processes).map(([key, process]) => (
 						<li key={key}>
 							<span>
@@ -164,7 +164,7 @@ export default function AdminLayout() {
 			</div>
 			<div>
 				<h2>Test Processes</h2>
-				<ul className="scrollbar-thin scrollbar-thumb-scrollbar overflow-y-scroll border-2 p-8">
+				<ul className="overflow-y-scroll border-2 p-8 scrollbar-thin scrollbar-thumb-scrollbar">
 					{Object.entries(data.testProcesses).map(([key, process]) => (
 						<li key={key}>
 							<span>

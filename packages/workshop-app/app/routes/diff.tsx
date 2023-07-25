@@ -143,15 +143,15 @@ export default function DiffViewer() {
 	})
 	return (
 		<div
-			className={cn('flex justify-between flex-col h-full', {
-				'opacity-30 cursor-wait': isNavigating,
+			className={cn('flex h-full flex-col justify-between', {
+				'cursor-wait opacity-30': isNavigating,
 			})}
 		>
 			<Diff diff={data.diff} allApps={data.allApps} />
-			<div className="border-border flex h-16 justify-end border-t items-center">
+			<div className="flex h-16 items-center justify-end border-t border-border">
 				<Link
 					to={`.?${params}`}
-					className="h-full w-16 flex justify-center items-center"
+					className="flex h-full w-16 items-center justify-center"
 				>
 					<Icon
 						name="Refresh"

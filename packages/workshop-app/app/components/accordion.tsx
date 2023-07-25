@@ -78,7 +78,7 @@ const AccordionComponent: React.FC<AccordionProps> = ({
 			<AccordionContent
 				forceMount={forceMount}
 				className={clsx(
-					'prose dark:prose-invert prose-pre:rounded-none prose-pre:m-0 prose-pre:mb-1 max-w-none whitespace-pre-wrap',
+					'prose max-w-none whitespace-pre-wrap dark:prose-invert prose-pre:m-0 prose-pre:mb-1 prose-pre:rounded-none',
 					{
 						'radix-state-closed:hidden': forceMount,
 					},
@@ -109,7 +109,7 @@ const AccordionTrigger: React.FC<any> = React.forwardRef(
 		<Accordion.Header className="flex" asChild>
 			<Accordion.Trigger
 				className={clsx(
-					'border-border hover:bg-foreground/20 group flex w-full items-center justify-between border-b p-4 pr-3 font-mono text-sm font-medium leading-none',
+					'group flex w-full items-center justify-between border-b border-border p-4 pr-3 font-mono text-sm font-medium leading-none hover:bg-foreground/20',
 					className,
 				)}
 				{...props}
@@ -117,12 +117,12 @@ const AccordionTrigger: React.FC<any> = React.forwardRef(
 			>
 				<div className="flex items-center gap-1.5">{children}</div>
 				<div className="flex items-center gap-2">
-					<span className="text-muted-foreground font-mono text-xs font-normal uppercase">
+					<span className="font-mono text-xs font-normal uppercase text-muted-foreground">
 						{variant}
 					</span>
 					<Icon
 						name="TriangleDownSmall"
-						className="group-radix-state-open:rotate-180 transition"
+						className="transition group-radix-state-open:rotate-180"
 						aria-hidden
 					/>
 				</div>

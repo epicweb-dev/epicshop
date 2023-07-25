@@ -128,12 +128,12 @@ export function PlaygroundChooser({
 			<Select.Trigger
 				aria-label="Select app for playground"
 				className={clsx(
-					'radix-placeholder:text-gray-500 flex h-full w-full items-center justify-between text-left focus-visible:outline-none',
+					'flex h-full w-full items-center justify-between text-left radix-placeholder:text-gray-500 focus-visible:outline-none',
 					fetcher.state !== 'idle' ? 'cursor-progress' : null,
 					fetcher.data?.status === 'error' ? 'cursor-not-allowed' : null,
 				)}
 			>
-				<span className="scrollbar-thin scrollbar-thumb-scrollbar w-80 flex-1 overflow-hidden text-ellipsis whitespace-nowrap">
+				<span className="w-80 flex-1 overflow-hidden text-ellipsis whitespace-nowrap scrollbar-thin scrollbar-thumb-scrollbar">
 					<Select.Value
 						placeholder="Select current app"
 						className="inline-block w-40 text-ellipsis"
@@ -187,7 +187,7 @@ function SelectItem({
 	return (
 		<Select.Item
 			value={value}
-			className="radix-disabled:text-red-500 radix-highlighted:opacity-100 radix-highlighted:outline-none radix-state-checked:opacity-100 relative flex cursor-pointer select-none items-center rounded px-10 py-2 leading-none opacity-80"
+			className="relative flex cursor-pointer select-none items-center rounded px-10 py-2 leading-none opacity-80 radix-disabled:text-red-500 radix-highlighted:opacity-100 radix-highlighted:outline-none radix-state-checked:opacity-100"
 		>
 			<Select.ItemText>{children}</Select.ItemText>
 			<Select.ItemIndicator className="absolute left-0 inline-flex w-[25px] items-center justify-center">
@@ -204,7 +204,7 @@ export function SetAppToPlayground({ appName }: { appName: string }) {
 			appName={appName}
 			title="Playground is not set to the right app. Click to set Playground."
 		>
-			<span className="text-foreground-danger flex items-center justify-center gap-1">
+			<span className="flex items-center justify-center gap-1 text-foreground-danger">
 				<Icon name="Unlinked" className="animate-ping" />{' '}
 				<span className="uppercase underline">Set to Playground</span>
 			</span>

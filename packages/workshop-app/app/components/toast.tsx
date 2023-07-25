@@ -195,7 +195,7 @@ export function ToastHub() {
 				: null}
 			<ToastPrimitive.Viewport
 				ref={viewPortRef}
-				className="min-w-md scrollbar-thin scrollbar-thumb-scrollbar fixed bottom-0 right-0 z-[2147483647] m-0 flex max-h-full w-[30%] max-w-xl list-none flex-col-reverse gap-[10px] overflow-y-auto overflow-x-hidden p-[var(--viewport-padding)] outline-none [--viewport-padding:_10px]"
+				className="fixed bottom-0 right-0 z-[2147483647] m-0 flex max-h-full w-[30%] min-w-md max-w-xl list-none flex-col-reverse gap-[10px] overflow-y-auto overflow-x-hidden p-[var(--viewport-padding)] outline-none scrollbar-thin scrollbar-thumb-scrollbar [--viewport-padding:_10px]"
 			/>
 		</ToastPrimitive.Provider>
 	)

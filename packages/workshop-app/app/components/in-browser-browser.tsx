@@ -258,7 +258,7 @@ function InBrowserBrowserImpl(
 	}
 	return isRunning ? (
 		<div className="flex h-full flex-grow flex-col">
-			<div className="border-border flex items-center justify-between border-b pl-1.5">
+			<div className="flex items-center justify-between border-b border-border pl-1.5">
 				<div className="mr-2 flex items-center justify-center gap-2 px-1">
 					<button
 						type="button"
@@ -304,7 +304,7 @@ function InBrowserBrowserImpl(
 					{existingSearchParamHiddenInputs}
 					<input
 						aria-label="pathname"
-						className="border-border bg-background text-foreground flex-1 border-x p-3 leading-none focus-visible:outline-none"
+						className="flex-1 border-x border-border bg-background p-3 leading-none text-foreground focus-visible:outline-none"
 						value={pathnameInputValue}
 						name="pathname"
 						onChange={e => setPathnameInputValue(e.currentTarget.value)}

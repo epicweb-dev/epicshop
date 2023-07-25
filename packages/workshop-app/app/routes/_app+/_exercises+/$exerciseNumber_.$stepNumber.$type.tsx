@@ -667,7 +667,7 @@ export default function ExercisePartRoute() {
 						</div>
 					</h4>
 					<article
-						className="shadow-on-scrollbox prose dark:prose-invert sm:prose-lg scrollbar-thin scrollbar-thumb-scrollbar h-full w-full max-w-none space-y-6 overflow-y-auto p-10 pt-8"
+						className="shadow-on-scrollbox prose h-full w-full max-w-none space-y-6 overflow-y-auto p-10 pt-8 scrollbar-thin scrollbar-thumb-scrollbar dark:prose-invert sm:prose-lg"
 						data-restore-scroll="true"
 					>
 						{data.exerciseStepApp.instructionsCode ? (
@@ -688,7 +688,7 @@ export default function ExercisePartRoute() {
 							<p>No instructions yet...</p>
 						)}
 					</article>
-					<div className="border-border flex h-16 justify-between border-t border-b-4 lg:border-b-0">
+					<div className="flex h-16 justify-between border-b-4 border-t border-border lg:border-b-0">
 						<div>
 							<div className="h-full">
 								<TouchedFiles />
@@ -727,7 +727,7 @@ export default function ExercisePartRoute() {
 					{/* the scrollbar adds 8 pixels to the bottom of the list which looks
 					funny with the border, especially when most of the time the scrollbar
 					shouldn't show up anyway. So we hide that extra space with -8px margin-bottom */}
-					<Tabs.List className="scrollbar-thin scrollbar-thumb-scrollbar z-20 mb-[-8px] flex-shrink-0 overflow-x-scroll">
+					<Tabs.List className="z-20 mb-[-8px] flex-shrink-0 overflow-x-scroll scrollbar-thin scrollbar-thumb-scrollbar">
 						{tabs.map(tab => {
 							return (
 								<Tabs.Trigger
@@ -738,7 +738,7 @@ export default function ExercisePartRoute() {
 									}
 									asChild
 									className={clsx(
-										'radix-state-active:bg-foreground radix-state-active:hover:bg-foreground/80 radix-state-active:hover:text-background/80 radix-state-active:text-background radix-state-active:z-10 radix-state-inactive:hover:bg-foreground/20 radix-state-inactive:hover:text-foreground/80 clip-path-button relative px-6 py-4 font-mono text-sm uppercase',
+										'clip-path-button relative px-6 py-4 font-mono text-sm uppercase radix-state-active:z-10 radix-state-active:bg-foreground radix-state-active:text-background radix-state-active:hover:bg-foreground/80 radix-state-active:hover:text-background/80 radix-state-inactive:hover:bg-foreground/20 radix-state-inactive:hover:text-foreground/80',
 									)}
 								>
 									<Link
@@ -761,7 +761,7 @@ export default function ExercisePartRoute() {
 					<div className="relative z-10 flex flex-grow flex-col overflow-y-auto border-t border-border">
 						<Tabs.Content
 							value="playground"
-							className="radix-state-inactive:hidden flex flex-grow items-center justify-center"
+							className="flex flex-grow items-center justify-center radix-state-inactive:hidden"
 						>
 							<Playground
 								appInfo={data.playground}
@@ -772,7 +772,7 @@ export default function ExercisePartRoute() {
 						</Tabs.Content>
 						<Tabs.Content
 							value="problem"
-							className="radix-state-inactive:hidden flex flex-grow items-center justify-center"
+							className="flex flex-grow items-center justify-center radix-state-inactive:hidden"
 						>
 							<Preview
 								appInfo={data.problem}
@@ -781,7 +781,7 @@ export default function ExercisePartRoute() {
 						</Tabs.Content>
 						<Tabs.Content
 							value="solution"
-							className="radix-state-inactive:hidden flex flex-grow items-center justify-center"
+							className="flex flex-grow items-center justify-center radix-state-inactive:hidden"
 						>
 							<Preview
 								appInfo={data.solution}
@@ -834,7 +834,7 @@ function Preview({
 		)
 	} else {
 		return (
-			<div className="scrollbar-thin scrollbar-thumb-scrollbar relative h-full flex-grow overflow-y-auto">
+			<div className="relative h-full flex-grow overflow-y-auto scrollbar-thin scrollbar-thumb-scrollbar">
 				<a
 					href={dev.baseUrl}
 					target="_blank"
@@ -900,7 +900,7 @@ function PlaygroundWindow({
 				title="Playground is not set to the right app. Click to set Playground."
 				size={28}
 				name="Unlinked"
-				className="text-foreground-danger animate-pulse"
+				className="animate-pulse text-foreground-danger"
 			/>
 		)
 	return (
@@ -943,7 +943,7 @@ function Tests({
 		const { baseUrl } = playgroundAppInfo.test
 		testUI = (
 			<div
-				className="scrollbar-thin scrollbar-thumb-scrollbar flex h-full w-full flex-grow flex-col overflow-y-auto"
+				className="flex h-full w-full flex-grow flex-col overflow-y-auto scrollbar-thin scrollbar-thumb-scrollbar"
 				key={inBrowserTestKey}
 			>
 				{playgroundAppInfo.test.testFiles.map(testFile => {

@@ -23,9 +23,9 @@ if (dir === 'server') {
 	ignore.push('dev-server.js')
 }
 
-const allFiles = glob.sync('**/*.*', { cwd: srcDir, ignore }).map(file =>
-	path.join(srcDir, file),
-)
+const allFiles = glob
+	.sync('**/*.*', { cwd: srcDir, ignore })
+	.map(file => path.join(srcDir, file))
 
 const entryPoints = []
 for (const file of allFiles) {
