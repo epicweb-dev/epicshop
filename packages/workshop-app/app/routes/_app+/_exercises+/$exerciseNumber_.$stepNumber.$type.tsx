@@ -812,9 +812,11 @@ export default function ExercisePartRoute() {
 }
 
 function Preview({
+	id,
 	appInfo,
 	inBrowserBrowserRef,
 }: {
+	id?: string
 	appInfo: SerializeFrom<typeof loader>['problem' | 'solution' | 'playground']
 	inBrowserBrowserRef: React.RefObject<InBrowserBrowserRef>
 }) {
@@ -826,6 +828,7 @@ function Preview({
 			<InBrowserBrowser
 				ref={inBrowserBrowserRef}
 				isRunning={isRunning}
+				id={id ?? name}
 				name={name}
 				portIsAvailable={portIsAvailable}
 				port={dev.portNumber}
@@ -874,6 +877,7 @@ function Playground({
 			allApps={allApps}
 		>
 			<Preview
+				id={playgroundAppInfo?.appName}
 				appInfo={playgroundAppInfo}
 				inBrowserBrowserRef={inBrowserBrowserRef}
 			/>

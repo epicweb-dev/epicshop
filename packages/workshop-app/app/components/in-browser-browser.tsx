@@ -58,6 +58,7 @@ function getNewIndex(prevIndex: number, delta: number, max: number) {
 }
 
 type Props = {
+	id: string
 	name: string
 	port: number
 	portIsAvailable: boolean | null
@@ -74,12 +75,13 @@ export const InBrowserBrowser = forwardRef<InBrowserBrowserRef, Props>(
 )
 
 function InBrowserBrowserImpl(
-	{ name, port, portIsAvailable, isRunning, baseUrl }: Props,
+	{ name, port, portIsAvailable, isRunning, baseUrl, id }: Props,
 	ref: ForwardedRef<InBrowserBrowserRef>,
 ) {
 	const [searchParams, setSearchParams] = useSearchParams()
 	const searchParamsPathname = searchParams.get('pathname') ?? '/'
-	const [iframeKey, setIframeKey] = useState(0)
+	const [iframeKeyNumber, setIframeKeyNumber] = useState(0)
+	const iframeKey = id + iframeKeyNumber
 	const lastDirectionRef = useRef<'forward' | 'back' | 'new'>('new')
 	const lastDirectionTimeout = useRef<ReturnType<typeof setTimeout> | null>(
 		null,
@@ -94,9 +96,25 @@ function InBrowserBrowserImpl(
 
 	const appUrl = new URL(baseUrl)
 	appUrl.pathname = searchParamsPathname
+	const currentAppUrl = useRef(appUrl)
+	useEffect(() => {
+		currentAppUrl.current = appUrl
+	})
 
 	/** changing the iframeSrcUrl will trigger a reload of the iframe */
 	const [iframeSrcUrl, setIframeSrcUrl] = useState(appUrl)
+
+	const currentId = useRef(id)
+	// if the id changes, then we're going to reload the iframe, but we want to
+	// make sure to preserve the pathname so we set the src to the current pathname
+	// this is one of the few side-effects in render that are "ok"
+	if (currentId.current !== id) {
+		currentId.current = id
+		setIframeSrcUrl(currentAppUrl.current)
+	}
+	useEffect(() => {
+		currentId.current = id
+	})
 
 	useEffect(() => {
 		function handleMessage(messageEvent: MessageEvent) {
@@ -256,6 +274,7 @@ function InBrowserBrowserImpl(
 			<input key={key} type="hidden" name={key} value={value} />,
 		)
 	}
+
 	return isRunning ? (
 		<div className="flex h-full flex-grow flex-col">
 			<div className="flex items-center justify-between border-b border-border pl-1.5">
@@ -281,7 +300,7 @@ function InBrowserBrowserImpl(
 						className="flex aspect-square h-full w-full items-center justify-center p-1 transition disabled:opacity-40"
 						onClick={() => {
 							setIframeSrcUrl(appUrl)
-							setIframeKey(iframeKey + 1)
+							setIframeKeyNumber(iframeKeyNumber + 1)
 							// TODO: figure out how we can avoid having to do this...
 							// I stayed up for hours one night trying and couldn't work out
 							// why react router wouldn't update the UI when using back/forward

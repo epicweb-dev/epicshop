@@ -1,30 +1,25 @@
 import { type CacheEntry } from 'cachified'
+import { execa } from 'execa'
 import fs from 'fs'
 import fsExtra from 'fs-extra'
 import { glob } from 'glob'
+import { globby, isGitIgnored } from 'globby'
+import pMap from 'p-map'
 import path from 'path'
 import { z } from 'zod'
 import {
+	appsCache,
 	cachified,
 	exampleAppCache,
-	appsCache,
+	playgroundAppCache,
 	problemAppCache,
 	solutionAppCache,
-	playgroundAppCache,
 } from './cache.server.ts'
-import { compileMdx } from './compile-mdx.server.ts'
 import { getOptionalWatcher, getWatcher } from './change-tracker.ts'
-import { getServerTimeHeader, type Timings } from './timing.server.ts'
-import {
-	closeProcess,
-	isAppRunning,
-	runAppDev,
-	waitOnApp,
-} from './process-manager.server.ts'
-import { execa } from 'execa'
-import { globby, isGitIgnored } from 'globby'
-import pMap from 'p-map'
+import { compileMdx } from './compile-mdx.server.ts'
+import { isAppRunning, runAppDev, waitOnApp } from './process-manager.server.ts'
 import { singleton } from './singleton.server.ts'
+import { getServerTimeHeader, type Timings } from './timing.server.ts'
 
 const workshopRoot = getWorkshopRoot()
 
@@ -927,12 +922,9 @@ export async function setPlayground(srcDir: string) {
 	const playgroundFiles = path.join(destDir, '**')
 	getOptionalWatcher()?.unwatch(playgroundFiles)
 	const playgroundApp = await getAppByName('playground')
-	const playgroundIsRunning = playgroundApp
+	const playgroundWasRunning = playgroundApp
 		? isAppRunning(playgroundApp)
 		: false
-	if (playgroundApp && playgroundIsRunning) {
-		await closeProcess(playgroundApp.name)
-	}
 
 	const basename = path.basename(srcDir)
 	// If we don't delete the destination node_modules first then copying the new
@@ -999,9 +991,12 @@ export async function setPlayground(srcDir: string) {
 	getOptionalWatcher()?.add(playgroundFiles)
 	modifiedTimes.set(destDir, Date.now())
 
-	if (playgroundApp && playgroundIsRunning) {
-		await runAppDev(playgroundApp)
-		await waitOnApp(playgroundApp)
+	if (playgroundApp && playgroundWasRunning) {
+		const playgroundIsStillRunning = isAppRunning(playgroundApp)
+		if (!playgroundIsStillRunning) {
+			await runAppDev(playgroundApp)
+			await waitOnApp(playgroundApp)
+		}
 	}
 }
 
