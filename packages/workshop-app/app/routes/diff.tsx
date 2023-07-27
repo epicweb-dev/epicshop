@@ -143,11 +143,13 @@ export default function DiffViewer() {
 	})
 	return (
 		<div
-			className={cn('flex h-full flex-col justify-between', {
+			className={cn('grid h-full grid-rows-[1fr,auto]', {
 				'cursor-wait opacity-30': isNavigating,
 			})}
 		>
-			<Diff diff={data.diff} allApps={data.allApps} />
+			<div className="overflow-y-auto">
+				<Diff diff={data.diff} allApps={data.allApps} />
+			</div>
 			<div className="flex h-16 items-center justify-end border-t border-border">
 				<Link
 					to={`.?${params}`}
