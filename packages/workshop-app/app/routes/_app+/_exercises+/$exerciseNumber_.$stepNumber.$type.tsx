@@ -644,6 +644,24 @@ export default function ExercisePartRoute() {
 	}, [searchParams, previewAppUrl])
 
 	const titleBits = pageTitle(data)
+	const [altDown, setAltDown] = React.useState(false)
+
+	React.useEffect(() => {
+		const set = (e: KeyboardEvent) => setAltDown(e.altKey)
+		document.addEventListener('keydown', set)
+		document.addEventListener('keyup', set)
+		return () => {
+			document.removeEventListener('keyup', set)
+			document.removeEventListener('keydown', set)
+		}
+	}, [])
+
+	// when alt is held down, the diff tab should open to the full-page diff view
+	// between the problem and solution (this is more for the instructor than the student)
+	const altDiffUrl = `/diff?${new URLSearchParams({
+		app1: data.problem?.name ?? '',
+		app2: data.solution?.name ?? '',
+	})}`
 
 	return (
 		<div className="flex flex-grow flex-col">
@@ -746,11 +764,15 @@ export default function ExercisePartRoute() {
 										className="h-14 outline-none focus:bg-foreground/80 focus:text-background/80"
 										preventScrollReset
 										prefetch="intent"
-										to={`?${withParam(
-											searchParams,
-											'preview',
-											tab === 'playground' ? null : tab,
-										)}`}
+										to={
+											tab === 'diff' && altDown
+												? altDiffUrl
+												: `?${withParam(
+														searchParams,
+														'preview',
+														tab === 'playground' ? null : tab,
+												  )}`
+										}
 									>
 										{tab}
 									</Link>
