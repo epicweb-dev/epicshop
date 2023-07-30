@@ -5,7 +5,7 @@ import { json } from '@remix-run/node'
 import { Link, useFetcher } from '@remix-run/react'
 import { getAppByName } from '~/utils/apps.server.ts'
 import { z } from 'zod'
-import { launchEditor } from '~/utils/launch-editor.server.ts'
+import { type Result, launchEditor } from '~/utils/launch-editor.server.ts'
 import { clsx } from 'clsx'
 import { showToast } from '~/components/toast.tsx'
 import { ensureUndeployed } from '~/utils/misc.tsx'
@@ -41,10 +41,13 @@ export async function action({ request }: DataFunctionArgs) {
 		column: formData.get('column') ?? undefined,
 	}
 	const form = launchSchema.parse(rawData)
-	let file
+	let result: Result = {
+		status: 'error',
+		error: 'unexpected error from launch-editor action',
+	}
 	switch (form.type) {
 		case 'file': {
-			file = form.file
+			result = await launchEditor(form.file, form.line, form.column)
 			break
 		}
 		case 'appFile': {
@@ -52,11 +55,28 @@ export async function action({ request }: DataFunctionArgs) {
 			if (!app) {
 				throw new Response(`App "${form.appName}" Not found`, { status: 404 })
 			}
-			file = form.appFile.map(filePath => path.join(app?.fullPath, filePath))
+			result = { status: 'success' }
+			const promises = form.appFile.map(async file => {
+				const [filePath = '', line = '1', column = '1'] = file.split(',')
+				const fullPath = path.join(app.fullPath, filePath)
+				const launchResult = await launchEditor(fullPath, +line, +column)
+				if (launchResult.status === 'error') {
+					console.log(
+						`Launch editor error while opening: ${filePath}\n${launchResult.error}\n`,
+					)
+					if (result.status === 'success') {
+						result = launchResult
+					} else {
+						result.error =
+							'Could not open some files in the editor, see the terminal for more information.'
+					}
+				}
+			})
+			await Promise.all(promises)
 			break
 		}
 	}
-	const result = await launchEditor(file, form.line, form.column)
+
 	return json(result)
 }
 

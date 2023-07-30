@@ -97,7 +97,9 @@ function TouchedFiles() {
 													{diffFiles.length > 1 && !ENV.KCDSHOP_DEPLOYED ? (
 														<div className="mb-2 border-b border-b-gray-50 border-opacity-50 pb-2 font-sans">
 															<LaunchEditor
-																appFile={diffFiles.map(file => file.path)}
+																appFile={diffFiles.map(
+																	file => `${file.path},${file.line},1`,
+																)}
 																appName="playground"
 																onUpdate={handleLaunchUpdate}
 															>
@@ -108,8 +110,7 @@ function TouchedFiles() {
 													{diffFiles.map(file => (
 														<li key={file.path} data-state={file.status}>
 															<LaunchEditor
-																appFile={file.path}
-																line={file.line}
+																appFile={`${file.path},${file.line},1`}
 																appName={
 																	ENV.KCDSHOP_DEPLOYED
 																		? data.problem?.name ?? 'playground'
