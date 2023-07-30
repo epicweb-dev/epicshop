@@ -10,10 +10,10 @@ import {
 	Link,
 	isRouteErrorResponse,
 	useLoaderData,
+	useNavigate,
 	useRouteError,
 	useSearchParams,
 	type LinkProps,
-	useNavigate,
 } from '@remix-run/react'
 import { clsx } from 'clsx'
 import * as React from 'react'
@@ -645,6 +645,7 @@ export default function ExercisePartRoute() {
 	}, [searchParams, previewAppUrl])
 
 	const titleBits = pageTitle(data)
+	const [altDown, setAltDown] = useState(false)
 	const navigate = useNavigate()
 
 	// when alt is held down, the diff tab should open to the full-page diff view
@@ -654,9 +655,10 @@ export default function ExercisePartRoute() {
 		app2: data.solution?.name ?? '',
 	})}`
 
-	const handleDiffClickWithAlt = React.useCallback(
+	const handleDiffTabClick = React.useCallback(
 		(event: React.MouseEvent<HTMLAnchorElement>) => {
-			if (event.altKey) {
+			setAltDown(event.altKey)
+			if (event.altKey && !event.ctrlKey && !event.shiftKey && !event.metaKey) {
 				event.preventDefault()
 				navigate(altDiffUrl)
 			}
@@ -765,12 +767,16 @@ export default function ExercisePartRoute() {
 										className="h-14 outline-none focus:bg-foreground/80 focus:text-background/80"
 										preventScrollReset
 										prefetch="intent"
-										onClick={handleDiffClickWithAlt}
-										to={`?${withParam(
-											searchParams,
-											'preview',
-											tab === 'playground' ? null : tab,
-										)}`}
+										onClickCapture={handleDiffTabClick}
+										to={
+											tab === 'diff' && altDown
+												? altDiffUrl
+												: `?${withParam(
+														searchParams,
+														'preview',
+														tab === 'playground' ? null : tab,
+												  )}`
+										}
 									>
 										{tab}
 									</Link>
