@@ -109,6 +109,7 @@ function TouchedFiles() {
 														<li key={file.path} data-state={file.status}>
 															<LaunchEditor
 																appFile={file.path}
+																line={file.line}
 																appName={
 																	ENV.KCDSHOP_DEPLOYED
 																		? data.problem?.name ?? 'playground'
