@@ -10,6 +10,7 @@ import {
 	Link,
 	isRouteErrorResponse,
 	useLoaderData,
+	useNavigate,
 	useRouteError,
 	useSearchParams,
 	type LinkProps,
@@ -644,7 +645,8 @@ export default function ExercisePartRoute() {
 	}, [searchParams, previewAppUrl])
 
 	const titleBits = pageTitle(data)
-	const [altDown, setAltDown] = React.useState(false)
+	const [altDown, setAltDown] = useState(false)
+	const navigate = useNavigate()
 
 	React.useEffect(() => {
 		const set = (e: KeyboardEvent) => setAltDown(e.altKey)
@@ -662,6 +664,13 @@ export default function ExercisePartRoute() {
 		app1: data.problem?.name ?? '',
 		app2: data.solution?.name ?? '',
 	})}`
+
+	function handleDiffTabClick(event: React.MouseEvent<HTMLAnchorElement>) {
+		if (event.altKey && !event.ctrlKey && !event.shiftKey && !event.metaKey) {
+			event.preventDefault()
+			navigate(altDiffUrl)
+		}
+	}
 
 	return (
 		<div className="flex flex-grow flex-col">
@@ -764,6 +773,7 @@ export default function ExercisePartRoute() {
 										className="h-14 outline-none focus:bg-foreground/80 focus:text-background/80"
 										preventScrollReset
 										prefetch="intent"
+										onClick={handleDiffTabClick}
 										to={
 											tab === 'diff' && altDown
 												? altDiffUrl
