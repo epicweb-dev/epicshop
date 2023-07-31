@@ -648,6 +648,16 @@ export default function ExercisePartRoute() {
 	const [altDown, setAltDown] = useState(false)
 	const navigate = useNavigate()
 
+	React.useEffect(() => {
+		const set = (e: KeyboardEvent) => setAltDown(e.altKey)
+		document.addEventListener('keydown', set)
+		document.addEventListener('keyup', set)
+		return () => {
+			document.removeEventListener('keyup', set)
+			document.removeEventListener('keydown', set)
+		}
+	}, [])
+
 	// when alt is held down, the diff tab should open to the full-page diff view
 	// between the problem and solution (this is more for the instructor than the student)
 	const altDiffUrl = `/diff?${new URLSearchParams({
@@ -655,16 +665,12 @@ export default function ExercisePartRoute() {
 		app2: data.solution?.name ?? '',
 	})}`
 
-	const handleDiffTabClick = React.useCallback(
-		(event: React.MouseEvent<HTMLAnchorElement>) => {
-			setAltDown(event.altKey)
-			if (event.altKey && !event.ctrlKey && !event.shiftKey && !event.metaKey) {
-				event.preventDefault()
-				navigate(altDiffUrl)
-			}
-		},
-		[navigate, altDiffUrl],
-	)
+	function handleDiffTabClick(event: React.MouseEvent<HTMLAnchorElement>) {
+		if (event.altKey && !event.ctrlKey && !event.shiftKey && !event.metaKey) {
+			event.preventDefault()
+			navigate(altDiffUrl)
+		}
+	}
 
 	return (
 		<div className="flex flex-grow flex-col">
@@ -767,7 +773,7 @@ export default function ExercisePartRoute() {
 										className="h-14 outline-none focus:bg-foreground/80 focus:text-background/80"
 										preventScrollReset
 										prefetch="intent"
-										onClickCapture={handleDiffTabClick}
+										onClick={handleDiffTabClick}
 										to={
 											tab === 'diff' && altDown
 												? altDiffUrl
