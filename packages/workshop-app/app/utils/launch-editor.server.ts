@@ -270,7 +270,7 @@ function guessEditor() {
 }
 
 let _childProcess: ReturnType<typeof child_process.spawn> | null = null
-type Result = { status: 'success' } | { status: 'error'; error: string }
+export type Result = { status: 'success' } | { status: 'error'; error: string }
 export async function launchEditor(
 	pathList: string[] | string,
 	lineNumber?: number,

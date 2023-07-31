@@ -1,7 +1,7 @@
 // import { exec } from 'child_process'
 import fsExtra from 'fs-extra'
 import os from 'os'
-import parseGitDiff from 'parse-git-diff'
+import parseGitDiff, { type AnyFileChange } from 'parse-git-diff'
 import path from 'path'
 import { BUNDLED_LANGUAGES } from 'shiki'
 import { diffCodeCache, diffFilesCache, cachified } from './cache.server.ts'
@@ -297,6 +297,18 @@ export async function getDiffFilesImpl(app1: App, app2: App) {
 		new Set([...getAppTestFiles(app1), ...getAppTestFiles(app2)]),
 	)
 
+	const startLine = (file: AnyFileChange) => {
+		const chunk = file.type === 'ChangedFile' && file.chunks[0]
+		if (chunk) {
+			return chunk.type === 'Chunk'
+				? chunk.fromFileRange.start
+				: chunk.type === 'CombinedChunk'
+				? chunk.fromFileRangeA.start
+				: 1
+		}
+		return 1
+	}
+
 	return parsed.files
 		.map(file => ({
 			// prettier-ignore
@@ -304,6 +316,7 @@ export async function getDiffFilesImpl(app1: App, app2: App) {
 			path: diffPathToRelative(
 				file.type === 'RenamedFile' ? file.pathBefore : file.path,
 			),
+			line: startLine(file),
 		}))
 		.filter(file => !testFiles.includes(file.path))
 }
