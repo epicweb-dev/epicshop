@@ -8,7 +8,7 @@ import { useRevalidator } from '@remix-run/react'
 
 export const clientHints = {
 	theme: {
-		cookieName: 'CH-prefers-color-scheme',
+		cookieName: 'KCDShop_CH-prefers-color-scheme',
 		getValueCode: `window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light'`,
 		fallback: 'light',
 		transform(value: string | null) {

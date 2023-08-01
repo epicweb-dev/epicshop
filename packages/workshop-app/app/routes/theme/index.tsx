@@ -1,18 +1,13 @@
 import { useForm } from '@conform-to/react'
 import { parse } from '@conform-to/zod'
 import { json, redirect, type DataFunctionArgs } from '@remix-run/node'
-import { useFetcher } from '@remix-run/react'
+import { useFetcher, useFetchers } from '@remix-run/react'
 import * as React from 'react'
 import { z } from 'zod'
 import { useHints } from '~/utils/client-hints.tsx'
 import { ErrorList } from '~/utils/forms.tsx'
 import { useRequestInfo } from '~/utils/request-info.ts'
-import {
-	commitSession,
-	deleteTheme,
-	getSession,
-	setTheme,
-} from './theme-session.server.ts'
+import { setTheme } from './theme-session.server.ts'
 import { Icon } from '~/components/icons.tsx'
 import { safeRedirect } from 'remix-utils'
 
@@ -41,27 +36,21 @@ export async function action({ request }: DataFunctionArgs) {
 	if (submission.intent !== 'submit') {
 		return json({ status: 'success', submission } as const)
 	}
-	const session = await getSession(request.headers.get('cookie'))
 	const { redirectTo, theme } = submission.value
-	if (theme === 'system') {
-		deleteTheme(session)
-	} else {
-		setTheme(session, theme)
-	}
 
 	const responseInit = {
-		headers: { 'Set-Cookie': await commitSession(session) },
+		headers: { 'set-cookie': setTheme(theme) },
 	}
 	if (redirectTo) {
 		return redirect(safeRedirect(redirectTo), responseInit)
 	} else {
-		return json({ success: true }, responseInit)
+		return json({ success: true, submission }, responseInit)
 	}
 }
 
 export function ThemeSwitch() {
 	const requestInfo = useRequestInfo()
-	const fetcher = useFetcher()
+	const fetcher = useFetcher<typeof action>()
 	const [isHydrated, setIsHydrated] = React.useState(false)
 
 	React.useEffect(() => {
@@ -96,7 +85,12 @@ export function ThemeSwitch() {
 					<input type="hidden" name="redirectTo" value={requestInfo.path} />
 				)}
 				<input type="hidden" name="theme" value={nextMode} />
-				<button className="flex h-8 w-8 cursor-pointer items-center justify-center">
+				<button
+					type="submit"
+					name="intent"
+					value="update-theme"
+					className="flex h-8 w-8 cursor-pointer items-center justify-center"
+				>
 					{modeLabel[mode]}
 				</button>
 			</div>
@@ -112,5 +106,14 @@ export function ThemeSwitch() {
 export function useTheme() {
 	const hints = useHints()
 	const requestInfo = useRequestInfo()
+	const fetchers = useFetchers()
+	const fetcher = fetchers.find(
+		f => f.formData?.get('intent') === 'update-theme',
+	)
+	const optimisticTheme = fetcher?.formData?.get('theme')
+	if (optimisticTheme === 'system') return hints.theme
+	if (optimisticTheme === 'light' || optimisticTheme === 'dark') {
+		return optimisticTheme
+	}
 	return requestInfo.session.theme ?? hints.theme
 }

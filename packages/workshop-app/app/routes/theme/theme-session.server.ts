@@ -1,35 +1,21 @@
-import { createCookieSessionStorage } from '@remix-run/node'
+import * as cookie from 'cookie'
 
-export const sessionStorage = createCookieSessionStorage({
-	cookie: {
-		name: 'theme',
-		sameSite: 'lax',
-		path: '/',
-		httpOnly: true,
-		secrets: ['🎨'],
-		secure: process.env.NODE_ENV === 'production',
-	},
-})
+const cookieName = 'KCDShop_theme'
+export type Theme = 'light' | 'dark'
 
-export const { getSession, commitSession, destroySession } = sessionStorage
-
-type Session = Awaited<ReturnType<typeof getSession>>
-
-const themeKey = 'theme'
-
-export async function getTheme(
-	request: Request,
-): Promise<'dark' | 'light' | null> {
-	const session = await getSession(request.headers.get('Cookie'))
-	const theme = session.get(themeKey)
-	if (theme === 'dark' || theme === 'light') return theme
+export function getTheme(request: Request): Theme | null {
+	const cookieHeader = request.headers.get('cookie')
+	const parsed = cookieHeader ? cookie.parse(cookieHeader)[cookieName] : null
+	if (parsed === 'light' || parsed === 'dark') return parsed
 	return null
 }
 
-export function setTheme(session: Session, theme: 'dark' | 'light') {
-	session.set(themeKey, theme)
-}
-
-export function deleteTheme(session: Session) {
-	session.unset(themeKey)
+export function setTheme(theme: Theme | 'system') {
+	return cookie.serialize(cookieName, theme, {
+		path: '/',
+		expires:
+			theme === 'system'
+				? new Date(0)
+				: new Date(Date.now() + 60 * 60 * 365 * 1000),
+	})
 }

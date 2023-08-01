@@ -71,7 +71,7 @@ export async function loader({ request }: DataFunctionArgs) {
 		desc: 'getWorkshopTitle in root',
 		timings,
 	})
-	const theme = await getTheme(request)
+	const theme = getTheme(request)
 	return json(
 		{
 			workshopTitle,
