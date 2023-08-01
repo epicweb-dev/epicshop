@@ -110,7 +110,7 @@
     "mime-types": "^2.1.35",
     "morgan": "^1.10.0",
     "p-queue": "^7.3.4",
-    "parse-git-diff": "^0.0.10",
+    "parse-git-diff": "^0.0.13",
     "react": "^18.2.0",
     "react-dom": "^18.2.0",
     "remark-autolink-headings": "^7.0.1",
