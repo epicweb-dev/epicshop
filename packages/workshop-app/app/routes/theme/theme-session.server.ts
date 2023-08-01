@@ -13,9 +13,6 @@ export function getTheme(request: Request): Theme | null {
 export function setTheme(theme: Theme | 'system') {
 	return cookie.serialize(cookieName, theme, {
 		path: '/',
-		expires:
-			theme === 'system'
-				? new Date(0)
-				: new Date(Date.now() + 60 * 60 * 365 * 1000),
+		maxAge: theme === 'system' ? 0 : 60 * 60 * 365 * 100,
 	})
 }

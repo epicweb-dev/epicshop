@@ -114,7 +114,7 @@ ${Object.values(clientHints)
 for (const hint of hints) {
 	if (hint.cookie !== hint.actual) {
 		cookieChanged = true;
-		document.cookie = encodeURIComponent(hint.name) + '=' + encodeURIComponent(hint.actual) + ';path=/';
+		document.cookie = encodeURIComponent(hint.name) + '=' + encodeURIComponent(hint.actual) + '; Max-Age=1314000; Path=/';
 	}
 }
 if (cookieChanged && navigator.cookieEnabled) {
