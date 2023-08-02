@@ -199,34 +199,39 @@ function Navigation() {
 													animate="visible"
 													className="ml-4 mt-4 flex flex-col gap-3"
 												>
-													{steps.map(({ name, stepNumber, title }) => {
-														const isActive =
-															Number(params.stepNumber) === stepNumber
-														const step = stepNumber.toString().padStart(2, '0')
-														const isPlayground =
-															name === data.playground.appName
-														return (
-															<motion.li
-																variants={itemVariants}
-																key={stepNumber}
-															>
-																<Link
-																	to={`/${exerciseNum}/${step}`}
-																	prefetch="intent"
-																	className={clsx(
-																		'relative whitespace-nowrap px-2 py-0.5 pr-3 text-xl font-medium outline-none after:absolute after:-bottom-2.5 after:-right-2.5 after:h-5 after:w-5 after:rotate-45 after:scale-75 after:bg-background after:content-[""] hover:underline focus:underline',
-																		{
-																			'bg-foreground text-background': isActive,
-																		},
-																	)}
+													{steps
+														.filter(Boolean)
+														.map(({ name, stepNumber, title }) => {
+															const isActive =
+																Number(params.stepNumber) === stepNumber
+															const step = stepNumber
+																.toString()
+																.padStart(2, '0')
+															const isPlayground =
+																name === data.playground.appName
+															return (
+																<motion.li
+																	variants={itemVariants}
+																	key={stepNumber}
 																>
-																	{isPlayground
-																		? `${step}. ${title} 🛝`
-																		: `${step}. ${title}`}
-																</Link>
-															</motion.li>
-														)
-													})}
+																	<Link
+																		to={`/${exerciseNum}/${step}`}
+																		prefetch="intent"
+																		className={clsx(
+																			'relative whitespace-nowrap px-2 py-0.5 pr-3 text-xl font-medium outline-none after:absolute after:-bottom-2.5 after:-right-2.5 after:h-5 after:w-5 after:rotate-45 after:scale-75 after:bg-background after:content-[""] hover:underline focus:underline',
+																			{
+																				'bg-foreground text-background':
+																					isActive,
+																			},
+																		)}
+																	>
+																		{isPlayground
+																			? `${step}. ${title} 🛝`
+																			: `${step}. ${title}`}
+																	</Link>
+																</motion.li>
+															)
+														})}
 													<motion.li variants={itemVariants}>
 														<NavLink
 															to={`/${exerciseNum}/finished`}
