@@ -15,12 +15,15 @@ import { getWatcher } from '../utils/change-tracker.ts'
 import { isEmbeddedFile } from '../utils/compile-mdx.server.ts'
 import getPort, { portNumbers } from 'get-port'
 import chalk from 'chalk'
+import sourceMapSupport from 'source-map-support'
 
 // @ts-ignore - this file may not exist if you haven't built yet, but it will
 // definitely exist by the time the dev or prod server actually runs.
 import * as remixBuild from '../build/index.js'
 
 const BUILD_PATH = '../build/index.js'
+
+sourceMapSupport.install()
 
 const build = remixBuild as unknown as ServerBuild
 let devBuild = build
