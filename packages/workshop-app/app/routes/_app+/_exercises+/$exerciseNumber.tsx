@@ -73,6 +73,7 @@ export async function loader({ params, request }: DataFunctionArgs) {
 		'README.mdx',
 	)
 
+	const firstStep = exercise.steps.find(Boolean)
 	return json(
 		{
 			exercise,
@@ -82,11 +83,14 @@ export async function loader({ params, request }: DataFunctionArgs) {
 				relativePath: `exercises/${exercise.dirName}`,
 			},
 			exerciseTitle: exercise.title,
+			firstStep,
+			firstType: firstStep?.problem ? 'problem' : 'solution',
 			title: workshopTitle,
-			exercises: exercises.map(e => ({
-				exerciseNumber: e.exerciseNumber,
-				title: e.title,
-			})),
+			// exercises: exercises.map(e => ({
+			// 	exerciseNumber: e.exerciseNumber,
+			// 	title: e.title,
+			// 	firstStep: e.steps.find(Boolean),
+			// })),
 		},
 		{
 			headers: {
@@ -108,9 +112,8 @@ export const headers: HeadersFunction = ({ loaderHeaders, parentHeaders }) => {
 export default function ExerciseNumberRoute() {
 	const data = useLoaderData<typeof loader>()
 
-	const firstExerciseNumber =
-		data.exercises[0]?.exerciseNumber.toString().padStart(2, '0') ?? '01'
-	const firstExercisePath = `${firstExerciseNumber}/problem`
+	const firstStepNumber = String(data.firstStep?.stepNumber ?? '01')
+	const firstStepPath = `${firstStepNumber.padStart(2, '0')}/${data.firstType}`
 	return (
 		<main className="relative w-full">
 			<div
@@ -124,11 +127,7 @@ export default function ExerciseNumberRoute() {
 								{data.exercise.title}
 							</h1>
 							<div className="mt-8">
-								<ButtonLink
-									to={firstExercisePath}
-									prefetch="intent"
-									varient="big"
-								>
+								<ButtonLink to={firstStepPath} prefetch="intent" varient="big">
 									Start Learning
 								</ButtonLink>
 							</div>
@@ -149,11 +148,7 @@ export default function ExerciseNumberRoute() {
 							)}
 						</div>
 						<div className="flex w-full items-center p-10 pb-16">
-							<ButtonLink
-								to={firstExercisePath}
-								prefetch="intent"
-								varient="big"
-							>
+							<ButtonLink to={firstStepPath} prefetch="intent" varient="big">
 								Start Learning
 							</ButtonLink>
 						</div>
