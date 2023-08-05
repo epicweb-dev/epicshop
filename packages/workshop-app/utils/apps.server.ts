@@ -939,22 +939,27 @@ export async function setPlayground(srcDir: string) {
 			if (srcFile.endsWith('.env')) return true
 			if (isIgnored(srcFile)) return false
 
-			const isDir = (await fsExtra.stat(srcFile)).isDirectory()
-			if (isDir) return true
-			const destIsDir = (await fsExtra.stat(destFile)).isDirectory()
-			// weird, but ok
-			if (destIsDir) return true
+			try {
+				const isDir = (await fsExtra.stat(srcFile)).isDirectory()
+				if (isDir) return true
+				const destIsDir = (await fsExtra.stat(destFile)).isDirectory()
+				// weird, but ok
+				if (destIsDir) return true
 
-			// it's better to check if the contents are the same before copying
-			// because it avoids unnecessary writes and reduces the impact on any
-			// file watchers (like the remix dev server). In practice, it's definitely
-			// slower, but it's better because it doesn't cause the dev server to
-			// crash as often.
-			const currentContents = await fsExtra.readFile(destFile, 'utf8')
-			const newContents = await fsExtra.readFile(srcFile, 'utf8')
-			if (currentContents === newContents) return false
+				// it's better to check if the contents are the same before copying
+				// because it avoids unnecessary writes and reduces the impact on any
+				// file watchers (like the remix dev server). In practice, it's definitely
+				// slower, but it's better because it doesn't cause the dev server to
+				// crash as often.
+				const currentContents = await fsExtra.readFile(destFile, 'utf8')
+				const newContents = await fsExtra.readFile(srcFile, 'utf8')
+				if (currentContents === newContents) return false
 
-			return true
+				return true
+			} catch {
+				// 🤷‍♂️ should probably copy it in this case
+				return true
+			}
 		},
 	})
 
