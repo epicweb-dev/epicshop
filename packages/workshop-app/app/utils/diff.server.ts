@@ -103,7 +103,9 @@ function getFileCodeblocks(
 			.map(([key, value]) => `${key}=${value}`)
 			.join(' ')
 
-		const launchEditor = (appNum: number, line: number) => {
+		const launchEditorClassName =
+			'border border-border hover:bg-foreground/20 rounded px-2 py-0.5 font-mono text-xs font-semibold'
+		function launchEditor(appNum: number, line: number) {
 			if (isDeployed) {
 				if (type === 'DeletedFile' && appNum === 2) return ''
 				if (type === 'AddedFile' && appNum === 1) return ''
@@ -117,11 +119,9 @@ function getFileCodeblocks(
 			const file = JSON.stringify(appNum === 1 ? filePathApp1 : filePathApp2)
 			const fixedTitle = getRelativePath(file)
 
-			const className =
-				'border border-border hover:bg-foreground/20 rounded px-2 py-0.5 font-mono text-xs font-semibold'
 			return `
 <LaunchEditor file=${file} line={${line}}>
-	<span	title=${fixedTitle} className="${className}">${label}</span>
+	<span title=${fixedTitle} className="${launchEditorClassName}">${label}</span>
 </LaunchEditor>`
 		}
 
@@ -132,8 +132,24 @@ function getFileCodeblocks(
 ${lines.join('\n')}
 \`\`\`
 
-<div className="flex gap-4 absolute top-1 right-3">
+<div className="flex gap-4 absolute top-1 right-3 items-center">
 	${launchEditor(1, startLine)}
+	<div className="display-alt-down flex gap-2">
+		<LaunchEditor file=${JSON.stringify(
+			filePathApp1,
+		)} syncTo={{file: ${JSON.stringify(filePathApp2)}}}>
+			<span className="block ${launchEditorClassName}">
+				<Icon name="ArrowLeft" title="Copy app 2 file to app 1" />
+			</span>
+		</LaunchEditor>
+		<LaunchEditor file=${JSON.stringify(
+			filePathApp2,
+		)} syncTo={{file: ${JSON.stringify(filePathApp1)}}}>
+			<span className="block ${launchEditorClassName}">
+				<Icon name="ArrowRight" title="Copy app 1 file to app 2" />
+			</span>
+		</LaunchEditor>
+	</div>
 	${launchEditor(2, toStartLine)}
 </div>
 

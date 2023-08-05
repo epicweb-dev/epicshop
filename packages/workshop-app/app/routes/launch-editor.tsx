@@ -1,36 +1,53 @@
-import { useEffect } from 'react'
-import path from 'path'
 import type { DataFunctionArgs } from '@remix-run/node'
 import { json } from '@remix-run/node'
 import { Link, useFetcher } from '@remix-run/react'
-import { getAppByName } from '~/utils/apps.server.ts'
-import { z } from 'zod'
-import { type Result, launchEditor } from '~/utils/launch-editor.server.ts'
 import { clsx } from 'clsx'
+import fsExtra from 'fs-extra'
+import path from 'path'
+import { useEffect } from 'react'
+import type { ZodTypeAny } from 'zod'
+import { z } from 'zod'
 import { showToast } from '~/components/toast.tsx'
+import { getAppByName } from '~/utils/apps.server.ts'
+import { launchEditor } from '~/utils/launch-editor.server.ts'
 import { ensureUndeployed } from '~/utils/misc.tsx'
 
-const launchSchema = z.intersection(
-	z.object({
-		line: z.coerce.number().optional(),
-		column: z.coerce.number().optional(),
-	}),
-	z.union([
+function getFileDescriptorSchema<AppFile extends ZodTypeAny>(appFile: AppFile) {
+	return z.union([
 		z.object({
 			type: z.literal('file'),
 			file: z.string(),
 		}),
 		z.object({
 			type: z.literal('appFile'),
-			appFile: z.array(z.string()),
+			appFile,
 			appName: z.string(),
 		}),
-	]),
+	])
+}
+
+const LaunchSchema = z.intersection(
+	z.object({
+		line: z.coerce.number().optional(),
+		column: z.coerce.number().optional(),
+		syncTo: getFileDescriptorSchema(z.string()).optional(),
+	}),
+	getFileDescriptorSchema(z.array(z.string())),
 )
 
 export async function action({ request }: DataFunctionArgs) {
 	ensureUndeployed()
 	const formData = await request.formData()
+	const syncTo = {
+		type: formData.get('syncTo.type') ?? undefined,
+		file: formData.get('syncTo.file') ?? undefined,
+		workshopFile: formData.get('syncTo.workshopFile') ?? undefined,
+		appFile: formData.getAll('syncTo.appFile') ?? undefined,
+		appName: formData.get('syncTo.appName') ?? undefined,
+	}
+	const syncToIsProvided = Object.values(syncTo).some(v =>
+		Array.isArray(v) ? v.length : v,
+	)
 	const rawData = {
 		type: formData.get('type'),
 		file: formData.get('file'),
@@ -39,53 +56,110 @@ export async function action({ request }: DataFunctionArgs) {
 		appName: formData.get('appName'),
 		line: formData.get('line') ?? undefined,
 		column: formData.get('column') ?? undefined,
+		syncTo: syncToIsProvided
+			? {
+					type: formData.get('syncTo.type'),
+					file: formData.get('syncTo.file'),
+					workshopFile: formData.get('syncTo.workshopFile'),
+					appFile: formData.getAll('syncTo.appFile'),
+					appName: formData.get('syncTo.appName'),
+			  }
+			: undefined,
 	}
-	const form = launchSchema.parse(rawData)
-	let result: Result = {
-		status: 'error',
-		error: 'unexpected error from launch-editor action',
-	}
-	switch (form.type) {
-		case 'file': {
-			result = await launchEditor(form.file, form.line, form.column)
-			break
-		}
-		case 'appFile': {
-			const app = await getAppByName(form.appName)
-			if (!app) {
-				throw new Response(`App "${form.appName}" Not found`, { status: 404 })
+	const form = LaunchSchema.parse(rawData)
+
+	async function getFiles(
+		fileDescriptor:
+			| ({ line?: number; colum?: number } & {
+					type: 'file'
+					file: string
+					appName?: never
+					appFile?: never
+			  })
+			| {
+					type: 'appFile'
+					file?: never
+					appName: string
+					appFile: string | Array<string>
+			  },
+	): Promise<Array<{ filepath: string; line?: number; column?: number }>> {
+		if (fileDescriptor.type === 'file') {
+			return [
+				{
+					filepath: fileDescriptor.file,
+					line: fileDescriptor.line,
+					column: fileDescriptor.colum,
+				},
+			]
+		} else {
+			const fileDescriptorApp = await getAppByName(fileDescriptor.appName)
+			if (!fileDescriptorApp) {
+				throw new Response(`App "${fileDescriptor.appName}" Not found`, {
+					status: 404,
+				})
 			}
-			result = { status: 'success' }
-			const promises = form.appFile.map(async file => {
-				const [filePath = '', line = '1', column = '1'] = file.split(',')
-				const fullPath = path.join(app.fullPath, filePath)
-				const launchResult = await launchEditor(fullPath, +line, +column)
-				if (launchResult.status === 'error') {
-					console.log(
-						`Launch editor error while opening: ${filePath}\n${launchResult.error}\n`,
+			const appFile = Array.isArray(fileDescriptor.appFile)
+				? fileDescriptor.appFile
+				: [fileDescriptor.appFile]
+			return appFile.map(file => {
+				const [filePath, line = '1', column = '1'] = file.split(',')
+				if (!filePath) {
+					throw new Response(
+						`appFile missing file path: ${fileDescriptor.appFile}`,
+						{ status: 400 },
 					)
-					if (result.status === 'success') {
-						result = launchResult
-					} else {
-						result.error =
-							'Could not open some files in the editor, see the terminal for more information.'
-					}
+				}
+				return {
+					filepath: path.join(fileDescriptorApp.fullPath, filePath),
+					line: Number(line),
+					column: Number(column),
 				}
 			})
-			await Promise.all(promises)
-			break
 		}
 	}
 
-	return json(result)
+	const filesToOpen = await getFiles(form)
+	if ('syncTo' in form && form.syncTo) {
+		const originFiles = await getFiles(form.syncTo)
+		for (let index = 0; index < originFiles.length; index++) {
+			const originFile = originFiles[index]
+			if (!originFile) continue
+			const destFile = filesToOpen[index]
+			if (!destFile) {
+				throw new Response(
+					`Trying to sync to a file that does not appear at index ${index}`,
+				)
+			}
+			await fsExtra.ensureDir(path.dirname(destFile.filepath))
+			await fsExtra.promises.copyFile(originFile.filepath, destFile.filepath)
+		}
+	}
+	const results: Array<
+		{ status: 'success' } | { status: 'error'; message: string }
+	> = []
+	for (const file of filesToOpen) {
+		console.log(file)
+		results.push(await launchEditor(file.filepath, file.line, file.column))
+	}
+
+	if (results.every(r => r.status === 'success')) {
+		return json({ status: 'success' } as const)
+	} else {
+		const messages = results
+			.map((r, index, array) =>
+				r.status === 'error'
+					? array.length > 1
+						? `${index}. ${r.message}`
+						: r.message
+					: null,
+			)
+			.filter(Boolean)
+			.join('\n')
+		return json({ status: 'error', message: messages } as const)
+	}
 }
 
-type LaunchEditorProps = {
-	line?: number
-	column?: number
-	children: React.ReactNode
-	onUpdate?: (state: string) => void
-} & (
+type FileDescriptorProps<AppFile> =
 	| {
 			file: string
 			appFile?: never
@@ -93,10 +167,17 @@ type LaunchEditorProps = {
 	  }
 	| {
 			file?: never
-			appFile: string | string[]
+			appFile: AppFile
 			appName: string
 	  }
-)
+
+type LaunchEditorProps = {
+	line?: number
+	column?: number
+	syncTo?: FileDescriptorProps<string>
+	children: React.ReactNode
+	onUpdate?: (state: string) => void
+} & FileDescriptorProps<string | string[]>
 
 function useLaunchFetcher(onUpdate?: ((state: string) => void) | undefined) {
 	const fetcher = useFetcher<typeof action>()
@@ -104,12 +185,13 @@ function useLaunchFetcher(onUpdate?: ((state: string) => void) | undefined) {
 	useEffect(() => {
 		switch (fetcher.state) {
 			case 'loading': {
-				const error = fetcher.data?.status === 'error' ? fetcher.data.error : ''
-				if (error) {
+				const message =
+					fetcher.data?.status === 'error' ? fetcher.data.message : ''
+				if (message) {
 					showToast(document, {
 						title: 'Launch Editor Error',
 						variant: 'Error',
-						content: error,
+						content: message,
 					})
 				}
 			}
@@ -126,6 +208,7 @@ function LaunchEditorImpl({
 	file,
 	appFile,
 	appName,
+	syncTo,
 	line,
 	column,
 	children,
@@ -135,8 +218,14 @@ function LaunchEditorImpl({
 
 	const fileList = typeof appFile === 'string' ? [appFile] : appFile
 	const type = file ? 'file' : appFile ? 'appFile' : ''
+	const syncToType = syncTo?.file ? 'file' : syncTo?.appFile ? 'appFile' : ''
+
 	return (
-		<fetcher.Form action="/launch-editor" method="POST">
+		<fetcher.Form
+			action="/launch-editor"
+			method="POST"
+			className="flex items-center"
+		>
 			<input type="hidden" name="line" value={line} />
 			<input type="hidden" name="column" value={column} />
 			<input type="hidden" name="type" value={type} />
@@ -145,6 +234,14 @@ function LaunchEditorImpl({
 			{fileList?.map(file => (
 				<input type="hidden" name="appFile" key={file} value={file} />
 			))}
+			{syncTo ? (
+				<>
+					<input type="hidden" name="syncTo.type" value={syncToType} />
+					<input type="hidden" name="syncTo.file" value={syncTo.file} />
+					<input type="hidden" name="syncTo.appName" value={syncTo.appName} />
+					<input type="hidden" name="syncTo.appFile" value={syncTo.appFile} />
+				</>
+			) : null}
 			<button
 				type="submit"
 				className={clsx(

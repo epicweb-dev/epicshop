@@ -5,7 +5,6 @@ import type {
 } from '@remix-run/node'
 import { json } from '@remix-run/node'
 import {
-	Link,
 	isRouteErrorResponse,
 	useLoaderData,
 	useRouteError,
@@ -19,7 +18,7 @@ import {
 	getWorkshopRoot,
 	getWorkshopTitle,
 } from '~/utils/apps.server.ts'
-import { Mdx, PreWithButtons } from '~/utils/mdx.tsx'
+import { Mdx } from '~/utils/mdx.tsx'
 import { getErrorMessage, invariantResponse } from '~/utils/misc.tsx'
 import {
 	combineServerTimings,
@@ -138,9 +137,6 @@ export default function ExerciseNumberRoute() {
 									code={data.exercise?.instructionsCode}
 									components={{
 										h1: () => null,
-										pre: PreWithButtons,
-										// @ts-expect-error 🤷‍♂️ this is fine
-										Link,
 									}}
 								/>
 							) : (

@@ -1,11 +1,11 @@
 // copied (and barely modified) from create-react-app:
 //   https://github.com/facebook/create-react-app/blob/d960b9e38c062584ff6cfb1a70e1512509a966e7/packages/react-dev-utils/launchEditor.js
 
+import child_process from 'child_process'
 import fs from 'fs'
 import fsExtra from 'fs-extra'
-import path from 'path'
-import child_process from 'child_process'
 import os from 'os'
+import path from 'path'
 import shellQuote from 'shell-quote'
 import { getRelativePath } from './apps.server.ts'
 
@@ -270,17 +270,19 @@ function guessEditor() {
 }
 
 let _childProcess: ReturnType<typeof child_process.spawn> | null = null
-export type Result = { status: 'success' } | { status: 'error'; error: string }
+export type Result =
+	| { status: 'success' }
+	| { status: 'error'; message: string }
 export async function launchEditor(
 	pathList: string[] | string,
-	lineNumber?: number,
-	colNumber?: number,
+	lineNumber: number = 1,
+	colNumber: number = 1,
 ): Promise<Result> {
 	// Sanitize lineNumber to prevent malicious use on win32
 	// via: https://github.com/nodejs/node/blob/c3bb4b1aa5e907d489619fb43d233c3336bfc03d/lib/child_process.js#L333
 	// and it should be a positive integer
 	if (lineNumber && !(Number.isInteger(lineNumber) && lineNumber > 0)) {
-		return { status: 'error', error: 'lineNumber must be a positive integer' }
+		return { status: 'error', message: 'lineNumber must be a positive integer' }
 	}
 
 	// colNumber is optional, but should be a positive integer too
@@ -288,15 +290,16 @@ export async function launchEditor(
 	if (colNumber && !(Number.isInteger(colNumber) && colNumber > 0)) {
 		colNumber = 1
 	}
+	console.log({ lineNumber, colNumber })
 
 	let [editor, ...args] = guessEditor()
 
 	if (!editor) {
-		return { status: 'error', error: 'No editor found' }
+		return { status: 'error', message: 'No editor found' }
 	}
 
 	if (editor.toLowerCase() === 'none') {
-		return { status: 'error', error: 'Editor set to "none"' }
+		return { status: 'error', message: 'Editor set to "none"' }
 	}
 
 	if (typeof pathList === 'string') {
@@ -353,17 +356,17 @@ export async function launchEditor(
 
 	// TODO: figure out how to send error messages as JSX from here...
 	function getErrorMessage() {
-		let error: string
+		let message: string
 		if (errorsList.length) {
 			const readableName =
 				errorsList.length === 1 ? readablePath(errorsList[0]) : 'some files'
-			error = `Could not open ${readableName} in the editor.\n\nWhen running on Windows, file names are checked against a whitelist to protect against remote code execution attacks.\nFile names may consist only of alphanumeric characters (all languages), periods, dashes, slashes, and underscores.`
+			message = `Could not open ${readableName} in the editor.\n\nWhen running on Windows, file names are checked against a whitelist to protect against remote code execution attacks.\nFile names may consist only of alphanumeric characters (all languages), periods, dashes, slashes, and underscores.`
 		} else {
-			error = 'pathList must contain at least one valid file path'
+			message = 'pathList must contain at least one valid file path'
 		}
 		return {
 			status: 'error',
-			error,
+			message,
 		} as Result
 	}
 
@@ -417,7 +420,7 @@ export async function launchEditor(
 					fileList.length === 1 ? readablePath(fileList[0]) : 'some files'
 				return res({
 					status: 'error',
-					error: `Could not open ${readableName} in the editor.\n\nThe editor process exited with an error code (${errorCode}).`,
+					message: `Could not open ${readableName} in the editor.\n\nThe editor process exited with an error code (${errorCode}).`,
 				})
 			} else if (errorsList.length) {
 				// show error message even when the editor was opened successfully,
@@ -429,7 +432,7 @@ export async function launchEditor(
 		})
 
 		_childProcess.on('error', async function (error) {
-			return res({ status: 'error', error: error.message })
+			return res({ status: 'error', message: error.message })
 		})
 	})
 }

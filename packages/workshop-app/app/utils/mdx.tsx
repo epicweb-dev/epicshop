@@ -1,13 +1,14 @@
-import path from 'node:path'
+import { useLoaderData } from '@remix-run/react'
+import { clsx } from 'clsx'
 import { LRUCache } from 'lru-cache'
-import * as mdxBundler from 'mdx-bundler/client/index.js'
 import type { MDXContentProps } from 'mdx-bundler/client'
+import * as mdxBundler from 'mdx-bundler/client/index.js'
+import path from 'node:path'
 import * as React from 'react'
+import { Icon } from '~/components/icons.tsx'
+import { type loader } from '~/routes/_app+/_exercises+/$exerciseNumber_.$stepNumber.$type.tsx'
 import { LaunchEditor } from '~/routes/launch-editor.tsx'
 import { AnchorOrLink, cn } from './misc.tsx'
-import { useLoaderData } from '@remix-run/react'
-import { type loader } from '~/routes/_app+/_exercises+/$exerciseNumber_.$stepNumber.$type.tsx'
-import { clsx } from 'clsx'
 
 const safePath = (s: string) => s.replace(/\\/g, '/')
 
@@ -227,5 +228,15 @@ export function Mdx({
 	components?: MDXContentProps['components']
 }) {
 	const Component = useMdxComponent(code)
-	return <Component components={components} />
+	return (
+		<Component
+			components={{
+				Icon,
+				pre: PreWithButtons,
+				// @ts-ignore this is fine 🤷‍♂️
+				Link: AnchorOrLink,
+				...components,
+			}}
+		/>
+	)
 }

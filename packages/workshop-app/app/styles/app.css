@@ -45,6 +45,14 @@ body {
 	@apply rotate-180;
 }
 
+.display-alt-down {
+	display: none;
+}
+
+.alt-down .display-alt-down {
+	display: inherit;
+}
+
 /* code syntax highlighting */
 /* dark is default: */
 :root {

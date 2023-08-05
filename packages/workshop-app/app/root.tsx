@@ -19,7 +19,7 @@ import {
 	useLocation,
 	useNavigation,
 } from '@remix-run/react'
-import { useCallback, useEffect } from 'react'
+import { useCallback, useEffect, useState } from 'react'
 import { useSpinDelay } from 'spin-delay'
 import { useTheme } from './routes/theme/index.tsx'
 import { getTheme } from './routes/theme/theme-session.server.ts'
@@ -105,11 +105,28 @@ export default function App() {
 		delay: 400,
 		minDuration: 200,
 	})
+	const [altDown, setAltDown] = useState(false)
+
+	useEffect(() => {
+		const set = (e: KeyboardEvent) => setAltDown(e.altKey)
+		document.addEventListener('keydown', set)
+		document.addEventListener('keyup', set)
+		return () => {
+			document.removeEventListener('keyup', set)
+			document.removeEventListener('keydown', set)
+		}
+	}, [])
+
 	const theme = useTheme()
 	return (
 		<html
 			lang="en"
-			className={cn('h-full', theme, { 'cursor-progress': showSpinner })}
+			className={cn(
+				'h-full',
+				theme,
+				{ 'cursor-progress': showSpinner },
+				altDown ? 'alt-down' : null,
+			)}
 		>
 			<head>
 				<ClientHintCheck />

@@ -46,7 +46,7 @@ import {
 	requireExerciseApp,
 } from '~/utils/apps.server.ts'
 import { getDiffCode, getDiffFiles } from '~/utils/diff.server.ts'
-import { Mdx, PreWithButtons } from '~/utils/mdx.tsx'
+import { Mdx } from '~/utils/mdx.tsx'
 import { cn, getErrorMessage } from '~/utils/misc.tsx'
 import {
 	isAppRunning,
@@ -706,9 +706,6 @@ export default function ExercisePartRoute() {
 									DiffLink,
 									InlineFile,
 									LinkToApp,
-									pre: PreWithButtons,
-									// @ts-expect-error 🤷‍♂️ This is fine
-									Link,
 								}}
 							/>
 						) : (

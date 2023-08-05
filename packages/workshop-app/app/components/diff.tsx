@@ -26,6 +26,8 @@ export function Diff({
 	const mdxComponents = useMemo(() => {
 		return {
 			Accordion: (props: any) => <AccordionComponent {...props} />,
+			// override the pre-with-buttons
+			pre: (props: any) => <pre {...props} />,
 		}
 	}, [])
 
