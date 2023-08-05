@@ -106,7 +106,7 @@ function validateEmbeddedFiles(
 }
 
 // this is not exported. Instead we have a queue around this. See below.
-async function compileMdx(
+export async function compileMdx(
 	file: string,
 ): Promise<{ code: string; title: string | null }> {
 	if (!(await checkFileExists(file))) {
@@ -149,7 +149,7 @@ async function compileMdx(
 	}
 
 	try {
-		const { code } = await bundleMDX({
+		const bundleResult = await queuedBundleMDX({
 			file,
 			cwd: path.dirname(file),
 			mdxOptions(options) {
@@ -181,8 +181,9 @@ async function compileMdx(
 				return options
 			},
 		})
+		if (!bundleResult) throw new Error(`Timeout for file: ${file}`)
 
-		const result = { code, title }
+		const result = { code: bundleResult.code, title }
 		await fsExtra.ensureDir(cacheDir)
 		await fs.promises.writeFile(
 			cacheLocation,
@@ -211,7 +212,7 @@ export async function compileMarkdownString(markdownString: string) {
 		ttl: 1000 * 60 * 60 * 24,
 		getFreshValue: async () => {
 			try {
-				const result = await bundleMDX({
+				const result = await queuedBundleMDX({
 					source: markdownString,
 					mdxOptions(options) {
 						options.rehypePlugins = [
@@ -222,6 +223,7 @@ export async function compileMarkdownString(markdownString: string) {
 						return options
 					},
 				})
+				if (!result) throw new Error(`Timed out compiling markdown string`)
 
 				return result.code
 			} catch (error: unknown) {
@@ -332,17 +334,15 @@ async function getQueue() {
 	_queue = new PQueue({
 		concurrency: 1,
 		throwOnTimeout: true,
-		timeout: 1000 * 10,
+		timeout: 1000 * 20,
 	})
 	return _queue
 }
 
 // We have to use a queue because we can't run more than one of these at a time
 // or we'll hit an out of memory error because esbuild uses a lot of memory...
-async function queuedCompileMdx(...args: Parameters<typeof compileMdx>) {
+async function queuedBundleMDX(...args: Parameters<typeof bundleMDX>) {
 	const queue = await getQueue()
-	const result = await queue.add(() => compileMdx(...args))
+	const result = await queue.add(() => bundleMDX(...args))
 	return result
 }
-
-export { queuedCompileMdx as compileMdx }
