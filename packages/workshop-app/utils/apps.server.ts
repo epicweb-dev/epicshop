@@ -4,7 +4,6 @@ import fs from 'fs'
 import fsExtra from 'fs-extra'
 import { glob } from 'glob'
 import { globby, isGitIgnored } from 'globby'
-import pMap from 'p-map'
 import path from 'path'
 import { z } from 'zod'
 import {
@@ -279,43 +278,40 @@ export async function getExercises({
 }: CachifiedOptions = {}): Promise<Array<Exercise>> {
 	const apps = await getApps({ request, timings })
 	const exerciseDirs = await readDir(path.join(workshopRoot, 'exercises'))
-	const exercises: Array<Exercise | null> = await pMap(
-		exerciseDirs,
-		async dirName => {
-			const exerciseNumber = extractExerciseNumber(dirName)
-			if (!exerciseNumber) return null
-			const compiledReadme = await compileReadme(
-				path.join(workshopRoot, 'exercises', dirName),
-			)
-			const steps: Exercise['steps'] = []
-			const exerciseApps = apps
-				.filter(isExerciseStepApp)
-				.filter(app => app.exerciseNumber === exerciseNumber)
-			for (const app of exerciseApps) {
-				// @ts-ignore (editor doesn't care, but tsc does 🤷‍♂️)
-				steps[app.stepNumber - 1] = {
-					...steps[app.stepNumber - 1],
-					[app.type]: app,
-					stepNumber: app.stepNumber,
-				}
+	const exercises: Array<Exercise> = []
+	for (const dirName of exerciseDirs) {
+		const exerciseNumber = extractExerciseNumber(dirName)
+		if (!exerciseNumber) continue
+		const compiledReadme = await compileReadme(
+			path.join(workshopRoot, 'exercises', dirName),
+		)
+		const steps: Exercise['steps'] = []
+		const exerciseApps = apps
+			.filter(isExerciseStepApp)
+			.filter(app => app.exerciseNumber === exerciseNumber)
+		for (const app of exerciseApps) {
+			// @ts-ignore (editor doesn't care, but tsc does 🤷‍♂️)
+			steps[app.stepNumber - 1] = {
+				...steps[app.stepNumber - 1],
+				[app.type]: app,
+				stepNumber: app.stepNumber,
 			}
-			return {
-				exerciseNumber,
-				dirName,
-				instructionsCode: compiledReadme?.code,
-				title: compiledReadme?.title ?? dirName,
-				steps,
-				problems: apps
-					.filter(isProblemApp)
-					.filter(app => app.exerciseNumber === exerciseNumber),
-				solutions: apps
-					.filter(isSolutionApp)
-					.filter(app => app.exerciseNumber === exerciseNumber),
-			}
-		},
-		{ concurrency: 1 },
-	)
-	return exercises.filter(Boolean)
+		}
+		exercises.push({
+			exerciseNumber,
+			dirName,
+			instructionsCode: compiledReadme?.code,
+			title: compiledReadme?.title ?? dirName,
+			steps,
+			problems: apps
+				.filter(isProblemApp)
+				.filter(app => app.exerciseNumber === exerciseNumber),
+			solutions: apps
+				.filter(isSolutionApp)
+				.filter(app => app.exerciseNumber === exerciseNumber),
+		})
+	}
+	return exercises
 }
 
 let appCallCount = 0
@@ -337,13 +333,10 @@ export async function getApps({
 		ttl: 1000 * 60 * 60 * 24,
 		forceFresh: forceFresh ?? getForceFresh(await appsCache.get(key)),
 		getFreshValue: async () => {
-			const [playgroundApp, problemApps, solutionApps, exampleApps] =
-				await Promise.all([
-					getPlaygroundApp({ request, timings }),
-					getProblemApps({ request, timings }),
-					getSolutionApps({ request, timings }),
-					getExampleApps({ request, timings }),
-				])
+			const playgroundApp = await getPlaygroundApp({ request, timings })
+			const problemApps = await getProblemApps({ request, timings })
+			const solutionApps = await getSolutionApps({ request, timings })
+			const exampleApps = await getExampleApps({ request, timings })
 			const sortedApps = [
 				playgroundApp,
 				...problemApps,
@@ -631,32 +624,34 @@ async function getExampleApps({
 	const exampleDirs = (
 		await glob('*', { cwd: examplesDir, ignore: 'node_modules/**' })
 	).map(p => path.join(examplesDir, p))
-	const exampleApps = await pMap(
-		exampleDirs,
-		async (exampleDir, index) => {
-			const key = `${exampleDir}-${index}`
-			return cachified({
-				key,
-				cache: exampleAppCache,
-				ttl: 1000 * 60 * 60 * 24,
 
-				timings,
-				timingKey: exampleDir.replace(`${examplesDir}${path.sep}`, ''),
-				request,
-				forceFresh: getForceFreshForDir(
-					exampleDir,
-					await exampleAppCache.get(key),
-				),
-				getFreshValue: () =>
-					getExampleAppFromPath(exampleDir, index).catch(error => {
-						console.error(error)
-						return null
-					}),
-			})
-		},
-		{ concurrency: 1 },
-	)
-	return exampleApps.filter(Boolean)
+	const exampleApps: Array<ExampleApp> = []
+
+	for (const exampleDir of exampleDirs) {
+		const index = exampleDirs.indexOf(exampleDir)
+		const key = `${exampleDir}-${index}`
+		const exampleApp = await cachified({
+			key,
+			cache: exampleAppCache,
+			ttl: 1000 * 60 * 60 * 24,
+
+			timings,
+			timingKey: exampleDir.replace(`${examplesDir}${path.sep}`, ''),
+			request,
+			forceFresh: getForceFreshForDir(
+				exampleDir,
+				await exampleAppCache.get(key),
+			),
+			getFreshValue: () =>
+				getExampleAppFromPath(exampleDir, index).catch(error => {
+					console.error(error)
+					return null
+				}),
+		})
+		if (exampleApp) exampleApps.push(exampleApp)
+	}
+
+	return exampleApps
 }
 
 async function getSolutionAppFromPath(
@@ -706,31 +701,31 @@ async function getSolutionApps({
 			ignore: 'node_modules/**',
 		})
 	).map(p => path.join(exercisesDir, p))
-	const solutionApps = await pMap(
-		solutionDirs,
-		async solutionDir => {
-			return cachified({
-				key: solutionDir,
-				cache: solutionAppCache,
-				timings,
-				timingKey: solutionDir.replace(`${exercisesDir}${path.sep}`, ''),
-				request,
-				ttl: 1000 * 60 * 60 * 24,
+	const solutionApps: Array<SolutionApp> = []
 
-				forceFresh: getForceFreshForDir(
-					solutionDir,
-					await solutionAppCache.get(solutionDir),
-				),
-				getFreshValue: () =>
-					getSolutionAppFromPath(solutionDir).catch(error => {
-						console.error(error)
-						return null
-					}),
-			})
-		},
-		{ concurrency: 1 },
-	)
-	return solutionApps.filter(Boolean)
+	for (const solutionDir of solutionDirs) {
+		const solutionApp = await cachified({
+			key: solutionDir,
+			cache: solutionAppCache,
+			timings,
+			timingKey: solutionDir.replace(`${exercisesDir}${path.sep}`, ''),
+			request,
+			ttl: 1000 * 60 * 60 * 24,
+
+			forceFresh: getForceFreshForDir(
+				solutionDir,
+				await solutionAppCache.get(solutionDir),
+			),
+			getFreshValue: () =>
+				getSolutionAppFromPath(solutionDir).catch(error => {
+					console.error(error)
+					return null
+				}),
+		})
+		if (solutionApp) solutionApps.push(solutionApp)
+	}
+
+	return solutionApps
 }
 
 async function getProblemAppFromPath(
@@ -780,31 +775,29 @@ async function getProblemApps({
 			ignore: 'node_modules/**',
 		})
 	).map(p => path.join(exercisesDir, p))
-	const problemApps = await pMap(
-		problemDirs,
-		async problemDir => {
-			return cachified({
-				key: problemDir,
-				cache: problemAppCache,
-				timings,
-				timingKey: problemDir.replace(`${exercisesDir}${path.sep}`, ''),
-				request,
-				ttl: 1000 * 60 * 60 * 24,
+	const problemApps: Array<ProblemApp> = []
+	for (const problemDir of problemDirs) {
+		const problemApp = await cachified({
+			key: problemDir,
+			cache: problemAppCache,
+			timings,
+			timingKey: problemDir.replace(`${exercisesDir}${path.sep}`, ''),
+			request,
+			ttl: 1000 * 60 * 60 * 24,
 
-				forceFresh: getForceFreshForDir(
-					problemDir,
-					await problemAppCache.get(problemDir),
-				),
-				getFreshValue: () =>
-					getProblemAppFromPath(problemDir).catch(error => {
-						console.error(error)
-						return null
-					}),
-			})
-		},
-		{ concurrency: 1 },
-	)
-	return problemApps.filter(Boolean).flat()
+			forceFresh: getForceFreshForDir(
+				problemDir,
+				await problemAppCache.get(problemDir),
+			),
+			getFreshValue: () =>
+				getProblemAppFromPath(problemDir).catch(error => {
+					console.error(error)
+					return null
+				}),
+		})
+		if (problemApp) problemApps.push(problemApp)
+	}
+	return problemApps
 }
 
 export async function getExercise(
