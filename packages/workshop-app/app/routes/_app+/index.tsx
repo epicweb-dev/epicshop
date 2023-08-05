@@ -118,7 +118,10 @@ export default function Index() {
 							)}
 						</div>
 						<div className="mb-10 p-10">
-							{data.workshopReadme.code?.length > 500 ? exerciseLinks : null}
+							{data.workshopReadme.code &&
+							data.workshopReadme.code?.length > 500
+								? exerciseLinks
+								: null}
 						</div>
 					</div>
 					<div className="flex h-[52px] justify-center border-t border-border">
