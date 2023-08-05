@@ -138,7 +138,6 @@ export async function action({ request }: DataFunctionArgs) {
 		{ status: 'success' } | { status: 'error'; message: string }
 	> = []
 	for (const file of filesToOpen) {
-		console.log(file)
 		results.push(await launchEditor(file.filepath, file.line, file.column))
 	}
 
