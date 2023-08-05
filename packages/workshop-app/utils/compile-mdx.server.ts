@@ -1,22 +1,23 @@
+import { remarkCodeBlocksShiki } from '@kentcdodds/md-temp'
+import { cachified, type CacheEntry } from 'cachified'
 import fs from 'fs'
 import fsExtra from 'fs-extra'
-import path from 'path'
-import { bundleMDX } from 'mdx-bundler'
-import { type PluggableList } from 'unified'
 import { type Element, type Root as HastRoot } from 'hast'
-import { type Root as MdastRoot } from 'mdast'
-import { remarkCodeBlocksShiki } from '@kentcdodds/md-temp'
-import {
-	type CodeFileData,
-	type EmbeddedFile,
-	remarkCodeFile,
-} from './codefile-mdx.server.ts'
-import { type CacheEntry, cachified } from 'cachified'
-import { compiledMarkdownCache, embeddedFilesCache } from './cache.server.ts'
-import { visit } from 'unist-util-visit'
 import md5 from 'md5-hex'
+import { type Root as MdastRoot } from 'mdast'
+import { bundleMDX } from 'mdx-bundler'
+import PQueue from 'p-queue'
+import path from 'path'
 import remarkAutolinkHeadings from 'remark-autolink-headings'
 import gfm from 'remark-gfm'
+import { type PluggableList } from 'unified'
+import { visit } from 'unist-util-visit'
+import { compiledMarkdownCache, embeddedFilesCache } from './cache.server.ts'
+import {
+	remarkCodeFile,
+	type CodeFileData,
+	type EmbeddedFile,
+} from './codefile-mdx.server.ts'
 // @ts-ignore - remark-emoji don't have an exports from ESM types
 import emoji from 'remark-emoji'
 import { singleton } from './singleton.server.ts'
@@ -104,7 +105,8 @@ function validateEmbeddedFiles(
 	)
 }
 
-export async function compileMdx(
+// this is not exported. Instead we have a queue around this. See below.
+async function compileMdx(
 	file: string,
 ): Promise<{ code: string; title: string | null }> {
 	if (!(await checkFileExists(file))) {
@@ -322,3 +324,25 @@ export async function isEmbeddedFile(filePath: string) {
 	}
 	return false
 }
+
+let _queue: PQueue | null = null
+async function getQueue() {
+	if (_queue) return _queue
+
+	_queue = new PQueue({
+		concurrency: 1,
+		throwOnTimeout: true,
+		timeout: 1000 * 10,
+	})
+	return _queue
+}
+
+// We have to use a queue because we can't run more than one of these at a time
+// or we'll hit an out of memory error because esbuild uses a lot of memory...
+async function queuedCompileMdx(...args: Parameters<typeof compileMdx>) {
+	const queue = await getQueue()
+	const result = await queue.add(() => compileMdx(...args))
+	return result
+}
+
+export { queuedCompileMdx as compileMdx }
