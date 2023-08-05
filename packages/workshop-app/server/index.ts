@@ -31,6 +31,9 @@ const isProd = process.env.NODE_ENV === 'production'
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url))
 const isPublished = !fs.existsSync(path.join(__dirname, '..', 'app'))
+const isDeployed =
+	process.env.KCDSHOP_DEPLOYED === 'true' ||
+	process.env.KCDSHOP_DEPLOYED === '1'
 const isRunningInBuildDir = path.dirname(__dirname).endsWith('build')
 const kcdshopAppRootDir = isRunningInBuildDir
 	? path.join(__dirname, '..', '..')
@@ -71,7 +74,7 @@ app.use(
 	}),
 )
 
-if (process.env.NODE_ENV !== 'production' && !isPublished) {
+if ((process.env.NODE_ENV !== 'production' && !isPublished) || isDeployed) {
 	morgan.token('url', (req, res) => decodeURIComponent(req.url ?? ''))
 	app.use(morgan('tiny'))
 }
