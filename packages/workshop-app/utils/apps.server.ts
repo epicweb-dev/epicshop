@@ -925,22 +925,36 @@ export async function setPlayground(srcDir: string) {
 	await fsExtra.remove(path.join(destDir, 'node_modules'))
 	// Copy the contents of the source directory to the destination directory recursively
 	await fsExtra.copy(srcDir, destDir, {
-		overwrite: true,
-		preserveTimestamps: true,
-		filter: async file => {
+		filter: async (srcFile, destFile) => {
 			if (
-				file.includes(`${basename}${path.sep}build`) ||
-				file.includes(`${basename}${path.sep}public${path.sep}build`)
+				srcFile.includes(`${basename}${path.sep}build`) ||
+				srcFile.includes(`${basename}${path.sep}public${path.sep}build`)
 			) {
 				return false
 			}
-			if (file === srcDir) return true
+			if (srcFile === srcDir) return true
 			// we copy node_modules even though it's .gitignored
-			if (file.includes('node_modules')) return true
+			if (srcFile.includes('node_modules')) return true
 			// make sure .env is copied whether it's .gitignored or not
-			if (file.endsWith('.env')) return true
-			const shouldCopy = !isIgnored(file)
-			return shouldCopy
+			if (srcFile.endsWith('.env')) return true
+			if (isIgnored(srcFile)) return false
+
+			const isDir = (await fsExtra.stat(srcFile)).isDirectory()
+			if (isDir) return true
+			const destIsDir = (await fsExtra.stat(destFile)).isDirectory()
+			// weird, but ok
+			if (destIsDir) return true
+
+			// it's better to check if the contents are the same before copying
+			// because it avoids unnecessary writes and reduces the impact on any
+			// file watchers (like the remix dev server). In practice, it's definitely
+			// slower, but it's better because it doesn't cause the dev server to
+			// crash as often.
+			const currentContents = await fsExtra.readFile(destFile, 'utf8')
+			const newContents = await fsExtra.readFile(srcFile, 'utf8')
+			if (currentContents === newContents) return false
+
+			return true
 		},
 	})
 

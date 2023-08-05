@@ -938,14 +938,21 @@ function PlaygroundWindow({
 		)
 	return (
 		<div className="flex h-full w-full flex-col justify-between">
-			<div className="flex h-14 flex-shrink-0 items-center justify-start gap-1 border-b border-border px-3">
+			<div className="flex h-14 flex-shrink-0 items-center justify-start gap-2 border-b border-border px-3">
 				{problemAppName ? (
 					<SetPlayground appName={problemAppName}>
 						{playgroundLinkedUI}
 					</SetPlayground>
 				) : (
-					<div className="flex">playgroundLinkedUI</div>
+					<div className="flex">{playgroundLinkedUI}</div>
 				)}
+				<div className="display-alt-down">
+					{playgroundAppInfo?.appName ? (
+						<SetPlayground appName={playgroundAppInfo?.appName}>
+							<Icon name="Refresh" title="Reset Playground" />
+						</SetPlayground>
+					) : null}
+				</div>
 				<PlaygroundChooser
 					allApps={allApps}
 					playgroundAppName={playgroundAppInfo?.appName}
