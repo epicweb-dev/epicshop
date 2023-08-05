@@ -290,7 +290,6 @@ export async function launchEditor(
 	if (colNumber && !(Number.isInteger(colNumber) && colNumber > 0)) {
 		colNumber = 1
 	}
-	console.log({ lineNumber, colNumber })
 
 	let [editor, ...args] = guessEditor()
 
