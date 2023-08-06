@@ -249,7 +249,10 @@ function getAppDirInfo(appDir: string) {
 	const regex = /^(?<stepNumber>\d+)\.(problem|solution)(\.(?<subtitle>.*))?$/
 	const match = regex.exec(appDir)
 	if (!match || !match.groups) {
-		throw new Error(`App directory "${appDir}" does not match regex "${regex}"`)
+		console.info(
+			`Ignoring directory "${appDir}" which does not match regex "${regex}"`,
+		)
+		return null
 	}
 	const { stepNumber: stepNumberString, subtitle } = match.groups
 	const stepNumber = Number(stepNumberString)
@@ -434,7 +437,9 @@ async function findSolutionDir({
 }): Promise<string | null> {
 	const dirName = path.basename(fullPath)
 	if (dirName.includes('.problem')) {
-		const { stepNumber } = getAppDirInfo(dirName)
+		const info = getAppDirInfo(dirName)
+		if (!info) return null
+		const { stepNumber } = info
 		const paddedStepNumber = stepNumber.toString().padStart(2, '0')
 		const parentDir = path.dirname(fullPath)
 		const siblingDirs = await fs.promises.readdir(parentDir)
@@ -463,7 +468,9 @@ async function findProblemDir({
 }): Promise<string | null> {
 	const dirName = path.basename(fullPath)
 	if (dirName.includes('.solution')) {
-		const { stepNumber } = getAppDirInfo(dirName)
+		const info = getAppDirInfo(dirName)
+		if (!info) return null
+		const { stepNumber } = info
 		const paddedStepNumber = stepNumber.toString().padStart(2, '0')
 		const parentDir = path.dirname(fullPath)
 		const siblingDirs = await fs.promises.readdir(parentDir)
@@ -663,7 +670,9 @@ async function getSolutionAppFromPath(
 	if (!exerciseNumber) return null
 
 	const name = getAppName(fullPath)
-	const { stepNumber } = getAppDirInfo(dirName)
+	const info = getAppDirInfo(dirName)
+	if (!info) return null
+	const { stepNumber } = info
 	const portNumber = 7000 + (exerciseNumber - 1) * 10 + stepNumber
 	const compiledReadme = await compileReadme(fullPath)
 	const problemDir = await findProblemDir({
@@ -737,7 +746,9 @@ async function getProblemAppFromPath(
 	if (!exerciseNumber) return null
 
 	const name = getAppName(fullPath)
-	const { stepNumber } = getAppDirInfo(dirName)
+	const info = getAppDirInfo(dirName)
+	if (!info) return null
+	const { stepNumber } = info
 	const portNumber = 6000 + (exerciseNumber - 1) * 10 + stepNumber
 	const compiledReadme = await compileReadme(fullPath, stepNumber)
 	const solutionDir = await findSolutionDir({
