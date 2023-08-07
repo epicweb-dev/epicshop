@@ -94,8 +94,7 @@ function InBrowserBrowserImpl(
 		useState(searchParamsPathname)
 	const iframeRef = useRef<HTMLIFrameElement>(null)
 
-	const appUrl = new URL(baseUrl)
-	appUrl.pathname = searchParamsPathname
+	const appUrl = new URL(searchParamsPathname, baseUrl)
 	const currentAppUrl = useRef(appUrl)
 	useEffect(() => {
 		currentAppUrl.current = appUrl
