@@ -939,7 +939,7 @@ function PlaygroundWindow({
 	return (
 		<div className="flex h-full w-full flex-col justify-between">
 			<div className="flex h-14 flex-shrink-0 items-center justify-start gap-2 border-b border-border px-3">
-				<div className="display-alt-up">
+				<div className="display-alt-up flex">
 					{problemAppName ? (
 						<SetPlayground appName={problemAppName}>
 							{playgroundLinkedUI}
@@ -955,7 +955,9 @@ function PlaygroundWindow({
 								<Icon name="Refresh" title="Reset Playground" />
 							</div>
 						</SetPlayground>
-					) : null}
+					) : (
+						<div className="h-7 w-7" />
+					)}
 				</div>
 				<PlaygroundChooser
 					allApps={allApps}
