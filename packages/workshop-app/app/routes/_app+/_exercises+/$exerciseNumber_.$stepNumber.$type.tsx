@@ -378,16 +378,16 @@ export default function ExercisePartRoute() {
 
 	const DiffLink = useMemo(() => {
 		return function DiffLink({
-			app1,
-			app2,
+			app1 = 0,
+			app2 = 1,
 			children,
-			preview,
+			fullPage = false,
 			to,
 		}: {
 			app1?: string | number | null
 			app2?: string | number | null
 			to?: string
-			preview?: boolean
+			fullPage?: boolean
 			children?: React.ReactNode
 		}) {
 			if (!to && !app1 && !app2) {
@@ -432,21 +432,21 @@ export default function ExercisePartRoute() {
 			if (!to) {
 				to = `app1=${app1Name}&app2=${app2Name}`
 			}
-			const pathToDiff = preview
-				? `?${decodeURIComponent(
+			const pathToDiff = fullPage
+				? `/diff?${to}`
+				: `?${decodeURIComponent(
 						withParam(
 							new URLSearchParams(),
 							'preview',
 							`diff&${to}`,
 						).toString(),
 				  )}`
-				: `/diff?${to}`
 
 			if (!children) {
 				const msg = (s: string) => s.split('__sep__')[2] ?? ''
 				children = (
 					<span>
-						Go to Diff {preview ? 'Preview' : ''} from:{' '}
+						Go to Diff {fullPage ? '' : 'Preview'} from:{' '}
 						<code>{msg(app1Name)}</code> to: <code>{msg(app2Name)}</code>
 					</span>
 				)
