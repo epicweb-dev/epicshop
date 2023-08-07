@@ -53,6 +53,10 @@ body {
 	display: inherit;
 }
 
+.alt-down .display-alt-up {
+	display: none;
+}
+
 /* code syntax highlighting */
 /* dark is default: */
 :root {
