@@ -83,6 +83,9 @@ function checkFileExists(file: string) {
 	)
 }
 
+const verboseLog =
+	process.env.KCDSHOP_VERBOSE_LOG === 'true' ? console.log : () => {}
+
 /**
  * @param embeddedFiles {string[]} - list of embedded files
  * @param lastCompiledTime {number} - timestamp indicating the last time mdx file was compiled
@@ -148,6 +151,7 @@ export async function compileMdx(
 	}
 
 	try {
+		verboseLog(`Compiling ${file}`)
 		const bundleResult = await queuedBundleMDX({
 			file,
 			cwd: path.dirname(file),
@@ -210,6 +214,8 @@ export async function compileMdx(
 	} catch (error: unknown) {
 		console.error(`Compilation error for file: `, file, error)
 		throw error
+	} finally {
+		verboseLog(`Successfully compiled ${file}`)
 	}
 }
 
@@ -220,6 +226,7 @@ export async function compileMarkdownString(markdownString: string) {
 		ttl: 1000 * 60 * 60 * 24,
 		getFreshValue: async () => {
 			try {
+				verboseLog(`Compiling string`, markdownString)
 				const result = await queuedBundleMDX({
 					source: markdownString,
 					esbuildOptions(options) {
@@ -246,6 +253,8 @@ export async function compileMarkdownString(markdownString: string) {
 			} catch (error: unknown) {
 				console.error(`Compilation error for code: `, markdownString, error)
 				throw error
+			} finally {
+				verboseLog(`Successfully compiled string`, markdownString)
 			}
 		},
 	})
