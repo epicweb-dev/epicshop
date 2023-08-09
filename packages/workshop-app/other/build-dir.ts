@@ -95,6 +95,7 @@ try {
 	}
 	console.log('✅ Build succeeded')
 } catch (error: unknown) {
+	console.error('❌ Build failed')
 	console.error(error)
 	process.exit(1)
 }
