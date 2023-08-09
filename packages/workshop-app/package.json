@@ -19,6 +19,9 @@
       "types": "./build/utils/apps.server.d.ts",
       "default": "./build/utils/apps.server.js"
     },
+    "./compile-mdx.server": {
+      "default": "./build/utils/compile-mdx.server.js"
+    },
     "./change-tracker": {
       "types": "./build/utils/change-tracker.d.ts",
       "default": "./build/utils/change-tracker.js"
