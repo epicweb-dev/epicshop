@@ -20,14 +20,14 @@ if (process.env.NODE_ENV === 'production' || isPublished) {
 		KCDSHOP_CONTEXT_CWD,
 		NODE_ENV: 'production',
 	}).catch(code => {
-		console.error('Encountered error starting the server, exiting...')
+		console.error('Encountered error running the server, exiting...')
 		process.exit(code)
 	})
 } else {
 	exec('npm run dev', {
 		KCDSHOP_CONTEXT_CWD,
 	}).catch(code => {
-		console.error('Encountered error starting the dev script, exiting...')
+		console.error('Encountered error running the dev script, exiting...')
 		process.exit(code)
 	})
 }

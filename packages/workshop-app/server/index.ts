@@ -141,7 +141,7 @@ ${chalk.bold('Press Ctrl+C to stop')}
 
 const wss = new WebSocketServer({ server, path: '/__ws' })
 
-getWatcher().on('all', async (event, filePath, stats) => {
+getWatcher()?.on('all', async (event, filePath, stats) => {
 	for (const client of wss.clients) {
 		if (client.readyState === WebSocket.OPEN) {
 			const embeddedFile = await isEmbeddedFile(filePath)

@@ -183,7 +183,7 @@ export function init() {
 			}
 		}
 	}
-	getWatcher().on('all', handleFileChanges)
+	getWatcher()?.on('all', handleFileChanges)
 }
 
 function getForceFresh(cacheEntry: CacheEntry | null | undefined) {
