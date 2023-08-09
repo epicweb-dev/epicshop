@@ -11,7 +11,12 @@ declare global {
 let watcher = global.__change_tracker_watcher__
 
 export function getWatcher() {
-	if (process.env.KCDSHOP_DEPLOYED) return null
+	if (
+		process.env.KCDSHOP_DEPLOYED ||
+		process.env.KCDSHOP_DISABLE_WATCHER === 'true'
+	) {
+		return null
+	}
 	if (watcher) return watcher
 	const workshopRoot = process.env.KCDSHOP_CONTEXT_CWD ?? process.cwd()
 	watcher = chokidar.watch(workshopRoot, {
