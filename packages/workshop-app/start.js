@@ -43,9 +43,9 @@ if (process.env.NODE_ENV === 'production') {
 
 process.on('unhandledRejection', (reason, promise) => {
 	console.error(
-		'Unhandled Rejection for:',
+		'Unhandled Rejection for: ',
 		promise,
-		'\nWith the reason:',
+		'\nWith the reason: ',
 		reason,
 	)
 	throw reason
