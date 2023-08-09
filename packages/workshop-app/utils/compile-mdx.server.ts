@@ -105,7 +105,6 @@ function validateEmbeddedFiles(
 	)
 }
 
-// this is not exported. Instead we have a queue around this. See below.
 export async function compileMdx(
 	file: string,
 ): Promise<{ code: string; title: string | null }> {

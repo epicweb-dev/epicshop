@@ -34,6 +34,7 @@ import {
 	time,
 } from './utils/timing.server.ts'
 import { getEnv } from './utils/env.server.ts'
+import { GeneralErrorBoundary } from './components/error-boundary.tsx'
 
 export const links: LinksFunction = () => {
 	return [
@@ -98,6 +99,43 @@ export const headers: HeadersFunction = ({ loaderHeaders }) => {
 	return headers
 }
 
+function Document({
+	children,
+	env = {},
+	className,
+}: {
+	children: React.ReactNode
+	env?: Record<string, unknown>
+	className: string
+}) {
+	return (
+		<html lang="en" className={className}>
+			<head>
+				<ClientHintCheck />
+				<Meta />
+				<meta charSet="utf-8" />
+				<meta name="viewport" content="width=device-width,initial-scale=1" />
+				<Links />
+				<script
+					dangerouslySetInnerHTML={{
+						__html: `window.ENV = ${JSON.stringify(env)}`,
+					}}
+				/>
+			</head>
+			<body className="h-screen bg-background text-foreground scrollbar-thin scrollbar-thumb-scrollbar">
+				{children}
+				<ScrollRestoration />
+				<ElementScrollRestoration elementQuery="[data-restore-scroll='true']" />
+				<Scripts />
+				{ENV.KCDSHOP_DEPLOYED ? null : <LiveReload />}
+				{ENV.KCDSHOP_DEPLOYED ? null : (
+					<script dangerouslySetInnerHTML={{ __html: getWebsocketJS() }} />
+				)}
+			</body>
+		</html>
+	)
+}
+
 export default function App() {
 	const data = useLoaderData<typeof loader>()
 	const navigation = useNavigation()
@@ -119,53 +157,32 @@ export default function App() {
 
 	const theme = useTheme()
 	return (
-		<html
-			lang="en"
+		<Document
 			className={cn(
 				'h-full',
 				theme,
 				{ 'cursor-progress': showSpinner },
 				altDown ? 'alt-down' : null,
 			)}
+			env={data.ENV}
 		>
-			<head>
-				<ClientHintCheck />
-				<meta charSet="utf-8" />
-				<meta name="viewport" content="width=device-width,initial-scale=1" />
-				<Meta />
-				<Links />
-				<script
-					dangerouslySetInnerHTML={{
-						__html: `window.ENV = ${JSON.stringify(data.ENV)}`,
-					}}
-				/>
-			</head>
-			<body className="h-screen bg-background text-foreground scrollbar-thin scrollbar-thumb-scrollbar">
-				{ENV.KCDSHOP_DEPLOYED ? (
-					<div className="h-full pt-10">
-						<h6 className="fixed inset-0 z-10 flex h-10 items-center border-b border-border px-2 font-mono text-sm font-medium uppercase leading-tight">
-							<div>
-								Limited deployed version.{' '}
-								<a href={ENV.KCDSHOP_GITHUB_ROOT} className="underline">
-									Setup locally
-								</a>{' '}
-								to get the full experience.
-							</div>
-						</h6>
-						<Outlet />
-					</div>
-				) : (
+			{ENV.KCDSHOP_DEPLOYED ? (
+				<div className="h-full pt-10">
+					<h6 className="fixed inset-0 z-10 flex h-10 items-center border-b border-border px-2 font-mono text-sm font-medium uppercase leading-tight">
+						<div>
+							Limited deployed version.{' '}
+							<a href={ENV.KCDSHOP_GITHUB_ROOT} className="underline">
+								Setup locally
+							</a>{' '}
+							to get the full experience.
+						</div>
+					</h6>
 					<Outlet />
-				)}
-				<ScrollRestoration />
-				<ElementScrollRestoration elementQuery="[data-restore-scroll='true']" />
-				<Scripts />
-				{ENV.KCDSHOP_DEPLOYED ? null : <LiveReload />}
-				{ENV.KCDSHOP_DEPLOYED ? null : (
-					<script dangerouslySetInnerHTML={{ __html: getWebsocketJS() }} />
-				)}
-			</body>
-		</html>
+				</div>
+			) : (
+				<Outlet />
+			)}
+		</Document>
 	)
 }
 
@@ -256,6 +273,14 @@ function ElementScrollRestoration({
 				)}, ${JSON.stringify(elementQuery)})`,
 			}}
 		/>
+	)
+}
+
+export function ErrorBoundary() {
+	return (
+		<Document className="h-full">
+			<GeneralErrorBoundary />
+		</Document>
 	)
 }
 

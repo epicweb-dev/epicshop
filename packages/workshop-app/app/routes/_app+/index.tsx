@@ -3,6 +3,7 @@ import { json } from '@remix-run/node'
 import { useLoaderData } from '@remix-run/react'
 import path from 'path'
 import { ButtonLink } from '~/components/button.tsx'
+import { GeneralErrorBoundary } from '~/components/error-boundary.tsx'
 import { EditFileOnGitHub } from '~/routes/launch-editor.tsx'
 import {
 	getExercises,
@@ -11,6 +12,7 @@ import {
 } from '~/utils/apps.server.ts'
 import { compileMdx } from '~/utils/compile-mdx.server.ts'
 import { Mdx } from '~/utils/mdx.tsx'
+import { getErrorMessage } from '~/utils/misc.tsx'
 import {
 	combineServerTimings,
 	getServerTimeHeader,
@@ -39,15 +41,28 @@ export async function loader({ request }: DataFunctionArgs) {
 					'exercises',
 					'README.mdx',
 				)
-				const compiled = await compileMdx(readmeFilepath)
-				return { ...compiled, file: readmeFilepath, relativePath: 'exercises' }
+				const compiled = await compileMdx(readmeFilepath).then(
+					r => ({ ...r, status: 'success' }) as const,
+					e => {
+						console.error(
+							`There was an error compiling the workshop readme`,
+							readmeFilepath,
+							e,
+						)
+						return { status: 'error', error: getErrorMessage(e) } as const
+					},
+				)
+				return { compiled, file: readmeFilepath, relativePath: 'exercises' }
 			},
 			{ timings, type: 'compileMdx', desc: 'compileMdx in index' },
 		),
 	])
 	return json(
 		{
-			title: workshopReadme.title ?? title,
+			title:
+				workshopReadme.compiled.status === 'success'
+					? workshopReadme.compiled.title
+					: title,
 			exercises: exercises.map(e => ({
 				exerciseNumber: e.exerciseNumber,
 				title: e.title,
@@ -103,20 +118,27 @@ export default function Index() {
 							<div className="mt-8">{exerciseLinks}</div>
 						</div>
 						<div className="prose mt-16 w-full max-w-none border-t border-border px-10 pt-16 dark:prose-invert sm:prose-lg">
-							{data.workshopReadme.code ? (
+							{data.workshopReadme.compiled.status === 'success' &&
+							data.workshopReadme.compiled.code ? (
 								<Mdx
-									code={data.workshopReadme.code}
+									code={data.workshopReadme.compiled.code}
 									components={{
 										h1: () => null,
 									}}
 								/>
+							) : data.workshopReadme.compiled.status === 'error' ? (
+								<div className="text-red-500">
+									There was an error:
+									<pre>{data.workshopReadme.compiled.error}</pre>
+								</div>
 							) : (
 								'No instructions yet...'
 							)}
 						</div>
 						<div className="mb-10 p-10">
-							{data.workshopReadme.code &&
-							data.workshopReadme.code?.length > 500
+							{data.workshopReadme.compiled.status === 'success' &&
+							data.workshopReadme.compiled.code &&
+							data.workshopReadme.compiled.code?.length > 500
 								? exerciseLinks
 								: null}
 						</div>
@@ -131,4 +153,8 @@ export default function Index() {
 			</div>
 		</main>
 	)
+}
+
+export function ErrorBoundary() {
+	return <GeneralErrorBoundary />
 }

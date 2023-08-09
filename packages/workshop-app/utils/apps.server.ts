@@ -239,7 +239,10 @@ async function compileReadme(appDir: string, number?: number) {
 		await getReadmePath({ appDir, stepNumber: number })
 	).replace(/\\/g, '/')
 	if (await exists(readmeFilepath)) {
-		const compiled = await compileMdx(readmeFilepath)
+		const compiled = await compileMdx(readmeFilepath).catch(error => {
+			console.error(`Error compiling ${readmeFilepath}:`, error)
+			return null
+		})
 		return compiled
 	}
 	return null
