@@ -25,6 +25,9 @@ const isDeployed = ENV.KCDSHOP_DEPLOYED
 const diffTmpDir = path.join(kcdshopTempDir, 'diff')
 
 function diffPathToRelative(filePath: string) {
+	if (filePath.startsWith('a/') || filePath.startsWith('b/')) {
+		filePath = filePath.slice(2)
+	}
 	const normalizedPath = path.normalize(filePath).replace(/^("|')|("|')$/g, '')
 
 	// eslint-disable-next-line @typescript-eslint/no-unused-vars
@@ -367,7 +370,8 @@ export async function getDiffCode(
 	const result = await cachified({
 		key,
 		cache: diffCodeCache,
-		forceFresh: forceFresh || getForceFreshForDiff(app1, app2, cacheEntry),
+		forceFresh:
+			true || forceFresh || getForceFreshForDiff(app1, app2, cacheEntry),
 		timings,
 		request,
 		getFreshValue: () => getDiffCodeImpl(app1, app2),
