@@ -370,8 +370,7 @@ export async function getDiffCode(
 	const result = await cachified({
 		key,
 		cache: diffCodeCache,
-		forceFresh:
-			true || forceFresh || getForceFreshForDiff(app1, app2, cacheEntry),
+		forceFresh: forceFresh || getForceFreshForDiff(app1, app2, cacheEntry),
 		timings,
 		request,
 		getFreshValue: () => getDiffCodeImpl(app1, app2),
