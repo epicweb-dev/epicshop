@@ -9,6 +9,7 @@ import { Icon } from '~/components/icons.tsx'
 import { type loader } from '~/routes/_app+/_exercises+/$exerciseNumber_.$stepNumber.$type.tsx'
 import { LaunchEditor } from '~/routes/launch-editor.tsx'
 import { AnchorOrLink, cn } from './misc.tsx'
+import { useTheme } from '~/routes/theme/index.tsx'
 
 const safePath = (s: string) => s.replace(/\\/g, '/')
 
@@ -166,6 +167,35 @@ export function PreWithButtons({ children, ...props }: any) {
 	)
 }
 
+function EpicVideo({
+	url: urlString,
+	title = 'EpicWeb.dev Video',
+}: {
+	url: string
+	title?: string
+}) {
+	const url = new URL(urlString)
+	url.pathname = url.pathname.endsWith('/')
+		? `${url.pathname}embed`
+		: `${url.pathname}/embed`
+	const theme = useTheme()
+	url.searchParams.set('theme', theme)
+	return (
+		<div className="relative aspect-video w-full shadow-lg dark:shadow-gray-800">
+			<div className="absolute inset-0 flex items-center justify-center">
+				<span>Loading "{title}"...</span>
+			</div>
+			<iframe
+				src={url.toString()}
+				className="absolute inset-0 z-10 flex h-full w-full"
+				title={title}
+				sandbox="allow-forms allow-scripts allow-same-origin allow-popups allow-popups-to-escape-sandbox"
+				allowFullScreen
+			/>
+		</div>
+	)
+}
+
 export const mdxComponents = {
 	a: AnchorOrLink,
 	// you can't put a <form> inside a <p> so we'll just use a div
@@ -181,6 +211,7 @@ export const mdxComponents = {
 		/>
 	),
 	LaunchEditor,
+	EpicVideo,
 }
 
 /**
