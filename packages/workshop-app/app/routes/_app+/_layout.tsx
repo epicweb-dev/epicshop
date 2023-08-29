@@ -326,7 +326,7 @@ function NavToggle({
 	return (
 		<div className="relative inline-flex h-14 w-full items-center justify-between overflow-hidden border-b border-border">
 			<button
-				className="flex w-14 items-center justify-center"
+				className="flex w-14 items-center h-14 justify-center"
 				aria-label="Open Navigation menu"
 				onClick={async () => {
 					menuControls.start(isMenuOpened ? 'close' : 'open')

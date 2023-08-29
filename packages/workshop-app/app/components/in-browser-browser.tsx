@@ -343,7 +343,7 @@ function InBrowserBrowserImpl(
 					<Icon name="ExternalLink" title="Open in new tab" />
 				</a>
 			</div>
-			<div className="flex h-full w-full flex-grow p-5">
+			<div className="flex h-full w-full flex-grow p-5 dark:bg-white">
 				<iframe
 					title={name}
 					key={iframeKey}

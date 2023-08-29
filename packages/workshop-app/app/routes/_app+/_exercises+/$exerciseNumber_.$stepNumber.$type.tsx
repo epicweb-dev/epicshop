@@ -676,17 +676,18 @@ export default function ExercisePartRoute() {
 		<div className="flex flex-grow flex-col">
 			<div className="grid h-full flex-grow grid-cols-1 grid-rows-2 lg:grid-cols-2 lg:grid-rows-1">
 				<div className="relative col-span-1 row-span-1 flex h-full flex-col border-r border-border">
-					<h4 className="pl-10 font-mono text-sm font-medium uppercase leading-tight">
-						<div className="flex h-14 flex-wrap items-center justify-start gap-x-3 py-2">
-							<Link to={`/${titleBits.exerciseNumber}`}>
+					<h4 className="pl-10 pr-5 border-b text-sm font-medium uppercase leading-tight min-h-[56px]">
+						<div className="flex h-14 flex-wrap items-center justify-between gap-x-2 py-2">
+							<div className="flex items-center justify-start gap-x-2">
+							<Link to={`/${titleBits.exerciseNumber}`} className='hover:underline'>
 								{titleBits.exerciseNumber}. {titleBits.exerciseTitle}
 							</Link>
-							{' | '}
-							<Link to=".">
+							{'/'}
+							<Link to="." className='hover:underline'>
 								{titleBits.stepNumber}. {titleBits.title}
-								{' | '}
-								{titleBits.emoji} {titleBits.type}
+								{' ('}{titleBits.emoji} {titleBits.type}{')'}
 							</Link>
+							</div>
 							{data.problem &&
 							data.playground?.appName !== data.problem.name ? (
 								<SetAppToPlayground appName={data.problem.name} />

@@ -21,6 +21,15 @@ const removeProseMargin = {
 	},
 }
 
+const removeCodeBackticks = {
+	'code::before': {
+		content: 'none',
+	},
+	'code::after': {
+		content: 'none',
+	},
+}
+
 const proseColors = {
 	'*': {
 		color: 'hsl(var(--foreground))',
@@ -49,12 +58,12 @@ export default {
 				mono: ['var(--font-mono)', ...defaultTheme.fontFamily.mono],
 			},
 			typography: {
-				DEFAULT: { css: [removeProseMargin, proseColors] },
-				sm: { css: [removeProseMargin, proseColors] },
-				base: { css: [removeProseMargin, proseColors] },
-				lg: { css: [removeProseMargin, proseColors] },
-				xl: { css: [removeProseMargin, proseColors] },
-				'2xl': { css: [removeProseMargin, proseColors] },
+				DEFAULT: { css: [removeProseMargin, proseColors, removeCodeBackticks] },
+				sm: { css: [removeProseMargin, proseColors, removeCodeBackticks] },
+				base: { css: [removeProseMargin, proseColors, removeCodeBackticks] },
+				lg: { css: [removeProseMargin, proseColors, removeCodeBackticks] },
+				xl: { css: [removeProseMargin, proseColors, removeCodeBackticks] },
+				'2xl': { css: [removeProseMargin, proseColors, removeCodeBackticks] },
 			},
 			colors: {
 				gray: colors.neutral,
