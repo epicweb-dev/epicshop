@@ -19,7 +19,7 @@ import {
 	useLocation,
 	useNavigation,
 } from '@remix-run/react'
-import { useCallback, useEffect, useState } from 'react'
+import { useCallback, useEffect } from 'react'
 import { useSpinDelay } from 'spin-delay'
 import { useTheme } from './routes/theme/index.tsx'
 import { getTheme } from './routes/theme/theme-session.server.ts'

@@ -951,7 +951,7 @@ export async function setPlayground(srcDir: string) {
 				KCDSHOP_PLAYGROUND_DEST_DIR: destDir,
 				KCDSHOP_PLAYGROUND_SRC_DIR: srcDir,
 				KCDSHOP_PLAYGROUND_WAS_RUNNING: playgroundWasRunning.toString(),
-			},
+			} as any,
 		})
 	}
 
@@ -1047,7 +1047,7 @@ export async function setPlayground(srcDir: string) {
 				KCDSHOP_PLAYGROUND_IS_STILL_RUNNING:
 					playgroundIsStillRunning.toString(),
 				KCDSHOP_PLAYGROUND_RESTART_PLAYGROUND: restartPlayground.toString(),
-			},
+			} as any,
 		})
 	}
 
