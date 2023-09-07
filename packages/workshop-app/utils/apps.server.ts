@@ -944,7 +944,7 @@ export async function setPlayground(srcDir: string) {
 	)
 	if (await exists(preSetPlaygroundPath)) {
 		await execa('node', [preSetPlaygroundPath], {
-			cwd: destDir,
+			cwd: workshopRoot,
 			stdio: 'inherit',
 			env: {
 				KCDSHOP_PLAYGROUND_TIMESTAMP: setPlaygroundTimestamp.toString(),
@@ -1037,7 +1037,7 @@ export async function setPlayground(srcDir: string) {
 	)
 	if (await exists(postSetPlaygroundPath)) {
 		await execa('node', [postSetPlaygroundPath], {
-			cwd: destDir,
+			cwd: workshopRoot,
 			stdio: 'inherit',
 			env: {
 				KCDSHOP_PLAYGROUND_TIMESTAMP: setPlaygroundTimestamp.toString(),

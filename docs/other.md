@@ -29,6 +29,4 @@ These will be provided with the following environment variables:
 - `KCDSHOP_PLAYGROUND_RESTART_PLAYGROUND`: Whether the playground will be
   restarted after the `post` script (available in the `post` script only).
 
-These scripts will also be run with the `cwd` set to the playground directory,
-but the actual script run will be the absolute path to the script in the source
-directory.
+These scripts will be run with the `cwd` set to the workshop root.
