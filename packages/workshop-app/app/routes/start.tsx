@@ -4,7 +4,12 @@ import { useFetcher } from '@remix-run/react'
 import { Button } from '~/components/button.tsx'
 import { Loading } from '~/components/loading.tsx'
 import { getAppByName } from '~/utils/apps.server.ts'
-import { ensureUndeployed, invariantResponse } from '~/utils/misc.tsx'
+import {
+	ensureUndeployed,
+	invariantResponse,
+	invariant,
+	useAltDown,
+} from '~/utils/misc.tsx'
 import {
 	closeProcess,
 	runAppDev,
@@ -18,7 +23,7 @@ export async function action({ request }: DataFunctionArgs) {
 	const intent = formData.get('intent')
 	invariantResponse(typeof intent === 'string', 'intent is required')
 
-	if (intent === 'start' || intent === 'stop') {
+	if (intent === 'start' || intent === 'stop' || intent === 'restart') {
 		const name = formData.get('name')
 		invariantResponse(typeof name === 'string', 'name is required')
 		const app = await getAppByName(name)
@@ -31,30 +36,44 @@ export async function action({ request }: DataFunctionArgs) {
 			})
 		}
 
+		async function startApp() {
+			invariant(app, 'app must be defined')
+			const result = await runAppDev(app)
+			if (result.running) {
+				await waitOnApp(app)
+				// wait another 200ms just in case the build output for assets isn't finished
+				await new Promise(resolve => setTimeout(resolve, 200))
+				return json({ status: 'app-started' } as const)
+			} else if (result.portNumber) {
+				return json({
+					status: 'app-not-started',
+					error: result.status,
+					port: result.portNumber,
+				} as const)
+			} else {
+				throw new Response(
+					'Tried starting a server for an app that does not have one',
+					{ status: 400 },
+				)
+			}
+		}
+
+		async function stopApp() {
+			invariant(app, 'app must be defined')
+			await closeProcess(app.name)
+			return json({ status: 'app-stopped' } as const)
+		}
+
 		switch (intent) {
 			case 'start': {
-				const result = await runAppDev(app)
-				if (result.running) {
-					await waitOnApp(app)
-					// wait another 200ms just in case the build output for assets isn't finished
-					await new Promise(resolve => setTimeout(resolve, 200))
-					return json({ status: 'app-started' } as const)
-				} else if (result.portNumber) {
-					return json({
-						status: 'app-not-started',
-						error: result.status,
-						port: result.portNumber,
-					} as const)
-				} else {
-					throw new Response(
-						'Tried starting a server for an app that does not have one',
-						{ status: 400 },
-					)
-				}
+				return startApp()
 			}
 			case 'stop': {
-				await closeProcess(app.name)
-				return json({ status: 'app-stopped' } as const)
+				return stopApp()
+			}
+			case 'restart': {
+				await stopApp()
+				return startApp()
 			}
 		}
 	}
@@ -70,16 +89,24 @@ export async function action({ request }: DataFunctionArgs) {
 
 export function AppStopper({ name }: { name: string }) {
 	const fetcher = useFetcher<typeof action>()
+	const inFlightIntent = fetcher.formData?.get('intent')
+	const inFlightState =
+		inFlightIntent === 'stop'
+			? 'Stopping App'
+			: inFlightIntent === 'restart'
+			? 'Restarting App'
+			: null
+	const altDown = useAltDown()
 	return (
 		<fetcher.Form method="POST" action="/start">
 			<input type="hidden" name="name" value={name} />
 			<button
 				type="submit"
 				name="intent"
-				value="stop"
+				value={altDown ? 'restart' : 'stop'}
 				className="h-full border-r border-border px-3 py-4 font-mono text-xs uppercase leading-none"
 			>
-				{fetcher.state === 'idle' ? 'Stop App' : 'Stopping App'}
+				{inFlightState ? inFlightState : altDown ? 'Restart App' : 'Stop App'}
 			</button>
 		</fetcher.Form>
 	)

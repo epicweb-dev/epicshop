@@ -20,6 +20,8 @@ import { isAppRunning, runAppDev, waitOnApp } from './process-manager.server.ts'
 import { singleton } from './singleton.server.ts'
 import { getServerTimeHeader, type Timings } from './timing.server.ts'
 
+process.env.NODE_ENV = process.env.NODE_ENV ?? 'development'
+
 const workshopRoot = getWorkshopRoot()
 
 const playgroundAppNameInfoPath = path.join(
@@ -932,6 +934,26 @@ export async function setPlayground(srcDir: string) {
 	const playgroundWasRunning = playgroundApp
 		? isAppRunning(playgroundApp)
 		: false
+	const setPlaygroundTimestamp = Date.now()
+
+	// run prepare-playground script if it exists
+	const preSetPlaygroundPath = path.join(
+		srcDir,
+		'kcdshop',
+		'pre-set-playground.js',
+	)
+	if (await exists(preSetPlaygroundPath)) {
+		await execa('node', [preSetPlaygroundPath], {
+			cwd: destDir,
+			stdio: 'inherit',
+			env: {
+				KCDSHOP_PLAYGROUND_TIMESTAMP: setPlaygroundTimestamp.toString(),
+				KCDSHOP_PLAYGROUND_DEST_DIR: destDir,
+				KCDSHOP_PLAYGROUND_SRC_DIR: srcDir,
+				KCDSHOP_PLAYGROUND_WAS_RUNNING: playgroundWasRunning.toString(),
+			},
+		})
+	}
 
 	const basename = path.basename(srcDir)
 	// If we don't delete the destination node_modules first then copying the new
@@ -965,9 +987,9 @@ export async function setPlayground(srcDir: string) {
 				// file watchers (like the remix dev server). In practice, it's definitely
 				// slower, but it's better because it doesn't cause the dev server to
 				// crash as often.
-				const currentContents = await fsExtra.readFile(destFile, 'utf8')
-				const newContents = await fsExtra.readFile(srcFile, 'utf8')
-				if (currentContents === newContents) return false
+				const currentContents = await fsExtra.readFile(destFile)
+				const newContents = await fsExtra.readFile(srcFile)
+				if (currentContents.equals(newContents)) return false
 
 				return true
 			} catch {
@@ -1002,28 +1024,40 @@ export async function setPlayground(srcDir: string) {
 	await fsExtra.ensureDir(path.dirname(playgroundAppNameInfoPath))
 	await fsExtra.writeJSON(playgroundAppNameInfoPath, { appName })
 
-	// run fixup-playground script if it exists
-	const fixupPlaygroundPath = path.join(
-		destDir,
+	const playgroundIsStillRunning = playgroundApp
+		? isAppRunning(playgroundApp)
+		: false
+	const restartPlayground = playgroundWasRunning && !playgroundIsStillRunning
+
+	// run postSet-playground script if it exists
+	const postSetPlaygroundPath = path.join(
+		srcDir,
 		'kcdshop',
-		'fixup-playground.js',
+		'post-set-playground.js',
 	)
-	if (await exists(fixupPlaygroundPath)) {
-		await execa('node', [fixupPlaygroundPath], {
+	if (await exists(postSetPlaygroundPath)) {
+		await execa('node', [postSetPlaygroundPath], {
 			cwd: destDir,
 			stdio: 'inherit',
+			env: {
+				KCDSHOP_PLAYGROUND_TIMESTAMP: setPlaygroundTimestamp.toString(),
+				KCDSHOP_PLAYGROUND_SRC_DIR: srcDir,
+				KCDSHOP_PLAYGROUND_DEST_DIR: destDir,
+				KCDSHOP_PLAYGROUND_WAS_RUNNING: playgroundWasRunning.toString(),
+				KCDSHOP_PLAYGROUND_IS_STILL_RUNNING:
+					playgroundIsStillRunning.toString(),
+				KCDSHOP_PLAYGROUND_RESTART_PLAYGROUND: restartPlayground.toString(),
+			},
 		})
 	}
+
+	if (playgroundApp && restartPlayground) {
+		await runAppDev(playgroundApp)
+		await waitOnApp(playgroundApp)
+	}
+
 	getOptionalWatcher()?.add(playgroundFiles)
 	modifiedTimes.set(destDir, Date.now())
-
-	if (playgroundApp && playgroundWasRunning) {
-		const playgroundIsStillRunning = isAppRunning(playgroundApp)
-		if (!playgroundIsStillRunning) {
-			await runAppDev(playgroundApp)
-			await waitOnApp(playgroundApp)
-		}
-	}
 }
 
 export async function getPlaygroundAppName() {

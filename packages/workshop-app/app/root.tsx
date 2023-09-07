@@ -27,7 +27,7 @@ import appStylesheetUrl from './styles/app.css'
 import tailwindStylesheetUrl from './styles/tailwind.css'
 import { getWorkshopTitle } from './utils/apps.server.ts'
 import { ClientHintCheck, getHints } from './utils/client-hints.tsx'
-import { cn } from './utils/misc.tsx'
+import { cn, useAltDown } from './utils/misc.tsx'
 import {
 	getServerTimeHeader,
 	makeTimings,
@@ -143,17 +143,7 @@ export default function App() {
 		delay: 400,
 		minDuration: 200,
 	})
-	const [altDown, setAltDown] = useState(false)
-
-	useEffect(() => {
-		const set = (e: KeyboardEvent) => setAltDown(e.altKey)
-		document.addEventListener('keydown', set)
-		document.addEventListener('keyup', set)
-		return () => {
-			document.removeEventListener('keyup', set)
-			document.removeEventListener('keydown', set)
-		}
-	}, [])
+	const altDown = useAltDown()
 
 	const theme = useTheme()
 	return (
