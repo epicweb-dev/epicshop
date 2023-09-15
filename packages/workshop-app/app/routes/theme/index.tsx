@@ -9,7 +9,7 @@ import { ErrorList } from '~/utils/forms.tsx'
 import { useRequestInfo } from '~/utils/request-info.ts'
 import { setTheme } from './theme-session.server.ts'
 import { Icon } from '~/components/icons.tsx'
-import { safeRedirect } from 'remix-utils'
+import { safeRedirect } from 'remix-utils/safe-redirect'
 
 const ROUTE_PATH = '/theme'
 
@@ -22,7 +22,6 @@ export async function action({ request }: DataFunctionArgs) {
 	const formData = await request.formData()
 	const submission = parse(formData, {
 		schema: ThemeFormSchema,
-		acceptMultipleErrors: () => true,
 	})
 	if (!submission.value) {
 		return json(

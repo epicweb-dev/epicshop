@@ -1,7 +1,7 @@
 import type {
 	DataFunctionArgs,
 	HeadersFunction,
-	V2_MetaFunction,
+	MetaFunction,
 } from '@remix-run/node'
 import { json } from '@remix-run/node'
 import { Link, useLoaderData } from '@remix-run/react'
@@ -22,10 +22,10 @@ import {
 import { NavChevrons } from '~/components/nav-chevrons.tsx'
 import { invariantResponse } from '~/utils/misc.tsx'
 
-export const meta: V2_MetaFunction<
-	typeof loader,
-	{ root: typeof rootLoader }
-> = ({ data, matches }) => {
+export const meta: MetaFunction<typeof loader, { root: typeof rootLoader }> = ({
+	data,
+	matches,
+}) => {
 	if (!data) {
 		return [{ title: '🦉 | Error' }]
 	}

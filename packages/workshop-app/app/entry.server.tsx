@@ -1,8 +1,10 @@
 import { PassThrough } from 'stream'
 import { renderToPipeableStream } from 'react-dom/server'
 import { RemixServer } from '@remix-run/react'
-import { Response } from '@remix-run/node'
-import type { EntryContext, Headers } from '@remix-run/node'
+import {
+	createReadableStreamFromReadable,
+	type EntryContext,
+} from '@remix-run/node'
 import isbot from 'isbot'
 import { init } from './utils/apps.server.ts'
 import { getEnv } from './utils/env.server.ts'
@@ -35,7 +37,7 @@ export default function handleRequest(
 					responseHeaders.set('Content-Type', 'text/html')
 
 					resolve(
-						new Response(body, {
+						new Response(createReadableStreamFromReadable(body), {
 							status: didError ? 500 : responseStatusCode,
 							headers: responseHeaders,
 						}),

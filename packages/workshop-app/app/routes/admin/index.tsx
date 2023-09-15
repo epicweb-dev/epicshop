@@ -1,4 +1,4 @@
-import type { DataFunctionArgs, V2_MetaFunction } from '@remix-run/node'
+import type { DataFunctionArgs, MetaFunction } from '@remix-run/node'
 import { json } from '@remix-run/node'
 import { Form, Link, useLoaderData, useNavigation } from '@remix-run/react'
 import { type loader as rootLoader } from '~/root.tsx'
@@ -11,10 +11,9 @@ declare global {
 	var __inspector_open__: boolean | undefined
 }
 
-export const meta: V2_MetaFunction<
-	typeof loader,
-	{ root: typeof rootLoader }
-> = ({ matches }) => {
+export const meta: MetaFunction<typeof loader, { root: typeof rootLoader }> = ({
+	matches,
+}) => {
 	const rootData = matches.find(m => m.id === 'root')?.data
 	return [{ title: `👷 | ${rootData?.workshopTitle}` }]
 }
@@ -67,7 +66,7 @@ export async function action({ request }: DataFunctionArgs) {
 	const intent = formData.get('intent')
 	switch (intent) {
 		case 'inspect': {
-			const inspector = await import('inspector')
+			const { inspector } = await import('./admin-utils.server.tsx')
 			if (!global.__inspector_open__) {
 				global.__inspector_open__ = true
 				inspector.open()
@@ -78,7 +77,7 @@ export async function action({ request }: DataFunctionArgs) {
 			}
 		}
 		case 'stop-inspect': {
-			const inspector = await import('inspector')
+			const { inspector } = await import('./admin-utils.server.tsx')
 			if (global.__inspector_open__) {
 				global.__inspector_open__ = false
 				inspector.close()

@@ -1,7 +1,7 @@
 import type {
 	DataFunctionArgs,
 	HeadersFunction,
-	V2_MetaFunction,
+	MetaFunction,
 } from '@remix-run/node'
 import { json } from '@remix-run/node'
 import {
@@ -27,10 +27,10 @@ import {
 	time,
 } from '~/utils/timing.server.ts'
 
-export const meta: V2_MetaFunction<
-	typeof loader,
-	{ root: typeof rootLoader }
-> = ({ data, matches }) => {
+export const meta: MetaFunction<typeof loader, { root: typeof rootLoader }> = ({
+	data,
+	matches,
+}) => {
 	if (!data) {
 		return [{ title: '📝 | Error' }]
 	}

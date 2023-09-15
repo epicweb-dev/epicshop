@@ -2,7 +2,10 @@ import { PassThrough } from 'stream'
 import { renderToPipeableStream } from 'react-dom/server'
 import { RemixServer } from '@remix-run/react'
 import isbot from 'isbot'
-import { type EntryContext, Response } from '@remix-run/node'
+import {
+	createReadableStreamFromReadable,
+	type EntryContext,
+} from '@remix-run/node'
 
 const ABORT_DELAY = 5000
 
@@ -27,7 +30,7 @@ export default function handleRequest(
 
 					responseHeaders.set('Content-Type', 'text/html')
 					resolve(
-						new Response(body, {
+						new Response(createReadableStreamFromReadable(body), {
 							status: didError ? 500 : responseStatusCode,
 							headers: responseHeaders,
 						}),

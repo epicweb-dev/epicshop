@@ -4,7 +4,7 @@ import type {
 	HeadersFunction,
 	LinksFunction,
 	SerializeFrom,
-	V2_MetaFunction,
+	MetaFunction,
 } from '@remix-run/node'
 import { json } from '@remix-run/node'
 import {
@@ -57,11 +57,7 @@ export const links: LinksFunction = () => {
 	]
 }
 
-export const meta: V2_MetaFunction = ({
-	data,
-}: {
-	data: SerializeFrom<typeof loader>
-}) => {
+export const meta: MetaFunction<typeof loader> = ({ data }) => {
 	return [{ title: data?.workshopTitle }]
 }
 

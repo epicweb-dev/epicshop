@@ -3,7 +3,7 @@ import type {
 	DataFunctionArgs,
 	HeadersFunction,
 	SerializeFrom,
-	V2_MetaFunction,
+	MetaFunction,
 } from '@remix-run/node'
 import { defer, redirect } from '@remix-run/node'
 import {
@@ -88,10 +88,10 @@ function pageTitle(
 	}
 }
 
-export const meta: V2_MetaFunction<
-	typeof loader,
-	{ root: typeof rootLoader }
-> = ({ data, matches }) => {
+export const meta: MetaFunction<typeof loader, { root: typeof rootLoader }> = ({
+	data,
+	matches,
+}) => {
 	const rootData = matches.find(m => m.id === 'root')?.data
 	const { emoji, stepNumber, title, exerciseNumber, exerciseTitle } =
 		pageTitle(data)

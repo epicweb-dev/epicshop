@@ -1,7 +1,7 @@
 import type {
 	DataFunctionArgs,
 	HeadersFunction,
-	V2_MetaFunction,
+	MetaFunction,
 } from '@remix-run/node'
 import { json } from '@remix-run/node'
 import { useLoaderData } from '@remix-run/react'
@@ -15,10 +15,9 @@ import {
 	makeTimings,
 } from '~/utils/timing.server.ts'
 
-export const meta: V2_MetaFunction<
-	typeof loader,
-	{ root: typeof rootLoader }
-> = ({ matches }) => {
+export const meta: MetaFunction<typeof loader, { root: typeof rootLoader }> = ({
+	matches,
+}) => {
 	const rootData = matches.find(m => m.id === 'root')?.data
 	return [{ title: `🎉 ${rootData?.workshopTitle}` }]
 }
