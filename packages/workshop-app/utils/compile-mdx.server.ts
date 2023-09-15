@@ -166,9 +166,13 @@ export async function compileMdx(
 			},
 			mdxOptions(options) {
 				options.remarkPlugins = [
+					// @ts-expect-error - the types here are a mess
 					...(options.remarkPlugins ?? []),
+					// @ts-expect-error - the types here are a mess
 					[remarkAutolinkHeadings, { behavior: 'wrap' }],
+					// @ts-expect-error - the types here are a mess
 					gfm,
+					// @ts-expect-error - the types here are a mess
 					() => (tree: MdastRoot) => {
 						visit(tree, 'heading', node => {
 							if (title) return
@@ -180,7 +184,9 @@ export async function compileMdx(
 						})
 						title = title ? title.replace(/^\d+\. /, '').trim() : null
 					},
+					// @ts-expect-error - the types here are a mess
 					() => remarkCodeFile(codeFileData),
+					// @ts-expect-error - the types here are a mess
 					emoji,
 				]
 				options.rehypePlugins = [

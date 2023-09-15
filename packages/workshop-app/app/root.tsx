@@ -3,7 +3,6 @@ import type {
 	DataFunctionArgs,
 	HeadersFunction,
 	LinksFunction,
-	SerializeFrom,
 	MetaFunction,
 } from '@remix-run/node'
 import { json } from '@remix-run/node'
