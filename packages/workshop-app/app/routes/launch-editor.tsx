@@ -260,9 +260,7 @@ function LaunchGitHub({
 	appFile,
 	appName,
 	line,
-	column,
 	children,
-	onUpdate,
 }: LaunchEditorProps) {
 	if (Array.isArray(appFile)) {
 		return <div>Cannot open more than one file</div>
