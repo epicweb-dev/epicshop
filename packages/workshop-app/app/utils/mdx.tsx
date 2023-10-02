@@ -205,7 +205,13 @@ function VideoEmbed({
 }
 
 function extractEpicTitle(urlString: string) {
-	const titleSegment = urlString.split('/').pop()
+	const url = new URL(urlString)
+	const urlSegments = url.pathname.split('/').filter(Boolean)
+	let titleSegment = urlSegments.pop()
+	const nonTitles = ['problem', 'solution', 'embed']
+	const isTitleSegment = (str?: string) => str && !nonTitles.includes(str)
+	while (!isTitleSegment(titleSegment)) titleSegment = urlSegments.pop()
+
 	if (!titleSegment) return 'EpicWeb.dev Video'
 
 	const titleWords = titleSegment.split('-')
