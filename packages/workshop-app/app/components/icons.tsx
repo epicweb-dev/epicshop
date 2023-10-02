@@ -1,4 +1,4 @@
-import React from 'react'
+import * as React from 'react'
 
 type Sizes = 16 | 20 | 24 | 28 | 32 | 40
 

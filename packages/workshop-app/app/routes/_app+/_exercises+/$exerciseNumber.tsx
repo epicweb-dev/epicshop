@@ -85,11 +85,6 @@ export async function loader({ params, request }: DataFunctionArgs) {
 			firstStep,
 			firstType: firstStep?.problem ? 'problem' : 'solution',
 			title: workshopTitle,
-			// exercises: exercises.map(e => ({
-			// 	exerciseNumber: e.exerciseNumber,
-			// 	title: e.title,
-			// 	firstStep: e.steps.find(Boolean),
-			// })),
 		},
 		{
 			headers: {
@@ -114,48 +109,44 @@ export default function ExerciseNumberRoute() {
 	const firstStepNumber = String(data.firstStep?.stepNumber ?? '01')
 	const firstStepPath = `${firstStepNumber.padStart(2, '0')}/${data.firstType}`
 	return (
-		<main className="relative w-full">
-			<div
+		<main className="relative flex h-full w-full max-w-5xl flex-col justify-between border-r border-border md:w-3/4 lg:w-2/3">
+			<article
 				data-restore-scroll="true"
-				className="shadow-on-scrollbox h-full w-full overflow-y-auto scrollbar-thin scrollbar-thumb-scrollbar"
+				className="shadow-on-scrollbox flex w-full flex-1 flex-col gap-12 overflow-y-scroll border-border px-10 py-12 pt-16 scrollbar-thin scrollbar-thumb-scrollbar"
 			>
-				<article className="flex min-h-full w-full flex-col justify-between border-r border-border md:w-3/4 lg:w-2/3">
-					<div>
-						<div className="px-10 pt-16">
-							<h1 className="text-[6vw] font-extrabold leading-none">
-								{data.exercise.title}
-							</h1>
-							<div className="mt-8">
-								<ButtonLink to={firstStepPath} prefetch="intent" varient="big">
-									Start Learning
-								</ButtonLink>
-							</div>
-						</div>
-						<div className="prose mt-16 w-full max-w-none border-t border-border px-10 pt-16 dark:prose-invert sm:prose-lg">
-							{data.exercise.instructionsCode ? (
-								<Mdx
-									code={data.exercise?.instructionsCode}
-									components={{
-										h1: () => null,
-									}}
-								/>
-							) : (
-								'No instructions yet...'
-							)}
-						</div>
-						<div className="flex w-full items-center p-10 pb-16">
-							<ButtonLink to={firstStepPath} prefetch="intent" varient="big">
-								Start Learning
-							</ButtonLink>
-						</div>
+				<div>
+					<h1 className="text-[6vw] font-extrabold leading-none">
+						{data.exercise.title}
+					</h1>
+					<div className="mt-8">
+						<ButtonLink to={firstStepPath} prefetch="intent" varient="big">
+							Start Learning
+						</ButtonLink>
 					</div>
-					<div className="flex h-[52px] justify-center border-t border-border">
-						<EditFileOnGitHub
-							file={data.exerciseReadme.file}
-							relativePath={data.exerciseReadme.relativePath}
+				</div>
+				<div className="prose dark:prose-invert sm:prose-lg">
+					{data.exercise.instructionsCode ? (
+						<Mdx
+							code={data.exercise?.instructionsCode}
+							components={{
+								h1: () => null,
+							}}
 						/>
-					</div>
-				</article>
+					) : (
+						'No instructions yet...'
+					)}
+				</div>
+				<div className="flex w-full items-center">
+					<ButtonLink to={firstStepPath} prefetch="intent" varient="big">
+						Start Learning
+					</ButtonLink>
+				</div>
+			</article>
+			<div className="flex h-[52px] justify-center border-t border-border">
+				<EditFileOnGitHub
+					file={data.exerciseReadme.file}
+					relativePath={data.exerciseReadme.relativePath}
+				/>
 			</div>
 		</main>
 	)

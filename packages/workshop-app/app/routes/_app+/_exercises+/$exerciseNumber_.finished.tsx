@@ -1,3 +1,4 @@
+import path from 'path'
 import type {
 	DataFunctionArgs,
 	HeadersFunction,
@@ -9,6 +10,7 @@ import {
 	getAppPageRoute,
 	getApps,
 	getExercise,
+	getWorkshopRoot,
 	getWorkshopTitle,
 	isExerciseStepApp,
 } from '~/utils/apps.server.ts'
@@ -20,7 +22,10 @@ import {
 	makeTimings,
 } from '~/utils/timing.server.ts'
 import { NavChevrons } from '~/components/nav-chevrons.tsx'
-import { invariantResponse } from '~/utils/misc.tsx'
+import { cn, invariantResponse } from '~/utils/misc.tsx'
+import * as React from 'react'
+import { Mdx } from '~/utils/mdx.tsx'
+import { EditFileOnGitHub } from '~/routes/launch-editor.tsx'
 
 export const meta: MetaFunction<typeof loader, { root: typeof rootLoader }> = ({
 	data,
@@ -54,6 +59,13 @@ export async function loader({ params, request }: DataFunctionArgs) {
 		request,
 	})
 
+	const finishedFilepath = path.join(
+		getWorkshopRoot(),
+		'exercises',
+		exercise.dirName,
+		'FINISHED.mdx',
+	)
+
 	const apps = await getApps({ request, timings })
 	const exerciseApps = apps
 		.filter(isExerciseStepApp)
@@ -64,6 +76,12 @@ export async function loader({ params, request }: DataFunctionArgs) {
 		{
 			workshopTitle,
 			exercise,
+			exerciseFinished: exercise.finishedCode
+				? {
+						file: finishedFilepath,
+						relativePath: `exercises/${exercise.dirName}/FINISHED.mdx`,
+				  }
+				: null,
 			prevStepLink: prevApp
 				? {
 						to: getAppPageRoute(prevApp),
@@ -99,37 +117,93 @@ export const headers: HeadersFunction = ({ loaderHeaders, parentHeaders }) => {
 
 export default function ExerciseFinished() {
 	const data = useLoaderData<typeof loader>()
-	const searchParams = new URLSearchParams([
-		['embedded', 'true'],
-		['entry.1836176234', data.workshopTitle],
-		['entry.428900931', data.exercise.title],
-	])
 	const exerciseNumber = data.exercise.exerciseNumber
 		.toString()
 		.padStart(2, '0')
+
+	const {
+		workshopTitle,
+		exercise: { title: exerciseTitle },
+	} = data
+
 	return (
-		<main className="flex w-full flex-col">
-			<div className="grid w-full flex-grow grid-cols-2 overflow-y-auto">
-				<div className="flex flex-grow flex-col border-r border-border">
-					<h4 className="border-b border-border py-[20.5px] pl-[58px] font-mono text-sm font-medium uppercase leading-none">
-						<Link to={`/${exerciseNumber}`} className="underline">
-							{`${exerciseNumber}. ${data.exercise.title}`}
-						</Link>
-						{` | Elaboration`}
-					</h4>
-					<iframe
-						className="flex-grow bg-white pt-4"
-						title="Elaboration"
-						src={`https://docs.google.com/forms/d/e/1FAIpQLSf3o9xyjQepTlOTH5Z7ZwkeSTdXh6YWI_RGc9KiyD3oUN0p6w/viewform?${searchParams.toString()}&hl=en`}
+		<div className="flex flex-grow flex-col">
+			<main className="grid h-full flex-grow grid-cols-1 grid-rows-2 lg:grid-cols-2 lg:grid-rows-1">
+				<div className="relative col-span-1 row-span-1 flex h-full flex-col border-r border-border">
+					<h1 className="h-14 border-b border-border pl-10 pr-5 text-sm font-medium uppercase leading-none">
+						<div className="flex h-14 flex-wrap items-center justify-between gap-x-2 py-2">
+							<div className="flex items-center justify-start gap-x-2">
+								<Link to={`/${exerciseNumber}`} className="hover:underline">
+									{`${exerciseNumber}. ${data.exercise.title}`}
+								</Link>
+								<span>/</span>
+								<span>Elaboration</span>
+							</div>
+						</div>
+					</h1>
+
+					<article
+						className="shadow-on-scrollbox prose h-full w-full max-w-none flex-1 space-y-6 overflow-y-auto p-10 pt-8 scrollbar-thin scrollbar-thumb-scrollbar dark:prose-invert sm:prose-lg"
+						data-restore-scroll="true"
 					>
-						<Loading />
-					</iframe>
-					<div className="flex h-[52px] justify-end border-t border-border">
+						{data.exercise.finishedCode ? (
+							<Mdx
+								code={data.exercise.finishedCode}
+								components={{ h1: () => null }}
+							/>
+						) : (
+							// TODO: render a random dad joke...
+							'No finished instructions yet...'
+						)}
+					</article>
+					<div className="flex h-16 justify-between border-b-4 border-t border-border lg:border-b-0">
+						<div />
+						{data.exerciseFinished ? (
+							<EditFileOnGitHub
+								file={data.exerciseFinished.file}
+								relativePath={data.exerciseFinished.relativePath}
+							/>
+						) : null}
 						<NavChevrons prev={data.prevStepLink} next={data.nextStepLink} />
 					</div>
 				</div>
-				<div></div>
-			</div>
-		</main>
+				<Survey workshopTitle={workshopTitle} exerciseTitle={exerciseTitle} />
+			</main>
+		</div>
+	)
+}
+
+function Survey({
+	workshopTitle,
+	exerciseTitle,
+}: {
+	workshopTitle: string
+	exerciseTitle: string
+}) {
+	const [iframeLoaded, setIframeLoaded] = React.useState(false)
+	const searchParams = new URLSearchParams([
+		['embedded', 'true'],
+		['entry.1836176234', workshopTitle],
+		['entry.428900931', exerciseTitle],
+	])
+	return (
+		<div className="relative flex-shrink-0">
+			{!iframeLoaded ? (
+				<div className="absolute inset-0 z-10 flex items-center justify-center">
+					<Loading>
+						<span>Loading {exerciseTitle} Elaboration form</span>
+					</Loading>
+				</div>
+			) : null}
+			<iframe
+				onLoad={() => setIframeLoaded(true)}
+				title="Elaboration"
+				src={`https://docs.google.com/forms/d/e/1FAIpQLSf3o9xyjQepTlOTH5Z7ZwkeSTdXh6YWI_RGc9KiyD3oUN0p6w/viewform?${searchParams.toString()}&hl=en`}
+				className={cn(
+					'absolute inset-0 flex h-full w-full transition-opacity duration-300',
+					iframeLoaded ? 'opacity-100' : 'opacity-0',
+				)}
+			/>
+		</div>
 	)
 }

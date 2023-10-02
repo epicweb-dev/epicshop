@@ -183,7 +183,7 @@ function VideoEmbed({
 	const [iframeLoaded, setIframeLoaded] = React.useState(false)
 
 	return (
-		<div className="relative aspect-video w-full shadow-lg dark:shadow-gray-800">
+		<div className="relative aspect-video w-full flex-shrink-0 shadow-lg dark:shadow-gray-800">
 			{!iframeLoaded ? (
 				<div className="absolute inset-0 z-10 flex items-center justify-center">
 					{loadingContent}
@@ -205,8 +205,15 @@ function VideoEmbed({
 }
 
 function extractEpicTitle(urlString: string) {
-	const url = new URL(urlString)
+	let url: URL = new URL('https://epicweb.dev')
+	try {
+		url = new URL(urlString)
+	} catch (error) {
+		console.error(error)
+		return 'EpicWeb.dev Video'
+	}
 	const urlSegments = url.pathname.split('/').filter(Boolean)
+	const isSolution = urlSegments.includes('solution')
 	let titleSegment = urlSegments.pop()
 	const nonTitles = ['problem', 'solution', 'embed', 'exercise']
 	const isTitleSegment = (str?: string) => str && !nonTitles.includes(str)
@@ -228,6 +235,9 @@ function extractEpicTitle(urlString: string) {
 				: word[0]?.toUpperCase() + word.slice(1),
 		)
 		.join(' ')
+	if (isSolution) {
+		return `${title} (🏁 solution)`
+	}
 	return title
 }
 
@@ -238,11 +248,17 @@ function EpicVideo({
 	url: string
 	title?: string
 }) {
-	const url = new URL(urlString)
+	const theme = useTheme()
+	let url: URL = new URL('https://epicweb.dev')
+	try {
+		url = new URL(urlString)
+	} catch (error) {
+		console.error(error)
+		return <div>Invalid URL: "{urlString}"</div>
+	}
 	url.pathname = url.pathname.endsWith('/')
 		? `${url.pathname}embed`
 		: `${url.pathname}/embed`
-	const theme = useTheme()
 	url.searchParams.set('theme', theme)
 	return (
 		<VideoEmbed

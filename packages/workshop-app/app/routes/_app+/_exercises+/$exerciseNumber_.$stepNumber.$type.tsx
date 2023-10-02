@@ -664,9 +664,9 @@ export default function ExercisePartRoute() {
 
 	return (
 		<div className="flex flex-grow flex-col">
-			<div className="grid h-full flex-grow grid-cols-1 grid-rows-2 lg:grid-cols-2 lg:grid-rows-1">
+			<main className="grid h-full flex-grow grid-cols-1 grid-rows-2 lg:grid-cols-2 lg:grid-rows-1">
 				<div className="relative col-span-1 row-span-1 flex h-full flex-col border-r border-border">
-					<h4 className="min-h-[56px] border-b pl-10 pr-5 text-sm font-medium uppercase leading-tight">
+					<h1 className="h-14 border-b pl-10 pr-5 text-sm font-medium uppercase leading-tight">
 						<div className="flex h-14 flex-wrap items-center justify-between gap-x-2 py-2">
 							<div className="flex items-center justify-start gap-x-2">
 								<Link
@@ -688,9 +688,9 @@ export default function ExercisePartRoute() {
 								<SetAppToPlayground appName={data.problem.name} />
 							) : null}
 						</div>
-					</h4>
+					</h1>
 					<article
-						className="shadow-on-scrollbox prose h-full w-full max-w-none space-y-6 overflow-y-auto p-10 pt-8 scrollbar-thin scrollbar-thumb-scrollbar dark:prose-invert sm:prose-lg"
+						className="shadow-on-scrollbox prose h-full w-full max-w-none flex-1 space-y-6 overflow-y-auto p-10 pt-8 scrollbar-thin scrollbar-thumb-scrollbar dark:prose-invert sm:prose-lg"
 						data-restore-scroll="true"
 					>
 						{data.exerciseStepApp.instructionsCode ? (
@@ -831,7 +831,7 @@ export default function ExercisePartRoute() {
 						</Tabs.Content>
 					</div>
 				</Tabs.Root>
-			</div>
+			</main>
 		</div>
 	)
 }

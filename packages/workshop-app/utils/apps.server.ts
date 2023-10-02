@@ -44,6 +44,7 @@ type Exercise = {
 	/** the title of the app used for display (comes from the first h1 in the README) */
 	title: string
 	instructionsCode?: string
+	finishedCode?: string
 	steps: Array<
 		{ stepNumber: number } & ( // it'll have both or one, but never neither
 			| { problem: ProblemApp; solution: SolutionApp }
@@ -219,30 +220,11 @@ async function readDir(dir: string) {
 	return []
 }
 
-export async function getReadmePath({
-	appDir,
-	stepNumber,
-}: {
-	appDir: string
-	stepNumber?: number
-}) {
-	let readmeFile = 'README.mdx'
-	if (stepNumber) {
-		readmeFile = `README.${stepNumber.toString().padStart(2, '0')}.mdx`
-		readmeFile = (await exists(path.join(appDir, readmeFile)))
-			? readmeFile
-			: 'README.mdx'
-	}
-	return path.join(appDir, readmeFile)
-}
-
-async function compileReadme(appDir: string, number?: number) {
-	const readmeFilepath = (
-		await getReadmePath({ appDir, stepNumber: number })
-	).replace(/\\/g, '/')
-	if (await exists(readmeFilepath)) {
-		const compiled = await compileMdx(readmeFilepath).catch(error => {
-			console.error(`Error compiling ${readmeFilepath}:`, error)
+async function compileMdxIfExists(filepath: string) {
+	filepath = filepath.replace(/\\/g, '/')
+	if (await exists(filepath)) {
+		const compiled = await compileMdx(filepath).catch(error => {
+			console.error(`Error compiling ${filepath}:`, error)
 			return null
 		})
 		return compiled
@@ -290,8 +272,11 @@ export async function getExercises({
 	for (const dirName of exerciseDirs) {
 		const exerciseNumber = extractExerciseNumber(dirName)
 		if (!exerciseNumber) continue
-		const compiledReadme = await compileReadme(
-			path.join(workshopRoot, 'exercises', dirName),
+		const compiledReadme = await compileMdxIfExists(
+			path.join(workshopRoot, 'exercises', dirName, 'README.mdx'),
+		)
+		const compiledFinished = await compileMdxIfExists(
+			path.join(workshopRoot, 'exercises', dirName, 'FINISHED.mdx'),
 		)
 		const steps: Exercise['steps'] = []
 		const exerciseApps = apps
@@ -309,6 +294,7 @@ export async function getExercises({
 			exerciseNumber,
 			dirName,
 			instructionsCode: compiledReadme?.code,
+			finishedCode: compiledFinished?.code,
 			title: compiledReadme?.title ?? dirName,
 			steps,
 			problems: apps
@@ -581,7 +567,7 @@ async function getPlaygroundApp({
 			const name = getAppName(playgroundDir)
 			const portNumber = 4000
 			const [compiledReadme, test, dev] = await Promise.all([
-				compileReadme(playgroundDir),
+				compileMdxIfExists(path.join(playgroundDir, 'README.mdx')),
 				getTestInfo({ fullPath: playgroundDir }),
 				getDevInfo({ fullPath: playgroundDir, portNumber }),
 			])
@@ -612,7 +598,9 @@ async function getExampleAppFromPath(
 	index: number,
 ): Promise<ExampleApp> {
 	const dirName = path.basename(fullPath)
-	const compiledReadme = await compileReadme(fullPath)
+	const compiledReadme = await compileMdxIfExists(
+		path.join(fullPath, 'README.mdx'),
+	)
 	const name = getAppName(fullPath)
 	const portNumber = 8000 + index
 	return {
@@ -679,7 +667,9 @@ async function getSolutionAppFromPath(
 	if (!info) return null
 	const { stepNumber } = info
 	const portNumber = 7000 + (exerciseNumber - 1) * 10 + stepNumber
-	const compiledReadme = await compileReadme(fullPath)
+	const compiledReadme = await compileMdxIfExists(
+		path.join(fullPath, 'README.mdx'),
+	)
 	const problemDir = await findProblemDir({
 		fullPath,
 	})
@@ -755,7 +745,9 @@ async function getProblemAppFromPath(
 	if (!info) return null
 	const { stepNumber } = info
 	const portNumber = 6000 + (exerciseNumber - 1) * 10 + stepNumber
-	const compiledReadme = await compileReadme(fullPath, stepNumber)
+	const compiledReadme = await compileMdxIfExists(
+		path.join(fullPath, 'README.mdx'),
+	)
 	const solutionDir = await findSolutionDir({
 		fullPath,
 	})
