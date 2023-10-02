@@ -208,7 +208,7 @@ function extractEpicTitle(urlString: string) {
 	const url = new URL(urlString)
 	const urlSegments = url.pathname.split('/').filter(Boolean)
 	let titleSegment = urlSegments.pop()
-	const nonTitles = ['problem', 'solution', 'embed']
+	const nonTitles = ['problem', 'solution', 'embed', 'exercise']
 	const isTitleSegment = (str?: string) => str && !nonTitles.includes(str)
 	while (!isTitleSegment(titleSegment)) titleSegment = urlSegments.pop()
 
