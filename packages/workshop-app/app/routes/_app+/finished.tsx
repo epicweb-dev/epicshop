@@ -161,7 +161,7 @@ function Survey({ workshopTitle }: { workshopTitle: string }) {
 			<iframe
 				onLoad={() => setIframeLoaded(true)}
 				title="Elaboration"
-				src={`https://docs.google.com/forms/d/e/1FAIpQLSf3o9xyjQepTlOTH5Z7ZwkeSTdXh6YWI_RGc9KiyD3oUN0p6w/viewform?${searchParams.toString()}&hl=en`}
+				src={`https://docs.google.com/forms/d/e/1FAIpQLSdRmj9p8-5zyoqRzxp3UpqSbC3aFkweXvvJIKes0a5s894gzg/viewform?${searchParams.toString()}&hl=en`}
 				className={cn(
 					'absolute inset-0 flex h-full w-full transition-opacity duration-300',
 					iframeLoaded ? 'opacity-100' : 'opacity-0',
