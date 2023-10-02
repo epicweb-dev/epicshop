@@ -1,6 +1,6 @@
 # MDX
 
-## Codeblocks
+## Code blocks
 
 Code blocks can have several options. They all come from
 [@kentcdodds/md-temp](https://npm.im/@kentcdodds/md-temp) (lol at the "-temp"
@@ -113,8 +113,9 @@ Link to diff route or diff preview, to show git diff between two examples app.
 
 - `app1`, `app2`: string | number - one of this format:
 
-  - EXERCISES_NAME - `exercises__sep__01.nested-routing__sep__01.problem.outlet`
-  - EXERCISENUMBERSTR/STEPNUMBERSTR.TYPE - `app1="02/02.problem"`
+  - `EXERCISES_NAME` -
+    `exercises__sep__01.nested-routing__sep__01.problem.outlet`
+  - `EXERCISENUMBERSTR/STEPNUMBERSTR.TYPE` - `app1="02/02.problem"`
   - offset step - 0, ±1, ±2... `app1={1}` - next step, step are in order of
     problem,solution,problem,solution, `app1={0} app2={4}` if current step is
     from `01/01.problem` to `01/03.problem`
@@ -133,4 +134,30 @@ Link to diff route or diff preview, to show git diff between two examples app.
 <DiffLink app1="02/01.solution" app2="02/02.problem">
   Go to Diff from: <code>01.problem.outlet</code> to: <code>01.solution.outlet</code>
 </DiffLink>
+```
+
+### `VideoEmbed`
+
+This allows you to embed a video from wherever. It adds a `theme` search param
+to the URL so hopefully whatever you're using supports theming that way
+(epicweb.dev does).
+
+```tsx
+<VideoEmbed
+  title="How to surprise people"
+  url="https://www.youtube.com/embed/dQw4w9WgXcQ?si=sVDrST4piI5vo1rn"
+/>
+```
+
+The `title` is used for display while the video is loading.
+
+As a short-cut, if your video comes from EpicWeb.dev, you can use `EpicVideo`
+which will auto-append a `/embed` to the end of the given URL, link to the video
+in the loading screen, and do its best to give a proper default title to the
+video.
+
+```tsx
+<EpicVideo
+	url="https://www.epicweb.dev/workshops/full-stack-foundations/styling/intro-to-full-stack-foundations-workshop"
+/>
 ```

@@ -10,6 +10,7 @@ import { type loader } from '~/routes/_app+/_exercises+/$exerciseNumber_.$stepNu
 import { LaunchEditor } from '~/routes/launch-editor.tsx'
 import { AnchorOrLink, cn } from './misc.tsx'
 import { useTheme } from '~/routes/theme/index.tsx'
+import { Loading } from '~/components/loading.tsx'
 
 const safePath = (s: string) => s.replace(/\\/g, '/')
 
@@ -166,10 +167,67 @@ export function PreWithButtons({ children, ...props }: any) {
 		</div>
 	)
 }
+function VideoEmbed({
+	url,
+	title = 'Video Embed',
+	loadingContent = (
+		<Loading>
+			<span>Loading "{title}"</span>
+		</Loading>
+	),
+}: {
+	url: string
+	title?: string
+	loadingContent?: React.ReactNode
+}) {
+	const [iframeLoaded, setIframeLoaded] = React.useState(false)
+
+	return (
+		<div className="relative aspect-video w-full shadow-lg dark:shadow-gray-800">
+			{!iframeLoaded ? (
+				<div className="absolute inset-0 z-10 flex items-center justify-center">
+					{loadingContent}
+				</div>
+			) : null}
+			<iframe
+				onLoad={() => setIframeLoaded(true)}
+				src={url}
+				className={cn(
+					'absolute inset-0 flex h-full w-full transition-opacity duration-300',
+					iframeLoaded ? 'opacity-100' : 'opacity-0',
+				)}
+				title={title}
+				sandbox="allow-forms allow-scripts allow-same-origin allow-popups allow-popups-to-escape-sandbox"
+				allowFullScreen
+			/>
+		</div>
+	)
+}
+
+function extractEpicTitle(urlString: string) {
+	const titleSegment = urlString.split('/').pop()
+	if (!titleSegment) return 'EpicWeb.dev Video'
+
+	const titleWords = titleSegment.split('-')
+	// prettier-ignore
+	const titleCaseExcludeWords = [
+		'the', 'a', 'an', 'and', 'but', 'or', 'for', 'nor', 'on', 'at', 'to',
+		'from', 'by', 'of', 'in', 'with', 'as',
+	]
+	const title = titleWords
+		.filter(Boolean)
+		.map((word, index) =>
+			titleCaseExcludeWords.includes(word) && index > 0
+				? word
+				: word[0]?.toUpperCase() + word.slice(1),
+		)
+		.join(' ')
+	return title
+}
 
 function EpicVideo({
 	url: urlString,
-	title = 'EpicWeb.dev Video',
+	title = extractEpicTitle(urlString),
 }: {
 	url: string
 	title?: string
@@ -181,18 +239,21 @@ function EpicVideo({
 	const theme = useTheme()
 	url.searchParams.set('theme', theme)
 	return (
-		<div className="relative aspect-video w-full shadow-lg dark:shadow-gray-800">
-			<div className="absolute inset-0 flex items-center justify-center">
-				<span>Loading "{title}"...</span>
-			</div>
-			<iframe
-				src={url.toString()}
-				className="absolute inset-0 z-10 flex h-full w-full"
-				title={title}
-				sandbox="allow-forms allow-scripts allow-same-origin allow-popups allow-popups-to-escape-sandbox"
-				allowFullScreen
-			/>
-		</div>
+		<VideoEmbed
+			url={url.toString()}
+			title={title}
+			loadingContent={
+				<Loading>
+					<span>
+						{'Loading "'}
+						<a className="underline" href={urlString}>
+							{title}
+						</a>
+						{'"'}
+					</span>
+				</Loading>
+			}
+		/>
 	)
 }
 
@@ -211,6 +272,7 @@ export const mdxComponents = {
 		/>
 	),
 	LaunchEditor,
+	VideoEmbed,
 	EpicVideo,
 }
 

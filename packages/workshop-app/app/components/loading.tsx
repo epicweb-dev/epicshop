@@ -2,8 +2,18 @@
 // and very out-dated. I've replaced it with a simple Characters component that
 // does the same thing we were using baffle-react for
 import { useEffect, useRef, useState } from 'react'
+import { useHints } from '~/utils/client-hints.tsx'
 
-export function Loading({ children }: { children?: React.ReactNode }) {
+export function Loading({
+	children = 'Loading',
+}: {
+	children?: React.ReactNode
+}) {
+	const { reducedMotion } = useHints()
+	if (reducedMotion === 'reduce') {
+		return <div className="animate-pulse">{children}</div>
+	}
+
 	return (
 		<div
 			className="flex items-center gap-2 font-mono text-sm font-medium uppercase"
@@ -12,7 +22,7 @@ export function Loading({ children }: { children?: React.ReactNode }) {
 			<div aria-hidden="true">
 				<Characters />
 			</div>
-			{children ? children : 'Loading'}
+			{children}
 			<div aria-hidden="true">
 				<Characters />
 			</div>

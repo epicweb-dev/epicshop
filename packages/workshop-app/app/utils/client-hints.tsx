@@ -15,6 +15,14 @@ export const clientHints = {
 			return value === 'dark' ? 'dark' : 'light'
 		},
 	},
+	reducedMotion: {
+		cookieName: 'KCDShop_CH-reduced-motion',
+		getValueCode: `window.matchMedia('(prefers-reduced-motion: reduce)').matches ? 'reduce' : 'no-preference'`,
+		fallback: 'no-preference',
+		transform(value: string | null) {
+			return value === 'reduce' ? 'reduce' : 'no-preference'
+		},
+	},
 	// add other hints here
 }
 
@@ -92,6 +100,20 @@ export function ClientHintCheck() {
 			themeQuery.removeEventListener('change', handleThemeChange)
 		}
 	}, [revalidate])
+
+	React.useEffect(() => {
+		const motionQuery = window.matchMedia('(prefers-reduced-motion: reduce)')
+		function handleMotionChange() {
+			document.cookie = `${clientHints.reducedMotion.cookieName}=${
+				motionQuery.matches ? 'reduce' : 'no-preference'
+			}`
+			revalidate()
+		}
+		motionQuery.addEventListener('change', handleMotionChange)
+		return () => {
+			motionQuery.removeEventListener('change', handleMotionChange)
+		}
+	})
 
 	return (
 		<script
