@@ -62,6 +62,7 @@ export type IconNames =
 	| 'Sun'
 	| 'Moon'
 	| 'Laptop'
+	| 'Video'
 
 export function Icon({
 	title,
