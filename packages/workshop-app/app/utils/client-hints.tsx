@@ -92,7 +92,7 @@ export function ClientHintCheck() {
 		function handleThemeChange() {
 			document.cookie = `${clientHints.theme.cookieName}=${
 				themeQuery.matches ? 'dark' : 'light'
-			}`
+			}; Max-Age=31536000; Path=/`
 			revalidate()
 		}
 		themeQuery.addEventListener('change', handleThemeChange)
@@ -106,7 +106,7 @@ export function ClientHintCheck() {
 		function handleMotionChange() {
 			document.cookie = `${clientHints.reducedMotion.cookieName}=${
 				motionQuery.matches ? 'reduce' : 'no-preference'
-			}`
+			}; Max-Age=31536000; Path=/`
 			revalidate()
 		}
 		motionQuery.addEventListener('change', handleMotionChange)
@@ -136,7 +136,7 @@ ${Object.values(clientHints)
 for (const hint of hints) {
 	if (hint.cookie !== hint.actual) {
 		cookieChanged = true;
-		document.cookie = encodeURIComponent(hint.name) + '=' + encodeURIComponent(hint.actual) + '; Max-Age=1314000; Path=/';
+		document.cookie = encodeURIComponent(hint.name) + '=' + encodeURIComponent(hint.actual) + '; Max-Age=31536000; Path=/';
 	}
 }
 if (cookieChanged && navigator.cookieEnabled) {
