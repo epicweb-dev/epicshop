@@ -8,7 +8,7 @@ import * as React from 'react'
 import { Icon } from '~/components/icons.tsx'
 import { type loader } from '~/routes/_app+/_exercises+/$exerciseNumber_.$stepNumber.$type.tsx'
 import { LaunchEditor } from '~/routes/launch-editor.tsx'
-import { AnchorOrLink, cn } from './misc.tsx'
+import { AnchorOrLink, Heading, cn } from './misc.tsx'
 import { useTheme } from '~/routes/theme/index.tsx'
 import { Loading } from '~/components/loading.tsx'
 
@@ -280,6 +280,12 @@ function EpicVideo({
 }
 
 export const mdxComponents = {
+	h1: (props: any) => <Heading {...props} as="h1" />,
+	h2: (props: any) => <Heading {...props} as="h2" />,
+	h3: (props: any) => <Heading {...props} as="h3" />,
+	h4: (props: any) => <Heading {...props} as="h4" />,
+	h5: (props: any) => <Heading {...props} as="h5" />,
+	h6: (props: any) => <Heading {...props} as="h6" />,
 	a: AnchorOrLink,
 	// you can't put a <form> inside a <p> so we'll just use a div
 	// if this is a problem, then render the form outside of the MDX and update <LaunchEditor /> to reference that one instead or something.

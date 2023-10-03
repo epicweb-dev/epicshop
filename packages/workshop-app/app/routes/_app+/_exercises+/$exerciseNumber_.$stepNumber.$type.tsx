@@ -690,7 +690,7 @@ export default function ExercisePartRoute() {
 						</div>
 					</h1>
 					<article
-						className="shadow-on-scrollbox prose h-full w-full max-w-none flex-1 space-y-6 overflow-y-auto p-10 pt-8 scrollbar-thin scrollbar-thumb-scrollbar dark:prose-invert sm:prose-lg"
+						className="shadow-on-scrollbox prose h-full w-full max-w-none flex-1 scroll-pt-6 space-y-6 overflow-y-auto p-10 pt-8 scrollbar-thin scrollbar-thumb-scrollbar dark:prose-invert sm:prose-lg"
 						data-restore-scroll="true"
 					>
 						{data.exerciseStepApp.instructionsCode ? (

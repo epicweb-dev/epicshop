@@ -76,6 +76,7 @@
     "@remix-run/express": "^2.0.0",
     "@remix-run/node": "^2.0.0",
     "@remix-run/react": "^2.0.0",
+    "@sindresorhus/slugify": "^2.2.1",
     "@types/chai": "^4.3.6",
     "@types/chai-dom": "^1.11.1",
     "address": "^1.2.2",

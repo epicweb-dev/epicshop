@@ -117,7 +117,7 @@ export default function Index() {
 							</h1>
 							<div className="mt-8">{exerciseLinks}</div>
 						</div>
-						<div className="prose mt-16 w-full max-w-none border-t border-border px-10 pt-16 dark:prose-invert sm:prose-lg">
+						<div className="prose mt-16 w-full max-w-none scroll-pt-6 border-t border-border px-10 pt-16 dark:prose-invert sm:prose-lg">
 							{data.workshopReadme.compiled.status === 'success' &&
 							data.workshopReadme.compiled.code ? (
 								<Mdx
