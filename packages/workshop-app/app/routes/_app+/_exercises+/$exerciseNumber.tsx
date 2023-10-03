@@ -124,7 +124,7 @@ export default function ExerciseNumberRoute() {
 						</ButtonLink>
 					</div>
 				</div>
-				<div className="prose dark:prose-invert sm:prose-lg">
+				<div className="prose scroll-pt-6 dark:prose-invert sm:prose-lg">
 					{data.exercise.instructionsCode ? (
 						<Mdx
 							code={data.exercise?.instructionsCode}

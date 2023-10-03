@@ -3,6 +3,8 @@ import { Link, useFormAction, useNavigation } from '@remix-run/react'
 import { clsx, type ClassValue } from 'clsx'
 import * as React from 'react'
 import { twMerge } from 'tailwind-merge'
+import slugify from '@sindresorhus/slugify'
+import { Icon } from '~/components/icons.tsx'
 
 export function getErrorMessage(error: unknown) {
 	if (typeof error === 'string') return error
@@ -211,3 +213,33 @@ export function useAltDown() {
 	}, [])
 	return altDown
 }
+
+export const Heading = React.forwardRef<
+	HTMLHeadingElement,
+	React.ComponentPropsWithoutRef<'h1'> & {
+		as?: 'h1' | 'h2' | 'h3' | 'h4' | 'h5' | 'h6'
+	}
+>(function Heading({ id, children, as: asProp, className, ...props }, ref) {
+	const Comp = asProp ?? 'h1'
+	const slugId = id ?? slugify(children ? String(children) : '')
+	return (
+		<Comp
+			id={slugId || undefined}
+			ref={ref}
+			className={cn('group relative', className)}
+			{...props}
+		>
+			{slugId ? (
+				<Link
+					aria-hidden="true"
+					tabIndex={-1}
+					to={`#${slugId}`}
+					className="absolute left-0 top-1/2 -translate-x-full -translate-y-1/2 p-2 opacity-0 transition group-hover:opacity-100 motion-safe:transition"
+				>
+					<Icon name="Linked" />
+				</Link>
+			) : null}
+			{children}
+		</Comp>
+	)
+})
