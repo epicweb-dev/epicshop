@@ -9,6 +9,8 @@ import { Icon } from '~/components/icons.tsx'
 import { type loader } from '~/routes/_app+/_exercises+/$exerciseNumber_.$stepNumber.$type.tsx'
 import { LaunchEditor } from '~/routes/launch-editor.tsx'
 import { AnchorOrLink, Heading, cn } from './misc.tsx'
+import { Loading } from '~/components/loading.tsx'
+import { useTheme } from '~/routes/theme/index.tsx'
 
 const safePath = (s: string) => s.replace(/\\/g, '/')
 
@@ -203,6 +205,43 @@ function extractEpicTitle(urlString: string) {
 	return title
 }
 
+function VideoEmbed({
+	url,
+	title = 'Video Embed',
+	loadingContent = (
+		<Loading>
+			<span>Loading "{title}"</span>
+		</Loading>
+	),
+}: {
+	url: string
+	title?: string
+	loadingContent?: React.ReactNode
+}) {
+	const [iframeLoaded, setIframeLoaded] = React.useState(false)
+
+	return (
+		<div className="relative aspect-video w-full flex-shrink-0 shadow-lg dark:shadow-gray-800">
+			{!iframeLoaded ? (
+				<div className="absolute inset-0 z-10 flex items-center justify-center">
+					{loadingContent}
+				</div>
+			) : null}
+			<iframe
+				onLoad={() => setIframeLoaded(true)}
+				src={url}
+				className={cn(
+					'absolute inset-0 flex h-full w-full transition-opacity duration-300',
+					iframeLoaded ? 'opacity-100' : 'opacity-0',
+				)}
+				title={title}
+				sandbox="allow-forms allow-scripts allow-same-origin allow-popups allow-popups-to-escape-sandbox"
+				allowFullScreen
+			/>
+		</div>
+	)
+}
+
 function EpicVideo({
 	url: urlString,
 	title = extractEpicTitle(urlString),
@@ -210,17 +249,46 @@ function EpicVideo({
 	url: string
 	title?: string
 }) {
+	const theme = useTheme()
+	let url: URL = new URL('https://epicweb.dev')
+	try {
+		url = new URL(urlString)
+	} catch (error) {
+		console.error(error)
+		return <div>Invalid URL: "{urlString}"</div>
+	}
+	url.pathname = url.pathname.endsWith('/')
+		? `${url.pathname}embed`
+		: `${url.pathname}/embed`
+	url.searchParams.set('theme', theme)
 	return (
-		// eslint-disable-next-line react/jsx-no-target-blank
-		<a
-			href={urlString}
-			target="_blank"
-			className="flex items-center gap-1 underline"
-		>
-			<Icon name="Video" size={24} title="EpicWeb.dev video" />
-			{title}
-			<Icon name="ExternalLink" title="Open video" />
-		</a>
+		<div>
+			{/* eslint-disable-next-line react/jsx-no-target-blank */}
+			<a
+				href={urlString}
+				target="_blank"
+				className="flex items-center gap-1 underline"
+			>
+				<Icon name="Video" size={24} title="EpicWeb.dev video" />
+				{title}
+				<Icon name="ExternalLink" title="Open video" />
+			</a>
+			<VideoEmbed
+				url={url.toString()}
+				title={title}
+				loadingContent={
+					<Loading>
+						<span>
+							{'Loading "'}
+							<a className="underline" href={urlString}>
+								{title}
+							</a>
+							{'"'}
+						</span>
+					</Loading>
+				}
+			/>
+		</div>
 	)
 }
 
@@ -245,6 +313,7 @@ export const mdxComponents = {
 		/>
 	),
 	LaunchEditor,
+	VideoEmbed,
 	EpicVideo,
 }
 
