@@ -32,8 +32,9 @@ export async function registerDevice() {
 
 	const timeout = setTimeout(() => handle.abort(), handle.expires_in * 1000)
 
-	const tokenSet = await handle.poll()
+	const tokenSet = await handle.poll().catch(() => {})
 	clearTimeout(timeout)
+	if (!tokenSet) return
 
 	await setAuthInfo({ tokenSet })
 	authEmitter.emit(EVENTS.AUTH_RESOLVED)

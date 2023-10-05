@@ -3,6 +3,7 @@ import { type DataFunctionArgs, json } from '@remix-run/node'
 import { useFetcher } from '@remix-run/react'
 import { clsx } from 'clsx'
 import { z } from 'zod'
+import { showProgressBarField } from '#app/components/progress-bar.tsx'
 import { setModifiedTimesForDir } from '#app/utils/apps.server.ts'
 import { ensureUndeployed } from '#app/utils/misc.tsx'
 import { type EmbeddedFile } from '../../utils/codefile-mdx.server.ts'
@@ -78,6 +79,7 @@ export function UpdateMdxCache({
 
 	return (
 		<fetcher.Form action="/update-mdx-cache" method="POST">
+			{showProgressBarField}
 			<input type="hidden" name="cacheLocation" value={cacheLocation} />
 			<input type="hidden" name="embeddedKey" value={embeddedKey} />
 			<input type="hidden" name="appFullPath" value={appFullPath} />

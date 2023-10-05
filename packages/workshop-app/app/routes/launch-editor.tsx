@@ -5,6 +5,7 @@ import { clsx } from 'clsx'
 import fsExtra from 'fs-extra'
 import { useEffect } from 'react'
 import { type ZodTypeAny, z } from 'zod'
+import { showProgressBarField } from '#app/components/progress-bar.tsx'
 import { showToast } from '#app/components/toast.tsx'
 import { getAppByName } from '#app/utils/apps.server.ts'
 import { launchEditor } from '#app/utils/launch-editor.server.ts'
@@ -223,6 +224,7 @@ function LaunchEditorImpl({
 			method="POST"
 			className="flex items-center"
 		>
+			{showProgressBarField}
 			<input type="hidden" name="line" value={line} />
 			<input type="hidden" name="column" value={column} />
 			<input type="hidden" name="type" value={type} />

@@ -5,6 +5,7 @@ import { clsx } from 'clsx'
 import { useEffect } from 'react'
 import { z } from 'zod'
 import { Icon } from '#app/components/icons.tsx'
+import { showProgressBarField } from '#app/components/progress-bar.tsx'
 import { showToast } from '#app/components/toast.tsx'
 import {
 	getAppByName,
@@ -92,6 +93,7 @@ export function SetPlayground({
 			className="inline-flex items-center justify-center"
 		>
 			<input type="hidden" name="appName" value={appName} />
+			{showProgressBarField}
 			<button
 				type="submit"
 				{...buttonProps}

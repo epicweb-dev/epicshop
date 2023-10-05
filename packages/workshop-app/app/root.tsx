@@ -1,10 +1,11 @@
 import { cssBundleHref } from '@remix-run/css-bundle'
-import  {
+import {
 	type DataFunctionArgs,
 	type HeadersFunction,
 	type LinksFunction,
 	type MetaFunction,
- json } from '@remix-run/node'
+	json,
+} from '@remix-run/node'
 import {
 	Links,
 	LiveReload,
@@ -20,6 +21,7 @@ import {
 import { useCallback, useEffect } from 'react'
 import { useSpinDelay } from 'spin-delay'
 import { GeneralErrorBoundary } from './components/error-boundary.tsx'
+import { EpicProgress } from './components/progress-bar.tsx'
 import { useTheme } from './routes/theme/index.tsx'
 import { getTheme } from './routes/theme/theme-session.server.ts'
 import appStylesheetUrl from './styles/app.css'
@@ -166,6 +168,7 @@ export default function App() {
 			) : (
 				<Outlet />
 			)}
+			<EpicProgress />
 		</Document>
 	)
 }

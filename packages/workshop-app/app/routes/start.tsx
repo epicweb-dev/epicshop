@@ -2,6 +2,7 @@ import { type DataFunctionArgs, json } from '@remix-run/node'
 import { useFetcher } from '@remix-run/react'
 import { Button } from '#app/components/button.tsx'
 import { Loading } from '#app/components/loading.tsx'
+import { showProgressBarField } from '#app/components/progress-bar.tsx'
 import { getAppByName } from '#app/utils/apps.server.ts'
 import {
 	ensureUndeployed,
@@ -98,6 +99,7 @@ export function AppStopper({ name }: { name: string }) {
 	const altDown = useAltDown()
 	return (
 		<fetcher.Form method="POST" action="/start">
+			{showProgressBarField}
 			<input type="hidden" name="name" value={name} />
 			<button
 				type="submit"

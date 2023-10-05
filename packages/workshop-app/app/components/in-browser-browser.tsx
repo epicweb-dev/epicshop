@@ -78,6 +78,40 @@ function InBrowserBrowserImpl(
 	{ name, port, portIsAvailable, isRunning, baseUrl, id }: Props,
 	ref: ForwardedRef<InBrowserBrowserRef>,
 ) {
+	return isRunning ? (
+		<InBrowserBrowserForRealz baseUrl={baseUrl} id={id} name={name} ref={ref} />
+	) : portIsAvailable === false ? (
+		<div className="flex flex-col items-center justify-center">
+			<p className="max-w-xs pb-5 text-center" role="status">
+				{`The port for this app is unavailable. It could be that you're running it `}
+				<a href={`http://localhost:${port}`} className="underline">
+					elsewhere
+				</a>
+				?
+			</p>
+			<PortStopper port={port} />
+		</div>
+	) : (
+		<AppStarter name={name} />
+	)
+}
+type RealBrowserProps = {
+	baseUrl: string
+	id: string
+	name: string
+}
+
+const InBrowserBrowserForRealz = forwardRef<
+	InBrowserBrowserRef,
+	RealBrowserProps
+>(InBrowserBrowserForRealzImpl)
+
+// we're doing this to ensure all of this complex stuff doesn't happen unless
+// the iframe is actually rendered.
+function InBrowserBrowserForRealzImpl(
+	{ baseUrl, id, name }: RealBrowserProps,
+	ref: ForwardedRef<InBrowserBrowserRef>,
+) {
 	const [searchParams, setSearchParams] = useSearchParams()
 	const searchParamsPathname = searchParams.get('pathname') ?? '/'
 	const [iframeKeyNumber, setIframeKeyNumber] = useState(0)
@@ -224,7 +258,7 @@ function InBrowserBrowserImpl(
 			newSearchParams.set('pathname', iframePathname)
 		}
 		const newSearch = newSearchParams.toString()
-		if (newSearch !== window.location.search) {
+		if (`?${newSearch}` !== window.location.search) {
 			setSearchParamsLatestRef.current(newSearchParams, { replace: true })
 		}
 	}, [iframePathname])
@@ -274,7 +308,7 @@ function InBrowserBrowserImpl(
 		)
 	}
 
-	return isRunning ? (
+	return (
 		<div className="flex h-full flex-grow flex-col">
 			<div className="flex items-center justify-between border-b border-border pl-1.5">
 				<div className="mr-2 flex items-center justify-center gap-2 px-1">
@@ -353,18 +387,5 @@ function InBrowserBrowserImpl(
 				/>
 			</div>
 		</div>
-	) : portIsAvailable === false ? (
-		<div className="flex flex-col items-center justify-center">
-			<p className="max-w-xs pb-5 text-center" role="status">
-				{`The port for this app is unavailable. It could be that you're running it `}
-				<a href={`http://localhost:${port}`} className="underline">
-					elsewhere
-				</a>
-				?
-			</p>
-			<PortStopper port={port} />
-		</div>
-	) : (
-		<AppStarter name={name} />
 	)
 }
