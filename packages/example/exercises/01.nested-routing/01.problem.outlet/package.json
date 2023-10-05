@@ -3,7 +3,6 @@
   "private": true,
   "sideEffects": false,
   "kcd-workshop": {
-    "testRequiresApp": true,
     "scripts": {
       "test": "echo \"\\x1b[36mhello\\x1b[37mworld\" && sleep 0.7 && echo hi && sleep 0.7 && echo hi && sleep 0.7 && echo hi && sleep 0.7 && echo hi && sleep 0.7 && echo hi && sleep 0.7 && echo hi && sleep 0.7 && echo hi && sleep 0.7 && echo hi && sleep 0.7 && echo hi && sleep 0.7 && echo hi && sleep 0.7 && echo hi && sleep 0.7 && echo hi && sleep 0.7 && echo hi && sleep 0.7 && echo hi && sleep 0.7 && echo hi && sleep 0.7 && echo hi && sleep 0.7 && echo hi && sleep 0.7 && echo hi"
     }

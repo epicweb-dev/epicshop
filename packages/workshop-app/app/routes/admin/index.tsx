@@ -1,5 +1,4 @@
-import type { DataFunctionArgs, MetaFunction } from '@remix-run/node'
-import { json } from '@remix-run/node'
+import  { type DataFunctionArgs, type MetaFunction , json } from '@remix-run/node'
 import { Form, Link, useLoaderData, useNavigation } from '@remix-run/react'
 import { type loader as rootLoader } from '~/root.tsx'
 import { getApps } from '~/utils/apps.server.ts'

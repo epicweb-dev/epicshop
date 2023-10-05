@@ -2,9 +2,6 @@
   "name": "exercises.01.nested-routing.02.problem.outlet-context",
   "private": true,
   "sideEffects": false,
-  "kcd-workshop": {
-    "testRequiresApp": true
-  },
   "type": "module",
   "scripts": {
     "build": "run-s build:*",

@@ -1,14 +1,15 @@
+import fs from 'fs'
+import path from 'path'
 import { remarkCodeBlocksShiki } from '@kentcdodds/md-temp'
 import { cachified, type CacheEntry } from 'cachified'
-import fs from 'fs'
 import fsExtra from 'fs-extra'
 import { type Element, type Root as HastRoot } from 'hast'
 import md5 from 'md5-hex'
 import { type Root as MdastRoot } from 'mdast'
 import { bundleMDX } from 'mdx-bundler'
 import PQueue from 'p-queue'
-import path from 'path'
 import remarkAutolinkHeadings from 'remark-autolink-headings'
+import emoji from 'remark-emoji'
 import gfm from 'remark-gfm'
 import { type PluggableList } from 'unified'
 import { visit } from 'unist-util-visit'
@@ -19,7 +20,6 @@ import {
 	type EmbeddedFile,
 } from './codefile-mdx.server.ts'
 // @ts-ignore - remark-emoji don't have an exports from ESM types
-import emoji from 'remark-emoji'
 import { singleton } from './singleton.server.ts'
 
 const cacheDir = path.join(

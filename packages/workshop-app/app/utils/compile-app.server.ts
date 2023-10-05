@@ -1,5 +1,5 @@
-import path from 'path'
 import fs from 'fs'
+import path from 'path'
 
 // remix using `esbuild-plugin-polyfill-node` plugin
 // this plugin report that we can not use "esbuild",

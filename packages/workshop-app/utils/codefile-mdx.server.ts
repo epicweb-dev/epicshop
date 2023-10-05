@@ -1,6 +1,7 @@
 import fs from 'node:fs'
 import path from 'node:path'
 import { createProcessor } from '@mdx-js/mdx'
+import md5 from 'md5-hex'
 import { type Content, type Root as MdastRoot, type Parent } from 'mdast'
 import {
 	type MdxJsxAttribute,
@@ -9,7 +10,6 @@ import {
 import { removePosition } from 'unist-util-remove-position'
 import { type Visitor, visit } from 'unist-util-visit'
 import * as z from 'zod'
-import md5 from 'md5-hex'
 
 type CodeFile = {
 	node: MdxJsxFlowElement

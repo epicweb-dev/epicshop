@@ -1,10 +1,10 @@
+import fs from 'fs'
+import path from 'path'
 import { type CacheEntry } from 'cachified'
 import { execa } from 'execa'
-import fs from 'fs'
 import fsExtra from 'fs-extra'
 import { glob } from 'glob'
 import { globby, isGitIgnored } from 'globby'
-import path from 'path'
 import { z } from 'zod'
 import {
 	appsCache,
@@ -72,7 +72,7 @@ type BaseApp = {
 				baseUrl: `/app/${BaseApp['name']}/test/`
 				testFiles: Array<string>
 		  }
-		| { type: 'script'; script: string; requiresApp: boolean }
+		| { type: 'script'; script: string }
 		| { type: 'none' }
 	dev:
 		| { type: 'browser'; baseUrl: `/app/${BaseApp['name']}/` }
@@ -498,10 +498,7 @@ async function getTestInfo({
 		: null
 
 	if (testScript) {
-		const requiresApp = hasPkgJson
-			? await getPkgProp(fullPath, 'kcd-workshop.testRequiresApp', false)
-			: false
-		return { type: 'script', script: testScript, requiresApp }
+		return { type: 'script', script: testScript }
 	}
 
 	// tests are found in the corresponding solution directory

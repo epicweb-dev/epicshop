@@ -1,30 +1,29 @@
-import type {
-	DataFunctionArgs,
-	HeadersFunction,
-	MetaFunction,
-} from '@remix-run/node'
 import path from 'path'
-import { json } from '@remix-run/node'
+import  {
+	type DataFunctionArgs,
+	type HeadersFunction,
+	type MetaFunction,
+ json } from '@remix-run/node'
 import { Link, useLoaderData } from '@remix-run/react'
+import * as React from 'react'
 import { Loading } from '~/components/loading.tsx'
 import { NavChevrons } from '~/components/nav-chevrons.tsx'
 import { type loader as rootLoader } from '~/root.tsx'
-import { compileMdx } from '~/utils/compile-mdx.server.ts'
 import {
 	getExercises,
 	getWorkshopRoot,
 	getWorkshopTitle,
 } from '~/utils/apps.server.ts'
+import { compileMdx } from '~/utils/compile-mdx.server.ts'
+import { Mdx } from '~/utils/mdx.tsx'
+import { cn, getErrorMessage } from '~/utils/misc.tsx'
 import {
 	combineServerTimings,
 	getServerTimeHeader,
 	makeTimings,
 	time,
 } from '~/utils/timing.server.ts'
-import { cn, getErrorMessage } from '~/utils/misc.tsx'
-import * as React from 'react'
 import { EditFileOnGitHub } from '../launch-editor.tsx'
-import { Mdx } from '~/utils/mdx.tsx'
 
 export const meta: MetaFunction<typeof loader, { root: typeof rootLoader }> = ({
 	matches,

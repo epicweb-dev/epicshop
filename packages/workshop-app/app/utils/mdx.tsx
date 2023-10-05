@@ -1,16 +1,16 @@
+import path from 'node:path'
 import { useLoaderData } from '@remix-run/react'
 import { clsx } from 'clsx'
 import { LRUCache } from 'lru-cache'
-import type { MDXContentProps } from 'mdx-bundler/client'
+import  { type MDXContentProps } from 'mdx-bundler/client'
 import * as mdxBundler from 'mdx-bundler/client/index.js'
-import path from 'node:path'
 import * as React from 'react'
 import { Icon } from '~/components/icons.tsx'
+import { Loading } from '~/components/loading.tsx'
 import { type loader } from '~/routes/_app+/_exercises+/$exerciseNumber_.$stepNumber.$type.tsx'
 import { LaunchEditor } from '~/routes/launch-editor.tsx'
-import { AnchorOrLink, Heading, cn } from './misc.tsx'
-import { Loading } from '~/components/loading.tsx'
 import { useTheme } from '~/routes/theme/index.tsx'
+import { AnchorOrLink, Heading, cn } from './misc.tsx'
 
 const safePath = (s: string) => s.replace(/\\/g, '/')
 

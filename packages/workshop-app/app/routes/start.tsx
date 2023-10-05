@@ -1,5 +1,4 @@
-import type { DataFunctionArgs } from '@remix-run/node'
-import { json } from '@remix-run/node'
+import  { type DataFunctionArgs , json } from '@remix-run/node'
 import { useFetcher } from '@remix-run/react'
 import { Button } from '~/components/button.tsx'
 import { Loading } from '~/components/loading.tsx'

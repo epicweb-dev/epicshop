@@ -1,6 +1,6 @@
+import { configure } from '@testing-library/dom'
 import chai from 'chai'
 import chaiDOM from 'chai-dom'
-import { configure } from '@testing-library/dom'
 
 chai.use(chaiDOM)
 

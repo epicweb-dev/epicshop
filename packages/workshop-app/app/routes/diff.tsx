@@ -9,8 +9,7 @@ import { useSpinDelay } from 'spin-delay'
 import { Diff } from '~/components/diff.tsx'
 import { Icon } from '~/components/icons.tsx'
 import { NavChevrons } from '~/components/nav-chevrons.tsx'
-import type { App } from '~/utils/apps.server.ts'
-import {
+import  { type App ,
 	getAppByName,
 	getApps,
 	isExerciseStepApp,

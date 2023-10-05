@@ -1,11 +1,15 @@
 import path from 'path'
-import type {
-	DataFunctionArgs,
-	HeadersFunction,
-	MetaFunction,
-} from '@remix-run/node'
-import { json } from '@remix-run/node'
+import  {
+	type DataFunctionArgs,
+	type HeadersFunction,
+	type MetaFunction,
+ json } from '@remix-run/node'
 import { Link, useLoaderData } from '@remix-run/react'
+import * as React from 'react'
+import { Loading } from '~/components/loading.tsx'
+import { NavChevrons } from '~/components/nav-chevrons.tsx'
+import { type loader as rootLoader } from '~/root.tsx'
+import { EditFileOnGitHub } from '~/routes/launch-editor.tsx'
 import {
 	getAppPageRoute,
 	getApps,
@@ -14,18 +18,13 @@ import {
 	getWorkshopTitle,
 	isExerciseStepApp,
 } from '~/utils/apps.server.ts'
-import { type loader as rootLoader } from '~/root.tsx'
-import { Loading } from '~/components/loading.tsx'
+import { Mdx } from '~/utils/mdx.tsx'
+import { cn, invariantResponse } from '~/utils/misc.tsx'
 import {
 	combineServerTimings,
 	getServerTimeHeader,
 	makeTimings,
 } from '~/utils/timing.server.ts'
-import { NavChevrons } from '~/components/nav-chevrons.tsx'
-import { cn, invariantResponse } from '~/utils/misc.tsx'
-import * as React from 'react'
-import { Mdx } from '~/utils/mdx.tsx'
-import { EditFileOnGitHub } from '~/routes/launch-editor.tsx'
 
 export const meta: MetaFunction<typeof loader, { root: typeof rootLoader }> = ({
 	data,

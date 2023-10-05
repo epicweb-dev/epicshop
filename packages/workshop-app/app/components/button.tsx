@@ -1,5 +1,6 @@
-import { Link } from '@remix-run/react'
+import { type Link } from '@remix-run/react'
 import { clsx } from 'clsx'
+import { AnchorOrLink } from '~/utils/misc.tsx'
 
 function PendingState() {
 	return <span className="inline-block animate-spin">🌀</span>
@@ -73,7 +74,7 @@ export function ButtonLink({
 	return (
 		<div className="clip-path-button-outer w-fit border-2 border-foreground bg-foreground">
 			{/* eslint-disable-next-line jsx-a11y/anchor-has-content */}
-			<Link
+			<AnchorOrLink
 				{...props}
 				className={clsx(props.className, getButtonClassName({ varient }))}
 			/>

@@ -1,5 +1,8 @@
-import type { DataFunctionArgs, HeadersFunction } from '@remix-run/node'
-import { json } from '@remix-run/node'
+import {
+	type DataFunctionArgs,
+	type HeadersFunction,
+	json,
+} from '@remix-run/node'
 import {
 	Link,
 	NavLink,
@@ -8,9 +11,13 @@ import {
 	useParams,
 } from '@remix-run/react'
 import { clsx } from 'clsx'
-import type { AnimationControls } from 'framer-motion'
-import { motion, useAnimationControls } from 'framer-motion'
+import {
+	type AnimationControls,
+	motion,
+	useAnimationControls,
+} from 'framer-motion'
 import * as React from 'react'
+import { ThemeSwitch } from '../theme/index.tsx'
 import { ToastHub } from '~/components/toast.tsx'
 import {
 	extractNumbersFromAppName,
@@ -18,15 +25,16 @@ import {
 	getPlaygroundAppName,
 	getWorkshopTitle,
 } from '~/utils/apps.server.ts'
+import { getAuthInfo } from '~/utils/db.server.ts'
 import {
 	combineServerTimings,
 	getServerTimeHeader,
 	makeTimings,
 } from '~/utils/timing.server.ts'
-import { ThemeSwitch } from '../theme/index.tsx'
 
 export async function loader({ request }: DataFunctionArgs) {
 	const timings = makeTimings('stepLoader')
+	const isAuthenticated = Boolean(await getAuthInfo())
 	const [exercises, workshopTitle, playgroundAppName] = await Promise.all([
 		getExercises({ request, timings }),
 		getWorkshopTitle(),
@@ -63,6 +71,7 @@ export async function loader({ request }: DataFunctionArgs) {
 				})),
 			})),
 			playground,
+			isAuthenticated,
 		},
 		{
 			headers: {
@@ -158,6 +167,17 @@ function Navigation() {
 						isMenuOpened={isMenuOpened}
 						setMenuOpened={setMenuOpened}
 					/>
+
+					{ENV.KCDSHOP_DEPLOYED ? null : data.isAuthenticated ? (
+						<Link className="w-full py-4 text-center underline" to="/account">
+							account
+						</Link>
+					) : (
+						<Link className="w-full py-4 text-center underline" to="/login">
+							login
+						</Link>
+					)}
+
 					{isMenuOpened && (
 						<motion.div
 							style={{ width: OPENED_MENU_WIDTH }}
@@ -326,7 +346,7 @@ function NavToggle({
 	return (
 		<div className="relative inline-flex h-14 w-full items-center justify-between overflow-hidden border-b border-border">
 			<button
-				className="flex w-14 items-center h-14 justify-center"
+				className="flex h-14 w-14 items-center justify-center"
 				aria-label="Open Navigation menu"
 				onClick={async () => {
 					menuControls.start(isMenuOpened ? 'close' : 'open')

@@ -1,6 +1,5 @@
 import * as Select from '@radix-ui/react-select'
-import type { DataFunctionArgs } from '@remix-run/node'
-import { json } from '@remix-run/node'
+import  { type DataFunctionArgs , json } from '@remix-run/node'
 import { useFetcher } from '@remix-run/react'
 import { clsx } from 'clsx'
 import { useEffect } from 'react'

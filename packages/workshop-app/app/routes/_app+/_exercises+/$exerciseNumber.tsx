@@ -1,15 +1,14 @@
-import type {
-	DataFunctionArgs,
-	HeadersFunction,
-	MetaFunction,
-} from '@remix-run/node'
-import { json } from '@remix-run/node'
+import path from 'path'
+import  {
+	type DataFunctionArgs,
+	type HeadersFunction,
+	type MetaFunction,
+ json } from '@remix-run/node'
 import {
 	isRouteErrorResponse,
 	useLoaderData,
 	useRouteError,
 } from '@remix-run/react'
-import path from 'path'
 import { ButtonLink } from '~/components/button.tsx'
 import { type loader as rootLoader } from '~/root.tsx'
 import { EditFileOnGitHub } from '~/routes/launch-editor.tsx'

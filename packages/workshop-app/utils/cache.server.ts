@@ -6,15 +6,15 @@ import {
 	type LRUishCache,
 } from 'cachified'
 import { LRUCache } from 'lru-cache'
-import type {
-	App,
-	ExampleApp,
-	PlaygroundApp,
-	ProblemApp,
-	SolutionApp,
+import  {
+	type App,
+	type ExampleApp,
+	type PlaygroundApp,
+	type ProblemApp,
+	type SolutionApp,
 } from './apps.server.ts'
-import { time, type Timings } from './timing.server.ts'
 import { singleton } from './singleton.server.ts'
+import { time, type Timings } from './timing.server.ts'
 
 export const solutionAppCache =
 	makeSingletonCache<SolutionApp>('SolutionAppCache')

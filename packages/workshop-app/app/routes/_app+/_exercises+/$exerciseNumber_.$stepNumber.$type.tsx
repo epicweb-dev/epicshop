@@ -1,11 +1,10 @@
 import * as Tabs from '@radix-ui/react-tabs'
-import type {
-	DataFunctionArgs,
-	HeadersFunction,
-	SerializeFrom,
-	MetaFunction,
-} from '@remix-run/node'
-import { defer, redirect } from '@remix-run/node'
+import  {
+	type DataFunctionArgs,
+	type HeadersFunction,
+	type SerializeFrom,
+	type MetaFunction,
+ defer, redirect } from '@remix-run/node'
 import {
 	Link,
 	isRouteErrorResponse,
@@ -25,15 +24,17 @@ import {
 	type InBrowserBrowserRef,
 } from '~/components/in-browser-browser.tsx'
 import { InBrowserTestRunner } from '~/components/in-browser-test-runner.tsx'
+import { NavChevrons } from '~/components/nav-chevrons.tsx'
 import TouchedFiles from '~/components/touched-files.tsx'
 import { type loader as rootLoader } from '~/root.tsx'
+import { EditFileOnGitHub, LaunchEditor } from '~/routes/launch-editor.tsx'
 import {
 	PlaygroundChooser,
 	SetAppToPlayground,
 	SetPlayground,
 } from '~/routes/set-playground.tsx'
-import type { App, ExerciseStepApp } from '~/utils/apps.server.ts'
-import {
+import { UpdateMdxCache } from '~/routes/update-mdx-cache.tsx'
+import  { type App, type ExerciseStepApp ,
 	getAppByName,
 	getAppPageRoute,
 	getApps,
@@ -57,10 +58,7 @@ import {
 	getServerTimeHeader,
 	makeTimings,
 } from '~/utils/timing.server.ts'
-import { EditFileOnGitHub, LaunchEditor } from '~/routes/launch-editor.tsx'
 import { TestOutput } from '../../test.tsx'
-import { NavChevrons } from '~/components/nav-chevrons.tsx'
-import { UpdateMdxCache } from '~/routes/update-mdx-cache.tsx'
 
 function pageTitle(
 	data: SerializeFrom<typeof loader> | undefined,
@@ -960,7 +958,7 @@ function PlaygroundWindow({
 					playgroundAppName={playgroundAppInfo?.appName}
 				/>
 			</div>
-			<div className="flex flex-1 flex-grow items-center justify-center">
+			<div className="flex h-full flex-1 flex-grow items-center justify-center">
 				{children}
 			</div>
 		</div>
@@ -985,7 +983,7 @@ function Tests({
 		const { baseUrl } = playgroundAppInfo.test
 		testUI = (
 			<div
-				className="flex h-full w-full flex-grow flex-col overflow-y-auto scrollbar-thin scrollbar-thumb-scrollbar"
+				className="flex h-full w-full flex-grow flex-col"
 				key={inBrowserTestKey}
 			>
 				{playgroundAppInfo.test.testFiles.map(testFile => {

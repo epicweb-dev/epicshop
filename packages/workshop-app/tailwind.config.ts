@@ -1,10 +1,10 @@
-import type { Config } from 'tailwindcss'
-import defaultTheme from 'tailwindcss/defaultTheme.js'
-import colors from 'tailwindcss/colors.js'
 import typography from '@tailwindcss/typography'
+import scrollbar from 'tailwind-scrollbar'
+import { type Config } from 'tailwindcss'
+import colors from 'tailwindcss/colors.js'
+import defaultTheme from 'tailwindcss/defaultTheme.js'
 import animate from 'tailwindcss-animate'
 import cssRadix from 'tailwindcss-radix'
-import scrollbar from 'tailwind-scrollbar'
 
 const removeProseMargin = {
 	'> ul > li > *:first-child': {

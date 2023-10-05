@@ -1,11 +1,10 @@
 import { cssBundleHref } from '@remix-run/css-bundle'
-import type {
-	DataFunctionArgs,
-	HeadersFunction,
-	LinksFunction,
-	MetaFunction,
-} from '@remix-run/node'
-import { json } from '@remix-run/node'
+import  {
+	type DataFunctionArgs,
+	type HeadersFunction,
+	type LinksFunction,
+	type MetaFunction,
+ json } from '@remix-run/node'
 import {
 	Links,
 	LiveReload,
@@ -20,20 +19,20 @@ import {
 } from '@remix-run/react'
 import { useCallback, useEffect } from 'react'
 import { useSpinDelay } from 'spin-delay'
+import { GeneralErrorBoundary } from './components/error-boundary.tsx'
 import { useTheme } from './routes/theme/index.tsx'
 import { getTheme } from './routes/theme/theme-session.server.ts'
 import appStylesheetUrl from './styles/app.css'
 import tailwindStylesheetUrl from './styles/tailwind.css'
 import { getWorkshopTitle } from './utils/apps.server.ts'
 import { ClientHintCheck, getHints } from './utils/client-hints.tsx'
+import { getEnv } from './utils/env.server.ts'
 import { cn, useAltDown } from './utils/misc.tsx'
 import {
 	getServerTimeHeader,
 	makeTimings,
 	time,
 } from './utils/timing.server.ts'
-import { getEnv } from './utils/env.server.ts'
-import { GeneralErrorBoundary } from './components/error-boundary.tsx'
 
 export const links: LinksFunction = () => {
 	return [

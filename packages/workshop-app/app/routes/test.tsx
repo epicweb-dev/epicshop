@@ -1,5 +1,4 @@
-import type { DataFunctionArgs } from '@remix-run/node'
-import { json } from '@remix-run/node'
+import { type DataFunctionArgs, json } from '@remix-run/node'
 import { useFetcher } from '@remix-run/react'
 import AnsiToHTML from 'ansi-to-html'
 import escapeHtml from 'lodash.escape'
@@ -238,7 +237,7 @@ export function TestOutput({ name }: { name: string }) {
 
 	return (
 		<div className="relative flex h-full w-full flex-col">
-			<div className="flex h-12 w-full items-center justify-between border-b border-border">
+			<div className="flex h-12 w-full flex-shrink-0 items-center justify-between border-b border-border">
 				<div className="flex h-full items-center">
 					{!isRunning && (
 						<TestRunner
@@ -283,11 +282,9 @@ export function TestOutput({ name }: { name: string }) {
 					/>
 				)}
 			</div>
-			<div className="h-full overflow-y-scroll p-5 scrollbar-thin scrollbar-thumb-scrollbar">
-				<p className="pb-5 font-mono text-sm font-medium uppercase">
-					Test Output
-				</p>
-				<pre>
+			<div className="flex h-full flex-col gap-5 p-5">
+				<p className="font-mono text-sm font-medium uppercase">Test Output</p>
+				<pre className="shadow-on-scrollbox flex-1 overflow-y-scroll scrollbar-thin scrollbar-thumb-scrollbar">
 					{lines.map(line => (
 						<code
 							key={line.timestamp}

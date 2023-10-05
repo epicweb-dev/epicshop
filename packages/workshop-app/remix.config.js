@@ -22,7 +22,12 @@ export default {
 	},
 	routes: async defineRoutes => {
 		return flatRoutes('routes', defineRoutes, {
-			ignoredRouteFiles: ['**/.*', '**/*.css', '**/*.test.{js,jsx,ts,tsx}'],
+			ignoredRouteFiles: [
+				'**/.*',
+				'**/*.css',
+				'**/*.test.{js,jsx,ts,tsx}',
+				'**/__*',
+			],
 		})
 	},
 }

@@ -1,12 +1,11 @@
-import type { ChildProcess } from 'child_process'
-import { spawn } from 'child_process'
+import { type ChildProcess, spawn } from 'child_process'
 import net from 'net'
-import closeWithGrace from 'close-with-grace'
-import waitOn from 'wait-on'
-import type { App } from './apps.server.ts'
 import chalk from 'chalk'
+import closeWithGrace from 'close-with-grace'
 import { execaCommand } from 'execa'
 import fkill from 'fkill'
+import waitOn from 'wait-on'
+import { type App } from './apps.server.ts'
 import { singleton } from './singleton.server.ts'
 
 const isDeployed =
@@ -164,9 +163,6 @@ export async function runAppTests(app: App) {
 
 	if (app.test.type !== 'script') {
 		return { status: 'error', error: 'no-test' } as const
-	}
-	if (app.test.requiresApp && app.dev.type !== 'script') {
-		return { status: 'error', error: 'no server, but requires app' } as const
 	}
 
 	const testProcess = execaCommand(app.test.script, {

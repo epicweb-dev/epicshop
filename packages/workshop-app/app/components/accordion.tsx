@@ -1,7 +1,7 @@
-import * as React from 'react'
-import { clsx } from 'clsx'
-import { Icon } from './icons.tsx'
 import * as Accordion from '@radix-ui/react-accordion'
+import { clsx } from 'clsx'
+import * as React from 'react'
+import { Icon } from './icons.tsx'
 
 type AccordionProps = {
 	title: string

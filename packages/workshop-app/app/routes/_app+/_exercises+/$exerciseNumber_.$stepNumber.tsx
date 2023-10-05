@@ -1,5 +1,4 @@
-import type { DataFunctionArgs, HeadersFunction } from '@remix-run/node'
-import { json } from '@remix-run/node'
+import  { type DataFunctionArgs, type HeadersFunction , json } from '@remix-run/node'
 import { isRouteErrorResponse, Outlet, useRouteError } from '@remix-run/react'
 import { getExercises, getWorkshopTitle } from '~/utils/apps.server.ts'
 import { getErrorMessage, invariantResponse } from '~/utils/misc.tsx'
