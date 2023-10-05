@@ -9,8 +9,8 @@ import {
 	type ForwardedRef,
 } from 'react'
 import { z } from 'zod'
-import { Icon } from '~/components/icons.tsx'
-import { AppStarter, AppStopper, PortStopper } from '~/routes/start.tsx'
+import { Icon } from '#app/components/icons.tsx'
+import { AppStarter, AppStopper, PortStopper } from '#app/routes/start.tsx'
 
 const historyCallDataSchema = z.intersection(
 	z.object({

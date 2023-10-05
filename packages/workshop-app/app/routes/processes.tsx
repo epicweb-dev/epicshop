@@ -1,6 +1,6 @@
 import { json } from '@remix-run/node'
-import { ensureUndeployed } from '~/utils/misc.tsx'
-import { getProcesses } from '~/utils/process-manager.server.ts'
+import { ensureUndeployed } from '#app/utils/misc.tsx'
+import { getProcesses } from '#app/utils/process-manager.server.ts'
 
 export async function loader() {
 	ensureUndeployed()

@@ -3,7 +3,7 @@ import {
 	getExerciseApp,
 	isProblemApp,
 	isSolutionApp,
-} from '~/utils/apps.server.ts'
+} from '#app/utils/apps.server.ts'
 
 export async function loader({ params }: DataFunctionArgs) {
 	const problemApp = await getExerciseApp({ ...params, type: 'problem' }).then(

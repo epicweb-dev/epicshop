@@ -17,20 +17,20 @@ import {
 	useAnimationControls,
 } from 'framer-motion'
 import * as React from 'react'
-import { ThemeSwitch } from '../theme/index.tsx'
-import { ToastHub } from '~/components/toast.tsx'
+import { ToastHub } from '#app/components/toast.tsx'
 import {
 	extractNumbersFromAppName,
 	getExercises,
 	getPlaygroundAppName,
 	getWorkshopTitle,
-} from '~/utils/apps.server.ts'
-import { getAuthInfo } from '~/utils/db.server.ts'
+} from '#app/utils/apps.server.ts'
+import { getAuthInfo } from '#app/utils/db.server.ts'
 import {
 	combineServerTimings,
 	getServerTimeHeader,
 	makeTimings,
-} from '~/utils/timing.server.ts'
+} from '#app/utils/timing.server.ts'
+import { ThemeSwitch } from '../theme/index.tsx'
 
 export async function loader({ request }: DataFunctionArgs) {
 	const timings = makeTimings('stepLoader')

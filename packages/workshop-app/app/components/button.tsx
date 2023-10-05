@@ -1,6 +1,6 @@
 import { type Link } from '@remix-run/react'
 import { clsx } from 'clsx'
-import { AnchorOrLink } from '~/utils/misc.tsx'
+import { AnchorOrLink } from '#app/utils/misc.tsx'
 
 function PendingState() {
 	return <span className="inline-block animate-spin">🌀</span>

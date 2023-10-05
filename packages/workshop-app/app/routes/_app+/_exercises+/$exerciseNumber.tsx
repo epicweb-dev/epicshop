@@ -1,30 +1,31 @@
 import path from 'path'
-import  {
+import {
 	type DataFunctionArgs,
 	type HeadersFunction,
 	type MetaFunction,
- json } from '@remix-run/node'
+	json,
+} from '@remix-run/node'
 import {
 	isRouteErrorResponse,
 	useLoaderData,
 	useRouteError,
 } from '@remix-run/react'
-import { ButtonLink } from '~/components/button.tsx'
-import { type loader as rootLoader } from '~/root.tsx'
-import { EditFileOnGitHub } from '~/routes/launch-editor.tsx'
+import { ButtonLink } from '#app/components/button.tsx'
+import { type loader as rootLoader } from '#app/root.tsx'
+import { EditFileOnGitHub } from '#app/routes/launch-editor.tsx'
 import {
 	getExercises,
 	getWorkshopRoot,
 	getWorkshopTitle,
-} from '~/utils/apps.server.ts'
-import { Mdx } from '~/utils/mdx.tsx'
-import { getErrorMessage, invariantResponse } from '~/utils/misc.tsx'
+} from '#app/utils/apps.server.ts'
+import { Mdx } from '#app/utils/mdx.tsx'
+import { getErrorMessage, invariantResponse } from '#app/utils/misc.tsx'
 import {
 	combineServerTimings,
 	getServerTimeHeader,
 	makeTimings,
 	time,
-} from '~/utils/timing.server.ts'
+} from '#app/utils/timing.server.ts'
 
 export const meta: MetaFunction<typeof loader, { root: typeof rootLoader }> = ({
 	data,

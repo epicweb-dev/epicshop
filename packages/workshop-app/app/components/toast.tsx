@@ -3,8 +3,9 @@ import { clsx } from 'clsx'
 import { AnimatePresence, motion } from 'framer-motion'
 import { useCallback, useEffect, useRef, useState } from 'react'
 import { renderToString } from 'react-dom/server'
-import  { type DefaultColors } from 'tailwindcss/types/generated/colors.d.ts'
-import { useEventListener } from '~/utils/misc.tsx'
+// eslint-disable-next-line import/consistent-type-specifier-style
+import type { DefaultColors } from 'tailwindcss/types/generated/colors.d.ts'
+import { useEventListener } from '#app/utils/misc.tsx'
 import { Icon } from './icons.tsx'
 
 const ANIMATION_DURATION = 250

@@ -1,7 +1,7 @@
 import * as Accordion from '@radix-ui/react-accordion'
 import { useEffect, useRef, useState } from 'react'
 import { z } from 'zod'
-import AccordionComponent from '~/components/accordion.tsx'
+import AccordionComponent from '#app/components/accordion.tsx'
 import { AnimatedBars, Icon } from './icons.tsx'
 
 const testRunnerStatusDataSchema = z.intersection(

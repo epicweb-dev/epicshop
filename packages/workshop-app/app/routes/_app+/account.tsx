@@ -1,8 +1,8 @@
 import { json, type DataFunctionArgs, redirect } from '@remix-run/node'
 import { Form } from '@remix-run/react'
-import { Button } from '~/components/button.tsx'
-import { deleteAuthInfo, requireAuthInfo } from '~/utils/db.server.ts'
-import { ensureUndeployed } from '~/utils/misc.tsx'
+import { Button } from '#app/components/button.tsx'
+import { deleteAuthInfo, requireAuthInfo } from '#app/utils/db.server.ts'
+import { ensureUndeployed } from '#app/utils/misc.tsx'
 
 export async function loader({ request }: DataFunctionArgs) {
 	ensureUndeployed()

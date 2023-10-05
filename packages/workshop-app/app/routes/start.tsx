@@ -1,20 +1,20 @@
-import  { type DataFunctionArgs , json } from '@remix-run/node'
+import { type DataFunctionArgs, json } from '@remix-run/node'
 import { useFetcher } from '@remix-run/react'
-import { Button } from '~/components/button.tsx'
-import { Loading } from '~/components/loading.tsx'
-import { getAppByName } from '~/utils/apps.server.ts'
+import { Button } from '#app/components/button.tsx'
+import { Loading } from '#app/components/loading.tsx'
+import { getAppByName } from '#app/utils/apps.server.ts'
 import {
 	ensureUndeployed,
 	invariantResponse,
 	invariant,
 	useAltDown,
-} from '~/utils/misc.tsx'
+} from '#app/utils/misc.tsx'
 import {
 	closeProcess,
 	runAppDev,
 	stopPort,
 	waitOnApp,
-} from '~/utils/process-manager.server.ts'
+} from '#app/utils/process-manager.server.ts'
 
 export async function action({ request }: DataFunctionArgs) {
 	ensureUndeployed()

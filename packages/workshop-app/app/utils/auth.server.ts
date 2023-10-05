@@ -1,8 +1,8 @@
 import { EventEmitter } from 'events'
 import { Issuer, type Client } from 'openid-client'
+import { singleton } from '#app/utils/singleton.server.ts'
 import { EVENTS } from './auth-events.ts'
 import { setAuthInfo } from './db.server.ts'
-import { singleton } from '~/utils/singleton.server.ts'
 
 const { ISSUER = 'https://www.epicweb.dev/oauth' } = process.env
 const GRANT_TYPE = 'urn:ietf:params:oauth:grant-type:device_code'

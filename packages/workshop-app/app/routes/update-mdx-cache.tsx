@@ -3,8 +3,8 @@ import { type DataFunctionArgs, json } from '@remix-run/node'
 import { useFetcher } from '@remix-run/react'
 import { clsx } from 'clsx'
 import { z } from 'zod'
-import { setModifiedTimesForDir } from '~/utils/apps.server.ts'
-import { ensureUndeployed } from '~/utils/misc.tsx'
+import { setModifiedTimesForDir } from '#app/utils/apps.server.ts'
+import { ensureUndeployed } from '#app/utils/misc.tsx'
 import { type EmbeddedFile } from '../../utils/codefile-mdx.server.ts'
 
 const cacheSchema = z.object({

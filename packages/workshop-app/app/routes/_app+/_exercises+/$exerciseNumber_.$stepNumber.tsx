@@ -1,12 +1,16 @@
-import  { type DataFunctionArgs, type HeadersFunction , json } from '@remix-run/node'
+import {
+	type DataFunctionArgs,
+	type HeadersFunction,
+	json,
+} from '@remix-run/node'
 import { isRouteErrorResponse, Outlet, useRouteError } from '@remix-run/react'
-import { getExercises, getWorkshopTitle } from '~/utils/apps.server.ts'
-import { getErrorMessage, invariantResponse } from '~/utils/misc.tsx'
+import { getExercises, getWorkshopTitle } from '#app/utils/apps.server.ts'
+import { getErrorMessage, invariantResponse } from '#app/utils/misc.tsx'
 import {
 	combineServerTimings,
 	getServerTimeHeader,
 	makeTimings,
-} from '~/utils/timing.server.ts'
+} from '#app/utils/timing.server.ts'
 
 export async function loader({ request, params }: DataFunctionArgs) {
 	const timings = makeTimings('stepLoader')

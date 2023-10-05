@@ -1,6 +1,6 @@
 import { redirect, type DataFunctionArgs } from '@remix-run/node'
-import { getAppByName } from '~/utils/apps.server.ts'
-import { invariantResponse } from '~/utils/misc.tsx'
+import { getAppByName } from '#app/utils/apps.server.ts'
+import { invariantResponse } from '#app/utils/misc.tsx'
 
 export async function loader({ params, request }: DataFunctionArgs) {
 	const { id: appId } = params

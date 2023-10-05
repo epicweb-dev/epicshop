@@ -1,10 +1,12 @@
 import * as Tabs from '@radix-ui/react-tabs'
-import  {
+import {
 	type DataFunctionArgs,
 	type HeadersFunction,
 	type SerializeFrom,
 	type MetaFunction,
- defer, redirect } from '@remix-run/node'
+	defer,
+	redirect,
+} from '@remix-run/node'
 import {
 	Link,
 	isRouteErrorResponse,
@@ -17,24 +19,26 @@ import {
 import { clsx } from 'clsx'
 import * as React from 'react'
 import { useMemo, useRef, useState, type PropsWithChildren } from 'react'
-import { Diff } from '~/components/diff.tsx'
-import { Icon } from '~/components/icons.tsx'
+import { Diff } from '#app/components/diff.tsx'
+import { Icon } from '#app/components/icons.tsx'
 import {
 	InBrowserBrowser,
 	type InBrowserBrowserRef,
-} from '~/components/in-browser-browser.tsx'
-import { InBrowserTestRunner } from '~/components/in-browser-test-runner.tsx'
-import { NavChevrons } from '~/components/nav-chevrons.tsx'
-import TouchedFiles from '~/components/touched-files.tsx'
-import { type loader as rootLoader } from '~/root.tsx'
-import { EditFileOnGitHub, LaunchEditor } from '~/routes/launch-editor.tsx'
+} from '#app/components/in-browser-browser.tsx'
+import { InBrowserTestRunner } from '#app/components/in-browser-test-runner.tsx'
+import { NavChevrons } from '#app/components/nav-chevrons.tsx'
+import TouchedFiles from '#app/components/touched-files.tsx'
+import { type loader as rootLoader } from '#app/root.tsx'
+import { EditFileOnGitHub, LaunchEditor } from '#app/routes/launch-editor.tsx'
 import {
 	PlaygroundChooser,
 	SetAppToPlayground,
 	SetPlayground,
-} from '~/routes/set-playground.tsx'
-import { UpdateMdxCache } from '~/routes/update-mdx-cache.tsx'
-import  { type App, type ExerciseStepApp ,
+} from '#app/routes/set-playground.tsx'
+import { UpdateMdxCache } from '#app/routes/update-mdx-cache.tsx'
+import {
+	type App,
+	type ExerciseStepApp,
 	getAppByName,
 	getAppPageRoute,
 	getApps,
@@ -45,19 +49,19 @@ import  { type App, type ExerciseStepApp ,
 	isPlaygroundApp,
 	requireExercise,
 	requireExerciseApp,
-} from '~/utils/apps.server.ts'
-import { getDiffCode, getDiffFiles } from '~/utils/diff.server.ts'
-import { Mdx } from '~/utils/mdx.tsx'
-import { cn, getErrorMessage, useAltDown } from '~/utils/misc.tsx'
+} from '#app/utils/apps.server.ts'
+import { getDiffCode, getDiffFiles } from '#app/utils/diff.server.ts'
+import { Mdx } from '#app/utils/mdx.tsx'
+import { cn, getErrorMessage, useAltDown } from '#app/utils/misc.tsx'
 import {
 	isAppRunning,
 	isPortAvailable,
-} from '~/utils/process-manager.server.ts'
+} from '#app/utils/process-manager.server.ts'
 import {
 	combineServerTimings,
 	getServerTimeHeader,
 	makeTimings,
-} from '~/utils/timing.server.ts'
+} from '#app/utils/timing.server.ts'
 import { TestOutput } from '../../test.tsx'
 
 function pageTitle(

@@ -16,7 +16,11 @@
     "forceConsistentCasingInFileNames": true,
     "baseUrl": ".",
     "paths": {
-      "~/*": ["./app/*"]
+      "#*": ["./*"],
+      "@/icon-name": [
+        "./app/components/ui/icons/name.d.ts",
+        "./types/icon-name.d.ts"
+      ]
     },
     "skipLibCheck": true,
     "typeRoots": ["./types", "./node_modules/@types"],

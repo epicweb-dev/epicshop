@@ -6,18 +6,19 @@ import {
 	useSearchParams,
 } from '@remix-run/react'
 import { useSpinDelay } from 'spin-delay'
-import { Diff } from '~/components/diff.tsx'
-import { Icon } from '~/components/icons.tsx'
-import { NavChevrons } from '~/components/nav-chevrons.tsx'
-import  { type App ,
+import { Diff } from '#app/components/diff.tsx'
+import { Icon } from '#app/components/icons.tsx'
+import { NavChevrons } from '#app/components/nav-chevrons.tsx'
+import {
+	type App,
 	getAppByName,
 	getApps,
 	isExerciseStepApp,
 	isPlaygroundApp,
-} from '~/utils/apps.server.ts'
-import { getDiffCode } from '~/utils/diff.server.ts'
-import { cn } from '~/utils/misc.tsx'
-import { makeTimings } from '~/utils/timing.server.ts'
+} from '#app/utils/apps.server.ts'
+import { getDiffCode } from '#app/utils/diff.server.ts'
+import { cn } from '#app/utils/misc.tsx'
+import { makeTimings } from '#app/utils/timing.server.ts'
 
 export async function loader({ request }: DataFunctionArgs) {
 	const reqUrl = new URL(request.url)

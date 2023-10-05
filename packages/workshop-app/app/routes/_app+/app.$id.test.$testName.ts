@@ -1,5 +1,5 @@
 import path from 'path'
-import  { type DataFunctionArgs , redirect } from '@remix-run/node'
+import { type DataFunctionArgs, redirect } from '@remix-run/node'
 import fsExtra from 'fs-extra'
 import {
 	getAppByName,
@@ -9,9 +9,9 @@ import {
 	isProblemApp,
 	isSolutionApp,
 	isPlaygroundApp,
-} from '~/utils/apps.server.ts'
-import { invariantResponse } from '~/utils/misc.tsx'
-import { getServerTimeHeader, makeTimings } from '~/utils/timing.server.ts'
+} from '#app/utils/apps.server.ts'
+import { invariantResponse } from '#app/utils/misc.tsx'
+import { getServerTimeHeader, makeTimings } from '#app/utils/timing.server.ts'
 
 export async function loader({ params, request }: DataFunctionArgs) {
 	const timings = makeTimings('app_test_loader')

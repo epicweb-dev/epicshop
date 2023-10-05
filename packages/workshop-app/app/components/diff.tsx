@@ -3,8 +3,8 @@ import * as Select from '@radix-ui/react-select'
 import { Await, Form, useSearchParams, useSubmit } from '@remix-run/react'
 import { clsx } from 'clsx'
 import React, { Suspense, useMemo } from 'react'
-import AccordionComponent from '~/components/accordion.tsx'
-import { Mdx } from '~/utils/mdx.tsx'
+import AccordionComponent from '#app/components/accordion.tsx'
+import { Mdx } from '#app/utils/mdx.tsx'
 import { Icon } from './icons.tsx'
 
 type diffProp = {

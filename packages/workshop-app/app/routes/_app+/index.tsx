@@ -1,23 +1,27 @@
 import path from 'path'
-import  { type DataFunctionArgs, type HeadersFunction , json } from '@remix-run/node'
+import {
+	type DataFunctionArgs,
+	type HeadersFunction,
+	json,
+} from '@remix-run/node'
 import { useLoaderData } from '@remix-run/react'
-import { ButtonLink } from '~/components/button.tsx'
-import { GeneralErrorBoundary } from '~/components/error-boundary.tsx'
-import { EditFileOnGitHub } from '~/routes/launch-editor.tsx'
+import { ButtonLink } from '#app/components/button.tsx'
+import { GeneralErrorBoundary } from '#app/components/error-boundary.tsx'
+import { EditFileOnGitHub } from '#app/routes/launch-editor.tsx'
 import {
 	getExercises,
 	getWorkshopRoot,
 	getWorkshopTitle,
-} from '~/utils/apps.server.ts'
-import { compileMdx } from '~/utils/compile-mdx.server.ts'
-import { Mdx } from '~/utils/mdx.tsx'
-import { getErrorMessage } from '~/utils/misc.tsx'
+} from '#app/utils/apps.server.ts'
+import { compileMdx } from '#app/utils/compile-mdx.server.ts'
+import { Mdx } from '#app/utils/mdx.tsx'
+import { getErrorMessage } from '#app/utils/misc.tsx'
 import {
 	combineServerTimings,
 	getServerTimeHeader,
 	makeTimings,
 	time,
-} from '~/utils/timing.server.ts'
+} from '#app/utils/timing.server.ts'
 
 export async function loader({ request }: DataFunctionArgs) {
 	const timings = makeTimings('indexLoader')

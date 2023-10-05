@@ -1,9 +1,14 @@
-import  { type LinkProps , Link, useFormAction, useNavigation } from '@remix-run/react'
+import {
+	type LinkProps,
+	Link,
+	useFormAction,
+	useNavigation,
+} from '@remix-run/react'
 import slugify from '@sindresorhus/slugify'
 import { clsx, type ClassValue } from 'clsx'
 import * as React from 'react'
 import { twMerge } from 'tailwind-merge'
-import { Icon } from '~/components/icons.tsx'
+import { Icon } from '#app/components/icons.tsx'
 
 export function getErrorMessage(error: unknown) {
 	if (typeof error === 'string') return error

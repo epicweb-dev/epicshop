@@ -1,11 +1,11 @@
 import * as Select from '@radix-ui/react-select'
-import  { type DataFunctionArgs , json } from '@remix-run/node'
+import { type DataFunctionArgs, json } from '@remix-run/node'
 import { useFetcher } from '@remix-run/react'
 import { clsx } from 'clsx'
 import { useEffect } from 'react'
 import { z } from 'zod'
-import { Icon } from '~/components/icons.tsx'
-import { showToast } from '~/components/toast.tsx'
+import { Icon } from '#app/components/icons.tsx'
+import { showToast } from '#app/components/toast.tsx'
 import {
 	getAppByName,
 	getApps,
@@ -13,9 +13,9 @@ import {
 	isProblemApp,
 	isSolutionApp,
 	setPlayground,
-} from '~/utils/apps.server.ts'
-import { getDiffCode } from '~/utils/diff.server.ts'
-import { ensureUndeployed, getErrorMessage } from '~/utils/misc.tsx'
+} from '#app/utils/apps.server.ts'
+import { getDiffCode } from '#app/utils/diff.server.ts'
+import { ensureUndeployed, getErrorMessage } from '#app/utils/misc.tsx'
 
 const setPlaygroundSchema = z.object({
 	appName: z.string(),

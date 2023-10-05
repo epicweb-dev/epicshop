@@ -6,15 +6,15 @@ import { useEffect, useReducer, useRef } from 'react'
 import { eventStream } from 'remix-utils/event-stream'
 import { useEventSource } from 'remix-utils/use-event-source'
 import { z } from 'zod'
-import { Icon, AnimatedBars } from '~/components/icons.tsx'
-import { getAppByName } from '~/utils/apps.server.ts'
-import { ensureUndeployed } from '~/utils/misc.tsx'
+import { Icon, AnimatedBars } from '#app/components/icons.tsx'
+import { getAppByName } from '#app/utils/apps.server.ts'
+import { ensureUndeployed } from '#app/utils/misc.tsx'
 import {
 	clearTestProcessEntry,
 	getTestProcessEntry,
 	isTestRunning,
 	runAppTests,
-} from '~/utils/process-manager.server.ts'
+} from '#app/utils/process-manager.server.ts'
 
 const testActionSchema = z.union([
 	z.object({
