@@ -145,7 +145,7 @@ export default function App() {
 	return (
 		<Document
 			className={cn(
-				'h-full',
+				'h-full antialiased',
 				theme,
 				{ 'cursor-progress': showSpinner },
 				altDown ? 'alt-down' : null,

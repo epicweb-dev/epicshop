@@ -3,7 +3,6 @@ import { Form } from '@remix-run/react'
 import { Button } from '#app/components/button.tsx'
 import { deleteAuthInfo, requireAuthInfo } from '#app/utils/db.server.ts'
 import { ensureUndeployed } from '#app/utils/misc.tsx'
-
 export async function loader({ request }: DataFunctionArgs) {
 	ensureUndeployed()
 	await requireAuthInfo({ request })
@@ -18,11 +17,13 @@ export async function action() {
 
 export default function Account() {
 	return (
-		<main>
-			<h1 className="text-2xl">Account</h1>
-			<p>You are logged in</p>
+		<main className="flex w-full flex-grow flex-col items-center justify-center">
+			<h1 className="text-2xl">Your Account</h1>
+			<p className="pb-8 pt-3 text-gray-700 dark:text-gray-300">
+				You are logged in.
+			</p>
 			<Form method="post">
-				<Button varient="primary">Logout</Button>
+				<Button varient="primary">Log out</Button>
 			</Form>
 		</main>
 	)
