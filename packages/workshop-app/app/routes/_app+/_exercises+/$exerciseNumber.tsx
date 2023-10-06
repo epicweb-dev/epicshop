@@ -3,7 +3,7 @@ import {
 	type DataFunctionArgs,
 	type HeadersFunction,
 	type MetaFunction,
-	json,
+	defer,
 } from '@remix-run/node'
 import {
 	isRouteErrorResponse,
@@ -11,6 +11,7 @@ import {
 	useRouteError,
 } from '@remix-run/react'
 import { ButtonLink } from '#app/components/button.tsx'
+import { usePreboundEpicVideo } from '#app/components/epic-video.tsx'
 import { type loader as rootLoader } from '#app/root.tsx'
 import { EditFileOnGitHub } from '#app/routes/launch-editor.tsx'
 import {
@@ -18,6 +19,7 @@ import {
 	getWorkshopRoot,
 	getWorkshopTitle,
 } from '#app/utils/apps.server.ts'
+import { getEpicVideoInfos } from '#app/utils/epic-api.ts'
 import { Mdx } from '#app/utils/mdx.tsx'
 import { getErrorMessage, invariantResponse } from '#app/utils/misc.tsx'
 import {
@@ -73,7 +75,8 @@ export async function loader({ params, request }: DataFunctionArgs) {
 	)
 
 	const firstStep = exercise.steps.find(Boolean)
-	return json(
+
+	return defer(
 		{
 			exercise,
 			exerciseNumber: exercise.exerciseNumber,
@@ -85,6 +88,10 @@ export async function loader({ params, request }: DataFunctionArgs) {
 			firstStep,
 			firstType: firstStep?.problem ? 'problem' : 'solution',
 			title: workshopTitle,
+			epicVideoInfosPromise: getEpicVideoInfos(
+				exercise.instructionsEpicVideoEmbeds,
+				{ request },
+			),
 		},
 		{
 			headers: {
@@ -105,6 +112,7 @@ export const headers: HeadersFunction = ({ loaderHeaders, parentHeaders }) => {
 
 export default function ExerciseNumberRoute() {
 	const data = useLoaderData<typeof loader>()
+	const EpicVideo = usePreboundEpicVideo(data.epicVideoInfosPromise)
 
 	const firstStepNumber = String(data.firstStep?.stepNumber ?? '01')
 	const firstStepPath = `${firstStepNumber.padStart(2, '0')}/${data.firstType}`
@@ -130,6 +138,7 @@ export default function ExerciseNumberRoute() {
 							code={data.exercise?.instructionsCode}
 							components={{
 								h1: () => null,
+								EpicVideo,
 							}}
 						/>
 					) : (

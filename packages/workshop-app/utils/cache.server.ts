@@ -1,12 +1,17 @@
+import os from 'os'
+import path from 'path'
 import * as C from 'cachified'
 import {
 	lruCacheAdapter,
 	verboseReporter,
+	type Cache as CachifiedCache,
 	type CacheEntry,
 	type LRUishCache,
 } from 'cachified'
+import fsExtra from 'fs-extra'
 import { LRUCache } from 'lru-cache'
-import  {
+import md5 from 'md5-hex'
+import {
 	type App,
 	type ExampleApp,
 	type PlaygroundApp,
@@ -30,6 +35,37 @@ export const compiledMarkdownCache = makeSingletonCache<string>(
 )
 export const embeddedFilesCache =
 	makeSingletonCache<Record<string, string[]>>('EmbeddedFilesCache')
+
+const cacheDir = path.join(os.homedir(), '.kcdshop', 'cache')
+
+export const fsCache: CachifiedCache = {
+	name: 'Filesystem cache',
+	async get(key) {
+		try {
+			const filePath = path.join(cacheDir, md5(key))
+			const data = await fsExtra.readJSON(filePath)
+			return data
+		} catch (error: unknown) {
+			if (
+				error instanceof Error &&
+				'code' in error &&
+				error.code === 'ENOENT'
+			) {
+				return null
+			}
+			throw error
+		}
+	},
+	async set(key, entry) {
+		const filePath = path.join(cacheDir, md5(key))
+		await fsExtra.ensureDir(path.dirname(filePath))
+		await fsExtra.writeJSON(filePath, entry)
+	},
+	async delete(key) {
+		const filePath = path.join(cacheDir, md5(key))
+		await fsExtra.remove(filePath)
+	},
+}
 
 function makeSingletonCache<CacheEntryType>(name: string) {
 	return singleton(name, () => {

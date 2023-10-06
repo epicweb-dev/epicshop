@@ -13,7 +13,11 @@ import emoji from 'remark-emoji'
 import gfm from 'remark-gfm'
 import { type PluggableList } from 'unified'
 import { visit } from 'unist-util-visit'
-import { compiledMarkdownCache, embeddedFilesCache } from './cache.server.ts'
+import {
+	compiledMarkdownCache,
+	embeddedFilesCache,
+	shouldForceFresh,
+} from './cache.server.ts'
 import {
 	remarkCodeFile,
 	type CodeFileData,
@@ -110,7 +114,12 @@ function validateEmbeddedFiles(
 
 export async function compileMdx(
 	file: string,
-): Promise<{ code: string; title: string | null }> {
+	{ request, forceFresh }: { request?: Request; forceFresh?: boolean } = {},
+): Promise<{
+	code: string
+	title: string | null
+	epicVideoEmbeds: Array<string>
+}> {
 	if (!(await checkFileExists(file))) {
 		throw new Error(`File does not exist: ${file}`)
 	}
@@ -120,7 +129,12 @@ export async function compileMdx(
 	const stat = await fs.promises.stat(file)
 	const cacheLocation = path.join(cacheDir, `${md5(file)}.json`)
 
-	if (await checkFileExists(cacheLocation)) {
+	const requireFresh = await shouldForceFresh({
+		forceFresh,
+		request,
+		key: cacheLocation,
+	})
+	if (!requireFresh && (await checkFileExists(cacheLocation))) {
 		const cached = JSON.parse(
 			await fs.promises.readFile(cacheLocation, 'utf-8'),
 		) as any
@@ -143,6 +157,7 @@ export async function compileMdx(
 		}
 	}
 	let title: string | null = null
+	const epicVideoEmbeds: Array<string> = []
 	const codeFileData = {
 		mdxFile: file,
 		cacheLocation,
@@ -185,6 +200,19 @@ export async function compileMdx(
 						title = title ? title.replace(/^\d+\. /, '').trim() : null
 					},
 					// @ts-expect-error - the types here are a mess
+					() => (tree: MdastRoot) => {
+						visit(tree, 'mdxJsxFlowElement', jsxEl => {
+							if (jsxEl.name !== 'EpicVideo') return
+							const urlAttr = jsxEl.attributes.find(
+								a => a.type === 'mdxJsxAttribute' && a.name === 'url',
+							)
+							if (!urlAttr) return
+							const url = urlAttr.value
+							if (typeof url !== 'string') return
+							epicVideoEmbeds.push(url)
+						})
+					},
+					// @ts-expect-error - the types here are a mess
 					() => remarkCodeFile(codeFileData),
 					// @ts-expect-error - the types here are a mess
 					emoji,
@@ -201,7 +229,7 @@ export async function compileMdx(
 		})
 		if (!bundleResult) throw new Error(`Timeout for file: ${file}`)
 
-		const result = { code: bundleResult.code, title }
+		const result = { code: bundleResult.code, title, epicVideoEmbeds }
 		await fsExtra.ensureDir(cacheDir)
 		await fs.promises.writeFile(
 			cacheLocation,

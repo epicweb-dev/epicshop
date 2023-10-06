@@ -1,11 +1,12 @@
 import path from 'path'
 import {
+	defer,
 	type DataFunctionArgs,
 	type HeadersFunction,
-	json,
 } from '@remix-run/node'
 import { useLoaderData } from '@remix-run/react'
 import { ButtonLink } from '#app/components/button.tsx'
+import { usePreboundEpicVideo } from '#app/components/epic-video.tsx'
 import { GeneralErrorBoundary } from '#app/components/error-boundary.tsx'
 import { EditFileOnGitHub } from '#app/routes/launch-editor.tsx'
 import {
@@ -14,6 +15,7 @@ import {
 	getWorkshopTitle,
 } from '#app/utils/apps.server.ts'
 import { compileMdx } from '#app/utils/compile-mdx.server.ts'
+import { getEpicVideoInfos } from '#app/utils/epic-api.ts'
 import { Mdx } from '#app/utils/mdx.tsx'
 import { getErrorMessage } from '#app/utils/misc.tsx'
 import {
@@ -44,7 +46,7 @@ export async function loader({ request }: DataFunctionArgs) {
 					'exercises',
 					'README.mdx',
 				)
-				const compiled = await compileMdx(readmeFilepath).then(
+				const compiled = await compileMdx(readmeFilepath, { request }).then(
 					r => ({ ...r, status: 'success' }) as const,
 					e => {
 						console.error(
@@ -60,7 +62,8 @@ export async function loader({ request }: DataFunctionArgs) {
 			{ timings, type: 'compileMdx', desc: 'compileMdx in index' },
 		),
 	])
-	return json(
+
+	return defer(
 		{
 			title:
 				workshopReadme.compiled.status === 'success'
@@ -71,6 +74,12 @@ export async function loader({ request }: DataFunctionArgs) {
 				title: e.title,
 			})),
 			workshopReadme,
+			epicVideoInfosPromise:
+				workshopReadme.compiled.status === 'success'
+					? getEpicVideoInfos(workshopReadme.compiled.epicVideoEmbeds, {
+							request,
+					  })
+					: null,
 		},
 		{
 			headers: {
@@ -91,6 +100,7 @@ export const headers: HeadersFunction = ({ loaderHeaders, parentHeaders }) => {
 
 export default function Index() {
 	const data = useLoaderData<typeof loader>()
+	const EpicVideo = usePreboundEpicVideo(data.epicVideoInfosPromise)
 
 	const exerciseLinks = (
 		<ul className="flex flex-wrap gap-4">
@@ -127,6 +137,7 @@ export default function Index() {
 									code={data.workshopReadme.compiled.code}
 									components={{
 										h1: () => null,
+										EpicVideo,
 									}}
 								/>
 							) : data.workshopReadme.compiled.status === 'error' ? (

@@ -45,6 +45,8 @@ type Exercise = {
 	title: string
 	instructionsCode?: string
 	finishedCode?: string
+	instructionsEpicVideoEmbeds?: Array<string>
+	finishedEpicVideoEmbeds?: Array<string>
 	steps: Array<
 		{ stepNumber: number } & ( // it'll have both or one, but never neither
 			| { problem: ProblemApp; solution: SolutionApp }
@@ -66,6 +68,7 @@ type BaseApp = {
 	fullPath: string
 	relativePath: string
 	instructionsCode?: string
+	epicVideoEmbeds?: Array<string>
 	test:
 		| {
 				type: 'browser'
@@ -220,10 +223,13 @@ async function readDir(dir: string) {
 	return []
 }
 
-async function compileMdxIfExists(filepath: string) {
+async function compileMdxIfExists(
+	filepath: string,
+	{ request }: { request?: Request } = {},
+) {
 	filepath = filepath.replace(/\\/g, '/')
 	if (await exists(filepath)) {
-		const compiled = await compileMdx(filepath).catch(error => {
+		const compiled = await compileMdx(filepath, { request }).catch(error => {
 			console.error(`Error compiling ${filepath}:`, error)
 			return null
 		})
@@ -274,9 +280,11 @@ export async function getExercises({
 		if (!exerciseNumber) continue
 		const compiledReadme = await compileMdxIfExists(
 			path.join(workshopRoot, 'exercises', dirName, 'README.mdx'),
+			{ request },
 		)
 		const compiledFinished = await compileMdxIfExists(
 			path.join(workshopRoot, 'exercises', dirName, 'FINISHED.mdx'),
+			{ request },
 		)
 		const steps: Exercise['steps'] = []
 		const exerciseApps = apps
@@ -296,6 +304,8 @@ export async function getExercises({
 			instructionsCode: compiledReadme?.code,
 			finishedCode: compiledFinished?.code,
 			title: compiledReadme?.title ?? dirName,
+			instructionsEpicVideoEmbeds: compiledReadme?.epicVideoEmbeds,
+			finishedEpicVideoEmbeds: compiledFinished?.epicVideoEmbeds,
 			steps,
 			problems: apps
 				.filter(isProblemApp)
@@ -564,7 +574,7 @@ async function getPlaygroundApp({
 			const name = getAppName(playgroundDir)
 			const portNumber = 4000
 			const [compiledReadme, test, dev] = await Promise.all([
-				compileMdxIfExists(path.join(playgroundDir, 'README.mdx')),
+				compileMdxIfExists(path.join(playgroundDir, 'README.mdx'), { request }),
 				getTestInfo({ fullPath: playgroundDir }),
 				getDevInfo({ fullPath: playgroundDir, portNumber }),
 			])
@@ -578,6 +588,7 @@ async function getPlaygroundApp({
 					'',
 				),
 				title: compiledReadme?.title ?? name,
+				epicVideoEmbeds: compiledReadme?.epicVideoEmbeds,
 				dirName,
 				instructionsCode: compiledReadme?.code,
 				test,
@@ -593,10 +604,12 @@ async function getPlaygroundApp({
 async function getExampleAppFromPath(
 	fullPath: string,
 	index: number,
+	request?: Request,
 ): Promise<ExampleApp> {
 	const dirName = path.basename(fullPath)
 	const compiledReadme = await compileMdxIfExists(
 		path.join(fullPath, 'README.mdx'),
+		{ request },
 	)
 	const name = getAppName(fullPath)
 	const portNumber = 8000 + index
@@ -606,6 +619,7 @@ async function getExampleAppFromPath(
 		fullPath,
 		relativePath: fullPath.replace(`${getWorkshopRoot()}${path.sep}`, ''),
 		title: compiledReadme?.title ?? name,
+		epicVideoEmbeds: compiledReadme?.epicVideoEmbeds,
 		dirName,
 		instructionsCode: compiledReadme?.code,
 		test: await getTestInfo({ fullPath }),
@@ -640,7 +654,7 @@ async function getExampleApps({
 				await exampleAppCache.get(key),
 			),
 			getFreshValue: () =>
-				getExampleAppFromPath(exampleDir, index).catch(error => {
+				getExampleAppFromPath(exampleDir, index, request).catch(error => {
 					console.error(error)
 					return null
 				}),
@@ -653,6 +667,7 @@ async function getExampleApps({
 
 async function getSolutionAppFromPath(
 	fullPath: string,
+	request?: Request,
 ): Promise<SolutionApp | null> {
 	const dirName = path.basename(fullPath)
 	const parentDirName = path.basename(path.dirname(fullPath))
@@ -666,6 +681,7 @@ async function getSolutionAppFromPath(
 	const portNumber = 7000 + (exerciseNumber - 1) * 10 + stepNumber
 	const compiledReadme = await compileMdxIfExists(
 		path.join(fullPath, 'README.mdx'),
+		{ request },
 	)
 	const problemDir = await findProblemDir({
 		fullPath,
@@ -678,6 +694,7 @@ async function getSolutionAppFromPath(
 	return {
 		name,
 		title: compiledReadme?.title ?? name,
+		epicVideoEmbeds: compiledReadme?.epicVideoEmbeds,
 		type: 'solution',
 		problemName,
 		exerciseNumber,
@@ -718,7 +735,7 @@ async function getSolutionApps({
 				await solutionAppCache.get(solutionDir),
 			),
 			getFreshValue: () =>
-				getSolutionAppFromPath(solutionDir).catch(error => {
+				getSolutionAppFromPath(solutionDir, request).catch(error => {
 					console.error(error)
 					return null
 				}),
@@ -731,6 +748,7 @@ async function getSolutionApps({
 
 async function getProblemAppFromPath(
 	fullPath: string,
+	request?: Request,
 ): Promise<ProblemApp | null> {
 	const dirName = path.basename(fullPath)
 	const parentDirName = path.basename(path.dirname(fullPath))
@@ -744,6 +762,7 @@ async function getProblemAppFromPath(
 	const portNumber = 6000 + (exerciseNumber - 1) * 10 + stepNumber
 	const compiledReadme = await compileMdxIfExists(
 		path.join(fullPath, 'README.mdx'),
+		{ request },
 	)
 	const solutionDir = await findSolutionDir({
 		fullPath,
@@ -757,6 +776,7 @@ async function getProblemAppFromPath(
 		solutionName,
 		name,
 		title: compiledReadme?.title ?? name,
+		epicVideoEmbeds: compiledReadme?.epicVideoEmbeds,
 		type: 'problem',
 		exerciseNumber,
 		stepNumber,

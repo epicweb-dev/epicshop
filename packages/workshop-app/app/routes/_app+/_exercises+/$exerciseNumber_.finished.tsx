@@ -3,10 +3,11 @@ import {
 	type DataFunctionArgs,
 	type HeadersFunction,
 	type MetaFunction,
-	json,
+	defer,
 } from '@remix-run/node'
 import { Link, useLoaderData } from '@remix-run/react'
 import * as React from 'react'
+import { usePreboundEpicVideo } from '#app/components/epic-video.tsx'
 import { Loading } from '#app/components/loading.tsx'
 import { NavChevrons } from '#app/components/nav-chevrons.tsx'
 import { type loader as rootLoader } from '#app/root.tsx'
@@ -19,6 +20,7 @@ import {
 	getWorkshopTitle,
 	isExerciseStepApp,
 } from '#app/utils/apps.server.ts'
+import { getEpicVideoInfos } from '#app/utils/epic-api.ts'
 import { Mdx } from '#app/utils/mdx.tsx'
 import { cn, invariantResponse } from '#app/utils/misc.tsx'
 import {
@@ -72,10 +74,14 @@ export async function loader({ params, request }: DataFunctionArgs) {
 		.filter(app => app.exerciseNumber === exercise.exerciseNumber)
 	const prevApp = exerciseApps[exerciseApps.length - 1]
 
-	return json(
+	return defer(
 		{
 			workshopTitle,
 			exercise,
+			epicVideoInfosPromise: getEpicVideoInfos(
+				exercise.finishedEpicVideoEmbeds,
+				{ request },
+			),
 			exerciseFinished: exercise.finishedCode
 				? {
 						file: finishedFilepath,
@@ -117,6 +123,7 @@ export const headers: HeadersFunction = ({ loaderHeaders, parentHeaders }) => {
 
 export default function ExerciseFinished() {
 	const data = useLoaderData<typeof loader>()
+	const EpicVideo = usePreboundEpicVideo(data.epicVideoInfosPromise)
 	const exerciseNumber = data.exercise.exerciseNumber
 		.toString()
 		.padStart(2, '0')
@@ -149,7 +156,7 @@ export default function ExerciseFinished() {
 						{data.exercise.finishedCode ? (
 							<Mdx
 								code={data.exercise.finishedCode}
-								components={{ h1: () => null }}
+								components={{ h1: () => null, EpicVideo }}
 							/>
 						) : (
 							// TODO: render a random dad joke...

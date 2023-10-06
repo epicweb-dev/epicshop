@@ -1,8 +1,8 @@
-import { homedir } from 'os'
-import { join } from 'path'
+import os from 'os'
+import path from 'path'
 import { redirect } from '@remix-run/node'
 import fsExtra from 'fs-extra'
-import md5 from 'md5-hash'
+import md5 from 'md5-hex'
 import { z } from 'zod'
 
 const TokenSetSchema = z.object({
@@ -20,8 +20,8 @@ const DataSchema = z.object({
 		.optional(),
 })
 
-const appDir = join(homedir(), '.kcdshop')
-const dbPath = join(appDir, 'data.json')
+const appDir = path.join(os.homedir(), '.kcdshop')
+const dbPath = path.join(appDir, 'data.json')
 
 async function readDb() {
 	if (ENV.KCDSHOP_DEPLOYED) return null
@@ -53,7 +53,7 @@ export async function getUserAvatar({
 		size: size.toString(),
 		default: 'identicon',
 	})
-	const gravatarUrl = `https://www.gravatar.com/avatar/${md5.default(
+	const gravatarUrl = `https://www.gravatar.com/avatar/${md5(
 		email,
 	)}?${gravatarOptions.toString()}`
 	return gravatarUrl

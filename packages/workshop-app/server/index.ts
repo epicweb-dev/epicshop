@@ -2,7 +2,11 @@ import fs from 'fs'
 import path from 'path'
 import { fileURLToPath } from 'url'
 import { createRequestHandler } from '@remix-run/express'
-import { type ServerBuild, broadcastDevReady } from '@remix-run/node'
+import {
+	type ServerBuild,
+	broadcastDevReady,
+	installGlobals,
+} from '@remix-run/node'
 import address from 'address'
 import chalk from 'chalk'
 import chokidar from 'chokidar'
@@ -23,6 +27,7 @@ import { isEmbeddedFile } from '../utils/compile-mdx.server.ts'
 
 const BUILD_PATH = '../build/index.js'
 
+installGlobals()
 sourceMapSupport.install()
 
 const build = remixBuild as unknown as ServerBuild

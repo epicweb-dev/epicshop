@@ -20,6 +20,7 @@ import { clsx } from 'clsx'
 import * as React from 'react'
 import { useMemo, useRef, useState, type PropsWithChildren } from 'react'
 import { Diff } from '#app/components/diff.tsx'
+import { usePreboundEpicVideo } from '#app/components/epic-video.tsx'
 import { Icon } from '#app/components/icons.tsx'
 import {
 	InBrowserBrowser,
@@ -51,6 +52,7 @@ import {
 	requireExerciseApp,
 } from '#app/utils/apps.server.ts'
 import { getDiffCode, getDiffFiles } from '#app/utils/diff.server.ts'
+import { getEpicVideoInfos } from '#app/utils/epic-api.ts'
 import { Mdx } from '#app/utils/mdx.tsx'
 import { cn, getErrorMessage, useAltDown } from '#app/utils/misc.tsx'
 import {
@@ -255,6 +257,7 @@ export async function loader({ request, params }: DataFunctionArgs) {
 			type: params.type as 'problem' | 'solution',
 			exerciseStepApp,
 			exerciseTitle: exercise.title,
+			epicVideoInfosPromise: getEpicVideoInfos(exerciseStepApp.epicVideoEmbeds),
 			exerciseIndex,
 			allApps,
 			prevStepLink: isFirstStep
@@ -371,6 +374,7 @@ type CodeFileNotificationProps = {
 
 export default function ExercisePartRoute() {
 	const data = useLoaderData<typeof loader>()
+	const EpicVideo = usePreboundEpicVideo(data.epicVideoInfosPromise)
 	const [searchParams] = useSearchParams()
 
 	const preview = searchParams.get('preview')
@@ -704,6 +708,7 @@ export default function ExercisePartRoute() {
 									DiffLink,
 									InlineFile,
 									LinkToApp,
+									EpicVideo,
 								}}
 							/>
 						) : (

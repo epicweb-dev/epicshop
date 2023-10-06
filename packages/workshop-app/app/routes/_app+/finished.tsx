@@ -1,12 +1,13 @@
 import path from 'path'
 import {
+	defer,
 	type DataFunctionArgs,
 	type HeadersFunction,
 	type MetaFunction,
-	json,
 } from '@remix-run/node'
 import { Link, useLoaderData } from '@remix-run/react'
 import * as React from 'react'
+import { usePreboundEpicVideo } from '#app/components/epic-video.tsx'
 import { Loading } from '#app/components/loading.tsx'
 import { NavChevrons } from '#app/components/nav-chevrons.tsx'
 import { type loader as rootLoader } from '#app/root.tsx'
@@ -16,6 +17,7 @@ import {
 	getWorkshopTitle,
 } from '#app/utils/apps.server.ts'
 import { compileMdx } from '#app/utils/compile-mdx.server.ts'
+import { getEpicVideoInfos } from '#app/utils/epic-api.ts'
 import { Mdx } from '#app/utils/mdx.tsx'
 import { cn, getErrorMessage } from '#app/utils/misc.tsx'
 import {
@@ -44,7 +46,7 @@ export async function loader({ request }: DataFunctionArgs) {
 				'exercises',
 				'FINISHED.mdx',
 			)
-			const compiled = await compileMdx(finishedFilepath).then(
+			const compiled = await compileMdx(finishedFilepath, { request }).then(
 				r => ({ ...r, status: 'success' }) as const,
 				e => {
 					console.error(
@@ -63,13 +65,20 @@ export async function loader({ request }: DataFunctionArgs) {
 		},
 		{ timings, type: 'compileMdx', desc: 'compileMdx in finished' },
 	)
+
 	const lastExercises = exercises[exercises.length - 1]
-	return json(
+	return defer(
 		{
 			workshopTitle: await getWorkshopTitle(),
 			finishedCode:
 				compiledFinished.compiled.status === 'success'
 					? compiledFinished.compiled.code
+					: null,
+			epicVideoInfosPromise:
+				compiledFinished.compiled.status === 'success'
+					? getEpicVideoInfos(compiledFinished.compiled.epicVideoEmbeds, {
+							request,
+					  })
 					: null,
 			workshopFinished: {
 				file: compiledFinished.file,
@@ -99,6 +108,8 @@ export const headers: HeadersFunction = ({ loaderHeaders, parentHeaders }) => {
 
 export default function ExerciseFinished() {
 	const data = useLoaderData<typeof loader>()
+	const EpicVideo = usePreboundEpicVideo(data.epicVideoInfosPromise)
+	console.log(data.epicVideoInfosPromise)
 	return (
 		<div className="flex flex-grow flex-col">
 			<main className="grid h-full flex-grow grid-cols-1 grid-rows-2 lg:grid-cols-2 lg:grid-rows-1">
@@ -120,7 +131,10 @@ export default function ExerciseFinished() {
 						data-restore-scroll="true"
 					>
 						{data.finishedCode ? (
-							<Mdx code={data.finishedCode} components={{ h1: () => null }} />
+							<Mdx
+								code={data.finishedCode}
+								components={{ h1: () => null, EpicVideo }}
+							/>
 						) : (
 							// TODO: render a random dad joke...
 							'No finished instructions yet...'
