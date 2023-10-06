@@ -63,6 +63,8 @@ export type IconNames =
 	| 'Moon'
 	| 'Laptop'
 	| 'Video'
+	| 'User'
+	| 'EpicWeb'
 
 export function Icon({
 	title,

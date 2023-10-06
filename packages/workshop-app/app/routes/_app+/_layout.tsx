@@ -31,6 +31,7 @@ import {
 	makeTimings,
 } from '#app/utils/timing.server.ts'
 import { ThemeSwitch } from '../theme/index.tsx'
+import { Icon } from '#app/components/icons.tsx'
 
 export async function loader({ request }: DataFunctionArgs) {
 	const timings = makeTimings('stepLoader')
@@ -93,14 +94,52 @@ export const headers: HeadersFunction = ({ loaderHeaders, parentHeaders }) => {
 }
 
 export default function App() {
+	const data = useLoaderData<typeof loader>()
+	const isAuthenticated = data.isAuthenticated
+
 	return (
-		<div className="flex h-full">
-			<div className="flex flex-grow">
-				<div className="flex flex-grow">
-					<Navigation />
-					<Outlet />
-				</div>
+		<div className="flex flex-col">
+			{ENV.KCDSHOP_DEPLOYED ? null : !isAuthenticated ? (
+				<EpicWebBanner />
+			) : null}
+			<div
+				className={clsx('flex flex-grow', {
+					'h-[calc(100vh-56px)]': !isAuthenticated,
+					'h-screen': isAuthenticated,
+				})}
+			>
+				<Navigation />
+				<Outlet />
 				<ToastHub />
+			</div>
+		</div>
+	)
+}
+
+function EpicWebBanner() {
+	return (
+		<div className="z-10 flex h-14 items-center justify-between border-b bg-gradient-to-tr from-blue-500 to-indigo-500 pl-4 text-white">
+			<div className="flex items-center gap-4">
+				<Icon name="EpicWeb" size={24} />
+				<p className="">Welcome to Workshop App for EpicWeb.dev!</p>
+			</div>
+			<div className="flex h-full items-center">
+				<Link
+					to="https://epicweb.dev"
+					target="_blank"
+					rel="noreferrer"
+					className="flex h-full items-center justify-center space-x-1.5 px-5 text-sm font-semibold"
+				>
+					<span className="drop-shadow-sm">Buy Epic Web</span>
+					<span>↗︎</span>
+				</Link>
+				<Link
+					to="/login"
+					className="flex h-full items-center justify-center space-x-1.5 bg-white/20 px-5 text-sm font-semibold shadow-md transition hover:bg-white/30"
+				>
+					<Icon name="User" size={24} />
+					<span className="drop-shadow-sm">Restore Purchase</span>
+				</Link>
 			</div>
 		</div>
 	)
@@ -167,17 +206,6 @@ function Navigation() {
 						isMenuOpened={isMenuOpened}
 						setMenuOpened={setMenuOpened}
 					/>
-
-					{ENV.KCDSHOP_DEPLOYED ? null : data.isAuthenticated ? (
-						<Link className="w-full py-4 text-center underline" to="/account">
-							account
-						</Link>
-					) : (
-						<Link className="w-full py-4 text-center underline" to="/login">
-							login
-						</Link>
-					)}
-
 					{isMenuOpened && (
 						<motion.div
 							style={{ width: OPENED_MENU_WIDTH }}
@@ -311,7 +339,24 @@ function Navigation() {
 							</div>
 						</div>
 					)}
-					<div className="mb-4 ml-3 self-start">
+					{ENV.KCDSHOP_DEPLOYED ? null : data.isAuthenticated ? (
+						<Link
+							className="flex h-14 w-full items-center justify-start space-x-3 border-y px-4 py-4 text-center no-underline hover:underline"
+							to="/account"
+						>
+							<Icon name="User" className="flex-shrink-0" size={24} />
+							{isMenuOpened ? (
+								<motion.div
+									className="flex items-center whitespace-nowrap"
+									initial={{ opacity: 0 }}
+									animate={{ opacity: 1 }}
+								>
+									Your Account
+								</motion.div>
+							) : null}
+						</Link>
+					) : null}
+					<div className="mb-4 ml-3 self-start pt-[15px]">
 						<ThemeSwitch />
 					</div>
 				</div>
