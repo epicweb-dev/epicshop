@@ -109,7 +109,6 @@ export const headers: HeadersFunction = ({ loaderHeaders, parentHeaders }) => {
 export default function ExerciseFinished() {
 	const data = useLoaderData<typeof loader>()
 	const EpicVideo = usePreboundEpicVideo(data.epicVideoInfosPromise)
-	console.log(data.epicVideoInfosPromise)
 	return (
 		<div className="flex flex-grow flex-col">
 			<main className="grid h-full flex-grow grid-cols-1 grid-rows-2 lg:grid-cols-2 lg:grid-rows-1">
