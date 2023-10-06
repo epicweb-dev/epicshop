@@ -2,6 +2,7 @@ import { homedir } from 'os'
 import { join } from 'path'
 import { redirect } from '@remix-run/node'
 import fsExtra from 'fs-extra'
+import md5 from 'md5-hash'
 import { z } from 'zod'
 
 const TokenSetSchema = z.object({
@@ -13,6 +14,8 @@ const DataSchema = z.object({
 	authInfo: z
 		.object({
 			tokenSet: TokenSetSchema,
+			email: z.string(),
+			name: z.string().optional(),
 		})
 		.optional(),
 })
@@ -37,6 +40,23 @@ async function readDb() {
 		void fsExtra.move(dbPath, `${dbPath}.bkp`).catch(() => {})
 	}
 	return null
+}
+
+export async function getUserAvatar({
+	email,
+	size,
+}: {
+	email: string
+	size: number
+}) {
+	const gravatarOptions = new URLSearchParams({
+		size: size.toString(),
+		default: 'identicon',
+	})
+	const gravatarUrl = `https://www.gravatar.com/avatar/${md5.default(
+		email,
+	)}?${gravatarOptions.toString()}`
+	return gravatarUrl
 }
 
 export async function getAuthInfo() {
@@ -70,10 +90,14 @@ export async function requireAuthInfo({
 
 export async function setAuthInfo({
 	tokenSet,
+	email = 'unknown@example.com',
+	name,
 }: {
 	tokenSet: Partial<z.infer<typeof TokenSetSchema>>
+	email?: string
+	name?: string
 }) {
-	const data = DataSchema.parse({ authInfo: { tokenSet } })
+	const data = DataSchema.parse({ authInfo: { tokenSet, email, name } })
 	await fsExtra.ensureDir(appDir)
 	await fsExtra.writeJSON(dbPath, data)
 	return data.authInfo

@@ -107,6 +107,7 @@
     "isbot": "^3.6.13",
     "lodash.escape": "^4.0.1",
     "lru-cache": "^10.0.1",
+    "md5-hash": "^1.0.1",
     "md5-hex": "^4.0.0",
     "mdx-bundler": "^9.2.1",
     "mime-types": "^2.1.35",

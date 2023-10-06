@@ -17,6 +17,7 @@ import {
 	useAnimationControls,
 } from 'framer-motion'
 import * as React from 'react'
+import { Icon } from '#app/components/icons.tsx'
 import { ToastHub } from '#app/components/toast.tsx'
 import {
 	extractNumbersFromAppName,
@@ -24,18 +25,20 @@ import {
 	getPlaygroundAppName,
 	getWorkshopTitle,
 } from '#app/utils/apps.server.ts'
-import { getAuthInfo } from '#app/utils/db.server.ts'
+import { getAuthInfo, getUserAvatar } from '#app/utils/db.server.ts'
 import {
 	combineServerTimings,
 	getServerTimeHeader,
 	makeTimings,
 } from '#app/utils/timing.server.ts'
 import { ThemeSwitch } from '../theme/index.tsx'
-import { Icon } from '#app/components/icons.tsx'
 
 export async function loader({ request }: DataFunctionArgs) {
 	const timings = makeTimings('stepLoader')
-	const isAuthenticated = Boolean(await getAuthInfo())
+	const authInfo = await getAuthInfo()
+	const gravatarUrl = authInfo
+		? await getUserAvatar({ email: authInfo.email, size: 44 })
+		: null
 	const [exercises, workshopTitle, playgroundAppName] = await Promise.all([
 		getExercises({ request, timings }),
 		getWorkshopTitle(),
@@ -72,7 +75,13 @@ export async function loader({ request }: DataFunctionArgs) {
 				})),
 			})),
 			playground,
-			isAuthenticated,
+			authInfo: authInfo
+				? {
+						name: authInfo.name,
+						email: authInfo.email,
+						gravatarUrl,
+				  }
+				: null,
 		},
 		{
 			headers: {
@@ -94,18 +103,15 @@ export const headers: HeadersFunction = ({ loaderHeaders, parentHeaders }) => {
 }
 
 export default function App() {
-	const data = useLoaderData<typeof loader>()
-	const isAuthenticated = data.isAuthenticated
+	const { authInfo } = useLoaderData<typeof loader>()
 
 	return (
 		<div className="flex flex-col">
-			{ENV.KCDSHOP_DEPLOYED ? null : !isAuthenticated ? (
-				<EpicWebBanner />
-			) : null}
+			{ENV.KCDSHOP_DEPLOYED || authInfo ? null : <EpicWebBanner />}
 			<div
 				className={clsx('flex flex-grow', {
-					'h-[calc(100vh-56px)]': !isAuthenticated,
-					'h-screen': isAuthenticated,
+					'h-[calc(100vh-56px)]': !authInfo,
+					'h-screen': authInfo,
 				})}
 			>
 				<Navigation />
@@ -121,13 +127,22 @@ function EpicWebBanner() {
 		<div className="z-10 flex h-14 items-center justify-between border-b bg-gradient-to-tr from-blue-500 to-indigo-500 pl-4 text-white">
 			<div className="flex items-center gap-4">
 				<Icon name="EpicWeb" size={24} />
-				<p className="">Welcome to Workshop App for EpicWeb.dev!</p>
+				<p>
+					Welcome to the Workshop App for{' '}
+					<Link
+						to="https://www.epicweb.dev"
+						className="underline"
+						target="_blank"
+					>
+						EpicWeb.dev
+					</Link>
+					!
+				</p>
 			</div>
 			<div className="flex h-full items-center">
 				<Link
-					to="https://epicweb.dev"
+					to="https://www.epicweb.dev"
 					target="_blank"
-					rel="noreferrer"
 					className="flex h-full items-center justify-center space-x-1.5 px-5 text-sm font-semibold"
 				>
 					<span className="drop-shadow-sm">Buy Epic Web</span>
@@ -339,12 +354,20 @@ function Navigation() {
 							</div>
 						</div>
 					)}
-					{ENV.KCDSHOP_DEPLOYED ? null : data.isAuthenticated ? (
+					{ENV.KCDSHOP_DEPLOYED ? null : data.authInfo ? (
 						<Link
 							className="flex h-14 w-full items-center justify-start space-x-3 border-y px-4 py-4 text-center no-underline hover:underline"
 							to="/account"
 						>
-							<Icon name="User" className="flex-shrink-0" size={24} />
+							{data.authInfo.gravatarUrl ? (
+								<img
+									alt={data.authInfo.name ?? data.authInfo.email}
+									src={data.authInfo.gravatarUrl}
+									className="h-full rounded-full"
+								/>
+							) : (
+								<Icon name="User" className="flex-shrink-0" size={24} />
+							)}
 							{isMenuOpened ? (
 								<motion.div
 									className="flex items-center whitespace-nowrap"

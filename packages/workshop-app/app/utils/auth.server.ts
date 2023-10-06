@@ -36,6 +36,7 @@ export async function registerDevice() {
 	clearTimeout(timeout)
 	if (!tokenSet) return
 
-	await setAuthInfo({ tokenSet })
+	const userinfo = await client.userinfo(tokenSet)
+	await setAuthInfo({ tokenSet, email: userinfo.email, name: userinfo.name })
 	authEmitter.emit(EVENTS.AUTH_RESOLVED)
 }

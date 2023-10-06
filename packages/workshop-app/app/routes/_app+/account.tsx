@@ -1,12 +1,18 @@
 import { json, type DataFunctionArgs, redirect } from '@remix-run/node'
-import { Form } from '@remix-run/react'
+import { Form, useLoaderData } from '@remix-run/react'
 import { Button } from '#app/components/button.tsx'
-import { deleteAuthInfo, requireAuthInfo } from '#app/utils/db.server.ts'
+import {
+	deleteAuthInfo,
+	getUserAvatar,
+	requireAuthInfo,
+} from '#app/utils/db.server.ts'
 import { ensureUndeployed } from '#app/utils/misc.tsx'
+
 export async function loader({ request }: DataFunctionArgs) {
 	ensureUndeployed()
-	await requireAuthInfo({ request })
-	return json({})
+	const { email, name } = await requireAuthInfo({ request })
+	const gravatarUrl = await getUserAvatar({ email, size: 288 })
+	return json({ email, name, gravatarUrl })
 }
 
 export async function action() {
@@ -16,13 +22,28 @@ export async function action() {
 }
 
 export default function Account() {
+	const data = useLoaderData<typeof loader>()
 	return (
-		<main className="flex w-full flex-grow flex-col items-center justify-center">
-			<h1 className="text-2xl">Your Account</h1>
-			<p className="pb-8 pt-3 text-gray-700 dark:text-gray-300">
-				You are logged in.
+		<main className="container flex w-full max-w-lg flex-grow flex-col items-center justify-center gap-4">
+			<img
+				className="h-36 w-36 rounded-full"
+				alt={data.name ?? data.email}
+				src={data.gravatarUrl}
+			/>
+			<h1 className="mb-1 text-2xl">Your Account</h1>
+			<p className="text-center text-gray-700 dark:text-gray-300">
+				{data.name
+					? `Hi ${data.name}, your device is logged in with ${data.email}.`
+					: `Your device is logged in with ${data.email}.`}
 			</p>
-			<Form method="post">
+			<p>
+				<small>
+					Note: it is your <i className="italic">device</i> that's logged in,
+					not your browser. So all browsers on this device will be logged in
+					with the same account.
+				</small>
+			</p>
+			<Form method="post" className="mt-2">
 				<Button varient="primary">Log out</Button>
 			</Form>
 		</main>
