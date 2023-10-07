@@ -31,9 +31,13 @@ function extractEpicTitle(urlString: string) {
 	// prettier-ignore
 	const titleCaseExcludeWords = [
 		'the', 'a', 'an', 'and', 'but', 'or', 'for', 'nor', 'on', 'at', 'to',
-		'from', 'by', 'of', 'in', 'with', 'as',
+		'from', 'by', 'of', 'in', 'with', 'as', 'npm', 'git', 'ssh', 'cli'
 	]
-	const allCapsWords = ['ui', 'ux', 'api', 'css', 'html', 'js', 'ts', 'svg']
+	// prettier-ignore
+	const allCapsWords = [
+		'ui', 'ux', 'api', 'css', 'html', 'js', 'ts', 'svg', 'ai',
+		'http', 'https', 'url', 'uri',
+	]
 	const title = titleWords
 		.filter(Boolean)
 		.map((word, index) =>
@@ -41,7 +45,9 @@ function extractEpicTitle(urlString: string) {
 				? word
 				: word[0]?.toUpperCase() + word.slice(1),
 		)
-		.map(word => (allCapsWords.includes(word) ? word.toUpperCase() : word))
+		.map(word =>
+			allCapsWords.includes(word.toLowerCase()) ? word.toUpperCase() : word,
+		)
 		.join(' ')
 	if (isSolution) {
 		return `${title} (🏁 solution)`

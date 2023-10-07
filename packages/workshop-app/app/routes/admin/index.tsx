@@ -1,7 +1,10 @@
 import { type DataFunctionArgs, type MetaFunction, json } from '@remix-run/node'
 import { Form, Link, useLoaderData, useNavigation } from '@remix-run/react'
+import { Icon } from '#app/components/icons.tsx'
 import { type loader as rootLoader } from '#app/root.tsx'
-import { getApps } from '#app/utils/apps.server.ts'
+import { useEpicProgress } from '#app/routes/progress.tsx'
+import { getApps, getEpicWorkshopSlug } from '#app/utils/apps.server.ts'
+import { type Progress } from '#app/utils/epic-api.ts'
 import { ensureUndeployed } from '#app/utils/misc.tsx'
 import { getProcesses } from '#app/utils/process-manager.server.ts'
 import { getServerTimeHeader, makeTimings } from '#app/utils/timing.server.ts'
@@ -20,6 +23,7 @@ export const meta: MetaFunction<typeof loader, { root: typeof rootLoader }> = ({
 export async function loader({ request }: DataFunctionArgs) {
 	ensureUndeployed()
 	const timings = makeTimings('adminLoader')
+	const workshopSlug = (await getEpicWorkshopSlug()) ?? 'Unkown'
 	const apps = (await getApps({ request, timings })).filter(
 		(a, i, ar) => ar.findIndex(b => a.name === b.name) === i,
 	)
@@ -48,6 +52,7 @@ export async function loader({ request }: DataFunctionArgs) {
 		{
 			apps,
 			processes,
+			workshopSlug,
 			testProcesses,
 			inspectorRunning: global.__inspector_open__,
 		},
@@ -92,13 +97,48 @@ export async function action({ request }: DataFunctionArgs) {
 	}
 }
 
+function sortProgress(a: Progress, b: Progress) {
+	return a.type === 'unknown' && b.type === 'unknown'
+		? 0
+		: a.type === 'unknown'
+		? -1
+		: b.type === 'unknown'
+		? 1
+		: 0
+}
+
+function linkProgress(progress: Progress) {
+	switch (progress.type) {
+		case 'workshop-instructions':
+			return '/'
+		case 'workshop-finished':
+			return '/finished'
+		case 'instructions':
+			return `/${progress.exerciseNumber.toString().padStart(2, '0')}`
+		case 'step':
+			return `/${progress.exerciseNumber
+				.toString()
+				.padStart(2, '0')}/${progress.stepNumber.toString().padStart(2, '0')}`
+		case 'finished':
+			return `/${progress.exerciseNumber.toString().padStart(2, '0')}/finished`
+		default:
+			return ''
+	}
+}
+
 export default function AdminLayout() {
 	const data = useLoaderData<typeof loader>()
 	const navigation = useNavigation()
+	const epicProgress = useEpicProgress()
 
 	const isStartingInspector = navigation.formData?.get('intent') === 'inspect'
 	const isStoppingInspector =
 		navigation.formData?.get('intent') === 'stop-inspect'
+
+	const progressStatus = {
+		completed: 'bg-blue-500',
+		incomplete: 'bg-yellow-500',
+	}
 
 	return (
 		<div className="container mx-auto">
@@ -107,6 +147,55 @@ export default function AdminLayout() {
 				<Link className="underline" to="/diff">
 					Diff Viewer
 				</Link>
+			</div>
+			<div>
+				<h2 className="text-lg font-bold">Progress</h2>
+				{epicProgress ? (
+					<ul className="flex max-h-48 flex-col gap-2 overflow-y-scroll border-2 p-8 scrollbar-thin scrollbar-thumb-scrollbar">
+						{epicProgress?.sort(sortProgress).map((progress, i) => {
+							const epicUrl = `https://www.epicweb.dev/workshops/${data.workshopSlug}/${progress.epicSectionSlug}/${progress.epicLessonSlug}`
+							const status = progress.epicCompletedAt
+								? 'completed'
+								: 'incomplete'
+							const label = [
+								`${progress.epicSectionSlug}/${progress.epicLessonSlug}`,
+								progress.epicCompletedAt
+									? `(${progress.epicCompletedAt})`
+									: null,
+							]
+								.filter(Boolean)
+								.join(' ')
+							return (
+								<li
+									key={progress.epicLessonSlug}
+									className="flex items-center gap-2"
+								>
+									<span
+										className={`h-3 w-3 rounded-full ${progressStatus[status]}`}
+									/>
+									{progress.type === 'unknown' ? (
+										<span className="flex items-center gap-1">
+											{label}
+											<span className="text-red-500">
+												<Icon
+													name="Close"
+													title="This video is in the workshop on EpicWeb.dev, but not in the local workshop."
+												/>
+											</span>
+										</span>
+									) : (
+										<Link to={linkProgress(progress)}>{label}</Link>
+									)}
+									<Link to={epicUrl}>
+										<Icon name="ExternalLink"></Icon>
+									</Link>
+								</li>
+							)
+						})}
+					</ul>
+				) : (
+					<p>No progress data</p>
+				)}
 			</div>
 			<div>
 				<h2>Commands</h2>

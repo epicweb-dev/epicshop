@@ -4,7 +4,8 @@
   "kcd-workshop": {
     "title": "Web App Fundamentals 🔭",
     "githubRoot": "https://github.com/epicweb-dev/kcdshop/tree/main/packages/example",
-    "root": true
+    "root": true,
+    "epicWorkshopSlug": "full-stack-foundations"
   },
   "type": "module",
   "scripts": {

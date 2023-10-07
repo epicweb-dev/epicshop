@@ -14,6 +14,7 @@ import { ButtonLink } from '#app/components/button.tsx'
 import { usePreboundEpicVideo } from '#app/components/epic-video.tsx'
 import { type loader as rootLoader } from '#app/root.tsx'
 import { EditFileOnGitHub } from '#app/routes/launch-editor.tsx'
+import { ProgressToggle } from '#app/routes/progress.tsx'
 import {
 	getExercises,
 	getWorkshopRoot,
@@ -132,15 +133,23 @@ export default function ExerciseNumberRoute() {
 						</ButtonLink>
 					</div>
 				</div>
-				<div className="prose scroll-pt-6 dark:prose-invert sm:prose-lg">
+				<div className="scroll-pt-6">
 					{data.exercise.instructionsCode ? (
-						<Mdx
-							code={data.exercise?.instructionsCode}
-							components={{
-								h1: () => null,
-								EpicVideo,
-							}}
-						/>
+						<>
+							<div className="prose dark:prose-invert sm:prose-lg">
+								<Mdx
+									code={data.exercise?.instructionsCode}
+									components={{
+										h1: () => null,
+										EpicVideo,
+									}}
+								/>
+							</div>
+							<ProgressToggle
+								type="instructions"
+								exerciseNumber={data.exerciseNumber}
+							/>
+						</>
 					) : (
 						'No instructions yet...'
 					)}

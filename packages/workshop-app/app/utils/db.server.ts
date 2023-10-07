@@ -42,7 +42,7 @@ async function readDb() {
 	return null
 }
 
-export async function getUserAvatar({
+export function getUserAvatar({
 	email,
 	size,
 }: {
@@ -73,7 +73,6 @@ export async function requireAuthInfo({
 }) {
 	const authInfo = await getAuthInfo()
 	if (!authInfo) {
-		console.log('required auth info')
 		const requestUrl = new URL(request.url)
 		redirectTo =
 			redirectTo === null

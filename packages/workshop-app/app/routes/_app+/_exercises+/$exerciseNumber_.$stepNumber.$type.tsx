@@ -31,6 +31,7 @@ import { NavChevrons } from '#app/components/nav-chevrons.tsx'
 import TouchedFiles from '#app/components/touched-files.tsx'
 import { type loader as rootLoader } from '#app/root.tsx'
 import { EditFileOnGitHub, LaunchEditor } from '#app/routes/launch-editor.tsx'
+import { ProgressToggle } from '#app/routes/progress.tsx'
 import {
 	PlaygroundChooser,
 	SetAppToPlayground,
@@ -696,21 +697,32 @@ export default function ExercisePartRoute() {
 						</div>
 					</h1>
 					<article
-						className="shadow-on-scrollbox prose h-full w-full max-w-none flex-1 scroll-pt-6 space-y-6 overflow-y-auto p-10 pt-8 scrollbar-thin scrollbar-thumb-scrollbar dark:prose-invert sm:prose-lg"
+						className="shadow-on-scrollbox h-full w-full max-w-none flex-1 scroll-pt-6 space-y-6 overflow-y-auto p-10 pt-8 scrollbar-thin scrollbar-thumb-scrollbar"
 						data-restore-scroll="true"
 					>
 						{data.exerciseStepApp.instructionsCode ? (
-							<Mdx
-								code={data.exerciseStepApp?.instructionsCode}
-								components={{
-									CodeFile,
-									CodeFileNotification,
-									DiffLink,
-									InlineFile,
-									LinkToApp,
-									EpicVideo,
-								}}
-							/>
+							<>
+								<div className="prose dark:prose-invert sm:prose-lg">
+									<Mdx
+										code={data.exerciseStepApp?.instructionsCode}
+										components={{
+											CodeFile,
+											CodeFileNotification,
+											DiffLink,
+											InlineFile,
+											LinkToApp,
+											EpicVideo,
+										}}
+									/>
+								</div>
+								{data.type === 'solution' ? (
+									<ProgressToggle
+										type="step"
+										exerciseNumber={data.exerciseStepApp.exerciseNumber}
+										stepNumber={data.exerciseStepApp.stepNumber}
+									/>
+								) : null}
+							</>
 						) : (
 							<p>No instructions yet...</p>
 						)}

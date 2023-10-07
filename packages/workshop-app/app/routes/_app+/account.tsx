@@ -1,18 +1,14 @@
-import { json, type DataFunctionArgs, redirect } from '@remix-run/node'
-import { Form, useLoaderData } from '@remix-run/react'
+import { json, redirect, type DataFunctionArgs } from '@remix-run/node'
+import { Form } from '@remix-run/react'
 import { Button } from '#app/components/button.tsx'
-import {
-	deleteAuthInfo,
-	getUserAvatar,
-	requireAuthInfo,
-} from '#app/utils/db.server.ts'
+import { useUser } from '#app/components/user.tsx'
+import { deleteAuthInfo, requireAuthInfo } from '#app/utils/db.server.ts'
 import { ensureUndeployed } from '#app/utils/misc.tsx'
 
 export async function loader({ request }: DataFunctionArgs) {
 	ensureUndeployed()
-	const { email, name } = await requireAuthInfo({ request })
-	const gravatarUrl = await getUserAvatar({ email, size: 288 })
-	return json({ email, name, gravatarUrl })
+	await requireAuthInfo({ request })
+	return json({})
 }
 
 export async function action() {
@@ -22,19 +18,19 @@ export async function action() {
 }
 
 export default function Account() {
-	const data = useLoaderData<typeof loader>()
+	const user = useUser()
 	return (
 		<main className="container flex w-full max-w-lg flex-grow flex-col items-center justify-center gap-4">
 			<img
 				className="h-36 w-36 rounded-full"
-				alt={data.name ?? data.email}
-				src={data.gravatarUrl}
+				alt={user.name ?? user.email}
+				src={user.gravatarUrl}
 			/>
 			<h1 className="mb-1 text-2xl">Your Account</h1>
 			<p className="text-center text-gray-700 dark:text-gray-300">
-				{data.name
-					? `Hi ${data.name}, your device is logged in with ${data.email}.`
-					: `Your device is logged in with ${data.email}.`}
+				{user.name
+					? `Hi ${user.name}, your device is logged in with ${user.email}.`
+					: `Your device is logged in with ${user.email}.`}
 			</p>
 			<p>
 				<small>

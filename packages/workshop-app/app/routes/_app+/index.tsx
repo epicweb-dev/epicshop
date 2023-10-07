@@ -1,4 +1,3 @@
-import path from 'path'
 import {
 	defer,
 	type DataFunctionArgs,
@@ -11,23 +10,21 @@ import { GeneralErrorBoundary } from '#app/components/error-boundary.tsx'
 import { EditFileOnGitHub } from '#app/routes/launch-editor.tsx'
 import {
 	getExercises,
-	getWorkshopRoot,
+	getWorkshopInstructions,
 	getWorkshopTitle,
 } from '#app/utils/apps.server.ts'
-import { compileMdx } from '#app/utils/compile-mdx.server.ts'
 import { getEpicVideoInfos } from '#app/utils/epic-api.ts'
 import { Mdx } from '#app/utils/mdx.tsx'
-import { getErrorMessage } from '#app/utils/misc.tsx'
 import {
 	combineServerTimings,
 	getServerTimeHeader,
 	makeTimings,
 	time,
 } from '#app/utils/timing.server.ts'
+import { ProgressToggle } from '../progress.tsx'
 
 export async function loader({ request }: DataFunctionArgs) {
 	const timings = makeTimings('indexLoader')
-	const workshopRoot = getWorkshopRoot()
 	const [title, exercises, workshopReadme] = await Promise.all([
 		time(() => getWorkshopTitle(), {
 			timings,
@@ -39,28 +36,11 @@ export async function loader({ request }: DataFunctionArgs) {
 			type: 'getExercises',
 			desc: 'getExercises in index',
 		}),
-		time(
-			async () => {
-				const readmeFilepath = path.join(
-					workshopRoot,
-					'exercises',
-					'README.mdx',
-				)
-				const compiled = await compileMdx(readmeFilepath, { request }).then(
-					r => ({ ...r, status: 'success' }) as const,
-					e => {
-						console.error(
-							`There was an error compiling the workshop readme`,
-							readmeFilepath,
-							e,
-						)
-						return { status: 'error', error: getErrorMessage(e) } as const
-					},
-				)
-				return { compiled, file: readmeFilepath, relativePath: 'exercises' }
-			},
-			{ timings, type: 'compileMdx', desc: 'compileMdx in index' },
-		),
+		time(() => getWorkshopInstructions({ request }), {
+			timings,
+			type: 'compileMdx',
+			desc: 'compileMdx in index',
+		}),
 	])
 
 	return defer(
@@ -118,11 +98,11 @@ export default function Index() {
 	)
 	return (
 		<main className="relative w-full">
-			<div
+			<article
 				data-restore-scroll="true"
 				className="shadow-on-scrollbox h-full w-full overflow-y-auto scrollbar-thin scrollbar-thumb-scrollbar"
 			>
-				<article className="flex min-h-full w-full flex-col justify-between border-r border-border md:w-3/4 lg:w-2/3">
+				<div className="flex min-h-full w-full flex-col justify-between border-r border-border md:w-3/4 lg:w-2/3">
 					<div>
 						<div className="px-10 pt-16">
 							<h1 className="text-[6vw] font-extrabold leading-none">
@@ -130,16 +110,21 @@ export default function Index() {
 							</h1>
 							<div className="mt-8">{exerciseLinks}</div>
 						</div>
-						<div className="prose mt-16 w-full max-w-none scroll-pt-6 border-t border-border px-10 pt-16 dark:prose-invert sm:prose-lg">
+						<div className="mt-16 w-full max-w-none scroll-pt-6 border-t border-border px-10 pt-16">
 							{data.workshopReadme.compiled.status === 'success' &&
 							data.workshopReadme.compiled.code ? (
-								<Mdx
-									code={data.workshopReadme.compiled.code}
-									components={{
-										h1: () => null,
-										EpicVideo,
-									}}
-								/>
+								<>
+									<div className="prose dark:prose-invert sm:prose-lg">
+										<Mdx
+											code={data.workshopReadme.compiled.code}
+											components={{
+												h1: () => null,
+												EpicVideo,
+											}}
+										/>
+									</div>
+									<ProgressToggle type="workshop-instructions" />
+								</>
 							) : data.workshopReadme.compiled.status === 'error' ? (
 								<div className="text-red-500">
 									There was an error:
@@ -163,8 +148,8 @@ export default function Index() {
 							relativePath={data.workshopReadme.relativePath}
 						/>
 					</div>
-				</article>
-			</div>
+				</div>
+			</article>
 		</main>
 	)
 }

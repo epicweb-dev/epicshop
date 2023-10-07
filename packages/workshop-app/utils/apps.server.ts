@@ -1090,14 +1090,62 @@ export async function getWorkshopTitle() {
 	const title = await getPkgProp<string>(workshopRoot, 'kcd-workshop.title')
 	if (!title) {
 		throw new Error(
-			`Workshop title not found. Make sure the root of the workshop has "kcd-workshop" and "title" in the package.json. ${workshopRoot}`,
+			`Workshop title not found. Make sure the root of the workshop has "kcd-workshop" with a "title" property in the package.json. ${workshopRoot}`,
 		)
 	}
 	return title
 }
 
+export async function getEpicWorkshopSlug() {
+	const epicWorkshopSlug = await getPkgProp<string>(
+		workshopRoot,
+		'kcd-workshop.epicWorkshopSlug',
+	)
+	return epicWorkshopSlug || null
+}
+
 export function getWorkshopRoot() {
 	return process.env.KCDSHOP_CONTEXT_CWD ?? process.cwd()
+}
+
+export async function getWorkshopInstructions({
+	request,
+}: { request?: Request } = {}) {
+	const readmeFilepath = path.join(workshopRoot, 'exercises', 'README.mdx')
+	const compiled = await compileMdx(readmeFilepath, { request }).then(
+		r => ({ ...r, status: 'success' }) as const,
+		e => {
+			console.error(
+				`There was an error compiling the workshop readme`,
+				readmeFilepath,
+				e,
+			)
+			return { status: 'error', error: getErrorMessage(e) } as const
+		},
+	)
+	return { compiled, file: readmeFilepath, relativePath: 'exercises' } as const
+}
+
+export async function getWorkshopFinished({
+	request,
+}: { request?: Request } = {}) {
+	const finishedFilepath = path.join(workshopRoot, 'exercises', 'FINISHED.mdx')
+	const compiled = await compileMdx(finishedFilepath, { request }).then(
+		r => ({ ...r, status: 'success' }) as const,
+		e => {
+			console.error(
+				`There was an error compiling the workshop finished.mdx`,
+				finishedFilepath,
+				e,
+			)
+			return { status: 'error', error: getErrorMessage(e) } as const
+		},
+	)
+	return {
+		compiled,
+		file: finishedFilepath,
+		relativePath: 'exercises/finished.mdx',
+	} as const
 }
 
 const exercisesPath = path.join(workshopRoot, 'exercises/')
@@ -1107,4 +1155,18 @@ export function getRelativePath(filePath: string) {
 		.normalize(filePath)
 		.replace(playgroundPath, `playground${path.sep}`)
 		.replace(exercisesPath, '')
+}
+
+function getErrorMessage(error: unknown) {
+	if (typeof error === 'string') return error
+	if (
+		error &&
+		typeof error === 'object' &&
+		'message' in error &&
+		typeof error.message === 'string'
+	) {
+		return error.message
+	}
+	console.error('Unable to get error message for error', error)
+	return 'Unknown Error'
 }

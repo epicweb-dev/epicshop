@@ -12,6 +12,7 @@ import { Loading } from '#app/components/loading.tsx'
 import { NavChevrons } from '#app/components/nav-chevrons.tsx'
 import { type loader as rootLoader } from '#app/root.tsx'
 import { EditFileOnGitHub } from '#app/routes/launch-editor.tsx'
+import { ProgressToggle } from '#app/routes/progress.tsx'
 import {
 	getAppPageRoute,
 	getApps,
@@ -150,14 +151,22 @@ export default function ExerciseFinished() {
 					</h1>
 
 					<article
-						className="shadow-on-scrollbox prose h-full w-full max-w-none flex-1 scroll-pt-6 space-y-6 overflow-y-auto p-10 pt-8 scrollbar-thin scrollbar-thumb-scrollbar dark:prose-invert sm:prose-lg"
+						className="shadow-on-scrollbox h-full w-full max-w-none flex-1 scroll-pt-6 space-y-6 overflow-y-auto p-10 pt-8 scrollbar-thin scrollbar-thumb-scrollbar"
 						data-restore-scroll="true"
 					>
 						{data.exercise.finishedCode ? (
-							<Mdx
-								code={data.exercise.finishedCode}
-								components={{ h1: () => null, EpicVideo }}
-							/>
+							<>
+								<div className="prose dark:prose-invert sm:prose-lg">
+									<Mdx
+										code={data.exercise.finishedCode}
+										components={{ h1: () => null, EpicVideo }}
+									/>
+								</div>
+								<ProgressToggle
+									type="finished"
+									exerciseNumber={data.exercise.exerciseNumber}
+								/>
+							</>
 						) : (
 							// TODO: render a random dad joke...
 							'No finished instructions yet...'

@@ -19,26 +19,23 @@ import {
 import * as React from 'react'
 import { Icon } from '#app/components/icons.tsx'
 import { ToastHub } from '#app/components/toast.tsx'
+import { useOptionalUser } from '#app/components/user.tsx'
 import {
 	extractNumbersFromAppName,
 	getExercises,
 	getPlaygroundAppName,
 	getWorkshopTitle,
 } from '#app/utils/apps.server.ts'
-import { getAuthInfo, getUserAvatar } from '#app/utils/db.server.ts'
 import {
 	combineServerTimings,
 	getServerTimeHeader,
 	makeTimings,
 } from '#app/utils/timing.server.ts'
+import { useNextExerciseRoute } from '../progress.tsx'
 import { ThemeSwitch } from '../theme/index.tsx'
 
 export async function loader({ request }: DataFunctionArgs) {
 	const timings = makeTimings('stepLoader')
-	const authInfo = await getAuthInfo()
-	const gravatarUrl = authInfo
-		? await getUserAvatar({ email: authInfo.email, size: 44 })
-		: null
 	const [exercises, workshopTitle, playgroundAppName] = await Promise.all([
 		getExercises({ request, timings }),
 		getWorkshopTitle(),
@@ -75,13 +72,6 @@ export async function loader({ request }: DataFunctionArgs) {
 				})),
 			})),
 			playground,
-			authInfo: authInfo
-				? {
-						name: authInfo.name,
-						email: authInfo.email,
-						gravatarUrl,
-				  }
-				: null,
 		},
 		{
 			headers: {
@@ -103,15 +93,15 @@ export const headers: HeadersFunction = ({ loaderHeaders, parentHeaders }) => {
 }
 
 export default function App() {
-	const { authInfo } = useLoaderData<typeof loader>()
+	const user = useOptionalUser()
 
 	return (
 		<div className="flex flex-col">
-			{ENV.KCDSHOP_DEPLOYED || authInfo ? null : <EpicWebBanner />}
+			{ENV.KCDSHOP_DEPLOYED || user ? null : <EpicWebBanner />}
 			<div
 				className={clsx('flex flex-grow', {
-					'h-[calc(100vh-56px)]': !authInfo,
-					'h-screen': authInfo,
+					'h-[calc(100vh-56px)]': !user,
+					'h-screen': user,
 				})}
 			>
 				<Navigation />
@@ -162,6 +152,8 @@ function EpicWebBanner() {
 
 function Navigation() {
 	const data = useLoaderData<typeof loader>()
+	const user = useOptionalUser()
+	const nextExerciseRoute = useNextExerciseRoute()
 	const params = useParams()
 
 	const exercise = data.exercises.find(
@@ -354,15 +346,33 @@ function Navigation() {
 							</div>
 						</div>
 					)}
-					{ENV.KCDSHOP_DEPLOYED ? null : data.authInfo ? (
+					{ENV.KCDSHOP_DEPLOYED ? null : user && nextExerciseRoute ? (
 						<Link
-							className="flex h-14 w-full items-center justify-start space-x-3 border-y px-4 py-4 text-center no-underline hover:underline"
+							to={nextExerciseRoute}
+							prefetch="intent"
+							className="flex h-14 w-full items-center justify-start border-t px-4 py-4 no-underline hover:underline"
+						>
+							<Icon name="ArrowRight" />
+							{isMenuOpened ? (
+								<motion.div
+									className="flex items-center whitespace-nowrap"
+									initial={{ opacity: 0 }}
+									animate={{ opacity: 1 }}
+								>
+									Next Lesson
+								</motion.div>
+							) : null}
+						</Link>
+					) : null}
+					{ENV.KCDSHOP_DEPLOYED ? null : user ? (
+						<Link
+							className="flex h-14 w-full items-center justify-start space-x-3 border-t px-4 py-4 text-center no-underline hover:underline"
 							to="/account"
 						>
-							{data.authInfo.gravatarUrl ? (
+							{user.gravatarUrl ? (
 								<img
-									alt={data.authInfo.name ?? data.authInfo.email}
-									src={data.authInfo.gravatarUrl}
+									alt={user.name ?? user.email}
+									src={user.gravatarUrl}
 									className="h-full rounded-full"
 								/>
 							) : (
@@ -379,7 +389,7 @@ function Navigation() {
 							) : null}
 						</Link>
 					) : null}
-					<div className="mb-4 ml-3 self-start pt-[15px]">
+					<div className="mb-4 w-full self-start border-t pl-3 pt-[15px]">
 						<ThemeSwitch />
 					</div>
 				</div>

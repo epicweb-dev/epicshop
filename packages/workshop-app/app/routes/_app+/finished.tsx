@@ -1,4 +1,3 @@
-import path from 'path'
 import {
 	defer,
 	type DataFunctionArgs,
@@ -13,13 +12,12 @@ import { NavChevrons } from '#app/components/nav-chevrons.tsx'
 import { type loader as rootLoader } from '#app/root.tsx'
 import {
 	getExercises,
-	getWorkshopRoot,
+	getWorkshopFinished,
 	getWorkshopTitle,
 } from '#app/utils/apps.server.ts'
-import { compileMdx } from '#app/utils/compile-mdx.server.ts'
 import { getEpicVideoInfos } from '#app/utils/epic-api.ts'
 import { Mdx } from '#app/utils/mdx.tsx'
-import { cn, getErrorMessage } from '#app/utils/misc.tsx'
+import { cn } from '#app/utils/misc.tsx'
 import {
 	combineServerTimings,
 	getServerTimeHeader,
@@ -27,6 +25,7 @@ import {
 	time,
 } from '#app/utils/timing.server.ts'
 import { EditFileOnGitHub } from '../launch-editor.tsx'
+import { ProgressToggle } from '../progress.tsx'
 
 export const meta: MetaFunction<typeof loader, { root: typeof rootLoader }> = ({
 	matches,
@@ -38,33 +37,11 @@ export const meta: MetaFunction<typeof loader, { root: typeof rootLoader }> = ({
 export async function loader({ request }: DataFunctionArgs) {
 	const timings = makeTimings('finishedLoader')
 	const exercises = await getExercises({ request, timings })
-	const workshopRoot = getWorkshopRoot()
-	const compiledFinished = await time(
-		async () => {
-			const finishedFilepath = path.join(
-				workshopRoot,
-				'exercises',
-				'FINISHED.mdx',
-			)
-			const compiled = await compileMdx(finishedFilepath, { request }).then(
-				r => ({ ...r, status: 'success' }) as const,
-				e => {
-					console.error(
-						`There was an error compiling the workshop finished.mdx`,
-						finishedFilepath,
-						e,
-					)
-					return { status: 'error', error: getErrorMessage(e) } as const
-				},
-			)
-			return {
-				compiled,
-				file: finishedFilepath,
-				relativePath: 'exercises/finished.mdx',
-			}
-		},
-		{ timings, type: 'compileMdx', desc: 'compileMdx in finished' },
-	)
+	const compiledFinished = await time(() => getWorkshopFinished({ request }), {
+		timings,
+		type: 'compileMdx',
+		desc: 'compileMdx in finished',
+	})
 
 	const lastExercises = exercises[exercises.length - 1]
 	return defer(
@@ -126,14 +103,19 @@ export default function ExerciseFinished() {
 					</h1>
 
 					<article
-						className="shadow-on-scrollbox prose h-full w-full max-w-none flex-1 scroll-pt-6 space-y-6 overflow-y-auto p-10 pt-8 scrollbar-thin scrollbar-thumb-scrollbar dark:prose-invert sm:prose-lg"
+						className="shadow-on-scrollbox h-full w-full max-w-none flex-1 scroll-pt-6 space-y-6 overflow-y-auto p-10 pt-8 scrollbar-thin scrollbar-thumb-scrollbar"
 						data-restore-scroll="true"
 					>
 						{data.finishedCode ? (
-							<Mdx
-								code={data.finishedCode}
-								components={{ h1: () => null, EpicVideo }}
-							/>
+							<>
+								<div className="prose dark:prose-invert sm:prose-lg">
+									<Mdx
+										code={data.finishedCode}
+										components={{ h1: () => null, EpicVideo }}
+									/>
+								</div>
+								<ProgressToggle type="workshop-finished" />
+							</>
 						) : (
 							// TODO: render a random dad joke...
 							'No finished instructions yet...'

@@ -28,7 +28,9 @@ import appStylesheetUrl from './styles/app.css'
 import tailwindStylesheetUrl from './styles/tailwind.css'
 import { getWorkshopTitle } from './utils/apps.server.ts'
 import { ClientHintCheck, getHints } from './utils/client-hints.tsx'
+import { getAuthInfo, getUserAvatar } from './utils/db.server.ts'
 import { getEnv } from './utils/env.server.ts'
+import { getProgress } from './utils/epic-api.ts'
 import { cn, useAltDown } from './utils/misc.tsx'
 import {
 	getServerTimeHeader,
@@ -68,6 +70,9 @@ export async function loader({ request }: DataFunctionArgs) {
 		desc: 'getWorkshopTitle in root',
 		timings,
 	})
+
+	const authInfo = await getAuthInfo()
+	const progress = await getProgress({ timings })
 	const theme = getTheme(request)
 	return json(
 		{
@@ -78,6 +83,14 @@ export async function loader({ request }: DataFunctionArgs) {
 				path: new URL(request.url).pathname,
 				session: { theme },
 			},
+			progress,
+			user: authInfo
+				? {
+						name: authInfo.name,
+						email: authInfo.email,
+						gravatarUrl: getUserAvatar({ email: authInfo.email, size: 288 }),
+				  }
+				: null,
 		},
 		{
 			headers: {
