@@ -1,4 +1,3 @@
-import RealMuxPlayer from '@mux/mux-player-react'
 import { Await } from '@remix-run/react'
 import * as React from 'react'
 import { useTheme } from '#app/routes/theme/index.tsx'
@@ -6,9 +5,7 @@ import { type EpicVideoInfos } from '#app/utils/epic-api.ts'
 import { cn } from '#app/utils/misc.tsx'
 import { Icon } from './icons.tsx'
 import { Loading } from './loading.tsx'
-
-// Pretty sure their types are wrong in an ESM environment... 🤷‍♂️
-const MuxPlayer = RealMuxPlayer as unknown as typeof RealMuxPlayer.default
+import { MuxPlayer } from './mux-player.tsx'
 
 function extractEpicTitle(urlString: string) {
 	let url: URL = new URL('https://epicweb.dev')
