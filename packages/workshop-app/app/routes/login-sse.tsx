@@ -13,9 +13,14 @@ const CodeReceivedEventSchema = z.object({
 const AuthResolvedEventSchema = z.object({
 	type: z.literal(EVENTS.AUTH_RESOLVED),
 })
+const AuthRejectedEventSchema = z.object({
+	type: z.literal(EVENTS.AUTH_REJECTED),
+	error: z.string().optional().default('Unknown error'),
+})
 export const EventSchema = z.union([
 	CodeReceivedEventSchema,
 	AuthResolvedEventSchema,
+	AuthRejectedEventSchema,
 ])
 
 export async function loader({ request }: DataFunctionArgs) {
@@ -34,11 +39,18 @@ export async function loader({ request }: DataFunctionArgs) {
 		function handleAuthResolved() {
 			send({ data: JSON.stringify({ type: EVENTS.AUTH_RESOLVED }) })
 		}
+		function handleAuthRejected(data: any) {
+			send({
+				data: JSON.stringify({ type: EVENTS.AUTH_REJECTED, error: data.error }),
+			})
+		}
 		authEmitter.on(EVENTS.USER_CODE_RECEIVED, handleCodeReceived)
 		authEmitter.on(EVENTS.AUTH_RESOLVED, handleAuthResolved)
+		authEmitter.on(EVENTS.AUTH_REJECTED, handleAuthRejected)
 		return () => {
 			authEmitter.off(EVENTS.USER_CODE_RECEIVED, handleCodeReceived)
 			authEmitter.off(EVENTS.AUTH_RESOLVED, handleAuthResolved)
+			authEmitter.off(EVENTS.AUTH_REJECTED, handleAuthRejected)
 		}
 	})
 }

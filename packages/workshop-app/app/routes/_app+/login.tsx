@@ -26,6 +26,7 @@ export async function action() {
 export default function Login() {
 	const loginFetcher = useFetcher<typeof action>()
 	const [clickedVerificationLink, setClickedVerificationLink] = useState(false)
+	const [authError, setAuthError] = useState<null | string>(null)
 	const [userCodeInfo, setUserCodeInfo] = useState<null | {
 		code: string
 		url: string
@@ -50,6 +51,10 @@ export default function Login() {
 			case EVENTS.AUTH_RESOLVED: {
 				revalidator.revalidate()
 				navigate('/')
+				break
+			}
+			case EVENTS.AUTH_REJECTED: {
+				setAuthError(result.data.error)
 				break
 			}
 		}
@@ -101,6 +106,11 @@ export default function Login() {
 							</Button>
 						</loginFetcher.Form>
 					)}
+					{authError ? (
+						<div className="mt-4 text-red-500">
+							There was an error: <pre>{authError}</pre>
+						</div>
+					) : null}
 				</div>
 			</div>
 		</main>

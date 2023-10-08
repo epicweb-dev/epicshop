@@ -57,6 +57,18 @@ const DataSchema = z.object({
 const appDir = path.join(os.homedir(), '.kcdshop')
 const dbPath = path.join(appDir, 'data.json')
 
+export async function deleteDb() {
+	if (ENV.KCDSHOP_DEPLOYED) return null
+
+	try {
+		if (await fsExtra.exists(dbPath)) {
+			await fsExtra.remove(dbPath)
+		}
+	} catch (error) {
+		console.error(`Error deleting the database in ${dbPath}`, error)
+	}
+}
+
 async function readDb() {
 	if (ENV.KCDSHOP_DEPLOYED) return null
 

@@ -67,6 +67,18 @@ export const fsCache: CachifiedCache = {
 	},
 }
 
+export async function deleteCache() {
+	if (process.env.KCDSHOP_DEPLOYED) return null
+
+	try {
+		if (await fsExtra.exists(cacheDir)) {
+			await fsExtra.remove(cacheDir)
+		}
+	} catch (error) {
+		console.error(`Error deleting the cache in ${cacheDir}`, error)
+	}
+}
+
 function makeSingletonCache<CacheEntryType>(name: string) {
 	return singleton(name, () => {
 		const cache = new LRUCache<string, CacheEntry<CacheEntryType>>({

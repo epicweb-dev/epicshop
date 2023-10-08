@@ -8,6 +8,7 @@ import { type Progress } from '#app/utils/epic-api.ts'
 import { ensureUndeployed } from '#app/utils/misc.tsx'
 import { getProcesses } from '#app/utils/process-manager.server.ts'
 import { getServerTimeHeader, makeTimings } from '#app/utils/timing.server.ts'
+import { clearData } from './admin-utils.server.tsx'
 
 declare global {
 	var __inspector_open__: boolean | undefined
@@ -69,6 +70,10 @@ export async function action({ request }: DataFunctionArgs) {
 	const formData = await request.formData()
 	const intent = formData.get('intent')
 	switch (intent) {
+		case 'clear-data': {
+			await clearData()
+			return json({ success: true })
+		}
 		case 'inspect': {
 			const { inspector } = await import('./admin-utils.server.tsx')
 			if (!global.__inspector_open__) {
@@ -200,6 +205,13 @@ export default function AdminLayout() {
 			<div>
 				<h2>Commands</h2>
 				<ul className="max-h-48 overflow-y-scroll border-2 p-8 scrollbar-thin scrollbar-thumb-scrollbar">
+					<li>
+						<Form method="POST">
+							<button name="intent" value="clear-data">
+								Clear data
+							</button>
+						</Form>
+					</li>
 					<li>
 						{data.inspectorRunning ? (
 							<Form method="POST">
