@@ -10,7 +10,41 @@ const TokenSetSchema = z.object({
 	token_type: z.string(),
 	scope: z.string(),
 })
+export const PlayerPreferencesSchema = z.object({
+	volumeRate: z.number().optional(),
+	playbackRate: z.number().optional(),
+	autoplay: z.boolean().optional(),
+	videoQuality: z
+		.object({
+			bitrate: z.any().optional(),
+			height: z.any().optional(),
+			id: z.string().optional(),
+			width: z.any().optional(),
+		})
+		.optional()
+		.default({}),
+	subtitle: z
+		.object({
+			id: z.string().nullable().default(null),
+			kind: z.string().nullable().default(null),
+			label: z.string().nullable().default(null),
+			language: z.string().nullable().default(null),
+			mode: z.string().default('disabled'),
+		})
+		.optional()
+		.default({}),
+	muted: z.boolean().optional(),
+	theater: z.boolean().optional(),
+	defaultView: z.string().optional(),
+	activeSidebarTab: z.number().optional(),
+})
 const DataSchema = z.object({
+	preferences: z
+		.object({
+			player: PlayerPreferencesSchema.optional().default({}),
+		})
+		.optional()
+		.default({}),
 	authInfo: z
 		.object({
 			tokenSet: TokenSetSchema,
@@ -108,4 +142,22 @@ export async function deleteAuthInfo() {
 	delete db.authInfo
 	await fsExtra.ensureDir(appDir)
 	await fsExtra.writeJSON(dbPath, db)
+}
+
+export async function getPreferences() {
+	const data = await readDb()
+	return data?.preferences ?? null
+}
+
+export async function setPlayerPreferences(
+	playerPreferences: z.infer<typeof PlayerPreferencesSchema>,
+) {
+	const data = await readDb()
+	const updatedData = {
+		...data,
+		preferences: { ...data?.preferences, player: playerPreferences },
+	}
+	await fsExtra.ensureDir(appDir)
+	await fsExtra.writeJSON(dbPath, updatedData)
+	return updatedData.preferences.player
 }

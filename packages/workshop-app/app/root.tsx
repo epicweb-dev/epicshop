@@ -28,7 +28,11 @@ import appStylesheetUrl from './styles/app.css'
 import tailwindStylesheetUrl from './styles/tailwind.css'
 import { getWorkshopTitle } from './utils/apps.server.ts'
 import { ClientHintCheck, getHints } from './utils/client-hints.tsx'
-import { getAuthInfo, getUserAvatar } from './utils/db.server.ts'
+import {
+	getAuthInfo,
+	getPreferences,
+	getUserAvatar,
+} from './utils/db.server.ts'
 import { getEnv } from './utils/env.server.ts'
 import { getProgress } from './utils/epic-api.ts'
 import { cn, useAltDown } from './utils/misc.tsx'
@@ -72,6 +76,7 @@ export async function loader({ request }: DataFunctionArgs) {
 	})
 
 	const authInfo = await getAuthInfo()
+	const preferences = await getPreferences()
 	const progress = await getProgress({ timings })
 	const theme = getTheme(request)
 	return json(
@@ -84,6 +89,7 @@ export async function loader({ request }: DataFunctionArgs) {
 				session: { theme },
 			},
 			progress,
+			preferences,
 			user: authInfo
 				? {
 						name: authInfo.name,

@@ -1,11 +1,11 @@
 import { Await } from '@remix-run/react'
 import * as React from 'react'
 import { useTheme } from '#app/routes/theme/index.tsx'
+import { MuxPlayer } from '#app/routes/video-player/index.tsx'
 import { type EpicVideoInfos } from '#app/utils/epic-api.ts'
 import { cn } from '#app/utils/misc.tsx'
 import { Icon } from './icons.tsx'
 import { Loading } from './loading.tsx'
-import { MuxPlayer } from './mux-player.tsx'
 
 function extractEpicTitle(urlString: string) {
 	let url: URL = new URL('https://epicweb.dev')
