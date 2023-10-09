@@ -116,39 +116,57 @@ export function DeferredEpicVideo({
 }) {
 	const epicVideoInfosPromise = React.useContext(EpicVideoInfoContext)
 	return (
-		<React.Suspense fallback={<Loading>{title}</Loading>}>
-			<Await
-				errorElement={
-					<div>Sorry, failed loading videos. Check the terminal output?</div>
+		<div>
+			<React.Suspense
+				fallback={
+					<div className="flex aspect-video w-full items-center justify-center">
+						<Loading>{title}</Loading>
+					</div>
 				}
-				resolve={epicVideoInfosPromise}
 			>
-				{epicVideoInfos => {
-					const epicVideoInfo = epicVideoInfos?.[url]
-					if (!epicVideoInfo) return <EpicVideo url={url} title={title} />
-					const info = epicVideoInfo
-					if (info.status === 'success') {
-						// TODO: do something about the info.transcript
-						return (
-							<EpicVideo
-								url={url}
-								title={title}
-								muxPlaybackId={info.muxPlaybackId}
-							/>
-						)
-					} else if (info.statusCode === 401) {
-						// TODO: add login button inline
-						return <EpicVideoEmbed url={url} title={title} />
-					} else if (info.statusCode === 403) {
-						// TODO: mention lack of sufficient access, and upgrade button
-						return <EpicVideoEmbed url={url} title={title} />
-					} else {
-						// TODO: mention unknown error (maybe render info.statusText?)
-						return <EpicVideoEmbed url={url} title={title} />
+				<Await
+					errorElement={
+						<div>Sorry, failed loading videos. Check the terminal output?</div>
 					}
-				}}
-			</Await>
-		</React.Suspense>
+					resolve={epicVideoInfosPromise}
+				>
+					{epicVideoInfos => {
+						const epicVideoInfo = epicVideoInfos?.[url]
+						if (!epicVideoInfo) return <EpicVideo url={url} title={title} />
+						const info = epicVideoInfo
+						if (info.status === 'success') {
+							// TODO: do something about the info.transcript
+							return (
+								<EpicVideo
+									url={url}
+									title={title}
+									muxPlaybackId={info.muxPlaybackId}
+								/>
+							)
+						} else if (info.statusCode === 401) {
+							// TODO: add login button inline
+							return <EpicVideoEmbed url={url} title={title} />
+						} else if (info.statusCode === 403) {
+							// TODO: mention lack of sufficient access, and upgrade button
+							return <EpicVideoEmbed url={url} title={title} />
+						} else {
+							// TODO: mention unknown error (maybe render info.statusText?)
+							return <EpicVideoEmbed url={url} title={title} />
+						}
+					}}
+				</Await>
+			</React.Suspense>
+
+			{/* eslint-disable-next-line react/jsx-no-target-blank */}
+			<a
+				href={url}
+				target="_blank"
+				className="mt-4 flex items-center gap-1 text-base no-underline opacity-70 transition hover:underline hover:opacity-100"
+			>
+				<Icon name="Video" size={24} title="EpicWeb.dev video" />
+				{title} <span aria-hidden>↗︎</span>
+			</a>
+		</div>
 	)
 }
 
@@ -164,19 +182,12 @@ export function EpicVideo({
 	return (
 		<div>
 			{muxPlaybackId ? (
-				<MuxPlayer playbackId={muxPlaybackId} />
+				<div className="shadow-lg dark:shadow-gray-800">
+					<MuxPlayer playbackId={muxPlaybackId} />
+				</div>
 			) : (
 				<EpicVideoEmbed url={urlString} title={title} />
 			)}
-			{/* eslint-disable-next-line react/jsx-no-target-blank */}
-			<a
-				href={urlString}
-				target="_blank"
-				className="flex items-center gap-1 text-base no-underline opacity-70 transition hover:underline hover:opacity-100"
-			>
-				<Icon name="Video" size={24} title="EpicWeb.dev video" />
-				{title} <span aria-hidden>↗︎</span>
-			</a>
 		</div>
 	)
 }

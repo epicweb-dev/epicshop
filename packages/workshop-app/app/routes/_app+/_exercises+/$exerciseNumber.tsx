@@ -11,7 +11,6 @@ import {
 	useLoaderData,
 	useRouteError,
 } from '@remix-run/react'
-import { ButtonLink } from '#app/components/button.tsx'
 import { EpicVideoInfoProvider } from '#app/components/epic-video.tsx'
 import { type loader as rootLoader } from '#app/root.tsx'
 import { EditFileOnGitHub } from '#app/routes/launch-editor.tsx'
@@ -127,13 +126,8 @@ export default function ExerciseNumberRoute() {
 					<h1 className="text-[6vw] font-extrabold leading-none">
 						{data.exercise.title}
 					</h1>
-					<div className="mt-8">
-						<ButtonLink to={firstStepPath} prefetch="intent" varient="big">
-							Start Learning
-						</ButtonLink>
-					</div>
 				</div>
-				<div className="scroll-pt-6">
+				<div>
 					{data.exercise.instructionsCode ? (
 						<EpicVideoInfoProvider
 							epicVideoInfosPromise={data.epicVideoInfosPromise}
@@ -150,11 +144,6 @@ export default function ExerciseNumberRoute() {
 					) : (
 						'No instructions yet...'
 					)}
-				</div>
-				<div className="flex w-full items-center">
-					<ButtonLink to={firstStepPath} prefetch="intent" varient="big">
-						Start Learning
-					</ButtonLink>
 				</div>
 			</article>
 			<ProgressToggle

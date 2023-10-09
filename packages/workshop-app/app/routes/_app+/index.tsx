@@ -96,74 +96,68 @@ export default function Index() {
 						</span>
 						<span>{exercise.title}</span>
 					</Link>
-					{/* <ButtonLink
-						varient="primary"
-						to={`${exercise.exerciseNumber.toString().padStart(2, '0')}`}
-					>
-						{exercise.exerciseNumber}. {exercise.title}
-					</ButtonLink> */}
 				</li>
 			))}
 		</ul>
 	)
 	return (
-		<main className="relative w-full">
+		<main className="relative flex h-full w-full max-w-5xl flex-col justify-between border-r border-border md:w-3/4 lg:w-2/3">
 			<article
 				data-restore-scroll="true"
-				className="shadow-on-scrollbox h-full w-full overflow-y-auto scrollbar-thin scrollbar-thumb-scrollbar"
+				className="shadow-on-scrollbox flex w-full flex-1 flex-col gap-12 overflow-y-scroll border-border px-10 py-12 pt-16 scrollbar-thin scrollbar-thumb-scrollbar"
 			>
-				<div className="flex min-h-full w-full flex-col justify-between border-r border-border md:w-3/4 lg:w-2/3">
-					<div>
-						<div className="pt-16">
-							<h1 className="px-10 text-[6vw] font-extrabold leading-none">
-								{data.title}
-							</h1>
-							<div className="mt-8">{exerciseLinks}</div>
-						</div>
-						<div className="w-full max-w-none scroll-pt-6 border-t border-border px-10 pt-8">
-							<h2 className="pb-5 font-mono text-xs font-semibold uppercase">
-								Intro
-							</h2>
-							{data.workshopReadme.compiled.status === 'success' &&
-							data.workshopReadme.compiled.code ? (
-								<EpicVideoInfoProvider
-									epicVideoInfosPromise={data.epicVideoInfosPromise}
-								>
-									<div className="prose dark:prose-invert sm:prose-lg">
-										<Mdx
-											code={data.workshopReadme.compiled.code}
-											components={{
-												h1: () => null,
-											}}
-										/>
-									</div>
-									<ProgressToggle type="workshop-instructions" />
-								</EpicVideoInfoProvider>
-							) : data.workshopReadme.compiled.status === 'error' ? (
-								<div className="text-red-500">
-									There was an error:
-									<pre>{data.workshopReadme.compiled.error}</pre>
-								</div>
-							) : (
-								'No instructions yet...'
-							)}
-						</div>
-						<div className="pb-5 pt-10">
-							{data.workshopReadme.compiled.status === 'success' &&
-							data.workshopReadme.compiled.code &&
-							data.workshopReadme.compiled.code?.length > 500
-								? exerciseLinks
-								: null}
-						</div>
-					</div>
-					<div className="flex h-[52px] justify-center border-t border-border">
-						<EditFileOnGitHub
-							file={data.workshopReadme.file}
-							relativePath={data.workshopReadme.relativePath}
-						/>
+				<div>
+					<div className="pt-16">
+						<h1 className="px-10 text-[6vw] font-extrabold leading-none">
+							{data.title}
+						</h1>
 					</div>
 				</div>
+				<div className="w-full max-w-none scroll-pt-6 border-t border-border px-10 pt-8">
+					<h2 className="pb-5 font-mono text-xs font-semibold uppercase">
+						Intro
+					</h2>
+					{data.workshopReadme.compiled.status === 'success' &&
+					data.workshopReadme.compiled.code ? (
+						<EpicVideoInfoProvider
+							epicVideoInfosPromise={data.epicVideoInfosPromise}
+						>
+							<div className="prose dark:prose-invert sm:prose-lg">
+								<Mdx
+									code={data.workshopReadme.compiled.code}
+									components={{
+										h1: () => null,
+									}}
+								/>
+							</div>
+						</EpicVideoInfoProvider>
+					) : data.workshopReadme.compiled.status === 'error' ? (
+						<div className="text-red-500">
+							There was an error:
+							<pre>{data.workshopReadme.compiled.error}</pre>
+						</div>
+					) : (
+						'No instructions yet...'
+					)}
+				</div>
+				<div className="pb-5 pt-10">
+					{data.workshopReadme.compiled.status === 'success' &&
+					data.workshopReadme.compiled.code &&
+					data.workshopReadme.compiled.code?.length > 500
+						? exerciseLinks
+						: null}
+				</div>
 			</article>
+			<ProgressToggle
+				type="workshop-instructions"
+				className="h-14 border-t px-6"
+			/>
+			<div className="flex h-16 justify-center border-t border-border">
+				<EditFileOnGitHub
+					file={data.workshopReadme.file}
+					relativePath={data.workshopReadme.relativePath}
+				/>
+			</div>
 		</main>
 	)
 }

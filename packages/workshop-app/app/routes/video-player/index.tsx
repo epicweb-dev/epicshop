@@ -113,20 +113,22 @@ export function MuxPlayer(props: MuxPlayerProps) {
 	}, 300)
 
 	return (
-		<RealMuxPlayer
-			ref={muxPlayerRef}
-			playbackRates={[
-				0.5, 0.75, 1, 1.25, 1.5, 1.75, 2, 2.5, 3, 3.5,
-				// lol, someone really asked for this and I think it's funny so let's do it
-				// https://twitter.com/zackerydev/status/1710840197879918840
-				4,
-			]}
-			volume={playerPreferences?.volumeRate ?? 1}
-			playbackRate={playerPreferences?.playbackRate ?? 1}
-			thumbnailTime={0}
-			onRateChange={updatePreferences}
-			onVolumeChange={updatePreferences}
-			{...props}
-		/>
+		<div className="flex aspect-video flex-col">
+			<RealMuxPlayer
+				ref={muxPlayerRef}
+				playbackRates={[
+					0.5, 0.75, 1, 1.25, 1.5, 1.75, 2, 2.5, 3, 3.5,
+					// lol, someone really asked for this and I think it's funny so let's do it
+					// https://twitter.com/zackerydev/status/1710840197879918840
+					4,
+				]}
+				volume={playerPreferences?.volumeRate ?? 1}
+				playbackRate={playerPreferences?.playbackRate ?? 1}
+				thumbnailTime={0}
+				onRateChange={updatePreferences}
+				onVolumeChange={updatePreferences}
+				{...props}
+			/>
+		</div>
 	)
 }

@@ -1,12 +1,12 @@
-import * as React from 'react'
 import { json, type DataFunctionArgs } from '@remix-run/node'
 import { useFetcher, useRouteLoaderData } from '@remix-run/react'
+import clsx from 'clsx'
 import { motion } from 'framer-motion'
+import * as React from 'react'
 import { type loader as rootLoader } from '#app/root.tsx'
 import { requireAuthInfo } from '#app/utils/db.server.ts'
 import { updateProgress, type Progress } from '#app/utils/epic-api.ts'
 import { ensureUndeployed, invariantResponse } from '#app/utils/misc.tsx'
-import clsx from 'clsx'
 
 export function useEpicProgress() {
 	const data = useRouteLoaderData<typeof rootLoader>('root')
@@ -119,6 +119,8 @@ export function ProgressToggle({
 		: Boolean(progressItem?.epicCompletedAt)
 
 	const [startAnimation, setStartAnimation] = React.useState(false)
+
+	if (ENV.KCDSHOP_DEPLOYED || !progressItem) return null
 
 	return (
 		<progressFetcher.Form method="POST" action="/progress">

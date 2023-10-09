@@ -4,6 +4,7 @@ import { Button } from '#app/components/button.tsx'
 import { useUser } from '#app/components/user.tsx'
 import { deleteAuthInfo, requireAuthInfo } from '#app/utils/db.server.ts'
 import { ensureUndeployed } from '#app/utils/misc.tsx'
+import { deleteCache } from '#utils/cache.server.ts'
 
 export async function loader({ request }: DataFunctionArgs) {
 	ensureUndeployed()
@@ -14,6 +15,7 @@ export async function loader({ request }: DataFunctionArgs) {
 export async function action() {
 	ensureUndeployed()
 	await deleteAuthInfo()
+	await deleteCache()
 	return redirect('/login')
 }
 
