@@ -131,10 +131,8 @@ export function DeferredEpicVideo({
 }) {
 	const epicVideoInfosPromise = React.useContext(EpicVideoInfoContext)
 	const linkUI = (
-		<div className="relative mt-4 h-8">
-			<div className="absolute right-0 top-1">
-				<VideoLink url={url} title={title} />
-			</div>
+		<div>
+			<VideoLink url={url} title={title} />
 		</div>
 	)
 	return (
@@ -145,7 +143,10 @@ export function DeferredEpicVideo({
 						<div className="flex aspect-video w-full items-center justify-center">
 							<Loading>{title}</Loading>
 						</div>
-						{linkUI}
+						<div className="mt-4 flex flex-wrap justify-between">
+							<div className="h-8 min-w-[240px]" />
+							{linkUI}
+						</div>
 					</div>
 				}
 			>
@@ -158,25 +159,26 @@ export function DeferredEpicVideo({
 					{epicVideoInfos => {
 						const epicVideoInfo = epicVideoInfos?.[url]
 						const transcriptUI = (
-							<div>
+							<div className="min-w-[240px]">
 								<Link to="/login" className="underline">
 									Login
 								</Link>
-								{' to access transcripts'}
+								{' for transcripts'}
 							</div>
 						)
 						if (!epicVideoInfo) {
 							return (
 								<div>
 									<EpicVideoEmbed url={url} title={title} />
-									{transcriptUI}
-									{linkUI}
+									<div className="mt-4 flex min-h-[32px] flex-wrap items-center justify-between">
+										{transcriptUI}
+										{linkUI}
+									</div>
 								</div>
 							)
 						}
 						const info = epicVideoInfo
 						if (info.status === 'success') {
-							// TODO: do something about the info.transcript
 							return (
 								<EpicVideo
 									url={url}
@@ -186,30 +188,54 @@ export function DeferredEpicVideo({
 								/>
 							)
 						} else if (info.statusCode === 401) {
-							// TODO: add login button inline
 							return (
 								<div>
 									<EpicVideoEmbed url={url} title={title} />
-									{transcriptUI}
-									{linkUI}
+									<div className="mt-4 flex min-h-[32px] flex-wrap items-center justify-between">
+										{transcriptUI}
+										{linkUI}
+									</div>
 								</div>
 							)
 						} else if (info.statusCode === 403) {
-							// TODO: mention lack of sufficient access, and upgrade button
 							return (
 								<div>
 									<EpicVideoEmbed url={url} title={title} />
-									{transcriptUI}
-									{linkUI}
+									<div className="mt-4 flex min-h-[32px] flex-wrap items-center justify-between">
+										<div className="min-w-[240px]">
+											<Link
+												to="https://www.epicweb.dev/products"
+												className="underline"
+											>
+												Upgrade
+											</Link>
+											{' for transcripts'}
+										</div>
+										{linkUI}
+									</div>
+								</div>
+							)
+						} else if (info.statusCode === 404) {
+							return (
+								<div>
+									<EpicVideoEmbed url={url} title={title} />
+									<div className="mt-4 flex min-h-[32px] flex-wrap items-center justify-between">
+										<div className="min-w-[240px]">Transcripts not found</div>
+										{linkUI}
+									</div>
 								</div>
 							)
 						} else {
-							// TODO: mention unknown error (maybe render info.statusText?)
+							console.error(info)
 							return (
 								<div>
 									<EpicVideoEmbed url={url} title={title} />
-									{transcriptUI}
-									{linkUI}
+									<div className="mt-4 flex min-h-[32px] flex-wrap items-center justify-between">
+										<div className="min-w-[240px]">
+											Unknown error (check console)
+										</div>
+										{linkUI}
+									</div>
 								</div>
 							)
 						}

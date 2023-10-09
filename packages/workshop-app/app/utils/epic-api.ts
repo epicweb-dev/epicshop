@@ -15,6 +15,23 @@ const EpicVideoInfoSchema = z.object({
 	muxPlaybackId: z.string(),
 })
 
+const CachedEpicVideoInfoSchema = z
+	.object({
+		transcript: z.string(),
+		muxPlaybackId: z.string(),
+		status: z.literal('success'),
+		statusCode: z.number(),
+		statusText: z.string(),
+	})
+	.or(
+		z.object({
+			status: z.literal('error'),
+			statusCode: z.number(),
+			statusText: z.string(),
+		}),
+	)
+	.or(z.null())
+
 export type EpicVideoInfos = Record<
 	string,
 	Awaited<ReturnType<typeof getEpicVideoInfo>>
@@ -56,6 +73,7 @@ async function getEpicVideoInfo({
 }) {
 	const tokenPortion = accessToken ? md5(accessToken) : 'unauthenticated'
 	const key = `epic-video-info:${tokenPortion}:${epicVideoEmbed}`
+
 	return cachified({
 		key,
 		request,
@@ -63,23 +81,10 @@ async function getEpicVideoInfo({
 		timings,
 		ttl: 1000 * 60 * 60,
 		swr: 1000 * 60 * 60 * 24 * 30,
-		checkValue: z
-			.object({
-				transcript: z.string(),
-				muxPlaybackId: z.string(),
-				status: z.literal('success'),
-				statusCode: z.number(),
-				statusText: z.string(),
-			})
-			.or(
-				z.object({
-					status: z.literal('error'),
-					statusCode: z.number(),
-					statusText: z.string(),
-				}),
-			)
-			.or(z.null()),
-		async getFreshValue(context) {
+		checkValue: CachedEpicVideoInfoSchema,
+		async getFreshValue(
+			context,
+		): Promise<z.infer<typeof CachedEpicVideoInfoSchema>> {
 			const epicWebUrl = new URL(epicVideoEmbed)
 			if (epicWebUrl.host !== 'www.epicweb.dev') return null
 
@@ -148,7 +153,7 @@ async function getEpicProgress({
 		ttl: 1000 * 2,
 		swr: 1000 * 60 * 60 * 24 * 30,
 		checkValue: EpicProgressSchema,
-		async getFreshValue(context) {
+		async getFreshValue(context): Promise<z.infer<typeof EpicProgressSchema>> {
 			const response = await fetch('https://www.epicweb.dev/api/progress', {
 				headers: {
 					authorization: `Bearer ${authInfo.tokenSet.access_token}`,
@@ -378,7 +383,7 @@ export async function getWorkshopData(
 		forceFresh,
 		timings,
 		checkValue: ModuleSchema,
-		async getFreshValue() {
+		async getFreshValue(): Promise<z.infer<typeof ModuleSchema>> {
 			const response = await fetch(
 				`https://www.epicweb.dev/api/workshops/${encodeURIComponent(
 					epicWorkshopSlug,
