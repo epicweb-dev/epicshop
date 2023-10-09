@@ -23,7 +23,14 @@ const RealMuxPlayer =
 	MuxPlayerDefault as unknown as typeof MuxPlayerDefault.default
 type MuxPlayerProps = React.ComponentProps<typeof RealMuxPlayer>
 
-const ignoredInputs = ['input', 'select', 'button', 'textarea', 'mux-player']
+const ignoredInputs = [
+	'input',
+	'select',
+	'button',
+	'textarea',
+	'mux-player',
+	'summary',
+]
 
 export async function action({ request }: DataFunctionArgs) {
 	const result = PlayerPreferencesSchema.safeParse(await request.json())
@@ -36,11 +43,12 @@ export async function action({ request }: DataFunctionArgs) {
 	return json({ status: 'success' } as const)
 }
 
-export function MuxPlayer(props: MuxPlayerProps) {
+export function MuxPlayer({
+	muxPlayerRef,
+	...props
+}: MuxPlayerProps & { muxPlayerRef: React.RefObject<MuxPlayerRefAttributes> }) {
 	const playerPreferences = usePlayerPreferences()
 	const playerPreferencesFetcher = useFetcher<typeof action>()
-
-	const muxPlayerRef = React.useRef<MuxPlayerRefAttributes>(null)
 
 	React.useEffect(() => {
 		function handleUserKeyPress(e: any) {
@@ -86,7 +94,7 @@ export function MuxPlayer(props: MuxPlayerProps) {
 		return () => {
 			window.document?.removeEventListener('keydown', handleUserKeyPress)
 		}
-	}, [])
+	}, [muxPlayerRef])
 
 	const updatePreferences = useDebounce(() => {
 		const player = muxPlayerRef.current

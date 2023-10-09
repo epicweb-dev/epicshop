@@ -88,7 +88,6 @@ export async function loader({ request }: DataFunctionArgs) {
 			type: a.type,
 		}))
 
-	// TODO: figure out why this has to have `await` in front of it.
 	const diff = getDiffProp()
 	const app1Index = allApps.findIndex(a => a.name === app1?.name)
 	const prevApp1Index = usingDefaultApp1

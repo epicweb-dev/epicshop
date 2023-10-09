@@ -1,4 +1,5 @@
-import { Await } from '@remix-run/react'
+import { type MuxPlayerRefAttributes } from '@mux/mux-player-react'
+import { Await, Link } from '@remix-run/react'
 import * as React from 'react'
 import { useTheme } from '#app/routes/theme/index.tsx'
 import { MuxPlayer } from '#app/routes/video-player/index.tsx'
@@ -107,6 +108,20 @@ export function VideoEmbed({
 	)
 }
 
+function VideoLink({ url, title }: { url: string; title: string }) {
+	return (
+		// eslint-disable-next-line react/jsx-no-target-blank
+		<a
+			href={url}
+			target="_blank"
+			className="flex items-center gap-1 text-base no-underline opacity-70 transition hover:underline hover:opacity-100"
+			rel="noreferrer"
+		>
+			<Icon name="Video" size={24} title="EpicWeb.dev video" />
+			{title} <span aria-hidden>↗︎</span>
+		</a>
+	)
+}
 export function DeferredEpicVideo({
 	url,
 	title = extractEpicTitle(url),
@@ -115,12 +130,22 @@ export function DeferredEpicVideo({
 	title?: string
 }) {
 	const epicVideoInfosPromise = React.useContext(EpicVideoInfoContext)
+	const linkUI = (
+		<div className="relative mt-4 h-8">
+			<div className="absolute right-0 top-1">
+				<VideoLink url={url} title={title} />
+			</div>
+		</div>
+	)
 	return (
 		<div>
 			<React.Suspense
 				fallback={
-					<div className="flex aspect-video w-full items-center justify-center">
-						<Loading>{title}</Loading>
+					<div>
+						<div className="flex aspect-video w-full items-center justify-center">
+							<Loading>{title}</Loading>
+						</div>
+						{linkUI}
 					</div>
 				}
 			>
@@ -132,7 +157,23 @@ export function DeferredEpicVideo({
 				>
 					{epicVideoInfos => {
 						const epicVideoInfo = epicVideoInfos?.[url]
-						if (!epicVideoInfo) return <EpicVideo url={url} title={title} />
+						const transcriptUI = (
+							<div>
+								<Link to="/login" className="underline">
+									Login
+								</Link>
+								{' to access transcripts'}
+							</div>
+						)
+						if (!epicVideoInfo) {
+							return (
+								<div>
+									<EpicVideoEmbed url={url} title={title} />
+									{transcriptUI}
+									{linkUI}
+								</div>
+							)
+						}
 						const info = epicVideoInfo
 						if (info.status === 'success') {
 							// TODO: do something about the info.transcript
@@ -141,55 +182,131 @@ export function DeferredEpicVideo({
 									url={url}
 									title={title}
 									muxPlaybackId={info.muxPlaybackId}
+									transcript={info.transcript}
 								/>
 							)
 						} else if (info.statusCode === 401) {
 							// TODO: add login button inline
-							return <EpicVideoEmbed url={url} title={title} />
+							return (
+								<div>
+									<EpicVideoEmbed url={url} title={title} />
+									{transcriptUI}
+									{linkUI}
+								</div>
+							)
 						} else if (info.statusCode === 403) {
 							// TODO: mention lack of sufficient access, and upgrade button
-							return <EpicVideoEmbed url={url} title={title} />
+							return (
+								<div>
+									<EpicVideoEmbed url={url} title={title} />
+									{transcriptUI}
+									{linkUI}
+								</div>
+							)
 						} else {
 							// TODO: mention unknown error (maybe render info.statusText?)
-							return <EpicVideoEmbed url={url} title={title} />
+							return (
+								<div>
+									<EpicVideoEmbed url={url} title={title} />
+									{transcriptUI}
+									{linkUI}
+								</div>
+							)
 						}
 					}}
 				</Await>
 			</React.Suspense>
-
-			{/* eslint-disable-next-line react/jsx-no-target-blank */}
-			<a
-				href={url}
-				target="_blank"
-				className="mt-4 flex items-center gap-1 text-base no-underline opacity-70 transition hover:underline hover:opacity-100"
-			>
-				<Icon name="Video" size={24} title="EpicWeb.dev video" />
-				{title} <span aria-hidden>↗︎</span>
-			</a>
 		</div>
 	)
 }
 
-export function EpicVideo({
+function EpicVideo({
 	url: urlString,
 	title = extractEpicTitle(urlString),
 	muxPlaybackId,
+	transcript,
 }: {
 	url: string
 	title?: string
-	muxPlaybackId?: string
+	muxPlaybackId: string
+	transcript: string
 }) {
+	const muxPlayerRef = React.useRef<MuxPlayerRefAttributes>(null)
+	const timestampRegex = /(\d+:\d+)/g
+	// turn the transcript into an array of React elements
+	const transcriptElements: Array<React.ReactNode> = []
+	let match
+	let prevIndex = 0
+	while ((match = timestampRegex.exec(transcript))) {
+		const timestamp = match[1]
+		if (!timestampRegex.lastIndex || !timestamp) break
+
+		const timestampIndexStart = match.index
+		const timestampIndexEnd = timestampRegex.lastIndex
+		const textBeforeTimestamp = transcript.slice(
+			prevIndex + 1,
+			timestampIndexStart - 1,
+		)
+		transcriptElements.push(
+			<span key={timestampIndexStart}>{textBeforeTimestamp}</span>,
+		)
+		transcriptElements.push(
+			<button
+				key={timestamp}
+				className="underline"
+				onClick={event => {
+					if (muxPlayerRef.current) {
+						muxPlayerRef.current.currentTime = hmsToSeconds(timestamp)
+						muxPlayerRef.current.play()
+						muxPlayerRef.current.scrollIntoView({
+							behavior: 'smooth',
+							inline: 'center',
+							block: 'start',
+						})
+						event.currentTarget.blur()
+					}
+				}}
+			>
+				{timestamp}
+			</button>,
+		)
+		prevIndex = timestampIndexEnd
+	}
+	transcriptElements.push(
+		<span key={transcript.length}>
+			{transcript.slice(prevIndex + 1, transcript.length)}
+		</span>,
+	)
 	return (
 		<div>
-			{muxPlaybackId ? (
-				<div className="shadow-lg dark:shadow-gray-800">
-					<MuxPlayer playbackId={muxPlaybackId} />
+			<div className="shadow-lg dark:shadow-gray-800">
+				<MuxPlayer playbackId={muxPlaybackId} muxPlayerRef={muxPlayerRef} />
+			</div>
+			<div className="relative mt-4">
+				<details>
+					<summary>Transcript</summary>
+					<div className="whitespace-pre-line rounded-md bg-accent p-2 text-accent-foreground">
+						{transcriptElements}
+					</div>
+				</details>
+				<div className="absolute right-0 top-1">
+					<VideoLink url={urlString} title={title} />
 				</div>
-			) : (
-				<EpicVideoEmbed url={urlString} title={title} />
-			)}
+			</div>
 		</div>
 	)
+}
+
+function hmsToSeconds(str: any) {
+	let p = str.split(':'),
+		s = 0,
+		m = 1
+
+	while (p.length > 0) {
+		s += m * parseInt(p.pop(), 10)
+		m *= 60
+	}
+	return s
 }
 
 function EpicVideoEmbed({
