@@ -5,7 +5,7 @@ import {
 } from '@remix-run/node'
 import { useLoaderData } from '@remix-run/react'
 import { ButtonLink } from '#app/components/button.tsx'
-import { usePreboundEpicVideo } from '#app/components/epic-video.tsx'
+import { EpicVideoInfoProvider } from '#app/components/epic-video.tsx'
 import { GeneralErrorBoundary } from '#app/components/error-boundary.tsx'
 import { EditFileOnGitHub } from '#app/routes/launch-editor.tsx'
 import {
@@ -80,7 +80,6 @@ export const headers: HeadersFunction = ({ loaderHeaders, parentHeaders }) => {
 
 export default function Index() {
 	const data = useLoaderData<typeof loader>()
-	const EpicVideo = usePreboundEpicVideo(data.epicVideoInfosPromise)
 
 	const exerciseLinks = (
 		<ul className="flex flex-wrap gap-4">
@@ -113,18 +112,19 @@ export default function Index() {
 						<div className="mt-16 w-full max-w-none scroll-pt-6 border-t border-border px-10 pt-16">
 							{data.workshopReadme.compiled.status === 'success' &&
 							data.workshopReadme.compiled.code ? (
-								<>
+								<EpicVideoInfoProvider
+									epicVideoInfosPromise={data.epicVideoInfosPromise}
+								>
 									<div className="prose dark:prose-invert sm:prose-lg">
 										<Mdx
 											code={data.workshopReadme.compiled.code}
 											components={{
 												h1: () => null,
-												EpicVideo,
 											}}
 										/>
 									</div>
 									<ProgressToggle type="workshop-instructions" />
-								</>
+								</EpicVideoInfoProvider>
 							) : data.workshopReadme.compiled.status === 'error' ? (
 								<div className="text-red-500">
 									There was an error:

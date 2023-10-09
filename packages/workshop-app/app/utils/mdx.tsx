@@ -5,7 +5,7 @@ import { LRUCache } from 'lru-cache'
 import { type MDXContentProps } from 'mdx-bundler/client'
 import * as mdxBundler from 'mdx-bundler/client/index.js'
 import * as React from 'react'
-import { VideoEmbed, EpicVideo } from '#app/components/epic-video.tsx'
+import { VideoEmbed, DeferredEpicVideo } from '#app/components/epic-video.tsx'
 import { Icon } from '#app/components/icons.tsx'
 import { type loader } from '#app/routes/_app+/_exercises+/$exerciseNumber_.$stepNumber.$type.tsx'
 import { LaunchEditor } from '#app/routes/launch-editor.tsx'
@@ -189,7 +189,7 @@ export const mdxComponents = {
 	),
 	LaunchEditor,
 	VideoEmbed,
-	EpicVideo,
+	EpicVideo: DeferredEpicVideo,
 }
 
 /**

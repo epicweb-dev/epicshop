@@ -11,6 +11,7 @@ import {
 	setPlayerPreferences,
 } from '#app/utils/db.server.ts'
 import './mux-player.css'
+import { useDebounce } from '#app/utils/misc.tsx'
 
 export function usePlayerPreferences() {
 	const data = useRouteLoaderData<typeof rootLoader>('root')
@@ -87,7 +88,7 @@ export function MuxPlayer(props: MuxPlayerProps) {
 		}
 	}, [])
 
-	function updatePreferences() {
+	const updatePreferences = useDebounce(() => {
 		const player = muxPlayerRef.current
 		if (!player) return
 		playerPreferencesFetcher.submit(
@@ -109,7 +110,7 @@ export function MuxPlayer(props: MuxPlayerProps) {
 			} satisfies z.infer<typeof PlayerPreferencesSchema>,
 			{ method: 'POST', action: '/video-player', encType: 'application/json' },
 		)
-	}
+	}, 300)
 
 	return (
 		<RealMuxPlayer

@@ -11,7 +11,7 @@ import {
 	useRouteError,
 } from '@remix-run/react'
 import { ButtonLink } from '#app/components/button.tsx'
-import { usePreboundEpicVideo } from '#app/components/epic-video.tsx'
+import { EpicVideoInfoProvider } from '#app/components/epic-video.tsx'
 import { type loader as rootLoader } from '#app/root.tsx'
 import { EditFileOnGitHub } from '#app/routes/launch-editor.tsx'
 import { ProgressToggle } from '#app/routes/progress.tsx'
@@ -113,7 +113,6 @@ export const headers: HeadersFunction = ({ loaderHeaders, parentHeaders }) => {
 
 export default function ExerciseNumberRoute() {
 	const data = useLoaderData<typeof loader>()
-	const EpicVideo = usePreboundEpicVideo(data.epicVideoInfosPromise)
 
 	const firstStepNumber = String(data.firstStep?.stepNumber ?? '01')
 	const firstStepPath = `${firstStepNumber.padStart(2, '0')}/${data.firstType}`
@@ -135,13 +134,14 @@ export default function ExerciseNumberRoute() {
 				</div>
 				<div className="scroll-pt-6">
 					{data.exercise.instructionsCode ? (
-						<>
+						<EpicVideoInfoProvider
+							epicVideoInfosPromise={data.epicVideoInfosPromise}
+						>
 							<div className="prose dark:prose-invert sm:prose-lg">
 								<Mdx
 									code={data.exercise?.instructionsCode}
 									components={{
 										h1: () => null,
-										EpicVideo,
 									}}
 								/>
 							</div>
@@ -149,7 +149,7 @@ export default function ExerciseNumberRoute() {
 								type="instructions"
 								exerciseNumber={data.exerciseNumber}
 							/>
-						</>
+						</EpicVideoInfoProvider>
 					) : (
 						'No instructions yet...'
 					)}

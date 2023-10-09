@@ -7,6 +7,24 @@ import { cn } from '#app/utils/misc.tsx'
 import { Icon } from './icons.tsx'
 import { Loading } from './loading.tsx'
 
+const EpicVideoInfoContext = React.createContext<
+	Promise<EpicVideoInfos> | null | undefined
+>(null)
+
+export function EpicVideoInfoProvider({
+	children,
+	epicVideoInfosPromise,
+}: {
+	children: React.ReactNode
+	epicVideoInfosPromise?: Promise<EpicVideoInfos> | null
+}) {
+	return (
+		<EpicVideoInfoContext.Provider value={epicVideoInfosPromise}>
+			{children}
+		</EpicVideoInfoContext.Provider>
+	)
+}
+
 function extractEpicTitle(urlString: string) {
 	let url: URL = new URL('https://epicweb.dev')
 	try {
@@ -89,58 +107,49 @@ export function VideoEmbed({
 	)
 }
 
-export function usePreboundEpicVideo(
-	epicVideoInfosPromise?: EpicVideoInfos | Promise<EpicVideoInfos> | null,
-) {
-	return React.useMemo(() => {
-		if (!epicVideoInfosPromise) return EpicVideo
-
-		return function DeferredPreboundEpicVideo({
-			url,
-			title = extractEpicTitle(url),
-		}: {
-			url: string
-			title?: string
-		}) {
-			return (
-				<React.Suspense fallback={<Loading>{title}</Loading>}>
-					<Await
-						errorElement={
-							<div>
-								Sorry, failed loading videos. Check the terminal output?
-							</div>
-						}
-						resolve={epicVideoInfosPromise}
-					>
-						{epicVideoInfos => {
-							const epicVideoInfo = epicVideoInfos[url]
-							if (!epicVideoInfo) return <EpicVideo url={url} title={title} />
-							const info = epicVideoInfo
-							if (info.status === 'success') {
-								// TODO: do something about the info.transcript
-								return (
-									<EpicVideo
-										url={url}
-										title={title}
-										muxPlaybackId={info.muxPlaybackId}
-									/>
-								)
-							} else if (info.statusCode === 401) {
-								// TODO: add login button inline
-								return <EpicVideoEmbed url={url} title={title} />
-							} else if (info.statusCode === 403) {
-								// TODO: mention lack of sufficient access, and upgrade button
-								return <EpicVideoEmbed url={url} title={title} />
-							} else {
-								// TODO: mention unknown error (maybe render info.statusText?)
-								return <EpicVideoEmbed url={url} title={title} />
-							}
-						}}
-					</Await>
-				</React.Suspense>
-			)
-		}
-	}, [epicVideoInfosPromise])
+export function DeferredEpicVideo({
+	url,
+	title = extractEpicTitle(url),
+}: {
+	url: string
+	title?: string
+}) {
+	const epicVideoInfosPromise = React.useContext(EpicVideoInfoContext)
+	return (
+		<React.Suspense fallback={<Loading>{title}</Loading>}>
+			<Await
+				errorElement={
+					<div>Sorry, failed loading videos. Check the terminal output?</div>
+				}
+				resolve={epicVideoInfosPromise}
+			>
+				{epicVideoInfos => {
+					const epicVideoInfo = epicVideoInfos?.[url]
+					if (!epicVideoInfo) return <EpicVideo url={url} title={title} />
+					const info = epicVideoInfo
+					if (info.status === 'success') {
+						// TODO: do something about the info.transcript
+						return (
+							<EpicVideo
+								url={url}
+								title={title}
+								muxPlaybackId={info.muxPlaybackId}
+							/>
+						)
+					} else if (info.statusCode === 401) {
+						// TODO: add login button inline
+						return <EpicVideoEmbed url={url} title={title} />
+					} else if (info.statusCode === 403) {
+						// TODO: mention lack of sufficient access, and upgrade button
+						return <EpicVideoEmbed url={url} title={title} />
+					} else {
+						// TODO: mention unknown error (maybe render info.statusText?)
+						return <EpicVideoEmbed url={url} title={title} />
+					}
+				}}
+			</Await>
+		</React.Suspense>
+	)
 }
 
 export function EpicVideo({

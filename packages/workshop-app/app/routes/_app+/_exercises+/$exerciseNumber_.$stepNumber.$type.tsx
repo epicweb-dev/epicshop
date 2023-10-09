@@ -20,7 +20,7 @@ import { clsx } from 'clsx'
 import * as React from 'react'
 import { useMemo, useRef, useState, type PropsWithChildren } from 'react'
 import { Diff } from '#app/components/diff.tsx'
-import { usePreboundEpicVideo } from '#app/components/epic-video.tsx'
+import { EpicVideoInfoProvider } from '#app/components/epic-video.tsx'
 import { Icon } from '#app/components/icons.tsx'
 import {
 	InBrowserBrowser,
@@ -375,7 +375,6 @@ type CodeFileNotificationProps = {
 
 export default function ExercisePartRoute() {
 	const data = useLoaderData<typeof loader>()
-	const EpicVideo = usePreboundEpicVideo(data.epicVideoInfosPromise)
 	const [searchParams] = useSearchParams()
 
 	const preview = searchParams.get('preview')
@@ -701,7 +700,9 @@ export default function ExercisePartRoute() {
 						data-restore-scroll="true"
 					>
 						{data.exerciseStepApp.instructionsCode ? (
-							<>
+							<EpicVideoInfoProvider
+								epicVideoInfosPromise={data.epicVideoInfosPromise}
+							>
 								<div className="prose dark:prose-invert sm:prose-lg">
 									<Mdx
 										code={data.exerciseStepApp?.instructionsCode}
@@ -711,7 +712,6 @@ export default function ExercisePartRoute() {
 											DiffLink,
 											InlineFile,
 											LinkToApp,
-											EpicVideo,
 										}}
 									/>
 								</div>
@@ -722,7 +722,7 @@ export default function ExercisePartRoute() {
 										stepNumber={data.exerciseStepApp.stepNumber}
 									/>
 								) : null}
-							</>
+							</EpicVideoInfoProvider>
 						) : (
 							<p>No instructions yet...</p>
 						)}

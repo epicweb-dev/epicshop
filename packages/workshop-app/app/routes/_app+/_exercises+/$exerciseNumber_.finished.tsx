@@ -7,7 +7,7 @@ import {
 } from '@remix-run/node'
 import { Link, useLoaderData } from '@remix-run/react'
 import * as React from 'react'
-import { usePreboundEpicVideo } from '#app/components/epic-video.tsx'
+import { EpicVideoInfoProvider } from '#app/components/epic-video.tsx'
 import { Loading } from '#app/components/loading.tsx'
 import { NavChevrons } from '#app/components/nav-chevrons.tsx'
 import { type loader as rootLoader } from '#app/root.tsx'
@@ -124,7 +124,6 @@ export const headers: HeadersFunction = ({ loaderHeaders, parentHeaders }) => {
 
 export default function ExerciseFinished() {
 	const data = useLoaderData<typeof loader>()
-	const EpicVideo = usePreboundEpicVideo(data.epicVideoInfosPromise)
 	const exerciseNumber = data.exercise.exerciseNumber
 		.toString()
 		.padStart(2, '0')
@@ -155,18 +154,20 @@ export default function ExerciseFinished() {
 						data-restore-scroll="true"
 					>
 						{data.exercise.finishedCode ? (
-							<>
+							<EpicVideoInfoProvider
+								epicVideoInfosPromise={data.epicVideoInfosPromise}
+							>
 								<div className="prose dark:prose-invert sm:prose-lg">
 									<Mdx
 										code={data.exercise.finishedCode}
-										components={{ h1: () => null, EpicVideo }}
+										components={{ h1: () => null }}
 									/>
 								</div>
 								<ProgressToggle
 									type="finished"
 									exerciseNumber={data.exercise.exerciseNumber}
 								/>
-							</>
+							</EpicVideoInfoProvider>
 						) : (
 							// TODO: render a random dad joke...
 							'No finished instructions yet...'
