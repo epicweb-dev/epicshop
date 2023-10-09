@@ -1,11 +1,11 @@
 import * as Tabs from '@radix-ui/react-tabs'
 import {
-	type DataFunctionArgs,
-	type HeadersFunction,
-	type SerializeFrom,
-	type MetaFunction,
 	defer,
 	redirect,
+	type DataFunctionArgs,
+	type HeadersFunction,
+	type MetaFunction,
+	type SerializeFrom,
 } from '@remix-run/node'
 import {
 	Link,
@@ -14,13 +14,11 @@ import {
 	useNavigate,
 	useRouteError,
 	useSearchParams,
-	type LinkProps,
 } from '@remix-run/react'
 import { clsx } from 'clsx'
 import * as React from 'react'
-import { useMemo, useRef, useState, type PropsWithChildren } from 'react'
+import { useRef, useState } from 'react'
 import { Diff } from '#app/components/diff.tsx'
-import { EpicVideoInfoProvider } from '#app/components/epic-video.tsx'
 import { Icon } from '#app/components/icons.tsx'
 import {
 	InBrowserBrowser,
@@ -28,19 +26,16 @@ import {
 } from '#app/components/in-browser-browser.tsx'
 import { InBrowserTestRunner } from '#app/components/in-browser-test-runner.tsx'
 import { NavChevrons } from '#app/components/nav-chevrons.tsx'
-import TouchedFiles from '#app/components/touched-files.tsx'
 import { type loader as rootLoader } from '#app/root.tsx'
-import { EditFileOnGitHub, LaunchEditor } from '#app/routes/launch-editor.tsx'
+import { EditFileOnGitHub } from '#app/routes/launch-editor.tsx'
 import { ProgressToggle } from '#app/routes/progress.tsx'
 import {
 	PlaygroundChooser,
 	SetAppToPlayground,
 	SetPlayground,
 } from '#app/routes/set-playground.tsx'
-import { UpdateMdxCache } from '#app/routes/update-mdx-cache.tsx'
+import { TestOutput } from '#app/routes/test.tsx'
 import {
-	type App,
-	type ExerciseStepApp,
 	getAppByName,
 	getAppPageRoute,
 	getApps,
@@ -51,11 +46,12 @@ import {
 	isPlaygroundApp,
 	requireExercise,
 	requireExerciseApp,
+	type App,
+	type ExerciseStepApp,
 } from '#app/utils/apps.server.ts'
 import { getDiffCode, getDiffFiles } from '#app/utils/diff.server.ts'
 import { getEpicVideoInfos } from '#app/utils/epic-api.ts'
-import { Mdx } from '#app/utils/mdx.tsx'
-import { cn, getErrorMessage, useAltDown } from '#app/utils/misc.tsx'
+import { getErrorMessage, useAltDown } from '#app/utils/misc.tsx'
 import {
 	isAppRunning,
 	isPortAvailable,
@@ -65,7 +61,8 @@ import {
 	getServerTimeHeader,
 	makeTimings,
 } from '#app/utils/timing.server.ts'
-import { TestOutput } from '../../test.tsx'
+import { StepMdx } from './step-mdx.tsx'
+import TouchedFiles from './touched-files.tsx'
 
 function pageTitle(
 	data: SerializeFrom<typeof loader> | undefined,
@@ -356,23 +353,6 @@ function withParam(
 	return newSearchParams
 }
 
-type CodeFileNotificationProps = {
-	file: string
-	type?: 'solution' | 'problem'
-	children: React.ReactNode
-} & (
-	| {
-			variant: 'error'
-			cacheLocation?: never
-			embeddedKey?: never
-	  }
-	| {
-			variant: 'warning'
-			cacheLocation: string
-			embeddedKey: string
-	  }
-)
-
 export default function ExercisePartRoute() {
 	const data = useLoaderData<typeof loader>()
 	const [searchParams] = useSearchParams()
@@ -380,275 +360,6 @@ export default function ExercisePartRoute() {
 	const preview = searchParams.get('preview')
 	const activeTab = isValidPreview(preview) ? preview : tabs[0]
 	const inBrowserBrowserRef = useRef<InBrowserBrowserRef>(null)
-	const previewAppUrl = data.playground?.dev.baseUrl
-
-	const DiffLink = useMemo(() => {
-		return function DiffLink({
-			app1 = 0,
-			app2 = 1,
-			children,
-			fullPage = false,
-			to,
-		}: {
-			app1?: string | number | null
-			app2?: string | number | null
-			to?: string
-			fullPage?: boolean
-			children?: React.ReactNode
-		}) {
-			if (!to && !app1 && !app2) {
-				return (
-					<callout-danger className="notification">
-						<div className="title">DiffLink Error: invalid input</div>
-					</callout-danger>
-				)
-			}
-
-			function getAppName(input: typeof app1) {
-				if (typeof input === 'number') {
-					const stepIndex = data.exerciseIndex + input
-					return data.allApps[stepIndex]?.name
-				}
-				if (!input) return null
-				for (const { name, stepName } of data.allApps) {
-					if (input === name || input === stepName) {
-						return name
-					}
-				}
-				return null
-			}
-
-			if (to) {
-				const params = new URLSearchParams(to)
-				app1 = params.get('app1')
-				app2 = params.get('app2')
-			}
-			const app1Name = getAppName(app1)
-			const app2Name = getAppName(app2)
-			if (!app1Name || !app2Name) {
-				return (
-					<callout-danger className="notification">
-						<div className="title">DiffLink Error: invalid input</div>
-						{!app1Name && <div>app1: "{app1}" is not a valid app name</div>}
-						{!app2Name && <div>app2: "{app2}" is not a valid app name</div>}
-					</callout-danger>
-				)
-			}
-
-			if (!to) {
-				to = `app1=${app1Name}&app2=${app2Name}`
-			}
-			const pathToDiff = fullPage
-				? `/diff?${to}`
-				: `?${decodeURIComponent(
-						withParam(
-							new URLSearchParams(),
-							'preview',
-							`diff&${to}`,
-						).toString(),
-				  )}`
-
-			if (!children) {
-				const msg = (s: string) => s.split('__sep__')[2] ?? ''
-				children = (
-					<span>
-						Go to Diff {fullPage ? '' : 'Preview'} from:{' '}
-						<code>{msg(app1Name)}</code> to: <code>{msg(app2Name)}</code>
-					</span>
-				)
-			}
-
-			return <Link to={pathToDiff}>{children}</Link>
-		}
-	}, [data.allApps, data.exerciseIndex])
-
-	const CodeFile = useMemo(() => {
-		return function CodeFile({ file }: { file: string }) {
-			return (
-				<div className="border-4 border-[#ff4545] bg-[#ff454519] p-4 text-lg">
-					Something went wrong compiling <b>CodeFile</b> for file: <u>{file}</u>{' '}
-					to markdown
-				</div>
-			)
-		}
-	}, [])
-
-	const CodeFileNotification = useMemo(() => {
-		return function CodeFileNotification({
-			file,
-			type = 'problem',
-			children,
-			variant,
-			cacheLocation,
-			embeddedKey,
-			...props
-		}: CodeFileNotificationProps) {
-			const [visibility, setVisibility] = useState('visible')
-			const app = data[type]
-
-			const handleClick = () => {
-				if (visibility !== 'visible') return
-				setVisibility('collapse')
-				setTimeout(() => {
-					setVisibility('none')
-				}, 400)
-			}
-
-			const className = clsx(
-				'rounded px-4 py-1 font-mono text-sm font-semibold outline-none transition duration-300 ease-in-out',
-				{
-					'bg-amber-300/70 hover:bg-amber-300/40 active:bg-amber-300/50':
-						variant === 'warning',
-					'bg-red-300/70 hover:bg-red-300/40 active:bg-red-300/50':
-						variant === 'error',
-				},
-			)
-
-			return (
-				<div
-					className={clsx('notification important h-15 relative', {
-						'duration-400 !my-0 !h-0 !py-0 !opacity-0 transition-all ease-out':
-							visibility !== 'visible',
-						hidden: visibility === 'none',
-					})}
-				>
-					<div className="absolute right-3 top-3 z-50 flex gap-4">
-						{app ? (
-							<div className={className} title={`Edit ${file}`}>
-								<LaunchEditor appFile={file} appName={app.name} {...props}>
-									Edit this File
-								</LaunchEditor>
-							</div>
-						) : null}
-						{app && variant === 'warning' ? (
-							<div
-								className={className}
-								title={`Remove the warning from here and from ${file} cache file`}
-							>
-								<UpdateMdxCache
-									handleClick={handleClick}
-									cacheLocation={cacheLocation}
-									embeddedKey={embeddedKey}
-									appFullPath={app.fullPath}
-								/>
-							</div>
-						) : null}
-					</div>
-					{children}
-				</div>
-			)
-		}
-	}, [data])
-
-	const InlineFile = useMemo(() => {
-		return function InlineFile({
-			file,
-			type = 'playground',
-			children = <code>{file}</code>,
-			...props
-		}: Omit<PropsWithChildren<typeof LaunchEditor>, 'appName'> & {
-			file: string
-			type?: 'playground' | 'solution' | 'problem'
-		}) {
-			const app = data[type] || data[data.type]
-
-			const info = (
-				<div className="launch-editor-button-wrapper flex underline">
-					{children}{' '}
-					<svg height={24} width={24}>
-						<use href={`/icons.svg#keyboard`} />
-					</svg>
-				</div>
-			)
-
-			return ENV.KCDSHOP_DEPLOYED && app ? (
-				<div className="inline-block grow">
-					<LaunchEditor appFile={file} appName={app.name} {...props}>
-						{info}
-					</LaunchEditor>
-				</div>
-			) : app ? (
-				<div className="inline-block grow">
-					<LaunchEditor appFile={file} appName={app.name} {...props}>
-						{info}
-					</LaunchEditor>
-				</div>
-			) : type === 'playground' ? (
-				// playground does not exist yet
-				<div
-					className="inline-block grow cursor-not-allowed"
-					title="You must 'Set to Playground' before opening a file"
-				>
-					{info}
-				</div>
-			) : (
-				<>children</>
-			)
-		}
-	}, [data])
-
-	const LinkToApp = useMemo(() => {
-		return function LinkToApp({
-			to: appTo,
-			children = <code>{appTo.toString()}</code>,
-			...props
-		}: LinkProps) {
-			const to = `?${withParam(
-				searchParams,
-				'pathname',
-				appTo.toString(),
-			).toString()}`
-			const href = previewAppUrl
-				? previewAppUrl.slice(0, -1) + appTo.toString()
-				: null
-			return (
-				<div className="inline-flex items-center justify-between gap-1">
-					<Link
-						to={to}
-						{...props}
-						className={cn(props.className, {
-							'cursor-not-allowed': ENV.KCDSHOP_DEPLOYED,
-						})}
-						title={
-							ENV.KCDSHOP_DEPLOYED
-								? 'Cannot link to app in deployed version'
-								: undefined
-						}
-						onClick={event => {
-							if (ENV.KCDSHOP_DEPLOYED) event.preventDefault()
-
-							props.onClick?.(event)
-							inBrowserBrowserRef.current?.handleExtrnalNavigation(
-								appTo.toString(),
-							)
-						}}
-					>
-						{children}
-					</Link>
-					{href ? (
-						<a
-							href={href}
-							target="_blank"
-							rel="noreferrer"
-							className={cn('flex aspect-square items-center justify-center', {
-								'cursor-not-allowed': ENV.KCDSHOP_DEPLOYED,
-							})}
-							title={
-								ENV.KCDSHOP_DEPLOYED
-									? 'Cannot link to app in deployed version'
-									: 'Open in new tab'
-							}
-							onClick={event => {
-								if (ENV.KCDSHOP_DEPLOYED) event.preventDefault()
-							}}
-						>
-							<Icon name="ExternalLink" title="Open in new tab" />
-						</a>
-					) : null}
-				</div>
-			)
-		}
-	}, [searchParams, previewAppUrl])
 
 	const titleBits = pageTitle(data)
 	const altDown = useAltDown()
@@ -700,22 +411,9 @@ export default function ExercisePartRoute() {
 						data-restore-scroll="true"
 					>
 						{data.exerciseStepApp.instructionsCode ? (
-							<EpicVideoInfoProvider
-								epicVideoInfosPromise={data.epicVideoInfosPromise}
-							>
-								<div className="prose dark:prose-invert sm:prose-lg">
-									<Mdx
-										code={data.exerciseStepApp?.instructionsCode}
-										components={{
-											CodeFile,
-											CodeFileNotification,
-											DiffLink,
-											InlineFile,
-											LinkToApp,
-										}}
-									/>
-								</div>
-							</EpicVideoInfoProvider>
+							<div className="prose dark:prose-invert sm:prose-lg">
+								<StepMdx inBrowserBrowserRef={inBrowserBrowserRef} />
+							</div>
 						) : (
 							<p>No instructions yet...</p>
 						)}
