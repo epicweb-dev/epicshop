@@ -1,10 +1,12 @@
+import * as React from 'react'
 import { json, type DataFunctionArgs } from '@remix-run/node'
 import { useFetcher, useRouteLoaderData } from '@remix-run/react'
-import { Button } from '#app/components/button.tsx'
+import { motion } from 'framer-motion'
 import { type loader as rootLoader } from '#app/root.tsx'
 import { requireAuthInfo } from '#app/utils/db.server.ts'
 import { updateProgress, type Progress } from '#app/utils/epic-api.ts'
 import { ensureUndeployed, invariantResponse } from '#app/utils/misc.tsx'
+import clsx from 'clsx'
 
 export function useEpicProgress() {
 	const data = useRouteLoaderData<typeof rootLoader>('root')
@@ -70,13 +72,25 @@ export function ProgressToggle({
 	type,
 	exerciseNumber,
 	stepNumber,
+	className,
 }:
-	| { exerciseNumber: number; stepNumber?: never; type: ExerciseProgressType }
-	| { exerciseNumber: number; stepNumber: number; type: StepProgressType }
+	| {
+			exerciseNumber: number
+			stepNumber?: never
+			type: ExerciseProgressType
+			className?: string
+	  }
+	| {
+			exerciseNumber: number
+			stepNumber: number
+			type: StepProgressType
+			className?: string
+	  }
 	| {
 			type: WorkshopProgressType
 			exerciseNumber?: never
 			stepNumber?: never
+			className?: string
 	  }) {
 	const progressFetcher = useFetcher<typeof action>()
 	const progress = useEpicProgress()
@@ -104,6 +118,8 @@ export function ProgressToggle({
 		? progressFetcher.formData?.get('complete') === 'true'
 		: Boolean(progressItem?.epicCompletedAt)
 
+	const [startAnimation, setStartAnimation] = React.useState(false)
+
 	return (
 		<progressFetcher.Form method="POST" action="/progress">
 			<input
@@ -116,9 +132,55 @@ export function ProgressToggle({
 				name="complete"
 				value={(!optimisticCompleted).toString()}
 			/>
-			<Button varient="primary" type="submit">
+
+			<motion.button
+				onTap={() => {
+					setStartAnimation(!optimisticCompleted)
+				}}
+				type="submit"
+				className={clsx(
+					'group relative flex w-full items-center justify-between overflow-hidden transition hover:bg-[hsl(var(--foreground)/0.02)]',
+					className,
+				)}
+			>
 				{optimisticCompleted ? 'Mark as incomplete' : 'Mark as complete'}
-			</Button>
+				{startAnimation ? (
+					<motion.div
+						className="absolute right-0 h-20 w-20 rounded-full bg-foreground/20"
+						initial={{
+							scale: 0.5,
+							opacity: 0,
+						}}
+						animate={{
+							scale: [0.5, 2],
+							opacity: [0, 1, 0],
+						}}
+						transition={{
+							duration: 1,
+							ease: 'easeInOut',
+						}}
+					/>
+				) : null}
+				<motion.div
+					aria-hidden
+					className={clsx(
+						'relative flex h-8 w-8 items-center justify-center overflow-hidden rounded-full border transition',
+						{
+							'bg-foreground text-background duration-1000':
+								optimisticCompleted,
+							'duration-100 group-hover:bg-background': !optimisticCompleted,
+						},
+					)}
+				>
+					{optimisticCompleted ? (
+						'✓'
+					) : (
+						<div className="absolute -translate-y-10 opacity-25 transition group-hover:translate-y-0">
+							✓
+						</div>
+					)}
+				</motion.div>
+			</motion.button>
 		</progressFetcher.Form>
 	)
 }

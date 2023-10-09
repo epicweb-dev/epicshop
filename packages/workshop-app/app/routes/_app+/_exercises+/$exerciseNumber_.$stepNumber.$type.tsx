@@ -715,18 +715,19 @@ export default function ExercisePartRoute() {
 										}}
 									/>
 								</div>
-								{data.type === 'solution' ? (
-									<ProgressToggle
-										type="step"
-										exerciseNumber={data.exerciseStepApp.exerciseNumber}
-										stepNumber={data.exerciseStepApp.stepNumber}
-									/>
-								) : null}
 							</EpicVideoInfoProvider>
 						) : (
 							<p>No instructions yet...</p>
 						)}
 					</article>
+					{data.type === 'solution' ? (
+						<ProgressToggle
+							type="step"
+							exerciseNumber={data.exerciseStepApp.exerciseNumber}
+							stepNumber={data.exerciseStepApp.stepNumber}
+							className="h-14 border-t px-6"
+						/>
+					) : null}
 					<div className="flex h-16 justify-between border-b-4 border-t border-border lg:border-b-0">
 						<div>
 							<div className="h-full">

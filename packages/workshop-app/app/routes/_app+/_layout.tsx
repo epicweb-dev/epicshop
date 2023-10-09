@@ -346,24 +346,6 @@ function Navigation() {
 							</div>
 						</div>
 					)}
-					{ENV.KCDSHOP_DEPLOYED ? null : user && nextExerciseRoute ? (
-						<Link
-							to={nextExerciseRoute}
-							prefetch="intent"
-							className="flex h-14 w-full items-center justify-start border-t px-4 py-4 no-underline hover:underline"
-						>
-							<Icon name="ArrowRight" />
-							{isMenuOpened ? (
-								<motion.div
-									className="flex items-center whitespace-nowrap"
-									initial={{ opacity: 0 }}
-									animate={{ opacity: 1 }}
-								>
-									Next Lesson
-								</motion.div>
-							) : null}
-						</Link>
-					) : null}
 					{ENV.KCDSHOP_DEPLOYED ? null : user ? (
 						<Link
 							className="flex h-14 w-full items-center justify-start space-x-3 border-t px-4 py-4 text-center no-underline hover:underline"
@@ -385,6 +367,26 @@ function Navigation() {
 									animate={{ opacity: 1 }}
 								>
 									Your Account
+								</motion.div>
+							) : null}
+						</Link>
+					) : null}
+					{ENV.KCDSHOP_DEPLOYED ? null : user && nextExerciseRoute ? (
+						<Link
+							to={nextExerciseRoute}
+							prefetch="intent"
+							className={clsx(
+								'flex h-14 w-full items-center space-x-3 border-t px-4 py-4 pl-[18px] no-underline hover:underline',
+							)}
+						>
+							<Icon name="FastForward" className="flex-shrink-0" size={20} />
+							{isMenuOpened ? (
+								<motion.div
+									className="flex items-center whitespace-nowrap"
+									initial={{ opacity: 0 }}
+									animate={{ opacity: 1 }}
+								>
+									Continue to next lesson
 								</motion.div>
 							) : null}
 						</Link>

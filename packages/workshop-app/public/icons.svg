@@ -497,6 +497,14 @@
       <path d="M18.2525 9.31052L15.4992 8.50683L14.6953 5.74778L23.8291 0.171387L18.2525 9.31052Z"
         fill="currentColor" />
     </symbol>
-   
+
+    <symbol id="FastForward" fill="none" viewBox="0 0 24 24">
+      <g strokeLinejoin="round" strokeLinecap="round" strokeWidth="2" fill="none"
+        stroke="currentColor">
+        <path d="M13 19l9-7-9-7v14z" />
+        <path d="M2 19l9-7-9-7v14z" />
+      </g>
+    </symbol>
+
   </defs>
 </svg>

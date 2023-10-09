@@ -6,6 +6,7 @@ import {
 	defer,
 } from '@remix-run/node'
 import {
+	Link,
 	isRouteErrorResponse,
 	useLoaderData,
 	useRouteError,
@@ -145,10 +146,6 @@ export default function ExerciseNumberRoute() {
 									}}
 								/>
 							</div>
-							<ProgressToggle
-								type="instructions"
-								exerciseNumber={data.exerciseNumber}
-							/>
 						</EpicVideoInfoProvider>
 					) : (
 						'No instructions yet...'
@@ -160,11 +157,24 @@ export default function ExerciseNumberRoute() {
 					</ButtonLink>
 				</div>
 			</article>
-			<div className="flex h-[52px] justify-center border-t border-border">
+			<ProgressToggle
+				type="instructions"
+				exerciseNumber={data.exerciseNumber}
+				className="h-14 border-t px-6"
+			/>
+			<div className="flex h-16 justify-between border-b-4 border-t border-border lg:border-b-0">
+				<div />
 				<EditFileOnGitHub
 					file={data.exerciseReadme.file}
 					relativePath={data.exerciseReadme.relativePath}
 				/>
+				<Link
+					to={firstStepPath}
+					prefetch="intent"
+					className="flex h-full items-center justify-center bg-foreground px-7 text-background"
+				>
+					Start Learning
+				</Link>
 			</div>
 		</main>
 	)
