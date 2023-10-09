@@ -163,16 +163,17 @@ export default function ExerciseFinished() {
 										components={{ h1: () => null }}
 									/>
 								</div>
-								<ProgressToggle
-									type="finished"
-									exerciseNumber={data.exercise.exerciseNumber}
-								/>
 							</EpicVideoInfoProvider>
 						) : (
 							// TODO: render a random dad joke...
 							'No finished instructions yet...'
 						)}
 					</article>
+					<ProgressToggle
+						type="finished"
+						exerciseNumber={data.exercise.exerciseNumber}
+						className="h-14 border-t px-6"
+					/>
 					<div className="flex h-16 justify-between border-b-4 border-t border-border lg:border-b-0">
 						<div />
 						{data.exerciseFinished ? (

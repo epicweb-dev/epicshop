@@ -65,6 +65,7 @@ export type IconNames =
 	| 'Video'
 	| 'User'
 	| 'EpicWeb'
+	| 'FastForward'
 
 export function Icon({
 	title,

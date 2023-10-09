@@ -100,7 +100,6 @@ export default function ExerciseFinished() {
 							</div>
 						</div>
 					</h1>
-
 					<article
 						className="shadow-on-scrollbox h-full w-full max-w-none flex-1 scroll-pt-6 space-y-6 overflow-y-auto p-10 pt-8 scrollbar-thin scrollbar-thumb-scrollbar"
 						data-restore-scroll="true"
@@ -115,13 +114,16 @@ export default function ExerciseFinished() {
 										components={{ h1: () => null }}
 									/>
 								</div>
-								<ProgressToggle type="workshop-finished" />
 							</EpicVideoInfoProvider>
 						) : (
 							// TODO: render a random dad joke...
 							'No finished instructions yet...'
 						)}
 					</article>
+					<ProgressToggle
+						type="workshop-finished"
+						className="h-14 border-t px-6"
+					/>
 					<div className="flex h-16 justify-between border-b-4 border-t border-border lg:border-b-0">
 						<div />
 						{data.workshopFinished ? (
