@@ -2,7 +2,7 @@ import * as Accordion from '@radix-ui/react-accordion'
 import * as Select from '@radix-ui/react-select'
 import { Await, Form, useSearchParams, useSubmit } from '@remix-run/react'
 import { clsx } from 'clsx'
-import React, { Suspense, useMemo } from 'react'
+import React, { Suspense } from 'react'
 import AccordionComponent from '#app/components/accordion.tsx'
 import { Mdx } from '#app/utils/mdx.tsx'
 import { Icon } from './icons.tsx'
@@ -13,6 +13,8 @@ type diffProp = {
 	diffCode?: string | null
 }
 
+const pre = (props: any) => <pre {...props} />
+
 export function Diff({
 	diff,
 	allApps,
@@ -22,14 +24,6 @@ export function Diff({
 }) {
 	const submit = useSubmit()
 	const [params] = useSearchParams()
-
-	const mdxComponents = useMemo(() => {
-		return {
-			Accordion: (props: any) => <AccordionComponent {...props} />,
-			// override the pre-with-buttons
-			pre: (props: any) => <pre {...props} />,
-		}
-	}, [])
 
 	const hiddenInputs: Array<React.ReactNode> = []
 	for (const [key, value] of params.entries()) {
@@ -83,7 +77,14 @@ export function Diff({
 							{diff.diffCode ? (
 								<div>
 									<Accordion.Root className="w-full" type="multiple">
-										<Mdx code={diff.diffCode} components={mdxComponents} />
+										<Mdx
+											code={diff.diffCode}
+											components={{
+												Accordion: AccordionComponent,
+												// override the pre-with-buttons
+												pre,
+											}}
+										/>
 									</Accordion.Root>
 								</div>
 							) : diff.app1 && diff.app2 ? (
