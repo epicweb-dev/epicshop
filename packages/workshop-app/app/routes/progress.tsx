@@ -1,5 +1,11 @@
 import { json, type DataFunctionArgs } from '@remix-run/node'
-import { useFetcher, useRouteLoaderData } from '@remix-run/react'
+import {
+	useFetcher,
+	useFetchers,
+	useLocation,
+	useNavigation,
+	useRouteLoaderData,
+} from '@remix-run/react'
 import clsx from 'clsx'
 import { motion } from 'framer-motion'
 import * as React from 'react'
@@ -10,7 +16,23 @@ import { ensureUndeployed, invariantResponse } from '#app/utils/misc.tsx'
 
 export function useEpicProgress() {
 	const data = useRouteLoaderData<typeof rootLoader>('root')
-	return data?.progress
+	const progressFetcher = useFetchers().find(
+		f => f.formAction === '/progress' && f.formData?.has('complete'),
+	)
+	if (!progressFetcher || !data?.progress) return data?.progress ?? null
+	return data.progress.map(p => {
+		const optimisticCompleted =
+			progressFetcher.formData?.get('complete') === 'true'
+		const optimisticLessonSlug = progressFetcher.formData?.get('lessonSlug')
+		if (optimisticLessonSlug === p.epicLessonSlug) {
+			return {
+				...p,
+				epicCompletedAt: optimisticCompleted ? Date.now() : null,
+			}
+		} else {
+			return p
+		}
+	})
 }
 
 export function useNextExerciseRoute() {
@@ -41,6 +63,111 @@ export function useNextExerciseRoute() {
 
 	const st = nextProgress.stepNumber.toString().padStart(2, '0')
 	if (nextProgress.type === 'step') return `/${ex}/${st}/problem`
+
+	return null
+}
+
+const percentageClassNames = {
+	0: '',
+	1: 'before:h-[10%]',
+	2: 'before:h-[20%]',
+	3: 'before:h-[30%]',
+	4: 'before:h-[40%]',
+	5: 'before:h-[50%]',
+	6: 'before:h-[60%]',
+	7: 'before:h-[70%]',
+	8: 'before:h-[80%]',
+	9: 'before:h-[90%]',
+	10: 'before:h-[100%]',
+}
+
+export function useExerciseProgressClassName(exerciseNumber: number) {
+	const progress = useEpicProgress()
+	if (!progress || !progress.length) return null
+	const exerciseProgress = progress.filter(
+		p =>
+			(p.type === 'instructions' ||
+				p.type === 'step' ||
+				p.type === 'finished') &&
+			p.exerciseNumber === exerciseNumber,
+	)
+	if (!exerciseProgress.length) return null
+
+	const percentComlete =
+		exerciseProgress.reduce(
+			(acc, p) => (p.epicCompletedAt ? acc + 1 : acc),
+			0,
+		) / exerciseProgress.length
+
+	const numerator = Math[percentComlete > 0.1 ? 'floor' : 'ceil'](
+		percentComlete * 10,
+	) as 0 | 1 | 2 | 3 | 4 | 5 | 6 | 7 | 8 | 9 | 10
+
+	return `relative ${percentageClassNames[numerator]} before:bg-highlight before:absolute before:left-0 before:top-0 before:w-[4px]`
+}
+
+export function useProgressItemClassName(
+	progressItemSearch: ProgressItemSearch,
+) {
+	const progressItem = useProgressItem(progressItemSearch)
+	if (!progressItem?.epicCompletedAt) return null
+	return `relative before:h-[100%] before:bg-highlight before:absolute before:left-0 before:top-0 before:w-[4px]`
+}
+
+type WorkshopProgressType = Extract<
+	Progress['type'],
+	'workshop-instructions' | 'workshop-finished'
+>
+type ExerciseProgressType = Extract<
+	Progress['type'],
+	'instructions' | 'finished'
+>
+type StepProgressType = Extract<Progress['type'], 'step'>
+
+export type ProgressItemSearch =
+	| {
+			exerciseNumber: number
+			stepNumber?: never
+			type: ExerciseProgressType
+	  }
+	| {
+			exerciseNumber: number
+			stepNumber: number
+			type: StepProgressType
+	  }
+	| {
+			type: WorkshopProgressType
+			exerciseNumber?: never
+			stepNumber?: never
+	  }
+
+export function useProgressItem({
+	exerciseNumber,
+	stepNumber,
+	type,
+}: ProgressItemSearch) {
+	const progress = useEpicProgress()
+	if (!progress || !progress.length) return null
+
+	if (type === 'workshop-finished' || type === 'workshop-instructions') {
+		return progress?.find(p => p.type === type) ?? null
+	} else if (type === 'instructions' || type === 'finished') {
+		return (
+			progress?.find(
+				p => p.type === type && p.exerciseNumber === exerciseNumber,
+			) ?? null
+		)
+	} else if (type === 'step') {
+		return (
+			progress?.find(
+				p =>
+					p.type === type &&
+					p.exerciseNumber === exerciseNumber &&
+					p.stepNumber === stepNumber,
+			) ?? null
+		)
+	}
+	return null
 }
 
 export async function action({ request }: DataFunctionArgs) {
@@ -58,67 +185,51 @@ export async function action({ request }: DataFunctionArgs) {
 	return json(result)
 }
 
-type WorkshopProgressType = Extract<
-	Progress['type'],
-	'workshop-instructions' | 'workshop-finished'
->
-type ExerciseProgressType = Extract<
-	Progress['type'],
-	'instructions' | 'finished'
->
-type StepProgressType = Extract<Progress['type'], 'step'>
-
 export function ProgressToggle({
-	type,
-	exerciseNumber,
-	stepNumber,
 	className,
-}:
-	| {
-			exerciseNumber: number
-			stepNumber?: never
-			type: ExerciseProgressType
-			className?: string
-	  }
-	| {
-			exerciseNumber: number
-			stepNumber: number
-			type: StepProgressType
-			className?: string
-	  }
-	| {
-			type: WorkshopProgressType
-			exerciseNumber?: never
-			stepNumber?: never
-			className?: string
-	  }) {
+	...progressItemSearch
+}: { className?: string } & ProgressItemSearch) {
 	const progressFetcher = useFetcher<typeof action>()
-	const progress = useEpicProgress()
-
-	let progressItem: Exclude<typeof progress, undefined>[number] | null = null
-
-	if (type === 'workshop-finished' || type === 'workshop-instructions') {
-		progressItem = progress?.find(p => p.type === type) ?? null
-	} else if (type === 'instructions' || type === 'finished') {
-		progressItem =
-			progress?.find(
-				p => p.type === type && p.exerciseNumber === exerciseNumber,
-			) ?? null
-	} else if (type === 'step') {
-		progressItem =
-			progress?.find(
-				p =>
-					p.type === type &&
-					p.exerciseNumber === exerciseNumber &&
-					p.stepNumber === stepNumber,
-			) ?? null
-	}
+	const progressItem = useProgressItem(progressItemSearch)
+	const animationRef = React.useRef<HTMLDivElement>(null)
+	const buttonRef = React.useRef<HTMLButtonElement>(null)
 
 	const optimisticCompleted = progressFetcher.formData?.has('complete')
 		? progressFetcher.formData?.get('complete') === 'true'
 		: Boolean(progressItem?.epicCompletedAt)
 
 	const [startAnimation, setStartAnimation] = React.useState(false)
+
+	const location = useLocation()
+	const navigation = useNavigation()
+	const navigationLocationStateFrom = navigation.location?.state?.from
+	const navigationLocationPathname = navigation.location?.pathname
+	const locationPathname = location.pathname
+	React.useEffect(() => {
+		if (navigationLocationStateFrom === 'continue next lesson button') {
+			if (locationPathname === navigationLocationPathname) {
+				setStartAnimation(true)
+				buttonRef.current?.focus()
+			}
+		}
+	}, [
+		location.key,
+		locationPathname,
+		navigationLocationPathname,
+		navigationLocationStateFrom,
+	])
+
+	React.useEffect(() => {
+		if (!animationRef.current) return
+		if (!startAnimation) return
+		const animationPromises = animationRef.current
+			.getAnimations()
+			.map(({ finished }) => finished)
+
+		Promise.allSettled(animationPromises).then(() => {
+			setStartAnimation(false)
+		})
+	}, [startAnimation])
 
 	if (ENV.KCDSHOP_DEPLOYED || !progressItem) return null
 
@@ -136,18 +247,20 @@ export function ProgressToggle({
 			/>
 
 			<motion.button
-				onTap={() => {
+				ref={buttonRef}
+				onClick={() => {
 					setStartAnimation(!optimisticCompleted)
 				}}
 				type="submit"
 				className={clsx(
-					'group relative flex w-full items-center justify-between overflow-hidden transition hover:bg-[hsl(var(--foreground)/0.02)]',
+					'group relative flex w-full items-center justify-between overflow-hidden transition hover:bg-[hsl(var(--foreground)/0.02)] focus:bg-[hsl(var(--foreground)/0.02)]',
 					className,
 				)}
 			>
 				{optimisticCompleted ? 'Mark as incomplete' : 'Mark as complete'}
 				{startAnimation ? (
 					<motion.div
+						ref={animationRef}
 						className="absolute right-0 h-20 w-20 rounded-full bg-foreground/20"
 						initial={{
 							scale: 0.5,

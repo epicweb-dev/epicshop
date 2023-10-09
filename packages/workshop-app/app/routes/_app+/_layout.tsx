@@ -26,12 +26,18 @@ import {
 	getPlaygroundAppName,
 	getWorkshopTitle,
 } from '#app/utils/apps.server.ts'
+import { cn } from '#app/utils/misc.tsx'
 import {
 	combineServerTimings,
 	getServerTimeHeader,
 	makeTimings,
 } from '#app/utils/timing.server.ts'
-import { useNextExerciseRoute } from '../progress.tsx'
+import {
+	useNextExerciseRoute,
+	useExerciseProgressClassName,
+	type ProgressItemSearch,
+	useProgressItemClassName,
+} from '../progress.tsx'
 import { ThemeSwitch } from '../theme/index.tsx'
 
 export async function loader({ request }: DataFunctionArgs) {
@@ -94,6 +100,7 @@ export const headers: HeadersFunction = ({ loaderHeaders, parentHeaders }) => {
 
 export default function App() {
 	const user = useOptionalUser()
+	const [isMenuOpened, setMenuOpened] = React.useState(false)
 
 	return (
 		<div className="flex flex-col">
@@ -104,8 +111,15 @@ export default function App() {
 					'h-screen': user,
 				})}
 			>
-				<Navigation />
-				<Outlet />
+				<Navigation
+					isMenuOpened={isMenuOpened}
+					onMenuOpenChange={setMenuOpened}
+				/>
+				<div
+					className={cn('h-full w-full', isMenuOpened ? 'hidden md:block' : '')}
+				>
+					<Outlet />
+				</div>
 				<ToastHub />
 			</div>
 		</div>
@@ -150,7 +164,64 @@ function EpicWebBanner() {
 	)
 }
 
-function Navigation() {
+const itemVariants = {
+	hidden: { opacity: 0, x: -20 },
+	visible: { opacity: 1, x: 0 },
+}
+function NavigationExerciseListItem({
+	exerciseNumber,
+	children,
+}: {
+	exerciseNumber: number
+	children: React.ReactNode
+}) {
+	const progressClassName = useExerciseProgressClassName(exerciseNumber)
+	return (
+		<motion.li
+			variants={itemVariants}
+			className={cn(
+				// add gap of 3 to children, but using padding so the progress extends through the whole height
+				'py-[6px] first:pt-3 last:pb-3',
+				progressClassName
+					? `${progressClassName} border-border before:border-t`
+					: null,
+			)}
+		>
+			<span className="ml-2">{children}</span>
+		</motion.li>
+	)
+}
+
+function NavigationExerciseStepListItem({
+	children,
+	...progressItemSearch
+}: {
+	children: React.ReactNode
+} & ProgressItemSearch) {
+	const progressClassName = useProgressItemClassName(progressItemSearch)
+	return (
+		<motion.li
+			variants={itemVariants}
+			className={cn(
+				// add gap of 3 to children, but using padding so the progress extends through the whole height
+				'py-[6px] first:pt-3 last:pb-3',
+				progressClassName
+					? `${progressClassName} border-border before:border-t`
+					: null,
+			)}
+		>
+			<span className="ml-2">{children}</span>
+		</motion.li>
+	)
+}
+
+function Navigation({
+	isMenuOpened,
+	onMenuOpenChange: setMenuOpened,
+}: {
+	isMenuOpened: boolean
+	onMenuOpenChange: (change: boolean) => void
+}) {
 	const data = useLoaderData<typeof loader>()
 	const user = useOptionalUser()
 	const nextExerciseRoute = useNextExerciseRoute()
@@ -171,7 +242,6 @@ function Navigation() {
 	const OPENED_MENU_WIDTH = 400
 
 	// container
-	const [isMenuOpened, setMenuOpened] = React.useState(false)
 	const menuControls = useAnimationControls()
 	const menuVariants = {
 		close: { width: 56 },
@@ -192,11 +262,6 @@ function Navigation() {
 			opacity: 0,
 		},
 	}
-	const itemVariants = {
-		hidden: { opacity: 0, x: -20 },
-		visible: { opacity: 1, x: 0 },
-	}
-
 	const exNum = Number(params.exerciseNumber).toString().padStart(2, '0')
 
 	return (
@@ -224,7 +289,7 @@ function Navigation() {
 								variants={listVariants}
 								initial="hidden"
 								animate="visible"
-								className="flex flex-col gap-3"
+								className="flex flex-col"
 							>
 								{data.exercises.map(({ exerciseNumber, title, steps }) => {
 									const isActive =
@@ -234,7 +299,10 @@ function Navigation() {
 										data.playground.exerciseNumber === exerciseNumber
 									const exerciseNum = exerciseNumber.toString().padStart(2, '0')
 									return (
-										<motion.li variants={itemVariants} key={exerciseNumber}>
+										<NavigationExerciseListItem
+											key={exerciseNumber}
+											exerciseNumber={exerciseNumber}
+										>
 											<Link
 												prefetch="intent"
 												to={`/${exerciseNum}`}
@@ -252,8 +320,27 @@ function Navigation() {
 													variants={listVariants}
 													initial="hidden"
 													animate="visible"
-													className="ml-4 mt-4 flex flex-col gap-3"
+													className="ml-4 mt-4 flex flex-col"
 												>
+													<NavigationExerciseStepListItem
+														key={exerciseNumber}
+														type="instructions"
+														exerciseNumber={exerciseNumber}
+													>
+														<Link
+															to={`/${exerciseNum}`}
+															prefetch="intent"
+															className={clsx(
+																'relative whitespace-nowrap px-2 py-0.5 pr-3 text-xl font-medium outline-none after:absolute after:-bottom-2.5 after:-right-2.5 after:h-5 after:w-5 after:rotate-45 after:scale-75 after:bg-background after:content-[""] hover:underline focus:underline',
+																{
+																	'bg-foreground text-background':
+																		isActive && !params.stepNumber,
+																},
+															)}
+														>
+															Intro
+														</Link>
+													</NavigationExerciseStepListItem>
 													{steps
 														.filter(Boolean)
 														.map(({ name, stepNumber, title }) => {
@@ -265,9 +352,11 @@ function Navigation() {
 															const isPlayground =
 																name === data.playground.appName
 															return (
-																<motion.li
-																	variants={itemVariants}
+																<NavigationExerciseStepListItem
 																	key={stepNumber}
+																	type="step"
+																	stepNumber={stepNumber}
+																	exerciseNumber={exerciseNumber}
 																>
 																	<Link
 																		to={`/${exerciseNum}/${step}`}
@@ -284,10 +373,13 @@ function Navigation() {
 																			? `${step}. ${title} 🛝`
 																			: `${step}. ${title}`}
 																	</Link>
-																</motion.li>
+																</NavigationExerciseStepListItem>
 															)
 														})}
-													<motion.li variants={itemVariants}>
+													<NavigationExerciseStepListItem
+														type="finished"
+														exerciseNumber={exerciseNumber}
+													>
 														<NavLink
 															to={`/${exerciseNum}/finished`}
 															prefetch="intent"
@@ -302,14 +394,14 @@ function Navigation() {
 														>
 															📝 Elaboration
 														</NavLink>
-													</motion.li>
+													</NavigationExerciseStepListItem>
 												</motion.ul>
 											)}
-										</motion.li>
+										</NavigationExerciseListItem>
 									)
 								})}
 							</motion.ul>
-							<div>
+							<div className="mt-6">
 								<NavLink
 									to="/finished"
 									className={({ isActive }) =>
@@ -368,7 +460,9 @@ function Navigation() {
 								>
 									Your Account
 								</motion.div>
-							) : null}
+							) : (
+								<span className="sr-only">Your account</span>
+							)}
 						</Link>
 					) : null}
 					{ENV.KCDSHOP_DEPLOYED ? null : user && nextExerciseRoute ? (
@@ -378,6 +472,7 @@ function Navigation() {
 							className={clsx(
 								'flex h-14 w-full items-center space-x-3 border-t px-4 py-4 pl-[18px] no-underline hover:underline',
 							)}
+							state={{ from: 'continue next lesson button' }}
 						>
 							<Icon name="FastForward" className="flex-shrink-0" size={20} />
 							{isMenuOpened ? (
@@ -388,7 +483,9 @@ function Navigation() {
 								>
 									Continue to next lesson
 								</motion.div>
-							) : null}
+							) : (
+								<span className="sr-only">Continue to next lesson</span>
+							)}
 						</Link>
 					) : null}
 					<div className="mb-4 w-full self-start border-t pl-3 pt-[15px]">

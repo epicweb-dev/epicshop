@@ -86,7 +86,7 @@ export const headers: HeadersFunction = ({ loaderHeaders, parentHeaders }) => {
 export default function ExerciseFinished() {
 	const data = useLoaderData<typeof loader>()
 	return (
-		<div className="flex flex-grow flex-col">
+		<div className="flex h-full flex-grow flex-col">
 			<main className="grid h-full flex-grow grid-cols-1 grid-rows-2 lg:grid-cols-2 lg:grid-rows-1">
 				<div className="relative col-span-1 row-span-1 flex h-full flex-col border-r border-border">
 					<h1 className="h-14 border-b border-border pl-10 pr-5 text-sm font-medium uppercase leading-none">

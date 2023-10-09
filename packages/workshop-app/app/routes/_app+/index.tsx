@@ -2,6 +2,7 @@ import {
 	defer,
 	type DataFunctionArgs,
 	type HeadersFunction,
+	type SerializeFrom,
 } from '@remix-run/node'
 import { Link, useLoaderData } from '@remix-run/react'
 import { EpicVideoInfoProvider } from '#app/components/epic-video.tsx'
@@ -21,7 +22,7 @@ import {
 	makeTimings,
 	time,
 } from '#app/utils/timing.server.ts'
-import { ProgressToggle, useEpicProgress } from '../progress.tsx'
+import { ProgressToggle, useExerciseProgressClassName } from '../progress.tsx'
 
 export async function loader({ request }: DataFunctionArgs) {
 	const timings = makeTimings('indexLoader')
@@ -78,64 +79,43 @@ export const headers: HeadersFunction = ({ loaderHeaders, parentHeaders }) => {
 	return headers
 }
 
-const percentages = {
-	0: '',
-	1: 'before:h-[10%]',
-	2: 'before:h-[20%]',
-	3: 'before:h-[30%]',
-	4: 'before:h-[40%]',
-	5: 'before:h-[50%]',
-	6: 'before:h-[60%]',
-	7: 'before:h-[70%]',
-	8: 'before:h-[80%]',
-	9: 'before:h-[90%]',
-	10: 'before:h-[100%]',
+function ExerciseListItem({
+	exercise,
+}: {
+	exercise: SerializeFrom<typeof loader>['exercises'][number]
+}) {
+	const progressClassName = useExerciseProgressClassName(
+		exercise.exerciseNumber,
+	)
+	return (
+		<li key={exercise.exerciseNumber}>
+			<Link
+				className={cn(
+					"flex items-center gap-4 px-4 py-3 text-lg font-semibold transition after:absolute after:right-10 after:-translate-x-2 after:opacity-0 after:transition after:content-['→'] hover:bg-gray-50 hover:after:translate-x-0 hover:after:opacity-100 dark:hover:bg-white/5",
+					progressClassName,
+				)}
+				to={`${exercise.exerciseNumber.toString().padStart(2, '0')}`}
+			>
+				<span className="text-xs font-normal tabular-nums opacity-50">
+					{exercise.exerciseNumber}
+				</span>
+				<span>{exercise.title}</span>
+			</Link>
+		</li>
+	)
 }
 
 export default function Index() {
 	const data = useLoaderData<typeof loader>()
-	const progress = useEpicProgress() ?? []
 
 	const exerciseLinks = (
 		<ul className="flex flex-col divide-y divide-border dark:divide-border/50">
 			<strong className="px-10 pb-3 font-mono text-xs uppercase">
 				Sections
 			</strong>
-			{data.exercises.map(exercise => {
-				const exerciseProgress = progress.filter(
-					p =>
-						(p.type === 'instructions' ||
-							p.type === 'step' ||
-							p.type === 'finished') &&
-						p.exerciseNumber === exercise.exerciseNumber,
-				)
-				const percentComlete = exerciseProgress.length
-					? exerciseProgress.reduce(
-							(acc, p) => (p.epicCompletedAt ? acc + 1 : acc),
-							0,
-					  ) / exerciseProgress.length
-					: 0
-				const numerator = Math[percentComlete > 0.1 ? 'floor' : 'ceil'](
-					percentComlete * 10,
-				) as 0 | 1 | 2 | 3 | 4 | 5 | 6 | 7 | 8 | 9 | 10
-
-				return (
-					<li key={exercise.exerciseNumber}>
-						<Link
-							className={cn(
-								"before:bg-highlight relative flex items-center gap-4 px-4 py-3 text-lg font-semibold transition before:absolute before:left-0 before:top-0 before:w-[4px] after:absolute after:right-10 after:-translate-x-2 after:opacity-0 after:transition after:content-['→'] hover:bg-gray-50 hover:after:translate-x-0 hover:after:opacity-100 dark:hover:bg-white/5",
-								percentages[numerator] ?? '',
-							)}
-							to={`${exercise.exerciseNumber.toString().padStart(2, '0')}`}
-						>
-							<span className="text-xs font-normal tabular-nums opacity-50">
-								{exercise.exerciseNumber}
-							</span>
-							<span>{exercise.title}</span>
-						</Link>
-					</li>
-				)
-			})}
+			{data.exercises.map(exercise => (
+				<ExerciseListItem key={exercise.exerciseNumber} exercise={exercise} />
+			))}
 		</ul>
 	)
 	return (
