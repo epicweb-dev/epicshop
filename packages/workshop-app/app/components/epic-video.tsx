@@ -163,21 +163,20 @@ export function EpicVideo({
 }) {
 	return (
 		<div>
-			{/* eslint-disable-next-line react/jsx-no-target-blank */}
-			<a
-				href={urlString}
-				target="_blank"
-				className="flex items-center gap-1 underline"
-			>
-				<Icon name="Video" size={24} title="EpicWeb.dev video" />
-				{title}
-				<Icon name="ExternalLink" title="Open video" />
-			</a>
 			{muxPlaybackId ? (
 				<MuxPlayer playbackId={muxPlaybackId} />
 			) : (
 				<EpicVideoEmbed url={urlString} title={title} />
 			)}
+			{/* eslint-disable-next-line react/jsx-no-target-blank */}
+			<a
+				href={urlString}
+				target="_blank"
+				className="flex items-center gap-1 text-base no-underline opacity-70 transition hover:underline hover:opacity-100"
+			>
+				<Icon name="Video" size={24} title="EpicWeb.dev video" />
+				{title} <span aria-hidden>↗︎</span>
+			</a>
 		</div>
 	)
 }
