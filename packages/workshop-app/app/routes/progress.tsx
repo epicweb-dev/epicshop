@@ -7,7 +7,6 @@ import { requireAuthInfo } from '#app/utils/db.server.ts'
 import { updateProgress, type Progress } from '#app/utils/epic-api.ts'
 import { ensureUndeployed, invariantResponse } from '#app/utils/misc.tsx'
 import clsx from 'clsx'
-import { Icon } from '#app/components/icons.tsx'
 
 export function useEpicProgress() {
 	const data = useRouteLoaderData<typeof rootLoader>('root')
