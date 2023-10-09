@@ -71,6 +71,7 @@ export default {
 				input: 'hsl(var(--input))',
 				ring: 'hsl(var(--ring))',
 				background: 'hsl(var(--background))',
+				highlight: 'hsl(var(--highlight))',
 				foreground: 'hsl(var(--foreground))',
 				'foreground-danger': 'hsl(var(--foreground-danger))',
 				scrollbar: 'var(--scrollbar)',

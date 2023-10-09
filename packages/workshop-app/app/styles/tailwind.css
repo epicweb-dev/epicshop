@@ -16,6 +16,8 @@
 		/* prefixed with foreground because it should look good on the background */
 		--foreground-danger: 345 82.7% 40.8%;
 
+		--highlight: 220 85% 60%;
+
 		--muted: 210 40% 96.1%;
 		--muted-foreground: 215.4 16.3% 46.9%;
 
@@ -57,6 +59,8 @@
 
 		/* prefixed with foreground because it should look good on the background */
 		--foreground-danger: -4 68% 52%;
+
+		--highlight: 220 90% 75%;
 
 		--muted: 223 47% 11%;
 		--muted-foreground: 215.4 16.3% 56.9%;

@@ -48,7 +48,7 @@ function EpicProgress() {
 			<div
 				ref={ref}
 				className={cn(
-					'h-full w-0 bg-blue-600 duration-500 ease-in-out dark:bg-blue-200',
+					'bg-highlight h-full w-0 duration-500 ease-in-out',
 					isIdle &&
 						(animationComplete
 							? 'transition-none'
