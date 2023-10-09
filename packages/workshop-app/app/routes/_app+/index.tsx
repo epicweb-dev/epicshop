@@ -3,8 +3,7 @@ import {
 	type DataFunctionArgs,
 	type HeadersFunction,
 } from '@remix-run/node'
-import { useLoaderData } from '@remix-run/react'
-import { ButtonLink } from '#app/components/button.tsx'
+import { Link, useLoaderData } from '@remix-run/react'
 import { EpicVideoInfoProvider } from '#app/components/epic-video.tsx'
 import { GeneralErrorBoundary } from '#app/components/error-boundary.tsx'
 import { EditFileOnGitHub } from '#app/routes/launch-editor.tsx'
@@ -82,15 +81,27 @@ export default function Index() {
 	const data = useLoaderData<typeof loader>()
 
 	const exerciseLinks = (
-		<ul className="flex flex-wrap gap-4">
+		<ul className="flex flex-col divide-y divide-border dark:divide-border/50">
+			<strong className="px-10 pb-3 font-mono text-xs uppercase">
+				Sections
+			</strong>
 			{data.exercises.map(exercise => (
 				<li key={exercise.exerciseNumber}>
-					<ButtonLink
+					<Link
+						className="relative flex items-center gap-4 px-4 py-3 text-lg font-semibold transition after:absolute after:right-10 after:-translate-x-2 after:opacity-0 after:transition after:content-['→'] hover:bg-gray-50 hover:after:translate-x-0 hover:after:opacity-100 dark:hover:bg-white/5"
+						to={`${exercise.exerciseNumber.toString().padStart(2, '0')}`}
+					>
+						<span className="text-xs font-normal tabular-nums opacity-50">
+							{exercise.exerciseNumber}
+						</span>
+						<span>{exercise.title}</span>
+					</Link>
+					{/* <ButtonLink
 						varient="primary"
 						to={`${exercise.exerciseNumber.toString().padStart(2, '0')}`}
 					>
 						{exercise.exerciseNumber}. {exercise.title}
-					</ButtonLink>
+					</ButtonLink> */}
 				</li>
 			))}
 		</ul>
@@ -103,13 +114,16 @@ export default function Index() {
 			>
 				<div className="flex min-h-full w-full flex-col justify-between border-r border-border md:w-3/4 lg:w-2/3">
 					<div>
-						<div className="px-10 pt-16">
-							<h1 className="text-[6vw] font-extrabold leading-none">
+						<div className="pt-16">
+							<h1 className="px-10 text-[6vw] font-extrabold leading-none">
 								{data.title}
 							</h1>
 							<div className="mt-8">{exerciseLinks}</div>
 						</div>
-						<div className="mt-16 w-full max-w-none scroll-pt-6 border-t border-border px-10 pt-16">
+						<div className="w-full max-w-none scroll-pt-6 border-t border-border px-10 pt-8">
+							<h2 className="pb-5 font-mono text-xs font-semibold uppercase">
+								Intro
+							</h2>
 							{data.workshopReadme.compiled.status === 'success' &&
 							data.workshopReadme.compiled.code ? (
 								<EpicVideoInfoProvider
@@ -134,7 +148,7 @@ export default function Index() {
 								'No instructions yet...'
 							)}
 						</div>
-						<div className="mb-10 p-10">
+						<div className="pb-5 pt-10">
 							{data.workshopReadme.compiled.status === 'success' &&
 							data.workshopReadme.compiled.code &&
 							data.workshopReadme.compiled.code?.length > 500
