@@ -9,27 +9,47 @@ const __dirname = path.dirname(fileURLToPath(import.meta.url))
 const isPublished = !fs.existsSync(path.join(__dirname, '..', 'app'))
 const argv = process.argv.slice(2)
 
-if (argv[0] !== 'start') {
-	throw new Error('Only `start` is supported currently...')
+const command = argv[0]
+switch (command) {
+	case 'start': {
+		start()
+		break
+	}
+	case 'update': {
+		process.env.KCDSHOP_DISABLE_WATCHER = 'true'
+		const { updateLocalRepo } = await import('../build/utils/git.server.js')
+		const result = await updateLocalRepo()
+		if (result.status === 'success') {
+			console.log(`✅ ${result.message}`)
+		} else {
+			console.error(`❌ ${result.message}`)
+		}
+		break
+	}
+	default: {
+		throw new Error(`Command ${command} is not supported`)
+	}
 }
 
-const KCDSHOP_CONTEXT_CWD = process.env.KCDSHOP_CONTEXT_CWD ?? process.cwd()
+function start() {
+	const KCDSHOP_CONTEXT_CWD = process.env.KCDSHOP_CONTEXT_CWD ?? process.cwd()
 
-if (process.env.NODE_ENV === 'production' || isPublished) {
-	exec('node ./start.js', {
-		KCDSHOP_CONTEXT_CWD,
-		NODE_ENV: 'production',
-	}).catch(code => {
-		console.error('Encountered error running the server, exiting...')
-		process.exit(code)
-	})
-} else {
-	exec('npm run dev', {
-		KCDSHOP_CONTEXT_CWD,
-	}).catch(code => {
-		console.error('Encountered error running the dev script, exiting...')
-		process.exit(code)
-	})
+	if (process.env.NODE_ENV === 'production' || isPublished) {
+		exec('node ./start.js', {
+			KCDSHOP_CONTEXT_CWD,
+			NODE_ENV: 'production',
+		}).catch(code => {
+			console.error('Encountered error running the server, exiting...')
+			process.exit(code)
+		})
+	} else {
+		exec('npm run dev', {
+			KCDSHOP_CONTEXT_CWD,
+		}).catch(code => {
+			console.error('Encountered error running the dev script, exiting...')
+			process.exit(code)
+		})
+	}
 }
 
 async function exec(command, envVars) {

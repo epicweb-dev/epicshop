@@ -19,6 +19,7 @@ import { compileMdx } from './compile-mdx.server.ts'
 import { isAppRunning, runAppDev, waitOnApp } from './process-manager.server.ts'
 import { singleton } from './singleton.server.ts'
 import { getServerTimeHeader, type Timings } from './timing.server.ts'
+import { getErrorMessage, getPkgProp } from './utils.ts'
 
 process.env.NODE_ENV = process.env.NODE_ENV ?? 'development'
 
@@ -391,28 +392,6 @@ export async function getApps({
 		},
 	})
 	return apps
-}
-
-async function getPkgProp<Value>(
-	fullPath: string,
-	prop: string,
-	defaultValue?: Value,
-): Promise<Value> {
-	const pkg = JSON.parse(
-		fs.readFileSync(path.join(fullPath, 'package.json')).toString(),
-	) as any
-	const propPath = prop.split('.')
-	let value = pkg
-	for (const p of propPath) {
-		value = value[p]
-		if (value === undefined) break
-	}
-	if (value === undefined && defaultValue === undefined) {
-		throw new Error(
-			`Could not find required property ${prop} in package.json of ${fullPath}`,
-		)
-	}
-	return value ?? defaultValue
 }
 
 export function extractNumbersFromAppName(fullPath: string) {
@@ -1155,18 +1134,4 @@ export function getRelativePath(filePath: string) {
 		.normalize(filePath)
 		.replace(playgroundPath, `playground${path.sep}`)
 		.replace(exercisesPath, '')
-}
-
-function getErrorMessage(error: unknown) {
-	if (typeof error === 'string') return error
-	if (
-		error &&
-		typeof error === 'object' &&
-		'message' in error &&
-		typeof error.message === 'string'
-	) {
-		return error.message
-	}
-	console.error('Unable to get error message for error', error)
-	return 'Unknown Error'
 }

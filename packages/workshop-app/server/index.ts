@@ -21,6 +21,7 @@ import * as remixBuild from '../build/index.js'
 import { getApps, getWorkshopRoot } from '../utils/apps.server.ts'
 import { getWatcher } from '../utils/change-tracker.ts'
 import { isEmbeddedFile } from '../utils/compile-mdx.server.ts'
+import { checkForUpdates } from '../utils/git.server.ts'
 
 // @ts-ignore - this file may not exist if you haven't built yet, but it will
 // definitely exist by the time the dev or prod server actually runs.
@@ -44,6 +45,8 @@ const kcdshopAppRootDir = isRunningInBuildDir
 	? path.join(__dirname, '..', '..')
 	: path.join(__dirname, '..')
 
+// kick this off early...
+const hasUpdatesPromise = checkForUpdates()
 // caches all apps
 getApps()
 
@@ -104,7 +107,7 @@ const portToUse = await getPort({
 	port: portNumbers(desiredPort, desiredPort + 100),
 })
 
-const server = app.listen(portToUse, () => {
+const server = app.listen(portToUse, async () => {
 	const addy = server.address()
 	const portUsed =
 		desiredPort === portToUse
@@ -141,6 +144,18 @@ ${chalk.bold('Press Ctrl+C to stop')}
 
 	if (process.env.NODE_ENV === 'development') {
 		broadcastDevReady(build)
+	}
+
+	const hasUpdates = await hasUpdatesPromise
+	if (hasUpdates.updatesAvailable) {
+		const updateLink = chalk.blue(hasUpdates.diffLink)
+		const updateCommand = chalk.blue.bold('npx kcdshop update')
+		console.log(
+			'\n',
+			`🎉  There are ${chalk.yellow(
+				'updates available',
+			)} for this workshop repository.  🎉\n\nTo get the updates, stop the server and run the following command:\n\n  ${updateCommand}\n\nTo view a diff, check:\n  ${updateLink}`,
+		)
 	}
 })
 

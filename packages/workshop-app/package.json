@@ -29,6 +29,10 @@
       "types": "./build/utils/change-tracker.d.ts",
       "default": "./build/utils/change-tracker.js"
     },
+    "./git.server": {
+      "types": "./build/utils/git.server.d.ts",
+      "default": "./build/utils/git.server.js"
+    },
     "./iframe-sync": {
       "types": "./build/utils/iframe-sync.d.ts",
       "default": "./build/utils/iframe-sync.js"

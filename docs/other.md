@@ -30,3 +30,23 @@ These will be provided with the following environment variables:
   restarted after the `post` script (available in the `post` script only).
 
 These scripts will be run with the `cwd` set to the workshop root.
+
+## Update
+
+When the workshop app is started, it checks to see whether there are any updates
+to the repository. If there are, it will show a message to the user that there
+is an update available and will tell them to run `npx kcdshop update` to update
+the workshop. If you want to run anything after the update, add a `postupdate`
+script to `kcd-workshop.scripts` in the root `package.json`:
+
+```
+"kcd-workshop": {
+  "title": "Full Stack Foundations 🔭",
+  "githubRoot": "https://github.com/epicweb-dev/full-stack-foundations/blob/main",
+  "root": true,
+  "epicWorkshopSlug": "full-stack-foundations",
+  "scripts": {
+    "postupdate": "echo '🎉🎉🎉'"
+  }
+}
+```
