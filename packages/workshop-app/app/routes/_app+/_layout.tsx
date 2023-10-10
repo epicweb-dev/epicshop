@@ -106,8 +106,9 @@ export default function App() {
 		<div className="flex flex-col">
 			{user ? null : <EpicWebBanner />}
 			<div
-				className={clsx('flex flex-grow', {
-					'h-[calc(100vh-56px)]': !user,
+				className={cn('flex flex-grow', {
+					'h-[calc(100vh-112px)] sm:h-[calc(100vh-64px)]': ENV.KCDSHOP_DEPLOYED,
+					'h-[calc(100vh-64px)]': !user,
 					'h-screen': user,
 				})}
 			>
@@ -128,22 +129,43 @@ export default function App() {
 
 function EpicWebBanner() {
 	return (
-		<div className="z-10 flex h-14 items-center justify-between border-b bg-gradient-to-tr from-blue-500 to-indigo-500 pl-4 text-white">
-			<div className="flex items-center gap-4">
+		<div
+			className={cn(
+				'z-10 flex items-center justify-between border-b bg-gradient-to-tr from-blue-500 to-indigo-500 pl-4 text-white',
+				ENV.KCDSHOP_DEPLOYED ? 'h-[112px] md:h-[64px]' : 'h-16',
+			)}
+		>
+			<div className="flex flex-1 flex-wrap items-center gap-4">
 				<Icon name="EpicWeb" size={24} />
-				<p>
-					Welcome to the Workshop App for{' '}
-					<Link
-						to="https://www.epicweb.dev"
-						className="underline"
-						target="_blank"
-					>
-						EpicWeb.dev
-					</Link>
-					!
-				</p>
+				<div className="flex flex-1 flex-wrap items-center">
+					<p className="mr-2">
+						Welcome to the{' '}
+						<Link
+							to="https://www.epicweb.dev"
+							className="underline"
+							target="_blank"
+						>
+							EpicWeb.dev
+						</Link>{' '}
+						Workshop app!
+					</p>
+					{ENV.KCDSHOP_DEPLOYED ? (
+						<small className="text-sm">
+							This is the deployed version.{' '}
+							<Link
+								className="underline"
+								target="_blank"
+								rel="noopener noreferrer"
+								to={ENV.KCDSHOP_GITHUB_ROOT}
+							>
+								Run locally
+							</Link>{' '}
+							for full experience.
+						</small>
+					) : null}
+				</div>
 			</div>
-			<div className="flex h-full items-center">
+			<div className="flex h-full flex-col items-center md:flex-row">
 				<Link
 					to="https://www.epicweb.dev"
 					target="_blank"

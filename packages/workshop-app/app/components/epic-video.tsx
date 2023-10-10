@@ -158,7 +158,14 @@ export function DeferredEpicVideo({
 				>
 					{epicVideoInfos => {
 						const epicVideoInfo = epicVideoInfos?.[url]
-						const transcriptUI = (
+						const transcriptUI = ENV.KCDSHOP_DEPLOYED ? (
+							<div className="min-w-[240px]">
+								<Link to={ENV.KCDSHOP_GITHUB_ROOT} className="underline">
+									Run locally
+								</Link>
+								{' for transcripts'}
+							</div>
+						) : (
 							<div className="min-w-[240px]">
 								<Link to="/login" className="underline">
 									Login

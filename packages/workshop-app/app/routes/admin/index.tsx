@@ -152,141 +152,153 @@ export default function AdminLayout() {
 	}
 
 	return (
-		<div className="container mx-auto">
-			<h1>Admin</h1>
-			<div>
-				<Link className="underline" to="/diff">
-					Diff Viewer
-				</Link>
-			</div>
-			<div>
-				<h2 className="text-lg font-bold">Progress</h2>
-				{epicProgress ? (
-					<ul className="flex max-h-48 flex-col gap-2 overflow-y-scroll border-2 p-8 scrollbar-thin scrollbar-thumb-scrollbar">
-						{epicProgress?.sort(sortProgress).map((progress, i) => {
-							const epicUrl = `https://www.epicweb.dev/workshops/${data.workshopSlug}/${progress.epicSectionSlug}/${progress.epicLessonSlug}`
-							const status = progress.epicCompletedAt
-								? 'completed'
-								: 'incomplete'
-							const label = [
-								`${progress.epicSectionSlug}/${progress.epicLessonSlug}`,
-								progress.epicCompletedAt
-									? `(${progress.epicCompletedAt})`
-									: null,
-							]
-								.filter(Boolean)
-								.join(' ')
-							return (
-								<li
-									key={progress.epicLessonSlug}
-									className="flex items-center gap-2"
-								>
-									<span
-										className={`h-3 w-3 rounded-full ${progressStatus[status]}`}
-									/>
-									{progress.type === 'unknown' ? (
-										<span className="flex items-center gap-1">
-											{label}
-											<span className="text-red-500">
-												<Icon
-													name="Close"
-													title="This video is in the workshop on EpicWeb.dev, but not in the local workshop."
-												/>
-											</span>
-										</span>
-									) : (
-										<Link to={linkProgress(progress)}>{label}</Link>
-									)}
-									<Link to={epicUrl}>
-										<Icon name="ExternalLink"></Icon>
-									</Link>
-								</li>
-							)
-						})}
+		<main className="container mx-auto mt-8">
+			<h1 className="text-4xl font-bold">Admin</h1>
+			<div className="flex flex-col gap-4">
+				<nav>
+					<ul className="flex gap-3">
+						<li>
+							<Link className="underline" to="/">
+								Home
+							</Link>
+						</li>
+						<li>
+							<Link className="underline" to="/diff">
+								Diff Viewer
+							</Link>
+						</li>
 					</ul>
-				) : (
-					<p>No progress data</p>
-				)}
-			</div>
-			<div>
-				<h2>Commands</h2>
-				<ul className="max-h-48 overflow-y-scroll border-2 p-8 scrollbar-thin scrollbar-thumb-scrollbar">
-					<li>
-						<Form method="POST">
-							<button name="intent" value="clear-caches">
-								Clear caches
-							</button>
-						</Form>
-					</li>
-					<li>
-						<Form method="POST">
-							<button name="intent" value="clear-data">
-								Clear all data
-							</button>
-						</Form>
-					</li>
-					<li>
-						{data.inspectorRunning ? (
+				</nav>
+				<div>
+					<h2 className="text-lg font-bold">Progress</h2>
+					{epicProgress ? (
+						<ul className="flex max-h-72 flex-col gap-2 overflow-y-scroll border-2 p-8 scrollbar-thin scrollbar-thumb-scrollbar">
+							{epicProgress?.sort(sortProgress).map((progress, i) => {
+								const epicUrl = `https://www.epicweb.dev/workshops/${data.workshopSlug}/${progress.epicSectionSlug}/${progress.epicLessonSlug}`
+								const status = progress.epicCompletedAt
+									? 'completed'
+									: 'incomplete'
+								const label = [
+									`${progress.epicSectionSlug}/${progress.epicLessonSlug}`,
+									progress.epicCompletedAt
+										? `(${progress.epicCompletedAt})`
+										: null,
+								]
+									.filter(Boolean)
+									.join(' ')
+								return (
+									<li
+										key={progress.epicLessonSlug}
+										className="flex items-center gap-2"
+									>
+										<span
+											className={`h-3 w-3 rounded-full ${progressStatus[status]}`}
+											title={status}
+										/>
+										{progress.type === 'unknown' ? (
+											<span className="flex items-center gap-1">
+												{label}
+												<span className="text-red-500">
+													<Icon
+														name="Close"
+														title="This video is in the workshop on EpicWeb.dev, but not in the local workshop."
+													/>
+												</span>
+											</span>
+										) : (
+											<Link to={linkProgress(progress)}>{label}</Link>
+										)}
+										<Link to={epicUrl}>
+											<Icon name="ExternalLink"></Icon>
+										</Link>
+									</li>
+								)
+							})}
+						</ul>
+					) : (
+						<p>No progress data</p>
+					)}
+				</div>
+				<div>
+					<h2 className="text-lg font-bold">Commands</h2>
+					<ul className="max-h-48 overflow-y-scroll border-2 p-8 scrollbar-thin scrollbar-thumb-scrollbar">
+						<li>
 							<Form method="POST">
-								<button name="intent" value="stop-inspect">
-									{isStartingInspector
-										? 'Stopping inspector...'
-										: 'Stop inspector'}
+								<button name="intent" value="clear-caches">
+									Clear local caches
 								</button>
 							</Form>
-						) : (
+						</li>
+						<li>
 							<Form method="POST">
-								<button name="intent" value="inspect">
-									{isStoppingInspector
-										? 'Starting inspector...'
-										: 'Start inspector'}
+								<button name="intent" value="clear-data">
+									Clear all local data (including auth data)
 								</button>
 							</Form>
-						)}
-					</li>
-				</ul>
-			</div>
-			<div>
-				<h2>Apps</h2>
-				<ul className="max-h-48 list-none overflow-y-scroll border-2 p-8 scrollbar-thin scrollbar-thumb-scrollbar">
-					{data.apps.map(app => (
-						<li key={app.name} className="flex items-center gap-2 py-1">
-							{data.processes[app.name] ? (
-								<Pinger status="running" />
+						</li>
+						<li>
+							{data.inspectorRunning ? (
+								<Form method="POST">
+									<button name="intent" value="stop-inspect">
+										{isStartingInspector
+											? 'Stopping inspector...'
+											: 'Stop inspector'}
+									</button>
+								</Form>
 							) : (
-								<Pinger status="stopped" />
+								<Form method="POST">
+									<button name="intent" value="inspect">
+										{isStoppingInspector
+											? 'Starting inspector...'
+											: 'Start inspector'}
+									</button>
+								</Form>
 							)}
-							{app.name}
 						</li>
-					))}
-				</ul>
+					</ul>
+				</div>
+				<div>
+					<h2 className="text-lg font-bold">Apps</h2>
+					<ul className="max-h-48 list-none overflow-y-scroll border-2 p-8 scrollbar-thin scrollbar-thumb-scrollbar">
+						{data.apps.map(app => (
+							<li key={app.name} className="flex items-center gap-2 py-1">
+								{data.processes[app.name] ? (
+									<Pinger status="running" />
+								) : (
+									<Pinger status="stopped" />
+								)}
+								{app.name}
+							</li>
+						))}
+					</ul>
+				</div>
+				<div>
+					<h2 className="text-lg font-bold">Processes</h2>
+					<ul className="overflow-y-scroll border-2 p-8 scrollbar-thin scrollbar-thumb-scrollbar">
+						{Object.entries(data.processes).map(([key, process]) => (
+							<li key={key}>
+								<span>
+									{key} - Port: {process.port} - PID {process.pid} -{' '}
+									{process.color}
+								</span>
+							</li>
+						))}
+					</ul>
+				</div>
+				<div>
+					<h2 className="text-lg font-bold">Test Processes</h2>
+					<ul className="overflow-y-scroll border-2 p-8 scrollbar-thin scrollbar-thumb-scrollbar">
+						{Object.entries(data.testProcesses).map(([key, process]) => (
+							<li key={key}>
+								<span>
+									{key} - PID {process.pid} - Exit code: {process.exitCode}
+								</span>
+							</li>
+						))}
+					</ul>
+				</div>
 			</div>
-			<div>
-				<h2>Processes</h2>
-				<ul className="overflow-y-scroll border-2 p-8 scrollbar-thin scrollbar-thumb-scrollbar">
-					{Object.entries(data.processes).map(([key, process]) => (
-						<li key={key}>
-							<span>
-								{key} - Port: {process.port} - PID {process.pid} -{' '}
-								{process.color}
-							</span>
-						</li>
-					))}
-				</ul>
-			</div>
-			<div>
-				<h2>Test Processes</h2>
-				<ul className="overflow-y-scroll border-2 p-8 scrollbar-thin scrollbar-thumb-scrollbar">
-					{Object.entries(data.testProcesses).map(([key, process]) => (
-						<li key={key}>
-							<span>
-								{key} - PID {process.pid} - Exit code: {process.exitCode}
-							</span>
-						</li>
-					))}
-				</ul>
-			</div>
-		</div>
+		</main>
 	)
 }
 
