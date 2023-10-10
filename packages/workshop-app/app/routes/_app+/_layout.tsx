@@ -104,7 +104,7 @@ export default function App() {
 
 	return (
 		<div className="flex flex-col">
-			{ENV.KCDSHOP_DEPLOYED || user ? null : <EpicWebBanner />}
+			{user ? null : <EpicWebBanner />}
 			<div
 				className={clsx('flex flex-grow', {
 					'h-[calc(100vh-56px)]': !user,
@@ -153,7 +153,7 @@ function EpicWebBanner() {
 					<span>↗︎</span>
 				</Link>
 				<Link
-					to="/login"
+					to={ENV.KCDSHOP_DEPLOYED ? 'https://www.epicweb.dev/login' : '/login'}
 					className="flex h-full items-center justify-center space-x-1.5 bg-white/20 px-5 text-sm font-semibold shadow-md transition hover:bg-white/30"
 				>
 					<Icon name="User" size={24} />

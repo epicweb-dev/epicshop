@@ -174,22 +174,7 @@ export default function App() {
 			)}
 			env={data.ENV}
 		>
-			{ENV.KCDSHOP_DEPLOYED ? (
-				<div className="h-full pt-10">
-					<h6 className="fixed inset-0 z-10 flex h-10 items-center border-b border-border px-2 font-mono text-sm font-medium uppercase leading-tight">
-						<div>
-							Limited deployed version.{' '}
-							<a href={ENV.KCDSHOP_GITHUB_ROOT} className="underline">
-								Setup locally
-							</a>{' '}
-							to get the full experience.
-						</div>
-					</h6>
-					<Outlet />
-				</div>
-			) : (
-				<Outlet />
-			)}
+			<Outlet />
 			<EpicProgress />
 		</Document>
 	)
