@@ -15,3 +15,18 @@ export function useUser() {
 	}
 	return user
 }
+
+export function useOptionalDiscordMember() {
+	const data = useRouteLoaderData<typeof rootLoader>('root')
+	return data?.discordMember
+}
+
+export function useDiscordMember() {
+	const discordMember = useOptionalDiscordMember()
+	if (!discordMember) {
+		throw new Error(
+			'useDiscordMember requires a discordMember. If the discordMember is optional, use useOptionalDiscordMember instead.',
+		)
+	}
+	return discordMember
+}

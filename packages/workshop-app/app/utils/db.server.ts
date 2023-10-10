@@ -5,6 +5,12 @@ import fsExtra from 'fs-extra'
 import md5 from 'md5-hex'
 import { z } from 'zod'
 
+export const DiscordMemberSchema = z.object({
+	avatarURL: z.string().optional(),
+	displayName: z.string(),
+	id: z.string(),
+})
+
 const TokenSetSchema = z.object({
 	access_token: z.string(),
 	token_type: z.string(),
@@ -52,6 +58,7 @@ const DataSchema = z.object({
 			name: z.string().optional(),
 		})
 		.optional(),
+	discordMember: DiscordMemberSchema.optional(),
 })
 
 const appDir = path.join(os.homedir(), '.kcdshop')
@@ -148,14 +155,6 @@ export async function setAuthInfo({
 	return data.authInfo
 }
 
-export async function deleteAuthInfo() {
-	const db = await readDb()
-	if (!db) return
-	delete db.authInfo
-	await fsExtra.ensureDir(appDir)
-	await fsExtra.writeJSON(dbPath, db)
-}
-
 export async function getPreferences() {
 	const data = await readDb()
 	return data?.preferences ?? null
@@ -172,4 +171,29 @@ export async function setPlayerPreferences(
 	await fsExtra.ensureDir(appDir)
 	await fsExtra.writeJSON(dbPath, updatedData)
 	return updatedData.preferences.player
+}
+
+export async function getDiscordMember() {
+	const data = await readDb()
+	return data?.discordMember ?? null
+}
+
+export async function setDiscordMember(
+	discordMember: z.infer<typeof DiscordMemberSchema>,
+) {
+	const data = await readDb()
+	const updatedData = {
+		...data,
+		discordMember,
+	}
+	await fsExtra.ensureDir(appDir)
+	await fsExtra.writeJSON(dbPath, updatedData)
+	return updatedData.discordMember
+}
+
+export async function deleteDiscordInfo() {
+	const data = await readDb()
+	delete data?.discordMember
+	await fsExtra.ensureDir(appDir)
+	await fsExtra.writeJSON(dbPath, data)
 }

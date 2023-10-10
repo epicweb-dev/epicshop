@@ -30,6 +30,7 @@ import { getWorkshopTitle } from './utils/apps.server.ts'
 import { ClientHintCheck, getHints } from './utils/client-hints.tsx'
 import {
 	getAuthInfo,
+	getDiscordMember,
 	getPreferences,
 	getUserAvatar,
 } from './utils/db.server.ts'
@@ -78,6 +79,7 @@ export async function loader({ request }: DataFunctionArgs) {
 	const authInfo = await getAuthInfo()
 	const preferences = await getPreferences()
 	const progress = await getProgress({ timings })
+	const discordMember = await getDiscordMember()
 	const theme = getTheme(request)
 	return json(
 		{
@@ -90,6 +92,7 @@ export async function loader({ request }: DataFunctionArgs) {
 			},
 			progress,
 			preferences,
+			discordMember,
 			user: authInfo
 				? {
 						name: authInfo.name,

@@ -66,6 +66,7 @@ export type IconNames =
 	| 'User'
 	| 'EpicWeb'
 	| 'FastForward'
+	| 'Discord'
 
 export function Icon({
 	title,
