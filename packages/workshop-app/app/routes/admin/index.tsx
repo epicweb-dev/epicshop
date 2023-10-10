@@ -2,9 +2,11 @@ import { type DataFunctionArgs, type MetaFunction, json } from '@remix-run/node'
 import { Form, Link, useLoaderData, useNavigation } from '@remix-run/react'
 import { Icon } from '#app/components/icons.tsx'
 import { type loader as rootLoader } from '#app/root.tsx'
-import { useEpicProgress } from '#app/routes/progress.tsx'
+import {
+	type SerializedProgress,
+	useEpicProgress,
+} from '#app/routes/progress.tsx'
 import { getApps, getEpicWorkshopSlug } from '#app/utils/apps.server.ts'
-import { type Progress } from '#app/utils/epic-api.ts'
 import { ensureUndeployed } from '#app/utils/misc.tsx'
 import { getProcesses } from '#app/utils/process-manager.server.ts'
 import { getServerTimeHeader, makeTimings } from '#app/utils/timing.server.ts'
@@ -102,7 +104,7 @@ export async function action({ request }: DataFunctionArgs) {
 	}
 }
 
-function sortProgress(a: Progress, b: Progress) {
+function sortProgress(a: SerializedProgress, b: SerializedProgress) {
 	return a.type === 'unknown' && b.type === 'unknown'
 		? 0
 		: a.type === 'unknown'
@@ -112,7 +114,7 @@ function sortProgress(a: Progress, b: Progress) {
 		: 0
 }
 
-function linkProgress(progress: Progress) {
+function linkProgress(progress: SerializedProgress) {
 	switch (progress.type) {
 		case 'workshop-instructions':
 			return '/'

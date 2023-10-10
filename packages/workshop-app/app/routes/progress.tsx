@@ -34,6 +34,14 @@ export function useEpicProgress() {
 		}
 	})
 }
+export type SerializedProgress = ReturnType<
+	typeof useRequireEpicProgress
+>[number]
+export function useRequireEpicProgress() {
+	const progress = useEpicProgress()
+	if (!progress) return []
+	return progress
+}
 
 export function useNextExerciseRoute() {
 	const progress = useEpicProgress()
