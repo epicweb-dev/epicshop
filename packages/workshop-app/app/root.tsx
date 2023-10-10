@@ -45,7 +45,7 @@ import {
 
 export const links: LinksFunction = () => {
 	return [
-		{ rel: 'preload', href: '/icons.svg', as: 'image/svg+xml' },
+		{ rel: 'preload', href: '/icons.svg', as: 'image' },
 		{ rel: 'stylesheet', href: '/neogrotesk-font.css' },
 		{
 			rel: 'stylesheet',

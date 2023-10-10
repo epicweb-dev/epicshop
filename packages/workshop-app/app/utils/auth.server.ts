@@ -36,7 +36,12 @@ export async function registerDevice() {
 
 		const tokenSet = await handle.poll().catch(() => {})
 		clearTimeout(timeout)
-		if (!tokenSet) return
+		if (!tokenSet) {
+			authEmitter.emit(EVENTS.AUTH_REJECTED, {
+				error: 'Timed out waiting for user to authorize device.',
+			})
+			return
+		}
 
 		const userinfo = await client.userinfo(tokenSet)
 		await setAuthInfo({ tokenSet, email: userinfo.email, name: userinfo.name })

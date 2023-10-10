@@ -173,7 +173,7 @@ export default function AdminLayout() {
 					<h2 className="text-lg font-bold">Progress</h2>
 					{epicProgress ? (
 						<ul className="flex max-h-72 flex-col gap-2 overflow-y-scroll border-2 p-8 scrollbar-thin scrollbar-thumb-scrollbar">
-							{epicProgress?.sort(sortProgress).map((progress, i) => {
+							{epicProgress?.sort(sortProgress).map(progress => {
 								const epicUrl = `https://www.epicweb.dev/workshops/${data.workshopSlug}/${progress.epicSectionSlug}/${progress.epicLessonSlug}`
 								const status = progress.epicCompletedAt
 									? 'completed'

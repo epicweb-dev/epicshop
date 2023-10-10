@@ -313,7 +313,12 @@ function EpicVideo({
 	return (
 		<div>
 			<div className="shadow-lg dark:shadow-gray-800">
-				<MuxPlayer playbackId={muxPlaybackId} muxPlayerRef={muxPlayerRef} />
+				<MuxPlayer
+					playbackId={muxPlaybackId}
+					muxPlayerRef={muxPlayerRef}
+					title={title}
+					primaryColor="var(--color-accent)"
+				/>
 			</div>
 			<div className="relative mt-4">
 				<details>

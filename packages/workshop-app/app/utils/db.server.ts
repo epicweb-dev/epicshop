@@ -20,22 +20,15 @@ export const PlayerPreferencesSchema = z.object({
 	volumeRate: z.number().optional(),
 	playbackRate: z.number().optional(),
 	autoplay: z.boolean().optional(),
-	videoQuality: z
-		.object({
-			bitrate: z.any().optional(),
-			height: z.any().optional(),
-			id: z.string().optional(),
-			width: z.any().optional(),
-		})
-		.optional()
-		.default({}),
 	subtitle: z
 		.object({
 			id: z.string().nullable().default(null),
-			kind: z.string().nullable().default(null),
-			label: z.string().nullable().default(null),
-			language: z.string().nullable().default(null),
-			mode: z.string().default('disabled'),
+			mode: z
+				.literal('disabled')
+				.or(z.literal('hidden'))
+				.or(z.literal('showing'))
+				.nullable()
+				.default('disabled'),
 		})
 		.optional()
 		.default({}),

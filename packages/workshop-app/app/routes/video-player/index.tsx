@@ -43,12 +43,24 @@ export async function action({ request }: DataFunctionArgs) {
 	return json({ status: 'success' } as const)
 }
 
+function useLatest<Value>(value: Value) {
+	const ref = React.useRef(value)
+	React.useEffect(() => {
+		ref.current = value
+	}, [value])
+	return ref
+}
+
 export function MuxPlayer({
 	muxPlayerRef,
 	...props
 }: MuxPlayerProps & { muxPlayerRef: React.RefObject<MuxPlayerRefAttributes> }) {
 	const playerPreferences = usePlayerPreferences()
 	const playerPreferencesFetcher = useFetcher<typeof action>()
+	const [metadataLoaded, setMetadataLoaded] = React.useState(false)
+
+	const fetcherRef = useLatest(playerPreferencesFetcher)
+	const playerPreferencesRef = useLatest(playerPreferences)
 
 	React.useEffect(() => {
 		function handleUserKeyPress(e: any) {
@@ -99,26 +111,49 @@ export function MuxPlayer({
 	const updatePreferences = useDebounce(() => {
 		const player = muxPlayerRef.current
 		if (!player) return
-		playerPreferencesFetcher.submit(
-			// TODO: figure out how to actually read the proper values for this submission
-			{
-				playbackRate: player.playbackRate ?? undefined,
-				volumeRate: player.volume ?? undefined,
-				subtitle: {
-					id: null,
-					kind: null,
-					label: null,
-					language: null,
-					mode: 'disabled',
-				},
-				videoQuality: {},
-				// TODO: figure out how to make this satisfy a value that would be
-				// parseable by PlayerPreferencesSchema rather than one that satisfies
-				// the post-parse type
-			} satisfies z.infer<typeof PlayerPreferencesSchema>,
-			{ method: 'POST', action: '/video-player', encType: 'application/json' },
+		const subs = Array.from(player.textTracks ?? []).find(
+			t => t.kind === 'subtitles',
 		)
+		const newPrefs = {
+			playbackRate: player.playbackRate ?? undefined,
+			volumeRate: player.volume ?? undefined,
+			subtitle: subs
+				? { id: subs.id, mode: subs.mode }
+				: { id: null, mode: 'disabled' },
+		} satisfies z.input<typeof PlayerPreferencesSchema>
+
+		// don't update the preferences if there's no change...
+		if (isDeepEqual(newPrefs, playerPreferencesRef.current)) return
+
+		fetcherRef.current.submit(newPrefs, {
+			method: 'POST',
+			action: '/video-player',
+			encType: 'application/json',
+		})
 	}, 300)
+
+	React.useEffect(() => {
+		// as the video player gets loaded, mux fires a bunch of change events which
+		// we don't want. So we wait until the metadata is loaded before we start
+		// listening to the events.
+		if (!metadataLoaded) return
+
+		const textTracks = muxPlayerRef.current?.textTracks
+		if (!textTracks) return
+
+		const subtitlePref = playerPreferencesRef.current?.subtitle
+		if (subtitlePref?.id) {
+			const preferredTextTrack = textTracks.getTrackById(subtitlePref.id)
+			if (preferredTextTrack) {
+				preferredTextTrack.mode = subtitlePref.mode ?? 'hidden'
+			}
+		}
+
+		textTracks.addEventListener('change', updatePreferences)
+		return () => {
+			textTracks.removeEventListener('change', updatePreferences)
+		}
+	}, [metadataLoaded, muxPlayerRef, playerPreferencesRef, updatePreferences])
 
 	return (
 		<div className="flex aspect-video flex-col">
@@ -135,8 +170,36 @@ export function MuxPlayer({
 				thumbnailTime={0}
 				onRateChange={updatePreferences}
 				onVolumeChange={updatePreferences}
+				streamType="on-demand"
+				defaultHiddenCaptions={true}
+				accentColor="#427cf0"
+				targetLiveWindow={NaN} // this has gotta be a bug. Without this prop, we get SSR warnings 🤷‍♂️
+				onLoadedMetadata={() => setMetadataLoaded(true)}
 				{...props}
 			/>
 		</div>
 	)
+}
+
+function isDeepEqual(obj1: unknown, obj2: unknown) {
+	if (obj1 === obj2) return true
+	if (typeof obj1 !== typeof obj2) return false
+	if (typeof obj1 !== 'object' || typeof obj2 !== 'object') return false
+	if (obj1 === null || obj2 === null) return false
+	if (Array.isArray(obj1) !== Array.isArray(obj2)) return false
+	if (Array.isArray(obj1) && Array.isArray(obj2)) {
+		if (obj1.length !== obj2.length) return false
+		for (let i = 0; i < obj1.length; i++) {
+			if (!isDeepEqual(obj1[i], obj2[i])) return false
+		}
+		return true
+	}
+	const keys1 = Object.keys(obj1)
+	const keys2 = Object.keys(obj2)
+	if (keys1.length !== keys2.length) return false
+	for (const key of keys1) {
+		// @ts-expect-error 🤷‍♂️ it's fine
+		if (!isDeepEqual(obj1[key], obj2[key])) return false
+	}
+	return true
 }
