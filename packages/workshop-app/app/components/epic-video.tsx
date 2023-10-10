@@ -317,7 +317,6 @@ function EpicVideo({
 					playbackId={muxPlaybackId}
 					muxPlayerRef={muxPlayerRef}
 					title={title}
-					primaryColor="var(--color-accent)"
 				/>
 			</div>
 			<div className="relative mt-4">
