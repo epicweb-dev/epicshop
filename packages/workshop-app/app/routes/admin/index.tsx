@@ -10,7 +10,7 @@ import { getApps, getEpicWorkshopSlug } from '#app/utils/apps.server.ts'
 import { ensureUndeployed } from '#app/utils/misc.tsx'
 import { getProcesses } from '#app/utils/process-manager.server.ts'
 import { getServerTimeHeader, makeTimings } from '#app/utils/timing.server.ts'
-import { clearData } from './admin-utils.server.tsx'
+import { clearCaches, clearData } from './admin-utils.server.tsx'
 
 declare global {
 	var __inspector_open__: boolean | undefined
@@ -74,6 +74,10 @@ export async function action({ request }: DataFunctionArgs) {
 	switch (intent) {
 		case 'clear-data': {
 			await clearData()
+			return json({ success: true })
+		}
+		case 'clear-caches': {
+			await clearCaches()
 			return json({ success: true })
 		}
 		case 'inspect': {
@@ -209,8 +213,15 @@ export default function AdminLayout() {
 				<ul className="max-h-48 overflow-y-scroll border-2 p-8 scrollbar-thin scrollbar-thumb-scrollbar">
 					<li>
 						<Form method="POST">
+							<button name="intent" value="clear-caches">
+								Clear caches
+							</button>
+						</Form>
+					</li>
+					<li>
+						<Form method="POST">
 							<button name="intent" value="clear-data">
-								Clear data
+								Clear all data
 							</button>
 						</Form>
 					</li>

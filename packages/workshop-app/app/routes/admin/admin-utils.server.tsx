@@ -7,9 +7,13 @@ import { deleteCache } from '#utils/cache.server.ts'
 export { inspector }
 
 export async function clearData() {
+	await clearCaches()
+	await deleteDb()
+}
+
+export async function clearCaches() {
 	if (ENV.KCDSHOP_DEPLOYED) return
 	const workshopRoot = getWorkshopRoot()
 	await fsExtra.remove(path.join(workshopRoot, 'node_modules', '.cache'))
 	await deleteCache()
-	await deleteDb()
 }
