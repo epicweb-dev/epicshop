@@ -40,7 +40,7 @@ export const PlayerPreferencesSchema = z.object({
 const AuthInfoSchema = z.object({
 	tokenSet: TokenSetSchema,
 	email: z.string(),
-	name: z.string().optional(),
+	name: z.string().nullable().optional(),
 })
 const DataSchema = z.object({
 	preferences: z
