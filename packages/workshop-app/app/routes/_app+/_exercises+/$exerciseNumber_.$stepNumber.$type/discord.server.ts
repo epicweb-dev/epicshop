@@ -72,7 +72,7 @@ export async function fetchDiscordPosts({ request }: { request: Request }) {
 			)
 			const result = await fetch(
 				// `http://localhost:3000/resources/epic-web-forum?${searchParams}`,
-				`https://kcd-discord-bot-v2.fly.dev/resources/epic-web-forum${searchParams}`,
+				`https://kcd-discord-bot-v2.fly.dev/resources/epic-web-forum?${searchParams}`,
 				{
 					method: 'POST',
 					headers: { 'content-type': 'application/json' },
