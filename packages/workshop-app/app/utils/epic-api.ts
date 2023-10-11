@@ -291,7 +291,7 @@ function getProgressForLesson(
 				exerciseNumber: exercise.exerciseNumber,
 			} as const
 		}
-		for (const step of exercise.steps) {
+		for (const step of exercise.steps.filter(Boolean)) {
 			if (hasEmbed(step.problem?.epicVideoEmbeds)) {
 				return {
 					type: 'step',
