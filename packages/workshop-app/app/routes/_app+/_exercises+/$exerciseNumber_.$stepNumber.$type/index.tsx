@@ -26,10 +26,6 @@ import {
 } from '#app/components/in-browser-browser.tsx'
 import { InBrowserTestRunner } from '#app/components/in-browser-test-runner.tsx'
 import { NavChevrons } from '#app/components/nav-chevrons.tsx'
-import {
-	useOptionalDiscordMember,
-	useOptionalUser,
-} from '#app/components/user.tsx'
 import { type loader as rootLoader } from '#app/root.tsx'
 import { getDiscordAuthURL } from '#app/routes/discord.callback.ts'
 import { EditFileOnGitHub } from '#app/routes/launch-editor.tsx'
@@ -66,6 +62,8 @@ import {
 	getServerTimeHeader,
 	makeTimings,
 } from '#app/utils/timing.server.ts'
+import { fetchDiscordPosts } from './discord.server.ts'
+import { DiscordChat } from './discord.tsx'
 import { StepMdx } from './step-mdx.tsx'
 import TouchedFiles from './touched-files.tsx'
 
@@ -264,6 +262,8 @@ export async function loader({ request, params }: DataFunctionArgs) {
 			exerciseIndex,
 			allApps,
 			discordAuthUrl: getDiscordAuthURL(),
+			// defer this promise so that we don't block the response from being sent
+			discordPostsPromise: fetchDiscordPosts({ request }),
 			prevStepLink: isFirstStep
 				? {
 						to: `/${exerciseStepApp.exerciseNumber
@@ -747,80 +747,6 @@ function Tests({
 		>
 			{testUI}
 		</PlaygroundWindow>
-	)
-}
-
-function DiscordChat() {
-	const data = useLoaderData<typeof loader>()
-	const user = useOptionalUser()
-	const discordMember = useOptionalDiscordMember()
-	return (
-		<div className="container flex h-full max-w-3xl flex-col items-center justify-center gap-4 p-12 text-lg">
-			{user ? (
-				discordMember ? (
-					<div>
-						<Link
-							to="https://discord.com/channels/715220730605731931/1161045224907341972"
-							target="_blank"
-							rel="noreferrer noopener"
-							className="inline-flex items-center gap-2 text-xl underline"
-						>
-							<Icon name="Discord" size={32} />
-							Open Discord
-						</Link>
-					</div>
-				) : (
-					<Link
-						to={data.discordAuthUrl}
-						className="inline-flex items-center gap-2 text-xl underline"
-					>
-						<Icon name="Discord" size={32} />
-						Connect Discord
-					</Link>
-				)
-			) : (
-				<div className="inline-flex items-center gap-2 text-xl">
-					<Link
-						to="/login"
-						className="inline-flex items-center gap-2 underline"
-					>
-						<Icon name="Discord" size={32} />
-						Login
-					</Link>{' '}
-					<span>to get access to the exclusive discord channel.</span>
-				</div>
-			)}
-			<p>
-				The{' '}
-				<Link
-					target="_blank"
-					rel="noreferrer noopener"
-					className="underline"
-					to="https://kentcdodds.com/discord"
-				>
-					KCD Community on Discord
-				</Link>{' '}
-				is a great place to hang out with other developers who are working
-				through this workshop. You can ask questions, get help, and solidify
-				what you're learning by helping others.
-			</p>
-			<p>
-				<small className="text-sm">
-					If you've not joined the KCD Community on Discord yet, you'll be
-					required to go through a short onboarding process first. A friendly
-					bot will explain the process when you{' '}
-					<Link
-						to="https://kcd.im/discord"
-						target="_blank"
-						rel="noreferrer noopener"
-						className="underline"
-					>
-						join
-					</Link>
-					.
-				</small>
-			</p>
-		</div>
 	)
 }
 

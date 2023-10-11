@@ -23,6 +23,14 @@ export const clientHints = {
 			return value === 'reduce' ? 'reduce' : 'no-preference'
 		},
 	},
+	timeZone: {
+		cookieName: 'CH-time-zone',
+		getValueCode: `Intl.DateTimeFormat().resolvedOptions().timeZone`,
+		fallback: 'Etc/UTC',
+		transform(value: string | null) {
+			return decodeURIComponent(value ?? 'Etc%2FUTC')
+		},
+	},
 	// add other hints here
 }
 
@@ -134,7 +142,7 @@ ${Object.values(clientHints)
 	.join(',\n')}
 ];
 for (const hint of hints) {
-	if (hint.cookie !== hint.actual) {
+	if (decodeURIComponent(hint.cookie) !== hint.actual) {
 		cookieChanged = true;
 		document.cookie = encodeURIComponent(hint.name) + '=' + encodeURIComponent(hint.actual) + '; Max-Age=31536000; Path=/';
 	}

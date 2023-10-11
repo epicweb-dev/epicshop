@@ -99,6 +99,7 @@
     "compression": "^1.7.4",
     "cross-env": "^7.0.3",
     "cross-spawn": "^7.0.3",
+    "dayjs": "^1.11.10",
     "dotenv": "^16.3.1",
     "esbuild": "^0.19.3",
     "execa": "^8.0.1",

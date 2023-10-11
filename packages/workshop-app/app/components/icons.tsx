@@ -1,6 +1,6 @@
 import * as React from 'react'
 
-type Sizes = 16 | 20 | 24 | 28 | 32 | 40
+type Sizes = 12 | 16 | 20 | 24 | 28 | 32 | 40
 
 // can't use styles in an external SVG sprite, so animated icons get inlined.
 export function AnimatedBars({
@@ -67,6 +67,7 @@ export type IconNames =
 	| 'EpicWeb'
 	| 'FastForward'
 	| 'Discord'
+	| 'Chat'
 
 export function Icon({
 	title,

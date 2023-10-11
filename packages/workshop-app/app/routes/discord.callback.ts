@@ -7,16 +7,17 @@ import {
 import { invariantResponse } from '#app/utils/misc.tsx'
 
 const port = process.env.PORT || '5639'
+const scope = 'guilds.join identify messages.read'
 
 export function getDiscordAuthURL() {
-	const discordAuthUrl = new URL('https://discord.com/api/oauth2/authorize')
+	const discordAuthUrl = new URL('https://discord.com/oauth2/authorize')
 	discordAuthUrl.searchParams.append('client_id', '738096608440483870')
 	discordAuthUrl.searchParams.append(
 		'redirect_uri',
 		`http://localhost:${port}/discord/callback`,
 	)
 	discordAuthUrl.searchParams.append('response_type', 'code')
-	discordAuthUrl.searchParams.append('scope', 'identify')
+	discordAuthUrl.searchParams.append('scope', scope)
 	return discordAuthUrl.toString()
 }
 
@@ -26,6 +27,7 @@ export async function loader({ request }: DataFunctionArgs) {
 	invariantResponse(discordCode, 'Missing code')
 
 	const result = await fetch(
+		// 'http://localhost:3000/resources/connect-epic-web',
 		'https://kcd-discord-bot-v2.fly.dev/resources/connect-epic-web',
 		{
 			method: 'POST',
@@ -34,6 +36,7 @@ export async function loader({ request }: DataFunctionArgs) {
 				deviceToken: authInfo.tokenSet.access_token,
 				discordCode,
 				port,
+				scope,
 			}),
 		},
 	)
@@ -53,6 +56,7 @@ export async function loader({ request }: DataFunctionArgs) {
 		console.error(jsonResult.error)
 		return redirect('/account?error')
 	}
+	console.log(jsonResult.oauthData)
 	const discordMemberResult = DiscordMemberSchema.safeParse(jsonResult.member)
 	if (discordMemberResult.success) {
 		await setDiscordMember(discordMemberResult.data)

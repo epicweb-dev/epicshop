@@ -142,15 +142,18 @@ export async function shouldForceFresh({
 }: {
 	forceFresh?: boolean | string
 	request?: Request
-	key: string
+	key?: string
 }) {
 	if (typeof forceFresh === 'boolean') return forceFresh
-	if (typeof forceFresh === 'string') return forceFresh.split(',').includes(key)
+	if (typeof forceFresh === 'string' && key) {
+		return forceFresh.split(',').includes(key)
+	}
 
 	if (!request) return false
 	const fresh = new URL(request.url).searchParams.get('fresh')
 	if (typeof fresh !== 'string') return false
 	if (fresh === '') return true
+	if (!key) return false
 
 	return fresh.split(',').includes(key)
 }
