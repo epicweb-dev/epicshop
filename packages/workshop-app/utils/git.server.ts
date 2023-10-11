@@ -44,7 +44,7 @@ export async function checkForUpdates() {
 			['rev-list', '--count', '--left-right', 'HEAD...@{upstream}'],
 			{ cwd },
 		)
-		const [, behind] = stdout.trim().split(/\s+/).map(Number)
+		const [, behind = 0] = stdout.trim().split(/\s+/).map(Number)
 		const updatesAvailable = behind > 0
 
 		return {
