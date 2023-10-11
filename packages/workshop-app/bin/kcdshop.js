@@ -15,6 +15,7 @@ switch (command) {
 		start()
 		break
 	}
+	case 'upgrade':
 	case 'update': {
 		process.env.KCDSHOP_DISABLE_WATCHER = 'true'
 		const { updateLocalRepo } = await import('../build/utils/git.server.js')
