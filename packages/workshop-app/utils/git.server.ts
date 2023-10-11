@@ -1,6 +1,6 @@
-import { execaCommand } from 'execa'
+import { execa, execaCommand } from 'execa'
 import { getWorkshopRoot } from './apps.server.ts'
-import { getErrorMessage, getPkgProp } from './utils.ts'
+import { checkConnection, getErrorMessage, getPkgProp } from './utils.ts'
 
 const cwd = getWorkshopRoot()
 
@@ -21,11 +21,11 @@ async function getDiffUrl(commitBefore: string, commitAfter: string) {
 }
 
 export async function checkForUpdates() {
+	const online = await checkConnection()
+	if (!online) return { updatesAvailable: false } as const
 	let localCommit
 	let remoteCommit
 	try {
-		await execaCommand('git fetch origin', { cwd })
-
 		const currentBranch = (
 			await execaCommand('git rev-parse --abbrev-ref HEAD', { cwd })
 		).stdout.trim()
@@ -39,14 +39,22 @@ export async function checkForUpdates() {
 			})
 		).stdout.trim()
 
+		const { stdout } = await execa(
+			'git',
+			['rev-list', '--count', '--left-right', 'HEAD...@{upstream}'],
+			{ cwd },
+		)
+		const [, behind] = stdout.trim().split(/\s+/).map(Number)
+		const updatesAvailable = behind > 0
+
 		return {
-			updatesAvailable: localCommit !== remoteCommit,
+			updatesAvailable,
 			localCommit,
 			remoteCommit,
 			diffLink: await getDiffUrl(localCommit, remoteCommit),
-		}
+		} as const
 	} catch (error) {
-		console.error('Unable to check for updates', error)
+		console.error('Unable to check for updates', getErrorMessage(error))
 		return {
 			updatesAvailable: false,
 			localCommit,
@@ -55,7 +63,7 @@ export async function checkForUpdates() {
 				localCommit && remoteCommit
 					? await getDiffUrl(localCommit, remoteCommit)
 					: null,
-		}
+		} as const
 	}
 }
 

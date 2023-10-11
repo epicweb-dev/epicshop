@@ -1,5 +1,13 @@
+import { promises as dns } from 'node:dns'
 import fs from 'node:fs'
 import path from 'node:path'
+
+export async function checkConnection() {
+	return dns.resolve('example.com').then(
+		() => true,
+		() => false,
+	)
+}
 
 export async function getPkgProp<Value>(
 	fullPath: string,
