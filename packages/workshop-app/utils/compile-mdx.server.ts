@@ -207,8 +207,9 @@ export async function compileMdx(
 								a => a.type === 'mdxJsxAttribute' && a.name === 'url',
 							)
 							if (!urlAttr) return
-							const url = urlAttr.value
+							let url = urlAttr.value
 							if (typeof url !== 'string') return
+							if (url.endsWith('/')) url = url.slice(0, -1)
 							epicVideoEmbeds.push(url)
 						})
 					},
