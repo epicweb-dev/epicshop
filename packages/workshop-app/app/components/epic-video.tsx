@@ -45,7 +45,7 @@ function extractEpicTitle(urlString: string) {
 
 	const titleWords = titleSegment.split('-')
 	// prettier-ignore
-	const titleCaseExcludeWords = [
+	const lowerCaseWords = [
 		'the', 'a', 'an', 'and', 'but', 'or', 'for', 'nor', 'on', 'at', 'to',
 		'from', 'by', 'of', 'in', 'with', 'as', 'npm', 'git', 'ssh', 'cli'
 	]
@@ -54,16 +54,33 @@ function extractEpicTitle(urlString: string) {
 		'ui', 'ux', 'api', 'css', 'html', 'js', 'ts', 'svg', 'ai',
 		'http', 'https', 'url', 'uri',
 	]
+	// prettier-ignore
+	const literalWords = [
+		'useActionData', 'useAsyncError', 'useAsyncValue', 'useBeforeUnload',
+		'useFetcher', 'useFetchers', 'useFormAction', 'useHref', 'useLoaderData',
+		'useLocation', 'useMatches', 'useNavigate', 'useNavigation',
+		'useNavigationType', 'useOutlet', 'useOutletContext', 'useParams',
+		'useResolvedPath', 'useRevalidator', 'useRouteError', 'useRouteLoaderData',
+		'useSearchParams', 'useSubmit', 'useCallback', 'useContext',
+		'useDebugValue', 'useDeferredValue', 'useEffect', 'useId',
+		'useImperativeHandle', 'useInsertionEffect', 'useLayoutEffect', 'useMemo',
+		'useReducer', 'useRef', 'useState', 'useSyncExternalStore', 'useTransition',
+		'useForm','useFieldset', 'useFieldList', 'useEventSource', 'useHydrated',
+		'useAuthenticityToken', 'useShouldHydrate', 'useGlobalNavigationState',
+		'useLocales', 'useDelegatedAnchors', 'useDebounceFetcher', 'useFetcherType',
+	]
 	const title = titleWords
 		.filter(Boolean)
-		.map((word, index) =>
-			titleCaseExcludeWords.includes(word) && index > 0
-				? word
-				: word[0]?.toUpperCase() + word.slice(1),
-		)
-		.map(word =>
-			allCapsWords.includes(word.toLowerCase()) ? word.toUpperCase() : word,
-		)
+		.map((word, index) => {
+			const lowerWord = word.toLowerCase()
+			const literalWord = literalWords.find(w => w.toLowerCase() === lowerWord)
+			if (literalWord) return literalWord
+			if (allCapsWords.includes(lowerWord)) return word.toUpperCase()
+			if (lowerCaseWords.includes(lowerWord) && index > 0) {
+				return lowerWord
+			}
+			return lowerWord[0]?.toUpperCase() + lowerWord.slice(1)
+		})
 		.join(' ')
 	if (isSolution) {
 		return `${title} (🏁 solution)`
