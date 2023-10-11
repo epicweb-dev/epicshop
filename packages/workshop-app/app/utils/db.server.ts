@@ -37,6 +37,11 @@ export const PlayerPreferencesSchema = z.object({
 	defaultView: z.string().optional(),
 	activeSidebarTab: z.number().optional(),
 })
+const AuthInfoSchema = z.object({
+	tokenSet: TokenSetSchema,
+	email: z.string(),
+	name: z.string().optional(),
+})
 const DataSchema = z.object({
 	preferences: z
 		.object({
@@ -44,13 +49,7 @@ const DataSchema = z.object({
 		})
 		.optional()
 		.default({}),
-	authInfo: z
-		.object({
-			tokenSet: TokenSetSchema,
-			email: z.string(),
-			name: z.string().optional(),
-		})
-		.optional(),
+	authInfo: AuthInfoSchema.optional(),
 	discordMember: DiscordMemberSchema.optional(),
 })
 
@@ -142,10 +141,11 @@ export async function setAuthInfo({
 	email?: string
 	name?: string
 }) {
-	const data = DataSchema.parse({ authInfo: { tokenSet, email, name } })
+	const data = await readDb()
+	const authInfo = AuthInfoSchema.parse({ tokenSet, email, name })
 	await fsExtra.ensureDir(appDir)
-	await fsExtra.writeJSON(dbPath, data)
-	return data.authInfo
+	await fsExtra.writeJSON(dbPath, { ...data, authInfo })
+	return authInfo
 }
 
 export async function getPreferences() {
