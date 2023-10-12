@@ -147,7 +147,7 @@ ${chalk.bold('Press Ctrl+C to stop')}
 	}
 
 	const hasUpdates = await hasUpdatesPromise
-	if (true || hasUpdates.updatesAvailable) {
+	if (hasUpdates.updatesAvailable) {
 		const updateCommand = chalk.blue.bold.bgWhite(' npx kcdshop update ')
 		const updateLink = chalk.blue.bgWhite(` ${hasUpdates.diffLink} `)
 		console.log(
