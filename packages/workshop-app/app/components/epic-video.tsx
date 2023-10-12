@@ -336,16 +336,14 @@ function EpicVideo({
 					title={title}
 				/>
 			</div>
-			<div className="relative mt-4">
+			<div className="mt-4 flex flex-col gap-2">
+				<VideoLink url={urlString} title={title} />
 				<details>
 					<summary>Transcript</summary>
 					<div className="whitespace-pre-line rounded-md bg-accent p-2 text-accent-foreground">
 						{transcriptElements}
 					</div>
 				</details>
-				<div className="absolute right-0 top-1">
-					<VideoLink url={urlString} title={title} />
-				</div>
 			</div>
 		</div>
 	)
