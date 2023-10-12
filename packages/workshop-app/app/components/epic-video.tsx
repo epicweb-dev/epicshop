@@ -51,7 +51,7 @@ function extractEpicTitle(urlString: string) {
 	]
 	// prettier-ignore
 	const allCapsWords = [
-		'ui', 'ux', 'api', 'css', 'html', 'js', 'ts', 'svg', 'ai',
+		'ui', 'ux', 'api', 'css', 'html', 'js', 'ts', 'svg', 'ai', 'csrf', 'cors',
 		'http', 'https', 'url', 'uri', 'db', 'sql', 'json', 'yaml', 'yml',
 	]
 	// prettier-ignore
