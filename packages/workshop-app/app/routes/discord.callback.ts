@@ -56,7 +56,7 @@ export async function loader({ request }: DataFunctionArgs) {
 		console.error(jsonResult.error)
 		return redirect('/account?error')
 	}
-	console.log(jsonResult.oauthData)
+
 	const discordMemberResult = DiscordMemberSchema.safeParse(jsonResult.member)
 	if (discordMemberResult.success) {
 		await setDiscordMember(discordMemberResult.data)
