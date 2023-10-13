@@ -7,7 +7,6 @@ import {
 	broadcastDevReady,
 	installGlobals,
 } from '@remix-run/node'
-import address from 'address'
 import chalk from 'chalk'
 import chokidar from 'chokidar'
 import closeWithGrace from 'close-with-grace'
@@ -125,19 +124,10 @@ const server = app.listen(portToUse, async () => {
 	}
 	console.log(`🐨  Let's get learning!`)
 	const localUrl = `http://localhost:${portUsed}`
-	let lanUrl: string | null = null
-	const localIp = address.ip()
-	// Check if the address is a private ip
-	// https://en.wikipedia.org/wiki/Private_network#Private_IPv4_address_spaces
-	// https://github.com/facebook/create-react-app/blob/d960b9e38c062584ff6cfb1a70e1512509a966e7/packages/react-dev-utils/WebpackDevServerUtils.js#LL48C9-L54C10
-	if (/^10[.]|^172[.](1[6-9]|2[0-9]|3[0-1])[.]|^192[.]168[.]/.test(localIp)) {
-		lanUrl = `http://${localIp}:${portUsed}`
-	}
 
 	console.log(
 		`
 ${chalk.bold('Local:')}            ${chalk.cyan(localUrl)}
-${lanUrl ? `${chalk.bold('On Your Network:')}  ${chalk.cyan(lanUrl)}` : ''}
 ${chalk.bold('Press Ctrl+C to stop')}
 	`.trim(),
 	)
