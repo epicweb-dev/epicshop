@@ -16,7 +16,12 @@ import {
 } from './cache.server.ts'
 import { getOptionalWatcher, getWatcher } from './change-tracker.ts'
 import { compileMdx } from './compile-mdx.server.ts'
-import { isAppRunning, runAppDev, waitOnApp } from './process-manager.server.ts'
+import {
+	closeProcess,
+	isAppRunning,
+	runAppDev,
+	waitOnApp,
+} from './process-manager.server.ts'
 import { singleton } from './singleton.server.ts'
 import { getServerTimeHeader, type Timings } from './timing.server.ts'
 import { getErrorMessage, getPkgProp } from './utils.ts'
@@ -913,7 +918,10 @@ export function getAppPageRoute(app: ExerciseStepApp) {
 	return `/${exerciseNumber}/${stepNumber}/${app.type}`
 }
 
-export async function setPlayground(srcDir: string) {
+export async function setPlayground(
+	srcDir: string,
+	{ reset }: { reset?: boolean } = {},
+) {
 	const isIgnored = await isGitIgnored({ cwd: srcDir })
 	const destDir = path.join(getWorkshopRoot(), 'playground')
 	const playgroundFiles = path.join(destDir, '**')
@@ -922,6 +930,10 @@ export async function setPlayground(srcDir: string) {
 	const playgroundWasRunning = playgroundApp
 		? isAppRunning(playgroundApp)
 		: false
+	if (playgroundApp && reset) {
+		await closeProcess(playgroundApp.name)
+		await fsExtra.remove(destDir)
+	}
 	const setPlaygroundTimestamp = Date.now()
 
 	// run prepare-playground script if it exists

@@ -676,7 +676,7 @@ function PlaygroundWindow({
 				</div>
 				<div className="display-alt-down">
 					{playgroundAppInfo?.appName ? (
-						<SetPlayground appName={playgroundAppInfo?.appName}>
+						<SetPlayground appName={playgroundAppInfo?.appName} reset>
 							<div className="flex h-7 w-7 items-center justify-center">
 								<Icon name="Refresh" title="Reset Playground" />
 							</div>

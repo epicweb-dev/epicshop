@@ -273,13 +273,20 @@ export async function closeProcess(key: string) {
 	if (isDeployed) throw new Error('cannot close processes in deployed mode')
 	const proc = devProcesses.get(key)
 	if (proc) {
+		const exitedPromise = new Promise(resolve =>
+			proc.process.on('exit', resolve),
+		)
 		if (process.platform === 'win32') {
 			const { execa } = await import('execa')
 			await execa('taskkill', ['/pid', String(proc.process.pid), '/f', '/t'])
 		} else {
 			proc.process.kill()
 		}
-		await stopPort(proc.port) // 🤷‍♂️
+		await Promise.race([
+			new Promise(resolve => setTimeout(resolve, 500)),
+			exitedPromise,
+		])
+		await stopPort(proc.port) // just in case 🤷‍♂️
 		devProcesses.delete(key)
 	}
 }
