@@ -50,12 +50,10 @@ function extractEpicTitle(urlString: string) {
 		'from', 'by', 'of', 'in', 'with', 'as', 'npm', 'git', 'ssh', 'cli'
 	]
 	// prettier-ignore
-	const allCapsWords = [
-		'ui', 'ux', 'api', 'css', 'html', 'js', 'ts', 'svg', 'ai', 'csrf', 'cors',
-		'http', 'https', 'url', 'uri', 'db', 'sql', 'json', 'yaml', 'yml',
-	]
-	// prettier-ignore
 	const literalWords = [
+		'OAuth', 'UI', 'UX', 'API', 'CSS', 'HTML', 'JS', 'TS', 'SVG', 'AI', 'CSRF',
+		'CORS', 'HTTP', 'HTTPS', 'URL', 'URI', 'DB', 'SQL', 'JSON', 'YAML', 'YML',
+
 		'useActionData', 'useAsyncError', 'useAsyncValue', 'useBeforeUnload',
 		'useFetcher', 'useFetchers', 'useFormAction', 'useHref', 'useLoaderData',
 		'useLocation', 'useMatches', 'useNavigate', 'useNavigation',
@@ -75,7 +73,6 @@ function extractEpicTitle(urlString: string) {
 			const lowerWord = word.toLowerCase()
 			const literalWord = literalWords.find(w => w.toLowerCase() === lowerWord)
 			if (literalWord) return literalWord
-			if (allCapsWords.includes(lowerWord)) return word.toUpperCase()
 			if (lowerCaseWords.includes(lowerWord) && index > 0) {
 				return lowerWord
 			}
