@@ -1,6 +1,7 @@
 import { type DataFunctionArgs, type MetaFunction, json } from '@remix-run/node'
 import { Form, Link, useLoaderData, useNavigation } from '@remix-run/react'
 import { Icon } from '#app/components/icons.tsx'
+import { SimpleTooltip } from '#app/components/ui/tooltip.tsx'
 import { type loader as rootLoader } from '#app/root.tsx'
 import {
 	type SerializedProgress,
@@ -199,10 +200,9 @@ export default function AdminLayout() {
 											<span className="flex items-center gap-1">
 												{label}
 												<span className="text-red-500">
-													<Icon
-														name="Close"
-														title="This video is in the workshop on EpicWeb.dev, but not in the local workshop."
-													/>
+													<SimpleTooltip content="This video is in the workshop on EpicWeb.dev, but not in the local workshop.">
+														<Icon name="Close" />
+													</SimpleTooltip>
 												</span>
 											</span>
 										) : (

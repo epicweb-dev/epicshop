@@ -6,6 +6,7 @@ import React, { Suspense } from 'react'
 import AccordionComponent from '#app/components/accordion.tsx'
 import { Mdx } from '#app/utils/mdx.tsx'
 import { Icon } from './icons.tsx'
+import { SimpleTooltip } from './ui/tooltip.tsx'
 
 type diffProp = {
 	app1?: string
@@ -37,7 +38,9 @@ export function Diff({
 		<Suspense
 			fallback={
 				<div className="flex items-center justify-center p-8">
-					<Icon name="Refresh" className="animate-spin" title="Loading diff" />
+					<SimpleTooltip content="Loading diff">
+						<Icon name="Refresh" className="animate-spin" />
+					</SimpleTooltip>
 				</div>
 			}
 		>

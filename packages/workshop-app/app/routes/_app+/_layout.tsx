@@ -20,6 +20,7 @@ import * as React from 'react'
 import { Icon } from '#app/components/icons.tsx'
 import { ToastHub } from '#app/components/toast.tsx'
 import {
+	SimpleTooltip,
 	Tooltip,
 	TooltipContent,
 	TooltipProvider,
@@ -519,54 +520,58 @@ function Navigation({
 					)}
 					<FacePile isMenuOpened={isMenuOpened} />
 					{ENV.KCDSHOP_DEPLOYED ? null : user ? (
-						<Link
-							className="flex h-14 w-full items-center justify-start space-x-3 border-t px-4 py-4 text-center no-underline hover:underline"
-							to="/account"
-						>
-							{user.avatarUrl ? (
-								<img
-									alt={user.name ?? user.email}
-									src={user.avatarUrl}
-									className="h-full rounded-full"
-								/>
-							) : (
-								<Icon name="User" className="flex-shrink-0" size={24} />
-							)}
-							{isMenuOpened ? (
-								<motion.div
-									className="flex items-center whitespace-nowrap"
-									initial={{ opacity: 0 }}
-									animate={{ opacity: 1 }}
-								>
-									Your Account
-								</motion.div>
-							) : (
-								<span className="sr-only">Your account</span>
-							)}
-						</Link>
+						<SimpleTooltip content="Your account">
+							<Link
+								className="flex h-14 w-full items-center justify-start space-x-3 border-t px-4 py-4 text-center no-underline hover:underline"
+								to="/account"
+							>
+								{user.avatarUrl ? (
+									<img
+										alt={user.name ?? user.email}
+										src={user.avatarUrl}
+										className="h-full rounded-full"
+									/>
+								) : (
+									<Icon name="User" className="flex-shrink-0" size={24} />
+								)}
+								{isMenuOpened ? (
+									<motion.div
+										className="flex items-center whitespace-nowrap"
+										initial={{ opacity: 0 }}
+										animate={{ opacity: 1 }}
+									>
+										Your Account
+									</motion.div>
+								) : (
+									<span className="sr-only">Your account</span>
+								)}
+							</Link>
+						</SimpleTooltip>
 					) : null}
 					{ENV.KCDSHOP_DEPLOYED ? null : user && nextExerciseRoute ? (
-						<Link
-							to={nextExerciseRoute}
-							prefetch="intent"
-							className={clsx(
-								'flex h-14 w-full items-center space-x-3 border-t px-4 py-4 pl-[18px] no-underline hover:underline',
-							)}
-							state={{ from: 'continue next lesson button' }}
-						>
-							<Icon name="FastForward" className="flex-shrink-0" size={20} />
-							{isMenuOpened ? (
-								<motion.div
-									className="flex items-center whitespace-nowrap"
-									initial={{ opacity: 0 }}
-									animate={{ opacity: 1 }}
-								>
-									Continue to next lesson
-								</motion.div>
-							) : (
-								<span className="sr-only">Continue to next lesson</span>
-							)}
-						</Link>
+						<SimpleTooltip content="Continue to next lesson">
+							<Link
+								to={nextExerciseRoute}
+								prefetch="intent"
+								className={clsx(
+									'flex h-14 w-full items-center space-x-3 border-t px-4 py-4 pl-[18px] no-underline hover:underline',
+								)}
+								state={{ from: 'continue next lesson button' }}
+							>
+								<Icon name="FastForward" className="flex-shrink-0" size={20} />
+								{isMenuOpened ? (
+									<motion.div
+										className="flex items-center whitespace-nowrap"
+										initial={{ opacity: 0 }}
+										animate={{ opacity: 1 }}
+									>
+										Continue to next lesson
+									</motion.div>
+								) : (
+									<span className="sr-only">Continue to next lesson</span>
+								)}
+							</Link>
+						</SimpleTooltip>
 					) : null}
 					<div className="mb-4 w-full self-start border-t pl-3 pt-[15px]">
 						<ThemeSwitch />

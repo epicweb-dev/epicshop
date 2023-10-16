@@ -7,6 +7,7 @@ import { eventStream } from 'remix-utils/event-stream'
 import { useEventSource } from 'remix-utils/use-event-source'
 import { z } from 'zod'
 import { Icon, AnimatedBars } from '#app/components/icons.tsx'
+import { SimpleTooltip } from '#app/components/ui/tooltip.tsx'
 import { getAppByName } from '#app/utils/apps.server.ts'
 import { ensureUndeployed } from '#app/utils/misc.tsx'
 import {
@@ -320,19 +321,22 @@ export function TestRunner({
 	return (
 		<fetcher.Form method="POST" action="/test" className="h-full">
 			<input type="hidden" name="name" value={name} />
-			<button
-				type="submit"
-				name="intent"
-				value="run"
-				className="flex h-full flex-grow items-center justify-center border-r border-border px-3.5"
-				title="Run Tests"
+			<SimpleTooltip
+				content={fetcher.state === 'idle' ? 'Run Tests' : 'Running Tests...'}
 			>
-				{fetcher.state === 'idle' ? (
-					<Icon name="TriangleSmall" title="Run Tests" />
-				) : (
-					<AnimatedBars title="Running Tests" role="status" />
-				)}
-			</button>
+				<button
+					type="submit"
+					name="intent"
+					value="run"
+					className="flex h-full flex-grow items-center justify-center border-r border-border px-3.5"
+				>
+					{fetcher.state === 'idle' ? (
+						<Icon name="TriangleSmall" />
+					) : (
+						<AnimatedBars role="status" />
+					)}
+				</button>
+			</SimpleTooltip>
 		</fetcher.Form>
 	)
 }
@@ -357,24 +361,22 @@ export function ClearTest({
 	return (
 		<fetcher.Form method="POST" action="/test" className="h-full">
 			<input type="hidden" name="name" value={name} />
-			<button
-				type="submit"
-				name="intent"
-				value="clear"
-				className="flex h-full flex-grow items-center justify-center border-l border-border px-3.5"
-				title="Clear Tests"
+			<SimpleTooltip
+				content={fetcher.state === 'idle' ? 'Clear Tests' : 'Clearing Tests...'}
 			>
-				{fetcher.state === 'idle' ? (
-					<Icon name="Clear" title="Clear Tests" />
-				) : (
-					<Icon
-						name="Clear"
-						className="animate-pulse"
-						role="status"
-						title="Clearing Tests"
-					/>
-				)}
-			</button>
+				<button
+					type="submit"
+					name="intent"
+					value="clear"
+					className="flex h-full flex-grow items-center justify-center border-l border-border px-3.5"
+				>
+					{fetcher.state === 'idle' ? (
+						<Icon name="Clear" />
+					) : (
+						<Icon name="Clear" className="animate-pulse" role="status" />
+					)}
+				</button>
+			</SimpleTooltip>
 		</fetcher.Form>
 	)
 }
@@ -399,23 +401,22 @@ export function StopTest({
 	return (
 		<fetcher.Form method="POST" action="/test" className="h-full">
 			<input type="hidden" name="name" value={name} />
-			<button
-				type="submit"
-				name="intent"
-				value="stop"
-				className="flex h-full flex-grow items-center justify-center border-r border-border px-3.5"
+			<SimpleTooltip
+				content={fetcher.state === 'idle' ? 'Stop Tests' : 'Stopping Tests...'}
 			>
-				{fetcher.state === 'idle' ? (
-					<Icon name="Stop" title="Stop Tests" />
-				) : (
-					<Icon
-						name="Stop"
-						className="animate-pulse"
-						role="status"
-						title="Stopping Tests"
-					/>
-				)}
-			</button>
+				<button
+					type="submit"
+					name="intent"
+					value="stop"
+					className="flex h-full flex-grow items-center justify-center border-r border-border px-3.5"
+				>
+					{fetcher.state === 'idle' ? (
+						<Icon name="Stop" />
+					) : (
+						<Icon name="Stop" className="animate-pulse" role="status" />
+					)}
+				</button>
+			</SimpleTooltip>
 		</fetcher.Form>
 	)
 }

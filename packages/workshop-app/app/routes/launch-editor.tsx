@@ -7,6 +7,7 @@ import { useEffect } from 'react'
 import { type ZodTypeAny, z } from 'zod'
 import { showProgressBarField } from '#app/components/progress-bar.tsx'
 import { showToast } from '#app/components/toast.tsx'
+import { SimpleTooltip } from '#app/components/ui/tooltip.tsx'
 import { getAppByName } from '#app/utils/apps.server.ts'
 import { launchEditor } from '#app/utils/launch-editor.server.ts'
 import { ensureUndeployed } from '#app/utils/misc.tsx'
@@ -354,11 +355,10 @@ export const LaunchEditor = ENV.KCDSHOP_DEPLOYED
 	? ENV.KCDSHOP_GITHUB_ROOT
 		? LaunchGitHub
 		: ({ children }: LaunchEditorProps) => (
-				<button
-					className="launch_button cursor-not-allowed"
-					title="Cannot open files in deployed app"
-				>
-					{children}
-				</button>
+				<SimpleTooltip content="Cannot open files in deployed app">
+					<button className="launch_button cursor-not-allowed">
+						{children}
+					</button>
+				</SimpleTooltip>
 		  )
 	: LaunchEditorImpl

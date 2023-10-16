@@ -9,6 +9,7 @@ import { useSpinDelay } from 'spin-delay'
 import { Diff } from '#app/components/diff.tsx'
 import { Icon } from '#app/components/icons.tsx'
 import { NavChevrons } from '#app/components/nav-chevrons.tsx'
+import { SimpleTooltip } from '#app/components/ui/tooltip.tsx'
 import {
 	type App,
 	getAppByName,
@@ -150,16 +151,17 @@ export default function DiffViewer() {
 				<Diff diff={data.diff} allApps={data.allApps} />
 			</div>
 			<div className="flex h-16 items-center justify-end border-t border-border">
-				<Link
-					to={`.?${params}`}
-					className="flex h-full w-16 items-center justify-center"
-				>
-					<Icon
-						name="Refresh"
-						className={cn({ 'animate-spin': spinnerNavigating })}
-						title="Loading diff"
-					/>
-				</Link>
+				<SimpleTooltip content="Loading diff">
+					<Link
+						to={`.?${params}`}
+						className="flex h-full w-16 items-center justify-center"
+					>
+						<Icon
+							name="Refresh"
+							className={cn({ 'animate-spin': spinnerNavigating })}
+						/>
+					</Link>
+				</SimpleTooltip>
 				<NavChevrons prev={data.prevLink} next={data.nextLink} />
 			</div>
 		</div>

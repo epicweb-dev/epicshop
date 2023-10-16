@@ -10,6 +10,7 @@ import { useState, type PropsWithChildren } from 'react'
 import { EpicVideoInfoProvider } from '#app/components/epic-video.tsx'
 import { Icon } from '#app/components/icons.tsx'
 import { type InBrowserBrowserRef } from '#app/components/in-browser-browser.tsx'
+import { SimpleTooltip } from '#app/components/ui/tooltip.tsx'
 import { LaunchEditor } from '#app/routes/launch-editor.tsx'
 import { UpdateMdxCache } from '#app/routes/update-mdx-cache.tsx'
 import { Mdx } from '#app/utils/mdx.tsx'
@@ -284,12 +285,9 @@ function InlineFile({
 		</div>
 	) : type === 'playground' ? (
 		// playground does not exist yet
-		<div
-			className="inline-block grow cursor-not-allowed"
-			title="You must 'Set to Playground' before opening a file"
-		>
-			{info}
-		</div>
+		<SimpleTooltip content="You must 'Set to Playground' before opening a file">
+			<div className="inline-block grow cursor-not-allowed">{info}</div>
+		</SimpleTooltip>
 	) : (
 		<>children</>
 	)
@@ -335,24 +333,26 @@ function LinkToApp({
 				{children}
 			</Link>
 			{href ? (
-				<a
-					href={href}
-					target="_blank"
-					rel="noreferrer"
-					className={cn('flex aspect-square items-center justify-center', {
-						'cursor-not-allowed': ENV.KCDSHOP_DEPLOYED,
-					})}
-					title={
-						ENV.KCDSHOP_DEPLOYED
-							? 'Cannot link to app in deployed version'
-							: 'Open in new tab'
-					}
-					onClick={event => {
-						if (ENV.KCDSHOP_DEPLOYED) event.preventDefault()
-					}}
-				>
-					<Icon name="ExternalLink" title="Open in new tab" />
-				</a>
+				<SimpleTooltip content="Open in new tab">
+					<a
+						href={href}
+						target="_blank"
+						rel="noreferrer"
+						className={cn('flex aspect-square items-center justify-center', {
+							'cursor-not-allowed': ENV.KCDSHOP_DEPLOYED,
+						})}
+						title={
+							ENV.KCDSHOP_DEPLOYED
+								? 'Cannot link to app in deployed version'
+								: 'Open in new tab'
+						}
+						onClick={event => {
+							if (ENV.KCDSHOP_DEPLOYED) event.preventDefault()
+						}}
+					>
+						<Icon name="ExternalLink" />
+					</a>
+				</SimpleTooltip>
 			) : null}
 		</div>
 	)

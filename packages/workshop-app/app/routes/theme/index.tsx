@@ -6,6 +6,7 @@ import * as React from 'react'
 import { safeRedirect } from 'remix-utils/safe-redirect'
 import { z } from 'zod'
 import { Icon } from '#app/components/icons.tsx'
+import { SimpleTooltip } from '#app/components/ui/tooltip.tsx'
 import { useHints } from '#app/utils/client-hints.tsx'
 import { ErrorList } from '#app/utils/forms.tsx'
 import { useRequestInfo } from '#app/utils/request-info.ts'
@@ -84,14 +85,16 @@ export function ThemeSwitch() {
 					<input type="hidden" name="redirectTo" value={requestInfo.path} />
 				)}
 				<input type="hidden" name="theme" value={nextMode} />
-				<button
-					type="submit"
-					name="intent"
-					value="update-theme"
-					className="flex h-8 w-8 cursor-pointer items-center justify-center"
-				>
-					{modeLabel[mode]}
-				</button>
+				<SimpleTooltip content={`Change theme from ${mode} mode`}>
+					<button
+						type="submit"
+						name="intent"
+						value="update-theme"
+						className="flex h-8 w-8 cursor-pointer items-center justify-center"
+					>
+						{modeLabel[mode]}
+					</button>
+				</SimpleTooltip>
 			</div>
 			<ErrorList errors={form.errors} id={form.errorId} />
 		</fetcher.Form>

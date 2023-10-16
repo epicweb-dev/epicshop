@@ -651,23 +651,29 @@ function PlaygroundWindow({
 	allApps: Array<{ name: string; displayName: string }>
 	children: React.ReactNode
 }) {
-	const playgroundLinkedUI =
-		playgroundAppInfo?.appName === problemAppName ? (
-			<Icon size={28} name="Linked" title="Click to reset Playground." />
-		) : (
-			<Icon
-				title="Playground is not set to the right app. Click to set Playground."
-				size={28}
-				name="Unlinked"
-				className="animate-pulse text-foreground-danger"
-			/>
-		)
+	const isCorrectApp = playgroundAppInfo?.appName === problemAppName
+	const playgroundLinkedUI = isCorrectApp ? (
+		<Icon size={28} name="Linked" />
+	) : (
+		<Icon
+			size={28}
+			name="Unlinked"
+			className="animate-pulse text-foreground-danger"
+		/>
+	)
 	return (
 		<div className="flex h-full w-full flex-col justify-between">
 			<div className="flex h-14 flex-shrink-0 items-center justify-start gap-2 border-b border-border px-3">
 				<div className="display-alt-up flex">
 					{problemAppName ? (
-						<SetPlayground appName={problemAppName}>
+						<SetPlayground
+							appName={problemAppName}
+							tooltipText={
+								isCorrectApp
+									? 'Click to reset Playground.'
+									: 'Playground is not set to the right app. Click to set Playground.'
+							}
+						>
 							{playgroundLinkedUI}
 						</SetPlayground>
 					) : (
@@ -676,9 +682,13 @@ function PlaygroundWindow({
 				</div>
 				<div className="display-alt-down">
 					{playgroundAppInfo?.appName ? (
-						<SetPlayground appName={playgroundAppInfo?.appName} reset>
+						<SetPlayground
+							appName={playgroundAppInfo?.appName}
+							reset
+							tooltipText="Reset Playground"
+						>
 							<div className="flex h-7 w-7 items-center justify-center">
-								<Icon name="Refresh" title="Reset Playground" />
+								<Icon name="Refresh" />
 							</div>
 						</SetPlayground>
 					) : (

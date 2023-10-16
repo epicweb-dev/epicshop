@@ -7,6 +7,7 @@ import { z } from 'zod'
 import { Icon } from '#app/components/icons.tsx'
 import { showProgressBarField } from '#app/components/progress-bar.tsx'
 import { showToast } from '#app/components/toast.tsx'
+import { SimpleTooltip } from '#app/components/ui/tooltip.tsx'
 import {
 	getAppByName,
 	getApps,
@@ -71,9 +72,11 @@ export async function action({ request }: DataFunctionArgs) {
 export function SetPlayground({
 	appName,
 	reset = false,
+	tooltipText,
 	...buttonProps
 }: {
 	appName: string
+	tooltipText?: string
 	reset?: boolean
 } & JSX.IntrinsicElements['button']) {
 	const fetcher = useFetcher<typeof action>()
@@ -93,6 +96,17 @@ export function SetPlayground({
 		}
 	}, [fetcher])
 
+	const submitButton = (
+		<button
+			type="submit"
+			{...buttonProps}
+			className={clsx(
+				buttonProps.className,
+				fetcher.state !== 'idle' ? 'cursor-progress' : null,
+				fetcher.data?.status === 'error' ? 'cursor-not-allowed' : null,
+			)}
+		/>
+	)
 	return (
 		<fetcher.Form
 			action="/set-playground"
@@ -102,15 +116,11 @@ export function SetPlayground({
 			<input type="hidden" name="appName" value={appName} />
 			{reset ? <input type="hidden" name="reset" value="true" /> : null}
 			{showProgressBarField}
-			<button
-				type="submit"
-				{...buttonProps}
-				className={clsx(
-					buttonProps.className,
-					fetcher.state !== 'idle' ? 'cursor-progress' : null,
-					fetcher.data?.status === 'error' ? 'cursor-not-allowed' : null,
-				)}
-			/>
+			{tooltipText ? (
+				<SimpleTooltip content={tooltipText}>{submitButton}</SimpleTooltip>
+			) : (
+				submitButton
+			)}
 		</fetcher.Form>
 	)
 }
@@ -211,7 +221,7 @@ export function SetAppToPlayground({ appName }: { appName: string }) {
 	return (
 		<SetPlayground
 			appName={appName}
-			title="Playground is not set to the right app. Click to set Playground."
+			tooltipText="Playground is not set to the right app. Click to set Playground."
 		>
 			<span className="flex items-center justify-center gap-1 text-foreground-danger hover:underline">
 				<Icon name="Unlinked" className="animate-ping" />{' '}

@@ -22,6 +22,7 @@ import { useCallback, useEffect } from 'react'
 import { useSpinDelay } from 'spin-delay'
 import { GeneralErrorBoundary } from './components/error-boundary.tsx'
 import { EpicProgress } from './components/progress-bar.tsx'
+import { TooltipProvider } from './components/ui/tooltip.tsx'
 import { useTheme } from './routes/theme/index.tsx'
 import { getTheme } from './routes/theme/theme-session.server.ts'
 import appStylesheetUrl from './styles/app.css'
@@ -145,7 +146,7 @@ function Document({
 	)
 }
 
-export default function App() {
+function App() {
 	const data = useLoaderData<typeof loader>()
 	const navigation = useNavigation()
 	const showSpinner = useSpinDelay(navigation.state !== 'idle', {
@@ -168,6 +169,14 @@ export default function App() {
 			<Outlet />
 			<EpicProgress />
 		</Document>
+	)
+}
+
+export default function AppWithProviders() {
+	return (
+		<TooltipProvider>
+			<App />
+		</TooltipProvider>
 	)
 }
 

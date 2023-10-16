@@ -7,6 +7,7 @@ import { type EpicVideoInfos } from '#app/utils/epic-api.ts'
 import { cn } from '#app/utils/misc.tsx'
 import { Icon } from './icons.tsx'
 import { Loading } from './loading.tsx'
+import { SimpleTooltip } from './ui/tooltip.tsx'
 
 const EpicVideoInfoContext = React.createContext<
 	Promise<EpicVideoInfos> | null | undefined
@@ -131,7 +132,9 @@ function VideoLink({ url, title }: { url: string; title: string }) {
 			className="flex items-center gap-1 text-base no-underline opacity-70 transition hover:underline hover:opacity-100"
 			rel="noreferrer"
 		>
-			<Icon name="Video" size={24} title="EpicWeb.dev video" />
+			<SimpleTooltip content="EpicWeb.dev video">
+				<Icon name="Video" size={24} />
+			</SimpleTooltip>
 			{title} <span aria-hidden>↗︎</span>
 		</a>
 	)

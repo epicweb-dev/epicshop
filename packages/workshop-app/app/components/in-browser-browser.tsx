@@ -11,6 +11,12 @@ import {
 import { z } from 'zod'
 import { Icon } from '#app/components/icons.tsx'
 import { AppStarter, AppStopper, PortStopper } from '#app/routes/start.tsx'
+import {
+	Tooltip,
+	TooltipContent,
+	TooltipProvider,
+	TooltipTrigger,
+} from './ui/tooltip.tsx'
 
 const historyCallDataSchema = z.intersection(
 	z.object({
@@ -309,83 +315,104 @@ function InBrowserBrowserForRealzImpl(
 	}
 
 	return (
-		<div className="flex h-full flex-grow flex-col">
-			<div className="flex items-center justify-between border-b border-border pl-1.5">
-				<div className="mr-2 flex items-center justify-center gap-2 px-1">
-					<button
-						type="button"
-						className="flex aspect-square h-full w-full items-center justify-center p-1 transition disabled:opacity-40"
-						disabled={atStartOfHistory}
-						onClick={() => navigateChild(-1)}
+		<TooltipProvider>
+			<div className="flex h-full flex-grow flex-col">
+				<div className="flex items-center justify-between border-b border-border pl-1.5">
+					<div className="mr-2 flex items-center justify-center gap-2 px-1">
+						<Tooltip>
+							<TooltipTrigger asChild>
+								<button
+									type="button"
+									className="flex aspect-square h-full w-full items-center justify-center p-1 transition disabled:opacity-40"
+									disabled={atStartOfHistory}
+									onClick={() => navigateChild(-1)}
+								>
+									<Icon name="ArrowLeft" aria-hidden="true" />
+								</button>
+							</TooltipTrigger>
+							<TooltipContent>Go back</TooltipContent>
+						</Tooltip>
+						<Tooltip>
+							<TooltipTrigger asChild>
+								<button
+									type="button"
+									className="flex aspect-square h-full w-full items-center justify-center p-1 transition disabled:opacity-40"
+									disabled={atEndOfHistory}
+									onClick={() => navigateChild(1)}
+								>
+									<Icon name="ArrowRight" aria-hidden="true" />
+								</button>
+							</TooltipTrigger>
+							<TooltipContent>Go forward</TooltipContent>
+						</Tooltip>
+						<Tooltip>
+							<TooltipTrigger asChild>
+								<button
+									type="button"
+									className="flex aspect-square h-full w-full items-center justify-center p-1 transition disabled:opacity-40"
+									onClick={() => {
+										setIframeSrcUrl(appUrl)
+										setIframeKeyNumber(iframeKeyNumber + 1)
+										// TODO: figure out how we can avoid having to do this...
+										// I stayed up for hours one night trying and couldn't work out
+										// why react router wouldn't update the UI when using back/forward
+										// after a refresh.
+										setIFrameContext({
+											history: [appUrl.pathname],
+											index: 0,
+										})
+									}}
+								>
+									<Icon name="Refresh" aria-hidden="true" />
+								</button>
+							</TooltipTrigger>
+							<TooltipContent>Refresh</TooltipContent>
+						</Tooltip>
+					</div>
+					<Form
+						method="get"
+						replace
+						className="flex flex-1 gap-2"
+						onSubmit={() => handleExtrnalNavigation()}
 					>
-						<Icon name="ArrowLeft" aria-hidden="true" title="Go back" />
-					</button>
-					<button
-						type="button"
-						className="flex aspect-square h-full w-full items-center justify-center p-1 transition disabled:opacity-40"
-						disabled={atEndOfHistory}
-						onClick={() => navigateChild(1)}
-					>
-						<Icon name="ArrowRight" aria-hidden="true" title="Go forward" />
-					</button>
-					<button
-						type="button"
-						className="flex aspect-square h-full w-full items-center justify-center p-1 transition disabled:opacity-40"
-						onClick={() => {
-							setIframeSrcUrl(appUrl)
-							setIframeKeyNumber(iframeKeyNumber + 1)
-							// TODO: figure out how we can avoid having to do this...
-							// I stayed up for hours one night trying and couldn't work out
-							// why react router wouldn't update the UI when using back/forward
-							// after a refresh.
-							setIFrameContext({
-								history: [appUrl.pathname],
-								index: 0,
-							})
-						}}
-					>
-						<Icon name="Refresh" aria-hidden="true" title="Refresh" />
-					</button>
+						{existingSearchParamHiddenInputs}
+						<input
+							aria-label="pathname"
+							className="flex-1 border-x border-border bg-background p-3 leading-none text-foreground focus-visible:outline-none"
+							value={pathnameInputValue}
+							name="pathname"
+							onChange={e => setPathnameInputValue(e.currentTarget.value)}
+						/>
+						{/* TODO: Reconsider if this is needed as browsers don't usually have a submit button in address bar */}
+						{/* <button type="submit">Go</button> */}
+					</Form>
+					<AppStopper name={name} />
+					<Tooltip>
+						<TooltipTrigger asChild>
+							<a
+								href={appUrl.toString()}
+								target="_blank"
+								rel="noreferrer"
+								className={clsx(
+									'flex aspect-square items-center justify-center px-3.5',
+								)}
+							>
+								<Icon name="ExternalLink" />
+							</a>
+						</TooltipTrigger>
+						<TooltipContent>Open in new tab</TooltipContent>
+					</Tooltip>
 				</div>
-				<Form
-					method="get"
-					replace
-					className="flex flex-1 gap-2"
-					onSubmit={() => handleExtrnalNavigation()}
-				>
-					{existingSearchParamHiddenInputs}
-					<input
-						aria-label="pathname"
-						className="flex-1 border-x border-border bg-background p-3 leading-none text-foreground focus-visible:outline-none"
-						value={pathnameInputValue}
-						name="pathname"
-						onChange={e => setPathnameInputValue(e.currentTarget.value)}
+				<div className="flex h-full w-full flex-grow p-5 dark:bg-white">
+					<iframe
+						title={name}
+						key={iframeKey}
+						ref={iframeRef}
+						src={iframeSrcUrl.toString()}
+						className="h-full w-full flex-grow bg-white"
 					/>
-					{/* TODO: Reconsider if this is needed as browsers don't usually have a submit button in address bar */}
-					{/* <button type="submit">Go</button> */}
-				</Form>
-				<AppStopper name={name} />
-				<a
-					href={appUrl.toString()}
-					target="_blank"
-					rel="noreferrer"
-					title="Open in new tab"
-					className={clsx(
-						'flex aspect-square items-center justify-center px-3.5',
-					)}
-				>
-					<Icon name="ExternalLink" title="Open in new tab" />
-				</a>
+				</div>
 			</div>
-			<div className="flex h-full w-full flex-grow p-5 dark:bg-white">
-				<iframe
-					title={name}
-					key={iframeKey}
-					ref={iframeRef}
-					src={iframeSrcUrl.toString()}
-					className="h-full w-full flex-grow bg-white"
-				/>
-			</div>
-		</div>
+		</TooltipProvider>
 	)
 }
