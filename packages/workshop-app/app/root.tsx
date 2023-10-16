@@ -29,10 +29,9 @@ import tailwindStylesheetUrl from './styles/tailwind.css'
 import { getWorkshopTitle } from './utils/apps.server.ts'
 import { ClientHintCheck, getHints } from './utils/client-hints.tsx'
 import {
-	getAuthInfo,
 	getDiscordMember,
 	getPreferences,
-	getUserAvatar,
+	getUserInfo,
 } from './utils/db.server.ts'
 import { getEnv } from './utils/env.server.ts'
 import { getProgress } from './utils/epic-api.ts'
@@ -75,7 +74,6 @@ export async function loader({ request }: DataFunctionArgs) {
 		timings,
 	})
 
-	const authInfo = await getAuthInfo()
 	const preferences = await getPreferences()
 	const progress = await getProgress({ timings })
 	const discordMember = await getDiscordMember()
@@ -92,13 +90,7 @@ export async function loader({ request }: DataFunctionArgs) {
 			progress,
 			preferences,
 			discordMember,
-			user: authInfo
-				? {
-						name: authInfo.name,
-						email: authInfo.email,
-						gravatarUrl: getUserAvatar({ email: authInfo.email, size: 288 }),
-				  }
-				: null,
+			user: await getUserInfo(),
 		},
 		{
 			headers: {

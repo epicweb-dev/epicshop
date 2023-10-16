@@ -19,6 +19,12 @@ import {
 import * as React from 'react'
 import { Icon } from '#app/components/icons.tsx'
 import { ToastHub } from '#app/components/toast.tsx'
+import {
+	Tooltip,
+	TooltipContent,
+	TooltipProvider,
+	TooltipTrigger,
+} from '#app/components/ui/tooltip.tsx'
 import { useOptionalUser } from '#app/components/user.tsx'
 import {
 	extractNumbersFromAppName,
@@ -40,7 +46,7 @@ import {
 } from '../progress.tsx'
 import { ThemeSwitch } from '../theme/index.tsx'
 
-import { type User, usePresence } from './presence.ts'
+import { usePresence } from './presence.ts'
 
 export async function loader({ request }: DataFunctionArgs) {
 	const timings = makeTimings('stepLoader')
@@ -100,31 +106,49 @@ export const headers: HeadersFunction = ({ loaderHeaders, parentHeaders }) => {
 	return headers
 }
 
-/**
- *
- * Render a facepile component with the users currently viewing the page.
- */
-function FacePile(props: { users: User[] }) {
+function FacePile({ isMenuOpened }: { isMenuOpened: boolean }) {
+	const user = useOptionalUser()
+	const { users } = usePresence(user)
+	const limit = isMenuOpened ? 17 : 0
+	const numberOverLimit = users.length - limit
 	return (
-		<div className="absolute flex flex-wrap items-center space-x-2">
-			{props.users.map(user => (
-				<img
-					key={user.email}
-					alt={user.name || 'User'}
-					className="rounded-full border-2 border-gray-200 object-cover"
-					height="36"
-					src={user.gravatarUrl}
-					style={{
-						aspectRatio: '36/36',
-						objectFit: 'cover',
-					}}
-					width="36"
-				/>
-			))}
-
-			{/* If we truncate the above list, we can show an excess count here*/}
-			<div className="flex h-9 w-9 items-center justify-center rounded-full border-2 border-gray-200 bg-gray-200 text-gray-800">
-				+97
+		<div
+			className={cn(
+				'flex w-full items-center justify-start border-t p-4 transition-[height]',
+				isMenuOpened && users.length > 4 ? 'h-28' : 'h-14',
+			)}
+			style={isMenuOpened ? { width: OPENED_MENU_WIDTH } : {}}
+		>
+			<div className="flex flex-wrap items-center gap-2">
+				<TooltipProvider>
+					{users.slice(0, limit).map(user => (
+						<Tooltip key={user.id}>
+							<TooltipTrigger asChild>
+								<img
+									alt={user.name || 'Epic Web Dev'}
+									className="h-8 w-8 rounded-full border object-cover"
+									src={user.avatarUrl}
+								/>
+							</TooltipTrigger>
+							<TooltipContent>{user.name || 'Epic Web Dev'}</TooltipContent>
+						</Tooltip>
+					))}
+					{numberOverLimit > 0 ? (
+						<Tooltip>
+							<TooltipTrigger asChild>
+								<div
+									className={cn(
+										'flex items-center justify-center text-ellipsis rounded-full border-2 border-gray-200 bg-gray-200 text-sm text-gray-800',
+										isMenuOpened ? 'h-8 w-8' : 'h-6 w-6',
+									)}
+								>
+									+{numberOverLimit > 10 ? '...' : numberOverLimit}
+								</div>
+							</TooltipTrigger>
+							<TooltipContent>Epic Web Devs working now</TooltipContent>
+						</Tooltip>
+					) : null}
+				</TooltipProvider>
 			</div>
 		</div>
 	)
@@ -132,7 +156,6 @@ function FacePile(props: { users: User[] }) {
 
 export default function App() {
 	const user = useOptionalUser()
-	const { users } = usePresence(user)
 
 	const [isMenuOpened, setMenuOpened] = React.useState(false)
 
@@ -150,7 +173,6 @@ export default function App() {
 					isMenuOpened={isMenuOpened}
 					onMenuOpenChange={setMenuOpened}
 				/>
-				<FacePile users={users} />
 				<div
 					className={cn('h-full w-full', isMenuOpened ? 'hidden md:block' : '')}
 				>
@@ -272,6 +294,8 @@ function NavigationExerciseStepListItem({
 	)
 }
 
+const OPENED_MENU_WIDTH = 400
+
 function Navigation({
 	isMenuOpened,
 	onMenuOpenChange: setMenuOpened,
@@ -295,8 +319,6 @@ function Navigation({
 			: params.type === 'problem'
 			? exercise?.problems.find(p => p.stepNumber === Number(params.stepNumber))
 			: null
-
-	const OPENED_MENU_WIDTH = 400
 
 	// container
 	const menuControls = useAnimationControls()
@@ -495,15 +517,16 @@ function Navigation({
 							</div>
 						</div>
 					)}
+					<FacePile isMenuOpened={isMenuOpened} />
 					{ENV.KCDSHOP_DEPLOYED ? null : user ? (
 						<Link
 							className="flex h-14 w-full items-center justify-start space-x-3 border-t px-4 py-4 text-center no-underline hover:underline"
 							to="/account"
 						>
-							{user.gravatarUrl ? (
+							{user.avatarUrl ? (
 								<img
 									alt={user.name ?? user.email}
-									src={user.gravatarUrl}
+									src={user.avatarUrl}
 									className="h-full rounded-full"
 								/>
 							) : (
