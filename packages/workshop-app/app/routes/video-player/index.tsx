@@ -4,7 +4,7 @@ import MuxPlayerDefault, {
 import { json, type DataFunctionArgs } from '@remix-run/node'
 import { useFetcher, useRouteLoaderData } from '@remix-run/react'
 import * as React from 'react'
-import { type z } from 'zod'
+import { z } from 'zod'
 import { type loader as rootLoader } from '#app/root.tsx'
 import {
 	PlayerPreferencesSchema,
@@ -12,6 +12,15 @@ import {
 } from '#app/utils/db.server.ts'
 import './mux-player.css'
 import { useDebounce } from '#app/utils/misc.tsx'
+
+const PlaybackTimeSchema = z
+	.object({
+		time: z.number(),
+		expiresAt: z.string(),
+	})
+	.transform(data => {
+		return { time: Number(data.time), expiresAt: new Date(data.expiresAt) }
+	})
 
 export function usePlayerPreferences() {
 	const data = useRouteLoaderData<typeof rootLoader>('root')
@@ -58,6 +67,22 @@ export function MuxPlayer({
 	const playerPreferences = usePlayerPreferences()
 	const playerPreferencesFetcher = useFetcher<typeof action>()
 	const [metadataLoaded, setMetadataLoaded] = React.useState(false)
+	const currentTimeSessionKey = `${props.playbackId}:currentTime`
+	const [currentTime] = React.useState(() => {
+		if (typeof document === 'undefined') return 0
+		const stored = sessionStorage.getItem(currentTimeSessionKey)
+		if (!stored) return 0
+		try {
+			const { time, expiresAt } = PlaybackTimeSchema.parse(
+				JSON.parse(stored ?? '{}'),
+			)
+			if (expiresAt.getTime() < Date.now()) throw new Error('Time expired')
+			return time
+		} catch {
+			sessionStorage.removeItem(currentTimeSessionKey)
+			return 0
+		}
+	})
 
 	const fetcherRef = useLatest(playerPreferencesFetcher)
 	const playerPreferencesRef = useLatest(playerPreferences)
@@ -167,11 +192,21 @@ export function MuxPlayer({
 				]}
 				volume={playerPreferences?.volumeRate ?? 1}
 				playbackRate={playerPreferences?.playbackRate ?? 1}
-				thumbnailTime={0}
+				thumbnailTime={currentTime}
 				onRateChange={updatePreferences}
 				onVolumeChange={updatePreferences}
 				streamType="on-demand"
 				defaultHiddenCaptions={true}
+				currentTime={currentTime}
+				onTimeUpdate={() =>
+					sessionStorage.setItem(
+						currentTimeSessionKey,
+						JSON.stringify({
+							time: muxPlayerRef.current?.currentTime,
+							expiresAt: new Date(Date.now() + 1000 * 60 * 30).toISOString(),
+						}),
+					)
+				}
 				accentColor="#427cf0"
 				targetLiveWindow={NaN} // this has gotta be a bug. Without this prop, we get SSR warnings 🤷‍♂️
 				onLoadedMetadata={() => setMetadataLoaded(true)}

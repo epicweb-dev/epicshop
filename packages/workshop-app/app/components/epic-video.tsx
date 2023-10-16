@@ -125,18 +125,17 @@ export function VideoEmbed({
 
 function VideoLink({ url, title }: { url: string; title: string }) {
 	return (
-		// eslint-disable-next-line react/jsx-no-target-blank
-		<a
-			href={url}
-			target="_blank"
-			className="flex items-center gap-1 text-base no-underline opacity-70 transition hover:underline hover:opacity-100"
-			rel="noreferrer"
-		>
-			<SimpleTooltip content="EpicWeb.dev video">
+		<SimpleTooltip content="Open on EpicWeb.dev">
+			<a
+				href={url}
+				target="_blank"
+				className="flex items-center gap-1 text-base no-underline opacity-70 transition hover:underline hover:opacity-100"
+				rel="noreferrer"
+			>
 				<Icon name="Video" size={24} />
-			</SimpleTooltip>
-			{title} <span aria-hidden>↗︎</span>
-		</a>
+				{title} <span aria-hidden>↗︎</span>
+			</a>
+		</SimpleTooltip>
 	)
 }
 export function DeferredEpicVideo({
