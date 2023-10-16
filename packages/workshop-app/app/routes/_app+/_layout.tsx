@@ -40,6 +40,8 @@ import {
 } from '../progress.tsx'
 import { ThemeSwitch } from '../theme/index.tsx'
 
+import { type User, usePresence } from './presence.ts'
+
 export async function loader({ request }: DataFunctionArgs) {
 	const timings = makeTimings('stepLoader')
 	const [exercises, workshopTitle, playgroundAppName] = await Promise.all([
@@ -98,8 +100,40 @@ export const headers: HeadersFunction = ({ loaderHeaders, parentHeaders }) => {
 	return headers
 }
 
+/**
+ *
+ * Render a facepile component with the users currently viewing the page.
+ */
+function FacePile(props: { users: User[] }) {
+	return (
+		<div className="absolute flex flex-wrap items-center space-x-2">
+			{props.users.map(user => (
+				<img
+					key={user.email}
+					alt={user.name || 'User'}
+					className="rounded-full border-2 border-gray-200 object-cover"
+					height="36"
+					src={user.gravatarUrl}
+					style={{
+						aspectRatio: '36/36',
+						objectFit: 'cover',
+					}}
+					width="36"
+				/>
+			))}
+
+			{/* If we truncate the above list, we can show an excess count here*/}
+			<div className="flex h-9 w-9 items-center justify-center rounded-full border-2 border-gray-200 bg-gray-200 text-gray-800">
+				+97
+			</div>
+		</div>
+	)
+}
+
 export default function App() {
 	const user = useOptionalUser()
+	const { users } = usePresence(user)
+
 	const [isMenuOpened, setMenuOpened] = React.useState(false)
 
 	return (
@@ -116,6 +150,7 @@ export default function App() {
 					isMenuOpened={isMenuOpened}
 					onMenuOpenChange={setMenuOpened}
 				/>
+				<FacePile users={users} />
 				<div
 					className={cn('h-full w-full', isMenuOpened ? 'hidden md:block' : '')}
 				>
