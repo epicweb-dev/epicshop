@@ -7,10 +7,12 @@ import {
 	deleteDb,
 	deleteDiscordInfo,
 	requireAuthInfo,
+	setPresencePreferences,
 } from '#app/utils/db.server.ts'
 import { ensureUndeployed } from '#app/utils/misc.tsx'
 import { deleteCache } from '#utils/cache.server.ts'
 import { getDiscordAuthURL } from '../discord.callback.ts'
+import { usePresencePreferences } from './presence.ts'
 
 export async function loader({ request }: DataFunctionArgs) {
 	ensureUndeployed()
@@ -27,9 +29,13 @@ export async function action({ request }: { request: Request }) {
 	} else if (intent === 'logout') {
 		await deleteDb()
 		await deleteCache()
+		return redirect('/login')
+	} else if (intent === 'presence-opt-out') {
+		const optOut = formData.get('optOut') === 'true'
+		await setPresencePreferences({ optOut })
 	}
 
-	return redirect('/login')
+	return redirect('/account')
 }
 
 export default function Account() {
@@ -37,12 +43,13 @@ export default function Account() {
 	const disconnectFetcher = useFetcher()
 	const user = useUser()
 	const discordMember = useOptionalDiscordMember()
+	const presencePreferences = usePresencePreferences()
 	return (
 		<main className="container flex h-full w-full max-w-lg flex-grow flex-col items-center justify-center gap-4">
 			<img
 				className="h-36 w-36 rounded-full"
 				alt={discordMember?.displayName ?? user.name ?? user.email}
-				src={discordMember?.avatarURL ?? user.gravatarUrl}
+				src={user.avatarUrl}
 			/>
 			<h1 className="mb-1 text-2xl">Your Account</h1>
 			<p className="text-center text-gray-700 dark:text-gray-300">
@@ -73,6 +80,16 @@ export default function Account() {
 					Connect Discord
 				</Link>
 			)}
+			<Form method="POST">
+				<input
+					name="optOut"
+					type="hidden"
+					value={presencePreferences?.optOut ? 'false' : 'true'}
+				/>
+				<Button varient="mono" name="intent" value="presence-opt-out">
+					{presencePreferences?.optOut ? 'Opt in to' : 'Opt out of'} presence
+				</Button>
+			</Form>
 			<p>
 				<small>
 					Note: it is your <i className="italic">device</i> that's logged in,

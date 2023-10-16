@@ -16,36 +16,51 @@ const TokenSetSchema = z.object({
 	token_type: z.string(),
 	scope: z.string(),
 })
-export const PlayerPreferencesSchema = z.object({
-	volumeRate: z.number().optional(),
-	playbackRate: z.number().optional(),
-	autoplay: z.boolean().optional(),
-	subtitle: z
-		.object({
-			id: z.string().nullable().default(null),
-			mode: z
-				.literal('disabled')
-				.or(z.literal('hidden'))
-				.or(z.literal('showing'))
-				.nullable()
-				.default('disabled'),
-		})
-		.optional()
-		.default({}),
-	muted: z.boolean().optional(),
-	theater: z.boolean().optional(),
-	defaultView: z.string().optional(),
-	activeSidebarTab: z.number().optional(),
-})
-const AuthInfoSchema = z.object({
-	tokenSet: TokenSetSchema,
-	email: z.string(),
-	name: z.string().nullable().optional(),
-})
+export const PlayerPreferencesSchema = z
+	.object({
+		volumeRate: z.number().optional(),
+		playbackRate: z.number().optional(),
+		autoplay: z.boolean().optional(),
+		subtitle: z
+			.object({
+				id: z.string().nullable().default(null),
+				mode: z
+					.literal('disabled')
+					.or(z.literal('hidden'))
+					.or(z.literal('showing'))
+					.nullable()
+					.default('disabled'),
+			})
+			.optional()
+			.default({}),
+		muted: z.boolean().optional(),
+		theater: z.boolean().optional(),
+		defaultView: z.string().optional(),
+		activeSidebarTab: z.number().optional(),
+	})
+	.optional()
+	.default({})
+
+const PresencePreferencesSchema = z
+	.object({
+		optOut: z.boolean(),
+	})
+	.optional()
+	.default({ optOut: false })
+
+const AuthInfoSchema = z
+	.object({
+		tokenSet: TokenSetSchema,
+		email: z.string(),
+		name: z.string().nullable().optional(),
+	})
+	.transform(d => ({ ...d, id: md5(d.email) }))
+
 const DataSchema = z.object({
 	preferences: z
 		.object({
-			player: PlayerPreferencesSchema.optional().default({}),
+			player: PlayerPreferencesSchema,
+			presence: PresencePreferencesSchema,
 		})
 		.optional()
 		.default({}),
@@ -87,13 +102,26 @@ async function readDb() {
 	return null
 }
 
-export function getUserAvatar({
-	email,
-	size,
-}: {
-	email: string
-	size: number
-}) {
+export async function getAuthInfo() {
+	const data = await readDb()
+	return data?.authInfo ?? null
+}
+
+export async function getUserInfo() {
+	const db = await readDb()
+	if (!db?.authInfo) return null
+
+	return {
+		id: db.authInfo.id,
+		name: db.authInfo.name,
+		email: db.authInfo.email,
+		avatarUrl: db?.discordMember?.avatarURL
+			? db.discordMember.avatarURL
+			: getGravatar({ email: db.authInfo.email, size: 288 }),
+	}
+}
+
+function getGravatar({ email, size }: { email: string; size: number }) {
 	const gravatarOptions = new URLSearchParams({
 		size: size.toString(),
 		default: 'identicon',
@@ -102,11 +130,6 @@ export function getUserAvatar({
 		email,
 	)}?${gravatarOptions.toString()}`
 	return gravatarUrl
-}
-
-export async function getAuthInfo() {
-	const data = await readDb()
-	return data?.authInfo ?? null
 }
 
 export async function requireAuthInfo({
@@ -154,7 +177,7 @@ export async function getPreferences() {
 }
 
 export async function setPlayerPreferences(
-	playerPreferences: z.infer<typeof PlayerPreferencesSchema>,
+	playerPreferences: z.input<typeof PlayerPreferencesSchema>,
 ) {
 	const data = await readDb()
 	const updatedData = {
@@ -164,6 +187,19 @@ export async function setPlayerPreferences(
 	await fsExtra.ensureDir(appDir)
 	await fsExtra.writeJSON(dbPath, updatedData)
 	return updatedData.preferences.player
+}
+
+export async function setPresencePreferences(
+	presnecePreferences: z.input<typeof PresencePreferencesSchema>,
+) {
+	const data = await readDb()
+	const updatedData = {
+		...data,
+		preferences: { ...data?.preferences, presence: presnecePreferences },
+	}
+	await fsExtra.ensureDir(appDir)
+	await fsExtra.writeJSON(dbPath, updatedData)
+	return updatedData.preferences.presence
 }
 
 export async function getDiscordMember() {
