@@ -16,18 +16,22 @@ export function usePresencePreferences() {
 type User = Pick<ReturnType<typeof useUser>, 'id' | 'name' | 'avatarUrl'>
 
 export async function getPresentUsers(): Promise<User[]> {
-	const presence = (await fetch(
-		// 'http://127.0.0.1:1999/party/epic-web-presence',
-		'https://epic-web-presence.kentcdodds.partykit.dev/party/epic-web-presence',
-		{
-			method: 'POST',
-			headers: {
-				'Content-Type': 'application/json',
+	try {
+		const presence = (await fetch(
+			// 'http://127.0.0.1:1999/party/epic-web-presence',
+			'https://epic-web-presence.kentcdodds.partykit.dev/party/epic-web-presence',
+			{
+				method: 'POST',
+				headers: {
+					'Content-Type': 'application/json',
+				},
 			},
-		},
-	).then(res => res.json())) as Presence
-
-	return presence.users
+		).then(res => res.json())) as Presence
+		return presence.users
+	} catch (err) {
+		console.error('failed to get presence', err)
+		return []
+	}
 }
 
 export type Message =
