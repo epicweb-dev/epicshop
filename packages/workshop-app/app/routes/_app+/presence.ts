@@ -18,8 +18,8 @@ type User = Pick<ReturnType<typeof useUser>, 'id' | 'name' | 'avatarUrl'>
 export async function getPresentUsers(): Promise<User[]> {
 	try {
 		const presence = (await fetch(
-			// 'http://127.0.0.1:1999/party/epic-web-presence',
-			'https://epic-web-presence.kentcdodds.partykit.dev/party/epic-web-presence',
+			// 'http://127.0.0.1:1999/parties/main/epic-web-presence/presence',
+			'https://epic-web-presence.kentcdodds.partykit.dev/parties/main/epic-web-presence/presence',
 			{
 				headers: {
 					'Content-Type': 'application/json',
