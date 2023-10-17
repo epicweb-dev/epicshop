@@ -141,7 +141,7 @@ async function getEpicProgress({
 	const EpicProgressSchema = z.array(
 		z.object({
 			lessonId: z.string(),
-			completedAt: z.string(),
+			completedAt: z.string().nullable(),
 		}),
 	)
 	return cachified({
