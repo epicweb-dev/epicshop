@@ -112,6 +112,7 @@ function FacePile({ isMenuOpened }: { isMenuOpened: boolean }) {
 	const { users } = usePresence(user)
 	const limit = isMenuOpened ? 17 : 0
 	const numberOverLimit = users.length - limit
+	if (!users.length) return null
 	return (
 		<div
 			className={cn(

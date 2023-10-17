@@ -96,7 +96,7 @@ export async function loader({ request }: DataFunctionArgs) {
 			discordMember,
 			user,
 			presence: {
-				users: preferences?.presence ? presentUsers : [...presentUsers, user],
+				users: presentUsers,
 			},
 		},
 		{

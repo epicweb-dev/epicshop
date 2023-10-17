@@ -15,3 +15,4 @@ scripts/db.json
 /playwright-report/
 /playwright/.cache/
 .partykit
+**/dist/
