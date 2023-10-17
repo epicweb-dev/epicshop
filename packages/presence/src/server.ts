@@ -60,6 +60,13 @@ export default class Server implements Party.Server {
 			this.updateUsers()
 		}
 	}
+
+	onRequest(req: Party.Request): Response | Promise<Response> {
+		if (req.method === 'POST') {
+			return Response.json(this.getPresenceMessage().payload)
+		}
+		return new Response('Not found', { status: 404 })
+	}
 }
 
 Server satisfies Party.Worker

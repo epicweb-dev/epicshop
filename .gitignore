@@ -14,3 +14,4 @@ scripts/db.json
 /test-results/
 /playwright-report/
 /playwright/.cache/
+.partykit

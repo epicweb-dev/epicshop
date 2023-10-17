@@ -23,6 +23,7 @@ import { useSpinDelay } from 'spin-delay'
 import { GeneralErrorBoundary } from './components/error-boundary.tsx'
 import { EpicProgress } from './components/progress-bar.tsx'
 import { TooltipProvider } from './components/ui/tooltip.tsx'
+import { getPresentUsers } from './routes/_app+/presence.ts'
 import { useTheme } from './routes/theme/index.tsx'
 import { getTheme } from './routes/theme/theme-session.server.ts'
 import appStylesheetUrl from './styles/app.css'
@@ -79,6 +80,8 @@ export async function loader({ request }: DataFunctionArgs) {
 	const progress = await getProgress({ timings })
 	const discordMember = await getDiscordMember()
 	const theme = getTheme(request)
+	const user = await getUserInfo()
+	const presentUsers = await getPresentUsers()
 	return json(
 		{
 			workshopTitle,
@@ -91,7 +94,10 @@ export async function loader({ request }: DataFunctionArgs) {
 			progress,
 			preferences,
 			discordMember,
-			user: await getUserInfo(),
+			user,
+			presence: {
+				users: preferences?.presence ? presentUsers : [...presentUsers, user],
+			},
 		},
 		{
 			headers: {

@@ -15,6 +15,21 @@ export function usePresencePreferences() {
 
 type User = Pick<ReturnType<typeof useUser>, 'id' | 'name' | 'avatarUrl'>
 
+export async function getPresentUsers(): Promise<User[]> {
+	const presence = (await fetch(
+		// 'http://127.0.0.1:1999/party/epic-web-presence',
+		'https://epic-web-presence.kentcdodds.partykit.dev/party/epic-web-presence',
+		{
+			method: 'POST',
+			headers: {
+				'Content-Type': 'application/json',
+			},
+		},
+	).then(res => res.json())) as Presence
+
+	return presence.users
+}
+
 export type Message =
 	| { type: 'remove-user'; payload: Pick<User, 'id'> }
 	| { type: 'add-user'; payload: User }
@@ -38,10 +53,11 @@ function uniqueUsers(users: User[]) {
 export function usePresence(user: User | null | undefined) {
 	const prefs = usePresencePreferences()
 	const location = useLocation()
-	const [users, setUsers] = useState<User[]>([])
+	const data = useRouteLoaderData<typeof rootLoader>('root')
+	const [users, setUsers] = useState<User[]>(data.presence.users)
 
 	const socket = usePartySocket({
-		// host: 'localhost:1999',
+		// host: '127.0.0.1:1999',
 		host: 'epic-web-presence.kentcdodds.partykit.dev',
 		room: 'epic-web-presence',
 		onMessage(evt: MessageEvent) {
