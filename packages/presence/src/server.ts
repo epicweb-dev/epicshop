@@ -62,10 +62,8 @@ export default class Server implements Party.Server {
 	}
 
 	onRequest(req: Party.Request): Response | Promise<Response> {
-		if (req.method === 'POST') {
-			return Response.json(this.getPresenceMessage().payload)
-		}
-		return new Response('Not found', { status: 404 })
+		// TODO: do this only on a path. say /presence
+		return Response.json(this.getPresenceMessage().payload)
 	}
 }
 
