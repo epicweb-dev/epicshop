@@ -16,12 +16,12 @@ import getPort, { portNumbers } from 'get-port'
 import morgan from 'morgan'
 import sourceMapSupport from 'source-map-support'
 import { WebSocket, WebSocketServer } from 'ws'
-import { getPresentUsers } from '#app/routes/_app+/presence.ts'
 import * as remixBuild from '../build/index.js'
 import { getApps, getWorkshopRoot } from '../utils/apps.server.ts'
 import { getWatcher } from '../utils/change-tracker.ts'
 import { isEmbeddedFile } from '../utils/compile-mdx.server.ts'
 import { checkForUpdates } from '../utils/git.server.ts'
+import { getPresentUsers } from '../utils/presence.server.ts'
 
 // @ts-ignore - this file may not exist if you haven't built yet, but it will
 // definitely exist by the time the dev or prod server actually runs.

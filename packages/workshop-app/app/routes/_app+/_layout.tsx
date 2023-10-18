@@ -34,6 +34,7 @@ import {
 	getWorkshopTitle,
 } from '#app/utils/apps.server.ts'
 import { cn } from '#app/utils/misc.tsx'
+import { usePresence } from '#app/utils/presence.ts'
 import {
 	combineServerTimings,
 	getServerTimeHeader,
@@ -46,8 +47,6 @@ import {
 	useProgressItemClassName,
 } from '../progress.tsx'
 import { ThemeSwitch } from '../theme/index.tsx'
-
-import { usePresence } from './presence.ts'
 
 export async function loader({ request }: DataFunctionArgs) {
 	const timings = makeTimings('stepLoader')

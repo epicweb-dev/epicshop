@@ -3,6 +3,7 @@ import { Form, Link, useFetcher, useLoaderData } from '@remix-run/react'
 import { Button } from '#app/components/button.tsx'
 import { Icon } from '#app/components/icons.tsx'
 import { useOptionalDiscordMember, useUser } from '#app/components/user.tsx'
+import { deleteCache } from '#app/utils/cache.server.ts'
 import {
 	deleteDb,
 	deleteDiscordInfo,
@@ -10,9 +11,8 @@ import {
 	setPresencePreferences,
 } from '#app/utils/db.server.ts'
 import { ensureUndeployed } from '#app/utils/misc.tsx'
-import { deleteCache } from '#utils/cache.server.ts'
+import { usePresencePreferences } from '#app/utils/presence.ts'
 import { getDiscordAuthURL } from '../discord.callback.ts'
-import { usePresencePreferences } from './presence.ts'
 
 export async function loader({ request }: DataFunctionArgs) {
 	ensureUndeployed()

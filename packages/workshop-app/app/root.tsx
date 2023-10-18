@@ -23,7 +23,6 @@ import { useSpinDelay } from 'spin-delay'
 import { GeneralErrorBoundary } from './components/error-boundary.tsx'
 import { EpicProgress } from './components/progress-bar.tsx'
 import { TooltipProvider } from './components/ui/tooltip.tsx'
-import { getPresentUsers } from './routes/_app+/presence.ts'
 import { useTheme } from './routes/theme/index.tsx'
 import { getTheme } from './routes/theme/theme-session.server.ts'
 import appStylesheetUrl from './styles/app.css'
@@ -38,6 +37,7 @@ import {
 import { getEnv } from './utils/env.server.ts'
 import { getProgress } from './utils/epic-api.ts'
 import { cn, useAltDown } from './utils/misc.tsx'
+import { getPresentUsers } from './utils/presence.server.ts'
 import {
 	getServerTimeHeader,
 	makeTimings,
