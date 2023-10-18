@@ -102,6 +102,13 @@ export default function Account() {
 					Log out
 				</Button>
 			</Form>
+			<p>
+				Check{' '}
+				<Link to="/support" className="underline">
+					/support
+				</Link>{' '}
+				if you need support.
+			</p>
 		</main>
 	)
 }
