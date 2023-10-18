@@ -58,6 +58,6 @@ export function usePresence(user?: User | null) {
 				} satisfies Message),
 			)
 		}
-	}, [user, socket, location, prefs?.optOut])
+	}, [user, socket, prefs?.optOut])
 	return { users }
 }
