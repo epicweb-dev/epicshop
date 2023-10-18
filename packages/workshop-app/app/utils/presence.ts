@@ -1,4 +1,4 @@
-import { useLocation, useRouteLoaderData } from '@remix-run/react'
+import { useRouteLoaderData } from '@remix-run/react'
 import usePartySocketDef from 'partysocket/react'
 import { useEffect, useState } from 'react'
 import { type loader as rootLoader } from '#app/root.tsx'
@@ -23,7 +23,6 @@ export function usePresencePreferences() {
 
 export function usePresence(user?: User | null) {
 	const prefs = usePresencePreferences()
-	const location = useLocation()
 	const data = useRouteLoaderData<typeof rootLoader>('root')
 	const [users, setUsers] = useState(data?.presence.users ?? [])
 
