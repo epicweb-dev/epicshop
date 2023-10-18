@@ -35,6 +35,13 @@ export const compiledMarkdownCache = makeSingletonCache<string>(
 )
 export const embeddedFilesCache =
 	makeSingletonCache<Record<string, string[]>>('EmbeddedFilesCache')
+export const presenceCache = makeSingletonCache<
+	Array<{
+		id: string
+		avatarUrl: string
+		name: string | null | undefined
+	}>
+>('PresenceCache')
 
 const cacheDir = path.join(os.homedir(), '.kcdshop', 'cache')
 

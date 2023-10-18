@@ -81,7 +81,7 @@ export async function loader({ request }: DataFunctionArgs) {
 	const discordMember = await getDiscordMember()
 	const theme = getTheme(request)
 	const user = await getUserInfo()
-	const presentUsers = await getPresentUsers()
+	const presentUsers = await getPresentUsers(user, { request, timings })
 	return json(
 		{
 			workshopTitle,

@@ -16,6 +16,7 @@ import getPort, { portNumbers } from 'get-port'
 import morgan from 'morgan'
 import sourceMapSupport from 'source-map-support'
 import { WebSocket, WebSocketServer } from 'ws'
+import { getPresentUsers } from '#app/routes/_app+/presence.ts'
 import * as remixBuild from '../build/index.js'
 import { getApps, getWorkshopRoot } from '../utils/apps.server.ts'
 import { getWatcher } from '../utils/change-tracker.ts'
@@ -48,6 +49,7 @@ const kcdshopAppRootDir = isRunningInBuildDir
 const hasUpdatesPromise = checkForUpdates()
 // caches all apps
 getApps()
+getPresentUsers()
 
 const workshopRoot = getWorkshopRoot()
 

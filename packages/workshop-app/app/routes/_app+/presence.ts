@@ -4,6 +4,8 @@ import { useEffect, useState } from 'react'
 import { z } from 'zod'
 import { type loader as rootLoader } from '#app/root.tsx'
 import { getPreferences } from '#app/utils/db.server.ts'
+import { cachified, presenceCache } from '#utils/cache.server.ts'
+import { type Timings } from '#utils/timing.server.ts'
 
 const partykitRoom = 'epic-web-presence'
 // const partykitBaseUrl = `http://127.0.0.1:1999/parties/main/${partykitRoom}`
@@ -42,20 +44,41 @@ type User = z.infer<typeof UserSchema>
 
 const PresenceSchema = z.object({ users: z.array(UserSchema) })
 
-export async function getPresentUsers(user?: User | null) {
-	try {
-		const response = await fetch(`${partykitBaseUrl}/presence`)
-		const presence = PresenceSchema.parse(await response.json())
-		const preferences = await getPreferences()
-		const users = presence.users
-		if (preferences?.presence.optOut || !user) {
-			return uniqueUsers(users.filter(u => u.id !== user?.id))
-		} else {
-			return uniqueUsers([...users, user])
-		}
-	} catch (err) {
-		return []
-	}
+export async function getPresentUsers(
+	user?: User | null,
+	{ timings, request }: { timings?: Timings; request?: Request } = {},
+) {
+	return cachified({
+		key: 'presence',
+		cache: presenceCache,
+		forceFresh: true,
+		timings,
+		request,
+		ttl: 1000 * 60 * 5,
+		swr: 1000 * 60 * 60 * 24,
+		checkValue: z.array(UserSchema),
+		async getFreshValue(context) {
+			try {
+				const response = await fetch(`${partykitBaseUrl}/presence`)
+				if (!response.ok) {
+					throw new Error(
+						`Unexpected response from partykit: ${response.status} ${response.statusText}`,
+					)
+				}
+				const presence = PresenceSchema.parse(await response.json())
+				const preferences = await getPreferences()
+				const users = presence.users
+				if (preferences?.presence.optOut || !user) {
+					return uniqueUsers(users.filter(u => u.id !== user?.id))
+				} else {
+					return uniqueUsers([...users, user])
+				}
+			} catch (err) {
+				context.metadata.ttl = 300
+				return []
+			}
+		},
+	})
 }
 
 // A user maybe on the same page in multiple tabs
