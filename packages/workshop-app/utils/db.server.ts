@@ -6,7 +6,7 @@ import md5 from 'md5-hex'
 import { z } from 'zod'
 
 export const DiscordMemberSchema = z.object({
-	avatarURL: z.string().optional(),
+	avatarURL: z.string().nullable().optional(),
 	displayName: z.string(),
 	id: z.string(),
 })
