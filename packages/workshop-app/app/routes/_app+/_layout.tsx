@@ -125,13 +125,19 @@ function FacePile({ isMenuOpened }: { isMenuOpened: boolean }) {
 					{users.slice(0, limit).map(user => (
 						<Tooltip key={user.id}>
 							<TooltipTrigger asChild>
-								<img
-									alt={user.name || 'Epic Web Dev'}
-									className="h-8 w-8 rounded-full border object-cover"
-									src={user.avatarUrl}
-								/>
+								{user.avatarUrl ? (
+									<img
+										alt={user.name || 'Epic Web Dev'}
+										className="h-8 w-8 rounded-full border object-cover"
+										src={user.avatarUrl}
+									/>
+								) : (
+									<div className="flex h-8 w-8 items-center justify-center rounded-full border">
+										<Icon name="User" />
+									</div>
+								)}
 							</TooltipTrigger>
-							<TooltipContent>{user.name || 'Epic Web Dev'}</TooltipContent>
+							<TooltipContent>{user.name || 'An EPIC Web Dev'}</TooltipContent>
 						</Tooltip>
 					))}
 					{numberOverLimit > 0 ? (
@@ -143,10 +149,15 @@ function FacePile({ isMenuOpened }: { isMenuOpened: boolean }) {
 										isMenuOpened ? 'h-8 w-8' : 'h-6 w-6',
 									)}
 								>
-									+{numberOverLimit > 10 ? '...' : numberOverLimit}
+									<span className="pointer-events-none">
+										+{numberOverLimit > 10 ? '...' : numberOverLimit}
+									</span>
 								</div>
 							</TooltipTrigger>
-							<TooltipContent>Epic Web Devs working now</TooltipContent>
+							<TooltipContent>
+								{numberOverLimit} more Epic Web Dev
+								{numberOverLimit === 1 ? '' : 's'} working now
+							</TooltipContent>
 						</Tooltip>
 					) : null}
 				</TooltipProvider>

@@ -3,7 +3,7 @@ import { z } from 'zod'
 
 const UserPayloadSchema = z.object({
 	id: z.string(),
-	avatarUrl: z.string(),
+	avatarUrl: z.string().nullable().optional(),
 	name: z.string().nullable().optional(),
 })
 
@@ -21,6 +21,12 @@ const MessageSchema = z
 		payload: z.object({ id: z.string() }),
 	})
 	.or(z.object({ type: z.literal('add-user'), payload: UserPayloadSchema }))
+	.or(
+		z.object({
+			type: z.literal('add-anonymous-user'),
+			payload: z.object({ id: z.string() }),
+		}),
+	)
 	.or(
 		z.object({
 			type: z.literal('presence'),
@@ -79,6 +85,8 @@ export default (class Server implements Party.Server {
 		} else if (result.data.type === 'remove-user') {
 			setConnectionState(sender, null)
 			this.updateUsers()
+		} else if (result.data.type === 'add-anonymous-user') {
+			setConnectionState(sender, { user: result.data.payload })
 		}
 	}
 

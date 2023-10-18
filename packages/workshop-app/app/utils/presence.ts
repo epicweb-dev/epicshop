@@ -25,6 +25,15 @@ export function usePresence(user?: User | null) {
 	const prefs = usePresencePreferences()
 	const data = useRouteLoaderData<typeof rootLoader>('root')
 	const [users, setUsers] = useState(data?.presence.users ?? [])
+	const [clientId] = useState(() => {
+		if (typeof document === 'undefined') return null
+		if (user) return user.id
+		const clientId = sessionStorage.getItem('clientId')
+		if (clientId) return clientId
+		const newClientId = Math.random().toString(36).slice(2)
+		sessionStorage.setItem('clientId', newClientId)
+		return newClientId
+	})
 
 	const socket = usePartySocket({
 		host: new URL(partykitBaseUrl).host,
@@ -37,9 +46,19 @@ export function usePresence(user?: User | null) {
 			}
 		},
 	})
-	useEffect(() => {
-		if (!user) return
 
+	useEffect(() => {
+		if (!user) {
+			if (clientId) {
+				socket.send(
+					JSON.stringify({
+						type: 'add-user',
+						payload: { id: clientId },
+					} satisfies Message),
+				)
+			}
+			return
+		}
 		if (prefs?.optOut) {
 			// optimistic UI...
 			setUsers(currentUsers => currentUsers.filter(u => u.id !== user.id))
@@ -57,6 +76,6 @@ export function usePresence(user?: User | null) {
 				} satisfies Message),
 			)
 		}
-	}, [user, socket, prefs?.optOut])
+	}, [user, clientId, socket, prefs?.optOut])
 	return { users }
 }

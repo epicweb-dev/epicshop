@@ -6,7 +6,7 @@ export const partykitBaseUrl = `https://epic-web-presence.kentcdodds.partykit.de
 
 export const UserSchema = z.object({
 	id: z.string(),
-	avatarUrl: z.string(),
+	avatarUrl: z.string().nullable().optional(),
 	name: z.string().nullable().optional(),
 })
 
