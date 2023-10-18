@@ -49,6 +49,14 @@ export function usePresence(user?: User | null) {
 
 	useEffect(() => {
 		if ((!user || prefs?.optOut) && clientId) {
+			if (user) {
+				socket.send(
+					JSON.stringify({
+						type: 'remove-user',
+						payload: { id: user?.id },
+					} satisfies Message),
+				)
+			}
 			socket.send(
 				JSON.stringify({
 					type: 'add-user',
