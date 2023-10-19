@@ -25,10 +25,11 @@ const isDeployed = ENV.KCDSHOP_DEPLOYED
 const diffTmpDir = path.join(kcdshopTempDir, 'diff')
 
 function diffPathToRelative(filePath: string) {
-	if (filePath.startsWith('a/') || filePath.startsWith('b/')) {
-		filePath = filePath.slice(2)
+
+	let normalizedPath = path.normalize(filePath).replace(/^("|')|("|')$/g, '')
+	if (normalizedPath.startsWith('a/') || normalizedPath.startsWith('b/')) {
+		normalizedPath = normalizedPath.slice(2)
 	}
-	const normalizedPath = path.normalize(filePath).replace(/^("|')|("|')$/g, '')
 
 	// eslint-disable-next-line @typescript-eslint/no-unused-vars
 	const [workshopRootDirname, appId, id, ...relativePath] = normalizedPath
