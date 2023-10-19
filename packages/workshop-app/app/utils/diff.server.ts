@@ -25,8 +25,8 @@ const isDeployed = ENV.KCDSHOP_DEPLOYED
 const diffTmpDir = path.join(kcdshopTempDir, 'diff')
 
 function diffPathToRelative(filePath: string) {
-	if (filePath.startsWith('a/') || filePath.startsWith('b/')) {
-		filePath = filePath.slice(2)
+	if (filePath.startsWith('"a/') || filePath.startsWith('"b/')) {
+		filePath = filePath.slice(3)
 	}
 	const normalizedPath = path.normalize(filePath).replace(/^("|')|("|')$/g, '')
 
