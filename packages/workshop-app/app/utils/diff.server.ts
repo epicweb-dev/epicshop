@@ -27,7 +27,7 @@ const diffTmpDir = path.join(kcdshopTempDir, 'diff')
 function diffPathToRelative(filePath: string) {
 
 	let normalizedPath = path.normalize(filePath).replace(/^("|')|("|')$/g, '')
-	if (normalizedPath.startsWith('a\\') || normalizedPath.startsWith('b\\')) {
+	if (normalizedPath.startsWith('a\\') || normalizedPath.startsWith('b\\') || normalizedPath.startsWith('a/') || normalizedPath.startsWith('b/')) {
 		normalizedPath = normalizedPath.slice(2)
 	}
 
