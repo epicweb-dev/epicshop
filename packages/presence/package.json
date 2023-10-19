@@ -7,11 +7,10 @@
     "deploy": "partykit deploy"
   },
   "dependencies": {
-    "partysocket": "0.0.11",
     "zod": "^3.22.4"
   },
   "devDependencies": {
-    "partykit": "0.0.30",
+    "partykit": "0.0.32",
     "typescript": "^5.2.2"
   }
 }
