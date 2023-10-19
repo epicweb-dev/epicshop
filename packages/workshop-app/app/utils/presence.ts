@@ -1,5 +1,5 @@
 import { useRouteLoaderData } from '@remix-run/react'
-import usePartySocketDef from 'partysocket/react'
+import { usePartySocket } from 'partysocket/react'
 import { useEffect, useState } from 'react'
 import { type loader as rootLoader } from '#app/root.tsx'
 import {
@@ -11,10 +11,6 @@ import {
 } from '../../utils/presence.ts'
 
 export * from '../../utils/presence.ts'
-
-const usePartySocket =
-	// @ts-expect-error TS + ESM + default exports = pain
-	usePartySocketDef as (typeof usePartySocketDef)['default']
 
 export function usePresencePreferences() {
 	const data = useRouteLoaderData<typeof rootLoader>('root')
