@@ -1,15 +1,16 @@
 import type * as Party from 'partykit/server'
 import { z } from 'zod'
 
-const UserPayloadSchema = z.object({
+const UserSchema = z.object({
 	id: z.string(),
 	avatarUrl: z.string().nullable().optional(),
 	name: z.string().nullable().optional(),
 })
 
+type User = z.infer<typeof UserSchema>
 const ConnectionStateSchema = z
 	.object({
-		user: UserPayloadSchema.nullable().optional(),
+		user: UserSchema.nullable().optional(),
 	})
 	.nullable()
 
@@ -20,7 +21,7 @@ const MessageSchema = z
 		type: z.literal('remove-user'),
 		payload: z.object({ id: z.string() }),
 	})
-	.or(z.object({ type: z.literal('add-user'), payload: UserPayloadSchema }))
+	.or(z.object({ type: z.literal('add-user'), payload: UserSchema }))
 	.or(
 		z.object({
 			type: z.literal('add-anonymous-user'),
@@ -30,7 +31,7 @@ const MessageSchema = z
 	.or(
 		z.object({
 			type: z.literal('presence'),
-			payload: z.object({ users: z.array(UserPayloadSchema) }),
+			payload: z.object({ users: z.array(UserSchema) }),
 		}),
 	)
 type Message = z.infer<typeof MessageSchema>
@@ -60,7 +61,7 @@ export default (class Server implements Party.Server {
 	}
 
 	getPresenceMessage() {
-		const users = new Map<string, z.infer<typeof UserPayloadSchema>>()
+		const users = new Map<string, z.infer<typeof UserSchema>>()
 
 		for (const connection of this.party.getConnections()) {
 			const state = getConnectionState(connection)
@@ -71,7 +72,7 @@ export default (class Server implements Party.Server {
 
 		return {
 			type: 'presence',
-			payload: { users: Array.from(users.values()) },
+			payload: { users: sortUsers(Array.from(users.values())) },
 		} satisfies Message
 	}
 
@@ -133,4 +134,21 @@ function getConnectionState(connection: Party.Connection) {
 		setConnectionState(connection, null)
 		return null
 	}
+}
+
+function sortUsers(users: Array<User>) {
+	return [...users].sort((a, b) => {
+		const aScore = getScore(a)
+		const bScore = getScore(b)
+		if (aScore === bScore) return 0
+		return aScore > bScore ? -1 : 1
+	})
+}
+
+function getScore(user: User) {
+	let score = 0
+	if (user.avatarUrl) score += 1
+	if (user.avatarUrl?.includes('discordapp')) score += 0.5
+	if (user.name) score += 1
+	return score
 }
