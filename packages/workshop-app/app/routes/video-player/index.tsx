@@ -68,24 +68,25 @@ export function MuxPlayer({
 	const playerPreferencesFetcher = useFetcher<typeof action>()
 	const [metadataLoaded, setMetadataLoaded] = React.useState(false)
 	const currentTimeSessionKey = `${props.playbackId}:currentTime`
-	const [currentTime] = React.useState(() => {
-		if (typeof document === 'undefined') return 0
+	const [currentTime, setCurrentTime] = React.useState(0)
+
+	const fetcherRef = useLatest(playerPreferencesFetcher)
+	const playerPreferencesRef = useLatest(playerPreferences)
+
+	React.useEffect(() => {
+		if (typeof document === 'undefined') return
 		const stored = sessionStorage.getItem(currentTimeSessionKey)
-		if (!stored) return 0
+		if (!stored) return
 		try {
 			const { time, expiresAt } = PlaybackTimeSchema.parse(
 				JSON.parse(stored ?? '{}'),
 			)
 			if (expiresAt.getTime() < Date.now()) throw new Error('Time expired')
-			return time
+			setCurrentTime(time)
 		} catch {
 			sessionStorage.removeItem(currentTimeSessionKey)
-			return 0
 		}
-	})
-
-	const fetcherRef = useLatest(playerPreferencesFetcher)
-	const playerPreferencesRef = useLatest(playerPreferences)
+	}, [currentTimeSessionKey])
 
 	React.useEffect(() => {
 		function handleUserKeyPress(e: any) {

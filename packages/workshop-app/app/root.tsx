@@ -5,6 +5,7 @@ import {
 	type LinksFunction,
 	type MetaFunction,
 	json,
+	redirect,
 } from '@remix-run/node'
 import {
 	Links,
@@ -33,6 +34,7 @@ import {
 	getDiscordMember,
 	getPreferences,
 	getUserInfo,
+	readOnboardingData,
 } from './utils/db.server.ts'
 import { getEnv } from './utils/env.server.ts'
 import { getProgress } from './utils/epic-api.ts'
@@ -70,6 +72,12 @@ export const meta: MetaFunction<typeof loader> = ({ data }) => {
 
 export async function loader({ request }: DataFunctionArgs) {
 	const timings = makeTimings('rootLoader')
+	const onboarding = await readOnboardingData()
+	if (!onboarding?.finishedTourVideo) {
+		if (new URL(request.url).pathname !== '/onboarding') {
+			throw redirect('/onboarding')
+		}
+	}
 	const workshopTitle = await time(() => getWorkshopTitle(), {
 		type: 'getWorkshopTitle',
 		desc: 'getWorkshopTitle in root',

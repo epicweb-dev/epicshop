@@ -57,6 +57,10 @@ const AuthInfoSchema = z
 	.transform(d => ({ ...d, id: md5(d.email) }))
 
 const DataSchema = z.object({
+	onboarding: z
+		.object({ finishedTourVideo: z.boolean() })
+		.optional()
+		.default({ finishedTourVideo: false }),
 	preferences: z
 		.object({
 			player: PlayerPreferencesSchema,
@@ -225,4 +229,22 @@ export async function deleteDiscordInfo() {
 	delete data?.discordMember
 	await fsExtra.ensureDir(appDir)
 	await fsExtra.writeJSON(dbPath, data)
+}
+
+export async function readOnboardingData() {
+	const data = await readDb()
+	return data?.onboarding ?? null
+}
+
+export async function updateOnboardingData(onboardingData: {
+	finishedTourVideo: boolean
+}) {
+	const data = await readDb()
+	const updatedData = {
+		...data,
+		onboarding: { ...data?.onboarding, ...onboardingData },
+	}
+	await fsExtra.ensureDir(appDir)
+	await fsExtra.writeJSON(dbPath, updatedData)
+	return updatedData.onboarding
 }
