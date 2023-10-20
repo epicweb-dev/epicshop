@@ -46,11 +46,11 @@ function DiscordPosts() {
 					}
 				>
 					{posts => (
-						<ul className="flex w-full flex-col gap-4 p-12">
+						<ul className="flex w-full flex-col gap-4 p-3 xl:p-12">
 							{posts.map(post => (
 								<li
 									key={post.id}
-									className="rounded-3xl border border-border bg-background transition-all focus-within:-translate-y-1 focus-within:shadow-lg hover:-translate-y-1 hover:shadow-lg"
+									className="rounded-xl border border-border bg-background transition-all duration-200 focus-within:-translate-y-1 focus-within:shadow-lg hover:-translate-y-1 hover:shadow-lg"
 								>
 									<DiscordPost thread={post} />
 								</li>
@@ -103,9 +103,9 @@ function DiscordPost({ thread }: { thread: z.infer<typeof ThreadItemSchema> }) {
 								{thread.tags.map(t => (
 									<div
 										key={t.name}
-										className="rounded-full bg-accent px-2 py-1 text-sm"
+										className="flex items-center justify-center gap-1 rounded-full bg-accent px-2 py-1 text-sm"
 									>
-										<span className="h-3 w-3">
+										<span className="h-3 w-3 leading-3">
 											<Emoji name={t.emojiName} url={t.emojiUrl} />
 										</span>
 										<span>{t.name}</span>
@@ -161,7 +161,7 @@ function DiscordPost({ thread }: { thread: z.infer<typeof ThreadItemSchema> }) {
 											key={i}
 											className="flex items-center gap-1 rounded-md border border-blue-600 bg-blue-500/20 px-[5px] py-[0.5px] text-sm"
 										>
-											<span className="h-3 w-3">
+											<span className="h-3 w-3 leading-3">
 												<Emoji name={r.emojiName} url={r.emojiUrl} />
 											</span>
 											<span>{r.count}</span>
