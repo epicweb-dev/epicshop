@@ -15,6 +15,12 @@ const EpicVideoInfoSchema = z.object({
 	muxPlaybackId: z.string(),
 })
 
+const EpicVideoRegionRestrictedErrorSchema = z.object({
+	requestCountry: z.string(),
+	restrictedCountry: z.string(),
+	isRegionRestricted: z.literal(true),
+})
+
 const CachedEpicVideoInfoSchema = z
 	.object({
 		transcript: z.string(),
@@ -28,6 +34,17 @@ const CachedEpicVideoInfoSchema = z
 			status: z.literal('error'),
 			statusCode: z.number(),
 			statusText: z.string(),
+			type: z.literal('unknown'),
+		}),
+	)
+	.or(
+		z.object({
+			status: z.literal('error'),
+			statusCode: z.number(),
+			statusText: z.string(),
+			type: z.literal('region-restricted'),
+			requestCountry: z.string(),
+			restrictedCountry: z.string(),
 		}),
 	)
 	.or(z.null())
@@ -109,21 +126,39 @@ async function getEpicVideoInfo({
 					// don't cache errors for long...
 					context.metadata.ttl = 1000 * 2 // 2 seconds
 					context.metadata.swr = 0
-					console.warn(
-						`Response from EpicWeb for "${epicWebUrl.pathname}" does not match expectation`,
-						infoResult.error,
-					)
-					return {
-						status: 'error',
-						statusCode: 500,
-						statusText: 'API Data Type Mismatch',
-					} as const
+					const restrictedResult =
+						EpicVideoRegionRestrictedErrorSchema.safeParse(rawInfo)
+					if (restrictedResult.success) {
+						return {
+							status: 'error',
+							statusCode: status,
+							statusText,
+							type: 'region-restricted',
+							...restrictedResult.data,
+						} as const
+					} else {
+						console.warn(
+							`Response from EpicWeb for "${epicWebUrl.pathname}" does not match expectation`,
+							infoResult.error,
+						)
+						return {
+							status: 'error',
+							statusCode: 500,
+							statusText: 'API Data Type Mismatch',
+							type: 'unknown',
+						} as const
+					}
 				}
 			} else {
 				// don't cache errors for long...
 				context.metadata.ttl = 1000 * 2 // 2 seconds
 				context.metadata.swr = 0
-				return { status: 'error', statusCode: status, statusText } as const
+				return {
+					status: 'error',
+					statusCode: status,
+					statusText,
+					type: 'unknown',
+				} as const
 			}
 		},
 	})

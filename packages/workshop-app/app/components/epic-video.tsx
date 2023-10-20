@@ -210,6 +210,29 @@ export function DeferredEpicVideo({
 									transcript={info.transcript}
 								/>
 							)
+						} else if (info.type === 'region-restricted') {
+							return (
+								<div className="flex aspect-video flex-col items-center justify-center border-2 p-8">
+									<p className="!text-foreground-danger">
+										Error: Region Restricted
+									</p>
+									<p>
+										We've detected you're connecting from {info.requestCountry}{' '}
+										but your license has restricted access to{' '}
+										{info.restrictedCountry}
+									</p>
+									<p>
+										To continue watching uninterrupted, please{' '}
+										<a
+											href="https://www.epicweb.dev/products/full-stack-vol-1"
+											className="underline"
+										>
+											upgrade your EpicWeb.dev license
+										</a>{' '}
+										to a full Pro license.
+									</p>
+								</div>
+							)
 						} else if (info.statusCode === 401) {
 							return (
 								<div>
