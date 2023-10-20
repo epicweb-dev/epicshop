@@ -5,7 +5,6 @@ import {
 	redirect,
 } from '@remix-run/node'
 import { Form, useLoaderData } from '@remix-run/react'
-import * as React from 'react'
 import { Button } from '#app/components/button.tsx'
 import {
 	DeferredEpicVideo,

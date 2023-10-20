@@ -127,12 +127,17 @@ function FacePile({ isMenuOpened }: { isMenuOpened: boolean }) {
 							<TooltipTrigger asChild>
 								{user.avatarUrl ? (
 									<img
+										tabIndex={0}
 										alt={user.name || 'Epic Web Dev'}
 										className="h-8 w-8 rounded-full border object-cover"
 										src={user.avatarUrl}
 									/>
 								) : (
-									<div className="flex h-8 w-8 items-center justify-center rounded-full border">
+									<div
+										tabIndex={0}
+										aria-label={user.name || 'Epic Web Dev'}
+										className="flex h-8 w-8 items-center justify-center rounded-full border"
+									>
 										<Icon name="User" />
 									</div>
 								)}
@@ -144,6 +149,10 @@ function FacePile({ isMenuOpened }: { isMenuOpened: boolean }) {
 						<Tooltip>
 							<TooltipTrigger asChild>
 								<div
+									tabIndex={0}
+									aria-label={`${numberOverLimit} more Epic Web Dev${
+										numberOverLimit === 1 ? '' : 's'
+									} working now`}
 									className={cn(
 										'flex items-center justify-center text-ellipsis rounded-full border-2 border-gray-200 bg-gray-200 text-sm text-gray-800',
 										isMenuOpened ? 'h-8 w-8' : 'h-6 w-6',
