@@ -73,7 +73,7 @@ export const meta: MetaFunction<typeof loader> = ({ data }) => {
 export async function loader({ request }: DataFunctionArgs) {
 	const timings = makeTimings('rootLoader')
 	const onboarding = await readOnboardingData()
-	if (!onboarding?.finishedTourVideo) {
+	if (!ENV.KCDSHOP_DEPLOYED && !onboarding?.finishedTourVideo) {
 		if (new URL(request.url).pathname !== '/onboarding') {
 			throw redirect('/onboarding')
 		}
