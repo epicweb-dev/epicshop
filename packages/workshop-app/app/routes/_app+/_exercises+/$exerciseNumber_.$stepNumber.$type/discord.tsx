@@ -17,7 +17,7 @@ export function DiscordChat() {
 			<div className="text-center">
 				<DiscordCTA discordAuthUrl={data.discordAuthUrl} />
 			</div>
-			<div className="h-full bg-accent pb-4">
+			<div className="flex-1 bg-accent pb-4">
 				<DiscordPosts />
 			</div>
 		</div>
@@ -94,7 +94,7 @@ function DiscordPost({ thread }: { thread: z.infer<typeof ThreadItemSchema> }) {
 	const hints = useHints()
 
 	return (
-		<Link target="_blank" rel="noopener noreferrer" to={thread.link}>
+		<div>
 			<div className="flex flex-col gap-2 p-4">
 				<div className="flex gap-4">
 					<div className="flex flex-col gap-1">
@@ -146,7 +146,7 @@ function DiscordPost({ thread }: { thread: z.infer<typeof ThreadItemSchema> }) {
 						<img
 							src={thread.previewImageUrl}
 							alt=""
-							className="h-28 w-28 rounded-lg"
+							className="h-28 w-28 rounded-lg object-cover"
 						/>
 					) : null}
 				</div>
@@ -178,16 +178,16 @@ function DiscordPost({ thread }: { thread: z.infer<typeof ThreadItemSchema> }) {
 						</span>
 					</div>
 					<span className="flex items-center gap-4">
-						<Link to={thread.link.replace(/^https/, 'discord')}>
+						<a href={thread.link.replace(/^https/, 'discord')}>
 							<Icon name="Discord" />
-						</Link>
-						<Link to={thread.link} target="_blank" rel="noreferrer noopener">
+						</a>
+						<a href={thread.link} target="_blank" rel="noreferrer noopener">
 							<Icon name="ExternalLink" />
-						</Link>
+						</a>
 					</span>
 				</div>
 			</div>
-		</Link>
+		</div>
 	)
 }
 

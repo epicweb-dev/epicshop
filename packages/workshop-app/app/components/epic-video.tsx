@@ -159,9 +159,9 @@ export function DeferredEpicVideo({
 						<div className="flex aspect-video w-full items-center justify-center">
 							<Loading>{title}</Loading>
 						</div>
-						<div className="mt-4 flex flex-wrap justify-between">
-							<div className="h-8 min-w-[240px]" />
+						<div className="mt-4 flex flex-col gap-2">
 							{linkUI}
+							<div className="h-[32px]" />
 						</div>
 					</div>
 				}
@@ -175,14 +175,14 @@ export function DeferredEpicVideo({
 					{epicVideoInfos => {
 						const epicVideoInfo = epicVideoInfos?.[url]
 						const transcriptUI = ENV.KCDSHOP_DEPLOYED ? (
-							<div className="min-w-[240px]">
+							<div>
 								<Link to={ENV.KCDSHOP_GITHUB_ROOT} className="underline">
 									Run locally
 								</Link>
 								{' for transcripts'}
 							</div>
 						) : (
-							<div className="min-w-[240px]">
+							<div>
 								<Link to="/login" className="underline">
 									Login
 								</Link>
@@ -193,9 +193,9 @@ export function DeferredEpicVideo({
 							return (
 								<div>
 									<EpicVideoEmbed url={url} title={title} />
-									<div className="mt-4 flex min-h-[32px] flex-wrap items-center justify-between">
-										{transcriptUI}
+									<div className="mt-4 flex flex-col gap-2">
 										{linkUI}
+										{transcriptUI}
 									</div>
 								</div>
 							)
@@ -212,43 +212,30 @@ export function DeferredEpicVideo({
 							)
 						} else if (info.type === 'region-restricted') {
 							return (
-								<div className="flex aspect-video flex-col items-center justify-center border-2 p-8">
-									<p className="!text-foreground-danger">
-										Error: Region Restricted
-									</p>
-									<p>
-										We've detected you're connecting from {info.requestCountry}{' '}
-										but your license has restricted access to{' '}
-										{info.restrictedCountry}
-									</p>
-									<p>
-										To continue watching uninterrupted, please{' '}
-										<a
-											href="https://www.epicweb.dev/products/full-stack-vol-1"
-											className="underline"
-										>
-											upgrade your EpicWeb.dev license
-										</a>{' '}
-										to a full Pro license.
-									</p>
-								</div>
-							)
-						} else if (info.statusCode === 401) {
-							return (
 								<div>
-									<EpicVideoEmbed url={url} title={title} />
-									<div className="mt-4 flex min-h-[32px] flex-wrap items-center justify-between">
-										{transcriptUI}
-										{linkUI}
+									<div className="flex aspect-video min-h-full min-w-full flex-col items-center justify-start gap-2 overflow-y-scroll border-2 p-4 lg:justify-center lg:gap-4 lg:text-xl">
+										<div className="!text-foreground-danger">
+											Error: Region Restricted
+										</div>
+										<div>
+											We've detected you're connecting from{' '}
+											{info.requestCountry} but your license has restricted
+											access to {info.restrictedCountry}
+										</div>
+										<div>
+											To continue watching uninterrupted, please{' '}
+											<a
+												href="https://www.epicweb.dev/products/full-stack-vol-1"
+												className="underline"
+											>
+												upgrade your EpicWeb.dev license
+											</a>{' '}
+											to a full Pro license.
+										</div>
 									</div>
-								</div>
-							)
-						} else if (info.statusCode === 403) {
-							return (
-								<div>
-									<EpicVideoEmbed url={url} title={title} />
-									<div className="mt-4 flex min-h-[32px] flex-wrap items-center justify-between">
-										<div className="min-w-[240px]">
+									<div className="mt-4 flex flex-col gap-2">
+										{linkUI}
+										<div>
 											<Link
 												to="https://www.epicweb.dev/products"
 												className="underline"
@@ -257,7 +244,34 @@ export function DeferredEpicVideo({
 											</Link>
 											{' for transcripts'}
 										</div>
+									</div>
+								</div>
+							)
+						} else if (info.statusCode === 401) {
+							return (
+								<div>
+									<EpicVideoEmbed url={url} title={title} />
+									<div className="mt-4 flex flex-col gap-2">
 										{linkUI}
+										{transcriptUI}
+									</div>
+								</div>
+							)
+						} else if (info.statusCode === 403) {
+							return (
+								<div>
+									<EpicVideoEmbed url={url} title={title} />
+									<div className="mt-4 flex flex-col gap-2">
+										{linkUI}
+										<div>
+											<Link
+												to="https://www.epicweb.dev/products"
+												className="underline"
+											>
+												Upgrade
+											</Link>
+											{' for transcripts'}
+										</div>
 									</div>
 								</div>
 							)
@@ -265,9 +279,9 @@ export function DeferredEpicVideo({
 							return (
 								<div>
 									<EpicVideoEmbed url={url} title={title} />
-									<div className="mt-4 flex min-h-[32px] flex-wrap items-center justify-between">
-										<div className="min-w-[240px]">Transcripts not found</div>
+									<div className="mt-4 flex flex-col gap-2">
 										{linkUI}
+										<div>Transcripts not found</div>
 									</div>
 								</div>
 							)
@@ -276,11 +290,11 @@ export function DeferredEpicVideo({
 							return (
 								<div>
 									<EpicVideoEmbed url={url} title={title} />
-									<div className="mt-4 flex min-h-[32px] flex-wrap items-center justify-between">
-										<div className="min-w-[240px]">
+									<div className="mt-4 flex flex-col gap-2">
+										{linkUI}
+										<div className="!text-foreground-danger">
 											Unknown error (check console)
 										</div>
-										{linkUI}
 									</div>
 								</div>
 							)
