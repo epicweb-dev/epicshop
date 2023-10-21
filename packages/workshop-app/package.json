@@ -99,6 +99,7 @@
     "close-with-grace": "^1.2.0",
     "clsx": "^2.0.0",
     "compression": "^1.7.4",
+    "confetti-react": "^2.5.0",
     "cross-env": "^7.0.3",
     "cross-spawn": "^7.0.3",
     "dayjs": "^1.11.10",

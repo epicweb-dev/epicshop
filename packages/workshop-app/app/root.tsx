@@ -21,6 +21,7 @@ import {
 } from '@remix-run/react'
 import { useCallback, useEffect } from 'react'
 import { useSpinDelay } from 'spin-delay'
+import { Confetti } from './components/confetti.tsx'
 import { GeneralErrorBoundary } from './components/error-boundary.tsx'
 import { EpicProgress } from './components/progress-bar.tsx'
 import { EpicToaster } from './components/toaster.tsx'
@@ -31,6 +32,7 @@ import appStylesheetUrl from './styles/app.css'
 import tailwindStylesheetUrl from './styles/tailwind.css'
 import { getWorkshopTitle } from './utils/apps.server.ts'
 import { ClientHintCheck, getHints } from './utils/client-hints.tsx'
+import { getConfetti } from './utils/confetti.server.ts'
 import {
 	getDiscordMember,
 	getPreferences,
@@ -85,6 +87,7 @@ export async function loader({ request }: DataFunctionArgs) {
 	const preferences = await getPreferences()
 	const progress = await getProgress({ timings })
 	const { toast, headers: toastHeaders } = await getToast(request)
+	const { confettiId, headers: confettiHeaders } = getConfetti(request)
 	const discordMember = await getDiscordMember()
 	const theme = getTheme(request)
 	const user = await getUserInfo()
@@ -103,12 +106,13 @@ export async function loader({ request }: DataFunctionArgs) {
 			discordMember,
 			user,
 			toast,
+			confettiId,
 			presence: {
 				users: presentUsers,
 			},
 		},
 		{
-			headers: combineHeaders(toastHeaders, {
+			headers: combineHeaders(toastHeaders, confettiHeaders, {
 				'Server-Timing': timings.toString(),
 			}),
 		},
@@ -181,6 +185,7 @@ function App() {
 			env={data.ENV}
 		>
 			<Outlet />
+			<Confetti id={data.confettiId} />
 			<EpicToaster toast={data.toast} />
 			<EpicProgress />
 		</Document>

@@ -10,9 +10,19 @@ import clsx from 'clsx'
 import { motion } from 'framer-motion'
 import * as React from 'react'
 import { type loader as rootLoader } from '#app/root.tsx'
+import { createConfettiHeaders } from '#app/utils/confetti.server.ts'
 import { requireAuthInfo } from '#app/utils/db.server.ts'
-import { updateProgress, type Progress } from '#app/utils/epic-api.ts'
-import { ensureUndeployed, invariantResponse } from '#app/utils/misc.tsx'
+import {
+	updateProgress,
+	type Progress,
+	getProgress,
+} from '#app/utils/epic-api.ts'
+import {
+	combineHeaders,
+	ensureUndeployed,
+	invariantResponse,
+} from '#app/utils/misc.tsx'
+import { createToastHeaders } from '#app/utils/toast.server.ts'
 
 export function useEpicProgress() {
 	const data = useRouteLoaderData<typeof rootLoader>('root')
@@ -189,8 +199,54 @@ export async function action({ request }: DataFunctionArgs) {
 		'lessonSlug must be a string',
 		{ status: 400 },
 	)
+	const beforeProgress = await getProgress({ request })
 	const result = await updateProgress({ lessonSlug, complete }, { request })
-	return json(result)
+
+	const lessonProgress = beforeProgress.find(
+		p => p.epicLessonSlug === lessonSlug,
+	)
+	function getCompletionAnnouncement() {
+		if (!complete) return null
+		if (!lessonProgress) return null
+		const allOtherAreFinished = beforeProgress.every(
+			p =>
+				p.epicCompletedAt || p.epicLessonSlug === lessonProgress.epicLessonSlug,
+		)
+		if (allOtherAreFinished) return 'You completed the workshop!'
+
+		if (
+			lessonProgress.type === 'workshop-instructions' ||
+			lessonProgress.type === 'unknown' ||
+			lessonProgress.type === 'workshop-finished'
+		) {
+			return null
+		}
+		const { exerciseNumber } = lessonProgress
+		const otherExerciseLessons = beforeProgress.filter(
+			p =>
+				(p.type === 'step' ||
+					p.type === 'instructions' ||
+					p.type === 'finished') &&
+				p.exerciseNumber === exerciseNumber &&
+				p.epicLessonSlug !== lessonSlug,
+		)
+		const otherAreFinished = otherExerciseLessons.every(p => p.epicCompletedAt)
+		return otherAreFinished ? `You completed exercise ${exerciseNumber}!` : null
+	}
+	const announcement = getCompletionAnnouncement()
+
+	return json(result, {
+		headers: combineHeaders(
+			announcement ? createConfettiHeaders() : null,
+			announcement
+				? await createToastHeaders({
+						title: 'Congratulations! 🎉',
+						description: announcement,
+						type: 'success',
+				  })
+				: null,
+		),
+	})
 }
 
 export function ProgressToggle({
