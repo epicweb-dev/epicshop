@@ -33,6 +33,9 @@ export async function checkForUpdates() {
 		localCommit = (
 			await execaCommand('git rev-parse --short HEAD', { cwd })
 		).stdout.trim()
+
+		await execaCommand('git fetch --all', { cwd })
+
 		remoteCommit = (
 			await execaCommand(`git rev-parse --short origin/${currentBranch}`, {
 				cwd,
