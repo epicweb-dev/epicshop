@@ -13,7 +13,10 @@ export const UserSchema = z.object({
 			workshopTitle: z.string().nullable().optional(),
 			exercise: z
 				.object({
-					type: z.union([z.literal('problem'), z.literal('solution')]),
+					type: z
+						.union([z.literal('problem'), z.literal('solution')])
+						.nullable()
+						.optional(),
 					exerciseNumber: z.number().nullable().optional(),
 					stepNumber: z.number().nullable().optional(),
 				})

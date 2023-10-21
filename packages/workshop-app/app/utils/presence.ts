@@ -25,9 +25,9 @@ export function useOptionalWorkshopTitle() {
 }
 
 const ExerciseAppParamsSchema = z.object({
-	type: z.union([z.literal('problem'), z.literal('solution')]),
+	type: z.union([z.literal('problem'), z.literal('solution')]).optional(),
 	exerciseNumber: z.coerce.number().finite(),
-	stepNumber: z.coerce.number().finite(),
+	stepNumber: z.coerce.number().finite().optional(),
 })
 
 export function usePresence(user?: User | null) {
@@ -93,9 +93,7 @@ export function usePresence(user?: User | null) {
 
 	const messageJson = message ? JSON.stringify(message) : null
 	useEffect(() => {
-		if (messageJson) {
-			socket.send(messageJson)
-		}
+		if (messageJson) socket.send(messageJson)
 	}, [messageJson, socket])
 
 	const scoredUsers = scoreUsers(location, users)
@@ -106,34 +104,33 @@ export function usePresence(user?: User | null) {
 function scoreUsers(location: User['location'], users: Array<User>) {
 	const scoredUsers = users.map(user => {
 		let score = 0
+		let available = 4
 		if (location?.workshopTitle === user.location?.workshopTitle) {
 			score += 1
 			if (
+				location?.exercise?.exerciseNumber &&
 				location?.exercise?.exerciseNumber ===
-				user.location?.exercise?.exerciseNumber
+					user.location?.exercise?.exerciseNumber
 			) {
 				score += 1
 				if (
+					location.exercise.stepNumber &&
 					location?.exercise?.stepNumber === user.location?.exercise?.stepNumber
 				) {
 					score += 1
-					if (location?.exercise?.type === user.location?.exercise?.type) {
+					if (
+						location?.exercise?.type &&
+						location?.exercise?.type === user.location?.exercise?.type
+					) {
 						score += 1
 					}
 				}
 			}
 		}
 
-		return { user, score }
+		return { user, score: Math.floor((score / available) * 10) / 10 }
 	})
-	const highestScore = Math.max(...scoredUsers.map(u => u.score))
-	const lowestScore = Math.min(...scoredUsers.map(u => u.score))
-	const denominator = highestScore - lowestScore
-	const adjustedScoredUsers = scoredUsers.map(u => ({
-		...u,
-		score: denominator ? (u.score - lowestScore) / denominator : 0,
-	}))
-	return adjustedScoredUsers.sort((a, b) => {
+	return scoredUsers.sort((a, b) => {
 		if (a.score === b.score) return 0
 		return a.score > b.score ? -1 : 1
 	})
