@@ -18,7 +18,6 @@ import {
 } from 'framer-motion'
 import * as React from 'react'
 import { Icon } from '#app/components/icons.tsx'
-import { ToastHub } from '#app/components/toast.tsx'
 import {
 	SimpleTooltip,
 	Tooltip,
@@ -199,7 +198,6 @@ export default function App() {
 				>
 					<Outlet />
 				</div>
-				<ToastHub />
 			</div>
 		</div>
 	)

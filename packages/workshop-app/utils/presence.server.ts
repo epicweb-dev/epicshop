@@ -16,7 +16,6 @@ export async function getPresentUsers(
 	return cachified({
 		key: 'presence',
 		cache: presenceCache,
-		forceFresh: true,
 		timings,
 		request,
 		ttl: 1000 * 60 * 5,
@@ -39,6 +38,7 @@ export async function getPresentUsers(
 					return uniqueUsers([...users, user])
 				}
 			} catch (err) {
+				console.error(err)
 				context.metadata.ttl = 300
 				return []
 			}

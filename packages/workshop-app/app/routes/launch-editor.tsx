@@ -6,11 +6,11 @@ import fsExtra from 'fs-extra'
 import { useEffect } from 'react'
 import { type ZodTypeAny, z } from 'zod'
 import { showProgressBarField } from '#app/components/progress-bar.tsx'
-import { showToast } from '#app/components/toast.tsx'
 import { SimpleTooltip } from '#app/components/ui/tooltip.tsx'
 import { getAppByName } from '#app/utils/apps.server.ts'
 import { launchEditor } from '#app/utils/launch-editor.server.ts'
 import { ensureUndeployed } from '#app/utils/misc.tsx'
+import { createToastHeaders } from '#app/utils/toast.server.ts'
 
 function getFileDescriptorSchema<AppFile extends ZodTypeAny>(appFile: AppFile) {
 	return z.union([
@@ -154,7 +154,14 @@ export async function action({ request }: DataFunctionArgs) {
 			)
 			.filter(Boolean)
 			.join('\n')
-		return json({ status: 'error', message: messages } as const)
+		console.error('Launch editor error:', messages)
+		return json({ status: 'error', message: messages } as const, {
+			headers: await createToastHeaders({
+				type: 'error',
+				title: 'Launch Editor Error',
+				description: messages,
+			}),
+		})
 	}
 }
 
@@ -182,21 +189,8 @@ function useLaunchFetcher(onUpdate?: ((state: string) => void) | undefined) {
 	const fetcher = useFetcher<typeof action>()
 
 	useEffect(() => {
-		switch (fetcher.state) {
-			case 'loading': {
-				const message =
-					fetcher.data?.status === 'error' ? fetcher.data.message : ''
-				if (message) {
-					showToast(document, {
-						title: 'Launch Editor Error',
-						variant: 'Error',
-						content: message,
-					})
-				}
-			}
-			case 'idle': {
-				if (fetcher.data != null) onUpdate?.('fetcher-done')
-			}
+		if (fetcher.state === 'idle' && fetcher.data != null) {
+			onUpdate?.('fetcher-done')
 		}
 	}, [fetcher, onUpdate])
 

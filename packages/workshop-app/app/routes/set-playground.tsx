@@ -2,11 +2,9 @@ import * as Select from '@radix-ui/react-select'
 import { type DataFunctionArgs, json } from '@remix-run/node'
 import { useFetcher } from '@remix-run/react'
 import { clsx } from 'clsx'
-import { useEffect } from 'react'
 import { z } from 'zod'
 import { Icon } from '#app/components/icons.tsx'
 import { showProgressBarField } from '#app/components/progress-bar.tsx'
-import { showToast } from '#app/components/toast.tsx'
 import { SimpleTooltip } from '#app/components/ui/tooltip.tsx'
 import {
 	getAppByName,
@@ -18,6 +16,7 @@ import {
 } from '#app/utils/apps.server.ts'
 import { getDiffCode } from '#app/utils/diff.server.ts'
 import { ensureUndeployed, getErrorMessage } from '#app/utils/misc.tsx'
+import { createToastHeaders } from '#app/utils/toast.server.ts'
 
 const SetPlaygroundSchema = z.object({
 	appName: z.string(),
@@ -57,8 +56,16 @@ export async function action({ request }: DataFunctionArgs) {
 	try {
 		await setPlayground(app.fullPath, { reset: form.reset })
 	} catch (error: unknown) {
-		return json({ status: 'error', error: getErrorMessage(error) } as const, {
+		const message = getErrorMessage(error)
+		console.error('Error setting playground', message)
+		return json({ status: 'error', error: message } as const, {
 			status: 500,
+			headers: await createToastHeaders({
+				type: 'error',
+				title: 'Error',
+				description:
+					'There was an error setting the playground. Check the terminal for details.',
+			}),
 		})
 	}
 	const apps = await getApps({ forceFresh: true })
@@ -80,21 +87,6 @@ export function SetPlayground({
 	reset?: boolean
 } & JSX.IntrinsicElements['button']) {
 	const fetcher = useFetcher<typeof action>()
-
-	useEffect(() => {
-		switch (fetcher.state) {
-			case 'loading': {
-				const error = fetcher.data?.status === 'error' ? fetcher.data.error : ''
-				if (error) {
-					showToast(document, {
-						title: 'Set Playground Error',
-						variant: 'Error',
-						content: error,
-					})
-				}
-			}
-		}
-	}, [fetcher])
 
 	const submitButton = (
 		<button

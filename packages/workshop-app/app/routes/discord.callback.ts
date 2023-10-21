@@ -5,6 +5,7 @@ import {
 	setDiscordMember,
 } from '#app/utils/db.server.ts'
 import { invariantResponse } from '#app/utils/misc.tsx'
+import { redirectWithToast } from '#app/utils/toast.server.ts'
 
 const port = process.env.PORT || '5639'
 const scope = 'guilds.join identify messages.read'
@@ -46,7 +47,11 @@ export async function loader({ request }: DataFunctionArgs) {
 			console.error(await result.text())
 		} catch {
 		} finally {
-			return redirect('/account?error')
+			return redirectWithToast('/account', {
+				type: 'error',
+				title: 'Error',
+				description: `There was an error connecting your Discord account (details in terminal output). Please try again.`,
+			})
 		}
 	}
 
@@ -60,10 +65,18 @@ export async function loader({ request }: DataFunctionArgs) {
 	const discordMemberResult = DiscordMemberSchema.safeParse(jsonResult.member)
 	if (discordMemberResult.success) {
 		await setDiscordMember(discordMemberResult.data)
-		return redirect('/account?success')
+		return redirectWithToast('/account', {
+			type: 'success',
+			title: 'Success',
+			description: `Your Discord account "${discordMemberResult.data.displayName}" has been connected!`,
+		})
 	} else {
 		console.error(`There was an error connecting Discord`)
 		console.error(discordMemberResult.error)
-		return redirect('/account?error')
+		return redirectWithToast('/account', {
+			type: 'error',
+			title: 'Error',
+			description: `There was an error connecting your Discord account (details in terminal output). Please try again.`,
+		})
 	}
 }

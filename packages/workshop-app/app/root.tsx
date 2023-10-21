@@ -23,6 +23,7 @@ import { useCallback, useEffect } from 'react'
 import { useSpinDelay } from 'spin-delay'
 import { GeneralErrorBoundary } from './components/error-boundary.tsx'
 import { EpicProgress } from './components/progress-bar.tsx'
+import { EpicToaster } from './components/toaster.tsx'
 import { TooltipProvider } from './components/ui/tooltip.tsx'
 import { useTheme } from './routes/theme/index.tsx'
 import { getTheme } from './routes/theme/theme-session.server.ts'
@@ -38,13 +39,10 @@ import {
 } from './utils/db.server.ts'
 import { getEnv } from './utils/env.server.ts'
 import { getProgress } from './utils/epic-api.ts'
-import { cn, useAltDown } from './utils/misc.tsx'
+import { cn, combineHeaders, useAltDown } from './utils/misc.tsx'
 import { getPresentUsers } from './utils/presence.server.ts'
-import {
-	getServerTimeHeader,
-	makeTimings,
-	time,
-} from './utils/timing.server.ts'
+import { makeTimings, time } from './utils/timing.server.ts'
+import { getToast } from './utils/toast.server.ts'
 
 export const links: LinksFunction = () => {
 	return [
@@ -86,6 +84,7 @@ export async function loader({ request }: DataFunctionArgs) {
 
 	const preferences = await getPreferences()
 	const progress = await getProgress({ timings })
+	const { toast, headers: toastHeaders } = await getToast(request)
 	const discordMember = await getDiscordMember()
 	const theme = getTheme(request)
 	const user = await getUserInfo()
@@ -103,14 +102,15 @@ export async function loader({ request }: DataFunctionArgs) {
 			preferences,
 			discordMember,
 			user,
+			toast,
 			presence: {
 				users: presentUsers,
 			},
 		},
 		{
-			headers: {
-				'Server-Timing': getServerTimeHeader(timings),
-			},
+			headers: combineHeaders(toastHeaders, {
+				'Server-Timing': timings.toString(),
+			}),
 		},
 	)
 }
@@ -181,6 +181,7 @@ function App() {
 			env={data.ENV}
 		>
 			<Outlet />
+			<EpicToaster toast={data.toast} />
 			<EpicProgress />
 		</Document>
 	)

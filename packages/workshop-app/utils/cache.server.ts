@@ -19,7 +19,7 @@ import {
 	type SolutionApp,
 } from './apps.server.ts'
 import { singleton } from './singleton.server.ts'
-import { time, type Timings } from './timing.server.ts'
+import { cachifiedTimingReporter, type Timings } from './timing.server.ts'
 
 export const solutionAppCache =
 	makeSingletonCache<SolutionApp>('SolutionAppCache')
@@ -108,38 +108,20 @@ export async function cachified<Value>({
 	forceFresh?: boolean | string
 	timingKey?: string
 }): Promise<Value> {
-	let cachifiedResolved = false
-	const forceFresh = await shouldForceFresh({
-		forceFresh: options.forceFresh,
-		request,
-		key,
-	})
-	const cachifiedPromise = C.cachified({
+	return C.cachified({
 		...options,
-		reporter: process.env.KCDSHOP_DEBUG_CACHE ? verboseReporter() : undefined,
 		key,
-		forceFresh,
-		getFreshValue: async context => {
-			// if we've already retrieved the cached value, then this may be called
-			// after the response has already been sent so there's no point in timing
-			// how long this is going to take
-			if (!cachifiedResolved && timings) {
-				return time(() => options.getFreshValue(context), {
-					timings,
-					type: `getFreshValue:${timingKey}`,
-					desc: `FRESH ${timingKey}`,
-				})
-			}
-			return options.getFreshValue(context)
-		},
+		forceFresh: await shouldForceFresh({
+			forceFresh: options.forceFresh,
+			request,
+			key,
+		}),
+		reporter: C.mergeReporters(
+			cachifiedTimingReporter(timings),
+			options.reporter,
+			process.env.KCDSHOP_DEBUG_CACHE ? verboseReporter() : undefined,
+		),
 	})
-	const result = await time(cachifiedPromise, {
-		timings,
-		type: `cache:${timingKey}`,
-		desc: `CACHE ${timingKey}`,
-	})
-	cachifiedResolved = true
-	return result
 }
 
 export async function shouldForceFresh({

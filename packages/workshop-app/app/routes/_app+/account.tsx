@@ -12,6 +12,7 @@ import {
 } from '#app/utils/db.server.ts'
 import { ensureUndeployed } from '#app/utils/misc.tsx'
 import { usePresencePreferences } from '#app/utils/presence.ts'
+import { redirectWithToast } from '#app/utils/toast.server.ts'
 import { getDiscordAuthURL } from '../discord.callback.ts'
 
 export async function loader({ request }: DataFunctionArgs) {
@@ -26,13 +27,27 @@ export async function action({ request }: { request: Request }) {
 	const intent = formData.get('intent')
 	if (intent === 'disconnect-discord') {
 		await deleteDiscordInfo()
+		return redirectWithToast('/account', {
+			type: 'success',
+			title: 'Disconnected',
+			description: 'Local discord data has been deleted.',
+		})
 	} else if (intent === 'logout') {
 		await deleteDb()
 		await deleteCache()
-		return redirect('/login')
+		return redirectWithToast('/login', {
+			type: 'success',
+			title: 'Logged out',
+			description: 'Goodbye! Come back soon!',
+		})
 	} else if (intent === 'presence-opt-out') {
 		const optOut = formData.get('optOut') === 'true'
 		await setPresencePreferences({ optOut })
+		return redirectWithToast('/account', {
+			title: optOut ? 'Opted out' : 'Opted in',
+			description: `You are now ${optOut ? 'invisible' : 'visible'}.`,
+			type: 'success',
+		})
 	}
 
 	return redirect('/account')
@@ -45,7 +60,7 @@ export default function Account() {
 	const discordMember = useOptionalDiscordMember()
 	const presencePreferences = usePresencePreferences()
 	return (
-		<main className="container flex h-full w-full max-w-lg flex-grow flex-col items-center justify-center gap-4">
+		<main className="container flex h-full w-full max-w-3xl flex-grow flex-col items-center justify-center gap-4">
 			<img
 				className="h-36 w-36 rounded-full"
 				alt={discordMember?.displayName ?? user.name ?? user.email}
@@ -94,7 +109,7 @@ export default function Account() {
 				<small>
 					Note: it is your <i className="italic">device</i> that's logged in,
 					not your browser. So all browsers on this device will be logged in
-					with the same account.
+					with the same account on this device.
 				</small>
 			</p>
 			<Form method="post" className="mt-2">
