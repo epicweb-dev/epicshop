@@ -1,4 +1,9 @@
-import { Link, useFormAction, useNavigation } from '@remix-run/react'
+import {
+	Link,
+	type LinkProps,
+	useFormAction,
+	useNavigation,
+} from '@remix-run/react'
 import slugify from '@sindresorhus/slugify'
 import { clsx, type ClassValue } from 'clsx'
 import * as React from 'react'
@@ -8,34 +13,61 @@ import { extendTailwindMerge } from 'tailwind-merge'
 import { Icon } from '#app/components/icons.tsx'
 import { extendedTheme } from './extended-theme.ts'
 
-/**
- *  base on https://usehooks.com/useEventListener/
- *
- *  make sure to use only memoized handler and options (when it is an object)
- *  to prevents removing and adding the listener on each render
- */
-export function useEventListener(
-	eventName: keyof CustomEventMap | string,
-	element: EventTargetElement,
-	handler: CustomEventListener<keyof CustomEventMap>,
-	options?: boolean | AddEventListenerOptions,
-) {
-	const savedHandler = React.useRef<typeof handler>()
+type AnchorProps = React.DetailedHTMLProps<
+	React.AnchorHTMLAttributes<HTMLAnchorElement>,
+	HTMLAnchorElement
+>
 
-	React.useEffect(() => {
-		savedHandler.current = handler
-	}, [handler])
+export const AnchorOrLink = React.forwardRef<
+	HTMLAnchorElement,
+	AnchorProps & {
+		reload?: boolean
+		to?: LinkProps['to']
+		prefetch?: LinkProps['prefetch']
+	}
+>(function AnchorOrLink(props, ref) {
+	const {
+		to,
+		href,
+		download,
+		reload = false,
+		prefetch,
+		children,
+		...rest
+	} = props
+	let toUrl = ''
+	let shouldUserRegularAnchor = reload || download
 
-	React.useEffect(() => {
-		const isSupported = element && element.addEventListener
-		if (!isSupported) return
-		const eventListener: typeof handler = function (event) {
-			if (savedHandler.current) savedHandler.current(event)
-		}
-		element.addEventListener(eventName, eventListener, options)
-		return () => element.removeEventListener(eventName, eventListener, options)
-	}, [eventName, element, options])
-}
+	if (!shouldUserRegularAnchor && typeof href === 'string') {
+		shouldUserRegularAnchor = href.includes(':') || href.startsWith('#')
+	}
+
+	if (!shouldUserRegularAnchor && typeof to === 'string') {
+		toUrl = to
+		shouldUserRegularAnchor = to.includes(':')
+	}
+
+	if (!shouldUserRegularAnchor && typeof to === 'object') {
+		toUrl = `${to.pathname ?? ''}${to.hash ? `#${to.hash}` : ''}${
+			to.search ? `?${to.search}` : ''
+		}`
+		shouldUserRegularAnchor = to.pathname?.includes(':')
+	}
+
+	if (shouldUserRegularAnchor) {
+		return (
+			<a {...rest} download={download} href={href ?? toUrl} ref={ref}>
+				{children}
+			</a>
+		)
+	} else {
+		return (
+			<Link prefetch={prefetch} to={to ?? href ?? ''} {...rest} ref={ref}>
+				{children}
+			</Link>
+		)
+	}
+})
 
 export function ensureUndeployed() {
 	if (ENV.KCDSHOP_DEPLOYED) {

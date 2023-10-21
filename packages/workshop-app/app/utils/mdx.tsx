@@ -9,7 +9,7 @@ import { VideoEmbed, DeferredEpicVideo } from '#app/components/epic-video.tsx'
 import { Icon } from '#app/components/icons.tsx'
 import { type loader } from '#app/routes/_app+/_exercises+/$exerciseNumber_.$stepNumber.$type/index.tsx'
 import { LaunchEditor } from '#app/routes/launch-editor.tsx'
-import { Heading, cn } from './misc.tsx'
+import { AnchorOrLink, Heading, cn } from './misc.tsx'
 
 const safePath = (s: string) => s.replace(/\\/g, '/')
 
@@ -174,7 +174,7 @@ export const mdxComponents = {
 	h4: (props: any) => <Heading {...props} as="h4" />,
 	h5: (props: any) => <Heading {...props} as="h5" />,
 	h6: (props: any) => <Heading {...props} as="h6" />,
-	a: Link,
+	a: AnchorOrLink,
 	// you can't put a <form> inside a <p> so we'll just use a div
 	// if this is a problem, then render the form outside of the MDX and update <LaunchEditor /> to reference that one instead or something.
 	p: (props: any) => <div {...props} />,
