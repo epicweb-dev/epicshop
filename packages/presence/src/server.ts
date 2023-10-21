@@ -5,6 +5,20 @@ const UserSchema = z.object({
 	id: z.string(),
 	avatarUrl: z.string().nullable().optional(),
 	name: z.string().nullable().optional(),
+	location: z
+		.object({
+			workshopTitle: z.string().nullable().optional(),
+			exercise: z
+				.object({
+					type: z.union([z.literal('problem'), z.literal('solution')]),
+					exerciseNumber: z.number().nullable().optional(),
+					stepNumber: z.number().nullable().optional(),
+				})
+				.nullable()
+				.optional(),
+		})
+		.nullable()
+		.optional(),
 })
 
 type User = z.infer<typeof UserSchema>
@@ -61,6 +75,13 @@ export default (class Server implements Party.Server {
 	}
 
 	getPresenceMessage() {
+		return {
+			type: 'presence',
+			payload: { users: this.getUsers() },
+		} satisfies Message
+	}
+
+	getUsers() {
 		const users = new Map<string, z.infer<typeof UserSchema>>()
 
 		for (const connection of this.party.getConnections()) {
@@ -70,10 +91,7 @@ export default (class Server implements Party.Server {
 			}
 		}
 
-		return {
-			type: 'presence',
-			payload: { users: sortUsers(Array.from(users.values())) },
-		} satisfies Message
+		return sortUsers(Array.from(users.values()))
 	}
 
 	onMessage(message: string, sender: Party.Connection) {

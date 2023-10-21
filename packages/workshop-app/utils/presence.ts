@@ -8,6 +8,20 @@ export const UserSchema = z.object({
 	id: z.string(),
 	avatarUrl: z.string().nullable().optional(),
 	name: z.string().nullable().optional(),
+	location: z
+		.object({
+			workshopTitle: z.string().nullable().optional(),
+			exercise: z
+				.object({
+					type: z.union([z.literal('problem'), z.literal('solution')]),
+					exerciseNumber: z.number().nullable().optional(),
+					stepNumber: z.number().nullable().optional(),
+				})
+				.nullable()
+				.optional(),
+		})
+		.nullable()
+		.optional(),
 })
 
 export const MessageSchema = z

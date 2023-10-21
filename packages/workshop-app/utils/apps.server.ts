@@ -842,7 +842,7 @@ export async function requireExerciseApp(
 	return app
 }
 
-const exerciseAppParams = z.object({
+const ExerciseAppParamsSchema = z.object({
 	type: z.union([z.literal('problem'), z.literal('solution')]),
 	exerciseNumber: z.coerce.number().finite(),
 	stepNumber: z.coerce.number().finite(),
@@ -856,7 +856,7 @@ export async function getExerciseApp(
 	},
 	{ request, timings }: CachifiedOptions = {},
 ) {
-	const result = exerciseAppParams.safeParse(params)
+	const result = ExerciseAppParamsSchema.safeParse(params)
 	if (!result.success) {
 		return null
 	}

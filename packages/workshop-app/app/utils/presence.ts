@@ -1,6 +1,8 @@
-import { useRouteLoaderData } from '@remix-run/react'
+import { createId as cuid } from '@paralleldrive/cuid2'
+import { useParams, useRouteLoaderData } from '@remix-run/react'
 import { usePartySocket } from 'partysocket/react'
 import { useEffect, useState } from 'react'
+import { z } from 'zod'
 import { type loader as rootLoader } from '#app/root.tsx'
 import {
 	MessageSchema,
@@ -17,7 +19,20 @@ export function usePresencePreferences() {
 	return data?.preferences?.presence ?? null
 }
 
+export function useOptionalWorkshopTitle() {
+	const data = useRouteLoaderData<typeof rootLoader>('root')
+	return data?.workshopTitle ?? null
+}
+
+const ExerciseAppParamsSchema = z.object({
+	type: z.union([z.literal('problem'), z.literal('solution')]),
+	exerciseNumber: z.coerce.number().finite(),
+	stepNumber: z.coerce.number().finite(),
+})
+
 export function usePresence(user?: User | null) {
+	const workshopTitle = useOptionalWorkshopTitle()
+	const rawParams = useParams()
 	const prefs = usePresencePreferences()
 	const data = useRouteLoaderData<typeof rootLoader>('root')
 	const [users, setUsers] = useState(data?.presence.users ?? [])
@@ -26,7 +41,7 @@ export function usePresence(user?: User | null) {
 		if (user) return user.id
 		const clientId = sessionStorage.getItem('clientId')
 		if (clientId) return clientId
-		const newClientId = Math.random().toString(36).slice(2)
+		const newClientId = cuid()
 		sessionStorage.setItem('clientId', newClientId)
 		return newClientId
 	})
@@ -43,30 +58,83 @@ export function usePresence(user?: User | null) {
 		},
 	})
 
-	useEffect(() => {
-		if ((!user || prefs?.optOut) && clientId) {
-			if (user) {
-				socket.send(
-					JSON.stringify({
-						type: 'remove-user',
-						payload: { id: user?.id },
-					} satisfies Message),
-				)
-			}
-			socket.send(
-				JSON.stringify({
-					type: 'add-user',
-					payload: { id: clientId },
-				} satisfies Message),
-			)
-		} else if (user) {
-			socket.send(
-				JSON.stringify({
-					type: 'add-user',
-					payload: { id: user.id, name: user.name, avatarUrl: user.avatarUrl },
-				} satisfies Message),
-			)
+	const paramsResult = ExerciseAppParamsSchema.safeParse(rawParams)
+	const params = paramsResult.success ? paramsResult.data : null
+	const location = {
+		workshopTitle,
+		...(params
+			? {
+					exercise: {
+						type: params.type,
+						exerciseNumber: params.exerciseNumber,
+						stepNumber: params.stepNumber,
+					},
+			  }
+			: null),
+	} satisfies User['location']
+
+	let message: Message | null = null
+	if ((!user || prefs?.optOut) && clientId) {
+		if (user) {
+			message = { type: 'remove-user', payload: { id: user?.id } }
 		}
-	}, [user, clientId, socket, prefs?.optOut])
-	return { users }
+		message = { type: 'add-user', payload: { id: clientId, location } }
+	} else if (user) {
+		message = {
+			type: 'add-user',
+			payload: {
+				id: user.id,
+				name: user.name,
+				avatarUrl: user.avatarUrl,
+				location,
+			},
+		}
+	}
+
+	const messageJson = message ? JSON.stringify(message) : null
+	useEffect(() => {
+		if (messageJson) {
+			socket.send(messageJson)
+		}
+	}, [messageJson, socket])
+
+	const scoredUsers = scoreUsers(location, users)
+
+	return { users: scoredUsers }
+}
+
+function scoreUsers(location: User['location'], users: Array<User>) {
+	const scoredUsers = users.map(user => {
+		let score = 0
+		if (location?.workshopTitle === user.location?.workshopTitle) {
+			score += 1
+			if (
+				location?.exercise?.exerciseNumber ===
+				user.location?.exercise?.exerciseNumber
+			) {
+				score += 1
+				if (
+					location?.exercise?.stepNumber === user.location?.exercise?.stepNumber
+				) {
+					score += 1
+					if (location?.exercise?.type === user.location?.exercise?.type) {
+						score += 1
+					}
+				}
+			}
+		}
+
+		return { user, score }
+	})
+	const highestScore = Math.max(...scoredUsers.map(u => u.score))
+	const lowestScore = Math.min(...scoredUsers.map(u => u.score))
+	const denominator = highestScore - lowestScore
+	const adjustedScoredUsers = scoredUsers.map(u => ({
+		...u,
+		score: denominator ? (u.score - lowestScore) / denominator : 0,
+	}))
+	return adjustedScoredUsers.sort((a, b) => {
+		if (a.score === b.score) return 0
+		return a.score > b.score ? -1 : 1
+	})
 }

@@ -33,7 +33,7 @@ import {
 	getWorkshopTitle,
 } from '#app/utils/apps.server.ts'
 import { cn } from '#app/utils/misc.tsx'
-import { usePresence } from '#app/utils/presence.ts'
+import { type User, usePresence } from '#app/utils/presence.ts'
 import {
 	combineServerTimings,
 	getServerTimeHeader,
@@ -109,6 +109,13 @@ function FacePile({ isMenuOpened }: { isMenuOpened: boolean }) {
 	const user = useOptionalUser()
 	const { users } = usePresence(user)
 	const limit = isMenuOpened ? 17 : 0
+	const opacities = ['opacity-70', 'opacity-80', 'opacity-90', 'opacity-100']
+	const shadows = [
+		'shadow-[0_0_2px_0_rgba(0,0,0,0.3)]',
+		'shadow-[0_0_4px_0_rgba(0,0,0,0.3)]',
+		'shadow-[0_0_7px_0_rgba(0,0,0,0.3)]',
+		'shadow-[0_0_10px_0_rgba(0,0,0,0.3)]',
+	]
 	const numberOverLimit = users.length - limit
 	if (!users.length) return null
 	return (
@@ -121,29 +128,61 @@ function FacePile({ isMenuOpened }: { isMenuOpened: boolean }) {
 		>
 			<div className="flex flex-wrap items-center gap-2">
 				<TooltipProvider>
-					{users.slice(0, limit).map(user => (
-						<Tooltip key={user.id}>
-							<TooltipTrigger asChild>
-								{user.avatarUrl ? (
-									<img
-										tabIndex={0}
-										alt={user.name || 'Epic Web Dev'}
-										className="h-8 w-8 rounded-full border object-cover"
-										src={user.avatarUrl}
-									/>
-								) : (
-									<div
-										tabIndex={0}
-										aria-label={user.name || 'Epic Web Dev'}
-										className="flex h-8 w-8 items-center justify-center rounded-full border"
-									>
-										<Icon name="User" />
-									</div>
-								)}
-							</TooltipTrigger>
-							<TooltipContent>{user.name || 'An EPIC Web Dev'}</TooltipContent>
-						</Tooltip>
-					))}
+					{users.slice(0, limit).map(({ user, score }) => {
+						const opacityNumber = Math.round(score * opacities.length - 1)
+						const shadowNumber = Math.round(score * shadows.length - 1)
+						const scoreClassNames = cn(
+							'shadow-purple-700 hover:opacity-100 focus:opacity-100 dark:shadow-purple-200',
+							opacities[opacityNumber] ?? 'opacity-60',
+							shadows[shadowNumber] ?? 'shadow-none',
+							score === 1
+								? 'animate-pulse hover:animate-none focus:animate-none'
+								: null,
+						)
+						const locationLabel = getLocationLabel(user.location)
+						return (
+							<Tooltip key={user.id}>
+								<TooltipTrigger asChild>
+									{user.avatarUrl ? (
+										<img
+											tabIndex={0}
+											alt={user.name || 'Epic Web Dev'}
+											className={cn(
+												'h-8 w-8 rounded-full border object-cover',
+												scoreClassNames,
+											)}
+											src={user.avatarUrl}
+										/>
+									) : (
+										<div
+											tabIndex={0}
+											aria-label={user.name || 'Epic Web Dev'}
+											className={cn(
+												'flex h-8 w-8 items-center justify-center rounded-full border',
+												scoreClassNames,
+											)}
+										>
+											<Icon name="User" />
+										</div>
+									)}
+								</TooltipTrigger>
+								<TooltipContent>
+									<span className="flex flex-col items-center justify-center gap-1">
+										<span>
+											{user.name || 'An EPIC Web Dev'}{' '}
+											{locationLabel ? ' is working on' : null}
+										</span>
+										{locationLabel?.line1 ? (
+											<span>{locationLabel.line1}</span>
+										) : null}
+										{locationLabel?.line2 ? (
+											<span>{locationLabel.line2}</span>
+										) : null}
+									</span>
+								</TooltipContent>
+							</Tooltip>
+						)
+					})}
 					{numberOverLimit > 0 ? (
 						<Tooltip>
 							<TooltipTrigger asChild>
@@ -201,6 +240,25 @@ export default function App() {
 			</div>
 		</div>
 	)
+}
+
+function getLocationLabel(location: User['location']) {
+	if (!location) return null
+
+	const { exercise } = location
+
+	const exercisePortion = [
+		exercise
+			? [exercise.exerciseNumber, exercise.stepNumber]
+					.filter(Boolean)
+					.map(s => s.toString().padStart(2, '0'))
+					.join('/')
+			: null,
+		exercise?.type,
+	]
+		.filter(Boolean)
+		.join(' - ')
+	return { line1: location.workshopTitle, line2: exercisePortion }
 }
 
 function EpicWebBanner() {
