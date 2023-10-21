@@ -17,7 +17,7 @@ export function DiscordChat() {
 			<div className="text-center">
 				<DiscordCTA discordAuthUrl={data.discordAuthUrl} />
 			</div>
-			<div className="flex-1 bg-accent pb-4">
+			<div className="flex-1 overflow-y-scroll bg-accent pb-4 scrollbar-thin scrollbar-thumb-scrollbar">
 				<DiscordPosts />
 			</div>
 		</div>

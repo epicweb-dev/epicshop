@@ -106,8 +106,8 @@ export const headers: HeadersFunction = ({ loaderHeaders, parentHeaders }) => {
 }
 
 function FacePile({ isMenuOpened }: { isMenuOpened: boolean }) {
-	const user = useOptionalUser()
-	let { users } = usePresence(user)
+	const loggedInUser = useOptionalUser()
+	let { users } = usePresence(loggedInUser)
 	const limit = isMenuOpened ? 17 : 0
 	const opacities = ['opacity-70', 'opacity-80', 'opacity-90', 'opacity-100']
 	const shadows = [
@@ -193,7 +193,13 @@ function FacePile({ isMenuOpened }: { isMenuOpened: boolean }) {
 									<span className="flex flex-col items-center justify-center gap-1">
 										<span>
 											{user.name || 'An EPIC Web Dev'}{' '}
-											{locationLabel ? ' is working on' : null}
+											{locationLabel
+												? ` is working ${
+														score === 1 && loggedInUser?.id !== user.id
+															? 'with you'
+															: ''
+												  } on`
+												: null}
 										</span>
 										{locationLabel?.line1 ? (
 											<span>{locationLabel.line1}</span>
@@ -615,7 +621,7 @@ function Navigation({
 					)}
 					<FacePile isMenuOpened={isMenuOpened} />
 					{ENV.KCDSHOP_DEPLOYED ? null : user ? (
-						<SimpleTooltip content="Your account">
+						<SimpleTooltip content={isMenuOpened ? null : 'Your account'}>
 							<Link
 								className="flex h-14 w-full items-center justify-start space-x-3 border-t px-4 py-4 text-center no-underline hover:underline"
 								to="/account"
@@ -644,7 +650,9 @@ function Navigation({
 						</SimpleTooltip>
 					) : null}
 					{ENV.KCDSHOP_DEPLOYED ? null : user && nextExerciseRoute ? (
-						<SimpleTooltip content="Continue to next lesson">
+						<SimpleTooltip
+							content={isMenuOpened ? null : 'Continue to next lesson'}
+						>
 							<Link
 								to={nextExerciseRoute}
 								prefetch="intent"
