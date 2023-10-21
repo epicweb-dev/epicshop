@@ -107,7 +107,7 @@ export const headers: HeadersFunction = ({ loaderHeaders, parentHeaders }) => {
 
 function FacePile({ isMenuOpened }: { isMenuOpened: boolean }) {
 	const user = useOptionalUser()
-	const { users } = usePresence(user)
+	let { users } = usePresence(user)
 	const limit = isMenuOpened ? 17 : 0
 	const opacities = ['opacity-70', 'opacity-80', 'opacity-90', 'opacity-100']
 	const shadows = [
@@ -116,8 +116,40 @@ function FacePile({ isMenuOpened }: { isMenuOpened: boolean }) {
 		'shadow-[0_0_7px_0_rgba(0,0,0,0.3)]',
 		'shadow-[0_0_10px_0_rgba(0,0,0,0.3)]',
 	]
+	function getScoreClassNames(score: number) {
+		const opacityNumber = Math.round(score * opacities.length - 1)
+		const shadowNumber = Math.round(score * shadows.length - 1)
+		return cn(
+			'shadow-purple-700 hover:opacity-100 focus:opacity-100 dark:shadow-purple-200',
+			opacities[opacityNumber] ?? 'opacity-60',
+			shadows[shadowNumber] ?? 'shadow-none',
+			score === 1
+				? 'animate-pulse hover:animate-none focus:animate-none'
+				: null,
+		)
+	}
 	const numberOverLimit = users.length - limit
 	if (!users.length) return null
+	const tiffany =
+		isMenuOpened && users.length === 1 ? (
+			<Link
+				target="_blank"
+				rel="noopener noreferrer"
+				to="https://www.youtube.com/watch?v=w6Q3mHyzn78"
+			>
+				<img
+					alt="Tiffany Tunes"
+					className={cn(
+						'h-8 w-8 rounded-full border object-cover',
+						getScoreClassNames(1),
+					)}
+					src="https://github-production-user-asset-6210df.s3.amazonaws.com/1500684/277090714-b26e5961-4ee5-4c20-abdb-b04c1c480f2b.png"
+				/>
+			</Link>
+		) : null
+	const overLimitLabel = `${numberOverLimit}${
+		isMenuOpened ? ' more ' : ' '
+	}Epic Web Dev${numberOverLimit === 1 ? '' : 's'} working now`
 	return (
 		<div
 			className={cn(
@@ -129,16 +161,7 @@ function FacePile({ isMenuOpened }: { isMenuOpened: boolean }) {
 			<div className="flex flex-wrap items-center gap-2">
 				<TooltipProvider>
 					{users.slice(0, limit).map(({ user, score }) => {
-						const opacityNumber = Math.round(score * opacities.length - 1)
-						const shadowNumber = Math.round(score * shadows.length - 1)
-						const scoreClassNames = cn(
-							'shadow-purple-700 hover:opacity-100 focus:opacity-100 dark:shadow-purple-200',
-							opacities[opacityNumber] ?? 'opacity-60',
-							shadows[shadowNumber] ?? 'shadow-none',
-							score === 1
-								? 'animate-pulse hover:animate-none focus:animate-none'
-								: null,
-						)
+						const scoreClassNames = getScoreClassNames(score)
 						const locationLabel = getLocationLabel(user.location)
 						return (
 							<Tooltip key={user.id}>
@@ -183,14 +206,13 @@ function FacePile({ isMenuOpened }: { isMenuOpened: boolean }) {
 							</Tooltip>
 						)
 					})}
+					{tiffany}
 					{numberOverLimit > 0 ? (
 						<Tooltip>
 							<TooltipTrigger asChild>
 								<div
 									tabIndex={0}
-									aria-label={`${numberOverLimit} more Epic Web Dev${
-										numberOverLimit === 1 ? '' : 's'
-									} working now`}
+									aria-label={overLimitLabel}
 									className={cn(
 										'flex items-center justify-center text-ellipsis rounded-full border-2 border-gray-200 bg-gray-200 text-sm text-gray-800',
 										isMenuOpened ? 'h-8 w-8' : 'h-6 w-6',
@@ -201,10 +223,7 @@ function FacePile({ isMenuOpened }: { isMenuOpened: boolean }) {
 									</span>
 								</div>
 							</TooltipTrigger>
-							<TooltipContent>
-								{numberOverLimit} more Epic Web Dev
-								{numberOverLimit === 1 ? '' : 's'} working now
-							</TooltipContent>
+							<TooltipContent>{overLimitLabel}</TooltipContent>
 						</Tooltip>
 					) : null}
 				</TooltipProvider>
