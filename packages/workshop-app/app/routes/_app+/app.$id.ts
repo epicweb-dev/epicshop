@@ -9,7 +9,7 @@ import {
 	getExercise,
 	getWorkshopTitle,
 } from '#app/utils/apps.server.ts'
-import { invariantResponse } from '#app/utils/misc.tsx'
+import { getBaseUrl, invariantResponse } from '#app/utils/misc.tsx'
 import { getServerTimeHeader, makeTimings } from '#app/utils/timing.server.ts'
 
 export async function loader({ request, params }: DataFunctionArgs) {
@@ -24,7 +24,7 @@ export async function loader({ request, params }: DataFunctionArgs) {
 		})
 	}
 	if (app.dev.type === 'script') {
-		return redirect(app.dev.baseUrl, {
+		return redirect(getBaseUrl({ request, port: app.dev.portNumber }), {
 			headers: { 'Server-Timing': getServerTimeHeader(timings) },
 		})
 	}
@@ -75,7 +75,7 @@ export async function loader({ request, params }: DataFunctionArgs) {
 <!DOCTYPE html>
 <html>
 	<head>
-		<base href="${app.dev.baseUrl}" />
+		<base href="${app.dev.pathname}" />
 		<meta charset="utf-8">
 		<meta name="viewport" content="width=device-width, initial-scale=1">
 		<title>${title}</title>

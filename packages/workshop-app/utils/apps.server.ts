@@ -78,17 +78,16 @@ type BaseApp = {
 	test:
 		| {
 				type: 'browser'
-				baseUrl: `/app/${BaseApp['name']}/test/`
+				pathname: `/app/${BaseApp['name']}/test/`
 				testFiles: Array<string>
 		  }
 		| { type: 'script'; script: string }
 		| { type: 'none' }
 	dev:
-		| { type: 'browser'; baseUrl: `/app/${BaseApp['name']}/` }
+		| { type: 'browser'; pathname: `/app/${BaseApp['name']}/` }
 		| {
 				type: 'script'
 				portNumber: number
-				baseUrl: `http://localhost:${number}/`
 		  }
 }
 
@@ -133,7 +132,6 @@ export function isApp(app: any): app is App {
 		typeof app.fullPath === 'string' &&
 		typeof app.test === 'object' &&
 		typeof app.dev === 'object' &&
-		typeof app.dev.baseUrl === 'string' &&
 		typeof app.type === 'string'
 	)
 }
@@ -502,7 +500,7 @@ async function getTestInfo({
 	const testFiles = dirList.filter(item => item.includes('.test.'))
 	if (testFiles.length) {
 		const name = getAppName(fullPath)
-		return { type: 'browser', baseUrl: `/app/${name}/test/`, testFiles }
+		return { type: 'browser', pathname: `/app/${name}/test/`, testFiles }
 	}
 
 	return { type: 'none' }
@@ -523,12 +521,11 @@ async function getDevInfo({
 	if (hasDevScript) {
 		return {
 			type: 'script',
-			baseUrl: `http://localhost:${portNumber}/`,
 			portNumber,
 		}
 	}
 	const name = getAppName(fullPath)
-	return { type: 'browser', baseUrl: `/app/${name}/` }
+	return { type: 'browser', pathname: `/app/${name}/` }
 }
 
 async function getPlaygroundApp({

@@ -14,7 +14,8 @@ import { SimpleTooltip } from '#app/components/ui/tooltip.tsx'
 import { LaunchEditor } from '#app/routes/launch-editor.tsx'
 import { UpdateMdxCache } from '#app/routes/update-mdx-cache.tsx'
 import { Mdx } from '#app/utils/mdx.tsx'
-import { cn } from '#app/utils/misc.tsx'
+import { cn, getBaseUrl } from '#app/utils/misc.tsx'
+import { useRequestInfo } from '#app/utils/request-info.ts'
 import { type loader } from './index.tsx'
 
 type StepContextType = {
@@ -305,7 +306,14 @@ function LinkToApp({
 		appTo.toString(),
 	).toString()}`
 	const data = useLoaderData<typeof loader>()
-	const previewAppUrl = data.playground?.dev.baseUrl
+	const requestInfo = useRequestInfo()
+	const previewAppUrl =
+		data.playground?.dev.type === 'script'
+			? getBaseUrl({
+					domain: requestInfo.domain,
+					port: data.playground.dev.portNumber,
+			  })
+			: data.playground?.dev.pathname
 	const { inBrowserBrowserRef } = useStepContext()
 	const href = previewAppUrl
 		? previewAppUrl.slice(0, -1) + appTo.toString()

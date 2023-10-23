@@ -32,10 +32,10 @@ type TestRunnerStatusData = z.infer<typeof testRunnerStatusDataSchema>
 type TestRunnerTestStepData = z.infer<typeof testRunnerTestStepDataSchema>
 
 export function InBrowserTestRunner({
-	baseUrl,
+	pathname,
 	testFile,
 }: {
-	baseUrl: string
+	pathname: string
 	testFile: string
 }) {
 	const iframeRef = useRef<HTMLIFrameElement>(null)
@@ -139,7 +139,7 @@ export function InBrowserTestRunner({
 							<iframe
 								ref={iframeRef}
 								title={testFile}
-								src={baseUrl + testFile}
+								src={pathname + testFile}
 								className="mt-5 min-h-[420px] w-full border border-border bg-white"
 							/>
 						</div>
@@ -153,7 +153,7 @@ export function InBrowserTestRunner({
 								<Icon name="Refresh" aria-label="Rerun Tests" />
 							</button>
 							<a
-								href={baseUrl + testFile}
+								href={pathname + testFile}
 								target="_blank"
 								rel="noreferrer"
 								className="border-r border-border p-3"

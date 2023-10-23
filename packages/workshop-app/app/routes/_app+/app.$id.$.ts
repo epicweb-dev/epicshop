@@ -4,7 +4,7 @@ import fsExtra from 'fs-extra'
 import mimeTypes from 'mime-types'
 import { getAppByName } from '#app/utils/apps.server.ts'
 import { compileTs } from '#app/utils/compile-app.server.ts'
-import { invariantResponse } from '#app/utils/misc.tsx'
+import { getBaseUrl, invariantResponse } from '#app/utils/misc.tsx'
 
 export async function loader({ params, request }: DataFunctionArgs) {
 	const { id: appId, '*': splat } = params
@@ -21,7 +21,7 @@ export async function loader({ params, request }: DataFunctionArgs) {
 		)
 	}
 	if (app.dev.type === 'script') {
-		return redirect(app.dev.baseUrl)
+		return redirect(getBaseUrl({ request, port: app.dev.portNumber }))
 	}
 
 	const filePath = path.join(fileApp.fullPath, splat)

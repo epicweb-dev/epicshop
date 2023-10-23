@@ -1,6 +1,6 @@
 import { redirect, type DataFunctionArgs } from '@remix-run/node'
 import { getAppByName } from '#app/utils/apps.server.ts'
-import { invariantResponse } from '#app/utils/misc.tsx'
+import { getBaseUrl, invariantResponse } from '#app/utils/misc.tsx'
 
 export async function loader({ params, request }: DataFunctionArgs) {
 	const { id: appId } = params
@@ -16,7 +16,7 @@ export async function loader({ params, request }: DataFunctionArgs) {
 		)
 	}
 	if (app.dev.type === 'script') {
-		return redirect(app.dev.baseUrl)
+		return redirect(getBaseUrl({ request, port: app.dev.portNumber }))
 	}
 	const relevantPaths = Array.from(new Set([app.fullPath, fileApp.fullPath]))
 

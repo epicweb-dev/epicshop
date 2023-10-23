@@ -57,6 +57,7 @@ import {
 	isAppRunning,
 	isPortAvailable,
 } from '#app/utils/process-manager.server.ts'
+import { useRequestInfo } from '#app/utils/request-info.ts'
 import {
 	combineServerTimings,
 	getServerTimeHeader,
@@ -575,10 +576,13 @@ function Preview({
 	appInfo: SerializeFrom<typeof loader>['problem' | 'solution' | 'playground']
 	inBrowserBrowserRef: React.RefObject<InBrowserBrowserRef>
 }) {
+	const requestInfo = useRequestInfo()
 	if (!appInfo) return <p>No app here. Sorry.</p>
 	const { isRunning, dev, name, portIsAvailable, title } = appInfo
 
 	if (dev.type === 'script') {
+		const baseUrl = new URL(requestInfo.domain)
+		baseUrl.port = String(dev.portNumber)
 		return (
 			<InBrowserBrowser
 				ref={inBrowserBrowserRef}
@@ -587,14 +591,14 @@ function Preview({
 				name={name}
 				portIsAvailable={portIsAvailable}
 				port={dev.portNumber}
-				baseUrl={dev.baseUrl}
+				baseUrl={baseUrl.toString()}
 			/>
 		)
 	} else {
 		return (
 			<div className="relative h-full flex-grow overflow-y-auto scrollbar-thin scrollbar-thumb-scrollbar">
 				<a
-					href={dev.baseUrl}
+					href={dev.pathname}
 					target="_blank"
 					rel="noreferrer"
 					className={clsx(
@@ -606,7 +610,7 @@ function Preview({
 				</a>
 				<iframe
 					title={title}
-					src={dev.baseUrl}
+					src={dev.pathname}
 					className="h-full w-full flex-grow bg-white p-3"
 				/>
 			</div>
@@ -722,7 +726,7 @@ function Tests({
 		testUI = <TestOutput name={playgroundAppInfo.name} />
 	}
 	if (playgroundAppInfo?.test.type === 'browser') {
-		const { baseUrl } = playgroundAppInfo.test
+		const { pathname } = playgroundAppInfo.test
 		testUI = (
 			<div
 				className="flex h-full w-full flex-grow flex-col"
@@ -731,7 +735,7 @@ function Tests({
 				{playgroundAppInfo.test.testFiles.map(testFile => {
 					return (
 						<div key={testFile}>
-							<InBrowserTestRunner baseUrl={baseUrl} testFile={testFile} />
+							<InBrowserTestRunner pathname={pathname} testFile={testFile} />
 						</div>
 					)
 				})}

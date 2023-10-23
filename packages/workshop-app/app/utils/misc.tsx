@@ -183,12 +183,37 @@ export function cn(...inputs: ClassValue[]) {
 }
 
 export function getDomainUrl(request: Request) {
+	const url = new URL(request.url)
 	const host =
 		request.headers.get('X-Forwarded-Host') ??
 		request.headers.get('host') ??
-		new URL(request.url).host
-	const protocol = host.includes('localhost') ? 'http' : 'https'
-	return `${protocol}://${host}`
+		url.host
+
+	const protocol = host.includes('localhost')
+		? 'http:'
+		: url.protocol ?? 'https:'
+	return `${protocol}//${host}`
+}
+
+export function getBaseUrl({
+	request,
+	domain = request ? getDomainUrl(request) : window.location.origin,
+	port,
+}: {
+	port: number
+} & (
+	| {
+			request: Request
+			domain?: never
+	  }
+	| {
+			request?: never
+			domain: string
+	  }
+)) {
+	const url = new URL(domain)
+	url.port = String(port)
+	return url.toString()
 }
 
 export function getReferrerRoute(request: Request) {

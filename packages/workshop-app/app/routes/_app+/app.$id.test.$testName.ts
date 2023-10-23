@@ -1,5 +1,5 @@
 import path from 'path'
-import { type DataFunctionArgs, redirect } from '@remix-run/node'
+import { type DataFunctionArgs } from '@remix-run/node'
 import fsExtra from 'fs-extra'
 import {
 	getAppByName,
@@ -12,6 +12,7 @@ import {
 } from '#app/utils/apps.server.ts'
 import { invariantResponse } from '#app/utils/misc.tsx'
 import { getServerTimeHeader, makeTimings } from '#app/utils/timing.server.ts'
+import { redirectWithToast } from '#app/utils/toast.server.ts'
 
 export async function loader({ params, request }: DataFunctionArgs) {
 	const timings = makeTimings('app_test_loader')
@@ -25,10 +26,16 @@ export async function loader({ params, request }: DataFunctionArgs) {
 			headers: { 'Server-Timing': getServerTimeHeader(timings) },
 		})
 	}
-	if (app.test.type !== 'browser') {
-		return redirect(app.dev.baseUrl, {
-			headers: { 'Server-Timing': getServerTimeHeader(timings) },
-		})
+	if (app.test.type !== 'browser' || app.dev.type !== 'browser') {
+		return redirectWithToast(
+			'/',
+			{
+				type: 'error',
+				title: 'Unsupported',
+				description: `Cannot load this app's tests in the browser`,
+			},
+			{ headers: { 'Server-Timing': getServerTimeHeader(timings) } },
+		)
 	}
 
 	const testFile = app.test.testFiles.find(file => file === testName)
@@ -56,7 +63,7 @@ export async function loader({ params, request }: DataFunctionArgs) {
 	const testFileQueryString = testFileAppName
 		? `?fileAppName=${encodeURIComponent(testFileAppName)}`
 		: ''
-	const testScriptPath = `${app.dev.baseUrl}${testFile}${testFileQueryString}`
+	const testScriptPath = `${app.dev.pathname}${testFile}${testFileQueryString}`
 	const testScriptSrc = /* javascript */ `
 function logStatus(message) {
 	if (window.parent !== window) {
@@ -140,7 +147,7 @@ import(${JSON.stringify(testScriptPath)}).then(
 <!DOCTYPE html>
 <html>
 	<head>
-		<base href="${app.dev.baseUrl}" />
+		<base href="${app.dev.pathname}" />
 		<meta charset="utf-8">
 		<meta name="viewport" content="width=device-width, initial-scale=1">
 		<title>${title}</title>

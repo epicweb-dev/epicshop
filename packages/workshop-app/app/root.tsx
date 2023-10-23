@@ -41,7 +41,7 @@ import {
 } from './utils/db.server.ts'
 import { getEnv } from './utils/env.server.ts'
 import { getProgress } from './utils/epic-api.ts'
-import { cn, combineHeaders, useAltDown } from './utils/misc.tsx'
+import { cn, combineHeaders, getDomainUrl, useAltDown } from './utils/misc.tsx'
 import { getPresentUsers } from './utils/presence.server.ts'
 import { makeTimings, time } from './utils/timing.server.ts'
 import { getToast } from './utils/toast.server.ts'
@@ -97,6 +97,7 @@ export async function loader({ request }: DataFunctionArgs) {
 			workshopTitle,
 			ENV: getEnv(),
 			requestInfo: {
+				domain: getDomainUrl(request),
 				hints: getHints(request),
 				path: new URL(request.url).pathname,
 				session: { theme },
