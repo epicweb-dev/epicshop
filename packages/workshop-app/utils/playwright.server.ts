@@ -9,10 +9,10 @@ export async function getInBrowserTestPages() {
 		.filter(a => a.test.type === 'browser')
 	const pages = apps.map(app => {
 		if (app.test.type !== 'browser') return null
-		const { baseUrl } = app.test
+		const { pathname } = app.test
 		return app.test.testFiles.map(testFile => {
 			return {
-				path: `${baseUrl}${testFile}`,
+				path: `${pathname}${testFile}`,
 				testFile,
 			}
 		})
