@@ -10,8 +10,13 @@ import { cachified, fsCache } from './cache.server.ts'
 import { getAuthInfo } from './db.server.ts'
 import { type Timings } from './timing.server.ts'
 
+const Transcript = z
+	.string()
+	.nullable()
+	.optional()
+	.transform(s => s ?? 'Transcripts not available')
 const EpicVideoInfoSchema = z.object({
-	transcript: z.string(),
+	transcript: Transcript,
 	muxPlaybackId: z.string(),
 })
 
@@ -23,7 +28,7 @@ const EpicVideoRegionRestrictedErrorSchema = z.object({
 
 const CachedEpicVideoInfoSchema = z
 	.object({
-		transcript: z.string(),
+		transcript: Transcript,
 		muxPlaybackId: z.string(),
 		status: z.literal('success'),
 		statusCode: z.number(),
