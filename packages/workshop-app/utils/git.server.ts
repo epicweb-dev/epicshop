@@ -11,7 +11,7 @@ async function getDiffUrl(commitBefore: string, commitAfter: string) {
 			{ cwd },
 		)
 		const [, username, repoName] =
-			remoteUrl.match(/:([^/]+)\/([^.]+)\.git/) ?? []
+			remoteUrl.match(/(?:[^/]+\/|:)([^/]+)\/([^.]+)\.git/) ?? []
 		const diffUrl = `https://github.com/${username}/${repoName}/compare/${commitBefore}...${commitAfter}`
 		return diffUrl
 	} catch (error) {
