@@ -166,6 +166,9 @@ async function getEpicVideoInfo({
 				} as const
 			}
 		},
+	}).catch(e => {
+		console.error(`Failed to fetch epic video info for ${epicVideoEmbed}`, e)
+		throw e
 	})
 }
 
