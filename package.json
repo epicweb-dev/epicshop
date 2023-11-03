@@ -3,8 +3,8 @@
   "private": true,
   "type": "module",
   "scripts": {
-    "typecheck": "npm run typecheck --workspaces --if-present",
-    "lint": "npm run lint --workspaces --if-present",
+    "typecheck": "tsc -b",
+    "lint": "eslint .",
     "build": "npm -w @kentcdodds/workshop-app run build",
     "prestart": "npm run build -s",
     "go": "cross-env NODE_ENV=development KCDSHOP_CONTEXT_CWD=$PWD/packages/example tsx watch $@",
