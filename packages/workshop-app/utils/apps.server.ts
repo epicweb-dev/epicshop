@@ -1088,6 +1088,7 @@ export async function getEpicWorkshopSlug() {
 	const epicWorkshopSlug = await getPkgProp<string>(
 		workshopRoot,
 		'kcd-workshop.epicWorkshopSlug',
+		'',
 	)
 	return epicWorkshopSlug || null
 }

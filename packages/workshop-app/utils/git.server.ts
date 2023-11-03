@@ -23,6 +23,22 @@ async function getDiffUrl(commitBefore: string, commitAfter: string) {
 export async function checkForUpdates() {
 	const online = await checkConnection()
 	if (!online) return { updatesAvailable: false } as const
+
+	const isInRepo = await execaCommand('git rev-parse --is-inside-work-tree', {
+		cwd,
+	}).then(
+		() => true,
+		() => false,
+	)
+	if (!isInRepo) {
+		return { updatesAvailable: false } as const
+	}
+
+	const { stdout: remote } = await execaCommand('git remote', { cwd })
+	if (!remote) {
+		return { updatesAvailable: false } as const
+	}
+
 	let localCommit
 	let remoteCommit
 	try {
