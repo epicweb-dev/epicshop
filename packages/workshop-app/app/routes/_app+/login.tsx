@@ -1,7 +1,7 @@
 import { json, redirect } from '@remix-run/node'
 import { useFetcher, useNavigate, useRevalidator } from '@remix-run/react'
 import { useEffect, useState } from 'react'
-import { useEventSource } from 'remix-utils/use-event-source'
+import { useEventSource } from 'remix-utils/sse/react'
 import { Button, ButtonLink } from '#app/components/button.tsx'
 import { Loading } from '#app/components/loading.tsx'
 import { EVENTS } from '#app/utils/auth-events.ts'

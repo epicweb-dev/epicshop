@@ -117,7 +117,7 @@ export async function getUserInfo() {
 
 	return {
 		id: db.authInfo.id,
-		name: db?.discordMember?.displayName ?? db.authInfo.name,
+		name: db?.discordMember?.displayName ?? db.authInfo.name ?? null,
 		email: db.authInfo.email,
 		avatarUrl:
 			db?.discordMember?.avatarURL ??

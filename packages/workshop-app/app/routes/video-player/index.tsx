@@ -1,4 +1,4 @@
-import MuxPlayerDefault, {
+import RealMuxPlayer, {
 	type MuxPlayerRefAttributes,
 } from '@mux/mux-player-react'
 import { json, type DataFunctionArgs } from '@remix-run/node'
@@ -27,9 +27,6 @@ export function usePlayerPreferences() {
 	return data?.preferences?.player ?? null
 }
 
-// Pretty sure their types are wrong in an ESM environment... 🤷‍♂️
-const RealMuxPlayer =
-	MuxPlayerDefault as unknown as typeof MuxPlayerDefault.default
 type MuxPlayerProps = React.ComponentProps<typeof RealMuxPlayer>
 
 const ignoredInputs = [

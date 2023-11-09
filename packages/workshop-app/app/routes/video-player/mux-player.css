@@ -20,3 +20,7 @@ mux-player::part(center play button) {
 mux-player::part(vertical-layer) {
 	background-color: rgba(0, 0, 0, 0);
 }
+
+mux-player::part(listbox) {
+	--media-listbox-layout: column;
+}
