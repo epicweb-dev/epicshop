@@ -11,7 +11,7 @@ import {
 	setPresencePreferences,
 } from '#app/utils/db.server.ts'
 import { ensureUndeployed } from '#app/utils/misc.tsx'
-import { usePresencePreferences } from '#app/utils/presence.ts'
+import { usePresencePreferences } from '#app/utils/presence.tsx'
 import { redirectWithToast } from '#app/utils/toast.server.ts'
 import { getDiscordAuthURL } from '../discord.callback.ts'
 

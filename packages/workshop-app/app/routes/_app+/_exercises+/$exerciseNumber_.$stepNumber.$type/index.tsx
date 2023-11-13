@@ -389,7 +389,7 @@ export default function ExercisePartRoute() {
 	return (
 		<div className="flex flex-grow flex-col">
 			<main className="grid h-full flex-grow grid-cols-1 grid-rows-2 lg:grid-cols-2 lg:grid-rows-1">
-				<div className="relative col-span-1 row-span-1 flex h-full flex-col border-r border-border">
+				<div className="relative col-span-1 row-span-1 flex h-full flex-col border-border lg:border-r">
 					<h1 className="h-14 border-b pl-10 pr-5 text-sm font-medium uppercase leading-tight">
 						<div className="flex h-14 flex-wrap items-center justify-between gap-x-2 py-2">
 							<div className="flex items-center justify-start gap-x-2">

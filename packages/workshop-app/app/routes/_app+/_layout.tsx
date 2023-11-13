@@ -33,7 +33,7 @@ import {
 	getWorkshopTitle,
 } from '#app/utils/apps.server.ts'
 import { cn } from '#app/utils/misc.tsx'
-import { type User, usePresence } from '#app/utils/presence.ts'
+import { type User, usePresence } from '#app/utils/presence.tsx'
 import {
 	combineServerTimings,
 	getServerTimeHeader,
@@ -107,7 +107,7 @@ export const headers: HeadersFunction = ({ loaderHeaders, parentHeaders }) => {
 
 function FacePile({ isMenuOpened }: { isMenuOpened: boolean }) {
 	const loggedInUser = useOptionalUser()
-	let { users } = usePresence(loggedInUser)
+	let { users } = usePresence()
 	const limit = isMenuOpened ? 17 : 0
 	const opacities = ['opacity-70', 'opacity-80', 'opacity-90', 'opacity-100']
 	const shadows = [

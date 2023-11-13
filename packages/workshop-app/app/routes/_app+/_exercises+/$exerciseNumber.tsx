@@ -117,10 +117,10 @@ export default function ExerciseNumberRoute() {
 	const firstStepNumber = String(data.firstStep?.stepNumber ?? '01')
 	const firstStepPath = `${firstStepNumber.padStart(2, '0')}/${data.firstType}`
 	return (
-		<main className="relative flex h-full w-full max-w-5xl flex-col justify-between border-r border-border md:w-3/4 lg:w-2/3">
+		<main className="relative flex h-full w-full max-w-5xl flex-col justify-between border-r border-border md:w-3/4 xl:w-2/3">
 			<article
 				data-restore-scroll="true"
-				className="shadow-on-scrollbox flex w-full flex-1 flex-col gap-12 overflow-y-scroll border-border px-10 py-12 pt-16 scrollbar-thin scrollbar-thumb-scrollbar"
+				className="shadow-on-scrollbox flex w-full flex-1 flex-col gap-12 overflow-y-scroll border-border px-3 py-4 pt-6 scrollbar-thin scrollbar-thumb-scrollbar md:px-10 md:py-12 md:pt-16"
 			>
 				<div>
 					<h1 className="text-[6vw] font-extrabold leading-none">

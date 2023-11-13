@@ -1,7 +1,7 @@
 import { createId as cuid } from '@paralleldrive/cuid2'
 import { useParams, useRouteLoaderData } from '@remix-run/react'
 import { usePartySocket } from 'partysocket/react'
-import { useEffect, useState } from 'react'
+import { createContext, useContext, useEffect, useState } from 'react'
 import { z } from 'zod'
 import { type loader as rootLoader } from '#app/root.tsx'
 import {
@@ -13,6 +13,10 @@ import {
 } from '../../utils/presence.ts'
 
 export * from '../../utils/presence.ts'
+
+const PresenceContext = createContext<ReturnType<
+	typeof usePresenceSocket
+> | null>(null)
 
 export function usePresencePreferences() {
 	const data = useRouteLoaderData<typeof rootLoader>('root')
@@ -30,7 +34,7 @@ const ExerciseAppParamsSchema = z.object({
 	stepNumber: z.coerce.number().finite().optional(),
 })
 
-export function usePresence(user?: User | null) {
+export function usePresenceSocket(user?: User | null) {
 	const workshopTitle = useOptionalWorkshopTitle()
 	const rawParams = useParams()
 	const prefs = usePresencePreferences()
@@ -134,4 +138,26 @@ function scoreUsers(location: User['location'], users: Array<User>) {
 		if (a.score === b.score) return 0
 		return a.score > b.score ? -1 : 1
 	})
+}
+
+export function Presence({
+	user,
+	children,
+}: {
+	user?: User | null
+	children: React.ReactNode
+}) {
+	return (
+		<PresenceContext.Provider value={usePresenceSocket(user)}>
+			{children}
+		</PresenceContext.Provider>
+	)
+}
+
+export function usePresence() {
+	const presence = useContext(PresenceContext)
+	if (!presence) {
+		throw new Error('usePresence must be used within a PresenceProvider')
+	}
+	return presence
 }

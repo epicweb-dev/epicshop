@@ -43,6 +43,7 @@ import { getEnv } from './utils/env.server.ts'
 import { getProgress } from './utils/epic-api.ts'
 import { cn, combineHeaders, getDomainUrl, useAltDown } from './utils/misc.tsx'
 import { getPresentUsers } from './utils/presence.server.ts'
+import { Presence } from './utils/presence.tsx'
 import { makeTimings, time } from './utils/timing.server.ts'
 import { getToast } from './utils/toast.server.ts'
 
@@ -194,10 +195,13 @@ function App() {
 }
 
 export default function AppWithProviders() {
+	const { user } = useLoaderData<typeof loader>()
 	return (
-		<TooltipProvider>
-			<App />
-		</TooltipProvider>
+		<Presence user={user}>
+			<TooltipProvider>
+				<App />
+			</TooltipProvider>
+		</Presence>
 	)
 }
 

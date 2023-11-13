@@ -125,17 +125,15 @@ export function VideoEmbed({
 
 function VideoLink({ url, title }: { url: string; title: string }) {
 	return (
-		<SimpleTooltip content="Open on EpicWeb.dev">
-			<a
-				href={url}
-				target="_blank"
-				className="flex items-center gap-1 text-base no-underline opacity-70 transition hover:underline hover:opacity-100"
-				rel="noreferrer"
-			>
-				<Icon name="Video" size={24} />
-				{title} <span aria-hidden>↗︎</span>
-			</a>
-		</SimpleTooltip>
+		<a
+			href={url}
+			target="_blank"
+			className="flex items-center gap-1 text-base no-underline opacity-70 transition hover:underline hover:opacity-100"
+			rel="noreferrer"
+		>
+			<Icon className="flex-shrink-0" name="Video" size={24} />
+			{title} <span aria-hidden>↗︎</span>
+		</a>
 	)
 }
 export function DeferredEpicVideo({

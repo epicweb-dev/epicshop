@@ -119,17 +119,17 @@ export default function Index() {
 		</ul>
 	)
 	return (
-		<main className="relative flex h-full w-full max-w-5xl flex-col justify-between border-r border-border md:w-3/4 lg:w-2/3">
+		<main className="relative flex h-full w-full max-w-5xl flex-col justify-between border-r border-border md:w-3/4 xl:w-2/3">
 			<article
 				data-restore-scroll="true"
-				className="shadow-on-scrollbox flex w-full flex-1 flex-col gap-12 overflow-y-scroll border-border px-10 py-12 pt-16 scrollbar-thin scrollbar-thumb-scrollbar"
+				className="shadow-on-scrollbox flex w-full flex-1 flex-col gap-12 overflow-y-scroll border-border md:px-10 md:py-12 md:pt-16 px-3 py-4 pt-6 scrollbar-thin scrollbar-thumb-scrollbar"
 			>
 				<div>
 					<h1 className="px-10 text-[6vw] font-extrabold leading-none">
 						{data.title}
 					</h1>
 				</div>
-				<div className="w-full max-w-none scroll-pt-6 border-t border-border px-10 pt-8">
+				<div className="w-full max-w-none scroll-pt-6 border-t border-border md:px-10 md:pt-8 px-3 pt-3">
 					<h2 className="pb-5 font-mono text-xs font-semibold uppercase">
 						Intro
 					</h2>
