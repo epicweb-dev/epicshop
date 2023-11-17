@@ -105,29 +105,28 @@ export const headers: HeadersFunction = ({ loaderHeaders, parentHeaders }) => {
 	return headers
 }
 
+const opacities = ['opacity-70', 'opacity-80', 'opacity-90', 'opacity-100']
+const shadows = [
+	'shadow-[0_0_2px_0_rgba(0,0,0,0.3)]',
+	'shadow-[0_0_4px_0_rgba(0,0,0,0.3)]',
+	'shadow-[0_0_7px_0_rgba(0,0,0,0.3)]',
+	'shadow-[0_0_10px_0_rgba(0,0,0,0.3)]',
+]
+function getScoreClassNames(score: number) {
+	const opacityNumber = Math.round(score * opacities.length - 1)
+	const shadowNumber = Math.round(score * shadows.length - 1)
+	return cn(
+		'shadow-purple-700 hover:opacity-100 focus:opacity-100 dark:shadow-purple-200',
+		opacities[opacityNumber] ?? 'opacity-60',
+		shadows[shadowNumber] ?? 'shadow-none',
+		score === 1 ? 'animate-pulse hover:animate-none focus:animate-none' : null,
+	)
+}
+
 function FacePile({ isMenuOpened }: { isMenuOpened: boolean }) {
 	const loggedInUser = useOptionalUser()
 	let { users } = usePresence()
 	const limit = isMenuOpened ? 17 : 0
-	const opacities = ['opacity-70', 'opacity-80', 'opacity-90', 'opacity-100']
-	const shadows = [
-		'shadow-[0_0_2px_0_rgba(0,0,0,0.3)]',
-		'shadow-[0_0_4px_0_rgba(0,0,0,0.3)]',
-		'shadow-[0_0_7px_0_rgba(0,0,0,0.3)]',
-		'shadow-[0_0_10px_0_rgba(0,0,0,0.3)]',
-	]
-	function getScoreClassNames(score: number) {
-		const opacityNumber = Math.round(score * opacities.length - 1)
-		const shadowNumber = Math.round(score * shadows.length - 1)
-		return cn(
-			'shadow-purple-700 hover:opacity-100 focus:opacity-100 dark:shadow-purple-200',
-			opacities[opacityNumber] ?? 'opacity-60',
-			shadows[shadowNumber] ?? 'shadow-none',
-			score === 1
-				? 'animate-pulse hover:animate-none focus:animate-none'
-				: null,
-		)
-	}
 	const numberOverLimit = users.length - limit
 	if (!users.length) return null
 	const tiffany =
@@ -151,89 +150,86 @@ function FacePile({ isMenuOpened }: { isMenuOpened: boolean }) {
 		isMenuOpened ? ' more ' : ' '
 	}Epic Web Dev${numberOverLimit === 1 ? '' : 's'} working now`
 	return (
-		<div
-			className={cn(
-				'flex w-full items-center justify-start border-t p-4 transition-[height]',
-				isMenuOpened && users.length > 4 ? 'h-28' : 'h-14',
-			)}
-			style={isMenuOpened ? { width: OPENED_MENU_WIDTH } : {}}
-		>
-			<div className="flex flex-wrap items-center gap-2">
-				<TooltipProvider>
-					{users.slice(0, limit).map(({ user, score }) => {
-						const scoreClassNames = getScoreClassNames(score)
-						const locationLabel = getLocationLabel(user.location)
-						return (
-							<Tooltip key={user.id}>
-								<TooltipTrigger asChild>
-									{user.avatarUrl ? (
-										<img
-											tabIndex={0}
-											alt={user.name || 'Epic Web Dev'}
-											className={cn(
-												'h-8 w-8 rounded-full border object-cover',
-												scoreClassNames,
-											)}
-											src={user.avatarUrl}
-										/>
-									) : (
-										<div
-											tabIndex={0}
-											aria-label={user.name || 'Epic Web Dev'}
-											className={cn(
-												'flex h-8 w-8 items-center justify-center rounded-full border',
-												scoreClassNames,
-											)}
-										>
-											<Icon name="User" />
-										</div>
-									)}
-								</TooltipTrigger>
-								<TooltipContent>
-									<span className="flex flex-col items-center justify-center gap-1">
-										<span>
-											{user.name || 'An EPIC Web Dev'}{' '}
-											{locationLabel
-												? ` is working ${
-														score === 1 && loggedInUser?.id !== user.id
-															? 'with you'
-															: ''
-												  } on`
-												: null}
-										</span>
-										{locationLabel?.line1 ? (
-											<span>{locationLabel.line1}</span>
-										) : null}
-										{locationLabel?.line2 ? (
-											<span>{locationLabel.line2}</span>
-										) : null}
-									</span>
-								</TooltipContent>
-							</Tooltip>
-						)
-					})}
-					{tiffany}
-					{numberOverLimit > 0 ? (
-						<Tooltip>
+		<div className="flex flex-wrap items-center gap-2">
+			<TooltipProvider>
+				{users.slice(0, limit).map(({ user, score }) => {
+					const scoreClassNames = getScoreClassNames(score)
+					const locationLabel = getLocationLabel(user.location)
+					return (
+						<Tooltip key={user.id}>
 							<TooltipTrigger asChild>
-								<div
-									tabIndex={0}
-									aria-label={overLimitLabel}
+								{user.avatarUrl ? (
+									<img
+										tabIndex={0}
+										alt={user.name || 'Epic Web Dev'}
+										className={cn(
+											'h-8 w-8 rounded-full border object-cover',
+											scoreClassNames,
+										)}
+										src={user.avatarUrl}
+									/>
+								) : (
+									<div
+										tabIndex={0}
+										aria-label={user.name || 'Epic Web Dev'}
+										className={cn(
+											'flex h-8 w-8 items-center justify-center rounded-full border',
+											scoreClassNames,
+										)}
+									>
+										<Icon name="User" />
+									</div>
+								)}
+							</TooltipTrigger>
+							<TooltipContent>
+								<span className="flex flex-col items-center justify-center gap-1">
+									<span>
+										{user.name || 'An EPIC Web Dev'}{' '}
+										{locationLabel
+											? ` is working ${
+													score === 1 && loggedInUser?.id !== user.id
+														? 'with you'
+														: ''
+											  } on`
+											: null}
+									</span>
+									{locationLabel?.line1 ? (
+										<span>{locationLabel.line1}</span>
+									) : null}
+									{locationLabel?.line2 ? (
+										<span>{locationLabel.line2}</span>
+									) : null}
+								</span>
+							</TooltipContent>
+						</Tooltip>
+					)
+				})}
+				{tiffany}
+				{numberOverLimit > 0 ? (
+					<Tooltip>
+						<TooltipTrigger asChild>
+							<div
+								tabIndex={0}
+								aria-label={overLimitLabel}
+								className={cn(
+									'flex items-center justify-center rounded-full border bg-accent text-xs text-accent-foreground',
+									isMenuOpened ? 'h-8 w-8' : 'h-6 w-6',
+								)}
+							>
+								<span
 									className={cn(
-										'flex items-center justify-center text-ellipsis rounded-full border-2 border-gray-200 bg-gray-200 text-sm text-gray-800',
-										isMenuOpened ? 'h-8 w-8' : 'h-6 w-6',
+										'pointer-events-none overflow-hidden text-ellipsis whitespace-nowrap text-center',
+										isMenuOpened ? 'w-8' : 'w-6',
 									)}
 								>
-									<span className="pointer-events-none">
-										+{numberOverLimit > 10 ? '...' : numberOverLimit}
-									</span>
-								</div>
-							</TooltipTrigger>
-							<TooltipContent>{overLimitLabel}</TooltipContent>
-						</Tooltip>
-					) : null}
-				</TooltipProvider>
-			</div>
+									{isMenuOpened ? `+${numberOverLimit}` : numberOverLimit}
+								</span>
+							</div>
+						</TooltipTrigger>
+						<TooltipContent>{overLimitLabel}</TooltipContent>
+					</Tooltip>
+				) : null}
+			</TooltipProvider>
 		</div>
 	)
 }
@@ -409,6 +405,7 @@ function Navigation({
 	const user = useOptionalUser()
 	const nextExerciseRoute = useNextExerciseRoute()
 	const params = useParams()
+	const { users } = usePresence()
 
 	const exercise = data.exercises.find(
 		e => e.exerciseNumber === Number(params.exerciseNumber),
@@ -619,7 +616,15 @@ function Navigation({
 							</div>
 						</div>
 					)}
-					<FacePile isMenuOpened={isMenuOpened} />
+					<div
+						className={cn(
+							'flex w-full items-center justify-start border-t p-4 transition-[height]',
+							isMenuOpened && users.length > 4 ? 'h-28' : 'h-14',
+						)}
+						style={isMenuOpened ? { width: OPENED_MENU_WIDTH } : {}}
+					>
+						<FacePile isMenuOpened={isMenuOpened} />
+					</div>
 					{ENV.KCDSHOP_DEPLOYED ? null : user ? (
 						<SimpleTooltip content={isMenuOpened ? null : 'Your account'}>
 							<Link
