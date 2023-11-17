@@ -16,6 +16,7 @@ import {
 	stopPort,
 	waitOnApp,
 } from '#app/utils/process-manager.server.ts'
+import { createToastHeaders } from '#app/utils/toast.server'
 
 export async function action({ request }: DataFunctionArgs) {
 	ensureUndeployed()
@@ -40,10 +41,32 @@ export async function action({ request }: DataFunctionArgs) {
 			invariant(app, 'app must be defined')
 			const result = await runAppDev(app)
 			if (result.running) {
-				await waitOnApp(app)
-				// wait another 200ms just in case the build output for assets isn't finished
-				await new Promise(resolve => setTimeout(resolve, 200))
-				return json({ status: 'app-started' } as const)
+				const appRunningResult = await waitOnApp(app)
+				if (appRunningResult?.status === 'success') {
+					// wait another 200ms just in case the build output for assets isn't finished
+					await new Promise(resolve => setTimeout(resolve, 200))
+					return json({ status: 'app-started' } as const)
+				} else if (app.dev.type === 'script') {
+					const errorMessage = appRunningResult
+						? appRunningResult.error
+						: 'Unknown error'
+					return json(
+						{
+							status: 'app-not-started',
+							error: errorMessage,
+							port: app.dev.portNumber,
+						} as const,
+						{
+							status: 500,
+							statusText: 'App did not start',
+							headers: await createToastHeaders({
+								description: errorMessage,
+								title: 'App did not start',
+								type: 'error',
+							}),
+						},
+					)
+				}
 			} else if (result.portNumber) {
 				return json({
 					status: 'app-not-started',
@@ -94,8 +117,8 @@ export function AppStopper({ name }: { name: string }) {
 		inFlightIntent === 'stop'
 			? 'Stopping App'
 			: inFlightIntent === 'restart'
-			? 'Restarting App'
-			: null
+			  ? 'Restarting App'
+			  : null
 	const altDown = useAltDown()
 	return (
 		<fetcher.Form method="POST" action="/start">

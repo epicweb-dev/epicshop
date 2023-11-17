@@ -143,7 +143,6 @@
     "unified": "^11.0.4",
     "unist-util-remove-position": "^5.0.0",
     "unist-util-visit": "^5.0.0",
-    "wait-on": "^7.2.0",
     "ws": "^8.14.2",
     "zod": "^3.22.4"
   },

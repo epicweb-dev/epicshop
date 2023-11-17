@@ -4,9 +4,9 @@ import chalk from 'chalk'
 import closeWithGrace from 'close-with-grace'
 import { execaCommand } from 'execa'
 import fkill from 'fkill'
-import waitOn from 'wait-on'
 import { type App } from './apps.server.ts'
 import { singleton } from './singleton.server.ts'
+import { getErrorMessage } from './utils.ts'
 
 const isDeployed =
 	process.env.KCDSHOP_DEPLOYED === 'true' ||
@@ -212,11 +212,27 @@ export async function runAppTests(app: App) {
 
 export async function waitOnApp(app: App) {
 	if (app.dev.type === 'script') {
-		return waitOn({
-			resources: [`http-get://localhost:${app.dev.portNumber}`],
-			timeout: 20_000,
-		})
+		const startTime = Date.now()
+
+		const retryInterval = 100
+		const timeout = 20_000
+		let lastError: unknown
+		while (Date.now() - startTime < timeout) {
+			try {
+				await fetch(`http://localhost:${app.dev.portNumber}`, {
+					method: 'HEAD',
+					headers: { Accept: '*/*' },
+				})
+				return { status: 'success' } as const
+			} catch (error) {
+				lastError = error
+				await new Promise(resolve => setTimeout(resolve, retryInterval))
+			}
+		}
+
+		return { status: 'error', error: getErrorMessage(lastError) } as const
 	}
+	return null
 }
 
 export function isPortAvailable(port: number | string): Promise<boolean> {
