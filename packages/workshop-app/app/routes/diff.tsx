@@ -151,7 +151,7 @@ export default function DiffViewer() {
 				<Diff diff={data.diff} allApps={data.allApps} />
 			</div>
 			<div className="flex h-16 items-center justify-end border-t border-border">
-				<SimpleTooltip content="Loading diff">
+				<SimpleTooltip content="Reload diff">
 					<Link
 						to={`.?${params}`}
 						className="flex h-full w-16 items-center justify-center"
