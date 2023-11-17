@@ -7,7 +7,6 @@ import { type EpicVideoInfos } from '#app/utils/epic-api.ts'
 import { cn } from '#app/utils/misc.tsx'
 import { Icon } from './icons.tsx'
 import { Loading } from './loading.tsx'
-import { SimpleTooltip } from './ui/tooltip.tsx'
 
 const EpicVideoInfoContext = React.createContext<
 	Promise<EpicVideoInfos> | null | undefined
