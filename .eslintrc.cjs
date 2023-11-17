@@ -2,7 +2,7 @@
  * @type {import('@types/eslint').Linter.BaseConfig}
  */
 module.exports = {
-	extends: ['@remix-run/eslint-config', 'prettier'],
+	extends: ['prettier'],
 	rules: {
 		'no-warning-comments': [
 			'error',

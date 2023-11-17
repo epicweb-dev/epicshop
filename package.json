@@ -23,10 +23,10 @@
   ],
   "devDependencies": {
     "@playwright/test": "^1.39.0",
-    "@remix-run/eslint-config": "^2.2.0",
     "dotenv": "^16.3.1",
     "eslint-config-prettier": "^9.0.0",
     "prettier": "^3.0.3",
+    "globby": "^11.1.0",
     "prettier-plugin-tailwindcss": "^0.5.7"
   },
   "dependencies": {
