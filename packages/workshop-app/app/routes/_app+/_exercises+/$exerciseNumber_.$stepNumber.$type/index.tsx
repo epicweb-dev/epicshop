@@ -52,7 +52,7 @@ import {
 } from '#app/utils/apps.server.ts'
 import { getDiffCode, getDiffFiles } from '#app/utils/diff.server.ts'
 import { getEpicVideoInfos } from '#app/utils/epic-api.ts'
-import { getErrorMessage, useAltDown } from '#app/utils/misc.tsx'
+import { getBaseUrl, getErrorMessage, useAltDown } from '#app/utils/misc.tsx'
 import {
 	isAppRunning,
 	isPortAvailable,
@@ -581,8 +581,10 @@ function Preview({
 	const { isRunning, dev, name, portIsAvailable, title } = appInfo
 
 	if (dev.type === 'script') {
-		const baseUrl = new URL(requestInfo.domain)
-		baseUrl.port = String(dev.portNumber)
+		const baseUrl = getBaseUrl({
+			domain: requestInfo.domain,
+			port: dev.portNumber,
+		})
 		return (
 			<InBrowserBrowser
 				ref={inBrowserBrowserRef}
@@ -591,7 +593,7 @@ function Preview({
 				name={name}
 				portIsAvailable={portIsAvailable}
 				port={dev.portNumber}
-				baseUrl={baseUrl.toString()}
+				baseUrl={baseUrl}
 			/>
 		)
 	} else {

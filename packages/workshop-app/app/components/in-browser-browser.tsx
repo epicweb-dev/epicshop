@@ -11,6 +11,8 @@ import {
 import { z } from 'zod'
 import { Icon } from '#app/components/icons.tsx'
 import { AppStarter, AppStopper, PortStopper } from '#app/routes/start.tsx'
+import { getBaseUrl } from '#app/utils/misc.tsx'
+import { useRequestInfo } from '#app/utils/request-info.ts'
 import {
 	Tooltip,
 	TooltipContent,
@@ -84,13 +86,17 @@ function InBrowserBrowserImpl(
 	{ name, port, portIsAvailable, isRunning, baseUrl, id }: Props,
 	ref: ForwardedRef<InBrowserBrowserRef>,
 ) {
+	const requestInfo = useRequestInfo()
 	return isRunning ? (
 		<InBrowserBrowserForRealz baseUrl={baseUrl} id={id} name={name} ref={ref} />
 	) : portIsAvailable === false ? (
 		<div className="flex flex-col items-center justify-center">
 			<p className="max-w-xs pb-5 text-center" role="status">
 				{`The port for this app is unavailable. It could be that you're running it `}
-				<a href={`http://localhost:${port}`} className="underline">
+				<a
+					href={getBaseUrl({ domain: requestInfo.domain, port })}
+					className="underline"
+				>
 					elsewhere
 				</a>
 				?

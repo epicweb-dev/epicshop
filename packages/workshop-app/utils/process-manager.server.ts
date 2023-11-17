@@ -213,7 +213,7 @@ export async function runAppTests(app: App) {
 export async function waitOnApp(app: App) {
 	if (app.dev.type === 'script') {
 		return waitOn({
-			resources: [`http://localhost:${app.dev.portNumber}`],
+			resources: [`http-get://localhost:${app.dev.portNumber}`],
 			timeout: 20_000,
 		})
 	}
