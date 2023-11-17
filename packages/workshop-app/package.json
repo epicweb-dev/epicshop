@@ -87,6 +87,7 @@
     "@remix-run/express": "^2.3.0",
     "@remix-run/node": "^2.3.0",
     "@remix-run/react": "^2.3.0",
+    "@sindresorhus/merge-streams": "^1.0.0",
     "@sindresorhus/slugify": "^2.2.1",
     "@types/chai": "^4.3.10",
     "@types/chai-dom": "^1.11.3",
