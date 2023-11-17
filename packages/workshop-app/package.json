@@ -118,7 +118,7 @@
     "lodash.escape": "^4.0.1",
     "lru-cache": "^10.0.2",
     "md5-hex": "^5.0.0",
-    "mdx-bundler": "^10.0.0",
+    "mdx-bundler": "^10.0.1",
     "mime-types": "^2.1.35",
     "morgan": "^1.10.0",
     "msw": "^2.0.8",
