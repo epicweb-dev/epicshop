@@ -4,8 +4,6 @@ import esbuild from 'esbuild'
 import fsExtra from 'fs-extra'
 import { glob } from 'glob'
 
-const pkg = fsExtra.readJsonSync(path.join(process.cwd(), 'package.json'))
-
 const dir = process.argv[2]
 
 if (dir !== 'server' && dir !== 'utils') {
@@ -71,7 +69,7 @@ const replaceImportExtension: esbuild.Plugin = {
 const config: esbuild.BuildOptions = {
 	entryPoints,
 	outdir: destDir,
-	target: [`node${pkg.engines.node}`],
+	target: [`node18`],
 	platform: 'node',
 	format: 'esm',
 	logLevel: 'info',
