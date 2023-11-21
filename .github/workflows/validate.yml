@@ -159,7 +159,7 @@ jobs:
       # This is *really* not great, but I don't know how to publish a package
       # in a workspace with bundleDependencies set.
       - name: ❌ Remove workspace
-        run: rm package.json
+        run: rm package.json && cp .npmrc ./packages/workshop-app/.npmrc
 
       - name: 📥 Download deps
         uses: bahmutov/npm-install@v1
