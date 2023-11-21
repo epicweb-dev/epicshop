@@ -16,3 +16,5 @@ scripts/db.json
 /playwright/.cache/
 .partykit
 **/dist/
+
+.nx/cache

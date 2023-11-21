@@ -54,7 +54,6 @@
     }
   },
   "scripts": {
-    "build": "run-p --print-label --print-name build:*",
     "build:remix": "remix build --sourcemap",
     "build:server": "tsx ./other/build-dir.ts server",
     "build:utils": "tsx ./other/build-dir.ts utils",
