@@ -54,6 +54,7 @@
     }
   },
   "scripts": {
+    "build": "nx run build",
     "build:remix": "remix build --sourcemap",
     "build:server": "tsx ./other/build-dir.ts server",
     "build:utils": "tsx ./other/build-dir.ts utils",
