@@ -8,6 +8,7 @@ import {
 	partykitBaseUrl,
 } from './presence.ts'
 import { type Timings } from './timing.server.ts'
+import { checkConnection } from './utils.ts'
 
 export async function getPresentUsers(
 	user?: User | null,
@@ -23,7 +24,22 @@ export async function getPresentUsers(
 		checkValue: z.array(UserSchema),
 		async getFreshValue(context) {
 			try {
-				const response = await fetch(`${partykitBaseUrl}/presence`)
+				const response = await Promise.race([
+					(async () => {
+						const connected = await checkConnection()
+						if (!connected) throw new Error(`No internet connection`)
+						return fetch(`${partykitBaseUrl}/presence`)
+					})(),
+					new Promise<Response>(resolve =>
+						setTimeout(
+							() => resolve(new Response('Timeout', { status: 500 })),
+							200,
+						),
+					),
+				] as const)
+				if (response.statusText === 'Timeout') {
+					throw new Error(`Timeout fetching partykit presence`)
+				}
 				if (!response.ok) {
 					throw new Error(
 						`Unexpected response from partykit: ${response.status} ${response.statusText}`,
@@ -37,8 +53,8 @@ export async function getPresentUsers(
 				} else {
 					return uniqueUsers([...users, user])
 				}
-			} catch (err) {
-				console.error(err)
+			} catch {
+				// console.error(err)
 				context.metadata.ttl = 300
 				return []
 			}
