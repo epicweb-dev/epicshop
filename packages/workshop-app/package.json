@@ -72,7 +72,7 @@
   "dependencies": {
     "@conform-to/react": "^0.9.1",
     "@conform-to/zod": "^0.9.1",
-    "@epic-web/client-hints": "^1.2.1",
+    "@epic-web/client-hints": "^1.2.2",
     "@kentcdodds/md-temp": "^6.0.0",
     "@mdx-js/mdx": "^3.0.0",
     "@mux/mux-player-react": "2.2.0-canary.0-116d6f0",
