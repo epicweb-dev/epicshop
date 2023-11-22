@@ -2,83 +2,39 @@
  * This file contains utilities for using client hints for user preference which
  * are needed by the server, but are only known by the browser.
  */
+import { getHintUtils } from '@epic-web/client-hints'
+import {
+	clientHint as colorSchemeHint,
+	subscribeToSchemeChange,
+} from '@epic-web/client-hints/color-scheme'
+import {
+	clientHint as reducedMotionHint,
+	subscribeToMotionChange,
+} from '@epic-web/client-hints/reduced-motion'
+import { clientHint as timeZoneHint } from '@epic-web/client-hints/time-zone'
 import { useRevalidator } from '@remix-run/react'
 import * as React from 'react'
 import { useRequestInfo } from './request-info.ts'
 
-export const clientHints = {
+const themeCookieName = 'KCDShop_CH-prefers-color-scheme'
+const motionCookieName = 'KCDShop_CH-reduced-motion'
+const hintsUtils = getHintUtils({
 	theme: {
-		cookieName: 'KCDShop_CH-prefers-color-scheme',
-		getValueCode: `window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light'`,
-		fallback: 'light',
-		transform(value: string | null) {
-			return value === 'dark' ? 'dark' : 'light'
-		},
-	},
-	reducedMotion: {
-		cookieName: 'KCDShop_CH-reduced-motion',
-		getValueCode: `window.matchMedia('(prefers-reduced-motion: reduce)').matches ? 'reduce' : 'no-preference'`,
-		fallback: 'no-preference',
-		transform(value: string | null) {
-			return value === 'reduce' ? 'reduce' : 'no-preference'
-		},
+		...colorSchemeHint,
+		cookieName: themeCookieName,
 	},
 	timeZone: {
-		cookieName: 'CH-time-zone',
-		getValueCode: `Intl.DateTimeFormat().resolvedOptions().timeZone`,
-		fallback: 'Etc/UTC',
-		transform(value: string | null) {
-			return decodeURIComponent(value ?? 'Etc%2FUTC')
-		},
+		...timeZoneHint,
+		cookieName: 'KCDShop_CH-time-zone',
+	},
+	reducedMotion: {
+		...reducedMotionHint,
+		cookieName: motionCookieName,
 	},
 	// add other hints here
-}
+})
 
-type ClientHintNames = keyof typeof clientHints
-
-function getCookieValue(cookieString: string, name: ClientHintNames) {
-	const hint = clientHints[name]
-	if (!hint) {
-		throw new Error(`Unknown client hint: ${name}`)
-	}
-	const value = cookieString
-		.split(';')
-		.map(c => c.trim())
-		.find(c => c.startsWith(hint.cookieName + '='))
-		?.split('=')[1]
-
-	return value ?? null
-}
-
-/**
- *
- * @param request {Request} - optional request object (only used on server)
- * @returns an object with the client hints and their values
- */
-export function getHints(request?: Request) {
-	const cookieString =
-		typeof document !== 'undefined'
-			? document.cookie
-			: typeof request !== 'undefined'
-			? request.headers.get('Cookie') ?? ''
-			: ''
-
-	return Object.entries(clientHints).reduce(
-		(acc, [name, hint]) => {
-			const hintName = name as ClientHintNames
-			// using ignore because it's not an issue with only one hint, but will
-			// be with more than one...
-			// @ts-ignore PR to improve these types is welcome
-			acc[hintName] = hint.transform(getCookieValue(cookieString, hintName))
-			return acc
-		},
-		{} as {
-			[name in ClientHintNames]: ReturnType<
-				(typeof clientHints)[name]['transform']
-			>
-		},
-	)
-}
+export const { getHints } = hintsUtils
 
 /**
  * @returns an object with the client hints and their values
@@ -93,64 +49,22 @@ export function useHints() {
  * if they are not set then reloads the page if any cookie was set to an
  * inaccurate value.
  */
-export function ClientHintCheck() {
+export function ClientHintCheck({ nonce }: { nonce: string }) {
 	const { revalidate } = useRevalidator()
-	React.useEffect(() => {
-		const themeQuery = window.matchMedia('(prefers-color-scheme: dark)')
-		function handleThemeChange() {
-			document.cookie = `${clientHints.theme.cookieName}=${
-				themeQuery.matches ? 'dark' : 'light'
-			}; Max-Age=31536000; Path=/`
-			revalidate()
-		}
-		themeQuery.addEventListener('change', handleThemeChange)
-		return () => {
-			themeQuery.removeEventListener('change', handleThemeChange)
-		}
-	}, [revalidate])
-
-	React.useEffect(() => {
-		const motionQuery = window.matchMedia('(prefers-reduced-motion: reduce)')
-		function handleMotionChange() {
-			document.cookie = `${clientHints.reducedMotion.cookieName}=${
-				motionQuery.matches ? 'reduce' : 'no-preference'
-			}; Max-Age=31536000; Path=/`
-			revalidate()
-		}
-		motionQuery.addEventListener('change', handleMotionChange)
-		return () => {
-			motionQuery.removeEventListener('change', handleMotionChange)
-		}
-	})
+	React.useEffect(
+		() => subscribeToSchemeChange(() => revalidate(), themeCookieName),
+		[revalidate],
+	)
+	React.useEffect(
+		() => subscribeToMotionChange(() => revalidate(), motionCookieName),
+		[revalidate],
+	)
 
 	return (
 		<script
+			nonce={nonce}
 			dangerouslySetInnerHTML={{
-				__html: `
-const cookies = document.cookie.split(';').map(c => c.trim()).reduce((acc, cur) => {
-	const [key, value] = cur.split('=');
-	acc[key] = value;
-	return acc;
-}, {});
-let cookieChanged = false;
-const hints = [
-${Object.values(clientHints)
-	.map(hint => {
-		const cookieName = JSON.stringify(hint.cookieName)
-		return `{ name: ${cookieName}, actual: String(${hint.getValueCode}), cookie: cookies[${cookieName}] }`
-	})
-	.join(',\n')}
-];
-for (const hint of hints) {
-	if (decodeURIComponent(hint.cookie) !== hint.actual) {
-		cookieChanged = true;
-		document.cookie = encodeURIComponent(hint.name) + '=' + encodeURIComponent(hint.actual) + '; Max-Age=31536000; Path=/';
-	}
-}
-if (cookieChanged && navigator.cookieEnabled) {
-	window.location.reload();
-}
-			`,
+				__html: hintsUtils.getClientHintCheckScript(),
 			}}
 		/>
 	)
