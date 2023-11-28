@@ -193,6 +193,8 @@
   "bundleDependencies": [
     "@conform-to/react",
     "@conform-to/zod",
+    "@epic-web/client-hints",
+    "@epic-web/restore-scroll",
     "@radix-ui/react-accordion",
     "@radix-ui/react-popover",
     "@radix-ui/react-select",
