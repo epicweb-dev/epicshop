@@ -1,3 +1,4 @@
+import { ElementScrollRestoration } from '@epic-web/restore-scroll'
 import {
 	defer,
 	type DataFunctionArgs,
@@ -5,6 +6,7 @@ import {
 	type MetaFunction,
 } from '@remix-run/node'
 import { Link, useLoaderData } from '@remix-run/react'
+import slugify from '@sindresorhus/slugify'
 import * as React from 'react'
 import { EpicVideoInfoProvider } from '#app/components/epic-video.tsx'
 import { Loading } from '#app/components/loading.tsx'
@@ -44,9 +46,11 @@ export async function loader({ request }: DataFunctionArgs) {
 	})
 
 	const lastExercises = exercises[exercises.length - 1]
+	const workshopTitle = await getWorkshopTitle()
 	return defer(
 		{
-			workshopTitle: await getWorkshopTitle(),
+			articleId: `workshop-${slugify(workshopTitle)}-finished`,
+			workshopTitle: workshopTitle,
 			finishedCode:
 				compiledFinished.compiled.status === 'success'
 					? compiledFinished.compiled.code
@@ -102,7 +106,7 @@ export default function ExerciseFinished() {
 					</h1>
 					<article
 						className="shadow-on-scrollbox h-full w-full max-w-none flex-1 scroll-pt-6 space-y-6 overflow-y-auto p-10 pt-8 scrollbar-thin scrollbar-thumb-scrollbar"
-						data-restore-scroll="true"
+						id={data.articleId}
 					>
 						{data.finishedCode ? (
 							<EpicVideoInfoProvider
@@ -120,6 +124,7 @@ export default function ExerciseFinished() {
 							'No finished instructions yet...'
 						)}
 					</article>
+					<ElementScrollRestoration elementQuery={`#${data.articleId}`} />
 					<ProgressToggle
 						type="workshop-finished"
 						className="h-14 border-t px-6"

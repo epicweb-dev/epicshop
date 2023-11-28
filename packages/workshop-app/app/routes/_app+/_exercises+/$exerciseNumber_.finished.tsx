@@ -1,4 +1,5 @@
 import path from 'path'
+import { ElementScrollRestoration } from '@epic-web/restore-scroll'
 import {
 	type DataFunctionArgs,
 	type HeadersFunction,
@@ -6,6 +7,7 @@ import {
 	defer,
 } from '@remix-run/node'
 import { Link, useLoaderData } from '@remix-run/react'
+import slugify from '@sindresorhus/slugify'
 import * as React from 'react'
 import { EpicVideoInfoProvider } from '#app/components/epic-video.tsx'
 import { Loading } from '#app/components/loading.tsx'
@@ -75,8 +77,13 @@ export async function loader({ params, request }: DataFunctionArgs) {
 		.filter(app => app.exerciseNumber === exercise.exerciseNumber)
 	const prevApp = exerciseApps[exerciseApps.length - 1]
 
+	const articleId = `workshop-${slugify(workshopTitle)}-${
+		exercise.exerciseNumber
+	}-finished`
+
 	return defer(
 		{
+			articleId,
 			workshopTitle,
 			exercise,
 			epicVideoInfosPromise: getEpicVideoInfos(
@@ -151,7 +158,7 @@ export default function ExerciseFinished() {
 
 					<article
 						className="shadow-on-scrollbox h-full w-full max-w-none flex-1 scroll-pt-6 space-y-6 overflow-y-auto p-10 pt-8 scrollbar-thin scrollbar-thumb-scrollbar"
-						data-restore-scroll="true"
+						id={data.articleId}
 					>
 						{data.exercise.finishedCode ? (
 							<EpicVideoInfoProvider
@@ -169,6 +176,7 @@ export default function ExerciseFinished() {
 							'No finished instructions yet...'
 						)}
 					</article>
+					<ElementScrollRestoration elementQuery={`#${data.articleId}`} />
 					<ProgressToggle
 						type="finished"
 						exerciseNumber={data.exercise.exerciseNumber}

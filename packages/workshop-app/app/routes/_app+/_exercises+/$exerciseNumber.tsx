@@ -1,4 +1,5 @@
 import path from 'path'
+import { ElementScrollRestoration } from '@epic-web/restore-scroll'
 import {
 	type DataFunctionArgs,
 	type HeadersFunction,
@@ -11,6 +12,7 @@ import {
 	useLoaderData,
 	useRouteError,
 } from '@remix-run/react'
+import slugify from '@sindresorhus/slugify'
 import { EpicVideoInfoProvider } from '#app/components/epic-video.tsx'
 import { type loader as rootLoader } from '#app/root.tsx'
 import { EditFileOnGitHub } from '#app/routes/launch-editor.tsx'
@@ -77,8 +79,13 @@ export async function loader({ params, request }: DataFunctionArgs) {
 
 	const firstStep = exercise.steps.find(Boolean)
 
+	const articleId = `workshop-${slugify(workshopTitle)}-${
+		exercise.exerciseNumber
+	}-instructions`
+
 	return defer(
 		{
+			articleId,
 			exercise,
 			exerciseNumber: exercise.exerciseNumber,
 			exerciseReadme: {
@@ -119,7 +126,8 @@ export default function ExerciseNumberRoute() {
 	return (
 		<main className="relative flex h-full w-full max-w-5xl flex-col justify-between border-r border-border md:w-3/4 xl:w-2/3">
 			<article
-				data-restore-scroll="true"
+				id={data.articleId}
+				key={data.articleId}
 				className="shadow-on-scrollbox flex w-full flex-1 flex-col gap-12 overflow-y-scroll border-border px-3 py-4 pt-6 scrollbar-thin scrollbar-thumb-scrollbar md:px-10 md:py-12 md:pt-16"
 			>
 				<div>
@@ -146,6 +154,7 @@ export default function ExerciseNumberRoute() {
 					)}
 				</div>
 			</article>
+			<ElementScrollRestoration elementQuery={`#${data.articleId}`} />
 			<ProgressToggle
 				type="instructions"
 				exerciseNumber={data.exerciseNumber}

@@ -1,3 +1,4 @@
+import { ElementScrollRestoration } from '@epic-web/restore-scroll'
 import {
 	defer,
 	type DataFunctionArgs,
@@ -5,6 +6,7 @@ import {
 	type SerializeFrom,
 } from '@remix-run/node'
 import { Link, useLoaderData } from '@remix-run/react'
+import slugify from '@sindresorhus/slugify'
 import { EpicVideoInfoProvider } from '#app/components/epic-video.tsx'
 import { GeneralErrorBoundary } from '#app/components/error-boundary.tsx'
 import { EditFileOnGitHub } from '#app/routes/launch-editor.tsx'
@@ -46,6 +48,7 @@ export async function loader({ request }: DataFunctionArgs) {
 
 	return defer(
 		{
+			articleId: `workshop-${slugify(title)}-instructions`,
 			title:
 				workshopReadme.compiled.status === 'success'
 					? workshopReadme.compiled.title
@@ -121,15 +124,15 @@ export default function Index() {
 	return (
 		<main className="relative flex h-full w-full max-w-5xl flex-col justify-between border-r border-border md:w-3/4 xl:w-2/3">
 			<article
-				data-restore-scroll="true"
-				className="shadow-on-scrollbox flex w-full flex-1 flex-col gap-12 overflow-y-scroll border-border md:px-10 md:py-12 md:pt-16 px-3 py-4 pt-6 scrollbar-thin scrollbar-thumb-scrollbar"
+				id={data.articleId}
+				className="shadow-on-scrollbox flex w-full flex-1 flex-col gap-12 overflow-y-scroll border-border px-3 py-4 pt-6 scrollbar-thin scrollbar-thumb-scrollbar md:px-10 md:py-12 md:pt-16"
 			>
 				<div>
 					<h1 className="px-10 text-[6vw] font-extrabold leading-none">
 						{data.title}
 					</h1>
 				</div>
-				<div className="w-full max-w-none scroll-pt-6 border-t border-border md:px-10 md:pt-8 px-3 pt-3">
+				<div className="w-full max-w-none scroll-pt-6 border-t border-border px-3 pt-3 md:px-10 md:pt-8">
 					<h2 className="pb-5 font-mono text-xs font-semibold uppercase">
 						Intro
 					</h2>
@@ -164,6 +167,7 @@ export default function Index() {
 						: null}
 				</div>
 			</article>
+			<ElementScrollRestoration elementQuery={`#${data.articleId}`} />
 			<ProgressToggle
 				type="workshop-instructions"
 				className="h-14 border-t px-6"

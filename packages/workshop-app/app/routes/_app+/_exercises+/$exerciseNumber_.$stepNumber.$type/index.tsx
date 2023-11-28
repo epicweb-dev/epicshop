@@ -1,3 +1,4 @@
+import { ElementScrollRestoration } from '@epic-web/restore-scroll'
 import * as Tabs from '@radix-ui/react-tabs'
 import {
 	defer,
@@ -15,6 +16,7 @@ import {
 	useRouteError,
 	useSearchParams,
 } from '@remix-run/react'
+import slugify from '@sindresorhus/slugify'
 import { clsx } from 'clsx'
 import * as React from 'react'
 import { useRef, useState } from 'react'
@@ -49,6 +51,7 @@ import {
 	requireExerciseApp,
 	type App,
 	type ExerciseStepApp,
+	getWorkshopTitle,
 } from '#app/utils/apps.server.ts'
 import { getDiffCode, getDiffFiles } from '#app/utils/diff.server.ts'
 import { getEpicVideoInfos } from '#app/utils/epic-api.ts'
@@ -112,6 +115,7 @@ export const meta: MetaFunction<typeof loader, { root: typeof rootLoader }> = ({
 
 export async function loader({ request, params }: DataFunctionArgs) {
 	const timings = makeTimings('exerciseStepTypeLoader')
+	const workshopTitle = await getWorkshopTitle()
 	const cacheOptions = { request, timings }
 	const exerciseStepApp = await requireExerciseApp(params, cacheOptions)
 	const exercise = await requireExercise(
@@ -254,8 +258,12 @@ export async function loader({ request, params }: DataFunctionArgs) {
 		}
 	}
 
+	const articleId = `workshop-${slugify(workshopTitle)}-${
+		exercise.exerciseNumber
+	}-${exerciseStepApp.stepNumber}-${exerciseStepApp.type}`
 	return defer(
 		{
+			articleId,
 			type: params.type as 'problem' | 'solution',
 			exerciseStepApp,
 			exerciseTitle: exercise.title,
@@ -273,11 +281,11 @@ export async function loader({ request, params }: DataFunctionArgs) {
 						children: `⬅️ ${exercise.title}`,
 				  }
 				: prevApp
-				? {
-						to: getAppPageRoute(prevApp),
-						children: `⬅️ ${prevApp.title} (${prevApp.type})`,
-				  }
-				: null,
+				  ? {
+							to: getAppPageRoute(prevApp),
+							children: `⬅️ ${prevApp.title} (${prevApp.type})`,
+				    }
+				  : null,
 			nextStepLink: isLastStep
 				? {
 						to: `/${exerciseStepApp.exerciseNumber
@@ -285,10 +293,10 @@ export async function loader({ request, params }: DataFunctionArgs) {
 							.padStart(2, '0')}/finished`,
 				  }
 				: nextApp
-				? {
-						to: getAppPageRoute(nextApp),
-				  }
-				: null,
+				  ? {
+							to: getAppPageRoute(nextApp),
+				    }
+				  : null,
 			playground: playgroundApp
 				? {
 						type: 'playground',
@@ -414,8 +422,8 @@ export default function ExercisePartRoute() {
 						</div>
 					</h1>
 					<article
+						id={data.articleId}
 						className="shadow-on-scrollbox h-full w-full max-w-none flex-1 scroll-pt-6 space-y-6 overflow-y-auto p-10 pt-8 scrollbar-thin scrollbar-thumb-scrollbar"
-						data-restore-scroll="true"
 					>
 						{data.exerciseStepApp.instructionsCode ? (
 							<div className="prose dark:prose-invert sm:prose-lg">
@@ -425,6 +433,10 @@ export default function ExercisePartRoute() {
 							<p>No instructions yet...</p>
 						)}
 					</article>
+					<ElementScrollRestoration
+						elementQuery={`#${data.articleId}`}
+						key={data.articleId}
+					/>
 					{data.type === 'solution' ? (
 						<ProgressToggle
 							type="step"
