@@ -8,6 +8,7 @@ import {
 	isProblemApp,
 	getExercise,
 	getWorkshopTitle,
+	isPlaygroundApp,
 } from '#app/utils/apps.server.ts'
 import { getBaseUrl, invariantResponse } from '#app/utils/misc.tsx'
 import { getServerTimeHeader, makeTimings } from '#app/utils/timing.server.ts'
@@ -17,6 +18,7 @@ export async function loader({ request, params }: DataFunctionArgs) {
 	const { id: appId } = params
 	invariantResponse(appId, 'App id is required')
 	const app = await getAppByName(appId, { request, timings })
+	const baseApp = isPlaygroundApp(app) ? await getAppByName(app.appName) : app
 	if (!app) {
 		throw new Response(`App "${appId}" not found`, {
 			status: 404,
@@ -56,18 +58,25 @@ export async function loader({ request, params }: DataFunctionArgs) {
 	}
 	const appTitle = app?.title ?? 'N/A'
 	const workshopTitle = await getWorkshopTitle()
+	const baseAppTitle = isExerciseStepApp(baseApp)
+		? [
+				`${baseApp.stepNumber.toString().padStart(2, '0')}. ${baseApp.title}`,
+				`${baseApp.exerciseNumber.toString().padStart(2, '0')}. ${
+					(await getExercise(baseApp.exerciseNumber, { request, timings }))
+						?.title ?? 'Unknown'
+				}`,
+				workshopTitle,
+		  ]
+		: [baseApp?.title ?? 'N/A']
 	const title = (
 		isExerciseStepApp(app)
 			? [
-					isProblemApp(app) ? '🏃💪' : isSolutionApp(app) ? '🏃🏁' : null,
-					`${app.stepNumber.toString().padStart(2, '0')}. ${app.title}`,
-					`${app.exerciseNumber.toString().padStart(2, '0')}. ${
-						(await getExercise(app.exerciseNumber, { request, timings }))
-							?.title ?? 'Unknown'
-					}`,
-					workshopTitle,
+					isProblemApp(app) ? '💪' : isSolutionApp(app) ? '🏁' : null,
+					...baseAppTitle,
 			  ]
-			: ['🏃', appTitle]
+			: isPlaygroundApp(app)
+			  ? ['🛝', ...baseAppTitle]
+			  : [appTitle]
 	)
 		.filter(Boolean)
 		.join(' | ')
