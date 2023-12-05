@@ -434,9 +434,10 @@ export async function getWorkshopData(
 				)}`,
 			).catch(e => new Response(getErrorMessage(e), { status: 500 }))
 			if (response.status < 200 || response.status >= 300) {
-				throw new Error(
+				console.error(
 					`Failed to fetch workshop data from EpicWeb for ${epicWorkshopSlug}: ${response.status} ${response.statusText}`,
 				)
+				return { sections: [] }
 			}
 			return ModuleSchema.parse(await response.json())
 		},
