@@ -8,6 +8,7 @@ import {
 } from './apps.server.ts'
 import { cachified, fsCache } from './cache.server.ts'
 import { getAuthInfo } from './db.server.ts'
+import { getErrorMessage } from './misc.tsx'
 import { type Timings } from './timing.server.ts'
 
 const Transcript = z
@@ -201,7 +202,7 @@ async function getEpicProgress({
 				headers: {
 					authorization: `Bearer ${authInfo.tokenSet.access_token}`,
 				},
-			})
+			}).catch(e => new Response(getErrorMessage(e), { status: 500 }))
 			if (response.status < 200 || response.status >= 300) {
 				console.error(
 					`Failed to fetch progress from EpicWeb: ${response.status} ${response.statusText}`,
@@ -376,7 +377,7 @@ export async function updateProgress(
 		body: JSON.stringify(
 			complete ? { lessonSlug } : { lessonSlug, remove: true },
 		),
-	})
+	}).catch(e => new Response(getErrorMessage(e), { status: 500 }))
 	// force the progress to be fresh whether or not we're successful
 	await getEpicProgress({ forceFresh: true, request, timings })
 
@@ -431,7 +432,7 @@ export async function getWorkshopData(
 				`https://www.epicweb.dev/api/workshops/${encodeURIComponent(
 					epicWorkshopSlug,
 				)}`,
-			)
+			).catch(e => new Response(getErrorMessage(e), { status: 500 }))
 			if (response.status < 200 || response.status >= 300) {
 				throw new Error(
 					`Failed to fetch workshop data from EpicWeb for ${epicWorkshopSlug}: ${response.status} ${response.statusText}`,

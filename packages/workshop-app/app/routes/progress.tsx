@@ -199,7 +199,10 @@ export async function action({ request }: DataFunctionArgs) {
 		'lessonSlug must be a string',
 		{ status: 400 },
 	)
-	const beforeProgress = await getProgress({ request })
+	const beforeProgress = await getProgress({ request }).catch(e => {
+		console.error('Failed to get progress', e)
+		return []
+	})
 	const result = await updateProgress({ lessonSlug, complete }, { request })
 
 	const lessonProgress = beforeProgress.find(

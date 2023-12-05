@@ -83,7 +83,11 @@ export async function loader({ request }: DataFunctionArgs) {
 	})
 
 	const preferences = await getPreferences()
-	const progress = await getProgress({ timings })
+	const progress = await getProgress({ timings }).catch(e => {
+		console.error('Failed to get progress', e)
+		const emptyProgress: Awaited<ReturnType<typeof getProgress>> = []
+		return emptyProgress
+	})
 	const { toast, headers: toastHeaders } = await getToast(request)
 	const { confettiId, headers: confettiHeaders } = getConfetti(request)
 	const discordMember = await getDiscordMember()
