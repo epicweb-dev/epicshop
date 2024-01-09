@@ -190,7 +190,7 @@ function FacePile({ isMenuOpened }: { isMenuOpened: boolean }) {
 													score === 1 && loggedInUser?.id !== user.id
 														? 'with you'
 														: ''
-											  } on`
+												} on`
 											: null}
 									</span>
 									{locationLabel?.line1 ? (
@@ -235,8 +235,7 @@ function FacePile({ isMenuOpened }: { isMenuOpened: boolean }) {
 }
 
 export default function App() {
-	const user = null // useOptionalUser()
-	// ENV.KCDSHOP_DEPLOYED = true
+	const user = useOptionalUser()
 
 	const [isMenuOpened, setMenuOpened] = React.useState(false)
 
@@ -418,12 +417,12 @@ function Navigation({
 		params.type === 'solution'
 			? exercise?.solutions.find(
 					s => s.stepNumber === Number(params.stepNumber),
-			  )
+				)
 			: params.type === 'problem'
-			  ? exercise?.problems.find(
+				? exercise?.problems.find(
 						p => p.stepNumber === Number(params.stepNumber),
-			    )
-			  : null
+					)
+				: null
 
 	// container
 	const menuControls = useAnimationControls()
