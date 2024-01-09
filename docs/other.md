@@ -11,9 +11,14 @@ version, but you can also disable it locally by setting the
 
 Sometimes when the user sets the playground, you may have things you want to
 accomplish before and after the playground is set. You can do this by adding a
-`kcdshop` directory in the exercise step directory and a `pre-set-playground.js`
-and `post-set-playground.js` file. This will be executed before and after the
+`kcdshop` directory in the root and a `pre-set-playground.js` and
+`post-set-playground.js` file. This will be executed before and after the
 playground is set.
+
+If you have some specific behavior of a specific exercise, then you can do the
+same within that exercise directory and that will be executed instead of the
+root `kcdshop` directory. If you want both to be run, simply import the root's
+version of the script from within your script to have it be executed.
 
 These will be provided with the following environment variables:
 

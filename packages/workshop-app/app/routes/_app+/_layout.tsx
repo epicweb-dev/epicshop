@@ -235,7 +235,8 @@ function FacePile({ isMenuOpened }: { isMenuOpened: boolean }) {
 }
 
 export default function App() {
-	const user = useOptionalUser()
+	const user = null // useOptionalUser()
+	// ENV.KCDSHOP_DEPLOYED = true
 
 	const [isMenuOpened, setMenuOpened] = React.useState(false)
 
@@ -244,9 +245,12 @@ export default function App() {
 			{user ? null : <EpicWebBanner />}
 			<div
 				className={cn('flex flex-grow', {
-					'h-[calc(100vh-112px)] sm:h-[calc(100vh-64px)]': ENV.KCDSHOP_DEPLOYED,
-					'h-[calc(100vh-64px)]': !user,
-					'h-screen': user,
+					'h-[calc(100vh-64px-env(safe-area-inset-top)-env(safe-area-inset-bottom))]':
+						!user,
+					'h-[calc(100vh-112px-env(safe-area-inset-top)-env(safe-area-inset-bottom))] sm:h-[calc(100vh-64px-env(safe-area-inset-top)-env(safe-area-inset-bottom))]':
+						ENV.KCDSHOP_DEPLOYED,
+					'h-[calc(100vh-env(safe-area-inset-top)-env(safe-area-inset-bottom))]':
+						user,
 				})}
 			>
 				<Navigation
@@ -416,8 +420,10 @@ function Navigation({
 					s => s.stepNumber === Number(params.stepNumber),
 			  )
 			: params.type === 'problem'
-			? exercise?.problems.find(p => p.stepNumber === Number(params.stepNumber))
-			: null
+			  ? exercise?.problems.find(
+						p => p.stepNumber === Number(params.stepNumber),
+			    )
+			  : null
 
 	// container
 	const menuControls = useAnimationControls()

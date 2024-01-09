@@ -153,7 +153,7 @@ function Document({
 					}}
 				/>
 			</head>
-			<body className="h-screen bg-background text-foreground scrollbar-thin scrollbar-thumb-scrollbar">
+			<body className="h-screen-safe bg-background text-foreground scrollbar-thin scrollbar-thumb-scrollbar">
 				{children}
 				<ScrollRestoration />
 				<Scripts />
@@ -179,7 +179,7 @@ function App() {
 	return (
 		<Document
 			className={cn(
-				'h-full antialiased',
+				'h-screen-safe antialiased',
 				theme,
 				{ 'cursor-progress': showSpinner },
 				altDown ? 'alt-down' : null,
@@ -207,7 +207,7 @@ export default function AppWithProviders() {
 
 export function ErrorBoundary() {
 	return (
-		<Document className="h-full">
+		<Document className="h-screen-safe">
 			<GeneralErrorBoundary />
 		</Document>
 	)

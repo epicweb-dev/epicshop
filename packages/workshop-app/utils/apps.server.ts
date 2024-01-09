@@ -175,6 +175,13 @@ function exists(file: string) {
 	)
 }
 
+function firstToExist(...files: Array<string>) {
+	return Promise.all(files.map(exists)).then(results => {
+		const index = results.findIndex(Boolean)
+		return index === -1 ? null : files[index]
+	})
+}
+
 export const modifiedTimes = singleton(
 	'modified_times',
 	() => new Map<string, number>(),
@@ -920,7 +927,8 @@ export async function setPlayground(
 	{ reset }: { reset?: boolean } = {},
 ) {
 	const isIgnored = await isGitIgnored({ cwd: srcDir })
-	const destDir = path.join(getWorkshopRoot(), 'playground')
+	const workshopRoot = getWorkshopRoot()
+	const destDir = path.join(workshopRoot, 'playground')
 	const playgroundFiles = path.join(destDir, '**')
 	getOptionalWatcher()?.unwatch(playgroundFiles)
 	const playgroundApp = await getAppByName('playground')
@@ -934,12 +942,11 @@ export async function setPlayground(
 	const setPlaygroundTimestamp = Date.now()
 
 	// run prepare-playground script if it exists
-	const preSetPlaygroundPath = path.join(
-		srcDir,
-		'kcdshop',
-		'pre-set-playground.js',
+	const preSetPlaygroundPath = await firstToExist(
+		path.join(srcDir, 'kcdshop', 'pre-set-playground.js'),
+		path.join(workshopRoot, 'kcdshop', 'pre-set-playground.js'),
 	)
-	if (await exists(preSetPlaygroundPath)) {
+	if (preSetPlaygroundPath) {
 		await execa('node', [preSetPlaygroundPath], {
 			cwd: workshopRoot,
 			stdio: 'inherit',
@@ -1027,12 +1034,11 @@ export async function setPlayground(
 	const restartPlayground = playgroundWasRunning && !playgroundIsStillRunning
 
 	// run postSet-playground script if it exists
-	const postSetPlaygroundPath = path.join(
-		srcDir,
-		'kcdshop',
-		'post-set-playground.js',
+	const postSetPlaygroundPath = await firstToExist(
+		path.join(srcDir, 'kcdshop', 'post-set-playground.js'),
+		path.join(workshopRoot, 'kcdshop', 'post-set-playground.js'),
 	)
-	if (await exists(postSetPlaygroundPath)) {
+	if (postSetPlaygroundPath) {
 		await execa('node', [postSetPlaygroundPath], {
 			cwd: workshopRoot,
 			stdio: 'inherit',

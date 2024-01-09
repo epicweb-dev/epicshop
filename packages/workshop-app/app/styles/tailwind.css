@@ -105,6 +105,13 @@
 			'rlig' 1,
 			'calt' 1;
 	}
+	html {
+		height: -webkit-fill-available;
+	}
+
+	body {
+		height: -webkit-fill-available;
+	}
 }
 
 @layer utilities {
