@@ -30,7 +30,7 @@
     "@testing-library/react": "^14.0.0",
     "@testing-library/user-event": "^14.4.3",
     "assert": "^2.0.0",
-    "tsx": "^3.12.7"
+    "tsx": "^4.7.0"
   },
   "eslintIgnore": [
     "/node_modules",
@@ -43,7 +43,7 @@
     "examples/*"
   ],
   "engines": {
-    "node": "14 || 16 || 18 || 19",
+    "node": "14 || 16 || 18 || 19 || 20",
     "npm": ">=8.16.0"
   }
 }

@@ -35,7 +35,7 @@
     "morgan": "^1.10.0",
     "react": "^18.2.0",
     "react-dom": "^18.2.0",
-    "tsx": "^3.12.10"
+    "tsx": "^4.7.0"
   },
   "devDependencies": {
     "@remix-run/dev": "^2.2.0",
@@ -56,6 +56,6 @@
     "typescript": "^5.2.2"
   },
   "engines": {
-    "node": "18"
+    "node": "20"
   }
 }
