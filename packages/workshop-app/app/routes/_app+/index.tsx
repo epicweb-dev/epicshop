@@ -128,7 +128,7 @@ export default function Index() {
 				className="shadow-on-scrollbox flex w-full flex-1 flex-col gap-12 overflow-y-scroll border-border px-3 py-4 pt-6 scrollbar-thin scrollbar-thumb-scrollbar md:px-10 md:py-12 md:pt-16"
 			>
 				<div>
-					<h1 className="px-10 text-[6vw] font-extrabold leading-none">
+					<h1 className="px-10 text-[clamp(3rem,6vw,8.5rem)] font-extrabold leading-none">
 						{data.title}
 					</h1>
 				</div>
