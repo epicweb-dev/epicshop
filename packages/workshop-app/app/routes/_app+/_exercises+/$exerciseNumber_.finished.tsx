@@ -1,7 +1,7 @@
 import path from 'path'
 import { ElementScrollRestoration } from '@epic-web/restore-scroll'
 import {
-	type DataFunctionArgs,
+	type LoaderFunctionArgs,
 	type HeadersFunction,
 	type MetaFunction,
 	defer,
@@ -48,7 +48,7 @@ export const meta: MetaFunction<typeof loader, { root: typeof rootLoader }> = ({
 	]
 }
 
-export async function loader({ params, request }: DataFunctionArgs) {
+export async function loader({ request, params }: LoaderFunctionArgs) {
 	const timings = makeTimings('exerciseFinishedLoader')
 	invariantResponse(params.exerciseNumber, 'exerciseNumber is required')
 	const exercise = await getExercise(params.exerciseNumber, {
@@ -94,23 +94,23 @@ export async function loader({ params, request }: DataFunctionArgs) {
 				? {
 						file: finishedFilepath,
 						relativePath: `exercises/${exercise.dirName}/FINISHED.mdx`,
-				  }
+					}
 				: null,
 			prevStepLink: prevApp
 				? {
 						to: getAppPageRoute(prevApp),
 						'aria-label': `${prevApp.title} (${prevApp.type})`,
-				  }
+					}
 				: null,
 			nextStepLink: nextExercise
 				? {
 						to: `/${nextExercise.exerciseNumber.toString().padStart(2, '0')}`,
 						'aria-label': `${nextExercise.title}`,
-				  }
+					}
 				: {
 						to: '/finished',
 						'aria-label': 'Finished! 🎉',
-				  },
+					},
 		},
 		{
 			headers: {

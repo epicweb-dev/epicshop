@@ -1,4 +1,4 @@
-import { redirect, type DataFunctionArgs } from '@remix-run/node'
+import { redirect, type LoaderFunctionArgs } from '@remix-run/node'
 import {
 	DiscordMemberSchema,
 	requireAuthInfo,
@@ -22,7 +22,7 @@ export function getDiscordAuthURL() {
 	return discordAuthUrl.toString()
 }
 
-export async function loader({ request }: DataFunctionArgs) {
+export async function loader({ request }: LoaderFunctionArgs) {
 	const authInfo = await requireAuthInfo({ request })
 	const discordCode = new URL(request.url).searchParams.get('code')
 	invariantResponse(discordCode, 'Missing code')

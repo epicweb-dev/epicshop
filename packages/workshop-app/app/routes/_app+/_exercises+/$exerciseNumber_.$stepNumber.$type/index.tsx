@@ -3,7 +3,7 @@ import * as Tabs from '@radix-ui/react-tabs'
 import {
 	defer,
 	redirect,
-	type DataFunctionArgs,
+	type LoaderFunctionArgs,
 	type HeadersFunction,
 	type MetaFunction,
 	type SerializeFrom,
@@ -113,7 +113,7 @@ export const meta: MetaFunction<typeof loader, { root: typeof rootLoader }> = ({
 	]
 }
 
-export async function loader({ request, params }: DataFunctionArgs) {
+export async function loader({ request, params }: LoaderFunctionArgs) {
 	const timings = makeTimings('exerciseStepTypeLoader')
 	const workshopTitle = await getWorkshopTitle()
 	const cacheOptions = { request, timings }
@@ -247,7 +247,7 @@ export async function loader({ request, params }: DataFunctionArgs) {
 				? getDiffFiles(problemApp, solutionApp, cacheOptions).catch(e => {
 						console.error(e)
 						return 'There was a problem generating the diff'
-				  })
+					})
 				: 'No diff available',
 		])
 		return {
@@ -279,24 +279,24 @@ export async function loader({ request, params }: DataFunctionArgs) {
 							.toString()
 							.padStart(2, '0')}`,
 						children: `⬅️ ${exercise.title}`,
-				  }
+					}
 				: prevApp
-				  ? {
+					? {
 							to: getAppPageRoute(prevApp),
 							children: `⬅️ ${prevApp.title} (${prevApp.type})`,
-				    }
-				  : null,
+						}
+					: null,
 			nextStepLink: isLastStep
 				? {
 						to: `/${exerciseStepApp.exerciseNumber
 							.toString()
 							.padStart(2, '0')}/finished`,
-				  }
+					}
 				: nextApp
-				  ? {
+					? {
 							to: getAppPageRoute(nextApp),
-				    }
-				  : null,
+						}
+					: null,
 			playground: playgroundApp
 				? {
 						type: 'playground',
@@ -307,7 +307,7 @@ export async function loader({ request, params }: DataFunctionArgs) {
 						name: playgroundApp.name,
 						appName: playgroundApp.appName,
 						...(await getAppRunningState(playgroundApp)),
-				  }
+					}
 				: null,
 			problem: problemApp
 				? {
@@ -318,7 +318,7 @@ export async function loader({ request, params }: DataFunctionArgs) {
 						title: problemApp.title,
 						name: problemApp.name,
 						...(await getAppRunningState(problemApp)),
-				  }
+					}
 				: null,
 			solution: solutionApp
 				? {
@@ -329,7 +329,7 @@ export async function loader({ request, params }: DataFunctionArgs) {
 						title: solutionApp.title,
 						name: solutionApp.name,
 						...(await getAppRunningState(solutionApp)),
-				  }
+					}
 				: null,
 			diff: getDiffProp(),
 		} as const,
@@ -461,7 +461,7 @@ export default function ExercisePartRoute() {
 									? {
 											to: data.prevStepLink.to,
 											'aria-label': 'Previous Step',
-									  }
+										}
 									: null
 							}
 							next={
@@ -469,7 +469,7 @@ export default function ExercisePartRoute() {
 									? {
 											to: data.nextStepLink.to,
 											'aria-label': 'Next Step',
-									  }
+										}
 									: null
 							}
 						/>
@@ -511,7 +511,7 @@ export default function ExercisePartRoute() {
 														searchParams,
 														'preview',
 														tab === 'playground' ? null : tab,
-												  )}`
+													)}`
 										}
 									>
 										{tab}

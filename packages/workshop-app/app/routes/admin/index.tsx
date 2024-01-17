@@ -1,4 +1,9 @@
-import { type DataFunctionArgs, type MetaFunction, json } from '@remix-run/node'
+import {
+	type ActionFunctionArgs,
+	type LoaderFunctionArgs,
+	type MetaFunction,
+	json,
+} from '@remix-run/node'
 import { Form, Link, useLoaderData, useNavigation } from '@remix-run/react'
 import { Icon } from '#app/components/icons.tsx'
 import { SimpleTooltip } from '#app/components/ui/tooltip.tsx'
@@ -24,7 +29,7 @@ export const meta: MetaFunction<typeof loader, { root: typeof rootLoader }> = ({
 	return [{ title: `👷 | ${rootData?.workshopTitle}` }]
 }
 
-export async function loader({ request }: DataFunctionArgs) {
+export async function loader({ request }: LoaderFunctionArgs) {
 	ensureUndeployed()
 	const timings = makeTimings('adminLoader')
 	const workshopSlug = (await getEpicWorkshopSlug()) ?? 'Unkown'
@@ -68,7 +73,7 @@ export async function loader({ request }: DataFunctionArgs) {
 	)
 }
 
-export async function action({ request }: DataFunctionArgs) {
+export async function action({ request }: ActionFunctionArgs) {
 	ensureUndeployed()
 	const formData = await request.formData()
 	const intent = formData.get('intent')
@@ -113,10 +118,10 @@ function sortProgress(a: SerializedProgress, b: SerializedProgress) {
 	return a.type === 'unknown' && b.type === 'unknown'
 		? 0
 		: a.type === 'unknown'
-		? -1
-		: b.type === 'unknown'
-		? 1
-		: 0
+			? -1
+			: b.type === 'unknown'
+				? 1
+				: 0
 }
 
 function linkProgress(progress: SerializedProgress) {

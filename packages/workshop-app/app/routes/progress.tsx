@@ -1,4 +1,4 @@
-import { json, type DataFunctionArgs } from '@remix-run/node'
+import { json, type ActionFunctionArgs } from '@remix-run/node'
 import {
 	useFetcher,
 	useFetchers,
@@ -188,7 +188,7 @@ export function useProgressItem({
 	return null
 }
 
-export async function action({ request }: DataFunctionArgs) {
+export async function action({ request }: ActionFunctionArgs) {
 	ensureUndeployed()
 	await requireAuthInfo({ request })
 	const formData = await request.formData()
@@ -246,7 +246,7 @@ export async function action({ request }: DataFunctionArgs) {
 						title: 'Congratulations! 🎉',
 						description: announcement,
 						type: 'success',
-				  })
+					})
 				: null,
 		),
 	})

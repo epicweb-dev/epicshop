@@ -1,7 +1,7 @@
 import path from 'path'
 import { ElementScrollRestoration } from '@epic-web/restore-scroll'
 import {
-	type DataFunctionArgs,
+	type LoaderFunctionArgs,
 	type HeadersFunction,
 	type MetaFunction,
 	defer,
@@ -48,7 +48,7 @@ export const meta: MetaFunction<typeof loader, { root: typeof rootLoader }> = ({
 	]
 }
 
-export async function loader({ params, request }: DataFunctionArgs) {
+export async function loader({ request, params }: LoaderFunctionArgs) {
 	const timings = makeTimings('exerciseNumberLoader')
 	invariantResponse(params.exerciseNumber, 'exerciseNumber is required')
 	const [exercises, workshopTitle] = await Promise.all([

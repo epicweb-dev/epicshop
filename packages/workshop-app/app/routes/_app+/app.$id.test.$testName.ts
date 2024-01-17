@@ -1,5 +1,5 @@
 import path from 'path'
-import { type DataFunctionArgs } from '@remix-run/node'
+import { type LoaderFunctionArgs } from '@remix-run/node'
 import fsExtra from 'fs-extra'
 import {
 	getAppByName,
@@ -14,7 +14,7 @@ import { invariantResponse } from '#app/utils/misc.tsx'
 import { getServerTimeHeader, makeTimings } from '#app/utils/timing.server.ts'
 import { redirectWithToast } from '#app/utils/toast.server.ts'
 
-export async function loader({ params, request }: DataFunctionArgs) {
+export async function loader({ request, params }: LoaderFunctionArgs) {
 	const timings = makeTimings('app_test_loader')
 	const { id: appId, testName } = params
 	invariantResponse(appId, 'App id is required')
@@ -138,7 +138,7 @@ import(${JSON.stringify(testScriptPath)}).then(
 							?.title ?? 'Unknown'
 					}`,
 					workshopTitle,
-			  ]
+				]
 			: ['🧪', appTitle]
 	)
 		.filter(Boolean)

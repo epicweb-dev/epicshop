@@ -1,5 +1,5 @@
 import fs from 'node:fs'
-import { type DataFunctionArgs, json } from '@remix-run/node'
+import { type ActionFunctionArgs, json } from '@remix-run/node'
 import { useFetcher } from '@remix-run/react'
 import { clsx } from 'clsx'
 import { z } from 'zod'
@@ -21,7 +21,7 @@ function checkFileExists(file: string) {
 	)
 }
 
-export async function action({ request }: DataFunctionArgs) {
+export async function action({ request }: ActionFunctionArgs) {
 	ensureUndeployed()
 	const formData = await request.formData()
 	const rawData = {

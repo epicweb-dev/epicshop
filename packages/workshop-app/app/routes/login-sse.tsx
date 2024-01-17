@@ -1,4 +1,4 @@
-import { type DataFunctionArgs } from '@remix-run/node'
+import { type LoaderFunctionArgs } from '@remix-run/node'
 import { eventStream } from 'remix-utils/sse/server'
 import { z } from 'zod'
 import { EVENTS } from '#app/utils/auth-events.ts'
@@ -23,7 +23,7 @@ export const EventSchema = z.union([
 	AuthRejectedEventSchema,
 ])
 
-export async function loader({ request }: DataFunctionArgs) {
+export async function loader({ request }: LoaderFunctionArgs) {
 	ensureUndeployed()
 	return eventStream(request.signal, function setup(send) {
 		function handleCodeReceived(data: any) {

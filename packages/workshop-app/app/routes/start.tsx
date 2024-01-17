@@ -1,4 +1,4 @@
-import { type DataFunctionArgs, json } from '@remix-run/node'
+import { type ActionFunctionArgs, json } from '@remix-run/node'
 import { useFetcher } from '@remix-run/react'
 import { Button } from '#app/components/button.tsx'
 import { Loading } from '#app/components/loading.tsx'
@@ -18,7 +18,7 @@ import {
 } from '#app/utils/process-manager.server.ts'
 import { createToastHeaders } from '#app/utils/toast.server'
 
-export async function action({ request }: DataFunctionArgs) {
+export async function action({ request }: ActionFunctionArgs) {
 	ensureUndeployed()
 	const formData = await request.formData()
 	const intent = formData.get('intent')
@@ -117,8 +117,8 @@ export function AppStopper({ name }: { name: string }) {
 		inFlightIntent === 'stop'
 			? 'Stopping App'
 			: inFlightIntent === 'restart'
-			  ? 'Restarting App'
-			  : null
+				? 'Restarting App'
+				: null
 	const altDown = useAltDown()
 	return (
 		<fetcher.Form method="POST" action="/start">

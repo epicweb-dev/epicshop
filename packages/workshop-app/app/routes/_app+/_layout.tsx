@@ -1,5 +1,5 @@
 import {
-	type DataFunctionArgs,
+	type LoaderFunctionArgs,
 	type HeadersFunction,
 	json,
 } from '@remix-run/node'
@@ -47,7 +47,7 @@ import {
 } from '../progress.tsx'
 import { ThemeSwitch } from '../theme/index.tsx'
 
-export async function loader({ request }: DataFunctionArgs) {
+export async function loader({ request }: LoaderFunctionArgs) {
 	const timings = makeTimings('stepLoader')
 	const [exercises, workshopTitle, playgroundAppName] = await Promise.all([
 		getExercises({ request, timings }),

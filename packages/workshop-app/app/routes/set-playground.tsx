@@ -1,5 +1,5 @@
 import * as Select from '@radix-ui/react-select'
-import { type DataFunctionArgs, json } from '@remix-run/node'
+import { type ActionFunctionArgs, json } from '@remix-run/node'
 import { useFetcher } from '@remix-run/react'
 import { clsx } from 'clsx'
 import { z } from 'zod'
@@ -27,7 +27,7 @@ const SetPlaygroundSchema = z.object({
 		.transform(v => v === 'true'),
 })
 
-export async function action({ request }: DataFunctionArgs) {
+export async function action({ request }: ActionFunctionArgs) {
 	ensureUndeployed()
 	const formData = await request.formData()
 	const rawData = {
@@ -51,8 +51,8 @@ export async function action({ request }: DataFunctionArgs) {
 		isProblemApp(app) && app.solutionName
 			? await getAppByName(app.solutionName)
 			: isSolutionApp(app) && app.problemName
-			? await getAppByName(app.problemName)
-			: undefined
+				? await getAppByName(app.problemName)
+				: undefined
 	try {
 		await setPlayground(app.fullPath, { reset: form.reset })
 	} catch (error: unknown) {

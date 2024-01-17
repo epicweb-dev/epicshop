@@ -1,6 +1,7 @@
 import {
 	defer,
-	type DataFunctionArgs,
+	type ActionFunctionArgs,
+	type LoaderFunctionArgs,
 	type HeadersFunction,
 	redirect,
 } from '@remix-run/node'
@@ -12,13 +13,11 @@ import {
 } from '#app/components/epic-video.tsx'
 import { getEpicVideoInfos } from '#app/utils/epic-api.ts'
 import { invariantResponse } from '#app/utils/misc.tsx'
-import { readOnboardingData, updateOnboardingData } from '#utils/db.server.ts'
+import { updateOnboardingData } from '#utils/db.server.ts'
 import { makeTimings } from '#utils/timing.server.ts'
 
-export async function loader({ request }: DataFunctionArgs) {
+export async function loader({ request }: LoaderFunctionArgs) {
 	const timings = makeTimings('onboarding')
-	const onboardingData = await readOnboardingData()
-	if (onboardingData?.finishedTourVideo) throw redirect('/')
 
 	const tourUrl =
 		'https://www.epicweb.dev/tips/get-started-with-the-epic-workshop-app'
@@ -36,7 +35,7 @@ export const headers: HeadersFunction = ({ loaderHeaders }) => {
 	return headers
 }
 
-export async function action({ request }: DataFunctionArgs) {
+export async function action({ request }: ActionFunctionArgs) {
 	const data = await request.formData()
 	const intent = data.get('intent')
 	invariantResponse(intent === 'complete', 'Invalid intent')

@@ -1,4 +1,4 @@
-import { json, redirect, type DataFunctionArgs } from '@remix-run/node'
+import { json, redirect, type LoaderFunctionArgs } from '@remix-run/node'
 import { Form, Link, useFetcher, useLoaderData } from '@remix-run/react'
 import { Button } from '#app/components/button.tsx'
 import { Icon } from '#app/components/icons.tsx'
@@ -15,7 +15,7 @@ import { usePresencePreferences } from '#app/utils/presence.tsx'
 import { redirectWithToast } from '#app/utils/toast.server.ts'
 import { getDiscordAuthURL } from '../discord.callback.ts'
 
-export async function loader({ request }: DataFunctionArgs) {
+export async function loader({ request }: LoaderFunctionArgs) {
 	ensureUndeployed()
 	await requireAuthInfo({ request })
 	return json({ discordAuthUrl: getDiscordAuthURL() })
@@ -71,7 +71,7 @@ export default function Account() {
 				{user.name
 					? `Hi ${
 							discordMember?.displayName ?? user.name
-					  }, your device is logged in with ${user.email}.`
+						}, your device is logged in with ${user.email}.`
 					: `Your device is logged in with ${user.email}.`}
 			</p>
 			{discordMember ? (
@@ -117,6 +117,13 @@ export default function Account() {
 					Log out
 				</Button>
 			</Form>
+			<p>
+				Check{' '}
+				<Link to="/onboarding" className="underline">
+					/onboarding
+				</Link>{' '}
+				if you'd like to review onboarding again.
+			</p>
 			<p>
 				Check{' '}
 				<Link to="/support" className="underline">

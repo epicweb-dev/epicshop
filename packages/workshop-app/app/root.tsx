@@ -1,6 +1,6 @@
 import { cssBundleHref } from '@remix-run/css-bundle'
 import {
-	type DataFunctionArgs,
+	type LoaderFunctionArgs,
 	type HeadersFunction,
 	type LinksFunction,
 	type MetaFunction,
@@ -68,7 +68,7 @@ export const meta: MetaFunction<typeof loader> = ({ data }) => {
 	return [{ title: data?.workshopTitle }]
 }
 
-export async function loader({ request }: DataFunctionArgs) {
+export async function loader({ request }: LoaderFunctionArgs) {
 	const timings = makeTimings('rootLoader')
 	const onboarding = await readOnboardingData()
 	if (!ENV.KCDSHOP_DEPLOYED && !onboarding?.finishedTourVideo) {
@@ -153,7 +153,7 @@ function Document({
 					}}
 				/>
 			</head>
-			<body className="h-screen-safe bg-background text-foreground scrollbar-thin scrollbar-thumb-scrollbar">
+			<body className="bg-background text-foreground scrollbar-thin scrollbar-thumb-scrollbar h-screen-safe">
 				{children}
 				<ScrollRestoration />
 				<Scripts />
@@ -179,7 +179,7 @@ function App() {
 	return (
 		<Document
 			className={cn(
-				'h-screen-safe antialiased',
+				'antialiased h-screen-safe',
 				theme,
 				{ 'cursor-progress': showSpinner },
 				altDown ? 'alt-down' : null,

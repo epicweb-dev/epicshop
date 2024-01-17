@@ -1,5 +1,5 @@
 import {
-	type DataFunctionArgs,
+	type LoaderFunctionArgs,
 	type HeadersFunction,
 	json,
 } from '@remix-run/node'
@@ -12,7 +12,7 @@ import {
 	makeTimings,
 } from '#app/utils/timing.server.ts'
 
-export async function loader({ request, params }: DataFunctionArgs) {
+export async function loader({ request, params }: LoaderFunctionArgs) {
 	const timings = makeTimings('stepLoader')
 	invariantResponse(params.exerciseNumber, 'exerciseNumber is required')
 	const [exercises, workshopTitle] = await Promise.all([

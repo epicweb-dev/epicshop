@@ -1,7 +1,7 @@
 import { ElementScrollRestoration } from '@epic-web/restore-scroll'
 import {
 	defer,
-	type DataFunctionArgs,
+	type LoaderFunctionArgs,
 	type HeadersFunction,
 	type SerializeFrom,
 } from '@remix-run/node'
@@ -26,7 +26,7 @@ import {
 } from '#app/utils/timing.server.ts'
 import { ProgressToggle, useExerciseProgressClassName } from '../progress.tsx'
 
-export async function loader({ request }: DataFunctionArgs) {
+export async function loader({ request }: LoaderFunctionArgs) {
 	const timings = makeTimings('indexLoader')
 	const [title, exercises, workshopReadme] = await Promise.all([
 		time(() => getWorkshopTitle(), {
@@ -62,7 +62,7 @@ export async function loader({ request }: DataFunctionArgs) {
 				workshopReadme.compiled.status === 'success'
 					? getEpicVideoInfos(workshopReadme.compiled.epicVideoEmbeds, {
 							request,
-					  })
+						})
 					: null,
 		},
 		{

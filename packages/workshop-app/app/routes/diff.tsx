@@ -1,4 +1,4 @@
-import { defer, type DataFunctionArgs } from '@remix-run/node'
+import { defer, type LoaderFunctionArgs } from '@remix-run/node'
 import {
 	Link,
 	useLoaderData,
@@ -21,7 +21,7 @@ import { getDiffCode } from '#app/utils/diff.server.ts'
 import { cn } from '#app/utils/misc.tsx'
 import { makeTimings } from '#app/utils/timing.server.ts'
 
-export async function loader({ request }: DataFunctionArgs) {
+export async function loader({ request }: LoaderFunctionArgs) {
 	const reqUrl = new URL(request.url)
 	const timings = makeTimings('diffLoader')
 	const cacheOptions = { request, timings }
@@ -94,14 +94,14 @@ export async function loader({ request }: DataFunctionArgs) {
 	const prevApp1Index = usingDefaultApp1
 		? allApps.length - 2
 		: app1Index === 0
-		? -2
-		: app1Index - 1
+			? -2
+			: app1Index - 1
 	const prevApp2Index = prevApp1Index + 1
 	const nextApp1Index = usingDefaultApp1
 		? 0
 		: app1Index + 1 < allApps.length
-		? app1Index + 1
-		: -2
+			? app1Index + 1
+			: -2
 	const nextApp2Index = nextApp1Index + 1
 	const prevApp1 = allAppsFull[prevApp1Index]?.name
 	const prevApp2 = allAppsFull[prevApp2Index]?.name

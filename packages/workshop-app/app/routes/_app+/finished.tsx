@@ -1,7 +1,7 @@
 import { ElementScrollRestoration } from '@epic-web/restore-scroll'
 import {
 	defer,
-	type DataFunctionArgs,
+	type LoaderFunctionArgs,
 	type HeadersFunction,
 	type MetaFunction,
 } from '@remix-run/node'
@@ -36,7 +36,7 @@ export const meta: MetaFunction<typeof loader, { root: typeof rootLoader }> = ({
 	return [{ title: `🎉 ${rootData?.workshopTitle}` }]
 }
 
-export async function loader({ request }: DataFunctionArgs) {
+export async function loader({ request }: LoaderFunctionArgs) {
 	const timings = makeTimings('finishedLoader')
 	const exercises = await getExercises({ request, timings })
 	const compiledFinished = await time(() => getWorkshopFinished({ request }), {
@@ -59,7 +59,7 @@ export async function loader({ request }: DataFunctionArgs) {
 				compiledFinished.compiled.status === 'success'
 					? getEpicVideoInfos(compiledFinished.compiled.epicVideoEmbeds, {
 							request,
-					  })
+						})
 					: null,
 			workshopFinished: {
 				file: compiledFinished.file,
@@ -68,7 +68,7 @@ export async function loader({ request }: DataFunctionArgs) {
 			prevStepLink: lastExercises
 				? {
 						to: `/${lastExercises.exerciseNumber}/finished`,
-				  }
+					}
 				: null,
 		},
 		{

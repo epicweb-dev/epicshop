@@ -1,11 +1,11 @@
-import { type DataFunctionArgs, redirect } from '@remix-run/node'
+import { type LoaderFunctionArgs, redirect } from '@remix-run/node'
 import {
 	getExerciseApp,
 	isProblemApp,
 	isSolutionApp,
 } from '#app/utils/apps.server.ts'
 
-export async function loader({ params }: DataFunctionArgs) {
+export async function loader({ params }: LoaderFunctionArgs) {
 	const problemApp = await getExerciseApp({ ...params, type: 'problem' }).then(
 		a => (isProblemApp(a) ? a : null),
 	)

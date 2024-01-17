@@ -1,7 +1,7 @@
 import RealMuxPlayer, {
 	type MuxPlayerRefAttributes,
 } from '@mux/mux-player-react'
-import { json, type DataFunctionArgs } from '@remix-run/node'
+import { json, type ActionFunctionArgs } from '@remix-run/node'
 import { useFetcher, useRouteLoaderData } from '@remix-run/react'
 import * as React from 'react'
 import { z } from 'zod'
@@ -38,7 +38,7 @@ const ignoredInputs = [
 	'summary',
 ]
 
-export async function action({ request }: DataFunctionArgs) {
+export async function action({ request }: ActionFunctionArgs) {
 	const result = PlayerPreferencesSchema.safeParse(await request.json())
 	if (!result.success) {
 		return json({ status: 'error', error: result.error.flatten() } as const, {

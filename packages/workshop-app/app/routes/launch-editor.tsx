@@ -1,5 +1,5 @@
 import path from 'path'
-import { type DataFunctionArgs, json } from '@remix-run/node'
+import { type ActionFunctionArgs, json } from '@remix-run/node'
 import { Link, useFetcher } from '@remix-run/react'
 import { clsx } from 'clsx'
 import fsExtra from 'fs-extra'
@@ -35,7 +35,7 @@ const LaunchSchema = z.intersection(
 	getFileDescriptorSchema(z.array(z.string())),
 )
 
-export async function action({ request }: DataFunctionArgs) {
+export async function action({ request }: ActionFunctionArgs) {
 	ensureUndeployed()
 	const formData = await request.formData()
 	const syncTo = {
@@ -63,7 +63,7 @@ export async function action({ request }: DataFunctionArgs) {
 					workshopFile: formData.get('syncTo.workshopFile'),
 					appFile: formData.getAll('syncTo.appFile'),
 					appName: formData.get('syncTo.appName'),
-			  }
+				}
 			: undefined,
 	}
 	const form = LaunchSchema.parse(rawData)
@@ -354,5 +354,5 @@ export const LaunchEditor = ENV.KCDSHOP_DEPLOYED
 						{children}
 					</button>
 				</SimpleTooltip>
-		  )
+			)
 	: LaunchEditorImpl

@@ -1,4 +1,8 @@
-import { type DataFunctionArgs, json } from '@remix-run/node'
+import {
+	type ActionFunctionArgs,
+	type LoaderFunctionArgs,
+	json,
+} from '@remix-run/node'
 import { useFetcher } from '@remix-run/react'
 import AnsiToHTML from 'ansi-to-html'
 import escapeHtml from 'lodash.escape'
@@ -61,7 +65,7 @@ const testEventQueueSchema = z.array(testEventSchema)
 type TestEvent = z.infer<typeof testEventSchema>
 type TestEventQueue = z.infer<typeof testEventQueueSchema>
 
-export async function loader({ request }: DataFunctionArgs) {
+export async function loader({ request }: LoaderFunctionArgs) {
 	ensureUndeployed()
 	const url = new URL(request.url)
 	const name = url.searchParams.get('name')
@@ -141,7 +145,7 @@ export async function loader({ request }: DataFunctionArgs) {
 	})
 }
 
-export async function action({ request }: DataFunctionArgs) {
+export async function action({ request }: ActionFunctionArgs) {
 	ensureUndeployed()
 	const formData = await request.formData()
 	const result = testActionSchema.safeParse({
