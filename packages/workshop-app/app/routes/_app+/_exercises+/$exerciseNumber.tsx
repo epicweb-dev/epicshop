@@ -154,7 +154,10 @@ export default function ExerciseNumberRoute() {
 					)}
 				</div>
 			</article>
-			<ElementScrollRestoration elementQuery={`#${data.articleId}`} />
+			<ElementScrollRestoration
+				elementQuery={`#${data.articleId}`}
+				key={`scroll-${data.articleId}`}
+			/>
 			<ProgressToggle
 				type="instructions"
 				exerciseNumber={data.exerciseNumber}

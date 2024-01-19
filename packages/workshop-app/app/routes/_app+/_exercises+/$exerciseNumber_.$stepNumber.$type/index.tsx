@@ -423,6 +423,7 @@ export default function ExercisePartRoute() {
 					</h1>
 					<article
 						id={data.articleId}
+						key={data.articleId}
 						className="shadow-on-scrollbox h-full w-full max-w-none flex-1 scroll-pt-6 space-y-6 overflow-y-auto p-10 pt-8 scrollbar-thin scrollbar-thumb-scrollbar"
 					>
 						{data.exerciseStepApp.instructionsCode ? (
@@ -435,7 +436,7 @@ export default function ExercisePartRoute() {
 					</article>
 					<ElementScrollRestoration
 						elementQuery={`#${data.articleId}`}
-						key={data.articleId}
+						key={`scroll-${data.articleId}`}
 					/>
 					{data.type === 'solution' ? (
 						<ProgressToggle
