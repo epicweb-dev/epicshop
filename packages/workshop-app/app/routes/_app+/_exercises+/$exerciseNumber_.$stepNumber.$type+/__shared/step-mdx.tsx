@@ -16,7 +16,7 @@ import { UpdateMdxCache } from '#app/routes/update-mdx-cache.tsx'
 import { Mdx } from '#app/utils/mdx.tsx'
 import { cn, getBaseUrl } from '#app/utils/misc.tsx'
 import { useRequestInfo } from '#app/utils/request-info.ts'
-import { type loader } from './index.tsx'
+import { type loader } from '../_layout.tsx'
 
 type StepContextType = {
 	inBrowserBrowserRef: React.RefObject<InBrowserBrowserRef>
@@ -146,7 +146,7 @@ function DiffLink({
 		? `/diff?${to}`
 		: `?${decodeURIComponent(
 				withParam(new URLSearchParams(), 'preview', `diff&${to}`).toString(),
-		  )}`
+			)}`
 
 	if (!children) {
 		const msg = (s: string) => s.split('__sep__')[2] ?? ''
@@ -312,7 +312,7 @@ function LinkToApp({
 			? getBaseUrl({
 					domain: requestInfo.domain,
 					port: data.playground.dev.portNumber,
-			  })
+				})
 			: data.playground?.dev.pathname
 	const { inBrowserBrowserRef } = useStepContext()
 	const href = previewAppUrl

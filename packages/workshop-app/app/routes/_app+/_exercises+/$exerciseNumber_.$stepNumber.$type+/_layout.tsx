@@ -3,41 +3,30 @@ import * as Tabs from '@radix-ui/react-tabs'
 import {
 	defer,
 	redirect,
-	type LoaderFunctionArgs,
 	type HeadersFunction,
+	type LoaderFunctionArgs,
 	type MetaFunction,
 	type SerializeFrom,
 } from '@remix-run/node'
 import {
 	Link,
-	isRouteErrorResponse,
 	useLoaderData,
 	useNavigate,
-	useRouteError,
 	useSearchParams,
 } from '@remix-run/react'
 import slugify from '@sindresorhus/slugify'
 import { clsx } from 'clsx'
 import * as React from 'react'
-import { useRef, useState } from 'react'
+import { useRef } from 'react'
 import { Diff } from '#app/components/diff.tsx'
-import { Icon } from '#app/components/icons.tsx'
-import {
-	InBrowserBrowser,
-	type InBrowserBrowserRef,
-} from '#app/components/in-browser-browser.tsx'
-import { InBrowserTestRunner } from '#app/components/in-browser-test-runner.tsx'
+import { GeneralErrorBoundary } from '#app/components/error-boundary.tsx'
+import { type InBrowserBrowserRef } from '#app/components/in-browser-browser.tsx'
 import { NavChevrons } from '#app/components/nav-chevrons.tsx'
 import { type loader as rootLoader } from '#app/root.tsx'
 import { getDiscordAuthURL } from '#app/routes/discord.callback.ts'
 import { EditFileOnGitHub } from '#app/routes/launch-editor.tsx'
 import { ProgressToggle } from '#app/routes/progress.tsx'
-import {
-	PlaygroundChooser,
-	SetAppToPlayground,
-	SetPlayground,
-} from '#app/routes/set-playground.tsx'
-import { TestOutput } from '#app/routes/test.tsx'
+import { SetAppToPlayground } from '#app/routes/set-playground.tsx'
 import {
 	getAppByName,
 	getAppPageRoute,
@@ -45,31 +34,33 @@ import {
 	getExerciseApp,
 	getNextExerciseApp,
 	getPrevExerciseApp,
+	getWorkshopTitle,
 	isExerciseStepApp,
 	isPlaygroundApp,
 	requireExercise,
 	requireExerciseApp,
 	type App,
 	type ExerciseStepApp,
-	getWorkshopTitle,
 } from '#app/utils/apps.server.ts'
 import { getDiffCode, getDiffFiles } from '#app/utils/diff.server.ts'
 import { getEpicVideoInfos } from '#app/utils/epic-api.ts'
-import { getBaseUrl, getErrorMessage, useAltDown } from '#app/utils/misc.tsx'
+import { useAltDown } from '#app/utils/misc.tsx'
 import {
 	isAppRunning,
 	isPortAvailable,
 } from '#app/utils/process-manager.server.ts'
-import { useRequestInfo } from '#app/utils/request-info.ts'
 import {
 	combineServerTimings,
 	getServerTimeHeader,
 	makeTimings,
 } from '#app/utils/timing.server.ts'
-import { fetchDiscordPosts } from './discord.server.ts'
-import { DiscordChat } from './discord.tsx'
-import { StepMdx } from './step-mdx.tsx'
-import TouchedFiles from './touched-files.tsx'
+import { fetchDiscordPosts } from './__shared/discord.server.ts'
+import { DiscordChat } from './__shared/discord.tsx'
+import { Playground } from './__shared/playground.tsx'
+import { Preview } from './__shared/preview.tsx'
+import { StepMdx } from './__shared/step-mdx.tsx'
+import { Tests } from './__shared/tests.tsx'
+import TouchedFiles from './__shared/touched-files.tsx'
 
 function pageTitle(
 	data: SerializeFrom<typeof loader> | undefined,
@@ -293,12 +284,10 @@ export async function loader({ request, params }: LoaderFunctionArgs) {
 							.padStart(2, '0')}/finished`,
 					}
 				: nextApp
-					? {
-							to: getAppPageRoute(nextApp),
-						}
+					? { to: getAppPageRoute(nextApp) }
 					: null,
 			playground: playgroundApp
-				? {
+				? ({
 						type: 'playground',
 						fullPath: playgroundApp.fullPath,
 						dev: playgroundApp.dev,
@@ -307,10 +296,10 @@ export async function loader({ request, params }: LoaderFunctionArgs) {
 						name: playgroundApp.name,
 						appName: playgroundApp.appName,
 						...(await getAppRunningState(playgroundApp)),
-					}
+					} as const)
 				: null,
 			problem: problemApp
-				? {
+				? ({
 						type: 'problem',
 						fullPath: problemApp.fullPath,
 						dev: problemApp.dev,
@@ -318,10 +307,10 @@ export async function loader({ request, params }: LoaderFunctionArgs) {
 						title: problemApp.title,
 						name: problemApp.name,
 						...(await getAppRunningState(problemApp)),
-					}
+					} as const)
 				: null,
 			solution: solutionApp
-				? {
+				? ({
 						type: 'solution',
 						fullPath: solutionApp.fullPath,
 						dev: solutionApp.dev,
@@ -329,7 +318,7 @@ export async function loader({ request, params }: LoaderFunctionArgs) {
 						title: solutionApp.title,
 						name: solutionApp.name,
 						...(await getAppRunningState(solutionApp)),
-					}
+					} as const)
 				: null,
 			diff: getDiffProp(),
 		} as const,
@@ -580,221 +569,12 @@ export default function ExercisePartRoute() {
 	)
 }
 
-function Preview({
-	id,
-	appInfo,
-	inBrowserBrowserRef,
-}: {
-	id?: string
-	appInfo: SerializeFrom<typeof loader>['problem' | 'solution' | 'playground']
-	inBrowserBrowserRef: React.RefObject<InBrowserBrowserRef>
-}) {
-	const requestInfo = useRequestInfo()
-	if (!appInfo) return <p>No app here. Sorry.</p>
-	const { isRunning, dev, name, portIsAvailable, title } = appInfo
-
-	if (dev.type === 'script') {
-		const baseUrl = getBaseUrl({
-			domain: requestInfo.domain,
-			port: dev.portNumber,
-		})
-		return (
-			<InBrowserBrowser
-				ref={inBrowserBrowserRef}
-				isRunning={isRunning}
-				id={id ?? name}
-				name={name}
-				portIsAvailable={portIsAvailable}
-				port={dev.portNumber}
-				baseUrl={baseUrl}
-			/>
-		)
-	} else {
-		return (
-			<div className="relative h-full flex-grow overflow-y-auto scrollbar-thin scrollbar-thumb-scrollbar">
-				<a
-					href={dev.pathname}
-					target="_blank"
-					rel="noreferrer"
-					className={clsx(
-						'absolute bottom-5 right-5 flex items-center justify-center rounded-full bg-gray-100 p-2.5 transition hover:bg-gray-200',
-					)}
-				>
-					<Icon name="ExternalLink" aria-hidden="true" />
-					<span className="sr-only">Open in New Window</span>
-				</a>
-				<iframe
-					title={title}
-					src={dev.pathname}
-					className="h-full w-full flex-grow bg-white p-3"
-				/>
-			</div>
-		)
-	}
-}
-
-function Playground({
-	appInfo: playgroundAppInfo,
-	inBrowserBrowserRef,
-	problemAppName,
-	allApps,
-}: {
-	appInfo: SerializeFrom<typeof loader>['playground']
-	inBrowserBrowserRef: React.RefObject<InBrowserBrowserRef>
-	problemAppName?: string
-	allApps: Array<{ name: string; displayName: string }>
-}) {
-	return (
-		<PlaygroundWindow
-			appInfo={playgroundAppInfo}
-			problemAppName={problemAppName}
-			allApps={allApps}
-		>
-			<Preview
-				id={playgroundAppInfo?.appName}
-				appInfo={playgroundAppInfo}
-				inBrowserBrowserRef={inBrowserBrowserRef}
-			/>
-		</PlaygroundWindow>
-	)
-}
-
-function PlaygroundWindow({
-	appInfo: playgroundAppInfo,
-	problemAppName,
-	allApps,
-	children,
-}: {
-	appInfo: SerializeFrom<typeof loader>['playground']
-	problemAppName?: string
-	allApps: Array<{ name: string; displayName: string }>
-	children: React.ReactNode
-}) {
-	const isCorrectApp = playgroundAppInfo?.appName === problemAppName
-	const playgroundLinkedUI = isCorrectApp ? (
-		<Icon size={28} name="Linked" />
-	) : (
-		<Icon
-			size={28}
-			name="Unlinked"
-			className="animate-pulse text-foreground-danger"
-		/>
-	)
-	return (
-		<div className="flex h-full w-full flex-col justify-between">
-			<div className="flex h-14 flex-shrink-0 items-center justify-start gap-2 border-b border-border px-3">
-				<div className="display-alt-up flex">
-					{problemAppName ? (
-						<SetPlayground
-							appName={problemAppName}
-							tooltipText={
-								isCorrectApp
-									? 'Click to reset Playground.'
-									: 'Playground is not set to the right app. Click to set Playground.'
-							}
-						>
-							{playgroundLinkedUI}
-						</SetPlayground>
-					) : (
-						<div className="flex">{playgroundLinkedUI}</div>
-					)}
-				</div>
-				<div className="display-alt-down">
-					{playgroundAppInfo?.appName ? (
-						<SetPlayground
-							appName={playgroundAppInfo?.appName}
-							reset
-							tooltipText="Reset Playground"
-						>
-							<div className="flex h-7 w-7 items-center justify-center">
-								<Icon name="Refresh" />
-							</div>
-						</SetPlayground>
-					) : (
-						<div className="h-7 w-7" />
-					)}
-				</div>
-				<PlaygroundChooser
-					allApps={allApps}
-					playgroundAppName={playgroundAppInfo?.appName}
-				/>
-			</div>
-			<div className="flex h-full flex-1 flex-grow items-center justify-center">
-				{children}
-			</div>
-		</div>
-	)
-}
-
-function Tests({
-	appInfo: playgroundAppInfo,
-	problemAppName,
-	allApps,
-}: {
-	appInfo: SerializeFrom<typeof loader>['playground']
-	problemAppName?: string
-	allApps: Array<{ name: string; displayName: string }>
-}) {
-	const [inBrowserTestKey, setInBrowserTestKey] = useState(0)
-	let testUI = <p>No tests here. Sorry.</p>
-	if (playgroundAppInfo?.test.type === 'script') {
-		testUI = <TestOutput name={playgroundAppInfo.name} />
-	}
-	if (playgroundAppInfo?.test.type === 'browser') {
-		const { pathname } = playgroundAppInfo.test
-		testUI = (
-			<div
-				className="flex h-full w-full flex-grow flex-col"
-				key={inBrowserTestKey}
-			>
-				{playgroundAppInfo.test.testFiles.map(testFile => {
-					return (
-						<div key={testFile}>
-							<InBrowserTestRunner pathname={pathname} testFile={testFile} />
-						</div>
-					)
-				})}
-				<div className="px-3 py-[21px]">
-					{playgroundAppInfo.type === 'solution' ? (
-						<div>NOTE: these tests are running on the solution</div>
-					) : null}
-					<button
-						onClick={() => setInBrowserTestKey(c => c + 1)}
-						className="flex items-center gap-2 font-mono text-sm uppercase leading-none"
-					>
-						<Icon name="Refresh" aria-hidden /> Rerun All Tests
-					</button>
-				</div>
-			</div>
-		)
-	}
-	return (
-		<PlaygroundWindow
-			appInfo={playgroundAppInfo}
-			problemAppName={problemAppName}
-			allApps={allApps}
-		>
-			{testUI}
-		</PlaygroundWindow>
-	)
-}
-
 export function ErrorBoundary() {
-	const error = useRouteError()
-
-	if (typeof document !== 'undefined') {
-		console.error(error)
-	}
-
-	return isRouteErrorResponse(error) ? (
-		error.status === 404 ? (
-			<p>Sorry, we couldn't find an app here.</p>
-		) : (
-			<p>
-				{error.status} {error.data}
-			</p>
-		)
-	) : (
-		<p>{getErrorMessage(error)}</p>
+	return (
+		<GeneralErrorBoundary
+			statusHandlers={{
+				404: () => <p>Sorry, we couldn't find an app here.</p>,
+			}}
+		/>
 	)
 }

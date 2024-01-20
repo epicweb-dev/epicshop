@@ -5,7 +5,7 @@ import { Icon } from '#app/components/icons.tsx'
 import { SimpleTooltip } from '#app/components/ui/tooltip.tsx'
 import { LaunchEditor } from '#app/routes/launch-editor.tsx'
 import { SetAppToPlayground } from '#app/routes/set-playground.tsx'
-import { type loader } from './index.tsx'
+import { type loader } from '../_layout.tsx'
 
 function TouchedFiles() {
 	const data = useLoaderData<typeof loader>()
@@ -90,7 +90,7 @@ function TouchedFiles() {
 															title:
 																"You must 'Set to Playground' before opening a file",
 															className: 'not-allowed',
-													  }
+														}
 											return (
 												<ul {...props}>
 													{diffFiles.length > 1 && !ENV.KCDSHOP_DEPLOYED ? (

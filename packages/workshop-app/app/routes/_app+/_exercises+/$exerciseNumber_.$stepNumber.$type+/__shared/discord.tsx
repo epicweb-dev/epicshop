@@ -6,9 +6,9 @@ import { Loading } from '#app/components/loading.tsx'
 import { useHints } from '#app/utils/client-hints.tsx'
 import { dayjs } from '#app/utils/dayjs.ts'
 import { useAltDown } from '#app/utils/misc.tsx'
-import { DiscordCTA, useDiscordCTALink } from '../../discord.tsx'
+import { DiscordCTA, useDiscordCTALink } from '../../../discord.tsx'
+import { type loader } from '../_layout.tsx'
 import { type ThreadItemSchema } from './discord.server.ts'
-import { type loader } from './index.tsx'
 
 export function DiscordChat() {
 	const data = useLoaderData<typeof loader>()
@@ -77,7 +77,7 @@ function DiscordPosts() {
 										'_blank',
 										'noreferrer noopener',
 									)
-							  }
+								}
 							: undefined
 					}
 					className="flex items-center gap-2 p-2 text-xl hover:underline"
