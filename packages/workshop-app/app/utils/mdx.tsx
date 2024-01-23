@@ -7,7 +7,7 @@ import * as mdxBundler from 'mdx-bundler/client/index.js'
 import * as React from 'react'
 import { VideoEmbed, DeferredEpicVideo } from '#app/components/epic-video.tsx'
 import { Icon } from '#app/components/icons.tsx'
-import { type loader } from '#app/routes/_app+/_exercises+/$exerciseNumber_.$stepNumber.$type/index.tsx'
+import { type loader } from '#app/routes/_app+/_exercises+/$exerciseNumber_.$stepNumber.$type+/_layout.tsx'
 import { LaunchEditor } from '#app/routes/launch-editor.tsx'
 import { AnchorOrLink, Heading, cn } from './misc.tsx'
 
@@ -71,8 +71,8 @@ function OpenInEditor({
 									isDifferentApp
 										? 'Playground is not set to the right app'
 										: isFileFromDifferentApp
-										? 'This file is from different app'
-										: "You must 'Set to Playground' before opening a file"
+											? 'This file is from different app'
+											: "You must 'Set to Playground' before opening a file"
 								}
 							>
 								<span className="uppercase">Open</span> in {type}
