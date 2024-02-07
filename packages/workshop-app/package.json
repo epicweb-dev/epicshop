@@ -220,5 +220,14 @@
     "type": "git",
     "url": "https://github.com/epicweb-dev/kcdshop.git",
     "directory": "packages/workshop-app"
+  },
+  "nx": {
+    "targets": {
+      "nx-release-publish": {
+        "options": {
+          "packageRoot": "publish/{projectRoot}"
+        }
+      }
+    }
   }
 }
