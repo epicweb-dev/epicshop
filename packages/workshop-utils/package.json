@@ -33,5 +33,10 @@
       "./package.json": "./package.json",
       "./timing.server": "./src/timing.server.ts"
     }
+  },
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/epicweb-dev/kcdshop.git",
+    "directory": "packages/workshop-utils"
   }
 }
