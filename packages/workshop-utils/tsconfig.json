@@ -1,18 +1,21 @@
 {
+  "include": ["./**/*.ts", "./**/*.tsx"],
   "compilerOptions": {
-    "declaration": true,
-    "declarationMap": true,
+    "lib": ["DOM", "DOM.Iterable", "ES2022"],
+    "isolatedModules": true,
     "esModuleInterop": true,
-    "forceConsistentCasingInFileNames": true,
-    "inlineSources": true,
-    "jsx": "react",
+    "jsx": "react-jsx",
     "module": "nodenext",
     "moduleResolution": "nodenext",
-    "noUncheckedIndexedAccess": true,
     "resolveJsonModule": true,
-    "skipLibCheck": true,
-    "sourceMap": true,
+    "target": "ES2022",
     "strict": true,
-    "target": "es2022"
+    "allowJs": true,
+    "forceConsistentCasingInFileNames": true,
+    "baseUrl": ".",
+    "skipLibCheck": true,
+    "declaration": true,
+    "noEmit": true,
+    "allowImportingTsExtensions": true
   }
 }

@@ -1,5 +1,9 @@
 import fs from 'fs'
 import path from 'path'
+import {
+	getServerTimeHeader,
+	type Timings,
+} from '@kentcdodds/workshop-utils/timing.server'
 import { type CacheEntry } from 'cachified'
 import { execa } from 'execa'
 import fsExtra from 'fs-extra'
@@ -23,10 +27,6 @@ import {
 	waitOnApp,
 } from './process-manager.server.ts'
 import { singleton } from './singleton.server.ts'
-import {
-	getServerTimeHeader,
-	type Timings,
-} from '@kentcdodds/workshop-utils/timing.server'
 import { getErrorMessage, getPkgProp } from './utils.ts'
 
 process.env.NODE_ENV = process.env.NODE_ENV ?? 'development'

@@ -18,14 +18,14 @@
     "dist"
   ],
   "scripts": {
-    "build": "tshy",
-    "build:watch": ""
+    "build": "tshy"
   },
   "devDependencies": {
     "@remix-run/eslint-config": "^2.6.0",
     "tshy": "^1.11.0"
   },
   "tshy": {
+    "project": "./tsconfig.build.json",
     "dialects": [
       "esm"
     ],
