@@ -1,0 +1,37 @@
+{
+  "name": "@kentcdodds/workshop-utils",
+  "version": "0.0.0-semantically-released",
+  "publishConfig": {
+    "access": "public"
+  },
+  "type": "module",
+  "exports": {
+    "./package.json": "./package.json",
+    "./timing.server": {
+      "import": {
+        "types": "./dist/esm/timing.server.d.ts",
+        "default": "./dist/esm/timing.server.js"
+      }
+    }
+  },
+  "files": [
+    "dist"
+  ],
+  "scripts": {
+    "build": "tshy",
+    "build:watch": ""
+  },
+  "devDependencies": {
+    "@remix-run/eslint-config": "^2.6.0",
+    "tshy": "^1.11.0"
+  },
+  "tshy": {
+    "dialects": [
+      "esm"
+    ],
+    "exports": {
+      "./package.json": "./package.json",
+      "./timing.server": "./src/timing.server.ts"
+    }
+  }
+}

@@ -23,7 +23,10 @@ import {
 	waitOnApp,
 } from './process-manager.server.ts'
 import { singleton } from './singleton.server.ts'
-import { getServerTimeHeader, type Timings } from './timing.server.ts'
+import {
+	getServerTimeHeader,
+	type Timings,
+} from '@kentcdodds/workshop-utils/timing.server'
 import { getErrorMessage, getPkgProp } from './utils.ts'
 
 process.env.NODE_ENV = process.env.NODE_ENV ?? 'development'
@@ -493,7 +496,7 @@ async function getTestInfo({
 				fullPath,
 				['kcd-workshop.scripts', testScriptName].join('.'),
 				'',
-		  )
+			)
 		: null
 
 	if (testScript) {

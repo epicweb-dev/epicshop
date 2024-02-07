@@ -16,7 +16,7 @@ import {
 } from './apps.server.ts'
 import { diffCodeCache, diffFilesCache, cachified } from './cache.server.ts'
 import { compileMarkdownString } from './compile-mdx.server.ts'
-import { type Timings } from './timing.server.ts'
+import { type Timings } from '@kentcdodds/workshop-utils/timing.server'
 
 const kcdshopTempDir = path.join(os.tmpdir(), 'kcdshop')
 
@@ -25,9 +25,13 @@ const isDeployed = ENV.KCDSHOP_DEPLOYED
 const diffTmpDir = path.join(kcdshopTempDir, 'diff')
 
 function diffPathToRelative(filePath: string) {
-
 	let normalizedPath = path.normalize(filePath).replace(/^("|')|("|')$/g, '')
-	if (normalizedPath.startsWith('a\\') || normalizedPath.startsWith('b\\') || normalizedPath.startsWith('a/') || normalizedPath.startsWith('b/')) {
+	if (
+		normalizedPath.startsWith('a\\') ||
+		normalizedPath.startsWith('b\\') ||
+		normalizedPath.startsWith('a/') ||
+		normalizedPath.startsWith('b/')
+	) {
 		normalizedPath = normalizedPath.slice(2)
 	}
 
@@ -79,16 +83,16 @@ function getFileCodeblocks(
 				type === 'AddedFile'
 					? `Binary file added`
 					: type === 'DeletedFile'
-					? 'Binary file deleted'
-					: 'Binary file changed',
+						? 'Binary file deleted'
+						: 'Binary file changed',
 			)
 		} else {
 			startLine =
 				chunk.type === 'Chunk'
 					? chunk.fromFileRange.start
 					: chunk.type === 'CombinedChunk'
-					? chunk.fromFileRangeA.start
-					: 1
+						? chunk.fromFileRangeA.start
+						: 1
 			toStartLine = chunk.toFileRange.start
 			for (
 				let lineNumber = 0;
@@ -340,8 +344,8 @@ export async function getDiffFilesImpl(app1: App, app2: App) {
 			return chunk.type === 'Chunk'
 				? chunk.fromFileRange.start
 				: chunk.type === 'CombinedChunk'
-				? chunk.fromFileRangeA.start
-				: 1
+					? chunk.fromFileRangeA.start
+					: 1
 		}
 		return 1
 	}

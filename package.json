@@ -4,7 +4,7 @@
   "type": "module",
   "scripts": {
     "postinstall": "patch-package --patch-dir other/patches",
-    "typecheck": "tsc -b",
+    "typecheck": "tsc -b --noEmit",
     "lint": "eslint .",
     "build": "nx run @kentcdodds/workshop-app:build",
     "prestart": "npm run build -s",

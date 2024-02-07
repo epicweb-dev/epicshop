@@ -1,5 +1,11 @@
 import { ElementScrollRestoration } from '@epic-web/restore-scroll'
 import {
+	combineServerTimings,
+	getServerTimeHeader,
+	makeTimings,
+	time,
+} from '@kentcdodds/workshop-utils/timing.server'
+import {
 	defer,
 	type LoaderFunctionArgs,
 	type HeadersFunction,
@@ -20,12 +26,6 @@ import {
 import { getEpicVideoInfos } from '#app/utils/epic-api.ts'
 import { Mdx } from '#app/utils/mdx.tsx'
 import { cn } from '#app/utils/misc.tsx'
-import {
-	combineServerTimings,
-	getServerTimeHeader,
-	makeTimings,
-	time,
-} from '#app/utils/timing.server.ts'
 import { EditFileOnGitHub } from '../launch-editor.tsx'
 import { ProgressToggle } from '../progress.tsx'
 

@@ -1,3 +1,4 @@
+import { makeTimings } from '@kentcdodds/workshop-utils/timing.server'
 import {
 	defer,
 	type ActionFunctionArgs,
@@ -14,7 +15,6 @@ import {
 import { getEpicVideoInfos } from '#app/utils/epic-api.ts'
 import { invariantResponse } from '#app/utils/misc.tsx'
 import { updateOnboardingData } from '#utils/db.server.ts'
-import { makeTimings } from '#utils/timing.server.ts'
 
 export async function loader({ request }: LoaderFunctionArgs) {
 	const timings = makeTimings('onboarding')

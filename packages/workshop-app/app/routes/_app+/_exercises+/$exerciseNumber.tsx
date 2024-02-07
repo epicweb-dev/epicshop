@@ -1,6 +1,12 @@
 import path from 'path'
 import { ElementScrollRestoration } from '@epic-web/restore-scroll'
 import {
+	combineServerTimings,
+	getServerTimeHeader,
+	makeTimings,
+	time,
+} from '@kentcdodds/workshop-utils/timing.server'
+import {
 	type LoaderFunctionArgs,
 	type HeadersFunction,
 	type MetaFunction,
@@ -25,12 +31,6 @@ import {
 import { getEpicVideoInfos } from '#app/utils/epic-api.ts'
 import { Mdx } from '#app/utils/mdx.tsx'
 import { getErrorMessage, invariantResponse } from '#app/utils/misc.tsx'
-import {
-	combineServerTimings,
-	getServerTimeHeader,
-	makeTimings,
-	time,
-} from '#app/utils/timing.server.ts'
 
 export const meta: MetaFunction<typeof loader, { root: typeof rootLoader }> = ({
 	data,

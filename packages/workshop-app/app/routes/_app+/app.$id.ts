@@ -1,4 +1,8 @@
 import path from 'path'
+import {
+	getServerTimeHeader,
+	makeTimings,
+} from '@kentcdodds/workshop-utils/timing.server'
 import { type LoaderFunctionArgs, redirect } from '@remix-run/node'
 import fsExtra from 'fs-extra'
 import {
@@ -11,7 +15,6 @@ import {
 	isPlaygroundApp,
 } from '#app/utils/apps.server.ts'
 import { getBaseUrl, invariantResponse } from '#app/utils/misc.tsx'
-import { getServerTimeHeader, makeTimings } from '#app/utils/timing.server.ts'
 
 export async function loader({ request, params }: LoaderFunctionArgs) {
 	const timings = makeTimings('app')

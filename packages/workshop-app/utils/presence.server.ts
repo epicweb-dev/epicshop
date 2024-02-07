@@ -7,7 +7,7 @@ import {
 	UserSchema,
 	partykitBaseUrl,
 } from './presence.ts'
-import { type Timings } from './timing.server.ts'
+import { type Timings } from '@kentcdodds/workshop-utils/timing.server'
 import { checkConnection } from './utils.ts'
 
 export async function getPresentUsers(

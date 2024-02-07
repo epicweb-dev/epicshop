@@ -1,3 +1,4 @@
+import { makeTimings, time } from '@kentcdodds/workshop-utils/timing.server'
 import { cssBundleHref } from '@remix-run/css-bundle'
 import {
 	type LoaderFunctionArgs,
@@ -41,7 +42,6 @@ import { getProgress } from './utils/epic-api.ts'
 import { cn, combineHeaders, getDomainUrl, useAltDown } from './utils/misc.tsx'
 import { getPresentUsers } from './utils/presence.server.ts'
 import { Presence } from './utils/presence.tsx'
-import { makeTimings, time } from './utils/timing.server.ts'
 import { getToast } from './utils/toast.server.ts'
 
 export const links: LinksFunction = () => {

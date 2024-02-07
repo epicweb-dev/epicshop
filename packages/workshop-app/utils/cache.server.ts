@@ -1,5 +1,9 @@
 import os from 'os'
 import path from 'path'
+import {
+	cachifiedTimingReporter,
+	type Timings,
+} from '@kentcdodds/workshop-utils/timing.server'
 import * as C from 'cachified'
 import {
 	lruCacheAdapter,
@@ -19,7 +23,6 @@ import {
 	type SolutionApp,
 } from './apps.server.ts'
 import { singleton } from './singleton.server.ts'
-import { cachifiedTimingReporter, type Timings } from './timing.server.ts'
 
 export const solutionAppCache =
 	makeSingletonCache<SolutionApp>('SolutionAppCache')

@@ -1,3 +1,4 @@
+import { makeTimings } from '@kentcdodds/workshop-utils/timing.server'
 import { defer, type LoaderFunctionArgs } from '@remix-run/node'
 import {
 	Link,
@@ -19,7 +20,6 @@ import {
 } from '#app/utils/apps.server.ts'
 import { getDiffCode } from '#app/utils/diff.server.ts'
 import { cn } from '#app/utils/misc.tsx'
-import { makeTimings } from '#app/utils/timing.server.ts'
 
 export async function loader({ request }: LoaderFunctionArgs) {
 	const reqUrl = new URL(request.url)

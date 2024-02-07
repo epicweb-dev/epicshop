@@ -10,6 +10,9 @@
     },
     {
       "path": "packages/workshop-app"
+    },
+    {
+      "path": "packages/workshop-utils"
     }
   ]
 }

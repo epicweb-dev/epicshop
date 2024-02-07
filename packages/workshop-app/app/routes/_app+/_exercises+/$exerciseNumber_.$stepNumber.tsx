@@ -1,4 +1,9 @@
 import {
+	combineServerTimings,
+	getServerTimeHeader,
+	makeTimings,
+} from '@kentcdodds/workshop-utils/timing.server'
+import {
 	type LoaderFunctionArgs,
 	type HeadersFunction,
 	json,
@@ -6,11 +11,6 @@ import {
 import { isRouteErrorResponse, Outlet, useRouteError } from '@remix-run/react'
 import { getExercises, getWorkshopTitle } from '#app/utils/apps.server.ts'
 import { getErrorMessage, invariantResponse } from '#app/utils/misc.tsx'
-import {
-	combineServerTimings,
-	getServerTimeHeader,
-	makeTimings,
-} from '#app/utils/timing.server.ts'
 
 export async function loader({ request, params }: LoaderFunctionArgs) {
 	const timings = makeTimings('stepLoader')

@@ -53,7 +53,7 @@ import {
 	combineServerTimings,
 	getServerTimeHeader,
 	makeTimings,
-} from '#app/utils/timing.server.ts'
+} from '@kentcdodds/workshop-utils/timing.server'
 import { fetchDiscordPosts } from './__shared/discord.server.ts'
 import { DiscordChat } from './__shared/discord.tsx'
 import { Playground } from './__shared/playground.tsx'

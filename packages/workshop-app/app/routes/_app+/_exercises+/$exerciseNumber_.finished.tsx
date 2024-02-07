@@ -30,7 +30,7 @@ import {
 	combineServerTimings,
 	getServerTimeHeader,
 	makeTimings,
-} from '#app/utils/timing.server.ts'
+} from '@kentcdodds/workshop-utils/timing.server'
 
 export const meta: MetaFunction<typeof loader, { root: typeof rootLoader }> = ({
 	data,

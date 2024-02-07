@@ -1,4 +1,9 @@
 import {
+	combineServerTimings,
+	getServerTimeHeader,
+	makeTimings,
+} from '@kentcdodds/workshop-utils/timing.server'
+import {
 	type LoaderFunctionArgs,
 	type HeadersFunction,
 	json,
@@ -34,11 +39,6 @@ import {
 } from '#app/utils/apps.server.ts'
 import { cn } from '#app/utils/misc.tsx'
 import { type User, usePresence } from '#app/utils/presence.tsx'
-import {
-	combineServerTimings,
-	getServerTimeHeader,
-	makeTimings,
-} from '#app/utils/timing.server.ts'
 import {
 	useNextExerciseRoute,
 	useExerciseProgressClassName,

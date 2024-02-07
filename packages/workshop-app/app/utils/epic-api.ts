@@ -9,7 +9,7 @@ import {
 import { cachified, fsCache } from './cache.server.ts'
 import { getAuthInfo } from './db.server.ts'
 import { getErrorMessage } from './misc.tsx'
-import { type Timings } from './timing.server.ts'
+import { type Timings } from '@kentcdodds/workshop-utils/timing.server'
 
 const Transcript = z
 	.string()
