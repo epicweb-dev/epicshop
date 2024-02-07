@@ -69,21 +69,26 @@ const { workspaceVersion, projectsVersionData } = await releaseVersion({
 	verbose: options.verbose,
 })
 
-if (process.env.CI || options.dryRun) {
-	await releaseChangelog({
-		gitCommit: false,
-		stageChanges: false,
-		gitTag: false,
-		versionData: projectsVersionData,
-		version: workspaceVersion,
+if (workspaceVersion === null) {
+	console.log('No relevant changes detected, skipping release process.')
+	process.exit(0)
+} else {
+	if (process.env.CI || options.dryRun) {
+		await releaseChangelog({
+			gitCommit: false,
+			stageChanges: false,
+			gitTag: false,
+			versionData: projectsVersionData,
+			version: workspaceVersion,
+			dryRun: options.dryRun,
+			verbose: options.verbose,
+		})
+	}
+
+	const result = await releasePublish({
 		dryRun: options.dryRun,
 		verbose: options.verbose,
 	})
+
+	process.exit(result)
 }
-
-const result = await releasePublish({
-	dryRun: options.dryRun,
-	verbose: options.verbose,
-})
-
-process.exit(result)
