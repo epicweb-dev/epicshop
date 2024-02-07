@@ -63,6 +63,7 @@ for (const project of projects) {
 const { workspaceVersion, projectsVersionData } = await releaseVersion({
 	gitCommit: false,
 	stageChanges: false,
+	gitTag: false,
 	specifier: options.version,
 	dryRun: options.dryRun,
 	verbose: options.verbose,
@@ -72,6 +73,7 @@ if (process.env.CI || options.dryRun) {
 	await releaseChangelog({
 		gitCommit: false,
 		stageChanges: false,
+		gitTag: false,
 		versionData: projectsVersionData,
 		version: workspaceVersion,
 		dryRun: options.dryRun,

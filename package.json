@@ -6,7 +6,7 @@
     "postinstall": "patch-package --patch-dir other/patches",
     "typecheck": "tsc -b",
     "lint": "eslint .",
-    "build": "nx run @kentcdodds/workshop-app:build",
+    "build": "nx run-many --target build",
     "prestart": "npm run build -s",
     "go": "cross-env NODE_ENV=development KCDSHOP_CONTEXT_CWD=$PWD/packages/example tsx watch $@",
     "start": "cross-env NODE_ENV=production npm -w example run start",
