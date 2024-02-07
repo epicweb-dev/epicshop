@@ -159,13 +159,9 @@ jobs:
           registry-url: 'https://registry.npmjs.org'
 
       - name: 📥 Download deps
-        run: npm ci
-
-      - name: 🧐 who am i?
-        run: npm whoami
-      #   uses: bahmutov/npm-install@v1
-      #   with:
-      #     useLockFile: false
+        uses: bahmutov/npm-install@v1
+        with:
+          useLockFile: false
 
       - name: 🏗 Run build script
         run: npm run build
