@@ -54,6 +54,7 @@ await Promise.all(
 
 const { workspaceVersion, projectsVersionData } = await releaseVersion({
 	gitCommit: false,
+	stageChanges: false,
 	specifier: options.version,
 	dryRun: options.dryRun,
 	verbose: options.verbose,
@@ -61,6 +62,7 @@ const { workspaceVersion, projectsVersionData } = await releaseVersion({
 
 await releaseChangelog({
 	gitCommit: false,
+	stageChanges: false,
 	versionData: projectsVersionData,
 	version: workspaceVersion,
 	dryRun: options.dryRun,
