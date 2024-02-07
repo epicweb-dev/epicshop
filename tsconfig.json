@@ -1,12 +1,15 @@
 {
-	"files": [],
-	"exclude": ["node_modules"],
-	"references": [
-		{
-			"path": "packages/example"
-		},
-		{
-			"path": "packages/workshop-app"
-		}
-	]
+  "files": [],
+  "exclude": ["node_modules"],
+  "references": [
+    {
+      "path": "other"
+    },
+    {
+      "path": "packages/example"
+    },
+    {
+      "path": "packages/workshop-app"
+    }
+  ]
 }

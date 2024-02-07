@@ -1,0 +1,13 @@
+diff --git a/node_modules/@nx/js/src/generators/release-version/release-version.js b/node_modules/@nx/js/src/generators/release-version/release-version.js
+index 49dc96c..2457095 100644
+--- a/node_modules/@nx/js/src/generators/release-version/release-version.js
++++ b/node_modules/@nx/js/src/generators/release-version/release-version.js
+@@ -307,7 +307,7 @@ To fix this you will either need to add a package.json file at that location, or
+          * Ensure that formatting is applied so that version bump diffs are as mimimal as possible
+          * within the context of the user's workspace.
+          */
+-        await (0, devkit_1.formatFiles)(tree);
++        // await (0, devkit_1.formatFiles)(tree);
+         // Return the version data so that it can be leveraged by the overall version command
+         return {
+             data: versionData,

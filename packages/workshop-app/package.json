@@ -9,6 +9,7 @@
     "kcdshop": "./bin/kcdshop.js"
   },
   "files": [
+    "bin",
     "start.js",
     "build",
     "public"

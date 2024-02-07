@@ -1,6 +1,11 @@
 {
   "$schema": "./node_modules/nx/schemas/nx-schema.json",
   "targetDefaults": {
+    "nx-release-publish": {
+      "options": {
+        "packageRoot": "publish/{projectRoot}"
+      }
+    },
     "build": {
       "cache": true,
       "dependsOn": ["^build"]
@@ -12,7 +17,16 @@
   "release": {
     "projects": ["@kentcdodds/workshop-app"],
     "version": {
-      "conventionalCommits": true
+      "conventionalCommits": true,
+      "generatorOptions": {
+        "packageRoot": "publish/{projectRoot}"
+      }
+    },
+    "changelog": {
+      "workspaceChangelog": {
+        "file": false,
+        "createRelease": "github"
+      }
     }
   }
 }
