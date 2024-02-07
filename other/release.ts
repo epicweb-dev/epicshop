@@ -1,7 +1,8 @@
 import fs from 'fs-extra'
+import { workspaceRoot, createProjectGraphAsync } from '@nx/devkit'
+import { findMatchingProjects } from 'nx/src/utils/find-matching-projects.js'
 import { releaseChangelog, releasePublish, releaseVersion } from 'nx/release'
 import path from 'path'
-import { fileURLToPath } from 'url'
 import { default as yargs } from 'yargs'
 
 process.env.NX_DAEMON = 'false'
@@ -27,30 +28,37 @@ const options = await yargs(process.argv)
 	})
 	.parseAsync()
 
-// for the project in packages/workshop-app: copy README.md, package.json, and the files mentioned in the package.json files property to a publish folder
-const __filename = fileURLToPath(import.meta.url)
-const __dirname = path.dirname(__filename)
+// get the projects from the nx.json in the parent directory
+const nxJsonPath = path.join(workspaceRoot, 'nx.json')
+const nxJson = await fs.readJSON(nxJsonPath)
+const graph = await createProjectGraphAsync()
+const projects = findMatchingProjects(nxJson.release.projects, graph.nodes)
 
-const workshopAppPath = path.join(__dirname, '..', 'packages', 'workshop-app')
-const publishPath = path.join(
-	__dirname,
-	'..',
-	'publish',
-	'packages',
-	'workshop-app',
-)
+for (const project of projects) {
+	const projectNode = graph.nodes[project]
+	if (!projectNode) {
+		throw new Error('ahhhhhhhhhhhhhhhhhh! This should be unpossible!')
+	}
 
-const packageJsonPath = path.join(workshopAppPath, 'package.json')
-const packageJson = await fs.readJson(packageJsonPath)
-const filesToCopy = [...(packageJson.files ?? []), 'README.md', 'package.json']
+	const srcPath = path.join(workspaceRoot, projectNode.data.root)
+	const publishPath = path.join(workspaceRoot, 'publish', projectNode.data.root)
 
-await Promise.all(
-	filesToCopy.map(async (file: string) => {
-		const sourcePath = path.join(workshopAppPath, file)
-		const destinationPath = path.join(publishPath, file)
-		await fs.copy(sourcePath, destinationPath)
-	}),
-)
+	const packageJsonPath = path.join(srcPath, 'package.json')
+	const packageJson = await fs.readJson(packageJsonPath)
+	const filesToCopy = [
+		...(packageJson.files ?? []),
+		'README.md',
+		'package.json',
+	]
+
+	await Promise.all(
+		filesToCopy.map(async (file: string) => {
+			const sourcePath = path.join(srcPath, file)
+			const destinationPath = path.join(publishPath, file)
+			await fs.copy(sourcePath, destinationPath)
+		}),
+	)
+}
 
 const { workspaceVersion, projectsVersionData } = await releaseVersion({
 	gitCommit: false,

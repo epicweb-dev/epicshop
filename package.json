@@ -23,6 +23,7 @@
     "packages/example/examples/*"
   ],
   "dependencies": {
+    "@nx/devkit": "^18.0.2",
     "@nx/js": "^18.0.2",
     "@playwright/test": "^1.39.0",
     "@types/yargs": "^17.0.32",
