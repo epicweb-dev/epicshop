@@ -1,18 +1,8 @@
 name: validate
 on:
   push:
-    branches:
-      [
-        '+([0-9])?(.{+([0-9]),x}).x',
-        'main',
-        'next',
-        'next-major',
-        'beta',
-        'alpha',
-        '!all-contributors/**',
-      ]
+    branches: ['main']
   pull_request:
-    branches-ignore: ['all-contributors/**']
 
 concurrency:
   group: ${{ github.workflow }}-${{ github.ref }}
@@ -143,10 +133,12 @@ jobs:
     name: 🚀 Release
     needs: [lint, typecheck, build, playwright]
     runs-on: ubuntu-latest
+    permissions:
+      contents: write
+      id-token: write
     if:
       ${{ github.repository == 'epicweb-dev/kcdshop' &&
-      contains('refs/heads/main,refs/heads/beta,refs/heads/next,refs/heads/alpha',
-      github.ref) && github.event_name == 'push' }}
+      contains('refs/heads/main', github.ref) && github.event_name == 'push' }}
     steps:
       - name: ⬇️ Checkout repo
         uses: actions/checkout@v3
@@ -155,11 +147,6 @@ jobs:
         uses: actions/setup-node@v3
         with:
           node-version: 20
-
-      # This is *really* not great, but I don't know how to publish a package
-      # in a workspace with bundleDependencies set.
-      - name: ❌ Remove workspace
-        run: rm package.json && cp .npmrc ./packages/workshop-app/.npmrc
 
       - name: 📥 Download deps
         uses: bahmutov/npm-install@v1
@@ -172,19 +159,8 @@ jobs:
         working-directory: ./packages/workshop-app
 
       - name: 🚀 Release
-        uses: cycjimmy/semantic-release-action@v3.2.0
-        with:
-          working_directory: ./packages/workshop-app
-          semantic_version: 17
-          branches: |
-            [
-              '+([0-9])?(.{+([0-9]),x}).x',
-              'main',
-              'next',
-              'next-major',
-              {name: 'beta', prerelease: true},
-              {name: 'alpha', prerelease: true}
-            ]
+        run: npx tsx other/release.ts --dry-run=false
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           NPM_TOKEN: ${{ secrets.NPM_TOKEN }}
+          NPM_CONFIG_PROVENANCE: 'true'

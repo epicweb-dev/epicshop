@@ -60,14 +60,16 @@ const { workspaceVersion, projectsVersionData } = await releaseVersion({
 	verbose: options.verbose,
 })
 
-await releaseChangelog({
-	gitCommit: false,
-	stageChanges: false,
-	versionData: projectsVersionData,
-	version: workspaceVersion,
-	dryRun: options.dryRun,
-	verbose: options.verbose,
-})
+if (process.env.CI || options.dryRun) {
+	await releaseChangelog({
+		gitCommit: false,
+		stageChanges: false,
+		versionData: projectsVersionData,
+		version: workspaceVersion,
+		dryRun: options.dryRun,
+		verbose: options.verbose,
+	})
+}
 
 await releasePublish({
 	dryRun: options.dryRun,
