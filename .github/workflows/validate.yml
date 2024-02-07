@@ -136,6 +136,10 @@ jobs:
     permissions:
       contents: write
       id-token: write
+    env:
+      NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
+      NPM_CONFIG_PROVENANCE: 'true'
+      GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
     if:
       ${{ github.repository == 'epicweb-dev/kcdshop' &&
       contains('refs/heads/main', github.ref) && github.event_name == 'push' }}
@@ -160,7 +164,3 @@ jobs:
 
       - name: 🚀 Release
         run: npx tsx other/release.ts --dry-run=false
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-          NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
-          NPM_CONFIG_PROVENANCE: 'true'
