@@ -138,6 +138,7 @@ jobs:
       id-token: write
     env:
       NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
+      NPM_TOKEN: ${{ secrets.NPM_TOKEN }}
       NPM_CONFIG_PROVENANCE: 'true'
       GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
     if:
@@ -155,9 +156,13 @@ jobs:
           node-version: 20
 
       - name: 📥 Download deps
-        uses: bahmutov/npm-install@v1
-        with:
-          useLockFile: false
+        run: npm ci
+
+      - name: 🧐 who am i?
+        run: npm whoami
+      #   uses: bahmutov/npm-install@v1
+      #   with:
+      #     useLockFile: false
 
       - name: 🏗 Run build script
         run: npm run build
