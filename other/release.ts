@@ -81,7 +81,9 @@ if (process.env.CI || options.dryRun) {
 	})
 }
 
-await releasePublish({
+const result = await releasePublish({
 	dryRun: options.dryRun,
 	verbose: options.verbose,
 })
+
+process.exit(result)
