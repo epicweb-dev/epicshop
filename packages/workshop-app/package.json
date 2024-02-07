@@ -75,6 +75,7 @@
     "@conform-to/react": "^0.9.1",
     "@conform-to/zod": "^0.9.1",
     "@epic-web/client-hints": "^1.2.2",
+    "@epic-web/remember": "^1.0.2",
     "@epic-web/restore-scroll": "^1.0.1",
     "@kentcdodds/md-temp": "^6.0.0",
     "@kentcdodds/workshop-utils": "file:../workshop-utils",

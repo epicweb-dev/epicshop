@@ -1,5 +1,6 @@
 import fs from 'fs'
 import path from 'path'
+import { remember } from '@epic-web/remember'
 import {
 	getServerTimeHeader,
 	type Timings,
@@ -26,7 +27,6 @@ import {
 	runAppDev,
 	waitOnApp,
 } from './process-manager.server.ts'
-import { singleton } from './singleton.server.ts'
 import { getErrorMessage, getPkgProp } from './utils.ts'
 
 process.env.NODE_ENV = process.env.NODE_ENV ?? 'development'
@@ -185,7 +185,7 @@ function firstToExist(...files: Array<string>) {
 	})
 }
 
-export const modifiedTimes = singleton(
+export const modifiedTimes = remember(
 	'modified_times',
 	() => new Map<string, number>(),
 )

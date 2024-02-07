@@ -1,11 +1,11 @@
 import { type ChildProcess, spawn } from 'child_process'
 import net from 'net'
+import { remember } from '@epic-web/remember'
 import chalk from 'chalk'
 import closeWithGrace from 'close-with-grace'
 import { execaCommand } from 'execa'
 import fkill from 'fkill'
 import { type App } from './apps.server.ts'
-import { singleton } from './singleton.server.ts'
 import { getErrorMessage } from './utils.ts'
 
 const isDeployed =
@@ -41,8 +41,8 @@ declare global {
 	>
 }
 
-const devProcesses = singleton('dev_processes', getDevProcessesMap)
-const testProcesses = singleton('test_processes', getTestProcessesMap)
+const devProcesses = remember('dev_processes', getDevProcessesMap)
+const testProcesses = remember('test_processes', getTestProcessesMap)
 
 function getDevProcessesMap() {
 	const procs: DevProcessesMap = new Map()

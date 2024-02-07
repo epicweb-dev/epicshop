@@ -1,5 +1,6 @@
 import fs from 'fs'
 import path from 'path'
+import { remember } from '@epic-web/remember'
 import { remarkCodeBlocksShiki } from '@kentcdodds/md-temp'
 import { cachified, type CacheEntry } from 'cachified'
 import fsExtra from 'fs-extra'
@@ -24,7 +25,6 @@ import {
 	type EmbeddedFile,
 } from './codefile-mdx.server.ts'
 // @ts-ignore - remark-emoji don't have an exports from ESM types
-import { singleton } from './singleton.server.ts'
 
 const cacheDir = path.join(
 	process.env.KCDSHOP_CONTEXT_CWD ?? process.cwd(),
@@ -288,7 +288,7 @@ export async function compileMarkdownString(markdownString: string) {
 	})
 }
 
-const modifiedEmbeddedFilesTime = singleton(
+const modifiedEmbeddedFilesTime = remember(
 	'modified_embedded_files_time',
 	() => new Map<string, number>(),
 )

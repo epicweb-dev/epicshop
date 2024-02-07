@@ -1,6 +1,6 @@
 import { EventEmitter } from 'events'
+import { remember } from '@epic-web/remember'
 import { Issuer, type Client } from 'openid-client'
-import { singleton } from '#app/utils/singleton.server.ts'
 import { EVENTS } from './auth-events.ts'
 import { setAuthInfo } from './db.server.ts'
 import { getErrorMessage } from './misc.tsx'
@@ -8,7 +8,7 @@ import { getErrorMessage } from './misc.tsx'
 const { ISSUER = 'https://www.epicweb.dev/oauth' } = process.env
 const GRANT_TYPE = 'urn:ietf:params:oauth:grant-type:device_code'
 
-export const authEmitter = singleton('authEmitter', () => new EventEmitter())
+export const authEmitter = remember('authEmitter', () => new EventEmitter())
 // cleanup any that may exist already
 authEmitter.removeAllListeners()
 

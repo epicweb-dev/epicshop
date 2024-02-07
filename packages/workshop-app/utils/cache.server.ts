@@ -1,5 +1,6 @@
 import os from 'os'
 import path from 'path'
+import { remember } from '@epic-web/remember'
 import {
 	cachifiedTimingReporter,
 	type Timings,
@@ -22,7 +23,6 @@ import {
 	type ProblemApp,
 	type SolutionApp,
 } from './apps.server.ts'
-import { singleton } from './singleton.server.ts'
 
 export const solutionAppCache =
 	makeSingletonCache<SolutionApp>('SolutionAppCache')
@@ -90,7 +90,7 @@ export async function deleteCache() {
 }
 
 function makeSingletonCache<CacheEntryType>(name: string) {
-	return singleton(name, () => {
+	return remember(name, () => {
 		const cache = new LRUCache<string, CacheEntry<CacheEntryType>>({
 			max: 1000,
 		}) as LRUishCache
