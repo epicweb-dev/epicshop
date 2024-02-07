@@ -1,4 +1,5 @@
 {
+  "$schema": "./node_modules/nx/schemas/nx-schema.json",
   "targetDefaults": {
     "build": {
       "cache": true,
@@ -7,5 +8,11 @@
   },
   "affected": {
     "defaultBase": "main"
+  },
+  "release": {
+    "projects": ["@kentcdodds/workshop-app"],
+    "version": {
+      "conventionalCommits": true
+    }
   }
 }
