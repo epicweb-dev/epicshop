@@ -9,6 +9,12 @@
     "build": {
       "cache": true,
       "dependsOn": ["^build"]
+    },
+    "lint": {
+      "cache": true
+    },
+    "typecheck": {
+      "cache": true
     }
   },
   "affected": {
