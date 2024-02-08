@@ -7,10 +7,88 @@
   "type": "module",
   "exports": {
     "./package.json": "./package.json",
+    "./apps.server": {
+      "import": {
+        "types": "./dist/esm/apps.server.d.ts",
+        "default": "./dist/esm/apps.server.js"
+      }
+    },
+    "./cache.server": {
+      "import": {
+        "types": "./dist/esm/cache.server.d.ts",
+        "default": "./dist/esm/cache.server.js"
+      }
+    },
+    "./db.server": {
+      "import": {
+        "types": "./dist/esm/db.server.d.ts",
+        "default": "./dist/esm/db.server.js"
+      }
+    },
     "./timing.server": {
       "import": {
         "types": "./dist/esm/timing.server.d.ts",
         "default": "./dist/esm/timing.server.js"
+      }
+    },
+    "./compile-mdx.server": {
+      "import": {
+        "types": "./dist/esm/compile-mdx.server.d.ts",
+        "default": "./dist/esm/compile-mdx.server.js"
+      }
+    },
+    "./codefile-mdx.server": {
+      "import": {
+        "types": "./dist/esm/codefile-mdx.server.d.ts",
+        "default": "./dist/esm/codefile-mdx.server.js"
+      }
+    },
+    "./change-tracker.server": {
+      "import": {
+        "types": "./dist/esm/change-tracker.server.d.ts",
+        "default": "./dist/esm/change-tracker.server.js"
+      }
+    },
+    "./git.server": {
+      "import": {
+        "types": "./dist/esm/git.server.d.ts",
+        "default": "./dist/esm/git.server.js"
+      }
+    },
+    "./iframe-sync": {
+      "import": {
+        "types": "./dist/esm/iframe-sync.d.ts",
+        "default": "./dist/esm/iframe-sync.js"
+      }
+    },
+    "./playwright.server": {
+      "import": {
+        "types": "./dist/esm/playwright.server.d.ts",
+        "default": "./dist/esm/playwright.server.js"
+      }
+    },
+    "./process-manager.server": {
+      "import": {
+        "types": "./dist/esm/process-manager.server.d.ts",
+        "default": "./dist/esm/process-manager.server.js"
+      }
+    },
+    "./test": {
+      "import": {
+        "types": "./dist/esm/test.d.ts",
+        "default": "./dist/esm/test.js"
+      }
+    },
+    "./utils.server": {
+      "import": {
+        "types": "./dist/esm/utils.server.d.ts",
+        "default": "./dist/esm/utils.server.js"
+      }
+    },
+    "./utils": {
+      "import": {
+        "types": "./dist/esm/utils.d.ts",
+        "default": "./dist/esm/utils.js"
       }
     }
   },
@@ -18,10 +96,45 @@
     "dist"
   ],
   "scripts": {
-    "build": "tshy"
+    "build": "tshy",
+    "build:watch": "nx watch --projects=@kentcdodds/workshop-utils -- nx run \\$NX_PROJECT_NAME:build"
+  },
+  "dependencies": {
+    "@epic-web/cachified": "^4.0.0",
+    "@epic-web/remember": "^1.0.2",
+    "@mdx-js/mdx": "^3.0.0",
+    "@playwright/test": "^1.41.2",
+    "@remix-run/node": "^2.6.0",
+    "@testing-library/dom": "^9.3.4",
+    "chai": "^5.0.3",
+    "chai-dom": "^1.12.0",
+    "chalk": "^5.3.0",
+    "close-with-grace": "^1.2.0",
+    "cross-spawn": "^7.0.3",
+    "execa": "^8.0.1",
+    "fkill": "^9.0.0",
+    "fs-extra": "^11.2.0",
+    "glob": "^10.3.10",
+    "globby": "^14.0.0",
+    "hast": "^1.0.0",
+    "lru-cache": "^10.2.0",
+    "md5-hex": "^5.0.0",
+    "mdast": "^3.0.0",
+    "mdast-util-mdx-jsx": "^3.0.0",
+    "mdx-bundler": "^10.0.1",
+    "p-queue": "^8.0.1",
+    "remark-autolink-headings": "^7.0.1",
+    "remark-emoji": "^4.0.1",
+    "remark-gfm": "^4.0.0",
+    "unified": "^11.0.4",
+    "unist-util-remove-position": "^5.0.0",
+    "unist-util-visit": "^5.0.0",
+    "zod": "^3.22.4"
   },
   "devDependencies": {
     "@remix-run/eslint-config": "^2.6.0",
+    "@total-typescript/ts-reset": "^0.5.1",
+    "@types/node": "^20.11.16",
     "tshy": "^1.11.0"
   },
   "tshy": {
@@ -31,7 +144,20 @@
     ],
     "exports": {
       "./package.json": "./package.json",
-      "./timing.server": "./src/timing.server.ts"
+      "./apps.server": "./src/apps.server.ts",
+      "./cache.server": "./src/cache.server.ts",
+      "./db.server": "./src/db.server.ts",
+      "./timing.server": "./src/timing.server.ts",
+      "./compile-mdx.server": "./src/compile-mdx.server.ts",
+      "./codefile-mdx.server": "./src/codefile-mdx.server.ts",
+      "./change-tracker.server": "./src/change-tracker.server.ts",
+      "./git.server": "./src/git.server.ts",
+      "./iframe-sync": "./src/iframe-sync.ts",
+      "./playwright.server": "./src/playwright.server.ts",
+      "./process-manager.server": "./src/process-manager.server.ts",
+      "./test": "./src/test.ts",
+      "./utils.server": "./src/utils.server.ts",
+      "./utils": "./src/utils.ts"
     }
   },
   "repository": {

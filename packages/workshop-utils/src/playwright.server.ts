@@ -1,7 +1,7 @@
 import { test, expect } from '@playwright/test'
 import crossSpawn from 'cross-spawn'
 import z from 'zod'
-import { getApps, isProblemApp } from './apps.server.ts'
+import { getApps, isProblemApp } from './apps.server.js'
 
 export async function getInBrowserTestPages() {
 	const apps = (await getApps())

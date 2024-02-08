@@ -1,15 +1,15 @@
-import { json, redirect, type LoaderFunctionArgs } from '@remix-run/node'
-import { Form, Link, useFetcher, useLoaderData } from '@remix-run/react'
-import { Button } from '#app/components/button.tsx'
-import { Icon } from '#app/components/icons.tsx'
-import { useOptionalDiscordMember, useUser } from '#app/components/user.tsx'
-import { deleteCache } from '#app/utils/cache.server.ts'
+import { deleteCache } from '@kentcdodds/workshop-utils/cache.server'
 import {
 	deleteDb,
 	deleteDiscordInfo,
 	requireAuthInfo,
 	setPresencePreferences,
-} from '#app/utils/db.server.ts'
+} from '@kentcdodds/workshop-utils/db.server'
+import { json, redirect, type LoaderFunctionArgs } from '@remix-run/node'
+import { Form, Link, useFetcher, useLoaderData } from '@remix-run/react'
+import { Button } from '#app/components/button.tsx'
+import { Icon } from '#app/components/icons.tsx'
+import { useOptionalDiscordMember, useUser } from '#app/components/user.tsx'
 import { ensureUndeployed } from '#app/utils/misc.tsx'
 import { usePresencePreferences } from '#app/utils/presence.tsx'
 import { redirectWithToast } from '#app/utils/toast.server.ts'

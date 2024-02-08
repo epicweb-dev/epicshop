@@ -1,3 +1,4 @@
+import { type BaseExerciseStepApp } from '@kentcdodds/workshop-utils/apps.server'
 import { Icon } from '#app/components/icons'
 import {
 	InBrowserBrowser,
@@ -5,7 +6,6 @@ import {
 } from '#app/components/in-browser-browser'
 import { cn, getBaseUrl } from '#app/utils/misc'
 import { useRequestInfo } from '#app/utils/request-info'
-import { type BaseExerciseStepApp } from '#utils/apps.server'
 
 export function Preview({
 	id,

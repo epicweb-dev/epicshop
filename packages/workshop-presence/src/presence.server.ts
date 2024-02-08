@@ -1,14 +1,25 @@
+import {
+	cachified,
+	makeSingletonCache,
+} from '@kentcdodds/workshop-utils/cache.server'
+import { getPreferences } from '@kentcdodds/workshop-utils/db.server'
+import { type Timings } from '@kentcdodds/workshop-utils/timing.server'
+import { checkConnection } from '@kentcdodds/workshop-utils/utils.server'
 import { z } from 'zod'
-import { cachified, presenceCache } from './cache.server.ts'
-import { getPreferences } from './db.server.ts'
 import {
 	PresenceSchema,
 	type User,
 	UserSchema,
 	partykitBaseUrl,
-} from './presence.ts'
-import { type Timings } from '@kentcdodds/workshop-utils/timing.server'
-import { checkConnection } from './utils.ts'
+} from './presence.js'
+
+export const presenceCache = makeSingletonCache<
+	Array<{
+		id: string
+		avatarUrl: string
+		name: string | null | undefined
+	}>
+>('PresenceCache')
 
 export async function getPresentUsers(
 	user?: User | null,

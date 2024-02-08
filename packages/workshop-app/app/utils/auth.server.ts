@@ -1,8 +1,8 @@
 import { EventEmitter } from 'events'
 import { remember } from '@epic-web/remember'
+import { setAuthInfo } from '@kentcdodds/workshop-utils/db.server'
 import { Issuer, type Client } from 'openid-client'
 import { EVENTS } from './auth-events.ts'
-import { setAuthInfo } from './db.server.ts'
 import { getErrorMessage } from './misc.tsx'
 
 const { ISSUER = 'https://www.epicweb.dev/oauth' } = process.env

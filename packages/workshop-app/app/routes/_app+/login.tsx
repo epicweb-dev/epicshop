@@ -1,3 +1,4 @@
+import { getAuthInfo } from '@kentcdodds/workshop-utils/db.server'
 import { json, redirect } from '@remix-run/node'
 import { useFetcher, useNavigate, useRevalidator } from '@remix-run/react'
 import { useEffect, useState } from 'react'
@@ -6,7 +7,6 @@ import { Button, ButtonLink } from '#app/components/button.tsx'
 import { Loading } from '#app/components/loading.tsx'
 import { EVENTS } from '#app/utils/auth-events.ts'
 import { registerDevice } from '#app/utils/auth.server.ts'
-import { getAuthInfo } from '#app/utils/db.server.ts'
 import { ensureUndeployed } from '#app/utils/misc.tsx'
 import { EventSchema } from '../login-sse.tsx'
 

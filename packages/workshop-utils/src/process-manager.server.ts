@@ -1,12 +1,12 @@
 import { type ChildProcess, spawn } from 'child_process'
-import net from 'net'
+import net from 'node:net'
 import { remember } from '@epic-web/remember'
 import chalk from 'chalk'
 import closeWithGrace from 'close-with-grace'
 import { execaCommand } from 'execa'
 import fkill from 'fkill'
-import { type App } from './apps.server.ts'
-import { getErrorMessage } from './utils.ts'
+import { type App } from './apps.server.js'
+import { getErrorMessage } from './utils.js'
 
 const isDeployed =
 	process.env.KCDSHOP_DEPLOYED === 'true' ||

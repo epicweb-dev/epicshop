@@ -1,18 +1,14 @@
 import os from 'os'
 import path from 'path'
-import { remember } from '@epic-web/remember'
-import {
-	cachifiedTimingReporter,
-	type Timings,
-} from '@kentcdodds/workshop-utils/timing.server'
-import * as C from 'cachified'
+import * as C from '@epic-web/cachified'
 import {
 	lruCacheAdapter,
 	verboseReporter,
 	type Cache as CachifiedCache,
 	type CacheEntry,
 	type LRUishCache,
-} from 'cachified'
+} from '@epic-web/cachified'
+import { remember } from '@epic-web/remember'
 import fsExtra from 'fs-extra'
 import { LRUCache } from 'lru-cache'
 import md5 from 'md5-hex'
@@ -22,7 +18,8 @@ import {
 	type PlaygroundApp,
 	type ProblemApp,
 	type SolutionApp,
-} from './apps.server.ts'
+} from './apps.server.js'
+import { cachifiedTimingReporter, type Timings } from './timing.server.js'
 
 export const solutionAppCache =
 	makeSingletonCache<SolutionApp>('SolutionAppCache')
@@ -38,13 +35,6 @@ export const compiledMarkdownCache = makeSingletonCache<string>(
 )
 export const embeddedFilesCache =
 	makeSingletonCache<Record<string, string[]>>('EmbeddedFilesCache')
-export const presenceCache = makeSingletonCache<
-	Array<{
-		id: string
-		avatarUrl: string
-		name: string | null | undefined
-	}>
->('PresenceCache')
 
 const cacheDir = path.join(os.homedir(), '.kcdshop', 'cache')
 
@@ -89,7 +79,7 @@ export async function deleteCache() {
 	}
 }
 
-function makeSingletonCache<CacheEntryType>(name: string) {
+export function makeSingletonCache<CacheEntryType>(name: string) {
 	return remember(name, () => {
 		const cache = new LRUCache<string, CacheEntry<CacheEntryType>>({
 			max: 1000,

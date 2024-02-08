@@ -1,10 +1,10 @@
-import { redirect, type LoaderFunctionArgs } from '@remix-run/node'
+import { invariantResponse } from '@epic-web/invariant'
 import {
 	DiscordMemberSchema,
 	requireAuthInfo,
 	setDiscordMember,
-} from '#app/utils/db.server.ts'
-import { invariantResponse } from '#app/utils/misc.tsx'
+} from '@kentcdodds/workshop-utils/db.server'
+import { redirect, type LoaderFunctionArgs } from '@remix-run/node'
 import { redirectWithToast } from '#app/utils/toast.server.ts'
 
 const port = process.env.PORT || '5639'

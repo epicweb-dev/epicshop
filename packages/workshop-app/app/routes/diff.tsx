@@ -1,3 +1,10 @@
+import {
+	type App,
+	getAppByName,
+	getApps,
+	isExerciseStepApp,
+	isPlaygroundApp,
+} from '@kentcdodds/workshop-utils/apps.server'
 import { makeTimings } from '@kentcdodds/workshop-utils/timing.server'
 import { defer, type LoaderFunctionArgs } from '@remix-run/node'
 import {
@@ -11,13 +18,6 @@ import { Diff } from '#app/components/diff.tsx'
 import { Icon } from '#app/components/icons.tsx'
 import { NavChevrons } from '#app/components/nav-chevrons.tsx'
 import { SimpleTooltip } from '#app/components/ui/tooltip.tsx'
-import {
-	type App,
-	getAppByName,
-	getApps,
-	isExerciseStepApp,
-	isPlaygroundApp,
-} from '#app/utils/apps.server.ts'
 import { getDiffCode } from '#app/utils/diff.server.ts'
 import { cn } from '#app/utils/misc.tsx'
 

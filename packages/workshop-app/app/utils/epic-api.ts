@@ -1,15 +1,15 @@
-import md5 from 'md5-hex'
-import { z } from 'zod'
 import {
 	getEpicWorkshopSlug,
 	getExercises,
 	getWorkshopFinished,
 	getWorkshopInstructions,
-} from './apps.server.ts'
-import { cachified, fsCache } from './cache.server.ts'
-import { getAuthInfo } from './db.server.ts'
-import { getErrorMessage } from './misc.tsx'
+} from '@kentcdodds/workshop-utils/apps.server'
+import { cachified, fsCache } from '@kentcdodds/workshop-utils/cache.server'
+import { getAuthInfo } from '@kentcdodds/workshop-utils/db.server'
 import { type Timings } from '@kentcdodds/workshop-utils/timing.server'
+import md5 from 'md5-hex'
+import { z } from 'zod'
+import { getErrorMessage } from './misc.tsx'
 
 const Transcript = z
 	.string()

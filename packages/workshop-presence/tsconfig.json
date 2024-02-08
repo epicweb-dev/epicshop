@@ -15,8 +15,6 @@
     "baseUrl": ".",
     "skipLibCheck": true,
     "declaration": true,
-    "emitDeclarationOnly": true,
-    "declarationDir": "../build/utils",
-    "allowImportingTsExtensions": true
+    "noEmit": true
   }
 }

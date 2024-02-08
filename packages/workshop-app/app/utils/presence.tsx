@@ -1,18 +1,18 @@
-import { createId as cuid } from '@paralleldrive/cuid2'
-import { useParams, useRouteLoaderData } from '@remix-run/react'
-import { usePartySocket } from 'partysocket/react'
-import { createContext, useContext, useEffect, useState } from 'react'
-import { z } from 'zod'
-import { type loader as rootLoader } from '#app/root.tsx'
 import {
 	MessageSchema,
 	type Message,
 	type User,
 	partykitRoom,
 	partykitBaseUrl,
-} from '../../utils/presence.ts'
+} from '@kentcdodds/workshop-presence/presence'
+import { createId as cuid } from '@paralleldrive/cuid2'
+import { useParams, useRouteLoaderData } from '@remix-run/react'
+import { usePartySocket } from 'partysocket/react'
+import { createContext, useContext, useEffect, useState } from 'react'
+import { z } from 'zod'
+import { type loader as rootLoader } from '#app/root.tsx'
 
-export * from '../../utils/presence.ts'
+export * from '@kentcdodds/workshop-presence/presence'
 
 const PresenceContext = createContext<ReturnType<
 	typeof usePresenceSocket
@@ -73,7 +73,7 @@ export function usePresenceSocket(user?: User | null) {
 						exerciseNumber: params.exerciseNumber,
 						stepNumber: params.stepNumber,
 					},
-			  }
+				}
 			: null),
 	} satisfies User['location']
 

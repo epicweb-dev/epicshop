@@ -1,3 +1,10 @@
+import { getAppByName } from '@kentcdodds/workshop-utils/apps.server'
+import {
+	clearTestProcessEntry,
+	getTestProcessEntry,
+	isTestRunning,
+	runAppTests,
+} from '@kentcdodds/workshop-utils/process-manager.server'
 import {
 	type ActionFunctionArgs,
 	type LoaderFunctionArgs,
@@ -12,14 +19,7 @@ import { eventStream } from 'remix-utils/sse/server'
 import { z } from 'zod'
 import { Icon, AnimatedBars } from '#app/components/icons.tsx'
 import { SimpleTooltip } from '#app/components/ui/tooltip.tsx'
-import { getAppByName } from '#app/utils/apps.server.ts'
 import { ensureUndeployed } from '#app/utils/misc.tsx'
-import {
-	clearTestProcessEntry,
-	getTestProcessEntry,
-	isTestRunning,
-	runAppTests,
-} from '#app/utils/process-manager.server.ts'
 
 const testActionSchema = z.union([
 	z.object({

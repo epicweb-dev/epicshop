@@ -1,10 +1,5 @@
 import path from 'path'
-import {
-	getServerTimeHeader,
-	makeTimings,
-} from '@kentcdodds/workshop-utils/timing.server'
-import { type LoaderFunctionArgs, redirect } from '@remix-run/node'
-import fsExtra from 'fs-extra'
+import { invariantResponse } from '@epic-web/invariant'
 import {
 	getAppByName,
 	isExerciseStepApp,
@@ -13,8 +8,14 @@ import {
 	getExercise,
 	getWorkshopTitle,
 	isPlaygroundApp,
-} from '#app/utils/apps.server.ts'
-import { getBaseUrl, invariantResponse } from '#app/utils/misc.tsx'
+} from '@kentcdodds/workshop-utils/apps.server'
+import {
+	getServerTimeHeader,
+	makeTimings,
+} from '@kentcdodds/workshop-utils/timing.server'
+import { type LoaderFunctionArgs, redirect } from '@remix-run/node'
+import fsExtra from 'fs-extra'
+import { getBaseUrl } from '#app/utils/misc.tsx'
 
 export async function loader({ request, params }: LoaderFunctionArgs) {
 	const timings = makeTimings('app')

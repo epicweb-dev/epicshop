@@ -1,4 +1,10 @@
 import {
+	extractNumbersFromAppName,
+	getExercises,
+	getPlaygroundAppName,
+	getWorkshopTitle,
+} from '@kentcdodds/workshop-utils/apps.server'
+import {
 	combineServerTimings,
 	getServerTimeHeader,
 	makeTimings,
@@ -31,12 +37,6 @@ import {
 	TooltipTrigger,
 } from '#app/components/ui/tooltip.tsx'
 import { useOptionalUser } from '#app/components/user.tsx'
-import {
-	extractNumbersFromAppName,
-	getExercises,
-	getPlaygroundAppName,
-	getWorkshopTitle,
-} from '#app/utils/apps.server.ts'
 import { cn } from '#app/utils/misc.tsx'
 import { type User, usePresence } from '#app/utils/presence.tsx'
 import {

@@ -1,3 +1,5 @@
+import { invariantResponse } from '@epic-web/invariant'
+import { updateOnboardingData } from '@kentcdodds/workshop-utils/db.server'
 import { makeTimings } from '@kentcdodds/workshop-utils/timing.server'
 import {
 	defer,
@@ -13,8 +15,6 @@ import {
 	EpicVideoInfoProvider,
 } from '#app/components/epic-video.tsx'
 import { getEpicVideoInfos } from '#app/utils/epic-api.ts'
-import { invariantResponse } from '#app/utils/misc.tsx'
-import { updateOnboardingData } from '#utils/db.server.ts'
 
 export async function loader({ request }: LoaderFunctionArgs) {
 	const timings = makeTimings('onboarding')

@@ -1,5 +1,11 @@
 import path from 'path'
+import { invariantResponse } from '@epic-web/invariant'
 import { ElementScrollRestoration } from '@epic-web/restore-scroll'
+import {
+	getExercises,
+	getWorkshopRoot,
+	getWorkshopTitle,
+} from '@kentcdodds/workshop-utils/apps.server'
 import {
 	combineServerTimings,
 	getServerTimeHeader,
@@ -23,14 +29,9 @@ import { EpicVideoInfoProvider } from '#app/components/epic-video.tsx'
 import { type loader as rootLoader } from '#app/root.tsx'
 import { EditFileOnGitHub } from '#app/routes/launch-editor.tsx'
 import { ProgressToggle } from '#app/routes/progress.tsx'
-import {
-	getExercises,
-	getWorkshopRoot,
-	getWorkshopTitle,
-} from '#app/utils/apps.server.ts'
 import { getEpicVideoInfos } from '#app/utils/epic-api.ts'
 import { Mdx } from '#app/utils/mdx.tsx'
-import { getErrorMessage, invariantResponse } from '#app/utils/misc.tsx'
+import { getErrorMessage } from '#app/utils/misc.tsx'
 
 export const meta: MetaFunction<typeof loader, { root: typeof rootLoader }> = ({
 	data,

@@ -13,6 +13,9 @@
     },
     {
       "path": "packages/workshop-utils"
+    },
+    {
+      "path": "packages/workshop-presence"
     }
   ]
 }

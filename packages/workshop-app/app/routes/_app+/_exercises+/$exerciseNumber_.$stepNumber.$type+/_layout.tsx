@@ -1,4 +1,28 @@
 import { ElementScrollRestoration } from '@epic-web/restore-scroll'
+import {
+	getAppByName,
+	getAppPageRoute,
+	getApps,
+	getExerciseApp,
+	getNextExerciseApp,
+	getPrevExerciseApp,
+	getWorkshopTitle,
+	isExerciseStepApp,
+	isPlaygroundApp,
+	requireExercise,
+	requireExerciseApp,
+	type App,
+	type ExerciseStepApp,
+} from '@kentcdodds/workshop-utils/apps.server'
+import {
+	isAppRunning,
+	isPortAvailable,
+} from '@kentcdodds/workshop-utils/process-manager.server'
+import {
+	combineServerTimings,
+	getServerTimeHeader,
+	makeTimings,
+} from '@kentcdodds/workshop-utils/timing.server'
 import * as Tabs from '@radix-ui/react-tabs'
 import {
 	defer,
@@ -27,33 +51,9 @@ import { getDiscordAuthURL } from '#app/routes/discord.callback.ts'
 import { EditFileOnGitHub } from '#app/routes/launch-editor.tsx'
 import { ProgressToggle } from '#app/routes/progress.tsx'
 import { SetAppToPlayground } from '#app/routes/set-playground.tsx'
-import {
-	getAppByName,
-	getAppPageRoute,
-	getApps,
-	getExerciseApp,
-	getNextExerciseApp,
-	getPrevExerciseApp,
-	getWorkshopTitle,
-	isExerciseStepApp,
-	isPlaygroundApp,
-	requireExercise,
-	requireExerciseApp,
-	type App,
-	type ExerciseStepApp,
-} from '#app/utils/apps.server.ts'
 import { getDiffCode, getDiffFiles } from '#app/utils/diff.server.ts'
 import { getEpicVideoInfos } from '#app/utils/epic-api.ts'
 import { useAltDown } from '#app/utils/misc.tsx'
-import {
-	isAppRunning,
-	isPortAvailable,
-} from '#app/utils/process-manager.server.ts'
-import {
-	combineServerTimings,
-	getServerTimeHeader,
-	makeTimings,
-} from '@kentcdodds/workshop-utils/timing.server'
 import { fetchDiscordPosts } from './__shared/discord.server.ts'
 import { DiscordChat } from './__shared/discord.tsx'
 import { Playground } from './__shared/playground.tsx'

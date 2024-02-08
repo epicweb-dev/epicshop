@@ -1,5 +1,10 @@
 import { ElementScrollRestoration } from '@epic-web/restore-scroll'
 import {
+	getExercises,
+	getWorkshopFinished,
+	getWorkshopTitle,
+} from '@kentcdodds/workshop-utils/apps.server'
+import {
 	combineServerTimings,
 	getServerTimeHeader,
 	makeTimings,
@@ -18,11 +23,6 @@ import { EpicVideoInfoProvider } from '#app/components/epic-video.tsx'
 import { Loading } from '#app/components/loading.tsx'
 import { NavChevrons } from '#app/components/nav-chevrons.tsx'
 import { type loader as rootLoader } from '#app/root.tsx'
-import {
-	getExercises,
-	getWorkshopFinished,
-	getWorkshopTitle,
-} from '#app/utils/apps.server.ts'
 import { getEpicVideoInfos } from '#app/utils/epic-api.ts'
 import { Mdx } from '#app/utils/mdx.tsx'
 import { cn } from '#app/utils/misc.tsx'

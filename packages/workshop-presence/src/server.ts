@@ -1,28 +1,6 @@
 import type * as Party from 'partykit/server'
 import { z } from 'zod'
-
-const UserSchema = z.object({
-	id: z.string(),
-	avatarUrl: z.string().nullable().optional(),
-	name: z.string().nullable().optional(),
-	location: z
-		.object({
-			workshopTitle: z.string().nullable().optional(),
-			exercise: z
-				.object({
-					type: z
-						.union([z.literal('problem'), z.literal('solution')])
-						.nullable()
-						.optional(),
-					exerciseNumber: z.number().nullable().optional(),
-					stepNumber: z.number().nullable().optional(),
-				})
-				.nullable()
-				.optional(),
-		})
-		.nullable()
-		.optional(),
-})
+import { UserSchema } from './presence.js'
 
 type User = z.infer<typeof UserSchema>
 const ConnectionStateSchema = z

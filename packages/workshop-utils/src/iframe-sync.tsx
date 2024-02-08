@@ -10,7 +10,7 @@ rather than just using those things directly.
 To reduce the annoyance, we'll have the host applications have a file like this:
 
 // Ignore this file please
-import { KCDShopIFrameSync } from '@kentcdodds/workshop-app/iframe-sync'
+import { KCDShopIFrameSync } from '@kentcdodds/workshop-utils/iframe-sync'
 import { useNavigate } from '@remix-run/react'
 import * as React from 'react'
 

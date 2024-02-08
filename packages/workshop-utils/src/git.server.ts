@@ -1,6 +1,7 @@
 import { execa, execaCommand } from 'execa'
-import { getWorkshopRoot } from './apps.server.ts'
-import { checkConnection, getErrorMessage, getPkgProp } from './utils.ts'
+import { getWorkshopRoot } from './apps.server.js'
+import { getErrorMessage } from './utils.js'
+import { checkConnection, getPkgProp } from './utils.server.js'
 
 const cwd = getWorkshopRoot()
 

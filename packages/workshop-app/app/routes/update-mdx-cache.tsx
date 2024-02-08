@@ -1,12 +1,12 @@
 import fs from 'node:fs'
+import { setModifiedTimesForDir } from '@kentcdodds/workshop-utils/apps.server'
+import { type EmbeddedFile } from '@kentcdodds/workshop-utils/codefile-mdx.server'
 import { type ActionFunctionArgs, json } from '@remix-run/node'
 import { useFetcher } from '@remix-run/react'
 import { clsx } from 'clsx'
 import { z } from 'zod'
 import { showProgressBarField } from '#app/components/progress-bar.tsx'
-import { setModifiedTimesForDir } from '#app/utils/apps.server.ts'
 import { ensureUndeployed } from '#app/utils/misc.tsx'
-import { type EmbeddedFile } from '../../utils/codefile-mdx.server.ts'
 
 const cacheSchema = z.object({
 	cacheLocation: z.string(),

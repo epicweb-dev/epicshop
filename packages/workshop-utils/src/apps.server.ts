@@ -1,11 +1,7 @@
 import fs from 'fs'
 import path from 'path'
+import { type CacheEntry } from '@epic-web/cachified'
 import { remember } from '@epic-web/remember'
-import {
-	getServerTimeHeader,
-	type Timings,
-} from '@kentcdodds/workshop-utils/timing.server'
-import { type CacheEntry } from 'cachified'
 import { execa } from 'execa'
 import fsExtra from 'fs-extra'
 import { glob } from 'glob'
@@ -18,16 +14,18 @@ import {
 	playgroundAppCache,
 	problemAppCache,
 	solutionAppCache,
-} from './cache.server.ts'
-import { getOptionalWatcher, getWatcher } from './change-tracker.ts'
-import { compileMdx } from './compile-mdx.server.ts'
+} from './cache.server.js'
+import { getOptionalWatcher, getWatcher } from './change-tracker.server.js'
+import { compileMdx } from './compile-mdx.server.js'
 import {
 	closeProcess,
 	isAppRunning,
 	runAppDev,
 	waitOnApp,
-} from './process-manager.server.ts'
-import { getErrorMessage, getPkgProp } from './utils.ts'
+} from './process-manager.server.js'
+import { getServerTimeHeader, type Timings } from './timing.server.js'
+import { getErrorMessage } from './utils.js'
+import { getPkgProp } from './utils.server.js'
 
 process.env.NODE_ENV = process.env.NODE_ENV ?? 'development'
 

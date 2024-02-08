@@ -1,5 +1,10 @@
 import { ElementScrollRestoration } from '@epic-web/restore-scroll'
 import {
+	getExercises,
+	getWorkshopInstructions,
+	getWorkshopTitle,
+} from '@kentcdodds/workshop-utils/apps.server'
+import {
 	combineServerTimings,
 	getServerTimeHeader,
 	makeTimings,
@@ -16,11 +21,6 @@ import slugify from '@sindresorhus/slugify'
 import { EpicVideoInfoProvider } from '#app/components/epic-video.tsx'
 import { GeneralErrorBoundary } from '#app/components/error-boundary.tsx'
 import { EditFileOnGitHub } from '#app/routes/launch-editor.tsx'
-import {
-	getExercises,
-	getWorkshopInstructions,
-	getWorkshopTitle,
-} from '#app/utils/apps.server.ts'
 import { getEpicVideoInfos } from '#app/utils/epic-api.ts'
 import { Mdx } from '#app/utils/mdx.tsx'
 import { cn } from '#app/utils/misc.tsx'

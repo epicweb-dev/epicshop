@@ -1,0 +1,63 @@
+{
+  "name": "@kentcdodds/workshop-presence",
+  "version": "0.0.0",
+  "private": true,
+  "scripts": {
+    "build": "tshy",
+    "dev": "partykit dev",
+    "deploy": "partykit deploy"
+  },
+  "dependencies": {
+    "@kentcdodds/workshop-utils": "file:../workshop-utils",
+    "zod": "^3.22.4"
+  },
+  "devDependencies": {
+    "partykit": "0.0.37",
+    "typescript": "^5.2.2",
+    "tshy": "^1.11.0"
+  },
+  "files": [
+    "dist"
+  ],
+  "tshy": {
+    "project": "./tsconfig.build.json",
+    "dialects": [
+      "esm"
+    ],
+    "exports": {
+      "./package.json": "./package.json",
+      "./presence.server": "./src/presence.server.ts",
+      "./presence": "./src/presence.ts"
+    }
+  },
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/epicweb-dev/kcdshop.git",
+    "directory": "packages/presence"
+  },
+  "nx": {
+    "targets": {
+      "nx-release-publish": {
+        "options": {
+          "packageRoot": "publish/{projectRoot}"
+        }
+      }
+    }
+  },
+  "exports": {
+    "./package.json": "./package.json",
+    "./presence.server": {
+      "import": {
+        "types": "./dist/esm/presence.server.d.ts",
+        "default": "./dist/esm/presence.server.js"
+      }
+    },
+    "./presence": {
+      "import": {
+        "types": "./dist/esm/presence.d.ts",
+        "default": "./dist/esm/presence.js"
+      }
+    }
+  },
+  "type": "module"
+}

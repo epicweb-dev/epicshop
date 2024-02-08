@@ -1,8 +1,8 @@
 import fs from 'fs'
 import path from 'path'
+import { cachified, type CacheEntry } from '@epic-web/cachified'
 import { remember } from '@epic-web/remember'
 import { remarkCodeBlocksShiki } from '@kentcdodds/md-temp'
-import { cachified, type CacheEntry } from 'cachified'
 import fsExtra from 'fs-extra'
 import { type Element, type Root as HastRoot } from 'hast'
 import md5 from 'md5-hex'
@@ -18,12 +18,12 @@ import {
 	compiledMarkdownCache,
 	embeddedFilesCache,
 	shouldForceFresh,
-} from './cache.server.ts'
+} from './cache.server.js'
 import {
 	remarkCodeFile,
 	type CodeFileData,
 	type EmbeddedFile,
-} from './codefile-mdx.server.ts'
+} from './codefile-mdx.server.js'
 // @ts-ignore - remark-emoji don't have an exports from ESM types
 
 const cacheDir = path.join(

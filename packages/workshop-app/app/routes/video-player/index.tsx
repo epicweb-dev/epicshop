@@ -1,3 +1,7 @@
+import {
+	PlayerPreferencesSchema,
+	setPlayerPreferences,
+} from '@kentcdodds/workshop-utils/db.server'
 import RealMuxPlayer, {
 	type MuxPlayerRefAttributes,
 } from '@mux/mux-player-react'
@@ -6,10 +10,6 @@ import { useFetcher, useRouteLoaderData } from '@remix-run/react'
 import * as React from 'react'
 import { z } from 'zod'
 import { type loader as rootLoader } from '#app/root.tsx'
-import {
-	PlayerPreferencesSchema,
-	setPlayerPreferences,
-} from '#app/utils/db.server.ts'
 import './mux-player.css'
 import { useDebounce } from '#app/utils/misc.tsx'
 

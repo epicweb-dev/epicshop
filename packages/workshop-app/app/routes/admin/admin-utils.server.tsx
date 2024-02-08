@@ -1,9 +1,9 @@
 import inspector from 'node:inspector'
 import path from 'node:path'
+import { getWorkshopRoot } from '@kentcdodds/workshop-utils/apps.server'
+import { deleteCache } from '@kentcdodds/workshop-utils/cache.server'
+import { deleteDb } from '@kentcdodds/workshop-utils/db.server'
 import fsExtra from 'fs-extra'
-import { deleteDb } from '#app/utils/db.server.ts'
-import { getWorkshopRoot } from '#utils/apps.server.ts'
-import { deleteCache } from '#utils/cache.server.ts'
 export { inspector }
 
 export async function clearData() {
