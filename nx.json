@@ -21,7 +21,11 @@
     "defaultBase": "main"
   },
   "release": {
-    "projects": ["@kentcdodds/workshop-app", "@kentcdodds/workshop-utils"],
+    "projects": [
+      "@kentcdodds/workshop-app",
+      "@kentcdodds/workshop-utils",
+      "@kentcdodds/workshop-presence"
+    ],
     "version": {
       "conventionalCommits": true,
       "generatorOptions": {
