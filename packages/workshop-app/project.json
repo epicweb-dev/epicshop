@@ -6,12 +6,7 @@
       "options": {
         "parallel": true,
         "cwd": "packages/workshop-app",
-        "commands": [
-          "npm run build:remix",
-          "npm run build:server",
-          "npm run build:utils",
-          "npm run build:decs"
-        ]
+        "commands": ["npm run build:remix", "npm run build:server"]
       }
     }
   }
