@@ -10,53 +10,22 @@
   },
   "files": [
     "bin",
-    "start.js",
     "build",
-    "public"
+    "dist",
+    "start.js"
   ],
   "type": "module",
   "imports": {
     "#*": "./*"
   },
   "exports": {
-    "./apps.server": {
-      "types": "./build/utils/apps.server.d.ts",
-      "default": "./build/utils/apps.server.js"
-    },
-    "./compile-mdx.server": {
-      "default": "./build/utils/compile-mdx.server.js"
-    },
-    "./change-tracker": {
-      "types": "./build/utils/change-tracker.d.ts",
-      "default": "./build/utils/change-tracker.js"
-    },
-    "./git.server": {
-      "types": "./build/utils/git.server.d.ts",
-      "default": "./build/utils/git.server.js"
-    },
-    "./iframe-sync": {
-      "types": "./build/utils/iframe-sync.d.ts",
-      "default": "./build/utils/iframe-sync.js"
-    },
-    "./playwright": {
-      "types": "./build/utils/playwright.server.d.ts",
-      "default": "./build/utils/playwright.server.js"
-    },
-    "./process-manager.server": {
-      "types": "./build/utils/process-manager.server.d.ts",
-      "default": "./build/utils/process-manager.server.js"
-    },
-    "./test": {
-      "types": "./build/utils/test.d.ts",
-      "default": "./build/utils/test.js"
-    },
     "./start": {
       "default": "./start.js"
     }
   },
   "scripts": {
     "build": "run-p --print-label --print-name build:*",
-    "build:remix": "remix build --sourcemap",
+    "build:remix": "remix vite:build --sourcemapClient",
     "build:server": "tsx ./other/build-dir.ts server",
     "dev": "cross-env NODE_ENV=development FORCE_COLOR=true run-p --print-label --print-name dev:*",
     "dev:remix": "remix dev -c \"node ./server/dev-server.js\" --manual",
@@ -75,7 +44,7 @@
     "@epic-web/invariant": "^1.0.0",
     "@epic-web/remember": "^1.0.2",
     "@epic-web/restore-scroll": "^1.0.1",
-    "@kentcdodds/md-temp": "^6.0.0",
+    "@kentcdodds/md-temp": "^6.0.1",
     "@kentcdodds/workshop-presence": "file:../workshop-presence",
     "@kentcdodds/workshop-utils": "file:../workshop-utils",
     "@mdx-js/mdx": "^3.0.0",
@@ -88,10 +57,10 @@
     "@radix-ui/react-tabs": "^1.0.4",
     "@radix-ui/react-toast": "^1.1.5",
     "@radix-ui/react-tooltip": "^1.0.7",
-    "@remix-run/css-bundle": "^2.3.0",
-    "@remix-run/express": "^2.3.0",
-    "@remix-run/node": "^2.3.0",
-    "@remix-run/react": "^2.3.0",
+    "@remix-run/css-bundle": "^2.6.0",
+    "@remix-run/express": "^2.6.0",
+    "@remix-run/node": "^2.6.0",
+    "@remix-run/react": "^2.6.0",
     "@sindresorhus/slugify": "^2.2.1",
     "@types/chai": "^4.3.10",
     "@types/chai-dom": "^1.11.3",
@@ -152,8 +121,8 @@
   },
   "devDependencies": {
     "@playwright/test": "^1.40.0",
-    "@remix-run/dev": "^2.3.0",
-    "@remix-run/eslint-config": "^2.3.0",
+    "@remix-run/dev": "^2.6.0",
+    "@remix-run/eslint-config": "^2.6.0",
     "@tailwindcss/typography": "^0.5.10",
     "@testing-library/dom": "^9.3.3",
     "@total-typescript/ts-reset": "^0.5.1",
@@ -180,7 +149,6 @@
     "eslint-config-prettier": "^9.0.0",
     "mdast-util-mdx-jsx": "^3.0.0",
     "npm-run-all": "^4.1.5",
-    "nx": "^17.1.3",
     "prettier": "^3.1.0",
     "prettier-plugin-tailwindcss": "^0.5.7",
     "tailwind-scrollbar": "^3.0.5",
@@ -188,7 +156,8 @@
     "tailwindcss-animate": "^1.0.7",
     "tailwindcss-safe-area": "^0.4.1",
     "tsx": "^4.7.0",
-    "typescript": "^5.2.2"
+    "typescript": "^5.2.2",
+    "vite": "^5.1.0"
   },
   "engines": {
     "node": ">=18"

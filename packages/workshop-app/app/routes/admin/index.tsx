@@ -22,7 +22,12 @@ import {
 	useEpicProgress,
 } from '#app/routes/progress.tsx'
 import { ensureUndeployed } from '#app/utils/misc.tsx'
-import { clearCaches, clearData } from './admin-utils.server.tsx'
+import {
+	clearCaches,
+	clearData,
+	startInspector,
+	stopInspector,
+} from './admin-utils.server.tsx'
 
 declare global {
 	var __inspector_open__: boolean | undefined
@@ -93,26 +98,12 @@ export async function action({ request }: ActionFunctionArgs) {
 			return json({ success: true })
 		}
 		case 'inspect': {
-			const { inspector } = await import('./admin-utils.server.tsx')
-			if (!global.__inspector_open__) {
-				global.__inspector_open__ = true
-				inspector.open()
-				return json({ success: true })
-			} else {
-				console.info(`Inspector already running.`)
-				return json({ success: true })
-			}
+			await startInspector()
+			return json({ success: true })
 		}
 		case 'stop-inspect': {
-			const { inspector } = await import('./admin-utils.server.tsx')
-			if (global.__inspector_open__) {
-				global.__inspector_open__ = false
-				inspector.close()
-				return json({ success: true })
-			} else {
-				console.info(`Inspector already stopped.`)
-				return json({ success: true })
-			}
+			await stopInspector()
+			return json({ success: true })
 		}
 		default: {
 			throw new Error(`Unknown intent: ${intent}`)

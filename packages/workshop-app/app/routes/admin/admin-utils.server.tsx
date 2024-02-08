@@ -4,7 +4,6 @@ import { getWorkshopRoot } from '@kentcdodds/workshop-utils/apps.server'
 import { deleteCache } from '@kentcdodds/workshop-utils/cache.server'
 import { deleteDb } from '@kentcdodds/workshop-utils/db.server'
 import fsExtra from 'fs-extra'
-export { inspector }
 
 export async function clearData() {
 	await clearCaches()
@@ -16,4 +15,22 @@ export async function clearCaches() {
 	const workshopRoot = getWorkshopRoot()
 	await fsExtra.remove(path.join(workshopRoot, 'node_modules', '.cache'))
 	await deleteCache()
+}
+
+export async function startInspector() {
+	if (!global.__inspector_open__) {
+		global.__inspector_open__ = true
+		inspector.open()
+	} else {
+		console.info(`Inspector already running.`)
+	}
+}
+
+export async function stopInspector() {
+	if (global.__inspector_open__) {
+		global.__inspector_open__ = false
+		inspector.close()
+	} else {
+		console.info(`Inspector already stopped.`)
+	}
 }

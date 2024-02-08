@@ -4,7 +4,8 @@ if (process.env.NODE_ENV === 'production') {
 	await import('./start.js')
 } else {
 	const command =
-		'tsx watch --clear-screen=false --ignore "app/**" --ignore "build/**" --ignore "node_modules/**" --inspect ./start.js'
+		// 'tsx watch --clear-screen=false --ignore "app/**" --ignore "build/**" --ignore "node_modules/**" --inspect ./start.js'
+		'tsx --inspect ./start.js'
 	execa(command, {
 		stdio: ['ignore', 'inherit', 'inherit'],
 		shell: true,

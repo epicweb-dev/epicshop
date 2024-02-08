@@ -18,7 +18,6 @@ import {
 } from '@remix-run/node'
 import {
 	Links,
-	LiveReload,
 	Meta,
 	Outlet,
 	Scripts,
@@ -34,8 +33,8 @@ import { EpicToaster } from './components/toaster.tsx'
 import { TooltipProvider } from './components/ui/tooltip.tsx'
 import { useTheme } from './routes/theme/index.tsx'
 import { getTheme } from './routes/theme/theme-session.server.ts'
-import appStylesheetUrl from './styles/app.css'
-import tailwindStylesheetUrl from './styles/tailwind.css'
+import appStylesheetUrl from './styles/app.css?url'
+import tailwindStylesheetUrl from './styles/tailwind.css?url'
 import { ClientHintCheck, getHints } from './utils/client-hints.tsx'
 import { getConfetti } from './utils/confetti.server.ts'
 import { getEnv } from './utils/env.server.ts'
@@ -157,7 +156,6 @@ function Document({
 				{children}
 				<ScrollRestoration />
 				<Scripts />
-				{ENV.KCDSHOP_DEPLOYED ? null : <LiveReload />}
 				{ENV.KCDSHOP_DEPLOYED ? null : (
 					<script dangerouslySetInnerHTML={{ __html: getWebsocketJS() }} />
 				)}

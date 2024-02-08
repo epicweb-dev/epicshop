@@ -6,14 +6,14 @@ import { glob } from 'glob'
 
 const dir = process.argv[2]
 
-if (dir !== 'server' && dir !== 'utils') {
-	throw new Error('Invalid directory, must be "server" or "utils"')
+if (dir !== 'server') {
+	throw new Error('Invalid directory, must be "server"')
 }
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url))
 const here = (...s: Array<string>) => path.join(__dirname, ...s)
 const srcDir = here('..', dir)
-const destDir = here('..', `build`, dir)
+const destDir = here('..', `dist`, dir)
 
 const ignore = ['**/tsconfig.json', '**/eslint*', '**/__tests__/**']
 if (dir === 'server') {

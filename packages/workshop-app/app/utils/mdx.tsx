@@ -1,4 +1,3 @@
-import path from 'node:path'
 import { Link, useLoaderData } from '@remix-run/react'
 import { clsx } from 'clsx'
 import { LRUCache } from 'lru-cache'
@@ -13,9 +12,9 @@ import { AnchorOrLink, Heading, cn } from './misc.tsx'
 
 const safePath = (s: string) => s.replace(/\\/g, '/')
 
-function getRelativePath(file: string, separator?: string, type?: string) {
+function getRelativePath(file: string, separator: string, type?: string) {
 	const [, relativePath] = file
-		.replace(/\\|\//g, separator ?? path.sep)
+		.replace(/\\|\//g, separator)
 		.split(`${type === 'playground' ? 'example' : 'exercises'}${separator}`)
 	return relativePath
 }
@@ -37,7 +36,7 @@ function OpenInEditor({
 	'data-buttons': buttons,
 	'data-filename': filename,
 	'data-fullpath': fullPath,
-	'data-sep': separator,
+	'data-sep': separator = '/',
 	'data-start': start,
 	'data-type': type,
 }: DataProps) {
@@ -86,7 +85,9 @@ function OpenInEditor({
 					return null
 				}
 
-				const file = path.join(safePath(app.fullPath), safePath(filename))
+				const file = [safePath(app.fullPath), safePath(filename)].join(
+					separator,
+				)
 				const fixedTitle = getRelativePath(file, separator, type)
 				return (
 					<LaunchEditor key={type} file={file} line={Number(start ?? 1)}>

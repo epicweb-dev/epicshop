@@ -10,14 +10,9 @@ import { getWatcher } from '@kentcdodds/workshop-utils/change-tracker.server'
 import { isEmbeddedFile } from '@kentcdodds/workshop-utils/compile-mdx.server'
 import { checkForUpdates } from '@kentcdodds/workshop-utils/git.server'
 import { createRequestHandler } from '@remix-run/express'
-import {
-	type ServerBuild,
-	broadcastDevReady,
-	installGlobals,
-} from '@remix-run/node'
+import { installGlobals } from '@remix-run/node'
 import { ip as ipAddress } from 'address'
 import chalk from 'chalk'
-import chokidar from 'chokidar'
 import closeWithGrace from 'close-with-grace'
 import compression from 'compression'
 import express from 'express'
@@ -26,17 +21,18 @@ import morgan from 'morgan'
 import sourceMapSupport from 'source-map-support'
 import { WebSocket, WebSocketServer } from 'ws'
 
-// @ts-ignore - this file may not exist if you haven't built yet, but it will
-// definitely exist by the time the dev or prod server actually runs.
-import * as remixBuild from '../build/index.js'
-
-const BUILD_PATH = '../build/index.js'
-
 installGlobals()
 sourceMapSupport.install()
 
-const build = remixBuild as unknown as ServerBuild
-let devBuild = build
+const viteDevServer =
+	process.env.NODE_ENV === 'production'
+		? null
+		: await import('vite').then(vite =>
+				vite.createServer({
+					server: { middlewareMode: true },
+				}),
+			)
+
 const isProd = process.env.NODE_ENV === 'production'
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url))
@@ -44,7 +40,7 @@ const isPublished = !fs.existsSync(path.join(__dirname, '..', 'app'))
 const isDeployed =
 	process.env.KCDSHOP_DEPLOYED === 'true' ||
 	process.env.KCDSHOP_DEPLOYED === '1'
-const isRunningInBuildDir = path.dirname(__dirname).endsWith('build')
+const isRunningInBuildDir = path.dirname(__dirname).endsWith('dist')
 const kcdshopAppRootDir = isRunningInBuildDir
 	? path.join(__dirname, '..', '..')
 	: path.join(__dirname, '..')
@@ -64,28 +60,23 @@ app.use(compression())
 // http://expressjs.com/en/advanced/best-practice-security.html#at-a-minimum-disable-x-powered-by-header
 app.disable('x-powered-by')
 
-// Remix fingerprints its assets so we can cache forever.
-app.use(
-	'/build',
-	express.static(path.join(kcdshopAppRootDir, 'public/build'), {
-		immutable: true,
-		maxAge: '1y',
-	}),
-)
+if (viteDevServer) {
+	app.use(viteDevServer.middlewares)
+} else {
+	// Everything else (like favicon.ico) is cached for an hour. You may want to be
+	// more aggressive with this caching.
+	app.use(
+		express.static(path.join(kcdshopAppRootDir, 'build/client'), {
+			maxAge: isProd ? '1h' : 0,
+		}),
+	)
 
-// Everything else (like favicon.ico) is cached for an hour. You may want to be
-// more aggressive with this caching.
-app.use(
-	express.static(path.join(kcdshopAppRootDir, 'public'), {
-		maxAge: isProd ? '1h' : 0,
-	}),
-)
-
-app.use(
-	express.static(path.join(workshopRoot, 'public'), {
-		maxAge: isProd ? '1h' : 0,
-	}),
-)
+	app.use(
+		express.static(path.join(workshopRoot, 'public'), {
+			maxAge: isProd ? '1h' : 0,
+		}),
+	)
+}
 
 if ((process.env.NODE_ENV !== 'production' && !isPublished) || isDeployed) {
 	morgan.token('url', (req, res) => decodeURIComponent(req.url ?? ''))
@@ -94,17 +85,12 @@ if ((process.env.NODE_ENV !== 'production' && !isPublished) || isDeployed) {
 
 app.all(
 	'*',
-	process.env.NODE_ENV === 'development'
-		? async (req, res, next) => {
-				return createRequestHandler({
-					build: devBuild,
-					mode: process.env.NODE_ENV,
-				})(req, res, next)
-			}
-		: createRequestHandler({
-				build,
-				mode: process.env.NODE_ENV,
-			}),
+	createRequestHandler({
+		build: viteDevServer
+			? () => viteDevServer.ssrLoadModule('virtual:remix/server-build')
+			: // @ts-ignore (this may or may not be built at this time, but it will be in prod)
+				((await import('#build/server/index.js')) as any),
+	}),
 )
 
 const desiredPort = Number(process.env.PORT || 5639)
@@ -147,10 +133,6 @@ ${chalk.bold('Press Ctrl+C to stop')}
 	`.trim(),
 	)
 
-	if (process.env.NODE_ENV === 'development') {
-		broadcastDevReady(build)
-	}
-
 	const hasUpdates = await hasUpdatesPromise
 	if (hasUpdates.updatesAvailable) {
 		const updateCommand = chalk.blue.bold.bgWhite(' npx kcdshop update ')
@@ -190,19 +172,3 @@ closeWithGrace(() => {
 		}),
 	])
 })
-
-// during dev, we'll keep the build module up to date with the changes
-if (process.env.NODE_ENV === 'development') {
-	async function reloadBuild() {
-		devBuild = await import(`${BUILD_PATH}?update=${Date.now()}`)
-		broadcastDevReady(devBuild)
-	}
-	// watch for changes in build/index.js and build/utils
-	const watchPath =
-		path.join(__dirname, path.dirname(BUILD_PATH)).replace(/\\/g, '/') + '/**.*'
-	const watcher = chokidar.watch(watchPath, {
-		ignored: ['**/**.map'],
-		ignoreInitial: true,
-	})
-	watcher.on('all', reloadBuild)
-}
