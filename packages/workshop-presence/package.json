@@ -1,7 +1,10 @@
 {
   "name": "@kentcdodds/workshop-presence",
-  "version": "0.0.0",
-  "private": true,
+  "version": "0.0.0-semantically-released",
+  "publishConfig": {
+    "access": "public"
+  },
+  "type": "module",
   "scripts": {
     "build": "tshy",
     "dev": "partykit dev",
@@ -58,6 +61,5 @@
         "default": "./dist/esm/presence.js"
       }
     }
-  },
-  "type": "module"
+  }
 }
