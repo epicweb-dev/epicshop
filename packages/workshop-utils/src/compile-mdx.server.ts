@@ -15,6 +15,7 @@ import gfm from 'remark-gfm'
 import { type PluggableList } from 'unified'
 import { visit } from 'unist-util-visit'
 import {
+	type CachedEmbeddedFilesList,
 	compiledMarkdownCache,
 	embeddedFilesCache,
 	shouldForceFresh,
@@ -293,8 +294,6 @@ const modifiedEmbeddedFilesTime = remember(
 	() => new Map<string, number>(),
 )
 
-type CachedEmbeddedFilesList = Record<string, string[]>
-
 const EMBEDDED_FILES_CACHE_KEY = 'embeddedFilesCache'
 
 async function updateEmbeddedFilesCache({
@@ -354,7 +353,7 @@ async function getEmbeddedFilesCache() {
 		key,
 		cache: embeddedFilesCache,
 		ttl: 1000 * 60 * 60 * 24,
-		forceFresh: getForceFresh(await embeddedFilesCache.get(key)),
+		forceFresh: getForceFresh(embeddedFilesCache.get(key)),
 		getFreshValue: async () => {
 			try {
 				const embeddedFilesLocation = path.join(cacheDir, 'embeddedFiles.json')

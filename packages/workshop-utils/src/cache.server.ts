@@ -2,11 +2,9 @@ import os from 'os'
 import path from 'path'
 import * as C from '@epic-web/cachified'
 import {
-	lruCacheAdapter,
 	verboseReporter,
 	type Cache as CachifiedCache,
 	type CacheEntry,
-	type LRUishCache,
 } from '@epic-web/cachified'
 import { remember } from '@epic-web/remember'
 import fsExtra from 'fs-extra'
@@ -33,8 +31,10 @@ export const diffFilesCache = makeSingletonCache<string>('DiffFilesCache')
 export const compiledMarkdownCache = makeSingletonCache<string>(
 	'CompiledMarkdownCache',
 )
-export const embeddedFilesCache =
-	makeSingletonCache<Record<string, string[]>>('EmbeddedFilesCache')
+export type CachedEmbeddedFilesList = Record<string, string[]>
+export const embeddedFilesCache = makeSingletonCache<
+	CachedEmbeddedFilesList | undefined
+>('EmbeddedFilesCache')
 
 const cacheDir = path.join(os.homedir(), '.kcdshop', 'cache')
 
@@ -81,11 +81,25 @@ export async function deleteCache() {
 
 export function makeSingletonCache<CacheEntryType>(name: string) {
 	return remember(name, () => {
-		const cache = new LRUCache<string, CacheEntry<CacheEntryType>>({
+		const lruInstance = new LRUCache<string, CacheEntry<CacheEntryType>>({
 			max: 1000,
-		}) as LRUishCache
-		cache.name = name
-		return lruCacheAdapter(cache)
+		})
+
+		const lru = {
+			name,
+			set: (key, value) => {
+				const ttl = C.totalTtl(value?.metadata)
+				lruInstance.set(key, value, {
+					ttl: ttl === Infinity ? undefined : ttl,
+					start: value?.metadata?.createdTime,
+				})
+				return value
+			},
+			get: key => lruInstance.get(key),
+			delete: key => lruInstance.delete(key),
+		} satisfies C.Cache<CacheEntryType>
+
+		return lru
 	})
 }
 
@@ -101,20 +115,21 @@ export async function cachified<Value>({
 	forceFresh?: boolean | string
 	timingKey?: string
 }): Promise<Value> {
-	return C.cachified({
-		...options,
-		key,
-		forceFresh: await shouldForceFresh({
-			forceFresh: options.forceFresh,
-			request,
+	return C.cachified(
+		{
+			...options,
 			key,
-		}),
-		reporter: C.mergeReporters(
+			forceFresh: await shouldForceFresh({
+				forceFresh: options.forceFresh,
+				request,
+				key,
+			}),
+		},
+		C.mergeReporters(
 			cachifiedTimingReporter(timings),
-			options.reporter,
 			process.env.KCDSHOP_DEBUG_CACHE ? verboseReporter() : undefined,
 		),
-	})
+	)
 }
 
 export async function shouldForceFresh({
