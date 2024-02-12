@@ -31,6 +31,9 @@ const nxJsonPath = path.join(workspaceRoot, 'nx.json')
 const nxJson = await fs.readJSON(nxJsonPath)
 const graph = await createProjectGraphAsync()
 const projects = findMatchingProjects(nxJson.release.projects, graph.nodes)
+const publishDir = path.join(workspaceRoot, 'publish')
+
+await fs.remove(publishDir)
 
 for (const project of projects) {
 	const projectNode = graph.nodes[project]
@@ -39,12 +42,13 @@ for (const project of projects) {
 	}
 
 	const srcPath = path.join(workspaceRoot, projectNode.data.root)
-	const publishPath = path.join(workspaceRoot, 'publish', projectNode.data.root)
+	const publishPath = path.join(publishDir, projectNode.data.root)
 
 	const packageJsonPath = path.join(srcPath, 'package.json')
 	const packageJson = await fs.readJson(packageJsonPath)
 	const filesToCopy = [
 		...(packageJson.files ?? []),
+		'node_modules',
 		'README.md',
 		'package.json',
 	]
@@ -53,8 +57,26 @@ for (const project of projects) {
 		filesToCopy.map(async (file: string) => {
 			const sourcePath = path.join(srcPath, file)
 			const destinationPath = path.join(publishPath, file)
-			await fs.copy(sourcePath, destinationPath)
+			if (await fs.pathExists(sourcePath)) {
+				await fs.copy(sourcePath, destinationPath)
+			}
 		}),
+	)
+
+	const exclude = [
+		`${path.sep}.bin${path.sep}`,
+		`${path.sep}.vite${path.sep}`,
+		`${path.sep}.cache${path.sep}`,
+	]
+
+	await fs.copy(
+		path.join(workspaceRoot, 'node_modules'),
+		path.join(publishPath, 'node_modules'),
+		{
+			overwrite: false,
+			dereference: false,
+			filter: (srcPath: string) => !exclude.some(e => srcPath.includes(e)),
+		},
 	)
 }
 
