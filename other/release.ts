@@ -5,8 +5,6 @@ import { releaseChangelog, releasePublish, releaseVersion } from 'nx/release'
 import path from 'path'
 import { default as yargs } from 'yargs'
 
-process.env.NX_DAEMON = 'false'
-
 const options = await yargs(process.argv)
 	.version(false) // don't use the default meaning of version in yargs
 	.option('version', {
