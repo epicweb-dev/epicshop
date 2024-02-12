@@ -46,12 +46,13 @@ for (const project of projects) {
 
 	const packageJsonPath = path.join(srcPath, 'package.json')
 	const packageJson = await fs.readJson(packageJsonPath)
+	const hasBundleDependencies = packageJson.bundleDependencies?.length > 0
 	const filesToCopy = [
 		...(packageJson.files ?? []),
-		'node_modules',
 		'README.md',
 		'package.json',
-	]
+		hasBundleDependencies ? 'node_modules' : null,
+	].filter(Boolean)
 
 	await Promise.all(
 		filesToCopy.map(async (file: string) => {
@@ -63,21 +64,23 @@ for (const project of projects) {
 		}),
 	)
 
-	const exclude = [
-		`${path.sep}.bin${path.sep}`,
-		`${path.sep}.vite${path.sep}`,
-		`${path.sep}.cache${path.sep}`,
-	]
+	if (hasBundleDependencies) {
+		const exclude = [
+			`${path.sep}.bin${path.sep}`,
+			`${path.sep}.vite${path.sep}`,
+			`${path.sep}.cache${path.sep}`,
+		]
 
-	await fs.copy(
-		path.join(workspaceRoot, 'node_modules'),
-		path.join(publishPath, 'node_modules'),
-		{
-			overwrite: false,
-			dereference: false,
-			filter: (srcPath: string) => !exclude.some(e => srcPath.includes(e)),
-		},
-	)
+		await fs.copy(
+			path.join(workspaceRoot, 'node_modules'),
+			path.join(publishPath, 'node_modules'),
+			{
+				overwrite: false,
+				dereference: false,
+				filter: (srcPath: string) => !exclude.some(e => srcPath.includes(e)),
+			},
+		)
+	}
 }
 
 const { workspaceVersion, projectsVersionData } = await releaseVersion({
