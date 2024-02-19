@@ -9,7 +9,10 @@ const __dirname = path.dirname(__filename)
 const here = (...p: Array<string>) => path.join(__dirname, ...p)
 
 async function makeTshyAliases(moduleName: string, folderName: string) {
-	const pkg = await import(here('..', folderName, 'package.json'))
+	const { default: pkg } = await import(
+		here('..', folderName, 'package.json'),
+		{ assert: { type: 'json' } }
+	)
 
 	return Object.entries(pkg.tshy.exports).reduce(
 		(acc, [key, value]) => {
