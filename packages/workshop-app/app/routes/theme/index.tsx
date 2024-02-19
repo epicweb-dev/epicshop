@@ -69,9 +69,9 @@ export function ThemeSwitch() {
 	const nextMode =
 		mode === 'system' ? 'light' : mode === 'light' ? 'dark' : 'system'
 	const modeLabel = {
-		light: <Icon size={20} name="Sun" title="Light mode" />,
-		dark: <Icon size={20} name="Moon" title="Dark mode" />,
-		system: <Icon size={20} name="Laptop" title="System mode" />,
+		light: <Icon size="md" name="Sun" title="Light mode" />,
+		dark: <Icon size="md" name="Moon" title="Dark mode" />,
+		system: <Icon size="md" name="Laptop" title="System mode" />,
 	}
 
 	return (

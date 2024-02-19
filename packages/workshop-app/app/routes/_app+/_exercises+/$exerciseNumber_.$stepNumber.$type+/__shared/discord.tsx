@@ -50,7 +50,7 @@ function DiscordPosts() {
 							{posts.map(post => (
 								<li
 									key={post.id}
-									className="rounded-xl border border-border bg-background transition-all duration-200 focus-within:-translate-y-1 focus-within:shadow-lg hover:-translate-y-1 hover:shadow-lg"
+									className="rounded-xl border bg-background transition-all duration-200 focus-within:-translate-y-1 focus-within:shadow-lg hover:-translate-y-1 hover:shadow-lg"
 								>
 									<DiscordPost thread={post} />
 								</li>

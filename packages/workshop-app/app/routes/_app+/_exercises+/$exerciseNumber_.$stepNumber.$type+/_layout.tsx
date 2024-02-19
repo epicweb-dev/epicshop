@@ -337,9 +337,14 @@ export const headers: HeadersFunction = ({ loaderHeaders, parentHeaders }) => {
 	return headers
 }
 
-const tabs = ENV.KCDSHOP_DEPLOYED
-	? (['diff', 'chat'] as const)
-	: (['playground', 'problem', 'solution', 'tests', 'diff', 'chat'] as const)
+const tabs = [
+	'playground',
+	'problem',
+	'solution',
+	'tests',
+	'diff',
+	'chat',
+] as const
 const isValidPreview = (s: string | null): s is (typeof tabs)[number] =>
 	Boolean(s && tabs.includes(s as (typeof tabs)[number]))
 
@@ -369,6 +374,19 @@ export default function ExercisePartRoute() {
 	const altDown = useAltDown()
 	const navigate = useNavigate()
 
+	function shouldHideTab(tab: (typeof tabs)[number]) {
+		if (tab === 'tests') {
+			return ENV.KCDSHOP_DEPLOYED || data.playground?.test.type === 'none'
+		}
+		if (tab === 'problem' || tab === 'solution') {
+			if (data[tab]?.dev.type === 'none') return true
+			if (ENV.KCDSHOP_DEPLOYED) {
+				return data[tab]?.dev.type !== 'browser'
+			}
+		}
+		return false
+	}
+
 	// when alt is held down, the diff tab should open to the full-page diff view
 	// between the problem and solution (this is more for the instructor than the student)
 	const altDiffUrl = `/diff?${new URLSearchParams({
@@ -386,7 +404,7 @@ export default function ExercisePartRoute() {
 	return (
 		<div className="flex flex-grow flex-col">
 			<main className="grid h-full flex-grow grid-cols-1 grid-rows-2 lg:grid-cols-2 lg:grid-rows-1">
-				<div className="relative col-span-1 row-span-1 flex h-full flex-col border-border lg:border-r">
+				<div className="relative col-span-1 row-span-1 flex h-full flex-col lg:border-r">
 					<h1 className="h-14 border-b pl-10 pr-5 text-sm font-medium uppercase leading-tight">
 						<div className="flex h-14 flex-wrap items-center justify-between gap-x-2 py-2">
 							<div className="flex items-center justify-start gap-x-2">
@@ -435,7 +453,7 @@ export default function ExercisePartRoute() {
 							className="h-14 border-t px-6"
 						/>
 					) : null}
-					<div className="flex h-16 justify-between border-b-4 border-t border-border lg:border-b-0">
+					<div className="flex h-16 justify-between border-b-4 border-t lg:border-b-0">
 						<div>
 							<div className="h-full">
 								<TouchedFiles />
@@ -474,15 +492,13 @@ export default function ExercisePartRoute() {
 					{/* the scrollbar adds 8 pixels to the bottom of the list which looks
 					funny with the border, especially when most of the time the scrollbar
 					shouldn't show up anyway. So we hide that extra space with -8px margin-bottom */}
-					<Tabs.List className="z-20 mb-[-8px] flex-shrink-0 overflow-x-scroll scrollbar-thin scrollbar-thumb-scrollbar">
+					<Tabs.List className="z-20 mb-[-8px] h-14 flex-shrink-0 overflow-x-scroll border-b scrollbar-thin scrollbar-thumb-scrollbar">
 						{tabs.map(tab => {
 							return (
 								<Tabs.Trigger
 									key={tab}
 									value={tab}
-									hidden={
-										tab === 'tests' && data.playground?.test.type === 'none'
-									}
+									hidden={shouldHideTab(tab)}
 									asChild
 									className={clsx(
 										'clip-path-button relative px-6 py-4 font-mono text-sm uppercase radix-state-active:z-10 radix-state-active:bg-foreground radix-state-active:text-background radix-state-active:hover:bg-foreground/80 radix-state-active:hover:text-background/80 radix-state-inactive:hover:bg-foreground/20 radix-state-inactive:hover:text-foreground/80',
@@ -510,7 +526,7 @@ export default function ExercisePartRoute() {
 							)
 						})}
 					</Tabs.List>
-					<div className="relative z-10 flex flex-grow flex-col overflow-y-auto border-t border-border">
+					<div className="relative z-10 flex flex-grow flex-col overflow-y-auto">
 						<Tabs.Content
 							value="playground"
 							className="flex flex-grow items-center justify-center radix-state-inactive:hidden"

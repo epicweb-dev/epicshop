@@ -54,7 +54,7 @@ export function Diff({
 			>
 				{diff => (
 					<div className="flex h-full w-full flex-col">
-						<div className="h-14 flex-shrink-0 border-b border-border">
+						<div className="h-14 flex-shrink-0 border-b">
 							<Form
 								onChange={e => submit(e.currentTarget)}
 								className="flex h-full w-full items-center overflow-x-auto scrollbar-thin scrollbar-thumb-scrollbar"
@@ -64,7 +64,7 @@ export function Diff({
 								<SelectFileToDiff
 									name="app1"
 									label="App 1"
-									className="border-r border-border"
+									className="border-r"
 									allApps={allApps}
 									defaultValue={diff.app1}
 								/>

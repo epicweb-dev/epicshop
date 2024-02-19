@@ -125,11 +125,11 @@ export default function ExerciseNumberRoute() {
 	const firstStepNumber = String(data.firstStep?.stepNumber ?? '01')
 	const firstStepPath = `${firstStepNumber.padStart(2, '0')}/${data.firstType}`
 	return (
-		<main className="relative flex h-full w-full max-w-5xl flex-col justify-between border-r border-border md:w-3/4 xl:w-2/3">
+		<main className="relative flex h-full w-full max-w-5xl flex-col justify-between border-r md:w-3/4 xl:w-2/3">
 			<article
 				id={data.articleId}
 				key={data.articleId}
-				className="shadow-on-scrollbox flex w-full flex-1 flex-col gap-12 overflow-y-scroll border-border px-3 py-4 pt-6 scrollbar-thin scrollbar-thumb-scrollbar md:px-10 md:py-12 md:pt-16"
+				className="shadow-on-scrollbox flex w-full flex-1 flex-col gap-12 overflow-y-scroll px-3 py-4 pt-6 scrollbar-thin scrollbar-thumb-scrollbar md:px-10 md:py-12 md:pt-16"
 			>
 				<div>
 					<h1 className="text-[clamp(3rem,6vw,8.5rem)] font-extrabold leading-none">
@@ -164,7 +164,7 @@ export default function ExerciseNumberRoute() {
 				exerciseNumber={data.exerciseNumber}
 				className="h-14 border-t px-6"
 			/>
-			<div className="flex h-16 justify-between border-b-4 border-t border-border lg:border-b-0">
+			<div className="flex h-16 justify-between border-b-4 border-t lg:border-b-0">
 				<div />
 				<EditFileOnGitHub
 					file={data.exerciseReadme.file}

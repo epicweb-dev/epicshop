@@ -140,15 +140,15 @@ export function InBrowserTestRunner({
 								ref={iframeRef}
 								title={testFile}
 								src={pathname + testFile}
-								className="mt-5 min-h-[420px] w-full border border-border bg-white"
+								className="mt-5 min-h-[420px] w-full border bg-white"
 							/>
 						</div>
-						<div className="flex border-y border-border">
+						<div className="flex border-y">
 							<button
 								onClick={() =>
 									iframeRef.current?.contentWindow?.location.reload()
 								}
-								className="border-r border-border p-3"
+								className="border-r p-3"
 							>
 								<Icon name="Refresh" aria-label="Rerun Tests" />
 							</button>
@@ -156,7 +156,7 @@ export function InBrowserTestRunner({
 								href={pathname + testFile}
 								target="_blank"
 								rel="noreferrer"
-								className="border-r border-border p-3"
+								className="border-r p-3"
 							>
 								<Icon name="ExternalLink" aria-label="Open in New Window" />
 							</a>

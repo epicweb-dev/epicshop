@@ -1,12 +1,45 @@
+import path from 'path'
+import { fileURLToPath } from 'url'
 import { unstable_vitePlugin as remix } from '@remix-run/dev'
 import { flatRoutes } from 'remix-flat-routes'
 import { defineConfig } from 'vite'
+
+const __filename = fileURLToPath(import.meta.url)
+const __dirname = path.dirname(__filename)
+const here = (...p: Array<string>) => path.join(__dirname, ...p)
+
+async function makeTshyAliases(moduleName: string, folderName: string) {
+	const pkg = await import(here('..', folderName, 'package.json'))
+
+	return Object.entries(pkg.tshy.exports).reduce(
+		(acc, [key, value]) => {
+			if (typeof value !== 'string') return acc
+			const importString = path.join(moduleName, key)
+			acc[importString] = here('..', folderName, value)
+			return acc
+		},
+		{} as Record<string, string>,
+	)
+}
+
+const aliases = {
+	...(await makeTshyAliases('@kentcdodds/workshop-utils', 'workshop-utils')),
+	...(await makeTshyAliases(
+		'@kentcdodds/workshop-presence',
+		'workshop-presence',
+	)),
+}
 
 const MODE = process.env.NODE_ENV
 
 export default defineConfig({
 	optimizeDeps: {
-		exclude: ['fsevents', 'globby'],
+		exclude: [
+			'fsevents',
+			'globby',
+			'@kentcdodds/workshop-utils',
+			'@kentcdodds/workshop-presence',
+		],
 	},
 	build: {
 		cssMinify: MODE === 'production',
@@ -14,6 +47,7 @@ export default defineConfig({
 			external: [/node:.*/, 'stream', 'crypto', 'fsevents', 'globby'],
 		},
 	},
+	resolve: { alias: aliases },
 	plugins: [
 		remix({
 			ignoredRouteFiles: ['**/*'],

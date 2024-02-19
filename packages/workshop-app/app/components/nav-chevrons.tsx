@@ -14,7 +14,7 @@ export function NavChevrons({
 				<Link
 					prefetch="intent"
 					{...prev}
-					className="group flex h-full items-center justify-center border-l border-border px-7"
+					className="group flex h-full items-center justify-center border-l px-7"
 					children={
 						<>
 							<Icon
@@ -33,7 +33,7 @@ export function NavChevrons({
 				<Link
 					prefetch="intent"
 					{...next}
-					className="group flex h-full items-center justify-center border-l border-border px-7"
+					className="group flex h-full items-center justify-center border-l px-7"
 					children={
 						<>
 							<Icon

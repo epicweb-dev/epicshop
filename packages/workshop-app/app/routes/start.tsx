@@ -124,7 +124,7 @@ export function AppStopper({ name }: { name: string }) {
 				type="submit"
 				name="intent"
 				value={altDown ? 'restart' : 'stop'}
-				className="h-full border-r border-border px-3 py-4 font-mono text-xs uppercase leading-none"
+				className="h-full border-r px-3 py-4 font-mono text-xs uppercase leading-none"
 			>
 				{inFlightState ? inFlightState : altDown ? 'Restart App' : 'Stop App'}
 			</button>

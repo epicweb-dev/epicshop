@@ -144,8 +144,8 @@ export default function ExerciseFinished() {
 	return (
 		<div className="flex flex-grow flex-col">
 			<main className="grid h-full flex-grow grid-cols-1 grid-rows-2 lg:grid-cols-2 lg:grid-rows-1">
-				<div className="relative col-span-1 row-span-1 flex h-full flex-col border-border lg:border-r">
-					<h1 className="h-14 border-b border-border pl-10 pr-5 text-sm font-medium uppercase leading-none">
+				<div className="relative col-span-1 row-span-1 flex h-full flex-col lg:border-r">
+					<h1 className="h-14 border-b pl-10 pr-5 text-sm font-medium uppercase leading-none">
 						<div className="flex h-14 flex-wrap items-center justify-between gap-x-2 py-2">
 							<div className="flex items-center justify-start gap-x-2">
 								<Link to={`/${exerciseNumber}`} className="hover:underline">
@@ -183,7 +183,7 @@ export default function ExerciseFinished() {
 						exerciseNumber={data.exercise.exerciseNumber}
 						className="h-14 border-t px-6"
 					/>
-					<div className="flex h-16 justify-between border-b-4 border-t border-border lg:border-b-0">
+					<div className="flex h-16 justify-between border-b-4 border-t lg:border-b-0">
 						<div />
 						{data.exerciseFinished ? (
 							<EditFileOnGitHub

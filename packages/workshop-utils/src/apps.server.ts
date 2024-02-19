@@ -86,10 +86,8 @@ type BaseApp = {
 		| { type: 'none' }
 	dev:
 		| { type: 'browser'; pathname: `/app/${BaseApp['name']}/` }
-		| {
-				type: 'script'
-				portNumber: number
-		  }
+		| { type: 'script'; portNumber: number }
+		| { type: 'none' }
 }
 
 export type BaseExerciseStepApp = BaseApp & {
@@ -527,13 +525,17 @@ async function getDevInfo({
 		: false
 
 	if (hasDevScript) {
-		return {
-			type: 'script',
-			portNumber,
-		}
+		return { type: 'script', portNumber }
 	}
-	const name = getAppName(fullPath)
-	return { type: 'browser', pathname: `/app/${name}/` }
+	const indexFiles = (await fsExtra.readdir(fullPath)).filter((file: string) =>
+		file.startsWith('index.'),
+	)
+	if (indexFiles.length) {
+		const name = getAppName(fullPath)
+		return { type: 'browser', pathname: `/app/${name}/` }
+	} else {
+		return { type: 'none' }
+	}
 }
 
 async function getPlaygroundApp({

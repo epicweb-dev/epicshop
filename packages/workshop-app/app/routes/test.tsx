@@ -242,7 +242,7 @@ export function TestOutput({ name }: { name: string }) {
 
 	return (
 		<div className="relative flex h-full w-full flex-col">
-			<div className="flex h-12 w-full flex-shrink-0 items-center justify-between border-b border-border">
+			<div className="flex h-12 w-full flex-shrink-0 items-center justify-between border-b">
 				<div className="flex h-full items-center">
 					{!isRunning && (
 						<TestRunner
@@ -259,7 +259,7 @@ export function TestOutput({ name }: { name: string }) {
 					)}
 					{isRunning ? (
 						<>
-							<div className="flex h-full flex-grow items-center justify-center border-r border-border px-3.5">
+							<div className="flex h-full flex-grow items-center justify-center border-r px-3.5">
 								<AnimatedBars role="status" aria-label="Running Tests" />
 							</div>
 							<StopTest name={name} />
@@ -332,7 +332,7 @@ export function TestRunner({
 					type="submit"
 					name="intent"
 					value="run"
-					className="flex h-full flex-grow items-center justify-center border-r border-border px-3.5"
+					className="flex h-full flex-grow items-center justify-center border-r px-3.5"
 				>
 					{fetcher.state === 'idle' ? (
 						<Icon name="TriangleSmall" />
@@ -372,7 +372,7 @@ export function ClearTest({
 					type="submit"
 					name="intent"
 					value="clear"
-					className="flex h-full flex-grow items-center justify-center border-l border-border px-3.5"
+					className="flex h-full flex-grow items-center justify-center border-l px-3.5"
 				>
 					{fetcher.state === 'idle' ? (
 						<Icon name="Clear" />
@@ -412,7 +412,7 @@ export function StopTest({
 					type="submit"
 					name="intent"
 					value="stop"
-					className="flex h-full flex-grow items-center justify-center border-r border-border px-3.5"
+					className="flex h-full flex-grow items-center justify-center border-r px-3.5"
 				>
 					{fetcher.state === 'idle' ? (
 						<Icon name="Stop" />

@@ -132,7 +132,7 @@ function getFileCodeblocks(
 			.join(' ')
 
 		const launchEditorClassName =
-			'border border-border hover:bg-foreground/20 rounded px-2 py-0.5 font-mono text-xs font-semibold'
+			'border hover:bg-foreground/20 rounded px-2 py-0.5 font-mono text-xs font-semibold'
 		function launchEditor(appNum: number, line: number) {
 			if (isDeployed) {
 				if (type === 'DeletedFile' && appNum === 2) return ''

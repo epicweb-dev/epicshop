@@ -294,7 +294,7 @@ function EpicWebBanner() {
 			)}
 		>
 			<div className="flex flex-1 flex-wrap items-center gap-4">
-				<Icon name="EpicWeb" size={24} />
+				<Icon name="EpicWeb" size="lg" />
 				<div className="flex flex-1 flex-wrap items-center">
 					<p className="mr-2">
 						Welcome to the{' '}
@@ -336,8 +336,8 @@ function EpicWebBanner() {
 					to={ENV.KCDSHOP_DEPLOYED ? 'https://www.epicweb.dev/login' : '/login'}
 					className="flex h-full items-center justify-center space-x-1.5 bg-white/20 px-5 text-sm font-semibold shadow-md transition hover:bg-white/30"
 				>
-					<Icon name="User" size={24} />
-					<span className="drop-shadow-sm">Restore Purchase</span>
+					<Icon name="User" size="lg" />
+					<span className="drop-shadow-sm">Login</span>
 				</Link>
 			</div>
 		</div>
@@ -362,9 +362,7 @@ function NavigationExerciseListItem({
 			className={cn(
 				// add gap of 3 to children, but using padding so the progress extends through the whole height
 				'py-[6px] first:pt-3 last:pb-3',
-				progressClassName
-					? `${progressClassName} border-border before:border-t`
-					: null,
+				progressClassName ? `${progressClassName} before:border-t` : null,
 			)}
 		>
 			<span className="ml-2">{children}</span>
@@ -385,9 +383,7 @@ function NavigationExerciseStepListItem({
 			className={cn(
 				// add gap of 3 to children, but using padding so the progress extends through the whole height
 				'py-[6px] first:pt-3 last:pb-3',
-				progressClassName
-					? `${progressClassName} border-border before:border-t`
-					: null,
+				progressClassName ? `${progressClassName} before:border-t` : null,
 			)}
 		>
 			<span className="ml-2">{children}</span>
@@ -448,7 +444,7 @@ function Navigation({
 	const exNum = Number(params.exerciseNumber).toString().padStart(2, '0')
 
 	return (
-		<nav className="flex border-r border-border">
+		<nav className="flex border-r">
 			<motion.div
 				initial={isMenuOpened ? 'open' : 'close'}
 				variants={menuVariants}
@@ -643,7 +639,7 @@ function Navigation({
 										className="h-full rounded-full"
 									/>
 								) : (
-									<Icon name="User" className="flex-shrink-0" size={24} />
+									<Icon name="User" className="flex-shrink-0" size="lg" />
 								)}
 								{isMenuOpened ? (
 									<motion.div
@@ -671,7 +667,7 @@ function Navigation({
 								)}
 								state={{ from: 'continue next lesson button' }}
 							>
-								<Icon name="FastForward" className="flex-shrink-0" size={20} />
+								<Icon name="FastForward" className="flex-shrink-0" size="md" />
 								{isMenuOpened ? (
 									<motion.div
 										className="flex items-center whitespace-nowrap"
@@ -719,7 +715,7 @@ function NavToggle({
 	const path02Controls = useAnimationControls()
 
 	return (
-		<div className="relative inline-flex h-14 w-full items-center justify-between overflow-hidden border-b border-border">
+		<div className="relative inline-flex h-14 w-full items-center justify-between overflow-hidden border-b">
 			<button
 				className="flex h-14 w-14 items-center justify-center"
 				aria-label="Open Navigation menu"

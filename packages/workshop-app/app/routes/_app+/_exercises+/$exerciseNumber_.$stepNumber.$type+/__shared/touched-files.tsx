@@ -24,7 +24,7 @@ function TouchedFiles() {
 			<Popover.Root open={open} onOpenChange={setOpen}>
 				<Popover.Trigger asChild>
 					<button
-						className="flex h-full items-center gap-1 border-r border-border px-6 py-3 font-mono text-sm uppercase"
+						className="flex h-full items-center gap-1 border-r px-6 py-3 font-mono text-sm uppercase"
 						aria-label="Relevant Files"
 					>
 						<Icon name="Files" />
@@ -34,7 +34,7 @@ function TouchedFiles() {
 				<Popover.Portal>
 					<Popover.Content
 						ref={contentRef}
-						className="slideRightContent lg:slideUpContent invert-theme z-10 select-none rounded border-border bg-background px-9 py-8 text-foreground"
+						className="slideRightContent lg:slideUpContent invert-theme z-10 select-none rounded bg-background px-9 py-8 text-foreground"
 						align="start"
 						sideOffset={5}
 					>

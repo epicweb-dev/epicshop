@@ -14,17 +14,17 @@ export function PlaygroundWindow({
 }) {
 	const isCorrectApp = playgroundAppName === problemAppName
 	const playgroundLinkedUI = isCorrectApp ? (
-		<Icon size={28} name="Linked" />
+		<Icon size="xl" name="Linked" />
 	) : (
 		<Icon
-			size={28}
+			size="xl"
 			name="Unlinked"
 			className="animate-pulse text-foreground-danger"
 		/>
 	)
 	return (
 		<div className="flex h-full w-full flex-col justify-between">
-			<div className="flex h-14 flex-shrink-0 items-center justify-start gap-2 border-b border-border px-3">
+			<div className="flex h-14 flex-shrink-0 items-center justify-start gap-2 border-b px-3">
 				<div className="display-alt-up flex">
 					{problemAppName ? (
 						<SetPlayground

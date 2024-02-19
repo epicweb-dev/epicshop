@@ -150,7 +150,7 @@ export default function DiffViewer() {
 			<div className="overflow-y-auto">
 				<Diff diff={data.diff} allApps={data.allApps} />
 			</div>
-			<div className="flex h-16 items-center justify-end border-t border-border">
+			<div className="flex h-16 items-center justify-end border-t">
 				<SimpleTooltip content="Reload diff">
 					<Link
 						to={`.?${params}`}

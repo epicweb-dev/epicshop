@@ -41,7 +41,7 @@ export function DiscordCTA({ discordAuthUrl }: { discordAuthUrl: string }) {
 		return (
 			<div className="flex flex-wrap items-center justify-center gap-2 text-xl">
 				<Link to="/login" className="inline-flex items-center gap-2 underline">
-					<Icon name="Discord" size={32} />
+					<Icon name="Discord" size="2xl" />
 					Login
 				</Link>{' '}
 				<span>
@@ -58,7 +58,7 @@ export function DiscordCTA({ discordAuthUrl }: { discordAuthUrl: string }) {
 		return (
 			<div className="flex flex-wrap items-center justify-center gap-2 text-xl">
 				<Link to={discordAuthUrl} className="flex items-center gap-2 underline">
-					<Icon name="Discord" size={32} />
+					<Icon name="Discord" size="2xl" />
 					Connect Discord
 				</Link>{' '}
 				<span>
@@ -76,7 +76,7 @@ export function DiscordCTA({ discordAuthUrl }: { discordAuthUrl: string }) {
 		return (
 			<div className="flex items-center justify-center gap-2 text-xl underline">
 				<Link to="discord://discord.com/channels/715220730605731931/1161045224907341972">
-					<Icon name="Discord" size={32} />
+					<Icon name="Discord" size="2xl" />
 				</Link>
 				<Link
 					to="https://discord.com/channels/715220730605731931/1161045224907341972"
@@ -94,7 +94,7 @@ export function DiscordCTA({ discordAuthUrl }: { discordAuthUrl: string }) {
 			to="https://kentcdodds.com/discord"
 			className="flex items-center gap-2 underline"
 		>
-			<Icon name="Discord" size={32} />
+			<Icon name="Discord" size="2xl" />
 			Learn about discord
 		</Link>
 	)

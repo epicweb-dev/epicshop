@@ -91,7 +91,7 @@ export default function Account() {
 					to={data.discordAuthUrl}
 					className="inline-flex items-center gap-2 underline"
 				>
-					<Icon name="Discord" size={24} />
+					<Icon name="Discord" size="lg" />
 					Connect Discord
 				</Link>
 			)}

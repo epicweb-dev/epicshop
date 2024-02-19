@@ -34,6 +34,12 @@ export async function loader({ request, params }: LoaderFunctionArgs) {
 			headers: { 'Server-Timing': getServerTimeHeader(timings) },
 		})
 	}
+	if (app.dev.type !== 'browser') {
+		throw new Response(
+			`App "${appId}" is not a browser app, its dev type is: "${app.dev.type}"`,
+			{ status: 400 },
+		)
+	}
 	const htmlFile = path.join(app.fullPath, 'index.html')
 	const hasHtml = await fsExtra.pathExists(htmlFile)
 	if (hasHtml) {

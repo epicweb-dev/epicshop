@@ -130,7 +130,7 @@ function VideoLink({ url, title }: { url: string; title: string }) {
 			className="flex items-center gap-1 text-base no-underline opacity-70 transition hover:underline hover:opacity-100"
 			rel="noreferrer"
 		>
-			<Icon className="flex-shrink-0" name="Video" size={24} />
+			<Icon className="flex-shrink-0" name="Video" size="lg" />
 			{title} <span aria-hidden>↗︎</span>
 		</a>
 	)
