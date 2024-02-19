@@ -313,7 +313,9 @@ function LinkToApp({
 					domain: requestInfo.domain,
 					port: data.playground.dev.portNumber,
 				})
-			: data.playground?.dev.pathname
+			: data.playground?.dev.type === 'browser'
+				? data.playground?.dev.pathname
+				: null
 	const { inBrowserBrowserRef } = useStepContext()
 	const href = previewAppUrl
 		? previewAppUrl.slice(0, -1) + appTo.toString()

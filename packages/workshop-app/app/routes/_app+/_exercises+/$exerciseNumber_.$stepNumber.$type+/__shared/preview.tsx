@@ -46,7 +46,7 @@ export function Preview({
 				baseUrl={baseUrl}
 			/>
 		)
-	} else {
+	} else if (dev.type === 'browser') {
 		return (
 			<div className="relative h-full flex-grow overflow-y-auto scrollbar-thin scrollbar-thumb-scrollbar">
 				<a
@@ -66,6 +66,12 @@ export function Preview({
 					className="h-full w-full flex-grow bg-white p-3"
 				/>
 			</div>
+		)
+	} else {
+		return (
+			<p>
+				Preview for dev type of <code>{dev.type}</code> not supported.
+			</p>
 		)
 	}
 }
