@@ -29,7 +29,7 @@ jobs:
           useLockFile: false
 
       - name: 🔬 Lint
-        run: npx nx lint
+        run: npm run lint
 
   typecheck:
     name: ʦ TypeScript
@@ -52,7 +52,7 @@ jobs:
         run: npm run build
 
       - name: 🔎 Type check
-        run: npx nx typecheck
+        run: npm run typecheck
 
   build:
     name: 🏗 Build
