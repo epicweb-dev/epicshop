@@ -384,6 +384,7 @@ export default function ExercisePartRoute() {
 				return data[tab]?.dev.type !== 'browser'
 			}
 		}
+		if (tab === 'playground' && ENV.KCDSHOP_DEPLOYED) return true
 		return false
 	}
 
