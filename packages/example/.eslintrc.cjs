@@ -4,9 +4,8 @@
 module.exports = {
 	extends: ['kentcdodds'],
 	parserOptions: {
-		project: require.resolve('./other/tsconfig.json'),
-	},
-	rules: {
-		'@typescript-eslint/no-explicit-any': 'off',
+		project: require.resolve('./scripts/tsconfig.json'),
+		sourceType: 'module',
+		ecmaVersion: 2023,
 	},
 }

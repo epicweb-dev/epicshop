@@ -37,6 +37,6 @@ export function createConfettiHeaders(
 export async function redirectWithConfetti(url: string, init?: ResponseInit) {
 	return redirect(url, {
 		...init,
-		headers: combineHeaders(init?.headers, await createConfettiHeaders()),
+		headers: combineHeaders(init?.headers, createConfettiHeaders()),
 	})
 }

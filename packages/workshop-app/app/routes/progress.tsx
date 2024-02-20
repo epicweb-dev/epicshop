@@ -59,6 +59,7 @@ export function useNextExerciseRoute() {
 		if (a.type === 'instructions') return a.exerciseNumber * 100
 		if (a.type === 'step') return a.exerciseNumber * 100 + a.stepNumber
 		if (a.type === 'finished') return a.exerciseNumber * 100 + 100
+		// eslint-disable-next-line @typescript-eslint/no-unnecessary-condition
 		if (a.type === 'unknown') return 100000
 		return -1
 	}
@@ -77,6 +78,7 @@ export function useNextExerciseRoute() {
 	if (nextProgress.type === 'finished') return `/${ex}/finished`
 
 	const st = nextProgress.stepNumber.toString().padStart(2, '0')
+	// eslint-disable-next-line @typescript-eslint/no-unnecessary-condition
 	if (nextProgress.type === 'step') return `/${ex}/${st}/problem`
 
 	return null
@@ -98,7 +100,7 @@ const percentageClassNames = {
 
 export function useExerciseProgressClassName(exerciseNumber: number) {
 	const progress = useEpicProgress()
-	if (!progress || !progress.length) return null
+	if (!progress?.length) return null
 	const exerciseProgress = progress.filter(
 		p =>
 			(p.type === 'instructions' ||
@@ -162,19 +164,20 @@ export function useProgressItem({
 	type,
 }: ProgressItemSearch) {
 	const progress = useEpicProgress()
-	if (!progress || !progress.length) return null
+	if (!progress?.length) return null
 
 	if (type === 'workshop-finished' || type === 'workshop-instructions') {
-		return progress?.find(p => p.type === type) ?? null
+		return progress.find(p => p.type === type) ?? null
 	} else if (type === 'instructions' || type === 'finished') {
 		return (
-			progress?.find(
+			progress.find(
 				p => p.type === type && p.exerciseNumber === exerciseNumber,
 			) ?? null
 		)
+		// eslint-disable-next-line @typescript-eslint/no-unnecessary-condition
 	} else if (type === 'step') {
 		return (
-			progress?.find(
+			progress.find(
 				p =>
 					p.type === type &&
 					p.exerciseNumber === exerciseNumber &&
@@ -259,13 +262,14 @@ export function ProgressToggle({
 	const buttonRef = React.useRef<HTMLButtonElement>(null)
 
 	const optimisticCompleted = progressFetcher.formData?.has('complete')
-		? progressFetcher.formData?.get('complete') === 'true'
+		? progressFetcher.formData.get('complete') === 'true'
 		: Boolean(progressItem?.epicCompletedAt)
 
 	const [startAnimation, setStartAnimation] = React.useState(false)
 
 	const location = useLocation()
 	const navigation = useNavigation()
+	// eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
 	const navigationLocationStateFrom = navigation.location?.state?.from
 	const navigationLocationPathname = navigation.location?.pathname
 	const locationPathname = location.pathname
@@ -290,7 +294,7 @@ export function ProgressToggle({
 			.getAnimations()
 			.map(({ finished }) => finished)
 
-		Promise.allSettled(animationPromises).then(() => {
+		void Promise.allSettled(animationPromises).then(() => {
 			setStartAnimation(false)
 		})
 	}, [startAnimation])
@@ -302,7 +306,7 @@ export function ProgressToggle({
 			<input
 				type="hidden"
 				name="lessonSlug"
-				value={progressItem?.epicLessonSlug}
+				value={progressItem.epicLessonSlug}
 			/>
 			<input
 				type="hidden"

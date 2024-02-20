@@ -11,11 +11,11 @@ import fsExtra from 'fs-extra'
 import { LRUCache } from 'lru-cache'
 import md5 from 'md5-hex'
 import {
+	type SolutionApp,
 	type App,
-	type ExampleApp,
 	type PlaygroundApp,
 	type ProblemApp,
-	type SolutionApp,
+	type ExampleApp,
 } from './apps.server.js'
 import { cachifiedTimingReporter, type Timings } from './timing.server.js'
 
@@ -43,6 +43,7 @@ export const fsCache: CachifiedCache = {
 	async get(key) {
 		try {
 			const filePath = path.join(cacheDir, md5(key))
+			// eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
 			const data = await fsExtra.readJSON(filePath)
 			return data
 		} catch (error: unknown) {
@@ -88,10 +89,10 @@ export function makeSingletonCache<CacheEntryType>(name: string) {
 		const lru = {
 			name,
 			set: (key, value) => {
-				const ttl = C.totalTtl(value?.metadata)
+				const ttl = C.totalTtl(value.metadata)
 				lruInstance.set(key, value, {
 					ttl: ttl === Infinity ? undefined : ttl,
-					start: value?.metadata?.createdTime,
+					start: value.metadata.createdTime,
 				})
 				return value
 			},
@@ -107,7 +108,9 @@ export async function cachified<Value>({
 	request,
 	timings,
 	key,
-	timingKey = key.length > 18 ? key.slice(0, 7) + '...' + key.slice(-8) : key,
+	// TODO: figure out what this was for before...
+	// eslint-disable-next-line @typescript-eslint/no-unused-vars
+	timingKey = key.length > 18 ? `${key.slice(0, 7)}...${key.slice(-8)}` : key,
 	...options
 }: Omit<C.CachifiedOptions<Value>, 'forceFresh'> & {
 	request?: Request

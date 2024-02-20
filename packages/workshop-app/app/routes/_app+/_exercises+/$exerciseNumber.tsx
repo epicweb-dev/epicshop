@@ -41,6 +41,7 @@ export const meta: MetaFunction<typeof loader, { root: typeof rootLoader }> = ({
 		return [{ title: '📝 | Error' }]
 	}
 	const number = data.exercise.exerciseNumber.toString().padStart(2, '0')
+	// eslint-disable-next-line @typescript-eslint/no-unnecessary-condition
 	const rootData = matches.find(m => m.id === 'root')?.data
 	return [
 		{
@@ -143,7 +144,7 @@ export default function ExerciseNumberRoute() {
 						>
 							<div className="prose dark:prose-invert sm:prose-lg">
 								<Mdx
-									code={data.exercise?.instructionsCode}
+									code={data.exercise.instructionsCode}
 									components={{
 										h1: () => null,
 									}}

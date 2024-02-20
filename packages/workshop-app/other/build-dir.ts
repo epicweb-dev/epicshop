@@ -15,11 +15,13 @@ const here = (...s: Array<string>) => path.join(__dirname, ...s)
 const srcDir = here('..', dir)
 const destDir = here('..', `dist`, dir)
 
-const ignore = ['**/tsconfig.json', '**/eslint*', '**/__tests__/**']
-if (dir === 'server') {
+const ignore = [
+	'**/tsconfig.json',
+	'**/eslint*',
+	'**/__tests__/**',
 	// for development only
-	ignore.push('dev-server.js')
-}
+	'dev-server.js',
+]
 
 const allFiles = glob
 	.sync('**/*.*', { cwd: srcDir, ignore })
@@ -31,7 +33,7 @@ for (const file of allFiles) {
 		entryPoints.push(file.replace(/\\/g, '/'))
 	} else {
 		const dest = file.replace(srcDir, destDir)
-		fsExtra.ensureDir(path.parse(dest).dir)
+		fsExtra.ensureDirSync(path.parse(dest).dir)
 		fsExtra.copySync(file, dest)
 		console.log(`copied: ${file.replace(`${srcDir}${path.sep}`, '')}`)
 	}
@@ -55,7 +57,7 @@ const replaceImportExtension: esbuild.Plugin = {
 			const re2 = /(import\n?\s?\(\n?.*)\.ts(x?["'`]\n?\))/g
 			let contents = source.replace(re1, replacer).replace(re2, '$1.j$2')
 			// import ../build/index.js
-			if (dir === 'server' && /server[\\/]index\.ts/.test(args.path)) {
+			if (/server[\\/]index\.ts/.test(args.path)) {
 				contents = contents.replace(
 					RegExp('../build/index.js', 'g'),
 					'../index.js',

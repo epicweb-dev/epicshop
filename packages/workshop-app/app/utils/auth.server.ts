@@ -17,6 +17,7 @@ export async function registerDevice() {
 		const issuer = await Issuer.discover(ISSUER)
 
 		// 🤷‍♂️
+		// eslint-disable-next-line @typescript-eslint/no-unsafe-call, @typescript-eslint/no-unsafe-member-access
 		const client: Client = await (issuer.Client as any).register({
 			grant_types: [GRANT_TYPE],
 			response_types: [],

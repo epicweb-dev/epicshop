@@ -40,8 +40,7 @@ export async function checkForUpdates() {
 		return { updatesAvailable: false } as const
 	}
 
-	let localCommit
-	let remoteCommit
+	let localCommit, remoteCommit
 	try {
 		const currentBranch = (
 			await execaCommand('git rev-parse --abbrev-ref HEAD', { cwd })
@@ -117,9 +116,8 @@ export async function updateLocalRepo() {
 		const postUpdateScript = await getPkgProp(
 			cwd,
 			'kcd-workshop.scripts.postupdate',
-			null,
 		)
-		if (postUpdateScript) {
+		if (typeof postUpdateScript === 'string') {
 			console.log('🏃 Running post update script...')
 			await execaCommand(postUpdateScript, { cwd, stdio: 'inherit' })
 		}

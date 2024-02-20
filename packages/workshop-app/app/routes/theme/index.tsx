@@ -5,12 +5,12 @@ import { useFetcher, useFetchers } from '@remix-run/react'
 import * as React from 'react'
 import { safeRedirect } from 'remix-utils/safe-redirect'
 import { z } from 'zod'
+import { setTheme } from './theme-session.server.ts'
 import { Icon } from '#app/components/icons.tsx'
 import { SimpleTooltip } from '#app/components/ui/tooltip.tsx'
 import { useHints } from '#app/utils/client-hints.tsx'
 import { ErrorList } from '#app/utils/forms.tsx'
 import { useRequestInfo } from '#app/utils/request-info.ts'
-import { setTheme } from './theme-session.server.ts'
 
 const ROUTE_PATH = '/theme'
 

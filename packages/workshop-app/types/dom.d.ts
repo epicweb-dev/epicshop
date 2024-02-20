@@ -14,7 +14,10 @@ declare global {
 		| {
 				children?:
 					| string
-					| React.ReactElement<any, string | React.JSXElementConstructor<any>>
+					| React.ReactElement<
+							unknown,
+							string | React.JSXElementConstructor<unknown>
+					  >
 				content?: never
 		  }
 	) &

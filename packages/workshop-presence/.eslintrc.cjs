@@ -2,12 +2,12 @@
  * @type {import('@types/eslint').Linter.BaseConfig}
  */
 module.exports = {
-	extends: [
-		'@remix-run/eslint-config',
-		'@remix-run/eslint-config/node',
-		'@remix-run/eslint-config/jest-testing-library',
-		'prettier',
-	],
+	extends: ['kentcdodds'],
+	parserOptions: {
+		project: require.resolve('./tsconfig.json'),
+		sourceType: 'module',
+		ecmaVersion: 2023,
+	},
 	rules: {
 		'react/display-name': 'off',
 		'@typescript-eslint/consistent-type-imports': [

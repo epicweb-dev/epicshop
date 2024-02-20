@@ -4,11 +4,11 @@ import { LRUCache } from 'lru-cache'
 import { type MDXContentProps } from 'mdx-bundler/client'
 import * as mdxBundler from 'mdx-bundler/client/index.js'
 import * as React from 'react'
+import { AnchorOrLink, Heading, cn } from './misc.tsx'
 import { VideoEmbed, DeferredEpicVideo } from '#app/components/epic-video.tsx'
 import { Icon } from '#app/components/icons.tsx'
 import { type loader } from '#app/routes/_app+/_exercises+/$exerciseNumber_.$stepNumber.$type+/_layout.tsx'
 import { LaunchEditor } from '#app/routes/launch-editor.tsx'
-import { AnchorOrLink, Heading, cn } from './misc.tsx'
 
 const safePath = (s: string) => s.replace(/\\/g, '/')
 
@@ -50,9 +50,7 @@ function OpenInEditor({
 		? (['problem', 'solution'] as const)
 		: (['problem', 'solution', 'playground'] as const)
 	const buttonList = buttons.split(',')
-	const apps = validButtons.filter(button =>
-		buttonList.includes(button),
-	) as (typeof validButtons)[number][]
+	const apps = validButtons.filter(button => buttonList.includes(button))
 
 	return (
 		<>
@@ -120,7 +118,7 @@ function CopyButton(): React.ReactNode {
 				const code =
 					button.parentElement?.parentElement?.querySelector('pre')
 						?.textContent || ''
-				navigator.clipboard.writeText(code)
+				void navigator.clipboard.writeText(code)
 			}}
 		>
 			{copied ? 'copied' : 'copy'}
@@ -158,6 +156,7 @@ export function PreWithButtons({ children, ...props }: any) {
 				{...props}
 				className={clsx(
 					'scrollbar-thin scrollbar-thumb-scrollbar',
+					// eslint-disable-next-line @typescript-eslint/no-unsafe-argument, @typescript-eslint/no-unsafe-member-access
 					props.className ?? '',
 				)}
 				{...updateFilename()}
@@ -184,6 +183,7 @@ export const mdxComponents = {
 			{...props}
 			className={clsx(
 				'scrollbar-thin scrollbar-thumb-scrollbar',
+				// eslint-disable-next-line @typescript-eslint/no-unsafe-argument, @typescript-eslint/no-unsafe-member-access
 				props.className ?? '',
 			)}
 		/>
@@ -243,7 +243,6 @@ export function Mdx({
 			components={{
 				Icon,
 				pre: PreWithButtons,
-				// @ts-ignore this is fine 🤷‍♂️
 				Link,
 				...components,
 			}}

@@ -143,20 +143,20 @@ function getArgumentsForLineNumber(
 		case 'subl':
 		case 'sublime':
 		case 'sublime_text':
-			return [fileName + ':' + lineNumber + ':' + colNumber]
+			return [`${fileName}:${lineNumber}:${colNumber}`]
 		case 'wstorm':
 		case 'charm':
-			return [fileName + ':' + lineNumber]
+			return [`${fileName}:${lineNumber}`]
 		case 'notepad++':
-			return ['-n' + lineNumber, '-c' + colNumber, fileName]
+			return [`-n${lineNumber}`, `-c${colNumber}`, fileName]
 		case 'vim':
 		case 'mvim':
 		case 'joe':
 		case 'gvim':
-			return ['+' + lineNumber, fileName]
+			return [`+${lineNumber}`, fileName]
 		case 'emacs':
 		case 'emacsclient':
-			return ['+' + lineNumber + ':' + colNumber, fileName]
+			return [`+${lineNumber}:${colNumber}`, fileName]
 		case 'rmate':
 		case 'mate':
 		case 'mine':
@@ -168,7 +168,7 @@ function getArgumentsForLineNumber(
 		case 'vscodium':
 		case 'VSCodium':
 			return addWorkspaceToArgumentsIfExists(
-				['-g', fileName + ':' + lineNumber + ':' + colNumber],
+				['-g', `${fileName}:${lineNumber}:${colNumber}`],
 				workspace,
 			)
 		case 'appcode':
@@ -200,10 +200,10 @@ function getArgumentsForLineNumber(
 	return [fileName]
 }
 
-function guessEditor() {
+function guessEditor(): Array<string | null> {
 	// Explicit config always wins
 	if (process.env.KCDSHOP_EDITOR) {
-		return shellQuote.parse(process.env.KCDSHOP_EDITOR)
+		return shellQuote.parse(process.env.KCDSHOP_EDITOR).map(a => String(a))
 	}
 
 	// We can find out which editor is currently running by:
@@ -215,8 +215,9 @@ function guessEditor() {
 			const processNames = Object.keys(COMMON_EDITORS_OSX)
 			for (let i = 0; i < processNames.length; i++) {
 				const processName = processNames[i]
-				if (processName && output.indexOf(processName) !== -1) {
+				if (processName && output.includes(processName)) {
 					// @ts-expect-error 🤷‍♂️ it's fine
+					// eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
 					const editor = COMMON_EDITORS_OSX[processName]
 					return [editor]
 				}
@@ -234,7 +235,7 @@ function guessEditor() {
 				const processPath = runningProcesses[i]?.trim()
 				if (!processPath) continue
 				const processName = path.basename(processPath)
-				if (COMMON_EDITORS_WIN.indexOf(processName) !== -1) {
+				if (COMMON_EDITORS_WIN.includes(processName)) {
 					return [processPath]
 				}
 			}
@@ -249,7 +250,7 @@ function guessEditor() {
 			for (let i = 0; i < processNames.length; i++) {
 				const processName = processNames[i]
 				if (!processName) continue
-				if (output.indexOf(processName) !== -1) {
+				if (output.includes(processName)) {
 					// @ts-expect-error 🤷‍♂️ it's fine
 					return [COMMON_EDITORS_LINUX[processName]]
 				}
@@ -291,7 +292,10 @@ export async function launchEditor(
 		colNumber = 1
 	}
 
-	let [editor, ...args] = guessEditor()
+	// eslint-disable-next-line @typescript-eslint/no-unsafe-assignment, prefer-const
+	const editorInfo = guessEditor()
+	const editor = editorInfo[0]
+	let args = editorInfo.slice(1).filter(Boolean)
 
 	if (!editor) {
 		return { status: 'error', message: 'No editor found' }
@@ -369,7 +373,7 @@ export async function launchEditor(
 		} as Result
 	}
 
-	let workspace = null
+	const workspace = null
 	if (lineNumber && fileList.length === 1) {
 		const fileName = fileList[0]
 		if (!fileName) {
@@ -382,7 +386,9 @@ export async function launchEditor(
 				lineNumber,
 				colNumber,
 				workspace,
-			),
+			)
+				.filter(Boolean)
+				.map(String),
 		)
 	} else {
 		const argList = fileList.filter(Boolean)
@@ -399,19 +405,19 @@ export async function launchEditor(
 		_childProcess.kill('SIGKILL')
 	}
 
-	return new Promise((res, rej) => {
+	return new Promise(res => {
 		if (process.platform === 'win32') {
 			// On Windows, launch the editor in a shell because spawn can only
 			// launch .exe files.
 			_childProcess = child_process.spawn(
 				'cmd.exe',
-				['/C', editor].concat(args),
+				['/C', editor].concat(args).filter(Boolean),
 				{ stdio: 'inherit' },
 			)
 		} else {
 			_childProcess = child_process.spawn(editor, args, { stdio: 'inherit' })
 		}
-		_childProcess.on('exit', async function (errorCode) {
+		_childProcess.on('exit', async errorCode => {
 			_childProcess = null
 
 			if (errorCode) {
@@ -430,7 +436,7 @@ export async function launchEditor(
 			}
 		})
 
-		_childProcess.on('error', async function (error) {
+		_childProcess.on('error', async error => {
 			return res({ status: 'error', message: error.message })
 		})
 	})

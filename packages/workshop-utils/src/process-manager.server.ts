@@ -35,10 +35,10 @@ type TestProcessEntry = {
 
 type TestProcessesMap = Map<string, TestProcessEntry>
 declare global {
-	var __process_dev_close_with_grace_return__: ReturnType<typeof closeWithGrace>
-	var __process_test_close_with_grace_return__: ReturnType<
-		typeof closeWithGrace
-	>
+	var __process_dev_close_with_grace_return__: ReturnType<
+			typeof closeWithGrace
+		>,
+		__process_test_close_with_grace_return__: ReturnType<typeof closeWithGrace>
 }
 
 const devProcesses = remember('dev_processes', getDevProcessesMap)
@@ -199,7 +199,7 @@ export async function runAppTests(app: App) {
 		})
 	}
 	testProcess.stderr?.on('data', handleStdErrData)
-	testProcess.on('exit', code => {
+	void testProcess.on('exit', code => {
 		testProcess.stdout?.off('data', handleStdOutData)
 		testProcess.stderr?.off('data', handleStdErrData)
 		// don't delete the entry from the map so we can show the output at any time
@@ -253,7 +253,6 @@ export function isAppRunning(app: { name: string }) {
 	try {
 		const devProcess = devProcesses.get(app.name)
 		if (!devProcess) return false
-		if (devProcess.process === null) return false
 		devProcess.process.kill(0)
 		return true
 	} catch {

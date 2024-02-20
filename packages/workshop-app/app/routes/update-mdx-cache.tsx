@@ -42,15 +42,18 @@ export async function action({ request }: ActionFunctionArgs) {
 	) as any
 
 	const cachedEmbeddedFiles = new Map<string, EmbeddedFile>(
+		// eslint-disable-next-line @typescript-eslint/no-unsafe-argument, @typescript-eslint/no-unsafe-member-access
 		Object.entries(cached?.value?.embeddedFiles ?? {}),
 	)
 
 	if (cachedEmbeddedFiles.has(embeddedKey)) {
 		delete cachedEmbeddedFiles.get(embeddedKey)?.warning
+		// eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
 		cached.value.embeddedFiles = Object.fromEntries(cachedEmbeddedFiles)
 	}
 
 	try {
+		// eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
 		cached.value.warningCancled = true
 		await fs.promises.writeFile(cacheLocation, JSON.stringify(cached))
 	} catch (error) {
@@ -88,7 +91,7 @@ export function UpdateMdxCache({
 				onClick={handleClick}
 				className={clsx(
 					'launch_button',
-					fetcher.state !== 'idle' ? 'cursor-progress' : null,
+					fetcher.state === 'idle' ? null : 'cursor-progress',
 				)}
 			>
 				Cancel Warning

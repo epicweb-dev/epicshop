@@ -37,7 +37,7 @@ app.use(
 // more aggressive with this caching.
 app.use(express.static('public', { maxAge: '1h' }))
 
-morgan.token('url', (req, res) => decodeURIComponent(req.url ?? ''))
+morgan.token('url', req => decodeURIComponent(req.url ?? ''))
 app.use(morgan('tiny'))
 
 app.all(
@@ -79,7 +79,8 @@ const server = app.listen(portToUse, () => {
 	console.log(`🚀  We have liftoff!`)
 	const localUrl = `http://localhost:${portUsed}`
 	let lanUrl: string | null = null
-	const localIp = address.ip()
+	// eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
+	const localIp: string = address.ip()
 	// Check if the address is a private ip
 	// https://en.wikipedia.org/wiki/Private_network#Private_IPv4_address_spaces
 	// https://github.com/facebook/create-react-app/blob/d960b9e38c062584ff6cfb1a70e1512509a966e7/packages/react-dev-utils/WebpackDevServerUtils.js#LL48C9-L54C10
@@ -96,7 +97,7 @@ ${chalk.bold('Press Ctrl+C to stop')}
 	)
 
 	if (process.env.NODE_ENV === 'development') {
-		broadcastDevReady(build)
+		void broadcastDevReady(build)
 	}
 })
 
@@ -108,9 +109,11 @@ closeWithGrace(async () => {
 
 // during dev, we'll keep the build module up to date with the changes
 if (process.env.NODE_ENV === 'development') {
+	// eslint-disable-next-line no-inner-declarations
 	async function reloadBuild() {
+		// eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
 		devBuild = await import(`${BUILD_PATH}?update=${Date.now()}`)
-		broadcastDevReady(devBuild)
+		void broadcastDevReady(devBuild)
 	}
 
 	const dirname = path.dirname(fileURLToPath(import.meta.url))

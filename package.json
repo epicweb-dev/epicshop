@@ -4,16 +4,16 @@
   "type": "module",
   "scripts": {
     "postinstall": "patch-package --patch-dir other/patches",
-    "typecheck": "tsc -b",
-    "lint": "eslint .",
+    "typecheck": "nx typecheck",
+    "lint": "nx lint",
     "build": "nx run-many --target build",
     "prestart": "npm run build -s",
     "go": "cross-env NODE_ENV=development KCDSHOP_CONTEXT_CWD=$PWD/packages/example tsx watch $@",
     "start": "cross-env NODE_ENV=production npm -w example run start",
     "dev": "npm -w example run start",
-    "test": "playwright test",
-    "format": "npm run format --workspaces --if-present",
-    "validate": "npm-run-all --parallel --print-label --print-name --continue-on-error typecheck lint test"
+    "test": "nx test",
+    "format": "nx format:write",
+    "validate": "nx run-many --target build,typecheck,lint,test --parallel"
   },
   "author": "Kent C. Dodds <me@kentcdodds.com> (https://kentcdodds.com/)",
   "license": "GPL-3.0-only",
@@ -24,12 +24,12 @@
   ],
   "dependencies": {
     "@nx/devkit": "^18.0.4",
+    "@nx/eslint": "^18.0.4",
     "@nx/js": "^18.0.4",
     "@playwright/test": "^1.39.0",
     "@types/yargs": "^17.0.32",
     "cross-env": "^7.0.3",
     "dotenv": "^16.3.1",
-    "eslint-config-prettier": "^9.0.0",
     "globby": "^11.1.0",
     "lru-cache": "^10.0.1",
     "npm-run-all": "^4.1.5",
@@ -41,9 +41,14 @@
     "yargs": "^17.7.2"
   },
   "nx": {
-    "includedScripts": ["lint", "typecheck"]
+    "includedScripts": []
   },
   "devDependencies": {
+    "@nrwl/linter": "^18.0.4",
+    "@nx/linter": "^18.0.4",
+    "@nx/playwright": "^18.0.4",
+    "@nx/workspace": "^18.0.4",
+    "eslint-config-kentcdodds": "^21.0.0",
     "verdaccio": "^5.0.4"
   }
 }

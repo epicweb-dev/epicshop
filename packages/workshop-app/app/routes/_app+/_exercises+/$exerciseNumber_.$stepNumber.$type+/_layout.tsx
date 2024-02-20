@@ -42,6 +42,13 @@ import slugify from '@sindresorhus/slugify'
 import { clsx } from 'clsx'
 import * as React from 'react'
 import { useRef } from 'react'
+import { fetchDiscordPosts } from './__shared/discord.server.ts'
+import { DiscordChat } from './__shared/discord.tsx'
+import { Playground } from './__shared/playground.tsx'
+import { Preview } from './__shared/preview.tsx'
+import { StepMdx } from './__shared/step-mdx.tsx'
+import { Tests } from './__shared/tests.tsx'
+import TouchedFiles from './__shared/touched-files.tsx'
 import { Diff } from '#app/components/diff.tsx'
 import { GeneralErrorBoundary } from '#app/components/error-boundary.tsx'
 import { type InBrowserBrowserRef } from '#app/components/in-browser-browser.tsx'
@@ -54,13 +61,6 @@ import { SetAppToPlayground } from '#app/routes/set-playground.tsx'
 import { getDiffCode, getDiffFiles } from '#app/utils/diff.server.ts'
 import { getEpicVideoInfos } from '#app/utils/epic-api.ts'
 import { useAltDown } from '#app/utils/misc.tsx'
-import { fetchDiscordPosts } from './__shared/discord.server.ts'
-import { DiscordChat } from './__shared/discord.tsx'
-import { Playground } from './__shared/playground.tsx'
-import { Preview } from './__shared/preview.tsx'
-import { StepMdx } from './__shared/step-mdx.tsx'
-import { Tests } from './__shared/tests.tsx'
-import TouchedFiles from './__shared/touched-files.tsx'
 
 function pageTitle(
 	data: SerializeFrom<typeof loader> | undefined,
@@ -92,6 +92,7 @@ export const meta: MetaFunction<typeof loader, { root: typeof rootLoader }> = ({
 	data,
 	matches,
 }) => {
+	// eslint-disable-next-line @typescript-eslint/no-unnecessary-condition
 	const rootData = matches.find(m => m.id === 'root')?.data
 	const { emoji, stepNumber, title, exerciseNumber, exerciseTitle } =
 		pageTitle(data)
@@ -186,7 +187,7 @@ export async function loader({ request, params }: LoaderFunctionArgs) {
 	}
 
 	async function getAppRunningState(a: App) {
-		if (a?.dev.type !== 'script') {
+		if (a.dev.type !== 'script') {
 			return { isRunning: false, portIsAvailable: null }
 		}
 		const isRunning = isAppRunning(a)

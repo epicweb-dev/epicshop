@@ -48,8 +48,8 @@ const kcdshopAppRootDir = isRunningInBuildDir
 // kick this off early...
 const hasUpdatesPromise = checkForUpdates()
 // caches all apps
-getApps()
-getPresentUsers()
+void getApps()
+void getPresentUsers()
 
 const workshopRoot = getWorkshopRoot()
 
@@ -79,13 +79,14 @@ if (viteDevServer) {
 }
 
 if ((process.env.NODE_ENV !== 'production' && !isPublished) || isDeployed) {
-	morgan.token('url', (req, res) => decodeURIComponent(req.url ?? ''))
+	morgan.token('url', req => decodeURIComponent(req.url ?? ''))
 	app.use(morgan('tiny'))
 }
 
 app.all(
 	'*',
 	createRequestHandler({
+		// eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
 		build: viteDevServer
 			? () => viteDevServer.ssrLoadModule('virtual:remix/server-build')
 			: // @ts-ignore (this may or may not be built at this time, but it will be in prod)

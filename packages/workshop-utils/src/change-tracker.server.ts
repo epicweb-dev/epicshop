@@ -2,17 +2,17 @@ import chokidar from 'chokidar'
 import closeWithGrace from 'close-with-grace'
 
 declare global {
-	var __change_tracker_watcher__: ReturnType<typeof chokidar.watch> | undefined
-	var __change_tracker_close_with_grace_return__: ReturnType<
-		typeof closeWithGrace
-	>
+	var __change_tracker_watcher__: ReturnType<typeof chokidar.watch> | undefined,
+		__change_tracker_close_with_grace_return__: ReturnType<
+			typeof closeWithGrace
+		>
 }
 
 let watcher = global.__change_tracker_watcher__
 
 export function getWatcher() {
 	if (
-		process.env.KCDSHOP_DEPLOYED ||
+		process.env.KCDSHOP_DEPLOYED ??
 		process.env.KCDSHOP_DISABLE_WATCHER === 'true'
 	) {
 		return null
@@ -37,6 +37,6 @@ export function getOptionalWatcher() {
 }
 
 global.__change_tracker_close_with_grace_return__?.uninstall()
-global.__change_tracker_close_with_grace_return__ = closeWithGrace(
-	() => watcher?.close(),
+global.__change_tracker_close_with_grace_return__ = closeWithGrace(() =>
+	watcher?.close(),
 )

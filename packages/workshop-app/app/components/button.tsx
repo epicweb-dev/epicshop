@@ -72,7 +72,6 @@ export function ButtonLink({
 	Parameters<typeof getButtonClassName>[0]) {
 	return (
 		<div className="clip-path-button-outer w-fit border-2 border-foreground bg-foreground">
-			{/* eslint-disable-next-line jsx-a11y/anchor-has-content */}
 			<Link
 				{...props}
 				className={clsx(props.className, getButtonClassName({ varient }))}

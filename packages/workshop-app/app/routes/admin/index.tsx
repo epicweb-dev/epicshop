@@ -14,6 +14,12 @@ import {
 	json,
 } from '@remix-run/node'
 import { Form, Link, useLoaderData, useNavigation } from '@remix-run/react'
+import {
+	clearCaches,
+	clearData,
+	startInspector,
+	stopInspector,
+} from './admin-utils.server.tsx'
 import { Icon } from '#app/components/icons.tsx'
 import { SimpleTooltip } from '#app/components/ui/tooltip.tsx'
 import { type loader as rootLoader } from '#app/root.tsx'
@@ -22,12 +28,6 @@ import {
 	useEpicProgress,
 } from '#app/routes/progress.tsx'
 import { ensureUndeployed } from '#app/utils/misc.tsx'
-import {
-	clearCaches,
-	clearData,
-	startInspector,
-	stopInspector,
-} from './admin-utils.server.tsx'
 
 declare global {
 	var __inspector_open__: boolean | undefined
@@ -36,6 +36,7 @@ declare global {
 export const meta: MetaFunction<typeof loader, { root: typeof rootLoader }> = ({
 	matches,
 }) => {
+	// eslint-disable-next-line @typescript-eslint/no-unnecessary-condition
 	const rootData = matches.find(m => m.id === 'root')?.data
 	return [{ title: `👷 | ${rootData?.workshopTitle}` }]
 }
@@ -176,7 +177,7 @@ export default function AdminLayout() {
 					<h2 className="text-lg font-bold">Progress</h2>
 					{epicProgress ? (
 						<ul className="flex max-h-72 flex-col gap-2 overflow-y-scroll border-2 p-8 scrollbar-thin scrollbar-thumb-scrollbar">
-							{epicProgress?.sort(sortProgress).map(progress => {
+							{epicProgress.sort(sortProgress).map(progress => {
 								const epicUrl = `https://www.epicweb.dev/workshops/${data.workshopSlug}/${progress.epicSectionSlug}/${progress.epicLessonSlug}`
 								const status = progress.epicCompletedAt
 									? 'completed'

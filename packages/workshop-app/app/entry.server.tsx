@@ -32,7 +32,7 @@ export default function handleRequest(
 			<RemixServer context={remixContext} url={request.url} />,
 			{
 				[callbackName]() {
-					let body = new PassThrough()
+					const body = new PassThrough()
 
 					responseHeaders.set('Content-Type', 'text/html')
 

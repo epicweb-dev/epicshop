@@ -25,7 +25,6 @@ import {
 	type CodeFileData,
 	type EmbeddedFile,
 } from './codefile-mdx.server.js'
-// @ts-ignore - remark-emoji don't have an exports from ESM types
 
 const cacheDir = path.join(
 	process.env.KCDSHOP_CONTEXT_CWD ?? process.cwd(),
@@ -309,6 +308,7 @@ async function updateEmbeddedFilesCache({
 		for (const [key, value] of Object.entries(cachedList)) {
 			cachedList[key] = value.filter(item => item !== mdxFile)
 			if (cachedList[key]?.length === 0) {
+				// eslint-disable-next-line @typescript-eslint/no-dynamic-delete
 				delete cachedList[key]
 			}
 		}
@@ -322,7 +322,7 @@ async function updateEmbeddedFilesCache({
 			new Set(Array.from(embeddedFiles.values()).map(({ file }) => file)),
 		).sort()
 		for (const file of files) {
-			cachedList[file] = [...(cachedList[file] || []), mdxFile]
+			cachedList[file] = [...(cachedList[file] ?? []), mdxFile]
 		}
 	}
 
@@ -399,3 +399,12 @@ async function queuedBundleMDX(...args: Parameters<typeof bundleMDX>) {
 	const result = await queue.add(() => bundleMDX(...args))
 	return result
 }
+
+// TODO: Fix these
+/*
+eslint
+	"@typescript-eslint/no-unsafe-assignment": "off",
+	"@typescript-eslint/no-unsafe-member-access": "off",
+	"@typescript-eslint/no-unnecessary-condition": "off",
+	"@typescript-eslint/no-unsafe-argument": "off",
+*/

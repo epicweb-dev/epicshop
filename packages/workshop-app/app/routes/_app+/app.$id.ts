@@ -66,7 +66,7 @@ export async function loader({ request, params }: LoaderFunctionArgs) {
 			{ status: 400 },
 		)
 	}
-	const appTitle = app?.title ?? 'N/A'
+	const appTitle = app.title
 	const workshopTitle = await getWorkshopTitle()
 	const baseAppTitle = isExerciseStepApp(baseApp)
 		? [

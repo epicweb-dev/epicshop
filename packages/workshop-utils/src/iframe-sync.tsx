@@ -27,63 +27,6 @@ type CustomReactType = {
 	createElement: (type: string, props: any, ...children: Array<any>) => any
 }
 
-export function KCDShopIFrameSync<ReactType extends CustomReactType>({
-	React,
-	navigate,
-}: {
-	React: ReactType
-	navigate: (...args: Array<any>) => void
-}) {
-	// communicate with parent
-	React.useEffect(() => {
-		if (effectSetup) return
-		effectSetup = true
-		if (window.parent === window) return
-
-		// @ts-expect-error - this is fine 🔥
-		window.__kcdshop__?.onHydrated?.()
-
-		const methods = [
-			'pushState',
-			'replaceState',
-			'go',
-			'forward',
-			'back',
-		] as const
-		for (const method of methods) {
-			// @ts-expect-error - this is fine 🔥
-			window.history[method] = new Proxy(window.history[method], {
-				// eslint-disable-next-line no-loop-func
-				apply(target, thisArg, argArray) {
-					window.parent.postMessage(
-						{ type: 'kcdshop:history-call', method, args: argArray },
-						'*',
-					)
-					// @ts-expect-error - this is fine too 🙃
-					return target.apply(thisArg, argArray)
-				},
-			})
-		}
-	}, [])
-
-	// listen for messages from parent
-	React.useEffect(() => {
-		function handleMessage(event: MessageEvent) {
-			const { type, params } = event.data
-			if (type === 'kcdshop:navigate-call') {
-				navigate(...params)
-			}
-		}
-		window.addEventListener('message', handleMessage)
-		return () => window.removeEventListener('message', handleMessage)
-	}, [navigate])
-
-	return React.createElement('script', {
-		type: 'module',
-		dangerouslySetInnerHTML: { __html: iframeSyncScript },
-	})
-}
-
 const iframeSyncScript = /* javascript */ `
 if (window.parent !== window) {
 	window.__kcdshop__ = window.__kcdshop__ || {};
@@ -113,3 +56,63 @@ if (window.parent !== window) {
 	};
 }
 `
+
+export function KCDShopIFrameSync<ReactType extends CustomReactType>({
+	React,
+	navigate,
+}: {
+	React: ReactType
+	navigate: (...args: Array<any>) => void
+}) {
+	// communicate with parent
+	React.useEffect(() => {
+		if (effectSetup) return
+		effectSetup = true
+		if (window.parent === window) return
+
+		// @ts-expect-error - this is fine 🔥
+		// eslint-disable-next-line @typescript-eslint/no-unsafe-call, @typescript-eslint/no-unsafe-member-access
+		window.__kcdshop__?.onHydrated?.()
+
+		const methods = [
+			'pushState',
+			'replaceState',
+			'go',
+			'forward',
+			'back',
+		] as const
+		for (const method of methods) {
+			// @ts-expect-error - this is fine 🔥
+			window.history[method] = new Proxy(window.history[method], {
+				// eslint-disable-next-line no-loop-func
+				apply(target, thisArg, argArray) {
+					window.parent.postMessage(
+						{ type: 'kcdshop:history-call', method, args: argArray },
+						'*',
+					)
+					// @ts-expect-error - this is fine too 🙃
+					return target.apply(thisArg, argArray)
+				},
+			})
+		}
+	}, [])
+
+	// listen for messages from parent
+	React.useEffect(() => {
+		function handleMessage(event: MessageEvent) {
+			// eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
+			const { type, params } = event.data
+			if (type === 'kcdshop:navigate-call') {
+				// eslint-disable-next-line @typescript-eslint/no-unsafe-argument
+				navigate(...params)
+			}
+		}
+		window.addEventListener('message', handleMessage)
+		return () => window.removeEventListener('message', handleMessage)
+	}, [navigate])
+
+	return React.createElement('script', {
+		type: 'module',
+		dangerouslySetInnerHTML: { __html: iframeSyncScript },
+	})
+}

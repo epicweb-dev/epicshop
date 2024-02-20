@@ -3,3 +3,4 @@ build
 public/build
 server-build
 components-build
+dist

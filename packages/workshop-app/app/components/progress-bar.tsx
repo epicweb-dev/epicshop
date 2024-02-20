@@ -33,7 +33,7 @@ function EpicProgress() {
 			.getAnimations()
 			.map(({ finished }) => finished)
 
-		Promise.allSettled(animationPromises).then(() => {
+		void Promise.allSettled(animationPromises).then(() => {
 			if (!delayedPending) setAnimationComplete(true)
 		})
 	}, [delayedPending])
@@ -48,7 +48,7 @@ function EpicProgress() {
 			<div
 				ref={ref}
 				className={cn(
-					'bg-highlight h-full w-0 duration-500 ease-in-out',
+					'h-full w-0 bg-highlight duration-500 ease-in-out',
 					isIdle &&
 						(animationComplete
 							? 'transition-none'

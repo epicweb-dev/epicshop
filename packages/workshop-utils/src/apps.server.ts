@@ -27,7 +27,8 @@ import { getServerTimeHeader, type Timings } from './timing.server.js'
 import { getErrorMessage } from './utils.js'
 import { getPkgProp } from './utils.server.js'
 
-process.env.NODE_ENV = process.env.NODE_ENV ?? 'development'
+// eslint-disable-next-line @typescript-eslint/no-unnecessary-condition
+process.env.NODE_ENV ??= 'development'
 
 const workshopRoot = getWorkshopRoot()
 
@@ -39,108 +40,123 @@ const playgroundAppNameInfoPath = path.join(
 	'playground.json',
 )
 
-type Prettyify<T> = { [K in keyof T]: T[K] } & {}
-
 type CachifiedOptions = { timings?: Timings; request?: Request }
 
-type Exercise = {
-	/** a unique identifier for the exercise */
-	exerciseNumber: number
-	/** used when displaying the list of files to match the list of apps in the file system (comes the name of the directory of the app) */
-	dirName: string
-	/** the title of the app used for display (comes from the first h1 in the README) */
-	title: string
-	instructionsCode?: string
-	finishedCode?: string
-	instructionsEpicVideoEmbeds?: Array<string>
-	finishedEpicVideoEmbeds?: Array<string>
-	steps: Array<
-		{ stepNumber: number } & ( // it'll have both or one, but never neither
-			| { problem: ProblemApp; solution: SolutionApp }
-			| { problem: ProblemApp; solution?: never }
-			| { problem?: never; solution: SolutionApp }
-		)
-	>
-	problems: Array<ProblemApp>
-	solutions: Array<SolutionApp>
-}
-
-type BaseApp = {
+const BaseAppSchema = z.object({
 	/** a unique identifier for the app (comes from the relative path of the app directory (replacing "/" with "__sep__")) */
-	name: string
+	name: z.string(),
 	/** the title of the app used for display (comes from the package.json title prop) */
-	title: string
+	title: z.string(),
 	/** used when displaying the list of files to match the list of apps in the file system (comes the name of the directory of the app) */
-	dirName: string
-	fullPath: string
-	relativePath: string
-	instructionsCode?: string
-	epicVideoEmbeds?: Array<string>
-	test:
-		| {
-				type: 'browser'
-				pathname: `/app/${BaseApp['name']}/test/`
-				testFiles: Array<string>
-		  }
-		| { type: 'script'; script: string }
-		| { type: 'none' }
-	dev:
-		| { type: 'browser'; pathname: `/app/${BaseApp['name']}/` }
-		| { type: 'script'; portNumber: number }
-		| { type: 'none' }
-}
+	dirName: z.string(),
+	fullPath: z.string(),
+	relativePath: z.string(),
+	instructionsCode: z.string().optional(),
+	epicVideoEmbeds: z.array(z.string()).optional(),
+	test: z.union([
+		z.object({
+			type: z.literal('browser'),
+			pathname: z.string(),
+			testFiles: z.array(z.string()),
+		}),
+		z.object({ type: z.literal('script'), script: z.string() }),
+		z.object({ type: z.literal('none') }),
+	]),
+	dev: z.union([
+		z.object({ type: z.literal('browser'), pathname: z.string() }),
+		z.object({ type: z.literal('script'), portNumber: z.number() }),
+		z.object({ type: z.literal('none') }),
+	]),
+})
 
-export type BaseExerciseStepApp = BaseApp & {
-	exerciseNumber: number
-	stepNumber: number
-}
+const BaseExerciseStepAppSchema = BaseAppSchema.extend({
+	exerciseNumber: z.number(),
+	stepNumber: z.number(),
+})
 
-export type ProblemApp = Prettyify<
-	BaseExerciseStepApp & {
-		type: 'problem'
-		solutionName: string | null
-	}
->
+const ProblemAppSchema = BaseExerciseStepAppSchema.extend({
+	type: z.literal('problem'),
+	solutionName: z.string().nullable(),
+})
 
-export type SolutionApp = Prettyify<
-	BaseExerciseStepApp & {
-		type: 'solution'
-		problemName: string | null
-	}
->
+const SolutionAppSchema = BaseExerciseStepAppSchema.extend({
+	type: z.literal('solution'),
+	problemName: z.string().nullable(),
+})
 
-export type ExampleApp = BaseApp & { type: 'example' }
+const ExampleAppSchema = BaseAppSchema.extend({
+	type: z.literal('example'),
+})
 
-export type PlaygroundApp = BaseApp & {
-	type: 'playground'
-	/** the name of the app upon which the playground is based */
-	appName: string
-}
+const PlaygroundAppSchema = BaseAppSchema.extend({
+	type: z.literal('playground'),
+	appName: z.string(),
+})
 
-export type ExerciseStepApp = ProblemApp | SolutionApp
+const ExerciseSchema = z.object({
+	/** a unique identifier for the exercise */
+	exerciseNumber: z.number(),
+	/** used when displaying the list of files to match the list of apps in the file system (comes the name of the directory of the app) */
+	dirName: z.string(),
+	/** the title of the app used for display (comes from the first h1 in the README) */
+	title: z.string(),
+	instructionsCode: z.string().optional(),
+	finishedCode: z.string().optional(),
+	instructionsEpicVideoEmbeds: z.array(z.string()).optional(),
+	finishedEpicVideoEmbeds: z.array(z.string()).optional(),
+	steps: z.array(
+		z.union([
+			z.object({
+				stepNumber: z.number(),
+				problem: ProblemAppSchema,
+				solution: SolutionAppSchema,
+			}),
+			z.object({
+				stepNumber: z.number(),
+				problem: ProblemAppSchema,
+				solution: z.never().optional(),
+			}),
+			z.object({
+				stepNumber: z.number(),
+				problem: z.never().optional(),
+				solution: SolutionAppSchema,
+			}),
+		]),
+	),
+	problems: z.array(ProblemAppSchema),
+	solutions: z.array(SolutionAppSchema),
+})
 
-export type App = PlaygroundApp | ExampleApp | ExerciseStepApp
+const ExerciseStepAppSchema = z.union([ProblemAppSchema, SolutionAppSchema])
+
+const AppSchema = z.union([
+	ExerciseStepAppSchema,
+	PlaygroundAppSchema,
+	ExampleAppSchema,
+])
+
+type BaseApp = z.infer<typeof BaseAppSchema>
+
+export type BaseExerciseStepApp = z.infer<typeof BaseExerciseStepAppSchema>
+export type ProblemApp = z.infer<typeof ProblemAppSchema>
+export type SolutionApp = z.infer<typeof SolutionAppSchema>
+export type ExampleApp = z.infer<typeof ExampleAppSchema>
+export type PlaygroundApp = z.infer<typeof PlaygroundAppSchema>
+export type ExerciseStepApp = z.infer<typeof ExerciseStepAppSchema>
+export type App = z.infer<typeof AppSchema>
+
+type Exercise = z.infer<typeof ExerciseSchema>
 
 export function isApp(app: any): app is App {
-	return (
-		app &&
-		typeof app === 'object' &&
-		typeof app.name === 'string' &&
-		typeof app.title === 'string' &&
-		typeof app.dirName === 'string' &&
-		typeof app.fullPath === 'string' &&
-		typeof app.test === 'object' &&
-		typeof app.dev === 'object' &&
-		typeof app.type === 'string'
-	)
+	return AppSchema.safeParse(app).success
 }
 
 export function isProblemApp(app: any): app is ProblemApp {
-	return isApp(app) && app.type === 'problem'
+	return ProblemAppSchema.safeParse(app).success
 }
 
 export function isSolutionApp(app: any): app is SolutionApp {
-	return isApp(app) && app.type === 'solution'
+	return SolutionAppSchema.safeParse(app).success
 }
 
 export function isFirstStepProblemApp(
@@ -251,7 +267,7 @@ async function compileMdxIfExists(
 function getAppDirInfo(appDir: string) {
 	const regex = /^(?<stepNumber>\d+)\.(problem|solution)(\.(?<subtitle>.*))?$/
 	const match = regex.exec(appDir)
-	if (!match || !match.groups) {
+	if (!match?.groups) {
 		console.info(
 			`Ignoring directory "${appDir}" which does not match regex "${regex}"`,
 		)
@@ -266,7 +282,7 @@ function getAppDirInfo(appDir: string) {
 	}
 
 	const type = match[2] as 'problem' | 'solution'
-	return { stepNumber: stepNumber, type, subtitle }
+	return { stepNumber, type, subtitle }
 }
 
 function extractExerciseNumber(dir: string) {
@@ -301,7 +317,7 @@ export async function getExercises({
 			.filter(isExerciseStepApp)
 			.filter(app => app.exerciseNumber === exerciseNumber)
 		for (const app of exerciseApps) {
-			// @ts-ignore (editor doesn't care, but tsc does 🤷‍♂️)
+			// @ts-expect-error (editor doesn't care, but tsc does 🤷‍♂️)
 			steps[app.stepNumber - 1] = {
 				...steps[app.stepNumber - 1],
 				[app.type]: app,
@@ -345,7 +361,7 @@ export async function getApps({
 		// This entire cache is to avoid a single request getting a fresh value
 		// multiple times unnecessarily (because getApps is called many times)
 		ttl: 1000 * 60 * 60 * 24,
-		forceFresh: forceFresh ?? getForceFresh(await appsCache.get(key)),
+		forceFresh: forceFresh ?? getForceFresh(appsCache.get(key)),
 		getFreshValue: async () => {
 			const playgroundApp = await getPlaygroundApp({ request, timings })
 			const problemApps = await getProblemApps({ request, timings })
@@ -553,10 +569,7 @@ async function getPlaygroundApp({
 		timings,
 		timingKey: playgroundDir.replace(`${playgroundDir}${path.sep}`, ''),
 		request,
-		forceFresh: getForceFreshForDir(
-			playgroundDir,
-			await playgroundAppCache.get(key),
-		),
+		forceFresh: getForceFreshForDir(playgroundDir, playgroundAppCache.get(key)),
 		getFreshValue: async () => {
 			if (!(await exists(playgroundDir))) return null
 			if (!appName) return null
@@ -640,10 +653,7 @@ async function getExampleApps({
 			timings,
 			timingKey: exampleDir.replace(`${examplesDir}${path.sep}`, ''),
 			request,
-			forceFresh: getForceFreshForDir(
-				exampleDir,
-				await exampleAppCache.get(key),
-			),
+			forceFresh: getForceFreshForDir(exampleDir, exampleAppCache.get(key)),
 			getFreshValue: () =>
 				getExampleAppFromPath(exampleDir, index, request).catch(error => {
 					console.error(error)
@@ -723,7 +733,7 @@ async function getSolutionApps({
 
 			forceFresh: getForceFreshForDir(
 				solutionDir,
-				await solutionAppCache.get(solutionDir),
+				solutionAppCache.get(solutionDir),
 			),
 			getFreshValue: () =>
 				getSolutionAppFromPath(solutionDir, request).catch(error => {
@@ -803,7 +813,7 @@ async function getProblemApps({
 
 			forceFresh: getForceFreshForDir(
 				problemDir,
-				await problemAppCache.get(problemDir),
+				problemAppCache.get(problemDir),
 			),
 			getFreshValue: () =>
 				getProblemAppFromPath(problemDir).catch(error => {
@@ -953,6 +963,7 @@ export async function setPlayground(
 		await execa('node', [preSetPlaygroundPath], {
 			cwd: workshopRoot,
 			stdio: 'inherit',
+			// eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
 			env: {
 				KCDSHOP_PLAYGROUND_TIMESTAMP: setPlaygroundTimestamp.toString(),
 				KCDSHOP_PLAYGROUND_DEST_DIR: destDir,
@@ -1045,6 +1056,7 @@ export async function setPlayground(
 		await execa('node', [postSetPlaygroundPath], {
 			cwd: workshopRoot,
 			stdio: 'inherit',
+			// eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
 			env: {
 				KCDSHOP_PLAYGROUND_TIMESTAMP: setPlaygroundTimestamp.toString(),
 				KCDSHOP_PLAYGROUND_SRC_DIR: srcDir,
@@ -1075,6 +1087,7 @@ export async function getPlaygroundAppName() {
 			playgroundAppNameInfoPath,
 			'utf8',
 		)
+		// eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
 		const { appName } = JSON.parse(jsonString) as any
 		if (typeof appName !== 'string') return null
 		return appName

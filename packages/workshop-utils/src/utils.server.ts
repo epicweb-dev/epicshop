@@ -1,6 +1,7 @@
 import { promises as dns } from 'node:dns'
 import fs from 'node:fs'
 import path from 'node:path'
+import { z } from 'zod'
 
 export async function checkConnection() {
 	return dns.resolve('example.com').then(
@@ -9,17 +10,29 @@ export async function checkConnection() {
 	)
 }
 
+const PkgSchema = z.object({}).passthrough()
+
 export async function getPkgProp<Value>(
 	fullPath: string,
 	prop: string,
 	defaultValue?: Value,
 ): Promise<Value> {
-	const pkg = JSON.parse(
-		fs.readFileSync(path.join(fullPath, 'package.json')).toString(),
-	) as any
+	let pkg: z.infer<typeof PkgSchema>
+	try {
+		pkg = PkgSchema.parse(
+			JSON.parse(
+				fs.readFileSync(path.join(fullPath, 'package.json')).toString(),
+			),
+		)
+	} catch (error) {
+		throw new Error(`Could not parse package.json of ${fullPath}`, {
+			cause: error,
+		})
+	}
 	const propPath = prop.split('.')
-	let value = pkg
+	let value: any = pkg
 	for (const p of propPath) {
+		// eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
 		value = value[p]
 		if (value === undefined) break
 	}

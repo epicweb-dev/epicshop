@@ -3,12 +3,12 @@ import { json, redirect } from '@remix-run/node'
 import { useFetcher, useNavigate, useRevalidator } from '@remix-run/react'
 import { useEffect, useState } from 'react'
 import { useEventSource } from 'remix-utils/sse/react'
+import { EventSchema } from '../login-sse.tsx'
 import { Button, ButtonLink } from '#app/components/button.tsx'
 import { Loading } from '#app/components/loading.tsx'
 import { EVENTS } from '#app/utils/auth-events.ts'
 import { registerDevice } from '#app/utils/auth.server.ts'
 import { ensureUndeployed } from '#app/utils/misc.tsx'
-import { EventSchema } from '../login-sse.tsx'
 
 export async function loader() {
 	ensureUndeployed()
@@ -80,7 +80,6 @@ export default function Login() {
 									<code>{userCodeInfo.code}</code>
 								</div>
 							</div>
-							{/* eslint-disable-next-line react/jsx-no-target-blank */}
 							<ButtonLink
 								varient="primary"
 								to={userCodeInfo.url}
@@ -117,7 +116,7 @@ export default function Login() {
 	)
 }
 
-const Logo: React.FC<{ className?: string }> = ({ className = '' }) => {
+function Logo({ className = '' }) {
 	// svg sprites do not support gradients
 	return (
 		<svg

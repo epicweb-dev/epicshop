@@ -1,5 +1,5 @@
 import { waitFor, within } from '@testing-library/dom'
-import userEvent from '@testing-library/user-event'
+import { userEvent } from '@testing-library/user-event'
 import { testStep, expect } from '@kentcdodds/workshop-utils/test'
 import '.'
 

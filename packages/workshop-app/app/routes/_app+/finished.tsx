@@ -19,6 +19,8 @@ import {
 import { Link, useLoaderData } from '@remix-run/react'
 import slugify from '@sindresorhus/slugify'
 import * as React from 'react'
+import { EditFileOnGitHub } from '../launch-editor.tsx'
+import { ProgressToggle } from '../progress.tsx'
 import { EpicVideoInfoProvider } from '#app/components/epic-video.tsx'
 import { Loading } from '#app/components/loading.tsx'
 import { NavChevrons } from '#app/components/nav-chevrons.tsx'
@@ -26,12 +28,11 @@ import { type loader as rootLoader } from '#app/root.tsx'
 import { getEpicVideoInfos } from '#app/utils/epic-api.ts'
 import { Mdx } from '#app/utils/mdx.tsx'
 import { cn } from '#app/utils/misc.tsx'
-import { EditFileOnGitHub } from '../launch-editor.tsx'
-import { ProgressToggle } from '../progress.tsx'
 
 export const meta: MetaFunction<typeof loader, { root: typeof rootLoader }> = ({
 	matches,
 }) => {
+	// eslint-disable-next-line @typescript-eslint/no-unnecessary-condition
 	const rootData = matches.find(m => m.id === 'root')?.data
 	return [{ title: `🎉 ${rootData?.workshopTitle}` }]
 }
@@ -50,7 +51,7 @@ export async function loader({ request }: LoaderFunctionArgs) {
 	return defer(
 		{
 			articleId: `workshop-${slugify(workshopTitle)}-finished`,
-			workshopTitle: workshopTitle,
+			workshopTitle,
 			finishedCode:
 				compiledFinished.compiled.status === 'success'
 					? compiledFinished.compiled.code
@@ -62,6 +63,7 @@ export async function loader({ request }: LoaderFunctionArgs) {
 						})
 					: null,
 			workshopFinished: {
+				status: compiledFinished.compiled.status,
 				file: compiledFinished.file,
 				relativePath: compiledFinished.relativePath,
 			},
@@ -131,7 +133,7 @@ export default function ExerciseFinished() {
 					/>
 					<div className="flex h-16 justify-between border-b-4 border-t lg:border-b-0">
 						<div />
-						{data.workshopFinished ? (
+						{data.workshopFinished.status === 'success' ? (
 							<EditFileOnGitHub
 								file={data.workshopFinished.file}
 								relativePath={data.workshopFinished.relativePath}

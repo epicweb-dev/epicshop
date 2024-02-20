@@ -94,7 +94,8 @@ function getFileCodeblocks(
 			startLine =
 				chunk.type === 'Chunk'
 					? chunk.fromFileRange.start
-					: chunk.type === 'CombinedChunk'
+					: // eslint-disable-next-line @typescript-eslint/no-unnecessary-condition
+						chunk.type === 'CombinedChunk'
 						? chunk.fromFileRangeA.start
 						: 1
 			toStartLine = chunk.toFileRange.start
@@ -115,6 +116,9 @@ function getFileCodeblocks(
 						removedLineNumbers.push(startLine + lineNumber)
 						break
 					}
+					default: {
+						break
+					}
 				}
 			}
 		}
@@ -133,6 +137,7 @@ function getFileCodeblocks(
 
 		const launchEditorClassName =
 			'border hover:bg-foreground/20 rounded px-2 py-0.5 font-mono text-xs font-semibold'
+		// eslint-disable-next-line no-inner-declarations
 		function launchEditor(appNum: number, line: number) {
 			if (isDeployed) {
 				if (type === 'DeletedFile' && appNum === 2) return ''
@@ -208,7 +213,7 @@ async function copyUnignoredFiles(
 	await cachified({
 		key,
 		cache: diffCodeCache,
-		forceFresh: getForceFreshForDir(srcDir, await diffCodeCache.get(key)),
+		forceFresh: getForceFreshForDir(srcDir, diffCodeCache.get(key)),
 		async getFreshValue() {
 			const isIgnored = await isGitIgnored({ cwd: srcDir })
 
@@ -246,14 +251,18 @@ async function prepareForDiff(app1: App, app2: App) {
 	// if everything except the `name` property of the `package.json` is the same
 	// the don't bother copying it
 	const comparePkgJson = (pkg1: any, pkg2: any) => {
+		// eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
 		const { name, ...rest1 } = pkg1
+		// eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
 		const { name: name2, ...rest2 } = pkg2
 		return JSON.stringify(rest1) === JSON.stringify(rest2)
 	}
+	// eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
 	const app1PkgJson =
 		app1.dev.type === 'script'
 			? await fsExtra.readJSON(path.join(app1.fullPath, 'package.json'))
 			: {}
+	// eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
 	const app2PkgJson =
 		app1.dev.type === 'script'
 			? await fsExtra.readJSON(path.join(app2.fullPath, 'package.json'))
@@ -297,7 +306,7 @@ export async function getDiffFiles(
 	}: { forceFresh?: boolean; timings?: Timings; request?: Request } = {},
 ) {
 	const key = `${app1.relativePath}__vs__${app2.relativePath}`
-	const cacheEntry = await diffFilesCache.get(key)
+	const cacheEntry = diffFilesCache.get(key)
 	const result = await cachified({
 		key,
 		cache: diffFilesCache,
@@ -357,6 +366,7 @@ export async function getDiffFilesImpl(app1: App, app2: App) {
 	return parsed.files
 		.map(file => ({
 			// prettier-ignore
+			// eslint-disable-next-line @typescript-eslint/no-unnecessary-condition
 			status: (typesMap[file.type] ?? 'unknown') as 'renamed' | 'modified' | 'deleted' | 'added' | 'unknown',
 			path: diffPathToRelative(
 				file.type === 'RenamedFile' ? file.pathBefore : file.path,
@@ -376,7 +386,7 @@ export async function getDiffCode(
 	}: { forceFresh?: boolean; timings?: Timings; request?: Request } = {},
 ) {
 	const key = `${app1.relativePath}__vs__${app2.relativePath}`
-	const cacheEntry = await diffCodeCache.get(key)
+	const cacheEntry = diffCodeCache.get(key)
 	const result = await cachified({
 		key,
 		cache: diffCodeCache,
@@ -389,7 +399,7 @@ export async function getDiffCode(
 }
 
 async function getDiffCodeImpl(app1: App, app2: App) {
-	let markdownLines = ['']
+	const markdownLines = ['']
 
 	if (app1.name === app2.name) {
 		markdownLines.push(

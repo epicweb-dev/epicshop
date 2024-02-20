@@ -1,19 +1,31 @@
-const requiredServerEnvs = [
-	'NODE_ENV',
-	'KCDSHOP_GITHUB_ROOT',
-	'KCDSHOP_CONTEXT_CWD',
-] as const
+import { z } from 'zod'
+
+const schema = z.object({
+	NODE_ENV: z
+		.enum(['production', 'development', 'test'] as const)
+		.default('development'),
+	KCDSHOP_GITHUB_ROOT: z.string(),
+	KCDSHOP_CONTEXT_CWD: z.string(),
+})
 
 declare global {
+	// eslint-disable-next-line @typescript-eslint/no-namespace
 	namespace NodeJS {
-		interface ProcessEnv
-			extends Record<(typeof requiredServerEnvs)[number], string> {}
+		// eslint-disable-next-line @typescript-eslint/no-empty-interface
+		interface ProcessEnv extends z.infer<typeof schema> {}
 	}
 }
 
-for (const env of requiredServerEnvs) {
-	if (!process.env[env]) {
-		throw new Error(`${env} is required`)
+export function init() {
+	const parsed = schema.safeParse(process.env)
+
+	if (!parsed.success) {
+		console.error(
+			'❌ Invalid environment variables:',
+			parsed.error.flatten().fieldErrors,
+		)
+
+		throw new Error('Invalid environment variables')
 	}
 }
 

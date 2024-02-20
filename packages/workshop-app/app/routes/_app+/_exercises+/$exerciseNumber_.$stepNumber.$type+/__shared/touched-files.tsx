@@ -1,11 +1,11 @@
 import * as Popover from '@radix-ui/react-popover'
 import { Await, useLoaderData } from '@remix-run/react'
 import * as React from 'react'
+import { type loader } from '../_layout.tsx'
 import { Icon } from '#app/components/icons.tsx'
 import { SimpleTooltip } from '#app/components/ui/tooltip.tsx'
 import { LaunchEditor } from '#app/routes/launch-editor.tsx'
 import { SetAppToPlayground } from '#app/routes/set-playground.tsx'
-import { type loader } from '../_layout.tsx'
 
 function TouchedFiles() {
 	const data = useLoaderData<typeof loader>()
@@ -43,7 +43,7 @@ function TouchedFiles() {
 								Relevant Files
 							</strong>
 							{data.problem &&
-							data.playground?.appName !== data.problem?.name ? (
+							data.playground?.appName !== data.problem.name ? (
 								<div className="mb-2 rounded p-1 font-mono font-medium">
 									<SetAppToPlayground appName={data.problem.name} />
 								</div>

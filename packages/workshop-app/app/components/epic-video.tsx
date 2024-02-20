@@ -1,12 +1,12 @@
 import { type MuxPlayerRefAttributes } from '@mux/mux-player-react'
 import { Await, Link } from '@remix-run/react'
 import * as React from 'react'
+import { Icon } from './icons.tsx'
+import { Loading } from './loading.tsx'
 import { useTheme } from '#app/routes/theme/index.tsx'
 import { MuxPlayer } from '#app/routes/video-player/index.tsx'
 import { type EpicVideoInfos } from '#app/utils/epic-api.ts'
 import { cn } from '#app/utils/misc.tsx'
-import { Icon } from './icons.tsx'
-import { Loading } from './loading.tsx'
 
 const EpicVideoInfoContext = React.createContext<
 	Promise<EpicVideoInfos> | null | undefined
@@ -102,11 +102,11 @@ export function VideoEmbed({
 
 	return (
 		<div className="relative aspect-video w-full flex-shrink-0 shadow-lg dark:shadow-gray-800">
-			{!iframeLoaded ? (
+			{iframeLoaded ? null : (
 				<div className="absolute inset-0 z-10 flex items-center justify-center">
 					{loadingContent}
 				</div>
-			) : null}
+			)}
 			<iframe
 				onLoad={() => setIframeLoaded(true)}
 				src={url}
@@ -173,9 +173,13 @@ export function DeferredEpicVideo({
 						const epicVideoInfo = epicVideoInfos?.[url]
 						const transcriptUI = ENV.KCDSHOP_DEPLOYED ? (
 							<div>
-								<Link to={ENV.KCDSHOP_GITHUB_ROOT} className="underline">
-									Run locally
-								</Link>
+								{ENV.KCDSHOP_GITHUB_ROOT ? (
+									<Link to={ENV.KCDSHOP_GITHUB_ROOT} className="underline">
+										Run locally
+									</Link>
+								) : (
+									'Run locally'
+								)}
 								{' for transcripts'}
 							</div>
 						) : (
@@ -340,7 +344,7 @@ function EpicVideo({
 				onClick={event => {
 					if (muxPlayerRef.current) {
 						muxPlayerRef.current.currentTime = hmsToSeconds(timestamp)
-						muxPlayerRef.current.play()
+						void muxPlayerRef.current.play()
 						muxPlayerRef.current.scrollIntoView({
 							behavior: 'smooth',
 							inline: 'center',
@@ -382,13 +386,13 @@ function EpicVideo({
 	)
 }
 
-function hmsToSeconds(str: any) {
-	let p = str.split(':'),
-		s = 0,
-		m = 1
+function hmsToSeconds(str: string) {
+	const p = str.split(':')
+	let s = 0
+	let m = 1
 
 	while (p.length > 0) {
-		s += m * parseInt(p.pop(), 10)
+		s += m * parseInt(p.pop() ?? '0', 10)
 		m *= 60
 	}
 	return s

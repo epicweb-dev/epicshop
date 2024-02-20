@@ -15,7 +15,7 @@ export function makeTimings(type: string, desc?: string) {
 		[type]: [{ desc, start: performance.now() }],
 	}
 	Object.defineProperty(timings, 'toString', {
-		value: function () {
+		value() {
 			return getServerTimeHeader(timings)
 		},
 		enumerable: false,
@@ -29,6 +29,7 @@ function createTimer(type: string, desc?: string) {
 		end(timings: Timings) {
 			let timingType = timings[type]
 
+			// eslint-disable-next-line @typescript-eslint/no-unnecessary-condition
 			if (!timingType) {
 				// eslint-disable-next-line no-multi-assign
 				timingType = timings[type] = []
@@ -115,6 +116,8 @@ export function cachifiedTimingReporter<Value>(
 					break
 				case 'done':
 					cacheRetrievalTimer.end(timings)
+					break
+				default:
 					break
 			}
 		}

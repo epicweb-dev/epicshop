@@ -40,9 +40,12 @@ export async function loader({ request }: LoaderFunctionArgs) {
 			send({ data: JSON.stringify({ type: EVENTS.AUTH_RESOLVED }) })
 		}
 		function handleAuthRejected(data: any) {
-			send({
-				data: JSON.stringify({ type: EVENTS.AUTH_REJECTED, error: data.error }),
-			})
+			const result = AuthRejectedEventSchema.safeParse(data)
+			if (result.success) {
+				send({ data: JSON.stringify(result.data) })
+			} else {
+				console.error('Error parsing auth rejected event', result.error, data)
+			}
 		}
 		authEmitter.on(EVENTS.USER_CODE_RECEIVED, handleCodeReceived)
 		authEmitter.on(EVENTS.AUTH_RESOLVED, handleAuthResolved)

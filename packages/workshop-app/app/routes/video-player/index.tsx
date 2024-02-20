@@ -75,9 +75,7 @@ export function MuxPlayer({
 		const stored = sessionStorage.getItem(currentTimeSessionKey)
 		if (!stored) return
 		try {
-			const { time, expiresAt } = PlaybackTimeSchema.parse(
-				JSON.parse(stored ?? '{}'),
-			)
+			const { time, expiresAt } = PlaybackTimeSchema.parse(JSON.parse(stored))
 			if (expiresAt.getTime() < Date.now()) throw new Error('Time expired')
 			setCurrentTime(time)
 		} catch {
@@ -86,7 +84,7 @@ export function MuxPlayer({
 	}, [currentTimeSessionKey])
 
 	React.useEffect(() => {
-		function handleUserKeyPress(e: any) {
+		function handleUserKeyPress(e: KeyboardEvent) {
 			if (!muxPlayerRef.current) return
 			const activeElement = document.activeElement
 			const isContentEditable =
@@ -96,14 +94,14 @@ export function MuxPlayer({
 
 			if (
 				activeElement &&
-				ignoredInputs.indexOf(activeElement.tagName.toLowerCase()) === -1 &&
+				!ignoredInputs.includes(activeElement.tagName.toLowerCase()) &&
 				!isContentEditable
 			) {
 				if (e.key === ' ') {
 					e.preventDefault()
-					muxPlayerRef.current.paused
+					void (muxPlayerRef.current.paused
 						? muxPlayerRef.current.play()
-						: muxPlayerRef.current.pause()
+						: muxPlayerRef.current.pause())
 				}
 				if (e.key === 'ArrowRight') {
 					e.preventDefault()
@@ -119,15 +117,15 @@ export function MuxPlayer({
 				}
 				if (e.key === 'f' && !e.metaKey && !e.ctrlKey) {
 					e.preventDefault()
-					document.fullscreenElement
+					void (document.fullscreenElement
 						? document.exitFullscreen()
-						: muxPlayerRef.current.requestFullscreen()
+						: muxPlayerRef.current.requestFullscreen())
 				}
 			}
 		}
-		window.document?.addEventListener('keydown', handleUserKeyPress)
+		window.document.addEventListener('keydown', handleUserKeyPress)
 		return () => {
-			window.document?.removeEventListener('keydown', handleUserKeyPress)
+			window.document.removeEventListener('keydown', handleUserKeyPress)
 		}
 	}, [muxPlayerRef])
 
@@ -138,8 +136,8 @@ export function MuxPlayer({
 			t => t.kind === 'subtitles',
 		)
 		const newPrefs = {
-			playbackRate: player.playbackRate ?? undefined,
-			volumeRate: player.volume ?? undefined,
+			playbackRate: player.playbackRate,
+			volumeRate: player.volume,
 			subtitle: subs
 				? { id: subs.id, mode: subs.mode }
 				: { id: null, mode: 'disabled' },

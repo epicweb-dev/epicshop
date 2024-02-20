@@ -1,9 +1,8 @@
 import { toast as showToast } from 'sonner'
-import { Icon } from '#app/components/icons'
-import { type InBrowserBrowserRef } from '#app/components/in-browser-browser'
-import { SimpleTooltip } from '#app/components/ui/tooltip'
 import { PlaygroundWindow } from './playground-window'
 import { Preview } from './preview'
+import { type InBrowserBrowserRef } from '#app/components/in-browser-browser'
+import { SimpleTooltip } from '#app/components/ui/tooltip'
 
 export function Playground({
 	appInfo: playgroundAppInfo,
@@ -32,12 +31,15 @@ export function Playground({
 							Navigate to{' '}
 							<SimpleTooltip content={playgroundAppInfo.fullPath}>
 								<span
+									className="underline"
 									onClick={() => {
-										navigator.clipboard.writeText(playgroundAppInfo.fullPath)
+										void navigator.clipboard.writeText(
+											playgroundAppInfo.fullPath,
+										)
 										showToast.success('Copied playground path to clipboard')
 									}}
 								>
-									<Icon name="CheckSmall">the playground directory</Icon>
+									the playground directory
 								</span>
 							</SimpleTooltip>{' '}
 							in your editor and terminal to work on this exercise!

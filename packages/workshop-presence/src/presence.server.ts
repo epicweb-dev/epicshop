@@ -59,7 +59,7 @@ export async function getPresentUsers(
 				const presence = PresenceSchema.parse(await response.json())
 				const preferences = await getPreferences()
 				const users = presence.users
-				if (preferences?.presence.optOut || !user) {
+				if (preferences?.presence.optOut ?? !user) {
 					return uniqueUsers(users.filter(u => u.id !== user?.id))
 				} else {
 					return uniqueUsers([...users, user])

@@ -1,12 +1,11 @@
 import { json } from '@remix-run/node'
 import { Link, useLoaderData } from '@remix-run/react'
+import { getDiscordAuthURL } from '../discord.callback.ts'
 import { Icon } from '#app/components/icons.tsx'
 import {
 	useOptionalDiscordMember,
 	useOptionalUser,
 } from '#app/components/user.tsx'
-
-import { getDiscordAuthURL } from '../discord.callback.ts'
 
 export async function loader() {
 	return json({ discordAuthUrl: getDiscordAuthURL() })
@@ -23,14 +22,11 @@ export function useDiscordCTALink({
 	if (!user) {
 		return '/login'
 	}
-	if (user && !discordMember) {
+	if (!discordMember) {
 		return discordAuthUrl
 	}
-	if (user && discordMember) {
-		return 'https://discord.com/channels/715220730605731931/1161045224907341972'
-	}
 
-	return 'https://kentcdodds.com/discord'
+	return 'https://discord.com/channels/715220730605731931/1161045224907341972'
 }
 
 export function DiscordCTA({ discordAuthUrl }: { discordAuthUrl: string }) {
@@ -54,7 +50,7 @@ export function DiscordCTA({ discordAuthUrl }: { discordAuthUrl: string }) {
 			</div>
 		)
 	}
-	if (user && !discordMember) {
+	if (!discordMember) {
 		return (
 			<div className="flex flex-wrap items-center justify-center gap-2 text-xl">
 				<Link to={discordAuthUrl} className="flex items-center gap-2 underline">
@@ -72,35 +68,23 @@ export function DiscordCTA({ discordAuthUrl }: { discordAuthUrl: string }) {
 		)
 	}
 
-	if (user && discordMember) {
-		return (
-			<div className="flex items-center justify-center gap-2 text-xl underline">
-				<Link to="discord://discord.com/channels/715220730605731931/1161045224907341972">
-					<Icon name="Discord" size="2xl" />
-				</Link>
-				<Link
-					to="https://discord.com/channels/715220730605731931/1161045224907341972"
-					target="_blank"
-					rel="noreferrer noopener"
-				>
-					Open Discord
-				</Link>
-			</div>
-		)
-	}
-
 	return (
-		<Link
-			to="https://kentcdodds.com/discord"
-			className="flex items-center gap-2 underline"
-		>
-			<Icon name="Discord" size="2xl" />
-			Learn about discord
-		</Link>
+		<div className="flex items-center justify-center gap-2 text-xl underline">
+			<Link to="discord://discord.com/channels/715220730605731931/1161045224907341972">
+				<Icon name="Discord" size="2xl" />
+			</Link>
+			<Link
+				to="https://discord.com/channels/715220730605731931/1161045224907341972"
+				target="_blank"
+				rel="noreferrer noopener"
+			>
+				Open Discord
+			</Link>
+		</div>
 	)
 }
 
-export default function () {
+export default function DiscordRoute() {
 	const data = useLoaderData<typeof loader>()
 
 	return (

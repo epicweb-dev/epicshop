@@ -131,7 +131,7 @@ export function PlaygroundChooser({
 			value={playgroundAppName}
 			onValueChange={appName => {
 				fetcher.submit(
-					{ appName: appName },
+					{ appName },
 					{ method: 'POST', action: '/set-playground' },
 				)
 			}}

@@ -5,10 +5,23 @@ import {
 	setDiscordMember,
 } from '@kentcdodds/workshop-utils/db.server'
 import { redirect, type LoaderFunctionArgs } from '@remix-run/node'
+import { z } from 'zod'
 import { redirectWithToast } from '#app/utils/toast.server.ts'
 
 const port = process.env.PORT || '5639'
 const scope = 'guilds.join identify messages.read'
+
+const DiscordApiResponseSchema = z
+	.object({
+		status: z.literal('error'),
+		error: z.string(),
+	})
+	.or(
+		z.object({
+			status: z.literal('success'),
+			member: DiscordMemberSchema,
+		}),
+	)
 
 export function getDiscordAuthURL() {
 	const discordAuthUrl = new URL('https://discord.com/oauth2/authorize')
@@ -46,37 +59,36 @@ export async function loader({ request }: LoaderFunctionArgs) {
 		try {
 			console.error(await result.text())
 		} catch {
-		} finally {
-			return redirectWithToast('/account', {
-				type: 'error',
-				title: 'Error',
-				description: `There was an error connecting your Discord account (details in terminal output). Please try again.`,
-			})
+			// ignore
 		}
-	}
-
-	const jsonResult = await result.json()
-	if (jsonResult.status === 'error') {
-		console.error(`There was an error connecting Discord`)
-		console.error(jsonResult.error)
-		return redirect('/account?error')
-	}
-
-	const discordMemberResult = DiscordMemberSchema.safeParse(jsonResult.member)
-	if (discordMemberResult.success) {
-		await setDiscordMember(discordMemberResult.data)
-		return redirectWithToast('/account', {
-			type: 'success',
-			title: 'Success',
-			description: `Your Discord account "${discordMemberResult.data.displayName}" has been connected!`,
-		})
-	} else {
-		console.error(`There was an error connecting Discord`)
-		console.error(discordMemberResult.error)
 		return redirectWithToast('/account', {
 			type: 'error',
 			title: 'Error',
 			description: `There was an error connecting your Discord account (details in terminal output). Please try again.`,
 		})
 	}
+
+	const parseResult = DiscordApiResponseSchema.safeParse(await result.json())
+	if (!parseResult.success) {
+		console.error(`There was an error connecting Discord`)
+		console.error(parseResult.error)
+		return redirectWithToast('/account', {
+			type: 'error',
+			title: 'Error',
+			description: `There was an error connecting your Discord account (details in terminal output). Please try again.`,
+		})
+	}
+	if (parseResult.data.status === 'error') {
+		console.error(`There was an error connecting Discord`)
+		console.error(parseResult.data.error)
+		return redirect('/account?error')
+	}
+	const member = parseResult.data.member
+
+	await setDiscordMember(member)
+	return redirectWithToast('/account', {
+		type: 'success',
+		title: 'Success',
+		description: `Your Discord account "${member.displayName}" has been connected!`,
+	})
 }

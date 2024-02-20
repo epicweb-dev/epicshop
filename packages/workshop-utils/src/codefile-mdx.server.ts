@@ -75,7 +75,7 @@ const isRangeInOrder = (range: RangeArray) =>
 const isRangesNonOverlapping = (range: RangeArray) => {
 	if (!Array.isArray(range)) return true
 	return range.every(
-		// @ts-ignore - typescript claim that range[i - 1] can be undefined
+		// @ts-expect-error - typescript claim that range[i - 1] can be undefined
 		([a], i) => i === 0 || range[i - 1][1] < a,
 	)
 }
@@ -152,15 +152,14 @@ async function validateProps(props: CodeFileProps, appDir: string) {
 				if (!Array.isArray(highlight) || !Array.isArray(validRange)) {
 					return z.NEVER
 				}
-				return highlight.every(
-					([hStart, hEnd]) =>
-						validRange?.some(
-							([rStart, rEnd]) => hStart >= rStart && hEnd <= rEnd,
-						),
+				return highlight.every(([hStart, hEnd]) =>
+					validRange?.some(
+						([rStart, rEnd]) => hStart >= rStart && hEnd <= rEnd,
+					),
 				)
-			}, 'Highlight range must be within defined range').transform(
-				() => props.highlight,
-			),
+			}, 'Highlight range must be within defined range')
+				.transform(() => props.highlight as Array<string>)
+				.optional(),
 			nonumber: BooleanSchema,
 			nocopy: BooleanSchema,
 			buttons: z
@@ -237,8 +236,8 @@ export function remarkCodeFile(data: CodeFileData) {
 	const appType = mdxFile.includes('problem')
 		? 'problem'
 		: mdxFile.includes('solution')
-		? 'solution'
-		: 'other' // not in exercise
+			? 'solution'
+			: 'other' // not in exercise
 
 	async function replaceCodeFileNode({
 		node,
@@ -299,6 +298,7 @@ export function remarkCodeFile(data: CodeFileData) {
 				typeof val === 'boolean' && val && meta.push(`${key}=true`),
 		)
 
+		// eslint-disable-next-line @typescript-eslint/no-unnecessary-condition
 		if (result.data.buttons) {
 			meta.push(`buttons=${result.data.buttons.join(',')}`)
 			meta.push(`type=${appType}`)
@@ -308,7 +308,7 @@ export function remarkCodeFile(data: CodeFileData) {
 			meta.push(`sep=${path.sep}`)
 		}
 
-		if (highlight) {
+		if (highlight?.length) {
 			meta.push(`lines=${highlight}`)
 		}
 
@@ -317,7 +317,7 @@ export function remarkCodeFile(data: CodeFileData) {
 		const preNodes = []
 		for (const [start, end] of fileSections) {
 			const rangeContent = stripIndent(
-				content.slice((start as number) - 1, end).join('\n'),
+				content.slice(start ? start - 1 : 0, end).join('\n'),
 			)
 			rangesContent.push(rangeContent)
 			const mdxSource = `
@@ -345,7 +345,7 @@ ${rangeContent}
 			cachedData &&
 			// If a warning existed previously and its hash matched the current hash,
 			// then the changes were reverted and the warning will be remove
-			((cachedData.warning && cachedData.warning !== contentHash) ||
+			((cachedData.warning && cachedData.warning !== contentHash) ??
 				(!cachedData.warning && cachedData.hash !== contentHash))
 		) {
 			// keep previously saved warning or previous hash

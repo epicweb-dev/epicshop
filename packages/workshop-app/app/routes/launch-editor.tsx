@@ -42,7 +42,7 @@ export async function action({ request }: ActionFunctionArgs) {
 		type: formData.get('syncTo.type') ?? undefined,
 		file: formData.get('syncTo.file') ?? undefined,
 		workshopFile: formData.get('syncTo.workshopFile') ?? undefined,
-		appFile: formData.getAll('syncTo.appFile') ?? undefined,
+		appFile: formData.getAll('syncTo.appFile'),
 		appName: formData.get('syncTo.appName') ?? undefined,
 	}
 	const syncToIsProvided = Object.values(syncTo).some(v =>
@@ -240,7 +240,7 @@ function LaunchEditorImpl({
 				type="submit"
 				className={clsx(
 					'launch_button',
-					fetcher.state !== 'idle' ? 'cursor-progress' : null,
+					fetcher.state === 'idle' ? null : 'cursor-progress',
 					fetcher.data?.status === 'error' ? 'cursor-not-allowed' : null,
 				)}
 			>
@@ -285,7 +285,7 @@ function LaunchGitHub({
 	return (
 		<a
 			className="launch_button no-underline!"
-			href={ENV.KCDSHOP_GITHUB_ROOT + '/' + path}
+			href={`${ENV.KCDSHOP_GITHUB_ROOT}/${path}`}
 			rel="noreferrer"
 			target="_blank"
 		>

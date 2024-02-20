@@ -16,6 +16,7 @@ function isError(maybeError: any): maybeError is Error {
 		maybeError &&
 		typeof maybeError === 'object' &&
 		'message' in maybeError &&
+		// eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
 		typeof maybeError.message === 'string'
 	)
 }
@@ -31,7 +32,9 @@ export async function testStep<ReturnValue>(
 		const result = await get()
 		const titleString =
 			typeof title === 'function' ? title({ type: 'pass' }) : title
-		if (window.parent !== window) {
+		if (window.parent === window) {
+			console.log(`✅ ${titleString}`)
+		} else {
 			window.parent.postMessage(
 				{
 					type: 'kcdshop:test-step-update',
@@ -41,8 +44,6 @@ export async function testStep<ReturnValue>(
 				},
 				'*',
 			)
-		} else {
-			console.log(`✅ ${titleString}`)
 		}
 		return result
 	} catch (e: unknown) {

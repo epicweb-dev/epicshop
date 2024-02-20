@@ -18,13 +18,13 @@ import {
 } from '@remix-run/node'
 import { Link, useLoaderData } from '@remix-run/react'
 import slugify from '@sindresorhus/slugify'
+import { ProgressToggle, useExerciseProgressClassName } from '../progress.tsx'
 import { EpicVideoInfoProvider } from '#app/components/epic-video.tsx'
 import { GeneralErrorBoundary } from '#app/components/error-boundary.tsx'
 import { EditFileOnGitHub } from '#app/routes/launch-editor.tsx'
 import { getEpicVideoInfos } from '#app/utils/epic-api.ts'
 import { Mdx } from '#app/utils/mdx.tsx'
 import { cn } from '#app/utils/misc.tsx'
-import { ProgressToggle, useExerciseProgressClassName } from '../progress.tsx'
 
 export async function loader({ request }: LoaderFunctionArgs) {
 	const timings = makeTimings('indexLoader')
@@ -162,7 +162,7 @@ export default function Index() {
 				<div className="pb-5 pt-10">
 					{data.workshopReadme.compiled.status === 'success' &&
 					data.workshopReadme.compiled.code &&
-					data.workshopReadme.compiled.code?.length > 500
+					data.workshopReadme.compiled.code.length > 500
 						? exerciseLinks
 						: null}
 				</div>

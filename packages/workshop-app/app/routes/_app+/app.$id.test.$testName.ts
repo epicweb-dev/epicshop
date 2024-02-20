@@ -129,7 +129,7 @@ import(${JSON.stringify(testScriptPath)}).then(
 	)
 	const indexCss = indexFiles.find((file: string) => file.endsWith('index.css'))
 
-	const appTitle = app?.title ?? 'N/A'
+	const appTitle = app.title
 	const workshopTitle = await getWorkshopTitle()
 	const title = (
 		isExerciseStepApp(app)

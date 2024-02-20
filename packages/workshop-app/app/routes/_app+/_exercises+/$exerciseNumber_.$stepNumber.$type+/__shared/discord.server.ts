@@ -87,9 +87,9 @@ export async function fetchDiscordPosts({ request }: { request: Request }) {
 				try {
 					console.error(await result.text())
 				} catch {
-				} finally {
-					return []
+					// ignore
 				}
+				return []
 			}
 
 			const jsonResult = await result.json()

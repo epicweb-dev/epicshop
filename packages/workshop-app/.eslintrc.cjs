@@ -2,13 +2,33 @@
  * @type {import('@types/eslint').Linter.BaseConfig}
  */
 module.exports = {
-	extends: [
-		'@remix-run/eslint-config',
-		'@remix-run/eslint-config/node',
-		'@remix-run/eslint-config/jest-testing-library',
-		'prettier',
-	],
+	extends: ['kentcdodds'],
+	parserOptions: {
+		project: require.resolve('./tsconfig.json'),
+		sourceType: 'module',
+		ecmaVersion: 2023,
+	},
 	rules: {
+		complexity: 'off',
+		'@typescript-eslint/no-explicit-any': 'off',
+		'@typescript-eslint/no-shadow': 'off',
+		'vars-on-top': 'off',
+		'no-var': 'off',
+		'no-await-in-loop': 'off',
+		'@typescript-eslint/no-throw-literal': 'off',
+		'@typescript-eslint/no-invalid-void-type': 'off',
+		'@typescript-eslint/prefer-nullish-coalescing': 'off',
+		'@typescript-eslint/no-non-null-assertion': 'off',
+		'@typescript-eslint/ban-ts-comment': 'off',
+		'@typescript-eslint/prefer-ts-expect-error': 'off',
+		'import/no-unresolved': 'off',
+		'no-shadow': 'off',
+		'one-var': 'off',
+		'default-case': 'off',
+		'@typescript-eslint/no-unsafe-assignment': 'off',
+		'no-inner-declarations': 'off',
+		'no-negated-condition': 'off',
+		'@typescript-eslint/no-base-to-string': 'off',
 		'react/display-name': 'off',
 		'@typescript-eslint/consistent-type-imports': [
 			'warn',

@@ -92,8 +92,7 @@ async function readDb() {
 
 	try {
 		if (await fsExtra.exists(dbPath)) {
-			const data = await fsExtra.readJSON(dbPath)
-			const db = DataSchema.parse(data)
+			const db = DataSchema.parse(await fsExtra.readJSON(dbPath))
 			return db
 		}
 	} catch (error) {
@@ -117,10 +116,10 @@ export async function getUserInfo() {
 
 	return {
 		id: db.authInfo.id,
-		name: db?.discordMember?.displayName ?? db.authInfo.name ?? null,
+		name: db.discordMember?.displayName ?? db.authInfo.name ?? null,
 		email: db.authInfo.email,
 		avatarUrl:
-			db?.discordMember?.avatarURL ??
+			db.discordMember?.avatarURL ??
 			getGravatar({ email: db.authInfo.email, size: 288 }),
 	}
 }

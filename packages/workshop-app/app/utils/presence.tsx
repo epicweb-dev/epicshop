@@ -54,7 +54,9 @@ export function usePresenceSocket(user?: User | null) {
 		host: new URL(partykitBaseUrl).host,
 		room: partykitRoom,
 		onMessage(evt: MessageEvent) {
-			const messageResult = MessageSchema.safeParse(JSON.parse(evt.data))
+			const messageResult = MessageSchema.safeParse(
+				JSON.parse(String(evt.data)),
+			)
 			if (!messageResult.success) return
 			if (messageResult.data.type === 'presence') {
 				setUsers(messageResult.data.payload.users)
@@ -80,7 +82,7 @@ export function usePresenceSocket(user?: User | null) {
 	let message: Message | null = null
 	if ((!user || prefs?.optOut) && clientId) {
 		if (user) {
-			message = { type: 'remove-user', payload: { id: user?.id } }
+			message = { type: 'remove-user', payload: { id: user.id } }
 		}
 		message = { type: 'add-user', payload: { id: clientId, location } }
 	} else if (user) {
@@ -108,23 +110,23 @@ export function usePresenceSocket(user?: User | null) {
 function scoreUsers(location: User['location'], users: Array<User>) {
 	const scoredUsers = users.map(user => {
 		let score = 0
-		let available = 4
+		const available = 4
 		if (location?.workshopTitle === user.location?.workshopTitle) {
 			score += 1
 			if (
 				location?.exercise?.exerciseNumber &&
-				location?.exercise?.exerciseNumber ===
+				location.exercise.exerciseNumber ===
 					user.location?.exercise?.exerciseNumber
 			) {
 				score += 1
 				if (
 					location.exercise.stepNumber &&
-					location?.exercise?.stepNumber === user.location?.exercise?.stepNumber
+					location.exercise.stepNumber === user.location.exercise.stepNumber
 				) {
 					score += 1
 					if (
-						location?.exercise?.type &&
-						location?.exercise?.type === user.location?.exercise?.type
+						location.exercise.type &&
+						location.exercise.type === user.location.exercise.type
 					) {
 						score += 1
 					}

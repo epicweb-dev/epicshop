@@ -1,7 +1,7 @@
 import { devices, type PlaywrightTestConfig } from '@playwright/test'
 import 'dotenv/config'
 
-const PORT = process.env.PORT || 5639
+const PORT = process.env.PORT ?? 5639
 
 /**
  * See https://playwright.dev/docs/test-configuration.

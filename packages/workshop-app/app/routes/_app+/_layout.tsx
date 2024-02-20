@@ -28,6 +28,13 @@ import {
 	useAnimationControls,
 } from 'framer-motion'
 import * as React from 'react'
+import {
+	useNextExerciseRoute,
+	useExerciseProgressClassName,
+	type ProgressItemSearch,
+	useProgressItemClassName,
+} from '../progress.tsx'
+import { ThemeSwitch } from '../theme/index.tsx'
 import { Icon } from '#app/components/icons.tsx'
 import {
 	SimpleTooltip,
@@ -39,13 +46,6 @@ import {
 import { useOptionalUser } from '#app/components/user.tsx'
 import { cn } from '#app/utils/misc.tsx'
 import { type User, usePresence } from '#app/utils/presence.tsx'
-import {
-	useNextExerciseRoute,
-	useExerciseProgressClassName,
-	type ProgressItemSearch,
-	useProgressItemClassName,
-} from '../progress.tsx'
-import { ThemeSwitch } from '../theme/index.tsx'
 
 export async function loader({ request }: LoaderFunctionArgs) {
 	const timings = makeTimings('stepLoader')
@@ -125,7 +125,7 @@ function getScoreClassNames(score: number) {
 
 function FacePile({ isMenuOpened }: { isMenuOpened: boolean }) {
 	const loggedInUser = useOptionalUser()
-	let { users } = usePresence()
+	const { users } = usePresence()
 	const limit = isMenuOpened ? 17 : 0
 	const numberOverLimit = users.length - limit
 	if (!users.length) return null
@@ -310,14 +310,16 @@ function EpicWebBanner() {
 					{ENV.KCDSHOP_DEPLOYED ? (
 						<small className="text-sm">
 							This is the deployed version.{' '}
-							<Link
-								className="underline"
-								target="_blank"
-								rel="noopener noreferrer"
-								to={ENV.KCDSHOP_GITHUB_ROOT}
-							>
-								Run locally
-							</Link>{' '}
+							{ENV.KCDSHOP_GITHUB_ROOT ? (
+								<Link
+									className="underline"
+									target="_blank"
+									rel="noopener noreferrer"
+									to={ENV.KCDSHOP_GITHUB_ROOT}
+								>
+									Run locally
+								</Link>
+							) : null}{' '}
 							for full experience.
 						</small>
 					) : null}
@@ -494,7 +496,7 @@ function Navigation({
 												{title}
 												{showPlayground ? ' 🛝' : null}
 											</Link>
-											{isActive && (
+											{isActive ? (
 												<motion.ul
 													variants={listVariants}
 													initial="hidden"
@@ -513,7 +515,7 @@ function Navigation({
 																'relative whitespace-nowrap px-2 py-0.5 pr-3 text-xl font-medium outline-none after:absolute after:-bottom-2.5 after:-right-2.5 after:h-5 after:w-5 after:rotate-45 after:scale-75 after:bg-background after:content-[""] hover:underline focus:underline',
 																{
 																	'bg-foreground text-background':
-																		isActive && !params.stepNumber,
+																		!params.stepNumber,
 																},
 															)}
 														>
@@ -575,7 +577,7 @@ function Navigation({
 														</NavLink>
 													</NavigationExerciseStepListItem>
 												</motion.ul>
-											)}
+											) : null}
 										</NavigationExerciseListItem>
 									)
 								})}
@@ -720,16 +722,16 @@ function NavToggle({
 				className="flex h-14 w-14 items-center justify-center"
 				aria-label="Open Navigation menu"
 				onClick={async () => {
-					menuControls.start(isMenuOpened ? 'close' : 'open')
+					void menuControls.start(isMenuOpened ? 'close' : 'open')
 					setMenuOpened(!isMenuOpened)
-					if (!isMenuOpened) {
+					if (isMenuOpened) {
+						void path01Controls.start(path01Variants.closed)
 						await path02Controls.start(path02Variants.moving)
-						path01Controls.start(path01Variants.open)
-						path02Controls.start(path02Variants.open)
+						void path02Controls.start(path02Variants.closed)
 					} else {
-						path01Controls.start(path01Variants.closed)
 						await path02Controls.start(path02Variants.moving)
-						path02Controls.start(path02Variants.closed)
+						void path01Controls.start(path01Variants.open)
+						void path02Controls.start(path02Variants.open)
 					}
 				}}
 			>

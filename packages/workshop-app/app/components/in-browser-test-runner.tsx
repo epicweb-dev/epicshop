@@ -1,8 +1,8 @@
 import * as Accordion from '@radix-ui/react-accordion'
 import { useEffect, useRef, useState } from 'react'
 import { z } from 'zod'
-import AccordionComponent from '#app/components/accordion.tsx'
 import { AnimatedBars, Icon } from './icons.tsx'
+import AccordionComponent from '#app/components/accordion.tsx'
 
 const testRunnerStatusDataSchema = z.intersection(
 	z.object({
@@ -130,7 +130,7 @@ export function InBrowserTestRunner({
 							</ul>
 							{message?.status === 'fail' ? (
 								<div className="flex items-baseline gap-2 text-foreground-danger">
-									<span>{testStepStatusEmojis['fail']}</span>
+									<span>{testStepStatusEmojis.fail}</span>
 									<pre className="max-h-48 overflow-y-auto text-foreground-danger scrollbar-thin scrollbar-thumb-scrollbar">
 										{message.error}
 									</pre>

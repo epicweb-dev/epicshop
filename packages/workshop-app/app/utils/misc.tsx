@@ -10,8 +10,8 @@ import * as React from 'react'
 import { useEffect, useMemo, useRef, useState } from 'react'
 import { useSpinDelay } from 'spin-delay'
 import { extendTailwindMerge } from 'tailwind-merge'
-import { Icon } from '#app/components/icons.tsx'
 import { extendedTheme } from './extended-theme.ts'
+import { Icon } from '#app/components/icons.tsx'
 
 type AnchorProps = React.DetailedHTMLProps<
 	React.AnchorHTMLAttributes<HTMLAnchorElement>,
@@ -29,6 +29,7 @@ export const AnchorOrLink = React.forwardRef<
 	const {
 		to,
 		href,
+		// eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
 		download,
 		reload = false,
 		prefetch,
@@ -36,7 +37,7 @@ export const AnchorOrLink = React.forwardRef<
 		...rest
 	} = props
 	let toUrl = ''
-	let shouldUserRegularAnchor = reload || download
+	let shouldUserRegularAnchor = reload || Boolean(download)
 
 	if (!shouldUserRegularAnchor && typeof href === 'string') {
 		shouldUserRegularAnchor = href.includes(':') || href.startsWith('#')
@@ -51,11 +52,12 @@ export const AnchorOrLink = React.forwardRef<
 		toUrl = `${to.pathname ?? ''}${to.hash ? `#${to.hash}` : ''}${
 			to.search ? `?${to.search}` : ''
 		}`
-		shouldUserRegularAnchor = to.pathname?.includes(':')
+		shouldUserRegularAnchor = Boolean(to.pathname?.includes(':'))
 	}
 
 	if (shouldUserRegularAnchor) {
 		return (
+			// eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
 			<a {...rest} download={download} href={href ?? toUrl} ref={ref}>
 				{children}
 			</a>
@@ -191,9 +193,7 @@ export function getDomainUrl(request: Request) {
 		request.headers.get('host') ??
 		url.host
 
-	const protocol = host.includes('localhost')
-		? 'http:'
-		: url.protocol ?? 'https:'
+	const protocol = host.includes('localhost') ? 'http:' : url.protocol
 	return `${protocol}//${host}`
 }
 
@@ -226,7 +226,7 @@ export function getReferrerRoute(request: Request) {
 		request.headers.get('referrer') ??
 		request.referrer
 	const domain = getDomainUrl(request)
-	if (referrer?.startsWith(domain)) {
+	if (referrer.startsWith(domain)) {
 		return referrer.slice(domain.length)
 	} else {
 		return '/'

@@ -36,7 +36,9 @@ export default (class Server implements Party.Server {
 		hibernate: true,
 	}
 
-	constructor(readonly party: Party.Party) {
+	readonly party: Party.Party
+
+	constructor(party: Party.Party) {
 		this.party = party
 	}
 
@@ -115,7 +117,7 @@ function setConnectionState(
 	if (typeof state !== 'function') {
 		return connection.setState(state)
 	}
-	connection.setState((prev: any) => {
+	connection.setState((prev: unknown) => {
 		const prevParseResult = ConnectionStateSchema.safeParse(prev)
 		if (prevParseResult.success) {
 			return state(prevParseResult.data)

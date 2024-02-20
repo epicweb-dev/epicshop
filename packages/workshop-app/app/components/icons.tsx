@@ -1,5 +1,5 @@
 import * as React from 'react'
-import { cn } from '#app/utils/misc'
+import { cn } from '#app/utils/misc.tsx'
 
 type Sizes = 12 | 16 | 20 | 24 | 28 | 32 | 40
 
@@ -128,7 +128,7 @@ export function Icon({
 			className={cn(sizeClassName[size], 'inline self-center', className)}
 		>
 			{title ? <title>{title}</title> : null}
-			<use href={`/icons.svg#${name}`} />
+			<use href={`/icons.svg#${name}`} fill="transparent" />
 		</svg>
 	)
 }

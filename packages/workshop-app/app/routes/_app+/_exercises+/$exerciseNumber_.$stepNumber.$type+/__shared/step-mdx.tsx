@@ -7,6 +7,7 @@ import {
 import { clsx } from 'clsx'
 import * as React from 'react'
 import { useState, type PropsWithChildren } from 'react'
+import { type loader } from '../_layout.tsx'
 import { EpicVideoInfoProvider } from '#app/components/epic-video.tsx'
 import { Icon } from '#app/components/icons.tsx'
 import { type InBrowserBrowserRef } from '#app/components/in-browser-browser.tsx'
@@ -16,7 +17,6 @@ import { UpdateMdxCache } from '#app/routes/update-mdx-cache.tsx'
 import { Mdx } from '#app/utils/mdx.tsx'
 import { cn, getBaseUrl } from '#app/utils/misc.tsx'
 import { useRequestInfo } from '#app/utils/request-info.ts'
-import { type loader } from '../_layout.tsx'
 
 type StepContextType = {
 	inBrowserBrowserRef: React.RefObject<InBrowserBrowserRef>
@@ -51,13 +51,13 @@ export function StepMdx({
 	inBrowserBrowserRef: React.RefObject<InBrowserBrowserRef>
 }) {
 	const data = useLoaderData<typeof loader>()
-	if (!data.exerciseStepApp?.instructionsCode) return null
+	if (!data.exerciseStepApp.instructionsCode) return null
 	return (
 		<StepContextProvider inBrowserBrowserRef={inBrowserBrowserRef}>
 			<EpicVideoInfoProvider epicVideoInfosPromise={data.epicVideoInfosPromise}>
 				<div className="prose dark:prose-invert sm:prose-lg">
 					<Mdx
-						code={data.exerciseStepApp?.instructionsCode}
+						code={data.exerciseStepApp.instructionsCode}
 						components={{
 							CodeFile,
 							CodeFileNotification,
@@ -314,7 +314,7 @@ function LinkToApp({
 					port: data.playground.dev.portNumber,
 				})
 			: data.playground?.dev.type === 'browser'
-				? data.playground?.dev.pathname
+				? data.playground.dev.pathname
 				: null
 	const { inBrowserBrowserRef } = useStepContext()
 	const href = previewAppUrl

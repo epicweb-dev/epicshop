@@ -24,7 +24,7 @@ const sleep = (time: number) =>
 	new Promise(resolve => setTimeout(resolve, time))
 
 async function waitFor<ReturnValue>(
-	cb: () => ReturnValue | Promise<ReturnValue>,
+	cb: () => ReturnValue | Promise<ReturnValue> | undefined | null,
 	{ timeout = 1000, interval = 30 } = {},
 ) {
 	const timeEnd = Date.now() + timeout
@@ -75,6 +75,9 @@ export function setupInBrowserTests() {
 					}
 					case 'info': {
 						infos.push(message.text())
+						break
+					}
+					default: {
 						break
 					}
 				}

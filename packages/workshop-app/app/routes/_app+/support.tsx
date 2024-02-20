@@ -7,7 +7,7 @@ export default function Support() {
 
 	let repoUrl = ENV.KCDSHOP_GITHUB_ROOT
 	let repoIssuesUrl = repoUrl
-	if (repoGroups?.org && repoGroups?.repo) {
+	if (repoGroups?.org && repoGroups.repo) {
 		repoUrl = `https://github.com/${repoGroups.org}/${repoGroups.repo}`
 		repoIssuesUrl = `${repoUrl}/issues`
 	}
