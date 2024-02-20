@@ -3,7 +3,7 @@
   "$schema": "node_modules/nx/schemas/project-schema.json",
   "targets": {
     "build": {
-      "command": "nx run-many --target build"
+      "command": "nx run-many --target build --parallel --projects @kentcdodds/workshop-app,@kentcdodds/workshop-utils,@kentcdodds/workshop-presence"
     },
     "lint": {
       "executor": "@nx/eslint:lint",
