@@ -18,7 +18,9 @@ switch (command) {
 	case 'upgrade':
 	case 'update': {
 		process.env.KCDSHOP_DISABLE_WATCHER = 'true'
-		const { updateLocalRepo } = await import('../build/utils/git.server.js')
+		const { updateLocalRepo } = await import(
+			'@kentcdodds/workshop-utils/git.server'
+		)
 		const result = await updateLocalRepo()
 		if (result.status === 'success') {
 			console.log(`✅ ${result.message}`)
