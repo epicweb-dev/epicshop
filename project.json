@@ -17,7 +17,8 @@
       "command": "tsc -b"
     },
     "test": {
-      "executor": "@nx/playwright:playwright"
+      "executor": "@nx/playwright:playwright",
+      "dependsOn": ["@kentcdodds/workshop-app:build"]
     },
     "local-registry": {
       "executor": "@nx/js:verdaccio",
