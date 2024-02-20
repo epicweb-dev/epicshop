@@ -368,7 +368,6 @@ export default function ExercisePartRoute() {
 	const [searchParams] = useSearchParams()
 
 	const preview = searchParams.get('preview')
-	const activeTab = isValidPreview(preview) ? preview : tabs[0]
 	const inBrowserBrowserRef = useRef<InBrowserBrowserRef>(null)
 
 	const titleBits = pageTitle(data)
@@ -388,6 +387,10 @@ export default function ExercisePartRoute() {
 		if (tab === 'playground' && ENV.KCDSHOP_DEPLOYED) return true
 		return false
 	}
+
+	const activeTab = isValidPreview(preview)
+		? preview
+		: tabs.find(t => !shouldHideTab(t))
 
 	// when alt is held down, the diff tab should open to the full-page diff view
 	// between the problem and solution (this is more for the instructor than the student)
