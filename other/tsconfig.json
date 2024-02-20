@@ -1,15 +1,5 @@
 {
   "include": ["../**/*.ts", "../**/*.js"],
-  "exclude": [
-    "**/dist/**",
-    "**/build/**",
-    "**/.cache/**",
-    "**/node_modules/**",
-    "**/tmp/**",
-    "**/test-results/**",
-    "**/publish/**",
-    "**/playwright-report/**"
-  ],
   "compilerOptions": {
     "isolatedModules": true,
     "esModuleInterop": true,
