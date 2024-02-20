@@ -44,14 +44,44 @@ is an update available and will tell them to run `npx kcdshop update` to update
 the workshop. If you want to run anything after the update, add a `postupdate`
 script to `kcd-workshop.scripts` in the root `package.json`:
 
-```
-"kcd-workshop": {
-  "title": "Full Stack Foundations 🔭",
-  "githubRoot": "https://github.com/epicweb-dev/full-stack-foundations/blob/main",
-  "root": true,
-  "epicWorkshopSlug": "full-stack-foundations",
-  "scripts": {
-    "postupdate": "echo '🎉🎉🎉'"
-  }
+```json
+{
+	"kcd-workshop": {
+		"title": "Full Stack Foundations 🔭",
+		"githubRoot": "https://github.com/epicweb-dev/full-stack-foundations/blob/main",
+		"root": true,
+		"epicWorkshopSlug": "full-stack-foundations",
+		"scripts": {
+			"postupdate": "echo '🎉🎉🎉'"
+		}
+	}
 }
 ```
+
+## Forms
+
+For the time being, we're using Google forms for the feedback and elaboration
+bits at the end of each exercise and the end of the workshop. You can customize
+these in the `package.json` of the root of your workshop like so:
+
+```json
+{
+	"kcd-workshop": {
+		"forms": {
+			"workshop": "https://docs.google.com/forms/d/e/1FAIpQLSdRmj9p8-5zyoqRzxp3UpqSbC3aFkweXvvJIKes0a5s894gzg/viewform?hl=en&embedded=true&entry.2123647600={workshopTitle}",
+			"exercise": "https://docs.google.com/forms/d/e/1FAIpQLSf3o9xyjQepTlOTH5Z7ZwkeSTdXh6YWI_RGc9KiyD3oUN0p6w/viewform?hl=en&embedded=true&entry.1836176234={workshopTitle}&entry.428900931={exerciseTitle}"
+		}
+	}
+}
+```
+
+Note that you can interpolate the `workshopTitle` and `exerciseTitle` into the
+URL so the user doesn't have to fill it out themselves (makes it easier to
+aggregate their feedback later).
+
+Unfortunately the `entry.2390423` values are kinda hard to find. You get them by
+creating a "Pre-filled URL" in the Google form and then you can see the values
+in the URL that's given to you.
+[Learn more](https://support.google.com/docs/answer/160000?co=GENIE.Platform%3DDesktop&hl=en).
+
+Eventually we'll probably move to something more custom, but for now this works.

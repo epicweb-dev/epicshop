@@ -14,6 +14,7 @@ import {
 	getServerTimeHeader,
 	makeTimings,
 } from '@kentcdodds/workshop-utils/timing.server'
+import { getPkgProp } from '@kentcdodds/workshop-utils/utils.server'
 import {
 	type LoaderFunctionArgs,
 	type HeadersFunction,
@@ -61,6 +62,15 @@ export async function loader({ request, params }: LoaderFunctionArgs) {
 		throw new Response('Not found', { status: 404 })
 	}
 	const workshopTitle = await getWorkshopTitle()
+	const workshopRoot = getWorkshopRoot()
+	const exerciseFormTemplate = await getPkgProp(
+		workshopRoot,
+		'kcd-workshop.forms.exercise',
+		`https://docs.google.com/forms/d/e/1FAIpQLSf3o9xyjQepTlOTH5Z7ZwkeSTdXh6YWI_RGc9KiyD3oUN0p6w/viewform?hl=en&embedded=true&entry.1836176234={workshopTitle}&entry.428900931={exerciseTitle}`,
+	)
+	const exerciseFormEmbedUrl = exerciseFormTemplate
+		.replace('{workshopTitle}', encodeURIComponent(workshopTitle))
+		.replace('{exerciseTitle}', encodeURIComponent(exercise.title))
 	const nextExercise = await getExercise(exercise.exerciseNumber + 1, {
 		timings,
 		request,
@@ -88,6 +98,7 @@ export async function loader({ request, params }: LoaderFunctionArgs) {
 			articleId,
 			workshopTitle,
 			exercise,
+			exerciseFormEmbedUrl,
 			epicVideoInfosPromise: getEpicVideoInfos(
 				exercise.finishedEpicVideoEmbeds,
 				{ request },
@@ -136,11 +147,6 @@ export default function ExerciseFinished() {
 	const exerciseNumber = data.exercise.exerciseNumber
 		.toString()
 		.padStart(2, '0')
-
-	const {
-		workshopTitle,
-		exercise: { title: exerciseTitle },
-	} = data
 
 	return (
 		<div className="flex flex-grow flex-col">
@@ -195,25 +201,23 @@ export default function ExerciseFinished() {
 						<NavChevrons prev={data.prevStepLink} next={data.nextStepLink} />
 					</div>
 				</div>
-				<Survey workshopTitle={workshopTitle} exerciseTitle={exerciseTitle} />
+				<Survey
+					exerciseFormEmbedUrl={data.exerciseFormEmbedUrl}
+					exerciseTitle={data.exercise.title}
+				/>
 			</main>
 		</div>
 	)
 }
 
 function Survey({
-	workshopTitle,
+	exerciseFormEmbedUrl,
 	exerciseTitle,
 }: {
-	workshopTitle: string
+	exerciseFormEmbedUrl: string
 	exerciseTitle: string
 }) {
 	const [iframeLoaded, setIframeLoaded] = React.useState(false)
-	const searchParams = new URLSearchParams([
-		['embedded', 'true'],
-		['entry.1836176234', workshopTitle],
-		['entry.428900931', exerciseTitle],
-	])
 	return (
 		<div className="relative flex-shrink-0">
 			{!iframeLoaded ? (
@@ -226,7 +230,7 @@ function Survey({
 			<iframe
 				onLoad={() => setIframeLoaded(true)}
 				title="Elaboration"
-				src={`https://docs.google.com/forms/d/e/1FAIpQLSf3o9xyjQepTlOTH5Z7ZwkeSTdXh6YWI_RGc9KiyD3oUN0p6w/viewform?${searchParams.toString()}&hl=en`}
+				src={exerciseFormEmbedUrl}
 				className={cn(
 					'absolute inset-0 flex h-full w-full transition-opacity duration-300',
 					iframeLoaded ? 'opacity-100' : 'opacity-0',

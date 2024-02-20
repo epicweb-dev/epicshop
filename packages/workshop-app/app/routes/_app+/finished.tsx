@@ -2,6 +2,7 @@ import { ElementScrollRestoration } from '@epic-web/restore-scroll'
 import {
 	getExercises,
 	getWorkshopFinished,
+	getWorkshopRoot,
 	getWorkshopTitle,
 } from '@kentcdodds/workshop-utils/apps.server'
 import {
@@ -10,6 +11,7 @@ import {
 	makeTimings,
 	time,
 } from '@kentcdodds/workshop-utils/timing.server'
+import { getPkgProp } from '@kentcdodds/workshop-utils/utils.server'
 import {
 	defer,
 	type LoaderFunctionArgs,
@@ -48,10 +50,21 @@ export async function loader({ request }: LoaderFunctionArgs) {
 
 	const lastExercises = exercises[exercises.length - 1]
 	const workshopTitle = await getWorkshopTitle()
+	const workshopRoot = getWorkshopRoot()
+	const workshopFormTemplate = await getPkgProp(
+		workshopRoot,
+		'kcd-workshop.forms.workshop',
+		'https://docs.google.com/forms/d/e/1FAIpQLSdRmj9p8-5zyoqRzxp3UpqSbC3aFkweXvvJIKes0a5s894gzg/viewform?hl=en&embedded=true&entry.2123647600={workshopTitle}',
+	)
+	const workshopFormEmbedUrl = workshopFormTemplate.replace(
+		'{workshopTitle}',
+		encodeURIComponent(workshopTitle),
+	)
 	return defer(
 		{
 			articleId: `workshop-${slugify(workshopTitle)}-finished`,
 			workshopTitle,
+			workshopFormEmbedUrl,
 			finishedCode:
 				compiledFinished.compiled.status === 'success'
 					? compiledFinished.compiled.code
@@ -142,18 +155,23 @@ export default function ExerciseFinished() {
 						<NavChevrons prev={data.prevStepLink} next={{ to: '/' }} />
 					</div>
 				</div>
-				<Survey workshopTitle={data.workshopTitle} />
+				<Survey
+					workshopTitle={data.workshopTitle}
+					workshopFormEmbedUrl={data.workshopFormEmbedUrl}
+				/>
 			</main>
 		</div>
 	)
 }
 
-function Survey({ workshopTitle }: { workshopTitle: string }) {
+function Survey({
+	workshopTitle,
+	workshopFormEmbedUrl,
+}: {
+	workshopTitle: string
+	workshopFormEmbedUrl: string
+}) {
 	const [iframeLoaded, setIframeLoaded] = React.useState(false)
-	const searchParams = new URLSearchParams([
-		['embedded', 'true'],
-		['entry.2123647600', workshopTitle],
-	])
 	return (
 		<div className="relative flex-shrink-0">
 			{!iframeLoaded ? (
@@ -166,7 +184,7 @@ function Survey({ workshopTitle }: { workshopTitle: string }) {
 			<iframe
 				onLoad={() => setIframeLoaded(true)}
 				title="Elaboration"
-				src={`https://docs.google.com/forms/d/e/1FAIpQLSdRmj9p8-5zyoqRzxp3UpqSbC3aFkweXvvJIKes0a5s894gzg/viewform?${searchParams.toString()}&hl=en`}
+				src={workshopFormEmbedUrl}
 				className={cn(
 					'absolute inset-0 flex h-full w-full transition-opacity duration-300',
 					iframeLoaded ? 'opacity-100' : 'opacity-0',
