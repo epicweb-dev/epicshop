@@ -2,12 +2,16 @@
   "name": "kcdshop",
   "$schema": "node_modules/nx/schemas/project-schema.json",
   "targets": {
+    "build": {
+      "command": "nx run-many --target build"
+    },
     "lint": {
       "executor": "@nx/eslint:lint",
       "outputs": ["{options.outputFile}"],
       "options": {
         "lintFilePatterns": ["**/*.ts", "**/*.tsx", "**/*.js", "**/*.jsx"]
-      }
+      },
+      "dependsOn": ["@kentcdodds/workshop-app:build"]
     },
     "typecheck": {
       "command": "tsc -b"
