@@ -1,4 +1,3 @@
-// import { exec } from 'child_process'
 import os from 'os'
 import path from 'path'
 import { type CacheEntry } from '@epic-web/cachified'
@@ -18,7 +17,7 @@ import { compileMarkdownString } from '@kentcdodds/workshop-utils/compile-mdx.se
 import { type Timings } from '@kentcdodds/workshop-utils/timing.server'
 import { execa } from 'execa'
 import fsExtra from 'fs-extra'
-import { isGitIgnored } from 'globby'
+import ignore from 'ignore'
 import parseGitDiff, { type AnyFileChange } from 'parse-git-diff'
 import { BUNDLED_LANGUAGES } from 'shiki'
 
@@ -192,41 +191,35 @@ ${lines.join('\n')}
 	return markdownLines
 }
 
-const EXTRA_FILES_TO_IGNORE = [
-	/README(\.\d+)?\.mdx?$/,
-	/package-lock\.json$/,
-	/\.DS_Store$/,
-	/\.vscode$/,
-	/\.idea$/,
-	/\.git$/,
-	/\.db$/,
-	/\/kcdshop\//,
-	/\\kcdshop\\/,
+const DEFAULT_IGNORE_PATTERNS = [
+	'**/README.*',
+	'**/package-lock.json',
+	'**/.DS_Store',
+	'**/.vscode',
+	'**/.idea',
+	'**/.git',
+	'**/*.db',
+	'**/kcdshop/**',
 ]
 
 async function copyUnignoredFiles(
 	srcDir: string,
 	destDir: string,
-	ignore: Array<string>,
+	ignoreList: Array<string>,
 ) {
-	const key = `COPY_${srcDir}__${destDir}__${ignore.join('_')}`
+	const key = `COPY_${srcDir}__${destDir}__${ignoreList.join('_')}`
 	await cachified({
 		key,
 		cache: diffCodeCache,
 		forceFresh: getForceFreshForDir(srcDir, diffCodeCache.get(key)),
 		async getFreshValue() {
-			const isIgnored = await isGitIgnored({ cwd: srcDir })
+			const ig = ignore().add(ignoreList)
 
 			await fsExtra.remove(destDir)
 			await fsExtra.copy(srcDir, destDir, {
 				filter: async file => {
 					if (file === srcDir) return true
-					const shouldCopy =
-						!isIgnored(file) &&
-						![...ignore, ...EXTRA_FILES_TO_IGNORE].some(f =>
-							typeof f === 'string' ? file.includes(f) : f.test(file),
-						)
-					return shouldCopy
+					return !ig.ignores(path.relative(srcDir, file))
 				},
 			})
 		},
@@ -251,32 +244,60 @@ async function prepareForDiff(app1: App, app2: App) {
 	// if everything except the `name` property of the `package.json` is the same
 	// the don't bother copying it
 	const comparePkgJson = (pkg1: any, pkg2: any) => {
-		// eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
 		const { name, ...rest1 } = pkg1
-		// eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
 		const { name: name2, ...rest2 } = pkg2
 		return JSON.stringify(rest1) === JSON.stringify(rest2)
 	}
-	// eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
 	const app1PkgJson =
 		app1.dev.type === 'script'
 			? await fsExtra.readJSON(path.join(app1.fullPath, 'package.json'))
 			: {}
-	// eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
 	const app2PkgJson =
 		app1.dev.type === 'script'
 			? await fsExtra.readJSON(path.join(app2.fullPath, 'package.json'))
 			: {}
-	const ignore = comparePkgJson(app1PkgJson, app2PkgJson)
+	const pkgJsonIgnore: Array<string> = comparePkgJson(app1PkgJson, app2PkgJson)
 		? ['package.json']
 		: []
+	const workshopIgnore = [
+		...(await getDiffIgnore(path.join(workshopRoot, '.gitignore'))),
+		...(await getDiffIgnore(path.join(workshopRoot, 'kcdshop', '.diffignore'))),
+	]
 
 	await Promise.all([
-		copyUnignoredFiles(app1.fullPath, app1CopyPath, ignore),
-		copyUnignoredFiles(app2.fullPath, app2CopyPath, ignore),
+		copyUnignoredFiles(app1.fullPath, app1CopyPath, [
+			...DEFAULT_IGNORE_PATTERNS,
+			...pkgJsonIgnore,
+			...workshopIgnore,
+			...(await getDiffIgnore(path.join(app1.fullPath, '.gitignore'))),
+			...(await getDiffIgnore(
+				path.join(app1.fullPath, 'kcdshop', '.diffignore'),
+			)),
+		]),
+		copyUnignoredFiles(app2.fullPath, app2CopyPath, [
+			...DEFAULT_IGNORE_PATTERNS,
+			...pkgJsonIgnore,
+			...workshopIgnore,
+			...(await getDiffIgnore(path.join(app2.fullPath, '.gitignore'))),
+			...(await getDiffIgnore(
+				path.join(app2.fullPath, 'kcdshop', '.diffignore'),
+			)),
+		]),
 	])
 
 	return { app1CopyPath, app2CopyPath }
+}
+
+async function getDiffIgnore(filePath: string): Promise<Array<string>> {
+	return (await fsExtra.pathExists(filePath))
+		? fsExtra.readFile(filePath, 'utf8').then(content =>
+				content
+					.split('\n')
+					.map(line => line.trim())
+					.filter(line => !line.startsWith('#'))
+					.filter(Boolean),
+			)
+		: []
 }
 
 function getForceFreshForDiff(

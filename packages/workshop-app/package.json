@@ -86,6 +86,7 @@
     "get-port": "^7.0.0",
     "glob": "^10.3.10",
     "globby": "^14.0.0",
+    "ignore": "^5.3.1",
     "isbot": "^3.7.1",
     "lodash.escape": "^4.0.1",
     "lru-cache": "^10.0.2",
