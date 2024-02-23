@@ -126,7 +126,7 @@ function InBrowserBrowserForRealzImpl(
 	ref: ForwardedRef<InBrowserBrowserRef>,
 ) {
 	const [searchParams, setSearchParams] = useSearchParams()
-	const searchParamsPathname = searchParams.get('pathname') ?? '/'
+	const searchParamsPathname = searchParams.get('pathname') ?? ''
 	const [iframeKeyNumber, setIframeKeyNumber] = useState(0)
 	const iframeKey = id + iframeKeyNumber
 	const lastDirectionRef = useRef<'forward' | 'back' | 'new'>('new')
@@ -384,13 +384,18 @@ function InBrowserBrowserForRealzImpl(
 						onSubmit={() => handleExtrnalNavigation()}
 					>
 						{existingSearchParamHiddenInputs}
-						<input
-							aria-label="pathname"
-							className="flex-1 border-x bg-background p-3 leading-none text-foreground focus-visible:outline-none"
-							value={pathnameInputValue}
-							name="pathname"
-							onChange={e => setPathnameInputValue(e.currentTarget.value)}
-						/>
+						<div className="flex flex-1 items-center border-x bg-background p-3 leading-none text-foreground">
+							<a href={appUrl.toString()} target="_blank" rel="noreferrer">
+								{iframeSrcUrl.origin}/
+							</a>
+							<input
+								aria-label="pathname"
+								className="flex-1 focus-visible:outline-none"
+								value={pathnameInputValue}
+								name="pathname"
+								onChange={e => setPathnameInputValue(e.currentTarget.value)}
+							/>
+						</div>
 						{/* TODO: Reconsider if this is needed as browsers don't usually have a submit button in address bar */}
 						{/* <button type="submit">Go</button> */}
 					</Form>

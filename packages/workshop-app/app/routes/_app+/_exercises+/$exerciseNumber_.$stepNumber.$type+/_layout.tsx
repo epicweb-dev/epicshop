@@ -376,7 +376,11 @@ export default function ExercisePartRoute() {
 
 	function shouldHideTab(tab: (typeof tabs)[number]) {
 		if (tab === 'tests') {
-			return ENV.KCDSHOP_DEPLOYED || data.playground?.test.type === 'none'
+			return (
+				ENV.KCDSHOP_DEPLOYED ||
+				!data.playground ||
+				data.playground.test.type === 'none'
+			)
 		}
 		if (tab === 'problem' || tab === 'solution') {
 			if (data[tab]?.dev.type === 'none') return true
@@ -494,10 +498,7 @@ export default function ExercisePartRoute() {
 					// intentionally no onValueChange here because the Link will trigger the
 					// change.
 				>
-					{/* the scrollbar adds 8 pixels to the bottom of the list which looks
-					funny with the border, especially when most of the time the scrollbar
-					shouldn't show up anyway. So we hide that extra space with -8px margin-bottom */}
-					<Tabs.List className="z-20 mb-[-8px] h-14 flex-shrink-0 overflow-x-scroll border-b scrollbar-thin scrollbar-thumb-scrollbar">
+					<Tabs.List className="z-20 h-14 overflow-x-scroll border-b scrollbar-thin scrollbar-thumb-scrollbar">
 						{tabs.map(tab => {
 							return (
 								<Tabs.Trigger
@@ -511,7 +512,7 @@ export default function ExercisePartRoute() {
 								>
 									<Link
 										id={`${tab}-tab`}
-										className="h-14 outline-none focus:bg-foreground/80 focus:text-background/80"
+										className="h-full outline-none focus:bg-foreground/80 focus:text-background/80"
 										preventScrollReset
 										prefetch="intent"
 										onClick={handleDiffTabClick}

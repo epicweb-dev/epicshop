@@ -3,6 +3,7 @@ import { PlaygroundWindow } from './playground-window'
 import { Preview } from './preview'
 import { type InBrowserBrowserRef } from '#app/components/in-browser-browser'
 import { SimpleTooltip } from '#app/components/ui/tooltip'
+import { SetAppToPlayground } from '#app/routes/set-playground'
 
 export function Playground({
 	appInfo: playgroundAppInfo,
@@ -46,12 +47,19 @@ export function Playground({
 						</div>
 					</div>
 				</div>
-			) : (
+			) : playgroundAppInfo ? (
 				<Preview
-					id={playgroundAppInfo?.appName}
+					id={playgroundAppInfo.appName}
 					appInfo={playgroundAppInfo}
 					inBrowserBrowserRef={inBrowserBrowserRef}
 				/>
+			) : (
+				<div className="flex flex-col justify-center gap-2">
+					<p>Please set the playground first</p>
+					{problemAppName ? (
+						<SetAppToPlayground appName={problemAppName} />
+					) : null}
+				</div>
 			)}
 		</PlaygroundWindow>
 	)
