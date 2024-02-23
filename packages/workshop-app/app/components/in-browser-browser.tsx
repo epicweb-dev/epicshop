@@ -386,7 +386,7 @@ function InBrowserBrowserForRealzImpl(
 						{existingSearchParamHiddenInputs}
 						<div className="flex flex-1 items-center border-x bg-background p-3 leading-none text-foreground">
 							<a href={appUrl.toString()} target="_blank" rel="noreferrer">
-								{iframeSrcUrl.origin}/
+								{iframeSrcUrl.host}/
 							</a>
 							<input
 								aria-label="pathname"
