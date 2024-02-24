@@ -70,13 +70,12 @@ if (viteDevServer) {
 			maxAge: isProd ? '1h' : 0,
 		}),
 	)
-
-	app.use(
-		express.static(path.join(workshopRoot, 'public'), {
-			maxAge: isProd ? '1h' : 0,
-		}),
-	)
 }
+app.use(
+	express.static(path.join(workshopRoot, 'public'), {
+		maxAge: isProd ? '1h' : 0,
+	}),
+)
 
 if ((process.env.NODE_ENV !== 'production' && !isPublished) || isDeployed) {
 	morgan.token('url', req => decodeURIComponent(req.url ?? ''))
