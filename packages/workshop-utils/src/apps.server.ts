@@ -935,6 +935,14 @@ export function getAppPageRoute(app: ExerciseStepApp) {
 	return `/${exerciseNumber}/${stepNumber}/${app.type}`
 }
 
+/**
+ * Given a file path, this will find the app that file path belongs to.
+ */
+export async function getAppFromFile(filePath: string) {
+	const apps = await getApps()
+	return apps.find(app => filePath.startsWith(app.fullPath))
+}
+
 export async function setPlayground(
 	srcDir: string,
 	{ reset }: { reset?: boolean } = {},

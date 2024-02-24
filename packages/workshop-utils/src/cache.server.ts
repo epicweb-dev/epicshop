@@ -35,6 +35,7 @@ export type CachedEmbeddedFilesList = Record<string, string[]>
 export const embeddedFilesCache = makeSingletonCache<
 	CachedEmbeddedFilesList | undefined
 >('EmbeddedFilesCache')
+export const compiledCodeCache = makeSingletonCache<string>('CompiledCodeCache')
 
 const cacheDir = path.join(os.homedir(), '.kcdshop', 'cache')
 

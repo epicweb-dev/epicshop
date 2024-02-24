@@ -17,6 +17,10 @@
     "baseUrl": ".",
     "paths": {
       "#*": ["./*"],
+      "@kentcdodds/workshop-utils/*": [
+        "../workshop-utils/src/*.ts",
+        "../workshop-utils/src/*.tsx"
+      ],
       "@/icon-name": [
         "./app/components/ui/icons/name.d.ts",
         "./types/icon-name.d.ts"

@@ -1,6 +1,7 @@
 import path from 'path'
 import { invariantResponse } from '@epic-web/invariant'
 import { getAppByName } from '@kentcdodds/workshop-utils/apps.server'
+import { makeTimings } from '@kentcdodds/workshop-utils/timing.server'
 import { redirect, type LoaderFunctionArgs } from '@remix-run/node'
 import fsExtra from 'fs-extra'
 import mimeTypes from 'mime-types'
@@ -8,6 +9,7 @@ import { compileTs } from '#app/utils/compile-app.server.ts'
 import { getBaseUrl } from '#app/utils/misc.tsx'
 
 export async function loader({ request, params }: LoaderFunctionArgs) {
+	const timings = makeTimings('app-file')
 	const { id: appId, '*': splat } = params
 	const url = new URL(request.url)
 	const fileAppName = url.searchParams.get('fileAppName')
@@ -32,7 +34,11 @@ export async function loader({ request, params }: LoaderFunctionArgs) {
 	}
 	if (filePath.endsWith('.ts') || filePath.endsWith('.tsx')) {
 		// compile ts/tsx files
-		const { outputFiles, errors } = await compileTs(filePath, app.fullPath)
+		const { outputFiles, errors } = await compileTs(filePath, app.fullPath, {
+			forceFresh: true,
+			request,
+			timings,
+		})
 		if (errors.length) {
 			console.error(`Failed to compile file "${filePath}"`)
 			console.error(errors)
@@ -46,6 +52,7 @@ export async function loader({ request, params }: LoaderFunctionArgs) {
 			headers: {
 				'Content-Length': Buffer.byteLength(file).toString(),
 				'Content-Type': 'text/javascript',
+				'Server-Timing': timings.toString(),
 			},
 		})
 	} else {
@@ -55,6 +62,7 @@ export async function loader({ request, params }: LoaderFunctionArgs) {
 			headers: {
 				'Content-Length': Buffer.byteLength(file).toString(),
 				'Content-Type': mimeType,
+				'Server-Timing': timings.toString(),
 			},
 		})
 	}
