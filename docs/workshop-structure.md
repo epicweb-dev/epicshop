@@ -152,12 +152,12 @@ an `index.html` will be generated on-demand for you. In this case you can also
 have an `index.css` file and that will be included in the generated `index.html`
 file as well.
 
-Another thing you can do with a simple app is create an `api.ts` (or `.tsx` or
-`.js` or `.jsx`) file which exports a `loader` and/or `action` function. This
-will be compiled and then dynamically imported by the workshop app any time
-there is a request to `api` from the simple app. You can treat the `loader` and
-`action` functions as if they're Remix loader and actions functions (because
-they are basically).
+Another thing you can do with a simple app is create an `api.server.ts` (or
+`.tsx` or `.js` or `.jsx`) file which exports a `loader` and/or `action`
+function. This will be compiled and then dynamically imported by the workshop
+app any time there is a request to `api` from the simple app. You can treat the
+`loader` and `action` functions as if they're Remix loader and actions functions
+(because they are basically).
 
 Keep in mind that these are all served from the workshop app, so you don't
 really get isolation from the workshop app which could potentially cause some

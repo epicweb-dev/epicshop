@@ -56,24 +56,23 @@ async function getApiModule({ request, params }: LoaderFunctionArgs) {
 	}
 
 	const apiFiles = (await fsExtra.readdir(app.fullPath))
-		.filter((file: string) => /^api\.(ts|tsx|js|jsx)$/.test(file))
+		.filter((file: string) => /^api\.server\.(ts|tsx|js|jsx)$/.test(file))
 		.map(f => path.join(app.fullPath, f))
 	const apiFile = apiFiles[0]
 	if (!apiFile) {
 		throw new Response(
-			`No api.(ts|tsx|js|jsx) file found in "${app.fullPath}"`,
+			`No api.server.(ts|tsx|js|jsx) file found in "${app.fullPath}"`,
 			{ status: 404 },
 		)
 	}
 	if (apiFiles.length > 1) {
 		throw new Response(
-			`Only one api.(ts|tsx|js|jsx) file is allowed, found ${apiFiles.join(', ')}`,
+			`Only one api.server.(ts|tsx|js|jsx) file is allowed, found ${apiFiles.join(', ')}`,
 			{ status: 400 },
 		)
 	}
 
 	const { outputFiles, errors } = await compileTs(apiFile, app.fullPath, {
-		forceFresh: true,
 		request,
 		timings,
 	})
