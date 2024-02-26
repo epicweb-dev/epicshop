@@ -116,8 +116,9 @@ export async function updateLocalRepo() {
 		const postUpdateScript = await getPkgProp(
 			cwd,
 			'kcd-workshop.scripts.postupdate',
+			'',
 		)
-		if (typeof postUpdateScript === 'string') {
+		if (postUpdateScript) {
 			console.log('🏃 Running post update script...')
 			await execaCommand(postUpdateScript, { cwd, stdio: 'inherit' })
 		}
