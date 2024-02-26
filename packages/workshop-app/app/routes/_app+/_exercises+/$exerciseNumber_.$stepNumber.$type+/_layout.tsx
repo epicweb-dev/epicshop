@@ -498,7 +498,7 @@ export default function ExercisePartRoute() {
 					// intentionally no onValueChange here because the Link will trigger the
 					// change.
 				>
-					<Tabs.List className="z-20 h-14 overflow-x-scroll border-b scrollbar-thin scrollbar-thumb-scrollbar">
+					<Tabs.List className="h-14 overflow-x-scroll border-b scrollbar-thin scrollbar-thumb-scrollbar">
 						{tabs.map(tab => {
 							return (
 								<Tabs.Trigger
