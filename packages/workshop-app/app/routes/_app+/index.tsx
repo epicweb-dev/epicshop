@@ -114,7 +114,7 @@ export default function Index() {
 	const exerciseLinks = (
 		<ul className="flex flex-col divide-y divide-border dark:divide-border/50">
 			<strong className="px-10 pb-3 font-mono text-xs uppercase">
-				Sections
+				Exercises
 			</strong>
 			{data.exercises.map(exercise => (
 				<ExerciseListItem key={exercise.exerciseNumber} exercise={exercise} />
