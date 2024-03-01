@@ -412,11 +412,20 @@ export async function launchEditor(
 			_childProcess = child_process.spawn(
 				'cmd.exe',
 				['/C', editor].concat(args).filter(Boolean),
-				{ stdio: 'inherit' },
+				{ stdio: ['inherit', 'inherit', 'pipe'] },
 			)
 		} else {
-			_childProcess = child_process.spawn(editor, args, { stdio: 'inherit' })
+			_childProcess = child_process.spawn(editor, args, {
+				stdio: ['inherit', 'inherit', 'pipe'],
+			})
 		}
+		_childProcess.stderr?.on('data', (data: string | Uint8Array) => {
+			const message = String(data)
+			// Filter out the specific error message for environment variable issues
+			if (!message.includes('Node.js environment variables are disabled')) {
+				process.stderr.write(data) // Only write non-filtered messages to stderr
+			}
+		})
 		_childProcess.on('exit', async errorCode => {
 			_childProcess = null
 
