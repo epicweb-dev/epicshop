@@ -60,9 +60,11 @@ script to `kcd-workshop.scripts` in the root `package.json`:
 
 ## Forms
 
-For the time being, we're using Google forms for the feedback and elaboration
-bits at the end of each exercise and the end of the workshop. You can customize
-these in the `package.json` of the root of your workshop like so:
+For the time being, we're using Google Forms for the feedback and elaboration
+bits at the end of each exercise and the end of the workshop.
+
+You can customize the exercise and workshop feedback forms in the `package.json`
+of the root of your workshop:
 
 ```json
 {
@@ -75,13 +77,23 @@ these in the `package.json` of the root of your workshop like so:
 }
 ```
 
-Note that you can interpolate the `workshopTitle` and `exerciseTitle` into the
-URL so the user doesn't have to fill it out themselves (makes it easier to
-aggregate their feedback later).
+### Pre-filling the forms
 
-Unfortunately the `entry.2390423` values are kinda hard to find. You get them by
-creating a "Pre-filled URL" in the Google form and then you can see the values
-in the URL that's given to you.
-[Learn more](https://support.google.com/docs/answer/160000?co=GENIE.Platform%3DDesktop&hl=en).
+Creating a feedback form for each exercise will quickly lead to you having
+hundreds of forms! Instead, kcdshop can take the same Google form URL and
+pre-fill the `{exerciseTitle}` and `{workshopTitle}` tokens present in it with
+the right exercise and workshop title.
+
+For that to work, you have to **create a pre-filled form URL**. To do that, read
+the "Send a form with pre-filled answers" in
+[Send our your form](https://support.google.com/docs/answer/160000?co=GENIE.Platform%3DDesktop&hl=en).
+
+1. Open your exercise/workshop feedback form on Google Forms;
+1. Click on the vertical menu icon (three dots next to your avatar), choose "Get
+   pre-filled link";
+1. In the opened form, put the `{exerciseTitle}` and `{workshopTitle}` literal
+   values into the right fields in your form;
+1. At the bottom, click "Get link". A "COPY LINK" button will appear. Click it
+   to copy the pre-filled URL. Use that URL in `package.json`.
 
 Eventually we'll probably move to something more custom, but for now this works.
