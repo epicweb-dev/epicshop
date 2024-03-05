@@ -26,6 +26,8 @@ export function getWatcher() {
 			'**/build/**',
 			'**/public/build/**',
 			'**/playwright-report/**',
+			'**/dist/**',
+			'**/.cache/**',
 		],
 	})
 	global.__change_tracker_watcher__ = watcher
