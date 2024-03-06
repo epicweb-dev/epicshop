@@ -3,7 +3,7 @@ import { clsx } from 'clsx'
 import { LRUCache } from 'lru-cache'
 import { type MDXContentProps } from 'mdx-bundler/client'
 import * as mdxBundler from 'mdx-bundler/client/index.js'
-import * as React from 'react'
+import { useEffect, useMemo, useState } from 'react'
 import { AnchorOrLink, Heading, cn } from './misc.tsx'
 import { VideoEmbed, DeferredEpicVideo } from '#app/components/epic-video.tsx'
 import { Icon } from '#app/components/icons.tsx'
@@ -100,9 +100,9 @@ function OpenInEditor({
 }
 
 function CopyButton(): React.ReactNode {
-	const [copied, setCopied] = React.useState(false)
+	const [copied, setCopied] = useState(false)
 
-	React.useEffect(() => {
+	useEffect(() => {
 		if (copied) {
 			const timeoutId = setTimeout(() => setCopied(false), 1500)
 			return () => clearTimeout(timeoutId)
@@ -220,7 +220,7 @@ const mdxComponentCache = new LRUCache<
 >({ max: 1000 })
 
 export function useMdxComponent(code: string) {
-	return React.useMemo(() => {
+	return useMemo(() => {
 		if (mdxComponentCache.has(code)) {
 			return mdxComponentCache.get(code)!
 		}
@@ -232,20 +232,15 @@ export function useMdxComponent(code: string) {
 
 export function Mdx({
 	code,
-	components,
+	components: externalComponents,
 }: {
 	code: string
 	components?: MDXContentProps['components']
 }) {
 	const Component = useMdxComponent(code)
-	return (
-		<Component
-			components={{
-				Icon,
-				pre: PreWithButtons,
-				Link,
-				...components,
-			}}
-		/>
+	const components = useMemo(
+		() => ({ Icon, pre: PreWithButtons, Link, ...externalComponents }),
+		[externalComponents],
 	)
+	return <Component components={components} />
 }

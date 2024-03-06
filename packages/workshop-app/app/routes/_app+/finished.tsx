@@ -102,6 +102,8 @@ export const headers: HeadersFunction = ({ loaderHeaders, parentHeaders }) => {
 	return headers
 }
 
+const mdxComponents = { h1: () => null }
+
 export default function ExerciseFinished() {
 	const data = useLoaderData<typeof loader>()
 	return (
@@ -128,10 +130,7 @@ export default function ExerciseFinished() {
 								epicVideoInfosPromise={data.epicVideoInfosPromise}
 							>
 								<div className="prose dark:prose-invert sm:prose-lg">
-									<Mdx
-										code={data.finishedCode}
-										components={{ h1: () => null }}
-									/>
+									<Mdx code={data.finishedCode} components={mdxComponents} />
 								</div>
 							</EpicVideoInfoProvider>
 						) : (

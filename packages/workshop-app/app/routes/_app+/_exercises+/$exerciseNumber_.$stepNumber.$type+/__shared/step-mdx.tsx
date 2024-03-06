@@ -45,6 +45,14 @@ function StepContextProvider({
 	)
 }
 
+const stepMdxComponents = {
+	CodeFile,
+	CodeFileNotification,
+	DiffLink,
+	InlineFile,
+	LinkToApp,
+}
+
 export function StepMdx({
 	inBrowserBrowserRef,
 }: {
@@ -58,13 +66,7 @@ export function StepMdx({
 				<div className="prose dark:prose-invert sm:prose-lg">
 					<Mdx
 						code={data.exerciseStepApp.instructionsCode}
-						components={{
-							CodeFile,
-							CodeFileNotification,
-							DiffLink,
-							InlineFile,
-							LinkToApp,
-						}}
+						components={stepMdxComponents}
 					/>
 				</div>
 			</EpicVideoInfoProvider>

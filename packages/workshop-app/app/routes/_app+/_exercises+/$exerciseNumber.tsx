@@ -120,6 +120,7 @@ export const headers: HeadersFunction = ({ loaderHeaders, parentHeaders }) => {
 	return headers
 }
 
+const mdxComponents = { h1: () => null }
 export default function ExerciseNumberRoute() {
 	const data = useLoaderData<typeof loader>()
 
@@ -145,9 +146,7 @@ export default function ExerciseNumberRoute() {
 							<div className="prose dark:prose-invert sm:prose-lg">
 								<Mdx
 									code={data.exercise.instructionsCode}
-									components={{
-										h1: () => null,
-									}}
+									components={mdxComponents}
 								/>
 							</div>
 						</EpicVideoInfoProvider>

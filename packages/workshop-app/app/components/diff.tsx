@@ -25,6 +25,12 @@ type diffProp = {
 
 const pre = (props: any) => <pre {...props} />
 
+const mdxComponents = {
+	Accordion: AccordionComponent,
+	// override the pre-with-buttons
+	pre,
+}
+
 export function Diff({
 	diff,
 	allApps,
@@ -109,14 +115,7 @@ export function Diff({
 							{diff.diffCode ? (
 								<div>
 									<Accordion.Root className="w-full" type="multiple">
-										<Mdx
-											code={diff.diffCode}
-											components={{
-												Accordion: AccordionComponent,
-												// override the pre-with-buttons
-												pre,
-											}}
-										/>
+										<Mdx code={diff.diffCode} components={mdxComponents} />
 									</Accordion.Root>
 								</div>
 							) : diff.app1 && diff.app2 ? (

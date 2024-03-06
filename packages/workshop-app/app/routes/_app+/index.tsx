@@ -108,6 +108,8 @@ function ExerciseListItem({
 	)
 }
 
+const mdxComponents = { h1: () => null }
+
 export default function Index() {
 	const data = useLoaderData<typeof loader>()
 
@@ -144,9 +146,7 @@ export default function Index() {
 							<div className="prose dark:prose-invert sm:prose-lg">
 								<Mdx
 									code={data.workshopReadme.compiled.code}
-									components={{
-										h1: () => null,
-									}}
+									components={mdxComponents}
 								/>
 							</div>
 						</EpicVideoInfoProvider>
