@@ -82,6 +82,31 @@ if ((process.env.NODE_ENV !== 'production' && !isPublished) || isDeployed) {
 	app.use(morgan('tiny'))
 }
 
+function getNumberOrNull(value: unknown) {
+	if (value == null) return null
+	const number = Number(value)
+	return Number.isNaN(number) ? null : number
+}
+
+// redirect /01/01 to /1/1 etc.
+app.use((req, res, next) => {
+	const segments = req.url
+		.split('/')
+		.map(s => s.trim())
+		.filter(Boolean)
+	// eslint-disable-next-line prefer-const
+	let [first, second, ...rest] = segments
+	const firstNumber = getNumberOrNull(first)
+	const secondNumber = getNumberOrNull(second)
+	if (firstNumber != null) first = firstNumber.toString().padStart(2, '0')
+	if (secondNumber != null) second = secondNumber.toString().padStart(2, '0')
+	const updatedUrl = `/${[first, second, ...rest].join('/')}`
+	if (req.url !== updatedUrl) {
+		return res.redirect(302, updatedUrl)
+	}
+	next()
+})
+
 app.all(
 	'*',
 	createRequestHandler({
