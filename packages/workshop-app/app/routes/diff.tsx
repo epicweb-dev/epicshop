@@ -2,8 +2,7 @@ import {
 	getAppByName,
 	getApps,
 	isExerciseStepApp,
-	isPlaygroundApp,
-	type App,
+	getAppDisplayName,
 } from '@kentcdodds/workshop-utils/apps.server'
 import { makeTimings } from '@kentcdodds/workshop-utils/timing.server'
 import { defer, type LoaderFunctionArgs } from '@remix-run/node'
@@ -57,30 +56,10 @@ export async function loader({ request }: LoaderFunctionArgs) {
 		}
 	}
 
-	function getDisplayName(a: App) {
-		let displayName = `${a.title} (${a.type})`
-		if (isExerciseStepApp(a)) {
-			displayName = `${a.exerciseNumber}.${a.stepNumber} ${a.title} (${
-				{ problem: '💪', solution: '🏁' }[a.type]
-			} ${a.type})`
-		} else if (isPlaygroundApp(a)) {
-			const playgroundAppBasis = allAppsFull.find(
-				otherApp => a.appName === otherApp.name,
-			)
-			if (playgroundAppBasis) {
-				const basisDisplayName = getDisplayName(playgroundAppBasis)
-				displayName = `🛝 Playground: ${basisDisplayName}`
-			} else {
-				displayName = `🛝 Playground: ${a.appName}`
-			}
-		}
-		return displayName
-	}
-
 	const allApps = allAppsFull
 		.filter((a, i, ar) => ar.findIndex(b => a.name === b.name) === i)
 		.map(a => ({
-			displayName: getDisplayName(a),
+			displayName: getAppDisplayName(a, allAppsFull),
 			name: a.name,
 			title: a.title,
 			type: a.type,

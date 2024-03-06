@@ -1104,6 +1104,25 @@ export async function getPlaygroundAppName() {
 	}
 }
 
+export function getAppDisplayName(a: App, allApps: Array<App>) {
+	let displayName = `${a.title} (${a.type})`
+	if (isExerciseStepApp(a)) {
+		const typeLabel = { problem: '💪', solution: '🏁' }[a.type]
+		displayName = `${a.exerciseNumber}.${a.stepNumber} ${a.title} (${typeLabel} ${a.type})`
+	} else if (isPlaygroundApp(a)) {
+		const playgroundAppBasis = allApps.find(
+			otherApp => a.appName === otherApp.name,
+		)
+		if (playgroundAppBasis) {
+			const basisDisplayName = getAppDisplayName(playgroundAppBasis, allApps)
+			displayName = `🛝 ${basisDisplayName}`
+		} else {
+			displayName = `🛝 ${a.appName}`
+		}
+	}
+	return displayName
+}
+
 export async function getWorkshopTitle() {
 	const title = await getPkgProp<string>(workshopRoot, 'kcd-workshop.title')
 	if (!title) {

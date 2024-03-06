@@ -13,6 +13,7 @@ import {
 	requireExerciseApp,
 	type App,
 	type ExerciseStepApp,
+	getAppDisplayName,
 } from '@kentcdodds/workshop-utils/apps.server'
 import {
 	isAppRunning,
@@ -146,26 +147,6 @@ export async function loader({ request, params }: LoaderFunctionArgs) {
 		: playgroundApp || problemApp
 	const app2 = app2Name ? await getAppByName(app2Name) : solutionApp
 
-	function getDisplayName(a: App) {
-		let displayName = `${a.title} (${a.type})`
-		if (isExerciseStepApp(a)) {
-			displayName = `${a.exerciseNumber}.${a.stepNumber} ${a.title} (${
-				{ problem: '💪', solution: '🏁' }[a.type]
-			} ${a.type})`
-		} else if (isPlaygroundApp(a)) {
-			const playgroundAppBasis = allAppsFull.find(
-				otherApp => a.appName === otherApp.name,
-			)
-			if (playgroundAppBasis) {
-				const basisDisplayName = getDisplayName(playgroundAppBasis)
-				displayName = `🛝 Playground: ${basisDisplayName}`
-			} else {
-				displayName = `🛝 Playground: ${a.appName}`
-			}
-		}
-		return displayName
-	}
-
 	function getStepId(a: ExerciseStepApp) {
 		return (
 			a.exerciseNumber * 1000 +
@@ -201,7 +182,7 @@ export async function loader({ request, params }: LoaderFunctionArgs) {
 	const allApps = allAppsFull
 		.filter((a, i, ar) => ar.findIndex(b => a.name === b.name) === i)
 		.map(a => ({
-			displayName: getDisplayName(a),
+			displayName: getAppDisplayName(a, allAppsFull),
 			name: a.name,
 			title: a.title,
 			type: a.type,
