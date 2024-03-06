@@ -157,17 +157,6 @@ export default function DiffViewer() {
 				<Diff diff={data.diff} allApps={data.allApps} />
 			</div>
 			<div className="flex h-16 items-center justify-end border-t">
-				<SimpleTooltip content="Reload diff">
-					<Link
-						to={`.?${paramsWithForcedRefresh}`}
-						className="flex h-full w-16 items-center justify-center"
-					>
-						<Icon
-							name="Refresh"
-							className={cn({ 'animate-spin': spinnerNavigating })}
-						/>
-					</Link>
-				</SimpleTooltip>
 				<NavChevrons prev={data.prevLink} next={data.nextLink} />
 			</div>
 		</div>
