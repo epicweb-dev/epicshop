@@ -1,12 +1,21 @@
 import * as Accordion from '@radix-ui/react-accordion'
 import * as Select from '@radix-ui/react-select'
-import { Await, Form, useSearchParams, useSubmit } from '@remix-run/react'
+import {
+	Await,
+	Form,
+	Link,
+	useNavigation,
+	useSearchParams,
+	useSubmit,
+} from '@remix-run/react'
 import { clsx } from 'clsx'
 import React, { Suspense } from 'react'
+import { useSpinDelay } from 'spin-delay'
 import { Icon } from './icons.tsx'
 import { SimpleTooltip } from './ui/tooltip.tsx'
 import AccordionComponent from '#app/components/accordion.tsx'
 import { Mdx } from '#app/utils/mdx.tsx'
+import { cn } from '#app/utils/misc.tsx'
 
 type diffProp = {
 	app1?: string
@@ -25,6 +34,13 @@ export function Diff({
 }) {
 	const submit = useSubmit()
 	const [params] = useSearchParams()
+	const paramsWithForcedRefresh = new URLSearchParams(params)
+	paramsWithForcedRefresh.set('forceFresh', 'diff')
+	const navigation = useNavigation()
+	const spinnerNavigating = useSpinDelay(navigation.state !== 'idle', {
+		delay: 0,
+		minDuration: 1000,
+	})
 
 	const hiddenInputs: Array<React.ReactNode> = []
 	for (const [key, value] of params.entries()) {
@@ -54,10 +70,23 @@ export function Diff({
 			>
 				{diff => (
 					<div className="flex h-full w-full flex-col">
-						<div className="h-14 flex-shrink-0 border-b">
+						<div className="flex h-14 w-full overflow-x-hidden border-b">
+							<div className="border-r">
+								<SimpleTooltip content="Reload diff">
+									<Link
+										to={`.?${paramsWithForcedRefresh}`}
+										className="flex h-full w-14 items-center justify-center"
+									>
+										<Icon
+											name="Refresh"
+											className={cn({ 'animate-spin': spinnerNavigating })}
+										/>
+									</Link>
+								</SimpleTooltip>
+							</div>
 							<Form
 								onChange={e => submit(e.currentTarget)}
-								className="flex h-full w-full items-center overflow-x-auto scrollbar-thin scrollbar-thumb-scrollbar"
+								className="flex h-full flex-1 items-center overflow-x-auto scrollbar-thin scrollbar-thumb-scrollbar"
 								key={`${diff.app1}${diff.app2}`}
 							>
 								{hiddenInputs}
@@ -124,7 +153,7 @@ function SelectFileToDiff({
 		<Select.Root name={name} defaultValue={defaultValue}>
 			<Select.Trigger
 				className={clsx(
-					'flex h-full w-full min-w-[10rem] max-w-[50%] items-center justify-between px-3 text-left radix-placeholder:text-gray-500 focus-visible:outline-none',
+					'flex h-full w-full max-w-[50%] items-center justify-between px-3 text-left radix-placeholder:text-gray-500 focus-visible:outline-none',
 					className,
 				)}
 				aria-label={`Select ${label} for git Diff`}

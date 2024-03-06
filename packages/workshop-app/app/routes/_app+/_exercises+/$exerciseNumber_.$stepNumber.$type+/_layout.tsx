@@ -108,6 +108,7 @@ export const meta: MetaFunction<typeof loader, { root: typeof rootLoader }> = ({
 export async function loader({ request, params }: LoaderFunctionArgs) {
 	const timings = makeTimings('exerciseStepTypeLoader')
 	const workshopTitle = await getWorkshopTitle()
+	const searchParams = new URL(request.url).searchParams
 	const cacheOptions = { request, timings }
 	const exerciseStepApp = await requireExerciseApp(params, cacheOptions)
 	const exercise = await requireExercise(
@@ -231,12 +232,18 @@ export async function loader({ request, params }: LoaderFunctionArgs) {
 			}
 		}
 		const [diffCode, diffFiles] = await Promise.all([
-			getDiffCode(app1, app2, cacheOptions).catch(e => {
+			getDiffCode(app1, app2, {
+				...cacheOptions,
+				forceFresh: searchParams.get('forceFresh') === 'diff',
+			}).catch(e => {
 				console.error(e)
 				return null
 			}),
 			problemApp && solutionApp
-				? getDiffFiles(problemApp, solutionApp, cacheOptions).catch(e => {
+				? getDiffFiles(problemApp, solutionApp, {
+						...cacheOptions,
+						forceFresh: searchParams.get('forceFresh') === 'diff',
+					}).catch(e => {
 						console.error(e)
 						return 'There was a problem generating the diff'
 					})

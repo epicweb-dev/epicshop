@@ -343,7 +343,7 @@ function getAppTestFiles(app: App) {
 	return app.test.type === 'browser' ? app.test.testFiles : []
 }
 
-export async function getDiffFilesImpl(app1: App, app2: App) {
+async function getDiffFilesImpl(app1: App, app2: App) {
 	if (app1.name === app2.name) {
 		return []
 	}
