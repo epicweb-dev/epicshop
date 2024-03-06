@@ -76,7 +76,7 @@ export function Diff({
 			>
 				{diff => (
 					<div className="flex h-full w-full flex-col">
-						<div className="flex min-h-14 w-full overflow-x-hidden border-b">
+						<div className="flex h-14 min-h-14 w-full overflow-x-hidden border-b">
 							<div className="border-r">
 								<SimpleTooltip content="Reload diff">
 									<Link
