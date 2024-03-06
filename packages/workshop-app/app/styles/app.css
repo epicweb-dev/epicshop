@@ -76,6 +76,9 @@ body {
 	--base0D: #82aaff; /* function calls */
 	--base0E: #c792ea; /* operators */
 	--base0F: #d3423e; /* "Embedded" (whatever that means) */
+
+	--highlight-removed: #d3423e;
+	--highlight-added: #7fdbca;
 }
 
 :root .light,
@@ -96,6 +99,9 @@ body {
 	--base0D: #4876d6; /* function calls */
 	--base0E: #994cc3; /* operators */
 	--base0F: #d3423e; /* "Embedded" (whatever that means) */
+
+	--highlight-removed: #d3423e;
+	--highlight-added: #0c969b;
 }
 
 /*
@@ -257,7 +263,7 @@ body {
 }
 
 .prose pre[data-remove] .codeblock-line[data-remove]:after {
-	background: var(--base0F);
+	background: var(--highlight-removed);
 }
 
 /* extra attributes are to make it more specific, otherwise the line number would show up */
@@ -266,7 +272,7 @@ body {
 }
 
 .prose pre[data-add] .codeblock-line[data-add]:after {
-	background: var(--base08);
+	background: var(--highlight-added);
 }
 
 .prose pre {

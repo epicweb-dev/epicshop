@@ -19,7 +19,7 @@ import { execa } from 'execa'
 import fsExtra from 'fs-extra'
 import ignore from 'ignore'
 import parseGitDiff, { type AnyFileChange } from 'parse-git-diff'
-import { BUNDLED_LANGUAGES } from 'shiki'
+import { bundledLanguagesInfo } from 'shiki/langs'
 
 const kcdshopTempDir = path.join(os.tmpdir(), 'kcdshop')
 
@@ -53,8 +53,8 @@ function diffPathToRelative(filePath: string) {
 
 function getLanguage(ext: string) {
 	return (
-		BUNDLED_LANGUAGES.find(l => l.id === ext || l.aliases?.includes(ext))?.id ??
-		'text'
+		bundledLanguagesInfo.find(l => l.id === ext || l.aliases?.includes(ext))
+			?.id ?? 'text'
 	)
 }
 

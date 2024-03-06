@@ -1,5 +1,5 @@
-import { useForm } from '@conform-to/react'
-import { parse } from '@conform-to/zod'
+import { getFormProps, useForm } from '@conform-to/react'
+import { parseWithZod } from '@conform-to/zod'
 import { json, redirect, type ActionFunctionArgs } from '@remix-run/node'
 import { useFetcher, useFetchers } from '@remix-run/react'
 import * as React from 'react'
@@ -21,20 +21,14 @@ const ThemeFormSchema = z.object({
 
 export async function action({ request }: ActionFunctionArgs) {
 	const formData = await request.formData()
-	const submission = parse(formData, {
+	const submission = parseWithZod(formData, {
 		schema: ThemeFormSchema,
 	})
-	if (!submission.value) {
-		return json(
-			{
-				status: 'error',
-				submission,
-			} as const,
-			{ status: 400 },
-		)
-	}
-	if (submission.intent !== 'submit') {
-		return json({ status: 'success', submission } as const)
+	if (submission.status !== 'success') {
+		return json(submission.reply(), {
+			// You can also use the status to determine the HTTP status code
+			status: submission.status === 'error' ? 400 : 200,
+		})
 	}
 	const { redirectTo, theme } = submission.value
 
@@ -44,7 +38,7 @@ export async function action({ request }: ActionFunctionArgs) {
 	if (redirectTo) {
 		return redirect(safeRedirect(redirectTo), responseInit)
 	} else {
-		return json({ success: true, submission }, responseInit)
+		return json(submission.reply(), responseInit)
 	}
 }
 
@@ -59,9 +53,9 @@ export function ThemeSwitch() {
 
 	const [form] = useForm({
 		id: 'onboarding',
-		lastSubmission: fetcher.data?.submission,
+		lastResult: fetcher.data,
 		onValidate({ formData }) {
-			return parse(formData, { schema: ThemeFormSchema })
+			return parseWithZod(formData, { schema: ThemeFormSchema })
 		},
 	})
 
@@ -75,7 +69,7 @@ export function ThemeSwitch() {
 	}
 
 	return (
-		<fetcher.Form method="POST" action={ROUTE_PATH} {...form.props}>
+		<fetcher.Form method="POST" action={ROUTE_PATH} {...getFormProps(form)}>
 			<div className="flex gap-2">
 				{/*
 					this is for progressive enhancement so we redirect them to the page

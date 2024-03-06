@@ -20,7 +20,7 @@ function getRelativePath(file: string, separator: string, type?: string) {
 }
 
 const buttonClassName =
-	'border-border bg-[var(--base00)] hover:bg-foreground/20 active:bg-foreground/30 box-content block rounded border-2 px-2 py-0.5 font-mono text-xs font-semibold outline-none transition duration-300 ease-in-out'
+	'border-border bg-[var(--shiki-background)] hover:bg-foreground/20 active:bg-foreground/30 box-content block rounded border-2 px-2 py-0.5 font-mono text-xs font-semibold outline-none transition duration-300 ease-in-out'
 
 type DataProps = {
 	'data-buttons'?: string
@@ -201,13 +201,14 @@ export const mdxComponents = {
 function getMdxComponent(code: string) {
 	const Component = mdxBundler.getMDXComponent(code)
 	function KCDMdxComponent({
-		components,
+		components: externalComponents,
 		...rest
 	}: Parameters<typeof Component>['0']) {
-		return (
-			// @ts-expect-error the types are wrong here
-			<Component components={{ ...mdxComponents, ...components }} {...rest} />
+		const components = useMemo(
+			() => ({ ...mdxComponents, ...externalComponents }),
+			[externalComponents],
 		)
+		return <Component components={components} {...rest} />
 	}
 	return KCDMdxComponent
 }

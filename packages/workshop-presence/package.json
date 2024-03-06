@@ -15,9 +15,9 @@
     "zod": "^3.22.4"
   },
   "devDependencies": {
-    "partykit": "0.0.37",
-    "typescript": "^5.2.2",
-    "tshy": "^1.11.0"
+    "partykit": "0.0.98",
+    "typescript": "^5.3.3",
+    "tshy": "^1.11.1"
   },
   "files": [
     "dist"
