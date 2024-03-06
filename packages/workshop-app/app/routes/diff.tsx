@@ -23,6 +23,7 @@ import { cn } from '#app/utils/misc.tsx'
 
 export async function loader({ request }: LoaderFunctionArgs) {
 	const reqUrl = new URL(request.url)
+	const searchParams = reqUrl.searchParams
 	const timings = makeTimings('diffLoader')
 	const cacheOptions = { request, timings }
 	const allAppsFull = await getApps()
@@ -49,7 +50,10 @@ export async function loader({ request }: LoaderFunctionArgs) {
 				diffCode: null,
 			}
 		}
-		const diffCode = await getDiffCode(app1, app2, cacheOptions).catch(e => {
+		const diffCode = await getDiffCode(app1, app2, {
+			...cacheOptions,
+			forceFresh: searchParams.get('forceFresh') === 'diff',
+		}).catch(e => {
 			console.error(e)
 			return null
 		})
@@ -130,6 +134,8 @@ export async function loader({ request }: LoaderFunctionArgs) {
 export default function DiffViewer() {
 	const data = useLoaderData<typeof loader>()
 	const [params] = useSearchParams()
+	const paramsWithForcedRefresh = new URLSearchParams(params)
+	paramsWithForcedRefresh.set('forceFresh', 'diff')
 	const navigation = useNavigation()
 	const isNavigating = useSpinDelay(navigation.state !== 'idle', {
 		delay: 200,
@@ -153,7 +159,7 @@ export default function DiffViewer() {
 			<div className="flex h-16 items-center justify-end border-t">
 				<SimpleTooltip content="Reload diff">
 					<Link
-						to={`.?${params}`}
+						to={`.?${paramsWithForcedRefresh}`}
 						className="flex h-full w-16 items-center justify-center"
 					>
 						<Icon
