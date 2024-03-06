@@ -98,9 +98,11 @@ app.use((req, res, next) => {
 	let [first, second, ...rest] = segments
 	const firstNumber = getNumberOrNull(first)
 	const secondNumber = getNumberOrNull(second)
+	if (firstNumber === null && secondNumber === null) return next()
+
 	if (firstNumber != null) first = firstNumber.toString().padStart(2, '0')
 	if (secondNumber != null) second = secondNumber.toString().padStart(2, '0')
-	const updatedUrl = `/${[first, second, ...rest].join('/')}`
+	const updatedUrl = `/${[first, second, ...rest].filter(Boolean).join('/')}`
 	if (req.url !== updatedUrl) {
 		return res.redirect(302, updatedUrl)
 	}
