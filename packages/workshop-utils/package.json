@@ -102,7 +102,7 @@
   "dependencies": {
     "@epic-web/cachified": "^5.1.2",
     "@epic-web/remember": "^1.0.2",
-    "@kentcdodds/md-temp": "^8.0.0",
+    "@kentcdodds/md-temp": "^8.0.1",
     "@mdx-js/mdx": "^3.0.1",
     "@playwright/test": "^1.42.1",
     "@remix-run/node": "^2.8.0",
