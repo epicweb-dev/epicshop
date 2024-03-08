@@ -296,6 +296,14 @@ function InlineFile({
 	)
 }
 
+function getPreviewType(
+	preview: string | null,
+): 'playground' | 'problem' | 'solution' {
+	if (preview === 'problem') return 'problem'
+	if (preview === 'solution') return 'solution'
+	return 'playground'
+}
+
 function LinkToApp({
 	to: appTo,
 	children = <code>{appTo.toString()}</code>,
@@ -308,12 +316,14 @@ function LinkToApp({
 		appTo.toString(),
 	).toString()}`
 	const data = useLoaderData<typeof loader>()
+	const type = getPreviewType(searchParams.get('preview'))
 	const requestInfo = useRequestInfo()
+	const app = data[type]
 	const previewAppUrl =
-		data.playground?.dev.type === 'script'
+		app?.dev.type === 'script'
 			? getBaseUrl({
 					domain: requestInfo.domain,
-					port: data.playground.dev.portNumber,
+					port: app.dev.portNumber,
 				})
 			: data.playground?.dev.type === 'browser'
 				? data.playground.dev.pathname
