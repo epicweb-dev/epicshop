@@ -228,11 +228,7 @@ function getWebsocketJS() {
 		const ws = new WebSocket(socketPath);
 		function handleFileChange(changedFiles) {
 			console.log(
-				[
-					'🐨 Reloading',
-					window.frameElement?.getAttribute('title'),
-					'window ...',
-				]
+				['🐨 Reloading', window.frameElement?.getAttribute('title')]
 					.filter(Boolean)
 					.join(' '),
 				changedFiles

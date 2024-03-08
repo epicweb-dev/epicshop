@@ -34,11 +34,7 @@ export async function loader({ request, params }: LoaderFunctionArgs) {
 			const { filePaths } = event.data;
 			if (${JSON.stringify(relevantPaths)}.some(p => filePaths.some(filePath => filePath.startsWith(p)))) {
 				console.log(
-					[
-						'🐨 Reloading',
-						window.frameElement?.getAttribute('title'),
-						'window ...',
-					]
+					['🐨 Reloading', window.frameElement?.getAttribute('title')]
 						.filter(Boolean)
 						.join(' '),
 				);

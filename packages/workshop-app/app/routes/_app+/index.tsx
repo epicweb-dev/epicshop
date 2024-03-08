@@ -67,7 +67,6 @@ export async function loader({ request }: LoaderFunctionArgs) {
 		},
 		{
 			headers: {
-				'Cache-Control': 'public, max-age=300',
 				'Server-Timing': getServerTimeHeader(timings),
 			},
 		},
