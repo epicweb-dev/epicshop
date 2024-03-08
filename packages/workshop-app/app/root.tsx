@@ -24,7 +24,9 @@ import {
 	ScrollRestoration,
 	useLoaderData,
 	useNavigation,
+	useRevalidator,
 } from '@remix-run/react'
+import { useEffect } from 'react'
 import { useSpinDelay } from 'spin-delay'
 import { Confetti } from './components/confetti.tsx'
 import { GeneralErrorBoundary } from './components/error-boundary.tsx'
@@ -138,6 +140,11 @@ function Document({
 	env?: Record<string, unknown>
 	className: string
 }) {
+	const revalidator = useRevalidator()
+	useEffect(() => {
+		window.__kcdshop ??= {}
+		window.__kcdshop.handleFileChange = revalidator.revalidate
+	}, [revalidator])
 	return (
 		<html lang="en" className={className}>
 			<head>
@@ -234,7 +241,11 @@ function getWebsocketJS() {
 						.filter(Boolean)
 						.join(' '),
 				);
-				setTimeout(() => window.location.reload(), 200)
+				if (typeof window.__kcdshop?.handleFileChange === "function") {
+					window.__kcdshop?.handleFileChange();
+				} else {
+					setTimeout(() => window.location.reload(), 200);
+				}
 			}
 		};
 		ws.onopen = () => {

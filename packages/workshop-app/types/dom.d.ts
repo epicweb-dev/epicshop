@@ -69,5 +69,12 @@ declare global {
 			>
 		}
 	}
+
+	interface Window {
+		__kcdshop?: {
+			handleFileChange?: () => void
+		}
+	}
 }
+
 export {} //keep that for TS compiler.
