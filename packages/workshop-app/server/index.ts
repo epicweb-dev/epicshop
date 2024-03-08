@@ -7,7 +7,6 @@ import {
 	getWorkshopRoot,
 } from '@kentcdodds/workshop-utils/apps.server'
 import { getWatcher } from '@kentcdodds/workshop-utils/change-tracker.server'
-import { isEmbeddedFile } from '@kentcdodds/workshop-utils/compile-mdx.server'
 import { checkForUpdates } from '@kentcdodds/workshop-utils/git.server'
 import { createRequestHandler } from '@remix-run/express'
 import { installGlobals } from '@remix-run/node'
@@ -175,17 +174,29 @@ ${chalk.bold('Press Ctrl+C to stop')}
 
 const wss = new WebSocketServer({ server, path: '/__ws' })
 
-getWatcher()?.on('all', async (event, filePath, stats) => {
-	for (const client of wss.clients) {
-		if (client.readyState === WebSocket.OPEN) {
-			const embeddedFile = await isEmbeddedFile(filePath)
-			client.send(
-				JSON.stringify({
-					type: 'kcdshop:file-change',
-					data: { event, filePath, stats, embeddedFile },
-				}),
-			)
-		}
+let timer: NodeJS.Timeout | null = null
+let fileChanges = new Set<string>()
+
+getWatcher()?.on('all', (event, filePath) => {
+	fileChanges.add(filePath)
+
+	if (!timer) {
+		timer = setTimeout(() => {
+			if (fileChanges.size === 0) return
+			for (const client of wss.clients) {
+				if (client.readyState === WebSocket.OPEN) {
+					client.send(
+						JSON.stringify({
+							type: 'kcdshop:file-change',
+							data: { event, filePaths: Array.from(fileChanges) },
+						}),
+					)
+				}
+			}
+
+			fileChanges = new Set()
+			timer = null
+		}, 50)
 	}
 })
 

@@ -31,15 +31,13 @@ export async function loader({ request, params }: LoaderFunctionArgs) {
 		ws.onmessage = (message) => {
 			const event = JSON.parse(message.data);
 			if (event.type !== 'kcdshop:file-change') return;
-			const { filePath, embeddedFile } = event.data;
-			if (embeddedFile || ${JSON.stringify(
-				relevantPaths,
-			)}.some(p => filePath.startsWith(p))) {
+			const { filePaths } = event.data;
+			if (${JSON.stringify(relevantPaths)}.some(p => filePaths.some(filePath => filePath.startsWith(p)))) {
 				console.log(
 					[
 						'🐨 Reloading',
 						window.frameElement?.getAttribute('title'),
-						' window ...',
+						'window ...',
 					]
 						.filter(Boolean)
 						.join(' '),

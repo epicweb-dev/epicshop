@@ -226,27 +226,36 @@ function getWebsocketJS() {
 		const port = location.port;
 		const socketPath = protocol + "//" + host + ":" + port + "/__ws";
 		const ws = new WebSocket(socketPath);
+		function handleFileChange(changedFiles) {
+			console.log(
+				[
+					'🐨 Reloading',
+					window.frameElement?.getAttribute('title'),
+					'window ...',
+				]
+					.filter(Boolean)
+					.join(' '),
+				changedFiles
+			);
+			if (typeof window.__kcdshop?.handleFileChange === "function") {
+				window.__kcdshop?.handleFileChange();
+			} else {
+				setTimeout(() => window.location.reload(), 200);
+			}
+		}
+		function debounce(fn, ms) {
+			let timeout;
+			return function debouncedFn(...args) {
+				clearTimeout(timeout);
+				timeout = setTimeout(() => fn(...args), ms);
+			};
+		}
+		const debouncedHandleFileChange = debounce(handleFileChange, 50);
 		ws.onmessage = (message) => {
 			const event = JSON.parse(message.data);
 			if (event.type !== 'kcdshop:file-change') return;
-			const { filePath, embeddedFile } = event.data;
-			if ((embeddedFile || filePath.includes('README') || filePath.includes('FINISHED')) && !filePath.includes('playground')) {
-				console.log(
-					[
-						'🐨 Reloading',
-						window.frameElement?.getAttribute('title'),
-						' window ...',
-						filePath + " changed",
-					]
-						.filter(Boolean)
-						.join(' '),
-				);
-				if (typeof window.__kcdshop?.handleFileChange === "function") {
-					window.__kcdshop?.handleFileChange();
-				} else {
-					setTimeout(() => window.location.reload(), 200);
-				}
-			}
+			const { filePaths } = event.data;
+			debouncedHandleFileChange(filePaths);
 		};
 		ws.onopen = () => {
 			if (config && typeof config.onOpen === "function") {
