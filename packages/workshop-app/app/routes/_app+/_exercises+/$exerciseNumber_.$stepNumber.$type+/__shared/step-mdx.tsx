@@ -266,7 +266,7 @@ function InlineFile({
 	const app = data[type] || data[data.type]
 
 	const info = (
-		<div className="launch-editor-button-wrapper flex underline">
+		<div className="launch-editor-button-wrapper flex underline underline-offset-4">
 			{children}{' '}
 			<svg height={24} width={24}>
 				<use href={`/icons.svg#keyboard`} />
