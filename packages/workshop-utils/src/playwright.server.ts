@@ -5,7 +5,7 @@ import { getApps, isProblemApp } from './apps.server.js'
 
 export async function getInBrowserTestPages() {
 	const apps = (await getApps())
-		.filter(a => !isProblemApp(a))
+		.filter(isProblemApp)
 		.filter(a => a.test.type === 'browser')
 	const pages = apps.map(app => {
 		if (app.test.type !== 'browser') return null
