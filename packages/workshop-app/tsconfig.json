@@ -21,6 +21,10 @@
         "../workshop-utils/src/*.ts",
         "../workshop-utils/src/*.tsx"
       ],
+      "@kentcdodds/workshop-presence/*": [
+        "../workshop-presence/src/*.ts",
+        "../workshop-presence/src/*.tsx"
+      ],
       "@/icon-name": [
         "./app/components/ui/icons/name.d.ts",
         "./types/icon-name.d.ts"

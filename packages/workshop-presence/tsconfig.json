@@ -15,6 +15,12 @@
     "baseUrl": ".",
     "skipLibCheck": true,
     "declaration": true,
-    "noEmit": true
+    "noEmit": true,
+    "paths": {
+      "@kentcdodds/workshop-utils/*": [
+        "../workshop-utils/src/*.ts",
+        "../workshop-utils/src/*.tsx"
+      ]
+    }
   }
 }
