@@ -16,7 +16,7 @@ export async function loader(args: LoaderFunctionArgs) {
 	const apiModule = await getApiModule(args)
 	invariantResponse(
 		apiModule.loader,
-		'api module must export a loader function',
+		'Attempted to make a GET request to the api endpoint but the api module does not export a loader function',
 		{ status: 405 },
 	)
 	return apiModule.loader(args)
@@ -26,7 +26,7 @@ export async function action(args: ActionFunctionArgs) {
 	const apiModule = await getApiModule(args)
 	invariantResponse(
 		apiModule.action,
-		'api module must export a action function',
+		'Attempted to make a non-GET request to the api endpoint but the api module does not export an action function',
 		{ status: 405 },
 	)
 	return apiModule.action(args)
