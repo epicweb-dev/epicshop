@@ -284,7 +284,7 @@ function LaunchGitHub({
 	].join('/')
 	return (
 		<a
-			className="launch_button no-underline!"
+			className="launch_button !no-underline"
 			href={`${ENV.KCDSHOP_GITHUB_ROOT}/${path}`}
 			rel="noreferrer"
 			target="_blank"
