@@ -1,0 +1,12 @@
+{
+  "name": "update-epic-workshop",
+  "version": "0.0.0-semantically-released",
+  "bin": "bin.js",
+  "files": [
+    "bin.js"
+  ],
+  "type": "module",
+  "dependencies": {
+    "execa": "^8.0.1"
+  }
+}

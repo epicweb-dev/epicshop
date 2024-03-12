@@ -40,9 +40,9 @@ These scripts will be run with the `cwd` set to the workshop root.
 
 When the workshop app is started, it checks to see whether there are any updates
 to the repository. If there are, it will show a message to the user that there
-is an update available and will tell them to run `npx kcdshop update` to update
-the workshop. If you want to run anything after the update, add a `postupdate`
-script to `kcd-workshop.scripts` in the root `package.json`:
+is an update available and will tell them to run `npx update-epic-workshop` to
+update the workshop. If you want to run anything after the update, add a
+`postupdate` script to `kcd-workshop.scripts` in the root `package.json`:
 
 ```json
 {

@@ -24,7 +24,8 @@
     "projects": [
       "@kentcdodds/workshop-app",
       "@kentcdodds/workshop-utils",
-      "@kentcdodds/workshop-presence"
+      "@kentcdodds/workshop-presence",
+      "update-epic-workshop"
     ],
     "version": {
       "conventionalCommits": true,
