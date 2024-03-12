@@ -1,10 +1,9 @@
 #!/usr/bin/env node
 
-import { execa, execaCommand } from 'execa'
+import { promises as dns } from 'node:dns'
 import fs from 'node:fs/promises'
 import path from 'node:path'
-import { promises as dns } from 'node:dns'
-import { spawn } from 'node:child_process'
+import { execa, execaCommand } from 'execa'
 
 const cwd = process.env.KCDSHOP_CONTEXT_CWD ?? process.cwd()
 
@@ -54,10 +53,8 @@ export async function updateLocalRepo() {
 		}
 
 		console.log('✅ Updated successfully.')
-		return
 	} catch (error) {
 		console.error('❌ Error updating local repo:', getErrorMessage(error))
-		return
 	}
 }
 
