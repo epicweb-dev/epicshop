@@ -19,13 +19,6 @@ module.exports = {
 		'no-inner-declarations': 'off',
 		'no-negated-condition': 'off',
 		'react/display-name': 'off',
-			'warn',
-			{
-				prefer: 'type-imports',
-				disallowTypeAnnotations: true,
-				fixStyle: 'inline-type-imports',
-			},
-		],
 		'import/no-duplicates': ['warn', { 'prefer-inline': true }],
 		'import/consistent-type-specifier-style': ['warn', 'prefer-inline'],
 		'import/order': [
