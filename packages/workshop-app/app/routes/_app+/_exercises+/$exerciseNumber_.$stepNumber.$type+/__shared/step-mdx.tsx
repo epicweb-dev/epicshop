@@ -49,8 +49,8 @@ const stepMdxComponents = {
 	CodeFile,
 	CodeFileNotification,
 	DiffLink,
-	PrevChangesLink,
-	NextChangesLink,
+	PrevDiffLink,
+	NextDiffLink,
 	InlineFile,
 	LinkToApp,
 }
@@ -90,7 +90,7 @@ function withParam(
 	return newSearchParams
 }
 
-function NextChangesLink({
+function NextDiffLink({
 	app = 0,
 	fullPage = false,
 	children,
@@ -106,7 +106,7 @@ function NextChangesLink({
 	)
 }
 
-function PrevChangesLink({
+function PrevDiffLink({
 	app = -1,
 	fullPage = false,
 	children,

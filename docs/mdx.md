@@ -137,14 +137,14 @@ Link to diff route or diff preview, to show git diff between two examples app.
 </DiffLink>
 ```
 
-### `NextChangesLink` and `PrevChangesLink`
+### `NextDiffLink` and `PrevDiffLink`
 
 These are just nice defaults for `DiffLink` to link to the next or previous
-changes. Use like so:
+diff. Use like so:
 
 ```mdx
-<NextChangesLink>Check the upcoming changes</NextChangesLink>
-<PrevChangesLink>Check the changes that were made</PrevChangesLink>
+<NextDiffLink>Check the upcoming changes</NextDiffLink>
+<PrevDiffLink>Check the changes that were made</PrevDiffLink>
 ```
 
 The fullscreen prop
