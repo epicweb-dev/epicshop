@@ -27,6 +27,10 @@ module.exports = {
 				fixStyle: 'inline-type-imports',
 			},
 		],
+
+		'@typescript-eslint/ban-ts-comment': 'off',
+		'@typescript-eslint/prefer-ts-expect-error': 'off',
+
 		'import/no-duplicates': ['warn', { 'prefer-inline': true }],
 		'import/consistent-type-specifier-style': ['warn', 'prefer-inline'],
 		'import/order': [

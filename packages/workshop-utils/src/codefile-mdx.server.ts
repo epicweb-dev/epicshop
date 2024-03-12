@@ -74,10 +74,7 @@ const isRangeInOrder = (range: RangeArray) =>
 
 const isRangesNonOverlapping = (range: RangeArray) => {
 	if (!Array.isArray(range)) return true
-	return range.every(
-		// @ts-expect-error - typescript claim that range[i - 1] can be undefined
-		([a], i) => i === 0 || range[i - 1][1] < a,
-	)
+	return range.every(([a], i) => i === 0 || (range[i - 1]?.[1] ?? 0) < a)
 }
 
 let fileContentCache: PathContentMap = new Map()

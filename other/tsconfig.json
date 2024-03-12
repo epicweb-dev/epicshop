@@ -1,5 +1,6 @@
 {
   "include": ["../**/*.ts", "../**/*.js"],
+  "exclude": ["**/node_modules/**"],
   "compilerOptions": {
     "isolatedModules": true,
     "esModuleInterop": true,

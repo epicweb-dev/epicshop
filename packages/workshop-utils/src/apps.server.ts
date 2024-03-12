@@ -1,3 +1,5 @@
+// TODO: figure out why this import is necessary (without it tsc seems to not honor the boolean reset 🤷‍♂️)
+import '@total-typescript/ts-reset'
 import fs from 'fs'
 import path from 'path'
 import { type CacheEntry } from '@epic-web/cachified'
@@ -317,7 +319,7 @@ export async function getExercises({
 			.filter(isExerciseStepApp)
 			.filter(app => app.exerciseNumber === exerciseNumber)
 		for (const app of exerciseApps) {
-			// @ts-expect-error (editor doesn't care, but tsc does 🤷‍♂️)
+			// @ts-ignore meh 🤷‍♂️
 			steps[app.stepNumber - 1] = {
 				...steps[app.stepNumber - 1],
 				[app.type]: app,

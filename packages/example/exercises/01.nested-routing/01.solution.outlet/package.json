@@ -51,7 +51,7 @@
     "prettier-plugin-tailwindcss": "^0.5.4",
     "remix-flat-routes": "^0.5.10",
     "tailwindcss": "^3.3.3",
-    "typescript": "^5.2.2"
+    "typescript": "^5.4.2"
   },
   "engines": {
     "node": "20"
