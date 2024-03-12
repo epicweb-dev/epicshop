@@ -120,21 +120,34 @@ Link to diff route or diff preview, to show git diff between two examples app.
     problem,solution,problem,solution, `app1={0} app2={4}` if current step is
     from `01/01.problem` to `01/03.problem`
 
-- `preview`: boolean
+- `fullPage`: boolean (defaults to `false`)
 
-  - when true link to `?preview=diff&...`
-  - when false link to diff route
+  - when false link to `?preview=diff&...`
+  - when true link to diff route
 
 - `children`: optional - default to
   `Go to Diff from: <code>APP1_STEP_NAME</code> to: <code>APP2_STEP_NAME</code>`
 
 - `to` or `app1` & `app2` are required.
 
-```
+```mdx
 <DiffLink app1="02/01.solution" app2="02/02.problem">
-  Go to Diff from: <code>01.problem.outlet</code> to: <code>01.solution.outlet</code>
+	Go to Diff from: <code>01.problem.outlet</code> to:{' '}
+	<code>01.solution.outlet</code>
 </DiffLink>
 ```
+
+### `NextChangesLink` and `PrevChangesLink`
+
+These are just nice defaults for `DiffLink` to link to the next or previous
+changes. Use like so:
+
+```mdx
+<NextChangesLink>Check the upcoming changes</NextChangesLink>
+<PrevChangesLink>Check the changes that were made</PrevChangesLink>
+```
+
+The fullscreen prop
 
 ### `VideoEmbed`
 
