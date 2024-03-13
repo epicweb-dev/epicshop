@@ -2,7 +2,7 @@ import fs from 'node:fs'
 import path from 'node:path'
 import { createProcessor } from '@mdx-js/mdx'
 import md5 from 'md5-hex'
-import { type Content, type Root as MdastRoot, type Parent } from 'mdast'
+import { type RootContent, type Root as MdastRoot, type Parent } from 'mdast'
 import {
 	type MdxJsxAttribute,
 	type MdxJsxFlowElement,
@@ -221,7 +221,7 @@ function stripIndent(string: string) {
 
 function mdxToMdast(mdx: string) {
 	const processor = createProcessor()
-	const mdast = processor.parse(mdx.trim()) as MdastRoot | Content
+	const mdast = processor.parse(mdx.trim()) as MdastRoot | RootContent
 	removePosition(mdast, { force: true })
 	return mdast.type === 'root' ? mdast.children : [mdast]
 }
