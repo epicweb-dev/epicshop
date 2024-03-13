@@ -38,15 +38,6 @@
     "url": "https://github.com/epicweb-dev/kcdshop.git",
     "directory": "packages/presence"
   },
-  "nx": {
-    "targets": {
-      "nx-release-publish": {
-        "options": {
-          "packageRoot": "publish/{projectRoot}"
-        }
-      }
-    }
-  },
   "exports": {
     "./package.json": "./package.json",
     "./presence.server": {
