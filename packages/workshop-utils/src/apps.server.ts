@@ -1,4 +1,4 @@
-// TODO: figure out why this import is necessary (without it tsc seems to not honor the boolean reset 🤷‍♂️)
+/// TODO: figure out why this import is necessary (without it tsc seems to not honor the boolean reset 🤷‍♂️)
 import '@total-typescript/ts-reset'
 import fs from 'fs'
 import path from 'path'
