@@ -6,8 +6,8 @@
       "executor": "nx:noop",
       "dependsOn": [
         "@kentcdodds/workshop-app:build",
-        "@kentcdodds/workshop-utils",
-        "@kentcdodds/workshop-presence"
+        "@kentcdodds/workshop-utils:build",
+        "@kentcdodds/workshop-presence:build"
       ]
     },
     "lint": {
