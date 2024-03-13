@@ -1,6 +1,7 @@
 {
   "name": "kcdshop",
   "$schema": "node_modules/nx/schemas/project-schema.json",
+  "implicitDependencies": ["@kentcdodds/workshop-app"],
   "targets": {
     "build": {
       "command": "nx run-many --target build --parallel --projects @kentcdodds/workshop-app,@kentcdodds/workshop-utils,@kentcdodds/workshop-presence"
