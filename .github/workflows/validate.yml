@@ -31,29 +31,6 @@ jobs:
       - name: 🔬 Lint
         run: npm run lint
 
-  typecheck:
-    name: ʦ TypeScript
-    runs-on: ubuntu-latest
-    steps:
-      - name: ⬇️ Checkout repo
-        uses: actions/checkout@v4
-
-      - name: ⎔ Setup node
-        uses: actions/setup-node@v4
-        with:
-          node-version: 20
-
-      - name: 📥 Download deps
-        uses: bahmutov/npm-install@v1
-        with:
-          useLockFile: false
-
-      - name: 🏗 Build
-        run: npm run build
-
-      - name: 🔎 Type check
-        run: npm run typecheck
-
   build:
     name: 🏗 Build
     runs-on: ubuntu-latest
@@ -73,6 +50,42 @@ jobs:
 
       - name: 🏗 Build
         run: npm run build
+
+      - name: 📦 Upload All Build Artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: all-build-artifacts
+          path: |
+            packages/workshop-app/build
+            packages/workshop-app/dist
+            packages/workshop-presence/dist
+            packages/workshop-utils/dist
+
+  typecheck:
+    name: ʦ TypeScript
+    needs: [build]
+    runs-on: ubuntu-latest
+    steps:
+      - name: ⬇️ Checkout repo
+        uses: actions/checkout@v4
+
+      - name: ⎔ Setup node
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+
+      - name: 📥 Download deps
+        uses: bahmutov/npm-install@v1
+        with:
+          useLockFile: false
+
+      - name: 📥 Download All Build Artifacts
+        uses: actions/download-artifact@v4
+        with:
+          name: all-build-artifacts
+
+      - name: 🔎 Type check
+        run: npm run typecheck
 
   playwright:
     name: 🎭 Playwright
@@ -99,7 +112,7 @@ jobs:
         run: npx playwright test
 
       - name: 📊 Upload report
-        uses: actions/upload-artifact@v3
+        uses: actions/upload-artifact@v4
         if: always()
         with:
           name: playwright-report
@@ -108,6 +121,7 @@ jobs:
 
   example:
     name: 🤹‍♂️ Example
+    needs: [build]
     strategy:
       matrix:
         os: [ubuntu-latest, windows-latest, macos-latest]
@@ -126,8 +140,10 @@ jobs:
         with:
           useLockFile: false
 
-      - name: 🏗 Build
-        run: npm run build
+      - name: 📥 Download All Build Artifacts
+        uses: actions/download-artifact@v4
+        with:
+          name: all-build-artifacts
 
       - name: ▶️ Run setup script
         run: node setup.mjs
@@ -166,8 +182,10 @@ jobs:
         with:
           useLockFile: false
 
-      - name: 🏗 Run build script
-        run: npm run build
+      - name: 📥 Download All Build Artifacts
+        uses: actions/download-artifact@v4
+        with:
+          name: all-build-artifacts
 
       - name: 🚀 Release
         run: npx tsx other/release.ts --dry-run=false
