@@ -83,6 +83,7 @@ jobs:
         uses: actions/download-artifact@v4
         with:
           name: all-build-artifacts
+          path: packages
 
       - name: 🔎 Type check
         run: npm run typecheck
@@ -144,6 +145,7 @@ jobs:
         uses: actions/download-artifact@v4
         with:
           name: all-build-artifacts
+          path: packages
 
       - name: ▶️ Run setup script
         run: node setup.mjs
@@ -186,6 +188,7 @@ jobs:
         uses: actions/download-artifact@v4
         with:
           name: all-build-artifacts
+          path: packages
 
       - name: 🚀 Release
         run: npx tsx other/release.ts --dry-run=false
