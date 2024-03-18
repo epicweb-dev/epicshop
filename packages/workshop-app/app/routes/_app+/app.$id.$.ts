@@ -3,10 +3,11 @@ import { invariantResponse } from '@epic-web/invariant'
 import { getAppByName } from '@kentcdodds/workshop-utils/apps.server'
 import { makeTimings } from '@kentcdodds/workshop-utils/timing.server'
 import { redirect, type LoaderFunctionArgs } from '@remix-run/node'
+import etag from 'etag'
 import fsExtra from 'fs-extra'
 import mimeTypes from 'mime-types'
 import { compileTs } from '#app/utils/compile-app.server.ts'
-import { getBaseUrl } from '#app/utils/misc.tsx'
+import { combineHeaders, getBaseUrl } from '#app/utils/misc.tsx'
 
 export async function loader({ request, params }: LoaderFunctionArgs) {
 	const timings = makeTimings('app-file')
@@ -47,22 +48,28 @@ export async function loader({ request, params }: LoaderFunctionArgs) {
 			throw new Response('Failed to compile file', { status: 500 })
 		}
 		const file = outputFiles[0].text
-		return new Response(file, {
-			headers: {
-				'Content-Length': Buffer.byteLength(file).toString(),
-				'Content-Type': 'text/javascript',
-				'Server-Timing': timings.toString(),
-			},
-		})
+		return getFileResponse(file, { 'Content-Type': 'text/javascript' })
 	} else {
 		const file = await fsExtra.readFile(filePath)
 		const mimeType = mimeTypes.lookup(filePath) || 'text/plain'
+		return getFileResponse(file, { 'Content-Type': mimeType })
+	}
+
+	function getFileResponse(file: Buffer | string, headers: HeadersInit = {}) {
+		const etagValue = etag(file)
+		const ifNoneMatch = request.headers.get('if-none-match')
+		if (ifNoneMatch === etagValue) {
+			return new Response(null, { status: 304 })
+		}
 		return new Response(file, {
-			headers: {
-				'Content-Length': Buffer.byteLength(file).toString(),
-				'Content-Type': mimeType,
-				'Server-Timing': timings.toString(),
-			},
+			headers: combineHeaders(
+				{
+					'Content-Length': Buffer.byteLength(file).toString(),
+					'Server-Timing': timings.toString(),
+					ETag: etagValue,
+				},
+				headers,
+			),
 		})
 	}
 }
