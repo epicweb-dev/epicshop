@@ -35,7 +35,6 @@ export async function loader({ request, params }: LoaderFunctionArgs) {
 	if (filePath.endsWith('.ts') || filePath.endsWith('.tsx')) {
 		// compile ts/tsx files
 		const { outputFiles, errors } = await compileTs(filePath, app.fullPath, {
-			forceFresh: true,
 			request,
 			timings,
 		})

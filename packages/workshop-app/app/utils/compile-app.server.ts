@@ -33,12 +33,13 @@ export async function compileTs(
 		timings,
 	}: { forceFresh?: boolean; request?: Request; timings?: Timings } = {},
 ) {
-	const cacheEntry = compiledCodeCache.get(filePath)
+	const key = `${filePath}::${fullPath}`
 	return cachified({
-		key: `${filePath}::${fullPath}`,
+		key,
 		request,
 		timings,
-		forceFresh: forceFresh || (await getForceFresh(filePath, cacheEntry)),
+		forceFresh:
+			forceFresh || (await getForceFresh(filePath, compiledCodeCache.get(key))),
 		cache: compiledCodeCache,
 		getFreshValue: async () => {
 			const result = await esbuild.build({
