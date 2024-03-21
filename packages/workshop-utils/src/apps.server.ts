@@ -447,13 +447,19 @@ function getPathname(
 	fullPath: string,
 ):
 	| '/app/playground/'
-	| `/app/${string}/${string}/${'problem' | 'solution'}/`
+	| `/app/exercise/${string}/${string}/${'problem' | 'solution'}/`
+	| `/app/example/${string}/`
 	| '/unknown/' {
 	if (/playground\/?$/.test(fullPath)) return `/app/playground/`
+	if (/examples\/.+\/?$/.test(fullPath)) {
+		// grab the last bit of the fullPath after the /examples
+		const restOfPath = fullPath.split(`${path.sep}examples${path.sep}`).at(-1)
+		return `/app/example/${restOfPath}/`
+	}
 	const appIdInfo = extractNumbersAndTypeFromAppNameOrPath(fullPath)
 	if (!appIdInfo) return '/unknown/'
 	const { exerciseNumber, stepNumber, type } = appIdInfo
-	return `/app/${exerciseNumber}/${stepNumber}/${type}/`
+	return `/app/exercise/${exerciseNumber}/${stepNumber}/${type}/`
 }
 
 function getAppName(fullPath: string) {

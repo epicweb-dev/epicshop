@@ -5,11 +5,9 @@ import {
 	getExercise,
 	getWorkshopTitle,
 	isExerciseStepApp,
+	isPlaygroundApp,
 	isProblemApp,
 	isSolutionApp,
-	isPlaygroundApp,
-	getPlaygroundApp,
-	getExerciseApp,
 } from '@kentcdodds/workshop-utils/apps.server'
 import {
 	getServerTimeHeader,
@@ -17,26 +15,16 @@ import {
 } from '@kentcdodds/workshop-utils/timing.server'
 import { type LoaderFunctionArgs } from '@remix-run/node'
 import fsExtra from 'fs-extra'
+import { resolveApps } from './utils'
 import { redirectWithToast } from '#app/utils/toast.server.ts'
 
 export async function loader({ request, params }: LoaderFunctionArgs) {
 	const timings = makeTimings('app_test_loader')
-	const { exerciseNumber, stepNumber, type, testName } = params
+	const { testName } = params
 	invariantResponse(testName, 'Test name is required')
-	const isPlayground = !exerciseNumber
-
-	const paramsDisplay = isPlayground
-		? 'playground'
-		: `${exerciseNumber}/${stepNumber}/${type}`
-	const app = isPlayground
-		? await getPlaygroundApp()
-		: await getExerciseApp(params, { request, timings })
-
-	if (!app) {
-		throw new Response(`App "${paramsDisplay}" not found`, {
-			status: 404,
-			headers: { 'Server-Timing': getServerTimeHeader(timings) },
-		})
+	const { fileApp, app } = await resolveApps({ request, params, timings })
+	if (!fileApp || !app) {
+		throw new Response(`Apps not found`, { status: 404 })
 	}
 	if (app.test.type !== 'browser' || app.dev.type !== 'browser') {
 		return redirectWithToast(

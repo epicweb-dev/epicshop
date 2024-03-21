@@ -7,8 +7,6 @@ import {
 	getExercise,
 	getWorkshopTitle,
 	isPlaygroundApp,
-	getExerciseApp,
-	getPlaygroundApp,
 } from '@kentcdodds/workshop-utils/apps.server'
 import {
 	getServerTimeHeader,
@@ -16,25 +14,15 @@ import {
 } from '@kentcdodds/workshop-utils/timing.server'
 import { type LoaderFunctionArgs, redirect } from '@remix-run/node'
 import fsExtra from 'fs-extra'
+import { resolveApps } from './utils'
 import { getBaseUrl } from '#app/utils/misc.tsx'
 
 export async function loader({ request, params }: LoaderFunctionArgs) {
 	const timings = makeTimings('app')
-	const { exerciseNumber, stepNumber, type } = params
-	const isPlayground = !exerciseNumber
-
-	const paramsDisplay = isPlayground
-		? 'playground'
-		: `${exerciseNumber}/${stepNumber}/${type}`
-	const app = isPlayground
-		? await getPlaygroundApp()
-		: await getExerciseApp(params, { request, timings })
+	const { fileApp, app } = await resolveApps({ request, params, timings })
 	const baseApp = isPlaygroundApp(app) ? await getAppByName(app.appName) : app
-	if (!app) {
-		throw new Response(`App "${paramsDisplay}" not found`, {
-			status: 404,
-			headers: { 'Server-Timing': getServerTimeHeader(timings) },
-		})
+	if (!fileApp || !app) {
+		throw new Response(`Apps not found`, { status: 404 })
 	}
 	if (app.dev.type === 'script') {
 		return redirect(getBaseUrl({ request, port: app.dev.portNumber }), {
@@ -43,7 +31,7 @@ export async function loader({ request, params }: LoaderFunctionArgs) {
 	}
 	if (app.dev.type !== 'browser') {
 		throw new Response(
-			`App "${paramsDisplay}" is not a browser app, its dev type is: "${app.dev.type}"`,
+			`App "${app.name}" is not a browser app, its dev type is: "${app.dev.type}"`,
 			{ status: 400 },
 		)
 	}
@@ -91,7 +79,7 @@ export async function loader({ request, params }: LoaderFunctionArgs) {
 					isProblemApp(app) ? '💪' : isSolutionApp(app) ? '🏁' : null,
 					...baseAppTitle,
 				]
-			: isPlayground
+			: isPlaygroundApp(app)
 				? ['🛝', ...baseAppTitle]
 				: [appTitle]
 	)

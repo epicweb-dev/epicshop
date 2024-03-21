@@ -1,43 +1,25 @@
 import path from 'path'
 import { invariantResponse } from '@epic-web/invariant'
-import {
-	getAppByName,
-	getExerciseApp,
-	getPlaygroundApp,
-} from '@kentcdodds/workshop-utils/apps.server'
 import { makeTimings } from '@kentcdodds/workshop-utils/timing.server'
 import { redirect, type LoaderFunctionArgs } from '@remix-run/node'
 import etag from 'etag'
 import fsExtra from 'fs-extra'
 import mimeTypes from 'mime-types'
+import { resolveApps } from './utils'
 import { compileTs } from '#app/utils/compile-app.server.ts'
 import { combineHeaders, getBaseUrl } from '#app/utils/misc.tsx'
 
 export async function loader({ request, params }: LoaderFunctionArgs) {
 	const timings = makeTimings('app-file')
-	const { exerciseNumber, stepNumber, type, '*': splat } = params
-	invariantResponse(splat, 'Splat is required')
-	const isPlayground = !exerciseNumber
-
-	const paramsDisplay = isPlayground
-		? 'playground'
-		: `${exerciseNumber}/${stepNumber}/${type}`
-	const app = isPlayground
-		? await getPlaygroundApp()
-		: await getExerciseApp(params, { request, timings })
-
-	const url = new URL(request.url)
-	const fileAppName = url.searchParams.get('fileAppName')
-	const fileApp = fileAppName ? await getAppByName(fileAppName) : app
+	const { fileApp, app } = await resolveApps({ request, params, timings })
 	if (!fileApp || !app) {
-		throw new Response(
-			`Apps with ids "${fileAppName}" (resolveDir) and "${paramsDisplay}" (app) for resource "${splat}" not found`,
-			{ status: 404 },
-		)
+		throw new Response(`Apps not found`, { status: 404 })
 	}
 	if (app.dev.type === 'script') {
 		return redirect(getBaseUrl({ request, port: app.dev.portNumber }))
 	}
+	const splat = params['*']
+	invariantResponse(splat, 'splat required')
 
 	const filePath = path.join(fileApp.fullPath, splat)
 	const fileExists = await fsExtra.pathExists(filePath)

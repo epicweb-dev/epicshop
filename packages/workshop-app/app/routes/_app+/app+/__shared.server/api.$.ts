@@ -1,10 +1,5 @@
 import path from 'node:path'
 import { invariantResponse } from '@epic-web/invariant'
-import {
-	getAppByName,
-	getExerciseApp,
-	getPlaygroundApp,
-} from '@kentcdodds/workshop-utils/apps.server'
 import { makeTimings } from '@kentcdodds/workshop-utils/timing.server'
 import {
 	redirect,
@@ -13,6 +8,7 @@ import {
 } from '@remix-run/node'
 import fsExtra from 'fs-extra'
 import { z } from 'zod'
+import { resolveApps } from './utils'
 import { compileTs } from '#app/utils/compile-app.server'
 import { getBaseUrl } from '#app/utils/misc'
 
@@ -43,24 +39,9 @@ const ApiModuleSchema = z.object({
 
 async function getApiModule({ request, params }: LoaderFunctionArgs) {
 	const timings = makeTimings('app-api')
-	const { exerciseNumber, stepNumber, type } = params
-	const isPlayground = !exerciseNumber
-
-	const paramsDisplay = isPlayground
-		? 'playground'
-		: `${exerciseNumber}/${stepNumber}/${type}`
-	const app = isPlayground
-		? await getPlaygroundApp()
-		: await getExerciseApp(params, { request, timings })
-
-	const url = new URL(request.url)
-	const fileAppName = url.searchParams.get('fileAppName')
-	const fileApp = fileAppName ? await getAppByName(fileAppName) : app
+	const { fileApp, app } = await resolveApps({ request, params, timings })
 	if (!fileApp || !app) {
-		throw new Response(
-			`Apps with ids "${fileAppName}" (resolveDir) and "${paramsDisplay}" (app) for api not found`,
-			{ status: 404 },
-		)
+		throw new Response(`Apps not found`, { status: 404 })
 	}
 	if (app.dev.type === 'script') {
 		throw redirect(getBaseUrl({ request, port: app.dev.portNumber }))
