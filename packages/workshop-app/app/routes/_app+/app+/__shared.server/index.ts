@@ -7,6 +7,7 @@ import {
 	getExercise,
 	getWorkshopTitle,
 	isPlaygroundApp,
+	isExampleApp,
 } from '@kentcdodds/workshop-utils/apps.server'
 import {
 	getServerTimeHeader,
@@ -81,7 +82,9 @@ export async function loader({ request, params }: LoaderFunctionArgs) {
 				]
 			: isPlaygroundApp(app)
 				? ['🛝', ...baseAppTitle]
-				: [appTitle]
+				: isExampleApp(app)
+					? ['📚', ...baseAppTitle]
+					: [appTitle]
 	)
 		.filter(Boolean)
 		.join(' | ')
