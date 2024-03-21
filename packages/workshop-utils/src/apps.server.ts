@@ -440,21 +440,23 @@ export function extractNumbersAndTypeFromAppNameOrPath(
 	return null
 }
 
+type PathnameType =
+	| `/app/playground/`
+	| `/app/exercise/${string}/${string}/${'problem' | 'solution'}/`
+	| `/app/examples/${string}/`
+	| '/unknown/'
+
 /**
  * This is the pathname for the app in the browser
  */
-function getPathname(
-	fullPath: string,
-):
-	| '/app/playground/'
-	| `/app/exercise/${string}/${string}/${'problem' | 'solution'}/`
-	| `/app/example/${string}/`
-	| '/unknown/' {
+function getPathname(fullPath: string): PathnameType {
 	if (/playground\/?$/.test(fullPath)) return `/app/playground/`
 	if (/examples\/.+\/?$/.test(fullPath)) {
-		// grab the last bit of the fullPath after the /examples
-		const restOfPath = fullPath.split(`${path.sep}examples${path.sep}`).at(-1)
-		return `/app/example/${restOfPath}/`
+		const restOfPath = fullPath.replace(
+			`${getWorkshopRoot()}${path.sep}examples${path.sep}`,
+			'',
+		)
+		return `/app/examples/${restOfPath}/`
 	}
 	const appIdInfo = extractNumbersAndTypeFromAppNameOrPath(fullPath)
 	if (!appIdInfo) return '/unknown/'

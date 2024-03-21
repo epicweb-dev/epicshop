@@ -25,7 +25,7 @@ export async function resolveApps({
 			? 'exercise'
 			: segments[1] === 'playground'
 				? 'playground'
-				: segments[1] === 'example'
+				: segments[1] === 'examples'
 					? 'example'
 					: null
 
