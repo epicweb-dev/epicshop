@@ -64,6 +64,11 @@ export default defineConfig({
 						'**/*.css',
 						'**/*.test.{js,jsx,ts,tsx}',
 						'**/__*',
+						'**/*.server.*',
+						'**/*.client.*',
+						'**/__*/*',
+						'**/*.server/*',
+						'**/*.client/*',
 					],
 				})
 			},

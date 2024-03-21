@@ -87,7 +87,8 @@ function getNumberOrNull(value: unknown) {
 	return Number.isNaN(number) ? null : number
 }
 
-// redirect /01/01 to /1/1 etc.
+// redirect /1/1 to /01/01 etc.
+// and redirect /app/1/1 to /app/01/01 etc.
 app.use((req, res, next) => {
 	const segments = req.url
 		.split('/')
@@ -95,13 +96,18 @@ app.use((req, res, next) => {
 		.filter(Boolean)
 	// eslint-disable-next-line prefer-const
 	let [first, second, ...rest] = segments
+	let leading = ''
+	if (segments[0] === 'app') {
+		leading = '/app'
+		;[first, second, ...rest] = segments.slice(1)
+	}
 	const firstNumber = getNumberOrNull(first)
 	const secondNumber = getNumberOrNull(second)
 	if (firstNumber === null && secondNumber === null) return next()
 
 	if (firstNumber != null) first = firstNumber.toString().padStart(2, '0')
 	if (secondNumber != null) second = secondNumber.toString().padStart(2, '0')
-	const updatedUrl = `/${[first, second, ...rest].filter(Boolean).join('/')}`
+	const updatedUrl = `${leading}/${[first, second, ...rest].filter(Boolean).join('/')}`
 	if (req.url !== updatedUrl) {
 		return res.redirect(302, updatedUrl)
 	}
@@ -115,6 +121,7 @@ app.all(
 		build: viteDevServer
 			? () => viteDevServer.ssrLoadModule('virtual:remix/server-build')
 			: // @ts-ignore (this may or may not be built at this time, but it will be in prod)
+				// eslint-disable-next-line @typescript-eslint/no-unnecessary-type-assertion
 				((await import('#build/server/index.js')) as any),
 	}),
 )

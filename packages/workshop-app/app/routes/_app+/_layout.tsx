@@ -1,5 +1,5 @@
 import {
-	extractNumbersFromAppName,
+	extractNumbersAndTypeFromAppNameOrPath,
 	getExercises,
 	getPlaygroundAppName,
 	getWorkshopTitle,
@@ -58,7 +58,8 @@ export async function loader({ request }: LoaderFunctionArgs) {
 	const playground = {
 		appName: playgroundAppName,
 		exerciseNumber: Number(
-			extractNumbersFromAppName(playgroundAppName ?? '').exerciseNumber,
+			extractNumbersAndTypeFromAppNameOrPath(playgroundAppName ?? '')
+				?.exerciseNumber,
 		),
 	}
 

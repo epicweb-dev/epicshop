@@ -421,10 +421,39 @@ export async function getApps({
 	return apps
 }
 
-export function extractNumbersFromAppName(fullPath: string) {
-	const regex = /(?<exerciseNumber>\d+)([^\d]*)(?<stepNumber>\d+)/g
-	const { exerciseNumber, stepNumber } = regex.exec(fullPath)?.groups ?? {}
-	return { exerciseNumber, stepNumber }
+const AppIdInfoSchema = z.object({
+	exerciseNumber: z.string(),
+	stepNumber: z.string(),
+	type: z.union([z.literal('problem'), z.literal('solution')]),
+})
+
+export function extractNumbersAndTypeFromAppNameOrPath(
+	fullPathOrAppName: string,
+) {
+	const relativePath = fullPathOrAppName.replace(workshopRoot, '')
+	const regex =
+		/(?<exerciseNumber>\d+)([^\d]*)(?<stepNumber>\d+)\.(?<type>problem|solution)/g
+	const { exerciseNumber, stepNumber, type } =
+		regex.exec(relativePath)?.groups ?? {}
+	const result = AppIdInfoSchema.safeParse({ exerciseNumber, stepNumber, type })
+	if (result.success) return result.data
+	return null
+}
+
+/**
+ * This is the pathname for the app in the browser
+ */
+function getPathname(
+	fullPath: string,
+):
+	| '/app/playground/'
+	| `/app/${string}/${string}/${'problem' | 'solution'}/`
+	| '/unknown/' {
+	if (/playground\/?$/.test(fullPath)) return `/app/playground/`
+	const appIdInfo = extractNumbersAndTypeFromAppNameOrPath(fullPath)
+	if (!appIdInfo) return '/unknown/'
+	const { exerciseNumber, stepNumber, type } = appIdInfo
+	return `/app/${exerciseNumber}/${stepNumber}/${type}/`
 }
 
 function getAppName(fullPath: string) {
@@ -523,8 +552,11 @@ async function getTestInfo({
 	const dirList = await fs.promises.readdir(testAppFullPath)
 	const testFiles = dirList.filter(item => item.includes('.test.'))
 	if (testFiles.length) {
-		const name = getAppName(fullPath)
-		return { type: 'browser', pathname: `/app/${name}/test/`, testFiles }
+		return {
+			type: 'browser',
+			pathname: `${getPathname(fullPath)}test/`,
+			testFiles,
+		}
 	}
 
 	return { type: 'none' }
@@ -549,14 +581,13 @@ async function getDevInfo({
 		file.startsWith('index.'),
 	)
 	if (indexFiles.length) {
-		const name = getAppName(fullPath)
-		return { type: 'browser', pathname: `/app/${name}/` }
+		return { type: 'browser', pathname: getPathname(fullPath) }
 	} else {
 		return { type: 'none' }
 	}
 }
 
-async function getPlaygroundApp({
+export async function getPlaygroundApp({
 	timings,
 	request,
 }: CachifiedOptions = {}): Promise<PlaygroundApp | null> {

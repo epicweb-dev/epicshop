@@ -25,7 +25,7 @@
   },
   "scripts": {
     "build": "run-p --print-label --print-name build:*",
-    "build:remix": "remix vite:build --sourcemapClient",
+    "build:remix": "remix vite:build --sourcemapClient --sourcemapServer",
     "build:server": "tsx ./other/build-dir.ts server",
     "dev": "remix dev -c \"node ./server/dev-server.js\" --manual",
     "format": "prettier --write .",
