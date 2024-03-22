@@ -1,0 +1,7 @@
+{
+  "name": "non-dev-example",
+  "type": "module",
+  "scripts": {
+    "test": "node src/index.js"
+  }
+}

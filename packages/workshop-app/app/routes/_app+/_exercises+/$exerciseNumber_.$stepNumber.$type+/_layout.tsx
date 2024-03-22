@@ -189,7 +189,16 @@ export async function loader({ request, params }: LoaderFunctionArgs) {
 			...getStepNameAndId(a),
 		}))
 
-	allApps.sort((a, b) => a.stepId - b.stepId)
+	allApps.sort((a, b) => {
+		// order them by their stepId
+		if (a.stepId > 0 && b.stepId > 0) return a.stepId - b.stepId
+
+		// non-step apps should come after step apps
+		if (a.stepId > 0) return -1
+		if (b.stepId > 0) return 1
+
+		return 0
+	})
 	const exerciseId = getStepId(exerciseStepApp)
 	const exerciseIndex = allApps.findIndex(step => step.stepId === exerciseId)
 

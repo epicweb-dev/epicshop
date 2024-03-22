@@ -1160,6 +1160,8 @@ export function getAppDisplayName(a: App, allApps: Array<App>) {
 		} else {
 			displayName = `🛝 ${a.appName}`
 		}
+	} else if (isExampleApp(a)) {
+		displayName = `📚 ${a.title} (example)`
 	}
 	return displayName
 }

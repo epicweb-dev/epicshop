@@ -6,6 +6,9 @@ Let's look at an example workshop:
 .
 ├── LICENSE.md
 ├── README.md
+├── examples
+│   └── htmly-thing
+│       └── index.html
 ├── exercises
 │   ├── 01.composition
 │   │   ├── 01.problem.reuse
@@ -105,9 +108,11 @@ Let's define a few terms:
 - Workshop: the entire project
 - Exercise: each directory in the `exercises` directory
 - Exercise Step: each subdirectory in an exercise directory
+- Example: A runnable project in the `examples` directory
 - App: A runnable project in the workshop
 - Problem: The App which is the initial state of an exercise step
 - Solution: The App which is the final state of an exercise step
+- Playground: A place where learners can play with the App
 
 Workshops have many exercises, exercises have many steps, steps have a single
 problem and a single solution.
