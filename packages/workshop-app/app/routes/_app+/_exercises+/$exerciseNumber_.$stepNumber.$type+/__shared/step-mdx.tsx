@@ -185,11 +185,10 @@ function DiffLink({
 			)}`
 
 	if (!children) {
-		const msg = (s: string) => s.split('__sep__')[2] ?? ''
 		children = (
 			<span>
-				Go to Diff {fullPage ? '' : 'Preview'} from:{' '}
-				<code>{msg(app1Name)}</code> to: <code>{msg(app2Name)}</code>
+				Go to Diff {fullPage ? '' : 'Preview'} from: <code>{app1Name}</code> to:{' '}
+				<code>{app2Name}</code>
 			</span>
 		)
 	}

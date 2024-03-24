@@ -45,7 +45,7 @@ const playgroundAppNameInfoPath = path.join(
 type CachifiedOptions = { timings?: Timings; request?: Request }
 
 const BaseAppSchema = z.object({
-	/** a unique identifier for the app (comes from the relative path of the app directory (replacing "/" with "__sep__")) */
+	/** a unique identifier for the app */
 	name: z.string(),
 	/** the title of the app used for display (comes from the package.json title prop) */
 	title: z.string(),
@@ -440,38 +440,83 @@ export function extractNumbersAndTypeFromAppNameOrPath(
 	return null
 }
 
-type PathnameType =
-	| `/app/playground/`
-	| `/app/exercise/${string}/${string}/${'problem' | 'solution'}/`
-	| `/app/examples/${string}/`
-	| '/unknown/'
+async function getProblemDirs() {
+	const exercisesDir = path.join(workshopRoot, 'exercises')
+	const problemDirs = (
+		await glob('**/*problem*', {
+			cwd: exercisesDir,
+			ignore: 'node_modules/**',
+		})
+	).map(p => path.join(exercisesDir, p))
+	return problemDirs
+}
+
+async function getSolutionDirs() {
+	const exercisesDir = path.join(workshopRoot, 'exercises')
+	const solutionDirs = (
+		await glob('**/*solution*', {
+			cwd: exercisesDir,
+			ignore: 'node_modules/**',
+		})
+	).map(p => path.join(exercisesDir, p))
+	return solutionDirs
+}
 
 /**
  * This is the pathname for the app in the browser
  */
-function getPathname(fullPath: string): PathnameType {
-	if (/playground\/?$/.test(fullPath)) return `/app/playground/`
+function getPathname(fullPath: string) {
+	const appName = getAppName(fullPath)
+	return `/app/${appName}/`
+}
+
+function getAppName(fullPath: string) {
+	if (/playground\/?$/.test(fullPath)) return 'playground'
 	if (/examples\/.+\/?$/.test(fullPath)) {
 		const restOfPath = fullPath.replace(
 			`${getWorkshopRoot()}${path.sep}examples${path.sep}`,
 			'',
 		)
-		return `/app/examples/${restOfPath}/`
+		return `example.${restOfPath.split(path.sep).join('__sep__')}`
 	}
 	const appIdInfo = extractNumbersAndTypeFromAppNameOrPath(fullPath)
-	if (!appIdInfo) return '/unknown/'
-	const { exerciseNumber, stepNumber, type } = appIdInfo
-	return `/app/exercise/${exerciseNumber}/${stepNumber}/${type}/`
+	if (appIdInfo) {
+		const { exerciseNumber, stepNumber, type } = appIdInfo
+		return `${exerciseNumber}.${stepNumber}.${type}`
+	} else {
+		const relativePath = fullPath.replace(`${workshopRoot}${path.sep}`, '')
+		return relativePath.split(path.sep).join('__sep__')
+	}
 }
 
-function getAppName(fullPath: string) {
-	const relativePath = fullPath.replace(`${workshopRoot}${path.sep}`, '')
-	return relativePath.split(path.sep).join('__sep__')
-}
-
-function getFullPathFromAppName(appName: string) {
-	const relativePath = appName.replaceAll('__sep__', path.sep)
-	return path.join(workshopRoot, relativePath)
+async function getFullPathFromAppName(appName: string) {
+	if (appName === 'playground') return path.join(workshopRoot, 'playground')
+	if (appName.startsWith('.example')) {
+		const relativePath = appName
+			.replace('.example', '')
+			.split('__sep__')
+			.join(path.sep)
+		return path.join(workshopRoot, 'examples', relativePath)
+	}
+	if (appName.includes('__sep__')) {
+		const relativePath = appName.replaceAll('__sep__', path.sep)
+		return path.join(workshopRoot, relativePath)
+	}
+	const [exerciseNumber, stepNumber, type] = appName.split('.')
+	const appDirs =
+		type === 'problem'
+			? await getProblemDirs()
+			: type === 'solution'
+				? await getSolutionDirs()
+				: []
+	const dir = appDirs.find(dir => {
+		const info = extractNumbersAndTypeFromAppNameOrPath(dir)
+		if (!info) return false
+		return (
+			info.exerciseNumber === exerciseNumber && info.stepNumber === stepNumber
+		)
+	})
+	return dir ?? appName
 }
 
 async function findSolutionDir({
@@ -496,10 +541,9 @@ async function findSolutionDir({
 	} else if (fullPath.endsWith('playground')) {
 		const appName = await getPlaygroundAppName()
 		if (appName) {
-			const solDir = await findSolutionDir({
-				fullPath: getFullPathFromAppName(appName),
+			return findSolutionDir({
+				fullPath: await getFullPathFromAppName(appName),
 			})
-			return solDir
 		}
 	}
 	return null
@@ -527,9 +571,7 @@ async function findProblemDir({
 	} else if (fullPath.endsWith('playground')) {
 		const appName = await getPlaygroundAppName()
 		if (appName) {
-			return findProblemDir({
-				fullPath: getFullPathFromAppName(appName),
-			})
+			return findProblemDir({ fullPath: await getFullPathFromAppName(appName) })
 		}
 	}
 	return null
@@ -755,12 +797,7 @@ async function getSolutionApps({
 	request,
 }: CachifiedOptions = {}): Promise<Array<SolutionApp>> {
 	const exercisesDir = path.join(workshopRoot, 'exercises')
-	const solutionDirs = (
-		await glob('**/*solution*', {
-			cwd: exercisesDir,
-			ignore: 'node_modules/**',
-		})
-	).map(p => path.join(exercisesDir, p))
+	const solutionDirs = await getSolutionDirs()
 	const solutionApps: Array<SolutionApp> = []
 
 	for (const solutionDir of solutionDirs) {
@@ -1127,6 +1164,10 @@ export async function setPlayground(
 	modifiedTimes.set(destDir, Date.now())
 }
 
+/**
+ * The playground is based on another app. This returns the app the playground
+ * is based on.
+ */
 export async function getPlaygroundAppName() {
 	if (!(await exists(playgroundAppNameInfoPath))) {
 		return null

@@ -113,8 +113,7 @@ Link to diff route or diff preview, to show git diff between two examples app.
 
 - `app1`, `app2`: string | number - one of this format:
 
-  - `EXERCISES_NAME` -
-    `exercises__sep__01.nested-routing__sep__01.problem.outlet`
+  - `EXERCISES_NAME` - `01.01.problem`
   - `EXERCISENUMBERSTR/STEPNUMBERSTR.TYPE` - `app1="02/02.problem"`
   - offset step - 0, ±1, ±2... `app1={1}` - next step, step are in order of
     problem,solution,problem,solution, `app1={0} app2={4}` if current step is

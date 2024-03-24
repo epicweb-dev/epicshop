@@ -1,5 +1,9 @@
+import path from 'node:path'
 import { getPresentUsers } from '@kentcdodds/workshop-presence/presence.server'
-import { getWorkshopTitle } from '@kentcdodds/workshop-utils/apps.server'
+import {
+	getApps,
+	getWorkshopTitle,
+} from '@kentcdodds/workshop-utils/apps.server'
 import {
 	getDiscordMember,
 	getPreferences,
@@ -94,16 +98,23 @@ export async function loader({ request }: LoaderFunctionArgs) {
 	const discordMember = await getDiscordMember()
 	const theme = getTheme(request)
 	const user = await getUserInfo()
+	const apps = await getApps({ request, timings })
 	const presentUsers = await getPresentUsers(user, { request, timings })
 	return json(
 		{
 			workshopTitle,
+			apps: apps.map(({ name, fullPath, relativePath }) => ({
+				name,
+				fullPath,
+				relativePath,
+			})),
 			ENV: getEnv(),
 			requestInfo: {
 				domain: getDomainUrl(request),
 				hints: getHints(request),
 				path: new URL(request.url).pathname,
 				session: { theme },
+				separator: path.sep,
 			},
 			progress,
 			preferences,

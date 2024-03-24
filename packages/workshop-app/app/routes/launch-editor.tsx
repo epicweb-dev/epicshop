@@ -6,10 +6,12 @@ import { clsx } from 'clsx'
 import fsExtra from 'fs-extra'
 import { useEffect } from 'react'
 import { type ZodTypeAny, z } from 'zod'
+import { useApps } from '#app/components/apps'
 import { showProgressBarField } from '#app/components/progress-bar.tsx'
 import { SimpleTooltip } from '#app/components/ui/tooltip.tsx'
 import { launchEditor } from '#app/utils/launch-editor.server.ts'
 import { ensureUndeployed } from '#app/utils/misc.tsx'
+import { useRequestInfo } from '#app/utils/request-info'
 import { createToastHeaders } from '#app/utils/toast.server.ts'
 
 function getFileDescriptorSchema<AppFile extends ZodTypeAny>(appFile: AppFile) {
@@ -257,6 +259,8 @@ function LaunchGitHub({
 	line,
 	children,
 }: LaunchEditorProps) {
+	const apps = useApps()
+	const requestInfo = useRequestInfo()
 	if (Array.isArray(appFile)) {
 		return <div>Cannot open more than one file</div>
 	}
@@ -278,8 +282,9 @@ function LaunchGitHub({
 			</a>
 		)
 	}
+	const app = apps.find(a => a.name === appName)
 	const path = [
-		...(appName?.split('__sep__') ?? []),
+		...(app?.relativePath.split(requestInfo.separator) ?? []),
 		appFile + (line ? `#L${line}` : ''),
 	].join('/')
 	return (

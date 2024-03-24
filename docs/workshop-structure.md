@@ -173,7 +173,7 @@ NOTE: As the path to your app is dynamic, you'll want to rely on the `<base>`
 that's added to the `index.html` file. For example:
 
 ```html
-<base href="/app/exercises__sep__08.final__sep__01.solution/" />
+<base href="/app/08.01.solution/" />
 ```
 
 This means that when you make a fetch request to `/api`, you need to do this:
