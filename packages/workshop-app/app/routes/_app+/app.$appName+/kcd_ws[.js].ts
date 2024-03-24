@@ -1,6 +1,6 @@
 import { makeTimings } from '@kentcdodds/workshop-utils/timing.server'
 import { redirect, type LoaderFunctionArgs } from '@remix-run/node'
-import { resolveApps } from './utils'
+import { resolveApps } from './__utils.ts'
 import { getBaseUrl } from '#app/utils/misc.tsx'
 
 export async function loader({ request, params }: LoaderFunctionArgs) {

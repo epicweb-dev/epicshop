@@ -5,7 +5,7 @@ import { redirect, type LoaderFunctionArgs } from '@remix-run/node'
 import etag from 'etag'
 import fsExtra from 'fs-extra'
 import mimeTypes from 'mime-types'
-import { resolveApps } from './utils'
+import { resolveApps } from './__utils.ts'
 import { compileTs } from '#app/utils/compile-app.server.ts'
 import { combineHeaders, getBaseUrl } from '#app/utils/misc.tsx'
 

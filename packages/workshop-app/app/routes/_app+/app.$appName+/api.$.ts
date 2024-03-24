@@ -8,7 +8,7 @@ import {
 } from '@remix-run/node'
 import fsExtra from 'fs-extra'
 import { z } from 'zod'
-import { resolveApps } from './utils'
+import { resolveApps } from './__utils'
 import { compileTs } from '#app/utils/compile-app.server'
 import { getBaseUrl } from '#app/utils/misc'
 

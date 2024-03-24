@@ -15,7 +15,7 @@ import {
 } from '@kentcdodds/workshop-utils/timing.server'
 import { type LoaderFunctionArgs, redirect } from '@remix-run/node'
 import fsExtra from 'fs-extra'
-import { resolveApps } from './utils'
+import { resolveApps } from './__utils.ts'
 import { getBaseUrl } from '#app/utils/misc.tsx'
 
 export async function loader({ request, params }: LoaderFunctionArgs) {
