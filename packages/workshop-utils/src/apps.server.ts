@@ -272,6 +272,7 @@ function getAppDirInfo(appDir: string) {
 	if (!match?.groups) {
 		console.info(
 			`Ignoring directory "${appDir}" which does not match regex "${regex}"`,
+			new Error().stack,
 		)
 		return null
 	}
@@ -427,15 +428,38 @@ const AppIdInfoSchema = z.object({
 	type: z.union([z.literal('problem'), z.literal('solution')]),
 })
 
+/**
+ * Handles both full paths and app names
+ *
+ * @example
+ * extractNumbersAndTypeFromAppNameOrPath('02.01.problem') // { exerciseNumber: '02', stepNumber: '01', type: 'problem' }
+ * extractNumbersAndTypeFromAppNameOrPath('/path/to/exercises/02.desc/01.problem.desc') // { exerciseNumber: '02', stepNumber: '01', type: 'problem' }
+ */
 export function extractNumbersAndTypeFromAppNameOrPath(
 	fullPathOrAppName: string,
 ) {
-	const relativePath = fullPathOrAppName.replace(workshopRoot, '')
-	const regex =
-		/exercises\/(?<exerciseNumber>\d+).*(?<stepNumber>\d+)\.(?<type>problem|solution)/g
-	const { exerciseNumber, stepNumber, type } =
-		regex.exec(relativePath)?.groups ?? {}
-	const result = AppIdInfoSchema.safeParse({ exerciseNumber, stepNumber, type })
+	const info: { exerciseNumber?: string; stepNumber?: string; type?: string } =
+		{}
+	if (fullPathOrAppName.includes(path.sep)) {
+		const relativePath = fullPathOrAppName.replace(
+			path.join(workshopRoot, 'exercises', path.sep),
+			'',
+		)
+		const [exerciseNumberPart, stepNumberPart] = relativePath.split(path.sep)
+		if (!exerciseNumberPart || !stepNumberPart) return null
+		const exerciseNumber = exerciseNumberPart.split('.')[0]
+		const stepNumber = stepNumberPart.split('.')[0]
+		const type = stepNumberPart.split('.')[1]?.split('.')[0]
+		info.exerciseNumber = exerciseNumber
+		info.stepNumber = stepNumber
+		info.type = type
+	} else {
+		const [exerciseNumber, stepNumber, type] = fullPathOrAppName.split('.')
+		info.exerciseNumber = exerciseNumber
+		info.stepNumber = stepNumber
+		info.type = type
+	}
+	const result = AppIdInfoSchema.safeParse(info)
 	if (result.success) return result.data
 	return null
 }
@@ -482,9 +506,6 @@ function getAppName(fullPath: string) {
 	const appIdInfo = extractNumbersAndTypeFromAppNameOrPath(fullPath)
 	if (appIdInfo) {
 		const { exerciseNumber, stepNumber, type } = appIdInfo
-		if (exerciseNumber === '2') {
-			console.log(fullPath)
-		}
 		return `${exerciseNumber}.${stepNumber}.${type}`
 	} else {
 		const relativePath = fullPath.replace(`${workshopRoot}${path.sep}`, '')
