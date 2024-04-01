@@ -432,7 +432,7 @@ export function extractNumbersAndTypeFromAppNameOrPath(
 ) {
 	const relativePath = fullPathOrAppName.replace(workshopRoot, '')
 	const regex =
-		/(?<exerciseNumber>\d+)([^\d]*)(?<stepNumber>\d+)\.(?<type>problem|solution)/g
+		/exercises\/(?<exerciseNumber>\d+).*(?<stepNumber>\d+)\.(?<type>problem|solution)/g
 	const { exerciseNumber, stepNumber, type } =
 		regex.exec(relativePath)?.groups ?? {}
 	const result = AppIdInfoSchema.safeParse({ exerciseNumber, stepNumber, type })
@@ -482,6 +482,9 @@ function getAppName(fullPath: string) {
 	const appIdInfo = extractNumbersAndTypeFromAppNameOrPath(fullPath)
 	if (appIdInfo) {
 		const { exerciseNumber, stepNumber, type } = appIdInfo
+		if (exerciseNumber === '2') {
+			console.log(fullPath)
+		}
 		return `${exerciseNumber}.${stepNumber}.${type}`
 	} else {
 		const relativePath = fullPath.replace(`${workshopRoot}${path.sep}`, '')
