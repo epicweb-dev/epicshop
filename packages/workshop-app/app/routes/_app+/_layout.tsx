@@ -258,7 +258,10 @@ export default function App() {
 					onMenuOpenChange={setMenuOpened}
 				/>
 				<div
-					className={cn('h-full w-full', isMenuOpened ? 'hidden md:block' : '')}
+					className={cn(
+						'h-full w-full max-w-[calc(100%-56px)]',
+						isMenuOpened ? 'hidden md:block' : '',
+					)}
 				>
 					<Outlet />
 				</div>
