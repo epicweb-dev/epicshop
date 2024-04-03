@@ -467,7 +467,7 @@ export function extractNumbersAndTypeFromAppNameOrPath(
 async function getProblemDirs() {
 	const exercisesDir = path.join(workshopRoot, 'exercises')
 	const problemDirs = (
-		await glob('**/*problem*', {
+		await glob('**/*.problem*', {
 			cwd: exercisesDir,
 			ignore: 'node_modules/**',
 		})
@@ -478,7 +478,7 @@ async function getProblemDirs() {
 async function getSolutionDirs() {
 	const exercisesDir = path.join(workshopRoot, 'exercises')
 	const solutionDirs = (
-		await glob('**/*solution*', {
+		await glob('**/*.solution*', {
 			cwd: exercisesDir,
 			ignore: 'node_modules/**',
 		})
@@ -897,12 +897,7 @@ async function getProblemApps({
 	request,
 }: CachifiedOptions = {}): Promise<Array<ProblemApp>> {
 	const exercisesDir = path.join(workshopRoot, 'exercises')
-	const problemDirs = (
-		await glob('**/*problem*', {
-			cwd: exercisesDir,
-			ignore: 'node_modules/**',
-		})
-	).map(p => path.join(exercisesDir, p))
+	const problemDirs = await getProblemDirs()
 	const problemApps: Array<ProblemApp> = []
 	for (const problemDir of problemDirs) {
 		const problemApp = await cachified({
@@ -1013,6 +1008,7 @@ export async function getNextExerciseApp(
 	if (index === -1) {
 		throw new Error(`Could not find app ${app.name}`)
 	}
+	console.log(apps)
 	const nextApp = apps[index + 1]
 	return nextApp ? nextApp : null
 }

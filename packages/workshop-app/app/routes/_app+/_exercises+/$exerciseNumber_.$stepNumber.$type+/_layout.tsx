@@ -267,13 +267,9 @@ export async function loader({ request, params }: LoaderFunctionArgs) {
 						to: `/${exerciseStepApp.exerciseNumber
 							.toString()
 							.padStart(2, '0')}`,
-						children: `⬅️ ${exercise.title}`,
 					}
 				: prevApp
-					? {
-							to: getAppPageRoute(prevApp),
-							children: `⬅️ ${prevApp.title} (${prevApp.type})`,
-						}
+					? { to: getAppPageRoute(prevApp) }
 					: null,
 			nextStepLink: isLastStep
 				? {
