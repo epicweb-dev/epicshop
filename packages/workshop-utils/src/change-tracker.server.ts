@@ -22,6 +22,7 @@ export function getWatcher() {
 	watcher = chokidar.watch(workshopRoot, {
 		ignoreInitial: true,
 		ignored: [
+			'**/.git/**',
 			'**/node_modules/**',
 			'**/build/**',
 			'**/public/build/**',
