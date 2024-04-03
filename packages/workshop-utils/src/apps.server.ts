@@ -1008,7 +1008,6 @@ export async function getNextExerciseApp(
 	if (index === -1) {
 		throw new Error(`Could not find app ${app.name}`)
 	}
-	console.log(apps)
 	const nextApp = apps[index + 1]
 	return nextApp ? nextApp : null
 }
