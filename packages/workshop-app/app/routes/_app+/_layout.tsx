@@ -720,24 +720,43 @@ function NavToggle({
 	const path01Controls = useAnimationControls()
 	const path02Controls = useAnimationControls()
 
+	async function toggleMenu() {
+		void menuControls.start(isMenuOpened ? 'close' : 'open')
+		setMenuOpened(!isMenuOpened)
+		if (isMenuOpened) {
+			void path01Controls.start(path01Variants.closed)
+			await path02Controls.start(path02Variants.moving)
+			void path02Controls.start(path02Variants.closed)
+		} else {
+			await path02Controls.start(path02Variants.moving)
+			void path01Controls.start(path01Variants.open)
+			void path02Controls.start(path02Variants.open)
+		}
+	}
+
+	const latestToggleMenu = React.useRef(toggleMenu)
+	React.useEffect(() => {
+		latestToggleMenu.current = toggleMenu
+	})
+
+	React.useEffect(() => {
+		if (!isMenuOpened) return
+
+		function handleKeyUp(event: KeyboardEvent) {
+			if (event.key === 'Escape') {
+				void latestToggleMenu.current()
+			}
+		}
+		document.addEventListener('keyup', handleKeyUp)
+		return () => document.removeEventListener('keyup', handleKeyUp)
+	}, [isMenuOpened])
+
 	return (
 		<div className="relative inline-flex h-14 w-full items-center justify-between overflow-hidden border-b">
 			<button
 				className="flex h-14 w-14 items-center justify-center"
 				aria-label="Open Navigation menu"
-				onClick={async () => {
-					void menuControls.start(isMenuOpened ? 'close' : 'open')
-					setMenuOpened(!isMenuOpened)
-					if (isMenuOpened) {
-						void path01Controls.start(path01Variants.closed)
-						await path02Controls.start(path02Variants.moving)
-						void path02Controls.start(path02Variants.closed)
-					} else {
-						await path02Controls.start(path02Variants.moving)
-						void path01Controls.start(path01Variants.open)
-						void path02Controls.start(path02Variants.open)
-					}
-				}}
+				onClick={toggleMenu}
 			>
 				<svg width="24" height="24" viewBox="0 0 24 24">
 					<motion.path
