@@ -46,7 +46,7 @@ export async function updateLocalRepo() {
 			String(await fs.readFile(path.join(cwd, 'package.json'))),
 		)
 
-		const postUpdateScript = pkg['epicshop']?.scripts?.postupdate ?? ''
+		const postUpdateScript = pkg.epicshop?.scripts?.postupdate ?? ''
 		if (postUpdateScript) {
 			console.log('🏃 Running post update script...')
 			await execaCommand(postUpdateScript, { cwd, stdio: 'inherit' })
