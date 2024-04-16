@@ -6,7 +6,7 @@ import AccordionComponent from '#app/components/accordion.tsx'
 
 const testRunnerStatusDataSchema = z.intersection(
 	z.object({
-		type: z.literal('kcdshop:test-status-update'),
+		type: z.literal('epicshop:test-status-update'),
 		timestamp: z.number(),
 	}),
 	z.union([
@@ -17,7 +17,7 @@ const testRunnerStatusDataSchema = z.intersection(
 )
 
 const testRunnerTestStepDataSchema = z.object({
-	type: z.literal('kcdshop:test-step-update'),
+	type: z.literal('epicshop:test-step-update'),
 	status: z.literal('pass'),
 	title: z.string(),
 	timestamp: z.number(),
@@ -59,13 +59,13 @@ export function InBrowserTestRunner({
 				return
 			}
 			const { data } = result
-			if (data.type === 'kcdshop:test-status-update') {
+			if (data.type === 'epicshop:test-status-update') {
 				if (data.status === 'pending') {
 					setTestSteps([])
 				}
 				setMessage(data)
 			}
-			if (data.type === 'kcdshop:test-step-update') {
+			if (data.type === 'epicshop:test-step-update') {
 				setTestSteps(steps => [...steps, data])
 			}
 		}

@@ -1,12 +1,12 @@
 import {
 	getApps,
 	getEpicWorkshopSlug,
-} from '@kentcdodds/workshop-utils/apps.server'
-import { getProcesses } from '@kentcdodds/workshop-utils/process-manager.server'
+} from '@epic-web/workshop-utils/apps.server'
+import { getProcesses } from '@epic-web/workshop-utils/process-manager.server'
 import {
 	getServerTimeHeader,
 	makeTimings,
-} from '@kentcdodds/workshop-utils/timing.server'
+} from '@epic-web/workshop-utils/timing.server'
 import {
 	type ActionFunctionArgs,
 	type LoaderFunctionArgs,

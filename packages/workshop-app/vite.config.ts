@@ -28,9 +28,9 @@ async function makeTshyAliases(moduleName: string, folderName: string) {
 }
 
 const aliases = {
-	...(await makeTshyAliases('@kentcdodds/workshop-utils', 'workshop-utils')),
+	...(await makeTshyAliases('@epic-web/workshop-utils', 'workshop-utils')),
 	...(await makeTshyAliases(
-		'@kentcdodds/workshop-presence',
+		'@epic-web/workshop-presence',
 		'workshop-presence',
 	)),
 }
@@ -42,8 +42,8 @@ export default defineConfig({
 		exclude: [
 			'fsevents',
 			'globby',
-			'@kentcdodds/workshop-utils',
-			'@kentcdodds/workshop-presence',
+			'@epic-web/workshop-utils',
+			'@epic-web/workshop-presence',
 		],
 	},
 	build: {

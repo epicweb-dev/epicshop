@@ -307,7 +307,7 @@ function InlineFile({
 		</div>
 	)
 
-	return ENV.KCDSHOP_DEPLOYED && app ? (
+	return ENV.EPICSHOP_DEPLOYED && app ? (
 		<div className="inline-block grow">
 			<LaunchEditor appFile={file} appName={app.name} {...props}>
 				{info}
@@ -371,15 +371,15 @@ function LinkToApp({
 				to={to}
 				{...props}
 				className={cn(props.className, {
-					'cursor-not-allowed': ENV.KCDSHOP_DEPLOYED,
+					'cursor-not-allowed': ENV.EPICSHOP_DEPLOYED,
 				})}
 				title={
-					ENV.KCDSHOP_DEPLOYED
+					ENV.EPICSHOP_DEPLOYED
 						? 'Cannot link to app in deployed version'
 						: undefined
 				}
 				onClick={event => {
-					if (ENV.KCDSHOP_DEPLOYED) event.preventDefault()
+					if (ENV.EPICSHOP_DEPLOYED) event.preventDefault()
 
 					props.onClick?.(event)
 					inBrowserBrowserRef.current?.handleExtrnalNavigation(appTo.toString())
@@ -394,15 +394,15 @@ function LinkToApp({
 						target="_blank"
 						rel="noreferrer"
 						className={cn('flex aspect-square items-center justify-center', {
-							'cursor-not-allowed': ENV.KCDSHOP_DEPLOYED,
+							'cursor-not-allowed': ENV.EPICSHOP_DEPLOYED,
 						})}
 						title={
-							ENV.KCDSHOP_DEPLOYED
+							ENV.EPICSHOP_DEPLOYED
 								? 'Cannot link to app in deployed version'
 								: 'Open in new tab'
 						}
 						onClick={event => {
-							if (ENV.KCDSHOP_DEPLOYED) event.preventDefault()
+							if (ENV.EPICSHOP_DEPLOYED) event.preventDefault()
 						}}
 					>
 						<Icon name="ExternalLink" />

@@ -3,12 +3,12 @@ import {
 	getExercises,
 	getPlaygroundAppName,
 	getWorkshopTitle,
-} from '@kentcdodds/workshop-utils/apps.server'
+} from '@epic-web/workshop-utils/apps.server'
 import {
 	combineServerTimings,
 	getServerTimeHeader,
 	makeTimings,
-} from '@kentcdodds/workshop-utils/timing.server'
+} from '@epic-web/workshop-utils/timing.server'
 import {
 	type LoaderFunctionArgs,
 	type HeadersFunction,
@@ -248,7 +248,7 @@ export default function App() {
 					'h-[calc(100vh-64px-env(safe-area-inset-top)-env(safe-area-inset-bottom))]':
 						!user,
 					'h-[calc(100vh-112px-env(safe-area-inset-top)-env(safe-area-inset-bottom))] sm:h-[calc(100vh-64px-env(safe-area-inset-top)-env(safe-area-inset-bottom))]':
-						ENV.KCDSHOP_DEPLOYED,
+						ENV.EPICSHOP_DEPLOYED,
 					'h-[calc(100vh-env(safe-area-inset-top)-env(safe-area-inset-bottom))]':
 						user,
 				})}
@@ -294,7 +294,7 @@ function EpicWebBanner() {
 		<div
 			className={cn(
 				'z-10 flex items-center justify-between border-b bg-gradient-to-tr from-blue-500 to-indigo-500 pl-4 text-white',
-				ENV.KCDSHOP_DEPLOYED ? 'h-[112px] md:h-[64px]' : 'h-16',
+				ENV.EPICSHOP_DEPLOYED ? 'h-[112px] md:h-[64px]' : 'h-16',
 			)}
 		>
 			<div className="flex flex-1 flex-wrap items-center gap-4">
@@ -311,15 +311,15 @@ function EpicWebBanner() {
 						</Link>{' '}
 						Workshop app!
 					</p>
-					{ENV.KCDSHOP_DEPLOYED ? (
+					{ENV.EPICSHOP_DEPLOYED ? (
 						<small className="text-sm">
 							This is the deployed version.{' '}
-							{ENV.KCDSHOP_GITHUB_ROOT ? (
+							{ENV.EPICSHOP_GITHUB_ROOT ? (
 								<Link
 									className="underline"
 									target="_blank"
 									rel="noopener noreferrer"
-									to={ENV.KCDSHOP_GITHUB_ROOT}
+									to={ENV.EPICSHOP_GITHUB_ROOT}
 								>
 									Run locally
 								</Link>
@@ -339,7 +339,9 @@ function EpicWebBanner() {
 					<span>↗︎</span>
 				</Link>
 				<Link
-					to={ENV.KCDSHOP_DEPLOYED ? 'https://www.epicweb.dev/login' : '/login'}
+					to={
+						ENV.EPICSHOP_DEPLOYED ? 'https://www.epicweb.dev/login' : '/login'
+					}
 					className="flex h-full items-center justify-center space-x-1.5 bg-white/20 px-5 text-sm font-semibold shadow-md transition hover:bg-white/30"
 				>
 					<Icon name="User" size="lg" />
@@ -632,7 +634,7 @@ function Navigation({
 					>
 						<FacePile isMenuOpened={isMenuOpened} />
 					</div>
-					{ENV.KCDSHOP_DEPLOYED ? null : user ? (
+					{ENV.EPICSHOP_DEPLOYED ? null : user ? (
 						<SimpleTooltip content={isMenuOpened ? null : 'Your account'}>
 							<Link
 								className="flex h-14 w-full items-center justify-start space-x-3 border-t px-4 py-4 text-center no-underline hover:underline"
@@ -661,7 +663,7 @@ function Navigation({
 							</Link>
 						</SimpleTooltip>
 					) : null}
-					{ENV.KCDSHOP_DEPLOYED ? null : user && nextExerciseRoute ? (
+					{ENV.EPICSHOP_DEPLOYED ? null : user && nextExerciseRoute ? (
 						<SimpleTooltip
 							content={isMenuOpened ? null : 'Continue to next lesson'}
 						>

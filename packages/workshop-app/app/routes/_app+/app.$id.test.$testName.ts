@@ -8,11 +8,11 @@ import {
 	isProblemApp,
 	isSolutionApp,
 	isPlaygroundApp,
-} from '@kentcdodds/workshop-utils/apps.server'
+} from '@epic-web/workshop-utils/apps.server'
 import {
 	getServerTimeHeader,
 	makeTimings,
-} from '@kentcdodds/workshop-utils/timing.server'
+} from '@epic-web/workshop-utils/timing.server'
 import { type LoaderFunctionArgs } from '@remix-run/node'
 import fsExtra from 'fs-extra'
 import { redirectWithToast } from '#app/utils/toast.server.ts'
@@ -71,7 +71,7 @@ export async function loader({ request, params }: LoaderFunctionArgs) {
 function logStatus(message) {
 	if (window.parent !== window) {
 		window.parent.postMessage(
-			{ type: 'kcdshop:test-status-update', ...message },
+			{ type: 'epicshop:test-status-update', ...message },
 			'*',
 		)
 	} else {
@@ -159,7 +159,7 @@ import(${JSON.stringify(testScriptPath)}).then(
 	</head>
 	<body>
 		${testScriptTag}
-		<script type="module" src="kcd_ws.js${testFileQueryString}"></script>
+		<script type="module" src="epic_ws.js${testFileQueryString}"></script>
 	</body>
 </html>
 `

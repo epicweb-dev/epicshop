@@ -37,7 +37,7 @@ export async function testStep<ReturnValue>(
 		} else {
 			window.parent.postMessage(
 				{
-					type: 'kcdshop:test-step-update',
+					type: 'epicshop:test-step-update',
 					status: 'pass',
 					title: titleString,
 					timestamp: Date.now(),

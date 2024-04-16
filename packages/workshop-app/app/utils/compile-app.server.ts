@@ -4,12 +4,12 @@ import { type CacheEntry } from '@epic-web/cachified'
 import {
 	getAppFromFile,
 	modifiedTimes,
-} from '@kentcdodds/workshop-utils/apps.server'
+} from '@epic-web/workshop-utils/apps.server'
 import {
 	cachified,
 	compiledCodeCache,
-} from '@kentcdodds/workshop-utils/cache.server'
-import { type Timings } from '@kentcdodds/workshop-utils/timing.server'
+} from '@epic-web/workshop-utils/cache.server'
+import { type Timings } from '@epic-web/workshop-utils/timing.server'
 import * as esbuild from 'esbuild'
 
 async function getForceFresh(

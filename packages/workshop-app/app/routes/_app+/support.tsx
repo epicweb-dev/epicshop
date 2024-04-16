@@ -1,11 +1,11 @@
 import { Link } from '@remix-run/react'
 
 export default function Support() {
-	const repoGroups = ENV.KCDSHOP_GITHUB_ROOT.match(
+	const repoGroups = ENV.EPICSHOP_GITHUB_ROOT.match(
 		/github\.com\/(?<org>[^/?]+)\/(?<repo>[^/?]+)/,
 	)?.groups
 
-	let repoUrl = ENV.KCDSHOP_GITHUB_ROOT
+	let repoUrl = ENV.EPICSHOP_GITHUB_ROOT
 	let repoIssuesUrl = repoUrl
 	if (repoGroups?.org && repoGroups.repo) {
 		repoUrl = `https://github.com/${repoGroups.org}/${repoGroups.repo}`
@@ -30,10 +30,10 @@ export default function Support() {
 				<li>
 					Workshop App:{' '}
 					<a
-						href="https://github.com/epicweb-dev/kcdshop/issues"
+						href="https://github.com/epicweb-dev/epicshop/issues"
 						className="underline"
 					>
-						github.com/epicweb-dev/kcdshop
+						github.com/epicweb-dev/epicshop
 					</a>{' '}
 					– Helpful if you're having trouble with or feedback for the local
 					workshop app.

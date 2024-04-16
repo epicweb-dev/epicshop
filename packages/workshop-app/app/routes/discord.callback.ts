@@ -3,7 +3,7 @@ import {
 	DiscordMemberSchema,
 	requireAuthInfo,
 	setDiscordMember,
-} from '@kentcdodds/workshop-utils/db.server'
+} from '@epic-web/workshop-utils/db.server'
 import { redirect, type LoaderFunctionArgs } from '@remix-run/node'
 import { z } from 'zod'
 import { redirectWithToast } from '#app/utils/toast.server.ts'

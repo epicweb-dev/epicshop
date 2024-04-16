@@ -1,4 +1,4 @@
-import { type PlaygroundApp } from '@kentcdodds/workshop-utils/apps.server'
+import { type PlaygroundApp } from '@epic-web/workshop-utils/apps.server'
 import { useState } from 'react'
 import { PlaygroundWindow } from './playground-window'
 import { Icon } from '#app/components/icons'

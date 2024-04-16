@@ -1,5 +1,5 @@
 {
-  "name": "@kentcdodds/workshop-app",
+  "name": "@epic-web/workshop-app",
   "targets": {
     "build": {
       "executor": "nx:run-commands",

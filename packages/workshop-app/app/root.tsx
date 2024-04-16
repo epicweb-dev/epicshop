@@ -1,16 +1,13 @@
 import path from 'node:path'
-import { getPresentUsers } from '@kentcdodds/workshop-presence/presence.server'
-import {
-	getApps,
-	getWorkshopTitle,
-} from '@kentcdodds/workshop-utils/apps.server'
+import { getPresentUsers } from '@epic-web/workshop-presence/presence.server'
+import { getApps, getWorkshopTitle } from '@epic-web/workshop-utils/apps.server'
 import {
 	getDiscordMember,
 	getPreferences,
 	getUserInfo,
 	readOnboardingData,
-} from '@kentcdodds/workshop-utils/db.server'
-import { makeTimings, time } from '@kentcdodds/workshop-utils/timing.server'
+} from '@epic-web/workshop-utils/db.server'
+import { makeTimings, time } from '@epic-web/workshop-utils/timing.server'
 import { cssBundleHref } from '@remix-run/css-bundle'
 import {
 	type LoaderFunctionArgs,
@@ -76,7 +73,7 @@ export const meta: MetaFunction<typeof loader> = ({ data }) => {
 export async function loader({ request }: LoaderFunctionArgs) {
 	const timings = makeTimings('rootLoader')
 	const onboarding = await readOnboardingData()
-	if (!ENV.KCDSHOP_DEPLOYED && !onboarding?.finishedTourVideo) {
+	if (!ENV.EPICSHOP_DEPLOYED && !onboarding?.finishedTourVideo) {
 		if (new URL(request.url).pathname !== '/onboarding') {
 			throw redirect('/onboarding')
 		}
@@ -153,8 +150,8 @@ function Document({
 }) {
 	const revalidator = useRevalidator()
 	useEffect(() => {
-		window.__kcdshop ??= {}
-		window.__kcdshop.handleFileChange = revalidator.revalidate
+		window.__epicshop ??= {}
+		window.__epicshop.handleFileChange = revalidator.revalidate
 	}, [revalidator])
 	return (
 		<html lang="en" className={className}>
@@ -174,7 +171,7 @@ function Document({
 				{children}
 				<ScrollRestoration />
 				<Scripts />
-				{ENV.KCDSHOP_DEPLOYED ? null : (
+				{ENV.EPICSHOP_DEPLOYED ? null : (
 					<script dangerouslySetInnerHTML={{ __html: getWebsocketJS() }} />
 				)}
 			</body>
@@ -231,7 +228,7 @@ export function ErrorBoundary() {
 
 function getWebsocketJS() {
 	const js = /* javascript */ `
-	function kcdLiveReloadConnect(config) {
+	function epicLiveReloadConnect(config) {
 		const protocol = location.protocol === "https:" ? "wss:" : "ws:";
 		const host = location.hostname;
 		const port = location.port;
@@ -244,8 +241,8 @@ function getWebsocketJS() {
 					.join(' '),
 				changedFiles
 			);
-			if (typeof window.__kcdshop?.handleFileChange === "function") {
-				window.__kcdshop?.handleFileChange();
+			if (typeof window.__epicshop?.handleFileChange === "function") {
+				window.__epicshop?.handleFileChange();
 			} else {
 				setTimeout(() => window.location.reload(), 200);
 			}
@@ -260,7 +257,7 @@ function getWebsocketJS() {
 		const debouncedHandleFileChange = debounce(handleFileChange, 50);
 		ws.onmessage = (message) => {
 			const event = JSON.parse(message.data);
-			if (event.type !== 'kcdshop:file-change') return;
+			if (event.type !== 'epicshop:file-change') return;
 			const { filePaths } = event.data;
 			debouncedHandleFileChange(filePaths);
 		};
@@ -271,10 +268,10 @@ function getWebsocketJS() {
 		};
 		ws.onclose = (event) => {
 			if (event.code === 1006) {
-				console.log("KCD dev server web socket closed. Reconnecting...");
+				console.log("Epic Web dev server web socket closed. Reconnecting...");
 				setTimeout(
 					() =>
-						kcdLiveReloadConnect({
+						epicLiveReloadConnect({
 							onOpen: () => window.location.reload(),
 						}),
 				1000
@@ -282,11 +279,11 @@ function getWebsocketJS() {
 			}
 		};
 		ws.onerror = (error) => {
-			console.log("KCD dev server web socket error:");
+			console.log("Epic Web dev server web socket error:");
 			console.error(error);
 		};
 	}
-	kcdLiveReloadConnect();
+	epicLiveReloadConnect();
 	`
 	return js
 }

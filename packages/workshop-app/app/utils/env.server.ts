@@ -4,8 +4,8 @@ const schema = z.object({
 	NODE_ENV: z
 		.enum(['production', 'development', 'test'] as const)
 		.default('development'),
-	KCDSHOP_GITHUB_ROOT: z.string(),
-	KCDSHOP_CONTEXT_CWD: z.string(),
+	EPICSHOP_GITHUB_ROOT: z.string(),
+	EPICSHOP_CONTEXT_CWD: z.string(),
 })
 
 declare global {
@@ -41,11 +41,11 @@ export function init() {
 export function getEnv() {
 	return {
 		MODE: process.env.NODE_ENV,
-		KCDSHOP_CONTEXT_CWD: process.env.KCDSHOP_CONTEXT_CWD,
-		KCDSHOP_GITHUB_ROOT: process.env.KCDSHOP_GITHUB_ROOT,
-		KCDSHOP_DEPLOYED:
-			process.env.KCDSHOP_DEPLOYED === 'true' ||
-			process.env.KCDSHOP_DEPLOYED === '1',
+		EPICSHOP_CONTEXT_CWD: process.env.EPICSHOP_CONTEXT_CWD,
+		EPICSHOP_GITHUB_ROOT: process.env.EPICSHOP_GITHUB_ROOT,
+		EPICSHOP_DEPLOYED:
+			process.env.EPICSHOP_DEPLOYED === 'true' ||
+			process.env.EPICSHOP_DEPLOYED === '1',
 	}
 }
 

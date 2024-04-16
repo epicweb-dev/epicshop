@@ -115,7 +115,7 @@ export async function updateLocalRepo() {
 
 		const postUpdateScript = await getPkgProp(
 			cwd,
-			'kcd-workshop.scripts.postupdate',
+			'epicshop.scripts.postupdate',
 			'',
 		)
 		if (postUpdateScript) {

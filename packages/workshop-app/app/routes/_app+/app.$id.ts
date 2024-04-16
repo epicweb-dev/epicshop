@@ -8,11 +8,11 @@ import {
 	getExercise,
 	getWorkshopTitle,
 	isPlaygroundApp,
-} from '@kentcdodds/workshop-utils/apps.server'
+} from '@epic-web/workshop-utils/apps.server'
 import {
 	getServerTimeHeader,
 	makeTimings,
-} from '@kentcdodds/workshop-utils/timing.server'
+} from '@epic-web/workshop-utils/timing.server'
 import { type LoaderFunctionArgs, redirect } from '@remix-run/node'
 import fsExtra from 'fs-extra'
 import { getBaseUrl } from '#app/utils/misc.tsx'
@@ -105,7 +105,7 @@ export async function loader({ request, params }: LoaderFunctionArgs) {
 		${scripts
 			.map(script => `<script type="module" src="${script}"></script>`)
 			.join('\n')}
-		<script type="module" src="kcd_ws.js"></script>
+		<script type="module" src="epic_ws.js"></script>
 	</body>
 </html>
 `

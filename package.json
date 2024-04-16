@@ -1,5 +1,5 @@
 {
-  "name": "kcdshop",
+  "name": "epic-workshop",
   "private": true,
   "type": "module",
   "scripts": {
@@ -8,7 +8,7 @@
     "lint": "nx lint",
     "build": "nx run-many --target build",
     "prestart": "npm run build -s",
-    "go": "cross-env NODE_ENV=development KCDSHOP_CONTEXT_CWD=$PWD/packages/example tsx watch $@",
+    "go": "cross-env NODE_ENV=development EPICSHOP_CONTEXT_CWD=$PWD/packages/example tsx watch $@",
     "start": "cross-env NODE_ENV=production npm -w example run start",
     "dev": "npm -w example run start",
     "test": "nx test",

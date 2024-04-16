@@ -1,10 +1,10 @@
-import { makeTimings } from '@kentcdodds/workshop-utils/timing.server'
+import { makeTimings } from '@epic-web/workshop-utils/timing.server'
 import { redirect, type LoaderFunctionArgs } from '@remix-run/node'
 import { resolveApps } from './__utils.ts'
 import { getBaseUrl } from '#app/utils/misc.tsx'
 
 export async function loader({ request, params }: LoaderFunctionArgs) {
-	const timings = makeTimings('kcd_ws script')
+	const timings = makeTimings('epic_ws script')
 	const { fileApp, app } = await resolveApps({ request, params, timings })
 	if (!fileApp || !app) {
 		throw new Response(`Apps not found`, { status: 404 })
@@ -15,7 +15,7 @@ export async function loader({ request, params }: LoaderFunctionArgs) {
 	const relevantPaths = Array.from(new Set([app.fullPath, fileApp.fullPath]))
 
 	const js = /* javascript */ `
-	function kcdLiveReloadConnect(config) {
+	function epicLiveReloadConnect(config) {
 		const protocol = location.protocol === "https:" ? "wss:" : "ws:";
 		const host = location.hostname;
 		const port = location.port;
@@ -23,7 +23,7 @@ export async function loader({ request, params }: LoaderFunctionArgs) {
 		const ws = new WebSocket(socketPath);
 		ws.onmessage = (message) => {
 			const event = JSON.parse(message.data);
-			if (event.type !== 'kcdshop:file-change') return;
+			if (event.type !== 'epicshop:file-change') return;
 			const { filePaths } = event.data;
 			if (${JSON.stringify(relevantPaths)}.some(p => filePaths.some(filePath => filePath.startsWith(p)))) {
 				console.log(
@@ -41,10 +41,10 @@ export async function loader({ request, params }: LoaderFunctionArgs) {
 		};
 		ws.onclose = (event) => {
 			if (event.code === 1006) {
-				console.log("KCD dev server web socket closed. Reconnecting...");
+				console.log("Epic Web dev server web socket closed. Reconnecting...");
 				setTimeout(
 					() =>
-						kcdLiveReloadConnect({
+						epicLiveReloadConnect({
 							onOpen: () => window.location.reload(),
 						}),
 				1000
@@ -52,11 +52,11 @@ export async function loader({ request, params }: LoaderFunctionArgs) {
 			}
 		};
 		ws.onerror = (error) => {
-			console.log("KCD dev server web socket error:");
+			console.log("Epic Web dev server web socket error:");
 			console.error(error);
 		};
 	}
-	kcdLiveReloadConnect();
+	epicLiveReloadConnect();
 	`
 	return new Response(js, {
 		headers: {

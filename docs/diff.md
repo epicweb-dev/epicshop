@@ -43,7 +43,7 @@ also filter out several other common files that are not relevant to the
 exercise. `package.json` is only ignored if the only difference is the `name`
 property, if there are other differences, it will be included in the diff.
 
-If that's not enough, you can add a `kcdshop/.diffignore` file to the root of
+If that's not enough, you can add a `epicshop/.diffignore` file to the root of
 the workshop repo and/or in the exercise directory to ignore additional files.
 You can even inverse the ignore by adding a `!` in front of the file pattern. So
 if you really wanted to include the `package.json` for some reason, then you
@@ -53,6 +53,6 @@ override the one that comes before it:
 
 - Default ignores
 - `.gitignore` in the root
-- `kcdshop/.diffignore` in the root
+- `epicshop/.diffignore` in the root
 - `.gitignore` in the exercise directory
-- `kcdshop/.diffignore` in the exercise directory
+- `epicshop/.diffignore` in the exercise directory

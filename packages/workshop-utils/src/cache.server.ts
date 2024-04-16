@@ -37,7 +37,7 @@ export const embeddedFilesCache = makeSingletonCache<
 >('EmbeddedFilesCache')
 export const compiledCodeCache = makeSingletonCache<string>('CompiledCodeCache')
 
-const cacheDir = path.join(os.homedir(), '.kcdshop', 'cache')
+const cacheDir = path.join(os.homedir(), '.epicshop', 'cache')
 
 export const fsCache: CachifiedCache = {
 	name: 'Filesystem cache',
@@ -70,7 +70,7 @@ export const fsCache: CachifiedCache = {
 }
 
 export async function deleteCache() {
-	if (process.env.KCDSHOP_DEPLOYED) return null
+	if (process.env.EPICSHOP_DEPLOYED) return null
 
 	try {
 		if (await fsExtra.exists(cacheDir)) {
@@ -131,7 +131,7 @@ export async function cachified<Value>({
 		},
 		C.mergeReporters(
 			cachifiedTimingReporter(timings),
-			process.env.KCDSHOP_DEBUG_CACHE ? verboseReporter() : undefined,
+			process.env.EPICSHOP_DEBUG_CACHE ? verboseReporter() : undefined,
 		),
 	)
 }

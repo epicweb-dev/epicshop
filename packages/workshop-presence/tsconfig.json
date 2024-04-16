@@ -17,7 +17,7 @@
     "declaration": true,
     "noEmit": true,
     "paths": {
-      "@kentcdodds/workshop-utils/*": [
+      "@epic-web/workshop-utils/*": [
         "../workshop-utils/src/*.ts",
         "../workshop-utils/src/*.tsx"
       ]

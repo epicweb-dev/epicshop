@@ -98,7 +98,7 @@ export default function DiscordRoute() {
 					className="underline"
 					to="https://kentcdodds.com/discord"
 				>
-					KCD Community on Discord
+					Epic Web Community on Discord
 				</Link>{' '}
 				is a great place to hang out with other developers who are working
 				through this workshop. You can ask questions, get help, and solidify
@@ -106,7 +106,7 @@ export default function DiscordRoute() {
 			</p>
 			<p>
 				<small className="text-sm">
-					If you've not joined the KCD Community on Discord yet, you'll be
+					If you've not joined the Epic Web Community on Discord yet, you'll be
 					required to go through a short onboarding process first. A friendly
 					bot will explain the process when you{' '}
 					<Link

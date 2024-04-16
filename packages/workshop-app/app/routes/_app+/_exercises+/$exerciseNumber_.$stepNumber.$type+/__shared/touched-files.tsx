@@ -84,7 +84,7 @@ function TouchedFiles() {
 											}
 
 											const props =
-												appName || ENV.KCDSHOP_GITHUB_ROOT
+												appName || ENV.EPICSHOP_GITHUB_ROOT
 													? {}
 													: {
 															title:
@@ -93,7 +93,7 @@ function TouchedFiles() {
 														}
 											return (
 												<ul {...props}>
-													{diffFiles.length > 1 && !ENV.KCDSHOP_DEPLOYED ? (
+													{diffFiles.length > 1 && !ENV.EPICSHOP_DEPLOYED ? (
 														<div className="mb-2 border-b border-b-gray-50 border-opacity-50 pb-2 font-sans">
 															<LaunchEditor
 																appFile={diffFiles.map(
@@ -111,7 +111,7 @@ function TouchedFiles() {
 															<LaunchEditor
 																appFile={`${file.path},${file.line},1`}
 																appName={
-																	ENV.KCDSHOP_DEPLOYED
+																	ENV.EPICSHOP_DEPLOYED
 																		? data.problem?.name ?? 'playground'
 																		: 'playground'
 																}

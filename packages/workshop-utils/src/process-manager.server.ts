@@ -9,8 +9,8 @@ import { type App } from './apps.server.js'
 import { getErrorMessage } from './utils.js'
 
 const isDeployed =
-	process.env.KCDSHOP_DEPLOYED === 'true' ||
-	process.env.KCDSHOP_DEPLOYED === '1'
+	process.env.EPICSHOP_DEPLOYED === 'true' ||
+	process.env.EPICSHOP_DEPLOYED === '1'
 
 type DevProcessesMap = Map<
 	string,

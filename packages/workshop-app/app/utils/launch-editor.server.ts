@@ -5,7 +5,7 @@ import child_process from 'child_process'
 import fs from 'fs'
 import os from 'os'
 import path from 'path'
-import { getRelativePath } from '@kentcdodds/workshop-utils/apps.server'
+import { getRelativePath } from '@epic-web/workshop-utils/apps.server'
 import fsExtra from 'fs-extra'
 import shellQuote from 'shell-quote'
 
@@ -202,8 +202,8 @@ function getArgumentsForLineNumber(
 
 function guessEditor(): Array<string | null> {
 	// Explicit config always wins
-	if (process.env.KCDSHOP_EDITOR) {
-		return shellQuote.parse(process.env.KCDSHOP_EDITOR).map(a => String(a))
+	if (process.env.EPICSHOP_EDITOR) {
+		return shellQuote.parse(process.env.EPICSHOP_EDITOR).map(a => String(a))
 	}
 
 	// We can find out which editor is currently running by:

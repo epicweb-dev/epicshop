@@ -28,7 +28,7 @@ declare global {
 
 	/* extend this list when need to, see EventMap interfaces at lib.dom.d.ts */
 	interface CustomEventMap {
-		'kcdshop-toast-show': CustomEvent<ToastEventProps>
+		'epicshop-toast-show': CustomEvent<ToastEventProps>
 	}
 
 	interface CustomEventListener<EVENT_TYPE>
@@ -71,7 +71,7 @@ declare global {
 	}
 
 	interface Window {
-		__kcdshop?: {
+		__epicshop?: {
 			handleFileChange?: () => void
 		}
 	}

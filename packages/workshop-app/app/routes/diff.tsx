@@ -3,8 +3,8 @@ import {
 	getApps,
 	isExerciseStepApp,
 	getAppDisplayName,
-} from '@kentcdodds/workshop-utils/apps.server'
-import { makeTimings } from '@kentcdodds/workshop-utils/timing.server'
+} from '@epic-web/workshop-utils/apps.server'
+import { makeTimings } from '@epic-web/workshop-utils/timing.server'
 import { defer, type LoaderFunctionArgs } from '@remix-run/node'
 import { useLoaderData, useNavigation, useSearchParams } from '@remix-run/react'
 import { useSpinDelay } from 'spin-delay'

@@ -2,7 +2,7 @@ import {
 	getExerciseApp,
 	isProblemApp,
 	isSolutionApp,
-} from '@kentcdodds/workshop-utils/apps.server'
+} from '@epic-web/workshop-utils/apps.server'
 import { type LoaderFunctionArgs, redirect } from '@remix-run/node'
 
 export async function loader({ params }: LoaderFunctionArgs) {

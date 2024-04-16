@@ -1,6 +1,6 @@
 import { invariantResponse } from '@epic-web/invariant'
-import { getAppByName, getApps } from '@kentcdodds/workshop-utils/apps.server'
-import { type Timings } from '@kentcdodds/workshop-utils/timing.server'
+import { getAppByName, getApps } from '@epic-web/workshop-utils/apps.server'
+import { type Timings } from '@epic-web/workshop-utils/timing.server'
 import { type Params } from '@remix-run/react'
 
 export async function resolveApps({

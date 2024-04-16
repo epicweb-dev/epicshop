@@ -3,13 +3,13 @@ import {
 	getExercises,
 	getWorkshopInstructions,
 	getWorkshopTitle,
-} from '@kentcdodds/workshop-utils/apps.server'
+} from '@epic-web/workshop-utils/apps.server'
 import {
 	combineServerTimings,
 	getServerTimeHeader,
 	makeTimings,
 	time,
-} from '@kentcdodds/workshop-utils/timing.server'
+} from '@epic-web/workshop-utils/timing.server'
 import {
 	defer,
 	type LoaderFunctionArgs,

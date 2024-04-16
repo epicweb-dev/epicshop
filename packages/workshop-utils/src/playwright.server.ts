@@ -43,7 +43,7 @@ async function waitFor<ReturnValue>(
 
 export function setupInBrowserTests() {
 	// doing this because playwright needs the tests to be registered synchoronously
-	const code = `import('@kentcdodds/workshop-utils/playwright.server').then(({ getInBrowserTestPages }) => getInBrowserTestPages().then(r => console.log(JSON.stringify(r))))`
+	const code = `import('@epic-web/workshop-utils/playwright.server').then(({ getInBrowserTestPages }) => getInBrowserTestPages().then(r => console.log(JSON.stringify(r))))`
 	const result = crossSpawn.sync('node', ['--eval', code], {
 		encoding: 'utf-8',
 	})

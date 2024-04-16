@@ -1,6 +1,6 @@
 import fs from 'node:fs'
-import { setModifiedTimesForDir } from '@kentcdodds/workshop-utils/apps.server'
-import { type EmbeddedFile } from '@kentcdodds/workshop-utils/codefile-mdx.server'
+import { setModifiedTimesForDir } from '@epic-web/workshop-utils/apps.server'
+import { type EmbeddedFile } from '@epic-web/workshop-utils/codefile-mdx.server'
 import { type ActionFunctionArgs, json } from '@remix-run/node'
 import { useFetcher } from '@remix-run/react'
 import { clsx } from 'clsx'

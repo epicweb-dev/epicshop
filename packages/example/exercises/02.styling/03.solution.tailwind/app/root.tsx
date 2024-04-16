@@ -7,7 +7,7 @@ import {
 	Scripts,
 	ScrollRestoration,
 } from '@remix-run/react'
-import { KCDShop } from './kcdshop.tsx'
+import { EpicShop } from './epicshop.tsx'
 
 import tailwindStylesheetUrl from './styles/tailwind.css'
 
@@ -33,7 +33,7 @@ export default function App() {
 				<ScrollRestoration />
 				<Scripts />
 				<LiveReload />
-				<KCDShop />
+				<EpicShop />
 			</body>
 		</html>
 	)

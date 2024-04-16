@@ -1,6 +1,6 @@
 import path from 'path'
 import { invariantResponse } from '@epic-web/invariant'
-import { makeTimings } from '@kentcdodds/workshop-utils/timing.server'
+import { makeTimings } from '@epic-web/workshop-utils/timing.server'
 import { redirect, type LoaderFunctionArgs } from '@remix-run/node'
 import etag from 'etag'
 import fsExtra from 'fs-extra'

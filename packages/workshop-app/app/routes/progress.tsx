@@ -1,5 +1,5 @@
 import { invariantResponse } from '@epic-web/invariant'
-import { requireAuthInfo } from '@kentcdodds/workshop-utils/db.server'
+import { requireAuthInfo } from '@epic-web/workshop-utils/db.server'
 import { json, type ActionFunctionArgs } from '@remix-run/node'
 import {
 	useFetcher,
@@ -299,7 +299,7 @@ export function ProgressToggle({
 		})
 	}, [startAnimation])
 
-	if (ENV.KCDSHOP_DEPLOYED || !progressItem) return null
+	if (ENV.EPICSHOP_DEPLOYED || !progressItem) return null
 
 	return (
 		<progressFetcher.Form method="POST" action="/progress">

@@ -8,13 +8,13 @@ import {
 	getWorkshopRoot,
 	getWorkshopTitle,
 	isExerciseStepApp,
-} from '@kentcdodds/workshop-utils/apps.server'
+} from '@epic-web/workshop-utils/apps.server'
 import {
 	combineServerTimings,
 	getServerTimeHeader,
 	makeTimings,
-} from '@kentcdodds/workshop-utils/timing.server'
-import { getPkgProp } from '@kentcdodds/workshop-utils/utils.server'
+} from '@epic-web/workshop-utils/timing.server'
+import { getPkgProp } from '@epic-web/workshop-utils/utils.server'
 import {
 	type LoaderFunctionArgs,
 	type HeadersFunction,
@@ -65,7 +65,7 @@ export async function loader({ request, params }: LoaderFunctionArgs) {
 	const workshopRoot = getWorkshopRoot()
 	const exerciseFormTemplate = await getPkgProp(
 		workshopRoot,
-		'kcd-workshop.forms.exercise',
+		'epicshop.forms.exercise',
 		`https://docs.google.com/forms/d/e/1FAIpQLSf3o9xyjQepTlOTH5Z7ZwkeSTdXh6YWI_RGc9KiyD3oUN0p6w/viewform?hl=en&embedded=true&entry.1836176234={workshopTitle}&entry.428900931={exerciseTitle}`,
 	)
 	const exerciseFormEmbedUrl = exerciseFormTemplate

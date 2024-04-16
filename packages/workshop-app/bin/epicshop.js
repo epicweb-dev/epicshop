@@ -17,9 +17,9 @@ switch (command) {
 	}
 	case 'upgrade':
 	case 'update': {
-		process.env.KCDSHOP_DISABLE_WATCHER = 'true'
+		process.env.EPICSHOP_DISABLE_WATCHER = 'true'
 		const { updateLocalRepo } = await import(
-			'@kentcdodds/workshop-utils/git.server'
+			'@epic-web/workshop-utils/git.server'
 		)
 		const result = await updateLocalRepo()
 		if (result.status === 'success') {
@@ -35,11 +35,11 @@ switch (command) {
 }
 
 function start() {
-	const KCDSHOP_CONTEXT_CWD = process.env.KCDSHOP_CONTEXT_CWD ?? process.cwd()
+	const EPICSHOP_CONTEXT_CWD = process.env.EPICSHOP_CONTEXT_CWD ?? process.cwd()
 
 	if (process.env.NODE_ENV === 'production' || isPublished) {
 		exec('node ./start.js', {
-			KCDSHOP_CONTEXT_CWD,
+			EPICSHOP_CONTEXT_CWD,
 			NODE_ENV: 'production',
 		}).catch(code => {
 			console.error('Encountered error running the server, exiting...')
@@ -47,7 +47,7 @@ function start() {
 		})
 	} else {
 		exec('npm run dev', {
-			KCDSHOP_CONTEXT_CWD,
+			EPICSHOP_CONTEXT_CWD,
 		}).catch(code => {
 			console.error('Encountered error running the dev script, exiting...')
 			process.exit(code)

@@ -1,8 +1,8 @@
-import { getExercises } from '@kentcdodds/workshop-utils/apps.server'
+import { getExercises } from '@epic-web/workshop-utils/apps.server'
 import {
 	getServerTimeHeader,
 	makeTimings,
-} from '@kentcdodds/workshop-utils/timing.server'
+} from '@epic-web/workshop-utils/timing.server'
 import { type LoaderFunctionArgs, json } from '@remix-run/node'
 
 export async function loader({ request }: LoaderFunctionArgs) {

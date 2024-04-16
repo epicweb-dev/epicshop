@@ -171,10 +171,10 @@ export function DeferredEpicVideo({
 				>
 					{epicVideoInfos => {
 						const epicVideoInfo = epicVideoInfos?.[url]
-						const transcriptUI = ENV.KCDSHOP_DEPLOYED ? (
+						const transcriptUI = ENV.EPICSHOP_DEPLOYED ? (
 							<div>
-								{ENV.KCDSHOP_GITHUB_ROOT ? (
-									<Link to={ENV.KCDSHOP_GITHUB_ROOT} className="underline">
+								{ENV.EPICSHOP_GITHUB_ROOT ? (
+									<Link to={ENV.EPICSHOP_GITHUB_ROOT} className="underline">
 										Run locally
 									</Link>
 								) : (

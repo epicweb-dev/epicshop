@@ -69,7 +69,7 @@ Let's look at an example workshop:
 │   │   │   └── vite.config.ts
 │   │   └── README.mdx
 │   └── README.mdx
-├── kcdshop
+├── epicshop
 │   ├── package-lock.json
 │   ├── package.json
 │   ├── playwright.config.ts

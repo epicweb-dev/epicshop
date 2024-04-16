@@ -3,10 +3,10 @@ import {
 	getExercises,
 	getWorkshopFinished,
 	getWorkshopInstructions,
-} from '@kentcdodds/workshop-utils/apps.server'
-import { cachified, fsCache } from '@kentcdodds/workshop-utils/cache.server'
-import { getAuthInfo } from '@kentcdodds/workshop-utils/db.server'
-import { type Timings } from '@kentcdodds/workshop-utils/timing.server'
+} from '@epic-web/workshop-utils/apps.server'
+import { cachified, fsCache } from '@epic-web/workshop-utils/cache.server'
+import { getAuthInfo } from '@epic-web/workshop-utils/db.server'
+import { type Timings } from '@epic-web/workshop-utils/timing.server'
 import md5 from 'md5-hex'
 import { z } from 'zod'
 import { getErrorMessage } from './misc.tsx'
@@ -66,7 +66,7 @@ export async function getEpicVideoInfos(
 ) {
 	if (!epicWebUrls) return {}
 	const authInfo = await getAuthInfo()
-	if (ENV.KCDSHOP_DEPLOYED) return {}
+	if (ENV.EPICSHOP_DEPLOYED) return {}
 
 	const epicVideoInfos: EpicVideoInfos = {}
 	for (const epicVideoEmbed of epicWebUrls) {
@@ -178,7 +178,7 @@ async function getEpicProgress({
 	request,
 	forceFresh,
 }: { timings?: Timings; request?: Request; forceFresh?: boolean } = {}) {
-	if (ENV.KCDSHOP_DEPLOYED) return []
+	if (ENV.EPICSHOP_DEPLOYED) return []
 	const authInfo = await getAuthInfo()
 	if (!authInfo) return []
 	const tokenPart = md5(authInfo.tokenSet.access_token)
@@ -225,7 +225,7 @@ export async function getProgress({
 	timings?: Timings
 	request?: Request
 } = {}) {
-	if (ENV.KCDSHOP_DEPLOYED) return []
+	if (ENV.EPICSHOP_DEPLOYED) return []
 	const authInfo = await getAuthInfo()
 	if (!authInfo) return []
 	const epicWorkshopSlug = await getEpicWorkshopSlug()
@@ -357,7 +357,7 @@ export async function updateProgress(
 		request?: Request
 	} = {},
 ) {
-	if (ENV.KCDSHOP_DEPLOYED) {
+	if (ENV.EPICSHOP_DEPLOYED) {
 		return {
 			status: 'error',
 			error: 'cannot update progress when deployed',
@@ -414,7 +414,7 @@ export async function getWorkshopData(
 		forceFresh?: boolean
 	} = {},
 ) {
-	if (ENV.KCDSHOP_DEPLOYED) return { sections: [] }
+	if (ENV.EPICSHOP_DEPLOYED) return { sections: [] }
 	const authInfo = await getAuthInfo()
 	// auth is not required, but we only use it for progress which is only needed
 	// if you're authenticated anyway.

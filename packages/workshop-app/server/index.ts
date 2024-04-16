@@ -1,13 +1,10 @@
 import fs from 'fs'
 import path from 'path'
 import { fileURLToPath } from 'url'
-import { getPresentUsers } from '@kentcdodds/workshop-presence/presence.server'
-import {
-	getApps,
-	getWorkshopRoot,
-} from '@kentcdodds/workshop-utils/apps.server'
-import { getWatcher } from '@kentcdodds/workshop-utils/change-tracker.server'
-import { checkForUpdates } from '@kentcdodds/workshop-utils/git.server'
+import { getPresentUsers } from '@epic-web/workshop-presence/presence.server'
+import { getApps, getWorkshopRoot } from '@epic-web/workshop-utils/apps.server'
+import { getWatcher } from '@epic-web/workshop-utils/change-tracker.server'
+import { checkForUpdates } from '@epic-web/workshop-utils/git.server'
 import { createRequestHandler } from '@remix-run/express'
 import { installGlobals } from '@remix-run/node'
 import { ip as ipAddress } from 'address'
@@ -37,10 +34,10 @@ const isProd = process.env.NODE_ENV === 'production'
 const __dirname = path.dirname(fileURLToPath(import.meta.url))
 const isPublished = !fs.existsSync(path.join(__dirname, '..', 'app'))
 const isDeployed =
-	process.env.KCDSHOP_DEPLOYED === 'true' ||
-	process.env.KCDSHOP_DEPLOYED === '1'
+	process.env.EPICSHOP_DEPLOYED === 'true' ||
+	process.env.EPICSHOP_DEPLOYED === '1'
 const isRunningInBuildDir = path.dirname(__dirname).endsWith('dist')
-const kcdshopAppRootDir = isRunningInBuildDir
+const epicshopAppRootDir = isRunningInBuildDir
 	? path.join(__dirname, '..', '..')
 	: path.join(__dirname, '..')
 
@@ -65,7 +62,7 @@ if (viteDevServer) {
 	// Everything else (like favicon.ico) is cached for an hour. You may want to be
 	// more aggressive with this caching.
 	app.use(
-		express.static(path.join(kcdshopAppRootDir, 'build/client'), {
+		express.static(path.join(epicshopAppRootDir, 'build/client'), {
 			maxAge: isProd ? '1h' : 0,
 		}),
 	)
@@ -194,7 +191,7 @@ getWatcher()?.on('all', (event, filePath) => {
 				if (client.readyState === WebSocket.OPEN) {
 					client.send(
 						JSON.stringify({
-							type: 'kcdshop:file-change',
+							type: 'epicshop:file-change',
 							data: { event, filePaths: Array.from(fileChanges) },
 						}),
 					)

@@ -72,17 +72,20 @@ export const AnchorOrLink = React.forwardRef<
 })
 
 export function ensureUndeployed() {
-	if (ENV.KCDSHOP_DEPLOYED) {
-		throw new Response('KCDSHOP_DEPLOYED is true, cannot perform this action', {
-			status: 400,
-		})
+	if (ENV.EPICSHOP_DEPLOYED) {
+		throw new Response(
+			'EPICSHOP_DEPLOYED is true, cannot perform this action',
+			{
+				status: 400,
+			},
+		)
 	}
 }
 
 export function ensureDeployed() {
-	if (!ENV.KCDSHOP_DEPLOYED) {
+	if (!ENV.EPICSHOP_DEPLOYED) {
 		throw new Response(
-			'KCDSHOP_DEPLOYED is false, cannot perform this action',
+			'EPICSHOP_DEPLOYED is false, cannot perform this action',
 			{ status: 400 },
 		)
 	}

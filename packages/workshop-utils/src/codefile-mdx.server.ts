@@ -89,7 +89,7 @@ async function getFileContent(filePath: string) {
 		return fileContent
 	} catch (error) {
 		console.warn(
-			`@kentcdodds/kcdshop - invalid CodeFile.\nCould not read file: ${filePath}\n`,
+			`@kentcdodds/epicshop - invalid CodeFile.\nCould not read file: ${filePath}\n`,
 		)
 	}
 }

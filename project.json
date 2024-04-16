@@ -1,13 +1,13 @@
 {
-  "name": "kcdshop",
+  "name": "epic-workshop",
   "$schema": "node_modules/nx/schemas/project-schema.json",
   "targets": {
     "build": {
       "executor": "nx:noop",
       "dependsOn": [
-        "@kentcdodds/workshop-app:build",
-        "@kentcdodds/workshop-utils:build",
-        "@kentcdodds/workshop-presence:build"
+        "@epic-web/workshop-app:build",
+        "@epic-web/workshop-utils:build",
+        "@epic-web/workshop-presence:build"
       ]
     },
     "lint": {
@@ -16,14 +16,14 @@
       "options": {
         "lintFilePatterns": ["**/*.ts", "**/*.tsx", "**/*.js", "**/*.jsx"]
       },
-      "dependsOn": ["@kentcdodds/workshop-app:build"]
+      "dependsOn": ["@epic-web/workshop-app:build"]
     },
     "typecheck": {
       "command": "tsc -b"
     },
     "test": {
       "executor": "@nx/playwright:playwright",
-      "dependsOn": ["@kentcdodds/workshop-app:build"]
+      "dependsOn": ["@epic-web/workshop-app:build"]
     },
     "local-registry": {
       "executor": "@nx/js:verdaccio",

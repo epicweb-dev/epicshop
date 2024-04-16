@@ -16,8 +16,8 @@ import { useRevalidator } from '@remix-run/react'
 import * as React from 'react'
 import { useRequestInfo } from './request-info.ts'
 
-const themeCookieName = 'KCDShop_CH-prefers-color-scheme'
-const motionCookieName = 'KCDShop_CH-reduced-motion'
+const themeCookieName = 'EpicShop_CH-prefers-color-scheme'
+const motionCookieName = 'EpicShop_CH-reduced-motion'
 const hintsUtils = getHintUtils({
 	theme: {
 		...colorSchemeHint,
@@ -25,7 +25,7 @@ const hintsUtils = getHintUtils({
 	},
 	timeZone: {
 		...timeZoneHint,
-		cookieName: 'KCDShop_CH-time-zone',
+		cookieName: 'EpicShop_CH-time-zone',
 	},
 	reducedMotion: {
 		...reducedMotionHint,

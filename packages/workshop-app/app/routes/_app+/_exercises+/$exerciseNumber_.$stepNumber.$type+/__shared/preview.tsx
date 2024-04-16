@@ -1,4 +1,4 @@
-import { type BaseExerciseStepApp } from '@kentcdodds/workshop-utils/apps.server'
+import { type BaseExerciseStepApp } from '@epic-web/workshop-utils/apps.server'
 import { Icon } from '#app/components/icons'
 import {
 	InBrowserBrowser,

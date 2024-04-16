@@ -1,7 +1,7 @@
 import {
 	PlayerPreferencesSchema,
 	setPlayerPreferences,
-} from '@kentcdodds/workshop-utils/db.server'
+} from '@epic-web/workshop-utils/db.server'
 import RealMuxPlayer, {
 	type MuxPlayerRefAttributes,
 } from '@mux/mux-player-react'

@@ -1,11 +1,11 @@
 import { invariant, invariantResponse } from '@epic-web/invariant'
-import { getAppByName } from '@kentcdodds/workshop-utils/apps.server'
+import { getAppByName } from '@epic-web/workshop-utils/apps.server'
 import {
 	closeProcess,
 	runAppDev,
 	stopPort,
 	waitOnApp,
-} from '@kentcdodds/workshop-utils/process-manager.server'
+} from '@epic-web/workshop-utils/process-manager.server'
 import { type ActionFunctionArgs, json } from '@remix-run/node'
 import { useFetcher } from '@remix-run/react'
 import { Button } from '#app/components/button.tsx'

@@ -1,9 +1,9 @@
 {
   "name": "example",
   "private": true,
-  "kcd-workshop": {
+  "epicshop": {
     "title": "Web App Fundamentals 🔭",
-    "githubRoot": "https://github.com/epicweb-dev/kcdshop/tree/main/packages/example",
+    "githubRoot": "https://github.com/epicweb-dev/epicshop/tree/main/packages/example",
     "root": true,
     "epicWorkshopSlug": "full-stack-foundations",
     "forms": {
@@ -14,8 +14,8 @@
   "type": "module",
   "scripts": {
     "build": "echo \"No build needed\"",
-    "start": "kcdshop start",
-    "dev": "kcdshop start",
+    "start": "epicshop start",
+    "dev": "epicshop start",
     "test": "cross-env NODE_ENV=development npx playwright test",
     "postinstall": "npx playwright install chromium --with-deps",
     "setup:custom": "npm run setup --if-present --workspaces",
@@ -28,8 +28,8 @@
   "author": "Kent C. Dodds <me@kentcdodds.com> (https://kentcdodds.com/)",
   "license": "MIT",
   "dependencies": {
-    "@kentcdodds/workshop-app": "file:../workshop-app",
-    "@kentcdodds/workshop-utils": "file:../workshop-utils",
+    "@epic-web/workshop-app": "file:../workshop-app",
+    "@epic-web/workshop-utils": "file:../workshop-utils",
     "@playwright/test": "^1.36.1",
     "@testing-library/dom": "^9.3.1",
     "@testing-library/react": "^14.0.0",

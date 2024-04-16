@@ -1,5 +1,5 @@
 import { PassThrough } from 'stream'
-import { init } from '@kentcdodds/workshop-utils/apps.server'
+import { init } from '@epic-web/workshop-utils/apps.server'
 import {
 	createReadableStreamFromReadable,
 	type EntryContext,

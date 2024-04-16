@@ -1,5 +1,5 @@
 {
-  "name": "@kentcdodds/workshop-presence",
+  "name": "@epic-web/workshop-presence",
   "version": "0.0.0-semantically-released",
   "publishConfig": {
     "access": "public"
@@ -11,7 +11,7 @@
     "deploy": "partykit deploy"
   },
   "dependencies": {
-    "@kentcdodds/workshop-utils": "file:../workshop-utils",
+    "@epic-web/workshop-utils": "file:../workshop-utils",
     "zod": "^3.22.4"
   },
   "devDependencies": {
@@ -35,7 +35,7 @@
   },
   "repository": {
     "type": "git",
-    "url": "https://github.com/epicweb-dev/kcdshop.git",
+    "url": "https://github.com/epicweb-dev/epicshop.git",
     "directory": "packages/presence"
   },
   "exports": {

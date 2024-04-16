@@ -46,7 +46,7 @@ function OpenInEditor({
 
 	const currentAppFullPath = safePath(data[data.type]?.fullPath ?? '')
 	const isFileFromDifferentApp = !fullPath.startsWith(currentAppFullPath)
-	const validButtons = ENV.KCDSHOP_DEPLOYED
+	const validButtons = ENV.EPICSHOP_DEPLOYED
 		? (['problem', 'solution'] as const)
 		: (['problem', 'solution', 'playground'] as const)
 	const buttonList = buttons.split(',')
@@ -200,7 +200,7 @@ export const mdxComponents = {
  */
 function getMdxComponent(code: string) {
 	const Component = mdxBundler.getMDXComponent(code)
-	function KCDMdxComponent({
+	function EpicMdxComponent({
 		components: externalComponents,
 		...rest
 	}: Parameters<typeof Component>['0']) {
@@ -210,7 +210,7 @@ function getMdxComponent(code: string) {
 		)
 		return <Component components={components} {...rest} />
 	}
-	return KCDMdxComponent
+	return EpicMdxComponent
 }
 
 // This exists so we don't have to call new Function for the given code

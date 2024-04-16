@@ -165,7 +165,7 @@ jobs:
       NPM_CONFIG_PROVENANCE: 'true'
       GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
     if:
-      ${{ github.repository == 'epicweb-dev/kcdshop' &&
+      ${{ github.repository == 'epicweb-dev/workshop-app' &&
       contains('refs/heads/main', github.ref) && github.event_name == 'push' }}
     steps:
       - name: ⬇️ Checkout repo

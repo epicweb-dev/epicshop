@@ -4,14 +4,14 @@ import {
 	getWorkshopFinished,
 	getWorkshopRoot,
 	getWorkshopTitle,
-} from '@kentcdodds/workshop-utils/apps.server'
+} from '@epic-web/workshop-utils/apps.server'
 import {
 	combineServerTimings,
 	getServerTimeHeader,
 	makeTimings,
 	time,
-} from '@kentcdodds/workshop-utils/timing.server'
-import { getPkgProp } from '@kentcdodds/workshop-utils/utils.server'
+} from '@epic-web/workshop-utils/timing.server'
+import { getPkgProp } from '@epic-web/workshop-utils/utils.server'
 import {
 	defer,
 	type LoaderFunctionArgs,
@@ -53,7 +53,7 @@ export async function loader({ request }: LoaderFunctionArgs) {
 	const workshopRoot = getWorkshopRoot()
 	const workshopFormTemplate = await getPkgProp(
 		workshopRoot,
-		'kcd-workshop.forms.workshop',
+		'epicshop.forms.workshop',
 		'https://docs.google.com/forms/d/e/1FAIpQLSdRmj9p8-5zyoqRzxp3UpqSbC3aFkweXvvJIKes0a5s894gzg/viewform?hl=en&embedded=true&entry.2123647600={workshopTitle}',
 	)
 	const workshopFormEmbedUrl = workshopFormTemplate.replace(

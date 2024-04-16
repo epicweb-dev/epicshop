@@ -14,16 +14,16 @@ import {
 	type App,
 	type ExerciseStepApp,
 	getAppDisplayName,
-} from '@kentcdodds/workshop-utils/apps.server'
+} from '@epic-web/workshop-utils/apps.server'
 import {
 	isAppRunning,
 	isPortAvailable,
-} from '@kentcdodds/workshop-utils/process-manager.server'
+} from '@epic-web/workshop-utils/process-manager.server'
 import {
 	combineServerTimings,
 	getServerTimeHeader,
 	makeTimings,
-} from '@kentcdodds/workshop-utils/timing.server'
+} from '@epic-web/workshop-utils/timing.server'
 import * as Tabs from '@radix-ui/react-tabs'
 import {
 	defer,
@@ -100,7 +100,7 @@ export const meta: MetaFunction<typeof loader, { root: typeof rootLoader }> = ({
 	return [
 		{
 			title: `${emoji} | ${stepNumber}. ${title} | ${exerciseNumber}. ${exerciseTitle} | ${
-				rootData?.workshopTitle ?? 'KCD Workshop'
+				rootData?.workshopTitle ?? 'Epic Workshop'
 			}`,
 		},
 	]
@@ -370,18 +370,18 @@ export default function ExercisePartRoute() {
 	function shouldHideTab(tab: (typeof tabs)[number]) {
 		if (tab === 'tests') {
 			return (
-				ENV.KCDSHOP_DEPLOYED ||
+				ENV.EPICSHOP_DEPLOYED ||
 				!data.playground ||
 				data.playground.test.type === 'none'
 			)
 		}
 		if (tab === 'problem' || tab === 'solution') {
 			if (data[tab]?.dev.type === 'none') return true
-			if (ENV.KCDSHOP_DEPLOYED) {
+			if (ENV.EPICSHOP_DEPLOYED) {
 				return data[tab]?.dev.type !== 'browser'
 			}
 		}
-		if (tab === 'playground' && ENV.KCDSHOP_DEPLOYED) return true
+		if (tab === 'playground' && ENV.EPICSHOP_DEPLOYED) return true
 		return false
 	}
 

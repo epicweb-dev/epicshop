@@ -27,7 +27,7 @@ import {
 } from './codefile-mdx.server.js'
 
 const cacheDir = path.join(
-	process.env.KCDSHOP_CONTEXT_CWD ?? process.cwd(),
+	process.env.EPICSHOP_CONTEXT_CWD ?? process.cwd(),
 	'./node_modules/.cache/compile-mdx',
 )
 
@@ -88,7 +88,7 @@ function checkFileExists(file: string) {
 }
 
 const verboseLog =
-	process.env.KCDSHOP_VERBOSE_LOG === 'true' ? console.log : () => {}
+	process.env.EPICSHOP_VERBOSE_LOG === 'true' ? console.log : () => {}
 
 /**
  * @param embeddedFiles {string[]} - list of embedded files

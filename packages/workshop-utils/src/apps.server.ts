@@ -38,7 +38,7 @@ const playgroundAppNameInfoPath = path.join(
 	getWorkshopRoot(),
 	'node_modules',
 	'.cache',
-	'kcdshop',
+	'epicshop',
 	'playground.json',
 )
 
@@ -611,7 +611,7 @@ async function getTestInfo({
 	const testScript = hasPkgJson
 		? await getPkgProp(
 				fullPath,
-				['kcd-workshop.scripts', testScriptName].join('.'),
+				['epicshop.scripts', testScriptName].join('.'),
 				'',
 			)
 		: null
@@ -1061,8 +1061,8 @@ export async function setPlayground(
 
 	// run prepare-playground script if it exists
 	const preSetPlaygroundPath = await firstToExist(
-		path.join(srcDir, 'kcdshop', 'pre-set-playground.js'),
-		path.join(workshopRoot, 'kcdshop', 'pre-set-playground.js'),
+		path.join(srcDir, 'epicshop', 'pre-set-playground.js'),
+		path.join(workshopRoot, 'epicshop', 'pre-set-playground.js'),
 	)
 	if (preSetPlaygroundPath) {
 		await execa('node', [preSetPlaygroundPath], {
@@ -1070,10 +1070,10 @@ export async function setPlayground(
 			stdio: 'inherit',
 			// eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
 			env: {
-				KCDSHOP_PLAYGROUND_TIMESTAMP: setPlaygroundTimestamp.toString(),
-				KCDSHOP_PLAYGROUND_DEST_DIR: destDir,
-				KCDSHOP_PLAYGROUND_SRC_DIR: srcDir,
-				KCDSHOP_PLAYGROUND_WAS_RUNNING: playgroundWasRunning.toString(),
+				EPICSHOP_PLAYGROUND_TIMESTAMP: setPlaygroundTimestamp.toString(),
+				EPICSHOP_PLAYGROUND_DEST_DIR: destDir,
+				EPICSHOP_PLAYGROUND_SRC_DIR: srcDir,
+				EPICSHOP_PLAYGROUND_WAS_RUNNING: playgroundWasRunning.toString(),
 			} as any,
 		})
 	}
@@ -1154,8 +1154,8 @@ export async function setPlayground(
 
 	// run postSet-playground script if it exists
 	const postSetPlaygroundPath = await firstToExist(
-		path.join(srcDir, 'kcdshop', 'post-set-playground.js'),
-		path.join(workshopRoot, 'kcdshop', 'post-set-playground.js'),
+		path.join(srcDir, 'epicshop', 'post-set-playground.js'),
+		path.join(workshopRoot, 'epicshop', 'post-set-playground.js'),
 	)
 	if (postSetPlaygroundPath) {
 		await execa('node', [postSetPlaygroundPath], {
@@ -1163,13 +1163,13 @@ export async function setPlayground(
 			stdio: 'inherit',
 			// eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
 			env: {
-				KCDSHOP_PLAYGROUND_TIMESTAMP: setPlaygroundTimestamp.toString(),
-				KCDSHOP_PLAYGROUND_SRC_DIR: srcDir,
-				KCDSHOP_PLAYGROUND_DEST_DIR: destDir,
-				KCDSHOP_PLAYGROUND_WAS_RUNNING: playgroundWasRunning.toString(),
-				KCDSHOP_PLAYGROUND_IS_STILL_RUNNING:
+				EPICSHOP_PLAYGROUND_TIMESTAMP: setPlaygroundTimestamp.toString(),
+				EPICSHOP_PLAYGROUND_SRC_DIR: srcDir,
+				EPICSHOP_PLAYGROUND_DEST_DIR: destDir,
+				EPICSHOP_PLAYGROUND_WAS_RUNNING: playgroundWasRunning.toString(),
+				EPICSHOP_PLAYGROUND_IS_STILL_RUNNING:
 					playgroundIsStillRunning.toString(),
-				KCDSHOP_PLAYGROUND_RESTART_PLAYGROUND: restartPlayground.toString(),
+				EPICSHOP_PLAYGROUND_RESTART_PLAYGROUND: restartPlayground.toString(),
 			} as any,
 		})
 	}
@@ -1227,10 +1227,10 @@ export function getAppDisplayName(a: App, allApps: Array<App>) {
 }
 
 export async function getWorkshopTitle() {
-	const title = await getPkgProp<string>(workshopRoot, 'kcd-workshop.title')
+	const title = await getPkgProp<string>(workshopRoot, 'epicshop.title')
 	if (!title) {
 		throw new Error(
-			`Workshop title not found. Make sure the root of the workshop has "kcd-workshop" with a "title" property in the package.json. ${workshopRoot}`,
+			`Workshop title not found. Make sure the root of the workshop has "epicshop" with a "title" property in the package.json. ${workshopRoot}`,
 		)
 	}
 	return title
@@ -1239,14 +1239,14 @@ export async function getWorkshopTitle() {
 export async function getEpicWorkshopSlug() {
 	const epicWorkshopSlug = await getPkgProp<string>(
 		workshopRoot,
-		'kcd-workshop.epicWorkshopSlug',
+		'epicshop.epicWorkshopSlug',
 		'',
 	)
 	return epicWorkshopSlug || null
 }
 
 export function getWorkshopRoot() {
-	return process.env.KCDSHOP_CONTEXT_CWD ?? process.cwd()
+	return process.env.EPICSHOP_CONTEXT_CWD ?? process.cwd()
 }
 
 export async function getWorkshopInstructions({

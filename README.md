@@ -1,3 +1,4 @@
-# kcdshop
+# Epic Workshop
 
-This is (going to be) the Workshop App used in EpicWeb.dev. Stay tuned.
+This is the Workshop App used in EpicWeb.dev. Learn more:
+https://www.epicweb.dev/get-started

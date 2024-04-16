@@ -1,10 +1,10 @@
-import { getAppByName } from '@kentcdodds/workshop-utils/apps.server'
+import { getAppByName } from '@epic-web/workshop-utils/apps.server'
 import {
 	clearTestProcessEntry,
 	getTestProcessEntry,
 	isTestRunning,
 	runAppTests,
-} from '@kentcdodds/workshop-utils/process-manager.server'
+} from '@epic-web/workshop-utils/process-manager.server'
 import {
 	type ActionFunctionArgs,
 	type LoaderFunctionArgs,

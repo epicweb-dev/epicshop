@@ -5,7 +5,7 @@ import fs from 'node:fs/promises'
 import path from 'node:path'
 import { execa, execaCommand } from 'execa'
 
-const cwd = process.env.KCDSHOP_CONTEXT_CWD ?? process.cwd()
+const cwd = process.env.EPICSHOP_CONTEXT_CWD ?? process.cwd()
 
 await updateLocalRepo()
 
@@ -46,7 +46,7 @@ export async function updateLocalRepo() {
 			String(await fs.readFile(path.join(cwd, 'package.json'))),
 		)
 
-		const postUpdateScript = pkg['kcd-workshop']?.scripts?.postupdate ?? ''
+		const postUpdateScript = pkg['epicshop']?.scripts?.postupdate ?? ''
 		if (postUpdateScript) {
 			console.log('🏃 Running post update script...')
 			await execaCommand(postUpdateScript, { cwd, stdio: 'inherit' })

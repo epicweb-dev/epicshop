@@ -4,7 +4,7 @@ import {
 	type User,
 	partykitRoom,
 	partykitBaseUrl,
-} from '@kentcdodds/workshop-presence/presence'
+} from '@epic-web/workshop-presence/presence'
 import { createId as cuid } from '@paralleldrive/cuid2'
 import { useParams, useRouteLoaderData } from '@remix-run/react'
 import { usePartySocket } from 'partysocket/react'
@@ -12,7 +12,7 @@ import { createContext, useContext, useEffect, useState } from 'react'
 import { z } from 'zod'
 import { type loader as rootLoader } from '#app/root.tsx'
 
-export * from '@kentcdodds/workshop-presence/presence'
+export * from '@epic-web/workshop-presence/presence'
 
 const PresenceContext = createContext<ReturnType<
 	typeof usePresenceSocket

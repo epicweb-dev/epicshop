@@ -1,6 +1,6 @@
 import { invariantResponse } from '@epic-web/invariant'
-import { updateOnboardingData } from '@kentcdodds/workshop-utils/db.server'
-import { makeTimings } from '@kentcdodds/workshop-utils/timing.server'
+import { updateOnboardingData } from '@epic-web/workshop-utils/db.server'
+import { makeTimings } from '@epic-web/workshop-utils/timing.server'
 import {
 	defer,
 	type ActionFunctionArgs,

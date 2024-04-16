@@ -1,5 +1,5 @@
 /*
-This file is kinda weird. KCDShop actually bundles react and react router to
+This file is kinda weird. EpicShop actually bundles react and react router to
 avoid getting version clashes, but this component is used in the "host"
 application. Anything we use in this file will be this file's version of that
 dependency, which in the case of bundled dependencies would be different from
@@ -10,13 +10,13 @@ rather than just using those things directly.
 To reduce the annoyance, we'll have the host applications have a file like this:
 
 // Ignore this file please
-import { KCDShopIFrameSync } from '@kentcdodds/workshop-utils/iframe-sync'
+import { EpicShopIFrameSync } from '@epic-web/workshop-utils/iframe-sync'
 import { useNavigate } from '@remix-run/react'
 import * as React from 'react'
 
-export function KCDShop() {
+export function EpicShop() {
 	const navigate = useNavigate()
-	return <KCDShopIFrameSync React={React} navigate={navigate} />
+	return <EpicShopIFrameSync React={React} navigate={navigate} />
 }
 
  */
@@ -29,14 +29,14 @@ type CustomReactType = {
 
 const iframeSyncScript = /* javascript */ `
 if (window.parent !== window) {
-	window.__kcdshop__ = window.__kcdshop__ || {};
+	window.__epicshop__ = window.__epicshop__ || {};
 	window.parent.postMessage(
-		{ type: 'kcdshop:loaded', url: window.location.href },
+		{ type: 'epicshop:loaded', url: window.location.href },
 		'*'
 	);
 	function handleMessage(event) {
 		const { type, params } = event.data
-		if (type === 'kcdshop:navigate-call') {
+		if (type === 'epicshop:navigate-call') {
 			const [distanceOrUrl, options] = params
 			if (typeof distanceOrUrl === 'number') {
 				window.history.go(distanceOrUrl)
@@ -51,13 +51,13 @@ if (window.parent !== window) {
 	}
 
 	window.addEventListener('message', handleMessage)
-	window.__kcdshop__.onHydrated = function() {
+	window.__epicshop__.onHydrated = function() {
 		window.removeEventListener('message', handleMessage)
 	};
 }
 `
 
-export function KCDShopIFrameSync<ReactType extends CustomReactType>({
+export function EpicShopIFrameSync<ReactType extends CustomReactType>({
 	React,
 	navigate,
 }: {
@@ -72,7 +72,7 @@ export function KCDShopIFrameSync<ReactType extends CustomReactType>({
 
 		// @ts-expect-error - this is fine 🔥
 		// eslint-disable-next-line @typescript-eslint/no-unsafe-call, @typescript-eslint/no-unsafe-member-access
-		window.__kcdshop__?.onHydrated?.()
+		window.__epicshop__?.onHydrated?.()
 
 		const methods = [
 			'pushState',
@@ -87,7 +87,7 @@ export function KCDShopIFrameSync<ReactType extends CustomReactType>({
 				// eslint-disable-next-line no-loop-func
 				apply(target, thisArg, argArray) {
 					window.parent.postMessage(
-						{ type: 'kcdshop:history-call', method, args: argArray },
+						{ type: 'epicshop:history-call', method, args: argArray },
 						'*',
 					)
 					// @ts-expect-error - this is fine too 🙃
@@ -102,7 +102,7 @@ export function KCDShopIFrameSync<ReactType extends CustomReactType>({
 		function handleMessage(event: MessageEvent) {
 			// eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
 			const { type, params } = event.data
-			if (type === 'kcdshop:navigate-call') {
+			if (type === 'epicshop:navigate-call') {
 				// eslint-disable-next-line @typescript-eslint/no-unsafe-argument
 				navigate(...params)
 			}

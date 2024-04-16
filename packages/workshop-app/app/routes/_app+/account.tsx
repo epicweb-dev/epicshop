@@ -1,10 +1,10 @@
-import { deleteCache } from '@kentcdodds/workshop-utils/cache.server'
+import { deleteCache } from '@epic-web/workshop-utils/cache.server'
 import {
 	deleteDb,
 	deleteDiscordInfo,
 	requireAuthInfo,
 	setPresencePreferences,
-} from '@kentcdodds/workshop-utils/db.server'
+} from '@epic-web/workshop-utils/db.server'
 import { json, redirect, type LoaderFunctionArgs } from '@remix-run/node'
 import { Form, Link, useFetcher, useLoaderData } from '@remix-run/react'
 import { getDiscordAuthURL } from '../discord.callback.ts'

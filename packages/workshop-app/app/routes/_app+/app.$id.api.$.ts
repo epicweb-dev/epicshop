@@ -1,7 +1,7 @@
 import path from 'node:path'
 import { invariantResponse } from '@epic-web/invariant'
-import { getAppByName } from '@kentcdodds/workshop-utils/apps.server'
-import { makeTimings } from '@kentcdodds/workshop-utils/timing.server'
+import { getAppByName } from '@epic-web/workshop-utils/apps.server'
+import { makeTimings } from '@epic-web/workshop-utils/timing.server'
 import {
 	redirect,
 	type ActionFunctionArgs,

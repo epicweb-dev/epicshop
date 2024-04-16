@@ -1,6 +1,6 @@
 import path from 'node:path'
 import { invariantResponse } from '@epic-web/invariant'
-import { makeTimings } from '@kentcdodds/workshop-utils/timing.server'
+import { makeTimings } from '@epic-web/workshop-utils/timing.server'
 import {
 	redirect,
 	type ActionFunctionArgs,

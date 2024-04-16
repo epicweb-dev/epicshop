@@ -7,25 +7,25 @@ import {
 	getWorkshopRoot,
 	modifiedTimes,
 	type App,
-} from '@kentcdodds/workshop-utils/apps.server'
+} from '@epic-web/workshop-utils/apps.server'
 import {
 	diffCodeCache,
 	diffFilesCache,
 	cachified,
-} from '@kentcdodds/workshop-utils/cache.server'
-import { compileMarkdownString } from '@kentcdodds/workshop-utils/compile-mdx.server'
-import { type Timings } from '@kentcdodds/workshop-utils/timing.server'
+} from '@epic-web/workshop-utils/cache.server'
+import { compileMarkdownString } from '@epic-web/workshop-utils/compile-mdx.server'
+import { type Timings } from '@epic-web/workshop-utils/timing.server'
 import { execa } from 'execa'
 import fsExtra from 'fs-extra'
 import ignore from 'ignore'
 import parseGitDiff, { type AnyFileChange } from 'parse-git-diff'
 import { bundledLanguagesInfo } from 'shiki/langs'
 
-const kcdshopTempDir = path.join(os.tmpdir(), 'kcdshop')
+const epicshopTempDir = path.join(os.tmpdir(), 'epicshop')
 
-const isDeployed = ENV.KCDSHOP_DEPLOYED
+const isDeployed = ENV.EPICSHOP_DEPLOYED
 
-const diffTmpDir = path.join(kcdshopTempDir, 'diff')
+const diffTmpDir = path.join(epicshopTempDir, 'diff')
 
 function diffPathToRelative(filePath: string) {
 	let normalizedPath = path.normalize(filePath).replace(/^("|')|("|')$/g, '')
@@ -199,7 +199,7 @@ const DEFAULT_IGNORE_PATTERNS = [
 	'**/.idea',
 	'**/.git',
 	'**/*.db',
-	'**/kcdshop/**',
+	'**/epicshop/**',
 ]
 
 async function copyUnignoredFiles(
@@ -261,7 +261,9 @@ async function prepareForDiff(app1: App, app2: App) {
 		: []
 	const workshopIgnore = [
 		...(await getDiffIgnore(path.join(workshopRoot, '.gitignore'))),
-		...(await getDiffIgnore(path.join(workshopRoot, 'kcdshop', '.diffignore'))),
+		...(await getDiffIgnore(
+			path.join(workshopRoot, 'epicshop', '.diffignore'),
+		)),
 	]
 
 	await Promise.all([
@@ -271,7 +273,7 @@ async function prepareForDiff(app1: App, app2: App) {
 			...workshopIgnore,
 			...(await getDiffIgnore(path.join(app1.fullPath, '.gitignore'))),
 			...(await getDiffIgnore(
-				path.join(app1.fullPath, 'kcdshop', '.diffignore'),
+				path.join(app1.fullPath, 'epicshop', '.diffignore'),
 			)),
 		]),
 		copyUnignoredFiles(app2.fullPath, app2CopyPath, [
@@ -280,7 +282,7 @@ async function prepareForDiff(app1: App, app2: App) {
 			...workshopIgnore,
 			...(await getDiffIgnore(path.join(app2.fullPath, '.gitignore'))),
 			...(await getDiffIgnore(
-				path.join(app2.fullPath, 'kcdshop', '.diffignore'),
+				path.join(app2.fullPath, 'epicshop', '.diffignore'),
 			)),
 		]),
 	])

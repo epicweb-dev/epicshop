@@ -2,7 +2,7 @@ import { redirect } from '@remix-run/node'
 import * as cookie from 'cookie'
 import { combineHeaders } from './misc.tsx'
 
-const cookieName = 'KCDShop_confetti'
+const cookieName = 'EpicShop_confetti'
 
 export function getConfetti(request: Request) {
 	const cookieHeader = request.headers.get('cookie')

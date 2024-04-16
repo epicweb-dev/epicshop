@@ -5,7 +5,7 @@ import {
 	isProblemApp,
 	isSolutionApp,
 	setPlayground,
-} from '@kentcdodds/workshop-utils/apps.server'
+} from '@epic-web/workshop-utils/apps.server'
 import * as Select from '@radix-ui/react-select'
 import { type ActionFunctionArgs, json } from '@remix-run/node'
 import { useFetcher } from '@remix-run/react'
@@ -209,7 +209,7 @@ function SelectItem({
 }
 
 export function SetAppToPlayground({ appName }: { appName: string }) {
-	if (ENV.KCDSHOP_DEPLOYED) return null
+	if (ENV.EPICSHOP_DEPLOYED) return null
 	return (
 		<SetPlayground
 			appName={appName}

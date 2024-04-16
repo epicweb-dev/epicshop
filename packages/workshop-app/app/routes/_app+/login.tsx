@@ -1,4 +1,4 @@
-import { getAuthInfo } from '@kentcdodds/workshop-utils/db.server'
+import { getAuthInfo } from '@epic-web/workshop-utils/db.server'
 import { json, redirect } from '@remix-run/node'
 import { useFetcher, useNavigate, useRevalidator } from '@remix-run/react'
 import { useEffect, useState } from 'react'

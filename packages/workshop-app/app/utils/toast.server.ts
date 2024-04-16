@@ -21,7 +21,7 @@ export type OptionalToast = Omit<Toast, 'id' | 'type'> & {
 
 export const toastSessionStorage = createCookieSessionStorage({
 	cookie: {
-		name: 'KCDShop_toast',
+		name: 'EpicShop_toast',
 		sameSite: 'lax',
 		path: '/',
 		httpOnly: true,

@@ -22,9 +22,9 @@
   },
   "release": {
     "projects": [
-      "@kentcdodds/workshop-app",
-      "@kentcdodds/workshop-utils",
-      "@kentcdodds/workshop-presence",
+      "@epic-web/workshop-app",
+      "@epic-web/workshop-utils",
+      "@epic-web/workshop-presence",
       "update-epic-workshop"
     ],
     "version": {

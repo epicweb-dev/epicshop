@@ -72,11 +72,11 @@ const DataSchema = z.object({
 	discordMember: DiscordMemberSchema.optional(),
 })
 
-const appDir = path.join(os.homedir(), '.kcdshop')
+const appDir = path.join(os.homedir(), '.epicshop')
 const dbPath = path.join(appDir, 'data.json')
 
 export async function deleteDb() {
-	if (process.env.KCDSHOP_DEPLOYED) return null
+	if (process.env.EPICSHOP_DEPLOYED) return null
 
 	try {
 		if (await fsExtra.exists(dbPath)) {
@@ -88,7 +88,7 @@ export async function deleteDb() {
 }
 
 async function readDb() {
-	if (process.env.KCDSHOP_DEPLOYED) return null
+	if (process.env.EPICSHOP_DEPLOYED) return null
 
 	try {
 		if (await fsExtra.exists(dbPath)) {

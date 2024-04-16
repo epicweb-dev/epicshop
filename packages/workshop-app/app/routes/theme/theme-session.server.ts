@@ -1,6 +1,6 @@
 import * as cookie from 'cookie'
 
-const cookieName = 'KCDShop_theme'
+const cookieName = 'EpicShop_theme'
 export type Theme = 'light' | 'dark'
 
 export function getTheme(request: Request): Theme | null {

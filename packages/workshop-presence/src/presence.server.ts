@@ -1,10 +1,10 @@
 import {
 	cachified,
 	makeSingletonCache,
-} from '@kentcdodds/workshop-utils/cache.server'
-import { getPreferences } from '@kentcdodds/workshop-utils/db.server'
-import { type Timings } from '@kentcdodds/workshop-utils/timing.server'
-import { checkConnection } from '@kentcdodds/workshop-utils/utils.server'
+} from '@epic-web/workshop-utils/cache.server'
+import { getPreferences } from '@epic-web/workshop-utils/db.server'
+import { type Timings } from '@epic-web/workshop-utils/timing.server'
+import { checkConnection } from '@epic-web/workshop-utils/utils.server'
 import { z } from 'zod'
 import {
 	PresenceSchema,

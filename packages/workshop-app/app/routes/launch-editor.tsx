@@ -1,5 +1,5 @@
 import path from 'path'
-import { getAppByName } from '@kentcdodds/workshop-utils/apps.server'
+import { getAppByName } from '@epic-web/workshop-utils/apps.server'
 import { type ActionFunctionArgs, json } from '@remix-run/node'
 import { Link, useFetcher } from '@remix-run/react'
 import { clsx } from 'clsx'
@@ -271,8 +271,8 @@ function LaunchGitHub({
 				className="launch_button !no-underline"
 				href={
 					safePath(file).replace(
-						safePath(ENV.KCDSHOP_CONTEXT_CWD),
-						ENV.KCDSHOP_GITHUB_ROOT,
+						safePath(ENV.EPICSHOP_CONTEXT_CWD),
+						ENV.EPICSHOP_GITHUB_ROOT,
 					) + (line ? `#L${line}` : '')
 				}
 				rel="noreferrer"
@@ -290,7 +290,7 @@ function LaunchGitHub({
 	return (
 		<a
 			className="launch_button !no-underline"
-			href={`${ENV.KCDSHOP_GITHUB_ROOT}/${path}`}
+			href={`${ENV.EPICSHOP_GITHUB_ROOT}/${path}`}
 			rel="noreferrer"
 			target="_blank"
 		>
@@ -320,7 +320,7 @@ export function EditFileOnGitHub({
 	const fetcher = useLaunchFetcher()
 
 	const handleClick = (e: React.MouseEvent<HTMLAnchorElement>) => {
-		if (!e.altKey || ENV.KCDSHOP_DEPLOYED) return
+		if (!e.altKey || ENV.EPICSHOP_DEPLOYED) return
 		e.preventDefault()
 		const formData = new FormData()
 		const type = file ? 'file' : 'appFile'
@@ -332,7 +332,7 @@ export function EditFileOnGitHub({
 		fetcher.submit(formData, { method: 'POST', action: '/launch-editor' })
 	}
 
-	const githubPath = ENV.KCDSHOP_GITHUB_ROOT.replace(
+	const githubPath = ENV.EPICSHOP_GITHUB_ROOT.replace(
 		/\/tree\/|\/blob\//,
 		'/edit/',
 	)
@@ -350,8 +350,8 @@ export function EditFileOnGitHub({
 	)
 }
 
-export const LaunchEditor = ENV.KCDSHOP_DEPLOYED
-	? ENV.KCDSHOP_GITHUB_ROOT
+export const LaunchEditor = ENV.EPICSHOP_DEPLOYED
+	? ENV.EPICSHOP_GITHUB_ROOT
 		? LaunchGitHub
 		: ({ children }: LaunchEditorProps) => (
 				<SimpleTooltip content="Cannot open files in deployed app">

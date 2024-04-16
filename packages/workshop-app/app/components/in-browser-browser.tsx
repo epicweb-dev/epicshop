@@ -22,7 +22,7 @@ import { useRequestInfo } from '#app/utils/request-info.ts'
 
 const historyCallDataSchema = z.intersection(
 	z.object({
-		type: z.literal('kcdshop:history-call'),
+		type: z.literal('epicshop:history-call'),
 	}),
 	z.union([
 		z.object({
@@ -54,7 +54,7 @@ const historyCallDataSchema = z.intersection(
 )
 
 const loadedSchema = z.object({
-	type: z.literal('kcdshop:loaded'),
+	type: z.literal('epicshop:loaded'),
 	url: z.string(),
 })
 
@@ -172,7 +172,7 @@ function InBrowserBrowserForRealzImpl(
 			if (!result.success) return
 			const { data } = result
 
-			if (data.type === 'kcdshop:loaded') {
+			if (data.type === 'epicshop:loaded') {
 				setIFrameContext(prevContext => {
 					const newIndex = (i: number) =>
 						getNewIndex(prevContext.index, i, prevContext.history.length - 1)
@@ -292,7 +292,7 @@ function InBrowserBrowserForRealzImpl(
 			lastDirectionRef.current = 'new'
 		}, 100)
 		iframeRef.current?.contentWindow?.postMessage(
-			{ type: 'kcdshop:navigate-call', params },
+			{ type: 'epicshop:navigate-call', params },
 			'*',
 		)
 	}

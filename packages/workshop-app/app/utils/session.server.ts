@@ -2,7 +2,7 @@ import { createCookieSessionStorage } from '@remix-run/node'
 
 const storage = createCookieSessionStorage({
 	cookie: {
-		name: '__KCD_SHOP_SESSION',
+		name: '__EPICSHOP_SESSION',
 		httpOnly: true,
 		secure: false,
 		path: '/',
