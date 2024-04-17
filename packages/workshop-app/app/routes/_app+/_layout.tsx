@@ -335,7 +335,7 @@ function EpicWebBanner() {
 					target="_blank"
 					className="flex h-full items-center justify-center space-x-1.5 px-5 text-sm font-semibold"
 				>
-					<span className="drop-shadow-sm">Buy Epic Web</span>
+					<span className="drop-shadow-sm">Join Epic Web</span>
 					<span>↗︎</span>
 				</Link>
 				<Link
