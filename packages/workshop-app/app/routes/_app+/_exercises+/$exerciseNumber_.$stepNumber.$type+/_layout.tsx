@@ -505,7 +505,7 @@ export default function ExercisePartRoute() {
 								>
 									<Link
 										id={`${tab}-tab`}
-										className="h-full outline-none focus:bg-foreground/80 focus:text-background/80"
+										className="inline-block h-full outline-none focus:bg-foreground/80 focus:text-background/80"
 										preventScrollReset
 										prefetch="intent"
 										onClick={handleDiffTabClick}
