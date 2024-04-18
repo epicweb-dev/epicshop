@@ -23,9 +23,9 @@
     "packages/example/examples/*"
   ],
   "dependencies": {
-    "@nx/devkit": "^18.0.4",
-    "@nx/eslint": "^18.0.4",
-    "@nx/js": "^18.0.4",
+    "@nx/devkit": "^18.3.1",
+    "@nx/eslint": "^18.3.1",
+    "@nx/js": "^18.3.1",
     "@playwright/test": "^1.39.0",
     "@types/yargs": "^17.0.32",
     "cross-env": "^7.0.3",
@@ -33,7 +33,7 @@
     "globby": "^14.0.1",
     "lru-cache": "^10.0.1",
     "npm-run-all": "^4.1.5",
-    "nx": "^18.0.4",
+    "nx": "^18.3.1",
     "patch-package": "^8.0.0",
     "prettier": "^3.0.3",
     "prettier-plugin-tailwindcss": "^0.5.7",
@@ -44,10 +44,10 @@
     "includedScripts": []
   },
   "devDependencies": {
-    "@nrwl/linter": "^18.0.4",
-    "@nx/linter": "^18.0.4",
-    "@nx/playwright": "^18.0.4",
-    "@nx/workspace": "^18.0.4",
+    "@nrwl/linter": "^18.3.1",
+    "@nx/linter": "^18.3.1",
+    "@nx/playwright": "^18.3.1",
+    "@nx/workspace": "^18.3.1",
     "eslint-config-kentcdodds": "^21.0.0",
     "verdaccio": "^5.0.4"
   }
