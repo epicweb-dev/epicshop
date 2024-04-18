@@ -72,6 +72,7 @@ type Props = {
 	portIsAvailable: boolean | null
 	isRunning: boolean
 	baseUrl: string
+	initialRoute: string
 }
 
 export type InBrowserBrowserRef = {
@@ -83,13 +84,19 @@ export const InBrowserBrowser = forwardRef<InBrowserBrowserRef, Props>(
 )
 
 function InBrowserBrowserImpl(
-	{ name, port, portIsAvailable, isRunning, baseUrl, id }: Props,
+	{ name, port, portIsAvailable, isRunning, baseUrl, id, initialRoute }: Props,
 	ref: ForwardedRef<InBrowserBrowserRef>,
 ) {
 	const requestInfo = useRequestInfo()
 	return isRunning ? (
 		// eslint-disable-next-line @typescript-eslint/no-use-before-define
-		<InBrowserBrowserForRealz baseUrl={baseUrl} id={id} name={name} ref={ref} />
+		<InBrowserBrowserForRealz
+			baseUrl={baseUrl}
+			id={id}
+			name={name}
+			ref={ref}
+			initialRoute={initialRoute}
+		/>
 	) : portIsAvailable === false ? (
 		<div className="flex flex-col items-center justify-center">
 			<p className="max-w-xs pb-5 text-center" role="status">
@@ -112,6 +119,7 @@ type RealBrowserProps = {
 	baseUrl: string
 	id: string
 	name: string
+	initialRoute: string
 }
 
 const InBrowserBrowserForRealz = forwardRef<
@@ -122,11 +130,11 @@ const InBrowserBrowserForRealz = forwardRef<
 // we're doing this to ensure all of this complex stuff doesn't happen unless
 // the iframe is actually rendered.
 function InBrowserBrowserForRealzImpl(
-	{ baseUrl, id, name }: RealBrowserProps,
+	{ baseUrl, id, name, initialRoute }: RealBrowserProps,
 	ref: ForwardedRef<InBrowserBrowserRef>,
 ) {
 	const [searchParams, setSearchParams] = useSearchParams()
-	const searchParamsPathname = searchParams.get('pathname') ?? ''
+	const searchParamsPathname = searchParams.get('pathname') ?? initialRoute
 	const [iframeKeyNumber, setIframeKeyNumber] = useState(0)
 	const iframeKey = id + iframeKeyNumber
 	const lastDirectionRef = useRef<'forward' | 'back' | 'new'>('new')

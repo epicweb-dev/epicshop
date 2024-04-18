@@ -42,6 +42,12 @@ const playgroundAppNameInfoPath = path.join(
 	'playground.json',
 )
 
+const defaultInitialRoute = await getPkgProp(
+	workshopRoot,
+	'epicshop.initialRoute',
+	'/',
+)
+
 type CachifiedOptions = { timings?: Timings; request?: Request }
 
 const BaseAppSchema = z.object({
@@ -66,7 +72,11 @@ const BaseAppSchema = z.object({
 	]),
 	dev: z.union([
 		z.object({ type: z.literal('browser'), pathname: z.string() }),
-		z.object({ type: z.literal('script'), portNumber: z.number() }),
+		z.object({
+			type: z.literal('script'),
+			portNumber: z.number(),
+			initialRoute: z.string(),
+		}),
 		z.object({ type: z.literal('none') }),
 	]),
 })
@@ -606,14 +616,9 @@ async function getTestInfo({
 }: {
 	fullPath: string
 }): Promise<BaseApp['test']> {
-	const testScriptName = 'test'
 	const hasPkgJson = await exists(path.join(fullPath, 'package.json'))
 	const testScript = hasPkgJson
-		? await getPkgProp(
-				fullPath,
-				['epicshop.scripts', testScriptName].join('.'),
-				'',
-			)
+		? await getPkgProp(fullPath, 'epicshop.scripts.test', '')
 		: null
 
 	if (testScript) {
@@ -645,11 +650,15 @@ async function getDevInfo({
 }): Promise<BaseApp['dev']> {
 	const hasPkgJson = await exists(path.join(fullPath, 'package.json'))
 	const hasDevScript = hasPkgJson
-		? Boolean(await getPkgProp(fullPath, ['scripts', 'dev'].join('.'), ''))
+		? Boolean(await getPkgProp(fullPath, 'scripts.dev', ''))
 		: false
 
 	if (hasDevScript) {
-		return { type: 'script', portNumber }
+		const initialRoute =
+			(hasPkgJson
+				? await getPkgProp(fullPath, 'epicshop.initialRoute', '')
+				: '') || defaultInitialRoute
+		return { type: 'script', portNumber, initialRoute }
 	}
 	const indexFiles = (await fsExtra.readdir(fullPath)).filter((file: string) =>
 		file.startsWith('index.'),

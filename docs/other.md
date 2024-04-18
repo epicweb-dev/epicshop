@@ -98,3 +98,22 @@ the "Send a form with pre-filled answers" in
    to copy the pre-filled URL. Use that URL in `package.json`.
 
 Eventually we'll probably move to something more custom, but for now this works.
+
+## Initial Route
+
+When the learner clicks "start server" we wait for the server to be ready by
+hitting it with `HEAD` requests. Once the server is ready, we load the `iframe`
+at the route `/` by default. You can customize this with the `initialRoute`
+property in the `package.json`:
+
+```json
+{
+	"epicshop": {
+		"initialRoute": "/some-other-route"
+	}
+}
+```
+
+You can do this globally by putting this configuration in the root of the
+workshop or on a per-exercise basis by putting it in the exercise's
+`package.json`.

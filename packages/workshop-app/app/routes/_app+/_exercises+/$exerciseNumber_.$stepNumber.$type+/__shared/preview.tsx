@@ -44,6 +44,7 @@ export function Preview({
 				portIsAvailable={portIsAvailable}
 				port={dev.portNumber}
 				baseUrl={baseUrl}
+				initialRoute={dev.initialRoute}
 			/>
 		)
 	} else if (dev.type === 'browser') {
