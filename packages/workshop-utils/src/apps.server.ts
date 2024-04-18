@@ -42,12 +42,6 @@ const playgroundAppNameInfoPath = path.join(
 	'playground.json',
 )
 
-const defaultInitialRoute = await getPkgProp(
-	workshopRoot,
-	'epicshop.initialRoute',
-	'/',
-)
-
 type CachifiedOptions = { timings?: Timings; request?: Request }
 
 const BaseAppSchema = z.object({
@@ -657,7 +651,7 @@ async function getDevInfo({
 		const initialRoute =
 			(hasPkgJson
 				? await getPkgProp(fullPath, 'epicshop.initialRoute', '')
-				: '') || defaultInitialRoute
+				: '') || (await getPkgProp(workshopRoot, 'epicshop.initialRoute', '/'))
 		return { type: 'script', portNumber, initialRoute }
 	}
 	const indexFiles = (await fsExtra.readdir(fullPath)).filter((file: string) =>
