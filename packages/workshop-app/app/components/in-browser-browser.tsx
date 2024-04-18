@@ -416,7 +416,7 @@ function InBrowserBrowserForRealzImpl(
 						<TooltipContent>Open in new tab</TooltipContent>
 					</Tooltip>
 				</div>
-				<div className="flex h-full w-full flex-grow p-5 dark:bg-white">
+				<div className="flex h-full w-full flex-grow dark:bg-white">
 					<iframe
 						title={name}
 						key={iframeKey}

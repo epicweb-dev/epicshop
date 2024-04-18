@@ -54,7 +54,7 @@ export function Preview({
 					target="_blank"
 					rel="noreferrer"
 					className={cn(
-						'absolute bottom-5 right-5 flex items-center justify-center rounded-full bg-gray-100 p-2.5 transition hover:bg-gray-200',
+						'absolute bottom-5 right-5 flex items-center justify-center rounded-full bg-gray-100 p-2.5 transition hover:bg-gray-200 dark:bg-gray-800 hover:dark:bg-gray-600',
 					)}
 				>
 					<Icon name="ExternalLink" aria-hidden="true" />
@@ -63,7 +63,7 @@ export function Preview({
 				<iframe
 					title={title}
 					src={dev.pathname}
-					className="h-full w-full flex-grow bg-white p-3"
+					className="h-full w-full flex-grow bg-white"
 				/>
 			</div>
 		)
