@@ -9,10 +9,12 @@ export function Tests({
 	appInfo: playgroundAppInfo,
 	problemAppName,
 	allApps,
+	isUpToDate,
 }: {
 	appInfo: Pick<PlaygroundApp, 'appName' | 'name' | 'type' | 'test'> | null
 	problemAppName?: string
 	allApps: Array<{ name: string; displayName: string }>
+	isUpToDate: boolean
 }) {
 	const [inBrowserTestKey, setInBrowserTestKey] = useState(0)
 	let testUI = <p>No tests here. Sorry.</p>
@@ -49,6 +51,7 @@ export function Tests({
 			playgroundAppName={playgroundAppInfo?.appName}
 			problemAppName={problemAppName}
 			allApps={allApps}
+			isUpToDate={isUpToDate}
 		>
 			{testUI}
 		</PlaygroundWindow>

@@ -4,24 +4,36 @@ import { PlaygroundChooser, SetPlayground } from '#app/routes/set-playground'
 export function PlaygroundWindow({
 	playgroundAppName,
 	problemAppName,
+	isUpToDate,
 	allApps,
 	children,
 }: {
 	playgroundAppName?: string
 	problemAppName?: string
+	isUpToDate: boolean
 	allApps: Array<{ name: string; displayName: string }>
 	children: React.ReactNode
 }) {
 	const isCorrectApp = playgroundAppName === problemAppName
-	const playgroundLinkedUI = isCorrectApp ? (
-		<Icon size="xl" name="Linked" />
-	) : (
-		<Icon
-			size="xl"
-			name="Unlinked"
-			className="animate-pulse text-foreground-danger"
-		/>
-	)
+	const playgroundLinkedUI =
+		isCorrectApp && isUpToDate ? (
+			<Icon size="xl" name="Linked" />
+		) : (
+			<Icon
+				size="xl"
+				name="Unlinked"
+				className="animate-pulse text-foreground-danger"
+			/>
+		)
+	let setPlaygroundTooltipText = 'Click to reset Playground.'
+	if (!isUpToDate) {
+		setPlaygroundTooltipText =
+			'Playground is out of date. Click to reset Playground.'
+	}
+	if (!isCorrectApp) {
+		setPlaygroundTooltipText =
+			'Playground is not set to the right app. Click to set Playground.'
+	}
 	return (
 		<div className="flex h-full w-full flex-col justify-between">
 			<div className="flex h-14 flex-shrink-0 items-center justify-start gap-2 border-b px-3">
@@ -29,11 +41,7 @@ export function PlaygroundWindow({
 					{problemAppName ? (
 						<SetPlayground
 							appName={problemAppName}
-							tooltipText={
-								isCorrectApp
-									? 'Click to reset Playground.'
-									: 'Playground is not set to the right app. Click to set Playground.'
-							}
+							tooltipText={setPlaygroundTooltipText}
 						>
 							{playgroundLinkedUI}
 						</SetPlayground>

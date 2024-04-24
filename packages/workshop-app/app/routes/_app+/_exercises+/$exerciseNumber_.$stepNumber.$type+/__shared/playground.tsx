@@ -10,17 +10,20 @@ export function Playground({
 	inBrowserBrowserRef,
 	problemAppName,
 	allApps,
+	isUpToDate,
 }: {
 	appInfo: Parameters<typeof Preview>['0']['appInfo'] | null
 	inBrowserBrowserRef: React.RefObject<InBrowserBrowserRef>
 	problemAppName?: string
 	allApps: Array<{ name: string; displayName: string }>
+	isUpToDate: boolean
 }) {
 	return (
 		<PlaygroundWindow
 			playgroundAppName={playgroundAppInfo?.appName}
 			problemAppName={problemAppName}
 			allApps={allApps}
+			isUpToDate={isUpToDate}
 		>
 			{playgroundAppInfo?.dev.type === 'none' ? (
 				<div>

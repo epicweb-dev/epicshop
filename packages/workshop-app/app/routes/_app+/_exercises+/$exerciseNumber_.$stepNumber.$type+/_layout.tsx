@@ -289,6 +289,7 @@ export async function loader({ request, params }: LoaderFunctionArgs) {
 						title: playgroundApp.title,
 						name: playgroundApp.name,
 						appName: playgroundApp.appName,
+						isUpToDate: playgroundApp.isUpToDate,
 						...(await getAppRunningState(playgroundApp)),
 					} as const)
 				: null,
@@ -407,9 +408,9 @@ export default function ExercisePartRoute() {
 		<div className="flex flex-grow flex-col">
 			<main className="grid h-full flex-grow grid-cols-1 grid-rows-2 lg:grid-cols-2 lg:grid-rows-1">
 				<div className="relative col-span-1 row-span-1 flex h-full flex-col lg:border-r">
-					<h1 className="h-14 border-b pl-10 pr-5 text-sm font-medium uppercase leading-tight">
+					<h1 className="h-14 border-b pl-10 pr-5 text-sm font-medium leading-tight">
 						<div className="flex h-14 flex-wrap items-center justify-between gap-x-2 py-2">
-							<div className="flex items-center justify-start gap-x-2">
+							<div className="flex items-center justify-start gap-x-2 uppercase">
 								<Link
 									to={`/${titleBits.exerciseNumber}`}
 									className="hover:underline"
@@ -535,6 +536,7 @@ export default function ExercisePartRoute() {
 								problemAppName={data.problem?.name}
 								inBrowserBrowserRef={inBrowserBrowserRef}
 								allApps={data.allApps}
+								isUpToDate={data.playground?.isUpToDate ?? false}
 							/>
 						</Tabs.Content>
 						<Tabs.Content
@@ -563,6 +565,7 @@ export default function ExercisePartRoute() {
 								appInfo={data.playground}
 								problemAppName={data.problem?.name}
 								allApps={data.allApps}
+								isUpToDate={data.playground?.isUpToDate ?? false}
 							/>
 						</Tabs.Content>
 						<Tabs.Content

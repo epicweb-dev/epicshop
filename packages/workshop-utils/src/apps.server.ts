@@ -97,6 +97,7 @@ const ExampleAppSchema = BaseAppSchema.extend({
 const PlaygroundAppSchema = BaseAppSchema.extend({
 	type: z.literal('playground'),
 	appName: z.string(),
+	isUpToDate: z.boolean(),
 })
 
 const ExerciseSchema = z.object({
@@ -669,8 +670,18 @@ export async function getPlaygroundApp({
 	request,
 }: CachifiedOptions = {}): Promise<PlaygroundApp | null> {
 	const playgroundDir = path.join(workshopRoot, 'playground')
-	const appName = await getPlaygroundAppName()
-	const key = `playground-${appName}`
+	const baseAppName = await getPlaygroundAppName()
+	const key = `playground-${baseAppName}`
+
+	const baseAppFullPath = baseAppName
+		? await getFullPathFromAppName(baseAppName)
+		: null
+	const playgroundCacheEntry = playgroundAppCache.get(key)
+	const forceFreshPlaygroundDir =
+		getForceFreshForDir(playgroundDir, playgroundCacheEntry) ?? false
+	const forceFreshBaseApp = baseAppFullPath
+		? getForceFreshForDir(baseAppFullPath, playgroundCacheEntry) ?? false
+		: false
 	return cachified({
 		key,
 		cache: playgroundAppCache,
@@ -679,10 +690,10 @@ export async function getPlaygroundApp({
 		timings,
 		timingKey: playgroundDir.replace(`${playgroundDir}${path.sep}`, ''),
 		request,
-		forceFresh: getForceFreshForDir(playgroundDir, playgroundAppCache.get(key)),
+		forceFresh: forceFreshPlaygroundDir || forceFreshBaseApp,
 		getFreshValue: async () => {
 			if (!(await exists(playgroundDir))) return null
-			if (!appName) return null
+			if (!baseAppName) return null
 
 			const dirName = path.basename(playgroundDir)
 			const name = getAppName(playgroundDir)
@@ -692,10 +703,17 @@ export async function getPlaygroundApp({
 				getTestInfo({ fullPath: playgroundDir }),
 				getDevInfo({ fullPath: playgroundDir, portNumber }),
 			])
+
+			const appModifiedTime = await getDirModifiedTime(
+				await getFullPathFromAppName(baseAppName),
+			)
+			const playgroundAppModifiedTime = await getDirModifiedTime(playgroundDir)
+
 			return {
 				name,
-				appName,
+				appName: baseAppName,
 				type: 'playground',
+				isUpToDate: appModifiedTime <= playgroundAppModifiedTime,
 				fullPath: playgroundDir,
 				relativePath: playgroundDir.replace(
 					`${getWorkshopRoot()}${path.sep}`,
@@ -1206,6 +1224,35 @@ export async function getPlaygroundAppName() {
 	} catch {
 		return null
 	}
+}
+
+async function getDirModifiedTime(dir: string): Promise<number> {
+	// we can't use modifiedTimes because it only stores the modified times of
+	// things the app started.
+
+	const isIgnored = await isGitIgnored({ cwd: dir })
+	const files = await fs.promises.readdir(dir, { withFileTypes: true })
+
+	const modifiedTimes = await Promise.all(
+		files.map(async file => {
+			if (isIgnored(file.name)) return 0
+
+			const filePath = path.join(dir, file.name)
+			if (file.isDirectory()) {
+				return getDirModifiedTime(filePath)
+			} else {
+				try {
+					const { mtimeMs } = await fs.promises.stat(filePath)
+					return mtimeMs
+				} catch {
+					// Handle errors (e.g., file access permissions, file has been moved or deleted)
+					return 0
+				}
+			}
+		}),
+	)
+
+	return Math.max(0, ...modifiedTimes) // Ensure there is a default of 0 if all files are ignored
 }
 
 export function getAppDisplayName(a: App, allApps: Array<App>) {
