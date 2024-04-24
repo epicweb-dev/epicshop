@@ -1,4 +1,5 @@
 import { Icon } from '#app/components/icons'
+import { SimpleTooltip } from '#app/components/ui/tooltip.js'
 import { PlaygroundChooser, SetPlayground } from '#app/routes/set-playground'
 
 export function PlaygroundWindow({
@@ -37,7 +38,7 @@ export function PlaygroundWindow({
 	return (
 		<div className="flex h-full w-full flex-col justify-between">
 			<div className="flex h-14 flex-shrink-0 items-center justify-start gap-2 border-b px-3">
-				<div className="display-alt-up flex">
+				<div className="display-alt-up">
 					{problemAppName ? (
 						<SetPlayground
 							appName={problemAppName}
@@ -46,7 +47,11 @@ export function PlaygroundWindow({
 							{playgroundLinkedUI}
 						</SetPlayground>
 					) : (
-						<div className="flex">{playgroundLinkedUI}</div>
+						<SimpleTooltip content="No problem app available for this step">
+							<div>
+								<Icon name="Question" />
+							</div>
+						</SimpleTooltip>
 					)}
 				</div>
 				<div className="display-alt-down">

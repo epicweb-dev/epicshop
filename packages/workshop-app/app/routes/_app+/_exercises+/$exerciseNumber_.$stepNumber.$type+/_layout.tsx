@@ -494,19 +494,15 @@ export default function ExercisePartRoute() {
 				>
 					<Tabs.List className="h-14 min-h-14 overflow-x-hidden border-b scrollbar-thin scrollbar-thumb-scrollbar">
 						{tabs.map(tab => {
+							const hidden = shouldHideTab(tab)
 							return (
-								<Tabs.Trigger
-									key={tab}
-									value={tab}
-									hidden={shouldHideTab(tab)}
-									asChild
-									className={clsx(
-										'clip-path-button relative px-6 py-4 font-mono text-sm uppercase radix-state-active:z-10 radix-state-active:bg-foreground radix-state-active:text-background radix-state-active:hover:bg-foreground/80 radix-state-active:hover:text-background/80 radix-state-inactive:hover:bg-foreground/20 radix-state-inactive:hover:text-foreground/80',
-									)}
-								>
+								<Tabs.Trigger key={tab} value={tab} hidden={hidden} asChild>
 									<Link
 										id={`${tab}-tab`}
-										className="inline-block h-full outline-none focus:bg-foreground/80 focus:text-background/80"
+										className={clsx(
+											'clip-path-button relative h-full px-6 py-4 font-mono text-sm uppercase outline-none radix-state-active:z-10 radix-state-active:bg-foreground radix-state-active:text-background radix-state-active:hover:bg-foreground/80 radix-state-active:hover:text-background/80 radix-state-inactive:hover:bg-foreground/20 radix-state-inactive:hover:text-foreground/80 focus:bg-foreground/80 focus:text-background/80',
+											hidden ? 'hidden' : 'inline-block',
+										)}
 										preventScrollReset
 										prefetch="intent"
 										onClick={handleDiffTabClick}
