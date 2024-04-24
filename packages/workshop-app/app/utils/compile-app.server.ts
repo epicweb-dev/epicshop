@@ -10,7 +10,7 @@ import {
 	compiledCodeCache,
 } from '@epic-web/workshop-utils/cache.server'
 import { type Timings } from '@epic-web/workshop-utils/timing.server'
-import * as esbuild from 'esbuild-wasm'
+import * as esbuild from 'esbuild'
 
 async function getForceFresh(
 	filePath: string,

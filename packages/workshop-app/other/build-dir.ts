@@ -1,6 +1,6 @@
 import path from 'path'
 import { fileURLToPath } from 'url'
-import * as esbuild from 'esbuild-wasm'
+import esbuild from 'esbuild'
 import fsExtra from 'fs-extra'
 import { glob } from 'glob'
 
