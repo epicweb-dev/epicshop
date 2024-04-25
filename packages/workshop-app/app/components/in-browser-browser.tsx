@@ -398,7 +398,7 @@ function InBrowserBrowserForRealzImpl(
 							</a>
 							<input
 								aria-label="pathname"
-								className="flex-1 focus-visible:outline-none"
+								className="flex-1 bg-background focus-visible:outline-none"
 								value={pathnameInputValue}
 								name="pathname"
 								onChange={e => setPathnameInputValue(e.currentTarget.value)}
