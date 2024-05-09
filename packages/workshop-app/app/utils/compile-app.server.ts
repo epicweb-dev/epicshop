@@ -28,10 +28,16 @@ export async function compileTs(
 	filePath: string,
 	fullPath: string,
 	{
+		esbuildOptions,
 		forceFresh,
 		request,
 		timings,
-	}: { forceFresh?: boolean; request?: Request; timings?: Timings } = {},
+	}: {
+		forceFresh?: boolean
+		request?: Request
+		timings?: Timings
+		esbuildOptions?: esbuild.BuildOptions
+	} = {},
 ) {
 	const key = `${filePath}::${fullPath}`
 	return cachified({
@@ -62,6 +68,7 @@ export async function compileTs(
 				jsx: 'automatic',
 				minify: false,
 				sourcemap: 'inline',
+				...esbuildOptions,
 			})
 			return result
 		},

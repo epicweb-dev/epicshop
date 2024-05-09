@@ -73,6 +73,7 @@ async function getApiModule({ request, params }: LoaderFunctionArgs) {
 	}
 
 	const { outputFiles, errors } = await compileTs(apiFile, app.fullPath, {
+		esbuildOptions: { platform: 'node' },
 		request,
 		timings,
 	})
@@ -81,7 +82,7 @@ async function getApiModule({ request, params }: LoaderFunctionArgs) {
 		console.error(errors)
 		throw new Response(errors.join('\n'), { status: 500 })
 	}
-	if (!outputFiles[0]) {
+	if (!outputFiles?.[0]) {
 		throw new Response(`Failed to compile file "${apiFile}"`, { status: 500 })
 	}
 	const apiCode = outputFiles[0].text
