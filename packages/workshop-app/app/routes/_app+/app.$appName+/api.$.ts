@@ -77,6 +77,9 @@ async function getApiModule({ request, params }: LoaderFunctionArgs) {
 	const { outputFiles, errors } = await compileTs(apiFile, app.fullPath, {
 		esbuildOptions: {
 			platform: 'node',
+			packages: 'external',
+			// just adds noise to errors and doesn't appear to help with debugging
+			sourcemap: false,
 			// remove the process.env define
 			define: {},
 		},
