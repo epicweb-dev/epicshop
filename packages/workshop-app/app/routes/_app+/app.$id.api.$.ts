@@ -13,23 +13,33 @@ import { compileTs } from '#app/utils/compile-app.server'
 import { getBaseUrl } from '#app/utils/misc'
 
 export async function loader(args: LoaderFunctionArgs) {
-	const apiModule = await getApiModule(args)
+	const api = await getApiModule(args)
 	invariantResponse(
-		apiModule.loader,
+		api.mod.loader,
 		'Attempted to make a GET request to the api endpoint but the api module does not export a loader function',
 		{ status: 405 },
 	)
-	return apiModule.loader(args)
+	try {
+		const result = await api.mod.loader(args)
+		return result
+	} catch (error) {
+		api.cleanupError(error)
+	}
 }
 
 export async function action(args: ActionFunctionArgs) {
-	const apiModule = await getApiModule(args)
+	const api = await getApiModule(args)
 	invariantResponse(
-		apiModule.action,
+		api.mod.action,
 		'Attempted to make a non-GET request to the api endpoint but the api module does not export an action function',
 		{ status: 405 },
 	)
-	return apiModule.action(args)
+	try {
+		const result = await api.mod.action(args)
+		return result
+	} catch (error) {
+		api.cleanupError(error)
+	}
 }
 
 const ApiModuleSchema = z.object({
@@ -87,7 +97,7 @@ async function getApiModule({ request, params }: LoaderFunctionArgs) {
 	}
 	const apiCode = outputFiles[0].text
 	const dataUrl = `data:text/javascript;base64,${Buffer.from(apiCode).toString('base64')}`
-	const mod = await import(/* @vite-ignore */ dataUrl)
+	const mod = await import(/* @vite-ignore */ dataUrl).catch(cleanupError)
 	const apiModule = ApiModuleSchema.safeParse(mod)
 	if (!apiModule.success) {
 		throw new Response(
@@ -95,5 +105,15 @@ async function getApiModule({ request, params }: LoaderFunctionArgs) {
 			{ status: 500 },
 		)
 	}
-	return apiModule.data
+	return {
+		mod: apiModule.data,
+		cleanupError,
+	}
+
+	function cleanupError(error: unknown) {
+		if (apiFile && error instanceof Error && error.stack) {
+			error.stack = error.stack.replace(dataUrl, apiFile)
+		}
+		throw error
+	}
 }
