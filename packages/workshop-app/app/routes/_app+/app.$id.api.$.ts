@@ -83,7 +83,11 @@ async function getApiModule({ request, params }: LoaderFunctionArgs) {
 	}
 
 	const { outputFiles, errors } = await compileTs(apiFile, app.fullPath, {
-		esbuildOptions: { platform: 'node' },
+		esbuildOptions: {
+			platform: 'node',
+			// remove the process.env define
+			define: {},
+		},
 		request,
 		timings,
 	})
