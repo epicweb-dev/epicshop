@@ -77,7 +77,8 @@ async function getApiModule({ request, params }: LoaderFunctionArgs) {
 	const { outputFiles, errors } = await compileTs(apiFile, app.fullPath, {
 		esbuildOptions: {
 			platform: 'node',
-			packages: 'external',
+			// packages external causes issues in Node 20 because Node tries to resolve the package.json from the data URL 🤷‍♂️
+			// packages: 'external', // figure out how to turn this on in the future...
 			// just adds noise to errors and doesn't appear to help with debugging
 			sourcemap: false,
 			// remove the process.env define
