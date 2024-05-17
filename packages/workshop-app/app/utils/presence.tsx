@@ -10,6 +10,7 @@ import { useParams, useRouteLoaderData } from '@remix-run/react'
 import { usePartySocket } from 'partysocket/react'
 import { createContext, useContext, useEffect, useState } from 'react'
 import { z } from 'zod'
+import { useRequestInfo } from './request-info.ts'
 import { type loader as rootLoader } from '#app/root.tsx'
 
 export * from '@epic-web/workshop-presence/presence'
@@ -36,6 +37,7 @@ const ExerciseAppParamsSchema = z.object({
 
 export function usePresenceSocket(user?: User | null) {
 	const workshopTitle = useOptionalWorkshopTitle()
+	const requestInfo = useRequestInfo()
 	const rawParams = useParams()
 	const prefs = usePresencePreferences()
 	const data = useRouteLoaderData<typeof rootLoader>('root')
@@ -68,6 +70,7 @@ export function usePresenceSocket(user?: User | null) {
 	const params = paramsResult.success ? paramsResult.data : null
 	const location = {
 		workshopTitle,
+		origin: requestInfo.origin,
 		...(params
 			? {
 					exercise: {

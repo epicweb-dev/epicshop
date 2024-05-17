@@ -107,6 +107,7 @@ export async function loader({ request }: LoaderFunctionArgs) {
 			})),
 			ENV: getEnv(),
 			requestInfo: {
+				origin: new URL(request.url).origin,
 				domain: getDomainUrl(request),
 				hints: getHints(request),
 				path: new URL(request.url).pathname,

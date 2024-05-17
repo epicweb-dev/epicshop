@@ -143,7 +143,7 @@ function FacePile({ isMenuOpened }: { isMenuOpened: boolean }) {
 						'h-8 w-8 rounded-full border object-cover',
 						getScoreClassNames(1),
 					)}
-					src="https://github-production-user-asset-6210df.s3.amazonaws.com/1500684/277090714-b26e5961-4ee5-4c20-abdb-b04c1c480f2b.png"
+					src="/img/tiffany.png"
 				/>
 			</Link>
 		) : null
@@ -187,7 +187,7 @@ function FacePile({ isMenuOpened }: { isMenuOpened: boolean }) {
 									<span>
 										{user.name || 'An EPIC Web Dev'}{' '}
 										{locationLabel
-											? ` is working ${
+											? ` is ${user.location?.origin?.includes('epicweb.dev') ? 'learning' : 'working'} ${
 													score === 1 && loggedInUser?.id !== user.id
 														? 'with you'
 														: ''

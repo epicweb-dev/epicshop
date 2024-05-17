@@ -11,6 +11,7 @@ export const UserSchema = z.object({
 	location: z
 		.object({
 			workshopTitle: z.string().nullable().optional(),
+			origin: z.string().nullable().optional(),
 			exercise: z
 				.object({
 					type: z
