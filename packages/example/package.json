@@ -31,15 +31,15 @@
   "dependencies": {
     "@epic-web/workshop-app": "file:../workshop-app",
     "@epic-web/workshop-utils": "file:../workshop-utils",
-    "@playwright/test": "^1.36.1",
-    "@testing-library/dom": "^9.3.1",
-    "@testing-library/react": "^14.0.0",
-    "@testing-library/user-event": "^14.4.3",
-    "assert": "^2.0.0",
+    "@playwright/test": "^1.44.1",
+    "@testing-library/dom": "^10.1.0",
+    "@testing-library/react": "^15.0.7",
+    "@testing-library/user-event": "^14.5.2",
+    "assert": "^2.1.0",
     "dotenv": "^16.4.5",
-    "react": "^18.2.0",
-    "react-dom": "^18.2.0",
-    "tsx": "^4.7.0"
+    "react": "^18.3.1",
+    "react-dom": "^18.3.1",
+    "tsx": "^4.11.0"
   },
   "eslintIgnore": [
     "/node_modules",

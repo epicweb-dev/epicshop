@@ -4,7 +4,7 @@ import express from 'express'
 import chokidar from 'chokidar'
 import compression from 'compression'
 import morgan from 'morgan'
-import address from 'address'
+import { ip as ipAddress } from 'address'
 import closeWithGrace from 'close-with-grace'
 import { createRequestHandler } from '@remix-run/express'
 import { type ServerBuild, broadcastDevReady } from '@remix-run/node'
@@ -80,7 +80,7 @@ const server = app.listen(portToUse, () => {
 	const localUrl = `http://localhost:${portUsed}`
 	let lanUrl: string | null = null
 	// eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
-	const localIp: string = address.ip()
+	const localIp = ipAddress() ?? 'Unknown'
 	// Check if the address is a private ip
 	// https://en.wikipedia.org/wiki/Private_network#Private_IPv4_address_spaces
 	// https://github.com/facebook/create-react-app/blob/d960b9e38c062584ff6cfb1a70e1512509a966e7/packages/react-dev-utils/WebpackDevServerUtils.js#LL48C9-L54C10

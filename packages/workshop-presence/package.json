@@ -12,12 +12,12 @@
   },
   "dependencies": {
     "@epic-web/workshop-utils": "file:../workshop-utils",
-    "zod": "^3.22.4"
+    "zod": "^3.23.8"
   },
   "devDependencies": {
-    "partykit": "0.0.99",
-    "typescript": "^5.4.2",
-    "tshy": "^1.11.1"
+    "partykit": "0.0.105",
+    "typescript": "^5.4.5",
+    "tshy": "^1.14.0"
   },
   "files": [
     "dist"
