@@ -42,7 +42,8 @@
     "prettier": "^3.2.5",
     "prettier-plugin-tailwindcss": "^0.5.14",
     "tsx": "^4.11.0",
-    "yargs": "^17.7.2"
+    "yargs": "^17.7.2",
+    "yoctocolors": "^2.0.2"
   },
   "nx": {
     "includedScripts": []
