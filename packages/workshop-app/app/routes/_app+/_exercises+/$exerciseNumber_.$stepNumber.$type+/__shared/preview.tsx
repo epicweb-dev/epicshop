@@ -24,7 +24,7 @@ export function Preview({
 		dev: BaseExerciseStepApp['dev']
 		test: BaseExerciseStepApp['test']
 	} | null
-	inBrowserBrowserRef: React.RefObject<InBrowserBrowserRef>
+	inBrowserBrowserRef: React.RefObject<InBrowserBrowserRef | null>
 }) {
 	const requestInfo = useRequestInfo()
 	if (!appInfo) return <p>No app here. Sorry.</p>

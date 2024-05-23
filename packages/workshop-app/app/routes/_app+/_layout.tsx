@@ -367,6 +367,7 @@ function NavigationExerciseListItem({
 	return (
 		<motion.li
 			variants={itemVariants}
+			// @ts-expect-error framer-motion + latest typescript types has issues
 			className={cn(
 				// add gap of 3 to children, but using padding so the progress extends through the whole height
 				'py-[6px] first:pt-3 last:pb-3',
@@ -388,6 +389,7 @@ function NavigationExerciseStepListItem({
 	return (
 		<motion.li
 			variants={itemVariants}
+			// @ts-expect-error framer-motion + latest typescript types has issues
 			className={cn(
 				// add gap of 3 to children, but using padding so the progress extends through the whole height
 				'py-[6px] first:pt-3 last:pb-3',
@@ -468,6 +470,7 @@ function Navigation({
 					{isMenuOpened && (
 						<motion.div
 							style={{ width: OPENED_MENU_WIDTH }}
+							// @ts-expect-error framer-motion + latest typescript types has issues
 							className="flex flex-grow flex-col justify-between overflow-y-auto p-6 scrollbar-thin scrollbar-thumb-scrollbar"
 							initial={{ opacity: 0 }}
 							animate={{ opacity: 1 }}
@@ -476,6 +479,7 @@ function Navigation({
 								variants={listVariants}
 								initial="hidden"
 								animate="visible"
+								// @ts-expect-error framer-motion + latest typescript types has issues
 								className="flex flex-col"
 							>
 								{data.exercises.map(({ exerciseNumber, title, steps }) => {
@@ -507,6 +511,7 @@ function Navigation({
 													variants={listVariants}
 													initial="hidden"
 													animate="visible"
+													// @ts-expect-error framer-motion + latest typescript types has issues
 													className="ml-4 mt-4 flex flex-col"
 												>
 													<NavigationExerciseStepListItem
@@ -651,6 +656,7 @@ function Navigation({
 								)}
 								{isMenuOpened ? (
 									<motion.div
+										// @ts-expect-error framer-motion + latest typescript types has issues
 										className="flex items-center whitespace-nowrap"
 										initial={{ opacity: 0 }}
 										animate={{ opacity: 1 }}
@@ -678,6 +684,7 @@ function Navigation({
 								<Icon name="FastForward" className="flex-shrink-0" size="md" />
 								{isMenuOpened ? (
 									<motion.div
+										// @ts-expect-error framer-motion + latest typescript types has issues
 										className="flex items-center whitespace-nowrap"
 										initial={{ opacity: 0 }}
 										animate={{ opacity: 1 }}
@@ -782,6 +789,7 @@ function NavToggle({
 					transition={{ delay: 0.2 }}
 					initial={{ opacity: 0, y: 5 }}
 					animate={{ opacity: 1, y: 0 }}
+					// @ts-expect-error framer-motion + latest typescript types has issues
 					className="absolute right-5 whitespace-nowrap font-mono text-sm uppercase"
 				>
 					<Link to="/">{title}</Link>

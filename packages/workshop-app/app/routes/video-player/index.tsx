@@ -60,7 +60,9 @@ function useLatest<Value>(value: Value) {
 export function MuxPlayer({
 	muxPlayerRef,
 	...props
-}: MuxPlayerProps & { muxPlayerRef: React.RefObject<MuxPlayerRefAttributes> }) {
+}: MuxPlayerProps & {
+	muxPlayerRef: React.RefObject<MuxPlayerRefAttributes | null>
+}) {
 	const playerPreferences = usePlayerPreferences()
 	const playerPreferencesFetcher = useFetcher<typeof action>()
 	const [metadataLoaded, setMetadataLoaded] = React.useState(false)

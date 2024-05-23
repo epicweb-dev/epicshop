@@ -20,5 +20,6 @@ scripts/db.json
 /playwright/.cache/
 .partykit
 **/dist/
+vite.config.ts.timestamp-*
 
 .nx/cache

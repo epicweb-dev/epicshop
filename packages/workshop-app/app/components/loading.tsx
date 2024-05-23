@@ -51,7 +51,7 @@ export function Characters() {
 }
 
 function useInterval(callback: () => void, delay: number | null = 1000) {
-	const savedCallback = useRef<() => void>()
+	const savedCallback = useRef<() => void>(null)
 
 	// Remember the latest function.
 	useEffect(() => {

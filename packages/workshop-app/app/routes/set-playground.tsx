@@ -85,7 +85,7 @@ export function SetPlayground({
 	appName: string
 	tooltipText?: string
 	reset?: boolean
-} & JSX.IntrinsicElements['button']) {
+} & React.ComponentProps<'button'>) {
 	const fetcher = useFetcher<typeof action>()
 
 	const submitButton = (

@@ -13,7 +13,7 @@ export function Playground({
 	isUpToDate,
 }: {
 	appInfo: Parameters<typeof Preview>['0']['appInfo'] | null
-	inBrowserBrowserRef: React.RefObject<InBrowserBrowserRef>
+	inBrowserBrowserRef: React.RefObject<InBrowserBrowserRef | null>
 	problemAppName?: string
 	allApps: Array<{ name: string; displayName: string }>
 	isUpToDate: boolean

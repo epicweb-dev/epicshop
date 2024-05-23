@@ -355,8 +355,8 @@ async function getDiffFilesImpl(app1: App, app2: App) {
 		'git',
 		['diff', '--no-index', '--ignore-blank-lines', app1CopyPath, app2CopyPath],
 		{ cwd: diffTmpDir },
-		// --no-index implies --exit-code, so we need to ignore the error
-	).catch(e => e)
+		// --no-index implies --exit-code, so we need to use the error output
+	).catch(e => e as { stdout: string })
 
 	void fsExtra.remove(app1CopyPath)
 	void fsExtra.remove(app2CopyPath)
@@ -447,8 +447,8 @@ async function getDiffCodeImpl(app1: App, app2: App) {
 			'--ignore-blank-lines',
 		],
 		{ cwd: diffTmpDir },
-		// --no-index implies --exit-code, so we need to ignore the error
-	).catch(e => e)
+		// --no-index implies --exit-code, so we need to use the error output
+	).catch(e => e as { stdout: string })
 
 	void fsExtra.remove(app1CopyPath)
 	void fsExtra.remove(app2CopyPath)

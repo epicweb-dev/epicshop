@@ -321,7 +321,7 @@ function InBrowserBrowserForRealzImpl(
 	const atEndOfHistory =
 		iframeContext.index === iframeContext.history.length - 1
 	const atStartOfHistory = iframeContext.index <= 0
-	const existingSearchParamHiddenInputs: Array<JSX.Element> = []
+	const existingSearchParamHiddenInputs: Array<React.ReactElement> = []
 	for (const [key, value] of searchParams.entries()) {
 		if (key === 'pathname') continue
 

@@ -3,7 +3,7 @@ import net from 'node:net'
 import { remember } from '@epic-web/remember'
 import chalk from 'chalk'
 import closeWithGrace from 'close-with-grace'
-import { execaCommand } from 'execa'
+import { type ResultPromise, execaCommand } from 'execa'
 import fkill from 'fkill'
 import { type App } from './apps.server.js'
 import { getErrorMessage } from './utils.js'
@@ -28,7 +28,7 @@ type OutputLine = {
 }
 
 type TestProcessEntry = {
-	process: ChildProcess | null
+	process: ResultPromise | null
 	output: Array<OutputLine>
 	exitCode?: number | null
 }

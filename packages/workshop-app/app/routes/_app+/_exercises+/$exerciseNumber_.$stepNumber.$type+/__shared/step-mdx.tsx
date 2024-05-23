@@ -19,7 +19,7 @@ import { cn, getBaseUrl } from '#app/utils/misc.tsx'
 import { useRequestInfo } from '#app/utils/request-info.ts'
 
 type StepContextType = {
-	inBrowserBrowserRef: React.RefObject<InBrowserBrowserRef>
+	inBrowserBrowserRef: React.RefObject<InBrowserBrowserRef | null>
 }
 const StepContext = React.createContext<StepContextType | null>(null)
 
@@ -36,7 +36,7 @@ function StepContextProvider({
 	inBrowserBrowserRef,
 }: {
 	children: React.ReactNode
-	inBrowserBrowserRef: React.RefObject<InBrowserBrowserRef>
+	inBrowserBrowserRef: React.RefObject<InBrowserBrowserRef | null>
 }) {
 	return (
 		<StepContext.Provider value={{ inBrowserBrowserRef }}>
@@ -58,7 +58,7 @@ const stepMdxComponents = {
 export function StepMdx({
 	inBrowserBrowserRef,
 }: {
-	inBrowserBrowserRef: React.RefObject<InBrowserBrowserRef>
+	inBrowserBrowserRef: React.RefObject<InBrowserBrowserRef | null>
 }) {
 	const data = useLoaderData<typeof loader>()
 	if (!data.exerciseStepApp.instructionsCode) return null
@@ -138,8 +138,10 @@ function DiffLink({
 	const data = useLoaderData<typeof loader>()
 	if (!to && !app1 && !app2) {
 		return (
+			// @ts-expect-error 🤷‍♂️
 			<callout-danger className="notification">
 				<div className="title">DiffLink Error: invalid input</div>
+				{/* @ts-expect-error 🤷‍♂️ */}
 			</callout-danger>
 		)
 	}
@@ -167,10 +169,12 @@ function DiffLink({
 	const app2Name = getAppName(app2)
 	if (!app1Name || !app2Name) {
 		return (
+			// @ts-expect-error 🤷‍♂️
 			<callout-danger className="notification">
 				<div className="title">DiffLink Error: invalid input</div>
 				{!app1Name && <div>app1: "{app1}" is not a valid app name</div>}
 				{!app2Name && <div>app2: "{app2}" is not a valid app name</div>}
+				{/* @ts-expect-error 🤷‍♂️ */}
 			</callout-danger>
 		)
 	}
