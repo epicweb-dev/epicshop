@@ -24,7 +24,9 @@ jobs:
           node-version: 20
 
       - name: 📥 Download deps
-        run: npm ci
+        uses: bahmutov/npm-install@v1
+        with:
+          useLockFile: false
 
       - name: 🔬 Lint
         run: npm run lint
@@ -42,7 +44,9 @@ jobs:
           node-version: 20
 
       - name: 📥 Download deps
-        run: npm ci
+        uses: bahmutov/npm-install@v1
+        with:
+          useLockFile: false
 
       - name: 🏗 Build
         run: npm run build
@@ -71,7 +75,9 @@ jobs:
           node-version: 20
 
       - name: 📥 Download deps
-        run: npm ci
+        uses: bahmutov/npm-install@v1
+        with:
+          useLockFile: false
 
       - name: 📥 Download All Build Artifacts
         uses: actions/download-artifact@v4
@@ -96,7 +102,9 @@ jobs:
           node-version: 20
 
       - name: 📥 Download deps
-        run: npm ci
+        uses: bahmutov/npm-install@v1
+        with:
+          useLockFile: false
 
       - name: 📥 Install Playwright Browsers
         run: npx playwright install --with-deps
@@ -129,7 +137,9 @@ jobs:
           node-version: 20
 
       - name: 📥 Download deps
-        run: npm ci
+        uses: bahmutov/npm-install@v1
+        with:
+          useLockFile: false
 
       - name: 📥 Download All Build Artifacts
         uses: actions/download-artifact@v4
@@ -170,7 +180,9 @@ jobs:
           registry-url: 'https://registry.npmjs.org'
 
       - name: 📥 Download deps
-        run: npm ci
+        uses: bahmutov/npm-install@v1
+        with:
+          useLockFile: false
 
       - name: 📥 Download All Build Artifacts
         uses: actions/download-artifact@v4
