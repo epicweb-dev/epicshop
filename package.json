@@ -22,18 +22,22 @@
     "packages/*"
   ],
   "dependencies": {
-    "@nx/devkit": "^19.0.6",
-    "@nx/eslint": "^19.0.6",
-    "@nx/js": "^19.0.6",
+    "@nx/devkit": "^18.3.5",
+    "@nx/eslint": "^18.3.5",
+    "@nx/js": "^18.3.5",
+    "@nx/linter": "^18.3.5",
+    "@nx/playwright": "^18.3.5",
+    "@nx/workspace": "^18.3.5",
     "@playwright/test": "^1.44.1",
     "@types/yargs": "^17.0.32",
     "cross-env": "^7.0.3",
     "dotenv": "^16.4.5",
+    "eslint-config-kentcdodds": "^21.0.0",
     "get-stream": "^9.0.1",
     "globby": "^14.0.1",
     "lru-cache": "^10.2.2",
     "npm-run-all": "^4.1.5",
-    "nx": "^19.0.6",
+    "nx": "^18.3.5",
     "patch-package": "^8.0.0",
     "prettier": "^3.2.5",
     "prettier-plugin-tailwindcss": "^0.5.14",
@@ -42,12 +46,5 @@
   },
   "nx": {
     "includedScripts": []
-  },
-  "devDependencies": {
-    "@nrwl/linter": "^19.0.6",
-    "@nx/linter": "^19.0.6",
-    "@nx/playwright": "^19.0.6",
-    "@nx/workspace": "^19.0.6",
-    "eslint-config-kentcdodds": "^21.0.0"
   }
 }
