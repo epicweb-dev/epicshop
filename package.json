@@ -3,14 +3,15 @@
   "private": true,
   "type": "module",
   "scripts": {
-    "postinstall": "patch-package --patch-dir other/patches",
+    "postinstall": "patch-package --patch-dir other/patches && npm run -s example:install",
+    "example:install": "cd example && npm install",
     "typecheck": "nx typecheck",
     "lint": "nx lint",
     "build": "nx run-many --target build",
     "prestart": "npm run build -s",
     "go": "cross-env NODE_ENV=development EPICSHOP_CONTEXT_CWD=$PWD/packages/example tsx watch $@",
-    "start": "cross-env NODE_ENV=production npm -w example run start",
-    "dev": "npm -w example run start",
+    "start": "cross-env NODE_ENV=production npm --prefix example run start",
+    "dev": "npm --prefix example run start",
     "test": "nx test",
     "format": "nx format:write",
     "validate": "nx run-many --target build,typecheck,lint,test --parallel"
@@ -18,9 +19,7 @@
   "author": "Kent C. Dodds <me@kentcdodds.com> (https://kentcdodds.com/)",
   "license": "GPL-3.0-only",
   "workspaces": [
-    "packages/*",
-    "packages/example/exercises/*/*",
-    "packages/example/examples/*"
+    "packages/*"
   ],
   "dependencies": {
     "@nx/devkit": "^19.0.6",
@@ -30,6 +29,7 @@
     "@types/yargs": "^17.0.32",
     "cross-env": "^7.0.3",
     "dotenv": "^16.4.5",
+    "get-stream": "^9.0.1",
     "globby": "^14.0.1",
     "lru-cache": "^10.2.2",
     "npm-run-all": "^4.1.5",
@@ -37,8 +37,6 @@
     "patch-package": "^8.0.0",
     "prettier": "^3.2.5",
     "prettier-plugin-tailwindcss": "^0.5.14",
-    "react": "19.0.0-rc-f994737d14-20240522",
-    "react-dom": "19.0.0-rc-f994737d14-20240522",
     "tsx": "^4.11.0",
     "yargs": "^17.7.2"
   },
@@ -50,14 +48,6 @@
     "@nx/linter": "^19.0.6",
     "@nx/playwright": "^19.0.6",
     "@nx/workspace": "^19.0.6",
-    "@types/react": "npm:types-react@19.0.0-beta.1",
-    "@types/react-dom": "npm:types-react-dom@19.0.0-beta.1",
     "eslint-config-kentcdodds": "^21.0.0"
-  },
-  "overrides": {
-    "@types/react": "$@types/react",
-    "@types/react-dom": "$@types/react-dom",
-    "react": "$react",
-    "react-dom": "$react-dom"
   }
 }

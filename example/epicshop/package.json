@@ -1,0 +1,6 @@
+{
+  "type": "module",
+  "dependencies": {
+    "@epic-web/workshop-app": "file:../../packages/workshop-app"
+  }
+}
