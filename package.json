@@ -52,8 +52,7 @@
     "@nx/workspace": "^19.0.6",
     "@types/react": "npm:types-react@19.0.0-beta.1",
     "@types/react-dom": "npm:types-react-dom@19.0.0-beta.1",
-    "eslint-config-kentcdodds": "^21.0.0",
-    "verdaccio": "^5.31.0"
+    "eslint-config-kentcdodds": "^21.0.0"
   },
   "overrides": {
     "@types/react": "$@types/react",
