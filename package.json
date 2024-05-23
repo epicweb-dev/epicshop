@@ -37,6 +37,8 @@
     "patch-package": "^8.0.0",
     "prettier": "^3.2.5",
     "prettier-plugin-tailwindcss": "^0.5.14",
+    "react": "19.0.0-rc-f994737d14-20240522",
+    "react-dom": "19.0.0-rc-f994737d14-20240522",
     "tsx": "^4.11.0",
     "yargs": "^17.7.2"
   },
@@ -48,7 +50,15 @@
     "@nx/linter": "^19.0.6",
     "@nx/playwright": "^19.0.6",
     "@nx/workspace": "^19.0.6",
+    "@types/react": "npm:types-react@19.0.0-beta.1",
+    "@types/react-dom": "npm:types-react-dom@19.0.0-beta.1",
     "eslint-config-kentcdodds": "^21.0.0",
     "verdaccio": "^5.31.0"
+  },
+  "overrides": {
+    "@types/react": "$@types/react",
+    "@types/react-dom": "$@types/react-dom",
+    "react": "$react",
+    "react-dom": "$react-dom"
   }
 }

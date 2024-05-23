@@ -29,7 +29,6 @@
   "author": "Kent C. Dodds <me@kentcdodds.com> (https://kentcdodds.com/)",
   "license": "MIT",
   "dependencies": {
-    "@epic-web/workshop-app": "file:../workshop-app",
     "@epic-web/workshop-utils": "file:../workshop-utils",
     "@playwright/test": "^1.44.1",
     "@testing-library/dom": "^10.1.0",
@@ -37,9 +36,19 @@
     "@testing-library/user-event": "^14.5.2",
     "assert": "^2.1.0",
     "dotenv": "^16.4.5",
-    "react": "^18.3.1",
-    "react-dom": "^18.3.1",
+    "react": "19.0.0-rc-f994737d14-20240522",
+    "react-dom": "19.0.0-rc-f994737d14-20240522",
     "tsx": "^4.11.0"
+  },
+  "devDependencies": {
+    "@types/react": "npm:types-react@19.0.0-beta.1",
+    "@types/react-dom": "npm:types-react-dom@19.0.0-beta.1"
+  },
+  "overrides": {
+    "@types/react": "$@types/react",
+    "@types/react-dom": "$@types/react-dom",
+    "react": "$react",
+    "react-dom": "$react-dom"
   },
   "eslintIgnore": [
     "/node_modules",

@@ -99,8 +99,8 @@
     "p-queue": "^8.0.1",
     "parse-git-diff": "^0.0.15",
     "partysocket": "^1.0.1",
-    "react": "^18.3.1",
-    "react-dom": "^18.3.1",
+    "react": "19.0.0-rc-f994737d14-20240522",
+    "react-dom": "19.0.0-rc-f994737d14-20240522",
     "remark-autolink-headings": "^7.0.1",
     "remark-emoji": "^4.0.1",
     "remark-gfm": "^4.0.0",
@@ -138,8 +138,8 @@
     "@types/morgan": "^1.9.9",
     "@types/node": "^20.12.12",
     "@types/prettier": "^2.7.3",
-    "@types/react": "^18.3.2",
-    "@types/react-dom": "^18.3.0",
+    "@types/react": "npm:types-react@19.0.0-beta.1",
+    "@types/react-dom": "npm:types-react-dom@19.0.0-beta.1",
     "@types/shell-quote": "^1.7.5",
     "@types/source-map-support": "^0.5.10",
     "@types/wait-on": "^5.3.4",
@@ -157,6 +157,10 @@
     "tsx": "^4.11.0",
     "typescript": "^5.4.5",
     "vite": "^5.2.11"
+  },
+  "overrides": {
+    "@types/react": "$@types/react",
+    "@types/react-dom": "$@types/react-dom"
   },
   "engines": {
     "node": ">=18"
