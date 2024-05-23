@@ -3,7 +3,7 @@
   "exclude": ["node_modules"],
   "references": [
     {
-      "path": "packages/example"
+      "path": "example"
     },
     {
       "path": "packages/workshop-app"

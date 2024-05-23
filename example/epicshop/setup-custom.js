@@ -3,7 +3,9 @@ import {
 	getApps,
 	isProblemApp,
 	setPlayground,
+	// eslint-disable-next-line import/no-unresolved
 } from '@epic-web/workshop-utils/apps.server'
+// eslint-disable-next-line import/no-unresolved
 import { getWatcher } from '@epic-web/workshop-utils/change-tracker.server'
 import fsExtra from 'fs-extra'
 
