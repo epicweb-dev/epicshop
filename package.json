@@ -3,8 +3,7 @@
   "private": true,
   "type": "module",
   "scripts": {
-    "postinstall": "npm run -s example:install",
-    "example:install": "cd example && npm install",
+    "postinstall": "cd ./example && npm install",
     "typecheck": "nx typecheck",
     "lint": "nx lint",
     "build": "nx run-many --target build",
