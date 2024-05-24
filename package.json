@@ -3,7 +3,6 @@
   "private": true,
   "type": "module",
   "scripts": {
-    "postinstall": "cd ./example && npm install",
     "typecheck": "nx typecheck",
     "lint": "nx lint",
     "build": "nx run-many --target build",
@@ -18,15 +17,17 @@
   "author": "Kent C. Dodds <me@kentcdodds.com> (https://kentcdodds.com/)",
   "license": "GPL-3.0-only",
   "workspaces": [
-    "packages/*"
+    "packages/*",
+    "example",
+    "example/epicshop"
   ],
   "dependencies": {
-    "@nx/devkit": "^18.3.5",
-    "@nx/eslint": "^18.3.5",
-    "@nx/js": "^18.3.5",
-    "@nx/linter": "^18.3.5",
-    "@nx/playwright": "^18.3.5",
-    "@nx/workspace": "^18.3.5",
+    "@nx/devkit": "19.0.7",
+    "@nx/eslint": "19.0.7",
+    "@nx/js": "19.0.7",
+    "@nx/linter": "19.0.7",
+    "@nx/playwright": "19.0.7",
+    "@nx/workspace": "19.0.7",
     "@playwright/test": "^1.44.1",
     "@types/yargs": "^17.0.32",
     "cross-env": "^7.0.3",
@@ -36,7 +37,7 @@
     "globby": "^14.0.1",
     "lru-cache": "^10.2.2",
     "npm-run-all": "^4.1.5",
-    "nx": "^18.3.5",
+    "nx": "19.0.7",
     "prettier": "^3.2.5",
     "prettier-plugin-tailwindcss": "^0.5.14",
     "tsx": "^4.11.0",

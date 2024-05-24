@@ -14,7 +14,6 @@
   },
   "type": "module",
   "scripts": {
-    "postinstall": "cd ./epicshop && npm install",
     "start": "npx --prefix ./epicshop epicshop start",
     "dev": "npx --prefix ./epicshop epicshop start",
     "setup": "node ./epicshop/setup.js",
@@ -39,6 +38,7 @@
     "tsx": "^4.11.0"
   },
   "devDependencies": {
+    "@types/glob": "^8.1.0",
     "@types/react": "npm:types-react@19.0.0-beta.1",
     "@types/react-dom": "npm:types-react-dom@19.0.0-beta.1"
   },
