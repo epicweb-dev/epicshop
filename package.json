@@ -3,7 +3,6 @@
   "private": true,
   "type": "module",
   "scripts": {
-    "postinstall": "cd ./example && npm ci",
     "typecheck": "nx typecheck",
     "lint": "nx lint",
     "build": "nx run-many --target build",
@@ -18,7 +17,9 @@
   "author": "Kent C. Dodds <me@kentcdodds.com> (https://kentcdodds.com/)",
   "license": "GPL-3.0-only",
   "workspaces": [
-    "packages/*"
+    "packages/*",
+    "example",
+    "example/epicshop"
   ],
   "dependencies": {
     "@nx/devkit": "19.0.7",

@@ -14,7 +14,6 @@
   },
   "type": "module",
   "scripts": {
-    "postinstall": "cd ./epicshop && npm ci",
     "start": "npx --prefix ./epicshop epicshop start",
     "dev": "npx --prefix ./epicshop epicshop start",
     "setup": "node ./epicshop/setup.js",
