@@ -91,7 +91,7 @@ app.use((req, res, next) => {
 		.split('/')
 		.map(s => s.trim())
 		.filter(Boolean)
-	// eslint-disable-next-line prefer-const
+
 	let [first, second, ...rest] = segments
 	let leading = ''
 	if (segments[0] === 'app') {
@@ -114,12 +114,10 @@ app.use((req, res, next) => {
 app.all(
 	'*',
 	createRequestHandler({
-		// eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
 		build: viteDevServer
 			? () => viteDevServer.ssrLoadModule('virtual:remix/server-build')
 			: // @ts-ignore (this may or may not be built at this time, but it will be in prod)
-				// eslint-disable-next-line @typescript-eslint/no-unnecessary-type-assertion
-				((await import('#build/server/index.js')) as any),
+				((await import('../build/server/index.js')) as any),
 	}),
 )
 
