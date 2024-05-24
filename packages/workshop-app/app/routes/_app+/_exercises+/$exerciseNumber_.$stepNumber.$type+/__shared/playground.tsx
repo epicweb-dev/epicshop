@@ -1,9 +1,9 @@
-import { toast as showToast } from 'sonner'
-import { PlaygroundWindow } from './playground-window'
-import { Preview } from './preview'
 import { type InBrowserBrowserRef } from '#app/components/in-browser-browser'
 import { SimpleTooltip } from '#app/components/ui/tooltip'
 import { SetAppToPlayground } from '#app/routes/set-playground'
+import { toast as showToast } from 'sonner'
+import { PlaygroundWindow } from './playground-window'
+import { Preview } from './preview'
 
 export function Playground({
 	appInfo: playgroundAppInfo,

@@ -1,3 +1,4 @@
+import { redirectWithToast } from '#app/utils/toast.server.ts'
 import { invariantResponse } from '@epic-web/invariant'
 import {
 	DiscordMemberSchema,
@@ -6,7 +7,6 @@ import {
 } from '@epic-web/workshop-utils/db.server'
 import { redirect, type LoaderFunctionArgs } from '@remix-run/node'
 import { z } from 'zod'
-import { redirectWithToast } from '#app/utils/toast.server.ts'
 
 const port = process.env.PORT || '5639'
 const scope = 'guilds.join identify messages.read'

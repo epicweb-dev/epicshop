@@ -1,6 +1,19 @@
+import { Diff } from '#app/components/diff.tsx'
+import { GeneralErrorBoundary } from '#app/components/error-boundary.tsx'
+import { type InBrowserBrowserRef } from '#app/components/in-browser-browser.tsx'
+import { NavChevrons } from '#app/components/nav-chevrons.tsx'
+import { type loader as rootLoader } from '#app/root.tsx'
+import { getDiscordAuthURL } from '#app/routes/discord.callback.ts'
+import { EditFileOnGitHub } from '#app/routes/launch-editor.tsx'
+import { ProgressToggle } from '#app/routes/progress.tsx'
+import { SetAppToPlayground } from '#app/routes/set-playground.tsx'
+import { getDiffCode, getDiffFiles } from '#app/utils/diff.server.ts'
+import { getEpicVideoInfos } from '#app/utils/epic-api.ts'
+import { useAltDown } from '#app/utils/misc.tsx'
 import { ElementScrollRestoration } from '@epic-web/restore-scroll'
 import {
 	getAppByName,
+	getAppDisplayName,
 	getAppPageRoute,
 	getApps,
 	getExerciseApp,
@@ -13,7 +26,6 @@ import {
 	requireExerciseApp,
 	type App,
 	type ExerciseStepApp,
-	getAppDisplayName,
 } from '@epic-web/workshop-utils/apps.server'
 import {
 	isAppRunning,
@@ -50,18 +62,6 @@ import { Preview } from './__shared/preview.tsx'
 import { StepMdx } from './__shared/step-mdx.tsx'
 import { Tests } from './__shared/tests.tsx'
 import TouchedFiles from './__shared/touched-files.tsx'
-import { Diff } from '#app/components/diff.tsx'
-import { GeneralErrorBoundary } from '#app/components/error-boundary.tsx'
-import { type InBrowserBrowserRef } from '#app/components/in-browser-browser.tsx'
-import { NavChevrons } from '#app/components/nav-chevrons.tsx'
-import { type loader as rootLoader } from '#app/root.tsx'
-import { getDiscordAuthURL } from '#app/routes/discord.callback.ts'
-import { EditFileOnGitHub } from '#app/routes/launch-editor.tsx'
-import { ProgressToggle } from '#app/routes/progress.tsx'
-import { SetAppToPlayground } from '#app/routes/set-playground.tsx'
-import { getDiffCode, getDiffFiles } from '#app/utils/diff.server.ts'
-import { getEpicVideoInfos } from '#app/utils/epic-api.ts'
-import { useAltDown } from '#app/utils/misc.tsx'
 
 function pageTitle(
 	data: SerializeFrom<typeof loader> | undefined,

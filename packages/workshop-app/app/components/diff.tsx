@@ -1,3 +1,6 @@
+import AccordionComponent from '#app/components/accordion.tsx'
+import { Mdx } from '#app/utils/mdx.tsx'
+import { cn } from '#app/utils/misc.tsx'
 import * as Accordion from '@radix-ui/react-accordion'
 import * as Select from '@radix-ui/react-select'
 import {
@@ -13,9 +16,6 @@ import React, { Suspense } from 'react'
 import { useSpinDelay } from 'spin-delay'
 import { Icon } from './icons.tsx'
 import { SimpleTooltip } from './ui/tooltip.tsx'
-import AccordionComponent from '#app/components/accordion.tsx'
-import { Mdx } from '#app/utils/mdx.tsx'
-import { cn } from '#app/utils/misc.tsx'
 
 type diffProp = {
 	app1?: string

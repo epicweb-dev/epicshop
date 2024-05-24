@@ -1,9 +1,9 @@
-import inspector from 'node:inspector'
-import path from 'node:path'
 import { getWorkshopRoot } from '@epic-web/workshop-utils/apps.server'
 import { deleteCache } from '@epic-web/workshop-utils/cache.server'
 import { deleteDb } from '@epic-web/workshop-utils/db.server'
 import fsExtra from 'fs-extra'
+import inspector from 'node:inspector'
+import path from 'node:path'
 
 export async function clearData() {
 	await clearCaches()

@@ -1,14 +1,14 @@
-import fs from 'node:fs'
-import path from 'node:path'
 import { createProcessor } from '@mdx-js/mdx'
 import md5 from 'md5-hex'
-import { type RootContent, type Root as MdastRoot, type Parent } from 'mdast'
+import { type Root as MdastRoot, type Parent, type RootContent } from 'mdast'
 import {
 	type MdxJsxAttribute,
 	type MdxJsxFlowElement,
 } from 'mdast-util-mdx-jsx'
+import fs from 'node:fs'
+import path from 'node:path'
 import { removePosition } from 'unist-util-remove-position'
-import { type Visitor, visit } from 'unist-util-visit'
+import { visit, type Visitor } from 'unist-util-visit'
 import * as z from 'zod'
 
 type CodeFile = {

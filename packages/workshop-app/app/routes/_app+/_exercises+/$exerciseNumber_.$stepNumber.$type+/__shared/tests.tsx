@@ -1,9 +1,9 @@
-import { type PlaygroundApp } from '@epic-web/workshop-utils/apps.server'
-import { useState } from 'react'
-import { PlaygroundWindow } from './playground-window'
 import { Icon } from '#app/components/icons'
 import { InBrowserTestRunner } from '#app/components/in-browser-test-runner'
 import { TestOutput } from '#app/routes/test'
+import { type PlaygroundApp } from '@epic-web/workshop-utils/apps.server'
+import { useState } from 'react'
+import { PlaygroundWindow } from './playground-window'
 
 export function Tests({
 	appInfo: playgroundAppInfo,

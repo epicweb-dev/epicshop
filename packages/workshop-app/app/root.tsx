@@ -1,4 +1,3 @@
-import path from 'node:path'
 import { getPresentUsers } from '@epic-web/workshop-presence/presence.server'
 import { getApps, getWorkshopTitle } from '@epic-web/workshop-utils/apps.server'
 import {
@@ -10,12 +9,12 @@ import {
 import { makeTimings, time } from '@epic-web/workshop-utils/timing.server'
 import { cssBundleHref } from '@remix-run/css-bundle'
 import {
-	type LoaderFunctionArgs,
-	type HeadersFunction,
-	type LinksFunction,
-	type MetaFunction,
 	json,
 	redirect,
+	type HeadersFunction,
+	type LinksFunction,
+	type LoaderFunctionArgs,
+	type MetaFunction,
 } from '@remix-run/node'
 import {
 	Links,
@@ -27,6 +26,7 @@ import {
 	useNavigation,
 	useRevalidator,
 } from '@remix-run/react'
+import path from 'node:path'
 import { useEffect } from 'react'
 import { useSpinDelay } from 'spin-delay'
 import { Confetti } from './components/confetti.tsx'

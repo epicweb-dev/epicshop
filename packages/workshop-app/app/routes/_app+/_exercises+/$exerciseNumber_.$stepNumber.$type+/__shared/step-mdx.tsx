@@ -1,3 +1,12 @@
+import { EpicVideoInfoProvider } from '#app/components/epic-video.tsx'
+import { Icon } from '#app/components/icons.tsx'
+import { type InBrowserBrowserRef } from '#app/components/in-browser-browser.tsx'
+import { SimpleTooltip } from '#app/components/ui/tooltip.tsx'
+import { LaunchEditor } from '#app/routes/launch-editor.tsx'
+import { UpdateMdxCache } from '#app/routes/update-mdx-cache.tsx'
+import { Mdx } from '#app/utils/mdx.tsx'
+import { cn, getBaseUrl } from '#app/utils/misc.tsx'
+import { useRequestInfo } from '#app/utils/request-info.ts'
 import {
 	Link,
 	useLoaderData,
@@ -8,15 +17,6 @@ import { clsx } from 'clsx'
 import * as React from 'react'
 import { useState, type PropsWithChildren } from 'react'
 import { type loader } from '../_layout.tsx'
-import { EpicVideoInfoProvider } from '#app/components/epic-video.tsx'
-import { Icon } from '#app/components/icons.tsx'
-import { type InBrowserBrowserRef } from '#app/components/in-browser-browser.tsx'
-import { SimpleTooltip } from '#app/components/ui/tooltip.tsx'
-import { LaunchEditor } from '#app/routes/launch-editor.tsx'
-import { UpdateMdxCache } from '#app/routes/update-mdx-cache.tsx'
-import { Mdx } from '#app/utils/mdx.tsx'
-import { cn, getBaseUrl } from '#app/utils/misc.tsx'
-import { useRequestInfo } from '#app/utils/request-info.ts'
 
 type StepContextType = {
 	inBrowserBrowserRef: React.RefObject<InBrowserBrowserRef | null>

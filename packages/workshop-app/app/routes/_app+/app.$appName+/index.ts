@@ -1,22 +1,22 @@
-import path from 'path'
+import { getBaseUrl } from '#app/utils/misc.tsx'
 import {
 	getAppByName,
-	isExerciseStepApp,
-	isSolutionApp,
-	isProblemApp,
 	getExercise,
 	getWorkshopTitle,
-	isPlaygroundApp,
 	isExampleApp,
+	isExerciseStepApp,
+	isPlaygroundApp,
+	isProblemApp,
+	isSolutionApp,
 } from '@epic-web/workshop-utils/apps.server'
 import {
 	getServerTimeHeader,
 	makeTimings,
 } from '@epic-web/workshop-utils/timing.server'
-import { type LoaderFunctionArgs, redirect } from '@remix-run/node'
+import { redirect, type LoaderFunctionArgs } from '@remix-run/node'
 import fsExtra from 'fs-extra'
+import path from 'path'
 import { resolveApps } from './__utils.ts'
-import { getBaseUrl } from '#app/utils/misc.tsx'
 
 export async function loader({ request, params }: LoaderFunctionArgs) {
 	const timings = makeTimings('app')

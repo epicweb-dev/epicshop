@@ -1,3 +1,14 @@
+import { Icon } from '#app/components/icons.tsx'
+import {
+	SimpleTooltip,
+	Tooltip,
+	TooltipContent,
+	TooltipProvider,
+	TooltipTrigger,
+} from '#app/components/ui/tooltip.tsx'
+import { useOptionalUser } from '#app/components/user.tsx'
+import { cn } from '#app/utils/misc.tsx'
+import { usePresence, type User } from '#app/utils/presence.tsx'
 import {
 	extractNumbersAndTypeFromAppNameOrPath,
 	getExercises,
@@ -10,9 +21,9 @@ import {
 	makeTimings,
 } from '@epic-web/workshop-utils/timing.server'
 import {
-	type LoaderFunctionArgs,
-	type HeadersFunction,
 	json,
+	type HeadersFunction,
+	type LoaderFunctionArgs,
 } from '@remix-run/node'
 import {
 	Link,
@@ -23,29 +34,18 @@ import {
 } from '@remix-run/react'
 import { clsx } from 'clsx'
 import {
-	type AnimationControls,
 	motion,
 	useAnimationControls,
+	type AnimationControls,
 } from 'framer-motion'
 import * as React from 'react'
 import {
-	useNextExerciseRoute,
 	useExerciseProgressClassName,
-	type ProgressItemSearch,
+	useNextExerciseRoute,
 	useProgressItemClassName,
+	type ProgressItemSearch,
 } from '../progress.tsx'
 import { ThemeSwitch } from '../theme/index.tsx'
-import { Icon } from '#app/components/icons.tsx'
-import {
-	SimpleTooltip,
-	Tooltip,
-	TooltipContent,
-	TooltipProvider,
-	TooltipTrigger,
-} from '#app/components/ui/tooltip.tsx'
-import { useOptionalUser } from '#app/components/user.tsx'
-import { cn } from '#app/utils/misc.tsx'
-import { type User, usePresence } from '#app/utils/presence.tsx'
 
 export async function loader({ request }: LoaderFunctionArgs) {
 	const timings = makeTimings('stepLoader')

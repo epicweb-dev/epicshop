@@ -1,44 +1,44 @@
 {
-  "$schema": "./node_modules/nx/schemas/nx-schema.json",
-  "targetDefaults": {
-    "nx-release-publish": {
-      "options": {
-        "packageRoot": "publish/{projectRoot}"
-      }
-    },
-    "build": {
-      "cache": true,
-      "dependsOn": ["^build"]
-    },
-    "lint": {
-      "cache": true
-    },
-    "typecheck": {
-      "cache": true
-    }
-  },
-  "affected": {
-    "defaultBase": "main"
-  },
-  "release": {
-    "projects": [
-      "@epic-web/workshop-app",
-      "@epic-web/workshop-utils",
-      "@epic-web/workshop-presence",
-      "update-epic-workshop"
-    ],
-    "version": {
-      "conventionalCommits": true,
-      "generatorOptions": {
-        "packageRoot": "publish/{projectRoot}"
-      }
-    },
-    "changelog": {
-      "workspaceChangelog": {
-        "file": false,
-        "createRelease": "github"
-      }
-    }
-  },
-  "nxCloudAccessToken": "ODZlMTQ4OWEtOTk2OS00NzkyLWI2Y2UtOTM2MDNkMmJkNjBkfHJlYWQ="
+	"$schema": "./node_modules/nx/schemas/nx-schema.json",
+	"targetDefaults": {
+		"nx-release-publish": {
+			"options": {
+				"packageRoot": "publish/{projectRoot}"
+			}
+		},
+		"build": {
+			"cache": true,
+			"dependsOn": ["^build"]
+		},
+		"lint": {
+			"cache": true
+		},
+		"typecheck": {
+			"cache": true
+		}
+	},
+	"affected": {
+		"defaultBase": "main"
+	},
+	"release": {
+		"projects": [
+			"@epic-web/workshop-app",
+			"@epic-web/workshop-utils",
+			"@epic-web/workshop-presence",
+			"update-epic-workshop"
+		],
+		"version": {
+			"conventionalCommits": true,
+			"generatorOptions": {
+				"packageRoot": "publish/{projectRoot}"
+			}
+		},
+		"changelog": {
+			"workspaceChangelog": {
+				"file": false,
+				"createRelease": "github"
+			}
+		}
+	},
+	"nxCloudAccessToken": "ODZlMTQ4OWEtOTk2OS00NzkyLWI2Y2UtOTM2MDNkMmJkNjBkfHJlYWQ="
 }

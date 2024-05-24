@@ -1,15 +1,15 @@
+import { createRequestHandler } from '@remix-run/express'
+import { broadcastDevReady, type ServerBuild } from '@remix-run/node'
+import { ip as ipAddress } from 'address'
+import chalk from 'chalk'
+import chokidar from 'chokidar'
+import closeWithGrace from 'close-with-grace'
+import compression from 'compression'
+import express from 'express'
+import getPort, { portNumbers } from 'get-port'
+import morgan from 'morgan'
 import path from 'path'
 import { fileURLToPath } from 'url'
-import express from 'express'
-import chokidar from 'chokidar'
-import compression from 'compression'
-import morgan from 'morgan'
-import { ip as ipAddress } from 'address'
-import closeWithGrace from 'close-with-grace'
-import { createRequestHandler } from '@remix-run/express'
-import { type ServerBuild, broadcastDevReady } from '@remix-run/node'
-import getPort, { portNumbers } from 'get-port'
-import chalk from 'chalk'
 
 // @ts-ignore - this file may not exist if you haven't built yet, but it will
 // definitely exist by the time the dev or prod server actually runs.
@@ -48,11 +48,11 @@ app.all(
 					build: devBuild,
 					mode: process.env.NODE_ENV,
 				})(req, res, next)
-		  }
+			}
 		: createRequestHandler({
 				build,
 				mode: process.env.NODE_ENV,
-		  }),
+			}),
 )
 
 const desiredPort = Number(process.env.PORT || 3000)
@@ -66,8 +66,8 @@ const server = app.listen(portToUse, () => {
 		desiredPort === portToUse
 			? desiredPort
 			: addy && typeof addy === 'object'
-			? addy.port
-			: 0
+				? addy.port
+				: 0
 
 	if (portUsed !== desiredPort) {
 		console.warn(

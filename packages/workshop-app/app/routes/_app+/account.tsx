@@ -1,3 +1,9 @@
+import { Button } from '#app/components/button.tsx'
+import { Icon } from '#app/components/icons.tsx'
+import { useOptionalDiscordMember, useUser } from '#app/components/user.tsx'
+import { ensureUndeployed } from '#app/utils/misc.tsx'
+import { usePresencePreferences } from '#app/utils/presence.tsx'
+import { redirectWithToast } from '#app/utils/toast.server.ts'
 import { deleteCache } from '@epic-web/workshop-utils/cache.server'
 import {
 	deleteDb,
@@ -8,12 +14,6 @@ import {
 import { json, redirect, type LoaderFunctionArgs } from '@remix-run/node'
 import { Form, Link, useFetcher, useLoaderData } from '@remix-run/react'
 import { getDiscordAuthURL } from '../discord.callback.ts'
-import { Button } from '#app/components/button.tsx'
-import { Icon } from '#app/components/icons.tsx'
-import { useOptionalDiscordMember, useUser } from '#app/components/user.tsx'
-import { ensureUndeployed } from '#app/utils/misc.tsx'
-import { usePresencePreferences } from '#app/utils/presence.tsx'
-import { redirectWithToast } from '#app/utils/toast.server.ts'
 
 export async function loader({ request }: LoaderFunctionArgs) {
 	ensureUndeployed()

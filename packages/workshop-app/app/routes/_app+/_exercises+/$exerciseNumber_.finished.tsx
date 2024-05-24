@@ -1,4 +1,12 @@
-import path from 'path'
+import { EpicVideoInfoProvider } from '#app/components/epic-video.tsx'
+import { Loading } from '#app/components/loading.tsx'
+import { NavChevrons } from '#app/components/nav-chevrons.tsx'
+import { type loader as rootLoader } from '#app/root.tsx'
+import { EditFileOnGitHub } from '#app/routes/launch-editor.tsx'
+import { ProgressToggle } from '#app/routes/progress.tsx'
+import { getEpicVideoInfos } from '#app/utils/epic-api.ts'
+import { Mdx } from '#app/utils/mdx.tsx'
+import { cn } from '#app/utils/misc.tsx'
 import { invariantResponse } from '@epic-web/invariant'
 import { ElementScrollRestoration } from '@epic-web/restore-scroll'
 import {
@@ -16,23 +24,15 @@ import {
 } from '@epic-web/workshop-utils/timing.server'
 import { getPkgProp } from '@epic-web/workshop-utils/utils.server'
 import {
-	type LoaderFunctionArgs,
-	type HeadersFunction,
-	type MetaFunction,
 	defer,
+	type HeadersFunction,
+	type LoaderFunctionArgs,
+	type MetaFunction,
 } from '@remix-run/node'
 import { Link, useLoaderData } from '@remix-run/react'
 import slugify from '@sindresorhus/slugify'
+import path from 'path'
 import * as React from 'react'
-import { EpicVideoInfoProvider } from '#app/components/epic-video.tsx'
-import { Loading } from '#app/components/loading.tsx'
-import { NavChevrons } from '#app/components/nav-chevrons.tsx'
-import { type loader as rootLoader } from '#app/root.tsx'
-import { EditFileOnGitHub } from '#app/routes/launch-editor.tsx'
-import { ProgressToggle } from '#app/routes/progress.tsx'
-import { getEpicVideoInfos } from '#app/utils/epic-api.ts'
-import { Mdx } from '#app/utils/mdx.tsx'
-import { cn } from '#app/utils/misc.tsx'
 
 export const meta: MetaFunction<typeof loader, { root: typeof rootLoader }> = ({
 	data,

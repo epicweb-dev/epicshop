@@ -1,6 +1,6 @@
-import { EventEmitter } from 'events'
 import { remember } from '@epic-web/remember'
 import { setAuthInfo } from '@epic-web/workshop-utils/db.server'
+import { EventEmitter } from 'events'
 import { Issuer, type Client } from 'openid-client'
 import { EVENTS } from './auth-events.ts'
 import { getErrorMessage } from './misc.tsx'

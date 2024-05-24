@@ -7,8 +7,8 @@ import {
 	Scripts,
 	ScrollRestoration,
 } from '@remix-run/react'
-import tailwindStylesheetUrl from './styles/tailwind.css'
 import { EpicShop } from './epicshop.tsx'
+import tailwindStylesheetUrl from './styles/tailwind.css'
 
 export const links: LinksFunction = () => {
 	return [{ rel: 'stylesheet', href: tailwindStylesheetUrl }]

@@ -1,4 +1,3 @@
-import { PassThrough } from 'stream'
 import { init } from '@epic-web/workshop-utils/apps.server'
 import {
 	createReadableStreamFromReadable,
@@ -7,6 +6,7 @@ import {
 import { RemixServer } from '@remix-run/react'
 import { isbot } from 'isbot'
 import { renderToPipeableStream } from 'react-dom/server'
+import { PassThrough } from 'stream'
 import { getEnv } from './utils/env.server.ts'
 
 global.ENV = getEnv()

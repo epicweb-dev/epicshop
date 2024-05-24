@@ -1,9 +1,10 @@
+import { type loader as rootLoader } from '#app/root.tsx'
 import {
 	MessageSchema,
+	partykitBaseUrl,
+	partykitRoom,
 	type Message,
 	type User,
-	partykitRoom,
-	partykitBaseUrl,
 } from '@epic-web/workshop-presence/presence'
 import { createId as cuid } from '@paralleldrive/cuid2'
 import { useParams, useRouteLoaderData } from '@remix-run/react'
@@ -11,7 +12,6 @@ import { usePartySocket } from 'partysocket/react'
 import { createContext, useContext, useEffect, useState } from 'react'
 import { z } from 'zod'
 import { useRequestInfo } from './request-info.ts'
-import { type loader as rootLoader } from '#app/root.tsx'
 
 export * from '@epic-web/workshop-presence/presence'
 

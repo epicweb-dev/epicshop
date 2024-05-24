@@ -1,3 +1,5 @@
+import { type loader as rootLoader } from '#app/root.tsx'
+import { useDebounce } from '#app/utils/misc.tsx'
 import {
 	PlayerPreferencesSchema,
 	setPlayerPreferences,
@@ -9,9 +11,7 @@ import { json, type ActionFunctionArgs } from '@remix-run/node'
 import { useFetcher, useRouteLoaderData } from '@remix-run/react'
 import * as React from 'react'
 import { z } from 'zod'
-import { type loader as rootLoader } from '#app/root.tsx'
 import './mux-player.css'
-import { useDebounce } from '#app/utils/misc.tsx'
 
 const PlaybackTimeSchema = z
 	.object({

@@ -1,10 +1,10 @@
-import { type ChildProcess, spawn } from 'child_process'
-import net from 'node:net'
 import { remember } from '@epic-web/remember'
 import chalk from 'chalk'
+import { spawn, type ChildProcess } from 'child_process'
 import closeWithGrace from 'close-with-grace'
-import { type ResultPromise, execaCommand } from 'execa'
+import { execaCommand, type ResultPromise } from 'execa'
 import fkill from 'fkill'
+import net from 'node:net'
 import { type App } from './apps.server.js'
 import { getErrorMessage } from './utils.js'
 

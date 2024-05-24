@@ -1,3 +1,6 @@
+import { AnimatedBars, Icon } from '#app/components/icons.tsx'
+import { SimpleTooltip } from '#app/components/ui/tooltip.tsx'
+import { ensureUndeployed } from '#app/utils/misc.tsx'
 import { getAppByName } from '@epic-web/workshop-utils/apps.server'
 import {
 	clearTestProcessEntry,
@@ -6,9 +9,9 @@ import {
 	runAppTests,
 } from '@epic-web/workshop-utils/process-manager.server'
 import {
+	json,
 	type ActionFunctionArgs,
 	type LoaderFunctionArgs,
-	json,
 } from '@remix-run/node'
 import { useFetcher } from '@remix-run/react'
 import AnsiToHTML from 'ansi-to-html'
@@ -17,9 +20,6 @@ import { useEffect, useReducer, useRef } from 'react'
 import { useEventSource } from 'remix-utils/sse/react'
 import { eventStream } from 'remix-utils/sse/server'
 import { z } from 'zod'
-import { Icon, AnimatedBars } from '#app/components/icons.tsx'
-import { SimpleTooltip } from '#app/components/ui/tooltip.tsx'
-import { ensureUndeployed } from '#app/utils/misc.tsx'
 
 const testActionSchema = z.union([
 	z.object({

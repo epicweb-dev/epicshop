@@ -1,13 +1,13 @@
 /// TODO: figure out why this import is necessary (without it tsc seems to not honor the boolean reset 🤷‍♂️)
-import '@total-typescript/ts-reset'
-import fs from 'fs'
-import path from 'path'
 import { type CacheEntry } from '@epic-web/cachified'
 import { remember } from '@epic-web/remember'
+import '@total-typescript/ts-reset'
 import { execa } from 'execa'
+import fs from 'fs'
 import fsExtra from 'fs-extra'
 import { glob } from 'glob'
 import { globby, isGitIgnored } from 'globby'
+import path from 'path'
 import { z } from 'zod'
 import {
 	appsCache,

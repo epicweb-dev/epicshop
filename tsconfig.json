@@ -1,18 +1,18 @@
 {
-  "files": [],
-  "exclude": ["node_modules"],
-  "references": [
-    {
-      "path": "example"
-    },
-    {
-      "path": "packages/workshop-app"
-    },
-    {
-      "path": "packages/workshop-utils"
-    },
-    {
-      "path": "packages/workshop-presence"
-    }
-  ]
+	"files": [],
+	"exclude": ["node_modules"],
+	"references": [
+		{
+			"path": "example"
+		},
+		{
+			"path": "packages/workshop-app"
+		},
+		{
+			"path": "packages/workshop-utils"
+		},
+		{
+			"path": "packages/workshop-presence"
+		}
+	]
 }

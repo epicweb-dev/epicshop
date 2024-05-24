@@ -8,9 +8,9 @@ import { checkConnection } from '@epic-web/workshop-utils/utils.server'
 import { z } from 'zod'
 import {
 	PresenceSchema,
-	type User,
 	UserSchema,
 	partykitBaseUrl,
+	type User,
 } from './presence.js'
 
 export const presenceCache = makeSingletonCache<

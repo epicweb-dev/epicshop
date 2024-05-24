@@ -156,8 +156,8 @@ to the URL so hopefully whatever you're using supports theming that way
 
 ```tsx
 <VideoEmbed
-  title="How to surprise people"
-  url="https://www.youtube.com/embed/dQw4w9WgXcQ?si=sVDrST4piI5vo1rn"
+	title="How to surprise people"
+	url="https://www.youtube.com/embed/dQw4w9WgXcQ?si=sVDrST4piI5vo1rn"
 />
 ```
 
@@ -169,7 +169,5 @@ in the loading screen, and do its best to give a proper default title to the
 video.
 
 ```tsx
-<EpicVideo
-	url="https://www.epicweb.dev/workshops/full-stack-foundations/styling/intro-to-full-stack-foundations-workshop"
-/>
+<EpicVideo url="https://www.epicweb.dev/workshops/full-stack-foundations/styling/intro-to-full-stack-foundations-workshop" />
 ```

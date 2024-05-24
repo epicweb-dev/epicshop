@@ -1,5 +1,5 @@
-import * as React from 'react'
 import { cn } from '#app/utils/misc.tsx'
+import * as React from 'react'
 
 type Sizes = 12 | 16 | 20 | 24 | 28 | 32 | 40
 

@@ -1,3 +1,7 @@
+import { DeferredEpicVideo, VideoEmbed } from '#app/components/epic-video.tsx'
+import { Icon } from '#app/components/icons.tsx'
+import { type loader } from '#app/routes/_app+/_exercises+/$exerciseNumber_.$stepNumber.$type+/_layout.tsx'
+import { LaunchEditor } from '#app/routes/launch-editor.tsx'
 import { Link, useLoaderData } from '@remix-run/react'
 import { clsx } from 'clsx'
 import { LRUCache } from 'lru-cache'
@@ -5,10 +9,6 @@ import { type MDXContentProps } from 'mdx-bundler/client'
 import * as mdxBundler from 'mdx-bundler/client/index.js'
 import { useEffect, useMemo, useState } from 'react'
 import { AnchorOrLink, Heading, cn } from './misc.tsx'
-import { VideoEmbed, DeferredEpicVideo } from '#app/components/epic-video.tsx'
-import { Icon } from '#app/components/icons.tsx'
-import { type loader } from '#app/routes/_app+/_exercises+/$exerciseNumber_.$stepNumber.$type+/_layout.tsx'
-import { LaunchEditor } from '#app/routes/launch-editor.tsx'
 
 const safePath = (s: string) => s.replace(/\\/g, '/')
 

@@ -41,4 +41,4 @@ export function SimpleTooltip({
 	)
 }
 
-export { Tooltip, TooltipTrigger, TooltipContent, TooltipProvider }
+export { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger }

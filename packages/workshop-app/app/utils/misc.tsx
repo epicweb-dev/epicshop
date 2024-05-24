@@ -1,8 +1,9 @@
+import { Icon } from '#app/components/icons.tsx'
 import {
 	Link,
-	type LinkProps,
 	useFormAction,
 	useNavigation,
+	type LinkProps,
 } from '@remix-run/react'
 import slugify from '@sindresorhus/slugify'
 import { clsx, type ClassValue } from 'clsx'
@@ -11,7 +12,6 @@ import { useEffect, useMemo, useRef, useState } from 'react'
 import { useSpinDelay } from 'spin-delay'
 import { extendTailwindMerge } from 'tailwind-merge'
 import { extendedTheme } from './extended-theme.ts'
-import { Icon } from '#app/components/icons.tsx'
 
 type AnchorProps = React.DetailedHTMLProps<
 	React.AnchorHTMLAttributes<HTMLAnchorElement>,

@@ -1,4 +1,4 @@
-import path from 'path'
+import { redirectWithToast } from '#app/utils/toast.server.ts'
 import { invariantResponse } from '@epic-web/invariant'
 import {
 	getAppByName,
@@ -15,8 +15,8 @@ import {
 } from '@epic-web/workshop-utils/timing.server'
 import { type LoaderFunctionArgs } from '@remix-run/node'
 import fsExtra from 'fs-extra'
+import path from 'path'
 import { resolveApps } from './__utils.ts'
-import { redirectWithToast } from '#app/utils/toast.server.ts'
 
 export async function loader({ request, params }: LoaderFunctionArgs) {
 	const timings = makeTimings('app_test_loader')

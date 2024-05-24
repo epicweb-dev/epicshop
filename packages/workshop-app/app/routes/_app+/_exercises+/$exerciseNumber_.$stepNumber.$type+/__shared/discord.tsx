@@ -1,14 +1,14 @@
+import { Icon } from '#app/components/icons.tsx'
+import { Loading } from '#app/components/loading.tsx'
+import { useHints } from '#app/utils/client-hints.tsx'
+import { dayjs } from '#app/utils/dayjs.ts'
+import { useAltDown } from '#app/utils/misc.tsx'
 import { Await, Link, useLoaderData } from '@remix-run/react'
 import * as React from 'react'
 import { type z } from 'zod'
 import { DiscordCTA, useDiscordCTALink } from '../../../discord.tsx'
 import { type loader } from '../_layout.tsx'
 import { type ThreadItemSchema } from './discord.server.ts'
-import { Icon } from '#app/components/icons.tsx'
-import { Loading } from '#app/components/loading.tsx'
-import { useHints } from '#app/utils/client-hints.tsx'
-import { dayjs } from '#app/utils/dayjs.ts'
-import { useAltDown } from '#app/utils/misc.tsx'
 
 export function DiscordChat() {
 	const data = useLoaderData<typeof loader>()

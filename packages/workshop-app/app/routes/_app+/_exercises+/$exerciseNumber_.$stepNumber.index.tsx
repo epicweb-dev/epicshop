@@ -3,7 +3,7 @@ import {
 	isProblemApp,
 	isSolutionApp,
 } from '@epic-web/workshop-utils/apps.server'
-import { type LoaderFunctionArgs, redirect } from '@remix-run/node'
+import { redirect, type LoaderFunctionArgs } from '@remix-run/node'
 
 export async function loader({ params }: LoaderFunctionArgs) {
 	const problemApp = await getExerciseApp({ ...params, type: 'problem' }).then(

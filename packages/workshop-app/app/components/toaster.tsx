@@ -1,6 +1,6 @@
+import { type Toast } from '#app/utils/toast.server.ts'
 import { useEffect } from 'react'
 import { Toaster, toast as showToast } from 'sonner'
-import { type Toast } from '#app/utils/toast.server.ts'
 
 export function EpicToaster({ toast }: { toast?: Toast | null }) {
 	return (

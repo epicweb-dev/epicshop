@@ -1,4 +1,4 @@
-import { test, expect } from '@playwright/test'
+import { expect, test } from '@playwright/test'
 import crossSpawn from 'cross-spawn'
 import z from 'zod'
 import { getApps, isProblemApp } from './apps.server.js'

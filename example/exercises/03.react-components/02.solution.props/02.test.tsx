@@ -1,6 +1,6 @@
+import { expect, testStep } from '@epic-web/workshop-utils/test'
 import { screen, waitFor } from '@testing-library/dom'
 import { userEvent } from '@testing-library/user-event'
-import { testStep, expect } from '@epic-web/workshop-utils/test'
 import '.'
 
 const button = await testStep(

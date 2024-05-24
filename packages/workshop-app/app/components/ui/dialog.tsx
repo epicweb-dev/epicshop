@@ -1,7 +1,7 @@
+import { cn } from '#app/utils/misc.ts'
 import * as DialogPrimitive from '@radix-ui/react-dialog'
 import * as React from 'react'
 import { Icon } from '../icons'
-import { cn } from '#app/utils/misc.ts'
 
 const Dialog = DialogPrimitive.Root
 
@@ -107,13 +107,13 @@ DialogDescription.displayName = DialogPrimitive.Description.displayName
 
 export {
 	Dialog,
-	DialogPortal,
-	DialogOverlay,
 	DialogClose,
-	DialogTrigger,
 	DialogContent,
-	DialogHeader,
-	DialogFooter,
-	DialogTitle,
 	DialogDescription,
+	DialogFooter,
+	DialogHeader,
+	DialogOverlay,
+	DialogPortal,
+	DialogTitle,
+	DialogTrigger,
 }

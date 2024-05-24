@@ -1,6 +1,6 @@
+import { ensureUndeployed } from '#app/utils/misc.tsx'
 import { getProcesses } from '@epic-web/workshop-utils/process-manager.server'
 import { json } from '@remix-run/node'
-import { ensureUndeployed } from '#app/utils/misc.tsx'
 
 export async function loader() {
 	ensureUndeployed()

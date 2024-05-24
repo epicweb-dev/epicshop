@@ -1,12 +1,12 @@
+import { useTheme } from '#app/routes/theme/index.tsx'
+import { MuxPlayer } from '#app/routes/video-player/index.tsx'
+import { type EpicVideoInfos } from '#app/utils/epic-api.ts'
+import { cn } from '#app/utils/misc.tsx'
 import { type MuxPlayerRefAttributes } from '@mux/mux-player-react'
 import { Await, Link } from '@remix-run/react'
 import * as React from 'react'
 import { Icon } from './icons.tsx'
 import { Loading } from './loading.tsx'
-import { useTheme } from '#app/routes/theme/index.tsx'
-import { MuxPlayer } from '#app/routes/video-player/index.tsx'
-import { type EpicVideoInfos } from '#app/utils/epic-api.ts'
-import { cn } from '#app/utils/misc.tsx'
 
 const EpicVideoInfoContext = React.createContext<
 	Promise<EpicVideoInfos> | null | undefined

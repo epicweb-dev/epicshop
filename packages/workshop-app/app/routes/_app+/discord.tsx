@@ -1,11 +1,11 @@
-import { json } from '@remix-run/node'
-import { Link, useLoaderData } from '@remix-run/react'
-import { getDiscordAuthURL } from '../discord.callback.ts'
 import { Icon } from '#app/components/icons.tsx'
 import {
 	useOptionalDiscordMember,
 	useOptionalUser,
 } from '#app/components/user.tsx'
+import { json } from '@remix-run/node'
+import { Link, useLoaderData } from '@remix-run/react'
+import { getDiscordAuthURL } from '../discord.callback.ts'
 
 export async function loader() {
 	return json({ discordAuthUrl: getDiscordAuthURL() })
