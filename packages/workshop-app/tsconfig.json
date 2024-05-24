@@ -4,7 +4,8 @@
   "compilerOptions": {
     "baseUrl": ".",
     "paths": {
-      "#*": ["./*"],
+      "#app/*": ["./app/*"],
+      "#tests/*": ["./tests/*"],
       "@epic-web/workshop-utils/*": [
         "../workshop-utils/src/*.ts",
         "../workshop-utils/src/*.tsx"
