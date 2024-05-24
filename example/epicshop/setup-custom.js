@@ -3,10 +3,9 @@ import {
 	isProblemApp,
 	setPlayground,
 } from '@epic-web/workshop-utils/apps.server'
-import path from 'node:path'
-// eslint-disable-next-line import/no-unresolved
 import { getWatcher } from '@epic-web/workshop-utils/change-tracker.server'
 import fsExtra from 'fs-extra'
+import path from 'node:path'
 
 // getApps expects this env var
 process.env.NODE_ENV = 'development'
