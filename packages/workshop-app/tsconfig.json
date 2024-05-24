@@ -1,19 +1,7 @@
 {
   "include": ["env.d.ts", "**/*.ts", "**/*.tsx"],
+  "extends": "@epic-web/config/typescript",
   "compilerOptions": {
-    "lib": ["DOM", "DOM.Iterable", "ES2022"],
-    "isolatedModules": true,
-    "esModuleInterop": true,
-    "jsx": "react-jsx",
-    "module": "ESNext",
-    "moduleResolution": "Bundler",
-    "resolveJsonModule": true,
-    "target": "ES2022",
-    "strict": true,
-    "noImplicitAny": true,
-    "noUncheckedIndexedAccess": true,
-    "allowJs": true,
-    "forceConsistentCasingInFileNames": true,
     "baseUrl": ".",
     "paths": {
       "#*": ["./*"],
@@ -31,10 +19,6 @@
       ]
     },
     "skipLibCheck": true,
-    "typeRoots": ["./types", "./node_modules/@types"],
-    "allowImportingTsExtensions": true,
-
-    // Remix takes care of building everything in `remix build`.
-    "noEmit": true
+    "typeRoots": ["./types", "./node_modules/@types"]
   }
 }

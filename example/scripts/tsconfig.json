@@ -1,22 +1,4 @@
 {
-	"include": ["../**/*.ts", "../**/*.tsx"],
-	"compilerOptions": {
-		"lib": ["DOM", "DOM.Iterable", "ES2022"],
-		"isolatedModules": true,
-		"esModuleInterop": true,
-		"jsx": "react-jsx",
-		"module": "nodenext",
-		"moduleResolution": "nodenext",
-		"resolveJsonModule": true,
-		"target": "ES2022",
-		"strict": true,
-		"noImplicitAny": true,
-		"noUncheckedIndexedAccess": true,
-		"allowJs": true,
-		"forceConsistentCasingInFileNames": true,
-		"skipLibCheck": true,
-		"typeRoots": ["../node_modules/@types"],
-		"allowImportingTsExtensions": true,
-		"noEmit": true
-	}
+  "include": ["../**/*.ts", "../**/*.tsx"],
+  "extends": "@epic-web/config/typescript"
 }

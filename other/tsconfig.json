@@ -1,23 +1,5 @@
 {
   "include": ["../**/*.ts", "../**/*.js"],
   "exclude": ["**/node_modules/**"],
-  "compilerOptions": {
-    "isolatedModules": true,
-    "esModuleInterop": true,
-    "module": "Node16",
-    "moduleResolution": "Node16",
-    "resolveJsonModule": true,
-    "target": "ES2022",
-    "jsx": "react-jsx",
-    "strict": true,
-    "noImplicitAny": true,
-    "noUncheckedIndexedAccess": true,
-    "allowJs": true,
-    "forceConsistentCasingInFileNames": true,
-    "skipLibCheck": true,
-    "typeRoots": ["../types", "../node_modules/@types"],
-    "allowImportingTsExtensions": true,
-
-    "noEmit": true
-  }
+  "extends": "@epic-web/config/typescript"
 }

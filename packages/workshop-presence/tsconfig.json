@@ -1,21 +1,7 @@
 {
   "include": ["./**/*.ts", "./**/*.tsx"],
+  "extends": "@epic-web/config/typescript",
   "compilerOptions": {
-    "lib": ["DOM", "DOM.Iterable", "ES2022"],
-    "isolatedModules": true,
-    "esModuleInterop": true,
-    "jsx": "react-jsx",
-    "module": "nodenext",
-    "moduleResolution": "nodenext",
-    "resolveJsonModule": true,
-    "target": "ES2022",
-    "strict": true,
-    "allowJs": true,
-    "forceConsistentCasingInFileNames": true,
-    "baseUrl": ".",
-    "skipLibCheck": true,
-    "declaration": true,
-    "noEmit": true,
     "paths": {
       "@epic-web/workshop-utils/*": [
         "../workshop-utils/src/*.ts",
