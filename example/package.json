@@ -25,22 +25,22 @@
   "keywords": [],
   "author": "Kent C. Dodds <me@kentcdodds.com> (https://kentcdodds.com/)",
   "license": "MIT",
+  "prettier": "@epic-web/config/prettier",
   "dependencies": {
+    "@epic-web/config": "^1.1.2",
     "@epic-web/workshop-utils": "file:../workshop-utils",
     "@playwright/test": "^1.44.1",
     "@testing-library/dom": "^10.1.0",
     "@testing-library/react": "^15.0.7",
     "@testing-library/user-event": "^14.5.2",
+    "@types/glob": "^8.1.0",
+    "@types/react": "npm:types-react@19.0.0-beta.1",
+    "@types/react-dom": "npm:types-react-dom@19.0.0-beta.1",
     "assert": "^2.1.0",
     "dotenv": "^16.4.5",
     "react": "19.0.0-rc-f994737d14-20240522",
     "react-dom": "19.0.0-rc-f994737d14-20240522",
     "tsx": "^4.11.0"
-  },
-  "devDependencies": {
-    "@types/glob": "^8.1.0",
-    "@types/react": "npm:types-react@19.0.0-beta.1",
-    "@types/react-dom": "npm:types-react-dom@19.0.0-beta.1"
   },
   "overrides": {
     "@types/react": "$@types/react",
