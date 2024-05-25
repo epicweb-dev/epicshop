@@ -32,7 +32,7 @@ export async function getPkgProp<Value>(
 	const propPath = prop.split('.')
 	let value: any = pkg
 	for (const p of propPath) {
-		// eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
+		 
 		value = value[p]
 		if (value === undefined) break
 	}

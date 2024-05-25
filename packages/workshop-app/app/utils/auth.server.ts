@@ -1,6 +1,6 @@
+import { EventEmitter } from 'events'
 import { remember } from '@epic-web/remember'
 import { setAuthInfo } from '@epic-web/workshop-utils/db.server'
-import { EventEmitter } from 'events'
 import { Issuer, type Client } from 'openid-client'
 import { EVENTS } from './auth-events.ts'
 import { getErrorMessage } from './misc.tsx'
@@ -17,7 +17,7 @@ export async function registerDevice() {
 		const issuer = await Issuer.discover(ISSUER)
 
 		// 🤷‍♂️
-		// eslint-disable-next-line @typescript-eslint/no-unsafe-call, @typescript-eslint/no-unsafe-member-access
+		 
 		const client: Client = await (issuer.Client as any).register({
 			grant_types: [GRANT_TYPE],
 			response_types: [],

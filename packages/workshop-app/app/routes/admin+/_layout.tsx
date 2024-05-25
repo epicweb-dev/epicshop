@@ -1,11 +1,3 @@
-import { Icon } from '#app/components/icons.tsx'
-import { SimpleTooltip } from '#app/components/ui/tooltip.tsx'
-import { type loader as rootLoader } from '#app/root.tsx'
-import {
-	useEpicProgress,
-	type SerializedProgress,
-} from '#app/routes/progress.tsx'
-import { ensureUndeployed } from '#app/utils/misc.tsx'
 import {
 	getApps,
 	getEpicWorkshopSlug,
@@ -22,6 +14,14 @@ import {
 	type MetaFunction,
 } from '@remix-run/node'
 import { Form, Link, useLoaderData, useNavigation } from '@remix-run/react'
+import { Icon } from '#app/components/icons.tsx'
+import { SimpleTooltip } from '#app/components/ui/tooltip.tsx'
+import { type loader as rootLoader } from '#app/root.tsx'
+import {
+	useEpicProgress,
+	type SerializedProgress,
+} from '#app/routes/progress.tsx'
+import { ensureUndeployed } from '#app/utils/misc.tsx'
 import {
 	clearCaches,
 	clearData,
@@ -36,7 +36,7 @@ declare global {
 export const meta: MetaFunction<typeof loader, { root: typeof rootLoader }> = ({
 	matches,
 }) => {
-	// eslint-disable-next-line @typescript-eslint/no-unnecessary-condition
+	 
 	const rootData = matches.find(m => m.id === 'root')?.data
 	return [{ title: `👷 | ${rootData?.workshopTitle}` }]
 }

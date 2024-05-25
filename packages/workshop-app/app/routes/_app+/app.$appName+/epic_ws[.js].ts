@@ -1,6 +1,6 @@
-import { getBaseUrl } from '#app/utils/misc.tsx'
 import { makeTimings } from '@epic-web/workshop-utils/timing.server'
 import { redirect, type LoaderFunctionArgs } from '@remix-run/node'
+import { getBaseUrl } from '#app/utils/misc.tsx'
 import { resolveApps } from './__utils.ts'
 
 export async function loader({ request, params }: LoaderFunctionArgs) {

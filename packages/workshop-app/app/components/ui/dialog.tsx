@@ -1,6 +1,6 @@
-import { cn } from '#app/utils/misc.ts'
 import * as DialogPrimitive from '@radix-ui/react-dialog'
 import * as React from 'react'
+import { cn } from '#app/utils/misc.ts'
 import { Icon } from '../icons'
 
 const Dialog = DialogPrimitive.Root

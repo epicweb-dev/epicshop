@@ -1,3 +1,4 @@
+import path from 'node:path'
 import { getPresentUsers } from '@epic-web/workshop-presence/presence.server'
 import { getApps, getWorkshopTitle } from '@epic-web/workshop-utils/apps.server'
 import {
@@ -26,7 +27,6 @@ import {
 	useNavigation,
 	useRevalidator,
 } from '@remix-run/react'
-import path from 'node:path'
 import { useEffect } from 'react'
 import { useSpinDelay } from 'spin-delay'
 import { Confetti } from './components/confetti.tsx'

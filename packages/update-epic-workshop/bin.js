@@ -1,9 +1,9 @@
 #!/usr/bin/env node
 
-import { execa, execaCommand } from 'execa'
 import { promises as dns } from 'node:dns'
 import fs from 'node:fs/promises'
 import path from 'node:path'
+import { execa, execaCommand } from 'execa'
 
 const cwd = process.env.EPICSHOP_CONTEXT_CWD ?? process.cwd()
 

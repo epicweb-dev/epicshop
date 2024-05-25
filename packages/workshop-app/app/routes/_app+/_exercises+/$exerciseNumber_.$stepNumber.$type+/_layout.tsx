@@ -1,15 +1,3 @@
-import { Diff } from '#app/components/diff.tsx'
-import { GeneralErrorBoundary } from '#app/components/error-boundary.tsx'
-import { type InBrowserBrowserRef } from '#app/components/in-browser-browser.tsx'
-import { NavChevrons } from '#app/components/nav-chevrons.tsx'
-import { type loader as rootLoader } from '#app/root.tsx'
-import { getDiscordAuthURL } from '#app/routes/discord.callback.ts'
-import { EditFileOnGitHub } from '#app/routes/launch-editor.tsx'
-import { ProgressToggle } from '#app/routes/progress.tsx'
-import { SetAppToPlayground } from '#app/routes/set-playground.tsx'
-import { getDiffCode, getDiffFiles } from '#app/utils/diff.server.ts'
-import { getEpicVideoInfos } from '#app/utils/epic-api.ts'
-import { useAltDown } from '#app/utils/misc.tsx'
 import { ElementScrollRestoration } from '@epic-web/restore-scroll'
 import {
 	getAppByName,
@@ -55,6 +43,18 @@ import slugify from '@sindresorhus/slugify'
 import { clsx } from 'clsx'
 import * as React from 'react'
 import { useRef } from 'react'
+import { Diff } from '#app/components/diff.tsx'
+import { GeneralErrorBoundary } from '#app/components/error-boundary.tsx'
+import { type InBrowserBrowserRef } from '#app/components/in-browser-browser.tsx'
+import { NavChevrons } from '#app/components/nav-chevrons.tsx'
+import { type loader as rootLoader } from '#app/root.tsx'
+import { getDiscordAuthURL } from '#app/routes/discord.callback.ts'
+import { EditFileOnGitHub } from '#app/routes/launch-editor.tsx'
+import { ProgressToggle } from '#app/routes/progress.tsx'
+import { SetAppToPlayground } from '#app/routes/set-playground.tsx'
+import { getDiffCode, getDiffFiles } from '#app/utils/diff.server.ts'
+import { getEpicVideoInfos } from '#app/utils/epic-api.ts'
+import { useAltDown } from '#app/utils/misc.tsx'
 import { fetchDiscordPosts } from './__shared/discord.server.ts'
 import { DiscordChat } from './__shared/discord.tsx'
 import { Playground } from './__shared/playground.tsx'
@@ -93,7 +93,7 @@ export const meta: MetaFunction<typeof loader, { root: typeof rootLoader }> = ({
 	data,
 	matches,
 }) => {
-	// eslint-disable-next-line @typescript-eslint/no-unnecessary-condition
+	 
 	const rootData = matches.find(m => m.id === 'root')?.data
 	const { emoji, stepNumber, title, exerciseNumber, exerciseTitle } =
 		pageTitle(data)

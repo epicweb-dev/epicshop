@@ -29,9 +29,9 @@ function createTimer(type: string, desc?: string) {
 		end(timings: Timings) {
 			let timingType = timings[type]
 
-			// eslint-disable-next-line @typescript-eslint/no-unnecessary-condition
+			 
 			if (!timingType) {
-				// eslint-disable-next-line no-multi-assign
+				 
 				timingType = timings[type] = []
 			}
 			timingType.push({ desc, time: performance.now() - start })

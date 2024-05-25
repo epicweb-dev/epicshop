@@ -1,10 +1,4 @@
-import { EpicVideoInfoProvider } from '#app/components/epic-video.tsx'
-import { type loader as rootLoader } from '#app/root.tsx'
-import { EditFileOnGitHub } from '#app/routes/launch-editor.tsx'
-import { ProgressToggle } from '#app/routes/progress.tsx'
-import { getEpicVideoInfos } from '#app/utils/epic-api.ts'
-import { Mdx } from '#app/utils/mdx.tsx'
-import { getErrorMessage } from '#app/utils/misc.tsx'
+import path from 'path'
 import { invariantResponse } from '@epic-web/invariant'
 import { ElementScrollRestoration } from '@epic-web/restore-scroll'
 import {
@@ -31,7 +25,13 @@ import {
 	useRouteError,
 } from '@remix-run/react'
 import slugify from '@sindresorhus/slugify'
-import path from 'path'
+import { EpicVideoInfoProvider } from '#app/components/epic-video.tsx'
+import { type loader as rootLoader } from '#app/root.tsx'
+import { EditFileOnGitHub } from '#app/routes/launch-editor.tsx'
+import { ProgressToggle } from '#app/routes/progress.tsx'
+import { getEpicVideoInfos } from '#app/utils/epic-api.ts'
+import { Mdx } from '#app/utils/mdx.tsx'
+import { getErrorMessage } from '#app/utils/misc.tsx'
 
 export const meta: MetaFunction<typeof loader, { root: typeof rootLoader }> = ({
 	data,
@@ -41,7 +41,7 @@ export const meta: MetaFunction<typeof loader, { root: typeof rootLoader }> = ({
 		return [{ title: '📝 | Error' }]
 	}
 	const number = data.exercise.exerciseNumber.toString().padStart(2, '0')
-	// eslint-disable-next-line @typescript-eslint/no-unnecessary-condition
+	 
 	const rootData = matches.find(m => m.id === 'root')?.data
 	return [
 		{

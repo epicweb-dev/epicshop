@@ -1,12 +1,12 @@
-import { showProgressBarField } from '#app/components/progress-bar.tsx'
-import { ensureUndeployed } from '#app/utils/misc.tsx'
+import fs from 'node:fs'
 import { setModifiedTimesForDir } from '@epic-web/workshop-utils/apps.server'
 import { type EmbeddedFile } from '@epic-web/workshop-utils/codefile-mdx.server'
 import { json, type ActionFunctionArgs } from '@remix-run/node'
 import { useFetcher } from '@remix-run/react'
 import { clsx } from 'clsx'
-import fs from 'node:fs'
 import { z } from 'zod'
+import { showProgressBarField } from '#app/components/progress-bar.tsx'
+import { ensureUndeployed } from '#app/utils/misc.tsx'
 
 const cacheSchema = z.object({
 	cacheLocation: z.string(),
@@ -42,18 +42,18 @@ export async function action({ request }: ActionFunctionArgs) {
 	) as any
 
 	const cachedEmbeddedFiles = new Map<string, EmbeddedFile>(
-		// eslint-disable-next-line @typescript-eslint/no-unsafe-argument, @typescript-eslint/no-unsafe-member-access
+		 
 		Object.entries(cached?.value?.embeddedFiles ?? {}),
 	)
 
 	if (cachedEmbeddedFiles.has(embeddedKey)) {
 		delete cachedEmbeddedFiles.get(embeddedKey)?.warning
-		// eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
+		 
 		cached.value.embeddedFiles = Object.fromEntries(cachedEmbeddedFiles)
 	}
 
 	try {
-		// eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
+		 
 		cached.value.warningCancled = true
 		await fs.promises.writeFile(cacheLocation, JSON.stringify(cached))
 	} catch (error) {

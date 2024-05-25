@@ -16,7 +16,7 @@ function isError(maybeError: any): maybeError is Error {
 		maybeError &&
 		typeof maybeError === 'object' &&
 		'message' in maybeError &&
-		// eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
+		 
 		typeof maybeError.message === 'string'
 	)
 }

@@ -1,6 +1,6 @@
-import dotenv from 'dotenv'
 import fs from 'fs'
 import path from 'path'
+import dotenv from 'dotenv'
 
 const EPICSHOP_CONTEXT_CWD = process.env.EPICSHOP_CONTEXT_CWD ?? process.cwd()
 dotenv.config({
@@ -15,8 +15,10 @@ try {
 			'utf8',
 		),
 	)
-} catch (error) {
-	throw new Error(`Could not find package.json at ${EPICSHOP_CONTEXT_CWD}`)
+} catch {
+	throw new Error(
+		`Could not find and parse package.json at ${EPICSHOP_CONTEXT_CWD}`,
+	)
 }
 
 if (packageJson.epicshop.githubRoot) {

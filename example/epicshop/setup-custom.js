@@ -1,3 +1,4 @@
+import path from 'node:path'
 import {
 	getApps,
 	isProblemApp,
@@ -5,7 +6,6 @@ import {
 } from '@epic-web/workshop-utils/apps.server'
 import { getWatcher } from '@epic-web/workshop-utils/change-tracker.server'
 import fsExtra from 'fs-extra'
-import path from 'node:path'
 
 // getApps expects this env var
 process.env.NODE_ENV = 'development'

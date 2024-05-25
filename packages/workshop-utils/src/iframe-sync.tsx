@@ -71,7 +71,7 @@ export function EpicShopIFrameSync<ReactType extends CustomReactType>({
 		if (window.parent === window) return
 
 		// @ts-expect-error - this is fine 🔥
-		// eslint-disable-next-line @typescript-eslint/no-unsafe-call, @typescript-eslint/no-unsafe-member-access
+		 
 		window.__epicshop__?.onHydrated?.()
 
 		const methods = [
@@ -84,7 +84,7 @@ export function EpicShopIFrameSync<ReactType extends CustomReactType>({
 		for (const method of methods) {
 			// @ts-expect-error - this is fine 🔥
 			window.history[method] = new Proxy(window.history[method], {
-				// eslint-disable-next-line no-loop-func
+				 
 				apply(target, thisArg, argArray) {
 					window.parent.postMessage(
 						{ type: 'epicshop:history-call', method, args: argArray },
@@ -100,10 +100,10 @@ export function EpicShopIFrameSync<ReactType extends CustomReactType>({
 	// listen for messages from parent
 	React.useEffect(() => {
 		function handleMessage(event: MessageEvent) {
-			// eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
+			 
 			const { type, params } = event.data
 			if (type === 'epicshop:navigate-call') {
-				// eslint-disable-next-line @typescript-eslint/no-unsafe-argument
+				 
 				navigate(...params)
 			}
 		}

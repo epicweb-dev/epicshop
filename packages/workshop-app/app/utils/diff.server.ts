@@ -1,3 +1,5 @@
+import os from 'os'
+import path from 'path'
 import { type CacheEntry } from '@epic-web/cachified'
 import {
 	getForceFreshForDir,
@@ -16,9 +18,7 @@ import { type Timings } from '@epic-web/workshop-utils/timing.server'
 import { execa } from 'execa'
 import fsExtra from 'fs-extra'
 import ignore from 'ignore'
-import os from 'os'
 import parseGitDiff, { type AnyFileChange } from 'parse-git-diff'
-import path from 'path'
 import { bundledLanguagesInfo } from 'shiki/langs'
 
 const epicshopTempDir = path.join(os.tmpdir(), 'epicshop')
@@ -93,7 +93,7 @@ function getFileCodeblocks(
 			startLine =
 				chunk.type === 'Chunk'
 					? chunk.fromFileRange.start
-					: // eslint-disable-next-line @typescript-eslint/no-unnecessary-condition
+					:  
 						chunk.type === 'CombinedChunk'
 						? chunk.fromFileRangeA.start
 						: 1
@@ -136,7 +136,7 @@ function getFileCodeblocks(
 
 		const launchEditorClassName =
 			'border hover:bg-foreground/20 rounded px-2 py-0.5 font-mono text-xs font-semibold'
-		// eslint-disable-next-line no-inner-declarations
+		 
 		function launchEditor(appNum: number, line: number) {
 			if (isDeployed) {
 				if (type === 'DeletedFile' && appNum === 2) return ''
@@ -389,7 +389,7 @@ async function getDiffFilesImpl(app1: App, app2: App) {
 	return parsed.files
 		.map(file => ({
 			// prettier-ignore
-			// eslint-disable-next-line @typescript-eslint/no-unnecessary-condition
+			 
 			status: (typesMap[file.type] ?? 'unknown') as 'renamed' | 'modified' | 'deleted' | 'added' | 'unknown',
 			path: diffPathToRelative(
 				file.type === 'RenamedFile' ? file.pathBefore : file.path,

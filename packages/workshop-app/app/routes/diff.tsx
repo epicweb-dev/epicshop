@@ -1,7 +1,3 @@
-import { Diff } from '#app/components/diff.tsx'
-import { NavChevrons } from '#app/components/nav-chevrons.tsx'
-import { getDiffCode } from '#app/utils/diff.server.ts'
-import { cn } from '#app/utils/misc.tsx'
 import {
 	getAppByName,
 	getAppDisplayName,
@@ -12,6 +8,10 @@ import { makeTimings } from '@epic-web/workshop-utils/timing.server'
 import { defer, type LoaderFunctionArgs } from '@remix-run/node'
 import { useLoaderData, useNavigation, useSearchParams } from '@remix-run/react'
 import { useSpinDelay } from 'spin-delay'
+import { Diff } from '#app/components/diff.tsx'
+import { NavChevrons } from '#app/components/nav-chevrons.tsx'
+import { getDiffCode } from '#app/utils/diff.server.ts'
+import { cn } from '#app/utils/misc.tsx'
 
 export async function loader({ request }: LoaderFunctionArgs) {
 	const reqUrl = new URL(request.url)

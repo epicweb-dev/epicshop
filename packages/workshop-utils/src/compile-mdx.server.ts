@@ -1,14 +1,14 @@
+import fs from 'fs'
+import path from 'path'
 import { cachified, type CacheEntry } from '@epic-web/cachified'
 import { remember } from '@epic-web/remember'
 import { remarkCodeBlocksShiki } from '@kentcdodds/md-temp'
-import fs from 'fs'
 import fsExtra from 'fs-extra'
 import { type Element, type Root as HastRoot } from 'hast'
 import md5 from 'md5-hex'
 import { type Root as MdastRoot } from 'mdast'
 import { bundleMDX } from 'mdx-bundler'
 import PQueue from 'p-queue'
-import path from 'path'
 import remarkAutolinkHeadings from 'remark-autolink-headings'
 import emoji from 'remark-emoji'
 import gfm from 'remark-gfm'
@@ -308,7 +308,7 @@ async function updateEmbeddedFilesCache({
 		for (const [key, value] of Object.entries(cachedList)) {
 			cachedList[key] = value.filter(item => item !== mdxFile)
 			if (cachedList[key]?.length === 0) {
-				// eslint-disable-next-line @typescript-eslint/no-dynamic-delete
+				 
 				delete cachedList[key]
 			}
 		}

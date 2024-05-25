@@ -1,10 +1,3 @@
-import { EpicVideoInfoProvider } from '#app/components/epic-video.tsx'
-import { Loading } from '#app/components/loading.tsx'
-import { NavChevrons } from '#app/components/nav-chevrons.tsx'
-import { type loader as rootLoader } from '#app/root.tsx'
-import { getEpicVideoInfos } from '#app/utils/epic-api.ts'
-import { Mdx } from '#app/utils/mdx.tsx'
-import { cn } from '#app/utils/misc.tsx'
 import { ElementScrollRestoration } from '@epic-web/restore-scroll'
 import {
 	getExercises,
@@ -28,13 +21,20 @@ import {
 import { Link, useLoaderData } from '@remix-run/react'
 import slugify from '@sindresorhus/slugify'
 import * as React from 'react'
+import { EpicVideoInfoProvider } from '#app/components/epic-video.tsx'
+import { Loading } from '#app/components/loading.tsx'
+import { NavChevrons } from '#app/components/nav-chevrons.tsx'
+import { type loader as rootLoader } from '#app/root.tsx'
+import { getEpicVideoInfos } from '#app/utils/epic-api.ts'
+import { Mdx } from '#app/utils/mdx.tsx'
+import { cn } from '#app/utils/misc.tsx'
 import { EditFileOnGitHub } from '../launch-editor.tsx'
 import { ProgressToggle } from '../progress.tsx'
 
 export const meta: MetaFunction<typeof loader, { root: typeof rootLoader }> = ({
 	matches,
 }) => {
-	// eslint-disable-next-line @typescript-eslint/no-unnecessary-condition
+	 
 	const rootData = matches.find(m => m.id === 'root')?.data
 	return [{ title: `🎉 ${rootData?.workshopTitle}` }]
 }

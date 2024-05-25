@@ -1,3 +1,5 @@
+import os from 'os'
+import path from 'path'
 import * as C from '@epic-web/cachified'
 import {
 	verboseReporter,
@@ -8,8 +10,6 @@ import { remember } from '@epic-web/remember'
 import fsExtra from 'fs-extra'
 import { LRUCache } from 'lru-cache'
 import md5 from 'md5-hex'
-import os from 'os'
-import path from 'path'
 import {
 	type App,
 	type ExampleApp,
@@ -44,7 +44,7 @@ export const fsCache: CachifiedCache = {
 	async get(key) {
 		try {
 			const filePath = path.join(cacheDir, md5(key))
-			// eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
+			 
 			const data = await fsExtra.readJSON(filePath)
 			return data
 		} catch (error: unknown) {

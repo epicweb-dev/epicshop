@@ -1,10 +1,10 @@
 import typography from '@tailwindcss/typography'
 import scrollbar from 'tailwind-scrollbar'
 import { type Config } from 'tailwindcss'
+import defaultTheme from 'tailwindcss/defaultTheme.js'
 import animate from 'tailwindcss-animate'
 import cssRadix from 'tailwindcss-radix'
 import safeArea from 'tailwindcss-safe-area'
-import defaultTheme from 'tailwindcss/defaultTheme.js'
 import { extendedTheme } from './app/utils/extended-theme.ts'
 
 export default {

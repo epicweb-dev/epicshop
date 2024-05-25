@@ -1,7 +1,3 @@
-import { Icon } from '#app/components/icons.tsx'
-import { AppStarter, AppStopper, PortStopper } from '#app/routes/start.tsx'
-import { getBaseUrl } from '#app/utils/misc.tsx'
-import { useRequestInfo } from '#app/utils/request-info.ts'
 import { Form, useSearchParams, type NavigateFunction } from '@remix-run/react'
 import { clsx } from 'clsx'
 import {
@@ -13,6 +9,10 @@ import {
 	type ForwardedRef,
 } from 'react'
 import { z } from 'zod'
+import { Icon } from '#app/components/icons.tsx'
+import { AppStarter, AppStopper, PortStopper } from '#app/routes/start.tsx'
+import { getBaseUrl } from '#app/utils/misc.tsx'
+import { useRequestInfo } from '#app/utils/request-info.ts'
 import {
 	Tooltip,
 	TooltipContent,
@@ -89,7 +89,7 @@ function InBrowserBrowserImpl(
 ) {
 	const requestInfo = useRequestInfo()
 	return isRunning ? (
-		// eslint-disable-next-line @typescript-eslint/no-use-before-define
+		 
 		<InBrowserBrowserForRealz
 			baseUrl={baseUrl}
 			id={id}
@@ -188,7 +188,7 @@ function InBrowserBrowserForRealzImpl(
 						return { ...prevContext, index: newIndex(-1) }
 					} else if (lastDirectionRef.current === 'forward') {
 						return { ...prevContext, index: newIndex(1) }
-						// eslint-disable-next-line @typescript-eslint/no-unnecessary-condition
+						 
 					} else if (lastDirectionRef.current === 'new') {
 						const currentPathname = prevContext.history[prevContext.index]
 						const newPathname = new URL(data.url).pathname

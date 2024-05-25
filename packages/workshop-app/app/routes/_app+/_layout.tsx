@@ -1,14 +1,3 @@
-import { Icon } from '#app/components/icons.tsx'
-import {
-	SimpleTooltip,
-	Tooltip,
-	TooltipContent,
-	TooltipProvider,
-	TooltipTrigger,
-} from '#app/components/ui/tooltip.tsx'
-import { useOptionalUser } from '#app/components/user.tsx'
-import { cn } from '#app/utils/misc.tsx'
-import { usePresence, type User } from '#app/utils/presence.tsx'
 import {
 	extractNumbersAndTypeFromAppNameOrPath,
 	getExercises,
@@ -39,6 +28,17 @@ import {
 	type AnimationControls,
 } from 'framer-motion'
 import * as React from 'react'
+import { Icon } from '#app/components/icons.tsx'
+import {
+	SimpleTooltip,
+	Tooltip,
+	TooltipContent,
+	TooltipProvider,
+	TooltipTrigger,
+} from '#app/components/ui/tooltip.tsx'
+import { useOptionalUser } from '#app/components/user.tsx'
+import { cn } from '#app/utils/misc.tsx'
+import { usePresence, type User } from '#app/utils/presence.tsx'
 import {
 	useExerciseProgressClassName,
 	useNextExerciseRoute,

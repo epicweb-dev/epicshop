@@ -1,4 +1,3 @@
-import { Icon } from '#app/components/icons.tsx'
 import {
 	Link,
 	useFormAction,
@@ -11,6 +10,7 @@ import * as React from 'react'
 import { useEffect, useMemo, useRef, useState } from 'react'
 import { useSpinDelay } from 'spin-delay'
 import { extendTailwindMerge } from 'tailwind-merge'
+import { Icon } from '#app/components/icons.tsx'
 import { extendedTheme } from './extended-theme.ts'
 
 type AnchorProps = React.DetailedHTMLProps<
@@ -29,7 +29,7 @@ export const AnchorOrLink = React.forwardRef<
 	const {
 		to,
 		href,
-		// eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
+		 
 		download,
 		reload = false,
 		prefetch,
@@ -57,7 +57,7 @@ export const AnchorOrLink = React.forwardRef<
 
 	if (shouldUserRegularAnchor) {
 		return (
-			// eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
+			 
 			<a {...rest} download={download} href={href ?? toUrl} ref={ref}>
 				{children}
 			</a>

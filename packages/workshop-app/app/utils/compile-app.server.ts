@@ -1,3 +1,5 @@
+import fs from 'fs'
+import path from 'path'
 import { type CacheEntry } from '@epic-web/cachified'
 import {
 	getAppFromFile,
@@ -9,8 +11,6 @@ import {
 } from '@epic-web/workshop-utils/cache.server'
 import { type Timings } from '@epic-web/workshop-utils/timing.server'
 import * as esbuild from 'esbuild'
-import fs from 'fs'
-import path from 'path'
 
 async function getForceFresh(
 	filePath: string,

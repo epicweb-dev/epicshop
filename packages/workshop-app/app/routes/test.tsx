@@ -1,6 +1,3 @@
-import { AnimatedBars, Icon } from '#app/components/icons.tsx'
-import { SimpleTooltip } from '#app/components/ui/tooltip.tsx'
-import { ensureUndeployed } from '#app/utils/misc.tsx'
 import { getAppByName } from '@epic-web/workshop-utils/apps.server'
 import {
 	clearTestProcessEntry,
@@ -20,6 +17,9 @@ import { useEffect, useReducer, useRef } from 'react'
 import { useEventSource } from 'remix-utils/sse/react'
 import { eventStream } from 'remix-utils/sse/server'
 import { z } from 'zod'
+import { AnimatedBars, Icon } from '#app/components/icons.tsx'
+import { SimpleTooltip } from '#app/components/ui/tooltip.tsx'
+import { ensureUndeployed } from '#app/utils/misc.tsx'
 
 const testActionSchema = z.union([
 	z.object({

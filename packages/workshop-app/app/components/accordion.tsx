@@ -72,11 +72,11 @@ const AccordionComponent: React.FC<AccordionProps> = ({
 	const fixedTitle = title.replace(/\\\\/g, '\\')
 	return (
 		<Accordion.Item value={title}>
-			{/* eslint-disable-next-line @typescript-eslint/no-use-before-define */}
+			{ }
 			<AccordionTrigger variant={getVariantLabel()}>
 				{icon ? icon : getVariantIcon()} {fixedTitle}
 			</AccordionTrigger>
-			{/* eslint-disable-next-line @typescript-eslint/no-use-before-define */}
+			{ }
 			<AccordionContent
 				forceMount={forceMount}
 				className={clsx(
@@ -100,7 +100,7 @@ const AccordionTrigger: React.FC<any> = React.forwardRef(
 			<Accordion.Trigger
 				className={clsx(
 					'group flex w-full items-center justify-between border-b p-4 pr-3 font-mono text-sm font-medium leading-none hover:bg-foreground/20',
-					// eslint-disable-next-line @typescript-eslint/no-unsafe-argument
+					 
 					className,
 				)}
 				{...props}
@@ -125,7 +125,7 @@ const AccordionTrigger: React.FC<any> = React.forwardRef(
 const AccordionContent: React.FC<any> = React.forwardRef(
 	({ children, className, ...props }, forwardedRef) => (
 		<Accordion.Content
-			// eslint-disable-next-line @typescript-eslint/no-unsafe-argument
+			 
 			className={clsx('', className)}
 			{...props}
 			ref={forwardedRef}

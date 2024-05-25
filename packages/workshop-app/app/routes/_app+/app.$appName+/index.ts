@@ -1,4 +1,4 @@
-import { getBaseUrl } from '#app/utils/misc.tsx'
+import path from 'path'
 import {
 	getAppByName,
 	getExercise,
@@ -15,7 +15,7 @@ import {
 } from '@epic-web/workshop-utils/timing.server'
 import { redirect, type LoaderFunctionArgs } from '@remix-run/node'
 import fsExtra from 'fs-extra'
-import path from 'path'
+import { getBaseUrl } from '#app/utils/misc.tsx'
 import { resolveApps } from './__utils.ts'
 
 export async function loader({ request, params }: LoaderFunctionArgs) {

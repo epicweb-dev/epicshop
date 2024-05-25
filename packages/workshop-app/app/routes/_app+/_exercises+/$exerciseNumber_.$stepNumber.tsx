@@ -1,4 +1,3 @@
-import { getErrorMessage } from '#app/utils/misc.tsx'
 import { invariantResponse } from '@epic-web/invariant'
 import {
 	getExercises,
@@ -15,6 +14,7 @@ import {
 	type LoaderFunctionArgs,
 } from '@remix-run/node'
 import { Outlet, isRouteErrorResponse, useRouteError } from '@remix-run/react'
+import { getErrorMessage } from '#app/utils/misc.tsx'
 
 export async function loader({ request, params }: LoaderFunctionArgs) {
 	const timings = makeTimings('stepLoader')

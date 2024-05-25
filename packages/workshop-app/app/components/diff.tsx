@@ -1,6 +1,3 @@
-import AccordionComponent from '#app/components/accordion.tsx'
-import { Mdx } from '#app/utils/mdx.tsx'
-import { cn } from '#app/utils/misc.tsx'
 import * as Accordion from '@radix-ui/react-accordion'
 import * as Select from '@radix-ui/react-select'
 import {
@@ -14,6 +11,9 @@ import {
 import { clsx } from 'clsx'
 import React, { Suspense } from 'react'
 import { useSpinDelay } from 'spin-delay'
+import AccordionComponent from '#app/components/accordion.tsx'
+import { Mdx } from '#app/utils/mdx.tsx'
+import { cn } from '#app/utils/misc.tsx'
 import { Icon } from './icons.tsx'
 import { SimpleTooltip } from './ui/tooltip.tsx'
 
@@ -159,7 +159,7 @@ function SelectFileToDiff({
 			>
 				<span className="overflow-hidden text-ellipsis whitespace-nowrap">
 					{label}:{' '}
-					{/* eslint-disable-next-line @typescript-eslint/no-use-before-define */}
+					{ }
 					<SelectValue
 						placeholder={`Select ${label}`}
 						className="inline-block w-40 text-ellipsis"
@@ -185,7 +185,7 @@ function SelectFileToDiff({
 							</Select.Label>
 							{allApps.map(app => {
 								return (
-									// eslint-disable-next-line @typescript-eslint/no-use-before-define
+									 
 									<SelectItem key={app.name} value={app.name}>
 										{app.displayName}
 									</SelectItem>
@@ -208,7 +208,7 @@ const SelectItem: React.FC<any> = React.forwardRef(
 			<Select.Item
 				className={clsx(
 					'relative flex  cursor-pointer select-none items-center rounded px-10 py-2 leading-none opacity-80 radix-disabled:text-red-500 radix-highlighted:opacity-100 radix-highlighted:outline-none radix-state-checked:opacity-100',
-					// eslint-disable-next-line @typescript-eslint/no-unsafe-argument
+					 
 					className,
 				)}
 				{...props}
@@ -227,7 +227,7 @@ const SelectValue: React.FC<any> = React.forwardRef(
 	({ children, className, ...props }, forwardedRef) => {
 		return (
 			<Select.Value {...props} ref={forwardedRef}>
-				{/* eslint-disable-next-line @typescript-eslint/no-unsafe-member-access */}
+				{ }
 				{props.value}
 			</Select.Value>
 		)

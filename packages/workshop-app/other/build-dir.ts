@@ -1,8 +1,8 @@
+import path from 'path'
+import { fileURLToPath } from 'url'
 import esbuild from 'esbuild'
 import fsExtra from 'fs-extra'
 import { glob } from 'glob'
-import path from 'path'
-import { fileURLToPath } from 'url'
 
 const dir = process.argv[2]
 

@@ -1,5 +1,4 @@
-import { compileTs } from '#app/utils/compile-app.server.ts'
-import { getBaseUrl } from '#app/utils/misc.tsx'
+import path from 'node:path'
 import { invariantResponse } from '@epic-web/invariant'
 import { makeTimings } from '@epic-web/workshop-utils/timing.server'
 import {
@@ -8,8 +7,9 @@ import {
 	type LoaderFunctionArgs,
 } from '@remix-run/node'
 import fsExtra from 'fs-extra'
-import path from 'node:path'
 import { z } from 'zod'
+import { compileTs } from '#app/utils/compile-app.server.ts'
+import { getBaseUrl } from '#app/utils/misc.tsx'
 import { resolveApps } from './__utils'
 
 export async function loader(args: LoaderFunctionArgs) {

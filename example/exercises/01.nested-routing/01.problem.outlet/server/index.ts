@@ -1,3 +1,5 @@
+import path from 'path'
+import { fileURLToPath } from 'url'
 import { createRequestHandler } from '@remix-run/express'
 import { broadcastDevReady, type ServerBuild } from '@remix-run/node'
 import { ip as ipAddress } from 'address'
@@ -8,8 +10,6 @@ import compression from 'compression'
 import express from 'express'
 import getPort, { portNumbers } from 'get-port'
 import morgan from 'morgan'
-import path from 'path'
-import { fileURLToPath } from 'url'
 
 // @ts-ignore - this file may not exist if you haven't built yet, but it will
 // definitely exist by the time the dev or prod server actually runs.
@@ -79,7 +79,7 @@ const server = app.listen(portToUse, () => {
 	console.log(`🚀  We have liftoff!`)
 	const localUrl = `http://localhost:${portUsed}`
 	let lanUrl: string | null = null
-	// eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
+	 
 	const localIp: string = ipAddress() ?? 'Unknown'
 	// Check if the address is a private ip
 	// https://en.wikipedia.org/wiki/Private_network#Private_IPv4_address_spaces
@@ -109,9 +109,9 @@ closeWithGrace(async () => {
 
 // during dev, we'll keep the build module up to date with the changes
 if (process.env.NODE_ENV === 'development') {
-	// eslint-disable-next-line no-inner-declarations
+	 
 	async function reloadBuild() {
-		// eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
+		 
 		devBuild = await import(`${BUILD_PATH}?update=${Date.now()}`)
 		void broadcastDevReady(devBuild)
 	}

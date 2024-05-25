@@ -1,9 +1,3 @@
-import { Button } from '#app/components/button.tsx'
-import {
-	DeferredEpicVideo,
-	EpicVideoInfoProvider,
-} from '#app/components/epic-video.tsx'
-import { getEpicVideoInfos } from '#app/utils/epic-api.ts'
 import { invariantResponse } from '@epic-web/invariant'
 import { updateOnboardingData } from '@epic-web/workshop-utils/db.server'
 import { makeTimings } from '@epic-web/workshop-utils/timing.server'
@@ -15,6 +9,12 @@ import {
 	type LoaderFunctionArgs,
 } from '@remix-run/node'
 import { Form, useLoaderData } from '@remix-run/react'
+import { Button } from '#app/components/button.tsx'
+import {
+	DeferredEpicVideo,
+	EpicVideoInfoProvider,
+} from '#app/components/epic-video.tsx'
+import { getEpicVideoInfos } from '#app/utils/epic-api.ts'
 
 export async function loader({ request }: LoaderFunctionArgs) {
 	const timings = makeTimings('onboarding')

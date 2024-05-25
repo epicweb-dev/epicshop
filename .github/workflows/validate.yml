@@ -149,7 +149,7 @@ jobs:
 
       - name: ▶️ Run setup script
         run: node setup.mjs
-        working-directory: ./packages/example
+        working-directory: ./example
         continue-on-error: true
 
   release:

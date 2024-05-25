@@ -1,9 +1,9 @@
-import { EVENTS } from '#app/utils/auth-events.ts'
-import { authEmitter } from '#app/utils/auth.server.ts'
-import { ensureUndeployed } from '#app/utils/misc.tsx'
 import { type LoaderFunctionArgs } from '@remix-run/node'
 import { eventStream } from 'remix-utils/sse/server'
 import { z } from 'zod'
+import { EVENTS } from '#app/utils/auth-events.ts'
+import { authEmitter } from '#app/utils/auth.server.ts'
+import { ensureUndeployed } from '#app/utils/misc.tsx'
 
 const CodeReceivedEventSchema = z.object({
 	type: z.literal(EVENTS.USER_CODE_RECEIVED),

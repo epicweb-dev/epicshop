@@ -1,12 +1,12 @@
 // copied (and barely modified) from create-react-app:
 //   https://github.com/facebook/create-react-app/blob/d960b9e38c062584ff6cfb1a70e1512509a966e7/packages/react-dev-utils/launchEditor.js
 
-import { getRelativePath } from '@epic-web/workshop-utils/apps.server'
 import child_process from 'child_process'
 import fs from 'fs'
-import fsExtra from 'fs-extra'
 import os from 'os'
 import path from 'path'
+import { getRelativePath } from '@epic-web/workshop-utils/apps.server'
+import fsExtra from 'fs-extra'
 import shellQuote from 'shell-quote'
 
 function readablePath(filePath: string = '') {
@@ -217,7 +217,7 @@ function guessEditor(): Array<string | null> {
 				const processName = processNames[i]
 				if (processName && output.includes(processName)) {
 					// @ts-expect-error 🤷‍♂️ it's fine
-					// eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
+					 
 					const editor = COMMON_EDITORS_OSX[processName]
 					return [editor]
 				}
@@ -292,7 +292,7 @@ export async function launchEditor(
 		colNumber = 1
 	}
 
-	// eslint-disable-next-line @typescript-eslint/no-unsafe-assignment, prefer-const
+	 
 	const editorInfo = guessEditor()
 	const editor = editorInfo[0]
 	let args = editorInfo.slice(1).filter(Boolean)

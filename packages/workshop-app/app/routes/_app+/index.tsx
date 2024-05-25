@@ -1,9 +1,3 @@
-import { EpicVideoInfoProvider } from '#app/components/epic-video.tsx'
-import { GeneralErrorBoundary } from '#app/components/error-boundary.tsx'
-import { EditFileOnGitHub } from '#app/routes/launch-editor.tsx'
-import { getEpicVideoInfos } from '#app/utils/epic-api.ts'
-import { Mdx } from '#app/utils/mdx.tsx'
-import { cn } from '#app/utils/misc.tsx'
 import { ElementScrollRestoration } from '@epic-web/restore-scroll'
 import {
 	getExercises,
@@ -24,6 +18,12 @@ import {
 } from '@remix-run/node'
 import { Link, useLoaderData } from '@remix-run/react'
 import slugify from '@sindresorhus/slugify'
+import { EpicVideoInfoProvider } from '#app/components/epic-video.tsx'
+import { GeneralErrorBoundary } from '#app/components/error-boundary.tsx'
+import { EditFileOnGitHub } from '#app/routes/launch-editor.tsx'
+import { getEpicVideoInfos } from '#app/utils/epic-api.ts'
+import { Mdx } from '#app/utils/mdx.tsx'
+import { cn } from '#app/utils/misc.tsx'
 import { ProgressToggle, useExerciseProgressClassName } from '../progress.tsx'
 
 export async function loader({ request }: LoaderFunctionArgs) {

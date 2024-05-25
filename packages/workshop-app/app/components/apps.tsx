@@ -1,5 +1,5 @@
-import { type loader as rootLoader } from '#app/root.tsx'
 import { useRouteLoaderData } from '@remix-run/react'
+import { type loader as rootLoader } from '#app/root.tsx'
 
 export function useApps() {
 	const data = useRouteLoaderData<typeof rootLoader>('root')

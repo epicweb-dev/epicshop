@@ -1,12 +1,3 @@
-import { type loader as rootLoader } from '#app/root.tsx'
-import { createConfettiHeaders } from '#app/utils/confetti.server.ts'
-import {
-	getProgress,
-	updateProgress,
-	type Progress,
-} from '#app/utils/epic-api.ts'
-import { combineHeaders, ensureUndeployed } from '#app/utils/misc.tsx'
-import { createToastHeaders } from '#app/utils/toast.server.ts'
 import { invariantResponse } from '@epic-web/invariant'
 import { requireAuthInfo } from '@epic-web/workshop-utils/db.server'
 import { json, type ActionFunctionArgs } from '@remix-run/node'
@@ -20,6 +11,15 @@ import {
 import clsx from 'clsx'
 import { motion } from 'framer-motion'
 import * as React from 'react'
+import { type loader as rootLoader } from '#app/root.tsx'
+import { createConfettiHeaders } from '#app/utils/confetti.server.ts'
+import {
+	getProgress,
+	updateProgress,
+	type Progress,
+} from '#app/utils/epic-api.ts'
+import { combineHeaders, ensureUndeployed } from '#app/utils/misc.tsx'
+import { createToastHeaders } from '#app/utils/toast.server.ts'
 
 export function useEpicProgress() {
 	const data = useRouteLoaderData<typeof rootLoader>('root')
@@ -59,7 +59,7 @@ export function useNextExerciseRoute() {
 		if (a.type === 'instructions') return a.exerciseNumber * 100
 		if (a.type === 'step') return a.exerciseNumber * 100 + a.stepNumber
 		if (a.type === 'finished') return a.exerciseNumber * 100 + 100
-		// eslint-disable-next-line @typescript-eslint/no-unnecessary-condition
+		 
 		if (a.type === 'unknown') return 100000
 		return -1
 	}
@@ -78,7 +78,7 @@ export function useNextExerciseRoute() {
 	if (nextProgress.type === 'finished') return `/${ex}/finished`
 
 	const st = nextProgress.stepNumber.toString().padStart(2, '0')
-	// eslint-disable-next-line @typescript-eslint/no-unnecessary-condition
+	 
 	if (nextProgress.type === 'step') return `/${ex}/${st}/problem`
 
 	return null
@@ -174,7 +174,7 @@ export function useProgressItem({
 				p => p.type === type && p.exerciseNumber === exerciseNumber,
 			) ?? null
 		)
-		// eslint-disable-next-line @typescript-eslint/no-unnecessary-condition
+		 
 	} else if (type === 'step') {
 		return (
 			progress.find(
@@ -269,7 +269,7 @@ export function ProgressToggle({
 
 	const location = useLocation()
 	const navigation = useNavigation()
-	// eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
+	 
 	const navigationLocationStateFrom = navigation.location?.state?.from
 	const navigationLocationPathname = navigation.location?.pathname
 	const locationPathname = location.pathname

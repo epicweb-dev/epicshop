@@ -1,13 +1,13 @@
-/// TODO: figure out why this import is necessary (without it tsc seems to not honor the boolean reset 🤷‍♂️)
+import fs from 'node:fs'
+import path from 'node:path'
 import { type CacheEntry } from '@epic-web/cachified'
 import { remember } from '@epic-web/remember'
+/// TODO: figure out why this import is necessary (without it tsc seems to not honor the boolean reset 🤷‍♂️)
 import '@total-typescript/ts-reset'
 import { execa } from 'execa'
-import fs from 'fs'
 import fsExtra from 'fs-extra'
 import { glob } from 'glob'
 import { globby, isGitIgnored } from 'globby'
-import path from 'path'
 import { z } from 'zod'
 import {
 	appsCache,
@@ -29,7 +29,6 @@ import { getServerTimeHeader, type Timings } from './timing.server.js'
 import { getErrorMessage } from './utils.js'
 import { getPkgProp } from './utils.server.js'
 
-// eslint-disable-next-line @typescript-eslint/no-unnecessary-condition
 process.env.NODE_ENV ??= 'development'
 
 const workshopRoot = getWorkshopRoot()
@@ -1089,7 +1088,7 @@ export async function setPlayground(
 		await execa('node', [preSetPlaygroundPath], {
 			cwd: workshopRoot,
 			stdio: 'inherit',
-			// eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
+
 			env: {
 				EPICSHOP_PLAYGROUND_TIMESTAMP: setPlaygroundTimestamp.toString(),
 				EPICSHOP_PLAYGROUND_DEST_DIR: destDir,
@@ -1182,7 +1181,7 @@ export async function setPlayground(
 		await execa('node', [postSetPlaygroundPath], {
 			cwd: workshopRoot,
 			stdio: 'inherit',
-			// eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
+
 			env: {
 				EPICSHOP_PLAYGROUND_TIMESTAMP: setPlaygroundTimestamp.toString(),
 				EPICSHOP_PLAYGROUND_SRC_DIR: srcDir,
@@ -1217,7 +1216,7 @@ export async function getPlaygroundAppName() {
 			playgroundAppNameInfoPath,
 			'utf8',
 		)
-		// eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
+
 		const { appName } = JSON.parse(jsonString) as any
 		if (typeof appName !== 'string') return null
 		return appName

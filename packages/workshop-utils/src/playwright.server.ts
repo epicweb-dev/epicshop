@@ -58,7 +58,7 @@ export function setupInBrowserTests() {
 		.parse(JSON.parse(result.stdout))
 
 	for (const testPage of testPages) {
-		// eslint-disable-next-line no-loop-func
+		 
 		test(testPage.path, async ({ page }) => {
 			const errors: Array<string> = []
 			const logs: Array<string> = []

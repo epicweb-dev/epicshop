@@ -1,7 +1,7 @@
-import { vitePlugin as remix } from '@remix-run/dev'
 import path from 'path'
-import { flatRoutes } from 'remix-flat-routes'
 import { fileURLToPath } from 'url'
+import { vitePlugin as remix } from '@remix-run/dev'
+import { flatRoutes } from 'remix-flat-routes'
 import { defineConfig } from 'vite'
 
 const __filename = fileURLToPath(import.meta.url)
@@ -9,13 +9,13 @@ const __dirname = path.dirname(__filename)
 const here = (...p: Array<string>) => path.join(__dirname, ...p)
 
 async function makeTshyAliases(moduleName: string, folderName: string) {
-	// eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
+	 
 	const { default: pkg } = await import(
 		here('..', folderName, 'package.json'),
 		{ assert: { type: 'json' } }
 	)
 
-	// eslint-disable-next-line @typescript-eslint/no-unsafe-argument, @typescript-eslint/no-unsafe-member-access
+	 
 	return Object.entries(pkg.tshy.exports).reduce<Record<string, string>>(
 		(acc, [key, value]) => {
 			if (typeof value !== 'string') return acc
