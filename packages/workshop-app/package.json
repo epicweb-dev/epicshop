@@ -17,7 +17,8 @@
   "type": "module",
   "imports": {
     "#app/*": "./app/*",
-    "#tests/*": "./tests/*"
+    "#tests/*": "./tests/*",
+    "#build/*": "./build/*"
   },
   "exports": {
     "./start": {

@@ -1,25 +1,26 @@
 {
-  "include": ["env.d.ts", "deps.d.ts", "**/*.ts", "**/*.tsx"],
-  "extends": ["@epic-web/config/typescript"],
-  "compilerOptions": {
-    "baseUrl": ".",
-    "paths": {
-      "#app/*": ["./app/*"],
-      "#tests/*": ["./tests/*"],
-      "@epic-web/workshop-utils/*": [
-        "../workshop-utils/src/*.ts",
-        "../workshop-utils/src/*.tsx"
-      ],
-      "@epic-web/workshop-presence/*": [
-        "../workshop-presence/src/*.ts",
-        "../workshop-presence/src/*.tsx"
-      ],
-      "@/icon-name": [
-        "./app/components/ui/icons/name.d.ts",
-        "./types/icon-name.d.ts"
-      ]
-    },
-    "skipLibCheck": true,
-    "typeRoots": ["./types", "./node_modules/@types"]
-  }
+	"include": ["env.d.ts", "deps.d.ts", "**/*.ts", "**/*.tsx"],
+	"extends": ["@epic-web/config/typescript"],
+	"compilerOptions": {
+		"baseUrl": ".",
+		"paths": {
+			"#app/*": ["./app/*"],
+			"#tests/*": ["./tests/*"],
+			"#build/*": ["./build/*"],
+			"@epic-web/workshop-utils/*": [
+				"../workshop-utils/src/*.ts",
+				"../workshop-utils/src/*.tsx"
+			],
+			"@epic-web/workshop-presence/*": [
+				"../workshop-presence/src/*.ts",
+				"../workshop-presence/src/*.tsx"
+			],
+			"@/icon-name": [
+				"./app/components/ui/icons/name.d.ts",
+				"./types/icon-name.d.ts"
+			]
+		},
+		"skipLibCheck": true,
+		"typeRoots": ["./types", "./node_modules/@types"]
+	}
 }

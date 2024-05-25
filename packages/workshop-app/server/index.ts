@@ -117,7 +117,7 @@ app.all(
 		build: viteDevServer
 			? () => viteDevServer.ssrLoadModule('virtual:remix/server-build')
 			: // @ts-ignore (this may or may not be built at this time, but it will be in prod)
-				((await import('../build/server/index.js')) as any),
+				((await import('#build/server/index.js')) as any),
 	}),
 )
 
