@@ -1,4 +1,4 @@
 {
   "include": ["remix.env.d.ts", "**/*.ts", "**/*.tsx"],
-  "extends": "@epic-web/config/typescript"
+  "extends": ["@epic-web/config/typescript"]
 }

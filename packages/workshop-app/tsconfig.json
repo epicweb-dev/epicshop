@@ -1,6 +1,6 @@
 {
-  "include": ["env.d.ts", "**/*.ts", "**/*.tsx"],
-  "extends": "@epic-web/config/typescript",
+  "include": ["env.d.ts", "deps.d.ts", "**/*.ts", "**/*.tsx"],
+  "extends": ["@epic-web/config/typescript"],
   "compilerOptions": {
     "baseUrl": ".",
     "paths": {

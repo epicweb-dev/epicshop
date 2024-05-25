@@ -1,29 +1,29 @@
 {
-  "name": "epic-workshop",
-  "$schema": "node_modules/nx/schemas/project-schema.json",
-  "targets": {
-    "build": {
-      "executor": "nx:noop",
-      "dependsOn": [
-        "@epic-web/workshop-app:build",
-        "@epic-web/workshop-utils:build",
-        "@epic-web/workshop-presence:build"
-      ]
-    },
-    "lint": {
-      "executor": "@nx/eslint:lint",
-      "outputs": ["{options.outputFile}"],
-      "options": {
-        "lintFilePatterns": ["**/*.ts", "**/*.tsx", "**/*.js", "**/*.jsx"]
-      },
-      "dependsOn": ["@epic-web/workshop-app:build"]
-    },
-    "typecheck": {
-      "command": "tsc -b"
-    },
-    "test": {
-      "executor": "@nx/playwright:playwright",
-      "dependsOn": ["@epic-web/workshop-app:build"]
-    }
-  }
+	"name": "epic-workshop",
+	"$schema": "node_modules/nx/schemas/project-schema.json",
+	"targets": {
+		"build": {
+			"executor": "nx:noop",
+			"dependsOn": [
+				"@epic-web/workshop-app:build",
+				"@epic-web/workshop-utils:build",
+				"@epic-web/workshop-presence:build"
+			]
+		},
+		"lint": {
+			"executor": "@nx/eslint:lint",
+			"outputs": ["{options.outputFile}"],
+			"options": {
+				"lintFilePatterns": ["**/*.ts", "**/*.tsx", "**/*.js", "**/*.jsx"]
+			},
+			"dependsOn": ["@epic-web/workshop-app:build"]
+		},
+		"typecheck": {
+			"command": "tsc -b"
+		},
+		"test": {
+			"executor": "@nx/playwright:playwright",
+			"dependsOn": ["@epic-web/workshop-app:build"]
+		}
+	}
 }

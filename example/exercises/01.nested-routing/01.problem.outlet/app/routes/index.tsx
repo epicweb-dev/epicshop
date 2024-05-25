@@ -2,7 +2,7 @@ import { Link } from '@remix-run/react'
 
 export default function Index() {
 	return (
-		<main className="relative min-h-screen-safe bg-white">
+		<main className="min-h-screen-safe relative bg-white">
 			<h1>Welcome to the app</h1>
 			<Link to="/whatever" className="text-blue-800 underline">
 				Go to "/whatever"

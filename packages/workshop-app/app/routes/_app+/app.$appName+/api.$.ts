@@ -1,5 +1,5 @@
-import { compileTs } from '#app/utils/compile-app.server'
-import { getBaseUrl } from '#app/utils/misc'
+import { compileTs } from '#app/utils/compile-app.server.ts'
+import { getBaseUrl } from '#app/utils/misc.tsx'
 import { invariantResponse } from '@epic-web/invariant'
 import { makeTimings } from '@epic-web/workshop-utils/timing.server'
 import {
