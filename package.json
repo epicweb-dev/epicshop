@@ -22,7 +22,7 @@
     "example/epicshop"
   ],
   "dependencies": {
-    "@epic-web/config": "^1.3.5",
+    "@epic-web/config": "^1.7.4",
     "@nx/devkit": "19.0.7",
     "@nx/eslint": "19.0.7",
     "@nx/js": "19.0.7",

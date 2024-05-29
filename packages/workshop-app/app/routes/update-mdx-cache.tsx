@@ -42,18 +42,16 @@ export async function action({ request }: ActionFunctionArgs) {
 	) as any
 
 	const cachedEmbeddedFiles = new Map<string, EmbeddedFile>(
-		 
 		Object.entries(cached?.value?.embeddedFiles ?? {}),
 	)
 
 	if (cachedEmbeddedFiles.has(embeddedKey)) {
 		delete cachedEmbeddedFiles.get(embeddedKey)?.warning
-		 
+
 		cached.value.embeddedFiles = Object.fromEntries(cachedEmbeddedFiles)
 	}
 
 	try {
-		 
 		cached.value.warningCancled = true
 		await fs.promises.writeFile(cacheLocation, JSON.stringify(cached))
 	} catch (error) {

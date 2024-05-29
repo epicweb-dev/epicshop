@@ -59,7 +59,7 @@ export function useNextExerciseRoute() {
 		if (a.type === 'instructions') return a.exerciseNumber * 100
 		if (a.type === 'step') return a.exerciseNumber * 100 + a.stepNumber
 		if (a.type === 'finished') return a.exerciseNumber * 100 + 100
-		 
+
 		if (a.type === 'unknown') return 100000
 		return -1
 	}
@@ -78,7 +78,7 @@ export function useNextExerciseRoute() {
 	if (nextProgress.type === 'finished') return `/${ex}/finished`
 
 	const st = nextProgress.stepNumber.toString().padStart(2, '0')
-	 
+
 	if (nextProgress.type === 'step') return `/${ex}/${st}/problem`
 
 	return null
@@ -174,7 +174,6 @@ export function useProgressItem({
 				p => p.type === type && p.exerciseNumber === exerciseNumber,
 			) ?? null
 		)
-		 
 	} else if (type === 'step') {
 		return (
 			progress.find(
@@ -269,7 +268,7 @@ export function ProgressToggle({
 
 	const location = useLocation()
 	const navigation = useNavigation()
-	 
+
 	const navigationLocationStateFrom = navigation.location?.state?.from
 	const navigationLocationPathname = navigation.location?.pathname
 	const locationPathname = location.pathname

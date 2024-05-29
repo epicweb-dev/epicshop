@@ -217,7 +217,7 @@ function guessEditor(): Array<string | null> {
 				const processName = processNames[i]
 				if (processName && output.includes(processName)) {
 					// @ts-expect-error 🤷‍♂️ it's fine
-					 
+
 					const editor = COMMON_EDITORS_OSX[processName]
 					return [editor]
 				}
@@ -256,7 +256,7 @@ function guessEditor(): Array<string | null> {
 				}
 			}
 		}
-	} catch (error) {
+	} catch {
 		// Ignore...
 	}
 
@@ -292,7 +292,6 @@ export async function launchEditor(
 		colNumber = 1
 	}
 
-	 
 	const editorInfo = guessEditor()
 	const editor = editorInfo[0]
 	let args = editorInfo.slice(1).filter(Boolean)

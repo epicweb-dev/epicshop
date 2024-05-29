@@ -93,8 +93,7 @@ function getFileCodeblocks(
 			startLine =
 				chunk.type === 'Chunk'
 					? chunk.fromFileRange.start
-					:  
-						chunk.type === 'CombinedChunk'
+					: chunk.type === 'CombinedChunk'
 						? chunk.fromFileRangeA.start
 						: 1
 			toStartLine = chunk.toFileRange.start
@@ -136,7 +135,7 @@ function getFileCodeblocks(
 
 		const launchEditorClassName =
 			'border hover:bg-foreground/20 rounded px-2 py-0.5 font-mono text-xs font-semibold'
-		 
+
 		function launchEditor(appNum: number, line: number) {
 			if (isDeployed) {
 				if (type === 'DeletedFile' && appNum === 2) return ''
@@ -389,7 +388,7 @@ async function getDiffFilesImpl(app1: App, app2: App) {
 	return parsed.files
 		.map(file => ({
 			// prettier-ignore
-			 
+
 			status: (typesMap[file.type] ?? 'unknown') as 'renamed' | 'modified' | 'deleted' | 'added' | 'unknown',
 			path: diffPathToRelative(
 				file.type === 'RenamedFile' ? file.pathBefore : file.path,

@@ -44,7 +44,7 @@ export const fsCache: CachifiedCache = {
 	async get(key) {
 		try {
 			const filePath = path.join(cacheDir, md5(key))
-			 
+
 			const data = await fsExtra.readJSON(filePath)
 			return data
 		} catch (error: unknown) {

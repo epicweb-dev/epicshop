@@ -58,7 +58,6 @@ export function setupInBrowserTests() {
 		.parse(JSON.parse(result.stdout))
 
 	for (const testPage of testPages) {
-		 
 		test(testPage.path, async ({ page }) => {
 			const errors: Array<string> = []
 			const logs: Array<string> = []

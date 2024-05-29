@@ -1,12 +1,12 @@
 {
-  "include": ["./**/*.ts", "./**/*.tsx"],
-  "extends": ["@epic-web/config/typescript"],
-  "compilerOptions": {
-    "paths": {
-      "@epic-web/workshop-utils/*": [
-        "../workshop-utils/src/*.ts",
-        "../workshop-utils/src/*.tsx"
-      ]
-    }
-  }
+	"include": ["./**/*.ts", "./**/*.tsx"],
+	"extends": ["@epic-web/config/typescript"],
+	"compilerOptions": {
+		"paths": {
+			"@epic-web/workshop-utils/*": [
+				"../workshop-utils/src/*.ts",
+				"../workshop-utils/src/*.tsx"
+			]
+		}
+	}
 }

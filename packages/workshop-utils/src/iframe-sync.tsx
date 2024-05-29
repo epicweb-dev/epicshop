@@ -71,7 +71,7 @@ export function EpicShopIFrameSync<ReactType extends CustomReactType>({
 		if (window.parent === window) return
 
 		// @ts-expect-error - this is fine 🔥
-		 
+
 		window.__epicshop__?.onHydrated?.()
 
 		const methods = [
@@ -84,7 +84,6 @@ export function EpicShopIFrameSync<ReactType extends CustomReactType>({
 		for (const method of methods) {
 			// @ts-expect-error - this is fine 🔥
 			window.history[method] = new Proxy(window.history[method], {
-				 
 				apply(target, thisArg, argArray) {
 					window.parent.postMessage(
 						{ type: 'epicshop:history-call', method, args: argArray },
@@ -100,10 +99,8 @@ export function EpicShopIFrameSync<ReactType extends CustomReactType>({
 	// listen for messages from parent
 	React.useEffect(() => {
 		function handleMessage(event: MessageEvent) {
-			 
 			const { type, params } = event.data
 			if (type === 'epicshop:navigate-call') {
-				 
 				navigate(...params)
 			}
 		}

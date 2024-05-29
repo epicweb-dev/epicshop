@@ -17,7 +17,7 @@ export async function registerDevice() {
 		const issuer = await Issuer.discover(ISSUER)
 
 		// 🤷‍♂️
-		 
+
 		const client: Client = await (issuer.Client as any).register({
 			grant_types: [GRANT_TYPE],
 			response_types: [],

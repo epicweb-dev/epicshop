@@ -79,7 +79,7 @@ const server = app.listen(portToUse, () => {
 	console.log(`🚀  We have liftoff!`)
 	const localUrl = `http://localhost:${portUsed}`
 	let lanUrl: string | null = null
-	 
+
 	const localIp: string = ipAddress() ?? 'Unknown'
 	// Check if the address is a private ip
 	// https://en.wikipedia.org/wiki/Private_network#Private_IPv4_address_spaces
@@ -109,9 +109,7 @@ closeWithGrace(async () => {
 
 // during dev, we'll keep the build module up to date with the changes
 if (process.env.NODE_ENV === 'development') {
-	 
 	async function reloadBuild() {
-		 
 		devBuild = await import(`${BUILD_PATH}?update=${Date.now()}`)
 		void broadcastDevReady(devBuild)
 	}

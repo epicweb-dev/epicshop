@@ -156,7 +156,7 @@ export function PreWithButtons({ children, ...props }: any) {
 				{...props}
 				className={clsx(
 					'scrollbar-thin scrollbar-thumb-scrollbar',
-					 
+
 					props.className ?? '',
 				)}
 				{...updateFilename()}
@@ -183,7 +183,7 @@ export const mdxComponents = {
 			{...props}
 			className={clsx(
 				'scrollbar-thin scrollbar-thumb-scrollbar',
-				 
+
 				props.className ?? '',
 			)}
 		/>

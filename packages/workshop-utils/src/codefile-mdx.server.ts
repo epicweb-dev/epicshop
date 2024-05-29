@@ -87,7 +87,7 @@ async function getFileContent(filePath: string) {
 		const fileContent = content.split('\n')
 		fileContentCache.set(filePath, fileContent)
 		return fileContent
-	} catch (error) {
+	} catch {
 		console.warn(
 			`@epic-web/workshop-app - invalid CodeFile.\nCould not read file: ${filePath}\n`,
 		)
@@ -295,7 +295,6 @@ export function remarkCodeFile(data: CodeFileData) {
 				typeof val === 'boolean' && val && meta.push(`${key}=true`),
 		)
 
-		 
 		if (result.data.buttons) {
 			meta.push(`buttons=${result.data.buttons.join(',')}`)
 			meta.push(`type=${appType}`)

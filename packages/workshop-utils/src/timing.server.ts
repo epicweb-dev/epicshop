@@ -29,9 +29,7 @@ function createTimer(type: string, desc?: string) {
 		end(timings: Timings) {
 			let timingType = timings[type]
 
-			 
 			if (!timingType) {
-				 
 				timingType = timings[type] = []
 			}
 			timingType.push({ desc, time: performance.now() - start })

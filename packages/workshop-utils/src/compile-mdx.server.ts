@@ -308,7 +308,6 @@ async function updateEmbeddedFilesCache({
 		for (const [key, value] of Object.entries(cachedList)) {
 			cachedList[key] = value.filter(item => item !== mdxFile)
 			if (cachedList[key]?.length === 0) {
-				 
 				delete cachedList[key]
 			}
 		}
@@ -362,7 +361,7 @@ async function getEmbeddedFilesCache() {
 						await fs.promises.readFile(embeddedFilesLocation, 'utf-8'),
 					) as CachedEmbeddedFilesList
 				}
-			} catch (error: unknown) {
+			} catch {
 				console.error(`Unable to read 'embeddedFiles.json' from: `, cacheDir)
 			}
 			return undefined

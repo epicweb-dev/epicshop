@@ -34,7 +34,6 @@ import { ProgressToggle } from '../progress.tsx'
 export const meta: MetaFunction<typeof loader, { root: typeof rootLoader }> = ({
 	matches,
 }) => {
-	 
 	const rootData = matches.find(m => m.id === 'root')?.data
 	return [{ title: `🎉 ${rootData?.workshopTitle}` }]
 }

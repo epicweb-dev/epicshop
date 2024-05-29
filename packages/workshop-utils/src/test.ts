@@ -16,7 +16,6 @@ function isError(maybeError: any): maybeError is Error {
 		maybeError &&
 		typeof maybeError === 'object' &&
 		'message' in maybeError &&
-		 
 		typeof maybeError.message === 'string'
 	)
 }

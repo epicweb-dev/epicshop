@@ -20,7 +20,7 @@
     "validate": "run-p \"test -- --run\" lint typecheck"
   },
   "dependencies": {
-    "@epic-web/config": "^1.3.5",
+    "@epic-web/config": "^1.7.5",
     "@epic-web/workshop-utils": "file:../../../../packages/workshop-utils",
     "@remix-run/css-bundle": "^2.9.2",
     "@remix-run/express": "^2.9.2",

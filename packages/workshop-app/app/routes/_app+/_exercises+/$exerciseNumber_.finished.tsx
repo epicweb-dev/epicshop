@@ -42,7 +42,7 @@ export const meta: MetaFunction<typeof loader, { root: typeof rootLoader }> = ({
 		return [{ title: '🦉 | Error' }]
 	}
 	const number = data.exercise.exerciseNumber.toString().padStart(2, '0')
-	 
+
 	const rootData = matches.find(m => m.id === 'root')?.data
 	return [
 		{

@@ -1,4 +1,4 @@
 {
-  "include": ["**/*.ts", "**/*.tsx", "**/*.js"],
-  "extends": ["@epic-web/config/typescript"]
+	"include": ["**/*.ts", "**/*.tsx", "**/*.js"],
+	"extends": ["@epic-web/config/typescript"]
 }

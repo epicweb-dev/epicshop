@@ -29,7 +29,7 @@ export const AnchorOrLink = React.forwardRef<
 	const {
 		to,
 		href,
-		 
+
 		download,
 		reload = false,
 		prefetch,
@@ -57,7 +57,6 @@ export const AnchorOrLink = React.forwardRef<
 
 	if (shouldUserRegularAnchor) {
 		return (
-			 
 			<a {...rest} download={download} href={href ?? toUrl} ref={ref}>
 				{children}
 			</a>

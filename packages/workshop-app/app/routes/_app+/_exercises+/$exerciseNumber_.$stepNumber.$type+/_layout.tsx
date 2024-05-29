@@ -93,7 +93,6 @@ export const meta: MetaFunction<typeof loader, { root: typeof rootLoader }> = ({
 	data,
 	matches,
 }) => {
-	 
 	const rootData = matches.find(m => m.id === 'root')?.data
 	const { emoji, stepNumber, title, exerciseNumber, exerciseTitle } =
 		pageTitle(data)

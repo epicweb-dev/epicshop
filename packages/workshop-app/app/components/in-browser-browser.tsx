@@ -89,7 +89,6 @@ function InBrowserBrowserImpl(
 ) {
 	const requestInfo = useRequestInfo()
 	return isRunning ? (
-		 
 		<InBrowserBrowserForRealz
 			baseUrl={baseUrl}
 			id={id}
@@ -188,7 +187,6 @@ function InBrowserBrowserForRealzImpl(
 						return { ...prevContext, index: newIndex(-1) }
 					} else if (lastDirectionRef.current === 'forward') {
 						return { ...prevContext, index: newIndex(1) }
-						 
 					} else if (lastDirectionRef.current === 'new') {
 						const currentPathname = prevContext.history[prevContext.index]
 						const newPathname = new URL(data.url).pathname
