@@ -59,7 +59,7 @@ async function getApiModule({ request, params }: LoaderFunctionArgs) {
 
 	const apiFiles = (await fsExtra.readdir(app.fullPath))
 		.filter((file: string) => /^api\.server\.(ts|tsx|js|jsx)$/.test(file))
-		.map(f => path.join(app.fullPath, f))
+		.map((f) => path.join(app.fullPath, f))
 	const apiFile = apiFiles[0]
 	if (!apiFile) {
 		throw new Response(

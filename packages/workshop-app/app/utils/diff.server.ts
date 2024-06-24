@@ -53,7 +53,7 @@ function diffPathToRelative(filePath: string) {
 
 function getLanguage(ext: string) {
 	return (
-		bundledLanguagesInfo.find(l => l.id === ext || l.aliases?.includes(ext))
+		bundledLanguagesInfo.find((l) => l.id === ext || l.aliases?.includes(ext))
 			?.id ?? 'text'
 	)
 }
@@ -216,7 +216,7 @@ async function copyUnignoredFiles(
 
 			await fsExtra.remove(destDir)
 			await fsExtra.copy(srcDir, destDir, {
-				filter: async file => {
+				filter: async (file) => {
 					if (file === srcDir) return true
 					return !ig.ignores(path.relative(srcDir, file))
 				},
@@ -291,11 +291,11 @@ async function prepareForDiff(app1: App, app2: App) {
 
 async function getDiffIgnore(filePath: string): Promise<Array<string>> {
 	return (await fsExtra.pathExists(filePath))
-		? fsExtra.readFile(filePath, 'utf8').then(content =>
+		? fsExtra.readFile(filePath, 'utf8').then((content) =>
 				content
 					.split('\n')
-					.map(line => line.trim())
-					.filter(line => !line.startsWith('#'))
+					.map((line) => line.trim())
+					.filter((line) => !line.startsWith('#'))
 					.filter(Boolean),
 			)
 		: []
@@ -355,7 +355,7 @@ async function getDiffFilesImpl(app1: App, app2: App) {
 		['diff', '--no-index', '--ignore-blank-lines', app1CopyPath, app2CopyPath],
 		{ cwd: diffTmpDir },
 		// --no-index implies --exit-code, so we need to use the error output
-	).catch(e => e as { stdout: string })
+	).catch((e) => e as { stdout: string })
 
 	void fsExtra.remove(app1CopyPath)
 	void fsExtra.remove(app2CopyPath)
@@ -386,7 +386,7 @@ async function getDiffFilesImpl(app1: App, app2: App) {
 	}
 
 	return parsed.files
-		.map(file => ({
+		.map((file) => ({
 			// prettier-ignore
 
 			status: (typesMap[file.type] ?? 'unknown') as 'renamed' | 'modified' | 'deleted' | 'added' | 'unknown',
@@ -395,7 +395,7 @@ async function getDiffFilesImpl(app1: App, app2: App) {
 			),
 			line: startLine(file),
 		}))
-		.filter(file => !testFiles.includes(file.path))
+		.filter((file) => !testFiles.includes(file.path))
 }
 
 export async function getDiffCode(
@@ -447,7 +447,7 @@ async function getDiffCodeImpl(app1: App, app2: App) {
 		],
 		{ cwd: diffTmpDir },
 		// --no-index implies --exit-code, so we need to use the error output
-	).catch(e => e as { stdout: string })
+	).catch((e) => e as { stdout: string })
 
 	void fsExtra.remove(app1CopyPath)
 	void fsExtra.remove(app2CopyPath)

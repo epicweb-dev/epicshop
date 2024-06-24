@@ -30,13 +30,13 @@ if (packageJson.epicshop.githubRoot) {
 }
 
 if (process.env.NODE_ENV === 'production') {
-	await import('./dist/server/index.js').catch(err => {
+	await import('./dist/server/index.js').catch((err) => {
 		console.error('Encountered error importing the server, exiting...')
 		console.error(err)
 		process.exit(1)
 	})
 } else {
-	await import('./server/index.ts').catch(err => {
+	await import('./server/index.ts').catch((err) => {
 		console.error('Encountered error importing the server, exiting...')
 		console.error(err)
 		process.exit(1)

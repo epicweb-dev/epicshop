@@ -197,7 +197,7 @@ function exists(file: string) {
 }
 
 function firstToExist(...files: Array<string>) {
-	return Promise.all(files.map(exists)).then(results => {
+	return Promise.all(files.map(exists)).then((results) => {
 		const index = results.findIndex(Boolean)
 		return index === -1 ? null : files[index]
 	})
@@ -261,7 +261,7 @@ async function compileMdxIfExists(
 ) {
 	filepath = filepath.replace(/\\/g, '/')
 	if (await exists(filepath)) {
-		const compiled = await compileMdx(filepath, { request }).catch(error => {
+		const compiled = await compileMdx(filepath, { request }).catch((error) => {
 			console.error(`Error compiling ${filepath}:`, error)
 			return null
 		})
@@ -322,7 +322,7 @@ export async function getExercises({
 		const steps: Exercise['steps'] = []
 		const exerciseApps = apps
 			.filter(isExerciseStepApp)
-			.filter(app => app.exerciseNumber === exerciseNumber)
+			.filter((app) => app.exerciseNumber === exerciseNumber)
 		for (const app of exerciseApps) {
 			// @ts-ignore meh 🤷‍♂️
 			steps[app.stepNumber - 1] = {
@@ -342,10 +342,10 @@ export async function getExercises({
 			steps,
 			problems: apps
 				.filter(isProblemApp)
-				.filter(app => app.exerciseNumber === exerciseNumber),
+				.filter((app) => app.exerciseNumber === exerciseNumber),
 			solutions: apps
 				.filter(isSolutionApp)
-				.filter(app => app.exerciseNumber === exerciseNumber),
+				.filter((app) => app.exerciseNumber === exerciseNumber),
 		})
 	}
 	return exercises
@@ -475,7 +475,7 @@ async function getProblemDirs() {
 			cwd: exercisesDir,
 			ignore: 'node_modules/**',
 		})
-	).map(p => path.join(exercisesDir, p))
+	).map((p) => path.join(exercisesDir, p))
 	return problemDirs
 }
 
@@ -486,7 +486,7 @@ async function getSolutionDirs() {
 			cwd: exercisesDir,
 			ignore: 'node_modules/**',
 		})
-	).map(p => path.join(exercisesDir, p))
+	).map((p) => path.join(exercisesDir, p))
 	return solutionDirs
 }
 
@@ -537,7 +537,7 @@ async function getFullPathFromAppName(appName: string) {
 			: type === 'solution'
 				? await getSolutionDirs()
 				: []
-	const dir = appDirs.find(dir => {
+	const dir = appDirs.find((dir) => {
 		const info = extractNumbersAndTypeFromAppNameOrPath(dir)
 		if (!info) return false
 		return (
@@ -560,7 +560,7 @@ async function findSolutionDir({
 		const paddedStepNumber = stepNumber.toString().padStart(2, '0')
 		const parentDir = path.dirname(fullPath)
 		const siblingDirs = await fs.promises.readdir(parentDir)
-		const solutionDir = siblingDirs.find(dir =>
+		const solutionDir = siblingDirs.find((dir) =>
 			dir.startsWith(`${paddedStepNumber}.solution`),
 		)
 		if (solutionDir) {
@@ -591,7 +591,7 @@ async function findProblemDir({
 		const parentDir = path.dirname(fullPath)
 		const siblingDirs = await fs.promises.readdir(parentDir)
 		const problemDir = siblingDirs.find(
-			dir => dir.endsWith('problem') && dir.includes(paddedStepNumber),
+			(dir) => dir.endsWith('problem') && dir.includes(paddedStepNumber),
 		)
 		if (problemDir) {
 			return path.join(parentDir, problemDir)
@@ -623,7 +623,7 @@ async function getTestInfo({
 	const testAppFullPath = (await findSolutionDir({ fullPath })) ?? fullPath
 
 	const dirList = await fs.promises.readdir(testAppFullPath)
-	const testFiles = dirList.filter(item => item.includes('.test.'))
+	const testFiles = dirList.filter((item) => item.includes('.test.'))
 	if (testFiles.length) {
 		return {
 			type: 'browser',
@@ -726,7 +726,7 @@ export async function getPlaygroundApp({
 				dev,
 			} as const
 		},
-	}).catch(error => {
+	}).catch((error) => {
 		console.error(error)
 		return null
 	})
@@ -765,7 +765,7 @@ async function getExampleApps({
 	const examplesDir = path.join(workshopRoot, 'examples')
 	const exampleDirs = (
 		await glob('*', { cwd: examplesDir, ignore: 'node_modules/**' })
-	).map(p => path.join(examplesDir, p))
+	).map((p) => path.join(examplesDir, p))
 
 	const exampleApps: Array<ExampleApp> = []
 
@@ -782,7 +782,7 @@ async function getExampleApps({
 			request,
 			forceFresh: getForceFreshForDir(exampleDir, exampleAppCache.get(key)),
 			getFreshValue: () =>
-				getExampleAppFromPath(exampleDir, index, request).catch(error => {
+				getExampleAppFromPath(exampleDir, index, request).catch((error) => {
 					console.error(error)
 					return null
 				}),
@@ -858,7 +858,7 @@ async function getSolutionApps({
 				solutionAppCache.get(solutionDir),
 			),
 			getFreshValue: () =>
-				getSolutionAppFromPath(solutionDir, request).catch(error => {
+				getSolutionAppFromPath(solutionDir, request).catch((error) => {
 					console.error(error)
 					return null
 				}),
@@ -933,7 +933,7 @@ async function getProblemApps({
 				problemAppCache.get(problemDir),
 			),
 			getFreshValue: () =>
-				getProblemAppFromPath(problemDir).catch(error => {
+				getProblemAppFromPath(problemDir).catch((error) => {
 					console.error(error)
 					return null
 				}),
@@ -948,7 +948,7 @@ export async function getExercise(
 	{ request, timings }: CachifiedOptions = {},
 ) {
 	const exercises = await getExercises({ request, timings })
-	return exercises.find(s => s.exerciseNumber === Number(exerciseNumber))
+	return exercises.find((s) => s.exerciseNumber === Number(exerciseNumber))
 }
 
 export async function requireExercise(
@@ -997,7 +997,7 @@ export async function getExerciseApp(
 	const { type, exerciseNumber, stepNumber } = result.data
 
 	const apps = (await getApps({ request, timings })).filter(isExerciseStepApp)
-	const exerciseApp = apps.find(app => {
+	const exerciseApp = apps.find((app) => {
 		if (isExampleApp(app)) return false
 		return (
 			app.exerciseNumber === exerciseNumber &&
@@ -1016,7 +1016,7 @@ export async function getAppByName(
 	{ request, timings }: CachifiedOptions = {},
 ) {
 	const apps = await getApps({ request, timings })
-	return apps.find(a => a.name === name)
+	return apps.find((a) => a.name === name)
 }
 
 export async function getNextExerciseApp(
@@ -1024,7 +1024,7 @@ export async function getNextExerciseApp(
 	{ request, timings }: CachifiedOptions = {},
 ) {
 	const apps = (await getApps({ request, timings })).filter(isExerciseStepApp)
-	const index = apps.findIndex(a => a.name === app.name)
+	const index = apps.findIndex((a) => a.name === app.name)
 	if (index === -1) {
 		throw new Error(`Could not find app ${app.name}`)
 	}
@@ -1038,7 +1038,7 @@ export async function getPrevExerciseApp(
 ) {
 	const apps = (await getApps({ request, timings })).filter(isExerciseStepApp)
 
-	const index = apps.findIndex(a => a.name === app.name)
+	const index = apps.findIndex((a) => a.name === app.name)
 	if (index === -1) {
 		throw new Error(`Could not find app ${app.name}`)
 	}
@@ -1057,7 +1057,7 @@ export function getAppPageRoute(app: ExerciseStepApp) {
  */
 export async function getAppFromFile(filePath: string) {
 	const apps = await getApps()
-	return apps.find(app => filePath.startsWith(app.fullPath))
+	return apps.find((app) => filePath.startsWith(app.fullPath))
 }
 
 export async function setPlayground(
@@ -1149,14 +1149,14 @@ export async function setPlayground(
 			onlyFiles: false,
 			dot: true,
 		})
-		return files.map(f => f.replace(dirPath, ''))
+		return files.map((f) => f.replace(dirPath, ''))
 	}
 
 	// Remove files from destDir that were in destDir before but are not in srcDir
 	const srcFiles = await getFiles(srcDir)
 	const destFiles = await getFiles(destDir)
 	const filesToDelete = destFiles.filter(
-		fileName => !srcFiles.includes(fileName),
+		(fileName) => !srcFiles.includes(fileName),
 	)
 
 	for (const fileToDelete of filesToDelete) {
@@ -1233,7 +1233,7 @@ async function getDirModifiedTime(dir: string): Promise<number> {
 	const files = await fs.promises.readdir(dir, { withFileTypes: true })
 
 	const modifiedTimes = await Promise.all(
-		files.map(async file => {
+		files.map(async (file) => {
 			if (isIgnored(file.name)) return 0
 
 			const filePath = path.join(dir, file.name)
@@ -1261,7 +1261,7 @@ export function getAppDisplayName(a: App, allApps: Array<App>) {
 		displayName = `${a.exerciseNumber}.${a.stepNumber} ${a.title} (${typeLabel} ${a.type})`
 	} else if (isPlaygroundApp(a)) {
 		const playgroundAppBasis = allApps.find(
-			otherApp => a.appName === otherApp.name,
+			(otherApp) => a.appName === otherApp.name,
 		)
 		if (playgroundAppBasis) {
 			const basisDisplayName = getAppDisplayName(playgroundAppBasis, allApps)
@@ -1303,8 +1303,8 @@ export async function getWorkshopInstructions({
 }: { request?: Request } = {}) {
 	const readmeFilepath = path.join(workshopRoot, 'exercises', 'README.mdx')
 	const compiled = await compileMdx(readmeFilepath, { request }).then(
-		r => ({ ...r, status: 'success' }) as const,
-		e => {
+		(r) => ({ ...r, status: 'success' }) as const,
+		(e) => {
 			console.error(
 				`There was an error compiling the workshop readme`,
 				readmeFilepath,
@@ -1321,8 +1321,8 @@ export async function getWorkshopFinished({
 }: { request?: Request } = {}) {
 	const finishedFilepath = path.join(workshopRoot, 'exercises', 'FINISHED.mdx')
 	const compiled = await compileMdx(finishedFilepath, { request }).then(
-		r => ({ ...r, status: 'success' }) as const,
-		e => {
+		(r) => ({ ...r, status: 'success' }) as const,
+		(e) => {
 			console.error(
 				`There was an error compiling the workshop finished.mdx`,
 				finishedFilepath,

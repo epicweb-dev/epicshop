@@ -10,10 +10,10 @@ export const showProgressBarField = (
 function EpicProgress() {
 	const transition = useNavigation()
 	const fetchers = useFetchers().filter(
-		fetcher => fetcher.formData?.get('show-progress-bar') === 'true',
+		(fetcher) => fetcher.formData?.get('show-progress-bar') === 'true',
 	)
-	const states = [transition.state, ...fetchers.map(f => f.state)]
-	const busy = states.some(s => s !== 'idle')
+	const states = [transition.state, ...fetchers.map((f) => f.state)]
+	const busy = states.some((s) => s !== 'idle')
 	const delayedPending = useSpinDelay(busy, {
 		delay: 600,
 		minDuration: 400,
@@ -21,9 +21,9 @@ function EpicProgress() {
 	const ref = useRef<HTMLDivElement>(null)
 	const [animationComplete, setAnimationComplete] = useState(true)
 
-	const isIdle = states.every(s => s === 'idle')
-	const isSubmitting = states.some(s => s === 'submitting')
-	const isLoading = states.some(s => s === 'loading')
+	const isIdle = states.every((s) => s === 'idle')
+	const isSubmitting = states.some((s) => s === 'submitting')
+	const isLoading = states.some((s) => s === 'loading')
 
 	useEffect(() => {
 		if (!ref.current) return

@@ -203,7 +203,7 @@ function getArgumentsForLineNumber(
 function guessEditor(): Array<string | null> {
 	// Explicit config always wins
 	if (process.env.EPICSHOP_EDITOR) {
-		return shellQuote.parse(process.env.EPICSHOP_EDITOR).map(a => String(a))
+		return shellQuote.parse(process.env.EPICSHOP_EDITOR).map((a) => String(a))
 	}
 
 	// We can find out which editor is currently running by:
@@ -404,7 +404,7 @@ export async function launchEditor(
 		_childProcess.kill('SIGKILL')
 	}
 
-	return new Promise(res => {
+	return new Promise((res) => {
 		if (process.platform === 'win32') {
 			// On Windows, launch the editor in a shell because spawn can only
 			// launch .exe files.
@@ -425,7 +425,7 @@ export async function launchEditor(
 				process.stderr.write(data) // Only write non-filtered messages to stderr
 			}
 		})
-		_childProcess.on('exit', async errorCode => {
+		_childProcess.on('exit', async (errorCode) => {
 			_childProcess = null
 
 			if (errorCode) {
@@ -444,7 +444,7 @@ export async function launchEditor(
 			}
 		})
 
-		_childProcess.on('error', async error => {
+		_childProcess.on('error', async (error) => {
 			return res({ status: 'error', message: error.message })
 		})
 	})

@@ -97,8 +97,8 @@ export function makeSingletonCache<CacheEntryType>(name: string) {
 				})
 				return value
 			},
-			get: key => lruInstance.get(key),
-			delete: key => lruInstance.delete(key),
+			get: (key) => lruInstance.get(key),
+			delete: (key) => lruInstance.delete(key),
 		} satisfies C.Cache<CacheEntryType>
 
 		return lru

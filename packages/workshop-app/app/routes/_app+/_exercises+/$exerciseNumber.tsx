@@ -42,7 +42,7 @@ export const meta: MetaFunction<typeof loader, { root: typeof rootLoader }> = ({
 	}
 	const number = data.exercise.exerciseNumber.toString().padStart(2, '0')
 
-	const rootData = matches.find(m => m.id === 'root')?.data
+	const rootData = matches.find((m) => m.id === 'root')?.data
 	return [
 		{
 			title: `📝 | ${number}. ${data.exercise.title} | ${rootData?.workshopTitle}`,
@@ -66,7 +66,7 @@ export async function loader({ request, params }: LoaderFunctionArgs) {
 		}),
 	])
 	const exercise = exercises.find(
-		e => e.exerciseNumber === Number(params.exerciseNumber),
+		(e) => e.exerciseNumber === Number(params.exerciseNumber),
 	)
 	if (!exercise) {
 		throw new Response('Not found', { status: 404 })

@@ -104,7 +104,7 @@ export function useTheme() {
 	const requestInfo = useRequestInfo()
 	const fetchers = useFetchers()
 	const fetcher = fetchers.find(
-		f => f.formData?.get('intent') === 'update-theme',
+		(f) => f.formData?.get('intent') === 'update-theme',
 	)
 	const optimisticTheme = fetcher?.formData?.get('theme')
 	if (optimisticTheme === 'system') return hints.theme

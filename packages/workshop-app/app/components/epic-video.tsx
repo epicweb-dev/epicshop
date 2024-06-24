@@ -71,7 +71,9 @@ function extractEpicTitle(urlString: string) {
 		.filter(Boolean)
 		.map((word, index) => {
 			const lowerWord = word.toLowerCase()
-			const literalWord = literalWords.find(w => w.toLowerCase() === lowerWord)
+			const literalWord = literalWords.find(
+				(w) => w.toLowerCase() === lowerWord,
+			)
 			if (literalWord) return literalWord
 			if (lowerCaseWords.includes(lowerWord) && index > 0) {
 				return lowerWord
@@ -169,7 +171,7 @@ export function DeferredEpicVideo({
 					}
 					resolve={epicVideoInfosPromise}
 				>
-					{epicVideoInfos => {
+					{(epicVideoInfos) => {
 						const epicVideoInfo = epicVideoInfos?.[url]
 						const transcriptUI = ENV.EPICSHOP_DEPLOYED ? (
 							<div>
@@ -341,7 +343,7 @@ function EpicVideo({
 			<button
 				key={timestamp}
 				className="underline"
-				onClick={event => {
+				onClick={(event) => {
 					if (muxPlayerRef.current) {
 						muxPlayerRef.current.currentTime = hmsToSeconds(timestamp)
 						void muxPlayerRef.current.play()

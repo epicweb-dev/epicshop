@@ -180,7 +180,7 @@ function InBrowserBrowserForRealzImpl(
 			const { data } = result
 
 			if (data.type === 'epicshop:loaded') {
-				setIFrameContext(prevContext => {
+				setIFrameContext((prevContext) => {
 					const newIndex = (i: number) =>
 						getNewIndex(prevContext.index, i, prevContext.history.length - 1)
 					if (lastDirectionRef.current === 'back') {
@@ -208,7 +208,7 @@ function InBrowserBrowserForRealzImpl(
 			}
 
 			const { method } = data
-			setIFrameContext(prevContext => {
+			setIFrameContext((prevContext) => {
 				const newIndex = (i: number) =>
 					getNewIndex(prevContext.index, i, prevContext.history.length - 1)
 				const currentPathname = prevContext.history[prevContext.index]
@@ -399,7 +399,7 @@ function InBrowserBrowserForRealzImpl(
 								className="flex-1 bg-background focus-visible:outline-none"
 								value={pathnameInputValue}
 								name="pathname"
-								onChange={e => setPathnameInputValue(e.currentTarget.value)}
+								onChange={(e) => setPathnameInputValue(e.currentTarget.value)}
 							/>
 						</div>
 						{/* TODO: Reconsider if this is needed as browsers don't usually have a submit button in address bar */}

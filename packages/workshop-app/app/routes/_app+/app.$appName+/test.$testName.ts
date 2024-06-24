@@ -38,7 +38,7 @@ export async function loader({ request, params }: LoaderFunctionArgs) {
 		)
 	}
 
-	const testFile = app.test.testFiles.find(file => file === testName)
+	const testFile = app.test.testFiles.find((file) => file === testName)
 	if (!testFile) {
 		throw new Response(`Test "${testName}" not found`, {
 			status: 404,

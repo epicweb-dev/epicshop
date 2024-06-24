@@ -6,11 +6,11 @@ import { getApps, isProblemApp } from './apps.server.js'
 export async function getInBrowserTestPages() {
 	const apps = (await getApps())
 		.filter(isProblemApp)
-		.filter(a => a.test.type === 'browser')
-	const pages = apps.map(app => {
+		.filter((a) => a.test.type === 'browser')
+	const pages = apps.map((app) => {
 		if (app.test.type !== 'browser') return null
 		const { pathname } = app.test
-		return app.test.testFiles.map(testFile => {
+		return app.test.testFiles.map((testFile) => {
 			return {
 				path: `${pathname}${testFile}`,
 				testFile,
@@ -21,7 +21,7 @@ export async function getInBrowserTestPages() {
 }
 
 const sleep = (time: number) =>
-	new Promise(resolve => setTimeout(resolve, time))
+	new Promise((resolve) => setTimeout(resolve, time))
 
 async function waitFor<ReturnValue>(
 	cb: () => ReturnValue | Promise<ReturnValue> | undefined | null,
@@ -62,7 +62,7 @@ export function setupInBrowserTests() {
 			const errors: Array<string> = []
 			const logs: Array<string> = []
 			const infos: Array<string> = []
-			page.on('console', message => {
+			page.on('console', (message) => {
 				switch (message.type()) {
 					case 'error': {
 						errors.push(message.text())
@@ -84,16 +84,16 @@ export function setupInBrowserTests() {
 			await page.goto(testPage.path)
 			await page.waitForLoadState()
 			await waitFor(
-				() => infos.find(info => info.includes('status: pending')),
+				() => infos.find((info) => info.includes('status: pending')),
 				{ timeout: 10_000 },
 			)
 			const result = await Promise.race([
-				waitFor(() => logs.find(log => log.includes('status: pass')), {
+				waitFor(() => logs.find((log) => log.includes('status: pass')), {
 					timeout: 10_000,
 				}),
 				waitFor(() => (errors.length > 0 ? errors : null), {
 					timeout: 10_000,
-				}).then(errors => {
+				}).then((errors) => {
 					throw errors
 				}),
 			])

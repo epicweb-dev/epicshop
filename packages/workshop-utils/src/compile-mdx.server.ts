@@ -185,10 +185,10 @@ export async function compileMdx(
 					[remarkAutolinkHeadings, { behavior: 'wrap' }],
 					gfm,
 					() => (tree: MdastRoot) => {
-						visit(tree, 'heading', node => {
+						visit(tree, 'heading', (node) => {
 							if (title) return
 							if (node.depth === 1) {
-								visit(node, 'text', textNode => {
+								visit(node, 'text', (textNode) => {
 									title = textNode.value.trim()
 								})
 							}
@@ -196,10 +196,10 @@ export async function compileMdx(
 						title = title ? title.replace(/^\d+\. /, '').trim() : null
 					},
 					() => (tree: MdastRoot) => {
-						visit(tree, 'mdxJsxFlowElement', jsxEl => {
+						visit(tree, 'mdxJsxFlowElement', (jsxEl) => {
 							if (jsxEl.name !== 'EpicVideo') return
 							const urlAttr = jsxEl.attributes.find(
-								a => a.type === 'mdxJsxAttribute' && a.name === 'url',
+								(a) => a.type === 'mdxJsxAttribute' && a.name === 'url',
 							)
 							if (!urlAttr) return
 							let url = urlAttr.value
@@ -306,7 +306,7 @@ async function updateEmbeddedFilesCache({
 	// make sure we get clean list before updating it
 	if (cachedList) {
 		for (const [key, value] of Object.entries(cachedList)) {
-			cachedList[key] = value.filter(item => item !== mdxFile)
+			cachedList[key] = value.filter((item) => item !== mdxFile)
 			if (cachedList[key]?.length === 0) {
 				delete cachedList[key]
 			}

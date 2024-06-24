@@ -77,7 +77,7 @@ for (const project of projects) {
 			{
 				overwrite: false,
 				dereference: false,
-				filter: (srcPath: string) => !exclude.some(e => srcPath.includes(e)),
+				filter: (srcPath: string) => !exclude.some((e) => srcPath.includes(e)),
 			},
 		)
 	}

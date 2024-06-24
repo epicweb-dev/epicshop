@@ -48,7 +48,7 @@ const isValidRangeFormat = (value: string | undefined) =>
 	value ? REG_EXP.test(value) : true
 
 const transformRange = (value: string | undefined) =>
-	value?.split(',').map(range => {
+	value?.split(',').map((range) => {
 		const [start, end] = range.split('-').map(Number)
 		return [start, end ?? start] as [number, number]
 	})
@@ -59,7 +59,7 @@ const isRangeBounded = (
 	lines: number,
 ) => {
 	if (!lines || !Array.isArray(range)) return
-	if (range.flat().some(r => r < 1 || r > lines)) {
+	if (range.flat().some((r) => r < 1 || r > lines)) {
 		ctx.addIssue({
 			code: z.ZodIssueCode.custom,
 			message: `Range must be between 1 and ${lines}`,
@@ -102,10 +102,10 @@ async function validateProps(props: CodeFileProps, appDir: string) {
 		.nullable(z.string())
 		.optional()
 		.refine(
-			v => ['true', 'false', null, undefined].includes(v),
+			(v) => ['true', 'false', null, undefined].includes(v),
 			'optional boolean key can be "true", "false", null or undefined',
 		)
-		.transform(v => v === null || Boolean(v))
+		.transform((v) => v === null || Boolean(v))
 
 	const RangeSchema = z
 		.string()
@@ -139,13 +139,13 @@ async function validateProps(props: CodeFileProps, appDir: string) {
 						content,
 					}
 				}),
-			range: RangeSchema.refine(range => {
+			range: RangeSchema.refine((range) => {
 				const isValid = isRangesNonOverlapping(range)
 				// we use this value in highlight refine
 				validRange = isValid ? range : undefined
 				return isValid
 			}, 'Ranges must not overlap'),
-			highlight: RangeSchema.refine(highlight => {
+			highlight: RangeSchema.refine((highlight) => {
 				if (!Array.isArray(highlight) || !Array.isArray(validRange)) {
 					return z.NEVER
 				}
@@ -162,8 +162,10 @@ async function validateProps(props: CodeFileProps, appDir: string) {
 			buttons: z
 				.string()
 				.optional()
-				.transform(str => (str ? (str.split(',') as unknown as AppTypes) : []))
-				.refine(arr => arr.every(item => APP_TYPES.includes(item)), {
+				.transform((str) =>
+					str ? (str.split(',') as unknown as AppTypes) : [],
+				)
+				.refine((arr) => arr.every((item) => APP_TYPES.includes(item)), {
 					message: `Buttons can only be any of ${APP_TYPES.join(',')}`,
 				}),
 		})
@@ -200,7 +202,7 @@ ${content}
 <CodeFileNotification variant="error" file="${filename}" line="${startLine}" type="${appType}">
   <callout-danger class="notification">
     <div className="title">CodeFile Error: invalid input</div>
-    ${errors.map(error => `<div>${error}</div>`).join('')}
+    ${errors.map((error) => `<div>${error}</div>`).join('')}
 ${await codeFence()}
   </callout-danger>
 </CodeFileNotification>`

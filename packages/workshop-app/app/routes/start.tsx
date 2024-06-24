@@ -40,7 +40,7 @@ export async function action({ request }: ActionFunctionArgs) {
 				const appRunningResult = await waitOnApp(app)
 				if (appRunningResult?.status === 'success') {
 					// wait another 200ms just in case the build output for assets isn't finished
-					await new Promise(resolve => setTimeout(resolve, 200))
+					await new Promise((resolve) => setTimeout(resolve, 200))
 					return json({ status: 'app-started' } as const)
 				} else if (app.dev.type === 'script') {
 					const errorMessage = appRunningResult

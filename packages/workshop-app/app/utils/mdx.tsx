@@ -50,11 +50,11 @@ function OpenInEditor({
 		? (['problem', 'solution'] as const)
 		: (['problem', 'solution', 'playground'] as const)
 	const buttonList = buttons.split(',')
-	const apps = validButtons.filter(button => buttonList.includes(button))
+	const apps = validButtons.filter((button) => buttonList.includes(button))
 
 	return (
 		<>
-			{apps.map(type => {
+			{apps.map((type) => {
 				const app = data[type]
 				if (type === 'playground') {
 					const isDifferentApp =
@@ -112,7 +112,7 @@ function CopyButton(): React.ReactNode {
 	return (
 		<button
 			className={cn(buttonClassName, 'w-12 uppercase')}
-			onClick={event => {
+			onClick={(event) => {
 				setCopied(true)
 				const button = event.currentTarget
 				const code =

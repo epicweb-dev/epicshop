@@ -47,7 +47,7 @@ export async function action({ request }: ActionFunctionArgs) {
 		appFile: formData.getAll('syncTo.appFile'),
 		appName: formData.get('syncTo.appName') ?? undefined,
 	}
-	const syncToIsProvided = Object.values(syncTo).some(v =>
+	const syncToIsProvided = Object.values(syncTo).some((v) =>
 		Array.isArray(v) ? v.length : v,
 	)
 	const rawData = {
@@ -103,7 +103,7 @@ export async function action({ request }: ActionFunctionArgs) {
 			const appFile = Array.isArray(fileDescriptor.appFile)
 				? fileDescriptor.appFile
 				: [fileDescriptor.appFile]
-			return appFile.map(file => {
+			return appFile.map((file) => {
 				const [filePath, line = '1', column = '1'] = file.split(',')
 				if (!filePath) {
 					throw new Response(
@@ -143,7 +143,7 @@ export async function action({ request }: ActionFunctionArgs) {
 		results.push(await launchEditor(file.filepath, file.line, file.column))
 	}
 
-	if (results.every(r => r.status === 'success')) {
+	if (results.every((r) => r.status === 'success')) {
 		return json({ status: 'success' } as const)
 	} else {
 		const messages = results
@@ -227,7 +227,7 @@ function LaunchEditorImpl({
 			<input type="hidden" name="type" value={type} />
 			<input type="hidden" name="file" value={file} />
 			<input type="hidden" name="appName" value={appName} />
-			{fileList?.map(file => (
+			{fileList?.map((file) => (
 				<input type="hidden" name="appFile" key={file} value={file} />
 			))}
 			{syncTo ? (
@@ -282,7 +282,7 @@ function LaunchGitHub({
 			</a>
 		)
 	}
-	const app = apps.find(a => a.name === appName)
+	const app = apps.find((a) => a.name === appName)
 	const path = [
 		...(app?.relativePath.split(requestInfo.separator) ?? []),
 		appFile + (line ? `#L${line}` : ''),

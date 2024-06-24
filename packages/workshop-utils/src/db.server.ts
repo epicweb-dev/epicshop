@@ -54,7 +54,7 @@ const AuthInfoSchema = z
 		email: z.string(),
 		name: z.string().nullable().optional(),
 	})
-	.transform(d => ({ ...d, id: md5(d.email) }))
+	.transform((d) => ({ ...d, id: md5(d.email) }))
 
 const DataSchema = z.object({
 	onboarding: z

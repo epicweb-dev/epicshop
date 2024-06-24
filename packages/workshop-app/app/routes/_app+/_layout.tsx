@@ -66,7 +66,7 @@ export async function loader({ request }: LoaderFunctionArgs) {
 	const result = json(
 		{
 			workshopTitle,
-			exercises: exercises.map(e => ({
+			exercises: exercises.map((e) => ({
 				exerciseNumber: e.exerciseNumber,
 				title: e.title,
 				solutions: e.solutions.map(({ stepNumber, title, name }) => ({
@@ -279,7 +279,7 @@ function getLocationLabel(location: User['location']) {
 		exercise
 			? [exercise.exerciseNumber, exercise.stepNumber]
 					.filter(Boolean)
-					.map(s => s.toString().padStart(2, '0'))
+					.map((s) => s.toString().padStart(2, '0'))
 					.join('/')
 			: null,
 		exercise?.type,
@@ -417,16 +417,16 @@ function Navigation({
 	const { users } = usePresence()
 
 	const exercise = data.exercises.find(
-		e => e.exerciseNumber === Number(params.exerciseNumber),
+		(e) => e.exerciseNumber === Number(params.exerciseNumber),
 	)
 	const app =
 		params.type === 'solution'
 			? exercise?.solutions.find(
-					s => s.stepNumber === Number(params.stepNumber),
+					(s) => s.stepNumber === Number(params.stepNumber),
 				)
 			: params.type === 'problem'
 				? exercise?.problems.find(
-						p => p.stepNumber === Number(params.stepNumber),
+						(p) => p.stepNumber === Number(params.stepNumber),
 					)
 				: null
 

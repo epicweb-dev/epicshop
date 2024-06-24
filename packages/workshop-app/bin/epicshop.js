@@ -41,14 +41,14 @@ function start() {
 		exec('node ./start.js', {
 			EPICSHOP_CONTEXT_CWD,
 			NODE_ENV: 'production',
-		}).catch(code => {
+		}).catch((code) => {
 			console.error('Encountered error running the server, exiting...')
 			process.exit(code)
 		})
 	} else {
 		exec('npm run dev', {
 			EPICSHOP_CONTEXT_CWD,
-		}).catch(code => {
+		}).catch((code) => {
 			console.error('Encountered error running the dev script, exiting...')
 			process.exit(code)
 		})
@@ -73,7 +73,7 @@ async function exec(command, envVars) {
 			})
 		}
 		// process.on('SIGINT', child.kill)
-		child.on('exit', code => {
+		child.on('exit', (code) => {
 			if (code === 0) {
 				res(code)
 			} else {

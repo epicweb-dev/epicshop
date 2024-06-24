@@ -37,7 +37,7 @@ app.use(
 // more aggressive with this caching.
 app.use(express.static('public', { maxAge: '1h' }))
 
-morgan.token('url', req => decodeURIComponent(req.url ?? ''))
+morgan.token('url', (req) => decodeURIComponent(req.url ?? ''))
 app.use(morgan('tiny'))
 
 app.all(
@@ -103,7 +103,7 @@ ${chalk.bold('Press Ctrl+C to stop')}
 
 closeWithGrace(async () => {
 	await new Promise((resolve, reject) => {
-		server.close(e => (e ? reject(e) : resolve('ok')))
+		server.close((e) => (e ? reject(e) : resolve('ok')))
 	})
 })
 

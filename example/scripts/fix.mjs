@@ -25,26 +25,26 @@ const __dirname = path.dirname(fileURLToPath(import.meta.url))
 const here = (...p) => path.join(__dirname, ...p)
 
 const workshopRoot = here('..')
-const examples = (await readDir(here('../examples'))).map(dir =>
+const examples = (await readDir(here('../examples'))).map((dir) =>
 	here(`../examples/${dir}`),
 )
 const exercises = await readDir(here('../exercises'))
 const apps = (
 	await Promise.all([
-		...(await readDir(here('../examples'))).map(dir =>
+		...(await readDir(here('../examples'))).map((dir) =>
 			here(`../examples/${dir}`),
 		),
-		...exercises.flatMap(async exercise => {
+		...exercises.flatMap(async (exercise) => {
 			const exerciseDir = here(`../exercises/${exercise}`)
 			// if it is just a file instead of a directory, skip it
 			if (!(await fs.promises.stat(exerciseDir)).isDirectory()) {
 				return []
 			}
 			return (await readDir(exerciseDir))
-				.filter(dir => {
+				.filter((dir) => {
 					return /(problem|solution)/.test(dir)
 				})
-				.map(dir => here(`../exercises/${exercise}/${dir}`))
+				.map((dir) => here(`../exercises/${exercise}/${dir}`))
 		}),
 	])
 ).flat()
@@ -54,10 +54,10 @@ const apps = (
 // e.g. exercises/01-goo/problem.01-great
 // name: "exercises.01-goo.problem.01-great"
 
-const relativeToWorkshopRoot = dir =>
+const relativeToWorkshopRoot = (dir) =>
 	dir.replace(`${workshopRoot}${path.sep}`, '')
 
-const appsWithPkgJson = [...examples, ...apps].filter(app => {
+const appsWithPkgJson = [...examples, ...apps].filter((app) => {
 	const pkgjsonPath = path.join(app, 'package.json')
 	return exists(pkgjsonPath)
 })
@@ -71,7 +71,7 @@ for (const file of appsWithPkgJson) {
 const tsconfig = {
 	files: [],
 	exclude: ['node_modules'],
-	references: appsWithPkgJson.map(a => ({
+	references: appsWithPkgJson.map((a) => ({
 		path: relativeToWorkshopRoot(a).replace(/\\/g, '/'),
 	})),
 }

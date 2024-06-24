@@ -97,7 +97,7 @@ function TouchedFiles() {
 														<div className="mb-2 border-b border-b-gray-50 border-opacity-50 pb-2 font-sans">
 															<LaunchEditor
 																appFile={diffFiles.map(
-																	file => `${file.path},${file.line},1`,
+																	(file) => `${file.path},${file.line},1`,
 																)}
 																appName="playground"
 																onUpdate={handleLaunchUpdate}
@@ -106,7 +106,7 @@ function TouchedFiles() {
 															</LaunchEditor>
 														</div>
 													) : null}
-													{diffFiles.map(file => (
+													{diffFiles.map((file) => (
 														<li key={file.path} data-state={file.status}>
 															<LaunchEditor
 																appFile={`${file.path},${file.line},1`}

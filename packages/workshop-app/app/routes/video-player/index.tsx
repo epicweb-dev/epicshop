@@ -18,7 +18,7 @@ const PlaybackTimeSchema = z
 		time: z.number(),
 		expiresAt: z.string(),
 	})
-	.transform(data => {
+	.transform((data) => {
 		return { time: Number(data.time), expiresAt: new Date(data.expiresAt) }
 	})
 
@@ -135,7 +135,7 @@ export function MuxPlayer({
 		const player = muxPlayerRef.current
 		if (!player) return
 		const subs = Array.from(player.textTracks ?? []).find(
-			t => t.kind === 'subtitles',
+			(t) => t.kind === 'subtitles',
 		)
 		const newPrefs = {
 			playbackRate: player.playbackRate,

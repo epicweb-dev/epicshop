@@ -93,7 +93,7 @@ export const meta: MetaFunction<typeof loader, { root: typeof rootLoader }> = ({
 	data,
 	matches,
 }) => {
-	const rootData = matches.find(m => m.id === 'root')?.data
+	const rootData = matches.find((m) => m.id === 'root')?.data
 	const { emoji, stepNumber, title, exerciseNumber, exerciseTitle } =
 		pageTitle(data)
 	return [
@@ -179,8 +179,8 @@ export async function loader({ request, params }: LoaderFunctionArgs) {
 	}
 
 	const allApps = allAppsFull
-		.filter((a, i, ar) => ar.findIndex(b => a.name === b.name) === i)
-		.map(a => ({
+		.filter((a, i, ar) => ar.findIndex((b) => a.name === b.name) === i)
+		.map((a) => ({
 			displayName: getAppDisplayName(a, allAppsFull),
 			name: a.name,
 			title: a.title,
@@ -199,11 +199,11 @@ export async function loader({ request, params }: LoaderFunctionArgs) {
 		return 0
 	})
 	const exerciseId = getStepId(exerciseStepApp)
-	const exerciseIndex = allApps.findIndex(step => step.stepId === exerciseId)
+	const exerciseIndex = allApps.findIndex((step) => step.stepId === exerciseId)
 
 	const exerciseApps = allAppsFull
 		.filter(isExerciseStepApp)
-		.filter(app => app.exerciseNumber === exerciseStepApp.exerciseNumber)
+		.filter((app) => app.exerciseNumber === exerciseStepApp.exerciseNumber)
 	const isLastStep =
 		exerciseApps[exerciseApps.length - 1]?.name === exerciseStepApp.name
 	const isFirstStep = exerciseApps[0]?.name === exerciseStepApp.name
@@ -224,7 +224,7 @@ export async function loader({ request, params }: LoaderFunctionArgs) {
 			getDiffCode(app1, app2, {
 				...cacheOptions,
 				forceFresh: searchParams.get('forceFresh') === 'diff',
-			}).catch(e => {
+			}).catch((e) => {
 				console.error(e)
 				return null
 			}),
@@ -232,7 +232,7 @@ export async function loader({ request, params }: LoaderFunctionArgs) {
 				? getDiffFiles(problemApp, solutionApp, {
 						...cacheOptions,
 						forceFresh: searchParams.get('forceFresh') === 'diff',
-					}).catch(e => {
+					}).catch((e) => {
 						console.error(e)
 						return 'There was a problem generating the diff'
 					})
@@ -387,7 +387,7 @@ export default function ExercisePartRoute() {
 
 	const activeTab = isValidPreview(preview)
 		? preview
-		: tabs.find(t => !shouldHideTab(t))
+		: tabs.find((t) => !shouldHideTab(t))
 
 	// when alt is held down, the diff tab should open to the full-page diff view
 	// between the problem and solution (this is more for the instructor than the student)
@@ -492,7 +492,7 @@ export default function ExercisePartRoute() {
 					// change.
 				>
 					<Tabs.List className="h-14 min-h-14 overflow-x-hidden border-b scrollbar-thin scrollbar-thumb-scrollbar">
-						{tabs.map(tab => {
+						{tabs.map((tab) => {
 							const hidden = shouldHideTab(tab)
 							return (
 								<Tabs.Trigger key={tab} value={tab} hidden={hidden} asChild>

@@ -28,7 +28,7 @@ export function Tests({
 				className="flex h-full w-full flex-grow flex-col"
 				key={inBrowserTestKey}
 			>
-				{playgroundAppInfo.test.testFiles.map(testFile => {
+				{playgroundAppInfo.test.testFiles.map((testFile) => {
 					return (
 						<div key={testFile}>
 							<InBrowserTestRunner pathname={pathname} testFile={testFile} />
@@ -37,7 +37,7 @@ export function Tests({
 				})}
 				<div className="px-3 py-[21px]">
 					<button
-						onClick={() => setInBrowserTestKey(c => c + 1)}
+						onClick={() => setInBrowserTestKey((c) => c + 1)}
 						className="flex items-center gap-2 font-mono text-sm uppercase leading-none"
 					>
 						<Icon name="Refresh" aria-hidden /> Rerun All Tests

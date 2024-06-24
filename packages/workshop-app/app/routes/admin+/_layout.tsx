@@ -36,7 +36,7 @@ declare global {
 export const meta: MetaFunction<typeof loader, { root: typeof rootLoader }> = ({
 	matches,
 }) => {
-	const rootData = matches.find(m => m.id === 'root')?.data
+	const rootData = matches.find((m) => m.id === 'root')?.data
 	return [{ title: `👷 | ${rootData?.workshopTitle}` }]
 }
 
@@ -45,7 +45,7 @@ export async function loader({ request }: LoaderFunctionArgs) {
 	const timings = makeTimings('adminLoader')
 	const workshopSlug = (await getEpicWorkshopSlug()) ?? 'Unkown'
 	const apps = (await getApps({ request, timings })).filter(
-		(a, i, ar) => ar.findIndex(b => a.name === b.name) === i,
+		(a, i, ar) => ar.findIndex((b) => a.name === b.name) === i,
 	)
 	const processes: Record<
 		string,
@@ -176,7 +176,7 @@ export default function AdminLayout() {
 					<h2 className="text-lg font-bold">Progress</h2>
 					{epicProgress ? (
 						<ul className="flex max-h-72 flex-col gap-2 overflow-y-scroll border-2 p-8 scrollbar-thin scrollbar-thumb-scrollbar">
-							{epicProgress.sort(sortProgress).map(progress => {
+							{epicProgress.sort(sortProgress).map((progress) => {
 								const epicUrl = `https://www.epicweb.dev/workshops/${data.workshopSlug}/${progress.epicSectionSlug}/${progress.epicLessonSlug}`
 								const status = progress.epicCompletedAt
 									? 'completed'
@@ -262,7 +262,7 @@ export default function AdminLayout() {
 				<div>
 					<h2 className="text-lg font-bold">Apps</h2>
 					<ul className="max-h-48 list-none overflow-y-scroll border-2 p-8 scrollbar-thin scrollbar-thumb-scrollbar">
-						{data.apps.map(app => (
+						{data.apps.map((app) => (
 							<li key={app.name} className="flex items-center gap-2 py-1">
 								{data.processes[app.name] ? (
 									<Pinger status="running" />

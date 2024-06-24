@@ -15,7 +15,7 @@ const Transcript = z
 	.string()
 	.nullable()
 	.optional()
-	.transform(s => s ?? 'Transcripts not available')
+	.transform((s) => s ?? 'Transcripts not available')
 const EpicVideoInfoSchema = z.object({
 	transcript: Transcript,
 	muxPlaybackId: z.string(),
@@ -167,7 +167,7 @@ async function getEpicVideoInfo({
 				} as const
 			}
 		},
-	}).catch(e => {
+	}).catch((e) => {
 		console.error(`Failed to fetch epic video info for ${epicVideoEmbed}`, e)
 		throw e
 	})
@@ -202,7 +202,7 @@ async function getEpicProgress({
 				headers: {
 					authorization: `Bearer ${authInfo.tokenSet.access_token}`,
 				},
-			}).catch(e => new Response(getErrorMessage(e), { status: 500 }))
+			}).catch((e) => new Response(getErrorMessage(e), { status: 500 }))
 			if (response.status < 200 || response.status >= 300) {
 				console.error(
 					`Failed to fetch progress from EpicWeb: ${response.status} ${response.statusText}`,
@@ -309,7 +309,7 @@ function getProgressForLesson(
 	},
 ) {
 	const hasEmbed = (embed?: Array<string>) =>
-		embed?.some(e => e.split('/').at(-1) === epicLessonSlug)
+		embed?.some((e) => e.split('/').at(-1) === epicLessonSlug)
 	if (
 		workshopInstructions.compiled.status === 'success' &&
 		hasEmbed(workshopInstructions.compiled.epicVideoEmbeds)
@@ -377,7 +377,7 @@ export async function updateProgress(
 		body: JSON.stringify(
 			complete ? { lessonSlug } : { lessonSlug, remove: true },
 		),
-	}).catch(e => new Response(getErrorMessage(e), { status: 500 }))
+	}).catch((e) => new Response(getErrorMessage(e), { status: 500 }))
 	// force the progress to be fresh whether or not we're successful
 	await getEpicProgress({ forceFresh: true, request, timings })
 
@@ -432,7 +432,7 @@ export async function getWorkshopData(
 				`https://www.epicweb.dev/api/workshops/${encodeURIComponent(
 					epicWorkshopSlug,
 				)}`,
-			).catch(e => new Response(getErrorMessage(e), { status: 500 }))
+			).catch((e) => new Response(getErrorMessage(e), { status: 500 }))
 			if (response.status < 200 || response.status >= 300) {
 				console.error(
 					`Failed to fetch workshop data from EpicWeb for ${epicWorkshopSlug}: ${response.status} ${response.statusText}`,

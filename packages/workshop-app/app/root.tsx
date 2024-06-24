@@ -85,7 +85,7 @@ export async function loader({ request }: LoaderFunctionArgs) {
 	})
 
 	const preferences = await getPreferences()
-	const progress = await getProgress({ timings }).catch(e => {
+	const progress = await getProgress({ timings }).catch((e) => {
 		console.error('Failed to get progress', e)
 		const emptyProgress: Awaited<ReturnType<typeof getProgress>> = []
 		return emptyProgress

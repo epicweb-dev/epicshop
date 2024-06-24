@@ -23,7 +23,7 @@ sourceMapSupport.install()
 const viteDevServer =
 	process.env.NODE_ENV === 'production'
 		? null
-		: await import('vite').then(vite =>
+		: await import('vite').then((vite) =>
 				vite.createServer({
 					server: { middlewareMode: true },
 				}),
@@ -74,7 +74,7 @@ app.use(
 )
 
 if ((process.env.NODE_ENV !== 'production' && !isPublished) || isDeployed) {
-	morgan.token('url', req => decodeURIComponent(req.url ?? ''))
+	morgan.token('url', (req) => decodeURIComponent(req.url ?? ''))
 	app.use(morgan('tiny'))
 }
 
@@ -89,7 +89,7 @@ function getNumberOrNull(value: unknown) {
 app.use((req, res, next) => {
 	const segments = req.url
 		.split('/')
-		.map(s => s.trim())
+		.map((s) => s.trim())
 		.filter(Boolean)
 
 	let [first, second, ...rest] = segments
@@ -205,10 +205,10 @@ getWatcher()?.on('all', (event, filePath) => {
 closeWithGrace(() => {
 	return Promise.all([
 		new Promise((resolve, reject) => {
-			server.close(e => (e ? reject(e) : resolve('ok')))
+			server.close((e) => (e ? reject(e) : resolve('ok')))
 		}),
 		new Promise((resolve, reject) => {
-			wss.close(e => (e ? reject(e) : resolve('ok')))
+			wss.close((e) => (e ? reject(e) : resolve('ok')))
 		}),
 	])
 })

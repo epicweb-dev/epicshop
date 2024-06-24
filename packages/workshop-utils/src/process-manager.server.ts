@@ -103,8 +103,8 @@ export async function runAppDev(app: App) {
 	if (!(await isPortAvailable(portNumber))) {
 		return { status: 'port-unavailable', running: false, portNumber } as const
 	}
-	const availableColors = colors.filter(color =>
-		Array.from(devProcesses.values()).every(p => p.color !== color),
+	const availableColors = colors.filter((color) =>
+		Array.from(devProcesses.values()).every((p) => p.color !== color),
 	)
 	const color =
 		availableColors[devProcesses.size % availableColors.length] ?? 'blue'
@@ -131,7 +131,7 @@ export async function runAppDev(app: App) {
 			data
 				.toString('utf-8')
 				.split('\n')
-				.map(line => `${prefix} ${line}`)
+				.map((line) => `${prefix} ${line}`)
 				.join('\n'),
 		)
 	}
@@ -141,13 +141,13 @@ export async function runAppDev(app: App) {
 			data
 				.toString('utf-8')
 				.split('\n')
-				.map(line => `${prefix} ${line}`)
+				.map((line) => `${prefix} ${line}`)
 				.join('\n'),
 		)
 	}
 	appProcess.stderr.on('data', handleStdErrData)
 	devProcesses.set(key, { color, process: appProcess, port: portNumber })
-	appProcess.on('exit', code => {
+	appProcess.on('exit', (code) => {
 		appProcess.stdout.off('data', handleStdOutData)
 		appProcess.stderr.off('data', handleStdErrData)
 		console.log(`${prefix} exited (${code})`)
@@ -199,7 +199,7 @@ export async function runAppTests(app: App) {
 		})
 	}
 	testProcess.stderr?.on('data', handleStdErrData)
-	void testProcess.on('exit', code => {
+	void testProcess.on('exit', (code) => {
 		testProcess.stdout?.off('data', handleStdOutData)
 		testProcess.stderr?.off('data', handleStdErrData)
 		// don't delete the entry from the map so we can show the output at any time
@@ -226,7 +226,7 @@ export async function waitOnApp(app: App) {
 				return { status: 'success' } as const
 			} catch (error) {
 				lastError = error
-				await new Promise(resolve => setTimeout(resolve, retryInterval))
+				await new Promise((resolve) => setTimeout(resolve, retryInterval))
 			}
 		}
 
@@ -236,7 +236,7 @@ export async function waitOnApp(app: App) {
 }
 
 export function isPortAvailable(port: number | string): Promise<boolean> {
-	return new Promise(resolve => {
+	return new Promise((resolve) => {
 		const server = net.createServer()
 		server.unref()
 		server.on('error', () => resolve(false))
@@ -288,7 +288,7 @@ export async function closeProcess(key: string) {
 	if (isDeployed) throw new Error('cannot close processes in deployed mode')
 	const proc = devProcesses.get(key)
 	if (proc) {
-		const exitedPromise = new Promise(resolve =>
+		const exitedPromise = new Promise((resolve) =>
 			proc.process.on('exit', resolve),
 		)
 		if (process.platform === 'win32') {
@@ -298,7 +298,7 @@ export async function closeProcess(key: string) {
 			proc.process.kill()
 		}
 		await Promise.race([
-			new Promise(resolve => setTimeout(resolve, 500)),
+			new Promise((resolve) => setTimeout(resolve, 500)),
 			exitedPromise,
 		])
 		await stopPort(proc.port) // just in case 🤷‍♂️
@@ -306,7 +306,7 @@ export async function closeProcess(key: string) {
 	}
 }
 
-const sleep = (t: number) => new Promise(resolve => setTimeout(resolve, t))
+const sleep = (t: number) => new Promise((resolve) => setTimeout(resolve, t))
 
 export async function stopPort(port: string | number) {
 	if (isDeployed) throw new Error('cannot stop ports in deployed mode')

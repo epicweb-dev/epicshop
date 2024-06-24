@@ -45,7 +45,7 @@ export async function loader({ request }: LoaderFunctionArgs) {
 		const diffCode = await getDiffCode(app1, app2, {
 			...cacheOptions,
 			forceFresh: searchParams.get('forceFresh') === 'diff',
-		}).catch(e => {
+		}).catch((e) => {
 			console.error(e)
 			return null
 		})
@@ -57,8 +57,8 @@ export async function loader({ request }: LoaderFunctionArgs) {
 	}
 
 	const allApps = allAppsFull
-		.filter((a, i, ar) => ar.findIndex(b => a.name === b.name) === i)
-		.map(a => ({
+		.filter((a, i, ar) => ar.findIndex((b) => a.name === b.name) === i)
+		.map((a) => ({
 			displayName: getAppDisplayName(a, allAppsFull),
 			name: a.name,
 			title: a.title,
@@ -66,7 +66,7 @@ export async function loader({ request }: LoaderFunctionArgs) {
 		}))
 
 	const diff = getDiffProp()
-	const app1Index = allApps.findIndex(a => a.name === app1?.name)
+	const app1Index = allApps.findIndex((a) => a.name === app1?.name)
 	const prevApp1Index = usingDefaultApp1
 		? allApps.length - 2
 		: app1Index === 0

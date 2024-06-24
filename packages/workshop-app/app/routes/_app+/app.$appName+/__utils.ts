@@ -22,7 +22,7 @@ export async function resolveApps({
 	if (fileAppName) {
 		const apps = await getApps({ request, timings })
 		const fileApp = fileAppName
-			? apps.find(app => app.name === fileAppName)
+			? apps.find((app) => app.name === fileAppName)
 			: app
 		return { app, fileApp }
 	} else {

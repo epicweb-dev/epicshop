@@ -24,7 +24,7 @@ export async function loader({ request, params }: LoaderFunctionArgs) {
 		getWorkshopTitle(),
 	])
 	const exercise = exercises.find(
-		e => e.exerciseNumber === Number(params.exerciseNumber),
+		(e) => e.exerciseNumber === Number(params.exerciseNumber),
 	)
 	if (!exercise) {
 		throw new Response('Not found', { status: 404 })
@@ -35,7 +35,7 @@ export async function loader({ request, params }: LoaderFunctionArgs) {
 			exerciseNumber: exercise.exerciseNumber,
 			exerciseTitle: exercise.title,
 			title: workshopTitle,
-			exercises: exercises.map(e => ({
+			exercises: exercises.map((e) => ({
 				exerciseNumber: e.exerciseNumber,
 				title: e.title,
 			})),

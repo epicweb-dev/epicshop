@@ -111,7 +111,7 @@ export function usePresenceSocket(user?: User | null) {
 }
 
 function scoreUsers(location: User['location'], users: Array<User>) {
-	const scoredUsers = users.map(user => {
+	const scoredUsers = users.map((user) => {
 		let score = 0
 		const available = 4
 		if (location?.workshopTitle === user.location?.workshopTitle) {

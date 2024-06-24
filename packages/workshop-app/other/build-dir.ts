@@ -25,7 +25,7 @@ const ignore = [
 
 const allFiles = glob
 	.sync('**/*.*', { cwd: srcDir, ignore })
-	.map(file => path.join(srcDir, file))
+	.map((file) => path.join(srcDir, file))
 
 const entryPoints = []
 for (const file of allFiles) {
@@ -48,7 +48,7 @@ function replacer(_: string, p1: string, p2: string, p3: string) {
 const replaceImportExtension: esbuild.Plugin = {
 	name: 'replace-import-extension',
 	setup(build) {
-		build.onLoad({ filter: /\.tsx?$/ }, async args => {
+		build.onLoad({ filter: /\.tsx?$/ }, async (args) => {
 			const source = await fsExtra.readFile(args.path, 'utf8')
 			// import/export
 			const re1 =

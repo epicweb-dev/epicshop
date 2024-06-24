@@ -24,7 +24,7 @@ const SetPlaygroundSchema = z.object({
 		.string()
 		.nullable()
 		.optional()
-		.transform(v => v === 'true'),
+		.transform((v) => v === 'true'),
 })
 
 export async function action({ request }: ActionFunctionArgs) {
@@ -129,7 +129,7 @@ export function PlaygroundChooser({
 		<Select.Root
 			name="appName"
 			value={playgroundAppName}
-			onValueChange={appName => {
+			onValueChange={(appName) => {
 				fetcher.submit(
 					{ appName },
 					{ method: 'POST', action: '/set-playground' },
@@ -169,8 +169,8 @@ export function PlaygroundChooser({
 								App
 							</Select.Label>
 							{allApps
-								.filter(app => app.name !== 'playground')
-								.map(app => {
+								.filter((app) => app.name !== 'playground')
+								.map((app) => {
 									return (
 										<SelectItem key={app.name} value={app.name}>
 											{app.displayName}

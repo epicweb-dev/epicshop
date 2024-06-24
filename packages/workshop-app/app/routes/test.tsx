@@ -101,7 +101,7 @@ export async function loader({ request }: LoaderFunctionArgs) {
 			type: 'init',
 			exitCode: processEntry.exitCode,
 			isRunning,
-			output: processEntry.output.map(line => ({
+			output: processEntry.output.map((line) => ({
 				type: line.type,
 				html: ansi.toHtml(escapeHtml(line.content)),
 				timestamp: line.timestamp,
@@ -216,18 +216,18 @@ export function TestOutput({ name }: { name: string }) {
 			switch (event.type) {
 				case 'exit': {
 					const { isRunning, code: exitCode } = event
-					dispatch(prev => ({ ...prev, isRunning, exitCode }))
+					dispatch((prev) => ({ ...prev, isRunning, exitCode }))
 					break
 				}
 				case 'init': {
 					const { output, exitCode, isRunning } = event
-					dispatch(prev => ({ ...prev, lines: output, exitCode, isRunning }))
+					dispatch((prev) => ({ ...prev, lines: output, exitCode, isRunning }))
 					break
 				}
 				case 'stderr':
 				case 'stdout': {
 					const { type, data: html, timestamp } = event
-					dispatch(prev => ({
+					dispatch((prev) => ({
 						...prev,
 						lines: [...prev.lines, { type, html, timestamp }].sort(
 							(a, b) => a.timestamp - b.timestamp,
@@ -248,7 +248,7 @@ export function TestOutput({ name }: { name: string }) {
 						<TestRunner
 							name={name}
 							onRun={() => {
-								dispatch(prev => ({
+								dispatch((prev) => ({
 									...prev,
 									exitCode: undefined,
 									lines: [],
@@ -278,7 +278,7 @@ export function TestOutput({ name }: { name: string }) {
 					<ClearTest
 						name={name}
 						onClear={() => {
-							dispatch(prev => ({
+							dispatch((prev) => ({
 								...prev,
 								exitCode: undefined,
 								lines: [],
@@ -290,7 +290,7 @@ export function TestOutput({ name }: { name: string }) {
 			<div className="flex h-full flex-col gap-5 p-5">
 				<p className="font-mono text-sm font-medium uppercase">Test Output</p>
 				<pre className="shadow-on-scrollbox flex-1 overflow-y-scroll scrollbar-thin scrollbar-thumb-scrollbar">
-					{lines.map(line => (
+					{lines.map((line) => (
 						<code
 							key={line.timestamp}
 							data-type={line.type}

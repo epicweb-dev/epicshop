@@ -74,7 +74,7 @@ export function Diff({
 					</p>
 				}
 			>
-				{diff => (
+				{(diff) => (
 					<div className="flex h-full w-full flex-col">
 						<div className="flex h-14 min-h-14 w-full overflow-x-hidden border-b">
 							<div className="border-r">
@@ -91,7 +91,7 @@ export function Diff({
 								</SimpleTooltip>
 							</div>
 							<Form
-								onChange={e => submit(e.currentTarget)}
+								onChange={(e) => submit(e.currentTarget)}
 								className="flex h-full flex-1 items-center overflow-x-auto scrollbar-thin scrollbar-thumb-scrollbar"
 								key={`${diff.app1}${diff.app2}`}
 							>
@@ -158,7 +158,7 @@ function SelectFileToDiff({
 				aria-label={`Select ${label} for git Diff`}
 			>
 				<span className="overflow-hidden text-ellipsis whitespace-nowrap">
-					{label}: {' '}
+					{label}:{' '}
 					<SelectValue
 						placeholder={`Select ${label}`}
 						className="inline-block w-40 text-ellipsis"
@@ -182,7 +182,7 @@ function SelectFileToDiff({
 							<Select.Label className="px-5 pb-3 font-mono uppercase">
 								{label}
 							</Select.Label>
-							{allApps.map(app => {
+							{allApps.map((app) => {
 								return (
 									<SelectItem key={app.name} value={app.name}>
 										{app.displayName}

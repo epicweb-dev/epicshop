@@ -53,7 +53,7 @@ export async function loader({ request }: LoaderFunctionArgs) {
 				workshopReadme.compiled.status === 'success'
 					? workshopReadme.compiled.title
 					: title,
-			exercises: exercises.map(e => ({
+			exercises: exercises.map((e) => ({
 				exerciseNumber: e.exerciseNumber,
 				title: e.title,
 			})),
@@ -117,7 +117,7 @@ export default function Index() {
 			<strong className="px-10 pb-3 font-mono text-xs uppercase">
 				Exercises
 			</strong>
-			{data.exercises.map(exercise => (
+			{data.exercises.map((exercise) => (
 				<ExerciseListItem key={exercise.exerciseNumber} exercise={exercise} />
 			))}
 		</ul>

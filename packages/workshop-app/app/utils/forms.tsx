@@ -11,7 +11,7 @@ export function ErrorList({
 	if (!errorsToRender?.length) return null
 	return (
 		<ul id={id} className="space-y-1">
-			{errorsToRender.map(e => (
+			{errorsToRender.map((e) => (
 				<li key={e} className="text-danger text-[10px]">
 					{e}
 				</li>

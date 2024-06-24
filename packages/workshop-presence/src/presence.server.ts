@@ -41,7 +41,7 @@ export async function getPresentUsers(
 						if (!connected) throw new Error(`No internet connection`)
 						return fetch(`${partykitBaseUrl}/presence`)
 					})(),
-					new Promise<Response>(resolve =>
+					new Promise<Response>((resolve) =>
 						setTimeout(
 							() => resolve(new Response('Timeout', { status: 500 })),
 							200,
@@ -60,7 +60,7 @@ export async function getPresentUsers(
 				const preferences = await getPreferences()
 				const users = presence.users
 				if (preferences?.presence.optOut ?? !user) {
-					return uniqueUsers(users.filter(u => u.id !== user?.id))
+					return uniqueUsers(users.filter((u) => u.id !== user?.id))
 				} else {
 					return uniqueUsers([...users, user])
 				}
@@ -77,7 +77,7 @@ export async function getPresentUsers(
 // so let's make sure we only show them once
 function uniqueUsers(users: Array<User>) {
 	const seen = new Set()
-	return users.filter(user => {
+	return users.filter((user) => {
 		if (seen.has(user.id)) {
 			return false
 		}

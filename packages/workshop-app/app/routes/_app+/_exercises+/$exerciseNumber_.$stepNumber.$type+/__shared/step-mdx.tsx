@@ -382,7 +382,7 @@ function LinkToApp({
 						? 'Cannot link to app in deployed version'
 						: undefined
 				}
-				onClick={event => {
+				onClick={(event) => {
 					if (ENV.EPICSHOP_DEPLOYED) event.preventDefault()
 
 					props.onClick?.(event)
@@ -405,7 +405,7 @@ function LinkToApp({
 								? 'Cannot link to app in deployed version'
 								: 'Open in new tab'
 						}
-						onClick={event => {
+						onClick={(event) => {
 							if (ENV.EPICSHOP_DEPLOYED) event.preventDefault()
 						}}
 					>

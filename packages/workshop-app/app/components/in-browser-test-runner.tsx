@@ -66,7 +66,7 @@ export function InBrowserTestRunner({
 				setMessage(data)
 			}
 			if (data.type === 'epicshop:test-step-update') {
-				setTestSteps(steps => [...steps, data])
+				setTestSteps((steps) => [...steps, data])
 			}
 		}
 		window.addEventListener('message', handleMessage)
@@ -116,7 +116,7 @@ export function InBrowserTestRunner({
 					<div className="not-prose">
 						<div className="p-5 pt-3">
 							<ul className="">
-								{sortedTestSteps.map(testStep => (
+								{sortedTestSteps.map((testStep) => (
 									// sometimes the steps come in so fast that the timestamp is the same
 									<li key={testStep.timestamp + testStep.title}>
 										<div className="flex items-baseline gap-2 text-emerald-700">

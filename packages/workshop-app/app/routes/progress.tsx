@@ -24,10 +24,10 @@ import { createToastHeaders } from '#app/utils/toast.server.ts'
 export function useEpicProgress() {
 	const data = useRouteLoaderData<typeof rootLoader>('root')
 	const progressFetcher = useFetchers().find(
-		f => f.formAction === '/progress' && f.formData?.has('complete'),
+		(f) => f.formAction === '/progress' && f.formData?.has('complete'),
 	)
 	if (!progressFetcher || !data?.progress) return data?.progress ?? null
-	return data.progress.map(p => {
+	return data.progress.map((p) => {
 		const optimisticCompleted =
 			progressFetcher.formData?.get('complete') === 'true'
 		const optimisticLessonSlug = progressFetcher.formData?.get('lessonSlug')
@@ -66,7 +66,7 @@ export function useNextExerciseRoute() {
 	const sortedProgress = progress.sort((a, b) => {
 		return scoreProgress(a) - scoreProgress(b)
 	})
-	const nextProgress = sortedProgress.find(p => !p.epicCompletedAt)
+	const nextProgress = sortedProgress.find((p) => !p.epicCompletedAt)
 	if (!nextProgress) return null
 
 	if (nextProgress.type === 'unknown') return null
@@ -102,7 +102,7 @@ export function useExerciseProgressClassName(exerciseNumber: number) {
 	const progress = useEpicProgress()
 	if (!progress?.length) return null
 	const exerciseProgress = progress.filter(
-		p =>
+		(p) =>
 			(p.type === 'instructions' ||
 				p.type === 'step' ||
 				p.type === 'finished') &&
@@ -167,17 +167,17 @@ export function useProgressItem({
 	if (!progress?.length) return null
 
 	if (type === 'workshop-finished' || type === 'workshop-instructions') {
-		return progress.find(p => p.type === type) ?? null
+		return progress.find((p) => p.type === type) ?? null
 	} else if (type === 'instructions' || type === 'finished') {
 		return (
 			progress.find(
-				p => p.type === type && p.exerciseNumber === exerciseNumber,
+				(p) => p.type === type && p.exerciseNumber === exerciseNumber,
 			) ?? null
 		)
 	} else if (type === 'step') {
 		return (
 			progress.find(
-				p =>
+				(p) =>
 					p.type === type &&
 					p.exerciseNumber === exerciseNumber &&
 					p.stepNumber === stepNumber,
@@ -198,20 +198,20 @@ export async function action({ request }: ActionFunctionArgs) {
 		'lessonSlug must be a string',
 		{ status: 400 },
 	)
-	const beforeProgress = await getProgress({ request }).catch(e => {
+	const beforeProgress = await getProgress({ request }).catch((e) => {
 		console.error('Failed to get progress', e)
 		return []
 	})
 	const result = await updateProgress({ lessonSlug, complete }, { request })
 
 	const lessonProgress = beforeProgress.find(
-		p => p.epicLessonSlug === lessonSlug,
+		(p) => p.epicLessonSlug === lessonSlug,
 	)
 	function getCompletionAnnouncement() {
 		if (!complete) return null
 		if (!lessonProgress) return null
 		const allOtherAreFinished = beforeProgress.every(
-			p =>
+			(p) =>
 				p.epicCompletedAt || p.epicLessonSlug === lessonProgress.epicLessonSlug,
 		)
 		if (allOtherAreFinished) return 'You completed the workshop!'
@@ -225,14 +225,16 @@ export async function action({ request }: ActionFunctionArgs) {
 		}
 		const { exerciseNumber } = lessonProgress
 		const otherExerciseLessons = beforeProgress.filter(
-			p =>
+			(p) =>
 				(p.type === 'step' ||
 					p.type === 'instructions' ||
 					p.type === 'finished') &&
 				p.exerciseNumber === exerciseNumber &&
 				p.epicLessonSlug !== lessonSlug,
 		)
-		const otherAreFinished = otherExerciseLessons.every(p => p.epicCompletedAt)
+		const otherAreFinished = otherExerciseLessons.every(
+			(p) => p.epicCompletedAt,
+		)
 		return otherAreFinished ? `You completed exercise ${exerciseNumber}!` : null
 	}
 	const announcement = getCompletionAnnouncement()

@@ -162,7 +162,7 @@ function formatColors() {
 		if (typeof color === 'string') {
 			colors.push(key)
 		} else {
-			const colorGroup = Object.keys(color).map(subKey =>
+			const colorGroup = Object.keys(color).map((subKey) =>
 				subKey === 'DEFAULT' ? '' : subKey,
 			)
 			colors.push({ [key]: colorGroup })
@@ -341,7 +341,7 @@ export function useDelayedIsPending({
 function callAll<Args extends Array<unknown>>(
 	...fns: Array<((...args: Args) => unknown) | undefined>
 ) {
-	return (...args: Args) => fns.forEach(fn => fn?.(...args))
+	return (...args: Args) => fns.forEach((fn) => fn?.(...args))
 }
 
 /**
@@ -362,17 +362,18 @@ export function useDoubleCheck() {
 		const onClick: React.ButtonHTMLAttributes<HTMLButtonElement>['onClick'] =
 			doubleCheck
 				? undefined
-				: e => {
+				: (e) => {
 						e.preventDefault()
 						setDoubleCheck(true)
 					}
 
-		const onKeyUp: React.ButtonHTMLAttributes<HTMLButtonElement>['onKeyUp'] =
-			e => {
-				if (e.key === 'Escape') {
-					setDoubleCheck(false)
-				}
+		const onKeyUp: React.ButtonHTMLAttributes<HTMLButtonElement>['onKeyUp'] = (
+			e,
+		) => {
+			if (e.key === 'Escape') {
+				setDoubleCheck(false)
 			}
+		}
 
 		return {
 			...props,

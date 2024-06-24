@@ -45,9 +45,9 @@ function DiscordPosts() {
 						</div>
 					}
 				>
-					{posts => (
+					{(posts) => (
 						<ul className="flex w-full flex-col gap-4 p-3 xl:p-12">
-							{posts.map(post => (
+							{posts.map((post) => (
 								<li
 									key={post.id}
 									className="rounded-xl border bg-background transition-all duration-200 focus-within:-translate-y-1 focus-within:shadow-lg hover:-translate-y-1 hover:shadow-lg"
@@ -70,7 +70,7 @@ function DiscordPosts() {
 					rel="noreferrer noopener"
 					onClick={
 						altDown
-							? e => {
+							? (e) => {
 									e.preventDefault()
 									window.open(
 										e.currentTarget.href,
@@ -90,7 +90,7 @@ function DiscordPosts() {
 }
 
 function DiscordPost({ thread }: { thread: z.infer<typeof ThreadItemSchema> }) {
-	const reactionsWithCounts = thread.reactions.filter(r => r.count)
+	const reactionsWithCounts = thread.reactions.filter((r) => r.count)
 	const hints = useHints()
 
 	return (
@@ -100,7 +100,7 @@ function DiscordPost({ thread }: { thread: z.infer<typeof ThreadItemSchema> }) {
 					<div className="flex flex-col gap-1">
 						{thread.tags.length ? (
 							<div className="flex gap-2">
-								{thread.tags.map(t => (
+								{thread.tags.map((t) => (
 									<div
 										key={t.name}
 										className="flex items-center justify-center gap-1 rounded-full bg-accent px-2 py-1 text-sm"

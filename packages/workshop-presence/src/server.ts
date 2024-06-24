@@ -105,7 +105,7 @@ function shallowMergeConnectionState(
 	connection: Party.Connection,
 	state: ConnectionState,
 ) {
-	setConnectionState(connection, prev => ({ ...prev, ...state }))
+	setConnectionState(connection, (prev) => ({ ...prev, ...state }))
 }
 
 function setConnectionState(

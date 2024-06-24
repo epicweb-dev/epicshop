@@ -101,7 +101,7 @@ export async function loader({ request, params }: LoaderFunctionArgs) {
 	</head>
 	<body>
 		${scripts
-			.map(script => `<script type="module" src="${script}"></script>`)
+			.map((script) => `<script type="module" src="${script}"></script>`)
 			.join('\n')}
 		<script type="module" src="epic_ws.js"></script>
 	</body>

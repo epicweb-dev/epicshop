@@ -3,7 +3,7 @@ import * as ReactDOM from 'react-dom/client'
 
 function Counter() {
 	const [count, setCount] = useState(0)
-	const increment = () => setCount(c => c + 1)
+	const increment = () => setCount((c) => c + 1)
 	return <button onClick={increment}>This is an example{count}</button>
 }
 

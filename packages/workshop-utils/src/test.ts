@@ -6,7 +6,7 @@ chai.use(chaiDOM)
 
 // in the browser logging out the element is not necessary
 configure({
-	getElementError: message => new Error(message ?? 'Unknown error'),
+	getElementError: (message) => new Error(message ?? 'Unknown error'),
 })
 
 export const { expect } = chai
