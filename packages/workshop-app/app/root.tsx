@@ -1,6 +1,11 @@
 import path from 'node:path'
 import { getPresentUsers } from '@epic-web/workshop-presence/presence.server'
-import { getApps, getWorkshopTitle } from '@epic-web/workshop-utils/apps.server'
+import {
+	getApps,
+	getWorkshopInstructor,
+	getWorkshopSubtitle,
+	getWorkshopTitle,
+} from '@epic-web/workshop-utils/apps.server'
 import {
 	getDiscordMember,
 	getPreferences,
@@ -44,6 +49,7 @@ import { getEnv } from './utils/env.server.ts'
 import { getProgress } from './utils/epic-api.ts'
 import { cn, combineHeaders, getDomainUrl, useAltDown } from './utils/misc.tsx'
 import { Presence } from './utils/presence.tsx'
+import { getSeoMetaTags } from './utils/seo.ts'
 import { getToast } from './utils/toast.server.ts'
 
 export const links: LinksFunction = () => {
@@ -67,7 +73,14 @@ export const links: LinksFunction = () => {
 }
 
 export const meta: MetaFunction<typeof loader> = ({ data }) => {
-	return [{ title: data?.workshopTitle }]
+	if (!data) return []
+
+	return getSeoMetaTags({
+		instructor: data.instructor,
+		title: data.workshopTitle,
+		description: data.workshopSubtitle,
+		requestInfo: data.requestInfo,
+	})
 }
 
 export async function loader({ request }: LoaderFunctionArgs) {
@@ -81,6 +94,16 @@ export async function loader({ request }: LoaderFunctionArgs) {
 	const workshopTitle = await time(() => getWorkshopTitle(), {
 		type: 'getWorkshopTitle',
 		desc: 'getWorkshopTitle in root',
+		timings,
+	})
+	const workshopSubtitle = await time(() => getWorkshopSubtitle(), {
+		type: 'getWorkshopSubtitle',
+		desc: 'getWorkshopSubtitle in root',
+		timings,
+	})
+	const instructor = await time(() => getWorkshopInstructor(), {
+		type: 'getInstructor',
+		desc: 'getInstructor in root',
 		timings,
 	})
 
@@ -100,6 +123,8 @@ export async function loader({ request }: LoaderFunctionArgs) {
 	return json(
 		{
 			workshopTitle,
+			workshopSubtitle,
+			instructor,
 			apps: apps.map(({ name, fullPath, relativePath }) => ({
 				name,
 				fullPath,

@@ -55,6 +55,7 @@ import { SetAppToPlayground } from '#app/routes/set-playground.tsx'
 import { getDiffCode, getDiffFiles } from '#app/utils/diff.server.ts'
 import { getEpicVideoInfos } from '#app/utils/epic-api.ts'
 import { useAltDown } from '#app/utils/misc.tsx'
+import { getSeoMetaTags } from '#app/utils/seo.js'
 import { fetchDiscordPosts } from './__shared/discord.server.ts'
 import { DiscordChat } from './__shared/discord.tsx'
 import { Playground } from './__shared/playground.tsx'
@@ -92,17 +93,21 @@ function pageTitle(
 export const meta: MetaFunction<typeof loader, { root: typeof rootLoader }> = ({
 	data,
 	matches,
+	params,
 }) => {
 	const rootData = matches.find((m) => m.id === 'root')?.data
+	if (!data || !rootData) return [{ title: '🦉 | Error' }]
 	const { emoji, stepNumber, title, exerciseNumber, exerciseTitle } =
 		pageTitle(data)
-	return [
-		{
-			title: `${emoji} | ${stepNumber}. ${title} | ${exerciseNumber}. ${exerciseTitle} | ${
-				rootData?.workshopTitle ?? 'Epic Workshop'
-			}`,
-		},
-	]
+
+	return getSeoMetaTags({
+		title: `${emoji} | ${stepNumber}. ${title} | ${exerciseNumber}. ${exerciseTitle} | ${rootData.workshopTitle}`,
+		description: `${params.type} step for exercise ${exerciseNumber}. ${exerciseTitle}`,
+		ogTitle: title,
+		ogDescription: `${exerciseTitle} step ${Number(stepNumber)} ${params.type}`,
+		instructor: rootData.instructor,
+		requestInfo: rootData.requestInfo,
+	})
 }
 
 export async function loader({ request, params }: LoaderFunctionArgs) {

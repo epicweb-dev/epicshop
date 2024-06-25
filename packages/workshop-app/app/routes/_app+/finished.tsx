@@ -28,6 +28,7 @@ import { type loader as rootLoader } from '#app/root.tsx'
 import { getEpicVideoInfos } from '#app/utils/epic-api.ts'
 import { Mdx } from '#app/utils/mdx.tsx'
 import { cn } from '#app/utils/misc.tsx'
+import { getSeoMetaTags } from '#app/utils/seo.js'
 import { EditFileOnGitHub } from '../launch-editor.tsx'
 import { ProgressToggle } from '../progress.tsx'
 
@@ -35,7 +36,16 @@ export const meta: MetaFunction<typeof loader, { root: typeof rootLoader }> = ({
 	matches,
 }) => {
 	const rootData = matches.find((m) => m.id === 'root')?.data
-	return [{ title: `🎉 ${rootData?.workshopTitle}` }]
+	if (!rootData) return []
+
+	return getSeoMetaTags({
+		title: `🎉 ${rootData?.workshopTitle}`,
+		description: `Elaboration for ${rootData?.workshopTitle}`,
+		ogTitle: `Finished ${rootData?.workshopTitle}`,
+		ogDescription: `You finished! Time to submit feedback.`,
+		instructor: rootData.instructor,
+		requestInfo: rootData.requestInfo,
+	})
 }
 
 export async function loader({ request }: LoaderFunctionArgs) {

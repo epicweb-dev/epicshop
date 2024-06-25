@@ -32,22 +32,25 @@ import { ProgressToggle } from '#app/routes/progress.tsx'
 import { getEpicVideoInfos } from '#app/utils/epic-api.ts'
 import { Mdx } from '#app/utils/mdx.tsx'
 import { getErrorMessage } from '#app/utils/misc.tsx'
+import { getSeoMetaTags } from '#app/utils/seo.js'
 
 export const meta: MetaFunction<typeof loader, { root: typeof rootLoader }> = ({
 	data,
 	matches,
 }) => {
-	if (!data) {
-		return [{ title: '📝 | Error' }]
-	}
-	const number = data.exercise.exerciseNumber.toString().padStart(2, '0')
+	const number = data?.exercise.exerciseNumber.toString().padStart(2, '0')
 
 	const rootData = matches.find((m) => m.id === 'root')?.data
-	return [
-		{
-			title: `📝 | ${number}. ${data.exercise.title} | ${rootData?.workshopTitle}`,
-		},
-	]
+	if (!data || !rootData) return [{ title: '🦉 | Error' }]
+
+	return getSeoMetaTags({
+		title: `📝 | ${number}. ${data.exercise.title} | ${rootData?.workshopTitle}`,
+		description: `Elaboration for ${number}. ${data.exercise.title}`,
+		ogTitle: data.exercise.title,
+		ogDescription: `Elaboration for exercise ${Number(number)}`,
+		instructor: rootData.instructor,
+		requestInfo: rootData.requestInfo,
+	})
 }
 
 export async function loader({ request, params }: LoaderFunctionArgs) {

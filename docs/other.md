@@ -117,3 +117,29 @@ property in the `package.json`:
 You can do this globally by putting this configuration in the root of the
 workshop or on a per-exercise basis by putting it in the exercise's
 `package.json`.
+
+## Meta data Customization
+
+The deployed version of your workshop is a great way to market your workshop.
+People will see the quality material and any paid videos in the material will
+encourage people to buy the workshop. You can customize the meta data that is
+used when the workshop is shared on social media by adding the following to the
+`package.json`:
+
+```json
+{
+	"epicshop": {
+		"title": "Full Stack Foundations 🔭",
+		"subtitle": "Learn how to build full-stack applications.",
+		"instructor": {
+			"name": "Kent C. Dodds",
+			"avatar": "/images/instructor.png",
+			"𝕏": "kentcdodds"
+		}
+	}
+}
+```
+
+Make sure to place an image of you at `/pubic/images/instructor.png` that's at
+least 112px by 112px in your workshop repo and of course update the name and 𝕏
+handle to be your own.
