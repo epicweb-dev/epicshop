@@ -29,6 +29,14 @@ import {
 } from 'framer-motion'
 import * as React from 'react'
 import { Icon } from '#app/components/icons.tsx'
+import { makeMediaQueryStore } from '#app/components/media-query.js'
+import {
+	Dialog,
+	DialogContent,
+	DialogDescription,
+	DialogHeader,
+	DialogTrigger,
+} from '#app/components/ui/dialog.js'
 import {
 	SimpleTooltip,
 	Tooltip,
@@ -235,31 +243,49 @@ function FacePile({ isMenuOpened }: { isMenuOpened: boolean }) {
 	)
 }
 
+const useIsWide = makeMediaQueryStore('(min-width: 640px)', true)
+
 export default function App() {
 	const user = useOptionalUser()
+	const isWide = useIsWide()
 
 	const [isMenuOpened, setMenuOpened] = React.useState(false)
 
 	return (
 		<div className="flex flex-col">
 			{user ? null : <EpicWebBanner />}
+			{/*
+				this isn't placed in a conditional with isWide because the server render
+				doesn't know whether it should be around or not so we just use CSS to hide it
+				if it's not supposed to show up.
+
+				We don't just use media queries for the wider screen nav because we want
+				to avoid running all the logic in there unnecessarily.
+			*/}
+			<MobileNavigation
+				isMenuOpened={isMenuOpened}
+				onMenuOpenChange={setMenuOpened}
+			/>
 			<div
-				className={cn('flex flex-grow', {
-					'h-[calc(100vh-64px-env(safe-area-inset-top)-env(safe-area-inset-bottom))]':
+				// this nonsense is here because we want the panels to be scrollable rather
+				// than having the entire page be scrollable (at least on wider screens)
+				className={cn('flex flex-grow flex-col sm:flex-row', {
+					'h-[calc(100vh-128px-env(safe-area-inset-top)-env(safe-area-inset-bottom))] sm:h-[calc(100vh-64px-env(safe-area-inset-top)-env(safe-area-inset-bottom))]':
 						!user,
-					'h-[calc(100vh-112px-env(safe-area-inset-top)-env(safe-area-inset-bottom))] sm:h-[calc(100vh-64px-env(safe-area-inset-top)-env(safe-area-inset-bottom))]':
-						ENV.EPICSHOP_DEPLOYED,
-					'h-[calc(100vh-env(safe-area-inset-top)-env(safe-area-inset-bottom))]':
+					'h-[calc(100vh-64px-env(safe-area-inset-top)-env(safe-area-inset-bottom))] sm:h-[calc(100vh-env(safe-area-inset-top)-env(safe-area-inset-bottom))]':
 						user,
+					'h-[unset]': !isWide && isMenuOpened,
 				})}
 			>
-				<Navigation
-					isMenuOpened={isMenuOpened}
-					onMenuOpenChange={setMenuOpened}
-				/>
+				{isWide ? (
+					<Navigation
+						isMenuOpened={isMenuOpened}
+						onMenuOpenChange={setMenuOpened}
+					/>
+				) : null}
 				<div
 					className={cn(
-						'h-full w-full max-w-[calc(100%-56px)]',
+						'h-full w-full max-w-full sm:max-w-[calc(100%-56px)]',
 						isMenuOpened ? 'hidden md:block' : '',
 					)}
 				>
@@ -290,64 +316,132 @@ function getLocationLabel(location: User['location']) {
 }
 
 function EpicWebBanner() {
-	return (
-		<div
-			className={cn(
-				'z-10 flex items-center justify-between border-b bg-gradient-to-tr from-blue-500 to-indigo-500 pl-4 text-white',
-				ENV.EPICSHOP_DEPLOYED ? 'h-[112px] md:h-[64px]' : 'h-16',
+	const isWide = useIsWide()
+	const details = (
+		<div>
+			{ENV.EPICSHOP_DEPLOYED ? (
+				<div>
+					{`This is the deployed version. `}
+					{ENV.EPICSHOP_GITHUB_ROOT ? (
+						<>
+							<Link
+								className="underline"
+								target="_blank"
+								rel="noopener noreferrer"
+								to={ENV.EPICSHOP_GITHUB_ROOT}
+							>
+								Run locally
+							</Link>
+							{` for full experience.`}
+						</>
+					) : null}{' '}
+				</div>
+			) : (
+				<div>
+					<Link to="/login" className="underline">
+						Login
+					</Link>{' '}
+					or{' '}
+					<a href="https://www.epicweb.dev/login" className="underline">
+						join for free
+					</a>{' '}
+					for the full experience.
+				</div>
 			)}
-		>
-			<div className="flex flex-1 flex-wrap items-center gap-4">
-				<Icon name="EpicWeb" size="lg" />
-				<div className="flex flex-1 flex-wrap items-center">
-					<p className="mr-2">
-						Welcome to the{' '}
-						<Link
-							to="https://www.epicweb.dev"
-							className="underline"
-							target="_blank"
-						>
-							EpicWeb.dev
-						</Link>{' '}
-						Workshop app!
-					</p>
-					{ENV.EPICSHOP_DEPLOYED ? (
-						<small className="text-sm">
-							This is the deployed version.{' '}
-							{ENV.EPICSHOP_GITHUB_ROOT ? (
+		</div>
+	)
+	return (
+		<div className="z-10 flex h-16 items-center justify-between border-b bg-gradient-to-tr from-blue-500 to-indigo-500 pl-4 text-white">
+			{isWide ? (
+				<>
+					<div className="hidden flex-1 flex-wrap items-center gap-4 sm:flex">
+						<Icon name="EpicWeb" size="lg" />
+						<div className="flex flex-1 flex-wrap items-center">
+							<p className="mr-2">
+								Welcome to the{' '}
 								<Link
+									to="https://www.epicweb.dev"
 									className="underline"
 									target="_blank"
-									rel="noopener noreferrer"
-									to={ENV.EPICSHOP_GITHUB_ROOT}
 								>
-									Run locally
-								</Link>
-							) : null}{' '}
-							for full experience.
-						</small>
-					) : null}
-				</div>
-			</div>
-			<div className="flex h-full flex-col items-center md:flex-row">
-				<Link
-					to="https://www.epicweb.dev"
-					target="_blank"
-					className="flex h-full items-center justify-center space-x-1.5 px-5 text-sm font-semibold"
-				>
-					<span className="drop-shadow-sm">Join Epic Web 🆓</span>
-					<span>↗︎</span>
-				</Link>
-				<Link
-					to={
-						ENV.EPICSHOP_DEPLOYED ? 'https://www.epicweb.dev/login' : '/login'
-					}
-					className="flex h-full items-center justify-center space-x-1.5 bg-white/20 px-5 text-sm font-semibold shadow-md transition hover:bg-white/30"
-				>
-					<Icon name="User" size="lg" />
-					<span className="drop-shadow-sm">Login</span>
-				</Link>
-			</div>
+									EpicWeb.dev
+								</Link>{' '}
+								Workshop app!
+							</p>
+							{details}
+						</div>
+					</div>
+					<div className="hidden h-full flex-col items-center sm:flex md:flex-row">
+						<Link
+							to="https://www.epicweb.dev"
+							target="_blank"
+							className="flex h-full items-center justify-center space-x-1.5 px-5 text-sm font-semibold"
+						>
+							<span className="drop-shadow-sm">Join Epic Web</span>
+							<span>↗︎</span>
+						</Link>
+						<Link
+							to={
+								ENV.EPICSHOP_DEPLOYED
+									? 'https://www.epicweb.dev/login'
+									: '/login'
+							}
+							className="flex h-full items-center justify-center space-x-1.5 bg-white/20 px-5 text-sm font-semibold shadow-md transition hover:bg-white/30"
+						>
+							<Icon name="User" size="lg" />
+							<span className="drop-shadow-sm">Login</span>
+						</Link>
+					</div>
+				</>
+			) : (
+				<>
+					<div className="flex flex-1 flex-wrap items-center gap-4 sm:hidden">
+						<a href="https://www.epicweb.dev">
+							<Icon name="EpicWeb" size="lg" />
+						</a>
+						<Dialog>
+							<DialogTrigger>
+								<Icon name="Question" size="lg" className="animate-pulse" />
+							</DialogTrigger>
+							<DialogContent>
+								<DialogHeader>
+									<Icon name="EpicWeb" size="lg" />
+									<span className="text-lg font-semibold">EpicWeb.dev</span>
+								</DialogHeader>
+								<DialogDescription>
+									Welcome to the{' '}
+									<Link to="https://www.epicweb.dev" className="underline">
+										EpicWeb.dev
+									</Link>{' '}
+									Workshop app!
+								</DialogDescription>
+								{details}
+							</DialogContent>
+						</Dialog>
+					</div>
+					<div className="flex h-full items-center">
+						<Link
+							to="https://www.epicweb.dev"
+							target="_blank"
+							className="flex h-full items-center justify-center space-x-1.5 px-5 text-sm font-semibold"
+						>
+							<span className="drop-shadow-sm">Join</span>
+							<span>↗︎</span>
+						</Link>
+						<Link
+							to={
+								ENV.EPICSHOP_DEPLOYED
+									? 'https://www.epicweb.dev/login'
+									: '/login'
+							}
+							className="flex h-full items-center justify-center space-x-1.5 bg-white/20 px-5 text-sm font-semibold shadow-md transition hover:bg-white/30"
+						>
+							<Icon name="User" size="lg" />
+							<span className="drop-shadow-sm">Login</span>
+						</Link>
+					</div>
+				</>
+			)}
 		</div>
 	)
 }
@@ -398,6 +492,282 @@ function NavigationExerciseStepListItem({
 		>
 			<span className="ml-2">{children}</span>
 		</motion.li>
+	)
+}
+
+function MobileNavigation({
+	isMenuOpened,
+	onMenuOpenChange: setMenuOpened,
+}: {
+	isMenuOpened: boolean
+	onMenuOpenChange: (change: boolean) => void
+}) {
+	const data = useLoaderData<typeof loader>()
+	const user = useOptionalUser()
+	const nextExerciseRoute = useNextExerciseRoute()
+	const params = useParams()
+	const { users } = usePresence()
+
+	// items
+	const listVariants = {
+		visible: {
+			opacity: 1,
+			transition: {
+				duration: 0.05,
+				when: 'beforeChildren',
+				staggerChildren: 0.03,
+			},
+		},
+		hidden: {
+			opacity: 0,
+		},
+	}
+
+	return (
+		<nav className="flex w-full border-b sm:hidden">
+			<div className="w-full">
+				<div
+					className={cn('flex items-center', {
+						'flex-col': isMenuOpened,
+						'h-14': !isMenuOpened,
+					})}
+				>
+					<NavToggle
+						title={data.workshopTitle}
+						isMenuOpened={isMenuOpened}
+						setMenuOpened={setMenuOpened}
+					/>
+					{isMenuOpened && (
+						<motion.div
+							// @ts-expect-error framer-motion + latest typescript types has issues
+							className="flex w-full flex-grow flex-col justify-between overflow-x-auto p-6 scrollbar-thin scrollbar-thumb-scrollbar"
+							initial={{ opacity: 0 }}
+							animate={{ opacity: 1 }}
+						>
+							<motion.ul
+								variants={listVariants}
+								initial="hidden"
+								animate="visible"
+								// @ts-expect-error framer-motion + latest typescript types has issues
+								className="flex flex-col"
+							>
+								{data.exercises.map(({ exerciseNumber, title, steps }) => {
+									const isActive =
+										Number(params.exerciseNumber) === exerciseNumber
+									const showPlayground =
+										!isActive &&
+										data.playground.exerciseNumber === exerciseNumber
+									const exerciseNum = exerciseNumber.toString().padStart(2, '0')
+									return (
+										<NavigationExerciseListItem
+											key={exerciseNumber}
+											exerciseNumber={exerciseNumber}
+										>
+											<Link
+												prefetch="intent"
+												to={`/${exerciseNum}`}
+												className={clsx(
+													'relative whitespace-nowrap px-2 py-0.5 pr-3 text-2xl font-bold outline-none hover:underline focus:underline',
+													'after:absolute after:-bottom-2.5 after:-right-2.5 after:h-5 after:w-5 after:rotate-45 after:scale-75 after:bg-background after:content-[""] hover:underline focus:underline',
+													{ 'bg-foreground text-background': isActive },
+												)}
+											>
+												{title}
+												{showPlayground ? ' 🛝' : null}
+											</Link>
+											{isActive ? (
+												<motion.ul
+													variants={listVariants}
+													initial="hidden"
+													animate="visible"
+													// @ts-expect-error framer-motion + latest typescript types has issues
+													className="ml-4 mt-4 flex flex-col"
+												>
+													<NavigationExerciseStepListItem
+														key={exerciseNumber}
+														type="instructions"
+														exerciseNumber={exerciseNumber}
+													>
+														<Link
+															to={`/${exerciseNum}`}
+															prefetch="intent"
+															className={clsx(
+																'relative whitespace-nowrap px-2 py-0.5 pr-3 text-xl font-medium outline-none after:absolute after:-bottom-2.5 after:-right-2.5 after:h-5 after:w-5 after:rotate-45 after:scale-75 after:bg-background after:content-[""] hover:underline focus:underline',
+																{
+																	'bg-foreground text-background':
+																		!params.stepNumber,
+																},
+															)}
+														>
+															Intro
+														</Link>
+													</NavigationExerciseStepListItem>
+													{steps
+														.filter(Boolean)
+														.map(({ name, stepNumber, title }) => {
+															const isActive =
+																Number(params.stepNumber) === stepNumber
+															const step = stepNumber
+																.toString()
+																.padStart(2, '0')
+															const isPlayground =
+																name === data.playground.appName
+															return (
+																<NavigationExerciseStepListItem
+																	key={stepNumber}
+																	type="step"
+																	stepNumber={stepNumber}
+																	exerciseNumber={exerciseNumber}
+																>
+																	<Link
+																		to={`/${exerciseNum}/${step}`}
+																		prefetch="intent"
+																		className={clsx(
+																			'relative whitespace-nowrap px-2 py-0.5 pr-3 text-xl font-medium outline-none after:absolute after:-bottom-2.5 after:-right-2.5 after:h-5 after:w-5 after:rotate-45 after:scale-75 after:bg-background after:content-[""] hover:underline focus:underline',
+																			{
+																				'bg-foreground text-background':
+																					isActive,
+																			},
+																		)}
+																	>
+																		{isPlayground
+																			? `${step}. ${title} 🛝`
+																			: `${step}. ${title}`}
+																	</Link>
+																</NavigationExerciseStepListItem>
+															)
+														})}
+													<NavigationExerciseStepListItem
+														type="finished"
+														exerciseNumber={exerciseNumber}
+													>
+														<NavLink
+															to={`/${exerciseNum}/finished`}
+															prefetch="intent"
+															className={({ isActive }) =>
+																clsx(
+																	'relative whitespace-nowrap px-2 py-0.5 pr-3 text-base font-medium outline-none after:absolute after:-bottom-2.5 after:-right-2.5 after:h-5 after:w-5 after:rotate-45 after:scale-75 after:bg-background after:content-[""] hover:underline focus:underline',
+																	{
+																		'bg-foreground text-background': isActive,
+																	},
+																)
+															}
+														>
+															📝 Elaboration
+														</NavLink>
+													</NavigationExerciseStepListItem>
+												</motion.ul>
+											) : null}
+										</NavigationExerciseListItem>
+									)
+								})}
+							</motion.ul>
+							<div className="mt-6">
+								<NavLink
+									to="/finished"
+									className={({ isActive }) =>
+										clsx(
+											'relative whitespace-nowrap text-lg font-bold outline-none hover:underline focus:underline',
+											{
+												'bg-black text-white after:absolute after:-bottom-2.5 after:-right-2.5 after:h-5 after:w-5 after:rotate-45 after:scale-75 after:bg-background after:content-[""]':
+													isActive,
+											},
+										)
+									}
+								>
+									📝 Workshop Feedback
+								</NavLink>
+							</div>
+						</motion.div>
+					)}
+					<div className="flex-grow" />
+					<div
+						className={cn(
+							'flex items-center justify-start p-4',
+							isMenuOpened && users.length > 4 ? 'min-h-14' : 'h-14',
+							{
+								'w-full border-t': isMenuOpened,
+								'border-l': !isMenuOpened,
+							},
+						)}
+					>
+						<FacePile isMenuOpened={isMenuOpened} />
+					</div>
+					{ENV.EPICSHOP_DEPLOYED ? null : user ? (
+						<SimpleTooltip content={isMenuOpened ? null : 'Your account'}>
+							<Link
+								className={cn(
+									'flex h-14 items-center justify-start space-x-3 px-4 py-4 text-center no-underline hover:underline',
+									{
+										'border-l': !isMenuOpened,
+										'w-full border-t': isMenuOpened,
+									},
+								)}
+								to="/account"
+							>
+								{user.avatarUrl ? (
+									<img
+										alt={user.name ?? user.email}
+										src={user.avatarUrl}
+										className="h-full rounded-full"
+									/>
+								) : (
+									<Icon name="User" className="flex-shrink-0" size="lg" />
+								)}
+								{isMenuOpened ? (
+									<motion.div
+										// @ts-expect-error framer-motion + latest typescript types has issues
+										className="flex items-center whitespace-nowrap"
+										initial={{ opacity: 0 }}
+										animate={{ opacity: 1 }}
+									>
+										Your Account
+									</motion.div>
+								) : (
+									<span className="sr-only">Your account</span>
+								)}
+							</Link>
+						</SimpleTooltip>
+					) : null}
+					{ENV.EPICSHOP_DEPLOYED ? null : user && nextExerciseRoute ? (
+						<SimpleTooltip
+							content={isMenuOpened ? null : 'Continue to next lesson'}
+						>
+							<Link
+								to={nextExerciseRoute}
+								prefetch="intent"
+								className={clsx(
+									'flex h-14 w-full items-center space-x-3 border-t px-4 py-4 pl-[18px] no-underline hover:underline',
+								)}
+								state={{ from: 'continue next lesson button' }}
+							>
+								<Icon name="FastForward" className="flex-shrink-0" size="md" />
+								{isMenuOpened ? (
+									<motion.div
+										// @ts-expect-error framer-motion + latest typescript types has issues
+										className="flex items-center whitespace-nowrap"
+										initial={{ opacity: 0 }}
+										animate={{ opacity: 1 }}
+									>
+										Continue to next lesson
+									</motion.div>
+								) : (
+									<span className="sr-only">Continue to next lesson</span>
+								)}
+							</Link>
+						</SimpleTooltip>
+					) : null}
+					<div
+						className={cn('h-14 self-start p-4 pt-[15px] sm:mb-4 sm:w-full', {
+							'w-full border-t': isMenuOpened,
+							'border-l': !isMenuOpened,
+						})}
+					>
+						<ThemeSwitch />
+					</div>
+				</div>
+			</div>
+		</nav>
 	)
 }
 
@@ -454,7 +824,7 @@ function Navigation({
 	const exNum = Number(params.exerciseNumber).toString().padStart(2, '0')
 
 	return (
-		<nav className="flex border-r">
+		<nav className="hidden border-r sm:flex">
 			<motion.div
 				initial={isMenuOpened ? 'open' : 'close'}
 				variants={menuVariants}
@@ -715,7 +1085,7 @@ function NavToggle({
 	title: string
 	isMenuOpened: boolean
 	setMenuOpened: (value: boolean) => void
-	menuControls: AnimationControls
+	menuControls?: AnimationControls
 }) {
 	const path01Variants = {
 		open: { d: 'M3.06061 2.99999L21.0606 21' },
@@ -730,7 +1100,7 @@ function NavToggle({
 	const path02Controls = useAnimationControls()
 
 	async function toggleMenu() {
-		void menuControls.start(isMenuOpened ? 'close' : 'open')
+		void menuControls?.start(isMenuOpened ? 'close' : 'open')
 		setMenuOpened(!isMenuOpened)
 		if (isMenuOpened) {
 			void path01Controls.start(path01Variants.closed)
@@ -761,7 +1131,14 @@ function NavToggle({
 	}, [isMenuOpened])
 
 	return (
-		<div className="relative inline-flex h-14 w-full items-center justify-between overflow-hidden border-b">
+		<div
+			className={cn(
+				'relative inline-flex h-14 flex-shrink-0 items-center justify-between overflow-hidden border-r sm:w-full sm:border-b sm:border-r-0',
+				{
+					'w-full': isMenuOpened,
+				},
+			)}
+		>
 			<button
 				className="flex h-14 w-14 items-center justify-center"
 				aria-label="Open Navigation menu"

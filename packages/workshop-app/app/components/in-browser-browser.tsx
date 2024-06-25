@@ -337,7 +337,7 @@ function InBrowserBrowserForRealzImpl(
 							<TooltipTrigger asChild>
 								<button
 									type="button"
-									className="flex aspect-square h-full w-full items-center justify-center p-1 transition disabled:opacity-40"
+									className="hidden aspect-square h-full w-full items-center justify-center p-1 transition disabled:opacity-40 sm:flex"
 									disabled={atStartOfHistory}
 									onClick={() => navigateChild(-1)}
 								>
@@ -350,7 +350,7 @@ function InBrowserBrowserForRealzImpl(
 							<TooltipTrigger asChild>
 								<button
 									type="button"
-									className="flex aspect-square h-full w-full items-center justify-center p-1 transition disabled:opacity-40"
+									className="hidden aspect-square h-full w-full items-center justify-center p-1 transition disabled:opacity-40 sm:flex"
 									disabled={atEndOfHistory}
 									onClick={() => navigateChild(1)}
 								>
@@ -396,7 +396,7 @@ function InBrowserBrowserForRealzImpl(
 							</a>
 							<input
 								aria-label="pathname"
-								className="flex-1 bg-background focus-visible:outline-none"
+								className="w-full flex-1 bg-background focus-visible:outline-none"
 								value={pathnameInputValue}
 								name="pathname"
 								onChange={(e) => setPathnameInputValue(e.currentTarget.value)}

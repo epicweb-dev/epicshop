@@ -4,7 +4,6 @@ import {
 } from '@epic-web/workshop-utils/cache.server'
 import { getPreferences } from '@epic-web/workshop-utils/db.server'
 import { type Timings } from '@epic-web/workshop-utils/timing.server'
-import { checkConnection } from '@epic-web/workshop-utils/utils.server'
 import { z } from 'zod'
 import {
 	PresenceSchema,
@@ -36,16 +35,11 @@ export async function getPresentUsers(
 		async getFreshValue(context) {
 			try {
 				const response = await Promise.race([
-					(async () => {
-						const connected = await checkConnection()
-						if (!connected) throw new Error(`No internet connection`)
-						return fetch(`${partykitBaseUrl}/presence`)
-					})(),
+					fetch(`${partykitBaseUrl}/presence`),
 					new Promise<Response>((resolve) =>
-						setTimeout(
-							() => resolve(new Response('Timeout', { status: 500 })),
-							200,
-						),
+						setTimeout(() => {
+							resolve(new Response('Timeout', { status: 500 }))
+						}, 350),
 					),
 				] as const)
 				if (response.statusText === 'Timeout') {
@@ -64,9 +58,10 @@ export async function getPresentUsers(
 				} else {
 					return uniqueUsers([...users, user])
 				}
-			} catch {
+			} catch (error) {
 				// console.error(err)
 				context.metadata.ttl = 300
+				console.log('aaaaaaaaaaaaaaaaa', error)
 				return []
 			}
 		},
@@ -77,7 +72,7 @@ export async function getPresentUsers(
 // so let's make sure we only show them once
 function uniqueUsers(users: Array<User>) {
 	const seen = new Set()
-	return users.filter((user) => {
+	return users.filter(Boolean).filter((user) => {
 		if (seen.has(user.id)) {
 			return false
 		}

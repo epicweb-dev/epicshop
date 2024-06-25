@@ -1,13 +1,16 @@
-import { promises as dns } from 'node:dns'
 import fs from 'node:fs'
 import path from 'node:path'
 import { z } from 'zod'
 
 export async function checkConnection() {
-	return dns.resolve('example.com').then(
-		() => true,
-		() => false,
-	)
+	try {
+		const response = await fetch('https://www.cloudflare.com', {
+			method: 'HEAD',
+		})
+		return response.ok
+	} catch {
+		return false
+	}
 }
 
 const PkgSchema = z.object({}).passthrough()

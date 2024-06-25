@@ -409,9 +409,9 @@ export default function ExercisePartRoute() {
 	}
 
 	return (
-		<div className="flex flex-grow flex-col">
-			<main className="grid h-full flex-grow grid-cols-1 grid-rows-2 lg:grid-cols-2 lg:grid-rows-1">
-				<div className="relative col-span-1 row-span-1 flex h-full flex-col lg:border-r">
+		<div className="flex max-w-full flex-grow flex-col">
+			<main className="flex flex-grow flex-col sm:grid sm:h-full sm:min-h-[800px] sm:grid-cols-1 sm:grid-rows-2 md:min-h-[unset] lg:grid-cols-2 lg:grid-rows-1">
+				<div className="relative flex flex-col sm:col-span-1 sm:row-span-1 sm:h-full lg:border-r">
 					<h1 className="h-14 border-b pl-10 pr-5 text-sm font-medium leading-tight">
 						<div className="flex h-14 flex-wrap items-center justify-between gap-x-2 py-2">
 							<div className="flex items-center justify-start gap-x-2 uppercase">
@@ -431,19 +431,19 @@ export default function ExercisePartRoute() {
 							</div>
 							{data.problem &&
 							data.playground?.appName !== data.problem.name ? (
-								<SetAppToPlayground appName={data.problem.name} />
+								<div className="hidden md:block">
+									<SetAppToPlayground appName={data.problem.name} />
+								</div>
 							) : null}
 						</div>
 					</h1>
 					<article
 						id={data.articleId}
 						key={data.articleId}
-						className="shadow-on-scrollbox h-full w-full max-w-none flex-1 scroll-pt-6 space-y-6 overflow-y-auto p-10 pt-8 scrollbar-thin scrollbar-thumb-scrollbar"
+						className="shadow-on-scrollbox h-full w-full max-w-none flex-1 scroll-pt-6 space-y-6 overflow-y-auto p-2 scrollbar-thin scrollbar-thumb-scrollbar sm:p-10 sm:pt-8"
 					>
 						{data.exerciseStepApp.instructionsCode ? (
-							<div className="prose dark:prose-invert sm:prose-lg">
-								<StepMdx inBrowserBrowserRef={inBrowserBrowserRef} />
-							</div>
+							<StepMdx inBrowserBrowserRef={inBrowserBrowserRef} />
 						) : (
 							<p>No instructions yet...</p>
 						)}
@@ -491,7 +491,7 @@ export default function ExercisePartRoute() {
 					</div>
 				</div>
 				<Tabs.Root
-					className="relative col-span-1 row-span-1 flex flex-col overflow-y-auto"
+					className="relative flex flex-col overflow-y-auto sm:col-span-1 sm:row-span-1"
 					value={activeTab}
 					// intentionally no onValueChange here because the Link will trigger the
 					// change.
@@ -526,10 +526,10 @@ export default function ExercisePartRoute() {
 							)
 						})}
 					</Tabs.List>
-					<div className="relative z-10 flex flex-grow flex-col overflow-y-auto">
+					<div className="relative z-10 flex min-h-96 flex-grow flex-col overflow-y-auto">
 						<Tabs.Content
 							value="playground"
-							className="flex flex-grow items-center justify-center radix-state-inactive:hidden"
+							className="flex w-full flex-grow items-center justify-center self-start radix-state-inactive:hidden"
 						>
 							<Playground
 								appInfo={data.playground}
@@ -541,7 +541,7 @@ export default function ExercisePartRoute() {
 						</Tabs.Content>
 						<Tabs.Content
 							value="problem"
-							className="flex flex-grow items-center justify-center radix-state-inactive:hidden"
+							className="flex w-full flex-grow items-center justify-center self-start radix-state-inactive:hidden"
 						>
 							<Preview
 								appInfo={data.problem}
@@ -550,7 +550,7 @@ export default function ExercisePartRoute() {
 						</Tabs.Content>
 						<Tabs.Content
 							value="solution"
-							className="flex flex-grow items-center justify-center radix-state-inactive:hidden"
+							className="flex w-full flex-grow items-center justify-center self-start radix-state-inactive:hidden"
 						>
 							<Preview
 								appInfo={data.solution}
@@ -559,7 +559,7 @@ export default function ExercisePartRoute() {
 						</Tabs.Content>
 						<Tabs.Content
 							value="tests"
-							className="flex flex-grow items-start justify-center overflow-hidden radix-state-inactive:hidden"
+							className="flex w-full flex-grow items-start justify-center self-start overflow-hidden radix-state-inactive:hidden"
 						>
 							<Tests
 								appInfo={data.playground}
@@ -570,13 +570,13 @@ export default function ExercisePartRoute() {
 						</Tabs.Content>
 						<Tabs.Content
 							value="diff"
-							className="flex h-full flex-grow items-start justify-center radix-state-inactive:hidden"
+							className="flex h-full w-full flex-grow items-start justify-center self-start radix-state-inactive:hidden"
 						>
 							<Diff diff={data.diff} allApps={data.allApps} />
 						</Tabs.Content>
 						<Tabs.Content
 							value="chat"
-							className="flex h-full flex-grow items-start justify-center radix-state-inactive:hidden"
+							className="flex h-full w-full flex-grow items-start justify-center self-start radix-state-inactive:hidden"
 						>
 							<DiscordChat />
 						</Tabs.Content>
