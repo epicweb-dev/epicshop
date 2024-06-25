@@ -14,7 +14,7 @@ export async function loader({ request }: LoaderFunctionArgs) {
 	const title = url.searchParams.get('title') || workshopTitle
 	const subtitle =
 		url.searchParams.get('subtitle') || (await getWorkshopSubtitle())
-	const urlPathname = url.searchParams.get('urlPathname') || url.pathname
+	const urlPathname = url.searchParams.get('urlPathname') || ''
 	const element = (
 		<OgLayout
 			request={request}
