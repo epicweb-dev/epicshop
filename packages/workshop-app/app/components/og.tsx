@@ -164,7 +164,7 @@ export function OgLayout({
 					{workshopTitle}
 				</div>
 			) : null}
-			{urlPathname ? (
+			{urlPathname == null ? null : (
 				<div
 					style={{
 						display: 'flex',
@@ -177,9 +177,9 @@ export function OgLayout({
 						fontWeight: 700,
 					}}
 				>
-					{protocolFreeDomain + urlPathname}
+					{protocolFreeDomain + urlPathname.replace(/\/$/, '')}
 				</div>
-			) : null}
+			)}
 		</div>
 	)
 }
