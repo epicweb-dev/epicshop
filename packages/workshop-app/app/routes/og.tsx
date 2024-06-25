@@ -5,6 +5,7 @@ import {
 } from '@epic-web/workshop-utils/apps.server'
 import { type LoaderFunctionArgs } from '@remix-run/node'
 import { ImageResponse } from '@vercel/og'
+import { renderToStaticMarkup } from 'react-dom/server'
 import { OgLayout } from '#app/components/og.js'
 import { getErrorMessage } from '#app/utils/misc.js'
 
@@ -35,10 +36,13 @@ export async function loader({ request }: LoaderFunctionArgs) {
 			>
 				<h1
 					style={{
+						display: 'flex',
+						justifyContent: 'center',
 						fontSize: '80px',
-						fontWeight: 700,
-						textWrap: 'balance',
+						// https://github.com/vercel/satori/issues/498
+						textWrap: title.includes(' ') ? 'balance' : 'initial',
 						textAlign: 'center',
+						width: '100%',
 					}}
 				>
 					{title}
@@ -46,10 +50,13 @@ export async function loader({ request }: LoaderFunctionArgs) {
 				{subtitle ? (
 					<p
 						style={{
+							display: 'flex',
+							justifyContent: 'center',
 							fontSize: '40px',
-							fontWeight: 200,
-							textWrap: 'balance',
+							// https://github.com/vercel/satori/issues/498
+							textWrap: subtitle.includes(' ') ? 'balance' : 'initial',
 							textAlign: 'center',
+							width: '100%',
 						}}
 					>
 						{subtitle}
@@ -59,10 +66,17 @@ export async function loader({ request }: LoaderFunctionArgs) {
 		</OgLayout>
 	)
 
+	if (url.searchParams.get('html') === 'true') {
+		return new Response(renderToStaticMarkup(element), {
+			headers: { 'Content-Type': 'text/html' },
+		})
+	}
+
 	try {
 		return new ImageResponse(element, {
 			width: 1200,
 			height: 630,
+			debug: url.searchParams.get('debug') === 'true',
 		})
 	} catch (error) {
 		return new Response(getErrorMessage(error), { status: 500 })
