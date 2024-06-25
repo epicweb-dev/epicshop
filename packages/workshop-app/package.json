@@ -63,6 +63,7 @@
     "@sindresorhus/slugify": "^2.2.1",
     "@types/chai": "^4.3.16",
     "@types/chai-dom": "^1.11.3",
+    "@vercel/og": "^0.6.2",
     "address": "^2.0.2",
     "ansi-to-html": "^0.7.2",
     "chai": "^5.1.1",
