@@ -45,9 +45,9 @@ export const meta: MetaFunction<typeof loader, { root: typeof rootLoader }> = ({
 
 	return getSeoMetaTags({
 		title: `📝 | ${number}. ${data.exercise.title} | ${rootData?.workshopTitle}`,
-		description: `Elaboration for ${number}. ${data.exercise.title}`,
+		description: `Introduction for ${number}. ${data.exercise.title}`,
 		ogTitle: data.exercise.title,
-		ogDescription: `Elaboration for exercise ${Number(number)}`,
+		ogDescription: `Introduction for exercise ${Number(number)}`,
 		instructor: rootData.instructor,
 		requestInfo: rootData.requestInfo,
 	})
