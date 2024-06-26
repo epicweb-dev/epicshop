@@ -39,7 +39,7 @@ export async function getPresentUsers(
 					new Promise<Response>((resolve) =>
 						setTimeout(() => {
 							resolve(new Response('Timeout', { status: 500 }))
-						}, 350),
+						}, 500),
 					),
 				] as const)
 				if (response.statusText === 'Timeout') {
@@ -61,7 +61,6 @@ export async function getPresentUsers(
 			} catch (error) {
 				// console.error(err)
 				context.metadata.ttl = 300
-				console.log('aaaaaaaaaaaaaaaaa', error)
 				return []
 			}
 		},
