@@ -91,7 +91,8 @@ export async function loader({ request }: LoaderFunctionArgs) {
 			request,
 			timings,
 			timingKey: 'og-image',
-			forceFresh: debug || url.searchParams.get('fresh') === 'true',
+			// if debug is true, then force, otherwise use undefined and it'll be derived from the request
+			forceFresh: debug ? debug : undefined,
 			key: request.url,
 			cache: ogCache,
 			ttl: 1000 * 60 * 60 * 24 * 7,
@@ -102,6 +103,10 @@ export async function loader({ request }: LoaderFunctionArgs) {
 		})
 		return new Response(ogImg, {
 			headers: {
+				'Cache-Control':
+					ENV.EPICSHOP_DEPLOYED && !(debug || url.searchParams.has('fresh'))
+						? 'public, max-age=31536000, immutable'
+						: 'no-cache no-store',
 				'Content-Type': 'image/png',
 				'Server-Timing': timings.toString(),
 			},
