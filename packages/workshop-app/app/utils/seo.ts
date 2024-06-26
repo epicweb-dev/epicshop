@@ -16,7 +16,7 @@ export function getSeoMetaTags({
 			// to make cache busting possible, whenever the og image changes, we can change the version
 			// note if the inputs change, then the cache will be busted automatically
 			// it's only if the image changes that we need to change the version
-			version: 'v2',
+			version: 'v3',
 		}).toString(),
 	ogImageAlt = title,
 }: {

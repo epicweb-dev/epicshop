@@ -36,6 +36,7 @@ export const embeddedFilesCache = makeSingletonCache<
 	CachedEmbeddedFilesList | undefined
 >('EmbeddedFilesCache')
 export const compiledCodeCache = makeSingletonCache<string>('CompiledCodeCache')
+export const ogCache = makeSingletonCache<string>('OgCache')
 
 const cacheDir = path.join(os.homedir(), '.epicshop', 'cache')
 
@@ -109,8 +110,6 @@ export async function cachified<Value>({
 	request,
 	timings,
 	key,
-	// TODO: figure out what this was for before...
-	// eslint-disable-next-line @typescript-eslint/no-unused-vars
 	timingKey = key.length > 18 ? `${key.slice(0, 7)}...${key.slice(-8)}` : key,
 	...options
 }: Omit<C.CachifiedOptions<Value>, 'forceFresh'> & {
@@ -130,7 +129,7 @@ export async function cachified<Value>({
 			}),
 		},
 		C.mergeReporters(
-			cachifiedTimingReporter(timings),
+			cachifiedTimingReporter(timings, timingKey),
 			process.env.EPICSHOP_DEBUG_CACHE ? verboseReporter() : undefined,
 		),
 	)

@@ -74,7 +74,7 @@ export function getServerTimeHeader(timings?: Timings) {
 				.filter(Boolean)
 				.join(' & ')
 			return [
-				key.replaceAll(/(:| |@|=|;|,|\/|\\)/g, '_'),
+				key.replaceAll(/(:| |@|=|;|,|\/|\\|\{|\})/g, '_'),
 				desc ? `desc=${JSON.stringify(desc)}` : null,
 				`dur=${dur}`,
 			]
@@ -92,21 +92,23 @@ export function combineServerTimings(headers1: Headers, headers2: Headers) {
 
 export function cachifiedTimingReporter<Value>(
 	timings?: Timings,
+	timingKey?: string,
 ): undefined | CreateReporter<Value> {
 	if (!timings) return
 
 	return ({ key }) => {
+		timingKey = timingKey ?? key
 		const cacheRetrievalTimer = createTimer(
-			`cache:${key}`,
-			`${key} cache retrieval`,
+			`cache:${timingKey}`,
+			`${timingKey} cache retrieval`,
 		)
 		let getFreshValueTimer: ReturnType<typeof createTimer> | undefined
 		return (event) => {
 			switch (event.name) {
 				case 'getFreshValueStart':
 					getFreshValueTimer = createTimer(
-						`getFreshValue:${key}`,
-						`request forced to wait for a fresh ${key} value`,
+						`getFreshValue:${timingKey}`,
+						`request forced to wait for a fresh ${timingKey} value`,
 					)
 					break
 				case 'getFreshValueSuccess':
