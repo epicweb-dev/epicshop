@@ -43,6 +43,7 @@ export async function loader({ request }: LoaderFunctionArgs) {
 					height: '100%',
 					width: '100%',
 					color: 'white',
+					padding: 100,
 				}}
 			>
 				<h1
