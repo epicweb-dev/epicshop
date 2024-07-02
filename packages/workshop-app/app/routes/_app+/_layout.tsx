@@ -252,7 +252,7 @@ export default function App() {
 	const [isMenuOpened, setMenuOpened] = React.useState(false)
 
 	return (
-		<div className="flex h-full flex-col">
+		<div className="flex flex-col">
 			{user ? null : <EpicWebBanner />}
 			{/*
 				this isn't placed in a conditional with isWide because the server render
