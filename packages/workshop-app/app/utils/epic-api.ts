@@ -196,7 +196,7 @@ async function getEpicProgress({
 		}),
 	)
 	return cachified({
-		key: `epic-progress:${tokenPart}`,
+		key: `epic-progress:${epicWorkshopHost}:${tokenPart}`,
 		cache: fsCache,
 		request,
 		timings,
@@ -431,7 +431,7 @@ export async function getWorkshopData(
 	const epicWorkshopHost = await getEpicWorkshopHost()
 
 	return cachified({
-		key: `epic-workshop-data:${epicWorkshopSlug}`,
+		key: `epic-workshop-data:${epicWorkshopHost}:${epicWorkshopSlug}`,
 		cache: fsCache,
 		request,
 		forceFresh,
