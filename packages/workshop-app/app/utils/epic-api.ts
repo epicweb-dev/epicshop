@@ -1,4 +1,5 @@
 import {
+	getEpicWorkshopHost,
 	getEpicWorkshopSlug,
 	getExercises,
 	getWorkshopFinished,
@@ -108,11 +109,16 @@ async function getEpicVideoInfo({
 		async getFreshValue(
 			context,
 		): Promise<z.infer<typeof CachedEpicVideoInfoSchema>> {
-			const epicWebUrl = new URL(epicVideoEmbed)
-			if (epicWebUrl.host !== 'www.epicweb.dev') return null
+			const epicUrl = new URL(epicVideoEmbed)
+			if (
+				epicUrl.host !== 'www.epicweb.dev' &&
+				epicUrl.host !== 'www.epicreact.dev'
+			) {
+				return null
+			}
 
 			const infoResponse = await fetch(
-				`https://www.epicweb.dev/api${epicWebUrl.pathname}`,
+				`https://${epicUrl.host}/api${epicUrl.pathname}`,
 				accessToken
 					? { headers: { authorization: `Bearer ${accessToken}` } }
 					: undefined,
@@ -144,7 +150,7 @@ async function getEpicVideoInfo({
 						} as const
 					} else {
 						console.warn(
-							`Response from EpicWeb for "${epicWebUrl.pathname}" does not match expectation`,
+							`Response from EpicWeb for "${epicUrl.pathname}" does not match expectation`,
 							infoResult.error,
 						)
 						return {
@@ -180,6 +186,7 @@ async function getEpicProgress({
 }: { timings?: Timings; request?: Request; forceFresh?: boolean } = {}) {
 	if (ENV.EPICSHOP_DEPLOYED) return []
 	const authInfo = await getAuthInfo()
+	const epicWorkshopHost = await getEpicWorkshopHost()
 	if (!authInfo) return []
 	const tokenPart = md5(authInfo.tokenSet.access_token)
 	const EpicProgressSchema = z.array(
@@ -198,7 +205,7 @@ async function getEpicProgress({
 		swr: 1000 * 60 * 60 * 24 * 30,
 		checkValue: EpicProgressSchema,
 		async getFreshValue(context): Promise<z.infer<typeof EpicProgressSchema>> {
-			const response = await fetch('https://www.epicweb.dev/api/progress', {
+			const response = await fetch(`https://${epicWorkshopHost}/api/progress`, {
 				headers: {
 					authorization: `Bearer ${authInfo.tokenSet.access_token}`,
 				},
@@ -367,8 +374,9 @@ export async function updateProgress(
 	if (!authInfo) {
 		return { status: 'error', error: 'not authenticated' } as const
 	}
+	const epicWorkshopHost = await getEpicWorkshopHost()
 
-	const response = await fetch('https://www.epicweb.dev/api/progress', {
+	const response = await fetch(`https://${epicWorkshopHost}/api/progress`, {
 		method: 'POST',
 		headers: {
 			authorization: `Bearer ${authInfo.tokenSet.access_token}`,
@@ -420,6 +428,8 @@ export async function getWorkshopData(
 	// if you're authenticated anyway.
 	if (!authInfo) return { sections: [] }
 
+	const epicWorkshopHost = await getEpicWorkshopHost()
+
 	return cachified({
 		key: `epic-workshop-data:${epicWorkshopSlug}`,
 		cache: fsCache,
@@ -429,7 +439,7 @@ export async function getWorkshopData(
 		checkValue: ModuleSchema,
 		async getFreshValue(): Promise<z.infer<typeof ModuleSchema>> {
 			const response = await fetch(
-				`https://www.epicweb.dev/api/workshops/${encodeURIComponent(
+				`https://${epicWorkshopHost}/api/workshops/${encodeURIComponent(
 					epicWorkshopSlug,
 				)}`,
 			).catch((e) => new Response(getErrorMessage(e), { status: 500 }))

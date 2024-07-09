@@ -1304,6 +1304,15 @@ export async function getWorkshopInstructor() {
 	return instructor
 }
 
+export async function getEpicWorkshopHost() {
+	const epicWorkshopHost = await getPkgProp<string>(
+		workshopRoot,
+		'epicshop.epicWorkshopHost',
+		'www.epicweb.dev',
+	)
+	return epicWorkshopHost
+}
+
 export async function getEpicWorkshopSlug() {
 	const epicWorkshopSlug = await getPkgProp<string>(
 		workshopRoot,

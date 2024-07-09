@@ -143,3 +143,16 @@ used when the workshop is shared on social media by adding the following to the
 Make sure to place an image of you at `/pubic/images/instructor.png` that's at
 least 112px by 112px in your workshop repo and of course update the name and 𝕏
 handle to be your own.
+
+## Site customization
+
+If the workshop videos are hosted on a domain other than EpicWeb.dev, you can
+customize this by adding the following to the `package.json`:
+
+```json
+{
+	"epicshop": {
+		"epicWorkshopHost": "www.epicreact.dev"
+	}
+}
+```
