@@ -37,25 +37,13 @@ export function Preview({
 		const url = new URL(appInfo.stackBlitzUrl)
 		url.searchParams.set('embed', '1')
 		url.searchParams.set('theme', theme)
+
 		return (
-			<div className="relative h-full flex-grow overflow-y-auto scrollbar-thin scrollbar-thumb-scrollbar">
-				<a
-					href={url.toString()}
-					target="_blank"
-					rel="noreferrer"
-					className={cn(
-						'absolute bottom-5 right-5 flex items-center justify-center rounded-full bg-gray-100 p-2.5 transition hover:bg-gray-200 dark:bg-gray-800 hover:dark:bg-gray-600',
-					)}
-				>
-					<Icon name="ExternalLink" aria-hidden="true" />
-					<span className="sr-only">Open in New Window</span>
-				</a>
-				<iframe
-					title={title}
-					src={url.toString()}
-					className="h-full w-full flex-grow bg-white"
-				/>
-			</div>
+			<iframe
+				title={title}
+				src={url.toString()}
+				className="h-full w-full flex-grow bg-white"
+			/>
 		)
 	}
 

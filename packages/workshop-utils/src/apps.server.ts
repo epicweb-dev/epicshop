@@ -725,7 +725,7 @@ export async function getStackBlitzUrl({
 	const relativePath = fullPath.replace(`${workshopRoot}${path.sep}`, '')
 
 	const stackBlitzUrl = new URL(
-		`/fork/github${githubPart}/${relativePath}?${params}`,
+		`/github${githubPart}/${relativePath}?${params}`,
 		'https://stackblitz.com',
 	)
 
