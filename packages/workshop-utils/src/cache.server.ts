@@ -47,7 +47,10 @@ export const fsCache: CachifiedCache = {
 			const filePath = path.join(cacheDir, md5(key))
 
 			const data = await fsExtra.readJSON(filePath)
-			return data
+			if (data.entry) return data.entry
+			// this is just here for migration purposes. Earlier versions of the cache
+			// did not store the key in the cache file with the value under "entry".
+			return null
 		} catch (error: unknown) {
 			if (
 				error instanceof Error &&
@@ -62,12 +65,28 @@ export const fsCache: CachifiedCache = {
 	async set(key, entry) {
 		const filePath = path.join(cacheDir, md5(key))
 		await fsExtra.ensureDir(path.dirname(filePath))
-		await fsExtra.writeJSON(filePath, entry)
+		// store the key in the cache file because it's md5 hashed and the key has
+		// helpful debugging information.
+		await fsExtra.writeJSON(filePath, { key, entry })
 	},
 	async delete(key) {
 		const filePath = path.join(cacheDir, md5(key))
 		await fsExtra.remove(filePath)
 	},
+}
+
+export async function getAllFileCacheEntries() {
+	const files = await fsExtra.readdir(cacheDir)
+	const entries = await Promise.all(
+		files
+			.map(async (file) => {
+				const filePath = path.join(cacheDir, file)
+				const data = await fsExtra.readJSON(filePath)
+				return data
+			})
+			.filter(Boolean),
+	)
+	return entries
 }
 
 export async function deleteCache() {

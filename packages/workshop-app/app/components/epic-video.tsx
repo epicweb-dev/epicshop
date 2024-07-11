@@ -7,6 +7,7 @@ import { type EpicVideoInfos } from '#app/utils/epic-api.ts'
 import { cn } from '#app/utils/misc.tsx'
 import { Icon } from './icons.tsx'
 import { Loading } from './loading.tsx'
+import { useOptionalUser } from './user.tsx'
 
 const EpicVideoInfoContext = React.createContext<
 	Promise<EpicVideoInfos> | null | undefined
@@ -146,6 +147,7 @@ export function DeferredEpicVideo({
 	url: string
 	title?: string
 }) {
+	const user = useOptionalUser()
 	const epicVideoInfosPromise = React.useContext(EpicVideoInfoContext)
 	const linkUI = (
 		<div>
@@ -189,7 +191,7 @@ export function DeferredEpicVideo({
 						) : (
 							<div>
 								<Link to="/login" className="underline">
-									Login
+									{user ? 'Upgrade' : 'Login'}
 								</Link>
 								{' for transcripts'}
 							</div>
