@@ -111,6 +111,8 @@ export function VideoEmbed({
 			)}
 			<iframe
 				onLoad={() => setIframeLoaded(true)}
+				// show what would have shown if there is an error
+				onError={() => setIframeLoaded(true)}
 				src={url}
 				className={cn(
 					'absolute inset-0 flex h-full w-full transition-opacity duration-300',

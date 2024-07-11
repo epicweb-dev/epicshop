@@ -1,9 +1,11 @@
 import { type BaseExerciseStepApp } from '@epic-web/workshop-utils/apps.server'
+import { useState } from 'react'
 import { Icon } from '#app/components/icons'
 import {
 	InBrowserBrowser,
 	type InBrowserBrowserRef,
 } from '#app/components/in-browser-browser'
+import { Loading } from '#app/components/loading.js'
 import { useTheme } from '#app/routes/theme/index.js'
 import { cn, getBaseUrl } from '#app/utils/misc'
 import { useRequestInfo } from '#app/utils/request-info'
@@ -39,10 +41,19 @@ export function Preview({
 		url.searchParams.set('theme', theme)
 
 		return (
-			<iframe
+			<StackBlitzEmbed
 				title={title}
-				src={url.toString()}
-				className="h-full w-full flex-grow bg-white"
+				url={url.toString()}
+				loadingContent={
+					<Loading>
+						<span>
+							Loading{' '}
+							<a className="underline" href={appInfo.stackBlitzUrl}>
+								"{title}"
+							</a>
+						</span>
+					</Loading>
+				}
 			/>
 		)
 	}
@@ -92,4 +103,38 @@ export function Preview({
 			</p>
 		)
 	}
+}
+
+export function StackBlitzEmbed({
+	url,
+	title,
+	loadingContent,
+}: {
+	url: string
+	title?: string
+	loadingContent: React.ReactNode
+}) {
+	const [iframeLoaded, setIframeLoaded] = useState(false)
+
+	return (
+		<div className="h-full w-full flex-grow">
+			{iframeLoaded ? null : (
+				<div className="absolute inset-0 z-10 flex items-center justify-center">
+					{loadingContent}
+				</div>
+			)}
+			<iframe
+				onLoad={() => setIframeLoaded(true)}
+				// show what would have shown if there is an error
+				onError={() => setIframeLoaded(true)}
+				src={url}
+				className={cn(
+					'h-full w-full flex-grow transition-opacity duration-300',
+					iframeLoaded ? 'opacity-100' : 'opacity-0',
+				)}
+				title={title}
+				sandbox="allow-forms allow-scripts allow-same-origin allow-popups allow-popups-to-escape-sandbox"
+			/>
+		</div>
+	)
 }

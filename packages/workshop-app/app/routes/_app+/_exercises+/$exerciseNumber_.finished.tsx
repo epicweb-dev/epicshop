@@ -232,6 +232,8 @@ function Survey({
 			) : null}
 			<iframe
 				onLoad={() => setIframeLoaded(true)}
+				// show what would have shown if there is an error
+				onError={() => setIframeLoaded(true)}
 				title="Elaboration"
 				src={exerciseFormEmbedUrl}
 				className={cn(
