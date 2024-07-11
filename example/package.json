@@ -33,7 +33,7 @@
   "license": "MIT",
   "prettier": "@epic-web/config/prettier",
   "dependencies": {
-    "@epic-web/config": "^1.11.2",
+    "@epic-web/config": "^1.11.3",
     "@epic-web/workshop-utils": "file:../workshop-utils",
     "@playwright/test": "^1.44.1",
     "@testing-library/dom": "^10.1.0",

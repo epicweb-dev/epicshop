@@ -4,9 +4,9 @@ import {
 	InBrowserBrowser,
 	type InBrowserBrowserRef,
 } from '#app/components/in-browser-browser'
+import { useTheme } from '#app/routes/theme/index.js'
 import { cn, getBaseUrl } from '#app/utils/misc'
 import { useRequestInfo } from '#app/utils/request-info'
-import { useTheme } from '#app/routes/theme/index.js'
 
 export function Preview({
 	id,
@@ -29,9 +29,9 @@ export function Preview({
 	inBrowserBrowserRef: React.RefObject<InBrowserBrowserRef | null>
 }) {
 	const requestInfo = useRequestInfo()
+	const theme = useTheme()
 	if (!appInfo) return <p>No app here. Sorry.</p>
 	const { isRunning, dev, name, portIsAvailable, title } = appInfo
-	const theme = useTheme()
 
 	if (ENV.EPICSHOP_DEPLOYED && appInfo.stackBlitzUrl) {
 		const url = new URL(appInfo.stackBlitzUrl)
