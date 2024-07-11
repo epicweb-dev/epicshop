@@ -156,3 +156,55 @@ customize this by adding the following to the `package.json`:
 	}
 }
 ```
+
+## Stack Blitz Support
+
+StackBlitz embeds are used in the deployed version of the app so people can get
+a preview for what it's like to work through things (though they will be much
+better off running everything locally).
+
+StackBlitz is enabled by default and the defaults are pretty good, but if you
+would like to customize a few things you can do so globally or in individual
+exercises by adding the following to the `package.json`:
+
+```json
+{
+	"epicshop": {
+		"stackBlitzConfig": {
+			"title": "Title of the StackBlitz",
+			"startScript": "npm run dev",
+			"view": "preview",
+			"file": "src/index.tsx"
+		}
+	}
+}
+```
+
+Note: the `githubRoot` is required and only necessary in the root `package.json`
+of the workshop.
+
+The only config option you might really care to customize is the `file` which
+cannot be reasonably derived by the workshop app.
+
+The default `title` is the title of the exercise, the `startScript` is
+automatically detected by StackBlitz (defaults to `dev` then `start`).
+
+If you leave off the `view` then StackBlitz automatically determines the best
+view for the width of the iframe (valid values include `preview`, `editor`, and
+`both`).
+
+### Disabling StackBlitz
+
+StackBlitz can't do everything (like prisma + SQLite is not supported for
+example). So you can disable the embed via the `package.json` (either globally
+in the root or in an individual exercise):
+
+```json
+{
+	"epicshop": {
+		"stackBlitzConfig": null
+	}
+}
+```
+
+Setting the config to null will disable the embed.

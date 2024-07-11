@@ -294,6 +294,7 @@ export async function loader({ request, params }: LoaderFunctionArgs) {
 						name: playgroundApp.name,
 						appName: playgroundApp.appName,
 						isUpToDate: playgroundApp.isUpToDate,
+						stackBlitzUrl: playgroundApp.stackBlitzUrl,
 						...(await getAppRunningState(playgroundApp)),
 					} as const)
 				: null,
@@ -305,6 +306,7 @@ export async function loader({ request, params }: LoaderFunctionArgs) {
 						test: problemApp.test,
 						title: problemApp.title,
 						name: problemApp.name,
+						stackBlitzUrl: problemApp.stackBlitzUrl,
 						...(await getAppRunningState(problemApp)),
 					} as const)
 				: null,
@@ -316,6 +318,7 @@ export async function loader({ request, params }: LoaderFunctionArgs) {
 						test: solutionApp.test,
 						title: solutionApp.title,
 						name: solutionApp.name,
+						stackBlitzUrl: solutionApp.stackBlitzUrl,
 						...(await getAppRunningState(solutionApp)),
 					} as const)
 				: null,
@@ -383,7 +386,7 @@ export default function ExercisePartRoute() {
 		if (tab === 'problem' || tab === 'solution') {
 			if (data[tab]?.dev.type === 'none') return true
 			if (ENV.EPICSHOP_DEPLOYED) {
-				return data[tab]?.dev.type !== 'browser'
+				return data[tab]?.dev.type !== 'browser' && !data[tab]?.stackBlitzUrl
 			}
 		}
 		if (tab === 'playground' && ENV.EPICSHOP_DEPLOYED) return true

@@ -43,6 +43,19 @@ const playgroundAppNameInfoPath = path.join(
 
 type CachifiedOptions = { timings?: Timings; request?: Request }
 
+const StackBlitzConfigSchema = z.object({
+	// we default this to `${exerciseTitle} (${type})`
+	title: z.string().optional(),
+	// stackblitz defaults this to dev automatically
+	startScript: z.string().optional(),
+	// if no value is provided, then stackblitz defaults this to whatever
+	// looks best based on the width of the screen
+	view: z
+		.union([z.literal('editor'), z.literal('preview'), z.literal('both')])
+		.optional(),
+	file: z.string().optional(),
+})
+
 const BaseAppSchema = z.object({
 	/** a unique identifier for the app */
 	name: z.string(),
@@ -72,6 +85,7 @@ const BaseAppSchema = z.object({
 		}),
 		z.object({ type: z.literal('none') }),
 	]),
+	stackBlitzUrl: z.string().nullable(),
 })
 
 const BaseExerciseStepAppSchema = BaseAppSchema.extend({
@@ -150,6 +164,7 @@ export type ExampleApp = z.infer<typeof ExampleAppSchema>
 export type PlaygroundApp = z.infer<typeof PlaygroundAppSchema>
 export type ExerciseStepApp = z.infer<typeof ExerciseStepAppSchema>
 export type App = z.infer<typeof AppSchema>
+export type AppType = App['type']
 
 type Exercise = z.infer<typeof ExerciseSchema>
 
@@ -502,7 +517,7 @@ function getAppName(fullPath: string) {
 	if (/playground\/?$/.test(fullPath)) return 'playground'
 	if (/examples\/.+\/?$/.test(fullPath)) {
 		const restOfPath = fullPath.replace(
-			`${getWorkshopRoot()}${path.sep}examples${path.sep}`,
+			`${workshopRoot}${path.sep}examples${path.sep}`,
 			'',
 		)
 		return `example.${restOfPath.split(path.sep).join('__sep__')}`
@@ -664,6 +679,59 @@ async function getDevInfo({
 	}
 }
 
+export async function getStackBlitzUrl({
+	fullPath,
+	title,
+	type,
+}: {
+	fullPath: string
+	title: string
+	type: AppType
+}) {
+	const Schema = StackBlitzConfigSchema.nullable().optional()
+	const appStackBlitzConfig = Schema.parse(
+		// if there's no package.json this will throw. If that's the case, we can't use stackblitz
+		// https://discord.com/channels/364486390102097930/1260979618240790578
+		await getPkgProp(fullPath, 'epicshop.stackBlitzConfig', {}).catch(
+			() => null,
+		),
+	)
+	if (appStackBlitzConfig === null) return null
+	const workshopStackBlitzConfig = Schema.parse(
+		await getPkgProp(workshopRoot, 'epicshop.stackBlitzConfig', {}),
+	)
+
+	if (workshopStackBlitzConfig === null) return null
+
+	const githubRootUrlString = await getPkgProp(
+		workshopRoot,
+		'epicshop.githubRoot',
+		'',
+	)
+	if (!githubRootUrlString) return null
+
+	const githubRootUrl = new URL(githubRootUrlString)
+
+	const githubPart = githubRootUrl.pathname
+
+	const config = {
+		...workshopStackBlitzConfig,
+		...appStackBlitzConfig,
+		title: appStackBlitzConfig?.title ?? `${title} (${type})`,
+	} satisfies z.infer<typeof StackBlitzConfigSchema>
+
+	const params = new URLSearchParams(config)
+
+	const relativePath = fullPath.replace(`${workshopRoot}${path.sep}`, '')
+
+	const stackBlitzUrl = new URL(
+		`/fork/github${githubPart}/${relativePath}?${params}`,
+		'https://stackblitz.com',
+	)
+
+	return stackBlitzUrl.toString()
+}
+
 export async function getPlaygroundApp({
 	timings,
 	request,
@@ -707,24 +775,28 @@ export async function getPlaygroundApp({
 				await getFullPathFromAppName(baseAppName),
 			)
 			const playgroundAppModifiedTime = await getDirModifiedTime(playgroundDir)
+			const type = 'playground'
 
+			const title = compiledReadme?.title ?? name
 			return {
 				name,
 				appName: baseAppName,
-				type: 'playground',
+				type,
 				isUpToDate: appModifiedTime <= playgroundAppModifiedTime,
 				fullPath: playgroundDir,
-				relativePath: playgroundDir.replace(
-					`${getWorkshopRoot()}${path.sep}`,
-					'',
-				),
-				title: compiledReadme?.title ?? name,
+				relativePath: playgroundDir.replace(`${workshopRoot}${path.sep}`, ''),
+				title,
 				epicVideoEmbeds: compiledReadme?.epicVideoEmbeds,
 				dirName,
 				instructionsCode: compiledReadme?.code,
 				test,
 				dev,
-			} as const
+				stackBlitzUrl: await getStackBlitzUrl({
+					fullPath: playgroundDir,
+					title,
+					type,
+				}),
+			} satisfies PlaygroundApp
 		},
 	}).catch((error) => {
 		console.error(error)
@@ -744,18 +816,25 @@ async function getExampleAppFromPath(
 	)
 	const name = getAppName(fullPath)
 	const portNumber = 8000 + index
+	const type = 'example'
+	const title = compiledReadme?.title ?? name
 	return {
 		name,
-		type: 'example',
+		type,
 		fullPath,
-		relativePath: fullPath.replace(`${getWorkshopRoot()}${path.sep}`, ''),
-		title: compiledReadme?.title ?? name,
+		relativePath: fullPath.replace(`${workshopRoot}${path.sep}`, ''),
+		title,
 		epicVideoEmbeds: compiledReadme?.epicVideoEmbeds,
 		dirName,
 		instructionsCode: compiledReadme?.code,
 		test: await getTestInfo({ fullPath }),
 		dev: await getDevInfo({ fullPath, portNumber }),
-	}
+		stackBlitzUrl: await getStackBlitzUrl({
+			fullPath,
+			title,
+			type,
+		}),
+	} satisfies ExampleApp
 }
 
 async function getExampleApps({
@@ -819,9 +898,10 @@ async function getSolutionAppFromPath(
 		getTestInfo({ fullPath }),
 		getDevInfo({ fullPath, portNumber }),
 	])
+	const title = compiledReadme?.title ?? name
 	return {
 		name,
-		title: compiledReadme?.title ?? name,
+		title,
 		epicVideoEmbeds: compiledReadme?.epicVideoEmbeds,
 		type: 'solution',
 		problemName,
@@ -829,11 +909,16 @@ async function getSolutionAppFromPath(
 		stepNumber,
 		dirName,
 		fullPath,
-		relativePath: fullPath.replace(`${getWorkshopRoot()}${path.sep}`, ''),
+		relativePath: fullPath.replace(`${workshopRoot}${path.sep}`, ''),
 		instructionsCode: compiledReadme?.code,
 		test,
 		dev,
-	}
+		stackBlitzUrl: await getStackBlitzUrl({
+			fullPath,
+			title,
+			type: 'solution',
+		}),
+	} satisfies SolutionApp
 }
 
 async function getSolutionApps({
@@ -895,21 +980,27 @@ async function getProblemAppFromPath(
 		getTestInfo({ fullPath }),
 		getDevInfo({ fullPath, portNumber }),
 	])
+	const title = compiledReadme?.title ?? name
 	return {
 		solutionName,
 		name,
-		title: compiledReadme?.title ?? name,
+		title,
 		epicVideoEmbeds: compiledReadme?.epicVideoEmbeds,
 		type: 'problem',
 		exerciseNumber,
 		stepNumber,
 		dirName,
 		fullPath,
-		relativePath: fullPath.replace(`${getWorkshopRoot()}${path.sep}`, ''),
+		relativePath: fullPath.replace(`${workshopRoot}${path.sep}`, ''),
 		instructionsCode: compiledReadme?.code,
 		test,
 		dev,
-	}
+		stackBlitzUrl: await getStackBlitzUrl({
+			fullPath,
+			title,
+			type: 'problem',
+		}),
+	} satisfies ProblemApp
 }
 
 async function getProblemApps({
@@ -1065,7 +1156,6 @@ export async function setPlayground(
 	{ reset }: { reset?: boolean } = {},
 ) {
 	const isIgnored = await isGitIgnored({ cwd: srcDir })
-	const workshopRoot = getWorkshopRoot()
 	const destDir = path.join(workshopRoot, 'playground')
 	const playgroundFiles = path.join(destDir, '**')
 	getOptionalWatcher()?.unwatch(playgroundFiles)
@@ -1299,7 +1389,7 @@ export async function getWorkshopInstructor() {
 		.optional()
 
 	const instructor = InstructorSchema.parse(
-		await getPkgProp(getWorkshopRoot(), 'epicshop.instructor'),
+		await getPkgProp(workshopRoot, 'epicshop.instructor'),
 	)
 	return instructor
 }

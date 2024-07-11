@@ -4,7 +4,7 @@
   "epicshop": {
     "title": "Web App Fundamentals 🔭",
     "subtitle": "Learn the foundational tools and skills of building web applications",
-    "githubRoot": "https://github.com/epicweb-dev/epicshop/tree/main/packages/example",
+    "githubRoot": "https://github.com/epicweb-dev/epicshop/tree/main/example",
     "root": true,
     "epicWorkshopSlug": "full-stack-foundations",
     "initialRoute": "/whatever",

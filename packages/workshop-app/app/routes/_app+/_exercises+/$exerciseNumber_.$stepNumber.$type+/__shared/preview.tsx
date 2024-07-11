@@ -6,6 +6,7 @@ import {
 } from '#app/components/in-browser-browser'
 import { cn, getBaseUrl } from '#app/utils/misc'
 import { useRequestInfo } from '#app/utils/request-info'
+import { useTheme } from '#app/routes/theme/index.js'
 
 export function Preview({
 	id,
@@ -23,12 +24,40 @@ export function Preview({
 		fullPath: string
 		dev: BaseExerciseStepApp['dev']
 		test: BaseExerciseStepApp['test']
+		stackBlitzUrl: BaseExerciseStepApp['stackBlitzUrl']
 	} | null
 	inBrowserBrowserRef: React.RefObject<InBrowserBrowserRef | null>
 }) {
 	const requestInfo = useRequestInfo()
 	if (!appInfo) return <p>No app here. Sorry.</p>
 	const { isRunning, dev, name, portIsAvailable, title } = appInfo
+	const theme = useTheme()
+
+	if (ENV.EPICSHOP_DEPLOYED && appInfo.stackBlitzUrl) {
+		const url = new URL(appInfo.stackBlitzUrl)
+		url.searchParams.set('embed', '1')
+		url.searchParams.set('theme', theme)
+		return (
+			<div className="relative h-full flex-grow overflow-y-auto scrollbar-thin scrollbar-thumb-scrollbar">
+				<a
+					href={url.toString()}
+					target="_blank"
+					rel="noreferrer"
+					className={cn(
+						'absolute bottom-5 right-5 flex items-center justify-center rounded-full bg-gray-100 p-2.5 transition hover:bg-gray-200 dark:bg-gray-800 hover:dark:bg-gray-600',
+					)}
+				>
+					<Icon name="ExternalLink" aria-hidden="true" />
+					<span className="sr-only">Open in New Window</span>
+				</a>
+				<iframe
+					title={title}
+					src={url.toString()}
+					className="h-full w-full flex-grow bg-white"
+				/>
+			</div>
+		)
+	}
 
 	if (dev.type === 'script') {
 		const baseUrl = getBaseUrl({
