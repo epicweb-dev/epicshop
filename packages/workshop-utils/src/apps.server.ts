@@ -710,7 +710,9 @@ export async function getStackBlitzUrl({
 	)
 	if (!githubRootUrlString) return null
 
-	const githubRootUrl = new URL(githubRootUrlString)
+	const githubRootUrl = new URL(
+		githubRootUrlString.replace(/\/blob\//, '/tree/'),
+	)
 
 	const githubPart = githubRootUrl.pathname
 
