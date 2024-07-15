@@ -52,7 +52,6 @@ export function ThemeSwitch() {
 	}, [])
 
 	const [form] = useForm({
-		id: 'theme-switcher',
 		lastResult: fetcher.data,
 		onValidate({ formData }) {
 			return parseWithZod(formData, { schema: ThemeFormSchema })
