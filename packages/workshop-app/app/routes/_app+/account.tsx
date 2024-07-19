@@ -9,6 +9,7 @@ import { json, redirect, type LoaderFunctionArgs } from '@remix-run/node'
 import { Form, Link, useFetcher, useLoaderData } from '@remix-run/react'
 import { Button } from '#app/components/button.tsx'
 import { Icon } from '#app/components/icons.tsx'
+import { SimpleTooltip } from '#app/components/ui/tooltip.js'
 import { useOptionalDiscordMember, useUser } from '#app/components/user.tsx'
 import { ensureUndeployed } from '#app/utils/misc.tsx'
 import { usePresencePreferences } from '#app/utils/presence.tsx'
@@ -80,43 +81,66 @@ export default function Account() {
 						And you are connected to discord as {discordMember.displayName} (
 						{discordMember.id}).
 					</p>
-					<disconnectFetcher.Form method="post" className="mt-2">
-						<Button varient="mono" name="intent" value="disconnect-discord">
-							Disconnect Discord
-						</Button>
-					</disconnectFetcher.Form>
+					<div className="flex justify-center gap-2">
+						<disconnectFetcher.Form method="post">
+							<Button varient="mono" name="intent" value="disconnect-discord">
+								Disconnect Discord
+							</Button>
+						</disconnectFetcher.Form>
+						<SimpleTooltip content="Your discord connection gives you access to the exclusive Discord channels for Epic Web">
+							<Icon name="Question" tabIndex={0} />
+						</SimpleTooltip>
+					</div>
 				</>
 			) : (
-				<Link
-					to={data.discordAuthUrl}
-					className="inline-flex items-center gap-2 underline"
-				>
-					<Icon name="Discord" size="lg" />
-					Connect Discord
-				</Link>
+				<div className="flex items-center gap-2">
+					<Link
+						to={data.discordAuthUrl}
+						className="inline-flex items-center gap-2 underline"
+					>
+						<Icon name="Discord" size="lg" />
+						Connect Discord
+					</Link>
+					<SimpleTooltip content="This will give you access to the exclusive Discord channels for Epic Web">
+						<Icon name="Question" tabIndex={0} />
+					</SimpleTooltip>
+				</div>
 			)}
-			<Form method="POST">
-				<input
-					name="optOut"
-					type="hidden"
-					value={presencePreferences?.optOut ? 'false' : 'true'}
-				/>
-				<Button varient="mono" name="intent" value="presence-opt-out">
-					{presencePreferences?.optOut ? 'Opt in to' : 'Opt out of'} presence
-				</Button>
-			</Form>
-			<p>
-				<small>
-					Note: it is your <i className="italic">device</i> that's logged in,
-					not your browser. So all browsers on this device will be logged in
-					with the same account on this device.
-				</small>
-			</p>
-			<Form method="post" className="mt-2">
-				<Button varient="primary" name="intent" value="logout">
-					Log out
-				</Button>
-			</Form>
+			<div className="flex items-center gap-2">
+				<Form method="POST">
+					<input
+						name="optOut"
+						type="hidden"
+						value={presencePreferences?.optOut ? 'false' : 'true'}
+					/>
+					<Button varient="mono" name="intent" value="presence-opt-out">
+						{presencePreferences?.optOut ? 'Opt in to' : 'Opt out of'} presence
+					</Button>
+				</Form>
+				<SimpleTooltip content="This controls whether your name and avatar are displayed in the pile of faces in navigation">
+					<Icon name="Question" tabIndex={0} />
+				</SimpleTooltip>
+			</div>
+			<div className="flex items-center gap-2">
+				<Form method="post">
+					<Button varient="mono" name="intent" value="logout">
+						Log device out
+					</Button>
+				</Form>
+				<SimpleTooltip
+					content={
+						<div>
+							Note: it is your <i className="italic">device</i> that's logged
+							in, not your browser.
+							<br />
+							So all browsers on this device will be logged in with the same
+							account on this device.
+						</div>
+					}
+				>
+					<Icon name="Question" tabIndex={0} />
+				</SimpleTooltip>
+			</div>
 			<p>
 				Check{' '}
 				<Link to="/onboarding" className="underline">

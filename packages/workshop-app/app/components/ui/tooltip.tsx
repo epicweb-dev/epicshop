@@ -33,7 +33,7 @@ export function SimpleTooltip({
 	content,
 	children,
 }: {
-	content: string | null
+	content: React.ReactNode
 	children: React.ReactNode
 }) {
 	if (!content) return children
