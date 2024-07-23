@@ -117,6 +117,14 @@ async function getEpicVideoInfo({
 				return null
 			}
 
+			// this may be temporary until the /tutorials/ endpoint supports /api
+			if (epicUrl.pathname.startsWith('/tutorials/')) {
+				epicUrl.pathname = epicUrl.pathname.replace(
+					/^\/tutorials\//,
+					'/workshops/',
+				)
+			}
+
 			const infoResponse = await fetch(
 				`https://${epicUrl.host}/api${epicUrl.pathname}`,
 				accessToken
