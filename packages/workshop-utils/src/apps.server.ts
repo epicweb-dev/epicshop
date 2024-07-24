@@ -1387,13 +1387,15 @@ export async function getWorkshopInstructor() {
 			name: z.string().optional(),
 			avatar: z.string().optional(),
 			𝕏: z.string().optional(),
+			// alias because 𝕏 is hard to type 😅
+			xHandle: z.string().optional(),
 		})
 		.optional()
 
 	const instructor = InstructorSchema.parse(
 		await getPkgProp(workshopRoot, 'epicshop.instructor'),
 	)
-	return instructor
+	return instructor ? { ...instructor, 𝕏: instructor.xHandle } : undefined
 }
 
 export async function getEpicWorkshopHost() {

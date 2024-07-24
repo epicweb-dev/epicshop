@@ -23,7 +23,7 @@ export function getSeoMetaTags({
 	title: string
 	requestInfo: { domain: string; path: string }
 	description?: string
-	instructor: Awaited<ReturnType<typeof getWorkshopInstructor>>
+	instructor: Partial<Awaited<ReturnType<typeof getWorkshopInstructor>>>
 	ogTitle?: string
 	ogDescription?: string
 	ogImageUrl?: string

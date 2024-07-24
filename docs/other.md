@@ -144,6 +144,8 @@ Make sure to place an image of you at `/pubic/images/instructor.png` that's at
 least 112px by 112px in your workshop repo and of course update the name and 𝕏
 handle to be your own.
 
+> NOTE: you can use `xHandle` instead of `𝕏` if you want 😅
+
 ## Site customization
 
 If the workshop videos are hosted on a domain other than EpicWeb.dev, you can
