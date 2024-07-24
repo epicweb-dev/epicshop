@@ -626,6 +626,18 @@ async function getTestInfo({
 	fullPath: string
 }): Promise<BaseApp['test']> {
 	const hasPkgJson = await exists(path.join(fullPath, 'package.json'))
+	const testsEnabledLocally = hasPkgJson
+		? await getPkgProp(fullPath, 'epicshop.testTab.enabled', true)
+		: true
+	if (testsEnabledLocally === false) return { type: 'none' }
+
+	const testsEnabledGlobally = await getPkgProp(
+		workshopRoot,
+		'epicshop.testTab.enabled',
+		true,
+	)
+	if (testsEnabledGlobally === false) return { type: 'none' }
+
 	const testScript = hasPkgJson
 		? await getPkgProp(fullPath, 'epicshop.scripts.test', '')
 		: null
