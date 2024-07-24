@@ -58,7 +58,7 @@ export async function getPresentUsers(
 				} else {
 					return uniqueUsers([...users, user])
 				}
-			} catch (error) {
+			} catch {
 				// console.error(err)
 				context.metadata.ttl = 300
 				return []
