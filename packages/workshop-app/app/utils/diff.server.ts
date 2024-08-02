@@ -65,7 +65,9 @@ function getFileCodeblocks(
 	type: string,
 ) {
 	if (!file.chunks.length) {
-		return [`No changes`]
+		return [
+			`<p className="m-0 p-4 border-b text-muted-foreground">No changes</p>`,
+		]
 	}
 	const filepath = diffPathToRelative(
 		file.type === 'RenamedFile' ? file.pathAfter : file.path,
