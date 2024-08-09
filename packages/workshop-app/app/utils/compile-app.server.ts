@@ -45,7 +45,9 @@ export async function compileTs(
 		request,
 		timings,
 		forceFresh:
-			forceFresh || (await getForceFresh(filePath, compiledCodeCache.get(key))),
+			forceFresh ||
+			(await getForceFresh(filePath, compiledCodeCache.get(key))) ||
+			(await getForceFresh(fullPath, compiledCodeCache.get(key))),
 		cache: compiledCodeCache,
 		getFreshValue: async () => {
 			const result = await esbuild.build({

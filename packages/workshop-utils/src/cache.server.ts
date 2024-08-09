@@ -137,15 +137,16 @@ export async function cachified<Value>({
 	forceFresh?: boolean | string
 	timingKey?: string
 }): Promise<Value> {
+	const forceFresh = await shouldForceFresh({
+		forceFresh: options.forceFresh,
+		request,
+		key,
+	})
 	return C.cachified(
 		{
 			...options,
 			key,
-			forceFresh: await shouldForceFresh({
-				forceFresh: options.forceFresh,
-				request,
-				key,
-			}),
+			forceFresh,
 		},
 		C.mergeReporters(
 			cachifiedTimingReporter(timings, timingKey),
