@@ -79,6 +79,8 @@ body {
 
 	--highlight-removed: #d3423e;
 	--highlight-added: #7fdbca;
+	--highlight-added-selection: #7fdbca4a;
+	--highlight-removed-selection: #d3433e24;
 }
 
 :root .light,
@@ -273,6 +275,16 @@ body {
 
 .prose pre[data-add] .codeblock-line[data-add]:after {
 	background: var(--highlight-added);
+}
+
+.prose pre[data-add] .codeblock-line[data-add]::selection,
+.prose pre[data-add] .codeblock-line[data-add] span::selection {
+	background: var(--highlight-added-selection);
+}
+
+.prose pre[data-remove] .codeblock-line[data-remove]::selection,
+.prose pre[data-remove] .codeblock-line[data-remove] span::selection {
+	background: var(--highlight-removed-selection);
 }
 
 .prose pre {
