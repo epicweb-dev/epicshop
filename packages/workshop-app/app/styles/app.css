@@ -77,10 +77,10 @@ body {
 	--base0E: #c792ea; /* operators */
 	--base0F: #d3423e; /* "Embedded" (whatever that means) */
 
-	--highlight-removed: #d3423e;
 	--highlight-added: #7fdbca;
-	--highlight-added-selection: #7fdbca4a;
-	--highlight-removed-selection: #d3433e24;
+	--highlight-added-selection: #7fdbca47;
+	--highlight-removed: #d3423e;
+	--highlight-removed-selection: #d3433e57;
 }
 
 :root .light,
@@ -102,8 +102,10 @@ body {
 	--base0E: #994cc3; /* operators */
 	--base0F: #d3423e; /* "Embedded" (whatever that means) */
 
-	--highlight-removed: #d3423e;
 	--highlight-added: #0c969b;
+	--highlight-added-selection: #7fdbca4a;
+	--highlight-removed: #d3423e;
+	--highlight-removed-selection: #d3433e24;
 }
 
 /*
