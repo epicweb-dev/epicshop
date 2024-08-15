@@ -7,6 +7,7 @@ import {
 	getServerTimeHeader,
 	makeTimings,
 } from '@epic-web/workshop-utils/timing.server'
+import { type SEOHandle } from '@nasa-gcn/remix-seo'
 import {
 	json,
 	type ActionFunctionArgs,
@@ -31,6 +32,10 @@ import {
 
 declare global {
 	var __inspector_open__: boolean | undefined
+}
+
+export const handle: SEOHandle = {
+	getSitemapEntries: () => null,
 }
 
 export const meta: MetaFunction<typeof loader, { root: typeof rootLoader }> = ({

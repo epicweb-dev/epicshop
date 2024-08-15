@@ -1,3 +1,4 @@
+import { type SEOHandle } from '@nasa-gcn/remix-seo'
 import { json } from '@remix-run/node'
 import { Link, useLoaderData } from '@remix-run/react'
 import { Icon } from '#app/components/icons.tsx'
@@ -6,6 +7,10 @@ import {
 	useOptionalUser,
 } from '#app/components/user.tsx'
 import { getDiscordAuthURL } from '../discord.callback.ts'
+
+export const handle: SEOHandle = {
+	getSitemapEntries: () => null,
+}
 
 export async function loader() {
 	return json({ discordAuthUrl: getDiscordAuthURL() })

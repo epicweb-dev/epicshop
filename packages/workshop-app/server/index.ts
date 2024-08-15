@@ -6,7 +6,7 @@ import { getApps, getWorkshopRoot } from '@epic-web/workshop-utils/apps.server'
 import { getWatcher } from '@epic-web/workshop-utils/change-tracker.server'
 import { checkForUpdates } from '@epic-web/workshop-utils/git.server'
 import { createRequestHandler } from '@remix-run/express'
-import { installGlobals } from '@remix-run/node'
+import { type ServerBuild, installGlobals } from '@remix-run/node'
 import { ip as ipAddress } from 'address'
 import chalk from 'chalk'
 import closeWithGrace from 'close-with-grace'
@@ -16,6 +16,8 @@ import getPort, { portNumbers } from 'get-port'
 import morgan from 'morgan'
 import sourceMapSupport from 'source-map-support'
 import { WebSocket, WebSocketServer } from 'ws'
+
+const MODE = process.env.NODE_ENV ?? 'development'
 
 installGlobals()
 sourceMapSupport.install()
@@ -111,13 +113,21 @@ app.use((req, res, next) => {
 	next()
 })
 
+async function getBuild() {
+	const build = viteDevServer
+		? viteDevServer.ssrLoadModule('virtual:remix/server-build')
+		: // @ts-ignore this should exist before running the server
+			// but it may not exist just yet.
+			await import('#build/server/index.js')
+	return build as ServerBuild
+}
+
 app.all(
 	'*',
 	createRequestHandler({
-		build: viteDevServer
-			? () => viteDevServer.ssrLoadModule('virtual:remix/server-build')
-			: // @ts-ignore (this may or may not be built at this time, but it will be in prod)
-				((await import('#build/server/index.js')) as any),
+		getLoadContext: () => ({ serverBuild: getBuild() }),
+		mode: MODE,
+		build: getBuild,
 	}),
 )
 

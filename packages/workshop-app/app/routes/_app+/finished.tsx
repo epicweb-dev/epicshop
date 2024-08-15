@@ -12,6 +12,7 @@ import {
 	time,
 } from '@epic-web/workshop-utils/timing.server'
 import { getPkgProp } from '@epic-web/workshop-utils/utils.server'
+import { type SEOHandle } from '@nasa-gcn/remix-seo'
 import {
 	defer,
 	type HeadersFunction,
@@ -31,6 +32,10 @@ import { cn } from '#app/utils/misc.tsx'
 import { getSeoMetaTags } from '#app/utils/seo.js'
 import { EditFileOnGitHub } from '../launch-editor.tsx'
 import { ProgressToggle } from '../progress.tsx'
+
+export const handle: SEOHandle = {
+	getSitemapEntries: () => [{ route: '/finished' }],
+}
 
 export const meta: MetaFunction<typeof loader, { root: typeof rootLoader }> = ({
 	matches,

@@ -3,6 +3,7 @@ import { fileURLToPath } from 'url'
 import { vitePlugin as remix } from '@remix-run/dev'
 import { flatRoutes } from 'remix-flat-routes'
 import { defineConfig } from 'vite'
+import { envOnlyMacros } from 'vite-env-only'
 
 const __filename = fileURLToPath(import.meta.url)
 const __dirname = path.dirname(__filename)
@@ -53,6 +54,7 @@ export default defineConfig({
 	},
 	resolve: { alias: aliases },
 	plugins: [
+		envOnlyMacros(),
 		remix({
 			ignoredRouteFiles: ['**/*'],
 			serverModuleFormat: 'esm',

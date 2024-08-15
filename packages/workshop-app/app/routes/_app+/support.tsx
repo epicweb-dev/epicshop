@@ -1,4 +1,9 @@
+import { type SEOHandle } from '@nasa-gcn/remix-seo'
 import { Link } from '@remix-run/react'
+
+export const handle: SEOHandle = {
+	getSitemapEntries: () => null,
+}
 
 export default function Support() {
 	const repoGroups = ENV.EPICSHOP_GITHUB_ROOT.match(

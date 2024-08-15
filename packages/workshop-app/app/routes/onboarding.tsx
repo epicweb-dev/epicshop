@@ -1,6 +1,7 @@
 import { invariantResponse } from '@epic-web/invariant'
 import { updateOnboardingData } from '@epic-web/workshop-utils/db.server'
 import { makeTimings } from '@epic-web/workshop-utils/timing.server'
+import { type SEOHandle } from '@nasa-gcn/remix-seo'
 import {
 	defer,
 	redirect,
@@ -15,6 +16,10 @@ import {
 	EpicVideoInfoProvider,
 } from '#app/components/epic-video.tsx'
 import { getEpicVideoInfos } from '#app/utils/epic-api.ts'
+
+export const handle: SEOHandle = {
+	getSitemapEntries: () => null,
+}
 
 export async function loader({ request }: LoaderFunctionArgs) {
 	const timings = makeTimings('onboarding')

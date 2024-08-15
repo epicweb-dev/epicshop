@@ -5,6 +5,7 @@ import {
 	requireAuthInfo,
 	setPresencePreferences,
 } from '@epic-web/workshop-utils/db.server'
+import { type SEOHandle } from '@nasa-gcn/remix-seo'
 import { json, redirect, type LoaderFunctionArgs } from '@remix-run/node'
 import { Form, Link, useFetcher, useLoaderData } from '@remix-run/react'
 import { Button } from '#app/components/button.tsx'
@@ -15,6 +16,10 @@ import { ensureUndeployed } from '#app/utils/misc.tsx'
 import { usePresencePreferences } from '#app/utils/presence.tsx'
 import { redirectWithToast } from '#app/utils/toast.server.ts'
 import { getDiscordAuthURL } from '../discord.callback.ts'
+
+export const handle: SEOHandle = {
+	getSitemapEntries: () => null,
+}
 
 export async function loader({ request }: LoaderFunctionArgs) {
 	ensureUndeployed()
