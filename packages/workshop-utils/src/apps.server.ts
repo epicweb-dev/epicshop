@@ -32,7 +32,8 @@ import { getPkgProp } from './utils.server.js'
 
 let initialized = false
 
-const workshopRoot = getWorkshopRoot()
+const workshopRoot = (process.env.EPICSHOP_CONTEXT_CWD =
+	process.env.EPICSHOP_CONTEXT_CWD ?? process.cwd())
 
 let packageJson: any
 try {
@@ -44,7 +45,7 @@ try {
 }
 
 const playgroundAppNameInfoPath = path.join(
-	getWorkshopRoot(),
+	workshopRoot,
 	'node_modules',
 	'.cache',
 	'epicshop',
@@ -1473,10 +1474,6 @@ export async function getEpicWorkshopSlug() {
 		'',
 	)
 	return epicWorkshopSlug || null
-}
-
-export function getWorkshopRoot() {
-	return process.env.EPICSHOP_CONTEXT_CWD ?? process.cwd()
 }
 
 export async function getWorkshopInstructions({
