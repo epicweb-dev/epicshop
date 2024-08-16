@@ -170,15 +170,6 @@ export async function compileMdx(
 		const bundleResult = await queuedBundleMDX({
 			file,
 			cwd: path.dirname(file),
-			esbuildOptions(options) {
-				options.define = {
-					'process.env.NODE_ENV': JSON.stringify(
-						process.env.NODE_ENV ?? 'production',
-					),
-					...options.define,
-				}
-				return options
-			},
 			mdxOptions(options) {
 				options.remarkPlugins = [
 					...(options.remarkPlugins ?? []),
@@ -257,15 +248,6 @@ export async function compileMarkdownString(markdownString: string) {
 				verboseLog(`Compiling string`, markdownString)
 				const result = await queuedBundleMDX({
 					source: markdownString,
-					esbuildOptions(options) {
-						options.define = {
-							'process.env.NODE_ENV': JSON.stringify(
-								process.env.NODE_ENV ?? 'production',
-							),
-							...options.define,
-						}
-						return options
-					},
 					mdxOptions(options) {
 						options.rehypePlugins = [
 							...(options.rehypePlugins ?? []),
