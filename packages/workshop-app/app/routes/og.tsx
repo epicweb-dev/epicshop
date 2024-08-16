@@ -365,7 +365,12 @@ function OgLayout({
 									? `${domain}${instructor.avatar}`
 									: instructor.avatar
 							}
-							style={{ width: 56, height: 56, borderRadius: '50%', objectFit: 'cover' }}
+							style={{
+								width: 56,
+								height: 56,
+								borderRadius: '50%',
+								objectFit: 'cover',
+							}}
 						/>
 					) : null}
 					{instructor.name ? (
