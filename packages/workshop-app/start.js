@@ -2,6 +2,7 @@ import path from 'path'
 import dotenv from 'dotenv'
 
 process.env.NODE_ENV ??= 'development'
+process.env.EPICSHOP_ENABLE_WATCHER ??= 'true'
 const EPICSHOP_CONTEXT_CWD = process.env.EPICSHOP_CONTEXT_CWD ?? process.cwd()
 dotenv.config({
 	path: path.join(EPICSHOP_CONTEXT_CWD, '.env'),

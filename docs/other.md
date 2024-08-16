@@ -1,11 +1,11 @@
 # Other stuff
 
-## `EPICSHOP_DISABLE_WATCHER`
+## `EPICSHOP_ENABLE_WATCHER`
 
-By default, epicshop sets up file watchers for everything. In some situations
-this maybe an issue due to the number files. This is disabled in the deployed
-version, but you can also disable it locally by setting the
-`EPICSHOP_DISABLE_WATCHER` environment variable to "true".
+You shouldn't really need to do this normally. When you start up the app,
+epicshop sets up file watchers for everything in local development (not when
+deployed). If you're just using utilities, you probably don't want that watcher.
+However, if you do you can set `EPICSHOP_ENABLE_WATCHER` to "true" to enable it.
 
 ## Set to playground
 

@@ -13,7 +13,7 @@ let watcher = global.__change_tracker_watcher__
 export function getWatcher() {
 	if (
 		process.env.EPICSHOP_DEPLOYED ??
-		process.env.EPICSHOP_DISABLE_WATCHER === 'true'
+		process.env.EPICSHOP_ENABLE_WATCHER !== 'true'
 	) {
 		return null
 	}

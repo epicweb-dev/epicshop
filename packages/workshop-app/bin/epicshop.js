@@ -17,7 +17,6 @@ switch (command) {
 	}
 	case 'upgrade':
 	case 'update': {
-		process.env.EPICSHOP_DISABLE_WATCHER = 'true'
 		const { updateLocalRepo } = await import(
 			'@epic-web/workshop-utils/git.server'
 		)
