@@ -32,7 +32,7 @@ import { getPkgProp } from './utils.server.js'
 
 let initialized = false
 
-const workshopRoot = (process.env.EPICSHOP_CONTEXT_CWD =
+export const workshopRoot = (process.env.EPICSHOP_CONTEXT_CWD =
 	process.env.EPICSHOP_CONTEXT_CWD ?? process.cwd())
 
 let packageJson: any

@@ -1,9 +1,9 @@
 import { execa, execaCommand } from 'execa'
-import { getWorkshopRoot } from './apps.server.js'
+import { workshopRoot } from './apps.server.js'
 import { getErrorMessage } from './utils.js'
 import { checkConnection, getPkgProp } from './utils.server.js'
 
-const cwd = getWorkshopRoot()
+const cwd = workshopRoot
 
 async function getDiffUrl(commitBefore: string, commitAfter: string) {
 	try {

@@ -4,7 +4,7 @@ import { fileURLToPath } from 'url'
 import { getPresentUsers } from '@epic-web/workshop-presence/presence.server'
 import {
 	getApps,
-	getWorkshopRoot,
+	workshopRoot,
 	init as initApps,
 } from '@epic-web/workshop-utils/apps.server'
 import { getWatcher } from '@epic-web/workshop-utils/change-tracker.server'
@@ -53,8 +53,6 @@ const hasUpdatesPromise = checkForUpdates()
 // caches all apps
 void getApps()
 void getPresentUsers()
-
-const workshopRoot = getWorkshopRoot()
 
 const app = express()
 

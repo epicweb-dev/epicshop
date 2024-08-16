@@ -1,6 +1,6 @@
 import inspector from 'node:inspector'
 import path from 'node:path'
-import { getWorkshopRoot } from '@epic-web/workshop-utils/apps.server'
+import { workshopRoot } from '@epic-web/workshop-utils/apps.server'
 import { deleteCache } from '@epic-web/workshop-utils/cache.server'
 import { deleteDb } from '@epic-web/workshop-utils/db.server'
 import fsExtra from 'fs-extra'
@@ -12,7 +12,6 @@ export async function clearData() {
 
 export async function clearCaches() {
 	if (ENV.EPICSHOP_DEPLOYED) return
-	const workshopRoot = getWorkshopRoot()
 	await fsExtra.remove(path.join(workshopRoot, 'node_modules', '.cache'))
 	await deleteCache()
 }

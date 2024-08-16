@@ -5,7 +5,7 @@ import {
 	getAppPageRoute,
 	getApps,
 	getExercise,
-	getWorkshopRoot,
+	workshopRoot,
 	getWorkshopTitle,
 	isExerciseStepApp,
 } from '@epic-web/workshop-utils/apps.server'
@@ -65,7 +65,6 @@ export async function loader({ request, params }: LoaderFunctionArgs) {
 		throw new Response('Not found', { status: 404 })
 	}
 	const workshopTitle = await getWorkshopTitle()
-	const workshopRoot = getWorkshopRoot()
 	const exerciseFormTemplate = await getPkgProp(
 		workshopRoot,
 		'epicshop.forms.exercise',
@@ -80,7 +79,7 @@ export async function loader({ request, params }: LoaderFunctionArgs) {
 	})
 
 	const finishedFilepath = path.join(
-		getWorkshopRoot(),
+		workshopRoot,
 		'exercises',
 		exercise.dirName,
 		'FINISHED.mdx',

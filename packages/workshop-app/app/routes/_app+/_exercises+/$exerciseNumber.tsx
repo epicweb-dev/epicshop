@@ -3,7 +3,7 @@ import { invariantResponse } from '@epic-web/invariant'
 import { ElementScrollRestoration } from '@epic-web/restore-scroll'
 import {
 	getExercises,
-	getWorkshopRoot,
+	workshopRoot,
 	getWorkshopTitle,
 } from '@epic-web/workshop-utils/apps.server'
 import {
@@ -76,7 +76,7 @@ export async function loader({ request, params }: LoaderFunctionArgs) {
 	}
 
 	const readmeFilepath = path.join(
-		getWorkshopRoot(),
+		workshopRoot,
 		'exercises',
 		exercise.dirName,
 		'README.mdx',

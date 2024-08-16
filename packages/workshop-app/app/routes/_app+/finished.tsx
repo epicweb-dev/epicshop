@@ -2,7 +2,7 @@ import { ElementScrollRestoration } from '@epic-web/restore-scroll'
 import {
 	getExercises,
 	getWorkshopFinished,
-	getWorkshopRoot,
+	workshopRoot,
 	getWorkshopTitle,
 } from '@epic-web/workshop-utils/apps.server'
 import {
@@ -64,7 +64,6 @@ export async function loader({ request }: LoaderFunctionArgs) {
 
 	const lastExercises = exercises[exercises.length - 1]
 	const workshopTitle = await getWorkshopTitle()
-	const workshopRoot = getWorkshopRoot()
 	const workshopFormTemplate = await getPkgProp(
 		workshopRoot,
 		'epicshop.forms.workshop',

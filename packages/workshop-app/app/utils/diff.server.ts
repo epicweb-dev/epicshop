@@ -4,7 +4,7 @@ import { type CacheEntry } from '@epic-web/cachified'
 import {
 	getForceFreshForDir,
 	getRelativePath,
-	getWorkshopRoot,
+	workshopRoot,
 	modifiedTimes,
 	type App,
 } from '@epic-web/workshop-utils/apps.server'
@@ -228,7 +228,6 @@ async function copyUnignoredFiles(
 }
 
 async function prepareForDiff(app1: App, app2: App) {
-	const workshopRoot = getWorkshopRoot()
 	const id = Math.random().toString(36).slice(2)
 	const app1CopyPath = path.join(
 		diffTmpDir,
