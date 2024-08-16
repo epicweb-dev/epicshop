@@ -30,6 +30,8 @@ import { getServerTimeHeader, type Timings } from './timing.server.js'
 import { getErrorMessage } from './utils.js'
 import { getPkgProp } from './utils.server.js'
 
+let initialized = false
+
 const workshopRoot = getWorkshopRoot()
 
 let packageJson: any
@@ -232,6 +234,9 @@ export const modifiedTimes = remember(
 )
 
 export function init() {
+	if (initialized) return
+
+	initialized = true
 	try {
 		const { epicshop } = packageJson
 		let root: string, repo: string
@@ -411,6 +416,8 @@ export async function getApps({
 	request,
 	forceFresh,
 }: CachifiedOptions & { forceFresh?: boolean } = {}): Promise<Array<App>> {
+	if (!initialized) init()
+
 	const key = 'apps'
 	const apps = await cachified({
 		key,
