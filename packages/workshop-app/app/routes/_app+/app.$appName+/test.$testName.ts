@@ -108,10 +108,10 @@ import(${JSON.stringify(testScriptPath)}).then(
 	const htmlFile = path.join(app.fullPath, 'index.html')
 	const hasHtml = await fsExtra.pathExists(htmlFile)
 	if (hasHtml) {
-		const html = await fsExtra.readFile(htmlFile)
-		const testableHtml = html
-			.toString()
-			.replace(`</body>`, `${testScriptTag}</body>`)
+		const html = (await fsExtra.readFile(htmlFile)).toString()
+		const testableHtml = html.includes('</body/>')
+			? html.replace(`</body>`, `\n${testScriptTag}\n</body>`)
+			: `${html}\n${testScriptTag}`
 		return new Response(testableHtml, {
 			headers: {
 				'Content-Length': Buffer.byteLength(testableHtml).toString(),
