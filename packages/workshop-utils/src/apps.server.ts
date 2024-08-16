@@ -221,11 +221,10 @@ function exists(file: string) {
 	)
 }
 
-function firstToExist(...files: Array<string>) {
-	return Promise.all(files.map(exists)).then((results) => {
-		const index = results.findIndex(Boolean)
-		return index === -1 ? null : files[index]
-	})
+async function firstToExist(...files: Array<string>) {
+	const results = await Promise.all(files.map(exists))
+	const index = results.findIndex(Boolean)
+	return index === -1 ? null : files[index]
 }
 
 export const modifiedTimes = remember(
