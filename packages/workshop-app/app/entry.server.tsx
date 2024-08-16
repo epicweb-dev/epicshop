@@ -1,5 +1,4 @@
 import { PassThrough } from 'stream'
-import { init } from '@epic-web/workshop-utils/apps.server'
 import {
 	createReadableStreamFromReadable,
 	type EntryContext,
@@ -7,13 +6,8 @@ import {
 import { RemixServer } from '@remix-run/react'
 import { isbot } from 'isbot'
 import { renderToPipeableStream } from 'react-dom/server'
-import { getEnv } from './utils/env.server.ts'
-
-global.ENV = getEnv()
 
 const ABORT_DELAY = 15000
-
-init()
 
 export default function handleRequest(
 	request: Request,

@@ -6,11 +6,11 @@ export const handle: SEOHandle = {
 }
 
 export default function Support() {
-	const repoGroups = ENV.EPICSHOP_GITHUB_ROOT.match(
+	const repoGroups = ENV.EPICSHOP_GITHUB_REPO.match(
 		/github\.com\/(?<org>[^/?]+)\/(?<repo>[^/?]+)/,
 	)?.groups
 
-	let repoUrl = ENV.EPICSHOP_GITHUB_ROOT
+	let repoUrl = ENV.EPICSHOP_GITHUB_REPO
 	let repoIssuesUrl = repoUrl
 	if (repoGroups?.org && repoGroups.repo) {
 		repoUrl = `https://github.com/${repoGroups.org}/${repoGroups.repo}`

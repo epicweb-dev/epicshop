@@ -4,6 +4,7 @@ const schema = z.object({
 	NODE_ENV: z
 		.enum(['production', 'development', 'test'] as const)
 		.default('development'),
+	EPICSHOP_GITHUB_REPO: z.string(),
 	EPICSHOP_GITHUB_ROOT: z.string(),
 	EPICSHOP_CONTEXT_CWD: z.string(),
 })
@@ -40,6 +41,7 @@ export function getEnv() {
 	return {
 		MODE: process.env.NODE_ENV,
 		EPICSHOP_CONTEXT_CWD: process.env.EPICSHOP_CONTEXT_CWD,
+		EPICSHOP_GITHUB_REPO: process.env.EPICSHOP_GITHUB_REPO,
 		EPICSHOP_GITHUB_ROOT: process.env.EPICSHOP_GITHUB_ROOT,
 		EPICSHOP_DEPLOYED:
 			process.env.EPICSHOP_DEPLOYED === 'true' ||

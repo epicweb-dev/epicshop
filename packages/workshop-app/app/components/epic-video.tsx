@@ -179,13 +179,9 @@ export function DeferredEpicVideo({
 						const epicVideoInfo = epicVideoInfos?.[url]
 						const transcriptUI = ENV.EPICSHOP_DEPLOYED ? (
 							<div>
-								{ENV.EPICSHOP_GITHUB_ROOT ? (
-									<Link to={ENV.EPICSHOP_GITHUB_ROOT} className="underline">
-										Run locally
-									</Link>
-								) : (
-									'Run locally'
-								)}
+								<Link to={ENV.EPICSHOP_GITHUB_REPO} className="underline">
+									Run locally
+								</Link>
 								{' for transcripts'}
 							</div>
 						) : (

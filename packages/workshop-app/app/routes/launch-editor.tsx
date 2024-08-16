@@ -8,7 +8,6 @@ import { useEffect } from 'react'
 import { z, type ZodTypeAny } from 'zod'
 import { useApps } from '#app/components/apps'
 import { showProgressBarField } from '#app/components/progress-bar.tsx'
-import { SimpleTooltip } from '#app/components/ui/tooltip.tsx'
 import { launchEditor } from '#app/utils/launch-editor.server.ts'
 import { ensureUndeployed } from '#app/utils/misc.tsx'
 import { useRequestInfo } from '#app/utils/request-info'
@@ -351,13 +350,5 @@ export function EditFileOnGitHub({
 }
 
 export const LaunchEditor = ENV.EPICSHOP_DEPLOYED
-	? ENV.EPICSHOP_GITHUB_ROOT
-		? LaunchGitHub
-		: ({ children }: LaunchEditorProps) => (
-				<SimpleTooltip content="Cannot open files in deployed app">
-					<button className="launch_button cursor-not-allowed">
-						{children}
-					</button>
-				</SimpleTooltip>
-			)
+	? LaunchGitHub
 	: LaunchEditorImpl

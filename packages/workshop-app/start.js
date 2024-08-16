@@ -1,33 +1,11 @@
-import fs from 'fs'
 import path from 'path'
 import dotenv from 'dotenv'
 
+process.env.NODE_ENV ??= 'development'
 const EPICSHOP_CONTEXT_CWD = process.env.EPICSHOP_CONTEXT_CWD ?? process.cwd()
 dotenv.config({
 	path: path.join(EPICSHOP_CONTEXT_CWD, '.env'),
 })
-
-let packageJson
-try {
-	packageJson = JSON.parse(
-		await fs.promises.readFile(
-			path.join(EPICSHOP_CONTEXT_CWD, 'package.json'),
-			'utf8',
-		),
-	)
-} catch {
-	throw new Error(
-		`Could not find and parse package.json at ${EPICSHOP_CONTEXT_CWD}`,
-	)
-}
-
-if (packageJson.epicshop.githubRoot) {
-	process.env.EPICSHOP_GITHUB_ROOT = packageJson.epicshop.githubRoot
-} else {
-	throw new Error(
-		`Could not set the EPICSHOP_GITHUB_ROOT environment variable. Please set it to the URL of your GitHub repo in the "epicshop.githubRoot" property of the package.json.`,
-	)
-}
 
 if (process.env.NODE_ENV === 'production') {
 	await import('./dist/server/index.js').catch((err) => {

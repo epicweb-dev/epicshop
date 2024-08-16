@@ -9,84 +9,105 @@
     "./package.json": "./package.json",
     "./apps.server": {
       "import": {
+        "source": "./src/apps.server.ts",
         "types": "./dist/esm/apps.server.d.ts",
         "default": "./dist/esm/apps.server.js"
       }
     },
+    "./env.server": {
+      "import": {
+        "source": "./src/env.server.ts",
+        "types": "./dist/esm/env.server.d.ts",
+        "default": "./dist/esm/env.server.js"
+      }
+    },
     "./cache.server": {
       "import": {
+        "source": "./src/cache.server.ts",
         "types": "./dist/esm/cache.server.d.ts",
         "default": "./dist/esm/cache.server.js"
       }
     },
     "./db.server": {
       "import": {
+        "source": "./src/db.server.ts",
         "types": "./dist/esm/db.server.d.ts",
         "default": "./dist/esm/db.server.js"
       }
     },
     "./timing.server": {
       "import": {
+        "source": "./src/timing.server.ts",
         "types": "./dist/esm/timing.server.d.ts",
         "default": "./dist/esm/timing.server.js"
       }
     },
     "./compile-mdx.server": {
       "import": {
+        "source": "./src/compile-mdx.server.ts",
         "types": "./dist/esm/compile-mdx.server.d.ts",
         "default": "./dist/esm/compile-mdx.server.js"
       }
     },
     "./codefile-mdx.server": {
       "import": {
+        "source": "./src/codefile-mdx.server.ts",
         "types": "./dist/esm/codefile-mdx.server.d.ts",
         "default": "./dist/esm/codefile-mdx.server.js"
       }
     },
     "./change-tracker.server": {
       "import": {
+        "source": "./src/change-tracker.server.ts",
         "types": "./dist/esm/change-tracker.server.d.ts",
         "default": "./dist/esm/change-tracker.server.js"
       }
     },
     "./git.server": {
       "import": {
+        "source": "./src/git.server.ts",
         "types": "./dist/esm/git.server.d.ts",
         "default": "./dist/esm/git.server.js"
       }
     },
     "./iframe-sync": {
       "import": {
+        "source": "./src/iframe-sync.ts",
         "types": "./dist/esm/iframe-sync.d.ts",
         "default": "./dist/esm/iframe-sync.js"
       }
     },
     "./playwright.server": {
       "import": {
+        "source": "./src/playwright.server.ts",
         "types": "./dist/esm/playwright.server.d.ts",
         "default": "./dist/esm/playwright.server.js"
       }
     },
     "./process-manager.server": {
       "import": {
+        "source": "./src/process-manager.server.ts",
         "types": "./dist/esm/process-manager.server.d.ts",
         "default": "./dist/esm/process-manager.server.js"
       }
     },
     "./test": {
       "import": {
+        "source": "./src/test.ts",
         "types": "./dist/esm/test.d.ts",
         "default": "./dist/esm/test.js"
       }
     },
     "./utils.server": {
       "import": {
+        "source": "./src/utils.server.ts",
         "types": "./dist/esm/utils.server.d.ts",
         "default": "./dist/esm/utils.server.js"
       }
     },
     "./utils": {
       "import": {
+        "source": "./src/utils.ts",
         "types": "./dist/esm/utils.d.ts",
         "default": "./dist/esm/utils.js"
       }
@@ -150,6 +171,7 @@
     "exports": {
       "./package.json": "./package.json",
       "./apps.server": "./src/apps.server.ts",
+      "./env.server": "./src/env.server.ts",
       "./cache.server": "./src/cache.server.ts",
       "./db.server": "./src/db.server.ts",
       "./timing.server": "./src/timing.server.ts",

@@ -12,6 +12,7 @@ import {
 	getUserInfo,
 	readOnboardingData,
 } from '@epic-web/workshop-utils/db.server'
+import { getEnv } from '@epic-web/workshop-utils/env.server'
 import { makeTimings, time } from '@epic-web/workshop-utils/timing.server'
 import { cssBundleHref } from '@remix-run/css-bundle'
 import {
@@ -45,7 +46,6 @@ import appStylesheetUrl from './styles/app.css?url'
 import tailwindStylesheetUrl from './styles/tailwind.css?url'
 import { ClientHintCheck, getHints } from './utils/client-hints.tsx'
 import { getConfetti } from './utils/confetti.server.ts'
-import { getEnv } from './utils/env.server.ts'
 import { getProgress } from './utils/epic-api.ts'
 import { cn, combineHeaders, getDomainUrl, useAltDown } from './utils/misc.tsx'
 import { Presence } from './utils/presence.tsx'

@@ -42,12 +42,14 @@
     "./package.json": "./package.json",
     "./presence.server": {
       "import": {
+        "source": "./src/presence.server.ts",
         "types": "./dist/esm/presence.server.d.ts",
         "default": "./dist/esm/presence.server.js"
       }
     },
     "./presence": {
       "import": {
+        "source": "./src/presence.ts",
         "types": "./dist/esm/presence.d.ts",
         "default": "./dist/esm/presence.js"
       }

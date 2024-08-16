@@ -19,6 +19,7 @@ import {
 } from './cache.server.js'
 import { getOptionalWatcher, getWatcher } from './change-tracker.server.js'
 import { compileMdx } from './compile-mdx.server.js'
+import { getEnv, init as initEnv } from './env.server.js'
 import {
 	closeProcess,
 	isAppRunning,
@@ -29,9 +30,16 @@ import { getServerTimeHeader, type Timings } from './timing.server.js'
 import { getErrorMessage } from './utils.js'
 import { getPkgProp } from './utils.server.js'
 
-process.env.NODE_ENV ??= 'development'
-
 const workshopRoot = getWorkshopRoot()
+
+let packageJson: any
+try {
+	packageJson = JSON.parse(
+		fs.readFileSync(path.join(workshopRoot, 'package.json'), 'utf8'),
+	)
+} catch {
+	throw new Error(`Could not find and parse package.json at ${workshopRoot}`)
+}
 
 const playgroundAppNameInfoPath = path.join(
 	getWorkshopRoot(),
@@ -224,6 +232,36 @@ export const modifiedTimes = remember(
 )
 
 export function init() {
+	try {
+		const { epicshop } = packageJson
+		let root: string, repo: string
+		if (epicshop.githubRepo) {
+			repo = epicshop.githubRepo
+			root = `${repo.replace(/\/$/, '')}/tree/main`
+		} else if (epicshop.githubRoot) {
+			root = epicshop.githubRoot.replace(/\/$/, '')
+			repo = root.replace(/\/(blob|tree)\/.*$/, '')
+		} else {
+			throw new Error(
+				`Please set the URL of your GitHub repo in the "epicshop.githubRepo" property of the package.json.`,
+			)
+		}
+		if (!root.includes('/blob/') && !root.includes('/tree/')) {
+			root = `${root.replace(/\/$/, '')}/tree/main`
+		}
+		process.env.EPICSHOP_GITHUB_REPO = repo
+		process.env.EPICSHOP_GITHUB_ROOT = root
+	} catch (error) {
+		throw new Error(
+			`Could not set the EPICSHOP_GITHUB_ROOT environment variable. Please set it to the URL of your GitHub repo in the "epicshop.githubRoot" property of the package.json.`,
+			{ cause: error },
+		)
+	}
+
+	initEnv()
+
+	global.ENV = getEnv()
+
 	async function handleFileChanges(
 		event: string,
 		filePath: string,
@@ -715,12 +753,15 @@ export async function getStackBlitzUrl({
 
 	if (workshopStackBlitzConfig === null) return null
 
-	const githubRootUrlString = await getPkgProp(
-		workshopRoot,
-		'epicshop.githubRoot',
-		'',
-	)
+	let githubRootUrlString = ENV.EPICSHOP_GITHUB_REPO
 	if (!githubRootUrlString) return null
+
+	if (
+		!githubRootUrlString.includes('/blob/') ||
+		!githubRootUrlString.includes('/tree/')
+	) {
+		githubRootUrlString = `${githubRootUrlString.replace(/\/$/, '')}/blob/main`
+	}
 
 	const githubRootUrl = new URL(
 		githubRootUrlString.replace(/\/blob\//, '/tree/'),

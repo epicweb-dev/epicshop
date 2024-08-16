@@ -322,19 +322,17 @@ function EpicWebBanner() {
 			{ENV.EPICSHOP_DEPLOYED ? (
 				<div>
 					{`This is the deployed version. `}
-					{ENV.EPICSHOP_GITHUB_ROOT ? (
-						<>
-							<Link
-								className="underline"
-								target="_blank"
-								rel="noopener noreferrer"
-								to={ENV.EPICSHOP_GITHUB_ROOT}
-							>
-								Run locally
-							</Link>
-							{` for full experience.`}
-						</>
-					) : null}{' '}
+					<>
+						<Link
+							className="underline"
+							target="_blank"
+							rel="noopener noreferrer"
+							to={ENV.EPICSHOP_GITHUB_REPO}
+						>
+							Run locally
+						</Link>
+						{` for full experience.`}
+					</>{' '}
 				</div>
 			) : (
 				<div>

@@ -2,7 +2,11 @@ import fs from 'fs'
 import path from 'path'
 import { fileURLToPath } from 'url'
 import { getPresentUsers } from '@epic-web/workshop-presence/presence.server'
-import { getApps, getWorkshopRoot } from '@epic-web/workshop-utils/apps.server'
+import {
+	getApps,
+	getWorkshopRoot,
+	init as initApps,
+} from '@epic-web/workshop-utils/apps.server'
 import { getWatcher } from '@epic-web/workshop-utils/change-tracker.server'
 import { checkForUpdates } from '@epic-web/workshop-utils/git.server'
 import { createRequestHandler } from '@remix-run/express'
@@ -19,6 +23,7 @@ import { WebSocket, WebSocketServer } from 'ws'
 
 const MODE = process.env.NODE_ENV ?? 'development'
 
+initApps()
 installGlobals()
 sourceMapSupport.install()
 
