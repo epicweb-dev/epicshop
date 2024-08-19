@@ -52,18 +52,8 @@ export async function loader({ request, params }: LoaderFunctionArgs) {
 			headers: { 'Server-Timing': getServerTimeHeader(timings) },
 		})
 	}
-	let testFileAppName: string | null = app.name
-	if (isProblemApp(app)) {
-		testFileAppName = isProblemApp(app) ? app.solutionName : null
-	}
-	if (isPlaygroundApp(app)) {
-		const appBasis = await getAppByName(app.appName)
-		testFileAppName = isProblemApp(appBasis) ? appBasis.solutionName : null
-	}
-	const testFileQueryString = testFileAppName
-		? `?fileAppName=${encodeURIComponent(testFileAppName)}`
-		: ''
-	const testScriptPath = `${app.dev.pathname}${testFile}${testFileQueryString}`
+
+	const testScriptPath = `${app.dev.pathname}${testFile}`
 	const testScriptSrc = /* javascript */ `
 function logStatus(message) {
 	if (window.parent !== window) {
@@ -156,7 +146,7 @@ import(${JSON.stringify(testScriptPath)}).then(
 	</head>
 	<body>
 		${testScriptTag}
-		<script type="module" src="epic_ws.js${testFileQueryString}"></script>
+		<script type="module" src="epic_ws.js"></script>
 	</body>
 </html>
 `
