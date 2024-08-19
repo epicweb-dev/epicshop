@@ -1,11 +1,9 @@
 import path from 'path'
 import { invariantResponse } from '@epic-web/invariant'
 import {
-	getAppByName,
 	getExercise,
 	getWorkshopTitle,
 	isExerciseStepApp,
-	isPlaygroundApp,
 	isProblemApp,
 	isSolutionApp,
 } from '@epic-web/workshop-utils/apps.server'
