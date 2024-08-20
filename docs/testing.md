@@ -30,13 +30,16 @@ exercise.
 For simple apps, you can use the `@epic-web/workshop-utils/test` module to run
 tests in the browser.
 
-We run your tests in a sandboxed iframe so you can't access the DOM or do
-anything that would require a DOM. This automatically loads the same
-`indes.html` loaded by the app for the exercise. You communicate with the parent
-app using `testStep`:
+We run your tests in an iframe. For exercises that include an `index.html` file,
+this automatically loads the same `indes.html` and simply adds a script for your
+test file. For those which don't include a custom `index.html` file, one is
+created for you and you can import the exercise file yourself. You communicate
+with the parent app using `testStep` (this uses `postmessage` under the hood):
 
 ```ts
 import { testStep, expect, dtl } from '@epic-web/workshop-utils/test'
+
+import './index.tsx'
 
 await testStep('The counter button should be rendered', async () => {
 	expect(await dt.screen.findByRole('button', {name: /Click me please/i})).toBeInTheDocument()
