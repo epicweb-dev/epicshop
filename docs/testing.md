@@ -24,3 +24,26 @@ You can disable the tab by setting `epicshop.testTab.enabled` to false in the
 
 You can do this globally in the root `package.json` or in an individual
 exercise.
+
+## In-browser tests
+
+For simple apps, you can use the `@epic-web/workshop-utils/test` module to run
+tests in the browser.
+
+We run your tests in a sandboxed iframe so you can't access the DOM or do
+anything that would require a DOM. This automatically loads the same
+`indes.html` loaded by the app for the exercise. You communicate with the parent
+app using `testStep`:
+
+```ts
+import { testStep, expect, dtl } from '@epic-web/workshop-utils/test'
+
+await testStep('The counter button should be rendered', async () => {
+	expect(await dt.screen.findByRole('button', {name: /Click me please/i})).toBeInTheDocument()
+})
+```
+
+The `@epic-web/workshop-utils/test` module also exports a `dtl` object which is
+the same as everything in `@testing-library/dom`. The `expect` export is the
+same from `@vitest/expect` and it has the `@testing-library/jest-dom` matchers
+already added as well.

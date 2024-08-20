@@ -2,6 +2,7 @@ import * as Accordion from '@radix-ui/react-accordion'
 import { useEffect, useRef, useState } from 'react'
 import { z } from 'zod'
 import AccordionComponent from '#app/components/accordion.tsx'
+import { useAnsiToHtml } from '#app/utils/ansi-text.js'
 import { AnimatedBars, Icon } from './icons.tsx'
 
 const testRunnerStatusDataSchema = z.intersection(
@@ -38,6 +39,7 @@ export function InBrowserTestRunner({
 	pathname: string
 	testFile: string
 }) {
+	const ansi = useAnsiToHtml()
 	const iframeRef = useRef<HTMLIFrameElement>(null)
 	const [message, setMessage] = useState<TestRunnerStatusData | null>(null)
 	const [testSteps, setTestSteps] = useState<Array<TestRunnerTestStepData>>([])
@@ -114,14 +116,15 @@ export function InBrowserTestRunner({
 					forceMount={true}
 				>
 					<div className="not-prose">
-						<div className="p-5 pt-3">
-							<ul className="">
-								{sortedTestSteps.map((testStep) => (
+						<div className="flex flex-col gap-2 p-5 pt-3">
+							<ul className="flex flex-col gap-2">
+								{sortedTestSteps.map((testStep, index) => (
 									// sometimes the steps come in so fast that the timestamp is the same
 									<li key={testStep.timestamp + testStep.title}>
 										<div className="flex items-baseline gap-2 text-emerald-700">
+											<span>{index + 1}.</span>
 											<span>{testStepStatusEmojis[testStep.status]}</span>
-											<pre className="whitespace-pre-wrap">
+											<pre className="max-h-48 overflow-y-auto p-4 scrollbar-thin scrollbar-thumb-scrollbar">
 												{testStep.title}
 											</pre>
 										</div>
@@ -130,10 +133,14 @@ export function InBrowserTestRunner({
 							</ul>
 							{message?.status === 'fail' ? (
 								<div className="flex items-baseline gap-2 text-foreground-danger">
+									<span>{sortedTestSteps.length + 1}.</span>
 									<span>{testStepStatusEmojis.fail}</span>
-									<pre className="max-h-48 overflow-y-auto text-foreground-danger scrollbar-thin scrollbar-thumb-scrollbar">
-										{message.error}
-									</pre>
+									<pre
+										className="max-h-48 overflow-y-auto p-4 scrollbar-thin scrollbar-thumb-scrollbar"
+										dangerouslySetInnerHTML={{
+											__html: ansi.toHtml(message.error),
+										}}
+									/>
 								</div>
 							) : null}
 							<iframe

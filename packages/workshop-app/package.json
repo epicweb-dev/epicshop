@@ -92,7 +92,6 @@
     "globby": "^14.0.1",
     "ignore": "^5.3.1",
     "isbot": "^5.1.6",
-    "lodash.escape": "^4.0.1",
     "lru-cache": "^10.2.2",
     "md5-hex": "^5.0.0",
     "mdx-bundler": "^10.0.2",

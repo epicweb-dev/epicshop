@@ -11,14 +11,13 @@ import {
 	type LoaderFunctionArgs,
 } from '@remix-run/node'
 import { useFetcher } from '@remix-run/react'
-import AnsiToHTML from 'ansi-to-html'
-import escapeHtml from 'lodash.escape'
 import { useEffect, useReducer, useRef } from 'react'
 import { useEventSource } from 'remix-utils/sse/react'
 import { eventStream } from 'remix-utils/sse/server'
 import { z } from 'zod'
 import { AnimatedBars, Icon } from '#app/components/icons.tsx'
 import { SimpleTooltip } from '#app/components/ui/tooltip.tsx'
+import { useAnsiToHtml } from '#app/utils/ansi-text.js'
 import { ensureUndeployed } from '#app/utils/misc.tsx'
 
 const testActionSchema = z.union([
@@ -44,7 +43,7 @@ const testEventSchema = z.union([
 		output: z.array(
 			z.object({
 				type: z.union([z.literal('stdout'), z.literal('stderr')]),
-				html: z.string(),
+				content: z.string(),
 				timestamp: z.number(),
 			}),
 		),
@@ -81,7 +80,6 @@ export async function loader({ request }: LoaderFunctionArgs) {
 		return json({ error: 'App is not running tests' }, { status: 404 })
 	}
 	return eventStream(request.signal, function setup(send) {
-		const ansi = new AnsiToHTML()
 		// have to batch because the client may miss events if we send too many
 		// too rapidly
 		let queue: TestEventQueue = []
@@ -103,7 +101,7 @@ export async function loader({ request }: LoaderFunctionArgs) {
 			isRunning,
 			output: processEntry.output.map((line) => ({
 				type: line.type,
-				html: ansi.toHtml(escapeHtml(line.content)),
+				content: line.content,
 				timestamp: line.timestamp,
 			})),
 		})
@@ -116,14 +114,14 @@ export async function loader({ request }: LoaderFunctionArgs) {
 		function handleStdOutData(data: Buffer) {
 			sendEvent({
 				type: 'stdout',
-				data: ansi.toHtml(escapeHtml(data.toString('utf-8'))),
+				data: data.toString('utf-8'),
 				timestamp: Date.now(),
 			})
 		}
 		function handleStdErrData(data: Buffer) {
 			sendEvent({
 				type: 'stderr',
-				data: ansi.toHtml(escapeHtml(data.toString('utf-8'))),
+				data: data.toString('utf-8'),
 				timestamp: Date.now(),
 			})
 		}
@@ -191,7 +189,11 @@ export function TestOutput({ name }: { name: string }) {
 		version: number
 		isRunning: boolean
 		exitCode: number | null | undefined
-		lines: Array<{ type: 'stdout' | 'stderr'; html: string; timestamp: number }>
+		lines: Array<{
+			type: 'stdout' | 'stderr'
+			content: string
+			timestamp: number
+		}>
 	}
 	const [state, dispatch] = useReducer(simpleReducer<State>, {
 		version: 0,
@@ -199,6 +201,7 @@ export function TestOutput({ name }: { name: string }) {
 		exitCode: undefined,
 		lines: [],
 	})
+	const ansi = useAnsiToHtml()
 	const { version, isRunning, exitCode, lines } = state
 	const lastMessage = useEventSource(
 		`/test?${new URLSearchParams({ name })}&v=${version}`,
@@ -226,10 +229,10 @@ export function TestOutput({ name }: { name: string }) {
 				}
 				case 'stderr':
 				case 'stdout': {
-					const { type, data: html, timestamp } = event
+					const { type, data: content, timestamp } = event
 					dispatch((prev) => ({
 						...prev,
-						lines: [...prev.lines, { type, html, timestamp }].sort(
+						lines: [...prev.lines, { type, content, timestamp }].sort(
 							(a, b) => a.timestamp - b.timestamp,
 						),
 						isRunning: true,
@@ -295,7 +298,7 @@ export function TestOutput({ name }: { name: string }) {
 							key={line.timestamp}
 							data-type={line.type}
 							dangerouslySetInnerHTML={{
-								__html: line.html,
+								__html: ansi.toHtml(line.content),
 							}}
 						/>
 					))}
