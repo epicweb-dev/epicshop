@@ -7,7 +7,7 @@ import fsExtra from 'fs-extra'
 import mimeTypes from 'mime-types'
 import { compileTs } from '#app/utils/compile-app.server.ts'
 import { combineHeaders, getBaseUrl } from '#app/utils/misc.tsx'
-import { resolveApps } from './__utils.ts'
+import { firstExisting, resolveApps } from './__utils.ts'
 
 export async function loader({ request, params }: LoaderFunctionArgs) {
 	const timings = makeTimings('app-file')
@@ -21,9 +21,11 @@ export async function loader({ request, params }: LoaderFunctionArgs) {
 	const splat = params['*']
 	invariantResponse(splat, 'splat required')
 
-	const filePath = path.join(fileApp.fullPath, splat)
-	const fileExists = await fsExtra.pathExists(filePath)
-	if (!fileExists) {
+	const filePath = await firstExisting(
+		path.join(app.fullPath, splat),
+		path.join(fileApp.fullPath, splat),
+	)
+	if (!filePath) {
 		throw new Response('File not found', { status: 404 })
 	}
 	if (filePath.endsWith('.ts') || filePath.endsWith('.tsx')) {

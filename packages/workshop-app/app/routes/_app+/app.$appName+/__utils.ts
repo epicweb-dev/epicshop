@@ -7,6 +7,7 @@ import {
 } from '@epic-web/workshop-utils/apps.server'
 import { type Timings } from '@epic-web/workshop-utils/timing.server'
 import { type Params } from '@remix-run/react'
+import fsExtra from 'fs-extra'
 
 export async function resolveApps({
 	request,
@@ -39,4 +40,21 @@ export async function resolveApps({
 	} else {
 		return { app, fileApp: app }
 	}
+}
+
+function unique<ItemType>(
+	value: ItemType,
+	index: number,
+	self: Array<ItemType>,
+) {
+	return self.indexOf(value) === index
+}
+
+export async function firstExisting(...files: Array<string>) {
+	for (const file of files.filter(unique)) {
+		if (await fsExtra.pathExists(file)) {
+			return file
+		}
+	}
+	return null
 }
