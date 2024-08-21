@@ -244,7 +244,7 @@ export function TestOutput({ name }: { name: string }) {
 	}, [lastMessage])
 
 	return (
-		<div className="relative flex h-full w-full flex-col">
+		<div className="relative flex h-full w-full flex-col overflow-y-auto">
 			<div className="flex h-12 w-full flex-shrink-0 items-center justify-between border-b">
 				<div className="flex h-full items-center">
 					{!isRunning && (

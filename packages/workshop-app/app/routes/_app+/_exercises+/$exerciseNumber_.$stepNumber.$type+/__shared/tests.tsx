@@ -25,7 +25,7 @@ export function Tests({
 		const { pathname } = playgroundAppInfo.test
 		testUI = (
 			<div
-				className="flex h-full w-full flex-grow flex-col"
+				className="flex h-full w-full flex-grow flex-col overflow-y-auto"
 				key={inBrowserTestKey}
 			>
 				{playgroundAppInfo.test.testFiles.map((testFile) => {
