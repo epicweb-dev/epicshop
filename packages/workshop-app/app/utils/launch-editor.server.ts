@@ -40,6 +40,7 @@ const COMMON_EDITORS_OSX = {
 		'/Applications/Sublime Text Dev.app/Contents/SharedSupport/bin/subl',
 	'/Applications/Sublime Text 2.app/Contents/MacOS/Sublime Text 2':
 		'/Applications/Sublime Text 2.app/Contents/SharedSupport/bin/subl',
+	'/Applications/Cursor.app/Contents/MacOS/Cursor': 'cursor',
 	'/Applications/Visual Studio Code.app/Contents/MacOS/Electron': 'code',
 	'/Applications/Visual Studio Code - Insiders.app/Contents/MacOS/Electron':
 		'code-insiders',
@@ -65,11 +66,13 @@ const COMMON_EDITORS_OSX = {
 		'/Applications/GoLand.app/Contents/MacOS/goland',
 	'/Applications/Rider.app/Contents/MacOS/rider':
 		'/Applications/Rider.app/Contents/MacOS/rider',
+	'/Applications/Zed/Zed.app/Contents/MacOS/zed': 'zed',
 } as const
 
 const COMMON_EDITORS_LINUX = {
 	atom: 'atom',
 	Brackets: 'brackets',
+	cursor: 'cursor',
 	code: 'code',
 	'code-insiders': 'code-insiders',
 	vscodium: 'vscodium',
@@ -84,10 +87,12 @@ const COMMON_EDITORS_LINUX = {
 	'webstorm.sh': 'webstorm',
 	'goland.sh': 'goland',
 	'rider.sh': 'rider',
+	zed: 'zed',
 }
 
 const COMMON_EDITORS_WIN = [
 	'Brackets.exe',
+	'Cursor.exe',
 	'Code.exe',
 	'Code - Insiders.exe',
 	'VSCodium.exe',
@@ -110,6 +115,7 @@ const COMMON_EDITORS_WIN = [
 	'goland64.exe',
 	'rider.exe',
 	'rider64.exe',
+	'zed.exe',
 ]
 
 // Transpiled version of: /^([A-Za-z]:[/\\])?[\p{L}0-9/.\-_\\]+$/u
@@ -161,6 +167,7 @@ function getArgumentsForLineNumber(
 		case 'mate':
 		case 'mine':
 			return ['--line', lineNumber, fileName]
+		case 'cursor':
 		case 'code':
 		case 'Code':
 		case 'code-insiders':
@@ -212,12 +219,12 @@ function guessEditor(): Array<string | null> {
 	try {
 		if (process.platform === 'darwin') {
 			const output = child_process.execSync('ps x').toString()
-			const processNames = Object.keys(COMMON_EDITORS_OSX)
+			const processNames = Object.keys(COMMON_EDITORS_OSX) as Array<
+				keyof typeof COMMON_EDITORS_OSX
+			>
 			for (let i = 0; i < processNames.length; i++) {
 				const processName = processNames[i]
 				if (processName && output.includes(processName)) {
-					// @ts-expect-error 🤷‍♂️ it's fine
-
 					const editor = COMMON_EDITORS_OSX[processName]
 					return [editor]
 				}
