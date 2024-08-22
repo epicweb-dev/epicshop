@@ -28,6 +28,7 @@ import {
 	type AnimationControls,
 } from 'framer-motion'
 import * as React from 'react'
+import { useHydrated } from 'remix-utils/use-hydrated'
 import { Icon } from '#app/components/icons.tsx'
 import { makeMediaQueryStore } from '#app/components/media-query.js'
 import {
@@ -248,6 +249,7 @@ const useIsWide = makeMediaQueryStore('(min-width: 640px)', true)
 export default function App() {
 	const user = useOptionalUser()
 	const isWide = useIsWide()
+	const isHydrated = useHydrated()
 
 	const [isMenuOpened, setMenuOpened] = React.useState(false)
 
@@ -262,10 +264,12 @@ export default function App() {
 				We don't just use media queries for the wider screen nav because we want
 				to avoid running all the logic in there unnecessarily.
 			*/}
-			<MobileNavigation
-				isMenuOpened={isMenuOpened}
-				onMenuOpenChange={setMenuOpened}
-			/>
+			{isHydrated && isWide ? null : (
+				<MobileNavigation
+					isMenuOpened={isMenuOpened}
+					onMenuOpenChange={setMenuOpened}
+				/>
+			)}
 			<div
 				// this nonsense is here because we want the panels to be scrollable rather
 				// than having the entire page be scrollable (at least on wider screens)
@@ -685,7 +689,7 @@ function MobileNavigation({
 							isMenuOpened && users.length > 4 ? 'min-h-14' : 'h-14',
 							{
 								'w-full border-t': isMenuOpened,
-								'border-l': !isMenuOpened,
+								// left border is covered by the menu
 							},
 						)}
 					>
@@ -695,7 +699,7 @@ function MobileNavigation({
 						<SimpleTooltip content={isMenuOpened ? null : 'Your account'}>
 							<Link
 								className={cn(
-									'flex h-14 items-center justify-start space-x-3 px-4 py-4 text-center no-underline hover:underline',
+									'flex h-14 flex-shrink-0 items-center justify-start space-x-3 px-4 py-4 text-center no-underline hover:underline',
 									{
 										'border-l': !isMenuOpened,
 										'w-full border-t': isMenuOpened,
@@ -735,7 +739,7 @@ function MobileNavigation({
 								to={nextExerciseRoute}
 								prefetch="intent"
 								className={clsx(
-									'flex h-14 w-full items-center space-x-3 border-t px-4 py-4 pl-[18px] no-underline hover:underline',
+									'flex h-14 w-full items-center space-x-3 border-l px-4 py-4 pl-[18px] no-underline hover:underline',
 								)}
 								state={{ from: 'continue next lesson button' }}
 							>
@@ -756,10 +760,13 @@ function MobileNavigation({
 						</SimpleTooltip>
 					) : null}
 					<div
-						className={cn('h-14 self-start p-4 pt-[15px] sm:mb-4 sm:w-full', {
-							'w-full border-t': isMenuOpened,
-							'border-l': !isMenuOpened,
-						})}
+						className={cn(
+							'flex h-14 w-14 items-center justify-center self-start p-4 sm:mb-4 sm:w-full',
+							{
+								'w-full border-t': isMenuOpened,
+								'border-l': !isMenuOpened,
+							},
+						)}
 					>
 						<ThemeSwitch />
 					</div>
@@ -1010,7 +1017,7 @@ function Navigation({
 					{ENV.EPICSHOP_DEPLOYED ? null : user ? (
 						<SimpleTooltip content={isMenuOpened ? null : 'Your account'}>
 							<Link
-								className="flex h-14 w-full items-center justify-start space-x-3 border-t px-4 py-4 text-center no-underline hover:underline"
+								className="flex h-14 w-full flex-shrink-0 items-center justify-start space-x-3 border-t px-4 py-4 text-center no-underline hover:underline"
 								to="/account"
 							>
 								{user.avatarUrl ? (
@@ -1085,6 +1092,7 @@ function NavToggle({
 	setMenuOpened: (value: boolean) => void
 	menuControls?: AnimationControls
 }) {
+	const menuButtonRef = React.useRef<HTMLButtonElement>(null)
 	const path01Variants = {
 		open: { d: 'M3.06061 2.99999L21.0606 21' },
 		closed: { d: 'M0 9.5L24 9.5' },
@@ -1111,17 +1119,12 @@ function NavToggle({
 		}
 	}
 
-	const latestToggleMenu = React.useRef(toggleMenu)
-	React.useEffect(() => {
-		latestToggleMenu.current = toggleMenu
-	})
-
 	React.useEffect(() => {
 		if (!isMenuOpened) return
 
 		function handleKeyUp(event: KeyboardEvent) {
 			if (event.key === 'Escape') {
-				void latestToggleMenu.current()
+				menuButtonRef.current?.click()
 			}
 		}
 		document.addEventListener('keyup', handleKeyUp)
@@ -1138,6 +1141,7 @@ function NavToggle({
 			)}
 		>
 			<button
+				ref={menuButtonRef}
 				className="flex h-14 w-14 items-center justify-center"
 				aria-label="Open Navigation menu"
 				onClick={toggleMenu}
