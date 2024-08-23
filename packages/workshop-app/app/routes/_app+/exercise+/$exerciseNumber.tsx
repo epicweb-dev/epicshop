@@ -122,12 +122,16 @@ export const headers: HeadersFunction = ({ loaderHeaders, parentHeaders }) => {
 	return headers
 }
 
+// we'll render the title ourselves thank you
 const mdxComponents = { h1: () => null }
+
 export default function ExerciseNumberRoute() {
 	const data = useLoaderData<typeof loader>()
 
-	const firstStepNumber = String(data.firstStep?.stepNumber ?? '01')
-	const firstStepPath = `${firstStepNumber.padStart(2, '0')}/${data.firstType}`
+	const firstStepNumber = String(data.firstStep?.stepNumber ?? '01').padStart(
+		2,
+		'0',
+	)
 	return (
 		<main className="relative flex h-full w-full max-w-5xl flex-col justify-between border-r md:w-3/4 xl:w-2/3">
 			<article
@@ -173,7 +177,7 @@ export default function ExerciseNumberRoute() {
 					relativePath={data.exerciseReadme.relativePath}
 				/>
 				<Link
-					to={firstStepPath}
+					to={`${firstStepNumber}/${data.firstType}`}
 					prefetch="intent"
 					className="flex h-full items-center justify-center bg-foreground px-7 text-background"
 				>

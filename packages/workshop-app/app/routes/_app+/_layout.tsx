@@ -57,7 +57,7 @@ import {
 import { ThemeSwitch } from '../theme/index.tsx'
 
 export async function loader({ request }: LoaderFunctionArgs) {
-	const timings = makeTimings('stepLoader')
+	const timings = makeTimings('appLayoutLoader')
 	const [exercises, workshopTitle, playgroundAppName] = await Promise.all([
 		getExercises({ request, timings }),
 		getWorkshopTitle(),

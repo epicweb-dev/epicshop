@@ -5,7 +5,7 @@ import { Icon } from '#app/components/icons.tsx'
 import { SimpleTooltip } from '#app/components/ui/tooltip.tsx'
 import { LaunchEditor } from '#app/routes/launch-editor.tsx'
 import { SetAppToPlayground } from '#app/routes/set-playground.tsx'
-import { type loader } from '../_layout.tsx'
+import { type loader } from '../index.tsx'
 
 function TouchedFiles() {
 	const data = useLoaderData<typeof loader>()

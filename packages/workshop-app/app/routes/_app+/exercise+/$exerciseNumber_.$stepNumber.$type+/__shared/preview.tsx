@@ -98,9 +98,11 @@ export function Preview({
 		)
 	} else {
 		return (
-			<p>
-				Preview for dev type of <code>{dev.type}</code> not supported.
-			</p>
+			<div className="flex h-full items-center justify-center text-lg">
+				<p>
+					Preview for dev type of <code>{dev.type}</code> not supported.
+				</p>
+			</div>
 		)
 	}
 }

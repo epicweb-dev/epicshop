@@ -7,13 +7,15 @@ export const handle: SEOHandle = {
 	getSitemapEntries: serverOnly$(async (request) => {
 		const exercises = await getExercises({ request })
 		return exercises.flatMap((e) => [
-			{ route: `/${e.exerciseNumber.toString().padStart(2, '0')}` },
+			{ route: `/exercise/${e.exerciseNumber.toString().padStart(2, '0')}` },
 			...e.steps.flatMap((s) =>
 				['problem', 'solution'].map((type) => ({
-					route: `/${e.exerciseNumber.toString().padStart(2, '0')}/${s.stepNumber.toString().padStart(2, '0')}/${type}`,
+					route: `/exercise/${e.exerciseNumber.toString().padStart(2, '0')}/${s.stepNumber.toString().padStart(2, '0')}/${type}`,
 				})),
 			),
-			{ route: `/${e.exerciseNumber.toString().padStart(2, '0')}/finished` },
+			{
+				route: `/exercise/${e.exerciseNumber.toString().padStart(2, '0')}/finished`,
+			},
 		])
 	}),
 }

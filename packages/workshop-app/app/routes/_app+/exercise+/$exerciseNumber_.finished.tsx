@@ -119,7 +119,7 @@ export async function loader({ request, params }: LoaderFunctionArgs) {
 				: null,
 			nextStepLink: nextExercise
 				? {
-						to: `/${nextExercise.exerciseNumber.toString().padStart(2, '0')}`,
+						to: `/exercise/${nextExercise.exerciseNumber.toString().padStart(2, '0')}`,
 						'aria-label': `${nextExercise.title}`,
 					}
 				: {

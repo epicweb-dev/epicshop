@@ -5,11 +5,24 @@
 // ensure the user gets the right status code and we can display a nicer error
 // message for them than the Remix and/or browser default.
 
+import { type LoaderFunctionArgs } from '@remix-run/node'
 import { Link, useLocation } from '@remix-run/react'
 import { GeneralErrorBoundary } from '#app/components/error-boundary.tsx'
 import { Icon } from '#app/components/icons.tsx'
 
-export async function loader() {
+export async function loader({ params }: LoaderFunctionArgs) {
+	const splat = params['*']
+	const segments = splat?.split('/') ?? []
+	if (segments.length > 0 && !isNaN(Number(segments[0]))) {
+		const newPath = `/exercise/${splat}`
+		return new Response(null, {
+			status: 302,
+			headers: {
+				Location: newPath,
+			},
+		})
+	}
+
 	throw new Response('Not found', { status: 404 })
 }
 

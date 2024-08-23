@@ -7,7 +7,7 @@ import { useHints } from '#app/utils/client-hints.tsx'
 import { dayjs } from '#app/utils/dayjs.ts'
 import { useAltDown } from '#app/utils/misc.tsx'
 import { DiscordCTA, useDiscordCTALink } from '../../../discord.tsx'
-import { type loader } from '../_layout.tsx'
+import { type loader } from '../index.tsx'
 import { type ThreadItemSchema } from './discord.server.ts'
 
 export function DiscordChat() {

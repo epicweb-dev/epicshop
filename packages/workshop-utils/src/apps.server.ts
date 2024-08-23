@@ -294,16 +294,22 @@ export function setModifiedTimesForDir(dir: string) {
 }
 
 export function getForceFreshForDir(
-	dir: string,
 	cacheEntry: CacheEntry | null | undefined,
+	...dirs: Array<string | undefined | null>
 ) {
-	if (!path.isAbsolute(dir)) {
-		throw new Error(`Trying to get force fresh for non-absolute path: ${dir}`)
+	const truthyDirs = dirs.filter(Boolean)
+	for (const d of truthyDirs) {
+		if (!path.isAbsolute(d)) {
+			throw new Error(`Trying to get force fresh for non-absolute path: ${d}`)
+		}
 	}
 	if (!cacheEntry) return true
-	const modifiedTime = modifiedTimes.get(dir)
-	if (!modifiedTime) return undefined
-	return modifiedTime > cacheEntry.metadata.createdTime ? true : undefined
+	const latestModifiedTime = truthyDirs.reduce((latest, dir) => {
+		const modifiedTime = modifiedTimes.get(dir)
+		return modifiedTime && modifiedTime > latest ? modifiedTime : latest
+	}, 0)
+	if (!latestModifiedTime) return undefined
+	return latestModifiedTime > cacheEntry.metadata.createdTime ? true : undefined
 }
 
 async function readDir(dir: string) {
@@ -806,11 +812,6 @@ export async function getPlaygroundApp({
 		? await getFullPathFromAppName(baseAppName)
 		: null
 	const playgroundCacheEntry = playgroundAppCache.get(key)
-	const forceFreshPlaygroundDir =
-		getForceFreshForDir(playgroundDir, playgroundCacheEntry) ?? false
-	const forceFreshBaseApp = baseAppFullPath
-		? getForceFreshForDir(baseAppFullPath, playgroundCacheEntry) ?? false
-		: false
 	return cachified({
 		key,
 		cache: playgroundAppCache,
@@ -819,7 +820,11 @@ export async function getPlaygroundApp({
 		timings,
 		timingKey: playgroundDir.replace(`${playgroundDir}${path.sep}`, ''),
 		request,
-		forceFresh: forceFreshPlaygroundDir || forceFreshBaseApp,
+		forceFresh: getForceFreshForDir(
+			playgroundCacheEntry,
+			playgroundDir,
+			baseAppFullPath,
+		),
 		getFreshValue: async () => {
 			if (!(await exists(playgroundDir))) return null
 			if (!baseAppName) return null
@@ -921,7 +926,7 @@ async function getExampleApps({
 			timings,
 			timingKey: exampleDir.replace(`${examplesDir}${path.sep}`, ''),
 			request,
-			forceFresh: getForceFreshForDir(exampleDir, exampleAppCache.get(key)),
+			forceFresh: getForceFreshForDir(exampleAppCache.get(key), exampleDir),
 			getFreshValue: () =>
 				getExampleAppFromPath(exampleDir, index, request).catch((error) => {
 					console.error(error)
@@ -1001,8 +1006,8 @@ async function getSolutionApps({
 			ttl: 1000 * 60 * 60 * 24,
 
 			forceFresh: getForceFreshForDir(
-				solutionDir,
 				solutionAppCache.get(solutionDir),
+				solutionDir,
 			),
 			getFreshValue: () =>
 				getSolutionAppFromPath(solutionDir, request).catch((error) => {
@@ -1073,6 +1078,7 @@ async function getProblemApps({
 	const problemDirs = await getProblemDirs()
 	const problemApps: Array<ProblemApp> = []
 	for (const problemDir of problemDirs) {
+		const solutionDir = await findSolutionDir({ fullPath: problemDir })
 		const problemApp = await cachified({
 			key: problemDir,
 			cache: problemAppCache,
@@ -1082,8 +1088,9 @@ async function getProblemApps({
 			ttl: 1000 * 60 * 60 * 24,
 
 			forceFresh: getForceFreshForDir(
-				problemDir,
 				problemAppCache.get(problemDir),
+				problemDir,
+				solutionDir,
 			),
 			getFreshValue: () =>
 				getProblemAppFromPath(problemDir).catch((error) => {
@@ -1199,10 +1206,18 @@ export async function getPrevExerciseApp(
 	return prevApp ? prevApp : null
 }
 
-export function getAppPageRoute(app: ExerciseStepApp) {
+export function getAppPageRoute(
+	app: ExerciseStepApp,
+	{
+		subroute,
+		searchParams,
+	}: { subroute?: string; searchParams?: URLSearchParams } = {},
+) {
 	const exerciseNumber = app.exerciseNumber.toString().padStart(2, '0')
 	const stepNumber = app.stepNumber.toString().padStart(2, '0')
-	return `/${exerciseNumber}/${stepNumber}/${app.type}`
+	return `/exercise/${exerciseNumber}/${stepNumber}/${app.type}${
+		subroute ? `/${subroute}` : ''
+	}${searchParams ? `?${searchParams.toString()}` : ''}`
 }
 
 /**

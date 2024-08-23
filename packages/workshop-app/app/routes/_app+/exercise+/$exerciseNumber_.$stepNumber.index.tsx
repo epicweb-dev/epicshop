@@ -10,14 +10,18 @@ export async function loader({ params }: LoaderFunctionArgs) {
 		(a) => (isProblemApp(a) ? a : null),
 	)
 	if (problemApp) {
-		return redirect(`/${params.exerciseNumber}/${params.stepNumber}/problem`)
+		return redirect(
+			`/exercise/${params.exerciseNumber}/${params.stepNumber}/problem`,
+		)
 	}
 	const solutionApp = await getExerciseApp({
 		...params,
 		type: 'solution',
 	}).then((a) => (isSolutionApp(a) ? a : null))
 	if (solutionApp) {
-		return redirect(`/${params.exerciseNumber}/${params.stepNumber}/solution`)
+		return redirect(
+			`/exercise/${params.exerciseNumber}/${params.stepNumber}/solution`,
+		)
 	}
 	throw new Response('Not found', { status: 404 })
 }

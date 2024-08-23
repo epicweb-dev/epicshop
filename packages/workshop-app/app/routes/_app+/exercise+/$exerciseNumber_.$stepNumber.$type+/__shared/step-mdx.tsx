@@ -306,7 +306,7 @@ function InlineFile({
 		<div className="launch-editor-button-wrapper flex underline underline-offset-4">
 			{children}{' '}
 			<svg height={24} width={24}>
-				<use href={`/icons.svg#keyboard`} />
+				<use href={`/icons.svg#Keyboard`} />
 			</svg>
 		</div>
 	)

@@ -1,6 +1,5 @@
 import { ElementScrollRestoration } from '@epic-web/restore-scroll'
 import {
-	getAppByName,
 	getAppDisplayName,
 	getAppPageRoute,
 	getApps,
@@ -16,15 +15,10 @@ import {
 	type ExerciseStepApp,
 } from '@epic-web/workshop-utils/apps.server'
 import {
-	isAppRunning,
-	isPortAvailable,
-} from '@epic-web/workshop-utils/process-manager.server'
-import {
 	combineServerTimings,
 	getServerTimeHeader,
 	makeTimings,
 } from '@epic-web/workshop-utils/timing.server'
-import * as Tabs from '@radix-ui/react-tabs'
 import {
 	defer,
 	redirect,
@@ -33,35 +27,19 @@ import {
 	type MetaFunction,
 	type SerializeFrom,
 } from '@remix-run/node'
-import {
-	Link,
-	useLoaderData,
-	useNavigate,
-	useSearchParams,
-} from '@remix-run/react'
+import { Link, Outlet, useLoaderData } from '@remix-run/react'
 import slugify from '@sindresorhus/slugify'
-import { clsx } from 'clsx'
-import * as React from 'react'
 import { useRef } from 'react'
-import { Diff } from '#app/components/diff.tsx'
 import { GeneralErrorBoundary } from '#app/components/error-boundary.tsx'
 import { type InBrowserBrowserRef } from '#app/components/in-browser-browser.tsx'
 import { NavChevrons } from '#app/components/nav-chevrons.tsx'
 import { type loader as rootLoader } from '#app/root.tsx'
-import { getDiscordAuthURL } from '#app/routes/discord.callback.ts'
 import { EditFileOnGitHub } from '#app/routes/launch-editor.tsx'
 import { ProgressToggle } from '#app/routes/progress.tsx'
 import { SetAppToPlayground } from '#app/routes/set-playground.tsx'
-import { getDiffCode, getDiffFiles } from '#app/utils/diff.server.ts'
 import { getEpicVideoInfos } from '#app/utils/epic-api.ts'
-import { useAltDown } from '#app/utils/misc.tsx'
 import { getSeoMetaTags } from '#app/utils/seo.js'
-import { fetchDiscordPosts } from './__shared/discord.server.ts'
-import { DiscordChat } from './__shared/discord.tsx'
-import { Playground } from './__shared/playground.tsx'
-import { Preview } from './__shared/preview.tsx'
 import { StepMdx } from './__shared/step-mdx.tsx'
-import { Tests } from './__shared/tests.tsx'
 import TouchedFiles from './__shared/touched-files.tsx'
 
 function pageTitle(
@@ -113,7 +91,6 @@ export const meta: MetaFunction<typeof loader, { root: typeof rootLoader }> = ({
 export async function loader({ request, params }: LoaderFunctionArgs) {
 	const timings = makeTimings('exerciseStepTypeLoader')
 	const workshopTitle = await getWorkshopTitle()
-	const searchParams = new URL(request.url).searchParams
 	const cacheOptions = { request, timings }
 	const exerciseStepApp = await requireExerciseApp(params, cacheOptions)
 	const exercise = await requireExercise(
@@ -144,13 +121,6 @@ export async function loader({ request, params }: LoaderFunctionArgs) {
 	const allAppsFull = await getApps(cacheOptions)
 	const playgroundApp = allAppsFull.find(isPlaygroundApp)
 
-	const app1Name = reqUrl.searchParams.get('app1')
-	const app2Name = reqUrl.searchParams.get('app2')
-	const app1 = app1Name
-		? await getAppByName(app1Name)
-		: playgroundApp || problemApp
-	const app2 = app2Name ? await getAppByName(app2Name) : solutionApp
-
 	function getStepId(a: ExerciseStepApp) {
 		return (
 			a.exerciseNumber * 1000 +
@@ -170,17 +140,6 @@ export async function loader({ request, params }: LoaderFunctionArgs) {
 			}
 		}
 		return { stepName: '', stepId: -1 }
-	}
-
-	async function getAppRunningState(a: App) {
-		if (a.dev.type !== 'script') {
-			return { isRunning: false, portIsAvailable: null }
-		}
-		const isRunning = isAppRunning(a)
-		const portIsAvailable = isRunning
-			? null
-			: await isPortAvailable(a.dev.portNumber)
-		return { isRunning, portIsAvailable }
 	}
 
 	const allApps = allAppsFull
@@ -216,44 +175,13 @@ export async function loader({ request, params }: LoaderFunctionArgs) {
 	const nextApp = await getNextExerciseApp(exerciseStepApp, cacheOptions)
 	const prevApp = await getPrevExerciseApp(exerciseStepApp, cacheOptions)
 
-	async function getDiffProp() {
-		if (!app1 || !app2) {
-			return {
-				app1: app1?.name,
-				app2: app2?.name,
-				diffCode: null,
-				diffFiles: null,
-			}
-		}
-		const [diffCode, diffFiles] = await Promise.all([
-			getDiffCode(app1, app2, {
-				...cacheOptions,
-				forceFresh: searchParams.get('forceFresh') === 'diff',
-			}).catch((e) => {
-				console.error(e)
-				return null
-			}),
-			problemApp && solutionApp
-				? getDiffFiles(problemApp, solutionApp, {
-						...cacheOptions,
-						forceFresh: searchParams.get('forceFresh') === 'diff',
-					}).catch((e) => {
-						console.error(e)
-						return 'There was a problem generating the diff'
-					})
-				: 'No diff available',
-		])
-		return {
-			app1: app1.name,
-			app2: app2.name,
-			diffCode,
-			diffFiles,
-		}
-	}
-
 	const articleId = `workshop-${slugify(workshopTitle)}-${
 		exercise.exerciseNumber
 	}-${exerciseStepApp.stepNumber}-${exerciseStepApp.type}`
+	const url = new URL(request.url)
+	const subroute = url.pathname.split(
+		`/exercise/${params.exerciseNumber}/${params.stepNumber}/${params.type}/`,
+	)[1]
 	return defer(
 		{
 			articleId,
@@ -263,66 +191,61 @@ export async function loader({ request, params }: LoaderFunctionArgs) {
 			epicVideoInfosPromise: getEpicVideoInfos(exerciseStepApp.epicVideoEmbeds),
 			exerciseIndex,
 			allApps,
-			discordAuthUrl: getDiscordAuthURL(),
-			// defer this promise so that we don't block the response from being sent
-			discordPostsPromise: fetchDiscordPosts({ request }),
 			prevStepLink: isFirstStep
 				? {
-						to: `/${exerciseStepApp.exerciseNumber
+						to: `/exercise/${exerciseStepApp.exerciseNumber
 							.toString()
 							.padStart(2, '0')}`,
 					}
 				: prevApp
-					? { to: getAppPageRoute(prevApp) }
+					? {
+							to: getAppPageRoute(prevApp, {
+								subroute,
+								searchParams: url.searchParams,
+							}),
+						}
 					: null,
 			nextStepLink: isLastStep
 				? {
-						to: `/${exerciseStepApp.exerciseNumber
+						to: `/exercise/${exerciseStepApp.exerciseNumber
 							.toString()
 							.padStart(2, '0')}/finished`,
 					}
 				: nextApp
-					? { to: getAppPageRoute(nextApp) }
+					? {
+							to: getAppPageRoute(nextApp, {
+								subroute,
+								searchParams: url.searchParams,
+							}),
+						}
 					: null,
 			playground: playgroundApp
 				? ({
 						type: 'playground',
+						appName: playgroundApp.appName,
+						name: playgroundApp.name,
 						fullPath: playgroundApp.fullPath,
 						dev: playgroundApp.dev,
-						test: playgroundApp.test,
-						title: playgroundApp.title,
-						name: playgroundApp.name,
-						appName: playgroundApp.appName,
-						isUpToDate: playgroundApp.isUpToDate,
-						stackBlitzUrl: playgroundApp.stackBlitzUrl,
-						...(await getAppRunningState(playgroundApp)),
 					} as const)
 				: null,
 			problem: problemApp
 				? ({
 						type: 'problem',
-						fullPath: problemApp.fullPath,
-						dev: problemApp.dev,
-						test: problemApp.test,
 						title: problemApp.title,
 						name: problemApp.name,
-						stackBlitzUrl: problemApp.stackBlitzUrl,
-						...(await getAppRunningState(problemApp)),
+						fullPath: problemApp.fullPath,
+						dev: problemApp.dev,
 					} as const)
 				: null,
 			solution: solutionApp
 				? ({
 						type: 'solution',
-						fullPath: solutionApp.fullPath,
-						dev: solutionApp.dev,
-						test: solutionApp.test,
 						title: solutionApp.title,
 						name: solutionApp.name,
-						stackBlitzUrl: solutionApp.stackBlitzUrl,
-						...(await getAppRunningState(solutionApp)),
+						fullPath: solutionApp.fullPath,
+						dev: solutionApp.dev,
 					} as const)
 				: null,
-			diff: getDiffProp(),
 		} as const,
 		{
 			headers: {
@@ -339,77 +262,12 @@ export const headers: HeadersFunction = ({ loaderHeaders, parentHeaders }) => {
 	return headers
 }
 
-const tabs = [
-	'playground',
-	'problem',
-	'solution',
-	'tests',
-	'diff',
-	'chat',
-] as const
-const isValidPreview = (s: string | null): s is (typeof tabs)[number] =>
-	Boolean(s && tabs.includes(s as (typeof tabs)[number]))
-
-function withParam(
-	searchParams: URLSearchParams,
-	key: string,
-	value: string | null,
-) {
-	const newSearchParams = new URLSearchParams(searchParams)
-	if (value === null) {
-		newSearchParams.delete(key)
-	} else {
-		newSearchParams.set(key, value)
-	}
-	return newSearchParams
-}
-
 export default function ExercisePartRoute() {
 	const data = useLoaderData<typeof loader>()
-	const [searchParams] = useSearchParams()
 
-	const preview = searchParams.get('preview')
 	const inBrowserBrowserRef = useRef<InBrowserBrowserRef>(null)
 
 	const titleBits = pageTitle(data)
-	const altDown = useAltDown()
-	const navigate = useNavigate()
-
-	function shouldHideTab(tab: (typeof tabs)[number]) {
-		if (tab === 'tests') {
-			return (
-				ENV.EPICSHOP_DEPLOYED ||
-				!data.playground ||
-				data.playground.test.type === 'none'
-			)
-		}
-		if (tab === 'problem' || tab === 'solution') {
-			if (data[tab]?.dev.type === 'none') return true
-			if (ENV.EPICSHOP_DEPLOYED) {
-				return data[tab]?.dev.type !== 'browser' && !data[tab]?.stackBlitzUrl
-			}
-		}
-		if (tab === 'playground' && ENV.EPICSHOP_DEPLOYED) return true
-		return false
-	}
-
-	const activeTab = isValidPreview(preview)
-		? preview
-		: tabs.find((t) => !shouldHideTab(t))
-
-	// when alt is held down, the diff tab should open to the full-page diff view
-	// between the problem and solution (this is more for the instructor than the student)
-	const altDiffUrl = `/diff?${new URLSearchParams({
-		app1: data.problem?.name ?? '',
-		app2: data.solution?.name ?? '',
-	})}`
-
-	function handleDiffTabClick(event: React.MouseEvent<HTMLAnchorElement>) {
-		if (event.altKey && !event.ctrlKey && !event.shiftKey && !event.metaKey) {
-			event.preventDefault()
-			navigate(altDiffUrl)
-		}
-	}
 
 	return (
 		<div className="flex max-w-full flex-grow flex-col">
@@ -443,13 +301,39 @@ export default function ExercisePartRoute() {
 					<article
 						id={data.articleId}
 						key={data.articleId}
-						className="shadow-on-scrollbox h-full w-full max-w-none flex-1 scroll-pt-6 space-y-6 overflow-y-auto p-2 scrollbar-thin scrollbar-thumb-scrollbar sm:p-10 sm:pt-8"
+						className="shadow-on-scrollbox flex h-full w-full max-w-none flex-1 scroll-pt-6 flex-col justify-between space-y-6 overflow-y-auto p-2 scrollbar-thin scrollbar-thumb-scrollbar sm:p-10 sm:pt-8"
 					>
 						{data.exerciseStepApp.instructionsCode ? (
 							<StepMdx inBrowserBrowserRef={inBrowserBrowserRef} />
 						) : (
-							<p>No instructions yet...</p>
+							<div className="flex h-full items-center justify-center text-lg">
+								<p>No instructions yet...</p>
+							</div>
 						)}
+						<div className="mt-auto flex justify-between">
+							{data.prevStepLink ? (
+								<Link
+									to={data.prevStepLink.to}
+									aria-label="Previous Step"
+									prefetch="intent"
+								>
+									← Previous
+								</Link>
+							) : (
+								<span />
+							)}
+							{data.nextStepLink ? (
+								<Link
+									to={data.nextStepLink.to}
+									aria-label="Next Step"
+									prefetch="intent"
+								>
+									Next →
+								</Link>
+							) : (
+								<span />
+							)}
+						</div>
 					</article>
 					<ElementScrollRestoration
 						elementQuery={`#${data.articleId}`}
@@ -493,98 +377,7 @@ export default function ExercisePartRoute() {
 						/>
 					</div>
 				</div>
-				<Tabs.Root
-					className="relative flex flex-col overflow-y-auto sm:col-span-1 sm:row-span-1"
-					value={activeTab}
-					// intentionally no onValueChange here because the Link will trigger the
-					// change.
-				>
-					<Tabs.List className="h-14 min-h-14 overflow-x-hidden border-b scrollbar-thin scrollbar-thumb-scrollbar">
-						{tabs.map((tab) => {
-							const hidden = shouldHideTab(tab)
-							return (
-								<Tabs.Trigger key={tab} value={tab} hidden={hidden} asChild>
-									<Link
-										id={`${tab}-tab`}
-										className={clsx(
-											'clip-path-button relative h-full px-6 py-4 font-mono text-sm uppercase outline-none radix-state-active:z-10 radix-state-active:bg-foreground radix-state-active:text-background radix-state-active:hover:bg-foreground/80 radix-state-active:hover:text-background/80 radix-state-inactive:hover:bg-foreground/20 radix-state-inactive:hover:text-foreground/80 focus:bg-foreground/80 focus:text-background/80',
-											hidden ? 'hidden' : 'inline-block',
-										)}
-										preventScrollReset
-										prefetch="intent"
-										onClick={handleDiffTabClick}
-										to={
-											tab === 'diff' && altDown
-												? altDiffUrl
-												: `?${withParam(
-														searchParams,
-														'preview',
-														tab === 'playground' ? null : tab,
-													)}`
-										}
-									>
-										{tab}
-									</Link>
-								</Tabs.Trigger>
-							)
-						})}
-					</Tabs.List>
-					<div className="relative z-10 flex min-h-96 flex-grow flex-col overflow-y-auto">
-						<Tabs.Content
-							value="playground"
-							className="flex w-full flex-grow items-center justify-center self-start radix-state-inactive:hidden"
-						>
-							<Playground
-								appInfo={data.playground}
-								problemAppName={data.problem?.name}
-								inBrowserBrowserRef={inBrowserBrowserRef}
-								allApps={data.allApps}
-								isUpToDate={data.playground?.isUpToDate ?? false}
-							/>
-						</Tabs.Content>
-						<Tabs.Content
-							value="problem"
-							className="flex w-full flex-grow items-center justify-center self-start radix-state-inactive:hidden"
-						>
-							<Preview
-								appInfo={data.problem}
-								inBrowserBrowserRef={inBrowserBrowserRef}
-							/>
-						</Tabs.Content>
-						<Tabs.Content
-							value="solution"
-							className="flex w-full flex-grow items-center justify-center self-start radix-state-inactive:hidden"
-						>
-							<Preview
-								appInfo={data.solution}
-								inBrowserBrowserRef={inBrowserBrowserRef}
-							/>
-						</Tabs.Content>
-						<Tabs.Content
-							value="tests"
-							className="flex w-full flex-grow items-start justify-center self-start overflow-hidden radix-state-inactive:hidden"
-						>
-							<Tests
-								appInfo={data.playground}
-								problemAppName={data.problem?.name}
-								allApps={data.allApps}
-								isUpToDate={data.playground?.isUpToDate ?? false}
-							/>
-						</Tabs.Content>
-						<Tabs.Content
-							value="diff"
-							className="flex h-full w-full flex-grow items-start justify-center self-start radix-state-inactive:hidden"
-						>
-							<Diff diff={data.diff} allApps={data.allApps} />
-						</Tabs.Content>
-						<Tabs.Content
-							value="chat"
-							className="flex h-full w-full flex-grow items-start justify-center self-start radix-state-inactive:hidden"
-						>
-							<DiscordChat />
-						</Tabs.Content>
-					</div>
-				</Tabs.Root>
+				<Outlet />
 			</main>
 		</div>
 	)
