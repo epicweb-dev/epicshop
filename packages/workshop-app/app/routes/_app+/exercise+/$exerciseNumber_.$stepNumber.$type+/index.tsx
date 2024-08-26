@@ -34,7 +34,7 @@ import { Diff } from '#app/components/diff.tsx'
 import { GeneralErrorBoundary } from '#app/components/error-boundary.tsx'
 import { type InBrowserBrowserRef } from '#app/components/in-browser-browser.tsx'
 import { getDiscordAuthURL } from '#app/routes/discord.callback.ts'
-import { getDiffCode, getDiffFiles } from '#app/utils/diff.server.ts'
+import { getDiffCode } from '#app/utils/diff.server.ts'
 import { useAltDown } from '#app/utils/misc.tsx'
 import { fetchDiscordPosts } from './__shared/discord.server.ts'
 import { DiscordChat } from './__shared/discord.tsx'
@@ -127,32 +127,19 @@ export async function loader({ request, params }: LoaderFunctionArgs) {
 				app1: app1?.name,
 				app2: app2?.name,
 				diffCode: null,
-				diffFiles: null,
 			}
 		}
-		const [diffCode, diffFiles] = await Promise.all([
-			getDiffCode(app1, app2, {
-				...cacheOptions,
-				forceFresh: searchParams.get('forceFresh') === 'diff',
-			}).catch((e) => {
-				console.error(e)
-				return null
-			}),
-			problemApp && solutionApp
-				? getDiffFiles(problemApp, solutionApp, {
-						...cacheOptions,
-						forceFresh: searchParams.get('forceFresh') === 'diff',
-					}).catch((e) => {
-						console.error(e)
-						return 'There was a problem generating the diff'
-					})
-				: 'No diff available',
-		])
+		const diffCode = await getDiffCode(app1, app2, {
+			...cacheOptions,
+			forceFresh: searchParams.get('forceFresh') === 'diff',
+		}).catch((e) => {
+			console.error(e)
+			return null
+		})
 		return {
 			app1: app1.name,
 			app2: app2.name,
 			diffCode,
-			diffFiles,
 		}
 	}
 

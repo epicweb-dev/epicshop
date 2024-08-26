@@ -37,6 +37,7 @@ import { type loader as rootLoader } from '#app/root.tsx'
 import { EditFileOnGitHub } from '#app/routes/launch-editor.tsx'
 import { ProgressToggle } from '#app/routes/progress.tsx'
 import { SetAppToPlayground } from '#app/routes/set-playground.tsx'
+import { getDiffFiles } from '#app/utils/diff.server.js'
 import { getEpicVideoInfos } from '#app/utils/epic-api.ts'
 import { getSeoMetaTags } from '#app/utils/seo.js'
 import { StepMdx } from './__shared/step-mdx.tsx'
@@ -90,6 +91,7 @@ export const meta: MetaFunction<typeof loader, { root: typeof rootLoader }> = ({
 
 export async function loader({ request, params }: LoaderFunctionArgs) {
 	const timings = makeTimings('exerciseStepTypeLoader')
+	const url = new URL(request.url)
 	const workshopTitle = await getWorkshopTitle()
 	const cacheOptions = { request, timings }
 	const exerciseStepApp = await requireExerciseApp(params, cacheOptions)
@@ -178,7 +180,7 @@ export async function loader({ request, params }: LoaderFunctionArgs) {
 	const articleId = `workshop-${slugify(workshopTitle)}-${
 		exercise.exerciseNumber
 	}-${exerciseStepApp.stepNumber}-${exerciseStepApp.type}`
-	const url = new URL(request.url)
+
 	const subroute = url.pathname.split(
 		`/exercise/${params.exerciseNumber}/${params.stepNumber}/${params.type}/`,
 	)[1]
@@ -246,6 +248,16 @@ export async function loader({ request, params }: LoaderFunctionArgs) {
 						dev: solutionApp.dev,
 					} as const)
 				: null,
+			diffFiles:
+				problemApp && solutionApp
+					? getDiffFiles(problemApp, solutionApp, {
+							...cacheOptions,
+							forceFresh: url.searchParams.get('forceFresh') === 'diff',
+						}).catch((e) => {
+							console.error(e)
+							return 'There was a problem generating the diff (check the terminal output)'
+						})
+					: 'No diff available',
 		} as const,
 		{
 			headers: {
@@ -350,7 +362,7 @@ export default function ExercisePartRoute() {
 					<div className="flex h-16 justify-between border-b-4 border-t lg:border-b-0">
 						<div>
 							<div className="h-full">
-								<TouchedFiles />
+								<TouchedFiles diffFilesPromise={data.diffFiles} />
 							</div>
 						</div>
 						<EditFileOnGitHub
