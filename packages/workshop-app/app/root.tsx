@@ -81,17 +81,22 @@ export const meta: MetaFunction<typeof loader> = ({ data }) => {
 
 export async function loader({ request }: LoaderFunctionArgs) {
 	const timings = makeTimings('rootLoader')
-	const onboarding = await readOnboardingData()
-	if (!ENV.EPICSHOP_DEPLOYED && !onboarding?.finishedTourVideo) {
-		if (new URL(request.url).pathname !== '/onboarding') {
-			throw redirect('/onboarding')
-		}
-	}
 	const {
 		title: workshopTitle,
 		subtitle: workshopSubtitle,
 		instructor,
+		onboardingVideo,
 	} = getWorkshopConfig()
+
+	const onboarding = await readOnboardingData()
+	if (
+		!ENV.EPICSHOP_DEPLOYED &&
+		!onboarding?.tourVideosWatched.includes(onboardingVideo)
+	) {
+		if (new URL(request.url).pathname !== '/onboarding') {
+			throw redirect('/onboarding')
+		}
+	}
 
 	const preferences = await getPreferences()
 	const progress = await getProgress({ timings }).catch((e) => {

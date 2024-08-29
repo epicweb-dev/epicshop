@@ -1,5 +1,6 @@
 import { invariantResponse } from '@epic-web/invariant'
-import { updateOnboardingData } from '@epic-web/workshop-utils/db.server'
+import { getWorkshopConfig } from '@epic-web/workshop-utils/config.server'
+import { markOnboardingVideoWatched } from '@epic-web/workshop-utils/db.server'
 import { makeTimings } from '@epic-web/workshop-utils/timing.server'
 import { type SEOHandle } from '@nasa-gcn/remix-seo'
 import {
@@ -24,11 +25,10 @@ export const handle: SEOHandle = {
 export async function loader({ request }: LoaderFunctionArgs) {
 	const timings = makeTimings('onboarding')
 
-	const tourUrl =
-		'https://www.epicweb.dev/tips/get-started-with-the-epic-workshop-app'
-	const videoInfos = getEpicVideoInfos([tourUrl], { request, timings })
+	const { onboardingVideo } = getWorkshopConfig()
+	const videoInfos = getEpicVideoInfos([onboardingVideo], { request, timings })
 	return defer(
-		{ tourUrl, videoInfos },
+		{ onboardingVideo, videoInfos },
 		{ headers: { 'Server-Timing': timings.toString() } },
 	)
 }
@@ -44,7 +44,8 @@ export async function action({ request }: ActionFunctionArgs) {
 	const data = await request.formData()
 	const intent = data.get('intent')
 	invariantResponse(intent === 'complete', 'Invalid intent')
-	await updateOnboardingData({ finishedTourVideo: true })
+	const { onboardingVideo } = getWorkshopConfig()
+	await markOnboardingVideoWatched(onboardingVideo)
 	throw redirect('/account')
 }
 
@@ -62,7 +63,7 @@ export default function Onboarding() {
 				</p>
 				<div className="w-[780px] max-w-full">
 					<EpicVideoInfoProvider epicVideoInfosPromise={data.videoInfos}>
-						<DeferredEpicVideo url={data.tourUrl} />
+						<DeferredEpicVideo url={data.onboardingVideo} />
 					</EpicVideoInfoProvider>
 				</div>
 			</div>

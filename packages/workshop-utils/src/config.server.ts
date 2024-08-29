@@ -30,6 +30,11 @@ const WorkshopConfigSchema = z.object({
 	instructor: InstructorSchema.optional(),
 	epicWorkshopHost: z.string().default('www.epicweb.dev'),
 	epicWorkshopSlug: z.string().optional(),
+	onboardingVideo: z
+		.string()
+		.default(
+			'https://www.epicweb.dev/tips/get-started-with-the-epic-workshop-app',
+		),
 	githubRepo: z.string(),
 	githubRoot: z.string(),
 	stackBlitzConfig: StackBlitzConfigSchema.optional(),

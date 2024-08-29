@@ -58,9 +58,12 @@ const AuthInfoSchema = z
 
 const DataSchema = z.object({
 	onboarding: z
-		.object({ finishedTourVideo: z.boolean() })
+		.object({
+			tourVideosWatched: z.array(z.string()).default([]),
+		})
+		.passthrough()
 		.optional()
-		.default({ finishedTourVideo: false }),
+		.default({ tourVideosWatched: [] }),
 	preferences: z
 		.object({
 			player: PlayerPreferencesSchema,
@@ -235,13 +238,17 @@ export async function readOnboardingData() {
 	return data?.onboarding ?? null
 }
 
-export async function updateOnboardingData(onboardingData: {
-	finishedTourVideo: boolean
-}) {
+export async function markOnboardingVideoWatched(videoUrl: string) {
 	const data = await readDb()
 	const updatedData = {
 		...data,
-		onboarding: { ...data?.onboarding, ...onboardingData },
+		onboarding: {
+			...data?.onboarding,
+			tourVideosWatched: [
+				...(data?.onboarding.tourVideosWatched ?? []),
+				videoUrl,
+			].filter(Boolean),
+		},
 	}
 	await fsExtra.ensureDir(appDir)
 	await fsExtra.writeJSON(dbPath, updatedData)
