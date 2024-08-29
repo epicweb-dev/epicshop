@@ -1,6 +1,6 @@
 import { EventEmitter } from 'events'
 import { remember } from '@epic-web/remember'
-import { getEpicWorkshopHost } from '@epic-web/workshop-utils/apps.server'
+import { getWorkshopConfig } from '@epic-web/workshop-utils/config.server'
 import { setAuthInfo } from '@epic-web/workshop-utils/db.server'
 import { Issuer, type Client } from 'openid-client'
 import { EVENTS } from './auth-events.ts'
@@ -11,7 +11,7 @@ export const authEmitter = remember('authEmitter', () => new EventEmitter())
 authEmitter.removeAllListeners()
 
 export async function registerDevice() {
-	const epicWorkshopHost = await getEpicWorkshopHost()
+	const { epicWorkshopHost } = getWorkshopConfig()
 	const { ISSUER = `https://${epicWorkshopHost}/oauth` } = process.env
 	const GRANT_TYPE = 'urn:ietf:params:oauth:grant-type:device_code'
 	try {

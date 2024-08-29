@@ -2,16 +2,14 @@ import { ElementScrollRestoration } from '@epic-web/restore-scroll'
 import {
 	getExercises,
 	getWorkshopFinished,
-	workshopRoot,
-	getWorkshopTitle,
 } from '@epic-web/workshop-utils/apps.server'
+import { getWorkshopConfig } from '@epic-web/workshop-utils/config.server'
 import {
 	combineServerTimings,
 	getServerTimeHeader,
 	makeTimings,
 	time,
 } from '@epic-web/workshop-utils/timing.server'
-import { getPkgProp } from '@epic-web/workshop-utils/utils.server'
 import { type SEOHandle } from '@nasa-gcn/remix-seo'
 import {
 	defer,
@@ -63,12 +61,9 @@ export async function loader({ request }: LoaderFunctionArgs) {
 	})
 
 	const lastExercises = exercises[exercises.length - 1]
-	const workshopTitle = await getWorkshopTitle()
-	const workshopFormTemplate = await getPkgProp(
-		workshopRoot,
-		'epicshop.forms.workshop',
-		'https://docs.google.com/forms/d/e/1FAIpQLSdRmj9p8-5zyoqRzxp3UpqSbC3aFkweXvvJIKes0a5s894gzg/viewform?hl=en&embedded=true&entry.2123647600={workshopTitle}',
-	)
+	const workshopConfig = getWorkshopConfig()
+	const workshopTitle = workshopConfig.title
+	const workshopFormTemplate = workshopConfig.forms.workshop
 	const workshopFormEmbedUrl = workshopFormTemplate.replace(
 		'{workshopTitle}',
 		encodeURIComponent(workshopTitle),

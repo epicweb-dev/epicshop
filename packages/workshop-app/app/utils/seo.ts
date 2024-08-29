@@ -1,4 +1,4 @@
-import { type getWorkshopInstructor } from '@epic-web/workshop-utils/apps.server'
+import { type getWorkshopConfig } from '@epic-web/workshop-utils/config.server'
 
 export function getSeoMetaTags({
 	title,
@@ -23,7 +23,7 @@ export function getSeoMetaTags({
 	title: string
 	requestInfo: { domain: string; path: string }
 	description?: string
-	instructor: Partial<Awaited<ReturnType<typeof getWorkshopInstructor>>>
+	instructor: Partial<ReturnType<typeof getWorkshopConfig>['instructor']>
 	ogTitle?: string
 	ogDescription?: string
 	ogImageUrl?: string

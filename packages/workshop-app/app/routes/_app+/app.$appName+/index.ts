@@ -2,13 +2,13 @@ import path from 'path'
 import {
 	getAppByName,
 	getExercise,
-	getWorkshopTitle,
 	isExampleApp,
 	isExerciseStepApp,
 	isPlaygroundApp,
 	isProblemApp,
 	isSolutionApp,
 } from '@epic-web/workshop-utils/apps.server'
+import { getWorkshopConfig } from '@epic-web/workshop-utils/config.server'
 import {
 	getServerTimeHeader,
 	makeTimings,
@@ -63,7 +63,7 @@ export async function loader({ request, params }: LoaderFunctionArgs) {
 		)
 	}
 	const appTitle = app.title
-	const workshopTitle = await getWorkshopTitle()
+	const { title: workshopTitle } = getWorkshopConfig()
 	const baseAppTitle = isExerciseStepApp(baseApp)
 		? [
 				`${baseApp.stepNumber.toString().padStart(2, '0')}. ${baseApp.title}`,

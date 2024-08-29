@@ -2,8 +2,8 @@ import { ElementScrollRestoration } from '@epic-web/restore-scroll'
 import {
 	getExercises,
 	getWorkshopInstructions,
-	getWorkshopTitle,
 } from '@epic-web/workshop-utils/apps.server'
+import { getWorkshopConfig } from '@epic-web/workshop-utils/config.server'
 import {
 	combineServerTimings,
 	getServerTimeHeader,
@@ -28,12 +28,8 @@ import { ProgressToggle, useExerciseProgressClassName } from '../progress.tsx'
 
 export async function loader({ request }: LoaderFunctionArgs) {
 	const timings = makeTimings('indexLoader')
-	const [title, exercises, workshopReadme] = await Promise.all([
-		time(() => getWorkshopTitle(), {
-			timings,
-			type: 'getWorkshopTitle',
-			desc: 'getWorkshopTitle in index',
-		}),
+	const { title } = getWorkshopConfig()
+	const [exercises, workshopReadme] = await Promise.all([
 		time(() => getExercises({ request, timings }), {
 			timings,
 			type: 'getExercises',

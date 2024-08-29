@@ -4,8 +4,8 @@ import { ElementScrollRestoration } from '@epic-web/restore-scroll'
 import {
 	getExercises,
 	workshopRoot,
-	getWorkshopTitle,
 } from '@epic-web/workshop-utils/apps.server'
+import { getWorkshopConfig } from '@epic-web/workshop-utils/config.server'
 import {
 	combineServerTimings,
 	getServerTimeHeader,
@@ -56,18 +56,12 @@ export const meta: MetaFunction<typeof loader, { root: typeof rootLoader }> = ({
 export async function loader({ request, params }: LoaderFunctionArgs) {
 	const timings = makeTimings('exerciseNumberLoader')
 	invariantResponse(params.exerciseNumber, 'exerciseNumber is required')
-	const [exercises, workshopTitle] = await Promise.all([
-		time(() => getExercises({ request, timings }), {
-			timings,
-			type: 'getExercises',
-			desc: 'getExercises in $exerciseNumber.tsx',
-		}),
-		time(() => getWorkshopTitle(), {
-			timings,
-			type: 'getWorkshopTitle',
-			desc: 'getWorkshopTitle in $exerciseNumber.tsx',
-		}),
-	])
+	const { title: workshopTitle } = getWorkshopConfig()
+	const exercises = await time(() => getExercises({ request, timings }), {
+		timings,
+		type: 'getExercises',
+		desc: 'getExercises in $exerciseNumber.tsx',
+	})
 	const exercise = exercises.find(
 		(e) => e.exerciseNumber === Number(params.exerciseNumber),
 	)

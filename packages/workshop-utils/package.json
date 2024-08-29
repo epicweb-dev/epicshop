@@ -5,6 +5,31 @@
     "access": "public"
   },
   "type": "module",
+  "tshy": {
+    "project": "./tsconfig.build.json",
+    "dialects": [
+      "esm"
+    ],
+    "exports": {
+      "./package.json": "./package.json",
+      "./apps.server": "./src/apps.server.ts",
+      "./env.server": "./src/env.server.ts",
+      "./cache.server": "./src/cache.server.ts",
+      "./config.server": "./src/config.server.ts",
+      "./db.server": "./src/db.server.ts",
+      "./timing.server": "./src/timing.server.ts",
+      "./compile-mdx.server": "./src/compile-mdx.server.ts",
+      "./codefile-mdx.server": "./src/codefile-mdx.server.ts",
+      "./change-tracker.server": "./src/change-tracker.server.ts",
+      "./git.server": "./src/git.server.ts",
+      "./iframe-sync": "./src/iframe-sync.ts",
+      "./playwright.server": "./src/playwright.server.ts",
+      "./process-manager.server": "./src/process-manager.server.ts",
+      "./test": "./src/test.ts",
+      "./utils.server": "./src/utils.server.ts",
+      "./utils": "./src/utils.ts"
+    }
+  },
   "exports": {
     "./package.json": "./package.json",
     "./apps.server": {
@@ -26,6 +51,13 @@
         "source": "./src/cache.server.ts",
         "types": "./dist/esm/cache.server.d.ts",
         "default": "./dist/esm/cache.server.js"
+      }
+    },
+    "./config.server": {
+      "import": {
+        "source": "./src/config.server.ts",
+        "types": "./dist/esm/config.server.d.ts",
+        "default": "./dist/esm/config.server.js"
       }
     },
     "./db.server": {
@@ -164,30 +196,6 @@
     "@types/mdast": "^4.0.4",
     "@types/node": "^20.12.12",
     "tshy": "^1.14.0"
-  },
-  "tshy": {
-    "project": "./tsconfig.build.json",
-    "dialects": [
-      "esm"
-    ],
-    "exports": {
-      "./package.json": "./package.json",
-      "./apps.server": "./src/apps.server.ts",
-      "./env.server": "./src/env.server.ts",
-      "./cache.server": "./src/cache.server.ts",
-      "./db.server": "./src/db.server.ts",
-      "./timing.server": "./src/timing.server.ts",
-      "./compile-mdx.server": "./src/compile-mdx.server.ts",
-      "./codefile-mdx.server": "./src/codefile-mdx.server.ts",
-      "./change-tracker.server": "./src/change-tracker.server.ts",
-      "./git.server": "./src/git.server.ts",
-      "./iframe-sync": "./src/iframe-sync.ts",
-      "./playwright.server": "./src/playwright.server.ts",
-      "./process-manager.server": "./src/process-manager.server.ts",
-      "./test": "./src/test.ts",
-      "./utils.server": "./src/utils.server.ts",
-      "./utils": "./src/utils.ts"
-    }
   },
   "repository": {
     "type": "git",

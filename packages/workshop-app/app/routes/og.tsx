@@ -1,10 +1,6 @@
 import { invariant } from '@epic-web/invariant'
-import {
-	getWorkshopInstructor,
-	getWorkshopSubtitle,
-	getWorkshopTitle,
-} from '@epic-web/workshop-utils/apps.server'
 import { cachified, ogCache } from '@epic-web/workshop-utils/cache.server'
+import { getWorkshopConfig } from '@epic-web/workshop-utils/config.server'
 import {
 	type Timings,
 	makeTimings,
@@ -21,18 +17,19 @@ const HEIGHT = 630
 export async function loader({ request }: LoaderFunctionArgs) {
 	const timings = makeTimings('og', 'og image loader')
 	const url = new URL(request.url)
-	const workshopTitle = await getWorkshopTitle()
-	const title = url.searchParams.get('title') || workshopTitle
-	const subtitle =
-		url.searchParams.get('subtitle') || (await getWorkshopSubtitle())
+	const workshopConfig = getWorkshopConfig()
+	const title = url.searchParams.get('title') || workshopConfig.title
+	const subtitle = url.searchParams.get('subtitle') || workshopConfig.subtitle
 	const urlPathname = url.searchParams.get('urlPathname') || ''
 
 	const element = (
 		<OgLayout
 			request={request}
-			instructor={await getWorkshopInstructor()}
+			instructor={workshopConfig.instructor}
 			urlPathname={urlPathname}
-			workshopTitle={workshopTitle === title ? null : workshopTitle}
+			workshopTitle={
+				workshopConfig.title === title ? null : workshopConfig.title
+			}
 		>
 			<div
 				style={{
@@ -300,7 +297,7 @@ function OgLayout({
 	urlPathname = new URL(request.url).pathname.replace(/\/og$/, ''),
 	workshopTitle,
 }: {
-	instructor: Awaited<ReturnType<typeof getWorkshopInstructor>>
+	instructor: ReturnType<typeof getWorkshopConfig>['instructor']
 	request: Request
 	children: React.ReactNode
 	workshopTitle?: string | null

@@ -19,6 +19,12 @@ import {
 } from './cache.server.js'
 import { getOptionalWatcher, getWatcher } from './change-tracker.server.js'
 import { compileMdx } from './compile-mdx.server.js'
+import {
+	bustWorkshopConfigCache,
+	getAppConfig,
+	getStackBlitzUrl,
+	getWorkshopConfig,
+} from './config.server.js'
 import { getEnv, init as initEnv } from './env.server.js'
 import {
 	closeProcess,
@@ -28,21 +34,11 @@ import {
 } from './process-manager.server.js'
 import { getServerTimeHeader, type Timings } from './timing.server.js'
 import { getErrorMessage } from './utils.js'
-import { getPkgProp } from './utils.server.js'
 
 let initialized = false
 
 export const workshopRoot = (process.env.EPICSHOP_CONTEXT_CWD =
 	process.env.EPICSHOP_CONTEXT_CWD ?? process.cwd())
-
-let packageJson: any
-try {
-	packageJson = JSON.parse(
-		fs.readFileSync(path.join(workshopRoot, 'package.json'), 'utf8'),
-	)
-} catch {
-	throw new Error(`Could not find and parse package.json at ${workshopRoot}`)
-}
 
 const playgroundAppNameInfoPath = path.join(
 	workshopRoot,
@@ -53,19 +49,6 @@ const playgroundAppNameInfoPath = path.join(
 )
 
 type CachifiedOptions = { timings?: Timings; request?: Request }
-
-const StackBlitzConfigSchema = z.object({
-	// we default this to `${exerciseTitle} (${type})`
-	title: z.string().optional(),
-	// stackblitz defaults this to dev automatically
-	startScript: z.string().optional(),
-	// if no value is provided, then stackblitz defaults this to whatever
-	// looks best based on the width of the screen
-	view: z
-		.union([z.literal('editor'), z.literal('preview'), z.literal('both')])
-		.optional(),
-	file: z.string().optional(),
-})
 
 const BaseAppSchema = z.object({
 	/** a unique identifier for the app */
@@ -237,31 +220,9 @@ export function init() {
 	if (initialized) return
 
 	initialized = true
-	try {
-		const { epicshop } = packageJson
-		let root: string, repo: string
-		if (epicshop.githubRepo) {
-			repo = epicshop.githubRepo
-			root = `${repo.replace(/\/$/, '')}/tree/main`
-		} else if (epicshop.githubRoot) {
-			root = epicshop.githubRoot.replace(/\/$/, '')
-			repo = root.replace(/\/(blob|tree)\/.*$/, '')
-		} else {
-			throw new Error(
-				`Please set the URL of your GitHub repo in the "epicshop.githubRepo" property of the package.json.`,
-			)
-		}
-		if (!root.includes('/blob/') && !root.includes('/tree/')) {
-			root = `${root.replace(/\/$/, '')}/tree/main`
-		}
-		process.env.EPICSHOP_GITHUB_REPO = repo
-		process.env.EPICSHOP_GITHUB_ROOT = root
-	} catch (error) {
-		throw new Error(
-			`Could not set the EPICSHOP_GITHUB_ROOT environment variable. Please set it to the URL of your GitHub repo in the "epicshop.githubRoot" property of the package.json.`,
-			{ cause: error },
-		)
-	}
+	const config = getWorkshopConfig()
+	process.env.EPICSHOP_GITHUB_REPO = config.githubRepo
+	process.env.EPICSHOP_GITHUB_ROOT = config.githubRoot
 
 	initEnv()
 
@@ -271,6 +232,9 @@ export function init() {
 		event: string,
 		filePath: string,
 	): Promise<void> {
+		if (filePath === path.join(workshopRoot, 'package.json')) {
+			bustWorkshopConfigCache()
+		}
 		const apps = await getApps()
 		for (const app of apps) {
 			if (filePath.startsWith(app.fullPath)) {
@@ -676,22 +640,11 @@ async function getTestInfo({
 }: {
 	fullPath: string
 }): Promise<BaseApp['test']> {
-	const hasPkgJson = await exists(path.join(fullPath, 'package.json'))
-	const testsEnabledLocally = hasPkgJson
-		? await getPkgProp(fullPath, 'epicshop.testTab.enabled', true)
-		: true
-	if (testsEnabledLocally === false) return { type: 'none' }
-
-	const testsEnabledGlobally = await getPkgProp(
-		workshopRoot,
-		'epicshop.testTab.enabled',
-		true,
-	)
-	if (testsEnabledGlobally === false) return { type: 'none' }
-
-	const testScript = hasPkgJson
-		? await getPkgProp(fullPath, 'epicshop.scripts.test', '')
-		: null
+	const {
+		testTab: { enabled },
+		scripts: { test: testScript },
+	} = await getAppConfig(fullPath)
+	if (enabled === false) return { type: 'none' }
 
 	if (testScript) {
 		return { type: 'script', script: testScript }
@@ -720,16 +673,13 @@ async function getDevInfo({
 	fullPath: string
 	portNumber: number
 }): Promise<BaseApp['dev']> {
-	const hasPkgJson = await exists(path.join(fullPath, 'package.json'))
-	const hasDevScript = hasPkgJson
-		? Boolean(await getPkgProp(fullPath, 'scripts.dev', ''))
-		: false
+	const {
+		scripts: { dev: devScript },
+		initialRoute,
+	} = await getAppConfig(fullPath)
+	const hasDevScript = Boolean(devScript)
 
 	if (hasDevScript) {
-		const initialRoute =
-			(hasPkgJson
-				? await getPkgProp(fullPath, 'epicshop.initialRoute', '')
-				: '') || (await getPkgProp(workshopRoot, 'epicshop.initialRoute', '/'))
 		return { type: 'script', portNumber, initialRoute }
 	}
 	const indexFiles = (await fsExtra.readdir(fullPath)).filter((file: string) =>
@@ -740,64 +690,6 @@ async function getDevInfo({
 	} else {
 		return { type: 'none' }
 	}
-}
-
-export async function getStackBlitzUrl({
-	fullPath,
-	title,
-	type,
-}: {
-	fullPath: string
-	title: string
-	type: AppType
-}) {
-	const Schema = StackBlitzConfigSchema.nullable().optional()
-	const appStackBlitzConfig = Schema.parse(
-		// if there's no package.json this will throw. If that's the case, we can't use stackblitz
-		// https://discord.com/channels/364486390102097930/1260979618240790578
-		await getPkgProp(fullPath, 'epicshop.stackBlitzConfig', {}).catch(
-			() => null,
-		),
-	)
-	if (appStackBlitzConfig === null) return null
-	const workshopStackBlitzConfig = Schema.parse(
-		await getPkgProp(workshopRoot, 'epicshop.stackBlitzConfig', {}),
-	)
-
-	if (workshopStackBlitzConfig === null) return null
-
-	let githubRootUrlString = ENV.EPICSHOP_GITHUB_REPO
-	if (!githubRootUrlString) return null
-
-	if (
-		!githubRootUrlString.includes('/blob/') ||
-		!githubRootUrlString.includes('/tree/')
-	) {
-		githubRootUrlString = `${githubRootUrlString.replace(/\/$/, '')}/blob/main`
-	}
-
-	const githubRootUrl = new URL(
-		githubRootUrlString.replace(/\/blob\//, '/tree/'),
-	)
-
-	const githubPart = githubRootUrl.pathname
-
-	const config = {
-		...workshopStackBlitzConfig,
-		...appStackBlitzConfig,
-		title: appStackBlitzConfig?.title ?? `${title} (${type})`,
-	} satisfies z.infer<typeof StackBlitzConfigSchema>
-
-	const params = new URLSearchParams(config)
-
-	const relativePath = fullPath.replace(`${workshopRoot}${path.sep}`, '')
-
-	const stackBlitzUrl = new URL(
-		`/github${githubPart}/${relativePath}?${params}`,
-		'https://stackblitz.com',
-	)
-
-	return stackBlitzUrl.toString()
 }
 
 export async function getPlaygroundApp({
@@ -1440,55 +1332,6 @@ export function getAppDisplayName(a: App, allApps: Array<App>) {
 		displayName = `📚 ${a.title} (example)`
 	}
 	return displayName
-}
-
-export async function getWorkshopTitle() {
-	const title = await getPkgProp<string>(workshopRoot, 'epicshop.title')
-	if (!title) {
-		throw new Error(
-			`Workshop title not found. Make sure the root of the workshop has "epicshop" with a "title" property in the package.json. ${workshopRoot}`,
-		)
-	}
-	return title
-}
-
-export async function getWorkshopSubtitle() {
-	return await getPkgProp<string>(workshopRoot, 'epicshop.subtitle', '')
-}
-
-export async function getWorkshopInstructor() {
-	const InstructorSchema = z
-		.object({
-			name: z.string().optional(),
-			avatar: z.string().optional(),
-			𝕏: z.string().optional(),
-			// alias because 𝕏 is hard to type 😅
-			xHandle: z.string().optional(),
-		})
-		.optional()
-
-	const instructor = InstructorSchema.parse(
-		await getPkgProp(workshopRoot, 'epicshop.instructor'),
-	)
-	return instructor ? { ...instructor, 𝕏: instructor.xHandle } : undefined
-}
-
-export async function getEpicWorkshopHost() {
-	const epicWorkshopHost = await getPkgProp<string>(
-		workshopRoot,
-		'epicshop.epicWorkshopHost',
-		'www.epicweb.dev',
-	)
-	return epicWorkshopHost
-}
-
-export async function getEpicWorkshopSlug() {
-	const epicWorkshopSlug = await getPkgProp<string>(
-		workshopRoot,
-		'epicshop.epicWorkshopSlug',
-		'',
-	)
-	return epicWorkshopSlug || null
 }
 
 export async function getWorkshopInstructions({

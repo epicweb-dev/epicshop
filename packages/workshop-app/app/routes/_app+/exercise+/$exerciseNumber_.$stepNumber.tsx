@@ -1,8 +1,6 @@
 import { invariantResponse } from '@epic-web/invariant'
-import {
-	getExercises,
-	getWorkshopTitle,
-} from '@epic-web/workshop-utils/apps.server'
+import { getExercises } from '@epic-web/workshop-utils/apps.server'
+import { getWorkshopConfig } from '@epic-web/workshop-utils/config.server'
 import {
 	combineServerTimings,
 	getServerTimeHeader,
@@ -19,10 +17,8 @@ import { getErrorMessage } from '#app/utils/misc.tsx'
 export async function loader({ request, params }: LoaderFunctionArgs) {
 	const timings = makeTimings('stepLoader')
 	invariantResponse(params.exerciseNumber, 'exerciseNumber is required')
-	const [exercises, workshopTitle] = await Promise.all([
-		getExercises({ request, timings }),
-		getWorkshopTitle(),
-	])
+	const exercises = await getExercises({ request, timings })
+	const { title: workshopTitle } = getWorkshopConfig()
 	const exercise = exercises.find(
 		(e) => e.exerciseNumber === Number(params.exerciseNumber),
 	)

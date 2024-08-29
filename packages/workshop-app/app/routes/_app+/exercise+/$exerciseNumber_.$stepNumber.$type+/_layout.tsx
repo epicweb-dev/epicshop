@@ -6,7 +6,6 @@ import {
 	getExerciseApp,
 	getNextExerciseApp,
 	getPrevExerciseApp,
-	getWorkshopTitle,
 	isExerciseStepApp,
 	isPlaygroundApp,
 	requireExercise,
@@ -14,6 +13,7 @@ import {
 	type App,
 	type ExerciseStepApp,
 } from '@epic-web/workshop-utils/apps.server'
+import { getWorkshopConfig } from '@epic-web/workshop-utils/config.server'
 import {
 	combineServerTimings,
 	getServerTimeHeader,
@@ -92,7 +92,7 @@ export const meta: MetaFunction<typeof loader, { root: typeof rootLoader }> = ({
 export async function loader({ request, params }: LoaderFunctionArgs) {
 	const timings = makeTimings('exerciseStepTypeLoader')
 	const url = new URL(request.url)
-	const workshopTitle = await getWorkshopTitle()
+	const { title: workshopTitle } = getWorkshopConfig()
 	const cacheOptions = { request, timings }
 	const exerciseStepApp = await requireExerciseApp(params, cacheOptions)
 	const exercise = await requireExercise(

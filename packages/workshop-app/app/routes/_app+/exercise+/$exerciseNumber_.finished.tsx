@@ -6,15 +6,14 @@ import {
 	getApps,
 	getExercise,
 	workshopRoot,
-	getWorkshopTitle,
 	isExerciseStepApp,
 } from '@epic-web/workshop-utils/apps.server'
+import { getWorkshopConfig } from '@epic-web/workshop-utils/config.server'
 import {
 	combineServerTimings,
 	getServerTimeHeader,
 	makeTimings,
 } from '@epic-web/workshop-utils/timing.server'
-import { getPkgProp } from '@epic-web/workshop-utils/utils.server'
 import {
 	defer,
 	type HeadersFunction,
@@ -64,14 +63,10 @@ export async function loader({ request, params }: LoaderFunctionArgs) {
 	if (!exercise) {
 		throw new Response('Not found', { status: 404 })
 	}
-	const workshopTitle = await getWorkshopTitle()
-	const exerciseFormTemplate = await getPkgProp(
-		workshopRoot,
-		'epicshop.forms.exercise',
-		`https://docs.google.com/forms/d/e/1FAIpQLSf3o9xyjQepTlOTH5Z7ZwkeSTdXh6YWI_RGc9KiyD3oUN0p6w/viewform?hl=en&embedded=true&entry.1836176234={workshopTitle}&entry.428900931={exerciseTitle}`,
-	)
+	const workshopConfig = getWorkshopConfig()
+	const exerciseFormTemplate = workshopConfig.forms.exercise
 	const exerciseFormEmbedUrl = exerciseFormTemplate
-		.replace('{workshopTitle}', encodeURIComponent(workshopTitle))
+		.replace('{workshopTitle}', encodeURIComponent(workshopConfig.title))
 		.replace('{exerciseTitle}', encodeURIComponent(exercise.title))
 	const nextExercise = await getExercise(exercise.exerciseNumber + 1, {
 		timings,
@@ -91,14 +86,14 @@ export async function loader({ request, params }: LoaderFunctionArgs) {
 		.filter((app) => app.exerciseNumber === exercise.exerciseNumber)
 	const prevApp = exerciseApps[exerciseApps.length - 1]
 
-	const articleId = `workshop-${slugify(workshopTitle)}-${
+	const articleId = `workshop-${slugify(workshopConfig.title)}-${
 		exercise.exerciseNumber
 	}-finished`
 
 	return defer(
 		{
 			articleId,
-			workshopTitle,
+			workshopTitle: workshopConfig.title,
 			exercise,
 			exerciseFormEmbedUrl,
 			epicVideoInfosPromise: getEpicVideoInfos(

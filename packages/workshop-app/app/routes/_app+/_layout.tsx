@@ -2,8 +2,8 @@ import {
 	extractNumbersAndTypeFromAppNameOrPath,
 	getExercises,
 	getPlaygroundAppName,
-	getWorkshopTitle,
 } from '@epic-web/workshop-utils/apps.server'
+import { getWorkshopConfig } from '@epic-web/workshop-utils/config.server'
 import {
 	combineServerTimings,
 	getServerTimeHeader,
@@ -58,9 +58,9 @@ import { ThemeSwitch } from '../theme/index.tsx'
 
 export async function loader({ request }: LoaderFunctionArgs) {
 	const timings = makeTimings('appLayoutLoader')
-	const [exercises, workshopTitle, playgroundAppName] = await Promise.all([
+	const { title: workshopTitle } = getWorkshopConfig()
+	const [exercises, playgroundAppName] = await Promise.all([
 		getExercises({ request, timings }),
-		getWorkshopTitle(),
 		getPlaygroundAppName(),
 	])
 

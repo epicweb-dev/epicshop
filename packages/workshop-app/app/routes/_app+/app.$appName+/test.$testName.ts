@@ -2,11 +2,11 @@ import path from 'path'
 import { invariantResponse } from '@epic-web/invariant'
 import {
 	getExercise,
-	getWorkshopTitle,
 	isExerciseStepApp,
 	isProblemApp,
 	isSolutionApp,
 } from '@epic-web/workshop-utils/apps.server'
+import { getWorkshopConfig } from '@epic-web/workshop-utils/config.server'
 import {
 	getServerTimeHeader,
 	makeTimings,
@@ -115,7 +115,7 @@ import(${JSON.stringify(testScriptPath)}).then(
 	const indexCss = indexFiles.find((file: string) => file.endsWith('index.css'))
 
 	const appTitle = app.title
-	const workshopTitle = await getWorkshopTitle()
+	const { title: workshopTitle } = getWorkshopConfig()
 	const title = (
 		isExerciseStepApp(app)
 			? [

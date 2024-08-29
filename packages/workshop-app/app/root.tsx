@@ -1,11 +1,7 @@
 import path from 'node:path'
 import { getPresentUsers } from '@epic-web/workshop-presence/presence.server'
-import {
-	getApps,
-	getWorkshopInstructor,
-	getWorkshopSubtitle,
-	getWorkshopTitle,
-} from '@epic-web/workshop-utils/apps.server'
+import { getApps } from '@epic-web/workshop-utils/apps.server'
+import { getWorkshopConfig } from '@epic-web/workshop-utils/config.server'
 import {
 	getDiscordMember,
 	getPreferences,
@@ -13,7 +9,7 @@ import {
 	readOnboardingData,
 } from '@epic-web/workshop-utils/db.server'
 import { getEnv } from '@epic-web/workshop-utils/env.server'
-import { makeTimings, time } from '@epic-web/workshop-utils/timing.server'
+import { makeTimings } from '@epic-web/workshop-utils/timing.server'
 import { cssBundleHref } from '@remix-run/css-bundle'
 import {
 	json,
@@ -91,21 +87,11 @@ export async function loader({ request }: LoaderFunctionArgs) {
 			throw redirect('/onboarding')
 		}
 	}
-	const workshopTitle = await time(() => getWorkshopTitle(), {
-		type: 'getWorkshopTitle',
-		desc: 'getWorkshopTitle in root',
-		timings,
-	})
-	const workshopSubtitle = await time(() => getWorkshopSubtitle(), {
-		type: 'getWorkshopSubtitle',
-		desc: 'getWorkshopSubtitle in root',
-		timings,
-	})
-	const instructor = await time(() => getWorkshopInstructor(), {
-		type: 'getInstructor',
-		desc: 'getInstructor in root',
-		timings,
-	})
+	const {
+		title: workshopTitle,
+		subtitle: workshopSubtitle,
+		instructor,
+	} = getWorkshopConfig()
 
 	const preferences = await getPreferences()
 	const progress = await getProgress({ timings }).catch((e) => {

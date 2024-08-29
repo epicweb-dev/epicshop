@@ -1,11 +1,10 @@
 import {
-	getEpicWorkshopHost,
-	getEpicWorkshopSlug,
 	getExercises,
 	getWorkshopFinished,
 	getWorkshopInstructions,
 } from '@epic-web/workshop-utils/apps.server'
 import { cachified, fsCache } from '@epic-web/workshop-utils/cache.server'
+import { getWorkshopConfig } from '@epic-web/workshop-utils/config.server'
 import { getAuthInfo } from '@epic-web/workshop-utils/db.server'
 import { type Timings } from '@epic-web/workshop-utils/timing.server'
 import md5 from 'md5-hex'
@@ -194,7 +193,7 @@ async function getEpicProgress({
 }: { timings?: Timings; request?: Request; forceFresh?: boolean } = {}) {
 	if (ENV.EPICSHOP_DEPLOYED) return []
 	const authInfo = await getAuthInfo()
-	const epicWorkshopHost = await getEpicWorkshopHost()
+	const { epicWorkshopHost } = getWorkshopConfig()
 	if (!authInfo) return []
 	const tokenPart = md5(authInfo.tokenSet.access_token)
 	const EpicProgressSchema = z.array(
@@ -243,7 +242,7 @@ export async function getProgress({
 	if (ENV.EPICSHOP_DEPLOYED) return []
 	const authInfo = await getAuthInfo()
 	if (!authInfo) return []
-	const epicWorkshopSlug = await getEpicWorkshopSlug()
+	const { epicWorkshopSlug } = getWorkshopConfig()
 	if (!epicWorkshopSlug) return []
 
 	const [
@@ -382,7 +381,7 @@ export async function updateProgress(
 	if (!authInfo) {
 		return { status: 'error', error: 'not authenticated' } as const
 	}
-	const epicWorkshopHost = await getEpicWorkshopHost()
+	const { epicWorkshopHost } = getWorkshopConfig()
 
 	const response = await fetch(`https://${epicWorkshopHost}/api/progress`, {
 		method: 'POST',
@@ -436,7 +435,7 @@ export async function getWorkshopData(
 	// if you're authenticated anyway.
 	if (!authInfo) return { sections: [] }
 
-	const epicWorkshopHost = await getEpicWorkshopHost()
+	const { epicWorkshopHost } = getWorkshopConfig()
 
 	return cachified({
 		key: `epic-workshop-data:${epicWorkshopHost}:${epicWorkshopSlug}`,

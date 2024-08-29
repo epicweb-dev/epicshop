@@ -212,7 +212,7 @@ async function copyUnignoredFiles(
 	await cachified({
 		key,
 		cache: diffCodeCache,
-		forceFresh: getForceFreshForDir(srcDir, diffCodeCache.get(key)),
+		forceFresh: getForceFreshForDir(diffCodeCache.get(key), srcDir),
 		async getFreshValue() {
 			const ig = ignore().add(ignoreList)
 

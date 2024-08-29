@@ -1,7 +1,8 @@
 import { execa, execaCommand } from 'execa'
 import { workshopRoot } from './apps.server.js'
+import { getWorkshopConfig } from './config.server.js'
 import { getErrorMessage } from './utils.js'
-import { checkConnection, getPkgProp } from './utils.server.js'
+import { checkConnection } from './utils.server.js'
 
 const cwd = workshopRoot
 
@@ -113,11 +114,7 @@ export async function updateLocalRepo() {
 		console.log('📦 Re-installing dependencies...')
 		await execaCommand('npm install', { cwd, stdio: 'inherit' })
 
-		const postUpdateScript = await getPkgProp(
-			cwd,
-			'epicshop.scripts.postupdate',
-			'',
-		)
+		const postUpdateScript = getWorkshopConfig().scripts?.postupdate
 		if (postUpdateScript) {
 			console.log('🏃 Running post update script...')
 			await execaCommand(postUpdateScript, { cwd, stdio: 'inherit' })

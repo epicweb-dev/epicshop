@@ -1,7 +1,5 @@
-import {
-	getApps,
-	getEpicWorkshopSlug,
-} from '@epic-web/workshop-utils/apps.server'
+import { getApps } from '@epic-web/workshop-utils/apps.server'
+import { getWorkshopConfig } from '@epic-web/workshop-utils/config.server'
 import { getProcesses } from '@epic-web/workshop-utils/process-manager.server'
 import {
 	getServerTimeHeader,
@@ -48,7 +46,7 @@ export const meta: MetaFunction<typeof loader, { root: typeof rootLoader }> = ({
 export async function loader({ request }: LoaderFunctionArgs) {
 	ensureUndeployed()
 	const timings = makeTimings('adminLoader')
-	const workshopSlug = (await getEpicWorkshopSlug()) ?? 'Unkown'
+	const workshopSlug = getWorkshopConfig().epicWorkshopSlug ?? 'Unkown'
 	const apps = (await getApps({ request, timings })).filter(
 		(a, i, ar) => ar.findIndex((b) => a.name === b.name) === i,
 	)
