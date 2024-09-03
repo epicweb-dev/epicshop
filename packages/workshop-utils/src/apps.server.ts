@@ -1110,9 +1110,12 @@ export function getAppPageRoute(
 	const subrouteUrl = subroute ? `/${subroute}` : ''
 
 	if (searchParams) {
+		// these are used on the diff tab and if we preserve them then the user will
+		// be confused why the diff is never changing as they advance through the workshop.
 		searchParams.delete('app1')
 		searchParams.delete('app2')
 	}
+
 	const searchString = searchParams?.toString()
 	return `${baseUrl}${subrouteUrl}${searchString ? `?${searchString}` : ''}`
 }
