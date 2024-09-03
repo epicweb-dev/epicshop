@@ -1097,7 +1097,6 @@ export async function getPrevExerciseApp(
 	const prevApp = apps[index - 1]
 	return prevApp ? prevApp : null
 }
-
 export function getAppPageRoute(
 	app: ExerciseStepApp,
 	{
@@ -1107,9 +1106,15 @@ export function getAppPageRoute(
 ) {
 	const exerciseNumber = app.exerciseNumber.toString().padStart(2, '0')
 	const stepNumber = app.stepNumber.toString().padStart(2, '0')
-	return `/exercise/${exerciseNumber}/${stepNumber}/${app.type}${
-		subroute ? `/${subroute}` : ''
-	}${searchParams ? `?${searchParams.toString()}` : ''}`
+	const baseUrl = `/exercise/${exerciseNumber}/${stepNumber}/${app.type}`
+	const subrouteUrl = subroute ? `/${subroute}` : ''
+
+	if (searchParams) {
+		searchParams.delete('app1')
+		searchParams.delete('app2')
+	}
+	const searchString = searchParams?.toString()
+	return `${baseUrl}${subrouteUrl}${searchString ? `?${searchString}` : ''}`
 }
 
 /**
