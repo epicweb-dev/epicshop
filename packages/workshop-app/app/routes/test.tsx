@@ -19,6 +19,7 @@ import { AnimatedBars, Icon } from '#app/components/icons.tsx'
 import { SimpleTooltip } from '#app/components/ui/tooltip.tsx'
 import { useAnsiToHtml } from '#app/utils/ansi-text.js'
 import { ensureUndeployed } from '#app/utils/misc.tsx'
+import { jsonWithPE, usePERedirectInput } from '#app/utils/pe.js'
 
 const testActionSchema = z.union([
 	z.object({
@@ -151,30 +152,35 @@ export async function action({ request }: ActionFunctionArgs) {
 		name: formData.get('name'),
 	})
 	if (!result.success) {
-		return json(
+		return jsonWithPE(
+			formData,
 			{ success: false, error: result.error.flatten() },
 			{ status: 400 },
 		)
 	}
 	const app = await getAppByName(result.data.name)
 	if (!app) {
-		return json({ success: false, error: 'App not found' }, { status: 404 })
+		return jsonWithPE(
+			formData,
+			{ success: false, error: 'App not found' },
+			{ status: 404 },
+		)
 	}
 	switch (result.data.intent) {
 		case 'run': {
 			void runAppTests(app)
-			return json({ success: true })
+			return jsonWithPE(formData, { success: true })
 		}
 		case 'stop': {
 			const processEntry = getTestProcessEntry(app)
 			if (processEntry) {
 				processEntry.process?.kill()
 			}
-			return json({ success: true })
+			return jsonWithPE(formData, { success: true })
 		}
 		case 'clear': {
 			clearTestProcessEntry(app)
-			return json({ success: true })
+			return jsonWithPE(formData, { success: true })
 		}
 	}
 }
@@ -316,6 +322,7 @@ export function TestRunner({
 	onRun?: () => void
 }) {
 	const fetcher = useFetcher<typeof action>()
+	const peRedirectInput = usePERedirectInput()
 	const latestOnRun = useRef(onRun)
 	useEffect(() => {
 		latestOnRun.current = onRun
@@ -327,6 +334,7 @@ export function TestRunner({
 	}, [fetcher.data])
 	return (
 		<fetcher.Form method="POST" action="/test" className="h-full">
+			{peRedirectInput}
 			<input type="hidden" name="name" value={name} />
 			<SimpleTooltip
 				content={fetcher.state === 'idle' ? 'Run Tests' : 'Running Tests...'}
@@ -356,6 +364,7 @@ export function ClearTest({
 	onClear?: () => void
 }) {
 	const fetcher = useFetcher<typeof action>()
+	const peRedirectInput = usePERedirectInput()
 	const latestOnClear = useRef(onClear)
 	useEffect(() => {
 		latestOnClear.current = onClear
@@ -367,6 +376,7 @@ export function ClearTest({
 	}, [fetcher.data])
 	return (
 		<fetcher.Form method="POST" action="/test" className="h-full">
+			{peRedirectInput}
 			<input type="hidden" name="name" value={name} />
 			<SimpleTooltip
 				content={fetcher.state === 'idle' ? 'Clear Tests' : 'Clearing Tests...'}
@@ -396,6 +406,7 @@ export function StopTest({
 	onStop?: () => void
 }) {
 	const fetcher = useFetcher<typeof action>()
+	const peRedirectInput = usePERedirectInput()
 	const latestOnStop = useRef(onStop)
 	useEffect(() => {
 		latestOnStop.current = onStop
@@ -407,6 +418,7 @@ export function StopTest({
 	}, [fetcher.data])
 	return (
 		<fetcher.Form method="POST" action="/test" className="h-full">
+			{peRedirectInput}
 			<input type="hidden" name="name" value={name} />
 			<SimpleTooltip
 				content={fetcher.state === 'idle' ? 'Stop Tests' : 'Stopping Tests...'}
