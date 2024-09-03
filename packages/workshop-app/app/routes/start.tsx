@@ -12,6 +12,7 @@ import { Button } from '#app/components/button.tsx'
 import { Loading } from '#app/components/loading.tsx'
 import { showProgressBarField } from '#app/components/progress-bar.tsx'
 import { ensureUndeployed, useAltDown } from '#app/utils/misc.tsx'
+import { jsonWithPE, usePERedirectInput } from '#app/utils/pe.js'
 import { createToastHeaders } from '#app/utils/toast.server'
 
 export async function action({ request }: ActionFunctionArgs) {
@@ -41,7 +42,7 @@ export async function action({ request }: ActionFunctionArgs) {
 				if (appRunningResult?.status === 'success') {
 					// wait another 200ms just in case the build output for assets isn't finished
 					await new Promise((resolve) => setTimeout(resolve, 200))
-					return json({ status: 'app-started' } as const)
+					return jsonWithPE(formData, { status: 'app-started' } as const)
 				} else if (app.dev.type === 'script') {
 					const errorMessage = appRunningResult
 						? appRunningResult.error
@@ -64,7 +65,7 @@ export async function action({ request }: ActionFunctionArgs) {
 					)
 				}
 			} else if (result.portNumber) {
-				return json({
+				return jsonWithPE(formData, {
 					status: 'app-not-started',
 					error: result.status,
 					port: result.portNumber,
@@ -80,7 +81,7 @@ export async function action({ request }: ActionFunctionArgs) {
 		async function stopApp() {
 			invariant(app, 'app must be defined')
 			await closeProcess(app.name)
-			return json({ status: 'app-stopped' } as const)
+			return jsonWithPE(formData, { status: 'app-stopped' } as const)
 		}
 
 		switch (intent) {
@@ -101,13 +102,14 @@ export async function action({ request }: ActionFunctionArgs) {
 		const port = formData.get('port')
 		invariantResponse(typeof port === 'string', 'port is required')
 		await stopPort(port)
-		return json({ status: 'port-stopped' } as const)
+		return jsonWithPE(formData, { status: 'port-stopped' } as const)
 	}
 	throw new Error(`Unknown intent: ${intent}`)
 }
 
 export function AppStopper({ name }: { name: string }) {
 	const fetcher = useFetcher<typeof action>()
+	const peRedirectInput = usePERedirectInput()
 	const inFlightIntent = fetcher.formData?.get('intent')
 	const inFlightState =
 		inFlightIntent === 'stop'
@@ -118,6 +120,7 @@ export function AppStopper({ name }: { name: string }) {
 	const altDown = useAltDown()
 	return (
 		<fetcher.Form method="POST" action="/start">
+			{peRedirectInput}
 			{showProgressBarField}
 			<input type="hidden" name="name" value={name} />
 			<button
@@ -134,9 +137,11 @@ export function AppStopper({ name }: { name: string }) {
 
 export function PortStopper({ port }: { port: number | string }) {
 	const fetcher = useFetcher<typeof action>()
-
+	const peRedirectInput = usePERedirectInput()
 	return (
 		<fetcher.Form method="POST" action="/start">
+			{peRedirectInput}
+			{showProgressBarField}
 			<input type="hidden" name="port" value={port} />
 			<Button varient="mono" type="submit" name="intent" value="stop-port">
 				{fetcher.state === 'idle' ? 'Stop Port' : 'Stopping Port'}
@@ -147,6 +152,7 @@ export function PortStopper({ port }: { port: number | string }) {
 
 export function AppStarter({ name }: { name: string }) {
 	const fetcher = useFetcher<typeof action>()
+	const peRedirectInput = usePERedirectInput()
 	if (fetcher.data?.status === 'app-not-started') {
 		if (fetcher.data.error === 'port-unavailable') {
 			return (
@@ -162,6 +168,8 @@ export function AppStarter({ name }: { name: string }) {
 	}
 	return (
 		<fetcher.Form method="POST" action="/start">
+			{peRedirectInput}
+			{showProgressBarField}
 			<input type="hidden" name="name" value={name} />
 			{fetcher.state === 'idle' ? (
 				<Button type="submit" name="intent" value="start" varient="mono">

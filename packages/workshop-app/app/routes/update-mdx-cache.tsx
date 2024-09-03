@@ -7,6 +7,7 @@ import { clsx } from 'clsx'
 import { z } from 'zod'
 import { showProgressBarField } from '#app/components/progress-bar.tsx'
 import { ensureUndeployed } from '#app/utils/misc.tsx'
+import { jsonWithPE, usePERedirectInput } from '#app/utils/pe.js'
 
 const cacheSchema = z.object({
 	cacheLocation: z.string(),
@@ -62,7 +63,7 @@ export async function action({ request }: ActionFunctionArgs) {
 	}
 	setModifiedTimesForDir(appFullPath)
 
-	return json({ success: true })
+	return jsonWithPE(formData, { success: true })
 }
 
 export function UpdateMdxCache({
@@ -77,9 +78,11 @@ export function UpdateMdxCache({
 	appFullPath: string
 }) {
 	const fetcher = useFetcher<typeof action>()
+	const peRedirectInput = usePERedirectInput()
 
 	return (
 		<fetcher.Form action="/update-mdx-cache" method="POST">
+			{peRedirectInput}
 			{showProgressBarField}
 			<input type="hidden" name="cacheLocation" value={cacheLocation} />
 			<input type="hidden" name="embeddedKey" value={embeddedKey} />

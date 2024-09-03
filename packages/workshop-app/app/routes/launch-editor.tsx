@@ -1,6 +1,6 @@
 import path from 'path'
 import { getAppByName } from '@epic-web/workshop-utils/apps.server'
-import { json, type ActionFunctionArgs } from '@remix-run/node'
+import { type ActionFunctionArgs } from '@remix-run/node'
 import { Link, useFetcher } from '@remix-run/react'
 import { clsx } from 'clsx'
 import fsExtra from 'fs-extra'
@@ -10,6 +10,7 @@ import { useApps } from '#app/components/apps'
 import { showProgressBarField } from '#app/components/progress-bar.tsx'
 import { launchEditor } from '#app/utils/launch-editor.server.ts'
 import { ensureUndeployed } from '#app/utils/misc.tsx'
+import { jsonWithPE, usePERedirectInput } from '#app/utils/pe.js'
 import { useRequestInfo } from '#app/utils/request-info'
 import { createToastHeaders } from '#app/utils/toast.server.ts'
 
@@ -143,7 +144,7 @@ export async function action({ request }: ActionFunctionArgs) {
 	}
 
 	if (results.every((r) => r.status === 'success')) {
-		return json({ status: 'success' } as const)
+		return jsonWithPE(formData, { status: 'success' } as const)
 	} else {
 		const messages = results
 			.map((r, index, array) =>
@@ -156,13 +157,17 @@ export async function action({ request }: ActionFunctionArgs) {
 			.filter(Boolean)
 			.join('\n')
 		console.error('Launch editor error:', messages)
-		return json({ status: 'error', message: messages } as const, {
-			headers: await createToastHeaders({
-				type: 'error',
-				title: 'Launch Editor Error',
-				description: messages,
-			}),
-		})
+		return jsonWithPE(
+			formData,
+			{ status: 'error', message: messages } as const,
+			{
+				headers: await createToastHeaders({
+					type: 'error',
+					title: 'Launch Editor Error',
+					description: messages,
+				}),
+			},
+		)
 	}
 }
 
@@ -209,6 +214,7 @@ function LaunchEditorImpl({
 	onUpdate,
 }: LaunchEditorProps) {
 	const fetcher = useLaunchFetcher(onUpdate)
+	const peRedirectInput = usePERedirectInput()
 
 	const fileList = typeof appFile === 'string' ? [appFile] : appFile
 	const type = file ? 'file' : appFile ? 'appFile' : ''
@@ -220,6 +226,7 @@ function LaunchEditorImpl({
 			method="POST"
 			className="flex items-center"
 		>
+			{peRedirectInput}
 			{showProgressBarField}
 			<input type="hidden" name="line" value={line} />
 			<input type="hidden" name="column" value={column} />

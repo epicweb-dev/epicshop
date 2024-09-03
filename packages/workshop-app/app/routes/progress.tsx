@@ -1,6 +1,6 @@
 import { invariantResponse } from '@epic-web/invariant'
 import { requireAuthInfo } from '@epic-web/workshop-utils/db.server'
-import { json, type ActionFunctionArgs } from '@remix-run/node'
+import { type ActionFunctionArgs } from '@remix-run/node'
 import {
 	useFetcher,
 	useFetchers,
@@ -19,6 +19,7 @@ import {
 	type Progress,
 } from '#app/utils/epic-api.ts'
 import { combineHeaders, ensureUndeployed } from '#app/utils/misc.tsx'
+import { jsonWithPE, usePERedirectInput } from '#app/utils/pe.js'
 import { createToastHeaders } from '#app/utils/toast.server.ts'
 
 export function useEpicProgress() {
@@ -239,7 +240,7 @@ export async function action({ request }: ActionFunctionArgs) {
 	}
 	const announcement = getCompletionAnnouncement()
 
-	return json(result, {
+	return jsonWithPE(formData, result, {
 		headers: combineHeaders(
 			announcement ? createConfettiHeaders() : null,
 			announcement
@@ -258,6 +259,7 @@ export function ProgressToggle({
 	...progressItemSearch
 }: { className?: string } & ProgressItemSearch) {
 	const progressFetcher = useFetcher<typeof action>()
+	const peRedirectInput = usePERedirectInput()
 	const progressItem = useProgressItem(progressItemSearch)
 	const animationRef = React.useRef<HTMLDivElement>(null)
 	const buttonRef = React.useRef<HTMLButtonElement>(null)
@@ -304,6 +306,7 @@ export function ProgressToggle({
 
 	return (
 		<progressFetcher.Form method="POST" action="/progress">
+			{peRedirectInput}
 			<input
 				type="hidden"
 				name="lessonSlug"

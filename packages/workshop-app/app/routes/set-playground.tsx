@@ -16,6 +16,7 @@ import { showProgressBarField } from '#app/components/progress-bar.tsx'
 import { SimpleTooltip } from '#app/components/ui/tooltip.tsx'
 import { getDiffCode } from '#app/utils/diff.server.ts'
 import { ensureUndeployed, getErrorMessage } from '#app/utils/misc.tsx'
+import { jsonWithPE, usePERedirectInput } from '#app/utils/pe.js'
 import { createToastHeaders } from '#app/utils/toast.server.ts'
 
 const SetPlaygroundSchema = z.object({
@@ -32,17 +33,21 @@ export async function action({ request }: ActionFunctionArgs) {
 	const formData = await request.formData()
 	const rawData = {
 		appName: formData.get('appName'),
+		redirectTo: formData.get('redirectTo'),
 	}
 	const result = SetPlaygroundSchema.safeParse(rawData)
 	if (!result.success) {
-		return json({ status: 'error', error: result.error.message } as const, {
-			status: 400,
-		})
+		return jsonWithPE(
+			formData,
+			{ status: 'error', error: result.error.message } as const,
+			{ status: 400 },
+		)
 	}
 	const form = result.data
 	const app = await getAppByName(form.appName)
 	if (!app) {
-		return json(
+		return jsonWithPE(
+			formData,
 			{ status: 'error', error: `App ${form.appName} not found` } as const,
 			{ status: 404 },
 		)
@@ -73,7 +78,7 @@ export async function action({ request }: ActionFunctionArgs) {
 	if (playground && converseApp) {
 		await getDiffCode(playground, converseApp, { forceFresh: true })
 	}
-	return json({ status: 'success' } as const)
+	return jsonWithPE(formData, { status: 'success' } as const)
 }
 
 export function SetPlayground({
@@ -87,6 +92,7 @@ export function SetPlayground({
 	reset?: boolean
 } & React.ComponentProps<'button'>) {
 	const fetcher = useFetcher<typeof action>()
+	const peRedirectInput = usePERedirectInput()
 
 	const submitButton = (
 		<button
@@ -105,6 +111,7 @@ export function SetPlayground({
 			method="POST"
 			className="inline-flex items-center justify-center"
 		>
+			{peRedirectInput}
 			<input type="hidden" name="appName" value={appName} />
 			{reset ? <input type="hidden" name="reset" value="true" /> : null}
 			{showProgressBarField}
