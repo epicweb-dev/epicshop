@@ -147,7 +147,7 @@ export async function getStackBlitzUrl({
 
 	if (appConfig.stackBlitzConfig === null) return null
 
-	let githubRootUrlString = workshopConfig.githubRepo
+	let githubRootUrlString = workshopConfig.githubRoot
 
 	const githubRootUrl = new URL(
 		githubRootUrlString.replace(/\/blob\//, '/tree/'),
@@ -196,8 +196,8 @@ export async function getAppConfig(fullPath: string) {
 		stackBlitzConfig: StackBlitzConfigSchema.nullable()
 			.optional()
 			.transform((appStackBlitzConfig) => {
-				if (!appStackBlitzConfig) return workshopConfig.stackBlitzConfig ?? null
-				if (!workshopConfig.stackBlitzConfig) return appStackBlitzConfig
+				if (appStackBlitzConfig === null) return null
+
 				return {
 					...workshopConfig.stackBlitzConfig,
 					...appStackBlitzConfig,
