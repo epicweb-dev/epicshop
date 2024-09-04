@@ -61,6 +61,13 @@ app.use(compression())
 // http://expressjs.com/en/advanced/best-practice-security.html#at-a-minimum-disable-x-powered-by-header
 app.disable('x-powered-by')
 
+// the workshop's public assets override the app's public assets
+app.use(
+	express.static(path.join(workshopRoot, 'public'), {
+		maxAge: isProd ? '1h' : 0,
+	}),
+)
+
 if (viteDevServer) {
 	app.use(viteDevServer.middlewares)
 } else {
@@ -72,11 +79,6 @@ if (viteDevServer) {
 		}),
 	)
 }
-app.use(
-	express.static(path.join(workshopRoot, 'public'), {
-		maxAge: isProd ? '1h' : 0,
-	}),
-)
 
 if ((process.env.NODE_ENV !== 'production' && !isPublished) || isDeployed) {
 	morgan.token('url', (req) => decodeURIComponent(req.url ?? ''))
