@@ -30,7 +30,8 @@ import {
 import * as React from 'react'
 import { useHydrated } from 'remix-utils/use-hydrated'
 import { Icon } from '#app/components/icons.tsx'
-import { makeMediaQueryStore } from '#app/components/media-query.js'
+import { makeMediaQueryStore } from '#app/components/media-query.ts'
+import { Logo } from '#app/components/product.tsx'
 import {
 	Dialog,
 	DialogContent,
@@ -46,6 +47,7 @@ import {
 	TooltipTrigger,
 } from '#app/components/ui/tooltip.tsx'
 import { useOptionalUser } from '#app/components/user.tsx'
+import { useWorkshopConfig } from '#app/components/workshop-config.js'
 import { cn } from '#app/utils/misc.tsx'
 import { usePresence, type User } from '#app/utils/presence.tsx'
 import {
@@ -136,6 +138,9 @@ function getScoreClassNames(score: number) {
 function FacePile({ isMenuOpened }: { isMenuOpened: boolean }) {
 	const loggedInUser = useOptionalUser()
 	const { users } = usePresence()
+	const {
+		product: { displayNameShort },
+	} = useWorkshopConfig()
 	const limit = isMenuOpened ? 17 : 0
 	const numberOverLimit = users.length - limit
 	if (!users.length) return null
@@ -158,7 +163,7 @@ function FacePile({ isMenuOpened }: { isMenuOpened: boolean }) {
 		) : null
 	const overLimitLabel = `${numberOverLimit}${
 		isMenuOpened ? ' more ' : ' '
-	}Epic Web Dev${numberOverLimit === 1 ? '' : 's'} working now`
+	}${displayNameShort} Dev${numberOverLimit === 1 ? '' : 's'} working now`
 	return (
 		<div className="flex flex-wrap items-center gap-2">
 			<TooltipProvider>
@@ -171,7 +176,7 @@ function FacePile({ isMenuOpened }: { isMenuOpened: boolean }) {
 								{user.avatarUrl ? (
 									<img
 										tabIndex={0}
-										alt={user.name || 'Epic Web Dev'}
+										alt={user.name || displayNameShort}
 										className={cn(
 											'h-8 w-8 rounded-full border object-cover',
 											scoreClassNames,
@@ -181,7 +186,7 @@ function FacePile({ isMenuOpened }: { isMenuOpened: boolean }) {
 								) : (
 									<div
 										tabIndex={0}
-										aria-label={user.name || 'Epic Web Dev'}
+										aria-label={user.name || `${displayNameShort} Dev`}
 										className={cn(
 											'flex h-8 w-8 items-center justify-center rounded-full border',
 											scoreClassNames,
@@ -194,9 +199,9 @@ function FacePile({ isMenuOpened }: { isMenuOpened: boolean }) {
 							<TooltipContent>
 								<span className="flex flex-col items-center justify-center gap-1">
 									<span>
-										{user.name || 'An EPIC Web Dev'}{' '}
+										{user.name || `${displayNameShort} Dev`}{' '}
 										{locationLabel
-											? ` is ${user.location?.origin?.includes('epicweb.dev') ? 'learning' : 'working'} ${
+											? ` is ${user.location?.origin?.includes('localhost') ? 'working' : 'learning'} ${
 													score === 1 && loggedInUser?.id !== user.id
 														? 'with you'
 														: ''
@@ -255,7 +260,7 @@ export default function App() {
 
 	return (
 		<div className="flex flex-col">
-			{user ? null : <EpicWebBanner />}
+			{user ? null : <NoUserBanner />}
 			{/*
 				this isn't placed in a conditional with isWide because the server render
 				doesn't know whether it should be around or not so we just use CSS to hide it
@@ -319,8 +324,11 @@ function getLocationLabel(location: User['location']) {
 	return { line1: location.workshopTitle, line2: exercisePortion }
 }
 
-function EpicWebBanner() {
+function NoUserBanner() {
 	const isWide = useIsWide()
+	const {
+		product: { host, displayName },
+	} = useWorkshopConfig()
 	const details = (
 		<div>
 			{ENV.EPICSHOP_DEPLOYED ? (
@@ -344,7 +352,7 @@ function EpicWebBanner() {
 						Login
 					</Link>{' '}
 					or{' '}
-					<a href="https://www.epicweb.dev/login" className="underline">
+					<a href={`https://${host}/login`} className="underline">
 						join for free
 					</a>{' '}
 					for the full experience.
@@ -357,16 +365,16 @@ function EpicWebBanner() {
 			{isWide ? (
 				<>
 					<div className="hidden flex-1 flex-wrap items-center gap-4 sm:flex">
-						<Icon name="EpicWeb" size="lg" />
+						<Logo size="lg" style="monochrome" />
 						<div className="flex flex-1 flex-wrap items-center">
 							<p className="mr-2">
 								Welcome to the{' '}
 								<Link
-									to="https://www.epicweb.dev"
+									to={`https://${host}`}
 									className="underline"
 									target="_blank"
 								>
-									EpicWeb.dev
+									{displayName}
 								</Link>{' '}
 								Workshop app!
 							</p>
@@ -375,19 +383,15 @@ function EpicWebBanner() {
 					</div>
 					<div className="hidden h-full flex-col items-center sm:flex md:flex-row">
 						<Link
-							to="https://www.epicweb.dev"
+							to={`https://${host}`}
 							target="_blank"
 							className="flex h-full items-center justify-center space-x-1.5 px-5 text-sm font-semibold"
 						>
-							<span className="drop-shadow-sm">Join Epic Web</span>
+							<span className="drop-shadow-sm">Join {displayName}</span>
 							<span>↗︎</span>
 						</Link>
 						<Link
-							to={
-								ENV.EPICSHOP_DEPLOYED
-									? 'https://www.epicweb.dev/login'
-									: '/login'
-							}
+							to={ENV.EPICSHOP_DEPLOYED ? `https://${host}/login` : '/login'}
 							className="flex h-full items-center justify-center space-x-1.5 bg-white/20 px-5 text-sm font-semibold shadow-md transition hover:bg-white/30"
 						>
 							<Icon name="User" size="lg" />
@@ -398,8 +402,8 @@ function EpicWebBanner() {
 			) : (
 				<>
 					<div className="flex flex-1 flex-wrap items-center gap-4 sm:hidden">
-						<a href="https://www.epicweb.dev">
-							<Icon name="EpicWeb" size="lg" />
+						<a href={`https://${host}`}>
+							<Logo size="lg" style="monochrome" />
 						</a>
 						<Dialog>
 							<DialogTrigger>
@@ -407,13 +411,13 @@ function EpicWebBanner() {
 							</DialogTrigger>
 							<DialogContent>
 								<DialogHeader>
-									<Icon name="EpicWeb" size="lg" />
-									<span className="text-lg font-semibold">EpicWeb.dev</span>
+									<Logo size="lg" style="monochrome" />
+									<span className="text-lg font-semibold">{displayName}</span>
 								</DialogHeader>
 								<DialogDescription>
 									Welcome to the{' '}
-									<Link to="https://www.epicweb.dev" className="underline">
-										EpicWeb.dev
+									<Link to={`https://${host}`} className="underline">
+										{displayName}
 									</Link>{' '}
 									Workshop app!
 								</DialogDescription>
@@ -423,7 +427,7 @@ function EpicWebBanner() {
 					</div>
 					<div className="flex h-full items-center">
 						<Link
-							to="https://www.epicweb.dev"
+							to={`https://${host}`}
 							target="_blank"
 							className="flex h-full items-center justify-center space-x-1.5 px-5 text-sm font-semibold"
 						>
@@ -431,11 +435,7 @@ function EpicWebBanner() {
 							<span>↗︎</span>
 						</Link>
 						<Link
-							to={
-								ENV.EPICSHOP_DEPLOYED
-									? 'https://www.epicweb.dev/login'
-									: '/login'
-							}
+							to={ENV.EPICSHOP_DEPLOYED ? `https://${host}/login` : '/login'}
 							className="flex h-full items-center justify-center space-x-1.5 bg-white/20 px-5 text-sm font-semibold shadow-md transition hover:bg-white/30"
 						>
 							<Icon name="User" size="lg" />

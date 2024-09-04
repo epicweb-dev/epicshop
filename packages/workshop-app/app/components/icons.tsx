@@ -66,6 +66,7 @@ export type IconName =
 	| 'Video'
 	| 'User'
 	| 'EpicWeb'
+	| 'EpicWebGradient'
 	| 'FastForward'
 	| 'Discord'
 	| 'Chat'

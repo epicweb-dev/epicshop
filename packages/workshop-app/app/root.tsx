@@ -81,12 +81,13 @@ export const meta: MetaFunction<typeof loader> = ({ data }) => {
 
 export async function loader({ request }: LoaderFunctionArgs) {
 	const timings = makeTimings('rootLoader')
+	const workshopConfig = getWorkshopConfig()
 	const {
 		title: workshopTitle,
 		subtitle: workshopSubtitle,
 		instructor,
 		onboardingVideo,
-	} = getWorkshopConfig()
+	} = workshopConfig
 
 	const onboarding = await readOnboardingData()
 	if (
@@ -113,6 +114,7 @@ export async function loader({ request }: LoaderFunctionArgs) {
 	const presentUsers = await getPresentUsers(user, { request, timings })
 	return json(
 		{
+			workshopConfig,
 			workshopTitle,
 			workshopSubtitle,
 			instructor,
@@ -285,7 +287,7 @@ function getWebsocketJS() {
 		};
 		ws.onclose = (event) => {
 			if (event.code === 1006) {
-				console.log("Epic Web dev server web socket closed. Reconnecting...");
+				console.log("EpicShop dev server web socket closed. Reconnecting...");
 				setTimeout(
 					() =>
 						epicLiveReloadConnect({
@@ -296,7 +298,7 @@ function getWebsocketJS() {
 			}
 		};
 		ws.onerror = (error) => {
-			console.log("Epic Web dev server web socket error:");
+			console.log("EpicShop dev server web socket error:");
 			console.error(error);
 		};
 	}

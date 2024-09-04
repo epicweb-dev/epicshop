@@ -24,46 +24,69 @@ const InstructorSchema = z.object({
 	xHandle: z.string().optional(),
 })
 
-const WorkshopConfigSchema = z.object({
-	title: z.string(),
-	subtitle: z.string().optional(),
-	instructor: InstructorSchema.optional(),
-	epicWorkshopHost: z.string().default('www.epicweb.dev'),
-	epicWorkshopSlug: z.string().optional(),
-	onboardingVideo: z
-		.string()
-		.default(
-			'https://www.epicweb.dev/tips/get-started-with-the-epic-workshop-app',
-		),
-	githubRepo: z.string(),
-	githubRoot: z.string(),
-	stackBlitzConfig: StackBlitzConfigSchema.optional(),
-	forms: z
-		.object({
-			workshop: z
-				.string()
-				.default(
-					'https://docs.google.com/forms/d/e/1FAIpQLSdRmj9p8-5zyoqRzxp3UpqSbC3aFkweXvvJIKes0a5s894gzg/viewform?hl=en&embedded=true&entry.2123647600={workshopTitle}',
-				),
-			exercise: z
-				.string()
-				.default(
-					'https://docs.google.com/forms/d/e/1FAIpQLSf3o9xyjQepTlOTH5Z7ZwkeSTdXh6YWI_RGc9KiyD3oUN0p6w/viewform?hl=en&embedded=true&entry.1836176234={workshopTitle}&entry.428900931={exerciseTitle}',
-				),
-		})
-		.default({}),
-	testTab: z
-		.object({
-			enabled: z.boolean().default(true),
-		})
-		.default({}),
-	scripts: z
-		.object({
-			postupdate: z.string().optional(),
-		})
-		.optional(),
-	initialRoute: z.string().optional().default('/'), // Add this line
-})
+const WorkshopConfigSchema = z
+	.object({
+		title: z.string(),
+		subtitle: z.string().optional(),
+		instructor: InstructorSchema.optional(),
+		epicWorkshopHost: z.string().default('www.epicweb.dev'),
+		epicWorkshopSlug: z.string().optional(),
+		product: z
+			.object({
+				host: z.string().default('www.epicweb.dev'),
+				displayName: z.string().default('EpicWeb.dev'),
+				displayNameShort: z.string().default('Epic Web'),
+				logo: z.string().default('/logo.svg'),
+				slug: z.string().optional(),
+			})
+			.default({}),
+		onboardingVideo: z
+			.string()
+			.default(
+				'https://www.epicweb.dev/tips/get-started-with-the-epic-workshop-app',
+			),
+		githubRepo: z.string(),
+		githubRoot: z.string(),
+		stackBlitzConfig: StackBlitzConfigSchema.optional(),
+		forms: z
+			.object({
+				workshop: z
+					.string()
+					.default(
+						'https://docs.google.com/forms/d/e/1FAIpQLSdRmj9p8-5zyoqRzxp3UpqSbC3aFkweXvvJIKes0a5s894gzg/viewform?hl=en&embedded=true&entry.2123647600={workshopTitle}',
+					),
+				exercise: z
+					.string()
+					.default(
+						'https://docs.google.com/forms/d/e/1FAIpQLSf3o9xyjQepTlOTH5Z7ZwkeSTdXh6YWI_RGc9KiyD3oUN0p6w/viewform?hl=en&embedded=true&entry.1836176234={workshopTitle}&entry.428900931={exerciseTitle}',
+					),
+			})
+			.default({}),
+		testTab: z
+			.object({
+				enabled: z.boolean().default(true),
+			})
+			.default({}),
+		scripts: z
+			.object({
+				postupdate: z.string().optional(),
+			})
+			.optional(),
+		initialRoute: z.string().optional().default('/'), // Add this line
+	})
+	.transform((data) => {
+		return {
+			...data,
+			product: {
+				...data.product,
+				displayNameShort:
+					data.product.displayNameShort ?? data.product.displayName,
+				// for backwards compatibility
+				host: data.epicWorkshopHost,
+				slug: data.epicWorkshopSlug,
+			},
+		}
+	})
 
 export type WorkshopConfig = z.infer<typeof WorkshopConfigSchema>
 

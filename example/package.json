@@ -4,6 +4,12 @@
   "epicshop": {
     "title": "Web App Fundamentals 🔭",
     "subtitle": "Learn the foundational tools and skills of building web applications",
+    "workshopAPI": {
+      "host": "www.epicweb.dev",
+      "slug": "full-stack-foundations",
+      "logo": "/images/logo.svg",
+      "hostDisplayName": "EpicWeb.dev"
+    },
     "githubRoot": "https://github.com/epicweb-dev/epicshop/tree/main/example",
     "root": true,
     "epicWorkshopSlug": "full-stack-foundations",

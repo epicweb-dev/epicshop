@@ -41,7 +41,7 @@ export async function loader({ request, params }: LoaderFunctionArgs) {
 		};
 		ws.onclose = (event) => {
 			if (event.code === 1006) {
-				console.log("Epic Web dev server web socket closed. Reconnecting...");
+				console.log("EpicShop dev server web socket closed. Reconnecting...");
 				setTimeout(
 					() =>
 						epicLiveReloadConnect({
@@ -52,7 +52,7 @@ export async function loader({ request, params }: LoaderFunctionArgs) {
 			}
 		};
 		ws.onerror = (error) => {
-			console.log("Epic Web dev server web socket error:");
+			console.log("EpicShop dev server web socket error:");
 			console.error(error);
 		};
 	}

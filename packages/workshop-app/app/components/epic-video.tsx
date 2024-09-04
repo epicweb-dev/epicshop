@@ -8,6 +8,7 @@ import { cn } from '#app/utils/misc.tsx'
 import { Icon } from './icons.tsx'
 import { Loading } from './loading.tsx'
 import { useOptionalUser } from './user.tsx'
+import { useWorkshopConfig } from './workshop-config.tsx'
 
 const EpicVideoInfoContext = React.createContext<
 	Promise<EpicVideoInfos> | null | undefined
@@ -147,6 +148,9 @@ export function DeferredEpicVideo({
 	url: string
 	title?: string
 }) {
+	const {
+		product: { host: epicWorkshopHost, displayName },
+	} = useWorkshopConfig()
 	const user = useOptionalUser()
 	const epicVideoInfosPromise = React.useContext(EpicVideoInfoContext)
 	const linkUI = (
@@ -228,10 +232,10 @@ export function DeferredEpicVideo({
 										<div>
 											To continue watching uninterrupted, please{' '}
 											<a
-												href="https://www.epicweb.dev/products/full-stack-vol-1"
+												href={`https://${epicWorkshopHost}/products`}
 												className="underline"
 											>
-												upgrade your EpicWeb.dev license
+												upgrade your {displayName} license
 											</a>{' '}
 											to a full Pro license.
 										</div>
@@ -240,7 +244,7 @@ export function DeferredEpicVideo({
 										{linkUI}
 										<div>
 											<Link
-												to="https://www.epicweb.dev/products"
+												to={`https://${epicWorkshopHost}/products`}
 												className="underline"
 											>
 												Upgrade
@@ -268,7 +272,7 @@ export function DeferredEpicVideo({
 										{linkUI}
 										<div>
 											<Link
-												to="https://www.epicweb.dev/products"
+												to={`https://${epicWorkshopHost}/products`}
 												className="underline"
 											>
 												Upgrade
