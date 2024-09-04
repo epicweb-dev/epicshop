@@ -21,6 +21,9 @@ export async function loader({ request }: LoaderFunctionArgs) {
 	const title = url.searchParams.get('title') || workshopConfig.title
 	const subtitle = url.searchParams.get('subtitle') || workshopConfig.subtitle
 	const urlPathname = url.searchParams.get('urlPathname') || ''
+	const logo = workshopConfig.product.logo.startsWith('http')
+		? workshopConfig.product.logo
+		: new URL(workshopConfig.product.logo, getDomainUrl(request)).toString()
 
 	const element = (
 		<OgLayout
@@ -30,6 +33,8 @@ export async function loader({ request }: LoaderFunctionArgs) {
 			workshopTitle={
 				workshopConfig.title === title ? null : workshopConfig.title
 			}
+			productLogo={logo}
+			productDisplayName={workshopConfig.product.displayName}
 		>
 			<div
 				style={{
@@ -302,6 +307,8 @@ function OgLayout({
 	children: React.ReactNode
 	workshopTitle?: string | null
 	urlPathname?: string | null
+	productLogo: string
+	productDisplayName: string
 }) {
 	const domain = getDomainUrl(request)
 	const protocolFreeDomain = domain.replace(/^https?:\/\//, '')
@@ -335,13 +342,13 @@ function OgLayout({
 						width: '100%',
 						height: '100%',
 						objectFit: 'cover',
-						opacity: 0.4,
+						opacity: 0.3,
 					}}
-					src={`${domain}/img/epicweb-og-background.png`}
+					src={`${domain}/og/background.png`}
 				/>
 			</div>
 			<div style={{ display: 'flex', position: 'absolute', top: 20, left: 30 }}>
-				{epicWebLogo}
+				<img height={56} src={`${domain}/og/logo.svg`} />
 			</div>
 			{instructor ? (
 				<div

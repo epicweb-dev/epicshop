@@ -6,14 +6,13 @@
     "subtitle": "Learn the foundational tools and skills of building web applications",
     "product": {
       "host": "www.epicreact.dev",
-      "slug": "full-stack-foundations",
+      "slug": "react-fundamentals",
       "logo": "/images/logo.svg",
       "displayName": "EpicReact.dev",
       "displayNameShort": "Epic React"
     },
     "githubRoot": "https://github.com/epicweb-dev/epicshop/tree/main/example",
     "root": true,
-    "epicWorkshopSlug": "full-stack-foundations",
     "initialRoute": "/whatever",
     "forms": {
       "workshop": "https://docs.google.com/forms/d/e/1FAIpQLSdRmj9p8-5zyoqRzxp3UpqSbC3aFkweXvvJIKes0a5s894gzg/viewform?hl=en&embedded=true&entry.2123647600={workshopTitle}",

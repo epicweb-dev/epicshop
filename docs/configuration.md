@@ -91,6 +91,16 @@ To adjust the favicon, simply add a `favicon.ico` and a `favicon.svg` file to
 the `public` directory of your workshop repository. You can use media queries
 for light/dark themes in the `favicon.svg` file.
 
+### Open Graph Image
+
+To adjust the open graph image, simply add an `og/background.png` file and a
+`og/logo.svg` file to the `public` directory of your workshop repository. This
+image will have an opacity of `0.3` (with a black background) to ensure text
+overlay is legible. The workshop details will be overlayed on top of that image.
+
+Additionally, instructor details which you configure in the root `package.json`
+will be included in the open graph image.
+
 ## StackBlitz Configuration
 
 The `stackBlitzConfig` object can have the following properties:
