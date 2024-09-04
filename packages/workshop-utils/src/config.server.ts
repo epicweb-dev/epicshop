@@ -29,7 +29,7 @@ const WorkshopConfigSchema = z
 		title: z.string(),
 		subtitle: z.string().optional(),
 		instructor: InstructorSchema.optional(),
-		epicWorkshopHost: z.string().default('www.epicweb.dev'),
+		epicWorkshopHost: z.string().optional(),
 		epicWorkshopSlug: z.string().optional(),
 		product: z
 			.object({
@@ -82,8 +82,8 @@ const WorkshopConfigSchema = z
 				displayNameShort:
 					data.product.displayNameShort ?? data.product.displayName,
 				// for backwards compatibility
-				host: data.epicWorkshopHost,
-				slug: data.epicWorkshopSlug,
+				host: data.product.host ?? data.epicWorkshopHost,
+				slug: data.product.slug ?? data.epicWorkshopSlug,
 			},
 		}
 	})

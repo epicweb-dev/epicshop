@@ -193,7 +193,9 @@ async function getEpicProgress({
 }: { timings?: Timings; request?: Request; forceFresh?: boolean } = {}) {
 	if (ENV.EPICSHOP_DEPLOYED) return []
 	const authInfo = await getAuthInfo()
-	const { epicWorkshopHost } = getWorkshopConfig()
+	const {
+		product: { host },
+	} = getWorkshopConfig()
 	if (!authInfo) return []
 	const tokenPart = md5(authInfo.tokenSet.access_token)
 	const EpicProgressSchema = z.array(
@@ -203,7 +205,7 @@ async function getEpicProgress({
 		}),
 	)
 	return cachified({
-		key: `epic-progress:${epicWorkshopHost}:${tokenPart}`,
+		key: `epic-progress:${host}:${tokenPart}`,
 		cache: fsCache,
 		request,
 		timings,
@@ -212,7 +214,7 @@ async function getEpicProgress({
 		swr: 1000 * 60 * 60 * 24 * 30,
 		checkValue: EpicProgressSchema,
 		async getFreshValue(context): Promise<z.infer<typeof EpicProgressSchema>> {
-			const response = await fetch(`https://${epicWorkshopHost}/api/progress`, {
+			const response = await fetch(`https://${host}/api/progress`, {
 				headers: {
 					authorization: `Bearer ${authInfo.tokenSet.access_token}`,
 				},
@@ -381,9 +383,11 @@ export async function updateProgress(
 	if (!authInfo) {
 		return { status: 'error', error: 'not authenticated' } as const
 	}
-	const { epicWorkshopHost } = getWorkshopConfig()
+	const {
+		product: { host },
+	} = getWorkshopConfig()
 
-	const response = await fetch(`https://${epicWorkshopHost}/api/progress`, {
+	const response = await fetch(`https://${host}/api/progress`, {
 		method: 'POST',
 		headers: {
 			authorization: `Bearer ${authInfo.tokenSet.access_token}`,
@@ -435,10 +439,12 @@ export async function getWorkshopData(
 	// if you're authenticated anyway.
 	if (!authInfo) return { sections: [] }
 
-	const { epicWorkshopHost } = getWorkshopConfig()
+	const {
+		product: { host },
+	} = getWorkshopConfig()
 
 	return cachified({
-		key: `epic-workshop-data:${epicWorkshopHost}:${epicWorkshopSlug}`,
+		key: `epic-workshop-data:${host}:${epicWorkshopSlug}`,
 		cache: fsCache,
 		request,
 		forceFresh,
@@ -446,9 +452,7 @@ export async function getWorkshopData(
 		checkValue: ModuleSchema,
 		async getFreshValue(): Promise<z.infer<typeof ModuleSchema>> {
 			const response = await fetch(
-				`https://${epicWorkshopHost}/api/workshops/${encodeURIComponent(
-					epicWorkshopSlug,
-				)}`,
+				`https://${host}/api/workshops/${encodeURIComponent(epicWorkshopSlug)}`,
 			).catch((e) => new Response(getErrorMessage(e), { status: 500 }))
 			if (response.status < 200 || response.status >= 300) {
 				console.error(

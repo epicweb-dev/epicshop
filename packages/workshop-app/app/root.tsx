@@ -58,11 +58,10 @@ export const links: LinksFunction = () => {
 		{ rel: 'stylesheet', href: tailwindStylesheetUrl },
 		{ rel: 'stylesheet', href: appStylesheetUrl },
 		...(cssBundleHref ? [{ rel: 'stylesheet', href: cssBundleHref }] : []),
-		{ rel: 'mask-icon', href: '/favicons/favicon.svg' },
 		{
-			rel: 'alternate icon',
-			type: 'image/png',
-			href: '/favicon.png',
+			rel: 'icon',
+			href: '/favicon.ico',
+			sizes: '48x48',
 		},
 		{ rel: 'icon', type: 'image/svg+xml', href: '/favicon.svg' },
 	]

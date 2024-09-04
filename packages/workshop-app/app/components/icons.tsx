@@ -1,4 +1,5 @@
 import * as React from 'react'
+import iconsSvg from '#app/assets/icons.svg'
 import { cn } from '#app/utils/misc.tsx'
 
 type Sizes = 12 | 16 | 20 | 24 | 28 | 32 | 40
@@ -129,7 +130,7 @@ export function Icon({
 			className={cn(sizeClassName[size], 'inline self-center', className)}
 		>
 			{title ? <title>{title}</title> : null}
-			<use href={`/icons.svg#${name}`} fill="transparent" />
+			<use href={`${iconsSvg}#${name}`} fill="transparent" />
 		</svg>
 	)
 }

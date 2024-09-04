@@ -85,6 +85,12 @@ dynamically generate the logos for light/dark/monochrome themes. It's
 recommended that `monochrome` use `currentColor` for the stroke or fill, so it
 will use the correct color for the context in which it's viewed.
 
+### Favicon
+
+To adjust the favicon, simply add a `favicon.ico` and a `favicon.svg` file to
+the `public` directory of your workshop repository. You can use media queries
+for light/dark themes in the `favicon.svg` file.
+
 ## StackBlitz Configuration
 
 The `stackBlitzConfig` object can have the following properties:

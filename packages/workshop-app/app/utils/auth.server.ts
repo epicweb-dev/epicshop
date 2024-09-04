@@ -11,8 +11,10 @@ export const authEmitter = remember('authEmitter', () => new EventEmitter())
 authEmitter.removeAllListeners()
 
 export async function registerDevice() {
-	const { epicWorkshopHost } = getWorkshopConfig()
-	const { ISSUER = `https://${epicWorkshopHost}/oauth` } = process.env
+	const {
+		product: { host },
+	} = getWorkshopConfig()
+	const { ISSUER = `https://${host}/oauth` } = process.env
 	const GRANT_TYPE = 'urn:ietf:params:oauth:grant-type:device_code'
 	try {
 		const issuer = await Issuer.discover(ISSUER)

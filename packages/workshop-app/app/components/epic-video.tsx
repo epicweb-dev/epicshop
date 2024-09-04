@@ -149,7 +149,7 @@ export function DeferredEpicVideo({
 	title?: string
 }) {
 	const {
-		product: { host: epicWorkshopHost, displayName },
+		product: { host, displayName },
 	} = useWorkshopConfig()
 	const user = useOptionalUser()
 	const epicVideoInfosPromise = React.useContext(EpicVideoInfoContext)
@@ -232,7 +232,7 @@ export function DeferredEpicVideo({
 										<div>
 											To continue watching uninterrupted, please{' '}
 											<a
-												href={`https://${epicWorkshopHost}/products`}
+												href={`https://${host}/products`}
 												className="underline"
 											>
 												upgrade your {displayName} license
@@ -244,7 +244,7 @@ export function DeferredEpicVideo({
 										{linkUI}
 										<div>
 											<Link
-												to={`https://${epicWorkshopHost}/products`}
+												to={`https://${host}/products`}
 												className="underline"
 											>
 												Upgrade
@@ -272,7 +272,7 @@ export function DeferredEpicVideo({
 										{linkUI}
 										<div>
 											<Link
-												to={`https://${epicWorkshopHost}/products`}
+												to={`https://${host}/products`}
 												className="underline"
 											>
 												Upgrade

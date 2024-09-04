@@ -7,6 +7,7 @@ import {
 import { clsx } from 'clsx'
 import * as React from 'react'
 import { useState, type PropsWithChildren } from 'react'
+import iconsSvg from '#app/assets/icons.svg'
 import { EpicVideoInfoProvider } from '#app/components/epic-video.tsx'
 import { Icon } from '#app/components/icons.tsx'
 import { type InBrowserBrowserRef } from '#app/components/in-browser-browser.tsx'
@@ -306,7 +307,7 @@ function InlineFile({
 		<div className="launch-editor-button-wrapper flex underline underline-offset-4">
 			{children}{' '}
 			<svg height={24} width={24}>
-				<use href={`/icons.svg#Keyboard`} />
+				<use href={`${iconsSvg}#Keyboard`} />
 			</svg>
 		</div>
 	)
