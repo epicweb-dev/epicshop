@@ -1,5 +1,4 @@
 import { getApps } from '@epic-web/workshop-utils/apps.server'
-import { getWorkshopConfig } from '@epic-web/workshop-utils/config.server'
 import { getProcesses } from '@epic-web/workshop-utils/process-manager.server'
 import {
 	getServerTimeHeader,
@@ -15,6 +14,7 @@ import {
 import { Form, Link, useLoaderData, useNavigation } from '@remix-run/react'
 import { Icon } from '#app/components/icons.tsx'
 import { SimpleTooltip } from '#app/components/ui/tooltip.tsx'
+import { useWorkshopConfig } from '#app/components/workshop-config.js'
 import { type loader as rootLoader } from '#app/root.tsx'
 import {
 	useEpicProgress,
@@ -46,7 +46,6 @@ export const meta: MetaFunction<typeof loader, { root: typeof rootLoader }> = ({
 export async function loader({ request }: LoaderFunctionArgs) {
 	ensureUndeployed()
 	const timings = makeTimings('adminLoader')
-	const workshopSlug = getWorkshopConfig().epicWorkshopSlug ?? 'Unkown'
 	const apps = (await getApps({ request, timings })).filter(
 		(a, i, ar) => ar.findIndex((b) => a.name === b.name) === i,
 	)
@@ -75,7 +74,6 @@ export async function loader({ request }: LoaderFunctionArgs) {
 		{
 			apps,
 			processes,
-			workshopSlug,
 			testProcesses,
 			inspectorRunning: global.__inspector_open__,
 		},
@@ -146,6 +144,9 @@ function linkProgress(progress: SerializedProgress) {
 export default function AdminLayout() {
 	const data = useLoaderData<typeof loader>()
 	const navigation = useNavigation()
+	const {
+		product: { slug: workshopSlug = 'Unknown' },
+	} = useWorkshopConfig()
 	const epicProgress = useEpicProgress()
 
 	const isStartingInspector = navigation.formData?.get('intent') === 'inspect'
@@ -180,7 +181,7 @@ export default function AdminLayout() {
 					{epicProgress ? (
 						<ul className="flex max-h-72 flex-col gap-2 overflow-y-scroll border-2 p-8 scrollbar-thin scrollbar-thumb-scrollbar">
 							{epicProgress.sort(sortProgress).map((progress) => {
-								const epicUrl = `https://www.epicweb.dev/workshops/${data.workshopSlug}/${progress.epicSectionSlug}/${progress.epicLessonSlug}`
+								const epicUrl = `https://www.epicweb.dev/workshops/${workshopSlug}/${progress.epicSectionSlug}/${progress.epicLessonSlug}`
 								const status = progress.epicCompletedAt
 									? 'completed'
 									: 'incomplete'

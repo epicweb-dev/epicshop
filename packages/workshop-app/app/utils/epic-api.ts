@@ -244,8 +244,10 @@ export async function getProgress({
 	if (ENV.EPICSHOP_DEPLOYED) return []
 	const authInfo = await getAuthInfo()
 	if (!authInfo) return []
-	const { epicWorkshopSlug } = getWorkshopConfig()
-	if (!epicWorkshopSlug) return []
+	const {
+		product: { slug },
+	} = getWorkshopConfig()
+	if (!slug) return []
 
 	const [
 		workshopData,
@@ -254,7 +256,7 @@ export async function getProgress({
 		workshopFinished,
 		exercises,
 	] = await Promise.all([
-		getWorkshopData(epicWorkshopSlug, { request, timings }),
+		getWorkshopData(slug, { request, timings }),
 		getEpicProgress({ request, timings }),
 		getWorkshopInstructions({ request }),
 		getWorkshopFinished({ request }),
@@ -422,7 +424,7 @@ const ModuleSchema = z.object({
 })
 
 export async function getWorkshopData(
-	epicWorkshopSlug: string,
+	slug: string,
 	{
 		timings,
 		request,
@@ -444,7 +446,7 @@ export async function getWorkshopData(
 	} = getWorkshopConfig()
 
 	return cachified({
-		key: `epic-workshop-data:${host}:${epicWorkshopSlug}`,
+		key: `epic-workshop-data:${host}:${slug}`,
 		cache: fsCache,
 		request,
 		forceFresh,
@@ -452,11 +454,11 @@ export async function getWorkshopData(
 		checkValue: ModuleSchema,
 		async getFreshValue(): Promise<z.infer<typeof ModuleSchema>> {
 			const response = await fetch(
-				`https://${host}/api/workshops/${encodeURIComponent(epicWorkshopSlug)}`,
+				`https://${host}/api/workshops/${encodeURIComponent(slug)}`,
 			).catch((e) => new Response(getErrorMessage(e), { status: 500 }))
 			if (response.status < 200 || response.status >= 300) {
 				console.error(
-					`Failed to fetch workshop data from EpicWeb for ${epicWorkshopSlug}: ${response.status} ${response.statusText}`,
+					`Failed to fetch workshop data from EpicWeb for ${slug}: ${response.status} ${response.statusText}`,
 				)
 				return { sections: [] }
 			}
