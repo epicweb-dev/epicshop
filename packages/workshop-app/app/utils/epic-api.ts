@@ -245,7 +245,7 @@ export async function getProgress({
 	const authInfo = await getAuthInfo()
 	if (!authInfo) return []
 	const {
-		product: { slug },
+		product: { slug, host },
 	} = getWorkshopConfig()
 	if (!slug) return []
 
@@ -264,25 +264,18 @@ export async function getProgress({
 	])
 
 	type ProgressInfo = {
-		epicSectionSlug: string
+		epicLessonUrl: string
 		epicLessonSlug: string
 		epicCompletedAt: string | null
 	}
 	const progress: Array<
 		ProgressInfo &
-			(
-				| { type: 'unknown' }
-				| { type: 'workshop-instructions' }
-				| { type: 'workshop-finished' }
-				| { type: 'instructions'; exerciseNumber: number }
-				| { type: 'step'; exerciseNumber: number; stepNumber: number }
-				| { type: 'finished'; exerciseNumber: number }
-			)
+			(ReturnType<typeof getProgressForLesson> | { type: 'unknown' })
 	> = []
 
-	for (const section of workshopData.sections) {
-		const epicSectionSlug = section.slug
-		for (const lesson of section.lessons) {
+	for (const resource of workshopData.resources) {
+		const lessons = resource._type === 'section' ? resource.lessons : [resource]
+		for (const lesson of lessons) {
 			const epicLessonSlug = lesson.slug
 			const lessonProgress = epicProgress.find(
 				({ lessonId }) => lessonId === lesson._id,
@@ -293,17 +286,18 @@ export async function getProgress({
 				workshopFinished,
 				exercises,
 			})
+			const epicLessonUrl = `https://${host}/workshops/${slug}/${epicLessonSlug}`
 			if (progressForLesson) {
 				progress.push({
 					...progressForLesson,
-					epicSectionSlug,
+					epicLessonUrl,
 					epicLessonSlug,
 					epicCompletedAt,
 				})
 			} else {
 				progress.push({
 					type: 'unknown',
-					epicSectionSlug,
+					epicLessonUrl,
 					epicLessonSlug,
 					epicCompletedAt,
 				})
@@ -413,13 +407,18 @@ export async function updateProgress(
 }
 
 const ModuleSchema = z.object({
-	// Maybe we could use this for our own ogImage instead of making our own?
-	// ogImage: z.string().url(),
-	sections: z.array(
-		z.object({
-			slug: z.string(),
-			lessons: z.array(z.object({ _id: z.string(), slug: z.string() })),
-		}),
+	resources: z.array(
+		z.union([
+			z.object({
+				_type: z.literal('lesson'),
+				_id: z.string(),
+				slug: z.string(),
+			}),
+			z.object({
+				_type: z.literal('section'),
+				lessons: z.array(z.object({ _id: z.string(), slug: z.string() })),
+			}),
+		]),
 	),
 })
 
@@ -435,11 +434,11 @@ export async function getWorkshopData(
 		forceFresh?: boolean
 	} = {},
 ) {
-	if (ENV.EPICSHOP_DEPLOYED) return { sections: [] }
+	if (ENV.EPICSHOP_DEPLOYED) return { resources: [] }
 	const authInfo = await getAuthInfo()
 	// auth is not required, but we only use it for progress which is only needed
 	// if you're authenticated anyway.
-	if (!authInfo) return { sections: [] }
+	if (!authInfo) return { resources: [] }
 
 	const {
 		product: { host },
@@ -460,7 +459,7 @@ export async function getWorkshopData(
 				console.error(
 					`Failed to fetch workshop data from EpicWeb for ${slug}: ${response.status} ${response.statusText}`,
 				)
-				return { sections: [] }
+				return { resources: [] }
 			}
 			return ModuleSchema.parse(await response.json())
 		},
