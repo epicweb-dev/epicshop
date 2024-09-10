@@ -14,7 +14,6 @@ import {
 import { Form, Link, useLoaderData, useNavigation } from '@remix-run/react'
 import { Icon } from '#app/components/icons.tsx'
 import { SimpleTooltip } from '#app/components/ui/tooltip.tsx'
-import { useWorkshopConfig } from '#app/components/workshop-config.js'
 import { type loader as rootLoader } from '#app/root.tsx'
 import {
 	useEpicProgress,
@@ -144,9 +143,6 @@ function linkProgress(progress: SerializedProgress) {
 export default function AdminLayout() {
 	const data = useLoaderData<typeof loader>()
 	const navigation = useNavigation()
-	const {
-		product: { slug: workshopSlug = 'Unknown' },
-	} = useWorkshopConfig()
 	const epicProgress = useEpicProgress()
 
 	const isStartingInspector = navigation.formData?.get('intent') === 'inspect'
@@ -181,12 +177,11 @@ export default function AdminLayout() {
 					{epicProgress ? (
 						<ul className="flex max-h-72 flex-col gap-2 overflow-y-scroll border-2 p-8 scrollbar-thin scrollbar-thumb-scrollbar">
 							{epicProgress.sort(sortProgress).map((progress) => {
-								const epicUrl = `https://www.epicweb.dev/workshops/${workshopSlug}/${progress.epicSectionSlug}/${progress.epicLessonSlug}`
 								const status = progress.epicCompletedAt
 									? 'completed'
 									: 'incomplete'
 								const label = [
-									`${progress.epicSectionSlug}/${progress.epicLessonSlug}`,
+									progress.epicLessonSlug,
 									progress.epicCompletedAt
 										? `(${progress.epicCompletedAt})`
 										: null,
@@ -214,7 +209,7 @@ export default function AdminLayout() {
 										) : (
 											<Link to={linkProgress(progress)}>{label}</Link>
 										)}
-										<Link to={epicUrl}>
+										<Link to={progress.epicLessonUrl}>
 											<Icon name="ExternalLink"></Icon>
 										</Link>
 									</li>
