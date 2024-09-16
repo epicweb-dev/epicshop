@@ -15,3 +15,8 @@ export function useAnsiToHtml() {
 	)
 	return ansi
 }
+
+// remove this when this is fixed: https://github.com/rburns/ansi-to-html/issues/112
+export function stripCursorMovements(data: string) {
+	return data.replace(/\u001b\[\d+A/g, '').replace(/\u001b\[\d+K/g, '')
+}

@@ -17,7 +17,7 @@ import { eventStream } from 'remix-utils/sse/server'
 import { z } from 'zod'
 import { AnimatedBars, Icon } from '#app/components/icons.tsx'
 import { SimpleTooltip } from '#app/components/ui/tooltip.tsx'
-import { useAnsiToHtml } from '#app/utils/ansi-text.js'
+import { stripCursorMovements, useAnsiToHtml } from '#app/utils/ansi-text.js'
 import { userHasAccessToWorkshop } from '#app/utils/epic-api.js'
 import { ensureUndeployed } from '#app/utils/misc.tsx'
 import { jsonWithPE, usePERedirectInput } from '#app/utils/pe.js'
@@ -327,7 +327,7 @@ export function TestOutput({ name }: { name: string }) {
 							key={line.timestamp}
 							data-type={line.type}
 							dangerouslySetInnerHTML={{
-								__html: ansi.toHtml(line.content),
+								__html: ansi.toHtml(stripCursorMovements(line.content)),
 							}}
 						/>
 					))}

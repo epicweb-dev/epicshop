@@ -2,7 +2,7 @@ import * as Accordion from '@radix-ui/react-accordion'
 import { useEffect, useRef, useState } from 'react'
 import { z } from 'zod'
 import AccordionComponent from '#app/components/accordion.tsx'
-import { useAnsiToHtml } from '#app/utils/ansi-text.js'
+import { stripCursorMovements, useAnsiToHtml } from '#app/utils/ansi-text.js'
 import { AnimatedBars, Icon } from './icons.tsx'
 
 const testRunnerStatusDataSchema = z.intersection(
@@ -138,7 +138,7 @@ export function InBrowserTestRunner({
 									<pre
 										className="max-h-48 overflow-y-auto p-4 scrollbar-thin scrollbar-thumb-scrollbar"
 										dangerouslySetInnerHTML={{
-											__html: ansi.toHtml(message.error),
+											__html: ansi.toHtml(stripCursorMovements(message.error)),
 										}}
 									/>
 								</div>
