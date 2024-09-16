@@ -143,7 +143,10 @@ function FacePile({ isMenuOpened }: { isMenuOpened: boolean }) {
 	} = useWorkshopConfig()
 	const limit = isMenuOpened ? 17 : 0
 	const numberOverLimit = users.length - limit
+	const shouldShowNumberOverLimit = numberOverLimit > (isMenuOpened ? 1 : 0)
+
 	if (!users.length) return null
+
 	const tiffany =
 		isMenuOpened && users.length === 1 ? (
 			<Link
@@ -167,60 +170,62 @@ function FacePile({ isMenuOpened }: { isMenuOpened: boolean }) {
 	return (
 		<div className="flex flex-wrap items-center gap-2">
 			<TooltipProvider>
-				{users.slice(0, limit).map(({ user, score }) => {
-					const scoreClassNames = getScoreClassNames(score)
-					const locationLabel = getLocationLabel(user.location)
-					return (
-						<Tooltip key={user.id}>
-							<TooltipTrigger asChild>
-								{user.avatarUrl ? (
-									<img
-										tabIndex={0}
-										alt={user.name || displayNameShort}
-										className={cn(
-											'h-8 w-8 rounded-full border object-cover',
-											scoreClassNames,
-										)}
-										src={user.avatarUrl}
-									/>
-								) : (
-									<div
-										tabIndex={0}
-										aria-label={user.name || `${displayNameShort} Dev`}
-										className={cn(
-											'flex h-8 w-8 items-center justify-center rounded-full border',
-											scoreClassNames,
-										)}
-									>
-										<Icon name="User" />
-									</div>
-								)}
-							</TooltipTrigger>
-							<TooltipContent>
-								<span className="flex flex-col items-center justify-center gap-1">
-									<span>
-										{user.name || `${displayNameShort} Dev`}{' '}
-										{locationLabel
-											? ` is ${user.location?.origin?.includes('localhost') ? 'working' : 'learning'} ${
-													score === 1 && loggedInUser?.id !== user.id
-														? 'with you'
-														: ''
-												} on`
-											: null}
+				{(shouldShowNumberOverLimit ? users.slice(0, limit) : users).map(
+					({ user, score }) => {
+						const scoreClassNames = getScoreClassNames(score)
+						const locationLabel = getLocationLabel(user.location)
+						return (
+							<Tooltip key={user.id}>
+								<TooltipTrigger asChild>
+									{user.avatarUrl ? (
+										<img
+											tabIndex={0}
+											alt={user.name || displayNameShort}
+											className={cn(
+												'h-8 w-8 rounded-full border object-cover',
+												scoreClassNames,
+											)}
+											src={user.avatarUrl}
+										/>
+									) : (
+										<div
+											tabIndex={0}
+											aria-label={user.name || `${displayNameShort} Dev`}
+											className={cn(
+												'flex h-8 w-8 items-center justify-center rounded-full border',
+												scoreClassNames,
+											)}
+										>
+											<Icon name="User" />
+										</div>
+									)}
+								</TooltipTrigger>
+								<TooltipContent>
+									<span className="flex flex-col items-center justify-center gap-1">
+										<span>
+											{user.name || `${displayNameShort} Dev`}{' '}
+											{locationLabel
+												? ` is ${user.location?.origin?.includes('localhost') ? 'working' : 'learning'} ${
+														score === 1 && loggedInUser?.id !== user.id
+															? 'with you'
+															: ''
+													} on`
+												: null}
+										</span>
+										{locationLabel?.line1 ? (
+											<span>{locationLabel.line1}</span>
+										) : null}
+										{locationLabel?.line2 ? (
+											<span>{locationLabel.line2}</span>
+										) : null}
 									</span>
-									{locationLabel?.line1 ? (
-										<span>{locationLabel.line1}</span>
-									) : null}
-									{locationLabel?.line2 ? (
-										<span>{locationLabel.line2}</span>
-									) : null}
-								</span>
-							</TooltipContent>
-						</Tooltip>
-					)
-				})}
+								</TooltipContent>
+							</Tooltip>
+						)
+					},
+				)}
 				{tiffany}
-				{numberOverLimit > 0 ? (
+				{shouldShowNumberOverLimit ? (
 					<Tooltip>
 						<TooltipTrigger asChild>
 							<div
