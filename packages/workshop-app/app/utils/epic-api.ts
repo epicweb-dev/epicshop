@@ -476,20 +476,21 @@ export async function userHasAccessToWorkshop({
 	timings?: Timings
 	forceFresh?: boolean
 }) {
-	if (ENV.EPICSHOP_DEPLOYED) {
-		const cookieHeader = request.headers.get('Cookie')
-		if (!cookieHeader) return false
-		const cookies = cookie.parse(cookieHeader)
-		return cookies.skill === '1'
-	}
-
-	const authInfo = await getAuthInfo()
-	if (!authInfo) return false
 	const config = getWorkshopConfig()
 	const {
 		product: { host, slug },
 	} = config
 	if (!slug) return true
+
+	if (ENV.EPICSHOP_DEPLOYED) {
+		const cookieHeader = request.headers.get('Cookie')
+		if (!cookieHeader) return false
+		const cookies = cookie.parse(cookieHeader)
+		return cookies.skill?.split(',').includes(slug) ?? false
+	}
+
+	const authInfo = await getAuthInfo()
+	if (!authInfo) return false
 
 	return cachified({
 		key: `user-has-access-to-workshop:${host}:${slug}`,
