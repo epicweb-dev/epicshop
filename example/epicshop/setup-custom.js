@@ -4,7 +4,6 @@ import {
 	isProblemApp,
 	setPlayground,
 } from '@epic-web/workshop-utils/apps.server'
-import { getWatcher } from '@epic-web/workshop-utils/change-tracker.server'
 import fsExtra from 'fs-extra'
 
 // getApps expects this env var
@@ -33,5 +32,3 @@ if (!process.env.SKIP_PLAYGROUND) {
 		)
 	}
 }
-
-getWatcher().close()
