@@ -3,7 +3,6 @@ import net from 'node:net'
 import { remember } from '@epic-web/remember'
 import chalk from 'chalk'
 import closeWithGrace from 'close-with-grace'
-import { execaCommand, type ResultPromise } from 'execa'
 import fkill from 'fkill'
 import { type App } from './apps.server.js'
 import { getErrorMessage } from './utils.js'
@@ -28,7 +27,7 @@ type OutputLine = {
 }
 
 type TestProcessEntry = {
-	process: ResultPromise | null
+	process: ChildProcess | null
 	output: Array<OutputLine>
 	exitCode?: number | null
 }
@@ -108,7 +107,7 @@ export async function runAppDev(app: App) {
 	)
 	const color =
 		availableColors[devProcesses.size % availableColors.length] ?? 'blue'
-	const appProcess = spawn('npm', ['run', 'dev'], {
+	const appProcess = spawn('npm', ['run', 'dev', '--silent'], {
 		cwd: app.fullPath,
 		shell: true,
 		stdio: ['ignore', 'pipe', 'pipe'],
@@ -165,7 +164,7 @@ export async function runAppTests(app: App) {
 		return { status: 'error', error: 'no-test' } as const
 	}
 
-	const testProcess = execaCommand(app.test.script, {
+	const testProcess = spawn('npm', ['run', 'test', '--silent'], {
 		cwd: app.fullPath,
 		shell: true,
 		stdio: ['ignore', 'pipe', 'pipe'],
@@ -190,7 +189,7 @@ export async function runAppTests(app: App) {
 			timestamp: Date.now(),
 		})
 	}
-	testProcess.stdout?.on('data', handleStdOutData)
+	testProcess.stdout.on('data', handleStdOutData)
 	function handleStdErrData(data: Buffer) {
 		output.push({
 			type: 'stderr',
@@ -198,11 +197,10 @@ export async function runAppTests(app: App) {
 			timestamp: Date.now(),
 		})
 	}
-	testProcess.stderr?.on('data', handleStdErrData)
-	void testProcess.on('exit', (code) => {
-		testProcess.stdout?.off('data', handleStdOutData)
-		testProcess.stderr?.off('data', handleStdErrData)
-		// don't delete the entry from the map so we can show the output at any time
+	testProcess.stderr.on('data', handleStdErrData)
+	testProcess.on('exit', (code) => {
+		testProcess.stdout.off('data', handleStdOutData)
+		testProcess.stderr.off('data', handleStdErrData)
 		entry.process = null
 		entry.exitCode = code
 	})
