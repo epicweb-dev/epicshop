@@ -3,7 +3,6 @@ import { Await, Link, useLoaderData } from '@remix-run/react'
 import * as React from 'react'
 import { Icon } from '#app/components/icons.tsx'
 import { Loading } from '#app/components/loading.tsx'
-import { useHints } from '#app/utils/client-hints.tsx'
 import { useAltDown } from '#app/utils/misc.tsx'
 import { DiscordCTA, useDiscordCTALink } from '../../../discord.tsx'
 import { type loader } from '../index.tsx'
@@ -93,7 +92,6 @@ function DiscordPost({
 	thread: Awaited<SerializeFrom<typeof loader>['discordPostsPromise']>[number]
 }) {
 	const reactionsWithCounts = thread.reactions.filter((r) => r.count)
-	const hints = useHints()
 
 	return (
 		<div>
