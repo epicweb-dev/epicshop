@@ -6,7 +6,7 @@ import {
 import { getWorkshopConfig } from '@epic-web/workshop-utils/config.server'
 import { z } from 'zod'
 import { getHints } from '#app/utils/client-hints.js'
-import { dayjs } from '#app/utils/dayjs.ts'
+import { getDayjs } from '#app/utils/dayjs.ts'
 
 const EmojiDataSchema = z.union([
 	z.object({
@@ -125,6 +125,8 @@ export async function fetchDiscordPosts({ request }: { request: Request }) {
 
 	return threadData.map((thread) => ({
 		...thread,
-		lastUpdatedDisplay: dayjs(thread.lastUpdated).tz(hints.timeZone).fromNow(),
+		lastUpdatedDisplay: getDayjs()(thread.lastUpdated)
+			.tz(hints.timeZone)
+			.fromNow(),
 	}))
 }
