@@ -30,3 +30,8 @@ export function useDiscordMember() {
 	}
 	return discordMember
 }
+
+export function useUserHasAccess() {
+	const data = useRouteLoaderData<typeof rootLoader>('root')
+	return data?.userHasAccess ?? false
+}

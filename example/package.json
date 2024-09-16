@@ -9,7 +9,12 @@
       "slug": "react-fundamentals",
       "logo": "/images/logo.svg",
       "displayName": "EpicReact.dev",
-      "displayNameShort": "Epic React"
+      "displayNameShort": "Epic React",
+      "discordChannelId": "1285244676286189569",
+      "discordTags": [
+        "1285246046498328627",
+        "1285245484432228375"
+      ]
     },
     "githubRoot": "https://github.com/epicweb-dev/epicshop/tree/main/example",
     "root": true,

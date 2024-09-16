@@ -42,7 +42,7 @@ import appStylesheetUrl from './styles/app.css?url'
 import tailwindStylesheetUrl from './styles/tailwind.css?url'
 import { ClientHintCheck, getHints } from './utils/client-hints.tsx'
 import { getConfetti } from './utils/confetti.server.ts'
-import { getProgress } from './utils/epic-api.ts'
+import { getProgress, userHasAccessToWorkshop } from './utils/epic-api.ts'
 import { cn, combineHeaders, getDomainUrl, useAltDown } from './utils/misc.tsx'
 import { Presence } from './utils/presence.tsx'
 import { getSeoMetaTags } from './utils/seo.ts'
@@ -109,6 +109,7 @@ export async function loader({ request }: LoaderFunctionArgs) {
 	const discordMember = await getDiscordMember()
 	const theme = getTheme(request)
 	const user = await getUserInfo()
+	const userHasAccess = await userHasAccessToWorkshop({ request, timings })
 	const apps = await getApps({ request, timings })
 	const presentUsers = await getPresentUsers(user, { request, timings })
 	return json(
@@ -135,6 +136,7 @@ export async function loader({ request }: LoaderFunctionArgs) {
 			preferences,
 			discordMember,
 			user,
+			userHasAccess,
 			toast,
 			confettiId,
 			presence: {

@@ -7,6 +7,7 @@ import { cachified, fsCache } from '@epic-web/workshop-utils/cache.server'
 import { getWorkshopConfig } from '@epic-web/workshop-utils/config.server'
 import { getAuthInfo } from '@epic-web/workshop-utils/db.server'
 import { type Timings } from '@epic-web/workshop-utils/timing.server'
+import cookie from 'cookie'
 import md5 from 'md5-hex'
 import { z } from 'zod'
 import { getErrorMessage } from './misc.tsx'
@@ -462,6 +463,59 @@ export async function getWorkshopData(
 				return { resources: [] }
 			}
 			return ModuleSchema.parse(await response.json())
+		},
+	})
+}
+
+export async function userHasAccessToWorkshop({
+	timings,
+	request,
+	forceFresh,
+}: {
+	request: Request
+	timings?: Timings
+	forceFresh?: boolean
+}) {
+	if (ENV.EPICSHOP_DEPLOYED) {
+		const cookieHeader = request.headers.get('Cookie')
+		if (!cookieHeader) return false
+		const cookies = cookie.parse(cookieHeader)
+		return cookies.skill === '1'
+	}
+
+	const authInfo = await getAuthInfo()
+	if (!authInfo) return false
+	const config = getWorkshopConfig()
+	const {
+		product: { host, slug },
+	} = config
+	if (!slug) return true
+
+	return cachified({
+		key: `user-has-access-to-workshop:${host}:${slug}`,
+		cache: fsCache,
+		request,
+		forceFresh,
+		timings,
+		ttl: 1000 * 5,
+		checkValue: z.boolean(),
+		async getFreshValue(context) {
+			const response = await fetch(
+				`https://${host}/api/workshops/${encodeURIComponent(slug)}/access`,
+				{
+					headers: {
+						authorization: `Bearer ${authInfo.tokenSet.access_token}`,
+					},
+				},
+			).catch((e) => new Response(getErrorMessage(e), { status: 500 }))
+			const hasAccess = response.ok ? (await response.json()) === true : false
+
+			if (hasAccess) {
+				context.metadata.ttl = 1000 * 60 * 60 * 24 * 30
+				context.metadata.swr = 1000 * 60 * 60 * 24 * 30
+			}
+
+			return hasAccess
 		},
 	})
 }

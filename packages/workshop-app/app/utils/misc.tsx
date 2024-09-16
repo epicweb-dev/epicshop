@@ -142,7 +142,10 @@ export function getNoteImgSrc(imageId: string) {
 	return `/resources/note-images/${imageId}`
 }
 
-export function getErrorMessage(error: unknown) {
+export function getErrorMessage(
+	error: unknown,
+	defaultMessage: string = 'Unknown Error',
+) {
 	if (typeof error === 'string') return error
 	if (
 		error &&
@@ -152,8 +155,7 @@ export function getErrorMessage(error: unknown) {
 	) {
 		return error.message
 	}
-	console.error('Unable to get error message for error', error)
-	return 'Unknown Error'
+	return defaultMessage
 }
 
 function formatColors() {

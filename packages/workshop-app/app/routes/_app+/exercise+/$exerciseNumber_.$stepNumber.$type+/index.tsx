@@ -9,6 +9,7 @@ import {
 	type App,
 	type ExerciseStepApp,
 } from '@epic-web/workshop-utils/apps.server'
+import { compileMarkdownString } from '@epic-web/workshop-utils/compile-mdx.server'
 import {
 	combineServerTimings,
 	getServerTimeHeader,
@@ -35,6 +36,7 @@ import { GeneralErrorBoundary } from '#app/components/error-boundary.tsx'
 import { type InBrowserBrowserRef } from '#app/components/in-browser-browser.tsx'
 import { getDiscordAuthURL } from '#app/routes/discord.callback.ts'
 import { getDiffCode } from '#app/utils/diff.server.ts'
+import { userHasAccessToWorkshop } from '#app/utils/epic-api.js'
 import { useAltDown } from '#app/utils/misc.tsx'
 import { fetchDiscordPosts } from './__shared/discord.server.ts'
 import { DiscordChat } from './__shared/discord.tsx'
@@ -45,6 +47,10 @@ import { getAppRunningState } from './__shared/utils.tsx'
 
 export async function loader({ request, params }: LoaderFunctionArgs) {
 	const timings = makeTimings('exerciseStepTypeLoader')
+	const userHasAccess = await userHasAccessToWorkshop({
+		request,
+		timings,
+	})
 	const searchParams = new URL(request.url).searchParams
 	const cacheOptions = { request, timings }
 	const exerciseStepApp = await requireExerciseApp(params, cacheOptions)
@@ -127,6 +133,21 @@ export async function loader({ request, params }: LoaderFunctionArgs) {
 				app1: app1?.name,
 				app2: app2?.name,
 				diffCode: null,
+			}
+		}
+		if (!userHasAccess) {
+			return {
+				app1: app1?.name,
+				app2: app2?.name,
+				diffCode: await compileMarkdownString(
+					`
+					<div className="flex flex-col items-center justify-center p-4">
+						<p className="text-2xl font-bold">Purchase Required</p>
+						<p>You must purchase the workshop to view the diff.</p>
+					</div>
+					`,
+					// TODO: add a video demonstrating the diff feature
+				),
 			}
 		}
 		const diffCode = await getDiffCode(app1, app2, {

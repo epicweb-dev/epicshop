@@ -1,13 +1,7 @@
-import { getWorkshopConfig } from '@epic-web/workshop-utils/config.server'
 import { getAuthInfo } from '@epic-web/workshop-utils/db.server'
 import { type SEOHandle } from '@nasa-gcn/remix-seo'
 import { json, redirect } from '@remix-run/node'
-import {
-	useFetcher,
-	useLoaderData,
-	useNavigate,
-	useRevalidator,
-} from '@remix-run/react'
+import { useFetcher, useNavigate, useRevalidator } from '@remix-run/react'
 import { useEffect, useState } from 'react'
 import { useEventSource } from 'remix-utils/sse/react'
 import { Button, ButtonLink } from '#app/components/button.tsx'
@@ -18,7 +12,6 @@ import { EVENTS } from '#app/utils/auth-events.ts'
 import { registerDevice } from '#app/utils/auth.server.ts'
 import { ensureUndeployed } from '#app/utils/misc.tsx'
 import { EventSchema } from '../login-sse.tsx'
-import { useTheme } from '../theme/index.tsx'
 
 export const handle: SEOHandle = {
 	getSitemapEntries: () => null,

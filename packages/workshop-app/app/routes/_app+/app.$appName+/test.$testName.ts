@@ -13,11 +13,15 @@ import {
 } from '@epic-web/workshop-utils/timing.server'
 import { type LoaderFunctionArgs } from '@remix-run/node'
 import fsExtra from 'fs-extra'
+import { userHasAccessToWorkshop } from '#app/utils/epic-api.js'
 import { redirectWithToast } from '#app/utils/toast.server.ts'
 import { resolveApps } from './__utils.ts'
 
 export async function loader({ request, params }: LoaderFunctionArgs) {
 	const timings = makeTimings('app_test_loader')
+	const userHasAccess = await userHasAccessToWorkshop({
+		request,
+	})
 	const { testName } = params
 	invariantResponse(testName, 'Test name is required')
 	const { fileApp, app } = await resolveApps({ request, params, timings })
@@ -91,7 +95,9 @@ import(${JSON.stringify(testScriptPath)}).then(
 )
 `
 
-	const testScriptTag = `<script type="module">${testScriptSrc}</script>`
+	const testScriptTag = userHasAccess
+		? `<script type="module">${testScriptSrc}</script>`
+		: `<h1>Purchase Required</h1><p>You must purchase the workshop to run the tests</p>`
 
 	const htmlFile = path.join(app.fullPath, 'index.html')
 	const hasHtml = await fsExtra.pathExists(htmlFile)

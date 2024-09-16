@@ -18,8 +18,10 @@ import { z } from 'zod'
 import { AnimatedBars, Icon } from '#app/components/icons.tsx'
 import { SimpleTooltip } from '#app/components/ui/tooltip.tsx'
 import { useAnsiToHtml } from '#app/utils/ansi-text.js'
+import { userHasAccessToWorkshop } from '#app/utils/epic-api.js'
 import { ensureUndeployed } from '#app/utils/misc.tsx'
 import { jsonWithPE, usePERedirectInput } from '#app/utils/pe.js'
+import { createToastHeaders } from '#app/utils/toast.server.js'
 
 const testActionSchema = z.union([
 	z.object({
@@ -147,6 +149,27 @@ export async function loader({ request }: LoaderFunctionArgs) {
 export async function action({ request }: ActionFunctionArgs) {
 	ensureUndeployed()
 	const formData = await request.formData()
+	const userHasAccess = await userHasAccessToWorkshop({
+		request,
+	})
+	if (!userHasAccess) {
+		return jsonWithPE(
+			formData,
+			{
+				success: false,
+				error:
+					'You do not have access to this workshop. Purchase the workshop to be able to run the tests.',
+			},
+			{
+				status: 403,
+				headers: await createToastHeaders({
+					title: 'Purchase required',
+					description:
+						'You do not have access to this workshop. Purchase the workshop to be able to run the tests.',
+				}),
+			},
+		)
+	}
 	const result = testActionSchema.safeParse({
 		intent: formData.get('intent'),
 		name: formData.get('name'),
