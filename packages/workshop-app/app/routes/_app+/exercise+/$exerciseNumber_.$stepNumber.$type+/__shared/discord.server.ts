@@ -5,6 +5,8 @@ import {
 } from '@epic-web/workshop-utils/cache.server'
 import { getWorkshopConfig } from '@epic-web/workshop-utils/config.server'
 import { z } from 'zod'
+import { getHints } from '#app/utils/client-hints.js'
+import { dayjs } from '#app/utils/dayjs.ts'
 
 const EmojiDataSchema = z.union([
 	z.object({
@@ -77,7 +79,7 @@ export async function fetchDiscordPosts({ request }: { request: Request }) {
 	// const url = `http://localhost:3000/resources/forum-feed?${searchParams}`
 	const url = `https://kcd-discord-bot-v2.fly.dev/resources/forum-feed?${searchParams}`
 
-	return cachified({
+	const threadData = await cachified({
 		key: url,
 		request,
 		forceFresh,
@@ -118,4 +120,11 @@ export async function fetchDiscordPosts({ request }: { request: Request }) {
 			}
 		},
 	})
+
+	const hints = getHints(request)
+
+	return threadData.map((thread) => ({
+		...thread,
+		lastUpdatedDisplay: dayjs(thread.lastUpdated).tz(hints.timeZone).fromNow(),
+	}))
 }

@@ -1,14 +1,12 @@
+import { type SerializeFrom } from '@remix-run/node'
 import { Await, Link, useLoaderData } from '@remix-run/react'
 import * as React from 'react'
-import { type z } from 'zod'
 import { Icon } from '#app/components/icons.tsx'
 import { Loading } from '#app/components/loading.tsx'
 import { useHints } from '#app/utils/client-hints.tsx'
-import { dayjs } from '#app/utils/dayjs.ts'
 import { useAltDown } from '#app/utils/misc.tsx'
 import { DiscordCTA, useDiscordCTALink } from '../../../discord.tsx'
 import { type loader } from '../index.tsx'
-import { type ThreadItemSchema } from './discord.server.ts'
 
 export function DiscordChat() {
 	const data = useLoaderData<typeof loader>()
@@ -89,7 +87,11 @@ function DiscordPosts() {
 	)
 }
 
-function DiscordPost({ thread }: { thread: z.infer<typeof ThreadItemSchema> }) {
+function DiscordPost({
+	thread,
+}: {
+	thread: Awaited<SerializeFrom<typeof loader>['discordPostsPromise']>[number]
+}) {
 	const reactionsWithCounts = thread.reactions.filter((r) => r.count)
 	const hints = useHints()
 
@@ -106,6 +108,8 @@ function DiscordPost({ thread }: { thread: z.infer<typeof ThreadItemSchema> }) {
 										className="flex items-center justify-center gap-1 rounded-full bg-accent px-2 py-1 text-sm"
 									>
 										<span className="h-3 w-3 leading-3">
+											{/* not sure how to fix this one... */}
+											{/* @ts-expect-error */}
 											<Emoji name={t.emojiName} url={t.emojiUrl} />
 										</span>
 										<span>{t.name}</span>
@@ -162,6 +166,8 @@ function DiscordPost({ thread }: { thread: z.infer<typeof ThreadItemSchema> }) {
 											className="flex items-center gap-1 rounded-md border border-blue-600 bg-blue-500/20 px-[5px] py-[0.5px] text-sm"
 										>
 											<span className="h-3 w-3 leading-3">
+												{/* not sure how to fix this one... */}
+												{/* @ts-expect-error */}
 												<Emoji name={r.emojiName} url={r.emojiUrl} />
 											</span>
 											<span>{r.count}</span>
@@ -174,7 +180,7 @@ function DiscordPost({ thread }: { thread: z.infer<typeof ThreadItemSchema> }) {
 							<span className="inline-flex items-center gap-1">
 								<Icon name="Chat" /> {thread.messageCount}
 							</span>
-							{` · ${dayjs(thread.lastUpdated).tz(hints.timeZone).fromNow()}`}
+							{` · ${thread.lastUpdatedDisplay}`}
 						</span>
 					</div>
 					<span className="flex items-center gap-4">
