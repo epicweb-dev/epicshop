@@ -36,9 +36,9 @@ export default (class Server implements Party.Server {
 		hibernate: true,
 	}
 
-	readonly party: Party.Party
+	readonly party: Party.Room
 
-	constructor(party: Party.Party) {
+	constructor(party: Party.Room) {
 		this.party = party
 	}
 
@@ -97,6 +97,48 @@ export default (class Server implements Party.Server {
 		if (url.pathname.endsWith('/presence')) {
 			return Response.json(this.getPresenceMessage().payload)
 		}
+		if (url.pathname.endsWith('/show')) {
+			const users = this.getUsers()
+			const workshopUsers = organizeUsersByWorkshop(users)
+			return new Response(
+				`
+				<!DOCTYPE html>
+				<html lang="en">
+				<head>
+					<meta charset="UTF-8">
+					<meta name="viewport" content="width=device-width, initial-scale=1.0">
+					<title>Epic Web Presence</title>
+					<style>
+						body { font-family: Arial, sans-serif; max-width: 800px; margin: 0 auto; padding: 20px; }
+						h1, h2 { color: #333; }
+						ul { padding: 0; }
+						li { list-style: none; margin-bottom: 10px; }
+						.user-avatar { width: 64px; height: 64px; border-radius: 50%; vertical-align: middle; margin-right: 10px; }
+					</style>
+				</head>
+				<body>
+					<h1>Epic Web Presence</h1>
+					<p>Total Users: ${users.length}</p>
+					${Object.entries(workshopUsers)
+						.map(
+							([workshop, workshopUsers]) => `
+							<h2>${workshop}</h2>
+							<ul>
+								${workshopUsers.map(generateUserListItem).join('')}
+							</ul>
+						`,
+						)
+						.join('')}
+				</body>
+				</html>
+				`,
+				{
+					headers: {
+						'Content-Type': 'text/html',
+					},
+				},
+			)
+		}
 		return new Response('not found', { status: 404 })
 	}
 } satisfies Party.Worker)
@@ -152,4 +194,46 @@ function getScore(user: User) {
 	if (user.avatarUrl?.includes('discordapp')) score += 0.5
 	if (user.name) score += 1
 	return score
+}
+
+function organizeUsersByWorkshop(users: Array<User>) {
+	const workshopUsers: Record<string, Array<User>> = {}
+
+	for (const user of users) {
+		const workshop = user.location?.workshopTitle ?? 'Unknown Workshop'
+		if (!workshopUsers[workshop]) {
+			workshopUsers[workshop] = []
+		}
+		workshopUsers[workshop]?.push(user)
+	}
+
+	// Sort users within each workshop by exercise and step number
+	for (const workshop in workshopUsers) {
+		workshopUsers[workshop]?.sort((a, b) => {
+			const aExercise = a.location?.exercise?.exerciseNumber ?? 0
+			const bExercise = b.location?.exercise?.exerciseNumber ?? 0
+			if (aExercise !== bExercise) return aExercise - bExercise
+
+			const aStep = a.location?.exercise?.stepNumber ?? 0
+			const bStep = b.location?.exercise?.stepNumber ?? 0
+			return aStep - bStep
+		})
+	}
+
+	return workshopUsers
+}
+
+function generateUserListItem(user: User) {
+	const avatarUrl = user.avatarUrl ?? 'https://example.com/default-avatar.png'
+	const name = user.name ?? 'Anonymous'
+	const location = user.location?.exercise
+		? `Exercise ${user.location.exercise.exerciseNumber}, Step ${user.location.exercise.stepNumber}`
+		: 'Unknown location'
+
+	return `
+		<li>
+			<img class="user-avatar" src="${avatarUrl}" alt="${name}" />
+			<strong>${name}</strong> - ${location}
+		</li>
+	`
 }
