@@ -83,7 +83,7 @@ export async function fetchDiscordPosts({ request }: { request: Request }) {
 		forceFresh,
 		cache: fsCache,
 		ttl: 1000 * 60 * 2,
-		swr: 1000 * 60 * 60 * 24 * 7,
+		swr: 1000 * 60 * 60 * 24 * 365 * 100,
 		checkValue: ThreadDataSchema,
 		async getFreshValue(): Promise<z.infer<typeof ThreadDataSchema>> {
 			const result = await fetch(url, {
