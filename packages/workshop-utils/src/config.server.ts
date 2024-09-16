@@ -24,6 +24,7 @@ const InstructorSchema = z.object({
 	xHandle: z.string().optional(),
 })
 
+// most defaults are for backwards compatibility
 const WorkshopConfigSchema = z
 	.object({
 		title: z.string(),
@@ -38,6 +39,8 @@ const WorkshopConfigSchema = z
 				displayNameShort: z.string().default('Epic Web'),
 				logo: z.string().default('/logo.svg'),
 				slug: z.string().optional(),
+				discordChannelId: z.string().default('1161045224907341972'),
+				discordTags: z.array(z.string()).optional(),
 			})
 			.default({}),
 		onboardingVideo: z

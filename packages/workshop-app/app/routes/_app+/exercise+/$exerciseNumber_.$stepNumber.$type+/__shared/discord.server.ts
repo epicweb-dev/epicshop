@@ -3,6 +3,7 @@ import {
 	fsCache,
 	shouldForceFresh,
 } from '@epic-web/workshop-utils/cache.server'
+import { getWorkshopConfig } from '@epic-web/workshop-utils/config.server'
 import { z } from 'zod'
 
 const EmojiDataSchema = z.union([
@@ -62,26 +63,33 @@ const EpicForumResponseSchema = z
 	)
 
 export async function fetchDiscordPosts({ request }: { request: Request }) {
+	const config = getWorkshopConfig()
+	const forceFresh = await shouldForceFresh({ request })
+	const searchParams = new URLSearchParams({
+		channelId: config.product.discordChannelId,
+	})
+	if (config.product.discordTags?.length) {
+		for (const tag of config.product.discordTags) {
+			searchParams.append('tagId', tag)
+		}
+	}
+	if (forceFresh) searchParams.set('fresh', 'true')
+	// const url = `http://localhost:3000/resources/forum-feed?${searchParams}`
+	const url = `https://kcd-discord-bot-v2.fly.dev/resources/forum-feed?${searchParams}`
+
 	return cachified({
-		key: 'fetchDiscordPosts',
+		key: url,
 		request,
+		forceFresh,
 		cache: fsCache,
 		ttl: 1000 * 60 * 2,
 		swr: 1000 * 60 * 60 * 24 * 7,
 		checkValue: ThreadDataSchema,
 		async getFreshValue(): Promise<z.infer<typeof ThreadDataSchema>> {
-			const forceFresh = await shouldForceFresh({ request })
-			const searchParams = new URLSearchParams(
-				forceFresh ? { fresh: 'true' } : {},
-			)
-			const result = await fetch(
-				// `http://localhost:3000/resources/epic-web-forum?${searchParams}`,
-				`https://kcd-discord-bot-v2.fly.dev/resources/epic-web-forum?${searchParams}`,
-				{
-					method: 'POST',
-					headers: { 'content-type': 'application/json' },
-				},
-			)
+			const result = await fetch(url, {
+				headers: { 'content-type': 'application/json' },
+			})
+
 			if (!result.ok) {
 				console.error(`There was an error communicating with discord`)
 				try {
