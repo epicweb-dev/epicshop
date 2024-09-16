@@ -107,6 +107,7 @@ export default (class Server implements Party.Server {
 				<head>
 					<meta charset="UTF-8">
 					<meta name="viewport" content="width=device-width, initial-scale=1.0">
+					<meta http-equiv="refresh" content="5">
 					<title>Epic Web Presence</title>
 					<style>
 						body { font-family: Arial, sans-serif; max-width: 800px; margin: 0 auto; padding: 20px; }
@@ -224,11 +225,19 @@ function organizeUsersByWorkshop(users: Array<User>) {
 }
 
 function generateUserListItem(user: User) {
-	const avatarUrl = user.avatarUrl ?? 'https://example.com/default-avatar.png'
+	const avatarUrl = user.avatarUrl ?? '/avatar.png'
 	const name = user.name ?? 'Anonymous'
 	const location = user.location?.exercise
-		? `Exercise ${user.location.exercise.exerciseNumber}, Step ${user.location.exercise.stepNumber}`
-		: 'Unknown location'
+		? [
+				`Exercise ${user.location.exercise.exerciseNumber}`,
+				user.location.exercise.stepNumber &&
+					`Step ${user.location.exercise.stepNumber}`,
+			]
+				.filter(Boolean)
+				.join(', ')
+		: user.location?.origin
+			? user.location.origin
+			: 'Unknown location'
 
 	return `
 		<li>
