@@ -1,7 +1,9 @@
 import { type PlaygroundApp } from '@epic-web/workshop-utils/apps.server'
 import { useState } from 'react'
+import { DeferredEpicVideo } from '#app/components/epic-video.js'
 import { Icon } from '#app/components/icons'
 import { InBrowserTestRunner } from '#app/components/in-browser-test-runner'
+import { useUserHasAccess } from '#app/components/user.js'
 import { TestOutput } from '#app/routes/test'
 import { PlaygroundWindow } from './playground-window'
 
@@ -34,6 +36,26 @@ export function TestUI({
 	playgroundAppInfo: Pick<PlaygroundApp, 'name' | 'test'> | null
 }) {
 	const [inBrowserTestKey, setInBrowserTestKey] = useState(0)
+	const userHasAccess = useUserHasAccess()
+
+	if (!userHasAccess) {
+		return (
+			<div className="w-full p-12">
+				<div className="flex w-full flex-col gap-4 text-center">
+					<p className="text-2xl font-bold">Access Denied</p>
+					<p className="text-lg">
+						You must login or register for the workshop to view and run the
+						tests.
+					</p>
+				</div>
+				<div className="h-16" />
+				<p className="pb-4">
+					Check out this video to see how the test tab works.
+				</p>
+				<DeferredEpicVideo url="https://www.epicweb.dev/tips/epic-workshop-test-tab-demo" />
+			</div>
+		)
+	}
 
 	if (!playgroundAppInfo) {
 		return (

@@ -97,7 +97,7 @@ import(${JSON.stringify(testScriptPath)}).then(
 
 	const testScriptTag = userHasAccess
 		? `<script type="module">${testScriptSrc}</script>`
-		: `<h1>Purchase Required</h1><p>You must purchase the workshop to run the tests</p>`
+		: `<h1>Access Denied</h1><p>You must login or register for the workshop to run the tests</p>`
 
 	const htmlFile = path.join(app.fullPath, 'index.html')
 	const hasHtml = await fsExtra.pathExists(htmlFile)

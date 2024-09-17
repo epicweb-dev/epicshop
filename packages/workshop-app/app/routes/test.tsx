@@ -158,14 +158,14 @@ export async function action({ request }: ActionFunctionArgs) {
 			{
 				success: false,
 				error:
-					'You do not have access to this workshop. Purchase the workshop to be able to run the tests.',
+					'You do not have access to this workshop. Login or register for the workshop to be able to run the tests.',
 			},
 			{
 				status: 403,
 				headers: await createToastHeaders({
-					title: 'Purchase required',
+					title: 'Access denied',
 					description:
-						'You do not have access to this workshop. Purchase the workshop to be able to run the tests.',
+						'You do not have access to this workshop. Login or register for the workshop to be able to run the tests.',
 				}),
 			},
 		)

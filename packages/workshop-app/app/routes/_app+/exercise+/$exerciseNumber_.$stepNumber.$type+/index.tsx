@@ -140,13 +140,7 @@ export async function loader({ request, params }: LoaderFunctionArgs) {
 				app1: app1?.name,
 				app2: app2?.name,
 				diffCode: await compileMarkdownString(
-					`
-					<div className="flex flex-col items-center justify-center p-4">
-						<p className="text-2xl font-bold">Purchase Required</p>
-						<p>You must purchase the workshop to view the diff.</p>
-					</div>
-					`,
-					// TODO: add a video demonstrating the diff feature
+					`<h1>Access Denied</h1><p>You must login or register for the workshop to view the diff</p>`,
 				),
 			}
 		}

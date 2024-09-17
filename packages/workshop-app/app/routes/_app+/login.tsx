@@ -78,8 +78,8 @@ export default function Login() {
 					Authenticate with {displayName}
 				</h1>
 				<h2 className="max-w-sm pt-3 text-base text-gray-700 dark:text-gray-300">
-					If you have purchased {displayName}, you'll be able to watch videos,
-					track progress, and more!
+					If you have access to this workshop on {displayName}, you'll be able
+					to watch videos, track progress, and more!
 				</h2>
 				<div className="flex w-full flex-col items-center pt-5">
 					{userCodeInfo ? (
