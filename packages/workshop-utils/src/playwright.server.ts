@@ -57,47 +57,49 @@ export function setupInBrowserTests() {
 		.array(z.object({ path: z.string() }))
 		.parse(JSON.parse(result.stdout))
 
-	for (const testPage of testPages) {
-		test(testPage.path, async ({ page }) => {
-			const errors: Array<string> = []
-			const logs: Array<string> = []
-			const infos: Array<string> = []
-			page.on('console', (message) => {
-				switch (message.type()) {
-					case 'error': {
-						errors.push(message.text())
-						break
+	test.describe.parallel('in-browser tests', () => {
+		for (const testPage of testPages) {
+			test(testPage.path, async ({ page }) => {
+				const errors: Array<string> = []
+				const logs: Array<string> = []
+				const infos: Array<string> = []
+				page.on('console', (message) => {
+					switch (message.type()) {
+						case 'error': {
+							errors.push(message.text())
+							break
+						}
+						case 'log': {
+							logs.push(message.text())
+							break
+						}
+						case 'info': {
+							infos.push(message.text())
+							break
+						}
+						default: {
+							break
+						}
 					}
-					case 'log': {
-						logs.push(message.text())
-						break
-					}
-					case 'info': {
-						infos.push(message.text())
-						break
-					}
-					default: {
-						break
-					}
-				}
+				})
+				await page.goto(testPage.path)
+				await page.waitForLoadState()
+				await waitFor(
+					() => infos.find((info) => info.includes('status: pending')),
+					{ timeout: 10_000 },
+				)
+				const result = await Promise.race([
+					waitFor(() => logs.find((log) => log.includes('status: pass')), {
+						timeout: 10_000,
+					}),
+					waitFor(() => (errors.length > 0 ? errors : null), {
+						timeout: 10_000,
+					}).then((errors) => {
+						throw errors
+					}),
+				])
+				expect(result).toContain('status: pass')
 			})
-			await page.goto(testPage.path)
-			await page.waitForLoadState()
-			await waitFor(
-				() => infos.find((info) => info.includes('status: pending')),
-				{ timeout: 10_000 },
-			)
-			const result = await Promise.race([
-				waitFor(() => logs.find((log) => log.includes('status: pass')), {
-					timeout: 10_000,
-				}),
-				waitFor(() => (errors.length > 0 ? errors : null), {
-					timeout: 10_000,
-				}).then((errors) => {
-					throw errors
-				}),
-			])
-			expect(result).toContain('status: pass')
-		})
-	}
+		}
+	})
 }
