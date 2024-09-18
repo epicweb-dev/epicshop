@@ -123,7 +123,7 @@ export default (class Server implements Party.Server {
 					${Object.entries(workshopUsers)
 						.map(
 							([workshop, workshopUsers]) => `
-							<h2>${workshop}</h2>
+							<h2>${workshop} (${workshopUsers.length})</h2>
 							<ul>
 								${workshopUsers.map(generateUserListItem).join('')}
 							</ul>
