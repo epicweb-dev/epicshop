@@ -1,8 +1,8 @@
 {
   "type": "module",
   "dependencies": {
-    "@epic-web/workshop-app": "^4.22.2",
-    "@epic-web/workshop-utils": "^4.22.2",
+    "@epic-web/workshop-app": "file:../../packages/workshop-app",
+    "@epic-web/workshop-utils": "file:../../packages/workshop-utils",
     "fs-extra": "^11.2.0"
   }
 }
