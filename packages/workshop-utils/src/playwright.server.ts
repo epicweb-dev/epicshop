@@ -1,11 +1,11 @@
 import { expect, test } from '@playwright/test'
 import crossSpawn from 'cross-spawn'
 import z from 'zod'
-import { getApps, isProblemApp } from './apps.server.js'
+import { getApps, isSolutionApp } from './apps.server.js'
 
 export async function getInBrowserTestPages() {
 	const apps = (await getApps())
-		.filter(isProblemApp)
+		.filter(isSolutionApp)
 		.filter((a) => a.test.type === 'browser')
 	const pages = apps.map((app) => {
 		if (app.test.type !== 'browser') return null
@@ -43,7 +43,7 @@ async function waitFor<ReturnValue>(
 
 export function setupInBrowserTests() {
 	// doing this because playwright needs the tests to be registered synchoronously
-	const code = `import('@epic-web/workshop-utils/playwright.server').then(({ getInBrowserTestPages }) => getInBrowserTestPages().then(r => console.log(JSON.stringify(r))))`
+	const code = `import('@epic-web/workshop-utils/playwright.server').then(({ getInBrowserTestPages }) => getInBrowserTestPages().then(r => console.log(JSON.stringify(r)))).catch(e => {console.error(e);throw e;})`
 	const result = crossSpawn.sync('node', ['--eval', code], {
 		encoding: 'utf-8',
 	})
