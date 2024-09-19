@@ -188,13 +188,15 @@ function InBrowserBrowserForRealzImpl(
 					} else if (lastDirectionRef.current === 'forward') {
 						return { ...prevContext, index: newIndex(1) }
 					} else if (lastDirectionRef.current === 'new') {
-						const currentPathname = prevContext.history[prevContext.index]
-						const newPathname = new URL(data.url).pathname
-						if (currentPathname === newPathname) return prevContext
+						const currentFullPath = prevContext.history[prevContext.index]
+						const newUrl = new URL(data.url)
+						const newFullPath = newUrl.pathname + newUrl.search
+
+						if (currentFullPath === newFullPath) return prevContext
 
 						const newHistory = [
 							...prevContext.history.slice(0, prevContext.index + 1),
-							newPathname,
+							newFullPath,
 						]
 						return {
 							history: newHistory,
