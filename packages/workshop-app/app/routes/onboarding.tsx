@@ -1,6 +1,9 @@
 import { invariantResponse } from '@epic-web/invariant'
 import { getWorkshopConfig } from '@epic-web/workshop-utils/config.server'
-import { markOnboardingVideoWatched } from '@epic-web/workshop-utils/db.server'
+import {
+	getAuthInfo,
+	markOnboardingVideoWatched,
+} from '@epic-web/workshop-utils/db.server'
 import { makeTimings } from '@epic-web/workshop-utils/timing.server'
 import { type SEOHandle } from '@nasa-gcn/remix-seo'
 import {
@@ -42,11 +45,14 @@ export const headers: HeadersFunction = ({ loaderHeaders }) => {
 
 export async function action({ request }: ActionFunctionArgs) {
 	const data = await request.formData()
+	const authInfo = await getAuthInfo()
 	const intent = data.get('intent')
 	invariantResponse(intent === 'complete', 'Invalid intent')
 	const { onboardingVideo } = getWorkshopConfig()
 	await markOnboardingVideoWatched(onboardingVideo)
-	throw redirect('/account')
+
+	if (authInfo) throw redirect('/')
+	else throw redirect('/login')
 }
 
 export default function Onboarding() {
