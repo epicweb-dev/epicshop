@@ -275,6 +275,7 @@ export function ProgressToggle({
 
 	const navigationLocationStateFrom = navigation.location?.state?.from
 	const navigationLocationPathname = navigation.location?.pathname
+
 	const locationPathname = location.pathname
 	React.useEffect(() => {
 		if (navigationLocationStateFrom === 'continue next lesson button') {
@@ -291,15 +292,26 @@ export function ProgressToggle({
 	])
 
 	React.useEffect(() => {
-		if (!animationRef.current) return
+		let latest = true
 		if (!startAnimation) return
-		const animationPromises = animationRef.current
-			.getAnimations()
-			.map(({ finished }) => finished)
 
-		void Promise.allSettled(animationPromises).then(() => {
-			setStartAnimation(false)
+		// wait a bit for the animation to start
+		void new Promise((resolve) => setTimeout(resolve, 200)).then(async () => {
+			if (!latest) return
+			if (!animationRef.current) return
+
+			const animationPromises = animationRef.current
+				.getAnimations()
+				.map(({ finished }) => finished)
+
+			return Promise.allSettled(animationPromises).then(() => {
+				if (!latest) return
+				setStartAnimation(false)
+			})
 		})
+		return () => {
+			latest = false
+		}
 	}, [startAnimation])
 
 	if (ENV.EPICSHOP_DEPLOYED || !progressItem) return null
