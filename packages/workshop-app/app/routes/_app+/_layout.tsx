@@ -558,6 +558,21 @@ function MobileNavigation({
 								// @ts-expect-error framer-motion + latest typescript types has issues
 								className="flex flex-col"
 							>
+								<span>
+									<NavLink
+										prefetch="intent"
+										to="/"
+										className={({ isActive }) =>
+											clsx(
+												'relative whitespace-nowrap px-2 py-0.5 pr-3 text-2xl font-bold outline-none hover:underline focus:underline',
+												'after:absolute after:-bottom-2.5 after:-right-2.5 after:h-5 after:w-5 after:rotate-45 after:scale-75 after:bg-background after:content-[""] hover:underline focus:underline',
+												{ 'bg-foreground text-background': isActive },
+											)
+										}
+									>
+										Home
+									</NavLink>
+								</span>
 								{data.exercises.map(({ exerciseNumber, title, steps }) => {
 									const isActive =
 										Number(params.exerciseNumber) === exerciseNumber
@@ -862,6 +877,21 @@ function Navigation({
 								// @ts-expect-error framer-motion + latest typescript types has issues
 								className="flex flex-col"
 							>
+								<span>
+									<NavLink
+										prefetch="intent"
+										to="/"
+										className={({ isActive }) =>
+											clsx(
+												'relative whitespace-nowrap px-2 py-0.5 pr-3 text-2xl font-bold outline-none hover:underline focus:underline',
+												'after:absolute after:-bottom-2.5 after:-right-2.5 after:h-5 after:w-5 after:rotate-45 after:scale-75 after:bg-background after:content-[""] hover:underline focus:underline',
+												{ 'bg-foreground text-background': isActive },
+											)
+										}
+									>
+										Home
+									</NavLink>
+								</span>
 								{data.exercises.map(({ exerciseNumber, title, steps }) => {
 									const isActive =
 										Number(params.exerciseNumber) === exerciseNumber

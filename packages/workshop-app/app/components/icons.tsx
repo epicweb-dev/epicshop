@@ -71,6 +71,7 @@ export type IconName =
 	| 'FastForward'
 	| 'Discord'
 	| 'Chat'
+	| 'House'
 
 const sizeClassName = {
 	font: 'w-[1em] h-[1em]',
