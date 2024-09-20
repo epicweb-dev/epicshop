@@ -52,6 +52,7 @@ export function useRequireEpicProgress() {
 }
 
 export function useNextExerciseRoute() {
+	const currentPathname = useLocation().pathname
 	const progress = useEpicProgress()
 	if (!progress) return null
 	const scoreProgress = (a: (typeof progress)[number]) => {
@@ -75,12 +76,19 @@ export function useNextExerciseRoute() {
 	if (nextProgress.type === 'workshop-finished') return '/finished'
 
 	const ex = nextProgress.exerciseNumber.toString().padStart(2, '0')
-	if (nextProgress.type === 'instructions') return `/${ex}`
-	if (nextProgress.type === 'finished') return `/${ex}/finished`
+	if (nextProgress.type === 'instructions') return `/exercise/${ex}`
+	if (nextProgress.type === 'finished') return `/exercise/${ex}/finished`
 
 	const st = nextProgress.stepNumber.toString().padStart(2, '0')
 
-	if (nextProgress.type === 'step') return `/${ex}/${st}/problem`
+	if (nextProgress.type === 'step') {
+		const problemRoute = `/exercise/${ex}/${st}/problem`
+		const solutionRoute = `/exercise/${ex}/${st}/solution`
+		if (currentPathname === problemRoute || currentPathname === solutionRoute) {
+			return solutionRoute
+		}
+		return problemRoute
+	}
 
 	return null
 }
