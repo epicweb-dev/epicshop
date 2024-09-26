@@ -75,7 +75,7 @@ const WorkshopConfigSchema = z
 				postupdate: z.string().optional(),
 			})
 			.optional(),
-		initialRoute: z.string().optional().default('/'), // Add this line
+		initialRoute: z.string().optional().default('/'),
 	})
 	.transform((data) => {
 		return {

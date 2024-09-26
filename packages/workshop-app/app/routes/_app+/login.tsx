@@ -71,24 +71,24 @@ export default function Login() {
 	}, [lastMessage, navigate, revalidator])
 
 	return (
-		<main className="flex h-full w-full flex-grow flex-col items-center justify-center p-10 text-center">
+		<main className="flex h-full w-full flex-grow flex-col items-center justify-center p-10">
 			<div className="flex flex-col items-center">
 				<Logo className="h-16 w-16" />
 				<h1 className="pt-5 text-2xl font-semibold md:text-3xl">
-					Authenticate with {displayName}
+					Login to {displayName}
 				</h1>
-				<h2 className="max-w-sm pt-3 text-base text-gray-700 dark:text-gray-300">
-					If you have access to this workshop on {displayName}, you'll be able
-					to watch videos, track progress, and more!
-				</h2>
 				<div className="flex w-full flex-col items-center pt-5">
 					{userCodeInfo ? (
-						<div className="flex w-full flex-col items-center gap-3">
+						<div className="flex w-full max-w-md flex-col items-center gap-3">
 							<div className="my-2 flex w-full flex-col items-center gap-2">
 								<p className="text-lg">Your verification code is: </p>
-								<div className="mb-3 w-full bg-gray-100 px-5 py-3 text-lg font-bold dark:bg-black/40">
+								<div className="mb-3 w-full bg-gray-100 px-5 py-3 text-center text-lg font-bold dark:bg-black/40">
 									<code>{userCodeInfo.code}</code>
 								</div>
+								<p className="text-base">
+									You'll use this to verify your device on {displayName}. Click
+									verify code below to open the verification page.
+								</p>
 							</div>
 							<ButtonLink
 								varient="primary"
@@ -97,23 +97,49 @@ export default function Login() {
 								rel="noreferrer"
 								onClick={() => setClickedVerificationLink(true)}
 							>
-								Continue
+								Verify Auth Code
 							</ButtonLink>
 							{clickedVerificationLink ? (
-								<div className="pt-5 opacity-60">
-									<Loading>Waiting for confirmation</Loading>
+								<div className="justify-center pt-5 text-center opacity-60">
+									<Loading className="justify-center">
+										Waiting for confirmation
+									</Loading>
+									<p className="pt-2">
+										Please open{' '}
+										<a
+											href={userCodeInfo.url}
+											target="_blank"
+											className="underline"
+										>
+											your auth page
+										</a>{' '}
+										in a new tab to continue.
+									</p>
 								</div>
 							) : null}
 						</div>
 					) : (
-						<loginFetcher.Form method="POST">
-							<Button varient="primary" type="submit">
-								{loginFetcher.state === 'idle' &&
-								loginFetcher.data?.status !== 'pending'
-									? `Retrieve Code`
-									: `Retrieving Code...`}
-							</Button>
-						</loginFetcher.Form>
+						<div className="flex flex-col items-center gap-8">
+							<div className="flex max-w-lg flex-col gap-2 gap-3 pt-3 text-base text-gray-700 dark:text-gray-300">
+								<p>
+									If you have access to this workshop on {displayName}, you'll
+									be able to watch videos, track progress, run tests, view the
+									diffs, and more!
+								</p>
+								<p>
+									First you need to authenticate your device by requesting an
+									access code and verifying on {displayName}.
+								</p>
+							</div>
+							<loginFetcher.Form method="POST">
+								<Button varient="primary" type="submit">
+									{loginFetcher.state === 'idle' &&
+									loginFetcher.data?.status !== 'pending'
+										? `Retrieve Auth Code`
+										: `Retrieving Auth Code...`}
+								</Button>
+							</loginFetcher.Form>
+						</div>
 					)}
 					{authError ? (
 						<div className="mt-4 text-red-500">

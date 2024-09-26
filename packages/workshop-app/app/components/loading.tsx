@@ -3,10 +3,13 @@
 // does the same thing we were using baffle-react for
 import { useEffect, useRef, useState } from 'react'
 import { useHints } from '#app/utils/client-hints.tsx'
+import { cn } from '#app/utils/misc.tsx'
 
 export function Loading({
+	className,
 	children = 'Loading',
 }: {
+	className?: string
 	children?: React.ReactNode
 }) {
 	const { reducedMotion } = useHints()
@@ -16,7 +19,10 @@ export function Loading({
 
 	return (
 		<div
-			className="flex items-center gap-2 font-mono text-sm font-medium uppercase"
+			className={cn(
+				'flex items-center gap-2 font-mono text-sm font-medium uppercase',
+				className,
+			)}
 			role="status"
 		>
 			<div aria-hidden="true">
