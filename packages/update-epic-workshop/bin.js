@@ -28,7 +28,7 @@ export async function updateLocalRepo() {
 
 		if (uncommittedChanges) {
 			console.log('👜 Stashing uncommitted changes...')
-			await execaCommand('git stash', { cwd })
+			await execaCommand('git stash --include-untracked', { cwd })
 		}
 
 		console.log('⬇️ Pulling latest changes...')
