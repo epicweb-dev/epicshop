@@ -135,25 +135,33 @@ export async function compileMdx(
 		key: cacheLocation,
 	})
 	if (!requireFresh && (await checkFileExists(cacheLocation))) {
-		const cached = JSON.parse(
-			await fs.promises.readFile(cacheLocation, 'utf-8'),
-		) as any
+		try {
+			const cached = JSON.parse(
+				await fs.promises.readFile(cacheLocation, 'utf-8'),
+			) as any
 
-		cachedEmbeddedFiles = new Map(
-			Object.entries(cached.value.embeddedFiles ?? {}),
-		)
+			cachedEmbeddedFiles = new Map(
+				Object.entries(cached.value.embeddedFiles ?? {}),
+			)
 
-		const compiledTime = cached.value.compiledTime ?? 0
-		const warningCancled =
-			process.env.NODE_ENV === 'development'
-				? cached?.value?.warningCancled ?? false
-				: false
-		if (
-			compiledTime > stat.mtimeMs &&
-			!warningCancled &&
-			(await validateEmbeddedFiles(cachedEmbeddedFiles.values(), compiledTime))
-		) {
-			return cached.value
+			const compiledTime = cached.value.compiledTime ?? 0
+			const warningCancled =
+				process.env.NODE_ENV === 'development'
+					? cached?.value?.warningCancled ?? false
+					: false
+			if (
+				compiledTime > stat.mtimeMs &&
+				!warningCancled &&
+				(await validateEmbeddedFiles(
+					cachedEmbeddedFiles.values(),
+					compiledTime,
+				))
+			) {
+				return cached.value
+			}
+		} catch (error) {
+			console.error(`Error reading cached file: ${cacheLocation}`, error)
+			void fs.promises.unlink(cacheLocation)
 		}
 	}
 	let title: string | null = null
