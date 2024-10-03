@@ -90,11 +90,12 @@ function getNumberOrNull(value: unknown) {
 	const number = Number(value)
 	return Number.isNaN(number) ? null : number
 }
-
 // redirect /1/1 to /01/01 etc.
 // and redirect /app/1/1 to /app/01/01 etc.
+// preserve search params
 app.use((req, res, next) => {
-	const segments = req.url
+	const [path = '', search] = req.url.split('?')
+	const segments = path
 		.split('/')
 		.map((s) => s.trim())
 		.filter(Boolean)
@@ -111,7 +112,8 @@ app.use((req, res, next) => {
 
 	if (firstNumber != null) first = firstNumber.toString().padStart(2, '0')
 	if (secondNumber != null) second = secondNumber.toString().padStart(2, '0')
-	const updatedUrl = `${leading}/${[first, second, ...rest].filter(Boolean).join('/')}`
+	const updatedPath = `${leading}/${[first, second, ...rest].filter(Boolean).join('/')}`
+	const updatedUrl = search ? `${updatedPath}?${search}` : updatedPath
 	if (req.url !== updatedUrl) {
 		return res.redirect(302, updatedUrl)
 	}
