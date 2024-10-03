@@ -1,11 +1,7 @@
 import fs from 'fs'
 import path from 'path'
-import { cachified, type CacheEntry } from '@epic-web/cachified'
-import { remember } from '@epic-web/remember'
 import { remarkCodeBlocksShiki } from '@kentcdodds/md-temp'
-import fsExtra from 'fs-extra'
 import { type Element, type Root as HastRoot } from 'hast'
-import md5 from 'md5-hex'
 import { type Root as MdastRoot } from 'mdast'
 import { bundleMDX } from 'mdx-bundler'
 import PQueue from 'p-queue'
@@ -15,21 +11,12 @@ import gfm from 'remark-gfm'
 import { type PluggableList } from 'unified'
 import { visit } from 'unist-util-visit'
 import {
+	cachified,
+	compiledInstructionMarkdownCache,
 	compiledMarkdownCache,
-	embeddedFilesCache,
 	shouldForceFresh,
-	type CachedEmbeddedFilesList,
 } from './cache.server.js'
-import {
-	remarkCodeFile,
-	type CodeFileData,
-	type EmbeddedFile,
-} from './codefile-mdx.server.js'
-
-const cacheDir = path.join(
-	process.env.EPICSHOP_CONTEXT_CWD ?? process.cwd(),
-	'./node_modules/.cache/compile-mdx',
-)
+import { type Timings } from './timing.server.js'
 
 function trimCodeBlocks() {
 	return async function transformer(tree: HastRoot) {
@@ -80,98 +67,56 @@ const rehypePlugins = [
 	removePreContainerDivs,
 ] satisfies PluggableList
 
-function checkFileExists(file: string) {
-	return fs.promises.access(file, fs.constants.F_OK).then(
-		() => true,
-		() => false,
-	)
-}
-
 const verboseLog =
 	process.env.EPICSHOP_VERBOSE_LOG === 'true' ? console.log : () => {}
 
-/**
- * @param embeddedFiles {string[]} - list of embedded files
- * @param lastCompiledTime {number} - timestamp indicating the last time mdx file was compiled
- * @returns true if all embedded file mtimeMs are older then the file compiled time,
- * false if we need update
- */
-function validateEmbeddedFiles(
-	embeddedFiles: IterableIterator<EmbeddedFile>,
-	lastCompiledTime: number,
-): Promise<boolean> {
-	if (process.env.NODE_ENV !== 'development') return Promise.resolve(true)
-	return Promise.all(
-		Array.from(embeddedFiles).map(async ({ file }) => {
-			const stat = await fs.promises.stat(file).catch(() => ({ mtimeMs: 0 }))
-			return lastCompiledTime > stat.mtimeMs || Promise.reject()
-		}),
-	).then(
-		() => true,
-		() => false,
-	)
-}
-
 export async function compileMdx(
 	file: string,
-	{ request, forceFresh }: { request?: Request; forceFresh?: boolean } = {},
-): Promise<{
+	{
+		request,
+		timings,
+		forceFresh,
+	}: {
+		request?: Request
+		timings?: Timings
+		forceFresh?: boolean
+	} = {},
+) {
+	const stat = await fs.promises
+		.stat(file)
+		.catch((error: unknown) => ({ error }))
+	if ('error' in stat) {
+		throw new Error(`File stat cannot be read: ${stat.error}`)
+	}
+
+	const key = `file:${file}`
+	forceFresh = await shouldForceFresh({ forceFresh, request, key })
+
+	const existingCacheEntry = await compiledInstructionMarkdownCache.get(key)
+	if (!forceFresh && existingCacheEntry) {
+		const compiledTime = existingCacheEntry.metadata.createdTime
+		if (stat.mtimeMs <= compiledTime) {
+			return existingCacheEntry.value
+		}
+	}
+
+	return cachified({
+		key,
+		cache: compiledInstructionMarkdownCache,
+		request,
+		timings,
+		forceFresh,
+		getFreshValue: () => compileMdxImpl(file),
+	})
+}
+
+async function compileMdxImpl(file: string): Promise<{
 	code: string
 	title: string | null
 	epicVideoEmbeds: Array<string>
 }> {
-	if (!(await checkFileExists(file))) {
-		throw new Error(`File does not exist: ${file}`)
-	}
-
-	let cachedEmbeddedFiles = new Map<string, EmbeddedFile>()
-
-	const stat = await fs.promises.stat(file)
-	const cacheLocation = path.join(cacheDir, `${md5(file)}.json`)
-
-	const requireFresh = await shouldForceFresh({
-		forceFresh,
-		request,
-		key: cacheLocation,
-	})
-	if (!requireFresh && (await checkFileExists(cacheLocation))) {
-		try {
-			const cached = JSON.parse(
-				await fs.promises.readFile(cacheLocation, 'utf-8'),
-			) as any
-
-			cachedEmbeddedFiles = new Map(
-				Object.entries(cached.value.embeddedFiles ?? {}),
-			)
-
-			const compiledTime = cached.value.compiledTime ?? 0
-			const warningCancled =
-				process.env.NODE_ENV === 'development'
-					? cached?.value?.warningCancled ?? false
-					: false
-			if (
-				compiledTime > stat.mtimeMs &&
-				!warningCancled &&
-				(await validateEmbeddedFiles(
-					cachedEmbeddedFiles.values(),
-					compiledTime,
-				))
-			) {
-				return cached.value
-			}
-		} catch (error) {
-			console.error(`Error reading cached file: ${cacheLocation}`, error)
-			void fs.promises.unlink(cacheLocation)
-		}
-	}
 	let title: string | null = null
 	const epicVideoEmbeds: Array<string> = []
-	const codeFileData = {
-		mdxFile: file,
-		cacheLocation,
-		cachedEmbeddedFiles,
-		embeddedFiles: new Map<string, EmbeddedFile>(),
-	}
 
 	try {
 		verboseLog(`Compiling ${file}`)
@@ -196,8 +141,11 @@ export async function compileMdx(
 					},
 					() => (tree: MdastRoot) => {
 						visit(tree, 'mdxJsxFlowElement', (jsxEl) => {
+							// @ts-expect-error no idea why this started being an issue suddenly 🤷‍♂️
 							if (jsxEl.name !== 'EpicVideo') return
+							// @ts-expect-error no idea why this started being an issue suddenly 🤷‍♂️
 							const urlAttr = jsxEl.attributes.find(
+								// @ts-expect-error no idea why this started being an issue suddenly 🤷‍♂️
 								(a) => a.type === 'mdxJsxAttribute' && a.name === 'url',
 							)
 							if (!urlAttr) return
@@ -207,7 +155,6 @@ export async function compileMdx(
 							epicVideoEmbeds.push(url)
 						})
 					},
-					() => remarkCodeFile(codeFileData),
 					emoji,
 				]
 				options.rehypePlugins = [
@@ -223,20 +170,6 @@ export async function compileMdx(
 		if (!bundleResult) throw new Error(`Timeout for file: ${file}`)
 
 		const result = { code: bundleResult.code, title, epicVideoEmbeds }
-		await fsExtra.ensureDir(cacheDir)
-		await fs.promises.writeFile(
-			cacheLocation,
-			JSON.stringify({
-				value: {
-					...result,
-					compiledTime: Date.now(),
-					embeddedFiles: codeFileData.embeddedFiles.size
-						? Object.fromEntries(codeFileData.embeddedFiles)
-						: undefined,
-				},
-			}),
-		)
-		await updateEmbeddedFilesCache(codeFileData)
 		return result
 	} catch (error: unknown) {
 		console.error(`Compilation error for file: `, file, error)
@@ -276,97 +209,6 @@ export async function compileMarkdownString(markdownString: string) {
 			}
 		},
 	})
-}
-
-const modifiedEmbeddedFilesTime = remember(
-	'modified_embedded_files_time',
-	() => new Map<string, number>(),
-)
-
-const EMBEDDED_FILES_CACHE_KEY = 'embeddedFilesCache'
-
-async function updateEmbeddedFilesCache({
-	mdxFile,
-	embeddedFiles,
-}: CodeFileData) {
-	if (mdxFile.includes('playground')) return
-	let cachedList = await getEmbeddedFilesCache()
-	const hash = cachedList ? md5(JSON.stringify(cachedList)) : null
-
-	// make sure we get clean list before updating it
-	if (cachedList) {
-		for (const [key, value] of Object.entries(cachedList)) {
-			cachedList[key] = value.filter((item) => item !== mdxFile)
-			if (cachedList[key]?.length === 0) {
-				delete cachedList[key]
-			}
-		}
-	}
-
-	if (embeddedFiles.size) {
-		if (!cachedList) {
-			cachedList = {}
-		}
-		const files = Array.from(
-			new Set(Array.from(embeddedFiles.values()).map(({ file }) => file)),
-		).sort()
-		for (const file of files) {
-			cachedList[file] = [...(cachedList[file] ?? []), mdxFile]
-		}
-	}
-
-	if (cachedList && hash !== md5(JSON.stringify(cachedList))) {
-		await fsExtra.ensureDir(cacheDir)
-		const embeddedFilesLocation = path.join(cacheDir, 'embeddedFiles.json')
-		modifiedEmbeddedFilesTime.set(EMBEDDED_FILES_CACHE_KEY, Date.now())
-		await fs.promises.writeFile(
-			embeddedFilesLocation,
-			JSON.stringify({ ...cachedList }),
-		)
-	}
-}
-
-async function getEmbeddedFilesCache() {
-	const key = EMBEDDED_FILES_CACHE_KEY
-
-	function getForceFresh(cacheEntry: CacheEntry | null | undefined) {
-		if (!cacheEntry) return true
-		const latestModifiedTime = modifiedEmbeddedFilesTime.get(key)
-		if (!latestModifiedTime) return undefined
-		return latestModifiedTime > cacheEntry.metadata.createdTime
-			? true
-			: undefined
-	}
-
-	return cachified({
-		key,
-		cache: embeddedFilesCache,
-		ttl: 1000 * 60 * 60 * 24,
-		forceFresh: getForceFresh(embeddedFilesCache.get(key)),
-		getFreshValue: async () => {
-			try {
-				const embeddedFilesLocation = path.join(cacheDir, 'embeddedFiles.json')
-				if (await checkFileExists(embeddedFilesLocation)) {
-					return JSON.parse(
-						await fs.promises.readFile(embeddedFilesLocation, 'utf-8'),
-					) as CachedEmbeddedFilesList
-				}
-			} catch {
-				console.error(`Unable to read 'embeddedFiles.json' from: `, cacheDir)
-			}
-			return undefined
-		},
-	})
-}
-
-export async function isEmbeddedFile(filePath: string) {
-	if (process.env.NODE_ENV !== 'development') return false
-	const embeddedFilesList = await getEmbeddedFilesCache()
-	if (embeddedFilesList) {
-		const embeddedFiles = Object.keys(embeddedFilesList)
-		return embeddedFiles.includes(filePath.replace(/\\/g, '/'))
-	}
-	return false
 }
 
 let _queue: PQueue | null = null

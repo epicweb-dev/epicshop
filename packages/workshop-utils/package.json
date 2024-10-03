@@ -19,7 +19,6 @@
       "./db.server": "./src/db.server.ts",
       "./timing.server": "./src/timing.server.ts",
       "./compile-mdx.server": "./src/compile-mdx.server.ts",
-      "./codefile-mdx.server": "./src/codefile-mdx.server.ts",
       "./change-tracker.server": "./src/change-tracker.server.ts",
       "./git.server": "./src/git.server.ts",
       "./iframe-sync": "./src/iframe-sync.ts",
@@ -79,13 +78,6 @@
         "source": "./src/compile-mdx.server.ts",
         "types": "./dist/esm/compile-mdx.server.d.ts",
         "default": "./dist/esm/compile-mdx.server.js"
-      }
-    },
-    "./codefile-mdx.server": {
-      "import": {
-        "source": "./src/codefile-mdx.server.ts",
-        "types": "./dist/esm/codefile-mdx.server.d.ts",
-        "default": "./dist/esm/codefile-mdx.server.js"
       }
     },
     "./change-tracker.server": {

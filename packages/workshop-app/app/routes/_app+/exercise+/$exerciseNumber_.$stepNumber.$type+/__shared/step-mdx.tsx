@@ -4,16 +4,14 @@ import {
 	useSearchParams,
 	type LinkProps,
 } from '@remix-run/react'
-import { clsx } from 'clsx'
 import * as React from 'react'
-import { useState, type PropsWithChildren } from 'react'
+import { type PropsWithChildren } from 'react'
 import iconsSvg from '#app/assets/icons.svg'
 import { EpicVideoInfoProvider } from '#app/components/epic-video.tsx'
 import { Icon } from '#app/components/icons.tsx'
 import { type InBrowserBrowserRef } from '#app/components/in-browser-browser.tsx'
 import { SimpleTooltip } from '#app/components/ui/tooltip.tsx'
 import { LaunchEditor } from '#app/routes/launch-editor.tsx'
-import { UpdateMdxCache } from '#app/routes/update-mdx-cache.tsx'
 import { Mdx } from '#app/utils/mdx.tsx'
 import { cn, getBaseUrl } from '#app/utils/misc.tsx'
 import { useRequestInfo } from '#app/utils/request-info.ts'
@@ -47,8 +45,6 @@ function StepContextProvider({
 }
 
 const stepMdxComponents = {
-	CodeFile,
-	CodeFileNotification,
 	DiffLink,
 	PrevDiffLink,
 	NextDiffLink,
@@ -199,96 +195,6 @@ function DiffLink({
 	}
 
 	return <Link to={pathToDiff}>{children}</Link>
-}
-
-function CodeFile({ file }: { file: string }) {
-	return (
-		<div className="border-4 border-[#ff4545] bg-[#ff454519] p-4 text-lg">
-			Something went wrong compiling <b>CodeFile</b> for file: <u>{file}</u> to
-			markdown
-		</div>
-	)
-}
-
-function CodeFileNotification({
-	file,
-	type = 'problem',
-	children,
-	variant,
-	cacheLocation,
-	embeddedKey,
-	...props
-}: {
-	file: string
-	type?: 'solution' | 'problem'
-	children: React.ReactNode
-} & (
-	| {
-			variant: 'error'
-			cacheLocation?: never
-			embeddedKey?: never
-	  }
-	| {
-			variant: 'warning'
-			cacheLocation: string
-			embeddedKey: string
-	  }
-)) {
-	const [visibility, setVisibility] = useState('visible')
-	const data = useLoaderData<typeof loader>()
-	const app = data[type]
-
-	const handleClick = () => {
-		if (visibility !== 'visible') return
-		setVisibility('collapse')
-		setTimeout(() => {
-			setVisibility('none')
-		}, 400)
-	}
-
-	const className = clsx(
-		'rounded px-4 py-1 font-mono text-sm font-semibold outline-none transition duration-300 ease-in-out',
-		{
-			'bg-amber-300/70 hover:bg-amber-300/40 active:bg-amber-300/50':
-				variant === 'warning',
-			'bg-red-300/70 hover:bg-red-300/40 active:bg-red-300/50':
-				variant === 'error',
-		},
-	)
-
-	return (
-		<div
-			className={clsx('notification important h-15 relative', {
-				'duration-400 !my-0 !h-0 !py-0 !opacity-0 transition-all ease-out':
-					visibility !== 'visible',
-				hidden: visibility === 'none',
-			})}
-		>
-			<div className="absolute right-3 top-3 z-50 flex gap-4">
-				{app ? (
-					<div className={className} title={`Edit ${file}`}>
-						<LaunchEditor appFile={file} appName={app.name} {...props}>
-							Edit this File
-						</LaunchEditor>
-					</div>
-				) : null}
-				{app && variant === 'warning' ? (
-					<div
-						className={className}
-						title={`Remove the warning from here and from ${file} cache file`}
-					>
-						<UpdateMdxCache
-							handleClick={handleClick}
-							cacheLocation={cacheLocation}
-							embeddedKey={embeddedKey}
-							appFullPath={app.fullPath}
-						/>
-					</div>
-				) : null}
-			</div>
-			{children}
-		</div>
-	)
 }
 
 function InlineFile({

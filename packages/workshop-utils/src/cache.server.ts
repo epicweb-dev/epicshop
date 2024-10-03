@@ -1,11 +1,7 @@
 import os from 'os'
 import path from 'path'
 import * as C from '@epic-web/cachified'
-import {
-	verboseReporter,
-	type CacheEntry,
-	type Cache as CachifiedCache,
-} from '@epic-web/cachified'
+import { verboseReporter, type CacheEntry } from '@epic-web/cachified'
 import { remember } from '@epic-web/remember'
 import fsExtra from 'fs-extra'
 import { LRUCache } from 'lru-cache'
@@ -31,49 +27,17 @@ export const diffFilesCache = makeSingletonCache<string>('DiffFilesCache')
 export const compiledMarkdownCache = makeSingletonCache<string>(
 	'CompiledMarkdownCache',
 )
-export type CachedEmbeddedFilesList = Record<string, string[]>
-export const embeddedFilesCache = makeSingletonCache<
-	CachedEmbeddedFilesList | undefined
->('EmbeddedFilesCache')
 export const compiledCodeCache = makeSingletonCache<string>('CompiledCodeCache')
 export const ogCache = makeSingletonCache<string>('OgCache')
+export const compiledInstructionMarkdownCache = makeSingletonFsCache<{
+	code: string
+	title: string | null
+	epicVideoEmbeds: Array<string>
+}>('CompiledInstructionMarkdownCache')
 
 const cacheDir = path.join(os.homedir(), '.epicshop', 'cache')
 
-export const fsCache: CachifiedCache = {
-	name: 'Filesystem cache',
-	async get(key) {
-		try {
-			const filePath = path.join(cacheDir, md5(key))
-
-			const data = await fsExtra.readJSON(filePath)
-			if (data.entry) return data.entry
-			// this is just here for migration purposes. Earlier versions of the cache
-			// did not store the key in the cache file with the value under "entry".
-			return null
-		} catch (error: unknown) {
-			if (
-				error instanceof Error &&
-				'code' in error &&
-				error.code === 'ENOENT'
-			) {
-				return null
-			}
-			throw error
-		}
-	},
-	async set(key, entry) {
-		const filePath = path.join(cacheDir, md5(key))
-		await fsExtra.ensureDir(path.dirname(filePath))
-		// store the key in the cache file because it's md5 hashed and the key has
-		// helpful debugging information.
-		await fsExtra.writeJSON(filePath, { key, entry })
-	},
-	async delete(key) {
-		const filePath = path.join(cacheDir, md5(key))
-		await fsExtra.remove(filePath)
-	},
-}
+export const fsCache = makeSingletonFsCache('FsCache')
 
 export async function getAllFileCacheEntries() {
 	const files = await fsExtra.readdir(cacheDir)
@@ -122,6 +86,44 @@ export function makeSingletonCache<CacheEntryType>(name: string) {
 		} satisfies C.Cache<CacheEntryType>
 
 		return lru
+	})
+}
+
+export function makeSingletonFsCache<CacheEntryType>(name: string) {
+	return remember(name, () => {
+		const cacheDir = path.join(os.homedir(), '.epicshop', 'cache', name)
+
+		const fsCache: C.Cache<CacheEntryType> = {
+			name: `Filesystem cache (${name})`,
+			async get(key) {
+				try {
+					const filePath = path.join(cacheDir, md5(key))
+					const data = await fsExtra.readJSON(filePath)
+					if (data.entry) return data.entry
+					return null
+				} catch (error: unknown) {
+					if (
+						error instanceof Error &&
+						'code' in error &&
+						error.code === 'ENOENT'
+					) {
+						return null
+					}
+					throw error
+				}
+			},
+			async set(key, entry) {
+				const filePath = path.join(cacheDir, md5(key))
+				await fsExtra.ensureDir(path.dirname(filePath))
+				await fsExtra.writeJSON(filePath, { key, entry })
+			},
+			async delete(key) {
+				const filePath = path.join(cacheDir, md5(key))
+				await fsExtra.remove(filePath)
+			},
+		}
+
+		return fsCache
 	})
 }
 

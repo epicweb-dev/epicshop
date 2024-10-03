@@ -84,24 +84,6 @@ By default the text is just the path, but you can customize it as well:
 It's also got all the props a regular React Router `Link` has, so you can use
 `reloadDocument` if you're linking to a resource route or something.
 
-### `CodeFile`
-
-Display contents of a file:
-
-```mdx
-<CodeFile
-	file="app/entry.server.tsx"
-	range="1-8,10-20"
-	highlight="1-2,15-17"
-	nocopy
-	nonumber
-	buttons="problem,solution,playground"
-/>
-```
-
-This will keep track of the code in the file and let you know when it changes
-with a callout notification so you can update the props.
-
 ### `DiffLink`
 
 Link to diff route or diff preview, to show git diff between two examples app.
