@@ -94,10 +94,7 @@ export async function compileMdx(
 
 	const existingCacheEntry = await compiledInstructionMarkdownCache.get(key)
 	if (!forceFresh && existingCacheEntry) {
-		const compiledTime = existingCacheEntry.metadata.createdTime
-		if (stat.mtimeMs <= compiledTime) {
-			return existingCacheEntry.value
-		}
+		forceFresh = stat.mtimeMs > existingCacheEntry.metadata.createdTime
 	}
 
 	return cachified({
