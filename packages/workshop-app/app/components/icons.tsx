@@ -2,7 +2,7 @@ import * as React from 'react'
 import iconsSvg from '#app/assets/icons.svg'
 import { cn } from '#app/utils/misc.tsx'
 
-type Sizes = 12 | 16 | 20 | 24 | 28 | 32 | 40
+type Sizes = 12 | 14 | 16 | 20 | 24 | 28 | 32 | 40
 
 // can't use styles in an external SVG sprite, so animated icons get inlined.
 export function AnimatedBars({

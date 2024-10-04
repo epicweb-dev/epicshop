@@ -78,7 +78,7 @@ export function InBrowserTestRunner({
 	}, [])
 
 	const statusEmoji = {
-		pending: <AnimatedBars aria-label="Pending" />,
+		pending: <AnimatedBars size={14} aria-label="Pending" />,
 		pass: (
 			<Icon
 				name="CheckSmall"
