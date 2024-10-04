@@ -76,7 +76,7 @@ export async function action({ request }: ActionFunctionArgs) {
 	const apps = await getApps({ forceFresh: true })
 	const playground = apps.find(isPlaygroundApp)
 	if (playground && converseApp) {
-		await getDiffCode(playground, converseApp, { forceFresh: true })
+		void getDiffCode(playground, converseApp, { forceFresh: true })
 	}
 	return jsonWithPE(formData, { status: 'success' } as const)
 }
