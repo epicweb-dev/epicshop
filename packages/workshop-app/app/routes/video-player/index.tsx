@@ -30,13 +30,31 @@ export function usePlayerPreferences() {
 type MuxPlayerProps = React.ComponentProps<typeof RealMuxPlayer>
 
 const ignoredInputs = [
-	'input',
-	'select',
-	'button',
-	'textarea',
-	'mux-player',
-	'summary',
+	'INPUT',
+	'SELECT',
+	'BUTTON',
+	'TEXTAREA',
+	'MUX-PLAYER',
+	'SUMMARY',
 ]
+
+const ignoredRoles = ['button', 'option', 'combobox', 'tab', 'tablist']
+
+function shouldIgnoreHotkey(el: unknown) {
+	let current = el
+	while (current) {
+		if (!(current instanceof HTMLElement)) return false
+
+		const isIgnored =
+			ignoredInputs.includes(current.tagName) ||
+			ignoredRoles.includes(current.getAttribute('role') || '') ||
+			current.isContentEditable
+		if (isIgnored) return true
+		current = current.parentElement
+	}
+
+	return false
+}
 
 export async function action({ request }: ActionFunctionArgs) {
 	const result = PlayerPreferencesSchema.safeParse(await request.json())
@@ -89,40 +107,33 @@ export function MuxPlayer({
 		function handleUserKeyPress(e: KeyboardEvent) {
 			if (!muxPlayerRef.current) return
 			const activeElement = document.activeElement
-			const isContentEditable =
-				activeElement instanceof HTMLElement
-					? activeElement.contentEditable === 'true'
-					: false
 
-			if (
-				activeElement &&
-				!ignoredInputs.includes(activeElement.tagName.toLowerCase()) &&
-				!isContentEditable
-			) {
-				if (e.key === ' ') {
-					e.preventDefault()
-					void (muxPlayerRef.current.paused
-						? muxPlayerRef.current.play()
-						: muxPlayerRef.current.pause())
-				}
-				if (e.key === 'ArrowRight') {
-					e.preventDefault()
-					muxPlayerRef.current.currentTime =
-						muxPlayerRef.current.currentTime +
-						(muxPlayerRef.current.forwardSeekOffset || 10)
-				}
-				if (e.key === 'ArrowLeft') {
-					e.preventDefault()
-					muxPlayerRef.current.currentTime =
-						muxPlayerRef.current.currentTime -
-						(muxPlayerRef.current.forwardSeekOffset || 10)
-				}
-				if (e.key === 'f' && !e.metaKey && !e.ctrlKey) {
-					e.preventDefault()
-					void (document.fullscreenElement
-						? document.exitFullscreen()
-						: muxPlayerRef.current.requestFullscreen())
-				}
+			if (shouldIgnoreHotkey(activeElement)) return
+			if (shouldIgnoreHotkey(e.target)) return
+
+			if (e.key === ' ') {
+				e.preventDefault()
+				void (muxPlayerRef.current.paused
+					? muxPlayerRef.current.play()
+					: muxPlayerRef.current.pause())
+			}
+			if (e.key === 'ArrowRight') {
+				e.preventDefault()
+				muxPlayerRef.current.currentTime =
+					muxPlayerRef.current.currentTime +
+					(muxPlayerRef.current.forwardSeekOffset || 10)
+			}
+			if (e.key === 'ArrowLeft') {
+				e.preventDefault()
+				muxPlayerRef.current.currentTime =
+					muxPlayerRef.current.currentTime -
+					(muxPlayerRef.current.forwardSeekOffset || 10)
+			}
+			if (e.key === 'f' && !e.metaKey && !e.ctrlKey) {
+				e.preventDefault()
+				void (document.fullscreenElement
+					? document.exitFullscreen()
+					: muxPlayerRef.current.requestFullscreen())
 			}
 		}
 		window.document.addEventListener('keydown', handleUserKeyPress)
