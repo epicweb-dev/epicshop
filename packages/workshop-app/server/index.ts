@@ -106,6 +106,10 @@ app.use((req, res, next) => {
 		leading = '/app'
 		;[first, second, ...rest] = segments.slice(1)
 	}
+	if (segments[0] === 'exercise') {
+		leading = '/exercise'
+		;[first, second, ...rest] = segments.slice(1)
+	}
 	const firstNumber = getNumberOrNull(first)
 	const secondNumber = getNumberOrNull(second)
 	if (firstNumber === null && secondNumber === null) return next()
