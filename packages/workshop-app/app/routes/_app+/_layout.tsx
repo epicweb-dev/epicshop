@@ -32,6 +32,7 @@ import { useHydrated } from 'remix-utils/use-hydrated'
 import { Icon } from '#app/components/icons.tsx'
 import { makeMediaQueryStore } from '#app/components/media-query.ts'
 import { Logo } from '#app/components/product.tsx'
+import { useRevalidationWS } from '#app/components/revalidation-ws.js'
 import {
 	Dialog,
 	DialogContent,
@@ -262,6 +263,7 @@ export default function App() {
 	const isHydrated = useHydrated()
 
 	const [isMenuOpened, setMenuOpened] = React.useState(false)
+	useRevalidationWS({ watchPaths: ['./exercises/README.mdx'] })
 
 	return (
 		<div className="flex flex-col">

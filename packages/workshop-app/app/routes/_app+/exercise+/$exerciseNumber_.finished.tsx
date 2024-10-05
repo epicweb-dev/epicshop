@@ -26,6 +26,7 @@ import * as React from 'react'
 import { EpicVideoInfoProvider } from '#app/components/epic-video.tsx'
 import { Loading } from '#app/components/loading.tsx'
 import { NavChevrons } from '#app/components/nav-chevrons.tsx'
+import { useRevalidationWS } from '#app/components/revalidation-ws.js'
 import { type loader as rootLoader } from '#app/root.tsx'
 import { EditFileOnGitHub } from '#app/routes/launch-editor.tsx'
 import { ProgressToggle } from '#app/routes/progress.tsx'
@@ -100,12 +101,10 @@ export async function loader({ request, params }: LoaderFunctionArgs) {
 				exercise.finishedEpicVideoEmbeds,
 				{ request },
 			),
-			exerciseFinished: exercise.finishedCode
-				? {
-						file: finishedFilepath,
-						relativePath: `exercises/${exercise.dirName}/FINISHED.mdx`,
-					}
-				: null,
+			exerciseFinished: {
+				file: finishedFilepath,
+				relativePath: `exercises/${exercise.dirName}/FINISHED.mdx`,
+			},
 			prevStepLink: prevApp
 				? {
 						to: getAppPageRoute(prevApp),
@@ -144,6 +143,10 @@ export default function ExerciseFinished() {
 	const exerciseNumber = data.exercise.exerciseNumber
 		.toString()
 		.padStart(2, '0')
+
+	useRevalidationWS({
+		watchPaths: [`./exercises/${exerciseNumber}/FINISHED.mdx`],
+	})
 
 	return (
 		<div className="flex max-w-full flex-grow flex-col">
@@ -189,12 +192,10 @@ export default function ExerciseFinished() {
 					/>
 					<div className="flex h-16 justify-between border-b-4 border-t lg:border-b-0">
 						<div />
-						{data.exerciseFinished ? (
-							<EditFileOnGitHub
-								file={data.exerciseFinished.file}
-								relativePath={data.exerciseFinished.relativePath}
-							/>
-						) : null}
+						<EditFileOnGitHub
+							file={data.exerciseFinished.file}
+							relativePath={data.exerciseFinished.relativePath}
+						/>
 						<NavChevrons prev={data.prevStepLink} next={data.nextStepLink} />
 					</div>
 				</div>

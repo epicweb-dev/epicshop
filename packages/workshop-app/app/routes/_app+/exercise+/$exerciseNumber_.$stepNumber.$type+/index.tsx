@@ -46,7 +46,7 @@ import { Tests } from './__shared/tests.tsx'
 import { getAppRunningState } from './__shared/utils.tsx'
 
 export async function loader({ request, params }: LoaderFunctionArgs) {
-	const timings = makeTimings('exerciseStepTypeLoader')
+	const timings = makeTimings('exerciseStepTypeIndexLoader')
 	const userHasAccess = await userHasAccessToWorkshop({
 		request,
 		timings,

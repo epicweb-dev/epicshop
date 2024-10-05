@@ -26,6 +26,7 @@ import {
 } from '@remix-run/react'
 import slugify from '@sindresorhus/slugify'
 import { EpicVideoInfoProvider } from '#app/components/epic-video.tsx'
+import { useRevalidationWS } from '#app/components/revalidation-ws.js'
 import { type loader as rootLoader } from '#app/root.tsx'
 import { EditFileOnGitHub } from '#app/routes/launch-editor.tsx'
 import { ProgressToggle } from '#app/routes/progress.tsx'
@@ -121,6 +122,9 @@ const mdxComponents = { h1: () => null }
 
 export default function ExerciseNumberRoute() {
 	const data = useLoaderData<typeof loader>()
+	useRevalidationWS({
+		watchPaths: [data.exerciseReadme.file],
+	})
 
 	const firstStepNumber = String(data.firstStep?.stepNumber ?? '01').padStart(
 		2,

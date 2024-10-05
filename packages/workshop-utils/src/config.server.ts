@@ -4,6 +4,8 @@ import { z } from 'zod'
 
 export const workshopRoot = process.env.EPICSHOP_CONTEXT_CWD ?? process.cwd()
 
+const rootPkgJson = path.join(workshopRoot, 'package.json')
+
 export const StackBlitzConfigSchema = z.object({
 	// we default this to `${exerciseTitle} (${type})`
 	title: z.string().optional(),
@@ -93,14 +95,21 @@ const WorkshopConfigSchema = z
 
 export type WorkshopConfig = z.infer<typeof WorkshopConfigSchema>
 
-let cachedConfig: WorkshopConfig | null = null
-
-export function bustWorkshopConfigCache() {
-	cachedConfig = null
+const configCache: {
+	config: WorkshopConfig | null
+	modified: number
+} = {
+	config: null,
+	modified: 0,
 }
 
 export function getWorkshopConfig(): WorkshopConfig {
-	if (cachedConfig) return cachedConfig
+	if (
+		configCache.config &&
+		configCache.modified > fs.statSync(rootPkgJson).mtimeMs
+	) {
+		return configCache.config
+	}
 
 	const packageJsonPath = path.join(workshopRoot, 'package.json')
 	let packageJson: any
@@ -143,7 +152,8 @@ export function getWorkshopConfig(): WorkshopConfig {
 
 	try {
 		const parsedConfig = WorkshopConfigSchema.parse(epicshopConfig)
-		cachedConfig = parsedConfig
+		configCache.config = parsedConfig
+		configCache.modified = fs.statSync(rootPkgJson).mtimeMs
 		return parsedConfig
 	} catch (error) {
 		if (error instanceof z.ZodError) {

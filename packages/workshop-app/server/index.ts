@@ -7,19 +7,19 @@ import {
 	workshopRoot,
 	init as initApps,
 } from '@epic-web/workshop-utils/apps.server'
-import { getWatcher } from '@epic-web/workshop-utils/change-tracker.server'
 import { checkForUpdates } from '@epic-web/workshop-utils/git.server'
 import { createRequestHandler } from '@remix-run/express'
 import { type ServerBuild, installGlobals } from '@remix-run/node'
 import { ip as ipAddress } from 'address'
 import chalk from 'chalk'
+import chokidar, { type FSWatcher } from 'chokidar'
 import closeWithGrace from 'close-with-grace'
 import compression from 'compression'
 import express from 'express'
 import getPort, { portNumbers } from 'get-port'
 import morgan from 'morgan'
 import sourceMapSupport from 'source-map-support'
-import { WebSocket, WebSocketServer } from 'ws'
+import { type WebSocket, WebSocketServer } from 'ws'
 
 const MODE = process.env.NODE_ENV ?? 'development'
 
@@ -195,41 +195,92 @@ ${chalk.bold('Press Ctrl+C to stop')}
 	}
 })
 
-const wss = new WebSocketServer({ server, path: '/__ws' })
+if (
+	process.env.EPICSHOP_DEPLOYED !== 'true' &&
+	process.env.EPICSHOP_ENABLE_WATCHER === 'true'
+) {
+	const watches = new Map<
+		string,
+		{ clients: Set<WebSocket>; chok: FSWatcher }
+	>()
+	const wss = new WebSocketServer({ noServer: true })
 
-let timer: NodeJS.Timeout | null = null
-let fileChanges = new Set<string>()
-
-getWatcher()?.on('all', (event, filePath) => {
-	fileChanges.add(filePath)
-
-	if (!timer) {
-		timer = setTimeout(() => {
-			if (fileChanges.size === 0) return
-			for (const client of wss.clients) {
-				if (client.readyState === WebSocket.OPEN) {
-					client.send(
-						JSON.stringify({
-							type: 'epicshop:file-change',
-							data: { event, filePaths: Array.from(fileChanges) },
-						}),
-					)
+	server.on('upgrade', (request, socket, head) => {
+		const url = new URL(request.url ?? '/', 'ws://localhost:0000')
+		if (url.pathname === '/__ws') {
+			wss.handleUpgrade(request, socket, head, (ws) => {
+				const watchPaths = url.searchParams.getAll('watch')
+				if (watchPaths.length === 0) {
+					socket.destroy()
+					return
 				}
-			}
+				const key = watchPaths.join('&&')
+				let watcher = watches.get(key)
+				if (!watcher) {
+					const chok = chokidar.watch(watchPaths, {
+						cwd: workshopRoot,
+						ignoreInitial: true,
+						ignored: [
+							`/.git/`,
+							`/node_modules/`,
+							`/build/`,
+							`/server-build/`,
+							`/playwright-report/`,
+							`/dist/`,
+							`/.cache/`,
+						],
+					})
+					watcher = { clients: new Set(), chok }
+					watches.set(key, watcher)
 
-			fileChanges = new Set()
-			timer = null
-		}, 50)
-	}
-})
+					let timer: NodeJS.Timeout | null = null
+					let fileChanges = new Set<string>()
+					watcher.chok.on('all', (event, filePath) => {
+						fileChanges.add(filePath)
+						if (timer) return
+
+						timer = setTimeout(() => {
+							for (const client of watcher?.clients ?? []) {
+								client.send(
+									JSON.stringify({
+										type: 'epicshop:file-change',
+										data: { event, filePaths: Array.from(fileChanges) },
+									}),
+								)
+							}
+
+							fileChanges = new Set()
+							timer = null
+						}, 50)
+					})
+				}
+				watcher.clients.add(ws)
+
+				ws.on('close', () => {
+					watcher?.clients.delete(ws)
+					if (watcher?.clients.size === 0) {
+						watcher.chok.close()
+						watches.delete(key)
+					}
+				})
+			})
+		} else {
+			socket.destroy()
+		}
+	})
+
+	closeWithGrace(async () => {
+		await Promise.all([
+			...Array.from(watches.values()).map((watcher) => watcher.chok.close()),
+			new Promise((resolve, reject) => {
+				wss.close((e) => (e ? reject(e) : resolve('ok')))
+			}),
+		])
+	})
+}
 
 closeWithGrace(() => {
-	return Promise.all([
-		new Promise((resolve, reject) => {
-			server.close((e) => (e ? reject(e) : resolve('ok')))
-		}),
-		new Promise((resolve, reject) => {
-			wss.close((e) => (e ? reject(e) : resolve('ok')))
-		}),
-	])
+	return new Promise((resolve, reject) => {
+		server.close((e) => (e ? reject(e) : resolve()))
+	})
 })

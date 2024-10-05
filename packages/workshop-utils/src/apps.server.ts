@@ -20,7 +20,6 @@ import {
 import { getWatcher, withoutWatcher } from './change-tracker.server.js'
 import { compileMdx } from './compile-mdx.server.js'
 import {
-	bustWorkshopConfigCache,
 	getAppConfig,
 	getStackBlitzUrl,
 	getWorkshopConfig,
@@ -235,9 +234,6 @@ async function handleFileChanges(
 	event: string,
 	filePath: string,
 ): Promise<void> {
-	if (filePath === path.join(workshopRoot, 'package.json')) {
-		bustWorkshopConfigCache()
-	}
 	const apps = await getApps()
 	for (const app of apps) {
 		if (filePath.startsWith(app.fullPath)) {

@@ -27,9 +27,7 @@ import {
 	ScrollRestoration,
 	useLoaderData,
 	useNavigation,
-	useRevalidator,
 } from '@remix-run/react'
-import { useEffect } from 'react'
 import { useSpinDelay } from 'spin-delay'
 import { Confetti } from './components/confetti.tsx'
 import { GeneralErrorBoundary } from './components/error-boundary.tsx'
@@ -125,6 +123,9 @@ export async function loader({ request }: LoaderFunctionArgs) {
 			})),
 			ENV: getEnv(),
 			requestInfo: {
+				protocol: new URL(request.url).protocol,
+				hostname: new URL(request.url).hostname,
+				port: new URL(request.url).port,
 				origin: new URL(request.url).origin,
 				domain: getDomainUrl(request),
 				hints: getHints(request),
@@ -168,11 +169,6 @@ function Document({
 	env?: Record<string, unknown>
 	className: string
 }) {
-	const revalidator = useRevalidator()
-	useEffect(() => {
-		window.__epicshop ??= {}
-		window.__epicshop.handleFileChange = revalidator.revalidate
-	}, [revalidator])
 	return (
 		<html lang="en" className={className}>
 			<head>
@@ -191,9 +187,6 @@ function Document({
 				{children}
 				<ScrollRestoration />
 				<Scripts />
-				{ENV.EPICSHOP_DEPLOYED ? null : (
-					<script dangerouslySetInnerHTML={{ __html: getWebsocketJS() }} />
-				)}
 			</body>
 		</html>
 	)
@@ -244,66 +237,4 @@ export function ErrorBoundary() {
 			<GeneralErrorBoundary />
 		</Document>
 	)
-}
-
-function getWebsocketJS() {
-	const js = /* javascript */ `
-	function epicLiveReloadConnect(config) {
-		const protocol = location.protocol === "https:" ? "wss:" : "ws:";
-		const host = location.hostname;
-		const port = location.port;
-		const socketPath = protocol + "//" + host + ":" + port + "/__ws";
-		const ws = new WebSocket(socketPath);
-		function handleFileChange(changedFiles) {
-			console.log(
-				['🐨 Reloading', window.frameElement?.getAttribute('title')]
-					.filter(Boolean)
-					.join(' '),
-				changedFiles
-			);
-			if (typeof window.__epicshop?.handleFileChange === "function") {
-				window.__epicshop?.handleFileChange();
-			} else {
-				setTimeout(() => window.location.reload(), 200);
-			}
-		}
-		function debounce(fn, ms) {
-			let timeout;
-			return function debouncedFn(...args) {
-				clearTimeout(timeout);
-				timeout = setTimeout(() => fn(...args), ms);
-			};
-		}
-		const debouncedHandleFileChange = debounce(handleFileChange, 50);
-		ws.onmessage = (message) => {
-			const event = JSON.parse(message.data);
-			if (event.type !== 'epicshop:file-change') return;
-			const { filePaths } = event.data;
-			debouncedHandleFileChange(filePaths);
-		};
-		ws.onopen = () => {
-			if (config && typeof config.onOpen === "function") {
-				config.onOpen();
-			}
-		};
-		ws.onclose = (event) => {
-			if (event.code === 1006) {
-				console.log("EpicShop dev server web socket closed. Reconnecting...");
-				setTimeout(
-					() =>
-						epicLiveReloadConnect({
-							onOpen: () => window.location.reload(),
-						}),
-				1000
-				);
-			}
-		};
-		ws.onerror = (error) => {
-			console.log("EpicShop dev server web socket error:");
-			console.error(error);
-		};
-	}
-	epicLiveReloadConnect();
-	`
-	return js
 }

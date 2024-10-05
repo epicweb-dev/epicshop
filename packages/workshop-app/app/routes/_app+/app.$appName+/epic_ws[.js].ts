@@ -13,26 +13,29 @@ export async function loader({ request, params }: LoaderFunctionArgs) {
 		return redirect(getBaseUrl({ request, port: app.dev.portNumber }))
 	}
 	const relevantPaths = Array.from(new Set([app.fullPath, fileApp.fullPath]))
+	const watchParams = new URLSearchParams()
+	for (const path of relevantPaths) {
+		watchParams.append('watch', path)
+	}
 
 	const js = /* javascript */ `
 	function epicLiveReloadConnect(config) {
 		const protocol = location.protocol === "https:" ? "wss:" : "ws:";
 		const host = location.hostname;
 		const port = location.port;
-		const socketPath = protocol + "//" + host + ":" + port + "/__ws";
+		const socketPath = protocol + "//" + host + ":" + port + "/__ws?" + ${JSON.stringify(watchParams.toString())};
 		const ws = new WebSocket(socketPath);
 		ws.onmessage = (message) => {
 			const event = JSON.parse(message.data);
 			if (event.type !== 'epicshop:file-change') return;
 			const { filePaths } = event.data;
-			if (${JSON.stringify(relevantPaths)}.some(p => filePaths.some(filePath => filePath.startsWith(p)))) {
-				console.log(
-					['🐨 Reloading', window.frameElement?.getAttribute('title')]
-						.filter(Boolean)
-						.join(' '),
-				);
-				window.location.reload();
-			}
+			console.log(
+				['🐨 Reloading', window.frameElement?.getAttribute('title'), 'due to file changes:']
+					.filter(Boolean)
+					.join(' '),
+				filePaths
+			);
+			window.location.reload();
 		};
 		ws.onopen = () => {
 			if (config && typeof config.onOpen === "function") {

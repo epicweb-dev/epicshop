@@ -33,6 +33,7 @@ import { useRef } from 'react'
 import { GeneralErrorBoundary } from '#app/components/error-boundary.tsx'
 import { type InBrowserBrowserRef } from '#app/components/in-browser-browser.tsx'
 import { NavChevrons } from '#app/components/nav-chevrons.tsx'
+import { useRevalidationWS } from '#app/components/revalidation-ws.js'
 import { type loader as rootLoader } from '#app/root.tsx'
 import { EditFileOnGitHub } from '#app/routes/launch-editor.tsx'
 import { ProgressToggle } from '#app/routes/progress.tsx'
@@ -90,7 +91,7 @@ export const meta: MetaFunction<typeof loader, { root: typeof rootLoader }> = ({
 }
 
 export async function loader({ request, params }: LoaderFunctionArgs) {
-	const timings = makeTimings('exerciseStepTypeLoader')
+	const timings = makeTimings('exerciseStepTypeLayoutLoader')
 	const url = new URL(request.url)
 	const { title: workshopTitle } = getWorkshopConfig()
 	const cacheOptions = { request, timings }
@@ -280,6 +281,10 @@ export default function ExercisePartRoute() {
 	const inBrowserBrowserRef = useRef<InBrowserBrowserRef>(null)
 
 	const titleBits = pageTitle(data)
+
+	useRevalidationWS({
+		watchPaths: [`${data.exerciseStepApp.relativePath}/README.mdx`],
+	})
 
 	return (
 		<div className="flex max-w-full flex-grow flex-col">

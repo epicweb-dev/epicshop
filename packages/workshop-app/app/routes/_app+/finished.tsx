@@ -23,6 +23,7 @@ import * as React from 'react'
 import { EpicVideoInfoProvider } from '#app/components/epic-video.tsx'
 import { Loading } from '#app/components/loading.tsx'
 import { NavChevrons } from '#app/components/nav-chevrons.tsx'
+import { useRevalidationWS } from '#app/components/revalidation-ws.js'
 import { type loader as rootLoader } from '#app/root.tsx'
 import { getEpicVideoInfos } from '#app/utils/epic-api.ts'
 import { Mdx } from '#app/utils/mdx.tsx'
@@ -114,6 +115,7 @@ const mdxComponents = { h1: () => null }
 
 export default function ExerciseFinished() {
 	const data = useLoaderData<typeof loader>()
+	useRevalidationWS({ watchPaths: ['./exercises/FINISHED.mdx'] })
 	return (
 		<div className="flex h-full flex-grow flex-col">
 			<main className="grid h-full flex-grow grid-cols-1 grid-rows-2 lg:grid-cols-2 lg:grid-rows-1">
