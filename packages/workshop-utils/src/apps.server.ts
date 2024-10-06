@@ -231,7 +231,10 @@ export async function init() {
 
 	global.ENV = getEnv()
 
-	if (!ENV.EPICSHOP_DEPLOYED) {
+	if (
+		!ENV.EPICSHOP_DEPLOYED &&
+		process.env.EPICSHOP_ENABLE_WATCHER === 'true'
+	) {
 		const isIgnored = await isGitIgnored({ cwd: workshopRoot })
 
 		// watch the README, FINISHED, and package.json for changes that affect the apps
