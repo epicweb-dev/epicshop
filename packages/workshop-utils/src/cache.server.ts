@@ -34,6 +34,9 @@ export const compiledInstructionMarkdownCache = makeSingletonFsCache<{
 	title: string | null
 	epicVideoEmbeds: Array<string>
 }>('CompiledInstructionMarkdownCache')
+export const dirModifiedTimeCache = makeSingletonCache<number>(
+	'DirModifiedTimeCache',
+)
 
 const cacheDir = path.join(os.homedir(), '.epicshop', 'cache')
 

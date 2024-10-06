@@ -14,6 +14,7 @@ import {
 	diffFilesCache,
 } from '@epic-web/workshop-utils/cache.server'
 import { compileMarkdownString } from '@epic-web/workshop-utils/compile-mdx.server'
+import { modifiedMoreRecentlyThan } from '@epic-web/workshop-utils/modified-time.server'
 import { type Timings } from '@epic-web/workshop-utils/timing.server'
 import { execa } from 'execa'
 import fsExtra from 'fs-extra'
@@ -302,28 +303,41 @@ async function getDiffIgnore(filePath: string): Promise<Array<string>> {
 		: []
 }
 
-function getForceFreshForDiff(
+async function getForceFreshForDiff(
 	app1: App,
 	app2: App,
 	cacheEntry: CacheEntry | null | undefined,
 ) {
-	if (!cacheEntry) return true
+	// don't know when the cache was created? force refresh
+	const cacheModified = cacheEntry?.metadata.createdTime
+	if (!cacheModified) return true
+
+	// app1 modified after cache? force refresh
 	const app1Modified = modifiedTimes.get(app1.fullPath) ?? 0
+	if (app1Modified > cacheModified) return true
+
+	// app2 modified after cache? force refresh
 	const app2Modified = modifiedTimes.get(app2.fullPath) ?? 0
-	const cacheModified = cacheEntry.metadata.createdTime
-	return (
-		!cacheModified ||
-		app1Modified > cacheModified ||
-		app2Modified > cacheModified ||
-		undefined
+	if (app2Modified > cacheModified) return true
+
+	// ok, now let's actually check the modified times of all files in the
+	// directories and as soon as we find a file that was modified more recently
+	// then we know we need to force refresh
+	const modifiedMoreRecently = await modifiedMoreRecentlyThan(
+		cacheModified,
+		app1.fullPath,
+		app2.fullPath,
 	)
+	if (modifiedMoreRecently) return true
+
+	return undefined
 }
 
 export async function getDiffFiles(
 	app1: App,
 	app2: App,
 	{
-		forceFresh = false,
+		forceFresh,
 		timings,
 		request,
 	}: { forceFresh?: boolean; timings?: Timings; request?: Request } = {},
@@ -333,7 +347,8 @@ export async function getDiffFiles(
 	const result = await cachified({
 		key,
 		cache: diffFilesCache,
-		forceFresh: forceFresh || getForceFreshForDiff(app1, app2, cacheEntry),
+		forceFresh:
+			forceFresh || (await getForceFreshForDiff(app1, app2, cacheEntry)),
 		timings,
 		request,
 		getFreshValue: () => getDiffFilesImpl(app1, app2),
@@ -403,7 +418,7 @@ export async function getDiffCode(
 	app1: App,
 	app2: App,
 	{
-		forceFresh = false,
+		forceFresh,
 		timings,
 		request,
 	}: { forceFresh?: boolean; timings?: Timings; request?: Request } = {},
@@ -413,7 +428,8 @@ export async function getDiffCode(
 	const result = await cachified({
 		key,
 		cache: diffCodeCache,
-		forceFresh: forceFresh || getForceFreshForDiff(app1, app2, cacheEntry),
+		forceFresh:
+			forceFresh || (await getForceFreshForDiff(app1, app2, cacheEntry)),
 		timings,
 		request,
 		getFreshValue: () => getDiffCodeImpl(app1, app2),

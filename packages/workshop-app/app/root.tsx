@@ -28,6 +28,7 @@ import {
 	useLoaderData,
 	useNavigation,
 } from '@remix-run/react'
+import { promiseHash } from 'remix-utils/promise'
 import { useSpinDelay } from 'spin-delay'
 import { Confetti } from './components/confetti.tsx'
 import { GeneralErrorBoundary } from './components/error-boundary.tsx'
@@ -95,28 +96,36 @@ export async function loader({ request }: LoaderFunctionArgs) {
 			throw redirect('/onboarding')
 		}
 	}
-
-	const preferences = await getPreferences()
-	const progress = await getProgress({ timings }).catch((e) => {
-		console.error('Failed to get progress', e)
-		const emptyProgress: Awaited<ReturnType<typeof getProgress>> = []
-		return emptyProgress
-	})
-	const { toast, headers: toastHeaders } = await getToast(request)
-	const { confettiId, headers: confettiHeaders } = getConfetti(request)
-	const discordMember = await getDiscordMember()
 	const theme = getTheme(request)
-	const user = await getUserInfo()
-	const userHasAccess = await userHasAccessToWorkshop({ request, timings })
-	const apps = await getApps({ request, timings })
-	const presentUsers = await getPresentUsers(user, { request, timings })
+	const { confettiId, headers: confettiHeaders } = getConfetti(request)
+	const { toast, headers: toastHeaders } = await getToast(request)
+
+	const asyncStuff = await promiseHash({
+		preferences: getPreferences(),
+		progress: getProgress({ timings }).catch((e) => {
+			console.error('Failed to get progress', e)
+			const emptyProgress: Awaited<ReturnType<typeof getProgress>> = []
+			return emptyProgress
+		}),
+		discordMember: getDiscordMember(),
+		user: getUserInfo(),
+		userHasAccess: userHasAccessToWorkshop({ request, timings }),
+		apps: getApps({ request, timings }),
+	})
+
+	const presentUsers = await getPresentUsers(asyncStuff.user, {
+		request,
+		timings,
+	})
+
 	return json(
 		{
+			...asyncStuff,
 			workshopConfig,
 			workshopTitle,
 			workshopSubtitle,
 			instructor,
-			apps: apps.map(({ name, fullPath, relativePath }) => ({
+			apps: asyncStuff.apps.map(({ name, fullPath, relativePath }) => ({
 				name,
 				fullPath,
 				relativePath,
@@ -133,11 +142,6 @@ export async function loader({ request }: LoaderFunctionArgs) {
 				session: { theme },
 				separator: path.sep,
 			},
-			progress,
-			preferences,
-			discordMember,
-			user,
-			userHasAccess,
 			toast,
 			confettiId,
 			presence: {

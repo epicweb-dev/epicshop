@@ -108,7 +108,7 @@
     "remark-emoji": "^4.0.1",
     "remark-gfm": "^4.0.0",
     "remix-flat-routes": "^0.6.5",
-    "remix-utils": "7.6.0",
+    "remix-utils": "^7.6.0",
     "satori": "^0.10.13",
     "shell-quote": "^1.8.1",
     "shiki": "^1.6.0",

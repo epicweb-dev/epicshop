@@ -1,14 +1,12 @@
 import fs from 'fs'
 import path from 'path'
 import { type CacheEntry } from '@epic-web/cachified'
-import {
-	getAppFromFile,
-	modifiedTimes,
-} from '@epic-web/workshop-utils/apps.server'
+import { getAppFromFile } from '@epic-web/workshop-utils/apps.server'
 import {
 	cachified,
 	compiledCodeCache,
 } from '@epic-web/workshop-utils/cache.server'
+import { getDirModifiedTime } from '@epic-web/workshop-utils/modified-time.server'
 import { type Timings } from '@epic-web/workshop-utils/timing.server'
 import * as esbuild from 'esbuild'
 
@@ -19,7 +17,7 @@ async function getForceFresh(
 	if (!cacheEntry) return true
 	const app = await getAppFromFile(filePath)
 	if (!app) return true
-	const appModified = modifiedTimes.get(app.fullPath) ?? 0
+	const appModified = await getDirModifiedTime(app.fullPath)
 	const cacheModified = cacheEntry.metadata.createdTime
 	return !cacheModified || appModified > cacheModified || undefined
 }

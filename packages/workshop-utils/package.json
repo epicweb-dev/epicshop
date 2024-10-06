@@ -18,8 +18,8 @@
       "./config.server": "./src/config.server.ts",
       "./db.server": "./src/db.server.ts",
       "./timing.server": "./src/timing.server.ts",
+      "./modified-time.server": "./src/modified-time.server.ts",
       "./compile-mdx.server": "./src/compile-mdx.server.ts",
-      "./change-tracker.server": "./src/change-tracker.server.ts",
       "./git.server": "./src/git.server.ts",
       "./iframe-sync": "./src/iframe-sync.ts",
       "./playwright.server": "./src/playwright.server.ts",
@@ -73,18 +73,18 @@
         "default": "./dist/esm/timing.server.js"
       }
     },
+    "./modified-time.server": {
+      "import": {
+        "source": "./src/modified-time.server.ts",
+        "types": "./dist/esm/modified-time.server.d.ts",
+        "default": "./dist/esm/modified-time.server.js"
+      }
+    },
     "./compile-mdx.server": {
       "import": {
         "source": "./src/compile-mdx.server.ts",
         "types": "./dist/esm/compile-mdx.server.d.ts",
         "default": "./dist/esm/compile-mdx.server.js"
-      }
-    },
-    "./change-tracker.server": {
-      "import": {
-        "source": "./src/change-tracker.server.ts",
-        "types": "./dist/esm/change-tracker.server.d.ts",
-        "default": "./dist/esm/change-tracker.server.js"
       }
     },
     "./git.server": {

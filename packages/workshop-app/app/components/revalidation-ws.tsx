@@ -23,12 +23,14 @@ function useRevalidationWSImpl({ watchPaths }: { watchPaths: Array<string> }) {
 	for (const path of watchPaths) {
 		socketParams.append('watch', path)
 	}
+	const socketQuery = socketParams.toString()
 	const protocol = requestInfo.protocol === 'https:' ? 'wss:' : 'ws:'
 	const host = requestInfo.hostname
 	const port = requestInfo.port
-	const socketPath = `${protocol}//${host}:${port}/__ws?${socketParams.toString()}`
+	const socketPath = `${protocol}//${host}:${port}/__ws?${socketQuery}`
 
 	useEffect(() => {
+		if (!socketQuery) return
 		let ws: WebSocket | null = null
 		function createWebSocket() {
 			if (ws) ws.close()
@@ -66,10 +68,7 @@ function useRevalidationWSImpl({ watchPaths }: { watchPaths: Array<string> }) {
 		return () => {
 			ws?.close()
 		}
-	}, [socketPath])
-
-	// This component doesn't render anything
-	return null
+	}, [socketQuery, socketPath])
 }
 
 export const useRevalidationWS = ENV.EPICSHOP_DEPLOYED

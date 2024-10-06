@@ -14,8 +14,10 @@ import { useSpinDelay } from 'spin-delay'
 import AccordionComponent from '#app/components/accordion.tsx'
 import { Mdx } from '#app/utils/mdx.tsx'
 import { cn } from '#app/utils/misc.tsx'
+import { useApps } from './apps.tsx'
 import { DeferredEpicVideo } from './epic-video.tsx'
 import { Icon } from './icons.tsx'
+import { useRevalidationWS } from './revalidation-ws.tsx'
 import { SimpleTooltip } from './ui/tooltip.tsx'
 import { useUserHasAccess } from './user.tsx'
 
@@ -31,6 +33,23 @@ const mdxComponents = {
 	Accordion: AccordionComponent,
 	// override the pre-with-buttons
 	pre,
+}
+
+function RevalidateApps({
+	app1: app1Name,
+	app2: app2Name,
+}: {
+	app1?: string
+	app2?: string
+}) {
+	const apps = useApps()
+	const app1 = apps.find((app) => app.name === app1Name)
+	const app2 = apps.find((app) => app.name === app2Name)
+
+	useRevalidationWS({
+		watchPaths: [app1?.fullPath, app2?.fullPath].filter(Boolean),
+	})
+	return null
 }
 
 export function Diff({
@@ -149,6 +168,7 @@ export function Diff({
 								</p>
 							)}
 						</div>
+						<RevalidateApps app1={diff.app1} app2={diff.app2} />
 					</div>
 				)}
 			</Await>

@@ -6,6 +6,7 @@ import {
 	getApps,
 	workshopRoot,
 	init as initApps,
+	setModifiedTimesForAppDirs,
 } from '@epic-web/workshop-utils/apps.server'
 import { checkForUpdates } from '@epic-web/workshop-utils/git.server'
 import { createRequestHandler } from '@remix-run/express'
@@ -236,10 +237,10 @@ if (
 					let timer: NodeJS.Timeout | null = null
 					let fileChanges = new Set<string>()
 					watcher.chok.on('all', (event, filePath) => {
-						fileChanges.add(filePath)
+						fileChanges.add(path.join(workshopRoot, filePath))
 						if (timer) return
 
-						timer = setTimeout(() => {
+						timer = setTimeout(async () => {
 							for (const client of watcher?.clients ?? []) {
 								client.send(
 									JSON.stringify({
@@ -248,6 +249,7 @@ if (
 									}),
 								)
 							}
+							setModifiedTimesForAppDirs(...Array.from(fileChanges))
 
 							fileChanges = new Set()
 							timer = null
