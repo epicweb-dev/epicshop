@@ -6,7 +6,7 @@ import {
 	setPresencePreferences,
 } from '@epic-web/workshop-utils/db.server'
 import { type SEOHandle } from '@nasa-gcn/remix-seo'
-import { json, redirect, type LoaderFunctionArgs } from '@remix-run/node'
+import { redirect, type LoaderFunctionArgs } from '@remix-run/node'
 import { Form, Link, useFetcher, useLoaderData } from '@remix-run/react'
 import { Button } from '#app/components/button.tsx'
 import { Icon } from '#app/components/icons.tsx'
@@ -24,7 +24,7 @@ export const handle: SEOHandle = {
 export async function loader({ request }: LoaderFunctionArgs) {
 	ensureUndeployed()
 	await requireAuthInfo({ request })
-	return json({ discordAuthUrl: getDiscordAuthURL() })
+	return { discordAuthUrl: getDiscordAuthURL() }
 }
 
 export async function action({ request }: { request: Request }) {

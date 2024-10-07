@@ -7,7 +7,7 @@ import {
 import { makeTimings } from '@epic-web/workshop-utils/timing.server'
 import { type SEOHandle } from '@nasa-gcn/remix-seo'
 import {
-	defer,
+	unstable_data as data,
 	redirect,
 	type ActionFunctionArgs,
 	type HeadersFunction,
@@ -30,7 +30,7 @@ export async function loader({ request }: LoaderFunctionArgs) {
 
 	const { onboardingVideo } = getWorkshopConfig()
 	const videoInfos = getEpicVideoInfos([onboardingVideo], { request, timings })
-	return defer(
+	return data(
 		{ onboardingVideo, videoInfos },
 		{ headers: { 'Server-Timing': timings.toString() } },
 	)

@@ -10,7 +10,7 @@ import {
 } from '@epic-web/workshop-utils/apps.server'
 import { checkForUpdates } from '@epic-web/workshop-utils/git.server'
 import { createRequestHandler } from '@remix-run/express'
-import { type ServerBuild, installGlobals } from '@remix-run/node'
+import { type ServerBuild } from '@remix-run/node'
 import { ip as ipAddress } from 'address'
 import chalk from 'chalk'
 import chokidar, { type FSWatcher } from 'chokidar'
@@ -25,7 +25,6 @@ import { type WebSocket, WebSocketServer } from 'ws'
 const MODE = process.env.NODE_ENV ?? 'development'
 
 void initApps()
-installGlobals()
 sourceMapSupport.install()
 
 const viteDevServer =

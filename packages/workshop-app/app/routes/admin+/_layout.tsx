@@ -6,7 +6,7 @@ import {
 } from '@epic-web/workshop-utils/timing.server'
 import { type SEOHandle } from '@nasa-gcn/remix-seo'
 import {
-	json,
+	unstable_data as data,
 	type ActionFunctionArgs,
 	type LoaderFunctionArgs,
 	type MetaFunction,
@@ -69,7 +69,7 @@ export async function loader({ request }: LoaderFunctionArgs) {
 	] of getProcesses().testProcesses.entries()) {
 		testProcesses[name] = { pid: process?.pid, exitCode }
 	}
-	return json(
+	return data(
 		{
 			apps,
 			processes,
@@ -91,19 +91,19 @@ export async function action({ request }: ActionFunctionArgs) {
 	switch (intent) {
 		case 'clear-data': {
 			await clearData()
-			return json({ success: true })
+			return { success: true }
 		}
 		case 'clear-caches': {
 			await clearCaches()
-			return json({ success: true })
+			return { success: true }
 		}
 		case 'inspect': {
 			await startInspector()
-			return json({ success: true })
+			return { success: true }
 		}
 		case 'stop-inspect': {
 			await stopInspector()
-			return json({ success: true })
+			return { success: true }
 		}
 		default: {
 			throw new Error(`Unknown intent: ${intent}`)

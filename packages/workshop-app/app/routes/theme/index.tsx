@@ -1,13 +1,13 @@
 import { getFormProps, useForm } from '@conform-to/react'
 import { parseWithZod } from '@conform-to/zod'
-import { json, type ActionFunctionArgs } from '@remix-run/node'
+import { unstable_data as data, type ActionFunctionArgs } from '@remix-run/node'
 import { useFetcher, useFetchers } from '@remix-run/react'
 import { z } from 'zod'
 import { Icon } from '#app/components/icons.tsx'
 import { SimpleTooltip } from '#app/components/ui/tooltip.tsx'
 import { useHints } from '#app/utils/client-hints.tsx'
 import { ErrorList } from '#app/utils/forms.tsx'
-import { jsonWithPE, usePERedirectInput } from '#app/utils/pe.js'
+import { dataWithPE, usePERedirectInput } from '#app/utils/pe.js'
 import { useRequestInfo } from '#app/utils/request-info.ts'
 import { setTheme } from './theme-session.server.ts'
 
@@ -23,7 +23,7 @@ export async function action({ request }: ActionFunctionArgs) {
 		schema: ThemeFormSchema,
 	})
 	if (submission.status !== 'success') {
-		return json(submission.reply(), {
+		return data(submission.reply(), {
 			// You can also use the status to determine the HTTP status code
 			status: submission.status === 'error' ? 400 : 200,
 		})
@@ -33,7 +33,7 @@ export async function action({ request }: ActionFunctionArgs) {
 	const responseInit = {
 		headers: { 'set-cookie': setTheme(theme) },
 	}
-	return jsonWithPE(formData, submission.reply(), responseInit)
+	return dataWithPE(formData, submission.reply(), responseInit)
 }
 
 export function ThemeSwitch() {

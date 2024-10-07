@@ -19,7 +19,7 @@ import {
 	type Progress,
 } from '#app/utils/epic-api.ts'
 import { combineHeaders, ensureUndeployed } from '#app/utils/misc.tsx'
-import { jsonWithPE, usePERedirectInput } from '#app/utils/pe.js'
+import { dataWithPE, usePERedirectInput } from '#app/utils/pe.js'
 import { createToastHeaders } from '#app/utils/toast.server.ts'
 
 export function useEpicProgress() {
@@ -248,7 +248,7 @@ export async function action({ request }: ActionFunctionArgs) {
 	}
 	const announcement = getCompletionAnnouncement()
 
-	return jsonWithPE(formData, result, {
+	return dataWithPE(formData, result, {
 		headers: combineHeaders(
 			announcement ? createConfettiHeaders() : null,
 			announcement

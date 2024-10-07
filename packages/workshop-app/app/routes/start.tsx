@@ -6,13 +6,13 @@ import {
 	stopPort,
 	waitOnApp,
 } from '@epic-web/workshop-utils/process-manager.server'
-import { json, type ActionFunctionArgs } from '@remix-run/node'
+import { unstable_data as data, type ActionFunctionArgs } from '@remix-run/node'
 import { useFetcher } from '@remix-run/react'
 import { Button } from '#app/components/button.tsx'
 import { Loading } from '#app/components/loading.tsx'
 import { showProgressBarField } from '#app/components/progress-bar.tsx'
 import { ensureUndeployed, useAltDown } from '#app/utils/misc.tsx'
-import { jsonWithPE, usePERedirectInput } from '#app/utils/pe.js'
+import { dataWithPE, usePERedirectInput } from '#app/utils/pe.js'
 import { createToastHeaders } from '#app/utils/toast.server'
 
 export async function action({ request }: ActionFunctionArgs) {
@@ -42,12 +42,12 @@ export async function action({ request }: ActionFunctionArgs) {
 				if (appRunningResult?.status === 'success') {
 					// wait another 200ms just in case the build output for assets isn't finished
 					await new Promise((resolve) => setTimeout(resolve, 200))
-					return jsonWithPE(formData, { status: 'app-started' } as const)
+					return dataWithPE(formData, { status: 'app-started' } as const)
 				} else if (app.dev.type === 'script') {
 					const errorMessage = appRunningResult
 						? appRunningResult.error
 						: 'Unknown error'
-					return json(
+					return data(
 						{
 							status: 'app-not-started',
 							error: errorMessage,
@@ -65,7 +65,7 @@ export async function action({ request }: ActionFunctionArgs) {
 					)
 				}
 			} else if (result.portNumber) {
-				return jsonWithPE(formData, {
+				return dataWithPE(formData, {
 					status: 'app-not-started',
 					error: result.status,
 					port: result.portNumber,
@@ -81,7 +81,7 @@ export async function action({ request }: ActionFunctionArgs) {
 		async function stopApp() {
 			invariant(app, 'app must be defined')
 			await closeProcess(app.name)
-			return jsonWithPE(formData, { status: 'app-stopped' } as const)
+			return dataWithPE(formData, { status: 'app-stopped' } as const)
 		}
 
 		switch (intent) {
@@ -102,7 +102,7 @@ export async function action({ request }: ActionFunctionArgs) {
 		const port = formData.get('port')
 		invariantResponse(typeof port === 'string', 'port is required')
 		await stopPort(port)
-		return jsonWithPE(formData, { status: 'port-stopped' } as const)
+		return dataWithPE(formData, { status: 'port-stopped' } as const)
 	}
 	throw new Error(`Unknown intent: ${intent}`)
 }

@@ -12,7 +12,7 @@ import { getEnv } from '@epic-web/workshop-utils/env.server'
 import { makeTimings } from '@epic-web/workshop-utils/timing.server'
 import { cssBundleHref } from '@remix-run/css-bundle'
 import {
-	json,
+	unstable_data as data,
 	redirect,
 	type HeadersFunction,
 	type LinksFunction,
@@ -118,7 +118,7 @@ export async function loader({ request }: LoaderFunctionArgs) {
 		timings,
 	})
 
-	return json(
+	return data(
 		{
 			...asyncStuff,
 			workshopConfig,

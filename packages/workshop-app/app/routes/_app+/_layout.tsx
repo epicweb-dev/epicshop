@@ -10,7 +10,7 @@ import {
 	makeTimings,
 } from '@epic-web/workshop-utils/timing.server'
 import {
-	json,
+	unstable_data as data,
 	type HeadersFunction,
 	type LoaderFunctionArgs,
 } from '@remix-run/node'
@@ -75,7 +75,7 @@ export async function loader({ request }: LoaderFunctionArgs) {
 		),
 	}
 
-	const result = json(
+	const result = data(
 		{
 			workshopTitle,
 			exercises: exercises.map((e) => ({

@@ -1,5 +1,4 @@
 import { getProcesses } from '@epic-web/workshop-utils/process-manager.server'
-import { json } from '@remix-run/node'
 import { ensureUndeployed } from '#app/utils/misc.tsx'
 
 export async function loader() {
@@ -24,5 +23,5 @@ export async function loader() {
 	] of getProcesses().testProcesses.entries()) {
 		testProcesses[name] = { pid: process?.pid, exitCode, output }
 	}
-	return json({ processes, testProcesses })
+	return Response.json({ processes, testProcesses })
 }

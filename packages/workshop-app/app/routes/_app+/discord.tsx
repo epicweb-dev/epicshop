@@ -1,5 +1,4 @@
 import { type SEOHandle } from '@nasa-gcn/remix-seo'
-import { json } from '@remix-run/node'
 import { Link, useLoaderData } from '@remix-run/react'
 import { Icon } from '#app/components/icons.tsx'
 import {
@@ -13,7 +12,7 @@ export const handle: SEOHandle = {
 }
 
 export async function loader() {
-	return json({ discordAuthUrl: getDiscordAuthURL() })
+	return { discordAuthUrl: getDiscordAuthURL() }
 }
 
 export function useDiscordCTALink({

@@ -15,7 +15,7 @@ import {
 	makeTimings,
 } from '@epic-web/workshop-utils/timing.server'
 import {
-	defer,
+	unstable_data as data,
 	type HeadersFunction,
 	type LoaderFunctionArgs,
 	type MetaFunction,
@@ -91,7 +91,7 @@ export async function loader({ request, params }: LoaderFunctionArgs) {
 		exercise.exerciseNumber
 	}-finished`
 
-	return defer(
+	return data(
 		{
 			articleId,
 			workshopTitle: workshopConfig.title,

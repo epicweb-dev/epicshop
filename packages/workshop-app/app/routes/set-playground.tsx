@@ -7,7 +7,7 @@ import {
 	setPlayground,
 } from '@epic-web/workshop-utils/apps.server'
 import * as Select from '@radix-ui/react-select'
-import { json, type ActionFunctionArgs } from '@remix-run/node'
+import { unstable_data as data, type ActionFunctionArgs } from '@remix-run/node'
 import { useFetcher } from '@remix-run/react'
 import { clsx } from 'clsx'
 import { z } from 'zod'
@@ -16,7 +16,7 @@ import { showProgressBarField } from '#app/components/progress-bar.tsx'
 import { SimpleTooltip } from '#app/components/ui/tooltip.tsx'
 import { getDiffCode } from '#app/utils/diff.server.ts'
 import { ensureUndeployed, getErrorMessage } from '#app/utils/misc.tsx'
-import { jsonWithPE, usePERedirectInput } from '#app/utils/pe.js'
+import { dataWithPE, usePERedirectInput } from '#app/utils/pe.js'
 import { createToastHeaders } from '#app/utils/toast.server.ts'
 
 const SetPlaygroundSchema = z.object({
@@ -37,7 +37,7 @@ export async function action({ request }: ActionFunctionArgs) {
 	}
 	const result = SetPlaygroundSchema.safeParse(rawData)
 	if (!result.success) {
-		return jsonWithPE(
+		return dataWithPE(
 			formData,
 			{ status: 'error', error: result.error.message } as const,
 			{ status: 400 },
@@ -46,7 +46,7 @@ export async function action({ request }: ActionFunctionArgs) {
 	const form = result.data
 	const app = await getAppByName(form.appName)
 	if (!app) {
-		return jsonWithPE(
+		return dataWithPE(
 			formData,
 			{ status: 'error', error: `App ${form.appName} not found` } as const,
 			{ status: 404 },
@@ -63,7 +63,7 @@ export async function action({ request }: ActionFunctionArgs) {
 	} catch (error: unknown) {
 		const message = getErrorMessage(error)
 		console.error('Error setting playground', message)
-		return json({ status: 'error', error: message } as const, {
+		return data({ status: 'error', error: message } as const, {
 			status: 500,
 			headers: await createToastHeaders({
 				type: 'error',
@@ -78,7 +78,7 @@ export async function action({ request }: ActionFunctionArgs) {
 	if (playground && converseApp) {
 		void getDiffCode(playground, converseApp, { forceFresh: true })
 	}
-	return jsonWithPE(formData, { status: 'success' } as const)
+	return dataWithPE(formData, { status: 'success' } as const)
 }
 
 export function SetPlayground({
@@ -167,7 +167,7 @@ export function PlaygroundChooser({
 					align="start"
 					className="z-20 max-h-[50vh] bg-black text-white lg:max-h-[70vh]"
 				>
-					<Select.ScrollUpButton className="flex h-5 cursor-default items-center justify-center ">
+					<Select.ScrollUpButton className="flex h-5 cursor-default items-center justify-center">
 						<Icon name="ChevronUp" />
 					</Select.ScrollUpButton>
 					<Select.Viewport className="p-3">
@@ -186,7 +186,7 @@ export function PlaygroundChooser({
 								})}
 						</Select.Group>
 					</Select.Viewport>
-					<Select.ScrollDownButton className="flex h-5 cursor-default items-center justify-center ">
+					<Select.ScrollDownButton className="flex h-5 cursor-default items-center justify-center">
 						<Icon name="ChevronDown" />
 					</Select.ScrollDownButton>
 				</Select.Content>

@@ -5,7 +5,7 @@ import {
 import RealMuxPlayer, {
 	type MuxPlayerRefAttributes,
 } from '@mux/mux-player-react'
-import { json, type ActionFunctionArgs } from '@remix-run/node'
+import { unstable_data as data, type ActionFunctionArgs } from '@remix-run/node'
 import { useFetcher, useRouteLoaderData } from '@remix-run/react'
 import * as React from 'react'
 import { z } from 'zod'
@@ -59,12 +59,12 @@ function shouldIgnoreHotkey(el: unknown) {
 export async function action({ request }: ActionFunctionArgs) {
 	const result = PlayerPreferencesSchema.safeParse(await request.json())
 	if (!result.success) {
-		return json({ status: 'error', error: result.error.flatten() } as const, {
+		return data({ status: 'error', error: result.error.flatten() } as const, {
 			status: 400,
 		})
 	}
 	await setPlayerPreferences(result.data)
-	return json({ status: 'success' } as const)
+	return { status: 'success' } as const
 }
 
 function useLatest<Value>(value: Value) {

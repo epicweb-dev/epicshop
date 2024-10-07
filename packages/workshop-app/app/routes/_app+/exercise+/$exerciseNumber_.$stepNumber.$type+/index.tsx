@@ -17,7 +17,7 @@ import {
 } from '@epic-web/workshop-utils/timing.server'
 import * as Tabs from '@radix-ui/react-tabs'
 import {
-	defer,
+	unstable_data as data,
 	redirect,
 	type HeadersFunction,
 	type LoaderFunctionArgs,
@@ -158,7 +158,7 @@ export async function loader({ request, params }: LoaderFunctionArgs) {
 		}
 	}
 
-	return defer(
+	return data(
 		{
 			type: params.type as 'problem' | 'solution',
 			exerciseStepApp,

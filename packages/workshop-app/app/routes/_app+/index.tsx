@@ -11,7 +11,7 @@ import {
 	time,
 } from '@epic-web/workshop-utils/timing.server'
 import {
-	defer,
+	unstable_data as data,
 	type HeadersFunction,
 	type LoaderFunctionArgs,
 	type SerializeFrom,
@@ -42,7 +42,7 @@ export async function loader({ request }: LoaderFunctionArgs) {
 		}),
 	])
 
-	return defer(
+	return data(
 		{
 			articleId: `workshop-${slugify(title)}-instructions`,
 			title:

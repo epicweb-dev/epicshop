@@ -12,7 +12,7 @@ import {
 } from '@epic-web/workshop-utils/timing.server'
 import { type SEOHandle } from '@nasa-gcn/remix-seo'
 import {
-	defer,
+	unstable_data as data,
 	type HeadersFunction,
 	type LoaderFunctionArgs,
 	type MetaFunction,
@@ -69,7 +69,7 @@ export async function loader({ request }: LoaderFunctionArgs) {
 		'{workshopTitle}',
 		encodeURIComponent(workshopTitle),
 	)
-	return defer(
+	return data(
 		{
 			articleId: `workshop-${slugify(workshopTitle)}-finished`,
 			workshopTitle,

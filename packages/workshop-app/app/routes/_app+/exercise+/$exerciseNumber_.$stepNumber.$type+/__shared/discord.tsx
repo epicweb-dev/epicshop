@@ -106,8 +106,6 @@ function DiscordPost({
 										className="flex items-center justify-center gap-1 rounded-full bg-accent px-2 py-1 text-sm"
 									>
 										<span className="h-3 w-3 leading-3">
-											{/* not sure how to fix this one... */}
-											{/* @ts-expect-error */}
 											<Emoji name={t.emojiName} url={t.emojiUrl} />
 										</span>
 										<span>{t.name}</span>
@@ -164,8 +162,6 @@ function DiscordPost({
 											className="flex items-center gap-1 rounded-md border border-blue-600 bg-blue-500/20 px-[5px] py-[0.5px] text-sm"
 										>
 											<span className="h-3 w-3 leading-3">
-												{/* not sure how to fix this one... */}
-												{/* @ts-expect-error */}
 												<Emoji name={r.emojiName} url={r.emojiUrl} />
 											</span>
 											<span>{r.count}</span>

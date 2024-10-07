@@ -4,8 +4,8 @@ import {
 	makeTimings,
 } from '@epic-web/workshop-utils/timing.server'
 import {
+	unstable_data as data,
 	type HeadersFunction,
-	json,
 	type LoaderFunctionArgs,
 } from '@remix-run/node'
 import { useLoaderData } from '@remix-run/react'
@@ -20,24 +20,30 @@ export async function loader({ request, params }: LoaderFunctionArgs) {
 	const { isRunning, portIsAvailable } =
 		await getAppRunningState(exerciseStepApp)
 
-	return json({
-		appInfo: {
-			isRunning,
-			name: exerciseStepApp.name,
-			title: exerciseStepApp.title,
-			portIsAvailable,
-			type: exerciseStepApp.type,
-			fullPath: exerciseStepApp.fullPath,
-			dev: exerciseStepApp.dev,
-			test: exerciseStepApp.test,
-			stackBlitzUrl: exerciseStepApp.stackBlitzUrl,
+	return data(
+		{
+			appInfo: {
+				isRunning,
+				name: exerciseStepApp.name,
+				title: exerciseStepApp.title,
+				portIsAvailable,
+				type: exerciseStepApp.type,
+				fullPath: exerciseStepApp.fullPath,
+				dev: exerciseStepApp.dev,
+				test: exerciseStepApp.test,
+				stackBlitzUrl: exerciseStepApp.stackBlitzUrl,
+			},
 		},
-	})
+		{
+			headers: {
+				'Server-Timing': timings.toString(),
+			},
+		},
+	)
 }
 
 export const headers: HeadersFunction = ({ loaderHeaders, parentHeaders }) => {
 	const headers = {
-		'Cache-Control': loaderHeaders.get('Cache-Control') ?? '',
 		'Server-Timing': combineServerTimings(loaderHeaders, parentHeaders),
 	}
 	return headers

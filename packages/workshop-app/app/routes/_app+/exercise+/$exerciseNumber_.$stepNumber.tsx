@@ -7,7 +7,7 @@ import {
 	makeTimings,
 } from '@epic-web/workshop-utils/timing.server'
 import {
-	json,
+	unstable_data as data,
 	type HeadersFunction,
 	type LoaderFunctionArgs,
 } from '@remix-run/node'
@@ -26,7 +26,7 @@ export async function loader({ request, params }: LoaderFunctionArgs) {
 		throw new Response('Not found', { status: 404 })
 	}
 
-	const result = json(
+	const result = data(
 		{
 			exerciseNumber: exercise.exerciseNumber,
 			exerciseTitle: exercise.title,

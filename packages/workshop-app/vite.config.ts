@@ -36,6 +36,13 @@ const aliases = {
 
 const MODE = process.env.NODE_ENV
 
+declare module '@remix-run/server-runtime' {
+	// or cloudflare, deno, etc.
+	interface Future {
+		unstable_singleFetch: true
+	}
+}
+
 export default defineConfig({
 	optimizeDeps: {
 		exclude: [
@@ -78,6 +85,7 @@ export default defineConfig({
 				v3_throwAbortReason: true,
 				unstable_optimizeDeps: true,
 				unstable_lazyRouteDiscovery: true,
+				unstable_singleFetch: true,
 			},
 			ignoredRouteFiles: ['**/*'],
 			serverModuleFormat: 'esm',

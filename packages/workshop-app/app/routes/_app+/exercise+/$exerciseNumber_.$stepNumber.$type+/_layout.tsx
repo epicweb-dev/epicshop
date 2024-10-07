@@ -20,7 +20,7 @@ import {
 	makeTimings,
 } from '@epic-web/workshop-utils/timing.server'
 import {
-	defer,
+	unstable_data as data,
 	redirect,
 	type HeadersFunction,
 	type LoaderFunctionArgs,
@@ -185,7 +185,7 @@ export async function loader({ request, params }: LoaderFunctionArgs) {
 	const subroute = url.pathname.split(
 		`/exercise/${params.exerciseNumber}/${params.stepNumber}/${params.type}/`,
 	)[1]
-	return defer(
+	return data(
 		{
 			articleId,
 			type: params.type as 'problem' | 'solution',

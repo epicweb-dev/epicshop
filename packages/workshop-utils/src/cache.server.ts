@@ -42,18 +42,28 @@ const cacheDir = path.join(os.homedir(), '.epicshop', 'cache')
 
 export const fsCache = makeSingletonFsCache('FsCache')
 
-export async function getAllFileCacheEntries() {
-	const files = await fsExtra.readdir(cacheDir)
+async function readJsonFilesInDirectory(
+	dir: string,
+): Promise<Record<string, any>> {
+	const files = await fsExtra.readdir(dir)
 	const entries = await Promise.all(
-		files
-			.map(async (file) => {
-				const filePath = path.join(cacheDir, file)
+		files.map(async (file) => {
+			const filePath = path.join(dir, file)
+			const stats = await fsExtra.stat(filePath)
+			if (stats.isDirectory()) {
+				const subEntries = await readJsonFilesInDirectory(filePath)
+				return [file, subEntries]
+			} else {
 				const data = await fsExtra.readJSON(filePath)
-				return data
-			})
-			.filter(Boolean),
+				return [file, data]
+			}
+		}),
 	)
-	return entries
+	return Object.fromEntries(entries)
+}
+
+export async function getAllFileCacheEntries() {
+	return readJsonFilesInDirectory(cacheDir)
 }
 
 export async function deleteCache() {

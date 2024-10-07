@@ -1,6 +1,6 @@
 import { getAuthInfo } from '@epic-web/workshop-utils/db.server'
 import { type SEOHandle } from '@nasa-gcn/remix-seo'
-import { json, redirect } from '@remix-run/node'
+import { redirect } from '@remix-run/node'
 import { useFetcher, useNavigate, useRevalidator } from '@remix-run/react'
 import { useEffect, useState } from 'react'
 import { useEventSource } from 'remix-utils/sse/react'
@@ -21,13 +21,13 @@ export async function loader() {
 	ensureUndeployed()
 	const isAuthenticated = Boolean(await getAuthInfo())
 	if (isAuthenticated) throw redirect('/account')
-	return json({})
+	return {}
 }
 
 export async function action() {
 	ensureUndeployed()
 	void registerDevice()
-	return json({ status: 'pending' } as const)
+	return { status: 'pending' } as const
 }
 
 export default function Login() {

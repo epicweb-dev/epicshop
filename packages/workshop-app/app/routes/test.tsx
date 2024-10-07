@@ -6,7 +6,7 @@ import {
 	runAppTests,
 } from '@epic-web/workshop-utils/process-manager.server'
 import {
-	json,
+	unstable_data as data,
 	type ActionFunctionArgs,
 	type LoaderFunctionArgs,
 } from '@remix-run/node'
@@ -20,7 +20,7 @@ import { SimpleTooltip } from '#app/components/ui/tooltip.tsx'
 import { stripCursorMovements, useAnsiToHtml } from '#app/utils/ansi-text.js'
 import { userHasAccessToWorkshop } from '#app/utils/epic-api.js'
 import { ensureUndeployed } from '#app/utils/misc.tsx'
-import { jsonWithPE, usePERedirectInput } from '#app/utils/pe.js'
+import { dataWithPE, usePERedirectInput } from '#app/utils/pe.js'
 import { createToastHeaders } from '#app/utils/toast.server.js'
 
 const testActionSchema = z.union([
@@ -72,15 +72,15 @@ export async function loader({ request }: LoaderFunctionArgs) {
 	const url = new URL(request.url)
 	const name = url.searchParams.get('name')
 	if (!name) {
-		return json({ error: 'Missing name' }, { status: 400 })
+		return data({ error: 'Missing name' }, { status: 400 })
 	}
 	const app = await getAppByName(name)
 	if (!app) {
-		return json({ error: 'App not found' }, { status: 404 })
+		return data({ error: 'App not found' }, { status: 404 })
 	}
 	const processEntry = getTestProcessEntry(app)
 	if (!processEntry) {
-		return json({ error: 'App is not running tests' }, { status: 404 })
+		return data({ error: 'App is not running tests' }, { status: 404 })
 	}
 	return eventStream(request.signal, function setup(send) {
 		// have to batch because the client may miss events if we send too many
@@ -153,7 +153,7 @@ export async function action({ request }: ActionFunctionArgs) {
 		request,
 	})
 	if (!userHasAccess) {
-		return jsonWithPE(
+		return dataWithPE(
 			formData,
 			{
 				success: false,
@@ -175,7 +175,7 @@ export async function action({ request }: ActionFunctionArgs) {
 		name: formData.get('name'),
 	})
 	if (!result.success) {
-		return jsonWithPE(
+		return dataWithPE(
 			formData,
 			{ success: false, error: result.error.flatten() },
 			{ status: 400 },
@@ -183,7 +183,7 @@ export async function action({ request }: ActionFunctionArgs) {
 	}
 	const app = await getAppByName(result.data.name)
 	if (!app) {
-		return jsonWithPE(
+		return dataWithPE(
 			formData,
 			{ success: false, error: 'App not found' },
 			{ status: 404 },
@@ -192,18 +192,18 @@ export async function action({ request }: ActionFunctionArgs) {
 	switch (result.data.intent) {
 		case 'run': {
 			void runAppTests(app)
-			return jsonWithPE(formData, { success: true })
+			return dataWithPE(formData, { success: true })
 		}
 		case 'stop': {
 			const processEntry = getTestProcessEntry(app)
 			if (processEntry) {
 				processEntry.process?.kill()
 			}
-			return jsonWithPE(formData, { success: true })
+			return dataWithPE(formData, { success: true })
 		}
 		case 'clear': {
 			clearTestProcessEntry(app)
-			return jsonWithPE(formData, { success: true })
+			return dataWithPE(formData, { success: true })
 		}
 	}
 }

@@ -10,7 +10,7 @@ import { useApps } from '#app/components/apps'
 import { showProgressBarField } from '#app/components/progress-bar.tsx'
 import { launchEditor } from '#app/utils/launch-editor.server.ts'
 import { ensureUndeployed } from '#app/utils/misc.tsx'
-import { jsonWithPE, usePERedirectInput } from '#app/utils/pe.js'
+import { dataWithPE, usePERedirectInput } from '#app/utils/pe.js'
 import { useRequestInfo } from '#app/utils/request-info'
 import { createToastHeaders } from '#app/utils/toast.server.ts'
 
@@ -144,7 +144,7 @@ export async function action({ request }: ActionFunctionArgs) {
 	}
 
 	if (results.every((r) => r.status === 'success')) {
-		return jsonWithPE(formData, { status: 'success' } as const)
+		return dataWithPE(formData, { status: 'success' } as const)
 	} else {
 		const messages = results
 			.map((r, index, array) =>
@@ -157,7 +157,7 @@ export async function action({ request }: ActionFunctionArgs) {
 			.filter(Boolean)
 			.join('\n')
 		console.error('Launch editor error:', messages)
-		return jsonWithPE(
+		return dataWithPE(
 			formData,
 			{ status: 'error', message: messages } as const,
 			{

@@ -5,7 +5,7 @@ import {
 	isExerciseStepApp,
 } from '@epic-web/workshop-utils/apps.server'
 import { makeTimings } from '@epic-web/workshop-utils/timing.server'
-import { defer, type LoaderFunctionArgs } from '@remix-run/node'
+import { type LoaderFunctionArgs } from '@remix-run/node'
 import { useLoaderData, useNavigation, useSearchParams } from '@remix-run/react'
 import { useSpinDelay } from 'spin-delay'
 import { Diff } from '#app/components/diff.tsx'
@@ -89,7 +89,7 @@ export async function loader({ request }: LoaderFunctionArgs) {
 	const nextSearchParams = new URLSearchParams(reqUrl.searchParams)
 	nextSearchParams.set('app1', nextApp1 ?? '')
 	nextSearchParams.set('app2', nextApp2 ?? '')
-	return defer({
+	return {
 		allApps,
 		diff,
 		prevLink:
@@ -100,7 +100,7 @@ export async function loader({ request }: LoaderFunctionArgs) {
 			nextApp1 && nextApp2
 				? { to: `/diff?${nextSearchParams}`, 'aria-label': 'Next App' }
 				: { to: '/diff' },
-	})
+	}
 }
 
 export default function DiffViewer() {
