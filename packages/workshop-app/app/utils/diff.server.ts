@@ -251,11 +251,15 @@ async function prepareForDiff(app1: App, app2: App) {
 	}
 	const app1PkgJson =
 		app1.dev.type === 'script'
-			? await fsExtra.readJSON(path.join(app1.fullPath, 'package.json'))
+			? await fsExtra
+					.readJSON(path.join(app1.fullPath, 'package.json'))
+					.catch(() => ({}))
 			: {}
 	const app2PkgJson =
 		app1.dev.type === 'script'
-			? await fsExtra.readJSON(path.join(app2.fullPath, 'package.json'))
+			? await fsExtra
+					.readJSON(path.join(app2.fullPath, 'package.json'))
+					.catch(() => ({}))
 			: {}
 	const pkgJsonIgnore: Array<string> = comparePkgJson(app1PkgJson, app2PkgJson)
 		? ['package.json']
