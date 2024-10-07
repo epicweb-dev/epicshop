@@ -135,7 +135,7 @@
     "@types/mdast": "^4.0.4",
     "@types/mime-types": "^2.1.4",
     "@types/morgan": "^1.9.9",
-    "@types/node": "^22.7.4",
+    "@types/node": "^20.16.10",
     "@types/prettier": "^2.7.3",
     "@types/react": "npm:types-react@19.0.0-rc.1",
     "@types/react-dom": "npm:types-react-dom@19.0.0-rc.1",
