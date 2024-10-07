@@ -397,7 +397,7 @@ export async function getExercises({
 				stepNumber: app.stepNumber,
 			}
 		}
-		exercises.push({
+		const exercise = ExerciseSchema.parse({
 			exerciseNumber,
 			dirName,
 			instructionsCode: compiledReadme?.code,
@@ -413,6 +413,7 @@ export async function getExercises({
 				.filter(isSolutionApp)
 				.filter((app) => app.exerciseNumber === exerciseNumber),
 		})
+		exercises.push(exercise)
 	}
 	return exercises
 }

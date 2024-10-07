@@ -12,7 +12,6 @@ const here = (...p: Array<string>) => path.join(__dirname, ...p)
 async function makeTshyAliases(moduleName: string, folderName: string) {
 	const { default: pkg } = await import(
 		here('..', folderName, 'package.json'),
-		// @ts-expect-error not sure how to handle this...
 		{ assert: { type: 'json' } }
 	)
 
@@ -44,6 +43,11 @@ export default defineConfig({
 			'globby',
 			'@epic-web/workshop-utils',
 			'@epic-web/workshop-presence',
+			'crypto',
+			'stream',
+			'execa',
+			'npm-run-path',
+			'unicorn-magic',
 		],
 	},
 	build: {
@@ -55,6 +59,9 @@ export default defineConfig({
 				'crypto',
 				'fsevents',
 				'globby',
+				'execa',
+				'npm-run-path',
+				'unicorn-magic',
 				/^@epic-web\/workshop-utils.*/,
 			],
 		},

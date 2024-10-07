@@ -24,7 +24,7 @@ import { type WebSocket, WebSocketServer } from 'ws'
 
 const MODE = process.env.NODE_ENV ?? 'development'
 
-initApps()
+void initApps()
 installGlobals()
 sourceMapSupport.install()
 
@@ -261,8 +261,8 @@ if (
 				ws.on('close', () => {
 					watcher?.clients.delete(ws)
 					if (watcher?.clients.size === 0) {
-						watcher.chok.close()
 						watches.delete(key)
+						void watcher.chok.close()
 					}
 				})
 			})

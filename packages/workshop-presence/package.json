@@ -15,9 +15,9 @@
     "zod": "^3.23.8"
   },
   "devDependencies": {
-    "partykit": "0.0.105",
-    "typescript": "^5.4.5",
-    "tshy": "^1.14.0"
+    "partykit": "0.0.111",
+    "typescript": "^5.6.2",
+    "tshy": "^3.0.2"
   },
   "files": [
     "dist"
@@ -42,14 +42,12 @@
     "./package.json": "./package.json",
     "./presence.server": {
       "import": {
-        "source": "./src/presence.server.ts",
         "types": "./dist/esm/presence.server.d.ts",
         "default": "./dist/esm/presence.server.js"
       }
     },
     "./presence": {
       "import": {
-        "source": "./src/presence.ts",
         "types": "./dist/esm/presence.d.ts",
         "default": "./dist/esm/presence.js"
       }

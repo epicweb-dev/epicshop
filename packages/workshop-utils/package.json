@@ -33,105 +33,90 @@
     "./package.json": "./package.json",
     "./apps.server": {
       "import": {
-        "source": "./src/apps.server.ts",
         "types": "./dist/esm/apps.server.d.ts",
         "default": "./dist/esm/apps.server.js"
       }
     },
     "./env.server": {
       "import": {
-        "source": "./src/env.server.ts",
         "types": "./dist/esm/env.server.d.ts",
         "default": "./dist/esm/env.server.js"
       }
     },
     "./cache.server": {
       "import": {
-        "source": "./src/cache.server.ts",
         "types": "./dist/esm/cache.server.d.ts",
         "default": "./dist/esm/cache.server.js"
       }
     },
     "./config.server": {
       "import": {
-        "source": "./src/config.server.ts",
         "types": "./dist/esm/config.server.d.ts",
         "default": "./dist/esm/config.server.js"
       }
     },
     "./db.server": {
       "import": {
-        "source": "./src/db.server.ts",
         "types": "./dist/esm/db.server.d.ts",
         "default": "./dist/esm/db.server.js"
       }
     },
     "./timing.server": {
       "import": {
-        "source": "./src/timing.server.ts",
         "types": "./dist/esm/timing.server.d.ts",
         "default": "./dist/esm/timing.server.js"
       }
     },
     "./modified-time.server": {
       "import": {
-        "source": "./src/modified-time.server.ts",
         "types": "./dist/esm/modified-time.server.d.ts",
         "default": "./dist/esm/modified-time.server.js"
       }
     },
     "./compile-mdx.server": {
       "import": {
-        "source": "./src/compile-mdx.server.ts",
         "types": "./dist/esm/compile-mdx.server.d.ts",
         "default": "./dist/esm/compile-mdx.server.js"
       }
     },
     "./git.server": {
       "import": {
-        "source": "./src/git.server.ts",
         "types": "./dist/esm/git.server.d.ts",
         "default": "./dist/esm/git.server.js"
       }
     },
     "./iframe-sync": {
       "import": {
-        "source": "./src/iframe-sync.ts",
         "types": "./dist/esm/iframe-sync.d.ts",
         "default": "./dist/esm/iframe-sync.js"
       }
     },
     "./playwright.server": {
       "import": {
-        "source": "./src/playwright.server.ts",
         "types": "./dist/esm/playwright.server.d.ts",
         "default": "./dist/esm/playwright.server.js"
       }
     },
     "./process-manager.server": {
       "import": {
-        "source": "./src/process-manager.server.ts",
         "types": "./dist/esm/process-manager.server.d.ts",
         "default": "./dist/esm/process-manager.server.js"
       }
     },
     "./test": {
       "import": {
-        "source": "./src/test.ts",
         "types": "./dist/esm/test.d.ts",
         "default": "./dist/esm/test.js"
       }
     },
     "./utils.server": {
       "import": {
-        "source": "./src/utils.server.ts",
         "types": "./dist/esm/utils.server.d.ts",
         "default": "./dist/esm/utils.server.js"
       }
     },
     "./utils": {
       "import": {
-        "source": "./src/utils.ts",
         "types": "./dist/esm/utils.d.ts",
         "default": "./dist/esm/utils.js"
       }
@@ -146,39 +131,38 @@
   },
   "dependencies": {
     "@epic-web/cachified": "^5.2.0",
-    "@epic-web/remember": "^1.0.2",
+    "@epic-web/remember": "^1.1.0",
     "@kentcdodds/md-temp": "^9.0.1",
     "@mdx-js/mdx": "^3.0.1",
-    "@playwright/test": "^1.44.1",
-    "@remix-run/node": "^2.9.2",
-    "@testing-library/dom": "^10.1.0",
-    "@testing-library/jest-dom": "^6.4.8",
-    "@total-typescript/ts-reset": "^0.5.1",
-    "@types/chai": "^4.3.17",
+    "@playwright/test": "^1.47.2",
+    "@remix-run/node": "^2.12.1",
+    "@testing-library/dom": "^10.4.0",
+    "@testing-library/jest-dom": "^6.5.0",
+    "@total-typescript/ts-reset": "^0.6.1",
+    "@types/chai": "^5.0.0",
     "@types/chai-dom": "^1.11.3",
-    "@vitest/expect": "^2.0.5",
+    "@vitest/expect": "^2.1.2",
     "chai": "^5.1.1",
     "chai-dom": "^1.12.0",
     "chalk": "^5.3.0",
     "chokidar": "^4.0.1",
-    "close-with-grace": "^1.3.0",
+    "close-with-grace": "^2.1.0",
     "cross-spawn": "^7.0.3",
-    "execa": "^9.1.0",
+    "execa": "^9.4.0",
     "fkill": "^9.0.0",
     "fs-extra": "^11.2.0",
-    "glob": "^10.3.16",
-    "globby": "^14.0.1",
-    "lru-cache": "^10.2.2",
+    "globby": "^14.0.2",
+    "lru-cache": "^11.0.1",
     "md5-hex": "^5.0.0",
-    "mdast-util-mdx-jsx": "^3.1.2",
-    "mdx-bundler": "^10.0.2",
+    "mdast-util-mdx-jsx": "^3.1.3",
+    "mdx-bundler": "^10.0.3",
     "p-queue": "^8.0.1",
-    "rehype": "^13.0.1",
+    "rehype": "^13.0.2",
     "remark": "^15.0.1",
     "remark-autolink-headings": "^7.0.1",
-    "remark-emoji": "^4.0.1",
+    "remark-emoji": "^5.0.1",
     "remark-gfm": "^4.0.0",
-    "unified": "^11.0.4",
+    "unified": "^11.0.5",
     "unist-util-remove-position": "^5.0.0",
     "unist-util-visit": "^5.0.0",
     "zod": "^3.23.8"
@@ -186,8 +170,8 @@
   "devDependencies": {
     "@types/hast": "^3.0.4",
     "@types/mdast": "^4.0.4",
-    "@types/node": "^20.12.12",
-    "tshy": "^1.14.0"
+    "@types/node": "^20.16.10",
+    "tshy": "^3.0.2"
   },
   "repository": {
     "type": "git",
