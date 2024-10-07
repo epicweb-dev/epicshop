@@ -48,6 +48,7 @@ export default defineConfig({
 			'execa',
 			'npm-run-path',
 			'unicorn-magic',
+			'@resvg/resvg-js',
 		],
 	},
 	build: {
@@ -63,6 +64,7 @@ export default defineConfig({
 				'npm-run-path',
 				'unicorn-magic',
 				/^@epic-web\/workshop-utils.*/,
+				'@resvg/resvg-js',
 			],
 		},
 	},
@@ -70,6 +72,9 @@ export default defineConfig({
 	plugins: [
 		envOnlyMacros(),
 		remix({
+			future: {
+				unstable_optimizeDeps: true,
+			},
 			ignoredRouteFiles: ['**/*'],
 			serverModuleFormat: 'esm',
 			routes: async (defineRoutes) => {
