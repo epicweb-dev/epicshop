@@ -169,28 +169,6 @@
   "engines": {
     "node": ">=18"
   },
-  "bundleDependencies": [
-    "@conform-to/react",
-    "@conform-to/zod",
-    "@epic-web/client-hints",
-    "@epic-web/restore-scroll",
-    "@radix-ui/react-accordion",
-    "@radix-ui/react-popover",
-    "@radix-ui/react-select",
-    "@radix-ui/react-tabs",
-    "@radix-ui/react-toast",
-    "@remix-run/react",
-    "@remix-run/router",
-    "react-router",
-    "react-router-dom",
-    "clsx",
-    "chai",
-    "chai-dom",
-    "framer-motion",
-    "remix-utils",
-    "tailwind-merge",
-    "zod"
-  ],
   "repository": {
     "type": "git",
     "url": "https://github.com/epicweb-dev/epicshop.git",
