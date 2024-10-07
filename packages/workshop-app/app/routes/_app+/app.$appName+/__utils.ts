@@ -9,6 +9,12 @@ import { type Timings } from '@epic-web/workshop-utils/timing.server'
 import { type Params } from '@remix-run/react'
 import fsExtra from 'fs-extra'
 
+function parseAppNameFromReferer(request: Request) {
+	const url = new URL(request.headers.get('referer') ?? '')
+	const appName = url.pathname.split('/').pop()
+	return appName
+}
+
 export async function resolveApps({
 	request,
 	params,
@@ -18,7 +24,7 @@ export async function resolveApps({
 	params: Params
 	timings: Timings
 }) {
-	const { appName } = params
+	const appName = params.appName ?? parseAppNameFromReferer(request)
 
 	invariantResponse(appName, 'appName param required')
 	const app = await getAppByName(appName, { request, timings })
