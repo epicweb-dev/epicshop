@@ -527,17 +527,19 @@ const UserInfoSchema = z
 		name: z.string(),
 		email: z.string().email(),
 		image: z.string().nullable(),
-		discordProfile: z.object({
-			avatar: z.string().nullable(),
-			nick: z.string(),
-			user: z.object({
-				id: z.string(),
-				username: z.string(),
-				avatar: z.string(),
-				discriminator: z.string(),
-				global_name: z.string(),
-			}),
-		}),
+		discordProfile: z
+			.object({
+				avatar: z.string().nullable(),
+				nick: z.string(),
+				user: z.object({
+					id: z.string(),
+					username: z.string(),
+					avatar: z.string(),
+					discriminator: z.string(),
+					global_name: z.string(),
+				}),
+			})
+			.optional(),
 	})
 	.transform((data) => {
 		return {
