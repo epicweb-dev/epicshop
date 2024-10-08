@@ -148,7 +148,7 @@ async function getDiffUrl(commitBefore, commitAfter) {
 }
 
 export async function checkConnection() {
-	return dns.resolve('example.com').then(
+	return dns.resolve('registry.npmjs.com').then(
 		() => true,
 		() => false,
 	)
