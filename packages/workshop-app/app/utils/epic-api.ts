@@ -529,14 +529,12 @@ const UserInfoSchema = z
 		image: z.string().nullable(),
 		discordProfile: z
 			.object({
-				avatar: z.string().nullable(),
 				nick: z.string(),
 				user: z.object({
 					id: z.string(),
 					username: z.string(),
-					avatar: z.string(),
-					discriminator: z.string(),
-					global_name: z.string(),
+					avatar: z.string().nullable().optional(),
+					global_name: z.string().nullable().optional(),
 				}),
 			})
 			.optional(),
@@ -581,7 +579,7 @@ function resolveGravatarUrl(
 }
 
 function resolveDiscordAvatar(
-	user: { avatar: string | null; id: string } | undefined,
+	user: { avatar?: string | null; id: string } | undefined,
 	{ size }: { size: 16 | 32 | 64 | 128 | 256 | 512 | 1024 | 2048 | 4096 },
 ) {
 	if (!user) return null
