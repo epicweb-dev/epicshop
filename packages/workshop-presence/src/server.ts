@@ -225,7 +225,7 @@ function organizeUsersByWorkshop(users: Array<User>) {
 }
 
 function generateUserListItem(user: User) {
-	const avatarUrl = user.avatarUrl ?? '/avatar.png'
+	const imageUrl = user.imageUrlLarge ?? user.avatarUrl ?? '/avatar.png'
 	const name = user.name ?? 'Anonymous'
 	const location = user.location?.exercise
 		? [
@@ -244,7 +244,7 @@ function generateUserListItem(user: User) {
 
 	return `
 		<li>
-			<img class="user-avatar" src="${avatarUrl}" alt="${name}" />
+			<img class="user-avatar" src="${imageUrl}" alt="${name}" />
 			<strong>${name}</strong> - ${location} ${accessLabel}
 		</li>
 	`
