@@ -113,31 +113,6 @@ export async function getAuthInfo() {
 	return data?.authInfo ?? null
 }
 
-export async function getUserInfo() {
-	const db = await readDb()
-	if (!db?.authInfo) return null
-
-	return {
-		id: db.authInfo.id,
-		name: db.discordMember?.displayName ?? db.authInfo.name ?? null,
-		email: db.authInfo.email,
-		avatarUrl:
-			db.discordMember?.avatarURL ??
-			getGravatar({ email: db.authInfo.email, size: 288 }),
-	}
-}
-
-function getGravatar({ email, size }: { email: string; size: number }) {
-	const gravatarOptions = new URLSearchParams({
-		size: size.toString(),
-		default: 'identicon',
-	})
-	const gravatarUrl = `https://www.gravatar.com/avatar/${md5(
-		email,
-	)}?${gravatarOptions.toString()}`
-	return gravatarUrl
-}
-
 export async function requireAuthInfo({
 	request,
 	redirectTo,
@@ -151,7 +126,7 @@ export async function requireAuthInfo({
 		redirectTo =
 			redirectTo === null
 				? null
-				: redirectTo ?? `${requestUrl.pathname}${requestUrl.search}`
+				: (redirectTo ?? `${requestUrl.pathname}${requestUrl.search}`)
 		const loginParams = redirectTo ? new URLSearchParams({ redirectTo }) : null
 		const loginRedirect = ['/login', loginParams?.toString()]
 			.filter(Boolean)

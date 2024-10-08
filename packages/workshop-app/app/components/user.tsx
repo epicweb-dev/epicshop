@@ -18,7 +18,17 @@ export function useUser() {
 
 export function useOptionalDiscordMember() {
 	const data = useRouteLoaderData<typeof rootLoader>('root')
-	return data?.discordMember
+	// TODO: remove this when we remove local discord connection
+	return (
+		data?.discordMember ??
+		(data?.user?.discordProfile
+			? {
+					id: data.user.discordProfile.user.id,
+					displayName: data.user.discordProfile.user.global_name,
+					avatarUrl: data.user.imageUrlLarge,
+				}
+			: null)
+	)
 }
 
 export function useDiscordMember() {

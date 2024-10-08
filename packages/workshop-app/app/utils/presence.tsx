@@ -37,6 +37,8 @@ const ExerciseAppParamsSchema = z.object({
 
 export function usePresenceSocket(user?: User | null) {
 	const workshopTitle = useOptionalWorkshopTitle()
+	const { userHasAccess = false } =
+		useRouteLoaderData<typeof rootLoader>('root') ?? {}
 	const requestInfo = useRequestInfo()
 	const rawParams = useParams()
 	const prefs = usePresencePreferences()
@@ -94,7 +96,9 @@ export function usePresenceSocket(user?: User | null) {
 			payload: {
 				id: user.id,
 				name: user.name,
-				avatarUrl: user.avatarUrl,
+				userHasAccess,
+				imageUrlSmall: user.imageUrlSmall,
+				imageUrlLarge: user.imageUrlLarge,
 				location,
 			},
 		}

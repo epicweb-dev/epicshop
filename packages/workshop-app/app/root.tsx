@@ -5,7 +5,6 @@ import { getWorkshopConfig } from '@epic-web/workshop-utils/config.server'
 import {
 	getDiscordMember,
 	getPreferences,
-	getUserInfo,
 	readOnboardingData,
 } from '@epic-web/workshop-utils/db.server'
 import { getEnv } from '@epic-web/workshop-utils/env.server'
@@ -41,7 +40,11 @@ import appStylesheetUrl from './styles/app.css?url'
 import tailwindStylesheetUrl from './styles/tailwind.css?url'
 import { ClientHintCheck, getHints } from './utils/client-hints.tsx'
 import { getConfetti } from './utils/confetti.server.ts'
-import { getProgress, userHasAccessToWorkshop } from './utils/epic-api.ts'
+import {
+	getProgress,
+	getUserInfo,
+	userHasAccessToWorkshop,
+} from './utils/epic-api.ts'
 import { cn, combineHeaders, getDomainUrl, useAltDown } from './utils/misc.tsx'
 import { Presence } from './utils/presence.tsx'
 import { getSeoMetaTags } from './utils/seo.ts'

@@ -67,11 +67,15 @@ export default function Account() {
 	const presencePreferences = usePresencePreferences()
 	return (
 		<main className="container flex h-full w-full max-w-3xl flex-grow flex-col items-center justify-center gap-4">
-			<img
-				className="h-36 w-36 rounded-full"
-				alt={discordMember?.displayName ?? user.name ?? user.email}
-				src={user.avatarUrl}
-			/>
+			{user.imageUrlLarge ? (
+				<img
+					className="h-36 w-36 rounded-full"
+					alt={discordMember?.displayName ?? user.name ?? user.email}
+					src={user.imageUrlLarge}
+				/>
+			) : (
+				<Icon name="User" className="flex-shrink-0" size="lg" />
+			)}
 			<h1 className="mb-1 text-2xl">Your Account</h1>
 			<p className="text-center text-gray-700 dark:text-gray-300">
 				{user.name
@@ -83,8 +87,16 @@ export default function Account() {
 			{discordMember ? (
 				<>
 					<p className="text-center text-gray-700 dark:text-gray-300">
-						And you are connected to discord as {discordMember.displayName} (
-						{discordMember.id}).
+						And you are connected to discord as{' '}
+						<a
+							href={`https://discord.com/users/${discordMember.id}`}
+							target="_blank"
+							rel="noopener noreferrer"
+							className="underline"
+						>
+							{discordMember.displayName}
+						</a>
+						.
 					</p>
 					<div className="flex justify-center gap-2">
 						<disconnectFetcher.Form method="post">

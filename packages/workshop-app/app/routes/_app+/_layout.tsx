@@ -175,10 +175,11 @@ function FacePile({ isMenuOpened }: { isMenuOpened: boolean }) {
 					({ user, score }) => {
 						const scoreClassNames = getScoreClassNames(score)
 						const locationLabel = getLocationLabel(user.location)
+						const imageUrl = user.imageUrlSmall || user.avatarUrl
 						return (
 							<Tooltip key={user.id}>
 								<TooltipTrigger asChild>
-									{user.avatarUrl ? (
+									{imageUrl ? (
 										<img
 											tabIndex={0}
 											alt={user.name || displayNameShort}
@@ -186,7 +187,7 @@ function FacePile({ isMenuOpened }: { isMenuOpened: boolean }) {
 												'h-8 w-8 rounded-full border object-cover',
 												scoreClassNames,
 											)}
-											src={user.avatarUrl}
+											src={imageUrl}
 										/>
 									) : (
 										<div
@@ -729,10 +730,10 @@ function MobileNavigation({
 								)}
 								to="/account"
 							>
-								{user.avatarUrl ? (
+								{user.imageUrlSmall ? (
 									<img
 										alt={user.name ?? user.email}
-										src={user.avatarUrl}
+										src={user.imageUrlSmall}
 										className="h-full rounded-full"
 									/>
 								) : (
@@ -1057,10 +1058,10 @@ function Navigation({
 								className="flex h-14 w-full flex-shrink-0 items-center justify-start space-x-3 border-t px-4 py-4 text-center no-underline hover:underline"
 								to="/account"
 							>
-								{user.avatarUrl ? (
+								{user.imageUrlSmall ? (
 									<img
 										alt={user.name ?? user.email}
-										src={user.avatarUrl}
+										src={user.imageUrlSmall}
 										className="h-full rounded-full"
 									/>
 								) : (

@@ -520,3 +520,123 @@ export async function userHasAccessToWorkshop({
 		},
 	})
 }
+
+const UserInfoSchema = z
+	.object({
+		id: z.string(),
+		name: z.string(),
+		email: z.string().email(),
+		image: z.string().nullable(),
+		discordProfile: z.object({
+			avatar: z.string().nullable(),
+			nick: z.string(),
+			user: z.object({
+				id: z.string(),
+				username: z.string(),
+				avatar: z.string(),
+				discriminator: z.string(),
+				global_name: z.string(),
+			}),
+		}),
+	})
+	.transform((data) => {
+		return {
+			...data,
+			imageUrlSmall:
+				resizeImageUrl(data.image, { size: 64 }) ??
+				resolveDiscordAvatar(data.discordProfile?.user, {
+					size: 64,
+				}) ??
+				resolveGravatarUrl(data.email, { size: 64 }),
+			imageUrlLarge:
+				resizeImageUrl(data.image, { size: 512 }) ??
+				resolveDiscordAvatar(data.discordProfile?.user, {
+					size: 512,
+				}) ??
+				resolveGravatarUrl(data.email, { size: 512 }),
+		}
+	})
+
+function resizeImageUrl(url: string | null, { size }: { size: number }) {
+	if (!url) return null
+	const urlObj = new URL(url)
+	urlObj.searchParams.set('size', size.toString())
+	return urlObj.toString()
+}
+
+function resolveGravatarUrl(
+	email: string | undefined,
+	{ size }: { size: number },
+) {
+	if (!email) return null
+
+	const hash = md5(email.toLowerCase())
+	const gravatarOptions = new URLSearchParams({
+		size: size.toString(),
+		default: 'identicon',
+	})
+	return `https://www.gravatar.com/avatar/${hash}?${gravatarOptions.toString()}`
+}
+
+function resolveDiscordAvatar(
+	user: { avatar: string | null; id: string } | undefined,
+	{ size }: { size: 16 | 32 | 64 | 128 | 256 | 512 | 1024 | 2048 | 4096 },
+) {
+	if (!user) return null
+
+	const { avatar, id: userId } = user
+	if (!avatar) return null
+	const isGif = avatar.startsWith('a_')
+	const url = new URL(
+		`/avatars/${userId}/${avatar}.${isGif ? 'gif' : 'png'}`,
+		'https://cdn.discordapp.com',
+	)
+	url.searchParams.set('size', size.toString())
+	return url.toString()
+}
+
+export type UserInfo = z.infer<typeof UserInfoSchema>
+
+export async function getUserInfo({
+	timings,
+	request,
+	forceFresh,
+}: {
+	timings?: Timings
+	request?: Request
+	forceFresh?: boolean
+} = {}) {
+	const authInfo = await getAuthInfo()
+	if (!authInfo) return null
+	const { tokenSet } = authInfo
+	const {
+		product: { host },
+	} = getWorkshopConfig()
+
+	const accessToken = tokenSet.access_token
+
+	return cachified({
+		key: `user-info:${md5(accessToken)}`,
+		cache: fsCache,
+		request,
+		forceFresh,
+		timings,
+		ttl: 1000 * 60 * 1,
+		swr: 1000 * 60 * 60 * 24 * 365,
+		checkValue: UserInfoSchema,
+		async getFreshValue(): Promise<UserInfo> {
+			const response = await fetch(`https://${host}/oauth/userinfo`, {
+				headers: {
+					authorization: `Bearer ${accessToken}`,
+				},
+			})
+
+			if (!response.ok) {
+				throw new Error(`Failed to fetch user info: ${response.statusText}`)
+			}
+
+			const data = await response.json()
+			return UserInfoSchema.parse(data)
+		},
+	})
+}
