@@ -529,6 +529,7 @@ const UserInfoSchema = z
 		image: z.string().nullable(),
 		discordProfile: z
 			.object({
+				nick: z.string().nullable(),
 				user: z.object({
 					id: z.string(),
 					username: z.string(),
@@ -536,6 +537,7 @@ const UserInfoSchema = z
 					global_name: z.string().nullable().optional(),
 				}),
 			})
+			.nullable()
 			.optional(),
 	})
 	.transform((data) => {
