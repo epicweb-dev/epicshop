@@ -24,7 +24,9 @@ export function useOptionalDiscordMember() {
 		(data?.user?.discordProfile
 			? {
 					id: data.user.discordProfile.user.id,
-					displayName: data.user.discordProfile.user.global_name,
+					displayName:
+						data.user.discordProfile.nick ??
+						data.user.discordProfile.user.global_name,
 					avatarUrl: data.user.imageUrlLarge,
 				}
 			: null)
