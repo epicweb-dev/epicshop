@@ -176,6 +176,16 @@ function FacePile({ isMenuOpened }: { isMenuOpened: boolean }) {
 						const scoreClassNames = getScoreClassNames(score)
 						const locationLabel = getLocationLabel(user.location)
 						const imageUrl = user.imageUrlSmall || user.avatarUrl
+						const hasAccess = user.hasAccess
+						const local = user.location?.origin?.includes('localhost')
+
+						let doingLabel: string
+						if (hasAccess) {
+							doingLabel = local ? 'working' : 'referencing'
+						} else {
+							doingLabel = local ? 'previewing' : 'reviewing'
+						}
+
 						return (
 							<Tooltip key={user.id}>
 								<TooltipTrigger asChild>
@@ -207,7 +217,7 @@ function FacePile({ isMenuOpened }: { isMenuOpened: boolean }) {
 										<span>
 											{user.name || `${displayNameShort} Dev`}{' '}
 											{locationLabel
-												? ` is ${user.location?.origin?.includes('localhost') ? 'working' : 'learning'} ${
+												? ` is ${doingLabel} ${
 														score === 1 && loggedInUser?.id !== user.id
 															? 'with you'
 															: ''

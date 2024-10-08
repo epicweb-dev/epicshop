@@ -96,7 +96,7 @@ export function usePresenceSocket(user?: User | null) {
 			payload: {
 				id: user.id,
 				name: user.name,
-				userHasAccess,
+				hasAccess: userHasAccess,
 				imageUrlSmall: user.imageUrlSmall,
 				imageUrlLarge: user.imageUrlLarge,
 				location,
@@ -117,7 +117,10 @@ export function usePresenceSocket(user?: User | null) {
 function scoreUsers(location: User['location'], users: Array<User>) {
 	const scoredUsers = users.map((user) => {
 		let score = 0
-		const available = 4
+		const available = 5
+		if (user.hasAccess) {
+			score += 1
+		}
 		if (location?.workshopTitle === user.location?.workshopTitle) {
 			score += 1
 			if (

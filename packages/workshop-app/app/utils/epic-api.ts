@@ -614,9 +614,10 @@ export async function getUserInfo({
 	} = getWorkshopConfig()
 
 	const accessToken = tokenSet.access_token
+	const url = `https://${host}/oauth/userinfo`
 
 	return cachified({
-		key: `user-info:${md5(accessToken)}`,
+		key: `${url}:${md5(accessToken)}`,
 		cache: fsCache,
 		request,
 		forceFresh,
@@ -625,10 +626,8 @@ export async function getUserInfo({
 		swr: 1000 * 60 * 60 * 24 * 365,
 		checkValue: UserInfoSchema,
 		async getFreshValue(): Promise<UserInfo> {
-			const response = await fetch(`https://${host}/oauth/userinfo`, {
-				headers: {
-					authorization: `Bearer ${accessToken}`,
-				},
+			const response = await fetch(url, {
+				headers: { authorization: `Bearer ${accessToken}` },
 			})
 
 			if (!response.ok) {

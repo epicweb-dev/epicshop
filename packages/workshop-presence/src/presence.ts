@@ -6,7 +6,7 @@ export const partykitBaseUrl = `https://epic-web-presence.kentcdodds.partykit.de
 
 export const UserSchema = z.object({
 	id: z.string(),
-	userHasAccess: z.boolean().nullable().optional(),
+	hasAccess: z.boolean().nullable().optional(),
 	// TODO: remove the avatarUrl field once people have updated their workshops
 	avatarUrl: z.string().nullable().optional(),
 	imageUrlSmall: z.string().nullable().optional(),

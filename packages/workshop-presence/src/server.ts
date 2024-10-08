@@ -239,10 +239,13 @@ function generateUserListItem(user: User) {
 			? user.location.origin
 			: 'Unknown location'
 
+	const accessLabel =
+		typeof user.hasAccess === 'boolean' ? (user.hasAccess ? '🔑' : '🆓') : ''
+
 	return `
 		<li>
 			<img class="user-avatar" src="${avatarUrl}" alt="${name}" />
-			<strong>${name}</strong> - ${location}
+			<strong>${name}</strong> - ${location} ${accessLabel}
 		</li>
 	`
 }
