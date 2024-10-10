@@ -15,7 +15,7 @@ function useConnectDiscordURL() {
 	const {
 		product: { host },
 	} = useWorkshopConfig()
-	return `${host}/discord`
+	return `https://${host}/discord`
 }
 
 export function useDiscordCTALink() {
