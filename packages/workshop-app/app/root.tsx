@@ -3,7 +3,6 @@ import { getPresentUsers } from '@epic-web/workshop-presence/presence.server'
 import { getApps } from '@epic-web/workshop-utils/apps.server'
 import { getWorkshopConfig } from '@epic-web/workshop-utils/config.server'
 import {
-	getDiscordMember,
 	getPreferences,
 	readOnboardingData,
 } from '@epic-web/workshop-utils/db.server'
@@ -110,7 +109,6 @@ export async function loader({ request }: LoaderFunctionArgs) {
 			const emptyProgress: Awaited<ReturnType<typeof getProgress>> = []
 			return emptyProgress
 		}),
-		discordMember: getDiscordMember(),
 		user: getUserInfo(),
 		userHasAccess: userHasAccessToWorkshop({ request, timings }),
 		apps: getApps({ request, timings }),

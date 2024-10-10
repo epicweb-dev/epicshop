@@ -191,8 +191,8 @@ function sortUsers(users: Array<User>) {
 
 function getScore(user: User) {
 	let score = 0
-	if (user.avatarUrl) score += 1
-	if (user.avatarUrl?.includes('discordapp')) score += 0.5
+	if (user.imageUrlSmall) score += 1
+	if (user.imageUrlSmall?.includes('discordapp')) score += 0.5
 	if (user.name) score += 1
 	return score
 }

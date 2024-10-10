@@ -1,21 +1,20 @@
 import { deleteCache } from '@epic-web/workshop-utils/cache.server'
 import {
 	deleteDb,
-	deleteDiscordInfo,
 	requireAuthInfo,
 	setPresencePreferences,
 } from '@epic-web/workshop-utils/db.server'
 import { type SEOHandle } from '@nasa-gcn/remix-seo'
 import { redirect, type LoaderFunctionArgs } from '@remix-run/node'
-import { Form, Link, useFetcher, useLoaderData } from '@remix-run/react'
+import { Form, Link } from '@remix-run/react'
 import { Button } from '#app/components/button.tsx'
 import { Icon } from '#app/components/icons.tsx'
 import { SimpleTooltip } from '#app/components/ui/tooltip.js'
 import { useOptionalDiscordMember, useUser } from '#app/components/user.tsx'
+import { useWorkshopConfig } from '#app/components/workshop-config.tsx'
 import { ensureUndeployed } from '#app/utils/misc.tsx'
 import { usePresencePreferences } from '#app/utils/presence.tsx'
 import { redirectWithToast } from '#app/utils/toast.server.ts'
-import { getDiscordAuthURL } from '../discord.callback.ts'
 
 export const handle: SEOHandle = {
 	getSitemapEntries: () => null,
@@ -24,21 +23,14 @@ export const handle: SEOHandle = {
 export async function loader({ request }: LoaderFunctionArgs) {
 	ensureUndeployed()
 	await requireAuthInfo({ request })
-	return { discordAuthUrl: getDiscordAuthURL() }
+	return {}
 }
 
 export async function action({ request }: { request: Request }) {
 	ensureUndeployed()
 	const formData = await request.formData()
 	const intent = formData.get('intent')
-	if (intent === 'disconnect-discord') {
-		await deleteDiscordInfo()
-		return redirectWithToast('/account', {
-			type: 'success',
-			title: 'Disconnected',
-			description: 'Local discord data has been deleted.',
-		})
-	} else if (intent === 'logout') {
+	if (intent === 'logout') {
 		await deleteDb()
 		await deleteCache()
 		return redirectWithToast('/login', {
@@ -59,12 +51,18 @@ export async function action({ request }: { request: Request }) {
 	return redirect('/account')
 }
 
+function useConnectDiscordURL() {
+	const {
+		product: { host },
+	} = useWorkshopConfig()
+	return `${host}/discord`
+}
+
 export default function Account() {
-	const data = useLoaderData<typeof loader>()
-	const disconnectFetcher = useFetcher()
 	const user = useUser()
 	const discordMember = useOptionalDiscordMember()
 	const presencePreferences = usePresencePreferences()
+	const connectDiscordURL = useConnectDiscordURL()
 	return (
 		<main className="container flex h-full w-full max-w-3xl flex-grow flex-col items-center justify-center gap-4">
 			{user.imageUrlLarge ? (
@@ -98,21 +96,11 @@ export default function Account() {
 						</a>
 						.
 					</p>
-					<div className="flex justify-center gap-2">
-						<disconnectFetcher.Form method="post">
-							<Button varient="mono" name="intent" value="disconnect-discord">
-								Disconnect Discord
-							</Button>
-						</disconnectFetcher.Form>
-						<SimpleTooltip content="Your discord connection gives you access to the exclusive Discord channels for Epic Web">
-							<Icon name="Question" tabIndex={0} />
-						</SimpleTooltip>
-					</div>
 				</>
 			) : (
 				<div className="flex items-center gap-2">
 					<Link
-						to={data.discordAuthUrl}
+						to={connectDiscordURL}
 						className="inline-flex items-center gap-2 underline"
 					>
 						<Icon name="Discord" size="lg" />

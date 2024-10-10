@@ -1,42 +1,42 @@
 import { type SEOHandle } from '@nasa-gcn/remix-seo'
-import { Link, useLoaderData } from '@remix-run/react'
+import { Link } from '@remix-run/react'
 import { Icon } from '#app/components/icons.tsx'
 import {
 	useOptionalDiscordMember,
 	useOptionalUser,
 } from '#app/components/user.tsx'
-import { getDiscordAuthURL } from '../discord.callback.ts'
+import { useWorkshopConfig } from '#app/components/workshop-config.tsx'
 
 export const handle: SEOHandle = {
 	getSitemapEntries: () => null,
 }
 
-export async function loader() {
-	return { discordAuthUrl: getDiscordAuthURL() }
+function useConnectDiscordURL() {
+	const {
+		product: { host },
+	} = useWorkshopConfig()
+	return `${host}/discord`
 }
 
-export function useDiscordCTALink({
-	discordAuthUrl,
-}: {
-	discordAuthUrl: string
-}) {
+export function useDiscordCTALink() {
 	const user = useOptionalUser()
 	const discordMember = useOptionalDiscordMember()
+	const connectDiscordURL = useConnectDiscordURL()
 
 	if (!user) {
 		return '/login'
 	}
 	if (!discordMember) {
-		return discordAuthUrl
+		return connectDiscordURL
 	}
 
 	return 'https://discord.com/channels/715220730605731931/1161045224907341972'
 }
 
-export function DiscordCTA({ discordAuthUrl }: { discordAuthUrl: string }) {
+export function DiscordCTA() {
 	const user = useOptionalUser()
 	const discordMember = useOptionalDiscordMember()
-
+	const connectDiscordURL = useConnectDiscordURL()
 	if (!user) {
 		return (
 			<div className="flex flex-wrap items-center justify-center gap-2 text-xl">
@@ -57,7 +57,10 @@ export function DiscordCTA({ discordAuthUrl }: { discordAuthUrl: string }) {
 	if (!discordMember) {
 		return (
 			<div className="flex flex-wrap items-center justify-center gap-2 text-xl">
-				<Link to={discordAuthUrl} className="flex items-center gap-2 underline">
+				<Link
+					to={connectDiscordURL}
+					className="flex items-center gap-2 underline"
+				>
 					<Icon name="Discord" size="2xl" />
 					Connect Discord
 				</Link>{' '}
@@ -89,11 +92,9 @@ export function DiscordCTA({ discordAuthUrl }: { discordAuthUrl: string }) {
 }
 
 export default function DiscordRoute() {
-	const data = useLoaderData<typeof loader>()
-
 	return (
 		<div className="container flex h-full max-w-3xl flex-col items-center justify-center gap-4 p-12">
-			<DiscordCTA discordAuthUrl={data.discordAuthUrl} />
+			<DiscordCTA />
 			<p>
 				The{' '}
 				<Link

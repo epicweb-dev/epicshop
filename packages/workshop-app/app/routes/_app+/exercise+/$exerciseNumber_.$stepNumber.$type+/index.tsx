@@ -34,7 +34,6 @@ import { useRef } from 'react'
 import { Diff } from '#app/components/diff.tsx'
 import { GeneralErrorBoundary } from '#app/components/error-boundary.tsx'
 import { type InBrowserBrowserRef } from '#app/components/in-browser-browser.tsx'
-import { getDiscordAuthURL } from '#app/routes/discord.callback.ts'
 import { getDiffCode } from '#app/utils/diff.server.ts'
 import { userHasAccessToWorkshop } from '#app/utils/epic-api.js'
 import { useAltDown } from '#app/utils/misc.tsx'
@@ -163,7 +162,6 @@ export async function loader({ request, params }: LoaderFunctionArgs) {
 			type: params.type as 'problem' | 'solution',
 			exerciseStepApp,
 			allApps,
-			discordAuthUrl: getDiscordAuthURL(),
 			// defer this promise so that we don't block the response from being sent
 			discordPostsPromise: fetchDiscordPosts({ request }),
 			playground: playgroundApp

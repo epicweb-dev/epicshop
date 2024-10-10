@@ -5,12 +5,6 @@ import fsExtra from 'fs-extra'
 import md5 from 'md5-hex'
 import { z } from 'zod'
 
-export const DiscordMemberSchema = z.object({
-	avatarURL: z.string().nullable().optional(),
-	displayName: z.string(),
-	id: z.string(),
-})
-
 const TokenSetSchema = z.object({
 	access_token: z.string(),
 	token_type: z.string(),
@@ -72,7 +66,6 @@ const DataSchema = z.object({
 		.optional()
 		.default({}),
 	authInfo: AuthInfoSchema.optional(),
-	discordMember: DiscordMemberSchema.optional(),
 })
 
 const appDir = path.join(os.homedir(), '.epicshop')
@@ -181,31 +174,6 @@ export async function setPresencePreferences(
 	await fsExtra.ensureDir(appDir)
 	await fsExtra.writeJSON(dbPath, updatedData)
 	return updatedData.preferences.presence
-}
-
-export async function getDiscordMember() {
-	const data = await readDb()
-	return data?.discordMember ?? null
-}
-
-export async function setDiscordMember(
-	discordMember: z.infer<typeof DiscordMemberSchema>,
-) {
-	const data = await readDb()
-	const updatedData = {
-		...data,
-		discordMember,
-	}
-	await fsExtra.ensureDir(appDir)
-	await fsExtra.writeJSON(dbPath, updatedData)
-	return updatedData.discordMember
-}
-
-export async function deleteDiscordInfo() {
-	const data = await readDb()
-	delete data?.discordMember
-	await fsExtra.ensureDir(appDir)
-	await fsExtra.writeJSON(dbPath, data)
 }
 
 export async function readOnboardingData() {

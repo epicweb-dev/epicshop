@@ -12,13 +12,8 @@ import {
 	type User,
 } from './presence.js'
 
-export const presenceCache = makeSingletonCache<
-	Array<{
-		id: string
-		avatarUrl: string
-		name: string | null | undefined
-	}>
->('PresenceCache')
+export const presenceCache =
+	makeSingletonCache<Array<z.infer<typeof UserSchema>>>('PresenceCache')
 
 export async function getPresentUsers(
 	user?: User | null,

@@ -3,16 +3,15 @@ import { Await, Link, useLoaderData } from '@remix-run/react'
 import * as React from 'react'
 import { Icon } from '#app/components/icons.tsx'
 import { Loading } from '#app/components/loading.tsx'
+import { DiscordCTA, useDiscordCTALink } from '#app/routes/_app+/discord.tsx'
 import { useAltDown } from '#app/utils/misc.tsx'
-import { DiscordCTA, useDiscordCTALink } from '../../../discord.tsx'
 import { type loader } from '../index.tsx'
 
 export function DiscordChat() {
-	const data = useLoaderData<typeof loader>()
 	return (
 		<div className="flex h-full w-full flex-col gap-4 pt-4">
 			<div className="text-center">
-				<DiscordCTA discordAuthUrl={data.discordAuthUrl} />
+				<DiscordCTA />
 			</div>
 			<div className="flex-1 overflow-y-scroll bg-accent pb-4 scrollbar-thin scrollbar-thumb-scrollbar">
 				<DiscordPosts />
@@ -23,7 +22,7 @@ export function DiscordChat() {
 
 function DiscordPosts() {
 	const data = useLoaderData<typeof loader>()
-	const ctaLink = useDiscordCTALink({ discordAuthUrl: data.discordAuthUrl })
+	const ctaLink = useDiscordCTALink()
 	const altDown = useAltDown()
 	return (
 		<div className="flex h-full flex-col items-center justify-between">
