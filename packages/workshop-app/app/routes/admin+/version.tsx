@@ -90,12 +90,16 @@ export default function Version() {
 			<h3 className="text-md font-bold">Workshop App</h3>
 			<p>
 				{'Current Version: '}
-				<a
-					href={`https://github.com/epicweb-dev/epicshop/releases/tag/v${ENV.EPICSHOP_APP_VERSION}`}
-					className="underline"
-				>
-					{ENV.EPICSHOP_APP_VERSION}
-				</a>
+				{ENV.EPICSHOP_APP_VERSION ? (
+					<a
+						href={`https://github.com/epicweb-dev/epicshop/releases/tag/v${ENV.EPICSHOP_APP_VERSION}`}
+						className="underline"
+					>
+						{ENV.EPICSHOP_APP_VERSION}
+					</a>
+				) : (
+					'Unknown'
+				)}
 			</p>
 			<p>
 				{'Latest Version: '}
