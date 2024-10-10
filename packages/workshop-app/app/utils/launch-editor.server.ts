@@ -338,20 +338,20 @@ export async function launchEditor(
 				fileName = path.relative('', fileName)
 			}
 
+			const fileExists = fs.existsSync(fileName)
 			// cmd.exe on Windows is vulnerable to RCE attacks given a file name of the
 			// form "C:\Users\myusername\Downloads\& curl 172.21.93.52". Use a whitelist
 			// to validate user-provided file names. This doesn't cover the entire range
 			// of valid file names but should cover almost all of them in practice.
+			// if the file exists, then we're good.
 			if (
+				!fileExists &&
 				process.platform === 'win32' &&
-				!WINDOWS_FILE_NAME_WHITELIST.test(
-					// replacing characters we know are fine (because heck if I'm going to edit that regex above 🙃)
-					fileName.replace(/\+|\$|\[|\]/g, '').trim(),
-				)
+				!WINDOWS_FILE_NAME_WHITELIST.test(fileName)
 			) {
 				acc.errorsList.push(fileName)
 			} else {
-				if (!fs.existsSync(fileName)) {
+				if (!fileExists) {
 					fsExtra.ensureDirSync(path.dirname(fileName))
 					fsExtra.writeFileSync(fileName, '', 'utf8')
 				}
@@ -369,7 +369,7 @@ export async function launchEditor(
 		if (errorsList.length) {
 			const readableName =
 				errorsList.length === 1 ? readablePath(errorsList[0]) : 'some files'
-			message = `Could not open ${readableName} in the editor.\n\nWhen running on Windows, file names are checked against a whitelist to protect against remote code execution attacks.\nFile names may consist only of alphanumeric characters (all languages), periods, dashes, slashes, and underscores.`
+			message = `Could not open ${readableName} in the editor.\n\nWhen running on Windows, file names are checked against a whitelist to protect against remote code execution attacks.\nFile names may consist only of alphanumeric characters (all languages), periods, dashes, slashes, and underscores. Maybe you have your files in a folder that includes a space in the pathname? Rename the folder to remove the space and try again.`
 		} else {
 			message = 'pathList must contain at least one valid file path'
 		}
