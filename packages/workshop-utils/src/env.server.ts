@@ -7,6 +7,7 @@ const schema = z.object({
 	EPICSHOP_GITHUB_REPO: z.string(),
 	EPICSHOP_GITHUB_ROOT: z.string(),
 	EPICSHOP_CONTEXT_CWD: z.string(),
+	EPICSHOP_APP_VERSION: z.string(),
 })
 
 declare global {
@@ -46,6 +47,7 @@ export function getEnv() {
 		EPICSHOP_DEPLOYED:
 			process.env.EPICSHOP_DEPLOYED === 'true' ||
 			process.env.EPICSHOP_DEPLOYED === '1',
+		EPICSHOP_APP_VERSION: process.env.EPICSHOP_APP_VERSION,
 	}
 }
 

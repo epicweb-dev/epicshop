@@ -125,3 +125,35 @@ export async function updateLocalRepo() {
 		return { status: 'error', message: getErrorMessage(error) } as const
 	}
 }
+
+export async function getCommitInfo() {
+	try {
+		const { stdout: hash } = await execaCommand('git rev-parse HEAD', { cwd })
+		const { stdout: message } = await execaCommand('git log -1 --pretty=%B', {
+			cwd,
+		})
+		const { stdout: date } = await execaCommand('git log -1 --format=%cI', {
+			cwd,
+		})
+		return { hash: hash.trim(), message: message.trim(), date: date.trim() }
+	} catch (error) {
+		console.error('Failed to get commit info:', getErrorMessage(error))
+		return null
+	}
+}
+
+export async function getLatestWorkshopAppVersion() {
+	try {
+		const { stdout } = await execaCommand(
+			'npm view @epic-web/workshop-app version',
+			{ cwd },
+		)
+		return stdout.trim()
+	} catch (error) {
+		console.error(
+			'Failed to get latest workshop app version:',
+			getErrorMessage(error),
+		)
+		return null
+	}
+}

@@ -1,6 +1,12 @@
+import fs from 'fs/promises'
 import path from 'path'
 import dotenv from 'dotenv'
 
+const packageJson = JSON.parse(
+	await fs.readFile(path.resolve(process.cwd(), 'package.json'), 'utf-8'),
+)
+
+process.env.EPICSHOP_APP_VERSION ??= packageJson.version
 process.env.NODE_ENV ??= 'development'
 process.env.EPICSHOP_ENABLE_WATCHER ??= 'true'
 const EPICSHOP_CONTEXT_CWD = process.env.EPICSHOP_CONTEXT_CWD ?? process.cwd()

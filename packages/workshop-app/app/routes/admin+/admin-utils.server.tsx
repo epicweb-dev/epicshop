@@ -6,6 +6,7 @@ import { deleteDb } from '@epic-web/workshop-utils/db.server'
 import fsExtra from 'fs-extra'
 
 export async function clearData() {
+	if (ENV.EPICSHOP_DEPLOYED) return
 	await clearCaches()
 	await deleteDb()
 }
@@ -17,6 +18,7 @@ export async function clearCaches() {
 }
 
 export async function startInspector() {
+	if (ENV.EPICSHOP_DEPLOYED) return
 	if (!global.__inspector_open__) {
 		global.__inspector_open__ = true
 		inspector.open()
@@ -26,6 +28,7 @@ export async function startInspector() {
 }
 
 export async function stopInspector() {
+	if (ENV.EPICSHOP_DEPLOYED) return
 	if (global.__inspector_open__) {
 		global.__inspector_open__ = false
 		inspector.close()
