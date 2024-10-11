@@ -47,7 +47,7 @@ import {
 	TooltipProvider,
 	TooltipTrigger,
 } from '#app/components/ui/tooltip.tsx'
-import { useOptionalUser } from '#app/components/user.tsx'
+import { useOptionalUser, useUserHasAccess } from '#app/components/user.tsx'
 import { useWorkshopConfig } from '#app/components/workshop-config.js'
 import { cn } from '#app/utils/misc.tsx'
 import { usePresence, type User } from '#app/utils/presence.tsx'
@@ -355,6 +355,7 @@ function NoUserBanner() {
 	const {
 		product: { host, displayName },
 	} = useWorkshopConfig()
+	const userHasAccess = useUserHasAccess()
 	const details = (
 		<div>
 			{ENV.EPICSHOP_DEPLOYED ? (
@@ -407,23 +408,25 @@ function NoUserBanner() {
 							{details}
 						</div>
 					</div>
-					<div className="hidden h-full flex-col items-center sm:flex md:flex-row">
-						<Link
-							to={`https://${host}`}
-							target="_blank"
-							className="flex h-full items-center justify-center space-x-1.5 px-5 text-sm font-semibold"
-						>
-							<span className="drop-shadow-sm">Join {displayName}</span>
-							<span>↗︎</span>
-						</Link>
-						<Link
-							to={ENV.EPICSHOP_DEPLOYED ? `https://${host}/login` : '/login'}
-							className="flex h-full items-center justify-center space-x-1.5 bg-white/20 px-5 text-sm font-semibold shadow-md transition hover:bg-white/30"
-						>
-							<Icon name="User" size="lg" />
-							<span className="drop-shadow-sm">Login</span>
-						</Link>
-					</div>
+					{userHasAccess ? null : (
+						<div className="hidden h-full flex-col items-center sm:flex md:flex-row">
+							<Link
+								to={`https://${host}`}
+								target="_blank"
+								className="flex h-full items-center justify-center space-x-1.5 px-5 text-sm font-semibold"
+							>
+								<span className="drop-shadow-sm">Join {displayName}</span>
+								<span>↗︎</span>
+							</Link>
+							<Link
+								to={ENV.EPICSHOP_DEPLOYED ? `https://${host}/login` : '/login'}
+								className="flex h-full items-center justify-center space-x-1.5 bg-white/20 px-5 text-sm font-semibold shadow-md transition hover:bg-white/30"
+							>
+								<Icon name="User" size="lg" />
+								<span className="drop-shadow-sm">Login</span>
+							</Link>
+						</div>
+					)}
 				</>
 			) : (
 				<>
