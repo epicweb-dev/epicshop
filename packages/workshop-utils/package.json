@@ -14,6 +14,8 @@
       "./package.json": "./package.json",
       "./apps.server": "./src/apps.server.ts",
       "./env.server": "./src/env.server.ts",
+      "./epic-api.server": "./src/epic-api.server.ts",
+      "./user.server": "./src/user.server.ts",
       "./cache.server": "./src/cache.server.ts",
       "./config.server": "./src/config.server.ts",
       "./db.server": "./src/db.server.ts",
@@ -41,6 +43,18 @@
       "import": {
         "types": "./dist/esm/env.server.d.ts",
         "default": "./dist/esm/env.server.js"
+      }
+    },
+    "./epic-api.server": {
+      "import": {
+        "types": "./dist/esm/epic-api.server.d.ts",
+        "default": "./dist/esm/epic-api.server.js"
+      }
+    },
+    "./user.server": {
+      "import": {
+        "types": "./dist/esm/user.server.d.ts",
+        "default": "./dist/esm/user.server.js"
       }
     },
     "./cache.server": {
@@ -135,6 +149,7 @@
     "@epic-web/remember": "^1.1.0",
     "@kentcdodds/md-temp": "^9.0.1",
     "@mdx-js/mdx": "^3.0.1",
+    "@paralleldrive/cuid2": "^2.2.2",
     "@playwright/test": "^1.47.2",
     "@remix-run/node": "^2.12.1",
     "@testing-library/dom": "^10.4.0",
@@ -148,6 +163,7 @@
     "chalk": "^5.3.0",
     "chokidar": "^4.0.1",
     "close-with-grace": "^2.1.0",
+    "cookie": "^1.0.1",
     "cross-spawn": "^7.0.3",
     "execa": "^9.4.0",
     "fkill": "^9.0.0",

@@ -1,16 +1,16 @@
+import * as cookie from 'cookie'
+import md5 from 'md5-hex'
+import { z } from 'zod'
 import {
 	getExercises,
 	getWorkshopFinished,
 	getWorkshopInstructions,
-} from '@epic-web/workshop-utils/apps.server'
-import { cachified, fsCache } from '@epic-web/workshop-utils/cache.server'
-import { getWorkshopConfig } from '@epic-web/workshop-utils/config.server'
-import { getAuthInfo } from '@epic-web/workshop-utils/db.server'
-import { type Timings } from '@epic-web/workshop-utils/timing.server'
-import cookie from 'cookie'
-import md5 from 'md5-hex'
-import { z } from 'zod'
-import { getErrorMessage } from './misc.tsx'
+} from './apps.server.js'
+import { cachified, fsCache } from './cache.server.js'
+import { getWorkshopConfig } from './config.server.js'
+import { getAuthInfo, setAuthInfo } from './db.server.js'
+import { type Timings } from './timing.server.js'
+import { getErrorMessage } from './utils.js'
 
 const Transcript = z
 	.string()
@@ -472,7 +472,7 @@ export async function userHasAccessToWorkshop({
 	request,
 	forceFresh,
 }: {
-	request: Request
+	request?: Request
 	timings?: Timings
 	forceFresh?: boolean
 }) {
@@ -483,7 +483,7 @@ export async function userHasAccessToWorkshop({
 	if (!slug) return true
 
 	if (ENV.EPICSHOP_DEPLOYED) {
-		const cookieHeader = request.headers.get('Cookie')
+		const cookieHeader = request?.headers.get('Cookie')
 		if (!cookieHeader) return false
 		const cookies = cookie.parse(cookieHeader)
 		return cookies.skill?.split(',').includes(slug) ?? false
@@ -617,13 +617,13 @@ export async function getUserInfo({
 	const accessToken = tokenSet.access_token
 	const url = `https://${host}/oauth/userinfo`
 
-	return cachified({
+	const userInfo = await cachified({
 		key: `${url}:${md5(accessToken)}`,
 		cache: fsCache,
 		request,
 		forceFresh,
 		timings,
-		ttl: 1000 * 60 * 1,
+		ttl: 1000 * 30,
 		swr: 1000 * 60 * 60 * 24 * 365,
 		checkValue: UserInfoSchema,
 		async getFreshValue(): Promise<UserInfo> {
@@ -639,4 +639,16 @@ export async function getUserInfo({
 			return UserInfoSchema.parse(data)
 		},
 	})
+
+	// we used to md5 hash the email to get the id
+	// if the id doesn't match what we have on file, update it
+	// you can probably safely remove this in January 2025
+	if (userInfo && authInfo.id !== userInfo.id) {
+		await setAuthInfo({
+			...authInfo,
+			id: userInfo.id,
+		})
+	}
+
+	return userInfo
 }

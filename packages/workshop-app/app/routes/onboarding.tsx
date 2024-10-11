@@ -19,7 +19,7 @@ import {
 	DeferredEpicVideo,
 	EpicVideoInfoProvider,
 } from '#app/components/epic-video.tsx'
-import { getEpicVideoInfos } from '#app/utils/epic-api.ts'
+import { getEpicVideoInfos } from '@epic-web/workshop-utils/epic-api.server'
 
 export const handle: SEOHandle = {
 	getSitemapEntries: () => null,

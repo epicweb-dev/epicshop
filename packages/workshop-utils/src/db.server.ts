@@ -1,8 +1,8 @@
 import os from 'os'
 import path from 'path'
+import { createId as cuid } from '@paralleldrive/cuid2'
 import { redirect } from '@remix-run/node'
 import fsExtra from 'fs-extra'
-import md5 from 'md5-hex'
 import { z } from 'zod'
 
 const TokenSetSchema = z.object({
@@ -42,13 +42,12 @@ const PresencePreferencesSchema = z
 	.optional()
 	.default({ optOut: false })
 
-const AuthInfoSchema = z
-	.object({
-		tokenSet: TokenSetSchema,
-		email: z.string(),
-		name: z.string().nullable().optional(),
-	})
-	.transform((d) => ({ ...d, id: md5(d.email) }))
+const AuthInfoSchema = z.object({
+	id: z.string(),
+	tokenSet: TokenSetSchema,
+	email: z.string(),
+	name: z.string().nullable().optional(),
+})
 
 const DataSchema = z.object({
 	onboarding: z
@@ -66,10 +65,21 @@ const DataSchema = z.object({
 		.optional()
 		.default({}),
 	authInfo: AuthInfoSchema.optional(),
+	clientId: z.string().optional(),
 })
 
 const appDir = path.join(os.homedir(), '.epicshop')
 const dbPath = path.join(appDir, 'data.json')
+
+export async function getClientId() {
+	const data = await readDb()
+	if (data?.clientId) return data.clientId
+
+	const clientId = cuid()
+	await fsExtra.ensureDir(appDir)
+	await fsExtra.writeJSON(dbPath, { ...data, clientId })
+	return clientId
+}
 
 export async function deleteDb() {
 	if (process.env.EPICSHOP_DEPLOYED) return null
@@ -130,16 +140,18 @@ export async function requireAuthInfo({
 }
 
 export async function setAuthInfo({
+	id,
 	tokenSet,
 	email = 'unknown@example.com',
 	name,
 }: {
+	id: string
 	tokenSet: Partial<z.infer<typeof TokenSetSchema>>
-	email?: string
-	name?: string
+	email?: string | null
+	name?: string | null
 }) {
 	const data = await readDb()
-	const authInfo = AuthInfoSchema.parse({ tokenSet, email, name })
+	const authInfo = AuthInfoSchema.parse({ id, tokenSet, email, name })
 	await fsExtra.ensureDir(appDir)
 	await fsExtra.writeJSON(dbPath, { ...data, authInfo })
 	return authInfo

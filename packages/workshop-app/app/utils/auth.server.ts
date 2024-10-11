@@ -2,6 +2,9 @@ import { EventEmitter } from 'events'
 import { remember } from '@epic-web/remember'
 import { getWorkshopConfig } from '@epic-web/workshop-utils/config.server'
 import { setAuthInfo } from '@epic-web/workshop-utils/db.server'
+import { getUserInfo } from '@epic-web/workshop-utils/epic-api.server'
+import { createId as cuid } from '@paralleldrive/cuid2'
+import md5 from 'md5-hex'
 import { Issuer, type Client } from 'openid-client'
 import { EVENTS } from './auth-events.ts'
 import { getErrorMessage } from './misc.tsx'
@@ -47,7 +50,22 @@ export async function registerDevice() {
 		}
 
 		const userinfo = await client.userinfo(tokenSet)
-		await setAuthInfo({ tokenSet, email: userinfo.email, name: userinfo.name })
+		let id: string
+		if (typeof userinfo.id === 'string') {
+			id = userinfo.id
+		} else {
+			console.warn('[UNEXPECTED] User ID is not a string:', userinfo.id)
+			id = userinfo.email ? md5(userinfo.email) : cuid()
+		}
+		await setAuthInfo({
+			id,
+			tokenSet,
+			email: userinfo.email,
+			name: userinfo.name,
+		})
+
+		await getUserInfo({ forceFresh: true })
+
 		authEmitter.emit(EVENTS.AUTH_RESOLVED)
 	} catch (error) {
 		authEmitter.emit(EVENTS.AUTH_REJECTED, {

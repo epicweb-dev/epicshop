@@ -7,12 +7,20 @@ import {
 	readOnboardingData,
 } from '@epic-web/workshop-utils/db.server'
 import { getEnv } from '@epic-web/workshop-utils/env.server'
+import {
+	getProgress,
+	getUserInfo,
+	userHasAccessToWorkshop,
+} from '@epic-web/workshop-utils/epic-api.server'
 import { makeTimings } from '@epic-web/workshop-utils/timing.server'
+import {
+	getSetClientIdCookieHeader,
+	getUserId,
+} from '@epic-web/workshop-utils/user.server'
 import { cssBundleHref } from '@remix-run/css-bundle'
 import {
 	unstable_data as data,
 	redirect,
-	type HeadersFunction,
 	type LinksFunction,
 	type LoaderFunctionArgs,
 	type MetaFunction,
@@ -39,11 +47,6 @@ import appStylesheetUrl from './styles/app.css?url'
 import tailwindStylesheetUrl from './styles/tailwind.css?url'
 import { ClientHintCheck, getHints } from './utils/client-hints.tsx'
 import { getConfetti } from './utils/confetti.server.ts'
-import {
-	getProgress,
-	getUserInfo,
-	userHasAccessToWorkshop,
-} from './utils/epic-api.ts'
 import { cn, combineHeaders, getDomainUrl, useAltDown } from './utils/misc.tsx'
 import { Presence } from './utils/presence.tsx'
 import { getSeoMetaTags } from './utils/seo.ts'
@@ -103,6 +106,7 @@ export async function loader({ request }: LoaderFunctionArgs) {
 	const { toast, headers: toastHeaders } = await getToast(request)
 
 	const asyncStuff = await promiseHash({
+		userId: getUserId({ request }),
 		preferences: getPreferences(),
 		progress: getProgress({ timings }).catch((e) => {
 			console.error('Failed to get progress', e)
@@ -114,7 +118,7 @@ export async function loader({ request }: LoaderFunctionArgs) {
 		apps: getApps({ request, timings }),
 	})
 
-	const presentUsers = await getPresentUsers(asyncStuff.user, {
+	const presentUsers = await getPresentUsers({
 		request,
 		timings,
 	})
@@ -150,19 +154,16 @@ export async function loader({ request }: LoaderFunctionArgs) {
 			},
 		},
 		{
-			headers: combineHeaders(toastHeaders, confettiHeaders, {
-				'Server-Timing': timings.toString(),
-			}),
+			headers: combineHeaders(
+				toastHeaders,
+				confettiHeaders,
+				{ 'Server-Timing': timings.toString() },
+				asyncStuff.userId?.type === 'cookie.randomId'
+					? { 'Set-Cookie': getSetClientIdCookieHeader(asyncStuff.userId.id) }
+					: undefined,
+			),
 		},
 	)
-}
-
-export const headers: HeadersFunction = ({ loaderHeaders }) => {
-	const headers = {
-		'Cache-Control': loaderHeaders.get('Cache-Control') ?? '',
-		'Server-Timing': loaderHeaders.get('Server-Timing') ?? '',
-	}
-	return headers
 }
 
 function Document({

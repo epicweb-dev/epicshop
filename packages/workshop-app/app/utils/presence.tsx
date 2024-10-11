@@ -5,10 +5,16 @@ import {
 	type Message,
 	type User,
 } from '@epic-web/workshop-presence/presence'
-import { createId as cuid } from '@paralleldrive/cuid2'
 import { useParams, useRouteLoaderData } from '@remix-run/react'
 import { usePartySocket } from 'partysocket/react'
-import { createContext, useContext, useEffect, useState } from 'react'
+import {
+	createContext,
+	useCallback,
+	useContext,
+	useEffect,
+	useRef,
+	useState,
+} from 'react'
 import { z } from 'zod'
 import { type loader as rootLoader } from '#app/root.tsx'
 import { useRequestInfo } from './request-info.ts'
@@ -35,37 +41,80 @@ const ExerciseAppParamsSchema = z.object({
 	stepNumber: z.coerce.number().finite().optional(),
 })
 
+/**
+ * useFirstCallDelayedCallback
+ *
+ * This hook creates a callback that is delayed on its first call.
+ * It's useful for scenarios where you want to delay the execution of a function
+ * for a certain amount of time, but only on the initial call.
+ *
+ * If it's called again before the delay expires, then the prior call is ignored
+ * and when the delay expires, the latest call is executed.
+ *
+ * The motivation here is that the server may get one set of presence and by the
+ * time it shows up on the client it's stale. This delays the re-rendering of
+ * the UI to avoid a flicker as soon as you land on the page.
+ *
+ * @param cb The callback function to be delayed
+ * @param delay The delay in milliseconds before the callback is executed
+ * @returns A new function that wraps the original callback with the delay logic
+ */
+function useFirstCallDelayedCallback<Args extends unknown[]>(
+	cb: (...args: Args) => void,
+	delay: number,
+) {
+	const [timedPromise] = useState(
+		() => new Promise((resolve) => setTimeout(resolve, delay)),
+	)
+	const mounted = useRef(true)
+	const currentCallRef = useRef<symbol | null>(null)
+	const lastCbRef = useRef(cb)
+
+	useEffect(() => {
+		lastCbRef.current = cb
+	}, [cb])
+
+	const delayedCb = useCallback(
+		(...args: Args) => {
+			const thisOne = Symbol()
+			currentCallRef.current = thisOne
+			void timedPromise.then(() => {
+				if (!mounted.current) return
+				if (currentCallRef.current !== thisOne) {
+					return
+				}
+
+				lastCbRef.current(...args)
+			})
+		},
+		[timedPromise],
+	)
+
+	return delayedCb
+}
+
 export function usePresenceSocket(user?: User | null) {
 	const workshopTitle = useOptionalWorkshopTitle()
-	const { userHasAccess = false } =
+	const { userHasAccess = false, userId } =
 		useRouteLoaderData<typeof rootLoader>('root') ?? {}
 	const requestInfo = useRequestInfo()
 	const rawParams = useParams()
 	const prefs = usePresencePreferences()
 	const data = useRouteLoaderData<typeof rootLoader>('root')
 	const [users, setUsers] = useState(data?.presence.users ?? [])
-	const [clientId] = useState(() => {
-		if (typeof document === 'undefined') return null
-		if (user) return user.id
-		const clientId = sessionStorage.getItem('clientId')
-		if (clientId) return clientId
-		const newClientId = cuid()
-		sessionStorage.setItem('clientId', newClientId)
-		return newClientId
-	})
+
+	const handleMessage = useFirstCallDelayedCallback((evt: MessageEvent) => {
+		const messageResult = MessageSchema.safeParse(JSON.parse(String(evt.data)))
+		if (!messageResult.success) return
+		if (messageResult.data.type === 'presence') {
+			setUsers(messageResult.data.payload.users)
+		}
+	}, 2000)
 
 	const socket = usePartySocket({
 		host: new URL(partykitBaseUrl).host,
 		room: partykitRoom,
-		onMessage(evt: MessageEvent) {
-			const messageResult = MessageSchema.safeParse(
-				JSON.parse(String(evt.data)),
-			)
-			if (!messageResult.success) return
-			if (messageResult.data.type === 'presence') {
-				setUsers(messageResult.data.payload.users)
-			}
-		},
+		onMessage: handleMessage,
 	})
 
 	const paramsResult = ExerciseAppParamsSchema.safeParse(rawParams)
@@ -85,23 +134,24 @@ export function usePresenceSocket(user?: User | null) {
 	} satisfies User['location']
 
 	let message: Message | null = null
-	if ((!user || prefs?.optOut) && clientId) {
-		if (user) {
+	if (user) {
+		if (prefs?.optOut) {
 			message = { type: 'remove-user', payload: { id: user.id } }
+		} else {
+			message = {
+				type: 'add-user',
+				payload: {
+					id: user.id,
+					name: user.name,
+					hasAccess: userHasAccess,
+					imageUrlSmall: user.imageUrlSmall,
+					imageUrlLarge: user.imageUrlLarge,
+					location,
+				},
+			}
 		}
-		message = { type: 'add-user', payload: { id: clientId, location } }
-	} else if (user) {
-		message = {
-			type: 'add-user',
-			payload: {
-				id: user.id,
-				name: user.name,
-				hasAccess: userHasAccess,
-				imageUrlSmall: user.imageUrlSmall,
-				imageUrlLarge: user.imageUrlLarge,
-				location,
-			},
-		}
+	} else if (userId?.id) {
+		message = { type: 'add-user', payload: { id: userId.id, location } }
 	}
 
 	const messageJson = message ? JSON.stringify(message) : null
@@ -109,12 +159,16 @@ export function usePresenceSocket(user?: User | null) {
 		if (messageJson) socket.send(messageJson)
 	}, [messageJson, socket])
 
-	const scoredUsers = scoreUsers(location, users)
+	const scoredUsers = scoreUsers({ id: userId?.id, location }, users)
 
 	return { users: scoredUsers }
 }
 
-function scoreUsers(location: User['location'], users: Array<User>) {
+function scoreUsers(
+	user: { id?: string | null; location: User['location'] },
+	users: Array<User>,
+) {
+	const { location } = user
 	const scoredUsers = users.map((user) => {
 		let score = 0
 		const available = 5
@@ -147,6 +201,8 @@ function scoreUsers(location: User['location'], users: Array<User>) {
 		return { user, score: Math.floor((score / available) * 10) / 10 }
 	})
 	return scoredUsers.sort((a, b) => {
+		if (a.user.id === user?.id) return -1
+		if (b.user.id === user?.id) return 1
 		if (a.score === b.score) return 0
 		return a.score > b.score ? -1 : 1
 	})

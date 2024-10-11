@@ -17,7 +17,7 @@ import {
 	getProgress,
 	updateProgress,
 	type Progress,
-} from '#app/utils/epic-api.ts'
+} from '@epic-web/workshop-utils/epic-api.server'
 import { combineHeaders, ensureUndeployed } from '#app/utils/misc.tsx'
 import { dataWithPE, usePERedirectInput } from '#app/utils/pe.js'
 import { createToastHeaders } from '#app/utils/toast.server.ts'
