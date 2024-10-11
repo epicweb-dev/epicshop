@@ -98,6 +98,8 @@ export async function loader({ request }: LoaderFunctionArgs) {
 				})),
 			})),
 			playground,
+			isMenuOpened:
+				request.headers.get('cookie')?.includes('es_menu_open=true') ?? false,
 		},
 		{
 			headers: {
@@ -269,12 +271,18 @@ function FacePile({ isMenuOpened }: { isMenuOpened: boolean }) {
 const useIsWide = makeMediaQueryStore('(min-width: 640px)', true)
 
 export default function App() {
+	const data = useLoaderData<typeof loader>()
 	const user = useOptionalUser()
 	const isWide = useIsWide()
 	const isHydrated = useHydrated()
 
-	const [isMenuOpened, setMenuOpened] = React.useState(false)
+	const [isMenuOpened, setMenuOpenedState] = React.useState(data.isMenuOpened)
 	useRevalidationWS({ watchPaths: ['./exercises/README.mdx'] })
+
+	function setMenuOpened(value: boolean) {
+		setMenuOpenedState(value)
+		document.cookie = `es_menu_open=${value.toString()}; path=/; SameSite=Lax;`
+	}
 
 	return (
 		<div className="flex flex-col">
@@ -1140,6 +1148,7 @@ function NavToggle({
 	setMenuOpened: (value: boolean) => void
 	menuControls?: AnimationControls
 }) {
+	const initialOpenRef = React.useRef(isMenuOpened)
 	const menuButtonRef = React.useRef<HTMLButtonElement>(null)
 	const path01Variants = {
 		open: { d: 'M3.06061 2.99999L21.0606 21' },
@@ -1196,14 +1205,14 @@ function NavToggle({
 			>
 				<svg width="24" height="24" viewBox="0 0 24 24">
 					<motion.path
-						{...path01Variants.closed}
+						{...path01Variants[initialOpenRef.current ? 'open' : 'closed']}
 						animate={path01Controls}
 						transition={{ duration: 0.2 }}
 						stroke="currentColor"
 						strokeWidth={1.5}
 					/>
 					<motion.path
-						{...path02Variants.closed}
+						{...path02Variants[initialOpenRef.current ? 'open' : 'closed']}
 						animate={path02Controls}
 						transition={{ duration: 0.2 }}
 						stroke="currentColor"
