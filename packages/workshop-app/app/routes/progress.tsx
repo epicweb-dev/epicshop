@@ -1,5 +1,10 @@
 import { invariantResponse } from '@epic-web/invariant'
 import { requireAuthInfo } from '@epic-web/workshop-utils/db.server'
+import {
+	getProgress,
+	updateProgress,
+	type Progress,
+} from '@epic-web/workshop-utils/epic-api.server'
 import { type ActionFunctionArgs } from '@remix-run/node'
 import {
 	useFetcher,
@@ -13,11 +18,6 @@ import { motion } from 'framer-motion'
 import * as React from 'react'
 import { type loader as rootLoader } from '#app/root.tsx'
 import { createConfettiHeaders } from '#app/utils/confetti.server.ts'
-import {
-	getProgress,
-	updateProgress,
-	type Progress,
-} from '@epic-web/workshop-utils/epic-api.server'
 import { combineHeaders, ensureUndeployed } from '#app/utils/misc.tsx'
 import { dataWithPE, usePERedirectInput } from '#app/utils/pe.js'
 import { createToastHeaders } from '#app/utils/toast.server.ts'

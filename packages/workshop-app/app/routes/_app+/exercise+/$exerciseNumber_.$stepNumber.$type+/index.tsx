@@ -10,6 +10,7 @@ import {
 	type ExerciseStepApp,
 } from '@epic-web/workshop-utils/apps.server'
 import { compileMarkdownString } from '@epic-web/workshop-utils/compile-mdx.server'
+import { userHasAccessToWorkshop } from '@epic-web/workshop-utils/epic-api.server'
 import {
 	combineServerTimings,
 	getServerTimeHeader,
@@ -35,7 +36,6 @@ import { Diff } from '#app/components/diff.tsx'
 import { GeneralErrorBoundary } from '#app/components/error-boundary.tsx'
 import { type InBrowserBrowserRef } from '#app/components/in-browser-browser.tsx'
 import { getDiffCode } from '#app/utils/diff.server.ts'
-import { userHasAccessToWorkshop } from '@epic-web/workshop-utils/epic-api.server'
 import { useAltDown } from '#app/utils/misc.tsx'
 import { fetchDiscordPosts } from './__shared/discord.server.ts'
 import { DiscordChat } from './__shared/discord.tsx'

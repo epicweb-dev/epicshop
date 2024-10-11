@@ -4,6 +4,7 @@ import {
 	getAuthInfo,
 	markOnboardingVideoWatched,
 } from '@epic-web/workshop-utils/db.server'
+import { getEpicVideoInfos } from '@epic-web/workshop-utils/epic-api.server'
 import { makeTimings } from '@epic-web/workshop-utils/timing.server'
 import { type SEOHandle } from '@nasa-gcn/remix-seo'
 import {
@@ -19,7 +20,6 @@ import {
 	DeferredEpicVideo,
 	EpicVideoInfoProvider,
 } from '#app/components/epic-video.tsx'
-import { getEpicVideoInfos } from '@epic-web/workshop-utils/epic-api.server'
 
 export const handle: SEOHandle = {
 	getSitemapEntries: () => null,

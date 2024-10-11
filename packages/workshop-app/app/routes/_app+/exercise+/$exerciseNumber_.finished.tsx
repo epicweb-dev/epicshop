@@ -9,6 +9,7 @@ import {
 	isExerciseStepApp,
 } from '@epic-web/workshop-utils/apps.server'
 import { getWorkshopConfig } from '@epic-web/workshop-utils/config.server'
+import { getEpicVideoInfos } from '@epic-web/workshop-utils/epic-api.server'
 import {
 	combineServerTimings,
 	getServerTimeHeader,
@@ -30,7 +31,6 @@ import { useRevalidationWS } from '#app/components/revalidation-ws.js'
 import { type loader as rootLoader } from '#app/root.tsx'
 import { EditFileOnGitHub } from '#app/routes/launch-editor.tsx'
 import { ProgressToggle } from '#app/routes/progress.tsx'
-import { getEpicVideoInfos } from '@epic-web/workshop-utils/epic-api.server'
 import { Mdx } from '#app/utils/mdx.tsx'
 import { cn } from '#app/utils/misc.tsx'
 import { getSeoMetaTags } from '#app/utils/seo.js'

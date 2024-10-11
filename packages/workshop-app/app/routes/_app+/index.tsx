@@ -4,6 +4,7 @@ import {
 	getWorkshopInstructions,
 } from '@epic-web/workshop-utils/apps.server'
 import { getWorkshopConfig } from '@epic-web/workshop-utils/config.server'
+import { getEpicVideoInfos } from '@epic-web/workshop-utils/epic-api.server'
 import {
 	combineServerTimings,
 	getServerTimeHeader,
@@ -21,7 +22,6 @@ import slugify from '@sindresorhus/slugify'
 import { EpicVideoInfoProvider } from '#app/components/epic-video.tsx'
 import { GeneralErrorBoundary } from '#app/components/error-boundary.tsx'
 import { EditFileOnGitHub } from '#app/routes/launch-editor.tsx'
-import { getEpicVideoInfos } from '@epic-web/workshop-utils/epic-api.server'
 import { Mdx } from '#app/utils/mdx.tsx'
 import { cn } from '#app/utils/misc.tsx'
 import { ProgressToggle, useExerciseProgressClassName } from '../progress.tsx'

@@ -4,6 +4,7 @@ import {
 	getWorkshopFinished,
 } from '@epic-web/workshop-utils/apps.server'
 import { getWorkshopConfig } from '@epic-web/workshop-utils/config.server'
+import { getEpicVideoInfos } from '@epic-web/workshop-utils/epic-api.server'
 import {
 	combineServerTimings,
 	getServerTimeHeader,
@@ -25,7 +26,6 @@ import { Loading } from '#app/components/loading.tsx'
 import { NavChevrons } from '#app/components/nav-chevrons.tsx'
 import { useRevalidationWS } from '#app/components/revalidation-ws.js'
 import { type loader as rootLoader } from '#app/root.tsx'
-import { getEpicVideoInfos } from '@epic-web/workshop-utils/epic-api.server'
 import { Mdx } from '#app/utils/mdx.tsx'
 import { cn } from '#app/utils/misc.tsx'
 import { getSeoMetaTags } from '#app/utils/seo.js'
