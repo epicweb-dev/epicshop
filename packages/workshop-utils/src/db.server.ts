@@ -12,6 +12,8 @@ const TokenSetSchema = z.object({
 })
 export const PlayerPreferencesSchema = z
 	.object({
+		minResolution: z.number().optional(),
+		maxResolution: z.number().optional(),
 		volumeRate: z.number().optional(),
 		playbackRate: z.number().optional(),
 		autoplay: z.boolean().optional(),
@@ -168,7 +170,13 @@ export async function setPlayerPreferences(
 	const data = await readDb()
 	const updatedData = {
 		...data,
-		preferences: { ...data?.preferences, player: playerPreferences },
+		preferences: {
+			...data?.preferences,
+			player: {
+				...data?.preferences?.player,
+				...playerPreferences,
+			},
+		},
 	}
 	await fsExtra.ensureDir(appDir)
 	await fsExtra.writeJSON(dbPath, updatedData)

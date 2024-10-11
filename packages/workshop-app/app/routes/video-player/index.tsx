@@ -4,6 +4,8 @@ import {
 } from '@epic-web/workshop-utils/db.server'
 import RealMuxPlayer, {
 	type MuxPlayerRefAttributes,
+	MinResolution,
+	MaxResolution,
 } from '@mux/mux-player-react'
 import { unstable_data as data, type ActionFunctionArgs } from '@remix-run/node'
 import { useFetcher, useRouteLoaderData } from '@remix-run/react'
@@ -219,6 +221,8 @@ export function MuxPlayer({
 				accentColor="#427cf0"
 				targetLiveWindow={NaN} // this has gotta be a bug. Without this prop, we get SSR warnings 🤷‍♂️
 				onLoadedMetadata={() => setMetadataLoaded(true)}
+				minResolution={getMinResolutionValue(playerPreferences?.minResolution)}
+				maxResolution={getMaxResolutionValue(playerPreferences?.maxResolution)}
 				{...props}
 			/>
 		</div>
@@ -246,4 +250,22 @@ function isDeepEqual(obj1: unknown, obj2: unknown) {
 		if (!isDeepEqual(obj1[key], obj2[key])) return false
 	}
 	return true
+}
+
+function getMinResolutionValue(resolution: number | undefined) {
+	if (!resolution) return undefined
+	if (resolution <= 480) return MinResolution.noLessThan480p
+	if (resolution <= 540) return MinResolution.noLessThan540p
+	if (resolution <= 720) return MinResolution.noLessThan720p
+	if (resolution <= 1080) return MinResolution.noLessThan1080p
+	if (resolution <= 1440) return MinResolution.noLessThan1440p
+	return MinResolution.noLessThan2160p
+}
+
+function getMaxResolutionValue(resolution: number | undefined) {
+	if (!resolution) return undefined
+	if (resolution <= 720) return MaxResolution.upTo720p
+	if (resolution <= 1080) return MaxResolution.upTo1080p
+	if (resolution <= 1440) return MaxResolution.upTo1440p
+	return MaxResolution.upTo2160p
 }

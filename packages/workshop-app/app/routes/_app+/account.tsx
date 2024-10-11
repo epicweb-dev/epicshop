@@ -2,11 +2,12 @@ import { deleteCache } from '@epic-web/workshop-utils/cache.server'
 import {
 	deleteDb,
 	requireAuthInfo,
+	setPlayerPreferences,
 	setPresencePreferences,
 } from '@epic-web/workshop-utils/db.server'
 import { type SEOHandle } from '@nasa-gcn/remix-seo'
 import { redirect, type LoaderFunctionArgs } from '@remix-run/node'
-import { Form, Link } from '@remix-run/react'
+import { Form, Link, useNavigation } from '@remix-run/react'
 import { Button } from '#app/components/button.tsx'
 import { Icon } from '#app/components/icons.tsx'
 import { SimpleTooltip } from '#app/components/ui/tooltip.js'
@@ -15,6 +16,7 @@ import { useWorkshopConfig } from '#app/components/workshop-config.tsx'
 import { ensureUndeployed } from '#app/utils/misc.tsx'
 import { usePresencePreferences } from '#app/utils/presence.tsx'
 import { redirectWithToast } from '#app/utils/toast.server.ts'
+import { usePlayerPreferences } from '../video-player/index.tsx'
 
 export const handle: SEOHandle = {
 	getSitemapEntries: () => null,
@@ -46,6 +48,18 @@ export async function action({ request }: { request: Request }) {
 			description: `You are now ${optOut ? 'invisible' : 'visible'}.`,
 			type: 'success',
 		})
+	} else if (intent === 'update-player-preferences') {
+		const minResolution = formData.get('minResolution')
+		const maxResolution = formData.get('maxResolution')
+		await setPlayerPreferences({
+			minResolution: minResolution ? Number(minResolution) : undefined,
+			maxResolution: maxResolution ? Number(maxResolution) : undefined,
+		})
+		return redirectWithToast('/account', {
+			title: 'Preferences updated',
+			description: 'Your video player preferences have been updated.',
+			type: 'success',
+		})
 	}
 
 	return redirect('/account')
@@ -62,7 +76,12 @@ export default function Account() {
 	const user = useUser()
 	const discordMember = useOptionalDiscordMember()
 	const presencePreferences = usePresencePreferences()
+	const playerPreferences = usePlayerPreferences()
 	const connectDiscordURL = useConnectDiscordURL()
+	const navigation = useNavigation()
+
+	const isSubmitting = navigation.state === 'submitting'
+
 	return (
 		<main className="container flex h-full w-full max-w-3xl flex-grow flex-col items-center justify-center gap-4">
 			{user.imageUrlLarge ? (
@@ -146,6 +165,51 @@ export default function Account() {
 					<Icon name="Question" tabIndex={0} />
 				</SimpleTooltip>
 			</div>
+			<hr className="w-full" />
+			<div>
+				<h2 className="mb-2 text-xl">Video Player Preferences</h2>
+				<Form method="post" className="flex flex-col gap-4">
+					<div className="flex items-center gap-2">
+						<label htmlFor="minResolution">Minimum Resolution:</label>
+						<select
+							id="minResolution"
+							name="minResolution"
+							defaultValue={playerPreferences?.minResolution}
+						>
+							<option value="">Auto</option>
+							<option value="480">480p</option>
+							<option value="720">720p</option>
+							<option value="1080">1080p</option>
+							<option value="1440">1440p</option>
+							<option value="2160">2160p (4K)</option>
+						</select>
+					</div>
+					<div className="flex items-center gap-2">
+						<label htmlFor="maxResolution">Maximum Resolution:</label>
+						<select
+							id="maxResolution"
+							name="maxResolution"
+							defaultValue={playerPreferences?.maxResolution}
+						>
+							<option value="">Auto</option>
+							<option value="720">720p</option>
+							<option value="1080">1080p</option>
+							<option value="1440">1440p</option>
+							<option value="2160">2160p (4K)</option>
+						</select>
+					</div>
+					<Button
+						varient="mono"
+						type="submit"
+						name="intent"
+						value="update-player-preferences"
+						disabled={isSubmitting}
+					>
+						{isSubmitting ? 'Updating...' : 'Update Player Preferences'}
+					</Button>
+				</Form>
+			</div>
+			<hr className="w-full" />
 			<p>
 				Check{' '}
 				<Link to="/onboarding" className="underline">
