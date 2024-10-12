@@ -485,6 +485,7 @@ body {
 	margin-bottom: 0 !important;
 }
 
+// For Firefox tests: https://github.com/epicweb-dev/epicshop/pull/228#pullrequestreview-2363921488
 .radix-state-closed\:hidden[data-state='closed'] {
 	height: 0;
 	overflow: hidden;
