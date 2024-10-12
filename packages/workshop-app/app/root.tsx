@@ -170,13 +170,15 @@ function Document({
 	children,
 	env = {},
 	className,
+	style,
 }: {
 	children: React.ReactNode
 	env?: Record<string, unknown>
 	className: string
+	style?: React.CSSProperties
 }) {
 	return (
-		<html lang="en" className={className}>
+		<html lang="en" className={className} style={style}>
 			<head>
 				<ClientHintCheck />
 				<Meta />
@@ -210,6 +212,11 @@ function App() {
 	const theme = useTheme()
 	return (
 		<Document
+			style={
+				data.preferences?.fontSize
+					? { fontSize: `${data.preferences?.fontSize}px` }
+					: {}
+			}
 			className={cn(
 				'antialiased h-screen-safe',
 				theme,

@@ -112,6 +112,12 @@ export const extendedTheme = {
 		/** 16px size / 20px high / bold */
 		h6: ['1rem', { lineHeight: '1.25rem', fontWeight: '700' }],
 
+		/** 48px size / 52px high / normal */
+		'body-5xl': ['3rem', { lineHeight: '3.25rem' }],
+		/** 40px size / 44px high / normal */
+		'body-4xl': ['2.5rem', { lineHeight: '2.75rem' }],
+		/** 36px size / 40px high / normal */
+		'body-3xl': ['2.25rem', { lineHeight: '2.5rem' }],
 		/** 32px size / 36px high / normal */
 		'body-2xl': ['2rem', { lineHeight: '2.25rem' }],
 		/** 28px size / 36px high / normal */

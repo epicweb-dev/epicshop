@@ -2,21 +2,18 @@ import { deleteCache } from '@epic-web/workshop-utils/cache.server'
 import {
 	deleteDb,
 	requireAuthInfo,
-	setPlayerPreferences,
-	setPresencePreferences,
+	setPreferences,
 } from '@epic-web/workshop-utils/db.server'
 import { type SEOHandle } from '@nasa-gcn/remix-seo'
 import { redirect, type LoaderFunctionArgs } from '@remix-run/node'
-import { Form, Link, useNavigation } from '@remix-run/react'
+import { Form, Link } from '@remix-run/react'
 import { Button } from '#app/components/button.tsx'
 import { Icon } from '#app/components/icons.tsx'
 import { SimpleTooltip } from '#app/components/ui/tooltip.js'
 import { useOptionalDiscordMember, useUser } from '#app/components/user.tsx'
 import { useWorkshopConfig } from '#app/components/workshop-config.tsx'
 import { ensureUndeployed } from '#app/utils/misc.tsx'
-import { usePresencePreferences } from '#app/utils/presence.tsx'
 import { redirectWithToast } from '#app/utils/toast.server.ts'
-import { usePlayerPreferences } from '../video-player/index.tsx'
 
 export const handle: SEOHandle = {
 	getSitemapEntries: () => null,
@@ -42,22 +39,10 @@ export async function action({ request }: { request: Request }) {
 		})
 	} else if (intent === 'presence-opt-out') {
 		const optOut = formData.get('optOut') === 'true'
-		await setPresencePreferences({ optOut })
+		await setPreferences({ presence: { optOut } })
 		return redirectWithToast('/account', {
 			title: optOut ? 'Opted out' : 'Opted in',
 			description: `You are now ${optOut ? 'invisible' : 'visible'}.`,
-			type: 'success',
-		})
-	} else if (intent === 'update-player-preferences') {
-		const minResolution = formData.get('minResolution')
-		const maxResolution = formData.get('maxResolution')
-		await setPlayerPreferences({
-			minResolution: minResolution ? Number(minResolution) : undefined,
-			maxResolution: maxResolution ? Number(maxResolution) : undefined,
-		})
-		return redirectWithToast('/account', {
-			title: 'Preferences updated',
-			description: 'Your video player preferences have been updated.',
 			type: 'success',
 		})
 	}
@@ -74,13 +59,9 @@ function useConnectDiscordURL() {
 
 export default function Account() {
 	const user = useUser()
+	const config = useWorkshopConfig()
 	const discordMember = useOptionalDiscordMember()
-	const presencePreferences = usePresencePreferences()
-	const playerPreferences = usePlayerPreferences()
 	const connectDiscordURL = useConnectDiscordURL()
-	const navigation = useNavigation()
-
-	const isSubmitting = navigation.state === 'submitting'
 
 	return (
 		<main className="container flex h-full w-full max-w-3xl flex-grow flex-col items-center justify-center gap-4">
@@ -131,21 +112,6 @@ export default function Account() {
 				</div>
 			)}
 			<div className="flex items-center gap-2">
-				<Form method="POST">
-					<input
-						name="optOut"
-						type="hidden"
-						value={presencePreferences?.optOut ? 'false' : 'true'}
-					/>
-					<Button varient="mono" name="intent" value="presence-opt-out">
-						{presencePreferences?.optOut ? 'Opt in to' : 'Opt out of'} presence
-					</Button>
-				</Form>
-				<SimpleTooltip content="This controls whether your name and avatar are displayed in the pile of faces in navigation">
-					<Icon name="Question" tabIndex={0} />
-				</SimpleTooltip>
-			</div>
-			<div className="flex items-center gap-2">
 				<Form method="post">
 					<Button varient="mono" name="intent" value="logout">
 						Log device out
@@ -166,64 +132,32 @@ export default function Account() {
 				</SimpleTooltip>
 			</div>
 			<hr className="w-full" />
-			<div>
-				<h2 className="mb-2 text-xl">Video Player Preferences</h2>
-				<Form method="post" className="flex flex-col gap-4">
-					<div className="flex items-center gap-2">
-						<label htmlFor="minResolution">Minimum Resolution:</label>
-						<select
-							id="minResolution"
-							name="minResolution"
-							defaultValue={playerPreferences?.minResolution}
-						>
-							<option value="">Auto</option>
-							<option value="480">480p</option>
-							<option value="720">720p</option>
-							<option value="1080">1080p</option>
-							<option value="1440">1440p</option>
-							<option value="2160">2160p (4K)</option>
-						</select>
-					</div>
-					<div className="flex items-center gap-2">
-						<label htmlFor="maxResolution">Maximum Resolution:</label>
-						<select
-							id="maxResolution"
-							name="maxResolution"
-							defaultValue={playerPreferences?.maxResolution}
-						>
-							<option value="">Auto</option>
-							<option value="720">720p</option>
-							<option value="1080">1080p</option>
-							<option value="1440">1440p</option>
-							<option value="2160">2160p (4K)</option>
-						</select>
-					</div>
-					<Button
-						varient="mono"
-						type="submit"
-						name="intent"
-						value="update-player-preferences"
-						disabled={isSubmitting}
+			<ul className="flex list-inside list-disc flex-col gap-2 self-start">
+				<li>
+					<Link
+						to={`https://${config.product.host}/profile`}
+						className="inline-flex gap-1 underline"
 					>
-						{isSubmitting ? 'Updating...' : 'Update Player Preferences'}
-					</Button>
-				</Form>
-			</div>
-			<hr className="w-full" />
-			<p>
-				Check{' '}
-				<Link to="/onboarding" className="underline">
-					/onboarding
-				</Link>{' '}
-				if you'd like to review onboarding again.
-			</p>
-			<p>
-				Check{' '}
-				<Link to="/support" className="underline">
-					/support
-				</Link>{' '}
-				if you need support.
-			</p>
+						<span>Manage your account</span>
+						<Icon name="ExternalLink" />
+					</Link>
+				</li>
+				<li>
+					<Link to="/preferences" className="underline">
+						Manage your preferences
+					</Link>
+				</li>
+				<li>
+					<Link to="/onboarding" className="underline">
+						Review onboarding
+					</Link>
+				</li>
+				<li>
+					<Link to="/support" className="underline">
+						Get support
+					</Link>
+				</li>
+			</ul>
 		</main>
 	)
 }

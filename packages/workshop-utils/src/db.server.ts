@@ -63,6 +63,7 @@ const DataSchema = z.object({
 		.object({
 			player: PlayerPreferencesSchema,
 			presence: PresencePreferencesSchema,
+			fontSize: z.number().optional(),
 		})
 		.optional()
 		.default({}),
@@ -164,36 +165,44 @@ export async function getPreferences() {
 	return data?.preferences ?? null
 }
 
-export async function setPlayerPreferences(
-	playerPreferences: z.input<typeof PlayerPreferencesSchema>,
+export async function setPreferences(
+	preferences: z.input<typeof DataSchema>['preferences'],
 ) {
 	const data = await readDb()
 	const updatedData = {
 		...data,
 		preferences: {
 			...data?.preferences,
+			...preferences,
 			player: {
 				...data?.preferences?.player,
-				...playerPreferences,
+				...preferences?.player,
+			},
+			presence: {
+				...data?.preferences?.presence,
+				...preferences?.presence,
 			},
 		},
 	}
 	await fsExtra.ensureDir(appDir)
 	await fsExtra.writeJSON(dbPath, updatedData)
-	return updatedData.preferences.player
+	return updatedData.preferences
 }
 
-export async function setPresencePreferences(
-	presnecePreferences: z.input<typeof PresencePreferencesSchema>,
-) {
+export async function setFontSizePreference(fontSize: number | undefined) {
 	const data = await readDb()
 	const updatedData = {
 		...data,
-		preferences: { ...data?.preferences, presence: presnecePreferences },
+		preferences: { ...data?.preferences, fontSize },
 	}
 	await fsExtra.ensureDir(appDir)
 	await fsExtra.writeJSON(dbPath, updatedData)
-	return updatedData.preferences.presence
+	return updatedData.preferences.fontSize
+}
+
+export async function getFontSizePreference() {
+	const data = await readDb()
+	return data?.preferences?.fontSize ?? null
 }
 
 export async function readOnboardingData() {

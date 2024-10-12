@@ -1,6 +1,6 @@
 import {
 	PlayerPreferencesSchema,
-	setPlayerPreferences,
+	setPreferences,
 } from '@epic-web/workshop-utils/db.server'
 import RealMuxPlayer, {
 	type MuxPlayerRefAttributes,
@@ -65,7 +65,7 @@ export async function action({ request }: ActionFunctionArgs) {
 			status: 400,
 		})
 	}
-	await setPlayerPreferences(result.data)
+	await setPreferences({ player: result.data })
 	return { status: 'success' } as const
 }
 
