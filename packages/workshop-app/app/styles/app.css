@@ -484,3 +484,9 @@ body {
 .prose callout-danger.notification {
 	margin-bottom: 0 !important;
 }
+
+.radix-state-closed\:hidden[data-state='closed'] {
+	height: 0;
+	overflow: hidden;
+	display: flex;
+}
