@@ -5,6 +5,7 @@ import { Icon } from '#app/components/icons.tsx'
 import { Loading } from '#app/components/loading.tsx'
 import { DiscordCTA, useDiscordCTALink } from '#app/routes/_app+/discord.tsx'
 import { useAltDown } from '#app/utils/misc.tsx'
+import { useIsOnline } from '#app/utils/online.ts'
 import { type loader } from '../index.tsx'
 
 export function DiscordChat() {
@@ -24,6 +25,18 @@ function DiscordPosts() {
 	const data = useLoaderData<typeof loader>()
 	const ctaLink = useDiscordCTALink()
 	const altDown = useAltDown()
+	const isOnline = useIsOnline()
+	if (!isOnline) {
+		return (
+			<div className="flex h-full flex-col items-center justify-between">
+				<div className="text-foreground-destructive flex h-full w-full flex-col items-center justify-center">
+					<Icon name="Error" size="xl">
+						Unable to load discord messages when offline
+					</Icon>
+				</div>
+			</div>
+		)
+	}
 	return (
 		<div className="flex h-full flex-col items-center justify-between">
 			<React.Suspense

@@ -22,12 +22,14 @@ import { Link, useLoaderData } from '@remix-run/react'
 import slugify from '@sindresorhus/slugify'
 import * as React from 'react'
 import { EpicVideoInfoProvider } from '#app/components/epic-video.tsx'
+import { Icon } from '#app/components/icons.tsx'
 import { Loading } from '#app/components/loading.tsx'
 import { NavChevrons } from '#app/components/nav-chevrons.tsx'
 import { useRevalidationWS } from '#app/components/revalidation-ws.js'
 import { type loader as rootLoader } from '#app/root.tsx'
 import { Mdx } from '#app/utils/mdx.tsx'
 import { cn } from '#app/utils/misc.tsx'
+import { useIsOnline } from '#app/utils/online.ts'
 import { getSeoMetaTags } from '#app/utils/seo.js'
 import { EditFileOnGitHub } from '../launch-editor.tsx'
 import { ProgressToggle } from '../progress.tsx'
@@ -181,6 +183,24 @@ function Survey({
 	workshopFormEmbedUrl: string
 }) {
 	const [iframeLoaded, setIframeLoaded] = React.useState(false)
+	const isOnline = useIsOnline()
+	if (!isOnline) {
+		return (
+			<div className="relative flex-shrink-0">
+				<div className="text-foreground-destructive absolute inset-0 z-10 flex items-center justify-center">
+					<Icon name="Error" size="xl">
+						<span>
+							{'Unable to load the '}
+							<a href={workshopFormEmbedUrl} className="underline">
+								{`${workshopTitle} feedback form`}
+							</a>
+							{' when offline'}
+						</span>
+					</Icon>
+				</div>
+			</div>
+		)
+	}
 	return (
 		<div className="relative flex-shrink-0">
 			{!iframeLoaded ? (

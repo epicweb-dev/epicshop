@@ -222,7 +222,7 @@ export function SetAppToPlayground({ appName }: { appName: string }) {
 			appName={appName}
 			tooltipText="Playground is not set to the right app. Click to set Playground."
 		>
-			<span className="flex items-center justify-center gap-1 text-foreground-danger hover:underline">
+			<span className="text-foreground-destructive flex items-center justify-center gap-1 hover:underline">
 				<Icon name="Unlinked" className="animate-ping" />{' '}
 				<span className="uppercase">Set to Playground</span>
 			</span>

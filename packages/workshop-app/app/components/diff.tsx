@@ -109,7 +109,7 @@ export function Diff({
 			<Await
 				resolve={diff}
 				errorElement={
-					<p className="p-6 text-foreground-danger">
+					<p className="text-foreground-destructive p-6">
 						There was an error calculating the diff. Sorry.
 					</p>
 				}
@@ -215,7 +215,7 @@ function SelectFileToDiff({
 					align="start"
 					className="z-20 max-h-[50vh] bg-black text-white lg:max-h-[70vh]"
 				>
-					<Select.ScrollUpButton className="flex h-5 cursor-default items-center justify-center ">
+					<Select.ScrollUpButton className="flex h-5 cursor-default items-center justify-center">
 						<Icon name="ChevronUp" />
 					</Select.ScrollUpButton>
 					<Select.Viewport className="p-3">
@@ -232,7 +232,7 @@ function SelectFileToDiff({
 							})}
 						</Select.Group>
 					</Select.Viewport>
-					<Select.ScrollDownButton className="flex h-5 cursor-default items-center justify-center ">
+					<Select.ScrollDownButton className="flex h-5 cursor-default items-center justify-center">
 						<Icon name="ChevronDown" />
 					</Select.ScrollDownButton>
 				</Select.Content>
@@ -246,7 +246,7 @@ const SelectItem: React.FC<any> = React.forwardRef(
 		return (
 			<Select.Item
 				className={clsx(
-					'relative flex  cursor-pointer select-none items-center rounded px-10 py-2 leading-none opacity-80 radix-disabled:text-red-500 radix-highlighted:opacity-100 radix-highlighted:outline-none radix-state-checked:opacity-100',
+					'relative flex cursor-pointer select-none items-center rounded px-10 py-2 leading-none opacity-80 radix-disabled:text-red-500 radix-highlighted:opacity-100 radix-highlighted:outline-none radix-state-checked:opacity-100',
 
 					className,
 				)}

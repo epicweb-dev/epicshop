@@ -14,7 +14,7 @@
 		--foreground: 0 0% 0%;
 
 		/* prefixed with foreground because it should look good on the background */
-		--foreground-danger: 345 82.7% 40.8%;
+		--foreground-destructive: 345 82.7% 40.8%;
 
 		--highlight: 220 85% 60%;
 
@@ -58,7 +58,7 @@
 		--foreground: 230 20% 96%;
 
 		/* prefixed with foreground because it should look good on the background */
-		--foreground-danger: -4 68% 52%;
+		--foreground-destructive: -4 68% 52%;
 
 		--highlight: 220 90% 75%;
 

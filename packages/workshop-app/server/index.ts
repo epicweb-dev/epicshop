@@ -9,6 +9,7 @@ import {
 	setModifiedTimesForAppDirs,
 } from '@epic-web/workshop-utils/apps.server'
 import { checkForUpdates } from '@epic-web/workshop-utils/git.server'
+import { checkConnectionCached } from '@epic-web/workshop-utils/utils.server'
 import { createRequestHandler } from '@remix-run/express'
 import { type ServerBuild } from '@remix-run/node'
 import { ip as ipAddress } from 'address'
@@ -50,8 +51,9 @@ const epicshopAppRootDir = isRunningInBuildDir
 
 // kick this off early...
 const hasUpdatesPromise = checkForUpdates()
-// caches all apps
+// warm up some caches
 void getApps()
+void checkConnectionCached()
 void getPresentUsers()
 
 const app = express()

@@ -14,6 +14,7 @@ import {
 	type SolutionApp,
 } from './apps.server.js'
 import { cachifiedTimingReporter, type Timings } from './timing.server.js'
+import { checkConnectionCached } from './utils.server.js'
 
 export const solutionAppCache =
 	makeSingletonCache<SolutionApp>('SolutionAppCache')
@@ -37,6 +38,7 @@ export const compiledInstructionMarkdownCache = makeSingletonFsCache<{
 export const dirModifiedTimeCache = makeSingletonCache<number>(
 	'DirModifiedTimeCache',
 )
+export const connectionCache = makeSingletonCache<boolean>('ConnectionCache')
 
 const cacheDir = path.join(os.homedir(), '.epicshop', 'cache')
 
@@ -140,18 +142,37 @@ export function makeSingletonFsCache<CacheEntryType>(name: string) {
 	})
 }
 
+/**
+ * This wraps @epic-web/cachified to add a few handy features:
+ *
+ * 1. Automatic timing for timing headers
+ * 2. Automatic force refresh based on the request and enhancement of forceFresh
+ * to support comma-separated keys to force
+ * 3. Offline fallback support. If a fallback is given and we are detected to be
+ * offline, then the cached value is used regardless of whether it's expired and
+ * if one is not present then the given fallback will be used.
+ */
 export async function cachified<Value>({
 	request,
 	timings,
 	key,
 	timingKey = key.length > 18 ? `${key.slice(0, 7)}...${key.slice(-8)}` : key,
+	offlineFallbackValue,
 	...options
 }: Omit<C.CachifiedOptions<Value>, 'forceFresh'> & {
 	request?: Request
 	timings?: Timings
 	forceFresh?: boolean | string
 	timingKey?: string
+	offlineFallbackValue?: Value
 }): Promise<Value> {
+	if (offlineFallbackValue !== undefined) {
+		const isOnline = await checkConnectionCached({ request, timings })
+		if (!isOnline) {
+			const cacheEntry = await options.cache.get(key)
+			return cacheEntry?.value ?? offlineFallbackValue
+		}
+	}
 	const forceFresh = await shouldForceFresh({
 		forceFresh: options.forceFresh,
 		request,

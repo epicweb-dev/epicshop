@@ -59,7 +59,7 @@ export const extendedTheme = {
 		background: 'hsl(var(--background))',
 		highlight: 'hsl(var(--highlight))',
 		foreground: 'hsl(var(--foreground))',
-		'foreground-danger': 'hsl(var(--foreground-danger))',
+		'foreground-destructive': 'hsl(var(--foreground-destructive))',
 		scrollbar: 'var(--scrollbar)',
 		primary: {
 			DEFAULT: 'hsl(var(--primary))',

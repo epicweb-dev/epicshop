@@ -17,6 +17,7 @@ import {
 	getSetClientIdCookieHeader,
 	getUserId,
 } from '@epic-web/workshop-utils/user.server'
+import { checkConnectionCached } from '@epic-web/workshop-utils/utils.server'
 import { cssBundleHref } from '@remix-run/css-bundle'
 import {
 	unstable_data as data,
@@ -104,6 +105,7 @@ export async function loader({ request }: LoaderFunctionArgs) {
 	const theme = getTheme(request)
 	const { confettiId, headers: confettiHeaders } = getConfetti(request)
 	const { toast, headers: toastHeaders } = await getToast(request)
+	const isOnlinePromise = checkConnectionCached({ request, timings })
 
 	const asyncStuff = await promiseHash({
 		userId: getUserId({ request }),
@@ -146,6 +148,7 @@ export async function loader({ request }: LoaderFunctionArgs) {
 				path: new URL(request.url).pathname,
 				session: { theme },
 				separator: path.sep,
+				online: await isOnlinePromise,
 			},
 			toast,
 			confettiId,

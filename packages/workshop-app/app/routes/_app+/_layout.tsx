@@ -50,6 +50,7 @@ import {
 import { useOptionalUser, useUserHasAccess } from '#app/components/user.tsx'
 import { useWorkshopConfig } from '#app/components/workshop-config.js'
 import { cn } from '#app/utils/misc.tsx'
+import { useIsOnline } from '#app/utils/online.ts'
 import { usePresence, type User } from '#app/utils/presence.tsx'
 import {
 	useExerciseProgressClassName,
@@ -373,7 +374,7 @@ function NoUserBanner() {
 						{` for full experience.`}
 					</>{' '}
 				</div>
-			) : (
+			) : userHasAccess ? (
 				<div>
 					<Link to="/login" className="underline">
 						Login
@@ -384,7 +385,7 @@ function NoUserBanner() {
 					</a>{' '}
 					for the full experience.
 				</div>
-			)}
+			) : null}
 		</div>
 	)
 	return (
@@ -454,23 +455,25 @@ function NoUserBanner() {
 							</DialogContent>
 						</Dialog>
 					</div>
-					<div className="flex h-full items-center">
-						<Link
-							to={`https://${host}`}
-							target="_blank"
-							className="flex h-full items-center justify-center space-x-1.5 px-5 text-sm font-semibold"
-						>
-							<span className="drop-shadow-sm">Join</span>
-							<span>↗︎</span>
-						</Link>
-						<Link
-							to={ENV.EPICSHOP_DEPLOYED ? `https://${host}/login` : '/login'}
-							className="flex h-full items-center justify-center space-x-1.5 bg-white/20 px-5 text-sm font-semibold shadow-md transition hover:bg-white/30"
-						>
-							<Icon name="User" size="lg" />
-							<span className="drop-shadow-sm">Login</span>
-						</Link>
-					</div>
+					{userHasAccess ? null : (
+						<div className="flex h-full items-center">
+							<Link
+								to={`https://${host}`}
+								target="_blank"
+								className="flex h-full items-center justify-center space-x-1.5 px-5 text-sm font-semibold"
+							>
+								<span className="drop-shadow-sm">Join</span>
+								<span>↗︎</span>
+							</Link>
+							<Link
+								to={ENV.EPICSHOP_DEPLOYED ? `https://${host}/login` : '/login'}
+								className="flex h-full items-center justify-center space-x-1.5 bg-white/20 px-5 text-sm font-semibold shadow-md transition hover:bg-white/30"
+							>
+								<Icon name="User" size="lg" />
+								<span className="drop-shadow-sm">Login</span>
+							</Link>
+						</div>
+					)}
 				</>
 			)}
 		</div>
@@ -537,6 +540,7 @@ function MobileNavigation({
 	const user = useOptionalUser()
 	const nextExerciseRoute = useNextExerciseRoute()
 	const params = useParams()
+	const isOnline = useIsOnline()
 	const { users } = usePresence()
 
 	// items
@@ -727,14 +731,25 @@ function MobileNavigation({
 						</motion.div>
 					)}
 					<div className="flex-grow" />
+					{isOnline ? null : (
+						<SimpleTooltip content={isMenuOpened ? null : 'You are offline'}>
+							<div
+								className={cn(
+									'flex h-14 animate-pulse items-center justify-start p-4',
+									isMenuOpened ? 'w-full border-t' : 'border-l',
+								)}
+							>
+								<Icon name="Error" className="text-foreground-destructive">
+									{isMenuOpened ? 'You are offline' : null}
+								</Icon>
+							</div>
+						</SimpleTooltip>
+					)}
 					<div
 						className={cn(
 							'flex items-center justify-start p-4',
 							isMenuOpened && users.length > 4 ? 'min-h-14' : 'h-14',
-							{
-								'w-full border-t': isMenuOpened,
-								// left border is covered by the menu
-							},
+							isMenuOpened ? 'w-full border-t' : 'border-l',
 						)}
 					>
 						<FacePile isMenuOpened={isMenuOpened} />
@@ -833,6 +848,7 @@ function Navigation({
 	const user = useOptionalUser()
 	const nextExerciseRoute = useNextExerciseRoute()
 	const params = useParams()
+	const isOnline = useIsOnline()
 	const { users } = usePresence()
 
 	const exercise = data.exercises.find(
@@ -1063,6 +1079,22 @@ function Navigation({
 								) : null}
 							</div>
 						</div>
+					)}
+					{isOnline ? null : (
+						<SimpleTooltip content={isMenuOpened ? null : 'You are offline'}>
+							<div
+								className={cn(
+									'flex w-full animate-pulse items-center border-t p-4',
+									isMenuOpened ? 'justify-start' : 'justify-center',
+								)}
+							>
+								<Icon name="Error" className="text-foreground-destructive">
+									<span className="whitespace-nowrap">
+										{isMenuOpened ? 'You are offline' : null}
+									</span>
+								</Icon>
+							</div>
+						</SimpleTooltip>
 					)}
 					<div
 						className={cn(

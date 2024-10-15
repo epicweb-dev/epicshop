@@ -90,7 +90,7 @@ export function InBrowserTestRunner({
 			<Icon
 				name="Remove"
 				aria-label="Failed"
-				className="text-foreground-danger"
+				className="text-foreground-destructive"
 			/>
 		),
 		unknown: (
@@ -132,7 +132,7 @@ export function InBrowserTestRunner({
 								))}
 							</ul>
 							{message?.status === 'fail' ? (
-								<div className="flex items-baseline gap-2 text-foreground-danger">
+								<div className="text-foreground-destructive flex items-baseline gap-2">
 									<span>{sortedTestSteps.length + 1}.</span>
 									<span>{testStepStatusEmojis.fail}</span>
 									<pre

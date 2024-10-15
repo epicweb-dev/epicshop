@@ -17,6 +17,7 @@ import {
 } from 'react'
 import { z } from 'zod'
 import { type loader as rootLoader } from '#app/root.tsx'
+import { useIsOnline } from './online.ts'
 import { useRequestInfo } from './request-info.ts'
 
 export * from '@epic-web/workshop-presence/presence'
@@ -93,15 +94,37 @@ function useFirstCallDelayedCallback<Args extends unknown[]>(
 	return delayedCb
 }
 
-export function usePresenceSocket(user?: User | null) {
+function useUsersLocation() {
 	const workshopTitle = useOptionalWorkshopTitle()
-	const { userHasAccess = false, userId } =
-		useRouteLoaderData<typeof rootLoader>('root') ?? {}
 	const requestInfo = useRequestInfo()
 	const rawParams = useParams()
+	const paramsResult = ExerciseAppParamsSchema.safeParse(rawParams)
+	const params = paramsResult.success ? paramsResult.data : null
+
+	return {
+		workshopTitle,
+		origin: requestInfo.origin,
+		...(params
+			? {
+					exercise: {
+						type: params.type,
+						exerciseNumber: params.exerciseNumber,
+						stepNumber: params.stepNumber,
+					},
+				}
+			: null),
+	} satisfies User['location']
+}
+
+function usePresenceSocket(user?: User | null) {
 	const prefs = usePresencePreferences()
-	const data = useRouteLoaderData<typeof rootLoader>('root')
-	const [users, setUsers] = useState(data?.presence.users ?? [])
+	const {
+		userHasAccess = false,
+		userId,
+		presence,
+	} = useRouteLoaderData<typeof rootLoader>('root') ?? {}
+	const [users, setUsers] = useState(presence?.users ?? [])
+	const usersLocation = useUsersLocation()
 
 	const handleMessage = useFirstCallDelayedCallback((evt: MessageEvent) => {
 		const messageResult = MessageSchema.safeParse(JSON.parse(String(evt.data)))
@@ -117,22 +140,6 @@ export function usePresenceSocket(user?: User | null) {
 		onMessage: handleMessage,
 	})
 
-	const paramsResult = ExerciseAppParamsSchema.safeParse(rawParams)
-	const params = paramsResult.success ? paramsResult.data : null
-	const location = {
-		workshopTitle,
-		origin: requestInfo.origin,
-		...(params
-			? {
-					exercise: {
-						type: params.type,
-						exerciseNumber: params.exerciseNumber,
-						stepNumber: params.stepNumber,
-					},
-				}
-			: null),
-	} satisfies User['location']
-
 	let message: Message | null = null
 	if (user) {
 		if (prefs?.optOut) {
@@ -146,12 +153,15 @@ export function usePresenceSocket(user?: User | null) {
 					hasAccess: userHasAccess,
 					imageUrlSmall: user.imageUrlSmall,
 					imageUrlLarge: user.imageUrlLarge,
-					location,
+					location: usersLocation,
 				},
 			}
 		}
 	} else if (userId?.id) {
-		message = { type: 'add-user', payload: { id: userId.id, location } }
+		message = {
+			type: 'add-user',
+			payload: { id: userId.id, location: usersLocation },
+		}
 	}
 
 	const messageJson = message ? JSON.stringify(message) : null
@@ -159,7 +169,10 @@ export function usePresenceSocket(user?: User | null) {
 		if (messageJson) socket.send(messageJson)
 	}, [messageJson, socket])
 
-	const scoredUsers = scoreUsers({ id: userId?.id, location }, users)
+	const scoredUsers = scoreUsers(
+		{ id: userId?.id, location: usersLocation },
+		users,
+	)
 
 	return { users: scoredUsers }
 }
@@ -208,7 +221,7 @@ function scoreUsers(
 	})
 }
 
-export function Presence({
+function PresenceOnline({
 	user,
 	children,
 }: {
@@ -220,6 +233,44 @@ export function Presence({
 			{children}
 		</PresenceContext.Provider>
 	)
+}
+
+function PresenceOffline({
+	user,
+	children,
+}: {
+	user?: User | null
+	children: React.ReactNode
+}) {
+	const usersLocation = useUsersLocation()
+	const { presence } = useRouteLoaderData<typeof rootLoader>('root') ?? {}
+	return (
+		<PresenceContext.Provider
+			value={{
+				users: scoreUsers(
+					{ id: user?.id, location: usersLocation },
+					presence?.users ?? [],
+				),
+			}}
+		>
+			{children}
+		</PresenceContext.Provider>
+	)
+}
+
+export function Presence({
+	user,
+	children,
+}: {
+	user?: User | null
+	children: React.ReactNode
+}) {
+	const isOnline = useIsOnline()
+	if (isOnline) {
+		return <PresenceOnline user={user}>{children}</PresenceOnline>
+	} else {
+		return <PresenceOffline user={user}>{children}</PresenceOffline>
+	}
 }
 
 export function usePresence() {

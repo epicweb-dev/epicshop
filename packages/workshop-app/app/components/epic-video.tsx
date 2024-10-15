@@ -5,6 +5,7 @@ import * as React from 'react'
 import { useTheme } from '#app/routes/theme/index.tsx'
 import { MuxPlayer } from '#app/routes/video-player/index.tsx'
 import { cn } from '#app/utils/misc.tsx'
+import { useIsOnline } from '#app/utils/online.ts'
 import { Icon } from './icons.tsx'
 import { Loading } from './loading.tsx'
 import { useOptionalUser } from './user.tsx'
@@ -103,11 +104,29 @@ export function VideoEmbed({
 	loadingContent?: React.ReactNode
 }) {
 	const [iframeLoaded, setIframeLoaded] = React.useState(false)
+	const isOnline = useIsOnline()
+	if (!isOnline) {
+		return (
+			<div className="relative aspect-video w-full flex-shrink-0 shadow-lg">
+				<div className="not-prose text-foreground-destructive absolute inset-0 z-10 flex items-center justify-center p-8">
+					<Icon name="Error" size="xl">
+						<span>
+							{'Unable to load the video '}
+							<a href={url} className="underline">
+								{`"${title ?? url}"`}
+							</a>
+							{' when offline'}
+						</span>
+					</Icon>
+				</div>
+			</div>
+		)
+	}
 
 	return (
-		<div className="relative aspect-video w-full flex-shrink-0 shadow-lg dark:shadow-gray-800">
+		<div className="relative aspect-video w-full flex-shrink-0 shadow-lg">
 			{iframeLoaded ? null : (
-				<div className="absolute inset-0 z-10 flex items-center justify-center">
+				<div className="absolute inset-0 z-10 flex items-center justify-center p-8">
 					{loadingContent}
 				</div>
 			)}
@@ -221,7 +240,7 @@ export function DeferredEpicVideo({
 							return (
 								<div>
 									<div className="flex aspect-video min-h-full min-w-full flex-col items-center justify-start gap-2 overflow-y-scroll border-2 p-4 lg:justify-center lg:gap-4 lg:text-xl">
-										<div className="!text-foreground-danger">
+										<div className="!text-foreground-destructive">
 											Error: Region Restricted
 										</div>
 										<div>
@@ -299,7 +318,7 @@ export function DeferredEpicVideo({
 									<EpicVideoEmbed url={url} title={title} />
 									<div className="mt-4 flex flex-col gap-2">
 										{linkUI}
-										<div className="!text-foreground-danger">
+										<div className="!text-foreground-destructive">
 											Unknown error (check console)
 										</div>
 									</div>
@@ -372,7 +391,7 @@ function EpicVideo({
 	)
 	return (
 		<div>
-			<div className="shadow-lg dark:shadow-gray-800">
+			<div className="shadow-lg">
 				<MuxPlayer
 					playbackId={muxPlaybackId}
 					muxPlayerRef={muxPlayerRef}

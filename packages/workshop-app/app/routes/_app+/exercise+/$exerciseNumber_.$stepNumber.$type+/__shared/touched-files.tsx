@@ -66,7 +66,7 @@ function TouchedFiles({
 									<Await
 										resolve={diffFilesPromise}
 										errorElement={
-											<div className="text-foreground-danger">
+											<div className="text-foreground-destructive">
 												Something went wrong.
 											</div>
 										}
@@ -74,14 +74,16 @@ function TouchedFiles({
 										{(diffFiles) => {
 											if (!diffFiles) {
 												return (
-													<p className="text-foreground-danger">
+													<p className="text-foreground-destructive">
 														Unable to determine diff
 													</p>
 												)
 											}
 											if (typeof diffFiles === 'string') {
 												return (
-													<p className="text-foreground-danger">{diffFiles}</p>
+													<p className="text-foreground-destructive">
+														{diffFiles}
+													</p>
 												)
 											}
 											if (!diffFiles.length) {
@@ -117,7 +119,7 @@ function TouchedFiles({
 																appFile={`${file.path},${file.line},1`}
 																appName={
 																	ENV.EPICSHOP_DEPLOYED
-																		? data.problem?.name ?? 'playground'
+																		? (data.problem?.name ?? 'playground')
 																		: 'playground'
 																}
 																onUpdate={handleLaunchUpdate}

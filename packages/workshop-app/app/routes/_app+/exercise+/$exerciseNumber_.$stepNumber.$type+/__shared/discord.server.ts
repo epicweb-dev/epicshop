@@ -86,6 +86,7 @@ export async function fetchDiscordPosts({ request }: { request: Request }) {
 		cache: fsCache,
 		ttl: 1000 * 60 * 2,
 		swr: 1000 * 60 * 60 * 24 * 365 * 100,
+		offlineFallbackValue: [],
 		checkValue: ThreadDataSchema,
 		async getFreshValue(): Promise<z.infer<typeof ThreadDataSchema>> {
 			const result = await fetch(url, {

@@ -104,7 +104,8 @@ async function getEpicVideoInfo({
 		cache: fsCache,
 		timings,
 		ttl: 1000 * 60 * 60,
-		swr: 1000 * 60 * 60 * 24 * 30,
+		swr: 1000 * 60 * 60 * 24 * 365 * 10,
+		offlineFallbackValue: null,
 		checkValue: CachedEpicVideoInfoSchema,
 		async getFreshValue(
 			context,
@@ -144,7 +145,7 @@ async function getEpicVideoInfo({
 					} as const
 				} else {
 					// don't cache errors for long...
-					context.metadata.ttl = 1000 * 2 // 2 seconds
+					context.metadata.ttl = 1000 * 2
 					context.metadata.swr = 0
 					const restrictedResult =
 						EpicVideoRegionRestrictedErrorSchema.safeParse(rawInfo)
@@ -171,7 +172,7 @@ async function getEpicVideoInfo({
 				}
 			} else {
 				// don't cache errors for long...
-				context.metadata.ttl = 1000 * 2 // 2 seconds
+				context.metadata.ttl = 1000 * 2
 				context.metadata.swr = 0
 				return {
 					status: 'error',
@@ -212,7 +213,8 @@ async function getEpicProgress({
 		timings,
 		forceFresh,
 		ttl: 1000 * 2,
-		swr: 1000 * 60 * 60 * 24 * 30,
+		swr: 1000 * 60 * 60 * 24 * 365 * 10,
+		offlineFallbackValue: [],
 		checkValue: EpicProgressSchema,
 		async getFreshValue(context): Promise<z.infer<typeof EpicProgressSchema>> {
 			const response = await fetch(`https://${host}/api/progress`, {
@@ -225,7 +227,7 @@ async function getEpicProgress({
 					`Failed to fetch progress from EpicWeb: ${response.status} ${response.statusText}`,
 				)
 				// don't cache errors for long...
-				context.metadata.ttl = 1000 * 2 // 2 seconds
+				context.metadata.ttl = 1000 * 2
 				context.metadata.swr = 0
 				return []
 			}
@@ -451,6 +453,7 @@ export async function getWorkshopData(
 		request,
 		forceFresh,
 		timings,
+		offlineFallbackValue: { resources: [] },
 		checkValue: ModuleSchema,
 		async getFreshValue(): Promise<z.infer<typeof ModuleSchema>> {
 			const response = await fetch(
@@ -499,6 +502,7 @@ export async function userHasAccessToWorkshop({
 		forceFresh,
 		timings,
 		ttl: 1000 * 5,
+		offlineFallbackValue: false,
 		checkValue: z.boolean(),
 		async getFreshValue(context) {
 			const response = await fetch(
@@ -512,8 +516,8 @@ export async function userHasAccessToWorkshop({
 			const hasAccess = response.ok ? (await response.json()) === true : false
 
 			if (hasAccess) {
-				context.metadata.ttl = 1000 * 60 * 60 * 24 * 30
-				context.metadata.swr = 1000 * 60 * 60 * 24 * 30
+				context.metadata.ttl = 1000 * 60 * 5
+				context.metadata.swr = 1000 * 60 * 60 * 24 * 365 * 10
 			}
 
 			return hasAccess
@@ -624,7 +628,8 @@ export async function getUserInfo({
 		forceFresh,
 		timings,
 		ttl: 1000 * 30,
-		swr: 1000 * 60 * 60 * 24 * 365,
+		swr: 1000 * 60 * 60 * 24 * 365 * 10,
+		offlineFallbackValue: null,
 		checkValue: UserInfoSchema,
 		async getFreshValue(): Promise<UserInfo> {
 			const response = await fetch(url, {

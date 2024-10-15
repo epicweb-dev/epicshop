@@ -25,6 +25,7 @@ export async function getPresentUsers({
 		request,
 		ttl: 1000 * 2,
 		swr: 1000 * 60 * 60 * 24,
+		offlineFallbackValue: { users: [] },
 		checkValue: PresenceSchema,
 		async getFreshValue(context) {
 			try {
