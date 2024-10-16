@@ -2,7 +2,6 @@ import { useSyncExternalStore } from 'react'
 import { useRequestInfo } from './request-info.ts'
 
 function getSnapshot() {
-	return false
 	return window.navigator.onLine
 }
 
