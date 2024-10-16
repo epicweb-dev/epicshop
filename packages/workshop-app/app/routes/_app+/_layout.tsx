@@ -739,7 +739,10 @@ function MobileNavigation({
 									isMenuOpened ? 'w-full border-t' : 'border-l',
 								)}
 							>
-								<Icon name="Error" className="text-foreground-destructive">
+								<Icon
+									name="WifiNoConnection"
+									className="text-foreground-destructive"
+								>
 									{isMenuOpened ? 'You are offline' : null}
 								</Icon>
 							</div>
@@ -1088,10 +1091,13 @@ function Navigation({
 									isMenuOpened ? 'justify-start' : 'justify-center',
 								)}
 							>
-								<Icon name="Error" className="text-foreground-destructive">
-									<span className="whitespace-nowrap">
-										{isMenuOpened ? 'You are offline' : null}
-									</span>
+								<Icon
+									name="WifiNoConnection"
+									className="text-foreground-destructive"
+								>
+									{isMenuOpened ? (
+										<span className="whitespace-nowrap">You are offline</span>
+									) : null}
 								</Icon>
 							</div>
 						</SimpleTooltip>

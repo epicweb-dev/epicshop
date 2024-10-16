@@ -188,7 +188,7 @@ function Survey({
 		return (
 			<div className="relative flex-shrink-0">
 				<div className="text-foreground-destructive absolute inset-0 z-10 flex items-center justify-center">
-					<Icon name="Error" size="xl">
+					<Icon name="WifiNoConnection" size="xl">
 						<span>
 							{'Unable to load the '}
 							<a href={workshopFormEmbedUrl} className="underline">

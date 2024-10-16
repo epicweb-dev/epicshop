@@ -72,6 +72,7 @@ export type IconName =
 	| 'Discord'
 	| 'Chat'
 	| 'House'
+	| 'WifiNoConnection'
 
 const sizeClassName = {
 	font: 'w-[1em] h-[1em]',

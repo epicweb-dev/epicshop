@@ -30,7 +30,7 @@ function DiscordPosts() {
 		return (
 			<div className="flex h-full flex-col items-center justify-between">
 				<div className="text-foreground-destructive flex h-full w-full flex-col items-center justify-center">
-					<Icon name="Error" size="xl">
+					<Icon name="WifiNoConnection" size="xl">
 						Unable to load discord messages when offline
 					</Icon>
 				</div>

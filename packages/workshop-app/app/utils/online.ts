@@ -2,13 +2,16 @@ import { useSyncExternalStore } from 'react'
 import { useRequestInfo } from './request-info.ts'
 
 function getSnapshot() {
+	return false
 	return window.navigator.onLine
 }
 
 function subscribe(callback: () => void) {
 	window.addEventListener('online', callback)
+	window.addEventListener('offline', callback)
 	return () => {
 		window.removeEventListener('online', callback)
+		window.removeEventListener('offline', callback)
 	}
 }
 

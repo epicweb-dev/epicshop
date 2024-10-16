@@ -109,7 +109,7 @@ export function VideoEmbed({
 		return (
 			<div className="relative aspect-video w-full flex-shrink-0 shadow-lg">
 				<div className="not-prose text-foreground-destructive absolute inset-0 z-10 flex items-center justify-center p-8">
-					<Icon name="Error" size="xl">
+					<Icon name="WifiNoConnection" size="xl">
 						<span>
 							{'Unable to load the video '}
 							<a href={url} className="underline">
