@@ -24,6 +24,7 @@ export async function action({ request }: { request: Request }) {
 	const maxResolution = formData.get('maxResolution')
 	const fontSize = formData.get('fontSize')
 	const optOutPresence = formData.get('optOutPresence') === 'on'
+	const persistPlayground = formData.get('persistPlayground') === 'on'
 
 	await setPreferences({
 		player: {
@@ -31,9 +32,8 @@ export async function action({ request }: { request: Request }) {
 			maxResolution: maxResolution ? Number(maxResolution) : undefined,
 		},
 		fontSize: fontSize ? Number(fontSize) : undefined,
-		presence: {
-			optOut: optOutPresence,
-		},
+		presence: { optOut: optOutPresence },
+		playground: { persist: persistPlayground },
 	})
 
 	return redirectWithToast('/preferences', {
@@ -48,6 +48,7 @@ export default function AccountSettings() {
 	const playerPreferences = data?.preferences?.player
 	const fontSizePreference = data?.preferences?.fontSize
 	const presencePreferences = data?.preferences?.presence
+	const playgroundPreferences = data?.preferences?.playground
 	const navigation = useNavigation()
 
 	const isSubmitting = navigation.state === 'submitting'
@@ -125,6 +126,27 @@ export default function AccountSettings() {
 							defaultChecked={presencePreferences?.optOut}
 						/>
 						<label htmlFor="optOutPresence">Opt out of presence features</label>
+					</div>
+				</div>
+
+				<div>
+					<div className="mb-2 flex items-center gap-2">
+						<h2 className="text-body-xl">Persist Playground</h2>
+
+						<SimpleTooltip
+							content={`When enabled, clicking "Set to Playground" will save the current playground in the "saved-playgrounds" directory.`}
+						>
+							<Icon name="Question" tabIndex={0} />
+						</SimpleTooltip>
+					</div>
+					<div className="flex items-center gap-2">
+						<input
+							type="checkbox"
+							id="persistPlayground"
+							name="persistPlayground"
+							defaultChecked={playgroundPreferences?.persist}
+						/>
+						<label htmlFor="persistPlayground">Enable saving playground</label>
 					</div>
 				</div>
 

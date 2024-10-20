@@ -74,7 +74,6 @@
     "cookie": "^0.7.2",
     "cross-env": "^7.0.3",
     "cross-spawn": "^7.0.3",
-    "dayjs": "^1.11.13",
     "dotenv": "^16.4.5",
     "esbuild": "0.24.0",
     "etag": "^1.8.1",

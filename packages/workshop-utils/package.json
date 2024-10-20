@@ -146,6 +146,7 @@
   },
   "dependencies": {
     "@epic-web/cachified": "^5.2.0",
+    "@epic-web/invariant": "^1.0.0",
     "@epic-web/remember": "^1.1.0",
     "@kentcdodds/md-temp": "^9.0.1",
     "@mdx-js/mdx": "^3.0.1",
@@ -165,6 +166,7 @@
     "close-with-grace": "^2.1.0",
     "cookie": "^1.0.1",
     "cross-spawn": "^7.0.3",
+    "dayjs": "^1.11.13",
     "execa": "^9.4.0",
     "fkill": "^9.0.0",
     "fs-extra": "^11.2.0",

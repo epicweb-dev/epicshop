@@ -4,9 +4,9 @@ import {
 	shouldForceFresh,
 } from '@epic-web/workshop-utils/cache.server'
 import { getWorkshopConfig } from '@epic-web/workshop-utils/config.server'
+import { dayjs } from '@epic-web/workshop-utils/utils.server'
 import { z } from 'zod'
 import { getHints } from '#app/utils/client-hints.js'
-import { getDayjs } from '#app/utils/dayjs.ts'
 
 const EmojiDataSchema = z.union([
 	z.object({
@@ -126,8 +126,6 @@ export async function fetchDiscordPosts({ request }: { request: Request }) {
 
 	return threadData.map((thread) => ({
 		...thread,
-		lastUpdatedDisplay: getDayjs()(thread.lastUpdated)
-			.tz(hints.timeZone)
-			.fromNow(),
+		lastUpdatedDisplay: dayjs(thread.lastUpdated).tz(hints.timeZone).fromNow(),
 	}))
 }

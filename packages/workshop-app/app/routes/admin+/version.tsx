@@ -7,11 +7,12 @@ import {
 	makeTimings,
 	time,
 } from '@epic-web/workshop-utils/timing.server'
+import { dayjs } from '@epic-web/workshop-utils/utils.server'
 import { type SEOHandle } from '@nasa-gcn/remix-seo'
 import { type HeadersFunction } from '@remix-run/node'
 import { useLoaderData, unstable_data as data } from '@remix-run/react'
 import { useWorkshopConfig } from '#app/components/workshop-config.tsx'
-import { getDayjs } from '#app/utils/dayjs.ts'
+import { getErrorMessage } from '#app/utils/misc.tsx'
 
 export const handle: SEOHandle = {
 	getSitemapEntries: () => null,
@@ -21,13 +22,12 @@ export async function loader() {
 	const timings = makeTimings('versionLoader')
 	const [commitInfo, latestVersion] = await Promise.all([
 		time(() => getCommitInfo(), { timings, type: 'getCommitInfo' }),
-		time(() => getLatestWorkshopAppVersion(), {
+		time(() => getLatestWorkshopAppVersion().catch((e) => getErrorMessage(e)), {
 			timings,
 			type: 'getLatestWorkshopAppVersion',
 		}),
 	])
 
-	const dayjs = getDayjs()
 	const uptime = process.uptime() * 1000
 	const startDate = new Date(Date.now() - uptime)
 

@@ -25,3 +25,5 @@ vite.config.ts.timestamp-*
 .nx/cache
 .nx/workspace-data
 *.tsbuildinfo
+
+/example/playgrounds

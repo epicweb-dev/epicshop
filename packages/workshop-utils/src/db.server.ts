@@ -63,6 +63,11 @@ const DataSchema = z.object({
 		.object({
 			player: PlayerPreferencesSchema,
 			presence: PresencePreferencesSchema,
+			playground: z
+				.object({
+					persist: z.boolean().default(false),
+				})
+				.optional(),
 			fontSize: z.number().optional(),
 		})
 		.optional()

@@ -1,5 +1,17 @@
+import { remember } from '@epic-web/remember'
+import dayjsLib from 'dayjs'
+import relativeTimePlugin from 'dayjs/plugin/relativeTime.js'
+import timeZonePlugin from 'dayjs/plugin/timezone.js'
+import utcPlugin from 'dayjs/plugin/utc.js'
 import { cachified, connectionCache } from './cache.server.js'
 import { type Timings } from './timing.server.js'
+
+export const dayjs = remember('dayjs', () => {
+	dayjsLib.extend(utcPlugin)
+	dayjsLib.extend(timeZonePlugin)
+	dayjsLib.extend(relativeTimePlugin)
+	return dayjsLib
+})
 
 export async function checkConnection() {
 	try {

@@ -1,6 +1,7 @@
 import fs from 'node:fs'
 import path from 'node:path'
 import { type CacheEntry } from '@epic-web/cachified'
+import { invariant } from '@epic-web/invariant'
 import { remember } from '@epic-web/remember'
 import chokidar from 'chokidar'
 /// TODO: figure out why this import is necessary (without it tsc seems to not honor the boolean reset 🤷‍♂️)
@@ -24,6 +25,7 @@ import {
 	getStackBlitzUrl,
 	getWorkshopConfig,
 } from './config.server.js'
+import { getPreferences } from './db.server.js'
 import { getEnv, init as initEnv } from './env.server.js'
 import { getDirModifiedTime } from './modified-time.server.js'
 import {
@@ -34,6 +36,7 @@ import {
 } from './process-manager.server.js'
 import { getServerTimeHeader, time, type Timings } from './timing.server.js'
 import { getErrorMessage } from './utils.js'
+import { dayjs } from './utils.server.js'
 
 declare global {
 	var __epicshop_apps_initialized__: boolean | undefined
@@ -1201,19 +1204,65 @@ export async function getAppFromFile(filePath: string) {
 	return apps.find((app) => filePath.startsWith(app.fullPath))
 }
 
+export async function savePlayground() {
+	const playgroundApp = await getAppByName('playground')
+	invariant(playgroundApp, 'app with name "playground" does not exist')
+
+	invariant(
+		isPlaygroundApp(playgroundApp),
+		'app with name "playground" exists, but it is not a playground type app',
+	)
+
+	const playgroundDir = path.join(workshopRoot, 'playground')
+	const savedPlaygroundsDir = path.join(workshopRoot, 'saved-playgrounds')
+	await fsExtra.ensureDir(savedPlaygroundsDir)
+	const now = dayjs()
+	// note: the format must be filename safe
+	const timestamp = now.format('YYYY.MM.DD_HH.mm.ss')
+	const savedPlaygroundDirName = `${timestamp}_${playgroundApp.appName}`
+
+	const persistedPlaygroundReadmePath = path.join(
+		savedPlaygroundsDir,
+		'README.md',
+	)
+	if (!(await exists(persistedPlaygroundReadmePath))) {
+		await fsExtra.writeFile(
+			persistedPlaygroundReadmePath,
+			`
+# Saved Playgrounds
+
+This directory stores the playground directory each time you click "Set to
+Playground." If you do not wish to do this, go to
+[your preferences](http://localhost:5639/preferences) when the app is running
+locally and uncheck "Enable saving playground."
+			`.trim(),
+		)
+	}
+	await fsExtra.copy(
+		playgroundDir,
+		path.join(savedPlaygroundsDir, savedPlaygroundDirName),
+	)
+}
+
 export async function setPlayground(
 	srcDir: string,
 	{ reset }: { reset?: boolean } = {},
 ) {
-	const destDir = path.join(workshopRoot, 'playground')
-	const isIgnored = await isGitIgnored({ cwd: srcDir })
+	const preferences = await getPreferences()
 	const playgroundApp = await getAppByName('playground')
+	const playgroundDir = path.join(workshopRoot, 'playground')
+
+	if (playgroundApp && preferences?.playground?.persist) {
+		await savePlayground()
+	}
+
+	const isIgnored = await isGitIgnored({ cwd: srcDir })
 	const playgroundWasRunning = playgroundApp
 		? isAppRunning(playgroundApp)
 		: false
 	if (playgroundApp && reset) {
 		await closeProcess(playgroundApp.name)
-		await fsExtra.remove(destDir)
+		await fsExtra.remove(playgroundDir)
 	}
 	const setPlaygroundTimestamp = Date.now()
 
@@ -1229,7 +1278,7 @@ export async function setPlayground(
 
 			env: {
 				EPICSHOP_PLAYGROUND_TIMESTAMP: setPlaygroundTimestamp.toString(),
-				EPICSHOP_PLAYGROUND_DEST_DIR: destDir,
+				EPICSHOP_PLAYGROUND_DEST_DIR: playgroundDir,
 				EPICSHOP_PLAYGROUND_SRC_DIR: srcDir,
 				EPICSHOP_PLAYGROUND_WAS_RUNNING: playgroundWasRunning.toString(),
 			} as any,
@@ -1239,9 +1288,9 @@ export async function setPlayground(
 	const basename = path.basename(srcDir)
 	// If we don't delete the destination node_modules first then copying the new
 	// node_modules has issues.
-	await fsExtra.remove(path.join(destDir, 'node_modules'))
+	await fsExtra.remove(path.join(playgroundDir, 'node_modules'))
 	// Copy the contents of the source directory to the destination directory recursively
-	await fsExtra.copy(srcDir, destDir, {
+	await fsExtra.copy(srcDir, playgroundDir, {
 		filter: async (srcFile, destFile) => {
 			if (
 				srcFile.includes(`${basename}${path.sep}build`) ||
@@ -1292,13 +1341,13 @@ export async function setPlayground(
 
 	// Remove files from destDir that were in destDir before but are not in srcDir
 	const srcFiles = await getFiles(srcDir)
-	const destFiles = await getFiles(destDir)
+	const destFiles = await getFiles(playgroundDir)
 	const filesToDelete = destFiles.filter(
 		(fileName) => !srcFiles.includes(fileName),
 	)
 
 	for (const fileToDelete of filesToDelete) {
-		await fsExtra.remove(path.join(destDir, fileToDelete))
+		await fsExtra.remove(path.join(playgroundDir, fileToDelete))
 	}
 
 	const appName = getAppName(srcDir)
@@ -1323,7 +1372,7 @@ export async function setPlayground(
 			env: {
 				EPICSHOP_PLAYGROUND_TIMESTAMP: setPlaygroundTimestamp.toString(),
 				EPICSHOP_PLAYGROUND_SRC_DIR: srcDir,
-				EPICSHOP_PLAYGROUND_DEST_DIR: destDir,
+				EPICSHOP_PLAYGROUND_DEST_DIR: playgroundDir,
 				EPICSHOP_PLAYGROUND_WAS_RUNNING: playgroundWasRunning.toString(),
 				EPICSHOP_PLAYGROUND_IS_STILL_RUNNING:
 					playgroundIsStillRunning.toString(),
@@ -1333,7 +1382,7 @@ export async function setPlayground(
 	}
 
 	// since we are running without the watcher we need to set the modified time
-	modifiedTimes.set(destDir, Date.now())
+	modifiedTimes.set(playgroundDir, Date.now())
 
 	if (playgroundApp && restartPlayground) {
 		await runAppDev(playgroundApp)
