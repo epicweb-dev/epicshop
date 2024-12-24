@@ -14,7 +14,7 @@ const AuthResolvedEventSchema = z.object({
 	type: z.literal(EVENTS.AUTH_RESOLVED),
 })
 const AuthRejectedEventSchema = z.object({
-	type: z.literal(EVENTS.AUTH_REJECTED),
+	type: z.literal(EVENTS.AUTH_REJECTED).optional(),
 	error: z.string().optional().default('Unknown error'),
 })
 export const EventSchema = z.union([
