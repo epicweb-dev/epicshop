@@ -23,9 +23,9 @@ export default function Support() {
 				We're here to support you! Depending on the kind of support you need,
 				you will want to reach out in different places:
 			</p>
-			<ul className="list-disc">
+			<ul className="flex list-disc flex-col gap-4">
 				<li>
-					Technical issues:{' '}
+					<strong>Technical issues:</strong>{' '}
 					<a href="mailto:team@epicweb.dev" className="underline">
 						team@epicweb.dev
 					</a>{' '}
@@ -33,7 +33,7 @@ export default function Support() {
 					EpicWeb.dev account or access to course content.
 				</li>
 				<li>
-					Workshop App:{' '}
+					<strong>Workshop App:</strong>{' '}
 					<a
 						href="https://github.com/epicweb-dev/epicshop/issues"
 						className="underline"
@@ -44,7 +44,7 @@ export default function Support() {
 					workshop app.
 				</li>
 				<li>
-					Workshop content:{' '}
+					<strong>Workshop content:</strong>{' '}
 					<a href={repoIssuesUrl} className="underline">
 						{repoUrl.replace('https://', '')}
 					</a>{' '}
@@ -52,7 +52,7 @@ export default function Support() {
 					content of this workshop.
 				</li>
 				<li>
-					Discord:{' '}
+					<strong>Discord:</strong>{' '}
 					<Link to="/discord" className="underline">
 						/discord
 					</Link>{' '}

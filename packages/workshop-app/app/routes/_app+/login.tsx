@@ -1,7 +1,7 @@
 import { getAuthInfo } from '@epic-web/workshop-utils/db.server'
 import { type SEOHandle } from '@nasa-gcn/remix-seo'
 import { redirect } from '@remix-run/node'
-import { useFetcher, useNavigate, useRevalidator } from '@remix-run/react'
+import { Link, useFetcher, useNavigate, useRevalidator } from '@remix-run/react'
 import { useEffect, useState } from 'react'
 import { useEventSource } from 'remix-utils/sse/react'
 import { Button, ButtonLink } from '#app/components/button.tsx'
@@ -120,7 +120,7 @@ export default function Login() {
 						</div>
 					) : (
 						<div className="flex flex-col items-center gap-8">
-							<div className="flex max-w-lg flex-col gap-2 gap-3 pt-3 text-base text-gray-700 dark:text-gray-300">
+							<div className="flex max-w-lg flex-col gap-3 pt-3 text-base text-gray-700 dark:text-gray-300">
 								<p>
 									If you have access to this workshop on {displayName}, you'll
 									be able to watch videos, track progress, run tests, view the
@@ -142,9 +142,18 @@ export default function Login() {
 						</div>
 					)}
 					{authError ? (
-						<div className="mt-4 text-red-500">
-							There was an error: <pre>{authError}</pre>
-						</div>
+						<>
+							<div className="mt-4 text-red-500">
+								There was an error: <pre>{authError}</pre>
+							</div>
+							<div className="mt-4 text-red-500">
+								Please try again or{' '}
+								<Link to="/support" className="underline">
+									contact support
+								</Link>{' '}
+								if the problem persists.
+							</div>
+						</>
 					) : null}
 				</div>
 			</div>

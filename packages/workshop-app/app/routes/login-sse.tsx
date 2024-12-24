@@ -14,7 +14,7 @@ const AuthResolvedEventSchema = z.object({
 	type: z.literal(EVENTS.AUTH_RESOLVED),
 })
 const AuthRejectedEventSchema = z.object({
-	type: z.literal(EVENTS.AUTH_REJECTED).optional(),
+	type: z.literal(EVENTS.AUTH_REJECTED),
 	error: z.string().optional().default('Unknown error'),
 })
 export const EventSchema = z.union([
@@ -40,7 +40,10 @@ export async function loader({ request }: LoaderFunctionArgs) {
 			send({ data: JSON.stringify({ type: EVENTS.AUTH_RESOLVED }) })
 		}
 		function handleAuthRejected(data: any) {
-			const result = AuthRejectedEventSchema.safeParse(data)
+			const result = AuthRejectedEventSchema.safeParse({
+				type: EVENTS.AUTH_REJECTED,
+				...data,
+			})
 			if (result.success) {
 				send({ data: JSON.stringify(result.data) })
 			} else {

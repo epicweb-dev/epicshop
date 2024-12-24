@@ -44,7 +44,7 @@ export async function registerDevice() {
 		clearTimeout(timeout)
 		if (!tokenSet) {
 			authEmitter.emit(EVENTS.AUTH_REJECTED, {
-				error: 'Timed out waiting for user to authorize device.',
+				error: `Timed out in ${handle.expires_in} seconds waiting for user to authorize device.`,
 			})
 			return
 		}
