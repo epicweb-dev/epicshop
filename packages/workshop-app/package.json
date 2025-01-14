@@ -92,7 +92,7 @@
     "mime-types": "^2.1.35",
     "morgan": "^1.10.0",
     "msw": "^2.4.9",
-    "openid-client": "^5.7.0",
+    "openid-client": "^6.1.7",
     "p-queue": "^8.0.1",
     "parse-git-diff": "^0.0.16",
     "partysocket": "^1.0.2",
