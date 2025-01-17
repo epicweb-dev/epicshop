@@ -10,8 +10,8 @@ import { getErrorMessage } from './misc.tsx'
 
 const UserInfoSchema = z.object({
 	id: z.string(),
-	email: z.string().optional(),
-	name: z.string().optional(),
+	email: z.string(),
+	name: z.string().nullable().optional(),
 })
 
 export const authEmitter = remember('authEmitter', () => new EventEmitter())
