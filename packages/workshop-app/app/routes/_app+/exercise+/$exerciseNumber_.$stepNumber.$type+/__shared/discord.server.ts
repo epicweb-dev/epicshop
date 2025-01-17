@@ -7,6 +7,7 @@ import { getWorkshopConfig } from '@epic-web/workshop-utils/config.server'
 import { dayjs } from '@epic-web/workshop-utils/utils.server'
 import { z } from 'zod'
 import { getHints } from '#app/utils/client-hints.js'
+import { getErrorMessage } from '#app/utils/misc.tsx'
 
 const EmojiDataSchema = z.union([
 	z.object({
@@ -91,6 +92,8 @@ export async function fetchDiscordPosts({ request }: { request: Request }) {
 		async getFreshValue(): Promise<z.infer<typeof ThreadDataSchema>> {
 			const result = await fetch(url, {
 				headers: { 'content-type': 'application/json' },
+			}).catch((error) => {
+				return new Response(getErrorMessage(error), { status: 500 })
 			})
 
 			if (!result.ok) {
