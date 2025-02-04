@@ -28,6 +28,8 @@ const MODE = process.env.NODE_ENV ?? 'development'
 void initApps()
 sourceMapSupport.install()
 
+const __dirname = path.dirname(fileURLToPath(import.meta.url))
+
 const viteDevServer =
 	process.env.NODE_ENV === 'production'
 		? null
@@ -40,7 +42,6 @@ const viteDevServer =
 
 const isProd = process.env.NODE_ENV === 'production'
 
-const __dirname = path.dirname(fileURLToPath(import.meta.url))
 const isPublished = !fs.existsSync(path.join(__dirname, '..', 'app'))
 const isDeployed =
 	process.env.EPICSHOP_DEPLOYED === 'true' ||
