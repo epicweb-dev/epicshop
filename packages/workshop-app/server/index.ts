@@ -149,6 +149,16 @@ const portToUse = await getPort({
 	port: portNumbers(desiredPort, desiredPort + 100),
 })
 
+const localIp: string = ipAddress() ?? 'Unknown'
+// Check if the address is a private ip
+// https://en.wikipedia.org/wiki/Private_network#Private_IPv4_address_spaces
+// https://github.com/facebook/create-react-app/blob/d960b9e38c062584ff6cfb1a70e1512509a966e7/packages/react-dev-utils/WebpackDevServerUtils.js#LL48C9-L54C10
+const lanUrl = /^10[.]|^172[.](1[6-9]|2[0-9]|3[0-1])[.]|^192[.]168[.]/.test(
+	localIp,
+)
+	? `http://${localIp}:${portToUse}`
+	: null
+
 const server = app.listen(portToUse, async () => {
 	const addy = server.address()
 	const portUsed =
@@ -167,14 +177,6 @@ const server = app.listen(portToUse, async () => {
 	}
 	console.log(`🐨  Let's get learning!`)
 	const localUrl = `http://localhost:${portUsed}`
-	let lanUrl: string | null = null
-	const localIp: string = ipAddress() ?? 'Unknown'
-	// Check if the address is a private ip
-	// https://en.wikipedia.org/wiki/Private_network#Private_IPv4_address_spaces
-	// https://github.com/facebook/create-react-app/blob/d960b9e38c062584ff6cfb1a70e1512509a966e7/packages/react-dev-utils/WebpackDevServerUtils.js#LL48C9-L54C10
-	if (/^10[.]|^172[.](1[6-9]|2[0-9]|3[0-1])[.]|^192[.]168[.]/.test(localIp)) {
-		lanUrl = `http://${localIp}:${portUsed}`
-	}
 
 	console.log(
 		`
@@ -210,6 +212,19 @@ if (
 	server.on('upgrade', (request, socket, head) => {
 		const url = new URL(request.url ?? '/', 'ws://localhost:0000')
 		if (url.pathname === '/__ws') {
+			const origin = request.headers.origin
+			const isValidOrigin =
+				origin &&
+				(origin === `http://localhost:${portToUse}` ||
+					origin === `http://127.0.0.1:${portToUse}` ||
+					(lanUrl && origin === lanUrl))
+
+			if (!isValidOrigin) {
+				socket.write('HTTP/1.1 403 Forbidden\r\n\r\n')
+				socket.destroy()
+				return
+			}
+
 			wss.handleUpgrade(request, socket, head, (ws) => {
 				const watchPaths = url.searchParams.getAll('watch')
 				if (watchPaths.length === 0) {
