@@ -34,6 +34,7 @@ const viteDevServer =
 		: await import('vite').then((vite) =>
 				vite.createServer({
 					server: { middlewareMode: true },
+					configFile: path.join(__dirname, '..', 'vite.config.ts'),
 				}),
 			)
 
