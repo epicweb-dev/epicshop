@@ -1477,7 +1477,7 @@ const exercisesPath = path.join(workshopRoot, 'exercises/')
 const playgroundPath = path.join(workshopRoot, 'playground/')
 export function getRelativePath(filePath: string) {
 	return path
-		.normalize(filePath)
+		.normalize(filePath.replace(/^("|')|("|')$/g, ''))
 		.replace(playgroundPath, `playground${path.sep}`)
 		.replace(exercisesPath, '')
 }
