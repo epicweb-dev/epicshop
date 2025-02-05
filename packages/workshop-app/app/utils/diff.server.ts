@@ -29,7 +29,7 @@ const isDeployed = ENV.EPICSHOP_DEPLOYED
 const diffTmpDir = path.join(epicshopTempDir, 'diff')
 
 function diffPathToRelative(filePath: string) {
-	let normalizedPath = path.normalize(filePath).replace(/^("|')|("|')$/g, '')
+	let normalizedPath = path.normalize(filePath.replace(/^("|')|("|')$/g, ''))
 	if (
 		normalizedPath.startsWith('a\\') ||
 		normalizedPath.startsWith('b\\') ||
@@ -155,7 +155,7 @@ function getFileCodeblocks(
 
 			return `
 <LaunchEditor file=${file} line={${line}}>
-	<span title=${fixedTitle} className="${launchEditorClassName}">${label}</span>
+	<span title="${fixedTitle}" className="${launchEditorClassName}">${label}</span>
 </LaunchEditor>`
 		}
 
