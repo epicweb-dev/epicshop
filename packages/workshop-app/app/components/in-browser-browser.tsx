@@ -11,6 +11,7 @@ import {
 import { z } from 'zod'
 import { Icon } from '#app/components/icons.tsx'
 import { AppStarter, AppStopper, PortStopper } from '#app/routes/start.tsx'
+import { useTheme } from '#app/routes/theme/index.tsx'
 import { getBaseUrl } from '#app/utils/misc.tsx'
 import { useRequestInfo } from '#app/utils/request-info.ts'
 import {
@@ -132,6 +133,7 @@ function InBrowserBrowserForRealzImpl(
 	{ baseUrl, id, name, initialRoute }: RealBrowserProps,
 	ref: ForwardedRef<InBrowserBrowserRef>,
 ) {
+	const theme = useTheme()
 	const [searchParams, setSearchParams] = useSearchParams()
 	const searchParamsPathname = searchParams.get('pathname') ?? initialRoute
 	const [iframeKeyNumber, setIframeKeyNumber] = useState(0)
@@ -431,6 +433,7 @@ function InBrowserBrowserForRealzImpl(
 						ref={iframeRef}
 						src={iframeSrcUrl.toString()}
 						className="h-full w-full flex-grow bg-white"
+						style={{ colorScheme: theme }}
 					/>
 				</div>
 			</div>

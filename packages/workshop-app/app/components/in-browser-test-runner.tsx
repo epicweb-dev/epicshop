@@ -2,6 +2,7 @@ import * as Accordion from '@radix-ui/react-accordion'
 import { useEffect, useRef, useState } from 'react'
 import { z } from 'zod'
 import AccordionComponent from '#app/components/accordion.tsx'
+import { useTheme } from '#app/routes/theme/index.tsx'
 import { stripCursorMovements, useAnsiToHtml } from '#app/utils/ansi-text.js'
 import { AnimatedBars, Icon } from './icons.tsx'
 
@@ -39,6 +40,7 @@ export function InBrowserTestRunner({
 	pathname: string
 	testFile: string
 }) {
+	const theme = useTheme()
 	const ansi = useAnsiToHtml()
 	const iframeRef = useRef<HTMLIFrameElement>(null)
 	const [message, setMessage] = useState<TestRunnerStatusData | null>(null)
@@ -132,7 +134,7 @@ export function InBrowserTestRunner({
 								))}
 							</ul>
 							{message?.status === 'fail' ? (
-								<div className="text-foreground-destructive flex items-baseline gap-2">
+								<div className="flex items-baseline gap-2 text-foreground-destructive">
 									<span>{sortedTestSteps.length + 1}.</span>
 									<span>{testStepStatusEmojis.fail}</span>
 									<pre
@@ -148,6 +150,7 @@ export function InBrowserTestRunner({
 								title={testFile}
 								src={pathname + testFile}
 								className="mt-5 min-h-[420px] w-full border bg-white"
+								style={{ colorScheme: theme }}
 							/>
 						</div>
 						<div className="flex border-y">

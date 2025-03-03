@@ -33,6 +33,7 @@ import { useIsOnline } from '#app/utils/online.ts'
 import { getSeoMetaTags } from '#app/utils/seo.js'
 import { EditFileOnGitHub } from '../launch-editor.tsx'
 import { ProgressToggle } from '../progress.tsx'
+import { useTheme } from '../theme/index.tsx'
 
 export const handle: SEOHandle = {
 	getSitemapEntries: () => [{ route: '/finished' }],
@@ -182,12 +183,13 @@ function Survey({
 	workshopTitle: string
 	workshopFormEmbedUrl: string
 }) {
+	const theme = useTheme()
 	const [iframeLoaded, setIframeLoaded] = React.useState(false)
 	const isOnline = useIsOnline()
 	if (!isOnline) {
 		return (
 			<div className="relative flex-shrink-0">
-				<div className="text-foreground-destructive absolute inset-0 z-10 flex items-center justify-center">
+				<div className="absolute inset-0 z-10 flex items-center justify-center text-foreground-destructive">
 					<Icon name="WifiNoConnection" size="xl">
 						<span>
 							{'Unable to load the '}
@@ -220,6 +222,7 @@ function Survey({
 					'absolute inset-0 flex h-full w-full transition-opacity duration-300',
 					iframeLoaded ? 'opacity-100' : 'opacity-0',
 				)}
+				style={{ colorScheme: theme }}
 			/>
 		</div>
 	)

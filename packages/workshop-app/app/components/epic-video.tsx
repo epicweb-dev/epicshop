@@ -103,12 +103,13 @@ export function VideoEmbed({
 	title?: string
 	loadingContent?: React.ReactNode
 }) {
+	const theme = useTheme()
 	const [iframeLoaded, setIframeLoaded] = React.useState(false)
 	const isOnline = useIsOnline()
 	if (!isOnline) {
 		return (
 			<div className="relative aspect-video w-full flex-shrink-0 shadow-lg">
-				<div className="not-prose text-foreground-destructive absolute inset-0 z-10 flex items-center justify-center p-8">
+				<div className="not-prose absolute inset-0 z-10 flex items-center justify-center p-8 text-foreground-destructive">
 					<Icon name="WifiNoConnection" size="xl">
 						<span>
 							{'Unable to load the video '}
@@ -142,6 +143,7 @@ export function VideoEmbed({
 				title={title}
 				sandbox="allow-forms allow-scripts allow-same-origin allow-popups allow-popups-to-escape-sandbox"
 				allowFullScreen
+				style={{ colorScheme: theme }}
 			/>
 		</div>
 	)

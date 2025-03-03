@@ -92,7 +92,8 @@ export function Preview({
 				<iframe
 					title={title}
 					src={dev.pathname}
-					className="h-full w-full flex-grow bg-white"
+					className="yo yo h-full w-full flex-grow bg-white"
+					style={{ colorScheme: theme }}
 				/>
 			</div>
 		)
@@ -116,6 +117,7 @@ export function StackBlitzEmbed({
 	title?: string
 	loadingContent: React.ReactNode
 }) {
+	const theme = useTheme()
 	const [iframeLoaded, setIframeLoaded] = useState(false)
 
 	return (
@@ -136,6 +138,7 @@ export function StackBlitzEmbed({
 				)}
 				title={title}
 				sandbox="allow-forms allow-scripts allow-same-origin allow-popups allow-popups-to-escape-sandbox"
+				style={{ colorScheme: theme }}
 			/>
 		</div>
 	)

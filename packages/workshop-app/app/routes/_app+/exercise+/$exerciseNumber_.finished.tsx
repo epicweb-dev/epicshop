@@ -32,6 +32,7 @@ import { useRevalidationWS } from '#app/components/revalidation-ws.js'
 import { type loader as rootLoader } from '#app/root.tsx'
 import { EditFileOnGitHub } from '#app/routes/launch-editor.tsx'
 import { ProgressToggle } from '#app/routes/progress.tsx'
+import { useTheme } from '#app/routes/theme/index.tsx'
 import { Mdx } from '#app/utils/mdx.tsx'
 import { cn } from '#app/utils/misc.tsx'
 import { useIsOnline } from '#app/utils/online.ts'
@@ -217,12 +218,13 @@ function Survey({
 	exerciseFormEmbedUrl: string
 	exerciseTitle: string
 }) {
+	const theme = useTheme()
 	const [iframeLoaded, setIframeLoaded] = React.useState(false)
 	const isOnline = useIsOnline()
 	if (!isOnline) {
 		return (
 			<div className="relative flex-shrink-0">
-				<div className="text-foreground-destructive absolute inset-0 z-10 flex items-center justify-center text-body-md">
+				<div className="absolute inset-0 z-10 flex items-center justify-center text-body-md text-foreground-destructive">
 					<Icon name="WifiNoConnection" size="xl">
 						<span>
 							{'Unable to load the '}
@@ -255,6 +257,7 @@ function Survey({
 					'absolute inset-0 flex h-full w-full transition-opacity duration-300',
 					iframeLoaded ? 'opacity-100' : 'opacity-0',
 				)}
+				style={{ colorScheme: theme }}
 			/>
 		</div>
 	)
