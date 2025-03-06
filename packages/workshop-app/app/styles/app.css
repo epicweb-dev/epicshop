@@ -153,7 +153,6 @@ body {
 .prose pre[data-add] .codeblock-line:before,
 .prose pre[data-add] .codeblock-line:before {
 	padding-left: 0rem;
-	content: attr(data-line-number);
 	text-align: right;
 	display: inline-block;
 	width: 4rem;
@@ -162,6 +161,11 @@ body {
 	position: sticky;
 	left: 0;
 	background-color: var(--base00);
+	content: attr(data-line-number);
+}
+
+.prose pre .codeblock-line[data-diff-line-number]:before {
+	content: attr(data-diff-line-number);
 }
 
 /* make this more specific than above */
