@@ -372,7 +372,14 @@ async function getDiffFilesImpl(app1: App, app2: App) {
 
 	const { stdout: diffOutput } = await execa(
 		'git',
-		['diff', '--no-index', '--ignore-blank-lines', app1CopyPath, app2CopyPath],
+		[
+			'diff',
+			'--no-index',
+			'--ignore-blank-lines',
+			'--ignore-space-change',
+			app1CopyPath,
+			app2CopyPath,
+		],
 		{ cwd: diffTmpDir },
 		// --no-index implies --exit-code, so we need to use the error output
 	).catch((e) => e as { stdout: string })
@@ -465,6 +472,7 @@ async function getDiffCodeImpl(app1: App, app2: App) {
 			'--color-moved-ws=allow-indentation-change',
 			'--no-prefix',
 			'--ignore-blank-lines',
+			'--ignore-space-change',
 		],
 		{ cwd: diffTmpDir },
 		// --no-index implies --exit-code, so we need to use the error output
