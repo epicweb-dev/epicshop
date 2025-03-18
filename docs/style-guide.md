@@ -133,6 +133,42 @@ const obj = {
 > **Note**: Ordering of properties is not important (and not specified by the
 > spec) and it's not a priority for this style guide either.
 
+#### Accessors
+
+Don't use them. When I do this:
+
+```ts
+console.log(person.name)
+person.name = 'Bob'
+```
+
+All I expect to happen is to get the person's name and pass it to the `log`
+function and to set the person's name to `'Bob'`.
+
+Once you start using property accessors (getters and setters) then those
+guarantees are off.
+
+```ts
+// ✅ Good
+const person = {
+	name: 'Hannah',
+}
+
+// ❌ Avoid
+const person = {
+	get name() {
+		// haha! Now I can do something more than just return the name! 😈
+		return this.name
+	},
+	set name(value) {
+		// haha! Now I can do something more than just set the name! 😈
+		this.name = value
+	},
+}
+```
+
+This violates the principle of least surprise.
+
 ### Arrays
 
 #### Literal syntax
@@ -1235,7 +1271,41 @@ const person = { name, age }
 })()
 ```
 
-### Type Casting & Coercion
+### Types
+
+#### Type Inference
+
+Let TypeScript do the heavy lifting with type inference when possible:
+
+```ts
+// ✅ Good
+function add(a: number, b: number) {
+	return a + b // TypeScript infers return type as number
+}
+
+// ❌ Avoid
+function add(a: number, b: number): number {
+	return a + b
+}
+```
+
+#### Generics
+
+Use generics to create reusable components and functions. And treat type names
+in generics the same way you treat any other kind of variable or parameter
+(because a generic type is basically a parameter!):
+
+```tsx
+// ✅ Good
+function createArray<Value>(length: number, value: Value): Array<Value> {
+	return Array(length).fill(value)
+}
+
+// ❌ Avoid
+function createStringArray(length: number, value: string) {
+	return Array(length).fill(value)
+}
+```
 
 #### Type Assertions
 
@@ -1405,42 +1475,6 @@ Key principles:
 
 For example: `getUserMessages`, `handleClickOutside`, `shouldDisplayMessage`
 
-### Accessors
-
-Don't use them. When I do this:
-
-```ts
-console.log(person.name)
-person.name = 'Bob'
-```
-
-All I expect to happen is to get the person's name and pass it to the `log`
-function and to set the person's name to `'Bob'`.
-
-Once you start using property accessors (getters and setters) then those
-guarantees are off.
-
-```ts
-// ✅ Good
-const person = {
-	name: 'Hannah',
-}
-
-// ❌ Avoid
-const person = {
-	get name() {
-		// haha! Now I can do something more than just return the name! 😈
-		return this.name
-	},
-	set name(value) {
-		// haha! Now I can do something more than just set the name! 😈
-		this.name = value
-	},
-}
-```
-
-This violates the principle of least surprise.
-
 ### Events
 
 #### Event Constants
@@ -1543,13 +1577,31 @@ try {
 
 ### Testing
 
-#### Tests resemble usage
+#### Test User Interactions
 
-Follow the guiding principle:
+Test components based on how users actually interact with them, not
+implementation details:
 
 > The more your tests resemble the way your software is used, the more
 > confidence they can give you. -
 > [Kent C. Dodds](https://x.com/kentcdodds/status/977018512689455106)
+
+```tsx
+// ✅ Good
+test('User can add items to cart', async () => {
+	render(<ProductList />)
+	await userEvent.click(screen.getByRole('button', { name: /add to cart/i }))
+	await expect(screen.getByText(/1 item in cart/i)).toBeInTheDocument()
+})
+
+// ❌ Avoid
+test('Cart state updates when addToCart is called', () => {
+	const { container } = render(<ProductList />)
+	const addButton = container.querySelector('[data-testid="add-button"]')
+	fireEvent.click(addButton)
+	expect(container.querySelector('[data-testid="cart-count"]')).toHaveTextContent('1')
+})
+```
 
 #### Avoid Unnecessary Mocks
 
@@ -1564,7 +1616,7 @@ function Greeting({ name }: { name: string }) {
 
 test('Greeting displays the name', () => {
 	render(<Greeting name="Kent" />)
-	expect(container).toHaveTextContent('Hello Kent')
+	expect(screen.getByText('Hello Kent')).toBeInTheDocument()
 })
 
 // ❌ Avoid
