@@ -130,8 +130,8 @@ const obj = {
 }
 ```
 
-NOTE: Ordering of properties is not important (and not specified by the spec)
-and it's not a priority for this style guide either.
+> **Note**: Ordering of properties is not important (and not specified by the
+> spec) and it's not a priority for this style guide either.
 
 ### Arrays
 
@@ -191,6 +191,7 @@ for (let i = 0; i < items.length; i++) {
 	const n = items[i]
 	// ...
 }
+
 // ❌ Avoid
 items.forEach((n) => {
 	// ...
@@ -739,8 +740,8 @@ const json = el.textContent
 export const serverData = JSON.parse(json)
 ```
 
-In practice, you can't avoid some modules having side-effects (you gotta kick
-off the app somewhere), but most modules should be pure.
+> **Note**: In practice, you can't avoid some modules having side-effects (you
+> gotta kick off the app somewhere), but most modules should be pure.
 
 #### Import Conventions
 
@@ -814,7 +815,7 @@ export { add }
 
 Use ECMAScript modules for everything. The age of CommonJS is over.
 
-✅ Good **package.json**
+✅ Good **package.json**:
 
 ```json
 {
@@ -825,7 +826,7 @@ Use ECMAScript modules for everything. The age of CommonJS is over.
 Use **exports** field in **package.json** to explicitly declare module entry
 points.
 
-✅ Good **package.json**
+✅ Good **package.json**:
 
 ```json
 {
@@ -840,7 +841,7 @@ points.
 Use import aliases to avoid long relative paths. Use the standard `imports`
 config field in **package.json** to declare import aliases.
 
-✅ Good **package.json**
+✅ Good **package.json**:
 
 ```json
 {
@@ -855,7 +856,7 @@ config field in **package.json** to declare import aliases.
 import { add } from '#app/utils/math.ts'
 ```
 
-Latest versions of TypeScript support this syntax natively.
+> **Note**: Latest versions of TypeScript support this syntax natively.
 
 #### Include file extensions
 
@@ -1116,9 +1117,9 @@ function getErrorMessage() {
 }
 ```
 
-The linter should lint against FIXEM comments, so this is useful if you are
-testing things out and want to make sure you don't accidentally commit your work
-in progress.
+> **Note**: The linter should lint against FIXME comments, so this is useful if
+> you are testing things out and want to make sure you don't accidentally commit
+> your work in progress.
 
 #### Use @ts-expect-error for TypeScript workarounds
 
@@ -1499,8 +1500,8 @@ type CodeReceivedEvent = {
 }
 ```
 
-This is primarily useful because in event systems, you're typically crossing a
-boundary of your codebase (network etc.).
+> **Note**: This is primarily useful because in event systems, you're typically
+> crossing a boundary of your codebase (network etc.).
 
 #### Event Cleanup
 
@@ -1711,9 +1712,9 @@ test('renders a greeting', () => {
 })
 ```
 
-Most of the time your individual tests can avoid the use of `beforeEach` and
-`afterEach` altogether and it's only global setup that needs it (like mocking
-out `console.log` or setting up a mock server).
+> **Note**: Most of the time your individual tests can avoid the use of
+> `beforeEach` and `afterEach` altogether and it's only global setup that needs
+> it (like mocking out `console.log` or setting up a mock server).
 
 #### Avoid Testing Implementation Details
 
