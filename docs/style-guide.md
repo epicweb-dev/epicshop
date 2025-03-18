@@ -49,7 +49,7 @@ const isEnabled = true
 const sum = numbers.reduce((total, n) => total + n, 0)
 const names = people.map((p) => p.name)
 
-// ❌ Bad
+// ❌ Avoid
 const t = 'Web App Fundamentals'
 const n = 'Kent C. Dodds'
 const e = true
@@ -68,14 +68,6 @@ const BASE_URL = 'https://epicweb.dev'
 const DEFAULT_PORT = 3000
 ```
 
-#### Environment Variables
-
-Prefix environment variables with the project name to avoid conflicts:
-
-```tsx
-export const workshopRoot = process.env.EPICSHOP_CONTEXT_CWD
-```
-
 ### Objects
 
 #### Literal syntax
@@ -89,7 +81,7 @@ const name = 'Kent'
 const age = 36
 const person = { name, age }
 
-// ❌ Bad
+// ❌ Avoid
 const name = 'Kent'
 const age = 36
 const person = { name: name, age: age }
@@ -106,7 +98,7 @@ const obj = {
 	[key]: 'Kent',
 }
 
-// ❌ Bad
+// ❌ Avoid
 const key = 'name'
 const obj = {}
 obj[key] = 'Kent'
@@ -127,7 +119,7 @@ const obj = {
 	},
 }
 
-// ❌ Bad
+// ❌ Avoid
 const obj = {
 	method: function () {
 		// ...
@@ -138,8 +130,8 @@ const obj = {
 }
 ```
 
-Ordering of properties is not important (and not specified by the spec) and it's
-not a priority for this style guide either.
+NOTE: Ordering of properties is not important (and not specified by the spec)
+and it's not a priority for this style guide either.
 
 ### Arrays
 
@@ -151,7 +143,7 @@ Use Array literal syntax for creating arrays.
 // ✅ Good
 const items = [1, 2, 3]
 
-// ❌ Bad
+// ❌ Avoid
 const items = new Array(1, 2, 3)
 ```
 
@@ -164,7 +156,7 @@ Use `.filter(Boolean)` to remove falsey values from an array.
 const items = [1, null, 2, undefined, 3]
 const filteredItems = items.filter(Boolean)
 
-// ❌ Bad
+// ❌ Avoid
 const filteredItems = items.filter(
 	(item) => item !== null && item !== undefined,
 )
@@ -183,7 +175,7 @@ never more readable than a `for` loop and there's not situation where the
 const items = [1, 2, 3]
 const doubledItems = items.map((n) => n * 2)
 
-// ❌ Bad
+// ❌ Avoid
 const doubledItems = []
 for (const n of items) {
 	doubledItems.push(n * 2)
@@ -194,12 +186,12 @@ for (const n of items) {
 	// ...
 }
 
-// ❌ Bad
+// ❌ Avoid
 for (let i = 0; i < items.length; i++) {
 	const n = items[i]
 	// ...
 }
-// ❌ Bad
+// ❌ Avoid
 items.forEach((n) => {
 	// ...
 })
@@ -210,7 +202,7 @@ for (let i = 0; i < items.length; i++) {
 	console.log(`${n} at index ${i}`)
 }
 
-// ❌ Bad
+// ❌ Avoid
 for (const n of items) {
 	const i = items.indexOf(n)
 	console.log(`${n} at index ${i}`)
@@ -227,7 +219,7 @@ performance is an issue.
 const items = [1, 2, 3, 4, 5]
 const doubledGreaterThanTwoItems = items.filter((n) => n > 2).map((n) => n * 2)
 
-// ❌ Bad
+// ❌ Avoid
 const doubledItems = items.reduce((acc, n) => {
 	acc.push(n * 2)
 	return acc
@@ -243,7 +235,7 @@ Prefer the spread operator to copy an array:
 const itemsCopy = [...items]
 const combined = [...array1, ...array2]
 
-// ❌ Bad
+// ❌ Avoid
 const itemsCopy = items.slice()
 const combined = array1.concat(array2)
 ```
@@ -263,10 +255,7 @@ const mappedFilteredSortedItems = items
 	.map((n) => n * 2)
 	.sort((a, b) => a - b)
 
-// In an older environment
-const reversedItems = [...items].reverse()
-
-// ❌ Bad
+// ❌ Avoid
 const reversedItems = items.reverse()
 ```
 
@@ -280,7 +269,7 @@ const people = [{ name: 'Kent' }, { name: 'Sarah' }]
 const personIndex = 0
 const peopleWithKentReplaced = people.with(personIndex, { name: 'John' })
 
-// ❌ Bad (mutative)
+// ❌ Avoid (mutative)
 const peopleWithKentReplaced = [...people]
 peopleWithKentReplaced[personIndex] = { name: 'John' }
 ```
@@ -294,7 +283,7 @@ Prefer the Array generic syntax over brackets for TypeScript types:
 const items: Array<string> = []
 function transform(numbers: Array<number>) {}
 
-// ❌ Bad
+// ❌ Avoid
 const items: string[] = []
 function transform(numbers: number[]) {}
 ```
@@ -310,15 +299,15 @@ Use destructuring to make your code more terse.
 const { name, avatar, 𝕏: xHandle } = instructor
 const [first, second] = items
 
-// ❌ Bad
+// ❌ Avoid
 const name = instructor.name
 const avatar = instructor.avatar
 const xHandle = instructor.𝕏
 ```
 
-Destructuring multiple levels is fine when formatted properly by Prettier, but
-can definitely get out of hand, so use your best judgement. As usual, try both
-and choose the one you hate the least.
+Destructuring multiple levels is fine when formatted properly by a formatter,
+but can definitely get out of hand, so use your best judgement. As usual, try
+both and choose the one you hate the least.
 
 ```tsx
 // ✅ Good (nesting, but still readable)
@@ -329,7 +318,7 @@ const {
 	address: [{ city, state, country }],
 } = instructor
 
-// ❌ Bad (too much nesting)
+// ❌ Avoid (too much nesting)
 const [
 	{
 		name,
@@ -361,7 +350,7 @@ Prefer template literals over string concatenation.
 const name = 'Kent'
 const greeting = `Hello ${name}`
 
-// ❌ Bad
+// ❌ Avoid
 const greeting = 'Hello ' + name
 ```
 
@@ -377,11 +366,13 @@ const html = `
 </div>
 `.trim()
 
-// ❌ Bad
+// ❌ Avoid
 const html = '<div>' + '\n' + '<h1>Hello</h1>' + '\n' + '</div>'
 ```
 
 ### Functions
+
+#### Function declarations
 
 Use function declarations over function expressions. Name your functions
 descriptively.
@@ -396,7 +387,7 @@ function calculateTotal(items: Array<number>) {
 	return items.reduce((sum, item) => sum + item, 0)
 }
 
-// ❌ Bad
+// ❌ Avoid
 const calculateTotal = function (items: Array<number>) {
 	return items.reduce((sum, item) => sum + item, 0)
 }
@@ -404,6 +395,8 @@ const calculateTotal = function (items: Array<number>) {
 const calculateTotal = (items: Array<number>) =>
 	items.reduce((sum, item) => sum + item, 0)
 ```
+
+#### Limit single-use functions
 
 Limit creating single-use functions. By taking a large function and breaking it
 down into many smaller functions, you reduce benefits of type inference and have
@@ -423,7 +416,7 @@ function doStuff() {
 	// thing N
 }
 
-// ❌ Bad
+// ❌ Avoid
 function doThing1(param1: string, param2: number) {}
 function doThing2(param1: boolean, param2: User) {}
 function doThing3(param1: string, param2: Array<User>, param3: User) {}
@@ -440,6 +433,8 @@ function doStuff() {
 }
 ```
 
+#### Default parameters
+
 Prefer default parameters over short-circuiting.
 
 ```tsx
@@ -448,12 +443,14 @@ function createUser(name: string, role = 'user') {
 	return { name, role }
 }
 
-// ❌ Bad
+// ❌ Avoid
 function createUser(name: string, role: string) {
 	role ??= 'user'
 	return { name, role }
 }
 ```
+
+#### Early return
 
 Return early to avoid deep nesting. Use guard clauses:
 
@@ -466,7 +463,7 @@ function getMinResolutionValue(resolution: number | undefined) {
 	return MinResolution.noLessThan1080p
 }
 
-// ❌ Bad
+// ❌ Avoid
 function getMinResolutionValue(resolution: number | undefined) {
 	if (resolution) {
 		if (resolution <= 480) {
@@ -482,6 +479,8 @@ function getMinResolutionValue(resolution: number | undefined) {
 }
 ```
 
+#### Async/await
+
 Prefer async/await over promise chains:
 
 ```tsx
@@ -492,13 +491,36 @@ async function fetchUserData(userId: string) {
 	return { user, posts }
 }
 
-// ❌ Bad
+// ✅ Fine, because wrapping in try/catch is annoying
+function sendAnalytics(event: string) {
+	return fetch('/api/analytics', {
+		method: 'POST',
+		body: JSON.stringify({ event }),
+	}).catch(() => null)
+}
+
+// ❌ Avoid
 function fetchUserData(userId: string) {
 	return getUser(userId).then((user) => {
 		return getUserPosts(user.id).then((posts) => ({ user, posts }))
 	})
 }
+
+// ❌ Avoid
+async function sendAnalytics(event: string) {
+	try {
+		return await fetch('/api/analytics', {
+			method: 'POST',
+			body: JSON.stringify({ event }),
+		})
+	} catch {
+		// ignore
+		return null
+	}
+}
 ```
+
+#### Inline Callbacks
 
 Anonymous inline callbacks should be arrow functions:
 
@@ -507,7 +529,7 @@ Anonymous inline callbacks should be arrow functions:
 const items = [1, 2, 3]
 const doubledGreaterThanTwoItems = items.filter((n) => n > 2).map((n) => n * 2)
 
-// ❌ Bad
+// ❌ Avoid
 const items = [1, 2, 3]
 const doubledGreaterThanTwoItems = items
 	.filter(function (n) {
@@ -518,7 +540,9 @@ const doubledGreaterThanTwoItems = items
 	})
 ```
 
-Arrow functions should include pretenses even with a single parameter:
+#### Arrow Parens
+
+Arrow functions should include parentheses even with a single parameter:
 
 <!-- prettier-ignore -->
 ```tsx
@@ -526,7 +550,7 @@ Arrow functions should include pretenses even with a single parameter:
 const items = [1, 2, 3]
 const doubledGreaterThanTwoItems = items.filter((n) => n > 2).map((n) => n * 2)
 
-// ❌ Bad
+// ❌ Avoid
 const items = [1, 2, 3]
 const doubledGreaterThanTwoItems = items.filter(n => n > 2).map(n => n * 2)
 ```
@@ -558,7 +582,7 @@ function userHasAccess(user: User, requiredRole: Role) {
 	return user.role === requiredRole
 }
 
-// ❌ Bad
+// ❌ Avoid
 class User {
 	name: string
 	role: Role
@@ -605,7 +629,7 @@ const point1 = { x: 0, y: 0 }
 const point2 = { x: 1, y: 1 }
 const distance = distanceBetweenPoints(point1, point2)
 
-// ❌ Bad
+// ❌ Avoid
 function createPoint(x: number, y: number) {
 	return {
 		x,
@@ -635,7 +659,7 @@ class User {
 	}
 }
 
-// ❌ Bad
+// ❌ Avoid
 class User extends Person {
 	role: string
 	constructor(name: string, role: string) {
@@ -676,7 +700,7 @@ export function subtract(a: number, b: number) {
 	return a - b
 }
 
-// ❌ Bad
+// ❌ Avoid
 export default function add(a: number, b: number) {
 	return a + b
 }
@@ -708,7 +732,7 @@ export function getServerData() {
 	return serverData
 }
 
-// ❌ Bad
+// ❌ Avoid
 let serverData
 const el = document.getElementById('server-data')
 const json = el.textContent
@@ -724,12 +748,13 @@ Import order has semantic meaning (modules are executed in the order they're
 imported), but if you keep most modules pure, then order shouldn't matter. For
 this reason, having your imports grouped can make things a bit easier to read.
 
-```
+```ts
 // Group imports in this order:
-import node_modules        // Built-in & external packages
-import '#app/components'   // Internal absolute imports
-import '../other-folder'   // Internal relative imports
-import './local-file'      // Local imports
+import 'node:fs' // Built-in
+import 'match-sorter' // external packages
+import '#app/components' // Internal absolute imports
+import '../other-folder' // Internal relative imports
+import './local-file' // Local imports
 ```
 
 #### Type Imports
@@ -740,7 +765,7 @@ Each module imported should have a single import statement:
 // ✅ Good
 import { type MatchSorterOptions, matchSorter } from 'match-sorter'
 
-// ❌ Bad
+// ❌ Avoid
 import { type MatchSorterOptions } from 'match-sorter'
 import { matchSorter } from 'match-sorter'
 ```
@@ -758,7 +783,7 @@ function doStuff() {
 	// ...
 }
 
-// ❌ Bad
+// ❌ Avoid
 function doStuff() {
 	// ...
 }
@@ -778,7 +803,7 @@ export function add(a: number, b: number) {
 	return a + b
 }
 
-// ❌ Bad
+// ❌ Avoid
 function add(a: number, b: number) {
 	return a + b
 }
@@ -844,7 +869,7 @@ has `exports` defined in its **package.json**.
 import { redirect } from 'react-router'
 import { add } from './math.ts'
 
-// ❌ Bad
+// ❌ Avoid
 import { add } from './math'
 ```
 
@@ -865,7 +890,7 @@ function getUserProperty(user: User, property: string) {
 	return user[property]
 }
 
-// ❌ Bad
+// ❌ Avoid
 const name = user['name']
 ```
 
@@ -889,9 +914,15 @@ const a = null
 if (a === null) {
 	// ...
 }
+if (b != null) {
+	// ...
+}
 
-// ❌ Bad
+// ❌ Avoid
 if (a == null) {
+	// ...
+}
+if (b !== null && b !== undefined) {
 	// ...
 }
 ```
@@ -906,7 +937,7 @@ if (user) {
 	// ...
 }
 
-// ❌ Bad
+// ❌ Avoid
 if (user === true) {
 	// ...
 }
@@ -922,7 +953,7 @@ In JSX, do not render falsy values other than `null`.
 	{contacts.length ? <div>You have {contacts.length} contacts</div> : null}
 </div>
 
-// ❌ Bad
+// ❌ Avoid
 <div>
 	{contacts.length && <div>You have {contacts.length} contacts</div>}
 </div>
@@ -969,6 +1000,18 @@ switch (action.type) {
 		break
 	}
 }
+
+// ❌ Avoid
+switch (action.type) {
+	case 'add':
+		const { amount } = action
+		add(amount)
+		break
+	case 'remove':
+		const { removal } = action
+		remove(removal)
+		break
+}
 ```
 
 #### Avoid unnecessary ternaries
@@ -978,7 +1021,7 @@ switch (action.type) {
 const isAdmin = user.role === 'admin'
 const value = input ?? defaultValue
 
-// ❌ Bad
+// ❌ Avoid
 const isAdmin = user.role === 'admin' ? true : false
 const value = input != null ? input : defaultValue
 ```
@@ -997,7 +1040,7 @@ if (user.role === 'admin') {
 	abilities = ['add', 'remove', 'edit', 'create', 'modify', 'fly', 'sing']
 }
 
-// ❌ Bad
+// ❌ Avoid
 if (user.role === 'admin')
 	abilities = ['add', 'remove', 'edit', 'create', 'modify', 'fly', 'sing']
 ```
@@ -1015,32 +1058,766 @@ if (user) {
 	makeUserHappy(user)
 }
 
-// ❌ Bad
+// ❌ Avoid
 user && makeUserHappy(user)
 ```
 
 ### Comments
 
-### Whitespace
+#### Use comments to explain "why" not "what"
 
-### Commas
+Comments should explain why something is done a certain way, not what the code
+does. The names you use for variables and functions are "self-documenting" in a
+sense that they explain what the code does. But if you're doing something in a
+way that's non-obvious, comments can be helpful.
+
+```tsx
+// ✅ Good
+// We need to sanitize lineNumber to prevent malicious use on win32
+// via: https://example.com/link-to-issue-or-something
+if (lineNumber && !(Number.isInteger(lineNumber) && lineNumber > 0)) {
+	return { status: 'error', message: 'lineNumber must be a positive integer' }
+}
+
+// ❌ Avoid
+// Check if lineNumber is valid
+if (lineNumber && !(Number.isInteger(lineNumber) && lineNumber > 0)) {
+	return { status: 'error', message: 'lineNumber must be a positive integer' }
+}
+```
+
+#### Use TODO comments for future improvements
+
+Use TODO comments to mark code that needs future attention or improvement.
+
+```tsx
+// ✅ Good
+// TODO: figure out how to send error messages as JSX from here...
+function getErrorMessage() {
+	// ...
+}
+
+// ❌ Avoid
+// FIXME: this is broken
+function getErrorMessage() {
+	// ...
+}
+```
+
+#### Use FIXME comments for immediate problems
+
+Use FIXME comments to mark code that needs immediate attention or improvement.
+
+```tsx
+// ✅ Good
+// FIXME: this is broken
+function getErrorMessage() {
+	// ...
+}
+```
+
+The linter should lint against FIXEM comments, so this is useful if you are
+testing things out and want to make sure you don't accidentally commit your work
+in progress.
+
+#### Use @ts-expect-error for TypeScript workarounds
+
+When you need to work around TypeScript limitations (or your own knowledge gaps
+with TypeScript), use `@ts-expect-error` with a comment explaining why.
+
+```tsx
+// ✅ Good
+// @ts-expect-error no idea why this started being an issue suddenly 🤷‍♂️
+if (jsxEl.name !== 'EpicVideo') return
+
+// ❌ Avoid
+// @ts-ignore
+if (jsxEl.name !== 'EpicVideo') return
+```
+
+#### Use JSDoc for public APIs
+
+Use JSDoc comments for documenting public APIs and their types.
+
+```tsx
+// ✅ Good
+/**
+ * This function generates a TOTP code from a configuration
+ * and this comment will explain a few things that are important for you to
+ * understand if you're using this function
+ *
+ * @param {OTPConfig} config - The configuration for the TOTP
+ * @returns {string} The TOTP code
+ */
+export function generateTOTP(config: OTPConfig) {
+	// ...
+}
+```
+
+#### Avoid redundant comments
+
+Don't add comments that just repeat what the code already clearly expresses.
+
+```tsx
+// ✅ Good
+function calculateTotal(items: Array<number>) {
+	return items.reduce((sum, item) => sum + item, 0)
+}
+
+// ❌ Avoid
+// This function calculates the total of all items in the array
+function calculateTotal(items: Array<number>) {
+	return items.reduce((sum, item) => sum + item, 0)
+}
+```
 
 ### Semicolons
 
+#### Don't use unnecessary semicolons
+
+Don't use semicolons. The rules for when you should use semicolons are more
+complicated than the rules for when you must use semicolons. With the right
+eslint rule
+([`no-unexpected-multiline`](https://eslint.org/docs/latest/rules/no-unexpected-multiline))
+and a formatter that will format your code funny for you if you mess up, you can
+avoid the pitfalls. Read more about this in
+[Semicolons in JavaScript: A preference](https://kentcdodds.com/blog/semicolons-in-javascript-a-preference).
+
+<!-- prettier-ignore -->
+```tsx
+// ✅ Good
+const name = 'Kent'
+const age = 36
+const person = { name, age }
+const getPersonAge = () => person.age
+function getPersonName() {
+	return person.name
+}
+
+// ❌ Avoid
+const name = 'Kent';
+const age = 36;
+const person = { name, age };
+const getPersonAge = () => person.age;
+function getPersonName() {
+	return person.name
+}
+```
+
+The only time you need semicolons is when you have a statement that starts with
+`(`, `[`, or `` ` ``. Instances where you do that are few and far between. You
+can prefix that with a `;` if you need to and a code formatter will format your
+code funny if you forget to do so (and the linter rule will bug you about it
+too).
+
+```tsx
+// ✅ Good
+const name = 'Kent'
+const age = 36
+const person = { name, age }
+
+// The formatter will add semicolons here automatically
+;(async () => {
+	const result = await fetch('/api/user')
+	return result.json()
+})()
+
+// ❌ Avoid
+const name = 'Kent'
+const age = 36
+const person = { name, age }
+
+// Don't manually add semicolons
+;(async () => {
+	const result = await fetch('/api/user')
+	return result.json()
+})()
+```
+
 ### Type Casting & Coercion
+
+#### Type Assertions
+
+Avoid type assertions (`as`) when possible. Instead, use type guards or runtime
+validation.
+
+```tsx
+// ✅ Good
+function isError(maybeError: unknown): maybeError is Error {
+	return (
+		maybeError &&
+		typeof maybeError === 'object' &&
+		'message' in maybeError &&
+		typeof maybeError.message === 'string'
+	)
+}
+
+// ❌ Avoid
+const error = caughtError as Error
+```
+
+#### Type Guards
+
+Use type guards to narrow types and provide runtime type safety. Type guards are
+functions that check if a value is of a specific type. The most common way to
+create a type guard is using a type predicate.
+
+```tsx
+// ✅ Good - Using type predicate
+function isError(maybeError: unknown): maybeError is Error {
+	return (
+		maybeError &&
+		typeof maybeError === 'object' &&
+		'message' in maybeError &&
+		typeof maybeError.message === 'string'
+	)
+}
+
+// ✅ Good - Using type predicate with schema validation
+function isApp(app: unknown): app is App {
+	return AppSchema.safeParse(app).success
+}
+
+// ✅ Good - Using type predicate with composition
+function isExampleApp(app: unknown): app is ExampleApp {
+	return isApp(app) && app.type === 'example'
+}
+
+// ❌ Avoid - Not using type predicate
+function isApp(app: unknown): boolean {
+	return typeof app === 'object' && app !== null
+}
+```
+
+Type predicates use the syntax `parameterName is Type` to tell TypeScript that
+the function checks if the parameter is of the specified type. This allows
+TypeScript to narrow the type in code blocks where the function returns true.
+
+```tsx
+// Usage example:
+const maybeApp: unknown = getSomeApp()
+if (isExampleApp(maybeApp)) {
+	// TypeScript now knows that maybeApp is definitely an ExampleApp
+	maybeApp.type // TypeScript knows this is 'example'
+}
+```
+
+#### Schema Validation
+
+Use schema validation (like Zod) for runtime type checking and type inference
+when working with something that crosses the boundary of your codebase.
+
+```tsx
+// ✅ Good
+const OAuthData = z.object({
+	accessToken: z.string(),
+	refreshToken: z.string(),
+	expiresAt: z.date(),
+})
+type OAuthData = z.infer<typeof OAuthDataSchema>
+
+const oauthData = OAuthDataSchema.parse(rawData)
+
+// ❌ Avoid
+type OAuthData = {
+	accessToken: string
+	refreshToken: string
+	expiresAt: Date
+}
+const oauthData = rawData as OAuthData
+```
+
+#### Unknown Type
+
+Use `unknown` instead of `any` for values of unknown type. This forces you to
+perform type checking before using the value.
+
+```tsx
+// ✅ Good
+function handleError(error: unknown) {
+	if (isError(error)) {
+		console.error(error.message)
+	} else {
+		console.error('An unknown error occurred')
+	}
+}
+
+// ❌ Avoid
+function handleError(error: any) {
+	console.error(error.message)
+}
+```
+
+#### Type Coercion
+
+Avoid implicit type coercion. Use explicit type conversion when needed. An
+exception to this is working with truthiness.
+
+```tsx
+// ✅ Good
+const number = Number(stringValue)
+const string = String(numberValue)
+if (user) {
+	// ...
+}
+
+// ❌ Avoid
+const number = +stringValue
+const string = '' + numberValue
+if (Boolean(user)) {
+	// ...
+}
+```
 
 ### Naming Conventions
 
+Learn and follow [Artem's](https://github.com/kettanaito)
+[Naming Cheatsheet](https://github.com/kettanaito/naming-cheatsheet). Here's a
+summary:
+
+```tsx
+// ✅ Good
+const firstName = 'Kent'
+const friends = ['Kate', 'John']
+const pageCount = 5
+const hasPagination = postCount > 10
+const shouldPaginate = postCount > 10
+
+// ❌ Avoid
+const primerNombre = 'Kent'
+const amis = ['Kate', 'John']
+const page_count = 5
+const isPaginatable = postCount > 10
+const onItmClk = () => {}
+```
+
+Key principles:
+
+1. Use English for all names
+2. Be consistent with naming convention (camelCase, PascalCase, etc.)
+3. Names should be Short, Intuitive, and Descriptive (S-I-D)
+4. Avoid contractions and context duplication
+5. Function names should follow the A/HC/LC pattern:
+   - Action (get, set, handle, etc.)
+   - High Context (what it operates on)
+   - Low Context (optional additional context)
+
+For example: `getUserMessages`, `handleClickOutside`, `shouldDisplayMessage`
+
 ### Accessors
+
+Don't use them. When I do this:
+
+```ts
+console.log(person.name)
+person.name = 'Bob'
+```
+
+All I expect to happen is to get the person's name and pass it to the `log`
+function and to set the person's name to `'Bob'`.
+
+Once you start using property accessors (getters and setters) then those
+guarantees are off.
+
+```ts
+// ✅ Good
+const person = {
+	name: 'Hannah',
+}
+
+// ❌ Avoid
+const person = {
+	get name() {
+		// haha! Now I can do something more than just return the name! 😈
+		return this.name
+	},
+	set name(value) {
+		// haha! Now I can do something more than just set the name! 😈
+		this.name = value
+	},
+}
+```
+
+This violates the principle of least surprise.
 
 ### Events
 
-### Standard Library
+#### Event Constants
+
+Define event constants using a const object. Use uppercase with underscores for
+event names.
+
+```tsx
+// ✅ Good
+export const EVENTS = {
+	USER_CODE_RECEIVED: 'USER_CODE_RECEIVED',
+	AUTH_RESOLVED: 'AUTH_RESOLVED',
+	AUTH_REJECTED: 'AUTH_REJECTED',
+} as const
+
+// ❌ Avoid
+export const events = {
+	userCodeReceived: 'userCodeReceived',
+	authResolved: 'authResolved',
+	authRejected: 'authRejected',
+}
+```
+
+#### Event Types
+
+Use TypeScript to define event types based on the event constants.
+
+```tsx
+// ✅ Good
+export type EventTypes = keyof typeof EVENTS
+
+// ❌ Avoid
+export type EventTypes =
+	| 'USER_CODE_RECEIVED'
+	| 'AUTH_RESOLVED'
+	| 'AUTH_REJECTED'
+```
+
+#### Event Schemas
+
+Define Zod schemas for event payloads to ensure type safety and runtime
+validation.
+
+```tsx
+// ✅ Good
+const CodeReceivedEventSchema = z.object({
+	type: z.literal(EVENTS.USER_CODE_RECEIVED),
+	code: z.string(),
+	url: z.string(),
+})
+
+// ❌ Avoid
+type CodeReceivedEvent = {
+	type: 'USER_CODE_RECEIVED'
+	code: string
+	url: string
+}
+```
+
+This is primarily useful because in event systems, you're typically crossing a
+boundary of your codebase (network etc.).
+
+#### Event Cleanup
+
+Always clean up event listeners when they're no longer needed.
+
+```tsx
+// ✅ Good
+authEmitter.on(EVENTS.USER_CODE_RECEIVED, handleCodeReceived)
+return () => {
+	authEmitter.off(EVENTS.USER_CODE_RECEIVED, handleCodeReceived)
+}
+
+// ❌ Avoid
+authEmitter.on(EVENTS.USER_CODE_RECEIVED, handleCodeReceived)
+// No cleanup
+```
+
+#### Event Error Handling
+
+Make certain to cover error cases and emit events for those.
+
+```tsx
+// ✅ Good
+try {
+	// event handling logic
+} catch (error) {
+	authEmitter.emit(EVENTS.AUTH_REJECTED, {
+		error: getErrorMessage(error),
+	})
+}
+
+// ❌ Avoid
+try {
+	// event handling logic
+} catch (error) {
+	console.error(error)
+}
+```
 
 ### Testing
 
-## React
+#### Tests resemble usage
 
-## HTML
+Follow the guiding principle:
 
-## CSS
+> The more your tests resemble the way your software is used, the more
+> confidence they can give you. -
+> [Kent C. Dodds](https://x.com/kentcdodds/status/977018512689455106)
+
+#### Avoid Unnecessary Mocks
+
+Only mock what's absolutely necessary. Most of the time, you don't need to mock
+any of your own code or even dependency code.
+
+```tsx
+// ✅ Good
+function Greeting({ name }: { name: string }) {
+	return <div>Hello {name}</div>
+}
+
+test('Greeting displays the name', () => {
+	render(<Greeting name="Kent" />)
+	expect(container).toHaveTextContent('Hello Kent')
+})
+
+// ❌ Avoid
+test('Greeting displays the name', () => {
+	const mockName = 'Kent'
+	vi.mock('./greeting.tsx', () => ({
+		Greeting: () => <div>Hello {mockName}</div>,
+	}))
+	render(<Greeting name={mockName} />)
+	expect(container).toHaveTextContent('Hello Kent')
+})
+```
+
+#### Mock External Services
+
+Use MSW (Mock Service Worker) to mock external services. This allows you to test
+your application's integration with external APIs without actually making
+network requests.
+
+```tsx
+// ✅ Good
+import { setupServer } from 'msw/node'
+import { http } from 'msw'
+
+const server = setupServer(
+	http.get('/api/user', async ({ request }) => {
+		return HttpResponse.json({
+			name: 'Kent',
+			role: 'admin',
+		})
+	}),
+)
+
+test('User data is fetched and displayed', async () => {
+	render(<UserProfile />)
+	await expect(await screen.findByText('Kent')).toBeInTheDocument()
+})
+
+// ❌ Avoid
+test('User data is fetched and displayed', async () => {
+	vi.spyOn(global, 'fetch').mockResolvedValue({
+		json: () => Promise.resolve({ name: 'Kent', role: 'admin' }),
+	})
+	render(<UserProfile />)
+	await expect(await screen.findByText('Kent')).toBeInTheDocument()
+})
+```
+
+#### Use Test Function
+
+Use the `test` function instead of `describe` and `it`. This makes tests more
+straightforward and easier to understand.
+
+```tsx
+// ✅ Good
+test('User can log in with valid credentials', async () => {
+	render(<LoginForm />)
+	await userEvent.type(
+		screen.getByRole('textbox', { name: /email/i }),
+		'kent@example.com',
+	)
+	await userEvent.type(
+		screen.getByRole('textbox', { name: /password/i }),
+		'password123',
+	)
+	await userEvent.click(screen.getByRole('button', { name: /login/i }))
+	await expect(await screen.findByText('Welcome back!')).toBeInTheDocument()
+})
+
+// ❌ Avoid
+describe('LoginForm', () => {
+	it('should allow user to log in with valid credentials', async () => {
+		render(<LoginForm />)
+		await userEvent.type(
+			screen.getByRole('textbox', { name: /email/i }),
+			'kent@example.com',
+		)
+		await userEvent.type(
+			screen.getByRole('textbox', { name: /password/i }),
+			'password123',
+		)
+		await userEvent.click(screen.getByRole('button', { name: /login/i }))
+		await expect(await screen.findByText('Welcome back!')).toBeInTheDocument()
+	})
+})
+```
+
+#### Avoid Nesting Tests
+
+Keep your tests flat. Nesting makes tests harder to understand and maintain.
+
+```tsx
+// ✅ Good
+test('User can log in', async () => {
+	render(<LoginForm />)
+	await userEvent.type(
+		screen.getByRole('textbox', { name: /email/i }),
+		'kent@example.com',
+	)
+	await userEvent.type(
+		screen.getByRole('textbox', { name: /password/i }),
+		'password123',
+	)
+	await userEvent.click(screen.getByRole('button', { name: /login/i }))
+	await expect(await screen.findByText('Welcome back!')).toBeInTheDocument()
+})
+
+// ❌ Avoid
+describe('LoginForm', () => {
+	describe('when user enters valid credentials', () => {
+		it('should show welcome message', async () => {
+			render(<LoginForm />)
+			await userEvent.type(
+				screen.getByRole('textbox', { name: /email/i }),
+				'kent@example.com',
+			)
+			await userEvent.type(
+				screen.getByRole('textbox', { name: /password/i }),
+				'password123',
+			)
+			await userEvent.click(screen.getByRole('button', { name: /login/i }))
+			await expect(await screen.findByText('Welcome back!')).toBeInTheDocument()
+		})
+	})
+})
+```
+
+#### Avoid shared setup/teardown variables
+
+```tsx
+// ✅ Good
+test('renders a greeting', () => {
+	render(<Greeting name="Kent" />)
+	expect(screen.getByText('Hello Kent')).toBeInTheDocument()
+})
+
+// ❌ Avoid
+let utils
+beforeEach(() => {
+	utils = render(<Greeting name="Kent" />)
+})
+
+test('renders a greeting', () => {
+	expect(utils.getByText('Hello Kent')).toBeInTheDocument()
+})
+```
+
+Most of the time your individual tests can avoid the use of `beforeEach` and
+`afterEach` altogether and it's only global setup that needs it (like mocking
+out `console.log` or setting up a mock server).
+
+#### Avoid Testing Implementation Details
+
+Test your components based on how they're used, not how they're implemented.
+
+```tsx
+// ✅ Good
+function Counter() {
+	const [count, setCount] = useState(0)
+	return <button onClick={() => setCount((c) => c + 1)}>Count: {count}</button>
+}
+
+test('Counter increments when clicked', async () => {
+	render(<Counter />)
+	const button = screen.getByRole('button')
+	await userEvent.click(button)
+	expect(getByText('Count: 1')).toBeInTheDocument()
+})
+
+// ❌ Avoid
+test('Counter increments when clicked', () => {
+	const { container } = render(<Counter />)
+	const button = container.querySelector('button')
+	fireEvent.click(button)
+	const state = container.querySelector('[data-testid="count"]')
+	expect(state).toHaveTextContent('1')
+})
+```
+
+#### Keep Assertions Specific
+
+Make your assertions as specific as possible to catch the exact behavior you're
+testing.
+
+```tsx
+// ✅ Good
+test('Form shows error for invalid email', async () => {
+	render(<LoginForm />)
+	await userEvent.type(
+		screen.getByRole('textbox', { name: /email/i }),
+		'invalid-email',
+	)
+	await userEvent.click(screen.getByRole('button', { name: /login/i }))
+	await expect(
+		await screen.findByText(/enter a valid email/i),
+	).toBeInTheDocument()
+})
+
+// ❌ Avoid
+test('Form shows error for invalid email', async () => {
+	const { container } = render(<LoginForm />)
+	await userEvent.type(
+		screen.getByRole('textbox', { name: /email/i }),
+		'invalid-email',
+	)
+	await userEvent.click(screen.getByRole('button', { name: /login/i }))
+	expect(container).toMatchSnapshot()
+})
+```
+
+#### Follow the Testing Trophy
+
+Prioritize your tests according to the Testing Trophy:
+
+1. Static Analysis (TypeScript, ESLint)
+2. Unit Tests (Pure Functions)
+3. Integration Tests (Component Integration)
+4. E2E Tests (Critical User Flows)
+
+```tsx
+// ✅ Good
+// 1. Static Analysis
+function add(a: number, b: number): number {
+	return a + b
+}
+
+// 2. Unit Tests
+test('add function adds two numbers', () => {
+	expect(add(1, 2)).toBe(3)
+})
+
+// 3. Integration Tests
+test('Calculator component adds numbers', async () => {
+	render(<Calculator />)
+	await userEvent.click(screen.getByRole('button', { name: '1' }))
+	await userEvent.click(screen.getByRole('button', { name: '+' }))
+	await userEvent.click(screen.getByRole('button', { name: '2' }))
+	await userEvent.click(screen.getByRole('button', { name: '=' }))
+	expect(getByText('3')).toBeInTheDocument()
+})
+
+// 4. E2E Tests (using Playwright)
+await page.goto('/calculator')
+await expect(page.getByRole('button', { name: '0' })).toBeInTheDocument()
+await page.getByRole('button', { name: '1' }).click()
+await page.getByRole('button', { name: '+' }).click()
+await page.getByRole('button', { name: '2' }).click()
+await page.getByRole('button', { name: '=' }).click()
+await expect(page.getByRole('button', { name: '3' })).toBeInTheDocument()
+
+// ❌ Avoid
+// Don't write E2E tests for everything
+test('every button click updates display', () => {
+	render(<Calculator />)
+	// Testing every possible button combination...
+})
+```
