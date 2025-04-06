@@ -65,6 +65,7 @@ export default function AccountSettings() {
 							id="minResolution"
 							name="minResolution"
 							defaultValue={playerPreferences?.minResolution}
+							className="rounded-md border border-border bg-background px-2 py-1 text-foreground"
 						>
 							<option value="">Auto</option>
 							<option value="480">480p</option>
@@ -80,6 +81,7 @@ export default function AccountSettings() {
 							id="maxResolution"
 							name="maxResolution"
 							defaultValue={playerPreferences?.maxResolution}
+							className="rounded-md border border-border bg-background px-2 py-1 text-foreground"
 						>
 							<option value="">Auto</option>
 							<option value="720">720p</option>
@@ -106,6 +108,7 @@ export default function AccountSettings() {
 							step="1"
 							min="12"
 							max="26"
+							className="rounded-md border border-border bg-background px-2 py-1 text-foreground"
 						/>
 					</div>
 				</div>
