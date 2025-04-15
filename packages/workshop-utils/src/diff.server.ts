@@ -1,26 +1,22 @@
 import os from 'os'
 import path from 'path'
 import { type CacheEntry } from '@epic-web/cachified'
+import { execa } from 'execa'
+import fsExtra from 'fs-extra'
+import ignore from 'ignore'
+import parseGitDiff, { type AnyFileChange } from 'parse-git-diff'
+import { bundledLanguagesInfo } from 'shiki/langs'
 import {
 	getForceFreshForDir,
 	getRelativePath,
 	workshopRoot,
 	modifiedTimes,
 	type App,
-} from '@epic-web/workshop-utils/apps.server'
-import {
-	cachified,
-	diffCodeCache,
-	diffFilesCache,
-} from '@epic-web/workshop-utils/cache.server'
-import { compileMarkdownString } from '@epic-web/workshop-utils/compile-mdx.server'
-import { modifiedMoreRecentlyThan } from '@epic-web/workshop-utils/modified-time.server'
-import { type Timings } from '@epic-web/workshop-utils/timing.server'
-import { execa } from 'execa'
-import fsExtra from 'fs-extra'
-import ignore from 'ignore'
-import parseGitDiff, { type AnyFileChange } from 'parse-git-diff'
-import { bundledLanguagesInfo } from 'shiki/langs'
+} from './apps.server.js'
+import { cachified, diffCodeCache, diffFilesCache } from './cache.server.js'
+import { compileMarkdownString } from './compile-mdx.server.js'
+import { modifiedMoreRecentlyThan } from './modified-time.server.js'
+import { type Timings } from './timing.server.js'
 
 const epicshopTempDir = path.join(os.tmpdir(), 'epicshop')
 
