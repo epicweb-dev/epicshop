@@ -1,6 +1,5 @@
 # EpicShop MCP
 
-## Overview
+Configure the MCP for your project with `npx -y @epic-web/workshop-mcp`.
 
-This package is a monorepo for the EpicShop MCP. It contains the code for the
-MCP, as well as the code for the MCP CLI.
+Ask your LLM what it can do.
