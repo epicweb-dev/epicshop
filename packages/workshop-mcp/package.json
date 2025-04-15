@@ -12,11 +12,13 @@
       "esm"
     ],
     "exports": {
-      "./package.json": "./package.json"
+      "./package.json": "./package.json",
+      ".": "./dist/esm/cli.js"
     }
   },
   "exports": {
-    "./package.json": "./package.json"
+    "./package.json": "./package.json",
+    ".": "./dist/esm/cli.js"
   },
   "files": [
     "dist"
@@ -40,5 +42,7 @@
     "type": "git",
     "url": "https://github.com/epicweb-dev/epicshop.git",
     "directory": "packages/workshop-mcp"
-  }
+  },
+  "main": "./dist/esm/cli.js",
+  "module": "./dist/esm/cli.js"
 }
