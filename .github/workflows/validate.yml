@@ -60,6 +60,7 @@ jobs:
             packages/workshop-app/dist
             packages/workshop-presence/dist
             packages/workshop-utils/dist
+            packages/workshop-mcp/dist
 
   typecheck:
     name: ʦ TypeScript
