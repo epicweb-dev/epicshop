@@ -1,11 +1,11 @@
 {
-  "name": "@epic-web/epicshop-mcp",
+  "name": "@epic-web/workshop-mcp",
   "version": "0.0.0-semantically-released",
   "publishConfig": {
     "access": "public"
   },
   "bin": {
-    "epicshop-mcp": "./dist/esm/cli.js"
+    "workshop-mcp": "./dist/esm/cli.js"
   },
   "type": "module",
   "tshy": {
@@ -26,7 +26,7 @@
   "scripts": {
     "typecheck": "tsc -b --noEmit",
     "build": "tshy",
-    "build:watch": "nx watch --projects=@epic-web/epicshop-mcp -- nx run \\$NX_PROJECT_NAME:build"
+    "build:watch": "nx watch --projects=@epic-web/workshop-mcp -- nx run \\$NX_PROJECT_NAME:build"
   },
   "dependencies": {
     "@epic-web/workshop-utils": "file:../workshop-utils",
@@ -41,6 +41,6 @@
   "repository": {
     "type": "git",
     "url": "https://github.com/epicweb-dev/epicshop.git",
-    "directory": "packages/epicshop-mcp"
+    "directory": "packages/workshop-mcp"
   }
 }

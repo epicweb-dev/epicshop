@@ -7,6 +7,7 @@
 			"dependsOn": [
 				"@epic-web/workshop-app:build",
 				"@epic-web/workshop-utils:build",
+				"@epic-web/workshop-mcp:build",
 				"@epic-web/workshop-presence:build"
 			]
 		},
