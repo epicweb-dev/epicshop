@@ -16,6 +16,9 @@
 		},
 		{
 			"path": "packages/workshop-presence"
+		},
+		{
+			"path": "packages/epicshop-mcp"
 		}
 	]
 }

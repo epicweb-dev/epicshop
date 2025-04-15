@@ -1,0 +1,46 @@
+{
+  "name": "@epic-web/epicshop-mcp",
+  "version": "0.0.0-semantically-released",
+  "publishConfig": {
+    "access": "public"
+  },
+  "bin": {
+    "epicshop-mcp": "./dist/esm/cli.js"
+  },
+  "type": "module",
+  "tshy": {
+    "project": "./tsconfig.build.json",
+    "dialects": [
+      "esm"
+    ],
+    "exports": {
+      "./package.json": "./package.json"
+    }
+  },
+  "exports": {
+    "./package.json": "./package.json"
+  },
+  "files": [
+    "dist"
+  ],
+  "scripts": {
+    "typecheck": "tsc -b --noEmit",
+    "build": "tshy",
+    "build:watch": "nx watch --projects=@epic-web/epicshop-mcp -- nx run \\$NX_PROJECT_NAME:build"
+  },
+  "dependencies": {
+    "@epic-web/workshop-utils": "file:../workshop-utils",
+    "@modelcontextprotocol/sdk": "^1.9.0",
+    "zod": "^3.24.2"
+  },
+  "devDependencies": {
+    "@types/node": "^22.14.1",
+    "tshy": "^3.0.2",
+    "typescript": "^5.8.3"
+  },
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/epicweb-dev/epicshop.git",
+    "directory": "packages/epicshop-mcp"
+  }
+}

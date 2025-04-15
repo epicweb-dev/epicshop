@@ -618,7 +618,7 @@ function getAppName(fullPath: string) {
 	}
 }
 
-async function getFullPathFromAppName(appName: string) {
+export async function getFullPathFromAppName(appName: string) {
 	if (appName === 'playground') return path.join(workshopRoot, 'playground')
 	if (appName.startsWith('.example')) {
 		const relativePath = appName
@@ -648,7 +648,7 @@ async function getFullPathFromAppName(appName: string) {
 	return dir ?? appName
 }
 
-async function findSolutionDir({
+export async function findSolutionDir({
 	fullPath,
 }: {
 	fullPath: string
@@ -678,7 +678,7 @@ async function findSolutionDir({
 	return null
 }
 
-async function findProblemDir({
+export async function findProblemDir({
 	fullPath,
 }: {
 	fullPath: string

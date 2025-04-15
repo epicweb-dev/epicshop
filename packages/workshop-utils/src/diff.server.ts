@@ -215,6 +215,7 @@ async function copyUnignoredFiles(
 		cache: diffCodeCache,
 		forceFresh: getForceFreshForDir(diffCodeCache.get(key), srcDir),
 		async getFreshValue() {
+			// @ts-expect-error 🤷‍♂️ weird module stuff
 			const ig = ignore().add(ignoreList)
 
 			await fsExtra.remove(destDir)
@@ -555,7 +556,34 @@ ${getFileCodeblocks(file, filePathApp1, filePathApp2, file.type).join('\n')}
 			}
 		}
 	}
-
 	const code = await compileMarkdownString(markdownLines.join('\n'))
 	return code
+}
+
+export async function getDiffOutputWithRelativePaths(app1: App, app2: App) {
+	const { app1CopyPath, app2CopyPath } = await prepareForDiff(app1, app2)
+
+	const { stdout: diffOutput } = await execa(
+		'git',
+		[
+			'diff',
+			'--no-index',
+			app1CopyPath,
+			app2CopyPath,
+			'--color=never',
+			'--color-moved-ws=allow-indentation-change',
+			'--no-prefix',
+			'--ignore-blank-lines',
+			'--ignore-space-change',
+		],
+		{ cwd: diffTmpDir },
+		// --no-index implies --exit-code, so we need to use the error output
+	).catch((e) => e as { stdout: string })
+
+	void fsExtra.remove(app1CopyPath)
+	void fsExtra.remove(app2CopyPath)
+
+	return diffOutput
+		.replaceAll(app1CopyPath.slice(1), '.')
+		.replaceAll(app2CopyPath.slice(1), '.')
 }

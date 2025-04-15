@@ -6,6 +6,7 @@ import {
 	isSolutionApp,
 	setPlayground,
 } from '@epic-web/workshop-utils/apps.server'
+import { getDiffCode } from '@epic-web/workshop-utils/diff.server'
 import * as Select from '@radix-ui/react-select'
 import { unstable_data as data, type ActionFunctionArgs } from '@remix-run/node'
 import { useFetcher } from '@remix-run/react'
@@ -14,7 +15,6 @@ import { z } from 'zod'
 import { Icon } from '#app/components/icons.tsx'
 import { showProgressBarField } from '#app/components/progress-bar.tsx'
 import { SimpleTooltip } from '#app/components/ui/tooltip.tsx'
-import { getDiffCode } from '#app/utils/diff.server.ts'
 import { ensureUndeployed, getErrorMessage } from '#app/utils/misc.tsx'
 import { dataWithPE, usePERedirectInput } from '#app/utils/pe.js'
 import { createToastHeaders } from '#app/utils/toast.server.ts'
@@ -222,7 +222,7 @@ export function SetAppToPlayground({ appName }: { appName: string }) {
 			appName={appName}
 			tooltipText="Playground is not set to the right app. Click to set Playground."
 		>
-			<span className="text-foreground-destructive flex items-center justify-center gap-1 hover:underline">
+			<span className="flex items-center justify-center gap-1 text-foreground-destructive hover:underline">
 				<Icon name="Unlinked" className="animate-ping" />{' '}
 				<span className="uppercase">Set to Playground</span>
 			</span>

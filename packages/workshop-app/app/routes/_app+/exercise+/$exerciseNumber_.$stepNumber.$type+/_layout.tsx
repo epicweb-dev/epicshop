@@ -14,6 +14,7 @@ import {
 	type ExerciseStepApp,
 } from '@epic-web/workshop-utils/apps.server'
 import { getWorkshopConfig } from '@epic-web/workshop-utils/config.server'
+import { getDiffFiles } from '@epic-web/workshop-utils/diff.server'
 import { getEpicVideoInfos } from '@epic-web/workshop-utils/epic-api.server'
 import {
 	combineServerTimings,
@@ -39,7 +40,6 @@ import { type loader as rootLoader } from '#app/root.tsx'
 import { EditFileOnGitHub } from '#app/routes/launch-editor.tsx'
 import { ProgressToggle } from '#app/routes/progress.tsx'
 import { SetAppToPlayground } from '#app/routes/set-playground.tsx'
-import { getDiffFiles } from '#app/utils/diff.server.js'
 import { getSeoMetaTags } from '#app/utils/seo.js'
 import { StepMdx } from './__shared/step-mdx.tsx'
 import TouchedFiles from './__shared/touched-files.tsx'
