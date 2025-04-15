@@ -4,9 +4,7 @@
   "publishConfig": {
     "access": "public"
   },
-  "bin": {
-    ".": "./dist/esm/cli.js"
-  },
+  "bin": "./dist/esm/cli.js",
   "type": "module",
   "tshy": {
     "project": "./tsconfig.build.json",
