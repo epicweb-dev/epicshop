@@ -211,7 +211,7 @@ async function copyUnignoredFiles(
 		cache: diffCodeCache,
 		forceFresh: getForceFreshForDir(diffCodeCache.get(key), srcDir),
 		async getFreshValue() {
-			// @ts-expect-error 🤷‍♂️ weird module stuff
+			// @ts-ignore 🤷‍♂️ weird module stuff
 			const ig = ignore().add(ignoreList)
 
 			await fsExtra.remove(destDir)
