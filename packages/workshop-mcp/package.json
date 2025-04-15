@@ -5,7 +5,7 @@
     "access": "public"
   },
   "bin": {
-    "workshop-mcp": "./dist/esm/cli.js"
+    ".": "./dist/esm/cli.js"
   },
   "type": "module",
   "tshy": {
