@@ -221,8 +221,8 @@ work they still need to do and answer any questions about the exercise.
 				return transcripts.join('\n')
 			}
 
-			function getFileContentElement(filePath: string) {
-				return `<file path="${filePath}">${safeReadFile(filePath) ?? 'None found'}</file>`
+			async function getFileContentElement(filePath: string) {
+				return `<file path="${filePath}">${(await safeReadFile(filePath)) ?? 'None found'}</file>`
 			}
 			let text = `
 Below is all the context for this exercise and each step.
@@ -237,11 +237,11 @@ Below is all the context for this exercise and each step.
 
 <exerciseBackground number="${exerciseNumber}">
 	<intro>
-		${getFileContentElement(path.join(exercise.fullPath, 'README.mdx'))}
+		${await getFileContentElement(path.join(exercise.fullPath, 'README.mdx'))}
 		${getTranscriptsElement(exercise.instructionsEpicVideoEmbeds)}
 	</intro>
 	<outro>
-		${getFileContentElement(path.join(exercise.fullPath, 'FINISHED.mdx'))}
+		${await getFileContentElement(path.join(exercise.fullPath, 'FINISHED.mdx'))}
 		${getTranscriptsElement(exercise.finishedEpicVideoEmbeds)}
 	</outro>
 </exerciseBackground>
@@ -253,11 +253,11 @@ Below is all the context for this exercise and each step.
 					text += `
 <step number="${app.stepNumber}" isCurrent="${app.stepNumber === Number(stepNumber)}">
 	<problem>
-		${app.problem ? getFileContentElement(path.join(app.problem?.fullPath, `README.mdx`)) : 'No problem found'}
+		${app.problem ? await getFileContentElement(path.join(app.problem?.fullPath, `README.mdx`)) : 'No problem found'}
 		${getTranscriptsElement(app.problem?.epicVideoEmbeds ?? [])}
 	</problem>
 	<solution>
-		${app.solution ? getFileContentElement(path.join(app.solution?.fullPath, `README.mdx`)) : 'No solution found'}
+		${app.solution ? await getFileContentElement(path.join(app.solution?.fullPath, `README.mdx`)) : 'No solution found'}
 		${getTranscriptsElement(app.solution?.epicVideoEmbeds ?? [])}
 	</solution>
 </step>`
