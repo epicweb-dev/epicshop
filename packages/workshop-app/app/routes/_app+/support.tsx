@@ -1,5 +1,5 @@
 import { type SEOHandle } from '@nasa-gcn/remix-seo'
-import { Link } from '@remix-run/react'
+import { Link } from 'react-router';
 
 export const handle: SEOHandle = {
 	getSitemapEntries: () => null,

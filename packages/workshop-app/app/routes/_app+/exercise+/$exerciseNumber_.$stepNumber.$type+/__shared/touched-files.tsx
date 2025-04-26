@@ -1,6 +1,6 @@
 import * as Popover from '@radix-ui/react-popover'
-import { type SerializeFrom } from '@remix-run/node'
-import { Await, useLoaderData } from '@remix-run/react'
+import { type SerializeFrom } from 'react-router';
+import { Await, useLoaderData } from 'react-router';
 import * as React from 'react'
 import { Icon } from '#app/components/icons.tsx'
 import { SimpleTooltip } from '#app/components/ui/tooltip.tsx'

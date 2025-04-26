@@ -1,3 +1,12 @@
+import { GeneralErrorBoundary } from '#app/components/error-boundary.tsx'
+import { type InBrowserBrowserRef } from '#app/components/in-browser-browser.tsx'
+import { NavChevrons } from '#app/components/nav-chevrons.tsx'
+import { useRevalidationWS } from '#app/components/revalidation-ws.js'
+import { type loader as rootLoader } from '#app/root.tsx'
+import { EditFileOnGitHub } from '#app/routes/launch-editor.tsx'
+import { ProgressToggle } from '#app/routes/progress.tsx'
+import { SetAppToPlayground } from '#app/routes/set-playground.tsx'
+import { getSeoMetaTags } from '#app/utils/seo.js'
 import { ElementScrollRestoration } from '@epic-web/restore-scroll'
 import {
 	getAppDisplayName,
@@ -21,26 +30,19 @@ import {
 	getServerTimeHeader,
 	makeTimings,
 } from '@epic-web/workshop-utils/timing.server'
+import slugify from '@sindresorhus/slugify'
+import { useRef } from 'react'
 import {
-	unstable_data as data,
+	data,
+	Link,
+	Outlet,
 	redirect,
+	useLoaderData,
 	type HeadersFunction,
 	type LoaderFunctionArgs,
 	type MetaFunction,
 	type SerializeFrom,
-} from '@remix-run/node'
-import { Link, Outlet, useLoaderData } from '@remix-run/react'
-import slugify from '@sindresorhus/slugify'
-import { useRef } from 'react'
-import { GeneralErrorBoundary } from '#app/components/error-boundary.tsx'
-import { type InBrowserBrowserRef } from '#app/components/in-browser-browser.tsx'
-import { NavChevrons } from '#app/components/nav-chevrons.tsx'
-import { useRevalidationWS } from '#app/components/revalidation-ws.js'
-import { type loader as rootLoader } from '#app/root.tsx'
-import { EditFileOnGitHub } from '#app/routes/launch-editor.tsx'
-import { ProgressToggle } from '#app/routes/progress.tsx'
-import { SetAppToPlayground } from '#app/routes/set-playground.tsx'
-import { getSeoMetaTags } from '#app/utils/seo.js'
+} from 'react-router'
 import { StepMdx } from './__shared/step-mdx.tsx'
 import TouchedFiles from './__shared/touched-files.tsx'
 
@@ -52,12 +54,9 @@ function pageTitle(
 		data?.exerciseStepApp.exerciseNumber.toString().padStart(2, '0') ?? '00'
 	const stepNumber =
 		data?.exerciseStepApp.stepNumber.toString().padStart(2, '0') ?? '00'
-	const emoji = (
-		{
-			problem: '💪',
-			solution: '🏁',
-		} as const
-	)[data?.type ?? 'problem']
+	const emoji = ({ problem: '💪', solution: '🏁' } as const)[
+		data?.type ?? 'problem'
+	]
 	const title = data?.[data.type]?.title ?? 'N/A'
 	return {
 		emoji,
@@ -260,11 +259,7 @@ export async function loader({ request, params }: LoaderFunctionArgs) {
 						})
 					: 'No diff available',
 		} as const,
-		{
-			headers: {
-				'Server-Timing': getServerTimeHeader(timings),
-			},
-		},
+		{ headers: { 'Server-Timing': getServerTimeHeader(timings) } },
 	)
 }
 
@@ -377,18 +372,12 @@ export default function ExercisePartRoute() {
 						<NavChevrons
 							prev={
 								data.prevStepLink
-									? {
-											to: data.prevStepLink.to,
-											'aria-label': 'Previous Step',
-										}
+									? { to: data.prevStepLink.to, 'aria-label': 'Previous Step' }
 									: null
 							}
 							next={
 								data.nextStepLink
-									? {
-											to: data.nextStepLink.to,
-											'aria-label': 'Next Step',
-										}
+									? { to: data.nextStepLink.to, 'aria-label': 'Next Step' }
 									: null
 							}
 						/>

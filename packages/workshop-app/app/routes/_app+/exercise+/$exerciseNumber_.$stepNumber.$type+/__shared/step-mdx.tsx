@@ -1,9 +1,4 @@
-import {
-	Link,
-	useLoaderData,
-	useSearchParams,
-	type LinkProps,
-} from '@remix-run/react'
+import { Link, useLoaderData, useSearchParams, type LinkProps } from 'react-router';
 import * as React from 'react'
 import { type PropsWithChildren } from 'react'
 import iconsSvg from '#app/assets/icons.svg'
@@ -135,12 +130,12 @@ function DiffLink({
 	const data = useLoaderData<typeof loader>()
 	if (!to && !app1 && !app2) {
 		return (
-			// @ts-expect-error 🤷‍♂️
-			<callout-danger className="notification">
-				<div className="title">DiffLink Error: invalid input</div>
-				{/* @ts-expect-error 🤷‍♂️ */}
-			</callout-danger>
-		)
+            // @ts-expect-error 🤷‍♂️
+            (<callout-danger className="notification">
+                <div className="title">DiffLink Error: invalid input</div>
+                {/* @ts-expect-error 🤷‍♂️ */}
+            </callout-danger>)
+        );
 	}
 
 	function getAppName(input: typeof app1) {
@@ -166,14 +161,14 @@ function DiffLink({
 	const app2Name = getAppName(app2)
 	if (!app1Name || !app2Name) {
 		return (
-			// @ts-expect-error 🤷‍♂️
-			<callout-danger className="notification">
-				<div className="title">DiffLink Error: invalid input</div>
-				{!app1Name && <div>app1: "{app1}" is not a valid app name</div>}
-				{!app2Name && <div>app2: "{app2}" is not a valid app name</div>}
-				{/* @ts-expect-error 🤷‍♂️ */}
-			</callout-danger>
-		)
+            // @ts-expect-error 🤷‍♂️
+            (<callout-danger className="notification">
+                <div className="title">DiffLink Error: invalid input</div>
+                {!app1Name && <div>app1: "{app1}" is not a valid app name</div>}
+                {!app2Name && <div>app2: "{app2}" is not a valid app name</div>}
+                {/* @ts-expect-error 🤷‍♂️ */}
+            </callout-danger>)
+        );
 	}
 
 	if (!to) {
@@ -232,12 +227,12 @@ function InlineFile({
 		</div>
 	) : type === 'playground' ? (
 		// playground does not exist yet
-		<SimpleTooltip content="You must 'Set to Playground' before opening a file">
-			<div className="inline-block grow cursor-not-allowed">{info}</div>
-		</SimpleTooltip>
+		(<SimpleTooltip content="You must 'Set to Playground' before opening a file">
+            <div className="inline-block grow cursor-not-allowed">{info}</div>
+        </SimpleTooltip>)
 	) : (
 		<>children</>
-	)
+	);
 }
 
 function getPreviewType(

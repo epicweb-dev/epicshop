@@ -1,3 +1,13 @@
+import { EpicVideoInfoProvider } from '#app/components/epic-video.tsx'
+import { Icon } from '#app/components/icons.tsx'
+import { Loading } from '#app/components/loading.tsx'
+import { NavChevrons } from '#app/components/nav-chevrons.tsx'
+import { useRevalidationWS } from '#app/components/revalidation-ws.js'
+import { type loader as rootLoader } from '#app/root.tsx'
+import { Mdx } from '#app/utils/mdx.tsx'
+import { cn } from '#app/utils/misc.tsx'
+import { useIsOnline } from '#app/utils/online.ts'
+import { getSeoMetaTags } from '#app/utils/seo.js'
 import { ElementScrollRestoration } from '@epic-web/restore-scroll'
 import {
 	getExercises,
@@ -12,25 +22,16 @@ import {
 	time,
 } from '@epic-web/workshop-utils/timing.server'
 import { type SEOHandle } from '@nasa-gcn/remix-seo'
+import slugify from '@sindresorhus/slugify'
+import * as React from 'react'
 import {
-	unstable_data as data,
+	data,
+	Link,
+	useLoaderData,
 	type HeadersFunction,
 	type LoaderFunctionArgs,
 	type MetaFunction,
-} from '@remix-run/node'
-import { Link, useLoaderData } from '@remix-run/react'
-import slugify from '@sindresorhus/slugify'
-import * as React from 'react'
-import { EpicVideoInfoProvider } from '#app/components/epic-video.tsx'
-import { Icon } from '#app/components/icons.tsx'
-import { Loading } from '#app/components/loading.tsx'
-import { NavChevrons } from '#app/components/nav-chevrons.tsx'
-import { useRevalidationWS } from '#app/components/revalidation-ws.js'
-import { type loader as rootLoader } from '#app/root.tsx'
-import { Mdx } from '#app/utils/mdx.tsx'
-import { cn } from '#app/utils/misc.tsx'
-import { useIsOnline } from '#app/utils/online.ts'
-import { getSeoMetaTags } from '#app/utils/seo.js'
+} from 'react-router'
 import { EditFileOnGitHub } from '../launch-editor.tsx'
 import { ProgressToggle } from '../progress.tsx'
 import { useTheme } from '../theme/index.tsx'
@@ -93,16 +94,10 @@ export async function loader({ request }: LoaderFunctionArgs) {
 				relativePath: compiledFinished.relativePath,
 			},
 			prevStepLink: lastExercises
-				? {
-						to: `/${lastExercises.exerciseNumber}/finished`,
-					}
+				? { to: `/${lastExercises.exerciseNumber}/finished` }
 				: null,
 		},
-		{
-			headers: {
-				'Server-Timing': getServerTimeHeader(timings),
-			},
-		},
+		{ headers: { 'Server-Timing': getServerTimeHeader(timings) } },
 	)
 }
 

@@ -1,5 +1,5 @@
-import { type SerializeFrom } from '@remix-run/node'
-import { useRouteLoaderData } from '@remix-run/react'
+import { type SerializeFrom } from 'react-router';
+import { useRouteLoaderData } from 'react-router';
 import { type loader as rootLoader } from '#app/root.tsx'
 
 /**

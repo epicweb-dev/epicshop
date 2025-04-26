@@ -1,27 +1,27 @@
-import { getFormProps, useForm } from '@conform-to/react'
-import { parseWithZod } from '@conform-to/zod'
-import { unstable_data as data, type ActionFunctionArgs } from '@remix-run/node'
-import { useFetcher, useFetchers } from '@remix-run/react'
-import { z } from 'zod'
 import { Icon } from '#app/components/icons.tsx'
 import { SimpleTooltip } from '#app/components/ui/tooltip.tsx'
 import { useHints } from '#app/utils/client-hints.tsx'
 import { ErrorList } from '#app/utils/forms.tsx'
 import { dataWithPE, usePERedirectInput } from '#app/utils/pe.js'
 import { useRequestInfo } from '#app/utils/request-info.ts'
+import { getFormProps, useForm } from '@conform-to/react'
+import { parseWithZod } from '@conform-to/zod'
+import {
+	data,
+	useFetcher,
+	useFetchers,
+	type ActionFunctionArgs,
+} from 'react-router'
+import { z } from 'zod'
 import { setTheme } from './theme-session.server.ts'
 
 const ROUTE_PATH = '/theme'
 
-const ThemeFormSchema = z.object({
-	theme: z.enum(['system', 'light', 'dark']),
-})
+const ThemeFormSchema = z.object({ theme: z.enum(['system', 'light', 'dark']) })
 
 export async function action({ request }: ActionFunctionArgs) {
 	const formData = await request.formData()
-	const submission = parseWithZod(formData, {
-		schema: ThemeFormSchema,
-	})
+	const submission = parseWithZod(formData, { schema: ThemeFormSchema })
 	if (submission.status !== 'success') {
 		return data(submission.reply(), {
 			// You can also use the status to determine the HTTP status code
@@ -30,9 +30,7 @@ export async function action({ request }: ActionFunctionArgs) {
 	}
 	const { theme } = submission.value
 
-	const responseInit = {
-		headers: { 'set-cookie': setTheme(theme) },
-	}
+	const responseInit = { headers: { 'set-cookie': setTheme(theme) } }
 	return dataWithPE(formData, submission.reply(), responseInit)
 }
 

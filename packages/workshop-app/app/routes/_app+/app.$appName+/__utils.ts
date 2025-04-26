@@ -6,7 +6,7 @@ import {
 	isProblemApp,
 } from '@epic-web/workshop-utils/apps.server'
 import { type Timings } from '@epic-web/workshop-utils/timing.server'
-import { type Params } from '@remix-run/react'
+import { type Params } from 'react-router';
 import fsExtra from 'fs-extra'
 
 function parseAppNameFromReferer(request: Request) {

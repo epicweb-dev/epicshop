@@ -1,4 +1,4 @@
-import { Link, useLoaderData } from '@remix-run/react'
+import { Link, useLoaderData } from 'react-router';
 import { clsx } from 'clsx'
 import { LRUCache } from 'lru-cache'
 import { type MDXContentProps } from 'mdx-bundler/client'
@@ -141,7 +141,7 @@ export function PreWithButtons({ children, ...props }: any) {
 			if (!filename || filename.includes('..')) {
 				return { 'data-filename': getRelativePath(fullPath, separator) }
 			} else {
-				return { 'data-filename': filename.replace(/\//g, separator) }
+				return { 'data-filename': filename.replace(/\//g, separator) };
 			}
 		}
 	}

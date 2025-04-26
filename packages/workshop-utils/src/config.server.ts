@@ -68,16 +68,8 @@ const WorkshopConfigSchema = z
 					),
 			})
 			.default({}),
-		testTab: z
-			.object({
-				enabled: z.boolean().default(true),
-			})
-			.default({}),
-		scripts: z
-			.object({
-				postupdate: z.string().optional(),
-			})
-			.optional(),
+		testTab: z.object({ enabled: z.boolean().default(true) }).default({}),
+		scripts: z.object({ postupdate: z.string().optional() }).optional(),
 		initialRoute: z.string().optional().default('/'),
 	})
 	.transform((data) => {
@@ -96,10 +88,7 @@ const WorkshopConfigSchema = z
 
 export type WorkshopConfig = z.infer<typeof WorkshopConfigSchema>
 
-const configCache: {
-	config: WorkshopConfig | null
-	modified: number
-} = {
+const configCache: { config: WorkshopConfig | null; modified: number } = {
 	config: null,
 	modified: 0,
 }
@@ -194,7 +183,7 @@ export async function getStackBlitzUrl({
 
 	const stackBlitzConfig = {
 		...appConfig.stackBlitzConfig,
-		title: appConfig.stackBlitzConfig?.title ?? `${title} (${type})`,
+		title: appConfig.stackBlitzConfig.title ?? `${title} (${type})`,
 	}
 
 	const params = new URLSearchParams(stackBlitzConfig as Record<string, string>)
@@ -235,37 +224,26 @@ export async function getAppConfig(fullPath: string) {
 			.transform((appStackBlitzConfig) => {
 				if (appStackBlitzConfig === null) return null
 
-				return {
-					...workshopConfig.stackBlitzConfig,
-					...appStackBlitzConfig,
-				}
+				return { ...workshopConfig.stackBlitzConfig, ...appStackBlitzConfig }
 			}),
 		testTab: z
 			.object({
 				enabled: z
 					.boolean()
 					.optional()
-					.default(workshopConfig.testTab?.enabled ?? true),
+					.default(workshopConfig.testTab.enabled ?? true),
 			})
 			.default({}),
 		scripts: z
-			.object({
-				test: z.string().optional(),
-				dev: z.string().optional(),
-			})
+			.object({ test: z.string().optional(), dev: z.string().optional() })
 			.default({}),
 		initialRoute: z.string().optional().default(workshopConfig.initialRoute),
 	})
 
 	const appConfig = {
 		stackBlitzConfig: epicshopConfig.stackBlitzConfig,
-		testTab: {
-			enabled: epicshopConfig.testTab?.enabled,
-		},
-		scripts: {
-			test: scripts.test,
-			dev: scripts.dev,
-		},
+		testTab: { enabled: epicshopConfig.testTab?.enabled },
+		scripts: { test: scripts.test, dev: scripts.dev },
 		initialRoute: epicshopConfig.initialRoute,
 	}
 

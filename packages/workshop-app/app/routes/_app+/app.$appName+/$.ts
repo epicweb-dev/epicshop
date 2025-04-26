@@ -1,7 +1,7 @@
 import path from 'path'
 import { invariantResponse } from '@epic-web/invariant'
 import { makeTimings } from '@epic-web/workshop-utils/timing.server'
-import { redirect, type LoaderFunctionArgs } from '@remix-run/node'
+import { redirect, type LoaderFunctionArgs } from 'react-router';
 import etag from 'etag'
 import fsExtra from 'fs-extra'
 import mimeTypes from 'mime-types'
