@@ -34,7 +34,8 @@ function diffPathToRelative(filePath: string) {
 	) {
 		normalizedPath = normalizedPath.slice(2)
 	}
-
+	
+	// eslint-disable-next-line @typescript-eslint/no-unused-vars
 	const [workshopRootDirname, appId, id, ...relativePath] = normalizedPath
 		.replace(
 			process.platform === 'win32' || normalizedPath.startsWith(path.sep)
