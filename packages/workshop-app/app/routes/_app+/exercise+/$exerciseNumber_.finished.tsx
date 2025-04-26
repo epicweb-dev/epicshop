@@ -1,29 +1,3 @@
-import path from 'path'
-import { invariantResponse } from '@epic-web/invariant'
-import { ElementScrollRestoration } from '@epic-web/restore-scroll'
-import {
-	getAppPageRoute,
-	getApps,
-	getExercise,
-	workshopRoot,
-	isExerciseStepApp,
-} from '@epic-web/workshop-utils/apps.server'
-import { getWorkshopConfig } from '@epic-web/workshop-utils/config.server'
-import { getEpicVideoInfos } from '@epic-web/workshop-utils/epic-api.server'
-import {
-	combineServerTimings,
-	getServerTimeHeader,
-	makeTimings,
-} from '@epic-web/workshop-utils/timing.server'
-import {
-	unstable_data as data,
-	type HeadersFunction,
-	type LoaderFunctionArgs,
-	type MetaFunction,
-} from '@remix-run/node'
-import { Link, useLoaderData } from '@remix-run/react'
-import slugify from '@sindresorhus/slugify'
-import * as React from 'react'
 import { EpicVideoInfoProvider } from '#app/components/epic-video.tsx'
 import { Icon } from '#app/components/icons.tsx'
 import { Loading } from '#app/components/loading.tsx'
@@ -37,6 +11,33 @@ import { Mdx } from '#app/utils/mdx.tsx'
 import { cn } from '#app/utils/misc.tsx'
 import { useIsOnline } from '#app/utils/online.ts'
 import { getSeoMetaTags } from '#app/utils/seo.js'
+import { invariantResponse } from '@epic-web/invariant'
+import { ElementScrollRestoration } from '@epic-web/restore-scroll'
+import {
+	getAppPageRoute,
+	getApps,
+	getExercise,
+	isExerciseStepApp,
+	workshopRoot,
+} from '@epic-web/workshop-utils/apps.server'
+import { getWorkshopConfig } from '@epic-web/workshop-utils/config.server'
+import { getEpicVideoInfos } from '@epic-web/workshop-utils/epic-api.server'
+import {
+	combineServerTimings,
+	getServerTimeHeader,
+	makeTimings,
+} from '@epic-web/workshop-utils/timing.server'
+import slugify from '@sindresorhus/slugify'
+import path from 'path'
+import * as React from 'react'
+import {
+	data,
+	Link,
+	useLoaderData,
+	type HeadersFunction,
+	type LoaderFunctionArgs,
+	type MetaFunction,
+} from 'react-router'
 
 export const meta: MetaFunction<typeof loader, { root: typeof rootLoader }> = ({
 	data,
@@ -119,16 +120,9 @@ export async function loader({ request, params }: LoaderFunctionArgs) {
 						to: `/exercise/${nextExercise.exerciseNumber.toString().padStart(2, '0')}`,
 						'aria-label': `${nextExercise.title}`,
 					}
-				: {
-						to: '/finished',
-						'aria-label': 'Finished! 🎉',
-					},
+				: { to: '/finished', 'aria-label': 'Finished! 🎉' },
 		},
-		{
-			headers: {
-				'Server-Timing': getServerTimeHeader(timings),
-			},
-		},
+		{ headers: { 'Server-Timing': getServerTimeHeader(timings) } },
 	)
 }
 

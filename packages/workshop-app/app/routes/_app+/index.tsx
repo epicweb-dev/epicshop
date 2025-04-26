@@ -1,3 +1,8 @@
+import { EpicVideoInfoProvider } from '#app/components/epic-video.tsx'
+import { GeneralErrorBoundary } from '#app/components/error-boundary.tsx'
+import { EditFileOnGitHub } from '#app/routes/launch-editor.tsx'
+import { Mdx } from '#app/utils/mdx.tsx'
+import { cn } from '#app/utils/misc.tsx'
 import { ElementScrollRestoration } from '@epic-web/restore-scroll'
 import {
 	getExercises,
@@ -11,19 +16,15 @@ import {
 	makeTimings,
 	time,
 } from '@epic-web/workshop-utils/timing.server'
+import slugify from '@sindresorhus/slugify'
 import {
-	unstable_data as data,
+	data,
+	Link,
+	useLoaderData,
 	type HeadersFunction,
 	type LoaderFunctionArgs,
 	type SerializeFrom,
-} from '@remix-run/node'
-import { Link, useLoaderData } from '@remix-run/react'
-import slugify from '@sindresorhus/slugify'
-import { EpicVideoInfoProvider } from '#app/components/epic-video.tsx'
-import { GeneralErrorBoundary } from '#app/components/error-boundary.tsx'
-import { EditFileOnGitHub } from '#app/routes/launch-editor.tsx'
-import { Mdx } from '#app/utils/mdx.tsx'
-import { cn } from '#app/utils/misc.tsx'
+} from 'react-router'
 import { ProgressToggle, useExerciseProgressClassName } from '../progress.tsx'
 
 export async function loader({ request }: LoaderFunctionArgs) {
@@ -61,11 +62,7 @@ export async function loader({ request }: LoaderFunctionArgs) {
 						})
 					: null,
 		},
-		{
-			headers: {
-				'Server-Timing': getServerTimeHeader(timings),
-			},
-		},
+		{ headers: { 'Server-Timing': getServerTimeHeader(timings) } },
 	)
 }
 

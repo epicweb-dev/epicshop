@@ -1,4 +1,3 @@
-import path from 'node:path'
 import { getPresentUsers } from '@epic-web/workshop-presence/presence.server'
 import { getApps } from '@epic-web/workshop-utils/apps.server'
 import { getWorkshopConfig } from '@epic-web/workshop-utils/config.server'
@@ -18,23 +17,22 @@ import {
 	getUserId,
 } from '@epic-web/workshop-utils/user.server'
 import { checkConnectionCached } from '@epic-web/workshop-utils/utils.server'
-import { cssBundleHref } from '@remix-run/css-bundle'
+
+import path from 'node:path'
 import {
-	unstable_data as data,
-	redirect,
-	type LinksFunction,
-	type LoaderFunctionArgs,
-	type MetaFunction,
-} from '@remix-run/node'
-import {
+	data,
 	Links,
 	Meta,
 	Outlet,
+	redirect,
 	Scripts,
 	ScrollRestoration,
 	useLoaderData,
 	useNavigation,
-} from '@remix-run/react'
+	type LinksFunction,
+	type LoaderFunctionArgs,
+	type MetaFunction,
+} from 'react-router'
 import { promiseHash } from 'remix-utils/promise'
 import { useSpinDelay } from 'spin-delay'
 import { Confetti } from './components/confetti.tsx'
@@ -62,12 +60,8 @@ export const links: LinksFunction = () => {
 		},
 		{ rel: 'stylesheet', href: tailwindStylesheetUrl },
 		{ rel: 'stylesheet', href: appStylesheetUrl },
-		...(cssBundleHref ? [{ rel: 'stylesheet', href: cssBundleHref }] : []),
-		{
-			rel: 'icon',
-			href: '/favicon.ico',
-			sizes: '48x48',
-		},
+		// ...(cssBundleHref ? [{ rel: 'stylesheet', href: cssBundleHref }] : []),
+		{ rel: 'icon', href: '/favicon.ico', sizes: '48x48' },
 		{ rel: 'icon', type: 'image/svg+xml', href: '/favicon.svg' },
 	]
 }
@@ -120,10 +114,7 @@ export async function loader({ request }: LoaderFunctionArgs) {
 		apps: getApps({ request, timings }),
 	})
 
-	const presentUsers = await getPresentUsers({
-		request,
-		timings,
-	})
+	const presentUsers = await getPresentUsers({ request, timings })
 
 	return data(
 		{
@@ -152,16 +143,14 @@ export async function loader({ request }: LoaderFunctionArgs) {
 			},
 			toast,
 			confettiId,
-			presence: {
-				users: presentUsers,
-			},
+			presence: { users: presentUsers },
 		},
 		{
 			headers: combineHeaders(
 				toastHeaders,
 				confettiHeaders,
 				{ 'Server-Timing': timings.toString() },
-				asyncStuff.userId?.type === 'cookie.randomId'
+				asyncStuff.userId.type === 'cookie.randomId'
 					? { 'Set-Cookie': getSetClientIdCookieHeader(asyncStuff.userId.id) }
 					: undefined,
 			),
@@ -217,7 +206,7 @@ function App() {
 		<Document
 			style={
 				data.preferences?.fontSize
-					? { fontSize: `${data.preferences?.fontSize}px` }
+					? { fontSize: `${data.preferences.fontSize}px` }
 					: {}
 			}
 			className={cn(

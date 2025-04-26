@@ -1,7 +1,7 @@
 import path from 'path'
 import { getAppByName } from '@epic-web/workshop-utils/apps.server'
-import { type ActionFunctionArgs } from '@remix-run/node'
-import { Link, useFetcher } from '@remix-run/react'
+import { type ActionFunctionArgs } from 'react-router';
+import { Link, useFetcher } from 'react-router';
 import { clsx } from 'clsx'
 import fsExtra from 'fs-extra'
 import { useEffect } from 'react'
@@ -344,16 +344,16 @@ export function EditFileOnGitHub({
 	)
 
 	return (
-		<Link
+        (<Link
 			className="self-center font-mono text-sm"
 			onClick={handleClick}
 			target="_blank"
 			to={`${githubPath}/${relativePath}/${appFile}`.replace(/\\/g, '/')}
 		>
-			<span className="block md:hidden">Edit on GitHub</span>
-			<span className="hidden md:block">Edit this page on GitHub</span>
-		</Link>
-	)
+            <span className="block md:hidden">Edit on GitHub</span>
+            <span className="hidden md:block">Edit this page on GitHub</span>
+        </Link>)
+    );
 }
 
 export const LaunchEditor = ENV.EPICSHOP_DEPLOYED

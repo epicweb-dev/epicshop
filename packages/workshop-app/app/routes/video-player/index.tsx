@@ -1,25 +1,26 @@
+import { type loader as rootLoader } from '#app/root.tsx'
+import { useDebounce } from '#app/utils/misc.tsx'
 import {
 	PlayerPreferencesSchema,
 	setPreferences,
 } from '@epic-web/workshop-utils/db.server'
 import RealMuxPlayer, {
-	type MuxPlayerRefAttributes,
-	MinResolution,
 	MaxResolution,
+	MinResolution,
+	type MuxPlayerRefAttributes,
 } from '@mux/mux-player-react'
-import { unstable_data as data, type ActionFunctionArgs } from '@remix-run/node'
-import { useFetcher, useRouteLoaderData } from '@remix-run/react'
 import * as React from 'react'
+import {
+	data,
+	useFetcher,
+	useRouteLoaderData,
+	type ActionFunctionArgs,
+} from 'react-router'
 import { z } from 'zod'
-import { type loader as rootLoader } from '#app/root.tsx'
-import { useDebounce } from '#app/utils/misc.tsx'
 import './mux-player.css'
 
 const PlaybackTimeSchema = z
-	.object({
-		time: z.number(),
-		expiresAt: z.string(),
-	})
+	.object({ time: z.number(), expiresAt: z.string() })
 	.transform((data) => {
 		return { time: Number(data.time), expiresAt: new Date(data.expiresAt) }
 	})

@@ -4,11 +4,11 @@ import {
 	makeTimings,
 } from '@epic-web/workshop-utils/timing.server'
 import {
-	unstable_data as data,
+	data,
+	useLoaderData,
 	type HeadersFunction,
 	type LoaderFunctionArgs,
-} from '@remix-run/node'
-import { useLoaderData } from '@remix-run/react'
+} from 'react-router'
 import { TestUI } from './__shared/tests.tsx'
 
 export async function loader({ request, params }: LoaderFunctionArgs) {
@@ -16,17 +16,8 @@ export async function loader({ request, params }: LoaderFunctionArgs) {
 	const exerciseStepApp = await requireExerciseApp(params, { request, timings })
 
 	return data(
-		{
-			appInfo: {
-				name: exerciseStepApp?.name,
-				test: exerciseStepApp?.test,
-			},
-		},
-		{
-			headers: {
-				'Server-Timing': timings.toString(),
-			},
-		},
+		{ appInfo: { name: exerciseStepApp?.name, test: exerciseStepApp?.test } },
+		{ headers: { 'Server-Timing': timings.toString() } },
 	)
 }
 
