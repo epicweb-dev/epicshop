@@ -40,7 +40,6 @@
     "nx": "19.8.2",
     "prettier": "^3.2.5",
     "prettier-plugin-tailwindcss": "^0.6.8",
-    "react-router-dom": "^7.5.2",
     "tsx": "^4.11.0",
     "yargs": "^17.7.2",
     "yoctocolors": "^2.0.2"
