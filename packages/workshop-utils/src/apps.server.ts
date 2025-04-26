@@ -43,14 +43,15 @@ declare global {
 }
 global.__epicshop_apps_initialized__ ??= false
 
-export function setWorkshopRoot(root: string) {
+export function setWorkshopRoot(
+	root: string = process.env.EPICSHOP_CONTEXT_CWD ?? process.cwd(),
+) {
 	process.env.EPICSHOP_CONTEXT_CWD = root
 }
 
 export function getWorkshopRoot() {
-	if (!process.env.EPICSHOP_CONTEXT_CWD) {
-		setWorkshopRoot(process.cwd())
-	}
+	if (!process.env.EPICSHOP_CONTEXT_CWD) setWorkshopRoot()
+
 	return process.env.EPICSHOP_CONTEXT_CWD
 }
 
@@ -235,9 +236,8 @@ export const modifiedTimes = remember(
 )
 
 export async function init(workshopRoot?: string) {
-	if (workshopRoot) {
-		setWorkshopRoot(workshopRoot)
-	}
+	setWorkshopRoot(workshopRoot)
+
 	if (global.__epicshop_apps_initialized__) return
 
 	global.__epicshop_apps_initialized__ = true
