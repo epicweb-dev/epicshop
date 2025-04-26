@@ -43,16 +43,26 @@ declare global {
 }
 global.__epicshop_apps_initialized__ ??= false
 
-export const workshopRoot = (process.env.EPICSHOP_CONTEXT_CWD =
-	process.env.EPICSHOP_CONTEXT_CWD ?? process.cwd())
+export function setWorkshopRoot(root: string) {
+	process.env.EPICSHOP_CONTEXT_CWD = root
+}
 
-const playgroundAppNameInfoPath = path.join(
-	workshopRoot,
-	'node_modules',
-	'.cache',
-	'epicshop',
-	'playground.json',
-)
+export function getWorkshopRoot() {
+	if (!process.env.EPICSHOP_CONTEXT_CWD) {
+		setWorkshopRoot(process.cwd())
+	}
+	return process.env.EPICSHOP_CONTEXT_CWD
+}
+
+function getPlaygroundAppNameInfoPath() {
+	return path.join(
+		getWorkshopRoot(),
+		'node_modules',
+		'.cache',
+		'epicshop',
+		'playground.json',
+	)
+}
 
 type CachifiedOptions = { timings?: Timings; request?: Request }
 
@@ -114,6 +124,8 @@ const PlaygroundAppSchema = BaseAppSchema.extend({
 })
 
 const ExerciseSchema = z.object({
+	/** the full path to the exercise directory */
+	fullPath: z.string(),
 	/** a unique identifier for the exercise */
 	exerciseNumber: z.number(),
 	/** used when displaying the list of files to match the list of apps in the file system (comes the name of the directory of the app) */
@@ -222,7 +234,10 @@ export const modifiedTimes = remember(
 	() => new Map<string, number>(),
 )
 
-export async function init() {
+export async function init(workshopRoot?: string) {
+	if (workshopRoot) {
+		setWorkshopRoot(workshopRoot)
+	}
 	if (global.__epicshop_apps_initialized__) return
 
 	global.__epicshop_apps_initialized__ = true
@@ -238,12 +253,12 @@ export async function init() {
 		!ENV.EPICSHOP_DEPLOYED &&
 		process.env.EPICSHOP_ENABLE_WATCHER === 'true'
 	) {
-		const isIgnored = await isGitIgnored({ cwd: workshopRoot })
+		const isIgnored = await isGitIgnored({ cwd: getWorkshopRoot() })
 
 		// watch the README, FINISHED, and package.json for changes that affect the apps
 		const filesToWatch = ['README.mdx', 'FINISHED.mdx', 'package.json']
 		const chok = chokidar.watch(['examples', 'playground', 'exercises'], {
-			cwd: workshopRoot,
+			cwd: getWorkshopRoot(),
 			ignoreInitial: true,
 			ignored(filePath, stats) {
 				if (isIgnored(filePath)) return true
@@ -272,7 +287,7 @@ export async function init() {
 		})
 
 		chok.on('all', (_event, filePath) => {
-			setModifiedTimesForAppDirs(path.join(workshopRoot, filePath))
+			setModifiedTimesForAppDirs(path.join(getWorkshopRoot(), filePath))
 		})
 
 		closeWithGrace(() => chok.close())
@@ -375,17 +390,17 @@ export async function getExercises({
 	request,
 }: CachifiedOptions = {}): Promise<Array<Exercise>> {
 	const apps = await getApps({ request, timings })
-	const exerciseDirs = await readDir(path.join(workshopRoot, 'exercises'))
+	const exerciseDirs = await readDir(path.join(getWorkshopRoot(), 'exercises'))
 	const exercises: Array<Exercise> = []
 	for (const dirName of exerciseDirs) {
 		const exerciseNumber = extractExerciseNumber(dirName)
 		if (!exerciseNumber) continue
 		const compiledReadme = await compileMdxIfExists(
-			path.join(workshopRoot, 'exercises', dirName, 'README.mdx'),
+			path.join(getWorkshopRoot(), 'exercises', dirName, 'README.mdx'),
 			{ request },
 		)
 		const compiledFinished = await compileMdxIfExists(
-			path.join(workshopRoot, 'exercises', dirName, 'FINISHED.mdx'),
+			path.join(getWorkshopRoot(), 'exercises', dirName, 'FINISHED.mdx'),
 			{ request },
 		)
 		const steps: Exercise['steps'] = []
@@ -401,6 +416,7 @@ export async function getExercises({
 			}
 		}
 		const exercise = ExerciseSchema.parse({
+			fullPath: path.join(getWorkshopRoot(), 'exercises', dirName),
 			exerciseNumber,
 			dirName,
 			instructionsCode: compiledReadme?.code,
@@ -533,7 +549,7 @@ export function extractNumbersAndTypeFromAppNameOrPath(
 		{}
 	if (fullPathOrAppName.includes(path.sep)) {
 		const relativePath = fullPathOrAppName.replace(
-			path.join(workshopRoot, 'exercises', path.sep),
+			path.join(getWorkshopRoot(), 'exercises', path.sep),
 			'',
 		)
 		const [exerciseNumberPart, stepNumberPart] = relativePath.split(path.sep)
@@ -556,7 +572,7 @@ export function extractNumbersAndTypeFromAppNameOrPath(
 }
 
 async function getProblemDirs() {
-	const exercisesDir = path.join(workshopRoot, 'exercises')
+	const exercisesDir = path.join(getWorkshopRoot(), 'exercises')
 	const problemDirs = []
 	const exerciseSubDirs = await readDir(exercisesDir)
 	for (const subDir of exerciseSubDirs) {
@@ -574,7 +590,7 @@ async function getProblemDirs() {
 }
 
 async function getSolutionDirs() {
-	const exercisesDir = path.join(workshopRoot, 'exercises')
+	const exercisesDir = path.join(getWorkshopRoot(), 'exercises')
 	const solutionDirs = []
 	const exerciseSubDirs = await readDir(exercisesDir)
 	for (const subDir of exerciseSubDirs) {
@@ -603,7 +619,7 @@ function getAppName(fullPath: string) {
 	if (/playground\/?$/.test(fullPath)) return 'playground'
 	if (/examples\/.+\/?$/.test(fullPath)) {
 		const restOfPath = fullPath.replace(
-			`${workshopRoot}${path.sep}examples${path.sep}`,
+			`${getWorkshopRoot()}${path.sep}examples${path.sep}`,
 			'',
 		)
 		return `example.${restOfPath.split(path.sep).join('__sep__')}`
@@ -613,23 +629,24 @@ function getAppName(fullPath: string) {
 		const { exerciseNumber, stepNumber, type } = appIdInfo
 		return `${exerciseNumber}.${stepNumber}.${type}`
 	} else {
-		const relativePath = fullPath.replace(`${workshopRoot}${path.sep}`, '')
+		const relativePath = fullPath.replace(`${getWorkshopRoot()}${path.sep}`, '')
 		return relativePath.split(path.sep).join('__sep__')
 	}
 }
 
 export async function getFullPathFromAppName(appName: string) {
-	if (appName === 'playground') return path.join(workshopRoot, 'playground')
+	if (appName === 'playground')
+		return path.join(getWorkshopRoot(), 'playground')
 	if (appName.startsWith('.example')) {
 		const relativePath = appName
 			.replace('.example', '')
 			.split('__sep__')
 			.join(path.sep)
-		return path.join(workshopRoot, 'examples', relativePath)
+		return path.join(getWorkshopRoot(), 'examples', relativePath)
 	}
 	if (appName.includes('__sep__')) {
 		const relativePath = appName.replaceAll('__sep__', path.sep)
-		return path.join(workshopRoot, relativePath)
+		return path.join(getWorkshopRoot(), relativePath)
 	}
 	const [exerciseNumber, stepNumber, type] = appName.split('.')
 	const appDirs =
@@ -767,7 +784,7 @@ export async function getPlaygroundApp({
 	timings,
 	request,
 }: CachifiedOptions = {}): Promise<PlaygroundApp | null> {
-	const playgroundDir = path.join(workshopRoot, 'playground')
+	const playgroundDir = path.join(getWorkshopRoot(), 'playground')
 	const baseAppName = await getPlaygroundAppName()
 	const key = `playground-${baseAppName}`
 
@@ -814,7 +831,10 @@ export async function getPlaygroundApp({
 				type,
 				isUpToDate: appModifiedTime <= playgroundAppModifiedTime,
 				fullPath: playgroundDir,
-				relativePath: playgroundDir.replace(`${workshopRoot}${path.sep}`, ''),
+				relativePath: playgroundDir.replace(
+					`${getWorkshopRoot()}${path.sep}`,
+					'',
+				),
 				title,
 				epicVideoEmbeds: compiledReadme?.epicVideoEmbeds,
 				dirName,
@@ -852,7 +872,7 @@ async function getExampleAppFromPath(
 		name,
 		type,
 		fullPath,
-		relativePath: fullPath.replace(`${workshopRoot}${path.sep}`, ''),
+		relativePath: fullPath.replace(`${getWorkshopRoot()}${path.sep}`, ''),
 		title,
 		epicVideoEmbeds: compiledReadme?.epicVideoEmbeds,
 		dirName,
@@ -871,7 +891,7 @@ async function getExampleApps({
 	timings,
 	request,
 }: CachifiedOptions = {}): Promise<Array<ExampleApp>> {
-	const examplesDir = path.join(workshopRoot, 'examples')
+	const examplesDir = path.join(getWorkshopRoot(), 'examples')
 	const exampleDirs = (await readDir(examplesDir)).map((p) =>
 		path.join(examplesDir, p),
 	)
@@ -942,7 +962,7 @@ async function getSolutionAppFromPath(
 		stepNumber,
 		dirName,
 		fullPath,
-		relativePath: fullPath.replace(`${workshopRoot}${path.sep}`, ''),
+		relativePath: fullPath.replace(`${getWorkshopRoot()}${path.sep}`, ''),
 		instructionsCode: compiledReadme?.code,
 		test,
 		dev,
@@ -958,7 +978,7 @@ async function getSolutionApps({
 	timings,
 	request,
 }: CachifiedOptions = {}): Promise<Array<SolutionApp>> {
-	const exercisesDir = path.join(workshopRoot, 'exercises')
+	const exercisesDir = path.join(getWorkshopRoot(), 'exercises')
 	const solutionDirs = await getSolutionDirs()
 	const solutionApps: Array<SolutionApp> = []
 
@@ -1025,7 +1045,7 @@ async function getProblemAppFromPath(
 		stepNumber,
 		dirName,
 		fullPath,
-		relativePath: fullPath.replace(`${workshopRoot}${path.sep}`, ''),
+		relativePath: fullPath.replace(`${getWorkshopRoot()}${path.sep}`, ''),
 		instructionsCode: compiledReadme?.code,
 		test,
 		dev,
@@ -1041,7 +1061,7 @@ async function getProblemApps({
 	timings,
 	request,
 }: CachifiedOptions = {}): Promise<Array<ProblemApp>> {
-	const exercisesDir = path.join(workshopRoot, 'exercises')
+	const exercisesDir = path.join(getWorkshopRoot(), 'exercises')
 	const problemDirs = await getProblemDirs()
 	const problemApps: Array<ProblemApp> = []
 	for (const problemDir of problemDirs) {
@@ -1213,8 +1233,8 @@ export async function savePlayground() {
 		'app with name "playground" exists, but it is not a playground type app',
 	)
 
-	const playgroundDir = path.join(workshopRoot, 'playground')
-	const savedPlaygroundsDir = path.join(workshopRoot, 'saved-playgrounds')
+	const playgroundDir = path.join(getWorkshopRoot(), 'playground')
+	const savedPlaygroundsDir = path.join(getWorkshopRoot(), 'saved-playgrounds')
 	await fsExtra.ensureDir(savedPlaygroundsDir)
 	const now = dayjs()
 	// note: the format must be filename safe
@@ -1250,7 +1270,7 @@ export async function setPlayground(
 ) {
 	const preferences = await getPreferences()
 	const playgroundApp = await getAppByName('playground')
-	const playgroundDir = path.join(workshopRoot, 'playground')
+	const playgroundDir = path.join(getWorkshopRoot(), 'playground')
 
 	if (playgroundApp && preferences?.playground?.persist) {
 		await savePlayground()
@@ -1269,11 +1289,11 @@ export async function setPlayground(
 	// run prepare-playground script if it exists
 	const preSetPlaygroundPath = await firstToExist(
 		path.join(srcDir, 'epicshop', 'pre-set-playground.js'),
-		path.join(workshopRoot, 'epicshop', 'pre-set-playground.js'),
+		path.join(getWorkshopRoot(), 'epicshop', 'pre-set-playground.js'),
 	)
 	if (preSetPlaygroundPath) {
 		await execa('node', [preSetPlaygroundPath], {
-			cwd: workshopRoot,
+			cwd: getWorkshopRoot(),
 			stdio: 'inherit',
 
 			env: {
@@ -1351,8 +1371,8 @@ export async function setPlayground(
 	}
 
 	const appName = getAppName(srcDir)
-	await fsExtra.ensureDir(path.dirname(playgroundAppNameInfoPath))
-	await fsExtra.writeJSON(playgroundAppNameInfoPath, { appName })
+	await fsExtra.ensureDir(path.dirname(getPlaygroundAppNameInfoPath()))
+	await fsExtra.writeJSON(getPlaygroundAppNameInfoPath(), { appName })
 
 	const playgroundIsStillRunning = playgroundApp
 		? isAppRunning(playgroundApp)
@@ -1362,11 +1382,11 @@ export async function setPlayground(
 	// run postSet-playground script if it exists
 	const postSetPlaygroundPath = await firstToExist(
 		path.join(srcDir, 'epicshop', 'post-set-playground.js'),
-		path.join(workshopRoot, 'epicshop', 'post-set-playground.js'),
+		path.join(getWorkshopRoot(), 'epicshop', 'post-set-playground.js'),
 	)
 	if (postSetPlaygroundPath) {
 		await execa('node', [postSetPlaygroundPath], {
-			cwd: workshopRoot,
+			cwd: getWorkshopRoot(),
 			stdio: 'inherit',
 
 			env: {
@@ -1395,12 +1415,12 @@ export async function setPlayground(
  * is based on.
  */
 export async function getPlaygroundAppName() {
-	if (!(await exists(playgroundAppNameInfoPath))) {
+	if (!(await exists(getPlaygroundAppNameInfoPath()))) {
 		return null
 	}
 	try {
 		const jsonString = await fs.promises.readFile(
-			playgroundAppNameInfoPath,
+			getPlaygroundAppNameInfoPath(),
 			'utf8',
 		)
 
@@ -1436,7 +1456,7 @@ export function getAppDisplayName(a: App, allApps: Array<App>) {
 export async function getWorkshopInstructions({
 	request,
 }: { request?: Request } = {}) {
-	const readmeFilepath = path.join(workshopRoot, 'exercises', 'README.mdx')
+	const readmeFilepath = path.join(getWorkshopRoot(), 'exercises', 'README.mdx')
 	const compiled = await compileMdx(readmeFilepath, { request }).then(
 		(r) => ({ ...r, status: 'success' }) as const,
 		(e) => {
@@ -1454,7 +1474,11 @@ export async function getWorkshopInstructions({
 export async function getWorkshopFinished({
 	request,
 }: { request?: Request } = {}) {
-	const finishedFilepath = path.join(workshopRoot, 'exercises', 'FINISHED.mdx')
+	const finishedFilepath = path.join(
+		getWorkshopRoot(),
+		'exercises',
+		'FINISHED.mdx',
+	)
 	const compiled = await compileMdx(finishedFilepath, { request }).then(
 		(r) => ({ ...r, status: 'success' }) as const,
 		(e) => {
@@ -1473,9 +1497,10 @@ export async function getWorkshopFinished({
 	} as const
 }
 
-const exercisesPath = path.join(workshopRoot, 'exercises/')
-const playgroundPath = path.join(workshopRoot, 'playground/')
 export function getRelativePath(filePath: string) {
+	const exercisesPath = path.join(getWorkshopRoot(), 'exercises/')
+	const playgroundPath = path.join(getWorkshopRoot(), 'playground/')
+
 	return path
 		.normalize(filePath.replace(/^("|')|("|')$/g, ''))
 		.replace(playgroundPath, `playground${path.sep}`)
@@ -1486,7 +1511,7 @@ export function getRelativePath(filePath: string) {
  * Given a file path, this will determine the path to the app that file belongs to.
  */
 export function getAppPathFromFilePath(filePath: string): string | null {
-	const [, withinWorkshopRootHalf] = filePath.split(workshopRoot)
+	const [, withinWorkshopRootHalf] = filePath.split(getWorkshopRoot())
 	if (!withinWorkshopRootHalf) {
 		return null
 	}
@@ -1497,17 +1522,17 @@ export function getAppPathFromFilePath(filePath: string): string | null {
 
 	// Check if the file is in the playground
 	if (part1 === 'playground') {
-		return path.join(workshopRoot, 'playground')
+		return path.join(getWorkshopRoot(), 'playground')
 	}
 
 	// Check if the file is in an example
 	if (part1 === 'examples' && part2) {
-		return path.join(workshopRoot, 'examples', part2)
+		return path.join(getWorkshopRoot(), 'examples', part2)
 	}
 
 	// Check if the file is in an exercise
 	if (part1 === 'exercises' && part2 && part3) {
-		return path.join(workshopRoot, 'exercises', part2, part3)
+		return path.join(getWorkshopRoot(), 'exercises', part2, part3)
 	}
 
 	// If we couldn't determine the app path, return null

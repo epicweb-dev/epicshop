@@ -9,7 +9,7 @@ import { bundledLanguagesInfo } from 'shiki/langs'
 import {
 	getForceFreshForDir,
 	getRelativePath,
-	workshopRoot,
+	getWorkshopRoot,
 	modifiedTimes,
 	type App,
 } from './apps.server.js'
@@ -229,13 +229,13 @@ async function prepareForDiff(app1: App, app2: App) {
 	const id = Math.random().toString(36).slice(2)
 	const app1CopyPath = path.join(
 		diffTmpDir,
-		path.basename(workshopRoot),
+		path.basename(getWorkshopRoot()),
 		app1.name,
 		id,
 	)
 	const app2CopyPath = path.join(
 		diffTmpDir,
-		path.basename(workshopRoot),
+		path.basename(getWorkshopRoot()),
 		app2.name,
 		id,
 	)
@@ -262,9 +262,9 @@ async function prepareForDiff(app1: App, app2: App) {
 		? ['package.json']
 		: []
 	const workshopIgnore = [
-		...(await getDiffIgnore(path.join(workshopRoot, '.gitignore'))),
+		...(await getDiffIgnore(path.join(getWorkshopRoot(), '.gitignore'))),
 		...(await getDiffIgnore(
-			path.join(workshopRoot, 'epicshop', '.diffignore'),
+			path.join(getWorkshopRoot(), 'epicshop', '.diffignore'),
 		)),
 	]
 

@@ -5,7 +5,7 @@ import {
 	getAppPageRoute,
 	getApps,
 	getExercise,
-	workshopRoot,
+	getWorkshopRoot,
 	isExerciseStepApp,
 } from '@epic-web/workshop-utils/apps.server'
 import { getWorkshopConfig } from '@epic-web/workshop-utils/config.server'
@@ -78,7 +78,7 @@ export async function loader({ request, params }: LoaderFunctionArgs) {
 	})
 
 	const finishedFilepath = path.join(
-		workshopRoot,
+		getWorkshopRoot(),
 		'exercises',
 		exercise.dirName,
 		'FINISHED.mdx',

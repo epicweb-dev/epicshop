@@ -24,19 +24,22 @@
     "dist"
   ],
   "scripts": {
+    "dev": "tsx src/cli.ts",
     "typecheck": "tsc -b --noEmit",
     "build": "tshy",
     "build:watch": "nx watch --projects=@epic-web/workshop-mcp -- nx run \\$NX_PROJECT_NAME:build"
   },
   "dependencies": {
     "@epic-web/workshop-utils": "file:../workshop-utils",
+    "@epic-web/invariant": "^1.0.0",
     "@modelcontextprotocol/sdk": "^1.9.0",
     "zod": "^3.24.2"
   },
   "devDependencies": {
     "@types/node": "^22.14.1",
     "tshy": "^3.0.2",
-    "typescript": "^5.8.3"
+    "typescript": "^5.8.3",
+    "tsx": "^4.19.0"
   },
   "repository": {
     "type": "git",

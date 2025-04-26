@@ -2,9 +2,10 @@ import fs from 'node:fs'
 import path from 'node:path'
 import { z } from 'zod'
 
-export const workshopRoot = process.env.EPICSHOP_CONTEXT_CWD ?? process.cwd()
+export const getWorkshopRoot = () =>
+	process.env.EPICSHOP_CONTEXT_CWD ?? process.cwd()
 
-const rootPkgJson = path.join(workshopRoot, 'package.json')
+const getRootPkgJsonPath = () => path.join(getWorkshopRoot(), 'package.json')
 
 export const StackBlitzConfigSchema = z.object({
 	// we default this to `${exerciseTitle} (${type})`
@@ -106,12 +107,12 @@ const configCache: {
 export function getWorkshopConfig(): WorkshopConfig {
 	if (
 		configCache.config &&
-		configCache.modified > fs.statSync(rootPkgJson).mtimeMs
+		configCache.modified > fs.statSync(getRootPkgJsonPath()).mtimeMs
 	) {
 		return configCache.config
 	}
 
-	const packageJsonPath = path.join(workshopRoot, 'package.json')
+	const packageJsonPath = path.join(getWorkshopRoot(), 'package.json')
 	let packageJson: any
 
 	try {
@@ -153,7 +154,7 @@ export function getWorkshopConfig(): WorkshopConfig {
 	try {
 		const parsedConfig = WorkshopConfigSchema.parse(epicshopConfig)
 		configCache.config = parsedConfig
-		configCache.modified = fs.statSync(rootPkgJson).mtimeMs
+		configCache.modified = fs.statSync(getRootPkgJsonPath()).mtimeMs
 		return parsedConfig
 	} catch (error) {
 		if (error instanceof z.ZodError) {
@@ -198,7 +199,7 @@ export async function getStackBlitzUrl({
 
 	const params = new URLSearchParams(stackBlitzConfig as Record<string, string>)
 
-	const relativePath = fullPath.replace(`${workshopRoot}${path.sep}`, '')
+	const relativePath = fullPath.replace(`${getWorkshopRoot()}${path.sep}`, '')
 
 	const stackBlitzUrl = new URL(
 		`/github${githubPart}/${relativePath}?${params}`,

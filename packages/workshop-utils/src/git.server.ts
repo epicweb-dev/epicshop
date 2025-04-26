@@ -1,12 +1,11 @@
 import { execa, execaCommand } from 'execa'
-import { workshopRoot } from './apps.server.js'
+import { getWorkshopRoot } from './apps.server.js'
 import { getWorkshopConfig } from './config.server.js'
 import { getErrorMessage } from './utils.js'
 import { checkConnection } from './utils.server.js'
 
-const cwd = workshopRoot
-
 async function getDiffUrl(commitBefore: string, commitAfter: string) {
+	const cwd = getWorkshopRoot()
 	try {
 		const { stdout: remoteUrl } = await execaCommand(
 			'git config --get remote.origin.url',
@@ -23,6 +22,7 @@ async function getDiffUrl(commitBefore: string, commitAfter: string) {
 }
 
 export async function checkForUpdates() {
+	const cwd = getWorkshopRoot()
 	const online = await checkConnection()
 	if (!online) return { updatesAvailable: false } as const
 
@@ -88,6 +88,7 @@ export async function checkForUpdates() {
 }
 
 export async function updateLocalRepo() {
+	const cwd = getWorkshopRoot()
 	try {
 		const updates = await checkForUpdates()
 		if (!updates.updatesAvailable) {
@@ -127,6 +128,7 @@ export async function updateLocalRepo() {
 }
 
 export async function getCommitInfo() {
+	const cwd = getWorkshopRoot()
 	try {
 		const { stdout: hash } = await execaCommand('git rev-parse HEAD', { cwd })
 		const { stdout: message } = await execaCommand('git log -1 --pretty=%B', {
@@ -143,6 +145,7 @@ export async function getCommitInfo() {
 }
 
 export async function getLatestWorkshopAppVersion() {
+	const cwd = getWorkshopRoot()
 	try {
 		const { stdout } = await execaCommand(
 			'npm view @epic-web/workshop-app version',

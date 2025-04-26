@@ -478,7 +478,7 @@ export async function userHasAccessToWorkshop({
 	request?: Request
 	timings?: Timings
 	forceFresh?: boolean
-}) {
+} = {}) {
 	const config = getWorkshopConfig()
 	const {
 		product: { host, slug },

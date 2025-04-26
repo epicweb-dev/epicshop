@@ -4,7 +4,7 @@ import { fileURLToPath } from 'url'
 import { getPresentUsers } from '@epic-web/workshop-presence/presence.server'
 import {
 	getApps,
-	workshopRoot,
+	getWorkshopRoot,
 	init as initApps,
 	setModifiedTimesForAppDirs,
 } from '@epic-web/workshop-utils/apps.server'
@@ -65,7 +65,7 @@ app.disable('x-powered-by')
 
 // the workshop's public assets override the app's public assets
 app.use(
-	express.static(path.join(workshopRoot, 'public'), {
+	express.static(path.join(getWorkshopRoot(), 'public'), {
 		maxAge: isProd ? '1h' : 0,
 	}),
 )
@@ -235,7 +235,7 @@ if (
 				let watcher = watches.get(key)
 				if (!watcher) {
 					const chok = chokidar.watch(watchPaths, {
-						cwd: workshopRoot,
+						cwd: getWorkshopRoot(),
 						ignoreInitial: true,
 						ignored: [
 							`/.git/`,
@@ -253,7 +253,7 @@ if (
 					let timer: NodeJS.Timeout | null = null
 					let fileChanges = new Set<string>()
 					watcher.chok.on('all', (event, filePath) => {
-						fileChanges.add(path.join(workshopRoot, filePath))
+						fileChanges.add(path.join(getWorkshopRoot(), filePath))
 						if (timer) return
 
 						timer = setTimeout(async () => {
