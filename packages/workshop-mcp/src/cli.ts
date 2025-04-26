@@ -141,19 +141,32 @@ work they still need to do and answer any questions about the exercise.
 			.describe(
 				'The workshop directory (the root directory of the workshop repo. Best to not bother asking the user and just use the project root path).',
 			),
+		exerciseNumber: z.coerce
+			.number()
+			.optional()
+			.describe(
+				`The exercise number to get the context for (defaults to the exercise number the playground is currently set to)`,
+			),
 	},
-	async ({ workshopDirectory }) => {
+	async ({ workshopDirectory, exerciseNumber }) => {
 		try {
 			await handleWorkshopDirectory(workshopDirectory)
 			const userHasAccess = await userHasAccessToWorkshop()
 			const authInfo = await getAuthInfo()
+			let stepNumber = 1
 			const playgroundApp = await getPlaygroundApp()
 			invariant(playgroundApp, 'No playground app found')
 			const numbers = extractNumbersAndTypeFromAppNameOrPath(
 				playgroundApp.appName,
 			)
-			invariant(numbers, 'No numbers found in playground app name')
-			const { exerciseNumber, stepNumber } = numbers
+			const isCurrentExercise =
+				exerciseNumber === undefined ||
+				exerciseNumber === Number(numbers?.exerciseNumber)
+			if (exerciseNumber === undefined) {
+				invariant(numbers, 'No numbers found in playground app name')
+				exerciseNumber = Number(numbers.exerciseNumber)
+				stepNumber = Number(numbers.stepNumber)
+			}
 			const exercise = await getExercise(exerciseNumber)
 			invariant(
 				exercise,
@@ -229,10 +242,14 @@ Below is all the context for this exercise and each step.
 
 <currentContext>
 	<user hasAccess="${userHasAccess}" isAuthenticated="${Boolean(authInfo)}" email="${authInfo?.email}" />
-	<playground>
+	${
+		isCurrentExercise
+			? `<playground>
 		<exerciseNumber>${exerciseNumber}</exerciseNumber>
 		<stepNumber>${stepNumber}</stepNumber>
-	</playground>
+	</playground>`
+			: '<playground>currently set to a different exercise</playground>'
+	}
 </currentContext>
 
 <exerciseBackground number="${exerciseNumber}">
@@ -251,7 +268,7 @@ Below is all the context for this exercise and each step.
 				text += '\n\n<steps>'
 				for (const app of exercise.steps) {
 					text += `
-<step number="${app.stepNumber}" isCurrent="${app.stepNumber === Number(stepNumber)}">
+<step number="${app.stepNumber}" isCurrent="${isCurrentExercise && app.stepNumber === stepNumber}">
 	<problem>
 		${app.problem ? await getFileContentElement(path.join(app.problem?.fullPath, `README.mdx`)) : 'No problem found'}
 		${getTranscriptsElement(app.problem?.epicVideoEmbeds ?? [])}
@@ -288,7 +305,9 @@ NOTE: this will override their current exercise step work in the playground!
 
 Generally, it is better to not provide an exerciseNumber, stepNumber, and type
 and let the user continue to the next exercise. Only provide these arguments if
-the user explicitely asks to go to a specific exercise or step.
+the user explicitely asks to go to a specific exercise or step. If the user asks
+to start an exercise, specify stepNumber 1 and type 'problem' unless otherwise
+directed.
 
 Argument examples:
 A. Set to next exercise step from current (or first if there is none) - Most common
@@ -348,7 +367,7 @@ An error will be returned if no app is found for the given arguments.
 				// otherwise, default to the current exercise step app for arguments
 				exerciseNumber ??= currentExerciseStepApp?.exerciseNumber
 				stepNumber ??= currentExerciseStepApp?.stepNumber
-				type ??= 'problem'
+				type ??= currentExerciseStepApp?.type
 
 				desiredApp = exerciseStepApps.find(
 					(a) =>
