@@ -9,7 +9,11 @@ import { extendedTheme } from './app/utils/extended-theme.ts'
 
 export default {
 	darkMode: ['class'],
-	content: ['./app/**/*.{ts,tsx,jsx,js}', '../example/**/*.md'],
+	content: [
+		'./app/**/*.{ts,tsx,jsx,js}',
+		'../example/**/*.md',
+		'../workshop-utils/src/**/*.ts',
+	],
 	theme: {
 		container: {
 			center: true,
