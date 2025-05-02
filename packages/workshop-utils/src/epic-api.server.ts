@@ -637,7 +637,17 @@ export async function getUserInfo({
 			})
 
 			if (!response.ok) {
-				throw new Error(`Failed to fetch user info: ${response.statusText}`)
+				if (
+					response.headers.get('content-type')?.includes('application/json')
+				) {
+					const data = await response.json()
+					throw new Error(`Failed to fetch user info: ${JSON.stringify(data)}`)
+				} else {
+					const text = await response.text()
+					throw new Error(
+						`Failed to fetch user info: ${text || response.statusText}`,
+					)
+				}
 			}
 
 			const data = await response.json()
