@@ -1,16 +1,16 @@
+import { type InBrowserBrowserRef } from '#app/components/in-browser-browser.js'
 import { requireExerciseApp } from '@epic-web/workshop-utils/apps.server'
 import {
 	combineServerTimings,
 	makeTimings,
 } from '@epic-web/workshop-utils/timing.server'
+import { useRef } from 'react'
 import {
-	unstable_data as data,
+	data,
+	useLoaderData,
 	type HeadersFunction,
 	type LoaderFunctionArgs,
-} from '@remix-run/node'
-import { useLoaderData } from '@remix-run/react'
-import { useRef } from 'react'
-import { type InBrowserBrowserRef } from '#app/components/in-browser-browser.js'
+} from 'react-router'
 import { Preview } from './__shared/preview.tsx'
 import { getAppRunningState } from './__shared/utils.tsx'
 
@@ -34,11 +34,7 @@ export async function loader({ request, params }: LoaderFunctionArgs) {
 				stackBlitzUrl: exerciseStepApp.stackBlitzUrl,
 			},
 		},
-		{
-			headers: {
-				'Server-Timing': timings.toString(),
-			},
-		},
+		{ headers: { 'Server-Timing': timings.toString() } },
 	)
 }
 

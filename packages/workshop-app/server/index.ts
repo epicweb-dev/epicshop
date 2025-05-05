@@ -1,6 +1,3 @@
-import fs from 'fs'
-import path from 'path'
-import { fileURLToPath } from 'url'
 import { getPresentUsers } from '@epic-web/workshop-presence/presence.server'
 import {
 	getApps,
@@ -10,17 +7,20 @@ import {
 } from '@epic-web/workshop-utils/apps.server'
 import { checkForUpdates } from '@epic-web/workshop-utils/git.server'
 import { checkConnectionCached } from '@epic-web/workshop-utils/utils.server'
-import { createRequestHandler } from '@remix-run/express'
-import { type ServerBuild } from '@remix-run/node'
+import { createRequestHandler } from '@react-router/express'
 import { ip as ipAddress } from 'address'
 import chalk from 'chalk'
 import chokidar, { type FSWatcher } from 'chokidar'
 import closeWithGrace from 'close-with-grace'
 import compression from 'compression'
 import express from 'express'
+import fs from 'fs'
 import getPort, { portNumbers } from 'get-port'
 import morgan from 'morgan'
+import path from 'path'
+import { type ServerBuild } from 'react-router'
 import sourceMapSupport from 'source-map-support'
+import { fileURLToPath } from 'url'
 import { type WebSocket, WebSocketServer } from 'ws'
 
 const MODE = process.env.NODE_ENV ?? 'development'
@@ -32,9 +32,7 @@ const viteDevServer =
 	process.env.NODE_ENV === 'production'
 		? null
 		: await import('vite').then((vite) =>
-				vite.createServer({
-					server: { middlewareMode: true },
-				}),
+				vite.createServer({ server: { middlewareMode: true } }),
 			)
 
 const isProd = process.env.NODE_ENV === 'production'
@@ -128,7 +126,7 @@ app.use((req, res, next) => {
 
 async function getBuild() {
 	const build = viteDevServer
-		? viteDevServer.ssrLoadModule('virtual:remix/server-build')
+		? viteDevServer.ssrLoadModule('virtual:react-router/server-build')
 		: // @ts-ignore this should exist before running the server
 			// but it may not exist just yet.
 			await import('#build/server/index.js')
@@ -275,8 +273,8 @@ if (
 				watcher.clients.add(ws)
 
 				ws.on('close', () => {
-					watcher?.clients.delete(ws)
-					if (watcher?.clients.size === 0) {
+					watcher.clients.delete(ws)
+					if (watcher.clients.size === 0) {
 						watches.delete(key)
 						void watcher.chok.close()
 					}

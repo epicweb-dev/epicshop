@@ -1,17 +1,3 @@
-import { getApps } from '@epic-web/workshop-utils/apps.server'
-import { getProcesses } from '@epic-web/workshop-utils/process-manager.server'
-import {
-	getServerTimeHeader,
-	makeTimings,
-} from '@epic-web/workshop-utils/timing.server'
-import { type SEOHandle } from '@nasa-gcn/remix-seo'
-import {
-	unstable_data as data,
-	type ActionFunctionArgs,
-	type LoaderFunctionArgs,
-	type MetaFunction,
-} from '@remix-run/node'
-import { Form, Link, useLoaderData, useNavigation } from '@remix-run/react'
 import { Icon } from '#app/components/icons.tsx'
 import { SimpleTooltip } from '#app/components/ui/tooltip.tsx'
 import { type loader as rootLoader } from '#app/root.tsx'
@@ -20,6 +6,23 @@ import {
 	type SerializedProgress,
 } from '#app/routes/progress.tsx'
 import { ensureUndeployed } from '#app/utils/misc.tsx'
+import { getApps } from '@epic-web/workshop-utils/apps.server'
+import { getProcesses } from '@epic-web/workshop-utils/process-manager.server'
+import {
+	getServerTimeHeader,
+	makeTimings,
+} from '@epic-web/workshop-utils/timing.server'
+import { type SEOHandle } from '@nasa-gcn/remix-seo'
+import {
+	data,
+	Form,
+	Link,
+	useLoaderData,
+	useNavigation,
+	type ActionFunctionArgs,
+	type LoaderFunctionArgs,
+	type MetaFunction,
+} from 'react-router'
 import {
 	clearCaches,
 	clearData,
@@ -31,9 +34,7 @@ declare global {
 	var __inspector_open__: boolean | undefined
 }
 
-export const handle: SEOHandle = {
-	getSitemapEntries: () => null,
-}
+export const handle: SEOHandle = { getSitemapEntries: () => null }
 
 export const meta: MetaFunction<typeof loader, { root: typeof rootLoader }> = ({
 	matches,
@@ -76,11 +77,7 @@ export async function loader({ request }: LoaderFunctionArgs) {
 			testProcesses,
 			inspectorRunning: global.__inspector_open__,
 		},
-		{
-			headers: {
-				'Server-Timing': getServerTimeHeader(timings),
-			},
-		},
+		{ headers: { 'Server-Timing': getServerTimeHeader(timings) } },
 	)
 }
 
@@ -292,21 +289,10 @@ function Pinger({
 	status: 'running' | 'starting' | 'stopped' | 'taken'
 }) {
 	const colors = {
-		running: {
-			pinger: 'bg-green-400',
-			circle: 'bg-green-500',
-		},
-		starting: {
-			pinger: 'bg-sky-400',
-			circle: 'bg-sky-500',
-		},
-		stopped: {
-			circle: 'bg-gray-500',
-		},
-		taken: {
-			pinger: 'bg-red-400',
-			circle: 'bg-red-500',
-		},
+		running: { pinger: 'bg-green-400', circle: 'bg-green-500' },
+		starting: { pinger: 'bg-sky-400', circle: 'bg-sky-500' },
+		stopped: { circle: 'bg-gray-500' },
+		taken: { pinger: 'bg-red-400', circle: 'bg-red-500' },
 	}[status]
 	return (
 		<span className="relative flex h-3 w-3">

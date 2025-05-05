@@ -1,3 +1,7 @@
+import { Diff } from '#app/components/diff.tsx'
+import { GeneralErrorBoundary } from '#app/components/error-boundary.tsx'
+import { type InBrowserBrowserRef } from '#app/components/in-browser-browser.tsx'
+import { useAltDown } from '#app/utils/misc.tsx'
 import {
 	getAppByName,
 	getAppDisplayName,
@@ -10,6 +14,7 @@ import {
 	type ExerciseStepApp,
 } from '@epic-web/workshop-utils/apps.server'
 import { compileMarkdownString } from '@epic-web/workshop-utils/compile-mdx.server'
+import { getDiffCode } from '@epic-web/workshop-utils/diff.server'
 import { userHasAccessToWorkshop } from '@epic-web/workshop-utils/epic-api.server'
 import {
 	combineServerTimings,
@@ -17,26 +22,19 @@ import {
 	makeTimings,
 } from '@epic-web/workshop-utils/timing.server'
 import * as Tabs from '@radix-ui/react-tabs'
-import {
-	unstable_data as data,
-	redirect,
-	type HeadersFunction,
-	type LoaderFunctionArgs,
-} from '@remix-run/node'
-import {
-	Link,
-	useLoaderData,
-	useNavigate,
-	useSearchParams,
-} from '@remix-run/react'
 import { clsx } from 'clsx'
 import * as React from 'react'
 import { useRef } from 'react'
-import { Diff } from '#app/components/diff.tsx'
-import { GeneralErrorBoundary } from '#app/components/error-boundary.tsx'
-import { type InBrowserBrowserRef } from '#app/components/in-browser-browser.tsx'
-import { getDiffCode } from '@epic-web/workshop-utils/diff.server'
-import { useAltDown } from '#app/utils/misc.tsx'
+import {
+	data,
+	Link,
+	redirect,
+	useLoaderData,
+	useNavigate,
+	useSearchParams,
+	type HeadersFunction,
+	type LoaderFunctionArgs,
+} from 'react-router'
 import { fetchDiscordPosts } from './__shared/discord.server.ts'
 import { DiscordChat } from './__shared/discord.tsx'
 import { Playground } from './__shared/playground.tsx'
@@ -46,10 +44,7 @@ import { getAppRunningState } from './__shared/utils.tsx'
 
 export async function loader({ request, params }: LoaderFunctionArgs) {
 	const timings = makeTimings('exerciseStepTypeIndexLoader')
-	const userHasAccess = await userHasAccessToWorkshop({
-		request,
-		timings,
-	})
+	const userHasAccess = await userHasAccessToWorkshop({ request, timings })
 	const searchParams = new URL(request.url).searchParams
 	const cacheOptions = { request, timings }
 	const exerciseStepApp = await requireExerciseApp(params, cacheOptions)
@@ -128,11 +123,7 @@ export async function loader({ request, params }: LoaderFunctionArgs) {
 
 	async function getDiffProp() {
 		if (!app1 || !app2) {
-			return {
-				app1: app1?.name,
-				app2: app2?.name,
-				diffCode: null,
-			}
+			return { app1: app1?.name, app2: app2?.name, diffCode: null }
 		}
 		if (!userHasAccess) {
 			return {
@@ -150,11 +141,7 @@ export async function loader({ request, params }: LoaderFunctionArgs) {
 			console.error(e)
 			return null
 		})
-		return {
-			app1: app1.name,
-			app2: app2.name,
-			diffCode,
-		}
+		return { app1: app1.name, app2: app2.name, diffCode }
 	}
 
 	return data(
@@ -204,11 +191,7 @@ export async function loader({ request, params }: LoaderFunctionArgs) {
 				: null,
 			diff: getDiffProp(),
 		} as const,
-		{
-			headers: {
-				'Server-Timing': getServerTimeHeader(timings),
-			},
-		},
+		{ headers: { 'Server-Timing': getServerTimeHeader(timings) } },
 	)
 }
 

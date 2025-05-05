@@ -1,9 +1,9 @@
-import fs from 'node:fs'
-import path from 'node:path'
 import { type CacheEntry } from '@epic-web/cachified'
 import { invariant } from '@epic-web/invariant'
 import { remember } from '@epic-web/remember'
 import chokidar from 'chokidar'
+import fs from 'node:fs'
+import path from 'node:path'
 /// TODO: figure out why this import is necessary (without it tsc seems to not honor the boolean reset 🤷‍♂️)
 import '@total-typescript/ts-reset'
 import closeWithGrace from 'close-with-grace'
@@ -114,9 +114,7 @@ const SolutionAppSchema = BaseExerciseStepAppSchema.extend({
 	problemName: z.string().nullable(),
 })
 
-const ExampleAppSchema = BaseAppSchema.extend({
-	type: z.literal('example'),
-})
+const ExampleAppSchema = BaseAppSchema.extend({ type: z.literal('example') })
 
 const PlaygroundAppSchema = BaseAppSchema.extend({
 	type: z.literal('playground'),
@@ -879,11 +877,7 @@ async function getExampleAppFromPath(
 		instructionsCode: compiledReadme?.code,
 		test: await getTestInfo({ fullPath }),
 		dev: await getDevInfo({ fullPath, portNumber }),
-		stackBlitzUrl: await getStackBlitzUrl({
-			fullPath,
-			title,
-			type,
-		}),
+		stackBlitzUrl: await getStackBlitzUrl({ fullPath, title, type }),
 	} satisfies ExampleApp
 }
 
@@ -943,9 +937,7 @@ async function getSolutionAppFromPath(
 		path.join(fullPath, 'README.mdx'),
 		{ request },
 	)
-	const problemDir = await findProblemDir({
-		fullPath,
-	})
+	const problemDir = await findProblemDir({ fullPath })
 	const problemName = problemDir ? getAppName(problemDir) : null
 	const [test, dev] = await Promise.all([
 		getTestInfo({ fullPath }),
@@ -1026,9 +1018,7 @@ async function getProblemAppFromPath(
 		path.join(fullPath, 'README.mdx'),
 		{ request },
 	)
-	const solutionDir = await findSolutionDir({
-		fullPath,
-	})
+	const solutionDir = await findSolutionDir({ fullPath })
 	const solutionName = solutionDir ? getAppName(solutionDir) : null
 	const [test, dev] = await Promise.all([
 		getTestInfo({ fullPath }),
@@ -1049,11 +1039,7 @@ async function getProblemAppFromPath(
 		instructionsCode: compiledReadme?.code,
 		test,
 		dev,
-		stackBlitzUrl: await getStackBlitzUrl({
-			fullPath,
-			title,
-			type: 'problem',
-		}),
+		stackBlitzUrl: await getStackBlitzUrl({ fullPath, title, type: 'problem' }),
 	} satisfies ProblemApp
 }
 
@@ -1131,11 +1117,7 @@ const ExerciseAppParamsSchema = z.object({
 })
 
 export async function getExerciseApp(
-	params: {
-		type?: string
-		exerciseNumber?: string
-		stepNumber?: string
-	},
+	params: { type?: string; exerciseNumber?: string; stepNumber?: string },
 	{ request, timings }: CachifiedOptions = {},
 ) {
 	const result = ExerciseAppParamsSchema.safeParse(params)

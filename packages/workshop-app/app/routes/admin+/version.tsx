@@ -1,3 +1,5 @@
+import { useWorkshopConfig } from '#app/components/workshop-config.tsx'
+import { getErrorMessage } from '#app/utils/misc.tsx'
 import {
 	getCommitInfo,
 	getLatestWorkshopAppVersion,
@@ -9,14 +11,9 @@ import {
 } from '@epic-web/workshop-utils/timing.server'
 import { dayjs } from '@epic-web/workshop-utils/utils.server'
 import { type SEOHandle } from '@nasa-gcn/remix-seo'
-import { type HeadersFunction } from '@remix-run/node'
-import { useLoaderData, unstable_data as data } from '@remix-run/react'
-import { useWorkshopConfig } from '#app/components/workshop-config.tsx'
-import { getErrorMessage } from '#app/utils/misc.tsx'
+import { data, useLoaderData, type HeadersFunction } from 'react-router'
 
-export const handle: SEOHandle = {
-	getSitemapEntries: () => null,
-}
+export const handle: SEOHandle = { getSitemapEntries: () => null }
 
 export async function loader() {
 	const timings = makeTimings('versionLoader')
@@ -45,18 +42,12 @@ export async function loader() {
 			startTimeFormatted: dayjs(startDate).format('YYYY-MM-DD HH:mm:ss'),
 			startTimeFromNow: dayjs(startDate).fromNow(),
 		},
-		{
-			headers: {
-				'Server-Timing': timings.toString(),
-			},
-		},
+		{ headers: { 'Server-Timing': timings.toString() } },
 	)
 }
 
 export const headers: HeadersFunction = ({ parentHeaders, loaderHeaders }) => {
-	return {
-		'Server-Timing': combineServerTimings(parentHeaders, loaderHeaders),
-	}
+	return { 'Server-Timing': combineServerTimings(parentHeaders, loaderHeaders) }
 }
 
 export default function Version() {

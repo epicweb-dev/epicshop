@@ -1,4 +1,11 @@
-import path from 'path'
+import { EpicVideoInfoProvider } from '#app/components/epic-video.tsx'
+import { useRevalidationWS } from '#app/components/revalidation-ws.js'
+import { type loader as rootLoader } from '#app/root.tsx'
+import { EditFileOnGitHub } from '#app/routes/launch-editor.tsx'
+import { ProgressToggle } from '#app/routes/progress.tsx'
+import { Mdx } from '#app/utils/mdx.tsx'
+import { getErrorMessage } from '#app/utils/misc.tsx'
+import { getSeoMetaTags } from '#app/utils/seo.js'
 import { invariantResponse } from '@epic-web/invariant'
 import { ElementScrollRestoration } from '@epic-web/restore-scroll'
 import {
@@ -13,27 +20,18 @@ import {
 	makeTimings,
 	time,
 } from '@epic-web/workshop-utils/timing.server'
-import {
-	unstable_data as data,
-	type HeadersFunction,
-	type LoaderFunctionArgs,
-	type MetaFunction,
-} from '@remix-run/node'
+import slugify from '@sindresorhus/slugify'
+import path from 'path'
 import {
 	Link,
+	data,
 	isRouteErrorResponse,
 	useLoaderData,
 	useRouteError,
-} from '@remix-run/react'
-import slugify from '@sindresorhus/slugify'
-import { EpicVideoInfoProvider } from '#app/components/epic-video.tsx'
-import { useRevalidationWS } from '#app/components/revalidation-ws.js'
-import { type loader as rootLoader } from '#app/root.tsx'
-import { EditFileOnGitHub } from '#app/routes/launch-editor.tsx'
-import { ProgressToggle } from '#app/routes/progress.tsx'
-import { Mdx } from '#app/utils/mdx.tsx'
-import { getErrorMessage } from '#app/utils/misc.tsx'
-import { getSeoMetaTags } from '#app/utils/seo.js'
+	type HeadersFunction,
+	type LoaderFunctionArgs,
+	type MetaFunction,
+} from 'react-router'
 
 export const meta: MetaFunction<typeof loader, { root: typeof rootLoader }> = ({
 	data,
@@ -101,11 +99,7 @@ export async function loader({ request, params }: LoaderFunctionArgs) {
 				{ request },
 			),
 		},
-		{
-			headers: {
-				'Server-Timing': getServerTimeHeader(timings),
-			},
-		},
+		{ headers: { 'Server-Timing': getServerTimeHeader(timings) } },
 	)
 }
 
@@ -122,9 +116,7 @@ const mdxComponents = { h1: () => null }
 
 export default function ExerciseNumberRoute() {
 	const data = useLoaderData<typeof loader>()
-	useRevalidationWS({
-		watchPaths: [data.exerciseReadme.file],
-	})
+	useRevalidationWS({ watchPaths: [data.exerciseReadme.file] })
 
 	const firstStepNumber = String(data.firstStep?.stepNumber ?? '01').padStart(
 		2,

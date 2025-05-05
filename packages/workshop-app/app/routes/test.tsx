@@ -1,3 +1,9 @@
+import { AnimatedBars, Icon } from '#app/components/icons.tsx'
+import { SimpleTooltip } from '#app/components/ui/tooltip.tsx'
+import { stripCursorMovements, useAnsiToHtml } from '#app/utils/ansi-text.js'
+import { ensureUndeployed } from '#app/utils/misc.tsx'
+import { dataWithPE, usePERedirectInput } from '#app/utils/pe.js'
+import { createToastHeaders } from '#app/utils/toast.server.js'
 import { getAppByName } from '@epic-web/workshop-utils/apps.server'
 import { userHasAccessToWorkshop } from '@epic-web/workshop-utils/epic-api.server'
 import {
@@ -6,36 +12,21 @@ import {
 	isTestRunning,
 	runAppTests,
 } from '@epic-web/workshop-utils/process-manager.server'
+import { useEffect, useReducer, useRef } from 'react'
 import {
-	unstable_data as data,
+	data,
+	useFetcher,
 	type ActionFunctionArgs,
 	type LoaderFunctionArgs,
-} from '@remix-run/node'
-import { useFetcher } from '@remix-run/react'
-import { useEffect, useReducer, useRef } from 'react'
+} from 'react-router'
 import { useEventSource } from 'remix-utils/sse/react'
 import { eventStream } from 'remix-utils/sse/server'
 import { z } from 'zod'
-import { AnimatedBars, Icon } from '#app/components/icons.tsx'
-import { SimpleTooltip } from '#app/components/ui/tooltip.tsx'
-import { stripCursorMovements, useAnsiToHtml } from '#app/utils/ansi-text.js'
-import { ensureUndeployed } from '#app/utils/misc.tsx'
-import { dataWithPE, usePERedirectInput } from '#app/utils/pe.js'
-import { createToastHeaders } from '#app/utils/toast.server.js'
 
 const testActionSchema = z.union([
-	z.object({
-		intent: z.literal('run'),
-		name: z.string(),
-	}),
-	z.object({
-		intent: z.literal('stop'),
-		name: z.string(),
-	}),
-	z.object({
-		intent: z.literal('clear'),
-		name: z.string(),
-	}),
+	z.object({ intent: z.literal('run'), name: z.string() }),
+	z.object({ intent: z.literal('stop'), name: z.string() }),
+	z.object({ intent: z.literal('clear'), name: z.string() }),
 ])
 
 const testEventSchema = z.union([
@@ -149,9 +140,7 @@ export async function loader({ request }: LoaderFunctionArgs) {
 export async function action({ request }: ActionFunctionArgs) {
 	ensureUndeployed()
 	const formData = await request.formData()
-	const userHasAccess = await userHasAccessToWorkshop({
-		request,
-	})
+	const userHasAccess = await userHasAccessToWorkshop({ request })
 	if (!userHasAccess) {
 		return dataWithPE(
 			formData,
@@ -310,11 +299,7 @@ export function TestOutput({ name }: { name: string }) {
 					<ClearTest
 						name={name}
 						onClear={() => {
-							dispatch((prev) => ({
-								...prev,
-								exitCode: undefined,
-								lines: [],
-							}))
+							dispatch((prev) => ({ ...prev, exitCode: undefined, lines: [] }))
 						}}
 					/>
 				)}

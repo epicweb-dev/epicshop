@@ -1,3 +1,8 @@
+import { Button } from '#app/components/button.tsx'
+import {
+	DeferredEpicVideo,
+	EpicVideoInfoProvider,
+} from '#app/components/epic-video.tsx'
 import { invariantResponse } from '@epic-web/invariant'
 import { getWorkshopConfig } from '@epic-web/workshop-utils/config.server'
 import {
@@ -8,22 +13,16 @@ import { getEpicVideoInfos } from '@epic-web/workshop-utils/epic-api.server'
 import { makeTimings } from '@epic-web/workshop-utils/timing.server'
 import { type SEOHandle } from '@nasa-gcn/remix-seo'
 import {
-	unstable_data as data,
+	data,
+	Form,
 	redirect,
+	useLoaderData,
 	type ActionFunctionArgs,
 	type HeadersFunction,
 	type LoaderFunctionArgs,
-} from '@remix-run/node'
-import { Form, useLoaderData } from '@remix-run/react'
-import { Button } from '#app/components/button.tsx'
-import {
-	DeferredEpicVideo,
-	EpicVideoInfoProvider,
-} from '#app/components/epic-video.tsx'
+} from 'react-router'
 
-export const handle: SEOHandle = {
-	getSitemapEntries: () => null,
-}
+export const handle: SEOHandle = { getSitemapEntries: () => null }
 
 export async function loader({ request }: LoaderFunctionArgs) {
 	const timings = makeTimings('onboarding')
@@ -37,9 +36,7 @@ export async function loader({ request }: LoaderFunctionArgs) {
 }
 
 export const headers: HeadersFunction = ({ loaderHeaders }) => {
-	const headers = {
-		'Server-Timing': loaderHeaders.get('Server-Timing') ?? '',
-	}
+	const headers = { 'Server-Timing': loaderHeaders.get('Server-Timing') ?? '' }
 	return headers
 }
 
@@ -50,9 +47,11 @@ export async function action({ request }: ActionFunctionArgs) {
 	invariantResponse(intent === 'complete', 'Invalid intent')
 	const { onboardingVideo } = getWorkshopConfig()
 	await markOnboardingVideoWatched(onboardingVideo)
-
-	if (authInfo) throw redirect('/')
-	else throw redirect('/login')
+	if (authInfo) {
+		redirect('/')
+	} else {
+		redirect('/login')
+	}
 }
 
 export default function Onboarding() {

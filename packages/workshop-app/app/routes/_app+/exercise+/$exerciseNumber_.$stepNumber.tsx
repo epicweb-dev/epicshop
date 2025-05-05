@@ -1,3 +1,4 @@
+import { getErrorMessage } from '#app/utils/misc.tsx'
 import { invariantResponse } from '@epic-web/invariant'
 import { getExercises } from '@epic-web/workshop-utils/apps.server'
 import { getWorkshopConfig } from '@epic-web/workshop-utils/config.server'
@@ -7,12 +8,13 @@ import {
 	makeTimings,
 } from '@epic-web/workshop-utils/timing.server'
 import {
-	unstable_data as data,
+	Outlet,
+	data,
+	isRouteErrorResponse,
+	useRouteError,
 	type HeadersFunction,
 	type LoaderFunctionArgs,
-} from '@remix-run/node'
-import { Outlet, isRouteErrorResponse, useRouteError } from '@remix-run/react'
-import { getErrorMessage } from '#app/utils/misc.tsx'
+} from 'react-router'
 
 export async function loader({ request, params }: LoaderFunctionArgs) {
 	const timings = makeTimings('stepLoader')
@@ -36,11 +38,7 @@ export async function loader({ request, params }: LoaderFunctionArgs) {
 				title: e.title,
 			})),
 		},
-		{
-			headers: {
-				'Server-Timing': getServerTimeHeader(timings),
-			},
-		},
+		{ headers: { 'Server-Timing': getServerTimeHeader(timings) } },
 	)
 	return result
 }

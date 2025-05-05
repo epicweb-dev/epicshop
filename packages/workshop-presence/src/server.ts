@@ -4,9 +4,7 @@ import { UserSchema } from './presence.js'
 
 type User = z.infer<typeof UserSchema>
 const ConnectionStateSchema = z
-	.object({
-		user: UserSchema.nullable().optional(),
-	})
+	.object({ user: UserSchema.nullable().optional() })
 	.nullable()
 
 type ConnectionState = z.infer<typeof ConnectionStateSchema>
@@ -32,9 +30,7 @@ const MessageSchema = z
 type Message = z.infer<typeof MessageSchema>
 
 export default (class Server implements Party.Server {
-	options: Party.ServerOptions = {
-		hibernate: true,
-	}
+	options: Party.ServerOptions = { hibernate: true }
 
 	readonly party: Party.Room
 
@@ -133,11 +129,7 @@ export default (class Server implements Party.Server {
 				</body>
 				</html>
 				`,
-				{
-					headers: {
-						'Content-Type': 'text/html',
-					},
-				},
+				{ headers: { 'Content-Type': 'text/html' } },
 			)
 		}
 		return new Response('not found', { status: 404 })
@@ -205,7 +197,7 @@ function organizeUsersByWorkshop(users: Array<User>) {
 		if (!workshopUsers[workshop]) {
 			workshopUsers[workshop] = []
 		}
-		workshopUsers[workshop]?.push(user)
+		workshopUsers[workshop].push(user)
 	}
 
 	// Sort users within each workshop by exercise and step number

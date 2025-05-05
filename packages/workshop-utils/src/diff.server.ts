@@ -1,10 +1,10 @@
-import os from 'os'
-import path from 'path'
 import { type CacheEntry } from '@epic-web/cachified'
 import { execa } from 'execa'
 import fsExtra from 'fs-extra'
 import ignore from 'ignore'
+import os from 'os'
 import parseGitDiff, { type AnyFileChange } from 'parse-git-diff'
+import path from 'path'
 import { bundledLanguagesInfo } from 'shiki/langs'
 import {
 	getForceFreshForDir,
@@ -34,7 +34,7 @@ function diffPathToRelative(filePath: string) {
 	) {
 		normalizedPath = normalizedPath.slice(2)
 	}
-
+	
 	// eslint-disable-next-line @typescript-eslint/no-unused-vars
 	const [workshopRootDirname, appId, id, ...relativePath] = normalizedPath
 		.replace(

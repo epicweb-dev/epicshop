@@ -1,34 +1,3 @@
-import {
-	extractNumbersAndTypeFromAppNameOrPath,
-	getExercises,
-	getPlaygroundAppName,
-} from '@epic-web/workshop-utils/apps.server'
-import { getWorkshopConfig } from '@epic-web/workshop-utils/config.server'
-import {
-	combineServerTimings,
-	getServerTimeHeader,
-	makeTimings,
-} from '@epic-web/workshop-utils/timing.server'
-import {
-	unstable_data as data,
-	type HeadersFunction,
-	type LoaderFunctionArgs,
-} from '@remix-run/node'
-import {
-	Link,
-	NavLink,
-	Outlet,
-	useLoaderData,
-	useParams,
-} from '@remix-run/react'
-import { clsx } from 'clsx'
-import {
-	motion,
-	useAnimationControls,
-	type AnimationControls,
-} from 'framer-motion'
-import * as React from 'react'
-import { useHydrated } from 'remix-utils/use-hydrated'
 import { Icon } from '#app/components/icons.tsx'
 import { makeMediaQueryStore } from '#app/components/media-query.ts'
 import { Logo } from '#app/components/product.tsx'
@@ -52,6 +21,35 @@ import { useWorkshopConfig } from '#app/components/workshop-config.js'
 import { cn } from '#app/utils/misc.tsx'
 import { useIsOnline } from '#app/utils/online.ts'
 import { usePresence, type User } from '#app/utils/presence.tsx'
+import {
+	extractNumbersAndTypeFromAppNameOrPath,
+	getExercises,
+	getPlaygroundAppName,
+} from '@epic-web/workshop-utils/apps.server'
+import { getWorkshopConfig } from '@epic-web/workshop-utils/config.server'
+import {
+	combineServerTimings,
+	getServerTimeHeader,
+	makeTimings,
+} from '@epic-web/workshop-utils/timing.server'
+import { clsx } from 'clsx'
+import {
+	motion,
+	useAnimationControls,
+	type AnimationControls,
+} from 'framer-motion'
+import * as React from 'react'
+import {
+	data,
+	Link,
+	NavLink,
+	Outlet,
+	useLoaderData,
+	useParams,
+	type HeadersFunction,
+	type LoaderFunctionArgs,
+} from 'react-router'
+import { useHydrated } from 'remix-utils/use-hydrated'
 import {
 	useExerciseProgressClassName,
 	useNextExerciseRoute,
@@ -510,9 +508,7 @@ function NavigationExerciseListItem({
 function NavigationExerciseStepListItem({
 	children,
 	...progressItemSearch
-}: {
-	children: React.ReactNode
-} & ProgressItemSearch) {
+}: { children: React.ReactNode } & ProgressItemSearch) {
 	const progressClassName = useProgressItemClassName(progressItemSearch)
 	return (
 		<motion.li
@@ -553,9 +549,7 @@ function MobileNavigation({
 				staggerChildren: 0.03,
 			},
 		},
-		hidden: {
-			opacity: 0,
-		},
+		hidden: { opacity: 0 },
 	}
 
 	return (
@@ -697,9 +691,7 @@ function MobileNavigation({
 															className={({ isActive }) =>
 																clsx(
 																	'relative whitespace-nowrap px-2 py-0.5 pr-3 text-base font-medium outline-none after:absolute after:-bottom-2.5 after:-right-2.5 after:h-5 after:w-5 after:rotate-45 after:scale-75 after:bg-background after:content-[""] hover:underline focus:underline',
-																	{
-																		'bg-foreground text-background': isActive,
-																	},
+																	{ 'bg-foreground text-background': isActive },
 																)
 															}
 														>
@@ -824,10 +816,7 @@ function MobileNavigation({
 					<div
 						className={cn(
 							'flex h-14 w-14 items-center justify-center self-start p-4 sm:mb-4 sm:w-full',
-							{
-								'w-full border-t': isMenuOpened,
-								'border-l': !isMenuOpened,
-							},
+							{ 'w-full border-t': isMenuOpened, 'border-l': !isMenuOpened },
 						)}
 					>
 						<ThemeSwitch />
@@ -885,9 +874,7 @@ function Navigation({
 				staggerChildren: 0.03,
 			},
 		},
-		hidden: {
-			opacity: 0,
-		},
+		hidden: { opacity: 0 },
 	}
 	const exNum = Number(params.exerciseNumber).toString().padStart(2, '0')
 
@@ -1031,9 +1018,7 @@ function Navigation({
 															className={({ isActive }) =>
 																clsx(
 																	'relative whitespace-nowrap px-2 py-0.5 pr-3 text-base font-medium outline-none after:absolute after:-bottom-2.5 after:-right-2.5 after:h-5 after:w-5 after:rotate-45 after:scale-75 after:bg-background after:content-[""] hover:underline focus:underline',
-																	{
-																		'bg-foreground text-background': isActive,
-																	},
+																	{ 'bg-foreground text-background': isActive },
 																)
 															}
 														>
@@ -1233,9 +1218,7 @@ function NavToggle({
 		<div
 			className={cn(
 				'relative inline-flex h-14 flex-shrink-0 items-center justify-between overflow-hidden border-r sm:w-full sm:border-b sm:border-r-0',
-				{
-					'w-full': isMenuOpened,
-				},
+				{ 'w-full': isMenuOpened },
 			)}
 		>
 			<button

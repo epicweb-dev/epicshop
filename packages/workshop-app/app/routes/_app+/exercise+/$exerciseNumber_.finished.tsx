@@ -1,4 +1,16 @@
-import path from 'path'
+import { EpicVideoInfoProvider } from '#app/components/epic-video.tsx'
+import { Icon } from '#app/components/icons.tsx'
+import { Loading } from '#app/components/loading.tsx'
+import { NavChevrons } from '#app/components/nav-chevrons.tsx'
+import { useRevalidationWS } from '#app/components/revalidation-ws.js'
+import { type loader as rootLoader } from '#app/root.tsx'
+import { EditFileOnGitHub } from '#app/routes/launch-editor.tsx'
+import { ProgressToggle } from '#app/routes/progress.tsx'
+import { useTheme } from '#app/routes/theme/index.tsx'
+import { Mdx } from '#app/utils/mdx.tsx'
+import { cn } from '#app/utils/misc.tsx'
+import { useIsOnline } from '#app/utils/online.ts'
+import { getSeoMetaTags } from '#app/utils/seo.js'
 import { invariantResponse } from '@epic-web/invariant'
 import { ElementScrollRestoration } from '@epic-web/restore-scroll'
 import {
@@ -15,28 +27,17 @@ import {
 	getServerTimeHeader,
 	makeTimings,
 } from '@epic-web/workshop-utils/timing.server'
+import slugify from '@sindresorhus/slugify'
+import path from 'path'
+import * as React from 'react'
 import {
-	unstable_data as data,
+	data,
+	Link,
+	useLoaderData,
 	type HeadersFunction,
 	type LoaderFunctionArgs,
 	type MetaFunction,
-} from '@remix-run/node'
-import { Link, useLoaderData } from '@remix-run/react'
-import slugify from '@sindresorhus/slugify'
-import * as React from 'react'
-import { EpicVideoInfoProvider } from '#app/components/epic-video.tsx'
-import { Icon } from '#app/components/icons.tsx'
-import { Loading } from '#app/components/loading.tsx'
-import { NavChevrons } from '#app/components/nav-chevrons.tsx'
-import { useRevalidationWS } from '#app/components/revalidation-ws.js'
-import { type loader as rootLoader } from '#app/root.tsx'
-import { EditFileOnGitHub } from '#app/routes/launch-editor.tsx'
-import { ProgressToggle } from '#app/routes/progress.tsx'
-import { useTheme } from '#app/routes/theme/index.tsx'
-import { Mdx } from '#app/utils/mdx.tsx'
-import { cn } from '#app/utils/misc.tsx'
-import { useIsOnline } from '#app/utils/online.ts'
-import { getSeoMetaTags } from '#app/utils/seo.js'
+} from 'react-router'
 
 export const meta: MetaFunction<typeof loader, { root: typeof rootLoader }> = ({
 	data,
@@ -48,7 +49,7 @@ export const meta: MetaFunction<typeof loader, { root: typeof rootLoader }> = ({
 	if (!data || !rootData) return [{ title: '🦉 | Error' }]
 
 	return getSeoMetaTags({
-		title: `🦉 | ${number}. ${data.exercise.title} | ${rootData?.workshopTitle}`,
+		title: `🦉 | ${number}. ${data.exercise.title} | ${rootData.workshopTitle}`,
 		description: `Elaboration for ${number}. ${data.exercise.title}`,
 		ogTitle: `Finished: ${data.exercise.title}`,
 		ogDescription: `Elaboration for exercise ${Number(number)}`,
@@ -119,16 +120,9 @@ export async function loader({ request, params }: LoaderFunctionArgs) {
 						to: `/exercise/${nextExercise.exerciseNumber.toString().padStart(2, '0')}`,
 						'aria-label': `${nextExercise.title}`,
 					}
-				: {
-						to: '/finished',
-						'aria-label': 'Finished! 🎉',
-					},
+				: { to: '/finished', 'aria-label': 'Finished! 🎉' },
 		},
-		{
-			headers: {
-				'Server-Timing': getServerTimeHeader(timings),
-			},
-		},
+		{ headers: { 'Server-Timing': getServerTimeHeader(timings) } },
 	)
 }
 
