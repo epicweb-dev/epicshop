@@ -5,11 +5,11 @@
     "title": "Web App Fundamentals 🔭",
     "subtitle": "Learn the foundational tools and skills of building web applications",
     "product": {
-      "host": "www.epicreact.dev",
+      "host": "www.epicai.pro",
       "slug": "react-fundamentals",
       "logo": "/images/logo.svg",
-      "displayName": "EpicReact.dev",
-      "displayNameShort": "Epic React",
+      "displayName": "EpicAI.pro",
+      "displayNameShort": "Epic AI",
       "discordChannelId": "1285244676286189569",
       "discordTags": [
         "1285246046498328627",

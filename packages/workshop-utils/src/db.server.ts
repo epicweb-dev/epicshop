@@ -4,6 +4,7 @@ import { createId as cuid } from '@paralleldrive/cuid2'
 import { redirect } from '@remix-run/node'
 import fsExtra from 'fs-extra'
 import { z } from 'zod'
+import { getWorkshopConfig } from './config.server.js'
 
 const TokenSetSchema = z.object({
 	access_token: z.string(),
@@ -72,7 +73,10 @@ const DataSchema = z.object({
 		})
 		.optional()
 		.default({}),
+	// deprecated. Probably safe to remove in May 2026:
 	authInfo: AuthInfoSchema.optional(),
+	// new:
+	authInfos: z.record(z.string(), AuthInfoSchema).optional(),
 	clientId: z.string().optional(),
 })
 
@@ -120,8 +124,28 @@ async function readDb() {
 }
 
 export async function getAuthInfo() {
+	const config = getWorkshopConfig()
 	const data = await readDb()
-	return data?.authInfo ?? null
+	if (config.product.host && typeof data?.authInfos === 'object') {
+		if (config.product.host in data.authInfos) {
+			return data.authInfos[config.product.host]
+		}
+	}
+
+	// special case for non-epicweb/epicreact workshops
+	if (
+		!config.product.host ||
+		config.product.host === 'epicweb.dev' ||
+		config.product.host === 'epicreact.dev'
+	) {
+		// upgrade from old authInfo to new authInfos
+		if (data?.authInfo && config.product.host) {
+			await setAuthInfo(data.authInfo)
+		}
+		return data?.authInfo ?? null
+	}
+
+	return null
 }
 
 export async function requireAuthInfo({
@@ -161,7 +185,18 @@ export async function setAuthInfo({
 	const data = await readDb()
 	const authInfo = AuthInfoSchema.parse({ id, tokenSet, email, name })
 	await fsExtra.ensureDir(appDir)
-	await fsExtra.writeJSON(dbPath, { ...data, authInfo })
+	const config = getWorkshopConfig()
+	if (config.product.host) {
+		await fsExtra.writeJSON(dbPath, {
+			...data,
+			authInfos: {
+				...data?.authInfos,
+				[config.product.host]: authInfo,
+			},
+		})
+	} else {
+		await fsExtra.writeJSON(dbPath, { ...data, authInfo })
+	}
 	return authInfo
 }
 

@@ -634,7 +634,7 @@ export async function getUserInfo({
 		async getFreshValue(): Promise<UserInfo> {
 			const response = await fetch(url, {
 				headers: { authorization: `Bearer ${accessToken}` },
-			})
+			}).catch((e) => new Response(getErrorMessage(e), { status: 500 }))
 
 			if (!response.ok) {
 				if (
