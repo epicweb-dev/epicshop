@@ -10,6 +10,7 @@ import {
 	type ExerciseStepApp,
 } from '@epic-web/workshop-utils/apps.server'
 import { compileMarkdownString } from '@epic-web/workshop-utils/compile-mdx.server'
+import { getDiffCode } from '@epic-web/workshop-utils/diff.server'
 import { userHasAccessToWorkshop } from '@epic-web/workshop-utils/epic-api.server'
 import {
 	combineServerTimings,
@@ -35,7 +36,6 @@ import { useRef } from 'react'
 import { Diff } from '#app/components/diff.tsx'
 import { GeneralErrorBoundary } from '#app/components/error-boundary.tsx'
 import { type InBrowserBrowserRef } from '#app/components/in-browser-browser.tsx'
-import { getDiffCode } from '@epic-web/workshop-utils/diff.server'
 import { useAltDown } from '#app/utils/misc.tsx'
 import { fetchDiscordPosts } from './__shared/discord.server.ts'
 import { DiscordChat } from './__shared/discord.tsx'
@@ -331,6 +331,7 @@ export default function ExercisePartRoute() {
 				<Tabs.Content
 					value="playground"
 					className="flex w-full flex-grow items-center justify-center self-start radix-state-inactive:hidden"
+					forceMount
 				>
 					<Playground
 						appInfo={data.playground}
@@ -343,6 +344,7 @@ export default function ExercisePartRoute() {
 				<Tabs.Content
 					value="problem"
 					className="flex w-full flex-grow items-center justify-center self-start radix-state-inactive:hidden"
+					forceMount
 				>
 					<Preview
 						appInfo={data.problem}
@@ -352,6 +354,7 @@ export default function ExercisePartRoute() {
 				<Tabs.Content
 					value="solution"
 					className="flex w-full flex-grow items-center justify-center self-start radix-state-inactive:hidden"
+					forceMount
 				>
 					<Preview
 						appInfo={data.solution}
