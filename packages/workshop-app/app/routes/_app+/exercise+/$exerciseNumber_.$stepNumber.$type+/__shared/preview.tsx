@@ -97,6 +97,12 @@ export function Preview({
 				/>
 			</div>
 		)
+	} else if (dev.type === 'iframe') {
+		return (
+			<div className="flex h-full w-full items-center justify-center text-lg">
+				<iframe src={dev.url} className="h-full w-full flex-grow" />
+			</div>
+		)
 	} else {
 		return (
 			<div className="flex h-full items-center justify-center text-lg">

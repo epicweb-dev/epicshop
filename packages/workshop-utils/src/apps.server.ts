@@ -94,6 +94,7 @@ const BaseAppSchema = z.object({
 			portNumber: z.number(),
 			initialRoute: z.string(),
 		}),
+		z.object({ type: z.literal('iframe'), url: z.string() }),
 		z.object({ type: z.literal('none') }),
 	]),
 	stackBlitzUrl: z.string().nullable(),
@@ -761,14 +762,38 @@ async function getDevInfo({
 	fullPath: string
 	portNumber: number
 }): Promise<BaseApp['dev']> {
+	const appConfig = await getAppConfig(fullPath)
 	const {
 		scripts: { dev: devScript },
 		initialRoute,
-	} = await getAppConfig(fullPath)
+		previewTab: { iframe },
+	} = appConfig
+	const config = getWorkshopConfig()
 	const hasDevScript = Boolean(devScript)
 
 	if (hasDevScript) {
 		return { type: 'script', portNumber, initialRoute }
+	}
+	console.log('iframe', iframe)
+	if (iframe) {
+		const appIdInfo = extractNumbersAndTypeFromAppNameOrPath(
+			path.basename(fullPath),
+		)
+		const { exerciseNumber, stepNumber, type } = appIdInfo ?? {}
+		const replacements = {
+			fullPath,
+			workshopRoot: getWorkshopRoot(),
+			workshopSlug: config.product.slug,
+			exerciseNumber,
+			stepNumber,
+			type,
+		}
+		let url = iframe
+		for (const [key, value] of Object.entries(replacements)) {
+			if (!value) continue
+			url = url.replaceAll(`{${key}}`, value)
+		}
+		return { type: 'iframe', url }
 	}
 	const indexFiles = (await fsExtra.readdir(fullPath)).filter((file: string) =>
 		file.startsWith('index.'),

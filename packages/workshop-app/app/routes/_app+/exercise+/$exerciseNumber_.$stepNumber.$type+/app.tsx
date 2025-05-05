@@ -49,7 +49,7 @@ export const headers: HeadersFunction = ({ loaderHeaders, parentHeaders }) => {
 	return headers
 }
 
-export default function TestsList() {
+export default function AppRoute() {
 	const { appInfo } = useLoaderData<typeof loader>()
 	const ref = useRef<InBrowserBrowserRef>(null)
 

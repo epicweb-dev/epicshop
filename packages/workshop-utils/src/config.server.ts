@@ -73,6 +73,11 @@ const WorkshopConfigSchema = z
 				enabled: z.boolean().default(true),
 			})
 			.default({}),
+		previewTab: z
+			.object({
+				iframe: z.string().optional(),
+			})
+			.default({}),
 		scripts: z
 			.object({
 				postupdate: z.string().optional(),
@@ -248,6 +253,13 @@ export async function getAppConfig(fullPath: string) {
 					.default(workshopConfig.testTab?.enabled ?? true),
 			})
 			.default({}),
+		previewTab: z
+			.object({
+				iframe: workshopConfig.previewTab?.iframe
+					? z.string().optional().default(workshopConfig.previewTab?.iframe)
+					: z.string().optional(),
+			})
+			.default({}),
 		scripts: z
 			.object({
 				test: z.string().optional(),
@@ -261,6 +273,9 @@ export async function getAppConfig(fullPath: string) {
 		stackBlitzConfig: epicshopConfig.stackBlitzConfig,
 		testTab: {
 			enabled: epicshopConfig.testTab?.enabled,
+		},
+		previewTab: {
+			iframe: epicshopConfig.previewTab?.iframe,
 		},
 		scripts: {
 			test: scripts.test,
