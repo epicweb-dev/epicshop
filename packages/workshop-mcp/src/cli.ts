@@ -50,6 +50,69 @@ ask you to make should be in this directory.
 )
 
 server.tool(
+	'get_diff_between_apps',
+	`
+Intended to give context about the changes between two apps.
+
+The output is a git diff of the playground directory as BASE (their work in
+progress) against the solution directory as HEAD (the final state they're trying
+to achieve).
+
+The output is formatted as a git diff.
+
+App IDs are formatted as \`{exerciseNumber}.{stepNumber}.{type}\`.
+
+If the user asks for the diff for 2.3, then use 02.03.problem for app1 and 02.03.solution for app2.
+	`,
+	{
+		workshopDirectory: z.string().describe('The workshop directory'),
+		app1: z.string().describe('The ID of the first app'),
+		app2: z.string().describe('The ID of the second app'),
+	},
+	async ({ workshopDirectory, app1, app2 }) => {
+		try {
+			await handleWorkshopDirectory(workshopDirectory)
+
+			const { getDiffOutputWithRelativePaths } = await import(
+				'@epic-web/workshop-utils/diff.server'
+			)
+
+			const app1Name = extractNumbersAndTypeFromAppNameOrPath(app1)
+			const app2Name = extractNumbersAndTypeFromAppNameOrPath(app2)
+
+			const apps = await getApps()
+			const app1App = apps
+				.filter(isExerciseStepApp)
+				.find(
+					(a) =>
+						a.exerciseNumber === Number(app1Name?.exerciseNumber) &&
+						a.stepNumber === Number(app1Name?.stepNumber) &&
+						a.type === app1Name?.type,
+				)
+			const app2App = apps
+				.filter(isExerciseStepApp)
+				.find(
+					(a) =>
+						a.exerciseNumber === Number(app2Name?.exerciseNumber) &&
+						a.stepNumber === Number(app2Name?.stepNumber) &&
+						a.type === app2Name?.type,
+				)
+
+			invariant(app1App, `No app found for ${app1}`)
+			invariant(app2App, `No app found for ${app2}`)
+
+			const diffCode = await getDiffOutputWithRelativePaths(app1App, app2App)
+
+			if (!diffCode) return replyWithText('No changes')
+
+			return replyWithText(diffCode)
+		} catch (error) {
+			return replyWithError(error)
+		}
+	},
+)
+
+server.tool(
 	'get_exercise_step_progress_diff',
 	`
 Intended to help a student understand what work they still have to complete.
