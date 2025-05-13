@@ -14,6 +14,7 @@ import { AppStarter, AppStopper, PortStopper } from '#app/routes/start.tsx'
 import { useTheme } from '#app/routes/theme/index.tsx'
 import { getBaseUrl } from '#app/utils/misc.tsx'
 import { useRequestInfo } from '#app/utils/request-info.ts'
+import { LinkButton } from './button.tsx'
 import {
 	Tooltip,
 	TooltipContent,
@@ -89,31 +90,41 @@ function InBrowserBrowserImpl(
 	ref: ForwardedRef<InBrowserBrowserRef>,
 ) {
 	const requestInfo = useRequestInfo()
-	return isRunning ? (
-		<InBrowserBrowserForRealz
-			baseUrl={baseUrl}
-			id={id}
-			name={name}
-			ref={ref}
-			initialRoute={initialRoute}
-		/>
-	) : portIsAvailable === false ? (
-		<div className="flex flex-col items-center justify-center">
-			<p className="max-w-xs pb-5 text-center" role="status">
-				{`The port for this app is unavailable. It could be that you're running it `}
-				<a
-					href={getBaseUrl({ domain: requestInfo.domain, port })}
-					className="underline"
-				>
-					elsewhere
-				</a>
-				?
-			</p>
-			<PortStopper port={port} />
-		</div>
-	) : (
-		<AppStarter name={name} />
-	)
+	const [showUnmanaged, setShowUnmanaged] = useState(false)
+	if (isRunning || showUnmanaged) {
+		return (
+			<InBrowserBrowserForRealz
+				baseUrl={baseUrl}
+				id={id}
+				name={name}
+				ref={ref}
+				initialRoute={initialRoute}
+			/>
+		)
+	} else if (portIsAvailable === false) {
+		return (
+			<div className="flex flex-col items-center justify-center">
+				<p className="max-w-xs pb-5 text-center" role="status">
+					{`The port for this app is unavailable. It could be that you're running it `}
+					<a
+						href={getBaseUrl({ domain: requestInfo.domain, port })}
+						className="underline"
+						target="_blank"
+						rel="noreferrer"
+					>
+						elsewhere
+					</a>
+					{'. '}
+					<LinkButton onClick={() => setShowUnmanaged(true)}>
+						Show here anyway
+					</LinkButton>
+				</p>
+				<PortStopper port={port} />
+			</div>
+		)
+	} else {
+		return <AppStarter name={name} />
+	}
 }
 type RealBrowserProps = {
 	baseUrl: string

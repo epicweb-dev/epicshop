@@ -79,3 +79,10 @@ export function ButtonLink({
 		</div>
 	)
 }
+
+export function LinkButton({
+	className,
+	...props
+}: React.ComponentPropsWithoutRef<'button'>) {
+	return <button {...props} className={clsx('underline', className)} />
+}
