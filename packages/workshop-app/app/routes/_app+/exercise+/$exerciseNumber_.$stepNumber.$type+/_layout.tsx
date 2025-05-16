@@ -40,6 +40,7 @@ import { type loader as rootLoader } from '#app/root.tsx'
 import { EditFileOnGitHub } from '#app/routes/launch-editor.tsx'
 import { ProgressToggle } from '#app/routes/progress.tsx'
 import { SetAppToPlayground } from '#app/routes/set-playground.tsx'
+import { getExercisePath } from '#app/utils/misc.tsx'
 import { getSeoMetaTags } from '#app/utils/seo.js'
 import { StepMdx } from './__shared/step-mdx.tsx'
 import TouchedFiles from './__shared/touched-files.tsx'
@@ -294,7 +295,7 @@ export default function ExercisePartRoute() {
 						<div className="flex h-14 flex-wrap items-center justify-between gap-x-2 py-2">
 							<div className="flex items-center justify-start gap-x-2 uppercase">
 								<Link
-									to={`/${titleBits.exerciseNumber}`}
+									to={getExercisePath(data.exerciseStepApp.exerciseNumber)}
 									className="hover:underline"
 								>
 									{titleBits.exerciseNumber}. {titleBits.exerciseTitle}

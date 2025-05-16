@@ -49,7 +49,7 @@ import {
 } from '#app/components/ui/tooltip.tsx'
 import { useOptionalUser, useUserHasAccess } from '#app/components/user.tsx'
 import { useWorkshopConfig } from '#app/components/workshop-config.js'
-import { cn } from '#app/utils/misc.tsx'
+import { cn, getExercisePath, getExerciseStepPath } from '#app/utils/misc.tsx'
 import { useIsOnline } from '#app/utils/online.ts'
 import { usePresence, type User } from '#app/utils/presence.tsx'
 import {
@@ -68,12 +68,14 @@ export async function loader({ request }: LoaderFunctionArgs) {
 		getPlaygroundAppName(),
 	])
 
+	const playgroundNumbersAndType = extractNumbersAndTypeFromAppNameOrPath(
+		playgroundAppName ?? '',
+	)
 	const playground = {
 		appName: playgroundAppName,
-		exerciseNumber: Number(
-			extractNumbersAndTypeFromAppNameOrPath(playgroundAppName ?? '')
-				?.exerciseNumber,
-		),
+		exerciseNumber: Number(playgroundNumbersAndType?.exerciseNumber),
+		stepNumber: Number(playgroundNumbersAndType?.stepNumber),
+		type: playgroundNumbersAndType?.type,
 	}
 
 	const result = data(
@@ -96,6 +98,12 @@ export async function loader({ request }: LoaderFunctionArgs) {
 					stepNumber,
 					title: problem?.title ?? solution?.title ?? 'Unknown',
 					name: problem?.name ?? solution?.name ?? 'Unknown',
+					problem: problem
+						? { name: problem.name, title: problem.title }
+						: null,
+					solution: solution
+						? { name: solution.name, title: solution.title }
+						: null,
 				})),
 			})),
 			playground,
@@ -502,7 +510,7 @@ function NavigationExerciseListItem({
 				progressClassName ? `${progressClassName} before:border-t` : null,
 			)}
 		>
-			<span className="ml-2">{children}</span>
+			<span className="inline-block pl-2">{children}</span>
 		</motion.li>
 	)
 }
@@ -524,7 +532,7 @@ function NavigationExerciseStepListItem({
 				progressClassName ? `${progressClassName} before:border-t` : null,
 			)}
 		>
-			<span className="ml-2">{children}</span>
+			<span className="inline-block pl-2">{children}</span>
 		</motion.li>
 	)
 }
@@ -607,31 +615,43 @@ function MobileNavigation({
 									const showPlayground =
 										!isActive &&
 										data.playground.exerciseNumber === exerciseNumber
-									const exerciseNum = exerciseNumber.toString().padStart(2, '0')
 									return (
 										<NavigationExerciseListItem
 											key={exerciseNumber}
 											exerciseNumber={exerciseNumber}
 										>
-											<Link
-												prefetch="intent"
-												to={`/${exerciseNum}`}
-												className={clsx(
-													'relative whitespace-nowrap px-2 py-0.5 pr-3 text-2xl font-bold outline-none hover:underline focus:underline',
-													'after:absolute after:-bottom-2.5 after:-right-2.5 after:h-5 after:w-5 after:rotate-45 after:scale-75 after:bg-background after:content-[""] hover:underline focus:underline',
-													{ 'bg-foreground text-background': isActive },
-												)}
-											>
-												{title}
-												{showPlayground ? ' 🛝' : null}
-											</Link>
+											<span className="flex items-center gap-1 text-2xl font-bold">
+												<Link
+													prefetch="intent"
+													to={getExercisePath(exerciseNumber)}
+													className={clsx(
+														'relative whitespace-nowrap px-2 py-0.5 pr-3 outline-none hover:underline focus:underline',
+														'after:absolute after:-bottom-2.5 after:-right-2.5 after:h-5 after:w-5 after:rotate-45 after:scale-75 after:bg-background after:content-[""] hover:underline focus:underline',
+														{ 'bg-foreground text-background': isActive },
+													)}
+												>
+													{title}
+												</Link>
+												{showPlayground ? (
+													<Link
+														to={getExerciseStepPath(
+															data.playground.exerciseNumber,
+															data.playground.stepNumber,
+															data.playground.type,
+														)}
+														prefetch="intent"
+													>
+														🛝
+													</Link>
+												) : null}
+											</span>
 											{isActive ? (
 												<motion.ul
 													variants={listVariants}
 													initial="hidden"
 													animate="visible"
 													// @ts-expect-error framer-motion + latest typescript types has issues
-													className="ml-4 mt-4 flex flex-col"
+													className="ml-4 mt-2 flex flex-col"
 												>
 													<NavigationExerciseStepListItem
 														key={exerciseNumber}
@@ -639,7 +659,7 @@ function MobileNavigation({
 														exerciseNumber={exerciseNumber}
 													>
 														<Link
-															to={`/${exerciseNum}`}
+															to={getExercisePath(exerciseNumber)}
 															prefetch="intent"
 															className={clsx(
 																'relative whitespace-nowrap px-2 py-0.5 pr-3 text-xl font-medium outline-none after:absolute after:-bottom-2.5 after:-right-2.5 after:h-5 after:w-5 after:rotate-45 after:scale-75 after:bg-background after:content-[""] hover:underline focus:underline',
@@ -654,14 +674,7 @@ function MobileNavigation({
 													</NavigationExerciseStepListItem>
 													{steps
 														.filter(Boolean)
-														.map(({ name, stepNumber, title }) => {
-															const isActive =
-																Number(params.stepNumber) === stepNumber
-															const step = stepNumber
-																.toString()
-																.padStart(2, '0')
-															const isPlayground =
-																name === data.playground.appName
+														.map(({ stepNumber, title, problem, solution }) => {
 															return (
 																<NavigationExerciseStepListItem
 																	key={stepNumber}
@@ -669,21 +682,73 @@ function MobileNavigation({
 																	stepNumber={stepNumber}
 																	exerciseNumber={exerciseNumber}
 																>
-																	<Link
-																		to={`/${exerciseNum}/${step}`}
-																		prefetch="intent"
-																		className={clsx(
-																			'relative whitespace-nowrap px-2 py-0.5 pr-3 text-xl font-medium outline-none after:absolute after:-bottom-2.5 after:-right-2.5 after:h-5 after:w-5 after:rotate-45 after:scale-75 after:bg-background after:content-[""] hover:underline focus:underline',
-																			{
-																				'bg-foreground text-background':
-																					isActive,
-																			},
-																		)}
-																	>
-																		{isPlayground
-																			? `${step}. ${title} 🛝`
-																			: `${step}. ${title}`}
-																	</Link>
+																	<div className="flex flex-col gap-0.5">
+																		<Link
+																			to={getExerciseStepPath(
+																				exerciseNumber,
+																				stepNumber,
+																			)}
+																			prefetch="intent"
+																			className="font-semibold leading-tight"
+																		>
+																			{stepNumber.toString().padStart(2, '0')}.{' '}
+																			{title}
+																		</Link>
+																		<div className="ml-3 mt-0.5 flex gap-1">
+																			{problem && (
+																				<NavLink
+																					to={getExerciseStepPath(
+																						exerciseNumber,
+																						stepNumber,
+																						'problem',
+																					)}
+																					prefetch="intent"
+																					className={({ isActive }) =>
+																						clsx(
+																							'relative whitespace-nowrap px-2 py-0.5 pr-3 outline-none hover:underline focus:underline',
+																							'after:absolute after:-bottom-2.5 after:-right-2.5 after:h-5 after:w-5 after:rotate-45 after:scale-75 after:bg-background after:content-[""] hover:underline focus:underline',
+																							{
+																								'bg-foreground text-background':
+																									isActive,
+																							},
+																						)
+																					}
+																				>
+																					Problem
+																					{problem.name ===
+																					data.playground.appName
+																						? ' 🛝'
+																						: ''}
+																				</NavLink>
+																			)}
+																			{solution && (
+																				<NavLink
+																					to={getExerciseStepPath(
+																						exerciseNumber,
+																						stepNumber,
+																						'solution',
+																					)}
+																					prefetch="intent"
+																					className={({ isActive }) =>
+																						clsx(
+																							'relative whitespace-nowrap px-2 py-0.5 pr-3 outline-none hover:underline focus:underline',
+																							'after:absolute after:-bottom-2.5 after:-right-2.5 after:h-5 after:w-5 after:rotate-45 after:scale-75 after:bg-background after:content-[""] hover:underline focus:underline',
+																							{
+																								'bg-foreground text-background':
+																									isActive,
+																							},
+																						)
+																					}
+																				>
+																					Solution
+																					{solution.name ===
+																					data.playground.appName
+																						? ' 🛝'
+																						: ''}
+																				</NavLink>
+																			)}
+																		</div>
+																	</div>
 																</NavigationExerciseStepListItem>
 															)
 														})}
@@ -692,7 +757,7 @@ function MobileNavigation({
 														exerciseNumber={exerciseNumber}
 													>
 														<NavLink
-															to={`/${exerciseNum}/finished`}
+															to={getExercisePath(exerciseNumber, 'finished')}
 															prefetch="intent"
 															className={({ isActive }) =>
 																clsx(
@@ -889,7 +954,6 @@ function Navigation({
 			opacity: 0,
 		},
 	}
-	const exNum = Number(params.exerciseNumber).toString().padStart(2, '0')
 
 	return (
 		<nav className="hidden border-r sm:flex">
@@ -941,31 +1005,43 @@ function Navigation({
 									const showPlayground =
 										!isActive &&
 										data.playground.exerciseNumber === exerciseNumber
-									const exerciseNum = exerciseNumber.toString().padStart(2, '0')
 									return (
 										<NavigationExerciseListItem
 											key={exerciseNumber}
 											exerciseNumber={exerciseNumber}
 										>
-											<Link
-												prefetch="intent"
-												to={`/${exerciseNum}`}
-												className={clsx(
-													'relative whitespace-nowrap px-2 py-0.5 pr-3 text-2xl font-bold outline-none hover:underline focus:underline',
-													'after:absolute after:-bottom-2.5 after:-right-2.5 after:h-5 after:w-5 after:rotate-45 after:scale-75 after:bg-background after:content-[""] hover:underline focus:underline',
-													{ 'bg-foreground text-background': isActive },
-												)}
-											>
-												{title}
-												{showPlayground ? ' 🛝' : null}
-											</Link>
+											<span className="flex items-center gap-1 text-2xl font-bold">
+												<Link
+													prefetch="intent"
+													to={getExercisePath(exerciseNumber)}
+													className={clsx(
+														'relative whitespace-nowrap px-2 py-0.5 pr-3 outline-none hover:underline focus:underline',
+														'after:absolute after:-bottom-2.5 after:-right-2.5 after:h-5 after:w-5 after:rotate-45 after:scale-75 after:bg-background after:content-[""] hover:underline focus:underline',
+														{ 'bg-foreground text-background': isActive },
+													)}
+												>
+													{title}
+												</Link>
+												{showPlayground ? (
+													<Link
+														to={getExerciseStepPath(
+															data.playground.exerciseNumber,
+															data.playground.stepNumber,
+															data.playground.type,
+														)}
+														prefetch="intent"
+													>
+														🛝
+													</Link>
+												) : null}
+											</span>
 											{isActive ? (
 												<motion.ul
 													variants={listVariants}
 													initial="hidden"
 													animate="visible"
 													// @ts-expect-error framer-motion + latest typescript types has issues
-													className="ml-4 mt-4 flex flex-col"
+													className="ml-4 mt-2 flex flex-col"
 												>
 													<NavigationExerciseStepListItem
 														key={exerciseNumber}
@@ -973,7 +1049,7 @@ function Navigation({
 														exerciseNumber={exerciseNumber}
 													>
 														<Link
-															to={`/${exerciseNum}`}
+															to={getExercisePath(exerciseNumber)}
 															prefetch="intent"
 															className={clsx(
 																'relative whitespace-nowrap px-2 py-0.5 pr-3 text-xl font-medium outline-none after:absolute after:-bottom-2.5 after:-right-2.5 after:h-5 after:w-5 after:rotate-45 after:scale-75 after:bg-background after:content-[""] hover:underline focus:underline',
@@ -988,14 +1064,7 @@ function Navigation({
 													</NavigationExerciseStepListItem>
 													{steps
 														.filter(Boolean)
-														.map(({ name, stepNumber, title }) => {
-															const isActive =
-																Number(params.stepNumber) === stepNumber
-															const step = stepNumber
-																.toString()
-																.padStart(2, '0')
-															const isPlayground =
-																name === data.playground.appName
+														.map(({ stepNumber, title, problem, solution }) => {
 															return (
 																<NavigationExerciseStepListItem
 																	key={stepNumber}
@@ -1003,21 +1072,73 @@ function Navigation({
 																	stepNumber={stepNumber}
 																	exerciseNumber={exerciseNumber}
 																>
-																	<Link
-																		to={`/${exerciseNum}/${step}`}
-																		prefetch="intent"
-																		className={clsx(
-																			'relative whitespace-nowrap px-2 py-0.5 pr-3 text-xl font-medium outline-none after:absolute after:-bottom-2.5 after:-right-2.5 after:h-5 after:w-5 after:rotate-45 after:scale-75 after:bg-background after:content-[""] hover:underline focus:underline',
-																			{
-																				'bg-foreground text-background':
-																					isActive,
-																			},
-																		)}
-																	>
-																		{isPlayground
-																			? `${step}. ${title} 🛝`
-																			: `${step}. ${title}`}
-																	</Link>
+																	<div className="flex flex-col gap-0.5">
+																		<Link
+																			to={getExerciseStepPath(
+																				exerciseNumber,
+																				stepNumber,
+																			)}
+																			prefetch="intent"
+																			className="font-semibold leading-tight"
+																		>
+																			{stepNumber.toString().padStart(2, '0')}.{' '}
+																			{title}
+																		</Link>
+																		<div className="ml-3 mt-0.5 flex gap-1">
+																			{problem && (
+																				<NavLink
+																					to={getExerciseStepPath(
+																						exerciseNumber,
+																						stepNumber,
+																						'problem',
+																					)}
+																					prefetch="intent"
+																					className={({ isActive }) =>
+																						clsx(
+																							'relative whitespace-nowrap px-2 py-0.5 pr-3 outline-none hover:underline focus:underline',
+																							'after:absolute after:-bottom-2.5 after:-right-2.5 after:h-5 after:w-5 after:rotate-45 after:scale-75 after:bg-background after:content-[""] hover:underline focus:underline',
+																							{
+																								'bg-foreground text-background':
+																									isActive,
+																							},
+																						)
+																					}
+																				>
+																					Problem
+																					{problem.name ===
+																					data.playground.appName
+																						? ' 🛝'
+																						: ''}
+																				</NavLink>
+																			)}
+																			{solution && (
+																				<NavLink
+																					to={getExerciseStepPath(
+																						exerciseNumber,
+																						stepNumber,
+																						'solution',
+																					)}
+																					prefetch="intent"
+																					className={({ isActive }) =>
+																						clsx(
+																							'relative whitespace-nowrap px-2 py-0.5 pr-3 outline-none hover:underline focus:underline',
+																							'after:absolute after:-bottom-2.5 after:-right-2.5 after:h-5 after:w-5 after:rotate-45 after:scale-75 after:bg-background after:content-[""] hover:underline focus:underline',
+																							{
+																								'bg-foreground text-background':
+																									isActive,
+																							},
+																						)
+																					}
+																				>
+																					Solution
+																					{solution.name ===
+																					data.playground.appName
+																						? ' 🛝'
+																						: ''}
+																				</NavLink>
+																			)}
+																		</div>
+																	</div>
 																</NavigationExerciseStepListItem>
 															)
 														})}
@@ -1026,7 +1147,7 @@ function Navigation({
 														exerciseNumber={exerciseNumber}
 													>
 														<NavLink
-															to={`/${exerciseNum}/finished`}
+															to={getExercisePath(exerciseNumber, 'finished')}
 															prefetch="intent"
 															className={({ isActive }) =>
 																clsx(
@@ -1068,14 +1189,17 @@ function Navigation({
 						<div className="flex flex-grow flex-col justify-center">
 							<div className="orientation-sideways w-full font-mono text-sm font-medium uppercase leading-none">
 								{exercise?.title ? (
-									<Link to={`/${exNum}`}>{exercise.title}</Link>
+									<Link to={getExercisePath(Number(params.exerciseNumber))}>
+										{exercise.title}
+									</Link>
 								) : null}
 								{exercise?.title && app?.title ? ' — ' : null}
 								{app?.title ? (
 									<Link
-										to={`/${exNum}/${app.stepNumber
-											.toString()
-											.padStart(2, '0')}`}
+										to={getExerciseStepPath(
+											Number(params.exerciseNumber),
+											app.stepNumber,
+										)}
 									>
 										{app.title}
 									</Link>

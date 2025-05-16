@@ -1,3 +1,4 @@
+import { type ExerciseStepApp } from '@epic-web/workshop-utils/apps.server'
 import {
 	Link,
 	useFormAction,
@@ -438,4 +439,25 @@ export async function downloadFile(url: string, retries: number = 0) {
 		if (retries > MAX_RETRIES) throw e
 		return downloadFile(url, retries + 1)
 	}
+}
+
+export function getExercisePath(exerciseNumber: number, suffix?: 'finished') {
+	const exerciseNumberStr = exerciseNumber.toString().padStart(2, '0')
+	if (!suffix) return `/exercise/${exerciseNumberStr}`
+
+	return `/exercise/${exerciseNumberStr}/${suffix}`
+}
+
+export function getExerciseStepPath(
+	exerciseNumber: number,
+	stepNumber: number,
+	type?: ExerciseStepApp['type'],
+) {
+	const exerciseNumberStr = exerciseNumber.toString().padStart(2, '0')
+	if (!stepNumber) return `/exercise/${exerciseNumberStr}`
+
+	const stepNumberStr = stepNumber.toString().padStart(2, '0')
+	if (!type) return `/exercise/${exerciseNumberStr}/${stepNumberStr}`
+
+	return `/exercise/${exerciseNumberStr}/${stepNumberStr}/${type}`
 }
