@@ -65,7 +65,11 @@ App IDs are formatted as \`{exerciseNumber}.{stepNumber}.{type}\`.
 If the user asks for the diff for 2.3, then use 02.03.problem for app1 and 02.03.solution for app2.
 	`,
 	{
-		workshopDirectory: z.string().describe('The workshop directory'),
+		workshopDirectory: z
+			.string()
+			.describe(
+				'The workshop directory (the root directory of the workshop repo.).',
+			),
 		app1: z.string().describe('The ID of the first app'),
 		app2: z.string().describe('The ID of the second app'),
 	},
@@ -136,7 +140,7 @@ significance of changes.
 		workshopDirectory: z
 			.string()
 			.describe(
-				'The workshop directory (the root directory of the workshop repo. Best to not bother asking the user and just use the project root path).',
+				'The workshop directory (the root directory of the workshop repo.).',
 			),
 	},
 	async ({ workshopDirectory }) => {
@@ -202,7 +206,7 @@ work they still need to do and answer any questions about the exercise.
 		workshopDirectory: z
 			.string()
 			.describe(
-				'The workshop directory (the root directory of the workshop repo. Best to not bother asking the user and just use the project root path).',
+				'The workshop directory (the root directory of the workshop repo.).',
 			),
 		exerciseNumber: z.coerce
 			.number()
