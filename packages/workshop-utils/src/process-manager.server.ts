@@ -3,6 +3,7 @@ import net from 'node:net'
 import { remember } from '@epic-web/remember'
 import chalk from 'chalk'
 import closeWithGrace from 'close-with-grace'
+import findProcess from 'find-process'
 import fkill from 'fkill'
 import { type App } from './apps.server.js'
 import { getErrorMessage } from './utils.js'
@@ -247,12 +248,12 @@ export function isPortAvailable(port: number | string): Promise<boolean> {
 	})
 }
 
-export function isAppRunning(app: { name: string }) {
+export async function isAppRunning(app: { name: string }) {
 	try {
 		const devProcess = devProcesses.get(app.name)
-		if (!devProcess) return false
-		devProcess.process.kill(0)
-		return true
+		if (!devProcess?.process.pid) return false
+		const found = await findProcess('pid', devProcess.process.pid)
+		return found.length > 0
 	} catch {
 		return false
 	}

@@ -1278,7 +1278,7 @@ export async function setPlayground(
 
 	const isIgnored = await isGitIgnored({ cwd: srcDir })
 	const playgroundWasRunning = playgroundApp
-		? isAppRunning(playgroundApp)
+		? await isAppRunning(playgroundApp)
 		: false
 	if (playgroundApp && reset) {
 		await closeProcess(playgroundApp.name)

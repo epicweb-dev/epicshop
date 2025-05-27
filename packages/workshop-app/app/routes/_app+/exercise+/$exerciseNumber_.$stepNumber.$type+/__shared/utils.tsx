@@ -8,7 +8,7 @@ export async function getAppRunningState(a: App) {
 	if (a.dev.type !== 'script') {
 		return { isRunning: false, portIsAvailable: null }
 	}
-	const isRunning = isAppRunning(a)
+	const isRunning = await isAppRunning(a)
 	const portIsAvailable = isRunning
 		? null
 		: await isPortAvailable(a.dev.portNumber)
