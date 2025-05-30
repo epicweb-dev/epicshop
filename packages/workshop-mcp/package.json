@@ -4,7 +4,7 @@
   "publishConfig": {
     "access": "public"
   },
-  "bin": "./dist/esm/cli.js",
+  "bin": "./dist/esm/index.js",
   "type": "module",
   "tshy": {
     "project": "./tsconfig.build.json",
@@ -13,18 +13,18 @@
     ],
     "exports": {
       "./package.json": "./package.json",
-      ".": "./dist/esm/cli.js"
+      ".": "./dist/esm/index.js"
     }
   },
   "exports": {
     "./package.json": "./package.json",
-    ".": "./dist/esm/cli.js"
+    ".": "./dist/esm/index.js"
   },
   "files": [
     "dist"
   ],
   "scripts": {
-    "dev": "tsx src/cli.ts",
+    "dev": "tsx src/index.ts",
     "typecheck": "tsc -b --noEmit",
     "build": "tshy",
     "build:watch": "nx watch --projects=@epic-web/workshop-mcp -- nx run \\$NX_PROJECT_NAME:build"
@@ -46,6 +46,6 @@
     "url": "https://github.com/epicweb-dev/epicshop.git",
     "directory": "packages/workshop-mcp"
   },
-  "main": "./dist/esm/cli.js",
-  "module": "./dist/esm/cli.js"
+  "main": "./dist/esm/index.js",
+  "module": "./dist/esm/index.js"
 }
