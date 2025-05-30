@@ -12,6 +12,7 @@ import {
 	getUserInfo,
 	userHasAccessToWorkshop,
 } from '@epic-web/workshop-utils/epic-api.server'
+import { checkForUpdates } from '@epic-web/workshop-utils/git.server'
 import { makeTimings } from '@epic-web/workshop-utils/timing.server'
 import {
 	getSetClientIdCookieHeader,
@@ -42,6 +43,9 @@ import { GeneralErrorBoundary } from './components/error-boundary.tsx'
 import { EpicProgress } from './components/progress-bar.tsx'
 import { EpicToaster } from './components/toaster.tsx'
 import { TooltipProvider } from './components/ui/tooltip.tsx'
+import { getUnmutedNotifications } from './routes/admin+/notifications.server.tsx'
+import { Notifications } from './routes/admin+/notifications.tsx'
+import { UpdateToast } from './routes/admin+/update-repo.tsx'
 import { useTheme } from './routes/theme/index.tsx'
 import { getTheme } from './routes/theme/theme-session.server.ts'
 import appStylesheetUrl from './styles/app.css?url'
@@ -118,6 +122,8 @@ export async function loader({ request }: LoaderFunctionArgs) {
 		user: getUserInfo(),
 		userHasAccess: userHasAccessToWorkshop({ request, timings }),
 		apps: getApps({ request, timings }),
+		repoUpdates: checkForUpdates(),
+		unmutedNotifications: getUnmutedNotifications(),
 	})
 
 	const presentUsers = await getPresentUsers({
@@ -231,7 +237,9 @@ function App() {
 			<Outlet />
 			<Confetti id={data.confettiId} />
 			<EpicToaster toast={data.toast} />
+			<UpdateToast repoUpdates={data.repoUpdates} />
 			<EpicProgress />
+			<Notifications unmutedNotifications={data.unmutedNotifications} />
 		</Document>
 	)
 }

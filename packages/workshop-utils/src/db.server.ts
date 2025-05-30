@@ -52,6 +52,8 @@ const AuthInfoSchema = z.object({
 	name: z.string().nullable().optional(),
 })
 
+const MutedNotificationSchema = z.array(z.string()).default([])
+
 const DataSchema = z.object({
 	onboarding: z
 		.object({
@@ -78,6 +80,7 @@ const DataSchema = z.object({
 	// new:
 	authInfos: z.record(z.string(), AuthInfoSchema).optional(),
 	clientId: z.string().optional(),
+	mutedNotifications: MutedNotificationSchema.optional(),
 })
 
 const appDir = path.join(os.homedir(), '.epicshop')
@@ -227,6 +230,25 @@ export async function setPreferences(
 	await fsExtra.ensureDir(appDir)
 	await fsExtra.writeJSON(dbPath, updatedData)
 	return updatedData.preferences
+}
+
+export async function getMutedNotifications() {
+	const data = await readDb()
+	return data?.mutedNotifications ?? []
+}
+
+export async function muteNotification(id: string) {
+	const data = await readDb()
+	const mutedNotifications = Array.from(
+		new Set([...(data?.mutedNotifications ?? []), id]),
+	)
+	const updatedData = {
+		...data,
+		mutedNotifications,
+	}
+	await fsExtra.ensureDir(appDir)
+	await fsExtra.writeJSON(dbPath, updatedData)
+	return mutedNotifications
 }
 
 export async function setFontSizePreference(fontSize: number | undefined) {

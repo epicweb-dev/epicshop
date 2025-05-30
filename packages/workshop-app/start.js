@@ -2,6 +2,12 @@ import fs from 'fs/promises'
 import path from 'path'
 import dotenv from 'dotenv'
 
+if (process.env.EPICSHOP_SLOW_START === 'true') {
+	// slow start is used when doing the update-repo action to give time for the
+	// old server to exist before the new server starts (so ports are freed up).
+	await new Promise((resolve) => setTimeout(resolve, 1000))
+}
+
 const packageJson = JSON.parse(
 	await fs.readFile(path.resolve(process.cwd(), 'package.json'), 'utf-8'),
 )
