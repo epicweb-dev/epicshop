@@ -39,6 +39,12 @@ export const dirModifiedTimeCache = makeSingletonCache<number>(
 	'DirModifiedTimeCache',
 )
 export const connectionCache = makeSingletonCache<boolean>('ConnectionCache')
+export const checkForUpdatesCache = makeSingletonCache<{
+	updatesAvailable: boolean
+	localCommit: string
+	remoteCommit: string
+	diffLink: string | null
+}>('CheckForUpdatesCache')
 
 const cacheDir = path.join(os.homedir(), '.epicshop', 'cache')
 
