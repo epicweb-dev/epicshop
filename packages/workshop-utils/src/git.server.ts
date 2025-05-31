@@ -1,5 +1,6 @@
 import { execa, execaCommand } from 'execa'
 import { getWorkshopRoot } from './apps.server.js'
+import { cachified, checkForUpdatesCache } from './cache.server.js'
 import { getWorkshopConfig } from './config.server.js'
 import { getErrorMessage } from './utils.js'
 import { checkConnection } from './utils.server.js'
@@ -85,6 +86,17 @@ export async function checkForUpdates() {
 					: null,
 		} as const
 	}
+}
+
+export async function checkForUpdatesCached() {
+	const key = 'checkForUpdates'
+	return cachified({
+		ttl: 1000 * 60,
+		swr: 1000 * 60 * 60 * 24,
+		key,
+		getFreshValue: checkForUpdates,
+		cache: checkForUpdatesCache,
+	})
 }
 
 export async function updateLocalRepo() {

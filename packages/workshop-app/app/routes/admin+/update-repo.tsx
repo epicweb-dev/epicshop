@@ -1,6 +1,6 @@
 import { spawn } from 'child_process'
 import {
-	checkForUpdates,
+	checkForUpdatesCached,
 	updateLocalRepo,
 } from '@epic-web/workshop-utils/git.server'
 import { json } from '@remix-run/node'
@@ -9,7 +9,7 @@ import { useEffect, useRef } from 'react'
 import { toast } from 'sonner'
 
 export async function action() {
-	const updates = await checkForUpdates()
+	const updates = await checkForUpdatesCached()
 	if (!updates.updatesAvailable) {
 		return json({ type: 'error', error: 'No updates available' } as const, {
 			status: 400,

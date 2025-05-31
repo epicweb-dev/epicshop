@@ -12,7 +12,7 @@ import {
 	getUserInfo,
 	userHasAccessToWorkshop,
 } from '@epic-web/workshop-utils/epic-api.server'
-import { checkForUpdates } from '@epic-web/workshop-utils/git.server'
+import { checkForUpdatesCached } from '@epic-web/workshop-utils/git.server'
 import { makeTimings } from '@epic-web/workshop-utils/timing.server'
 import {
 	getSetClientIdCookieHeader,
@@ -122,7 +122,7 @@ export async function loader({ request }: LoaderFunctionArgs) {
 		user: getUserInfo(),
 		userHasAccess: userHasAccessToWorkshop({ request, timings }),
 		apps: getApps({ request, timings }),
-		repoUpdates: checkForUpdates(),
+		repoUpdates: checkForUpdatesCached(),
 		unmutedNotifications: getUnmutedNotifications(),
 	})
 

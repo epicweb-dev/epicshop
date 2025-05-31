@@ -8,7 +8,7 @@ import {
 	init as initApps,
 	setModifiedTimesForAppDirs,
 } from '@epic-web/workshop-utils/apps.server'
-import { checkForUpdates } from '@epic-web/workshop-utils/git.server'
+import { checkForUpdatesCached } from '@epic-web/workshop-utils/git.server'
 import { checkConnectionCached } from '@epic-web/workshop-utils/utils.server'
 import { createRequestHandler } from '@remix-run/express'
 import { type ServerBuild } from '@remix-run/node'
@@ -50,7 +50,7 @@ const epicshopAppRootDir = isRunningInBuildDir
 	: path.join(__dirname, '..')
 
 // kick this off early...
-const hasUpdatesPromise = checkForUpdates()
+const hasUpdatesPromise = checkForUpdatesCached()
 // warm up some caches
 void getApps()
 void checkConnectionCached()
