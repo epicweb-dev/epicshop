@@ -11,12 +11,12 @@ type Notification = {
 
 const NOTIFICATIONS: Array<Notification> = [
 	{
-		id: 'introducing-mcp-server-2025-05-30',
+		id: 'introducing-mcp-server-2025-06-02',
 		title: 'Introducing the epicshop MCP Server',
 		message:
 			'Use natural language to interact with this workshop and enhance your learning experience.',
 		type: 'info',
-		link: 'https://www.epicai.pro/introducing-the-epic-workshop-mcp-dj11t',
+		link: 'https://www.epicai.pro/your-ai-instructor-assistant-the-epicshop-mcp-server-0eazr',
 		expiresAt: null,
 	},
 ]
