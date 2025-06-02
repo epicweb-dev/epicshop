@@ -16,7 +16,7 @@ const NOTIFICATIONS: Array<Notification> = [
 		message:
 			'Use natural language to interact with this workshop and enhance your learning experience.',
 		type: 'info',
-		link: 'https://www.epicai.pro/your-ai-instructor-assistant-the-epicshop-mcp-server-0eazr',
+		link: 'https://www.epicai.pro/your-ai-assistant-instructor-the-epicshop-mcp-server-0eazr',
 		expiresAt: null,
 	},
 ]
