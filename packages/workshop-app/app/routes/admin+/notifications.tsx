@@ -26,10 +26,15 @@ export function Notifications({
 }) {
 	const fetcher = useFetcher<typeof action>()
 	const fetcherRef = useRef(fetcher)
+	const toastedIds = useRef<Set<string>>(new Set())
 
 	useEffect(() => {
 		for (const notification of unmutedNotifications) {
+			if (toastedIds.current.has(notification.id)) continue
+			toastedIds.current.add(notification.id)
+
 			toast.info(notification.title, {
+				id: notification.id,
 				description: (
 					<div>
 						<p>{notification.message}</p>

@@ -22,6 +22,8 @@ const NOTIFICATIONS: Array<Notification> = [
 ]
 
 export async function getUnmutedNotifications() {
+	if (ENV.EPICSHOP_DEPLOYED) return []
+
 	const muted = await getMutedNotifications()
 
 	const visibleNotifications = NOTIFICATIONS.filter((n) => {
