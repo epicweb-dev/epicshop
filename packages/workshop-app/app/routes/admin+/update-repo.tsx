@@ -39,7 +39,7 @@ export async function action() {
 export function UpdateToast({
 	repoUpdates,
 }: {
-	repoUpdates: Awaited<ReturnType<typeof checkForUpdates>>
+	repoUpdates: Awaited<ReturnType<typeof checkForUpdatesCached>>
 }) {
 	const updateFetcher = useFetcher<typeof action>()
 	const updateFetcherRef = useRef(updateFetcher)
