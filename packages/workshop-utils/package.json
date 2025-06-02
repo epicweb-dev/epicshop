@@ -26,6 +26,7 @@
       "./git.server": "./src/git.server.ts",
       "./iframe-sync": "./src/iframe-sync.ts",
       "./playwright.server": "./src/playwright.server.ts",
+      "./notifications.server": "./src/notifications.server.ts",
       "./process-manager.server": "./src/process-manager.server.ts",
       "./test": "./src/test.ts",
       "./utils.server": "./src/utils.server.ts",
@@ -118,6 +119,12 @@
         "default": "./dist/esm/playwright.server.js"
       }
     },
+    "./notifications.server": {
+      "import": {
+        "types": "./dist/esm/notifications.server.d.ts",
+        "default": "./dist/esm/notifications.server.js"
+      }
+    },
     "./process-manager.server": {
       "import": {
         "types": "./dist/esm/process-manager.server.d.ts",
@@ -181,6 +188,7 @@
     "fs-extra": "^11.2.0",
     "globby": "^14.0.2",
     "ignore": "^5.3.2",
+    "json5": "^2.2.3",
     "lru-cache": "^11.0.1",
     "md5-hex": "^5.0.0",
     "mdast-util-mdx-jsx": "^3.1.3",

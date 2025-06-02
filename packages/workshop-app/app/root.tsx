@@ -13,6 +13,7 @@ import {
 	userHasAccessToWorkshop,
 } from '@epic-web/workshop-utils/epic-api.server'
 import { checkForUpdatesCached } from '@epic-web/workshop-utils/git.server'
+import { getUnmutedNotifications } from '@epic-web/workshop-utils/notifications.server'
 import { makeTimings } from '@epic-web/workshop-utils/timing.server'
 import {
 	getSetClientIdCookieHeader,
@@ -43,7 +44,6 @@ import { GeneralErrorBoundary } from './components/error-boundary.tsx'
 import { EpicProgress } from './components/progress-bar.tsx'
 import { EpicToaster } from './components/toaster.tsx'
 import { TooltipProvider } from './components/ui/tooltip.tsx'
-import { getUnmutedNotifications } from './routes/admin+/notifications.server.tsx'
 import { Notifications } from './routes/admin+/notifications.tsx'
 import { UpdateToast } from './routes/admin+/update-repo.tsx'
 import { useTheme } from './routes/theme/index.tsx'

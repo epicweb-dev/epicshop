@@ -13,6 +13,7 @@ import {
 	type ProblemApp,
 	type SolutionApp,
 } from './apps.server.js'
+import { type Notification } from './notifications.server.js'
 import { cachifiedTimingReporter, type Timings } from './timing.server.js'
 import { checkConnectionCached } from './utils.server.js'
 
@@ -45,6 +46,8 @@ export const checkForUpdatesCache = makeSingletonCache<{
 	remoteCommit: string
 	diffLink: string | null
 }>('CheckForUpdatesCache')
+export const notificationsCache =
+	makeSingletonCache<Array<Notification>>('NotificationsCache')
 
 const cacheDir = path.join(os.homedir(), '.epicshop', 'cache')
 

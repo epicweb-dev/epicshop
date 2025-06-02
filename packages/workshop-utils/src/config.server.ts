@@ -79,6 +79,19 @@ const WorkshopConfigSchema = z
 			})
 			.optional(),
 		initialRoute: z.string().optional().default('/'),
+		notifications: z
+			.array(
+				z.object({
+					id: z.string(),
+					title: z.string(),
+					message: z.string(),
+					link: z.string().optional(),
+					type: z.enum(['info', 'warning', 'danger']),
+					expiresAt: z.date().nullable(),
+				}),
+			)
+			.optional()
+			.default([]),
 	})
 	.transform((data) => {
 		return {

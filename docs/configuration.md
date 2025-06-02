@@ -25,6 +25,7 @@ These options should be set in the root `package.json` of your workshop.
 | `testTab.enabled`                      | `boolean` | Whether to enable the test tab           | `true`                                                                  |
 | `scripts.postupdate`                   | `string`  | Script to run after workshop update      | Optional                                                                |
 | `initialRoute`                         | `string`  | Initial route for the app                | `"/"`                                                                   |
+| `notifications`                        | `array`   | Custom notifications for this workshop   | `[]`                                                                    |
 
 ## Product Configuration
 
@@ -159,5 +160,59 @@ Here's an example of some configuration in the root `package.json`:
     },
     "initialRoute": "/welcome"
   }
+}
+```
+
+### Workshop Notifications
+
+You can define custom notifications for your workshop using the `notifications`
+array in your `epicshop` config. These notifications are always shown to users
+of your workshop (unless expired or muted), and are not subject to product
+filtering like
+[remote notifications](https://gist.github.com/kentcdodds/c3aaa5141f591cdbb0e6bfcacd361f39).
+
+Each notification object can have the following fields:
+
+| Field       | Type   | Description                                                       |
+| ----------- | ------ | ----------------------------------------------------------------- |
+| `id`        | string | Unique identifier for the notification.                           |
+| `title`     | string | The notification title.                                           |
+| `message`   | string | The notification message.                                         |
+| `type`      | string | One of `info`, `warning`, or `danger`.                            |
+| `link`      | string | (Optional) A URL for users to learn more.                         |
+| `expiresAt` | date   | (Optional) A date after which the notification will not be shown. |
+
+**Note:**
+
+- Notifications defined in your workshop config are always included for your
+  users, regardless of the current product host/slug.
+- If `expiresAt` is set and is in the past, the notification will not be shown.
+- If a user mutes a notification, it will not be shown again for that user.
+- These notifications are merged with any remote notifications (such as those
+  from the Epicshop notification gist).
+
+#### Example
+
+```json
+{
+	"epicshop": {
+		// ...other config...
+		"notifications": [
+			{
+				"id": "custom-welcome",
+				"title": "Welcome to the Workshop!",
+				"message": "We're glad you're here. Check out the resources tab for more info.",
+				"type": "info"
+			},
+			{
+				"id": "new-feature",
+				"title": "New Feature",
+				"message": "We've added a new feature to the workshop. Check it out in the resources tab.",
+				"link": "https://www.epicweb.dev/new-feature",
+				"type": "info",
+				"expiresAt": "2025-07-01"
+			}
+		]
+	}
 }
 ```
