@@ -15,6 +15,8 @@ import { getAuthInfo } from '@epic-web/workshop-utils/db.server'
 import {
 	getEpicVideoInfos,
 	userHasAccessToWorkshop,
+	getUserInfo,
+	getProgress,
 } from '@epic-web/workshop-utils/epic-api.server'
 import {
 	type McpServer,
@@ -42,6 +44,7 @@ export async function getWorkshopContext({
 	const workshopRoot = await handleWorkshopDirectory(workshopDirectory)
 	const inWorkshop = (...d: Array<string>) => path.join(workshopRoot, ...d)
 	const readInWorkshop = (...d: Array<string>) => safeReadFile(inWorkshop(...d))
+	const progress = await getProgress()
 
 	const output = {
 		meta: {
@@ -49,8 +52,14 @@ export async function getWorkshopContext({
 			config: (
 				JSON.parse((await readInWorkshop('package.json')) || '{}') as any
 			).epicshop,
-			instructions: await readInWorkshop('exercise', 'README.mdx'),
-			finishedInstructions: await readInWorkshop('exercise', 'FINISHED.mdx'),
+			instructions: {
+				content: await readInWorkshop('exercise', 'README.mdx'),
+				progress: progress.find((p) => p.type === 'instructions'),
+			},
+			finishedInstructions: {
+				content: await readInWorkshop('exercise', 'FINISHED.mdx'),
+				progress: progress.find((p) => p.type === 'finished'),
+			},
 		},
 		exercises: [] as Array<any>,
 	}
@@ -61,15 +70,33 @@ export async function getWorkshopContext({
 			fullPath: exercise.fullPath,
 			exerciseNumber: exercise.exerciseNumber,
 			title: exercise.title,
-			instructions: await safeReadFile(
-				path.join(exercise.fullPath, 'README.mdx'),
-			),
-			finishedInstructions: await safeReadFile(
-				path.join(exercise.fullPath, 'FINISHED.mdx'),
-			),
+			instructions: {
+				content: await safeReadFile(path.join(exercise.fullPath, 'README.mdx')),
+				progress: progress.find(
+					(p) =>
+						p.type === 'instructions' &&
+						p.exerciseNumber === exercise.exerciseNumber,
+				),
+			},
+			finishedInstructions: {
+				content: await safeReadFile(
+					path.join(exercise.fullPath, 'FINISHED.mdx'),
+				),
+				progress: progress.find(
+					(p) =>
+						p.type === 'finished' &&
+						p.exerciseNumber === exercise.exerciseNumber,
+				),
+			},
 			steps: exercise.steps.map((step) => {
 				return {
 					stepNumber: step.stepNumber,
+					progress: progress.find(
+						(p) =>
+							p.type === 'step' &&
+							p.exerciseNumber === exercise.exerciseNumber &&
+							p.stepNumber === step.stepNumber,
+					),
 					title: step.problem?.title ?? step.solution?.title ?? null,
 					problem: step.problem
 						? {
@@ -145,6 +172,7 @@ async function getExerciseContext({
 	await handleWorkshopDirectory(workshopDirectory)
 	const userHasAccess = await userHasAccessToWorkshop()
 	const authInfo = await getAuthInfo()
+	const progress = await getProgress()
 	let stepNumber = 1
 	const playgroundApp = await getPlaygroundApp()
 	invariant(playgroundApp, 'No playground app found')
@@ -236,19 +264,26 @@ async function getExerciseContext({
 					}
 				: 'currently set to a different exercise',
 		},
-		exerciseBackground: {
+		exerciseInfo: {
 			number: exerciseNumber,
 			intro: {
 				content: await getFileContent(
 					path.join(exercise.fullPath, 'README.mdx'),
 				),
 				transcripts: getTranscripts(exercise.instructionsEpicVideoEmbeds),
+				progress: progress.find(
+					(p) =>
+						p.type === 'instructions' && p.exerciseNumber === exerciseNumber,
+				),
 			},
 			outro: {
 				content: await getFileContent(
 					path.join(exercise.fullPath, 'FINISHED.mdx'),
 				),
 				transcripts: getTranscripts(exercise.finishedEpicVideoEmbeds),
+				progress: progress.find(
+					(p) => p.type === 'finished' && p.exerciseNumber === exerciseNumber,
+				),
 			},
 		},
 		steps: exercise.steps
@@ -256,6 +291,12 @@ async function getExerciseContext({
 					exercise.steps.map(async (app) => ({
 						number: app.stepNumber,
 						isCurrent: isCurrentExercise && app.stepNumber === stepNumber,
+						progress: progress.find(
+							(p) =>
+								p.type === 'step' &&
+								p.exerciseNumber === exerciseNumber &&
+								p.stepNumber === app.stepNumber,
+						),
 						problem: {
 							content: app.problem
 								? await getFileContent(
@@ -310,7 +351,7 @@ async function getExerciseContextResource({
 	return {
 		uri: exerciseContextUriTemplate.uriTemplate.expand({
 			workshopDirectory,
-			exerciseNumber: String(context.exerciseBackground.number),
+			exerciseNumber: String(context.exerciseInfo.number),
 		}),
 		mimeType: 'application/json',
 		text: JSON.stringify(context),
@@ -439,6 +480,11 @@ async function getExerciseStepProgressDiff({
 	return diffCode
 }
 
+const exerciseStepProgressDiffUriTemplate = new ResourceTemplate(
+	'epicshop://{workshopDirectory}/exercise-step-progress-diff',
+	{ list: undefined },
+)
+
 async function getExerciseStepProgressDiffResource({
 	workshopDirectory,
 }: InputSchemaType<typeof getExerciseStepProgressDiffInputSchema>): Promise<
@@ -455,17 +501,102 @@ async function getExerciseStepProgressDiffResource({
 	}
 }
 
-const exerciseStepProgressDiffUriTemplate = new ResourceTemplate(
-	'epicshop://{workshopDirectory}/exercise-step-progress-diff',
-	{ list: undefined },
-)
-
 export const exerciseStepProgressDiffResource = {
 	name: 'exercise_step_progress_diff',
 	description: 'The diff between the current exercise step and the solution',
 	uriTemplate: exerciseStepProgressDiffUriTemplate,
 	getResource: getExerciseStepProgressDiffResource,
 	inputSchema: getExerciseStepProgressDiffInputSchema,
+}
+
+const getUserInfoInputSchema = {
+	workshopDirectory: z.string().describe('The workshop directory'),
+}
+
+const userInfoUri = new ResourceTemplate(
+	'epicshop://{workshopDirectory}/user/info',
+	{ list: undefined },
+)
+
+async function getUserInfoResource({
+	workshopDirectory,
+}: InputSchemaType<typeof getUserInfoInputSchema>) {
+	const userInfo = await getUserInfo()
+	return {
+		uri: userInfoUri.uriTemplate.expand({
+			workshopDirectory,
+		}),
+		mimeType: 'application/json',
+		text: JSON.stringify(userInfo),
+	}
+}
+
+export const userInfoResource = {
+	name: 'user_info',
+	description: 'Information about the current user',
+	uriTemplate: userInfoUri,
+	getResource: getUserInfoResource,
+	inputSchema: getUserInfoInputSchema,
+}
+
+const getUserAccessInputSchema = {
+	workshopDirectory: z.string().describe('The workshop directory'),
+}
+
+const userAccessUriTemplate = new ResourceTemplate(
+	'epicshop://{workshopDirectory}/user/access',
+	{ list: undefined },
+)
+
+async function getUserAccessResource({
+	workshopDirectory,
+}: InputSchemaType<typeof getUserAccessInputSchema>) {
+	const userHasAccess = await userHasAccessToWorkshop()
+	return {
+		uri: userAccessUriTemplate.uriTemplate.expand({
+			workshopDirectory,
+		}),
+		mimeType: 'application/json',
+		text: JSON.stringify({ userHasAccess }),
+	}
+}
+
+export const userAccessResource = {
+	name: 'user_access',
+	description: 'Whether the current user has access to the workshop',
+	uriTemplate: userAccessUriTemplate,
+	getResource: getUserAccessResource,
+	inputSchema: getUserAccessInputSchema,
+}
+
+const userProgressInputSchema = {
+	workshopDirectory: z.string().describe('The workshop directory'),
+}
+
+const userProgressUriTemplate = new ResourceTemplate(
+	'epicshop://{workshopDirectory}/user/progress',
+	{ list: undefined },
+)
+
+async function getUserProgressResource({
+	workshopDirectory,
+}: InputSchemaType<typeof userProgressInputSchema>) {
+	const userProgress = await getProgress()
+	return {
+		uri: userProgressUriTemplate.uriTemplate.expand({
+			workshopDirectory,
+		}),
+		mimeType: 'application/json',
+		text: JSON.stringify(userProgress),
+	}
+}
+
+export const userProgressResource = {
+	name: 'user_progress',
+	description: 'The progress of the current user',
+	uriTemplate: userProgressUriTemplate,
+	getResource: getUserProgressResource,
+	inputSchema: userProgressInputSchema,
 }
 
 export function initResources(server: McpServer) {
@@ -555,6 +686,53 @@ export function initResources(server: McpServer) {
 					await exerciseStepProgressDiffResource.getResource({
 						workshopDirectory,
 					}),
+				],
+			}
+		},
+	)
+
+	server.resource(
+		userInfoResource.name,
+		userInfoResource.uriTemplate,
+		{ description: userInfoResource.description },
+		async (_uri, { workshopDirectory }) => {
+			invariant(
+				typeof workshopDirectory === 'string',
+				'A single workshopDirectory is required',
+			)
+			return {
+				contents: [await userInfoResource.getResource({ workshopDirectory })],
+			}
+		},
+	)
+
+	server.resource(
+		userAccessResource.name,
+		userAccessResource.uriTemplate,
+		{ description: userAccessResource.description },
+		async (_uri, { workshopDirectory }) => {
+			invariant(
+				typeof workshopDirectory === 'string',
+				'A single workshopDirectory is required',
+			)
+			return {
+				contents: [await userAccessResource.getResource({ workshopDirectory })],
+			}
+		},
+	)
+
+	server.resource(
+		userProgressResource.name,
+		userProgressResource.uriTemplate,
+		{ description: userProgressResource.description },
+		async (_uri, { workshopDirectory }) => {
+			invariant(
+				typeof workshopDirectory === 'string',
+				'A single workshopDirectory is required',
+			)
+			return {
+				contents: [
+					await userProgressResource.getResource({ workshopDirectory }),
 				],
 			}
 		},

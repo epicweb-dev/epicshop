@@ -1,21 +1,38 @@
 import { invariant } from '@epic-web/invariant'
 import {
 	getApps,
+	getExerciseApp,
 	getPlaygroundAppName,
 	isExerciseStepApp,
 	isProblemApp,
 	setPlayground,
 	type ExerciseStepApp,
 } from '@epic-web/workshop-utils/apps.server'
+import { deleteCache } from '@epic-web/workshop-utils/cache.server'
+import { getWorkshopConfig } from '@epic-web/workshop-utils/config.server'
+import {
+	getAuthInfo,
+	logout,
+	setAuthInfo,
+} from '@epic-web/workshop-utils/db.server'
+import {
+	getProgress,
+	getUserInfo,
+	updateProgress,
+} from '@epic-web/workshop-utils/epic-api.server'
 import { type McpServer } from '@modelcontextprotocol/sdk/server/mcp.js'
 import { type ReadResourceResult } from '@modelcontextprotocol/sdk/types.js'
+import * as client from 'openid-client'
 import { z } from 'zod'
 import { quizMe, quizMeInputSchema } from './prompts.js'
 import {
-	exerciseContextResource,
-	workshopContextResource,
 	diffBetweenAppsResource,
+	exerciseContextResource,
 	exerciseStepProgressDiffResource,
+	userAccessResource,
+	userInfoResource,
+	userProgressResource,
+	workshopContextResource,
 } from './resources.js'
 import { handleWorkshopDirectory } from './utils.js'
 
@@ -23,6 +40,126 @@ import { handleWorkshopDirectory } from './utils.js'
 const clientSupportsEmbeddedResources = false
 
 export function initTools(server: McpServer) {
+	server.tool(
+		'login',
+		`Allow the user to login (or sign up) to the workshop. First`.trim(),
+		{
+			workshopDirectory: z.string().describe('The workshop directory'),
+		},
+		async ({ workshopDirectory }) => {
+			await handleWorkshopDirectory(workshopDirectory)
+			const {
+				product: { host },
+			} = getWorkshopConfig()
+			const ISSUER = `https://${host}/oauth`
+			const config = await client.discovery(new URL(ISSUER), 'EPICSHOP_APP')
+			const deviceResponse = await client.initiateDeviceAuthorization(
+				config,
+				{},
+			)
+
+			void handleAuthFlow()
+
+			return {
+				content: [
+					{
+						type: 'text',
+						text: `Please go to ${deviceResponse.verification_uri_complete}. Verify the code on the page is "${deviceResponse.user_code}" to login.`,
+					},
+				],
+			}
+
+			async function handleAuthFlow() {
+				const UserInfoSchema = z.object({
+					id: z.string(),
+					email: z.string(),
+					name: z.string().nullable().optional(),
+				})
+
+				const timeout = setTimeout(() => {
+					void server.server.notification({
+						method: 'notification',
+						params: {
+							message: 'Device authorization timed out',
+						},
+					})
+				}, deviceResponse.expires_in * 1000)
+
+				try {
+					const tokenSet = await client.pollDeviceAuthorizationGrant(
+						config,
+						deviceResponse,
+					)
+					clearTimeout(timeout)
+
+					if (!tokenSet) {
+						await server.server.notification({
+							method: 'notification',
+							params: {
+								message: 'No token set',
+							},
+						})
+						return
+					}
+
+					const protectedResourceResponse = await client.fetchProtectedResource(
+						config,
+						tokenSet.access_token,
+						new URL(`${ISSUER}/userinfo`),
+						'GET',
+					)
+					const userinfoRaw = await protectedResourceResponse.json()
+					const userinfoResult = UserInfoSchema.safeParse(userinfoRaw)
+					if (!userinfoResult.success) {
+						await server.server.notification({
+							method: 'notification',
+							params: {
+								message: `Failed to parse user info: ${userinfoResult.error.message}`,
+							},
+						})
+						return
+					}
+					const userinfo = userinfoResult.data
+
+					await setAuthInfo({
+						id: userinfo.id,
+						tokenSet,
+						email: userinfo.email,
+						name: userinfo.name,
+					})
+
+					await getUserInfo({ forceFresh: true })
+
+					await server.server.notification({
+						method: 'notification',
+						params: {
+							message: 'Authentication successful',
+						},
+					})
+				} catch (error) {
+					clearTimeout(timeout)
+					throw error
+				}
+			}
+		},
+	)
+
+	server.tool(
+		'logout',
+		`Allow the user to logout of the workshop (based on the workshop's host) and delete cache data.`,
+		{
+			workshopDirectory: z.string().describe('The workshop directory'),
+		},
+		async ({ workshopDirectory }) => {
+			await handleWorkshopDirectory(workshopDirectory)
+			await logout()
+			await deleteCache()
+			return {
+				content: [{ type: 'text', text: 'Logged out' }],
+			}
+		},
+	)
+
 	server.tool(
 		'set_playground',
 		`
@@ -38,17 +175,19 @@ to start an exercise, specify stepNumber 1 and type 'problem' unless otherwise
 directed.
 
 Argument examples:
-A. Set to next exercise step from current (or first if there is none) - Most common
+A. If logged in and there is an incomplete exercise step, set to next incomplete exercise step based on the user's progress - Most common
 	- [No arguments]
-B. Set to a specific exercise step
+B. If not logged in or all exercises are complete, set to next exercise step from current (or first if there is none)
+	- [No arguments]
+C. Set to a specific exercise step
 	- exerciseNumber: 1
 	- stepNumber: 1
 	- type: 'solution'
-C. Set to the solution of the current exercise step
+D. Set to the solution of the current exercise step
 	- type: 'solution'
-D. Set to the second step problem of the current exercise
+E. Set to the second step problem of the current exercise
 	- stepNumber: 2
-E. Set to the first step problem of the fifth exercise
+F. Set to the first step problem of the fifth exercise
 	- exerciseNumber: 5
 
 An error will be returned if no app is found for the given arguments.
@@ -70,6 +209,65 @@ An error will be returned if no app is found for the given arguments.
 		},
 		async ({ workshopDirectory, exerciseNumber, stepNumber, type }) => {
 			await handleWorkshopDirectory(workshopDirectory)
+			const authInfo = await getAuthInfo()
+
+			if (authInfo) {
+				const progress = await getProgress()
+				const scoreProgress = (a: (typeof progress)[number]) => {
+					if (a.type === 'workshop-instructions') return 0
+					if (a.type === 'workshop-finished') return 10000
+					if (a.type === 'instructions') return a.exerciseNumber * 100
+					if (a.type === 'step') return a.exerciseNumber * 100 + a.stepNumber
+					if (a.type === 'finished') return a.exerciseNumber * 100 + 100
+
+					if (a.type === 'unknown') return 100000
+					return -1
+				}
+				const sortedProgress = progress.sort((a, b) => {
+					return scoreProgress(a) - scoreProgress(b)
+				})
+				const nextProgress = sortedProgress.find((p) => !p.epicCompletedAt)
+				if (nextProgress) {
+					if (nextProgress.type === 'step') {
+						const exerciseApp = await getExerciseApp({
+							exerciseNumber: nextProgress.exerciseNumber.toString(),
+							stepNumber: nextProgress.stepNumber.toString(),
+							type: 'problem',
+						})
+						invariant(exerciseApp, 'No exercise app found')
+						await setPlayground(exerciseApp.fullPath)
+						return {
+							content: [
+								{
+									type: 'text',
+									text: `Playground set to ${exerciseApp.exerciseNumber}.${exerciseApp.stepNumber}.${exerciseApp.type}`,
+								},
+							],
+						}
+					}
+
+					if (
+						nextProgress.type === 'instructions' ||
+						nextProgress.type === 'finished'
+					) {
+						throw new Error(
+							`The user needs to mark the ${nextProgress.exerciseNumber} ${nextProgress.type === 'instructions' ? 'instructions' : 'finished'} as complete before they can continue. Have them watch the video at ${nextProgress.epicLessonUrl}, then mark it as complete.`,
+						)
+					}
+					if (
+						nextProgress.type === 'workshop-instructions' ||
+						nextProgress.type === 'workshop-finished'
+					) {
+						throw new Error(
+							`The user needs to mark the ${nextProgress.exerciseNumber} ${nextProgress.type === 'workshop-instructions' ? 'Workshop instructions' : 'Workshop finished'} as complete before they can continue. Have them watch the video at ${nextProgress.epicLessonUrl}, then mark it as complete.`,
+						)
+					}
+
+					throw new Error(
+						`The user needs to mark ${nextProgress.epicLessonSlug} as complete before they can continue. Have them watch the video at ${nextProgress.epicLessonUrl}, then mark it as complete.`,
+					)
+				}
+			}
 
 			const apps = await getApps()
 			const exerciseStepApps = apps.filter(isExerciseStepApp)
@@ -109,16 +307,59 @@ An error will be returned if no app is found for the given arguments.
 				`No app found for values derived by the arguments: ${exerciseNumber}.${stepNumber}.${type}`,
 			)
 			await setPlayground(desiredApp.fullPath)
+			const exerciseContext = await exerciseContextResource.getResource({
+				workshopDirectory,
+				exerciseNumber: desiredApp.exerciseNumber,
+			})
 			return {
 				content: [
 					{
 						type: 'text',
-						text: `Playground set to ${desiredApp.name}`,
+						text: `Playground set to ${desiredApp.name}.`,
+					},
+					getEmbeddedResourceContent(exerciseContext),
+				],
+			}
+		},
+	)
+
+	server.tool(
+		'update_progress',
+		`
+Intended to help you mark an Epic lesson as complete or incomplete.
+
+This will mark the Epic lesson as complete or incomplete and update the user's progress (get updated progress with the \`get_user_progress\` tool, the \`get_exercise_context\` tool, or the \`get_workshop_context\` tool).
+		`.trim(),
+		{
+			workshopDirectory: z.string().describe('The workshop directory'),
+			epicLessonSlug: z
+				.string()
+				.describe(
+					'The slug of the Epic lesson to mark as complete (can be retrieved from the `get_exercise_context` tool or the `get_workshop_context` tool)',
+				),
+			complete: z
+				.boolean()
+				.optional()
+				.default(true)
+				.describe(
+					'Whether to mark the lesson as complete or incomplete (defaults to true)',
+				),
+		},
+		async ({ workshopDirectory, epicLessonSlug, complete }) => {
+			await handleWorkshopDirectory(workshopDirectory)
+			await updateProgress({ lessonSlug: epicLessonSlug, complete })
+			return {
+				content: [
+					{
+						type: 'text',
+						text: `Lesson with slug ${epicLessonSlug} marked as ${complete ? 'complete' : 'incomplete'}`,
 					},
 				],
 			}
 		},
 	)
+
+	// TODO: add a tool to run the dev/test script for the given app
 }
 
 // These are tools that retrieve resources. Not all resources should be
@@ -135,6 +376,7 @@ yourself on the workshop as a whole.
 		`.trim(),
 		workshopContextResource.inputSchema,
 		async ({ workshopDirectory }) => {
+			await handleWorkshopDirectory(workshopDirectory)
 			const resource = await workshopContextResource.getResource({
 				workshopDirectory,
 			})
@@ -163,6 +405,7 @@ work they still need to do and answer any questions about the exercise.
 		`.trim(),
 		exerciseContextResource.inputSchema,
 		async ({ workshopDirectory, exerciseNumber }) => {
+			await handleWorkshopDirectory(workshopDirectory)
 			const resource = await exerciseContextResource.getResource({
 				workshopDirectory,
 				exerciseNumber,
@@ -190,6 +433,7 @@ If the user asks for the diff for 2.3, then use 02.03.problem for app1 and 02.03
 		`,
 		diffBetweenAppsResource.inputSchema,
 		async ({ workshopDirectory, app1, app2 }) => {
+			await handleWorkshopDirectory(workshopDirectory)
 			const resource = await diffBetweenAppsResource.getResource({
 				workshopDirectory,
 				app1,
@@ -228,7 +472,75 @@ significance of changes.
 		`.trim(),
 		exerciseStepProgressDiffResource.inputSchema,
 		async ({ workshopDirectory }) => {
+			await handleWorkshopDirectory(workshopDirectory)
 			const resource = await exerciseStepProgressDiffResource.getResource({
+				workshopDirectory,
+			})
+			return {
+				content: [getEmbeddedResourceContent(resource)],
+			}
+		},
+	)
+
+	server.tool(
+		'get_user_info',
+		`
+Intended to help you get information about the current user.
+
+This includes the user's name, email, etc. It's mostly useful to determine
+whether the user is logged in and know who they are.
+
+If the user is not logged in, tell them to log in by running the \`login\` tool.
+		`.trim(),
+		userInfoResource.inputSchema,
+		async ({ workshopDirectory }) => {
+			await handleWorkshopDirectory(workshopDirectory)
+			const resource = await userInfoResource.getResource({ workshopDirectory })
+			return {
+				content: [getEmbeddedResourceContent(resource)],
+			}
+		},
+	)
+
+	server.tool(
+		'get_user_access',
+		`
+Will tell you whether the user has access to the paid features of the workshop.
+
+Paid features include:
+- Transcripts
+- Progress tracking
+- Access to videos
+- Access to the discord chat
+- Test tab support
+- Diff tab support
+
+Encourage the user to upgrade if they need access to the paid features.
+		`.trim(),
+		userAccessResource.inputSchema,
+		async ({ workshopDirectory }) => {
+			await handleWorkshopDirectory(workshopDirectory)
+			const resource = await userAccessResource.getResource({
+				workshopDirectory,
+			})
+			return {
+				content: [getEmbeddedResourceContent(resource)],
+			}
+		},
+	)
+
+	server.tool(
+		'get_user_progress',
+		`
+Intended to help you get the progress of the current user. Can often be helpful
+to know what the next step that needs to be completed is. Make sure to provide
+the user with the URL of relevant incomplete lessons so they can watch them and
+then mark them as complete.
+		`.trim(),
+		userProgressResource.inputSchema,
+		async ({ workshopDirectory }) => {
+			await handleWorkshopDirectory(workshopDirectory)
+			const resource = await userProgressResource.getResource({
 				workshopDirectory,
 			})
 			return {

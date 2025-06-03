@@ -96,6 +96,20 @@ export async function getClientId() {
 	return clientId
 }
 
+export async function logout() {
+	const config = getWorkshopConfig()
+	const host = config.product.host
+	if (host) {
+		const data = await readDb()
+		const newAuthInfos = { ...data?.authInfos }
+		delete newAuthInfos[host]
+		await fsExtra.writeJSON(dbPath, {
+			...data,
+			authInfos: newAuthInfos,
+		})
+	}
+}
+
 export async function deleteDb() {
 	if (process.env.EPICSHOP_DEPLOYED) return null
 

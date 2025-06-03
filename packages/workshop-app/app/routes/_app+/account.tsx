@@ -1,6 +1,6 @@
 import { deleteCache } from '@epic-web/workshop-utils/cache.server'
 import {
-	deleteDb,
+	logout,
 	requireAuthInfo,
 	setPreferences,
 } from '@epic-web/workshop-utils/db.server'
@@ -30,7 +30,7 @@ export async function action({ request }: { request: Request }) {
 	const formData = await request.formData()
 	const intent = formData.get('intent')
 	if (intent === 'logout') {
-		await deleteDb()
+		await logout()
 		await deleteCache()
 		return redirectWithToast('/login', {
 			type: 'success',
