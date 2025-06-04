@@ -15,7 +15,7 @@ export async function action({ request }: { request: Request }) {
 	const id = formData.get('id')
 
 	if (intent === 'dismiss' && typeof id === 'string') {
-		await muteNotification(id)
+		await muteNotification(`update-repo-${id}`)
 		return json({ type: 'dismissed' } as const)
 	}
 
@@ -59,6 +59,8 @@ export function UpdateToast({
 }) {
 	const updateFetcher = useFetcher<typeof action>()
 	const updateFetcherRef = useRef(updateFetcher)
+	const dismissFetcher = useFetcher<typeof action>()
+	const dismissFetcherRef = useRef(dismissFetcher)
 	const { updatesAvailable, diffLink, remoteCommit } = repoUpdates
 
 	useEffect(() => {
@@ -84,7 +86,7 @@ export function UpdateToast({
 					const formData = new FormData()
 					formData.append('intent', 'dismiss')
 					formData.append('id', remoteCommit)
-					updateFetcherRef.current.submit(formData, {
+					dismissFetcherRef.current.submit(formData, {
 						method: 'post',
 						action: '/admin/update-repo',
 					})

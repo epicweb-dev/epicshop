@@ -138,7 +138,7 @@ export async function loader({ request }: LoaderFunctionArgs) {
 	if (
 		repoUpdates &&
 		repoUpdates.remoteCommit &&
-		mutedNotifications.includes(repoUpdates.remoteCommit)
+		mutedNotifications.includes(`update-repo-${repoUpdates.remoteCommit}`)
 	) {
 		repoUpdates = { ...repoUpdates, updatesAvailable: false }
 	}
