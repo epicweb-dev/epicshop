@@ -1,4 +1,5 @@
 import { spawn } from 'child_process'
+import { muteNotification } from '@epic-web/workshop-utils/db.server'
 import {
 	checkForUpdatesCached,
 	updateLocalRepo,
@@ -8,32 +9,47 @@ import { useFetcher } from '@remix-run/react'
 import { useEffect, useRef } from 'react'
 import { toast } from 'sonner'
 
-export async function action() {
-	const updates = await checkForUpdatesCached()
-	if (!updates.updatesAvailable) {
-		return json({ type: 'error', error: 'No updates available' } as const, {
-			status: 400,
-		})
+export async function action({ request }: { request: Request }) {
+	const formData = await request.formData()
+	const intent = formData.get('intent')
+	const id = formData.get('id')
+
+	if (intent === 'dismiss' && typeof id === 'string') {
+		await muteNotification(id)
+		return json({ type: 'dismissed' } as const)
 	}
 
-	await updateLocalRepo()
+	if (intent === 'update' && typeof id === 'string') {
+		const updates = await checkForUpdatesCached()
+		if (!updates.updatesAvailable) {
+			return json({ type: 'error', error: 'No updates available' } as const, {
+				status: 400,
+			})
+		}
 
-	// restart the server
-	spawn(process.argv[0]!, process.argv.slice(1), {
-		detached: true,
-		stdio: 'inherit',
-		env: {
-			...process.env,
-			EPICSHOP_SLOW_START: 'true',
-		},
+		await updateLocalRepo()
+
+		// restart the server
+		spawn(process.argv[0]!, process.argv.slice(1), {
+			detached: true,
+			stdio: 'inherit',
+			env: {
+				...process.env,
+				EPICSHOP_SLOW_START: 'true',
+			},
+		})
+
+		setTimeout(() => {
+			console.log('exiting the old server process')
+			process.exit(0)
+		}, 200)
+
+		return json({ type: 'success' } as const)
+	}
+
+	throw json({ type: 'error', error: 'Invalid intent' } as const, {
+		status: 400,
 	})
-
-	setTimeout(() => {
-		console.log('exiting the old server process')
-		process.exit(0)
-	}, 200)
-
-	return json({ type: 'success' } as const)
 }
 
 export function UpdateToast({
@@ -43,10 +59,10 @@ export function UpdateToast({
 }) {
 	const updateFetcher = useFetcher<typeof action>()
 	const updateFetcherRef = useRef(updateFetcher)
-	const { updatesAvailable, diffLink } = repoUpdates
+	const { updatesAvailable, diffLink, remoteCommit } = repoUpdates
 
 	useEffect(() => {
-		if (updatesAvailable) {
+		if (updatesAvailable && remoteCommit) {
 			toast.info('New workshop updates available', {
 				duration: Infinity,
 				description: (
@@ -64,10 +80,22 @@ export function UpdateToast({
 						) : null}
 					</div>
 				),
+				onDismiss: () => {
+					const formData = new FormData()
+					formData.append('intent', 'dismiss')
+					formData.append('id', remoteCommit)
+					updateFetcherRef.current.submit(formData, {
+						method: 'post',
+						action: '/admin/update-repo',
+					})
+				},
 				action: {
 					label: 'Update',
 					onClick: () => {
-						updateFetcherRef.current.submit(null, {
+						const formData = new FormData()
+						formData.append('intent', 'update')
+						formData.append('id', remoteCommit)
+						updateFetcherRef.current.submit(formData, {
 							method: 'post',
 							action: '/admin/update-repo',
 						})
@@ -75,7 +103,7 @@ export function UpdateToast({
 				},
 			})
 		}
-	}, [updatesAvailable, diffLink])
+	}, [updatesAvailable, diffLink, remoteCommit])
 
 	const fetcherResponse = updateFetcher.data
 	useEffect(() => {

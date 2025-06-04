@@ -5,6 +5,7 @@ import { getWorkshopConfig } from '@epic-web/workshop-utils/config.server'
 import {
 	getPreferences,
 	readOnboardingData,
+	getMutedNotifications,
 } from '@epic-web/workshop-utils/db.server'
 import { getEnv } from '@epic-web/workshop-utils/env.server'
 import {
@@ -131,6 +132,17 @@ export async function loader({ request }: LoaderFunctionArgs) {
 		timings,
 	})
 
+	// Filter out repoUpdates if muted
+	const mutedNotifications = await getMutedNotifications()
+	let repoUpdates = asyncStuff.repoUpdates
+	if (
+		repoUpdates &&
+		repoUpdates.remoteCommit &&
+		mutedNotifications.includes(repoUpdates.remoteCommit)
+	) {
+		repoUpdates = { ...repoUpdates, updatesAvailable: false }
+	}
+
 	return data(
 		{
 			...asyncStuff,
@@ -161,6 +173,7 @@ export async function loader({ request }: LoaderFunctionArgs) {
 			presence: {
 				users: presentUsers,
 			},
+			repoUpdates,
 		},
 		{
 			headers: combineHeaders(
