@@ -4,15 +4,18 @@ import { type McpServer } from '@modelcontextprotocol/sdk/server/mcp.js'
 import { type GetPromptResult } from '@modelcontextprotocol/sdk/types.js'
 import { z } from 'zod'
 import { exerciseContextResource } from './resources.js'
-import { handleWorkshopDirectory } from './utils.js'
+import {
+	handleWorkshopDirectory,
+	workshopDirectoryInputSchema,
+} from './utils.js'
 
 export const quizMeInputSchema = {
-	workshopDirectory: z.string().describe('The workshop directory'),
+	workshopDirectory: workshopDirectoryInputSchema,
 	exerciseNumber: z
 		.string()
 		.optional()
 		.describe(
-			'The exercise number to get quizzed on (leave blank for a random exercise).',
+			`The exercise number to get quizzed on (e.g., \`4\`). Leave blank for a random exercise.`,
 		),
 }
 

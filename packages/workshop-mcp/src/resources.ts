@@ -28,14 +28,11 @@ import {
 	handleWorkshopDirectory,
 	type InputSchemaType,
 	safeReadFile,
+	workshopDirectoryInputSchema,
 } from './utils.js'
 
 export const getWorkshopContextInputSchema = {
-	workshopDirectory: z
-		.string()
-		.describe(
-			'The workshop directory (the root directory of the workshop repo.).',
-		),
+	workshopDirectory: workshopDirectoryInputSchema,
 }
 
 export async function getWorkshopContext({
@@ -149,11 +146,7 @@ export const workshopContextResource = {
 }
 
 const getExerciseContextInputSchema = {
-	workshopDirectory: z
-		.string()
-		.describe(
-			'The workshop directory (the root directory of the workshop repo.).',
-		),
+	workshopDirectory: workshopDirectoryInputSchema,
 	exerciseNumber: z.coerce
 		.number()
 		.optional()
@@ -367,7 +360,7 @@ export const exerciseContextResource = {
 }
 
 const diffBetweenAppsInputSchema = {
-	workshopDirectory: z.string().describe('The workshop directory'),
+	workshopDirectory: workshopDirectoryInputSchema,
 	app1: z.string().describe('The ID of the first app'),
 	app2: z.string().describe('The ID of the second app'),
 }
@@ -448,7 +441,7 @@ export const diffBetweenAppsResource = {
 }
 
 const getExerciseStepProgressDiffInputSchema = {
-	workshopDirectory: z.string().describe('The workshop directory'),
+	workshopDirectory: workshopDirectoryInputSchema,
 }
 
 async function getExerciseStepProgressDiff({
@@ -510,7 +503,7 @@ export const exerciseStepProgressDiffResource = {
 }
 
 const getUserInfoInputSchema = {
-	workshopDirectory: z.string().describe('The workshop directory'),
+	workshopDirectory: workshopDirectoryInputSchema,
 }
 
 const userInfoUri = new ResourceTemplate(
@@ -540,7 +533,7 @@ export const userInfoResource = {
 }
 
 const getUserAccessInputSchema = {
-	workshopDirectory: z.string().describe('The workshop directory'),
+	workshopDirectory: workshopDirectoryInputSchema,
 }
 
 const userAccessUriTemplate = new ResourceTemplate(
@@ -570,7 +563,7 @@ export const userAccessResource = {
 }
 
 const userProgressInputSchema = {
-	workshopDirectory: z.string().describe('The workshop directory'),
+	workshopDirectory: workshopDirectoryInputSchema,
 }
 
 const userProgressUriTemplate = new ResourceTemplate(
@@ -609,6 +602,7 @@ export function initResources(server: McpServer) {
 				typeof workshopDirectory === 'string',
 				'A single workshopDirectory is required',
 			)
+			workshopDirectory = await handleWorkshopDirectory(workshopDirectory)
 			const resource = await workshopContextResource.getResource({
 				workshopDirectory,
 			})
@@ -638,6 +632,7 @@ export function initResources(server: McpServer) {
 				exerciseNumber >= 0,
 				'exerciseNumber must be greater than or equal to 0',
 			)
+			workshopDirectory = await handleWorkshopDirectory(workshopDirectory)
 			return {
 				contents: [
 					await exerciseContextResource.getResource({
@@ -660,6 +655,7 @@ export function initResources(server: McpServer) {
 			)
 			invariant(typeof app1 === 'string', 'A single app1 is required')
 			invariant(typeof app2 === 'string', 'A single app2 is required')
+			workshopDirectory = await handleWorkshopDirectory(workshopDirectory)
 			return {
 				contents: [
 					await diffBetweenAppsResource.getResource({
@@ -681,6 +677,7 @@ export function initResources(server: McpServer) {
 				typeof workshopDirectory === 'string',
 				'A single workshopDirectory is required',
 			)
+			workshopDirectory = await handleWorkshopDirectory(workshopDirectory)
 			return {
 				contents: [
 					await exerciseStepProgressDiffResource.getResource({
@@ -715,6 +712,7 @@ export function initResources(server: McpServer) {
 				typeof workshopDirectory === 'string',
 				'A single workshopDirectory is required',
 			)
+			workshopDirectory = await handleWorkshopDirectory(workshopDirectory)
 			return {
 				contents: [await userAccessResource.getResource({ workshopDirectory })],
 			}
@@ -730,6 +728,7 @@ export function initResources(server: McpServer) {
 				typeof workshopDirectory === 'string',
 				'A single workshopDirectory is required',
 			)
+			workshopDirectory = await handleWorkshopDirectory(workshopDirectory)
 			return {
 				contents: [
 					await userProgressResource.getResource({ workshopDirectory }),

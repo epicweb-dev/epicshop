@@ -27,12 +27,14 @@
     "dev": "tsx src/index.ts",
     "typecheck": "tsc -b --noEmit",
     "build": "tshy",
+    "inspect": "mcp-inspector",
     "build:watch": "nx watch --projects=@epic-web/workshop-mcp -- nx run \\$NX_PROJECT_NAME:build"
   },
   "dependencies": {
     "@epic-web/invariant": "^1.0.0",
     "@epic-web/workshop-utils": "file:../workshop-utils",
     "@modelcontextprotocol/sdk": "^1.9.0",
+    "@modelcontextprotocol/inspector": "^0.14.0",
     "openid-client": "^6.5.0",
     "zod": "^3.24.2"
   },

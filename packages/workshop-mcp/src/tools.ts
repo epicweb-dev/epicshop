@@ -34,7 +34,10 @@ import {
 	userProgressResource,
 	workshopContextResource,
 } from './resources.js'
-import { handleWorkshopDirectory } from './utils.js'
+import {
+	handleWorkshopDirectory,
+	workshopDirectoryInputSchema,
+} from './utils.js'
 
 // not enough support for this yet
 const clientSupportsEmbeddedResources = false
@@ -44,7 +47,7 @@ export function initTools(server: McpServer) {
 		'login',
 		`Allow the user to login (or sign up) to the workshop. First`.trim(),
 		{
-			workshopDirectory: z.string().describe('The workshop directory'),
+			workshopDirectory: workshopDirectoryInputSchema,
 		},
 		async ({ workshopDirectory }) => {
 			await handleWorkshopDirectory(workshopDirectory)
@@ -148,7 +151,7 @@ export function initTools(server: McpServer) {
 		'logout',
 		`Allow the user to logout of the workshop (based on the workshop's host) and delete cache data.`,
 		{
-			workshopDirectory: z.string().describe('The workshop directory'),
+			workshopDirectory: workshopDirectoryInputSchema,
 		},
 		async ({ workshopDirectory }) => {
 			await handleWorkshopDirectory(workshopDirectory)
@@ -193,7 +196,7 @@ F. Set to the first step problem of the fifth exercise
 An error will be returned if no app is found for the given arguments.
 	`.trim(),
 		{
-			workshopDirectory: z.string().describe('The workshop directory'),
+			workshopDirectory: workshopDirectoryInputSchema,
 			exerciseNumber: z.coerce
 				.number()
 				.optional()
@@ -208,7 +211,7 @@ An error will be returned if no app is found for the given arguments.
 				.describe('The type of app to set the playground to'),
 		},
 		async ({ workshopDirectory, exerciseNumber, stepNumber, type }) => {
-			await handleWorkshopDirectory(workshopDirectory)
+			workshopDirectory = await handleWorkshopDirectory(workshopDirectory)
 			const authInfo = await getAuthInfo()
 
 			if (authInfo) {
@@ -331,7 +334,7 @@ Intended to help you mark an Epic lesson as complete or incomplete.
 This will mark the Epic lesson as complete or incomplete and update the user's progress (get updated progress with the \`get_user_progress\` tool, the \`get_exercise_context\` tool, or the \`get_workshop_context\` tool).
 		`.trim(),
 		{
-			workshopDirectory: z.string().describe('The workshop directory'),
+			workshopDirectory: workshopDirectoryInputSchema,
 			epicLessonSlug: z
 				.string()
 				.describe(
@@ -376,7 +379,7 @@ yourself on the workshop as a whole.
 		`.trim(),
 		workshopContextResource.inputSchema,
 		async ({ workshopDirectory }) => {
-			await handleWorkshopDirectory(workshopDirectory)
+			workshopDirectory = await handleWorkshopDirectory(workshopDirectory)
 			const resource = await workshopContextResource.getResource({
 				workshopDirectory,
 			})
@@ -405,7 +408,7 @@ work they still need to do and answer any questions about the exercise.
 		`.trim(),
 		exerciseContextResource.inputSchema,
 		async ({ workshopDirectory, exerciseNumber }) => {
-			await handleWorkshopDirectory(workshopDirectory)
+			workshopDirectory = await handleWorkshopDirectory(workshopDirectory)
 			const resource = await exerciseContextResource.getResource({
 				workshopDirectory,
 				exerciseNumber,
@@ -433,7 +436,7 @@ If the user asks for the diff for 2.3, then use 02.03.problem for app1 and 02.03
 		`,
 		diffBetweenAppsResource.inputSchema,
 		async ({ workshopDirectory, app1, app2 }) => {
-			await handleWorkshopDirectory(workshopDirectory)
+			workshopDirectory = await handleWorkshopDirectory(workshopDirectory)
 			const resource = await diffBetweenAppsResource.getResource({
 				workshopDirectory,
 				app1,
@@ -450,10 +453,12 @@ If the user asks for the diff for 2.3, then use 02.03.problem for app1 and 02.03
 		`
 Intended to help a student understand what work they still have to complete.
 
-This returns a git diff of the playground directory as BASE (their work in
-progress) against the solution directory as HEAD (the final state they're trying
-to achieve). Meaning, if there are lines removed, it means they still need to
-add those lines and if they are added, it means they still need to remove them.
+This is not a typical diff. It's a diff of the user's work in progress against
+the solution.
+
+- Lines starting with \`-\` show code that needs to be removed from the user's solution
+- Lines starting with \`+\` show code that needs to be added to the user's solution
+- If there are differences, the user's work is incomplete
 
 Only tell the user they have more work to do if the diff output affects the
 required behavior, API, or user experience. If the differences are only
@@ -472,7 +477,7 @@ significance of changes.
 		`.trim(),
 		exerciseStepProgressDiffResource.inputSchema,
 		async ({ workshopDirectory }) => {
-			await handleWorkshopDirectory(workshopDirectory)
+			workshopDirectory = await handleWorkshopDirectory(workshopDirectory)
 			const resource = await exerciseStepProgressDiffResource.getResource({
 				workshopDirectory,
 			})
@@ -494,7 +499,7 @@ If the user is not logged in, tell them to log in by running the \`login\` tool.
 		`.trim(),
 		userInfoResource.inputSchema,
 		async ({ workshopDirectory }) => {
-			await handleWorkshopDirectory(workshopDirectory)
+			workshopDirectory = await handleWorkshopDirectory(workshopDirectory)
 			const resource = await userInfoResource.getResource({ workshopDirectory })
 			return {
 				content: [getEmbeddedResourceContent(resource)],
@@ -519,7 +524,7 @@ Encourage the user to upgrade if they need access to the paid features.
 		`.trim(),
 		userAccessResource.inputSchema,
 		async ({ workshopDirectory }) => {
-			await handleWorkshopDirectory(workshopDirectory)
+			workshopDirectory = await handleWorkshopDirectory(workshopDirectory)
 			const resource = await userAccessResource.getResource({
 				workshopDirectory,
 			})
@@ -539,7 +544,7 @@ then mark them as complete.
 		`.trim(),
 		userProgressResource.inputSchema,
 		async ({ workshopDirectory }) => {
-			await handleWorkshopDirectory(workshopDirectory)
+			workshopDirectory = await handleWorkshopDirectory(workshopDirectory)
 			const resource = await userProgressResource.getResource({
 				workshopDirectory,
 			})
@@ -557,9 +562,14 @@ export function initPromptTools(server: McpServer) {
 		`
 If the user asks you to quiz them on a topic from the workshop, use this tool to
 retrieve the instructions for how to do so.
+
+- If the user asks for a specific exercise, supply that exercise number.
+- If they ask for a specific exericse, supply that exercise number.
+- If they ask for a topic and you don't know which exercise that topic is in, use \`get_workshop_context\` to get the list of exercises and their topics and then supply the appropriate exercise number.
 		`.trim(),
 		quizMeInputSchema,
 		async ({ workshopDirectory, exerciseNumber }) => {
+			workshopDirectory = await handleWorkshopDirectory(workshopDirectory)
 			const result = await quizMe({ workshopDirectory, exerciseNumber })
 			return {
 				// QUESTION: will a prompt ever return messages that have role: 'assistant'?
