@@ -28,7 +28,7 @@ import {
 	handleWorkshopDirectory,
 	type InputSchemaType,
 	safeReadFile,
-	workshopDirectoryInputSchema,
+	getWorkshopDirectoryInputSchema,
 } from './utils.js'
 
 export const getWorkshopContextInputSchema = {

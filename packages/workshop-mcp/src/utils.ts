@@ -2,15 +2,30 @@ import fs from 'node:fs/promises'
 import path from 'node:path'
 import { init as initApps } from '@epic-web/workshop-utils/apps.server'
 import { z } from 'zod'
+import { McpServer } from '@modelcontextprotocol/sdk/server/mcp.js'
+import { AsyncLocalStorage } from 'node:async_hooks'
 
-export const workshopDirectoryInputSchema = z
-	.string()
-	.describe(
-		'The workshop directory (the root directory of the workshop repo). This should be an absolute path.',
-	)
+export const mcpServerStorage = new AsyncLocalStorage<McpServer>()
+
+export function getWorkshopDirectoryInputSchema() {
+	const server = mcpServerStorage.getStore()
+	if (server?.server.getClientCapabilities()?.roots) {
+		return z
+			.string()
+			.describe(
+				'The workshop directory (the root directory of the workshop repo). This should be an absolute path. If not provided, the server will use the first root directory that is a workshop directory.',
+			)
+			.optional()
+	} else {
+		return z
+			.string()
+			.describe(
+				'The workshop directory (the root directory of the workshop repo). This should be an absolute path.',
+			)
+	}
+}
 
 async function isWorkshopDirectory(workshopDirectory: string) {
-	console.error('isWorkshopDirectory', workshopDirectory)
 	const packageJson = await safeReadFile(
 		path.join(workshopDirectory, 'package.json'),
 	)
@@ -27,12 +42,33 @@ async function isWorkshopDirectory(workshopDirectory: string) {
 		}
 		throw error
 	}
-	console.error('isWorkshopDirectory', Boolean(pkgJson.epicshop))
 
 	return Boolean(pkgJson.epicshop)
 }
 
-export async function handleWorkshopDirectory(workshopDirectory: string) {
+export async function handleWorkshopDirectory(workshopDirectory?: string) {
+	if (!workshopDirectory) {
+		const server = mcpServerStorage.getStore()
+		if (!server) {
+			throw new Error('No workshop directory provided and no server found')
+		}
+		const { roots } = await server.server.listRoots()
+		if (roots.length > 0) {
+			// find the first root that is a workshop directory
+			for (const root of roots) {
+				if (root.uri.startsWith('file://')) {
+					workshopDirectory = path.resolve(root.uri.slice(7))
+					if (await isWorkshopDirectory(workshopDirectory)) {
+						return workshopDirectory
+					}
+				}
+			}
+		}
+		throw new Error(
+			'No workshop directory provided and no workshop directory found from the server roots',
+		)
+	}
+
 	workshopDirectory = workshopDirectory.trim()
 
 	if (!workshopDirectory) throw new Error('The workshop directory is required')

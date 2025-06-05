@@ -5,6 +5,7 @@ import { StdioServerTransport } from '@modelcontextprotocol/sdk/server/stdio.js'
 import { initPrompts } from './prompts.js'
 import { initResources } from './resources.js'
 import { initPromptTools, initResourceTools, initTools } from './tools.js'
+import { mcpServerStorage } from './utils.js'
 
 // Create server instance
 const server = new McpServer(
@@ -27,11 +28,13 @@ ask you to make should be in this directory.
 	},
 )
 
-initTools(server)
-initResourceTools(server)
-initResources(server)
-initPrompts(server)
-initPromptTools(server)
+mcpServerStorage.run(server, () => {
+	initTools(server)
+	initResourceTools(server)
+	initResources(server)
+	initPrompts(server)
+	initPromptTools(server)
+})
 
 async function main() {
 	const transport = new StdioServerTransport()
