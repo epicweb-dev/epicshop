@@ -307,8 +307,6 @@ export function setModifiedTimesForAppDirs(...filePaths: Array<string>) {
 		const appDir = getAppPathFromFilePath(filePath)
 		if (appDir) {
 			modifiedTimes.set(appDir, now)
-		} else {
-			console.warn(`filePath ${filePath} does not match any app dir`)
 		}
 	}
 }

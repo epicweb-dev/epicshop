@@ -18,6 +18,7 @@ const Transcript = z
 	.optional()
 	.transform((s) => s ?? 'Transcripts not available')
 const EpicVideoInfoSchema = z.object({
+	title: z.string().nullable().optional(),
 	transcript: Transcript,
 	muxPlaybackId: z.string(),
 })
@@ -30,6 +31,7 @@ const EpicVideoRegionRestrictedErrorSchema = z.object({
 
 const CachedEpicVideoInfoSchema = z
 	.object({
+		title: z.string().nullable().optional(),
 		transcript: Transcript,
 		muxPlaybackId: z.string(),
 		status: z.literal('success'),
@@ -113,7 +115,8 @@ async function getEpicVideoInfo({
 			const epicUrl = new URL(epicVideoEmbed)
 			if (
 				epicUrl.host !== 'www.epicweb.dev' &&
-				epicUrl.host !== 'www.epicreact.dev'
+				epicUrl.host !== 'www.epicreact.dev' &&
+				epicUrl.host !== 'www.epicai.pro'
 			) {
 				return null
 			}
@@ -126,15 +129,25 @@ async function getEpicVideoInfo({
 				)
 			}
 
+			// special case for epicai.pro videos
+			const apiUrl =
+				epicUrl.host === 'www.epicai.pro'
+					? getEpicAIVideoAPIUrl(epicVideoEmbed)
+					: `https://${epicUrl.host}/api${epicUrl.pathname}`
+
 			const infoResponse = await fetch(
-				`https://${epicUrl.host}/api${epicUrl.pathname}`,
+				apiUrl,
 				accessToken
 					? { headers: { authorization: `Bearer ${accessToken}` } }
 					: undefined,
 			)
 			const { status, statusText } = infoResponse
 			if (infoResponse.status >= 200 && infoResponse.status < 300) {
-				const rawInfo = await infoResponse.json()
+				let rawInfo = await infoResponse.json()
+				// another special case for epicai.pro videos
+				if (epicUrl.host === 'www.epicai.pro') {
+					rawInfo = preprocessEpicAIVideoAPIResult(rawInfo)
+				}
 				const infoResult = EpicVideoInfoSchema.safeParse(rawInfo)
 				if (infoResult.success) {
 					return {
@@ -186,6 +199,39 @@ async function getEpicVideoInfo({
 		console.error(`Failed to fetch epic video info for ${epicVideoEmbed}`, e)
 		throw e
 	})
+}
+
+function getEpicAIVideoAPIUrl(epicVideoEmbed: string) {
+	const epicUrl = new URL(epicVideoEmbed)
+	const slug = epicUrl.pathname.split('/').at(-1)!
+	return `https://epicai.pro/api/posts?slugOrId=${slug}`
+}
+
+function preprocessEpicAIVideoAPIResult(result: any) {
+	const PostVideoResourceSchema = z.object({
+		resource: z.object({
+			type: z.literal('videoResource'),
+			fields: EpicVideoInfoSchema,
+		}),
+	})
+	const PostSchema = z.object({
+		fields: z.object({ title: z.string() }),
+		resources: z.array(z.any()),
+	})
+	const post = PostSchema.safeParse(result)
+	if (!post.success) return null
+	for (const resource of post.data.resources) {
+		const videoResource = PostVideoResourceSchema.safeParse(resource)
+
+		if (videoResource.success) {
+			return {
+				...videoResource.data.resource.fields,
+				title: post.data.fields.title,
+			}
+		}
+	}
+
+	return null
 }
 
 async function getEpicProgress({

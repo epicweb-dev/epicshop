@@ -164,11 +164,16 @@ function VideoLink({ url, title }: { url: string; title: string }) {
 }
 export function DeferredEpicVideo({
 	url,
-	title = extractEpicTitle(url),
+	title: providedTitle,
 }: {
 	url: string
 	title?: string
 }) {
+	// we need to distinguish between the provided title and the fallback because the priority is:
+	// 1. provided title
+	// 2. title from the api
+	// 3. fallback title
+	const title = providedTitle ?? extractEpicTitle(url)
 	const {
 		product: { host, displayName },
 	} = useWorkshopConfig()
@@ -233,7 +238,7 @@ export function DeferredEpicVideo({
 							return (
 								<EpicVideo
 									url={url}
-									title={title}
+									title={providedTitle ?? info.title ?? title}
 									muxPlaybackId={info.muxPlaybackId}
 									transcript={info.transcript}
 								/>
@@ -444,6 +449,10 @@ function EpicVideoEmbed({
 		? `${url.pathname}embed`
 		: `${url.pathname}/embed`
 	url.searchParams.set('theme', theme)
+	// special case for epicai.pro videos
+	if (url.host === 'www.epicai.pro') {
+		url.pathname = `/posts/${url.pathname}`
+	}
 	return (
 		<VideoEmbed
 			url={url.toString()}
