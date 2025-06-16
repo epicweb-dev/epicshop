@@ -62,6 +62,6 @@
     "@types/react-dom": "$@types/react-dom"
   },
   "engines": {
-    "node": "20"
+    "node": "20 || 22 || 24"
   }
 }
