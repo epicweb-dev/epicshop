@@ -33,7 +33,7 @@
     "format": "prettier --write .",
     "lint": "eslint --cache --cache-location ./node_modules/.cache/eslint .",
     "start": "cross-env NODE_ENV=production node ./start.js",
-    "typecheck": "tsc -b --noEmit",
+    "typecheck": "tsc --noEmit",
     "validate": "run-p \"test -- --run\" lint typecheck"
   },
   "dependencies": {

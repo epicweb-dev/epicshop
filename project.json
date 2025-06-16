@@ -20,7 +20,7 @@
 			"dependsOn": ["@epic-web/workshop-app:build"]
 		},
 		"typecheck": {
-			"command": "tsc -b --noEmit"
+			"command": "tsc --noEmit"
 		},
 		"test": {
 			"executor": "@nx/playwright:playwright",

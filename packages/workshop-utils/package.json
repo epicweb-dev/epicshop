@@ -154,7 +154,7 @@
     "dist"
   ],
   "scripts": {
-    "typecheck": "tsc -b --noEmit",
+    "typecheck": "tsc --noEmit",
     "build": "tshy",
     "build:watch": "nx watch --projects=@epic-web/workshop-utils -- nx run \\$NX_PROJECT_NAME:build"
   },

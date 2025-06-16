@@ -25,7 +25,7 @@
   ],
   "scripts": {
     "dev": "tsx src/index.ts",
-    "typecheck": "tsc -b --noEmit",
+    "typecheck": "tsc --noEmit",
     "build": "tshy",
     "inspect": "mcp-inspector",
     "build:watch": "nx watch --projects=@epic-web/workshop-mcp -- nx run \\$NX_PROJECT_NAME:build"
