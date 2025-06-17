@@ -57,6 +57,12 @@ void checkConnectionCached()
 void getPresentUsers()
 
 const app = express()
+app.get(
+	'/.well-known/appspecific/com.chrome.devtools.json',
+	(req: any, res: any) => {
+		return res.status(404).send('Not found')
+	},
+)
 
 app.use(compression())
 
