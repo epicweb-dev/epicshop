@@ -495,3 +495,8 @@ body {
 	overflow: hidden;
 	display: flex;
 }
+
+/* until https://github.com/mermaid-js/mermaid/pull/6261 gets merged. Just make the background white */
+.mermaid {
+	background-color: white;
+}

@@ -88,6 +88,7 @@
     "lru-cache": "^11.0.1",
     "md5-hex": "^5.0.0",
     "mdx-bundler": "^10.0.3",
+    "mermaid": "^11.6.0",
     "mime-types": "^2.1.35",
     "morgan": "^1.10.0",
     "msw": "^2.4.9",

@@ -2,7 +2,9 @@ import fs from 'fs'
 import path from 'path'
 import { remarkCodeBlocksShiki } from '@kentcdodds/md-temp'
 import { type Element, type Root as HastRoot } from 'hast'
+import lz from 'lz-string'
 import { type Root as MdastRoot } from 'mdast'
+import { type MdxJsxFlowElement } from 'mdast-util-mdx-jsx'
 import { bundleMDX } from 'mdx-bundler'
 import PQueue from 'p-queue'
 import remarkAutolinkHeadings from 'remark-autolink-headings'
@@ -17,6 +19,103 @@ import {
 	shouldForceFresh,
 } from './cache.server.js'
 import { type Timings } from './timing.server.js'
+import { checkConnectionCached } from './utils.server.js'
+
+function remarkMermaidCodeToSvg() {
+	return async (tree: MdastRoot) => {
+		const promises: Array<Promise<void>> = []
+		visit(tree, 'code', (node, index, parent) => {
+			if (node.lang === 'mermaid' && parent && typeof index === 'number') {
+				const promise = (async () => {
+					const isConnected = await checkConnectionCached()
+					if (isConnected) {
+						const compressed = lz.compressToEncodedURIComponent(node.value)
+						const url = `https://mermaid-to-svg.kentcdodds.workers.dev/svg?mermaid=${compressed}`
+
+						const timeout = AbortSignal.timeout(5000)
+						const svgResponse = await fetch(url, { signal: timeout }).catch(
+							() => null,
+						)
+						if (svgResponse?.ok) {
+							const svgText = await svgResponse.text()
+							if (svgText) {
+								parent.children[index] = {
+									type: 'mdxJsxFlowElement',
+									name: 'div',
+									attributes: [
+										{
+											type: 'mdxJsxAttribute',
+											name: 'className',
+											value: 'mermaid',
+										},
+										{
+											type: 'mdxJsxAttribute',
+											name: 'dangerouslySetInnerHTML',
+											value: {
+												type: 'mdxJsxAttributeValueExpression',
+												value: `{__html: ${JSON.stringify(svgText)}}`,
+												// This hack brought to you by this: https://github.com/syntax-tree/hast-util-to-estree/blob/e5ccb97e9f42bba90359ea6d0f83a11d74e0dad6/lib/handlers/mdx-expression.js#L35-L38
+												// no idea why we're required to have estree here, but I'm pretty sure someone is supposed to add it automatically for us and it just never happens...
+												data: {
+													estree: {
+														type: 'Program',
+														sourceType: 'script',
+														body: [
+															{
+																type: 'ExpressionStatement',
+																expression: {
+																	type: 'ObjectExpression',
+																	properties: [
+																		{
+																			type: 'Property',
+																			method: false,
+																			shorthand: false,
+																			computed: false,
+																			kind: 'init',
+																			key: {
+																				type: 'Identifier',
+																				name: '__html',
+																			},
+																			value: {
+																				type: 'Literal',
+																				value: svgText,
+																			},
+																		},
+																	],
+																},
+															},
+														],
+													},
+												},
+											},
+										},
+									],
+									children: [],
+								} satisfies MdxJsxFlowElement
+								return
+							}
+						}
+					}
+
+					parent.children[index] = {
+						type: 'mdxJsxFlowElement',
+						name: 'Mermaid',
+						attributes: [
+							{
+								type: 'mdxJsxAttribute',
+								name: 'code',
+								value: node.value,
+							},
+						],
+						children: [],
+					} satisfies MdxJsxFlowElement
+				})()
+				promises.push(promise)
+			}
+		})
+		await Promise.all(promises)
+	}
+}
 
 function trimCodeBlocks() {
 	return async function transformer(tree: HastRoot) {
@@ -125,6 +224,7 @@ async function compileMdxImpl(file: string): Promise<{
 					...(options.remarkPlugins ?? []),
 					[remarkAutolinkHeadings, { behavior: 'wrap' }],
 					gfm,
+					remarkMermaidCodeToSvg,
 					() => (tree: MdastRoot) => {
 						visit(tree, 'heading', (node) => {
 							if (title) return
@@ -138,11 +238,8 @@ async function compileMdxImpl(file: string): Promise<{
 					},
 					() => (tree: MdastRoot) => {
 						visit(tree, 'mdxJsxFlowElement', (jsxEl) => {
-							// @ts-expect-error no idea why this started being an issue suddenly 🤷‍♂️
 							if (jsxEl.name !== 'EpicVideo') return
-							// @ts-expect-error no idea why this started being an issue suddenly 🤷‍♂️
 							const urlAttr = jsxEl.attributes.find(
-								// @ts-expect-error no idea why this started being an issue suddenly 🤷‍♂️
 								(a) => a.type === 'mdxJsxAttribute' && a.name === 'url',
 							)
 							if (!urlAttr) return
@@ -227,12 +324,3 @@ async function queuedBundleMDX(...args: Parameters<typeof bundleMDX>) {
 	const result = await queue.add(() => bundleMDX(...args))
 	return result
 }
-
-// TODO: Fix these
-/*
-eslint
-	"@typescript-eslint/no-unsafe-assignment": "off",
-	"@typescript-eslint/no-unsafe-member-access": "off",
-	"@typescript-eslint/no-unnecessary-condition": "off",
-	"@typescript-eslint/no-unsafe-argument": "off",
-*/
