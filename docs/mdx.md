@@ -158,6 +158,17 @@ video.
 
 You can use [mermaid](https://mermaid.js.org/) to create diagrams.
 
+````
+```mermaid
+sequenceDiagram
+    Alice->>John: Hello John, how are you?
+    John-->>Alice: Very Great!!!!!
+    Alice->>John: See you later!!
+```
+````
+
+GitHub should render this:
+
 ```mermaid
 sequenceDiagram
     Alice->>John: Hello John, how are you?
