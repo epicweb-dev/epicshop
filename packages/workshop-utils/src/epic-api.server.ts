@@ -216,11 +216,11 @@ function preprocessEpicAIVideoAPIResult(result: any) {
 	})
 	const PostSchema = z.object({
 		fields: z.object({ title: z.string() }),
-		resources: z.array(z.any()),
+		resources: z.array(z.any()).nullable(),
 	})
 	const post = PostSchema.safeParse(result)
 	if (!post.success) return null
-	for (const resource of post.data.resources) {
+	for (const resource of post.data.resources ?? []) {
 		const videoResource = PostVideoResourceSchema.safeParse(resource)
 
 		if (videoResource.success) {
@@ -322,7 +322,7 @@ export async function getProgress({
 			(ReturnType<typeof getProgressForLesson> | { type: 'unknown' })
 	> = []
 
-	for (const resource of workshopData.resources) {
+	for (const resource of workshopData.resources ?? []) {
 		const lessons = resource._type === 'section' ? resource.lessons : [resource]
 		for (const lesson of lessons) {
 			const epicLessonSlug = lesson.slug
@@ -456,19 +456,21 @@ export async function updateProgress(
 }
 
 const ModuleSchema = z.object({
-	resources: z.array(
-		z.union([
-			z.object({
-				_type: z.literal('lesson'),
-				_id: z.string(),
-				slug: z.string(),
-			}),
-			z.object({
-				_type: z.literal('section'),
-				lessons: z.array(z.object({ _id: z.string(), slug: z.string() })),
-			}),
-		]),
-	),
+	resources: z
+		.array(
+			z.union([
+				z.object({
+					_type: z.literal('lesson'),
+					_id: z.string(),
+					slug: z.string(),
+				}),
+				z.object({
+					_type: z.literal('section'),
+					lessons: z.array(z.object({ _id: z.string(), slug: z.string() })),
+				}),
+			]),
+		)
+		.nullable(),
 })
 
 export async function getWorkshopData(
@@ -511,7 +513,8 @@ export async function getWorkshopData(
 				)
 				return { resources: [] }
 			}
-			return ModuleSchema.parse(await response.json())
+			const jsonResponse = await response.json()
+			return ModuleSchema.parse(jsonResponse)
 		},
 	})
 }

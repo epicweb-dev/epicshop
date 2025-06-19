@@ -6,6 +6,7 @@ import * as mdxBundler from 'mdx-bundler/client/index.js'
 import { useEffect, useMemo, useState } from 'react'
 import { DeferredEpicVideo, VideoEmbed } from '#app/components/epic-video.tsx'
 import { Icon } from '#app/components/icons.tsx'
+import { Mermaid } from '#app/components/mermaid.tsx'
 import { type loader } from '#app/routes/_app+/exercise+/$exerciseNumber_.$stepNumber.$type+/_layout.tsx'
 import { LaunchEditor } from '#app/routes/launch-editor.tsx'
 import { AnchorOrLink, Heading, cn } from './misc.tsx'
@@ -191,6 +192,7 @@ export const mdxComponents = {
 	LaunchEditor,
 	VideoEmbed,
 	EpicVideo: DeferredEpicVideo,
+	Mermaid,
 }
 
 /**

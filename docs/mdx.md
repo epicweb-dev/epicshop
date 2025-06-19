@@ -153,3 +153,20 @@ video.
 ```tsx
 <EpicVideo url="https://www.epicweb.dev/workshops/full-stack-foundations/styling/intro-to-full-stack-foundations-workshop" />
 ```
+
+## Mermaid
+
+You can use [mermaid](https://mermaid.js.org/) to create diagrams.
+
+```mermaid
+sequenceDiagram
+    Alice->>John: Hello John, how are you?
+    John-->>Alice: Very Great!!!!!
+    Alice->>John: See you later!!
+```
+
+This is rendered on the server using a Cloudflare Worker because I can't stand
+things not being rendered on the server and popping in after the page has
+loaded!
+
+If the connection is slow, the diagram will be rendered on the client.
