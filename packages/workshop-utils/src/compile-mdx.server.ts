@@ -46,7 +46,7 @@ function remarkMermaidCodeToSvg() {
 										{
 											type: 'mdxJsxAttribute',
 											name: 'className',
-											value: 'mermaid',
+											value: 'mermaid not-prose',
 										},
 										{
 											type: 'mdxJsxAttribute',
