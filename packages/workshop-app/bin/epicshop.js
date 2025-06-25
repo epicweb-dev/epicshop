@@ -6,8 +6,10 @@ import fs from 'fs'
 import http from 'http'
 import path from 'path'
 import { fileURLToPath } from 'url'
+import chalk from 'chalk'
 import closeWithGrace from 'close-with-grace'
 import getPort from 'get-port'
+import open from 'open'
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url))
 const isPublished = !fs.existsSync(path.join(__dirname, '..', 'app'))
@@ -60,9 +62,13 @@ async function start() {
 	let server = null
 	let child = null
 	let restarting = false
+	let childPort = null
 	let childPortPromiseResolve = null
-	const childPort = new Promise((resolve) => {
+	const childPortPromise = new Promise((resolve) => {
 		childPortPromiseResolve = resolve
+	}).then((port) => {
+		childPort = port
+		return port
 	})
 
 	function parsePortFromLine(line) {
@@ -74,7 +80,7 @@ async function start() {
 	}
 
 	async function waitForChildReady() {
-		const port = await childPort
+		const port = await childPortPromise
 		const url = `http://localhost:${port}/`
 		const maxAttempts = 40 // 20s max (500ms interval)
 		for (let i = 0; i < maxAttempts; i++) {
@@ -187,15 +193,13 @@ async function start() {
 		if (child.stdout) {
 			child.stdout.on('data', (data) => {
 				process.stdout.write(data)
-
-				if (childPortPromiseResolve) {
+				if (!childPort) {
 					const str = data.toString('utf8')
 					const lines = str.split(/\r?\n/)
 					for (const line of lines) {
 						const port = parsePortFromLine(line)
-						if (port && childPortPromiseResolve) {
-							childPortPromiseResolve(port)
-							childPortPromiseResolve = null
+						if (port) {
+							childPortPromiseResolve?.(port)
 						}
 					}
 				}
@@ -213,8 +217,8 @@ async function start() {
 
 	spawnChild()
 
-	// Listen for 'u' key to update and restart
-	if (process.stdin.isTTY) {
+	if (process.stdin.isTTY && !isDeployed) {
+		printSupportedKeys()
 		process.stdin.setRawMode(true)
 		process.stdin.resume()
 		process.stdin.setEncoding('utf8')
@@ -224,6 +228,38 @@ async function start() {
 					'\n🔄 Update requested from terminal. Running update and restarting app process...',
 				)
 				await doUpdateAndRestart()
+			} else if (key === 'o') {
+				if (childPort) {
+					console.log(
+						chalk.blue(
+							`\n🌐 Opening browser to http://localhost:${childPort} ...`,
+						),
+					)
+					await open(`http://localhost:${childPort}`)
+				} else {
+					console.log(chalk.red('Local server URL not available yet.'))
+				}
+			} else if (key === 'q') {
+				console.log(chalk.yellow('\n👋 Exiting...'))
+				await cleanupBeforeExit()
+				process.exit(0)
+			} else if (key === 'r') {
+				console.log(chalk.magenta('\n🔄 Restarting app process...'))
+				restarting = true
+				await killChild(child)
+				restarting = false
+				spawnChild()
+			} else if (key === 'k') {
+				const messages = [
+					chalk.bgCyan.black('🐨 Kody says: You are koalafied for greatness!'),
+					chalk.bgGreen.black('🐨 Kody says: Keep going, you are pawsome!'),
+					chalk.bgMagenta.white('🐨 Kody says: Eucalyptus up and code on!'),
+					chalk.bgYellow.black('🐨 Kody says: You can do it, fur real!'),
+					chalk.bgBlue.white('🐨 Kody says: Stay curious, stay cuddly!'),
+					chalk.bgRed.white("🐨 Kody says: Don't leaf your dreams behind!"),
+				]
+				const msg = messages[Math.floor(Math.random() * messages.length)]
+				console.log('\n' + msg + '\n')
 			} else if (key === '\u0003') {
 				// Ctrl+C
 				await cleanupBeforeExit()
@@ -250,4 +286,14 @@ async function killChild(child) {
 		child.once('exit', onExit)
 		child.kill()
 	})
+}
+
+function printSupportedKeys() {
+	console.log(chalk.bold.cyan('\nSupported keys:'))
+	console.log(`  ${chalk.green('u')} - update repo`)
+	console.log(`  ${chalk.blue('o')} - open browser`)
+	console.log(`  ${chalk.yellow('q')} - exit`)
+	console.log(`  ${chalk.magenta('r')} - restart`)
+	console.log(`  ${chalk.cyan('k')} - Kody the Koala encouragement 🐨`)
+	console.log(`  ${chalk.gray('Ctrl+C')} - exit`)
 }
