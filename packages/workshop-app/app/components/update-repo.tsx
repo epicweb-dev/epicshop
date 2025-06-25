@@ -8,12 +8,7 @@ export function UpdateToast({
 }: {
 	repoUpdates: Awaited<ReturnType<typeof checkForUpdatesCached>>
 }) {
-	// const { updatesAvailable, diffLink, remoteCommit } = repoUpdates
-	// FIXME: mock data
-	const updatesAvailable = true
-	const diffLink =
-		'https://github.com/epic-web/workshop-app/compare/main...update'
-	const remoteCommit = '1234567890'
+	const { updatesAvailable, diffLink, remoteCommit } = repoUpdates
 
 	// Track the in-progress toast id and update notification id
 	const inProgressToastId = useRef<ReturnType<typeof toast.loading> | null>(
