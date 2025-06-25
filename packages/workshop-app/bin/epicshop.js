@@ -4,6 +4,7 @@ import { spawn } from 'child_process'
 import crypto from 'crypto'
 import fs from 'fs'
 import http from 'http'
+import os from 'os'
 import path from 'path'
 import { fileURLToPath } from 'url'
 import chalk from 'chalk'
@@ -215,6 +216,10 @@ async function start() {
 		})
 	}
 
+	console.log(
+		`🐨 Welcome to the workshop, ${chalk.bold.italic(os.userInfo().username)}!`,
+	)
+
 	spawnChild()
 
 	if (process.stdin.isTTY && !isDeployed) {
@@ -290,10 +295,9 @@ async function killChild(child) {
 
 function printSupportedKeys() {
 	console.log(chalk.bold.cyan('\nSupported keys:'))
-	console.log(`  ${chalk.green('u')} - update repo`)
 	console.log(`  ${chalk.blue('o')} - open browser`)
-	console.log(`  ${chalk.yellow('q')} - exit`)
+	console.log(`  ${chalk.green('u')} - update repo`)
 	console.log(`  ${chalk.magenta('r')} - restart`)
-	console.log(`  ${chalk.cyan('k')} - Kody the Koala encouragement 🐨`)
-	console.log(`  ${chalk.gray('Ctrl+C')} - exit`)
+	console.log(`  ${chalk.cyan('k')} - Kody kudos 🐨`)
+	console.log(`  ${chalk.gray('q')} (or ${chalk.gray('Ctrl+C')}) - exit`)
 }
