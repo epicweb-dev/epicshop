@@ -70,8 +70,10 @@ export function UpdateToast({
 									},
 								},
 							)
-							if (res.ok) {
-								throw new Error('Request to update workshop failed')
+							if (!res.ok) {
+								throw new Error(
+									`Request to update workshop failed: ${res.statusText}`,
+								)
 							}
 							const data = await res.json().catch(() => ({}))
 							const schema = z.object({
