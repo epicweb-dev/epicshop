@@ -87,10 +87,24 @@ export function UpdateToast({
 							}
 							const { status, message } = parsed.data
 							if (status === 'ok') {
+								let reloaded = false
 								toast.success('Workshop updated', {
-									description: 'Refreshing the page...',
+									description:
+										'Reloading in 2 seconds... You can reload now if you prefer.',
+									duration: 2000,
+									action: {
+										label: 'Reload now',
+										onClick: () => {
+											reloaded = true
+											window.location.reload()
+										},
+									},
+									onAutoClose: () => {
+										if (!reloaded) {
+											window.location.reload()
+										}
+									},
 								})
-								window.location.reload()
 							} else {
 								toast.error('Failed to update workshop', {
 									description: message || 'Unknown error',
