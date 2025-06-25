@@ -226,17 +226,21 @@ async function start() {
 				await doUpdateAndRestart()
 			} else if (key === '\u0003') {
 				// Ctrl+C
-				await killChild(child)
-				if (server) await new Promise((resolve) => server.close(resolve))
+				await cleanupBeforeExit()
 				process.exit(0)
 			}
 		})
 	}
 
-	closeWithGrace(async () => {
+	async function cleanupBeforeExit() {
+		if (process.platform === 'win32' && child && child.pid) {
+			spawn('taskkill', ['/pid', child.pid, '/f', '/t'])
+		}
 		await killChild(child)
 		if (server) await new Promise((resolve) => server.close(resolve))
-	})
+	}
+
+	closeWithGrace(cleanupBeforeExit)
 }
 
 async function killChild(child) {
