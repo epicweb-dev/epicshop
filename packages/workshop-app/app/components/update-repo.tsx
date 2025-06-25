@@ -1,0 +1,121 @@
+import { type checkForUpdatesCached } from '@epic-web/workshop-utils/git.server'
+import { useEffect, useRef } from 'react'
+import { toast } from 'sonner'
+import { z } from 'zod'
+
+export function UpdateToast({
+	repoUpdates,
+}: {
+	repoUpdates: Awaited<ReturnType<typeof checkForUpdatesCached>>
+}) {
+	// const { updatesAvailable, diffLink, remoteCommit } = repoUpdates
+	// FIXME: mock data
+	const updatesAvailable = true
+	const diffLink =
+		'https://github.com/epic-web/workshop-app/compare/main...update'
+	const remoteCommit = '1234567890'
+
+	// Track the in-progress toast id and update notification id
+	const inProgressToastId = useRef<ReturnType<typeof toast.loading> | null>(
+		null,
+	)
+	const updateNotificationId = useRef<ReturnType<typeof toast.info> | null>(
+		null,
+	)
+	const updateInProgress = useRef(false)
+
+	useEffect(() => {
+		if (updatesAvailable && remoteCommit) {
+			const id = toast.info('New workshop updates available', {
+				duration: Infinity,
+				description: (
+					<div>
+						{`Get the latest updates by clicking the update button. `}
+						{diffLink ? (
+							<a
+								href={diffLink}
+								target="_blank"
+								rel="noreferrer"
+								className="text-xs underline"
+							>
+								View changes
+							</a>
+						) : null}
+					</div>
+				),
+				onDismiss: () => {
+					// No-op for now, could call a dismiss endpoint if needed
+				},
+				action: {
+					label: 'Update',
+					onClick: async () => {
+						// Dismiss the update notification immediately
+						if (updateNotificationId.current) {
+							toast.dismiss(updateNotificationId.current)
+							updateNotificationId.current = null
+						}
+						// Show in-progress toast
+						if (!inProgressToastId.current) {
+							inProgressToastId.current = toast.loading('Update in progress...')
+						}
+						if (updateInProgress.current) return
+						updateInProgress.current = true
+						try {
+							const { EPICSHOP_PARENT_PORT, EPICSHOP_PARENT_TOKEN } =
+								window.ENV || {}
+							if (!EPICSHOP_PARENT_PORT || !EPICSHOP_PARENT_TOKEN) {
+								throw new Error('Update API not available')
+							}
+							const res = await fetch(
+								`http://localhost:${EPICSHOP_PARENT_PORT}/__epicshop-restart`,
+								{
+									method: 'POST',
+									headers: {
+										'x-epicshop-token': EPICSHOP_PARENT_TOKEN,
+									},
+								},
+							)
+							if (res.ok) {
+								throw new Error('Request to update workshop failed')
+							}
+							const data = await res.json().catch(() => ({}))
+							const schema = z.object({
+								status: z.enum(['ok', 'error']),
+								message: z.string().optional(),
+							})
+							const parsed = schema.safeParse(data)
+							if (!parsed.success) {
+								console.error('Invalid response from update API', data)
+								throw new Error('Invalid response from update API')
+							}
+							const { status, message } = parsed.data
+							if (status === 'ok') {
+								toast.success('Workshop updated', {
+									description: 'Refreshing the page...',
+								})
+								window.location.reload()
+							} else {
+								toast.error('Failed to update workshop', {
+									description: message || 'Unknown error',
+								})
+							}
+						} catch (err) {
+							toast.error('Failed to update workshop', {
+								description: err instanceof Error ? err.message : String(err),
+							})
+						} finally {
+							updateInProgress.current = false
+							if (inProgressToastId.current) {
+								toast.dismiss(inProgressToastId.current)
+								inProgressToastId.current = null
+							}
+						}
+					},
+				},
+			})
+			updateNotificationId.current = id
+		}
+	}, [updatesAvailable, diffLink, remoteCommit])
+
+	return null
+}

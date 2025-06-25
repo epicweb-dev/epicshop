@@ -50,7 +50,7 @@ export async function loader({ request, params }: LoaderFunctionArgs) {
 						epicLiveReloadConnect({
 							onOpen: () => window.location.reload(),
 						}),
-				1000
+					1000
 				);
 			}
 		};

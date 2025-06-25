@@ -192,6 +192,104 @@ ${chalk.bold('Press Ctrl+C to stop')}
 	`.trim(),
 	)
 
+	if (
+		process.env.EPICSHOP_DEPLOYED !== 'true' &&
+		process.env.EPICSHOP_ENABLE_WATCHER === 'true'
+	) {
+		const watches = new Map<
+			string,
+			{ clients: Set<WebSocket>; chok: FSWatcher }
+		>()
+		const wss = new WebSocketServer({ noServer: true })
+
+		server.on('upgrade', (request, socket, head) => {
+			const url = new URL(request.url ?? '/', 'ws://localhost:0000')
+			if (url.pathname === '/__ws') {
+				const origin = request.headers.origin
+				const isValidOrigin =
+					origin &&
+					(origin === `http://localhost:${portToUse}` ||
+						origin === `http://127.0.0.1:${portToUse}` ||
+						(lanUrl && origin === lanUrl))
+
+				if (!isValidOrigin) {
+					socket.write('HTTP/1.1 403 Forbidden\r\n\r\n')
+					socket.destroy()
+					return
+				}
+
+				wss.handleUpgrade(request, socket, head, (ws) => {
+					const watchPaths = url.searchParams.getAll('watch')
+					if (watchPaths.length === 0) {
+						socket.destroy()
+						return
+					}
+					const key = watchPaths.join('&&')
+					let watcher = watches.get(key)
+					if (!watcher) {
+						const chok = chokidar.watch(watchPaths, {
+							cwd: getWorkshopRoot(),
+							ignoreInitial: true,
+							ignored: [
+								`/.git/`,
+								`/node_modules/`,
+								`/build/`,
+								`/server-build/`,
+								`/playwright-report/`,
+								`/dist/`,
+								`/.cache/`,
+							],
+						})
+						watcher = { clients: new Set(), chok }
+						watches.set(key, watcher)
+
+						let timer: NodeJS.Timeout | null = null
+						let fileChanges = new Set<string>()
+						watcher.chok.on('all', (event, filePath) => {
+							fileChanges.add(path.join(getWorkshopRoot(), filePath))
+							if (timer) return
+
+							timer = setTimeout(async () => {
+								for (const client of watcher?.clients ?? []) {
+									client.send(
+										JSON.stringify({
+											type: 'epicshop:file-change',
+											data: { event, filePaths: Array.from(fileChanges) },
+										}),
+									)
+								}
+								setModifiedTimesForAppDirs(...Array.from(fileChanges))
+
+								fileChanges = new Set()
+								timer = null
+							}, 50)
+						})
+					}
+					watcher.clients.add(ws)
+
+					ws.on('close', () => {
+						watcher?.clients.delete(ws)
+						if (watcher?.clients.size === 0) {
+							watches.delete(key)
+							void watcher.chok.close()
+						}
+					})
+				})
+			} else {
+				socket.destroy()
+			}
+		})
+
+		closeWithGrace(async () => {
+			await Promise.all([
+				...Array.from(watches.values()).map((watcher) => watcher.chok.close()),
+				new Promise((resolve, reject) => {
+					wss.close((e) => (e ? reject(e) : resolve('ok')))
+				}),
+			])
+		})
+	}
+
 	const hasUpdates = await hasUpdatesPromise
 	if (hasUpdates.updatesAvailable) {
 		const updateCommand = chalk.blue.bold.bgWhite(' npx update-epic-workshop ')
@@ -200,108 +298,12 @@ ${chalk.bold('Press Ctrl+C to stop')}
 			'\n',
 			`🎉  There are ${chalk.yellow(
 				'updates available',
-			)} for this workshop repository.  🎉\n\nTo get the updates, stop the server and run the following command:\n\n  ${updateCommand}\n\nTo view a diff, check:\n  ${updateLink}`,
+			)} for this workshop repository.  🎉\n\nTo get the updates, ${chalk.green.bold.bgWhite(
+				`press the "u" key`,
+			)} or stop the server and run the following command:\n\n  ${updateCommand}\n\nTo view a diff, check:\n  ${updateLink}`,
 		)
 	}
 })
-
-if (
-	process.env.EPICSHOP_DEPLOYED !== 'true' &&
-	process.env.EPICSHOP_ENABLE_WATCHER === 'true'
-) {
-	const watches = new Map<
-		string,
-		{ clients: Set<WebSocket>; chok: FSWatcher }
-	>()
-	const wss = new WebSocketServer({ noServer: true })
-
-	server.on('upgrade', (request, socket, head) => {
-		const url = new URL(request.url ?? '/', 'ws://localhost:0000')
-		if (url.pathname === '/__ws') {
-			const origin = request.headers.origin
-			const isValidOrigin =
-				origin &&
-				(origin === `http://localhost:${portToUse}` ||
-					origin === `http://127.0.0.1:${portToUse}` ||
-					(lanUrl && origin === lanUrl))
-
-			if (!isValidOrigin) {
-				socket.write('HTTP/1.1 403 Forbidden\r\n\r\n')
-				socket.destroy()
-				return
-			}
-
-			wss.handleUpgrade(request, socket, head, (ws) => {
-				const watchPaths = url.searchParams.getAll('watch')
-				if (watchPaths.length === 0) {
-					socket.destroy()
-					return
-				}
-				const key = watchPaths.join('&&')
-				let watcher = watches.get(key)
-				if (!watcher) {
-					const chok = chokidar.watch(watchPaths, {
-						cwd: getWorkshopRoot(),
-						ignoreInitial: true,
-						ignored: [
-							`/.git/`,
-							`/node_modules/`,
-							`/build/`,
-							`/server-build/`,
-							`/playwright-report/`,
-							`/dist/`,
-							`/.cache/`,
-						],
-					})
-					watcher = { clients: new Set(), chok }
-					watches.set(key, watcher)
-
-					let timer: NodeJS.Timeout | null = null
-					let fileChanges = new Set<string>()
-					watcher.chok.on('all', (event, filePath) => {
-						fileChanges.add(path.join(getWorkshopRoot(), filePath))
-						if (timer) return
-
-						timer = setTimeout(async () => {
-							for (const client of watcher?.clients ?? []) {
-								client.send(
-									JSON.stringify({
-										type: 'epicshop:file-change',
-										data: { event, filePaths: Array.from(fileChanges) },
-									}),
-								)
-							}
-							setModifiedTimesForAppDirs(...Array.from(fileChanges))
-
-							fileChanges = new Set()
-							timer = null
-						}, 50)
-					})
-				}
-				watcher.clients.add(ws)
-
-				ws.on('close', () => {
-					watcher?.clients.delete(ws)
-					if (watcher?.clients.size === 0) {
-						watches.delete(key)
-						void watcher.chok.close()
-					}
-				})
-			})
-		} else {
-			socket.destroy()
-		}
-	})
-
-	closeWithGrace(async () => {
-		await Promise.all([
-			...Array.from(watches.values()).map((watcher) => watcher.chok.close()),
-			new Promise((resolve, reject) => {
-				wss.close((e) => (e ? reject(e) : resolve('ok')))
-			}),
-		])
-	})
-}
 
 closeWithGrace(() => {
 	return new Promise((resolve, reject) => {

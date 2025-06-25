@@ -8,6 +8,8 @@ const schema = z.object({
 	EPICSHOP_GITHUB_ROOT: z.string(),
 	EPICSHOP_CONTEXT_CWD: z.string(),
 	EPICSHOP_APP_VERSION: z.string().optional(),
+	EPICSHOP_PARENT_PORT: z.string().optional(),
+	EPICSHOP_PARENT_TOKEN: z.string().optional(),
 })
 
 declare global {
@@ -48,6 +50,8 @@ export function getEnv() {
 			process.env.EPICSHOP_DEPLOYED === 'true' ||
 			process.env.EPICSHOP_DEPLOYED === '1',
 		EPICSHOP_APP_VERSION: process.env.EPICSHOP_APP_VERSION,
+		EPICSHOP_PARENT_PORT: process.env.EPICSHOP_PARENT_PORT,
+		EPICSHOP_PARENT_TOKEN: process.env.EPICSHOP_PARENT_TOKEN,
 	}
 }
 
