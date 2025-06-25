@@ -256,14 +256,30 @@ async function start() {
 				spawnChild()
 			} else if (key === 'k') {
 				const messages = [
-					chalk.bgCyan.black('🐨 Kody says: You are koalafied for greatness!'),
-					chalk.bgGreen.black('🐨 Kody says: Keep going, you are pawsome!'),
-					chalk.bgMagenta.white('🐨 Kody says: Eucalyptus up and code on!'),
-					chalk.bgYellow.black('🐨 Kody says: You can do it, fur real!'),
-					chalk.bgBlue.white('🐨 Kody says: Stay curious, stay cuddly!'),
-					chalk.bgRed.white("🐨 Kody says: Don't leaf your dreams behind!"),
+					'🐨 Kody says: You are koalafied for greatness!',
+					'🐨 Kody says: Keep going, you are pawsome!',
+					'🐨 Kody says: Eucalyptus up and code on!',
+					'🐨 Kody says: You can do it, fur real!',
+					'🐨 Kody says: Stay curious, stay cuddly!',
+					"🐨 Kody says: Don't leaf your dreams behind!",
+					'🐨 Kody says: Time to branch out and grow!',
+					'🐨 Kody says: You are tree-mendous at this!',
+					'🐨 Kody says: Leaf your worries behind!',
+					'🐨 Kody says: You are absolutely koala-fied!',
+					'🐨 Kody says: Keep climbing, you are doing great!',
 				]
-				const msg = messages[Math.floor(Math.random() * messages.length)]
+				const colors = [
+					chalk.bgCyan.black,
+					chalk.bgGreen.black,
+					chalk.bgMagenta.white,
+					chalk.bgYellow.black,
+					chalk.bgBlue.white,
+					chalk.bgRed.white,
+				]
+				const randomMessage =
+					messages[Math.floor(Math.random() * messages.length)]
+				const randomColor = colors[Math.floor(Math.random() * colors.length)]
+				const msg = randomColor(randomMessage)
 				console.log('\n' + msg + '\n')
 			} else if (key === '\u0003') {
 				// Ctrl+C
