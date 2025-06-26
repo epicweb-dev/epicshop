@@ -340,7 +340,6 @@ export function ProgressToggle({
 
 			<motion.button
 				ref={buttonRef}
-				// @ts-expect-error framer-motion + latest typescript types has issues
 				onClick={() => {
 					setStartAnimation(!optimisticCompleted)
 				}}
@@ -354,7 +353,6 @@ export function ProgressToggle({
 				{startAnimation ? (
 					<motion.div
 						ref={animationRef}
-						// @ts-expect-error framer-motion + latest typescript types has issues
 						className="absolute right-0 h-20 w-20 rounded-full bg-foreground/20"
 						initial={{
 							scale: 0.5,
@@ -372,7 +370,6 @@ export function ProgressToggle({
 				) : null}
 				<motion.div
 					aria-hidden
-					// @ts-expect-error framer-motion + latest typescript types has issues
 					className={clsx(
 						'relative flex h-8 w-8 items-center justify-center overflow-hidden rounded-full border transition',
 						{
