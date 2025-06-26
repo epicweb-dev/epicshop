@@ -310,10 +310,12 @@ async function killChild(child) {
 }
 
 function printSupportedKeys() {
-	console.log(chalk.bold.cyan('\nSupported keys:'))
-	console.log(`  ${chalk.blue('o')} - open browser`)
-	console.log(`  ${chalk.green('u')} - update repo`)
-	console.log(`  ${chalk.magenta('r')} - restart`)
-	console.log(`  ${chalk.cyan('k')} - Kody kudos 🐨`)
-	console.log(`  ${chalk.gray('q')} (or ${chalk.gray('Ctrl+C')}) - exit`)
+	console.log(`
+${chalk.bold.cyan('Supported keys:')}
+  ${chalk.blue('o')} - open browser
+  ${chalk.green('u')} - update repo
+  ${chalk.magenta('r')} - restart
+  ${chalk.cyan('k')} - Kody kudos 🐨
+  ${chalk.gray('q')} (or ${chalk.gray('Ctrl+C')}) - exit
+`)
 }
