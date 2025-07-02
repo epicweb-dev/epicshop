@@ -11,7 +11,7 @@ import { type loader } from '../_layout.tsx'
 function TouchedFiles({
 	diffFilesPromise,
 }: {
-	diffFilesPromise: any<typeof loader>['diffFiles']
+	diffFilesPromise: Awaited<ReturnType<typeof loader>>['diffFiles']
 }) {
 	const data = useLoaderData<typeof loader>()
 

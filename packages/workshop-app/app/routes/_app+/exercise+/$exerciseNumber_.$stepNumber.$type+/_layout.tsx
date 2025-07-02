@@ -27,7 +27,6 @@ import {
     type HeadersFunction,
     type LoaderFunctionArgs,
     type MetaFunction,
-    type any,
 } from 'react-router';
 import { Link, Outlet, useLoaderData } from 'react-router';
 import slugify from '@sindresorhus/slugify'
@@ -46,7 +45,7 @@ import { StepMdx } from './__shared/step-mdx.tsx'
 import TouchedFiles from './__shared/touched-files.tsx'
 
 function pageTitle(
-	data: any<typeof loader> | undefined,
+	data: Awaited<ReturnType<typeof loader>> | undefined,
 	workshopTitle?: string,
 ) {
 	const exerciseNumber =

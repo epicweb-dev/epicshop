@@ -29,7 +29,7 @@
     "build": "run-p --print-label --print-name build:*",
     "build:remix": "react-router build --sourcemapClient --sourcemapServer",
     "build:server": "tsx ./other/build-dir.ts server",
-    "dev": "react-router dev -c \"node ./server/dev-server.js\" --manual",
+    "dev": "node ./server/dev-server.js",
     "format": "prettier --write .",
     "lint": "eslint --cache --cache-location ./node_modules/.cache/eslint .",
     "start": "cross-env NODE_ENV=production node ./start.js",

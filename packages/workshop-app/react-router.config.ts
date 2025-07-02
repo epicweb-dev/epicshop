@@ -3,7 +3,6 @@ import { flatRoutes } from 'remix-flat-routes'
 
 export default {
 	future: {
-		v3_throwAbortReason: true,
 		unstable_optimizeDeps: true,
 		unstable_lazyRouteDiscovery: true,
 		unstable_singleFetch: true,

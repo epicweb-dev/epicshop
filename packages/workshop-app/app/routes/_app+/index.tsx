@@ -15,7 +15,6 @@ import {
     data,
     type HeadersFunction,
     type LoaderFunctionArgs,
-    type any,
 } from 'react-router';
 import { Link, useLoaderData } from 'react-router';
 import slugify from '@sindresorhus/slugify'
@@ -80,7 +79,7 @@ export const headers: HeadersFunction = ({ loaderHeaders, parentHeaders }) => {
 function ExerciseListItem({
 	exercise,
 }: {
-	exercise: any<typeof loader>['exercises'][number]
+	exercise: Awaited<ReturnType<typeof loader>>['exercises'][number]
 }) {
 	const progressClassName = useExerciseProgressClassName(
 		exercise.exerciseNumber,
