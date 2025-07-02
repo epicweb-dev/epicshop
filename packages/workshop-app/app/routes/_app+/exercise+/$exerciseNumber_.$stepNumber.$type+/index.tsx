@@ -18,16 +18,19 @@ import {
 	makeTimings,
 } from '@epic-web/workshop-utils/timing.server'
 import * as Tabs from '@radix-ui/react-tabs'
-import {
-    data,
-    redirect,
-    type HeadersFunction,
-    type LoaderFunctionArgs,
-} from 'react-router';
-import { Link, useLoaderData, useNavigate, useSearchParams } from 'react-router';
 import { clsx } from 'clsx'
 import * as React from 'react'
 import { useRef } from 'react'
+import {
+	Link,
+	useLoaderData,
+	useNavigate,
+	useSearchParams,
+	data,
+	redirect,
+	type HeadersFunction,
+	type LoaderFunctionArgs,
+} from 'react-router'
 import { Diff } from '#app/components/diff.tsx'
 import { GeneralErrorBoundary } from '#app/components/error-boundary.tsx'
 import { type InBrowserBrowserRef } from '#app/components/in-browser-browser.tsx'
@@ -281,7 +284,7 @@ export default function ExercisePartRoute() {
 	function handleDiffTabClick(event: React.MouseEvent<HTMLAnchorElement>) {
 		if (event.altKey && !event.ctrlKey && !event.shiftKey && !event.metaKey) {
 			event.preventDefault()
-			navigate(altDiffUrl)
+			void navigate(altDiffUrl)
 		}
 	}
 

@@ -1,7 +1,7 @@
 import { muteNotification } from '@epic-web/workshop-utils/db.server'
 import { type getUnmutedNotifications } from '@epic-web/workshop-utils/notifications.server'
-import { data, type ActionFunctionArgs, useFetcher } from 'react-router';
 import { useEffect, useRef } from 'react'
+import { data, type ActionFunctionArgs, useFetcher } from 'react-router'
 import { toast } from 'sonner'
 
 export async function action({ request }: ActionFunctionArgs) {
@@ -52,7 +52,7 @@ export function Notifications({
 				action: {
 					label: 'Dismiss',
 					onClick: () => {
-						fetcherRef.current.submit(
+						void fetcherRef.current.submit(
 							{ intent: 'mute', id: notification.id },
 							{ method: 'post', action: '/admin/notifications' },
 						)

@@ -1,8 +1,8 @@
-import { useRouteLoaderData } from 'react-router';
-import { type loader as rootLoader } from '#app/root.tsx'
+import { useRouteLoaderData } from 'react-router'
+import { type RootLoaderData } from '#app/root.tsx'
 
 export function useWorkshopConfig() {
-	const data = useRouteLoaderData<typeof rootLoader>('root')
+	const data = useRouteLoaderData('root') as RootLoaderData
 	if (!data?.workshopConfig) {
 		throw new Error('useWorkshopConfig requires a workshopConfig.')
 	}

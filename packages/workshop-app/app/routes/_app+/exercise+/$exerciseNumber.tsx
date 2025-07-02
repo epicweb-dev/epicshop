@@ -13,30 +13,28 @@ import {
 	makeTimings,
 	time,
 } from '@epic-web/workshop-utils/timing.server'
-import {
-    data,
-    type HeadersFunction,
-    type LoaderFunctionArgs,
-    type MetaFunction,
-} from 'react-router';
-import { Link, isRouteErrorResponse, useLoaderData, useRouteError } from 'react-router';
 import slugify from '@sindresorhus/slugify'
+import {
+	data,
+	type HeadersFunction,
+	Link,
+	isRouteErrorResponse,
+	useRouteError,
+} from 'react-router'
 import { EpicVideoInfoProvider } from '#app/components/epic-video.tsx'
 import { useRevalidationWS } from '#app/components/revalidation-ws.js'
-import { type loader as rootLoader } from '#app/root.tsx'
+import { type RootLoaderData } from '#app/root.tsx'
 import { EditFileOnGitHub } from '#app/routes/launch-editor.tsx'
 import { ProgressToggle } from '#app/routes/progress.tsx'
 import { Mdx } from '#app/utils/mdx.tsx'
 import { getErrorMessage } from '#app/utils/misc.tsx'
 import { getSeoMetaTags } from '#app/utils/seo.js'
+import { type Route } from './+types/$exerciseNumber.tsx'
 
-export const meta: MetaFunction<typeof loader, { root: typeof rootLoader }> = ({
-	data,
-	matches,
-}) => {
+export const meta: Route.MetaFunction = ({ data, matches }) => {
 	const number = data?.exercise.exerciseNumber.toString().padStart(2, '0')
 
-	const rootData = matches.find((m) => m.id === 'root')?.data
+	const rootData = matches.find((m) => m?.id === 'root')?.data as RootLoaderData
 	if (!data || !rootData) return [{ title: '🦉 | Error' }]
 
 	return getSeoMetaTags({
@@ -49,7 +47,7 @@ export const meta: MetaFunction<typeof loader, { root: typeof rootLoader }> = ({
 	})
 }
 
-export async function loader({ request, params }: LoaderFunctionArgs) {
+export async function loader({ request, params }: Route.LoaderArgs) {
 	const timings = makeTimings('exerciseNumberLoader')
 	invariantResponse(params.exerciseNumber, 'exerciseNumber is required')
 	const { title: workshopTitle } = getWorkshopConfig()
@@ -115,8 +113,9 @@ export const headers: HeadersFunction = ({ loaderHeaders, parentHeaders }) => {
 // we'll render the title ourselves thank you
 const mdxComponents = { h1: () => null }
 
-export default function ExerciseNumberRoute() {
-	const data = useLoaderData<typeof loader>()
+export default function ExerciseNumberRoute({
+	loaderData: data,
+}: Route.ComponentProps) {
 	useRevalidationWS({
 		watchPaths: [data.exerciseReadme.file],
 	})

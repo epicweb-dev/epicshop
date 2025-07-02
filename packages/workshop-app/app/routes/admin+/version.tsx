@@ -9,8 +9,7 @@ import {
 } from '@epic-web/workshop-utils/timing.server'
 import { dayjs } from '@epic-web/workshop-utils/utils.server'
 import { type SEOHandle } from '@nasa-gcn/remix-seo'
-import { type HeadersFunction } from 'react-router';
-import { useLoaderData, data } from 'react-router';
+import { type HeadersFunction, useLoaderData, data  } from 'react-router';
 import { useWorkshopConfig } from '#app/components/workshop-config.tsx'
 import { getErrorMessage } from '#app/utils/misc.tsx'
 

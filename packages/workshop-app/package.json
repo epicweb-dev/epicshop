@@ -27,7 +27,7 @@
   },
   "scripts": {
     "build": "run-p --print-label --print-name build:*",
-    "build:remix": "react-router build --sourcemapClient --sourcemapServer",
+    "build:app": "react-router build --sourcemapClient --sourcemapServer",
     "build:server": "tsx ./other/build-dir.ts server",
     "dev": "node ./server/dev-server.js",
     "format": "prettier --write .",
@@ -43,7 +43,7 @@
     "@epic-web/client-hints": "^1.3.5",
     "@epic-web/invariant": "^1.0.0",
     "@epic-web/remember": "^1.1.0",
-    "@epic-web/restore-scroll": "^1.1.1",
+    "@epic-web/restore-scroll": "^2.0.0",
     "@epic-web/workshop-presence": "file:../workshop-presence",
     "@epic-web/workshop-utils": "file:../workshop-utils",
     "@mdx-js/mdx": "^3.0.1",
@@ -57,9 +57,9 @@
     "@radix-ui/react-tabs": "^1.1.1",
     "@radix-ui/react-toast": "^1.2.2",
     "@radix-ui/react-tooltip": "^1.1.3",
-
     "@react-router/express": "^7.0.0",
     "@react-router/node": "^7.0.0",
+    "@react-router/remix-routes-option-adapter": "^7.6.3",
     "@resvg/resvg-js": "^2.6.2",
     "@sindresorhus/slugify": "^2.2.1",
     "address": "^2.0.3",

@@ -6,8 +6,7 @@ import {
 	getServerTimeHeader,
 	makeTimings,
 } from '@epic-web/workshop-utils/timing.server'
-import { data, type HeadersFunction, type LoaderFunctionArgs } from 'react-router';
-import { Outlet, isRouteErrorResponse, useRouteError } from 'react-router';
+import { data, type HeadersFunction, type LoaderFunctionArgs, Outlet, isRouteErrorResponse, useRouteError  } from 'react-router';
 import { getErrorMessage } from '#app/utils/misc.tsx'
 
 export async function loader({ request, params }: LoaderFunctionArgs) {

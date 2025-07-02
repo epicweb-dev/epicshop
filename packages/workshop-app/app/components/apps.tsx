@@ -1,8 +1,8 @@
-import { useRouteLoaderData } from 'react-router';
-import { type loader as rootLoader } from '#app/root.tsx'
+import { useRouteLoaderData } from 'react-router'
+import { type RootLoaderData } from '#app/root.tsx'
 
 export function useApps() {
-	const data = useRouteLoaderData<typeof rootLoader>('root')
+	const data = useRouteLoaderData('root') as RootLoaderData
 	if (!data) {
 		throw new Error('useApps requires a data object from the root loader')
 	}

@@ -11,7 +11,6 @@ import {
 import { checkForUpdatesCached } from '@epic-web/workshop-utils/git.server'
 import { checkConnectionCached } from '@epic-web/workshop-utils/utils.server'
 import { createRequestHandler } from '@react-router/express';
-import { type ServerBuild } from 'react-router';
 import { ip as ipAddress } from 'address'
 import chalk from 'chalk'
 import chokidar, { type FSWatcher } from 'chokidar'
@@ -20,6 +19,7 @@ import compression from 'compression'
 import express from 'express'
 import getPort, { portNumbers } from 'get-port'
 import morgan from 'morgan'
+import { type ServerBuild } from 'react-router';
 import sourceMapSupport from 'source-map-support'
 import { type WebSocket, WebSocketServer } from 'ws'
 

@@ -1,11 +1,11 @@
-import { Await, Link, useLoaderData } from 'react-router';
 import * as React from 'react'
+import { Await, Link, useLoaderData } from 'react-router'
 import { Icon } from '#app/components/icons.tsx'
 import { Loading } from '#app/components/loading.tsx'
 import { DiscordCTA, useDiscordCTALink } from '#app/routes/_app+/discord.tsx'
 import { useAltDown } from '#app/utils/misc.tsx'
 import { useIsOnline } from '#app/utils/online.ts'
-import { type loader } from '../index.tsx'
+import { type Route } from '../+types/index.tsx'
 
 export function DiscordChat() {
 	return (
@@ -21,14 +21,14 @@ export function DiscordChat() {
 }
 
 function DiscordPosts() {
-	const data = useLoaderData<typeof loader>()
+	const data = useLoaderData<Route.ComponentProps['loaderData']>()
 	const ctaLink = useDiscordCTALink()
 	const altDown = useAltDown()
 	const isOnline = useIsOnline()
 	if (!isOnline) {
 		return (
 			<div className="flex h-full flex-col items-center justify-between">
-				<div className="text-foreground-destructive flex h-full w-full flex-col items-center justify-center">
+				<div className="flex h-full w-full flex-col items-center justify-center text-foreground-destructive">
 					<Icon name="WifiNoConnection" size="xl">
 						Unable to load discord messages when offline
 					</Icon>
@@ -37,8 +37,8 @@ function DiscordPosts() {
 		)
 	}
 	return (
-        (<div className="flex h-full flex-col items-center justify-between">
-            <React.Suspense
+		<div className="flex h-full flex-col items-center justify-between">
+			<React.Suspense
 				fallback={
 					<div className="flex h-full w-full flex-col items-center justify-center">
 						<Loading>Loading Discord Posts</Loading>
@@ -67,7 +67,7 @@ function DiscordPosts() {
 					)}
 				</Await>
 			</React.Suspense>
-            <div>
+			<div>
 				<Link
 					to={
 						altDown && !ctaLink.includes('oauth')
@@ -93,20 +93,22 @@ function DiscordPosts() {
 					Create Post <Icon name="ExternalLink" />
 				</Link>
 			</div>
-        </div>)
-    );
+		</div>
+	)
 }
 
 function DiscordPost({
 	thread,
 }: {
-	thread: Awaited<ReturnType<typeof loader>['discordPostsPromise']>[number]
+	thread: Awaited<
+		Route.ComponentProps['loaderData']['discordPostsPromise']
+	>[number]
 }) {
 	const reactionsWithCounts = thread.reactions.filter((r) => r.count)
 
 	return (
-        (<div>
-            <div className="flex flex-col gap-2 p-4">
+		<div>
+			<div className="flex flex-col gap-2 p-4">
 				<div className="flex gap-4">
 					<div className="flex flex-col gap-1">
 						{thread.tags.length ? (
@@ -198,8 +200,8 @@ function DiscordPost({
 					</span>
 				</div>
 			</div>
-        </div>)
-    );
+		</div>
+	)
 }
 
 function Emoji({ name, url }: { name?: string; url?: string }) {

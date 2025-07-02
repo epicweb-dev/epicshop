@@ -3,8 +3,7 @@ import {
 	combineServerTimings,
 	makeTimings,
 } from '@epic-web/workshop-utils/timing.server'
-import { data, type HeadersFunction, type LoaderFunctionArgs } from 'react-router';
-import { useLoaderData } from 'react-router';
+import { data, type HeadersFunction, type LoaderFunctionArgs, useLoaderData  } from 'react-router';
 import { TestUI } from './__shared/tests.tsx'
 
 export async function loader({ request, params }: LoaderFunctionArgs) {

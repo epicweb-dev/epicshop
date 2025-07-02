@@ -2,11 +2,11 @@ import {
 	getPreferences,
 	setPreferences,
 } from '@epic-web/workshop-utils/db.server'
-import { Form, useNavigation, useRouteLoaderData } from 'react-router';
+import { Form, useNavigation, useRouteLoaderData } from 'react-router'
 import { Button } from '#app/components/button.tsx'
 import { Icon } from '#app/components/icons.tsx'
 import { SimpleTooltip } from '#app/components/ui/tooltip.tsx'
-import { type loader as rootLoader } from '#app/root.tsx'
+import { type RootLoaderData } from '#app/root.tsx'
 import { ensureUndeployed } from '#app/utils/misc.tsx'
 import { redirectWithToast } from '#app/utils/toast.server.ts'
 
@@ -44,7 +44,7 @@ export async function action({ request }: { request: Request }) {
 }
 
 export default function AccountSettings() {
-	const data = useRouteLoaderData<typeof rootLoader>('root')
+	const data = useRouteLoaderData('root') as RootLoaderData
 	const playerPreferences = data?.preferences?.player
 	const fontSizePreference = data?.preferences?.fontSize
 	const presencePreferences = data?.preferences?.presence

@@ -1,13 +1,15 @@
 import { getFormProps, useForm } from '@conform-to/react'
 import { parseWithZod } from '@conform-to/zod'
-import { useFetcher, useFetchers } from 'react-router';
+import { data, useFetcher, useFetchers } from 'react-router'
 import { z } from 'zod'
 import { Icon } from '#app/components/icons.tsx'
 import { SimpleTooltip } from '#app/components/ui/tooltip.tsx'
 import { useHints } from '#app/utils/client-hints.tsx'
 import { ErrorList } from '#app/utils/forms.tsx'
-import { usePERedirectInput } from '#app/utils/pe.js'
+import { dataWithPE, usePERedirectInput } from '#app/utils/pe.js'
 import { useRequestInfo } from '#app/utils/request-info.ts'
+import { type Route } from './+types/index.tsx'
+import { setTheme } from './theme-session.server.ts'
 
 const ROUTE_PATH = '/theme'
 
@@ -15,12 +17,29 @@ const ThemeFormSchema = z.object({
 	theme: z.enum(['system', 'light', 'dark']),
 })
 
-// Action moved to /theme route to avoid server-only imports
+export async function action({ request }: Route.ActionArgs) {
+	const formData = await request.formData()
+	const submission = parseWithZod(formData, {
+		schema: ThemeFormSchema,
+	})
+	if (submission.status !== 'success') {
+		return data(submission.reply(), {
+			// You can also use the status to determine the HTTP status code
+			status: submission.status === 'error' ? 400 : 200,
+		})
+	}
+	const { theme } = submission.value
+
+	const responseInit = {
+		headers: { 'set-cookie': setTheme(theme) },
+	}
+	return dataWithPE(formData, submission.reply(), responseInit)
+}
 
 export function ThemeSwitch() {
 	const requestInfo = useRequestInfo()
 	const peRedirectInput = usePERedirectInput()
-	const fetcher = useFetcher<typeof action>()
+	const fetcher = useFetcher<Route.ComponentProps['actionData']>()
 
 	const [form] = useForm({
 		lastResult: fetcher.data,

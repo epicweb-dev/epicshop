@@ -1,17 +1,14 @@
 import { type SEOHandle } from '@nasa-gcn/remix-seo'
-import { type LoaderFunction, type MetaFunction } from 'react-router';
-import { Link, Outlet } from 'react-router';
-import { type loader as rootLoader } from '#app/root.tsx'
+import { Link, Outlet } from 'react-router'
+import { type RootLoaderData } from '#app/root.tsx'
+import { type Route } from './+types/_layout.tsx'
 
 export const handle: SEOHandle = {
 	getSitemapEntries: () => null,
 }
 
-export const meta: MetaFunction<
-	LoaderFunction,
-	{ root: typeof rootLoader }
-> = ({ matches }) => {
-	const rootData = matches.find((m) => m.id === 'root')?.data
+export const meta: Route.MetaFunction = ({ matches }) => {
+	const rootData = matches.find((m) => m?.id === 'root')?.data as RootLoaderData
 	return [{ title: `👷 | ${rootData?.workshopTitle}` }]
 }
 

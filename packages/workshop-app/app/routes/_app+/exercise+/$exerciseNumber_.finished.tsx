@@ -15,21 +15,15 @@ import {
 	getServerTimeHeader,
 	makeTimings,
 } from '@epic-web/workshop-utils/timing.server'
-import {
-    data,
-    type HeadersFunction,
-    type LoaderFunctionArgs,
-    type MetaFunction,
-} from 'react-router';
-import { Link, useLoaderData } from 'react-router';
 import slugify from '@sindresorhus/slugify'
 import * as React from 'react'
+import { data, type HeadersFunction, Link } from 'react-router'
 import { EpicVideoInfoProvider } from '#app/components/epic-video.tsx'
 import { Icon } from '#app/components/icons.tsx'
 import { Loading } from '#app/components/loading.tsx'
 import { NavChevrons } from '#app/components/nav-chevrons.tsx'
 import { useRevalidationWS } from '#app/components/revalidation-ws.js'
-import { type loader as rootLoader } from '#app/root.tsx'
+import { type RootLoaderData } from '#app/root.tsx'
 import { EditFileOnGitHub } from '#app/routes/launch-editor.tsx'
 import { ProgressToggle } from '#app/routes/progress.tsx'
 import { useTheme } from '#app/routes/theme/index.tsx'
@@ -37,14 +31,12 @@ import { Mdx } from '#app/utils/mdx.tsx'
 import { cn } from '#app/utils/misc.tsx'
 import { useIsOnline } from '#app/utils/online.ts'
 import { getSeoMetaTags } from '#app/utils/seo.js'
+import { type Route } from './+types/$exerciseNumber_.finished.tsx'
 
-export const meta: MetaFunction<typeof loader, { root: typeof rootLoader }> = ({
-	data,
-	matches,
-}) => {
+export const meta: Route.MetaFunction = ({ data, matches }) => {
 	const number = data?.exercise.exerciseNumber.toString().padStart(2, '0')
 
-	const rootData = matches.find((m) => m.id === 'root')?.data
+	const rootData = matches.find((m) => m?.id === 'root')?.data as RootLoaderData
 	if (!data || !rootData) return [{ title: '🦉 | Error' }]
 
 	return getSeoMetaTags({
@@ -57,7 +49,7 @@ export const meta: MetaFunction<typeof loader, { root: typeof rootLoader }> = ({
 	})
 }
 
-export async function loader({ request, params }: LoaderFunctionArgs) {
+export async function loader({ request, params }: Route.LoaderArgs) {
 	const timings = makeTimings('exerciseFinishedLoader')
 	invariantResponse(params.exerciseNumber, 'exerciseNumber is required')
 	const exercise = await getExercise(params.exerciseNumber, {
@@ -141,8 +133,9 @@ export const headers: HeadersFunction = ({ loaderHeaders, parentHeaders }) => {
 }
 
 const mdxComponents = { h1: () => null }
-export default function ExerciseFinished() {
-	const data = useLoaderData<typeof loader>()
+export default function ExerciseFinished({
+	loaderData: data,
+}: Route.ComponentProps) {
 	const exerciseNumber = data.exercise.exerciseNumber
 		.toString()
 		.padStart(2, '0')
@@ -152,8 +145,8 @@ export default function ExerciseFinished() {
 	})
 
 	return (
-        (<div className="flex max-w-full flex-grow flex-col">
-            <main className="flex flex-grow flex-col sm:grid sm:h-full sm:min-h-[800px] sm:grid-cols-1 sm:grid-rows-2 md:min-h-[unset] lg:grid-cols-2 lg:grid-rows-1">
+		<div className="flex max-w-full flex-grow flex-col">
+			<main className="flex flex-grow flex-col sm:grid sm:h-full sm:min-h-[800px] sm:grid-cols-1 sm:grid-rows-2 md:min-h-[unset] lg:grid-cols-2 lg:grid-rows-1">
 				<div className="relative flex flex-col sm:col-span-1 sm:row-span-1 sm:h-full lg:border-r">
 					<h1 className="h-14 border-b pl-10 pr-5 text-sm font-medium leading-tight">
 						<div className="flex h-14 flex-wrap items-center justify-between gap-x-2 py-2">
@@ -184,7 +177,7 @@ export default function ExerciseFinished() {
 							</EpicVideoInfoProvider>
 						) : (
 							// TODO: render a random dad joke...
-							('No finished instructions yet...')
+							'No finished instructions yet...'
 						)}
 					</article>
 					<ElementScrollRestoration elementQuery={`#${data.articleId}`} />
@@ -207,8 +200,8 @@ export default function ExerciseFinished() {
 					exerciseTitle={data.exercise.title}
 				/>
 			</main>
-        </div>)
-    );
+		</div>
+	)
 }
 
 function Survey({

@@ -5,19 +5,25 @@ import {
 	updateProgress,
 	type Progress,
 } from '@epic-web/workshop-utils/epic-api.server'
-import { type ActionFunctionArgs } from 'react-router';
-import { useFetcher, useFetchers, useLocation, useNavigation, useRouteLoaderData } from 'react-router';
 import clsx from 'clsx'
 import { motion } from 'framer-motion'
 import * as React from 'react'
-import { type loader as rootLoader } from '#app/root.tsx'
+import {
+	useFetcher,
+	useFetchers,
+	useLocation,
+	useNavigation,
+	useRouteLoaderData,
+	type ActionFunctionArgs,
+} from 'react-router'
+import { type RootLoaderData } from '#app/root.tsx'
 import { createConfettiHeaders } from '#app/utils/confetti.server.ts'
 import { combineHeaders, ensureUndeployed } from '#app/utils/misc.tsx'
 import { dataWithPE, usePERedirectInput } from '#app/utils/pe.js'
 import { createToastHeaders } from '#app/utils/toast.server.ts'
 
 export function useEpicProgress() {
-	const data = useRouteLoaderData<typeof rootLoader>('root')
+	const data = useRouteLoaderData('root') as RootLoaderData
 	const progressFetcher = useFetchers().find(
 		(f) => f.formAction === '/progress' && f.formData?.has('complete'),
 	)

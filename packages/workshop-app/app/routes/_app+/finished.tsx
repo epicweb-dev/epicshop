@@ -12,21 +12,15 @@ import {
 	time,
 } from '@epic-web/workshop-utils/timing.server'
 import { type SEOHandle } from '@nasa-gcn/remix-seo'
-import {
-    data,
-    type HeadersFunction,
-    type LoaderFunctionArgs,
-    type MetaFunction,
-} from 'react-router';
-import { Link, useLoaderData } from 'react-router';
 import slugify from '@sindresorhus/slugify'
 import * as React from 'react'
+import { data, type HeadersFunction, Link } from 'react-router'
 import { EpicVideoInfoProvider } from '#app/components/epic-video.tsx'
 import { Icon } from '#app/components/icons.tsx'
 import { Loading } from '#app/components/loading.tsx'
 import { NavChevrons } from '#app/components/nav-chevrons.tsx'
 import { useRevalidationWS } from '#app/components/revalidation-ws.js'
-import { type loader as rootLoader } from '#app/root.tsx'
+import { type RootLoaderData } from '#app/root.tsx'
 import { Mdx } from '#app/utils/mdx.tsx'
 import { cn } from '#app/utils/misc.tsx'
 import { useIsOnline } from '#app/utils/online.ts'
@@ -34,15 +28,14 @@ import { getSeoMetaTags } from '#app/utils/seo.js'
 import { EditFileOnGitHub } from '../launch-editor.tsx'
 import { ProgressToggle } from '../progress.tsx'
 import { useTheme } from '../theme/index.tsx'
+import { type Route } from './+types/finished.tsx'
 
 export const handle: SEOHandle = {
 	getSitemapEntries: () => [{ route: '/finished' }],
 }
 
-export const meta: MetaFunction<typeof loader, { root: typeof rootLoader }> = ({
-	matches,
-}) => {
-	const rootData = matches.find((m) => m.id === 'root')?.data
+export const meta: Route.MetaFunction = ({ matches }) => {
+	const rootData = matches.find((m) => m?.id === 'root')?.data as RootLoaderData
 	if (!rootData) return []
 
 	return getSeoMetaTags({
@@ -55,7 +48,7 @@ export const meta: MetaFunction<typeof loader, { root: typeof rootLoader }> = ({
 	})
 }
 
-export async function loader({ request }: LoaderFunctionArgs) {
+export async function loader({ request }: Route.LoaderArgs) {
 	const timings = makeTimings('finishedLoader')
 	const exercises = await getExercises({ request, timings })
 	const compiledFinished = await time(() => getWorkshopFinished({ request }), {
@@ -116,12 +109,13 @@ export const headers: HeadersFunction = ({ loaderHeaders, parentHeaders }) => {
 
 const mdxComponents = { h1: () => null }
 
-export default function ExerciseFinished() {
-	const data = useLoaderData<typeof loader>()
+export default function ExerciseFinished({
+	loaderData: data,
+}: Route.ComponentProps) {
 	useRevalidationWS({ watchPaths: ['./exercises/FINISHED.mdx'] })
 	return (
-        (<div className="flex h-full flex-grow flex-col">
-            <main className="grid h-full flex-grow grid-cols-1 grid-rows-2 lg:grid-cols-2 lg:grid-rows-1">
+		<div className="flex h-full flex-grow flex-col">
+			<main className="grid h-full flex-grow grid-cols-1 grid-rows-2 lg:grid-cols-2 lg:grid-rows-1">
 				<div className="relative col-span-1 row-span-1 flex h-full flex-col lg:border-r">
 					<h1 className="h-14 border-b pl-10 pr-5 text-sm font-medium uppercase leading-none">
 						<div className="flex h-14 flex-wrap items-center justify-between gap-x-2 py-2">
@@ -148,7 +142,7 @@ export default function ExerciseFinished() {
 							</EpicVideoInfoProvider>
 						) : (
 							// TODO: render a random dad joke...
-							('No finished instructions yet...')
+							'No finished instructions yet...'
 						)}
 					</article>
 					<ElementScrollRestoration elementQuery={`#${data.articleId}`} />
@@ -172,8 +166,8 @@ export default function ExerciseFinished() {
 					workshopFormEmbedUrl={data.workshopFormEmbedUrl}
 				/>
 			</main>
-        </div>)
-    );
+		</div>
+	)
 }
 
 function Survey({

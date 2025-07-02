@@ -1,7 +1,7 @@
+import { readFile } from 'node:fs/promises'
 import path from 'path'
-import { fileURLToPath, pathToFileURL } from 'url'
+import { fileURLToPath } from 'url'
 import { reactRouter } from '@react-router/dev/vite'
-import { flatRoutes } from 'remix-flat-routes'
 import { defineConfig } from 'vite'
 import { envOnlyMacros } from 'vite-env-only'
 
@@ -10,8 +10,10 @@ const __dirname = path.dirname(__filename)
 const here = (...p: Array<string>) => path.join(__dirname, ...p)
 
 async function makeTshyAliases(moduleName: string, folderName: string) {
-	const filePath = pathToFileURL(here('..', folderName, 'package.json')).href
-	const { default: pkg } = await import(filePath, { with: { type: 'json' } })
+	const filePath = here('..', folderName, 'package.json')
+	const pkg = JSON.parse(await readFile(filePath, 'utf-8')) as {
+		tshy: { exports: Record<string, string> }
+	}
 
 	return Object.entries(pkg.tshy.exports).reduce<Record<string, string>>(
 		(acc, [key, value]) => {
@@ -74,8 +76,5 @@ export default defineConfig({
 		},
 	},
 	resolve: { alias: aliases },
-	plugins: [
-		envOnlyMacros(),
-		reactRouter(),
-	],
+	plugins: [envOnlyMacros(), reactRouter()],
 })

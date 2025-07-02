@@ -1,19 +1,18 @@
 import * as Popover from '@radix-ui/react-popover'
-// type imports removed for compatibility
-import { Await, useLoaderData } from 'react-router';
 import * as React from 'react'
+import { Await, useLoaderData } from 'react-router'
 import { Icon } from '#app/components/icons.tsx'
 import { SimpleTooltip } from '#app/components/ui/tooltip.tsx'
 import { LaunchEditor } from '#app/routes/launch-editor.tsx'
 import { SetAppToPlayground } from '#app/routes/set-playground.tsx'
-import { type loader } from '../_layout.tsx'
+import { type Route as LayoutRoute } from '../+types/_layout.tsx'
 
 function TouchedFiles({
 	diffFilesPromise,
 }: {
-	diffFilesPromise: Awaited<ReturnType<typeof loader>>['diffFiles']
+	diffFilesPromise: LayoutRoute.ComponentProps['loaderData']['diffFiles']
 }) {
-	const data = useLoaderData<typeof loader>()
+	const data = useLoaderData<LayoutRoute.ComponentProps['loaderData']>()
 
 	const [open, setOpen] = React.useState(false)
 	const contentRef = React.useRef<HTMLDivElement>(null)

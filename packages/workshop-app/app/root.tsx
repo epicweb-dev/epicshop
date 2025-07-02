@@ -23,23 +23,20 @@ import {
 import { checkConnectionCached } from '@epic-web/workshop-utils/utils.server'
 
 import {
-    data,
-    redirect,
-    type LinksFunction,
-    type LoaderFunctionArgs,
-    type MetaFunction,
-} from 'react-router';
-import {
-    Links,
-    Meta,
-    Outlet,
-    Scripts,
-    ScrollRestoration,
-    useLoaderData,
-    useNavigation,
-} from 'react-router';
+	data,
+	redirect,
+	type LinksFunction,
+	Links,
+	Meta,
+	Outlet,
+	Scripts,
+	ScrollRestoration,
+	useLoaderData,
+	useNavigation,
+} from 'react-router'
 import { promiseHash } from 'remix-utils/promise'
 import { useSpinDelay } from 'spin-delay'
+import { type Route } from './+types/root.tsx'
 import { Confetti } from './components/confetti'
 import { GeneralErrorBoundary } from './components/error-boundary'
 import { EpicProgress } from './components/progress-bar'
@@ -76,7 +73,7 @@ export const links: LinksFunction = () => {
 	]
 }
 
-export const meta: MetaFunction<typeof loader> = ({ data }) => {
+export const meta: Route.MetaFunction = ({ data }) => {
 	if (!data) return []
 
 	return getSeoMetaTags({
@@ -87,7 +84,9 @@ export const meta: MetaFunction<typeof loader> = ({ data }) => {
 	})
 }
 
-export async function loader({ request }: LoaderFunctionArgs) {
+export type RootLoaderData = Route.ComponentProps['loaderData']
+
+export async function loader({ request }: Route.LoaderArgs) {
 	const timings = makeTimings('rootLoader')
 	const workshopConfig = getWorkshopConfig()
 	const {

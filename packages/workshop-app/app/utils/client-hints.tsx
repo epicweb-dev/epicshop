@@ -12,8 +12,8 @@ import {
 	subscribeToMotionChange,
 } from '@epic-web/client-hints/reduced-motion'
 import { clientHint as timeZoneHint } from '@epic-web/client-hints/time-zone'
-import { useRevalidator } from 'react-router';
 import * as React from 'react'
+import { useRevalidator } from 'react-router';
 import { useRequestInfo } from './request-info.ts'
 
 const themeCookieName = 'EpicShop_CH-prefers-color-scheme'
