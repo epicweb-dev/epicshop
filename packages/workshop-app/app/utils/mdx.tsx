@@ -3,7 +3,7 @@ import { LRUCache } from 'lru-cache'
 import { type MDXContentProps } from 'mdx-bundler/client'
 import * as mdxBundler from 'mdx-bundler/client/index.js'
 import { useEffect, useMemo, useState } from 'react'
-import { Link, useLoaderData } from 'react-router';
+import { Link, useLoaderData } from 'react-router'
 import { DeferredEpicVideo, VideoEmbed } from '#app/components/epic-video.tsx'
 import { Icon } from '#app/components/icons.tsx'
 import { Mermaid } from '#app/components/mermaid.tsx'
@@ -142,7 +142,7 @@ export function PreWithButtons({ children, ...props }: any) {
 			if (!filename || filename.includes('..')) {
 				return { 'data-filename': getRelativePath(fullPath, separator) }
 			} else {
-				return { 'data-filename': filename.replace(/\//g, separator) };
+				return { 'data-filename': filename.replace(/\//g, separator) }
 			}
 		}
 	}

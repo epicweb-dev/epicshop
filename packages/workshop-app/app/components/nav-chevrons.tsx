@@ -1,4 +1,4 @@
-import { Link, type LinkProps } from 'react-router';
+import { Link, type LinkProps } from 'react-router'
 import { Icon } from './icons.tsx'
 
 export function NavChevrons({

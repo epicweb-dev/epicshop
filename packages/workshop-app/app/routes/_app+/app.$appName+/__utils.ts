@@ -7,7 +7,7 @@ import {
 } from '@epic-web/workshop-utils/apps.server'
 import { type Timings } from '@epic-web/workshop-utils/timing.server'
 import fsExtra from 'fs-extra'
-import { type Params } from 'react-router';
+import { type Params } from 'react-router'
 
 function parseAppNameFromReferer(request: Request) {
 	const url = new URL(request.headers.get('referer') ?? '')

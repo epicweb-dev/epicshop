@@ -7,7 +7,7 @@ import {
 } from '@epic-web/workshop-utils/timing.server'
 import { Resvg } from '@resvg/resvg-js'
 import { renderToStaticMarkup } from 'react-dom/server'
-import { type LoaderFunctionArgs } from 'react-router';
+import { type LoaderFunctionArgs } from 'react-router'
 import satori, { type SatoriOptions } from 'satori'
 import { getDomainUrl, getErrorMessage } from '#app/utils/misc.js'
 
@@ -261,7 +261,7 @@ function OgLayout({
 	const protocolFreeDomain = domain.replace(/^https?:\/\//, '')
 
 	return (
-        (<div
+		<div
 			style={{
 				fontFamily: 'Josefin Sans',
 				display: 'flex',
@@ -271,7 +271,7 @@ function OgLayout({
 				position: 'relative',
 			}}
 		>
-            <div
+			<div
 				style={{
 					display: 'flex',
 					position: 'absolute',
@@ -294,10 +294,10 @@ function OgLayout({
 					src={`${domain}/og/background.png`}
 				/>
 			</div>
-            <div style={{ display: 'flex', position: 'absolute', top: 20, left: 30 }}>
+			<div style={{ display: 'flex', position: 'absolute', top: 20, left: 30 }}>
 				<img height={56} src={`${domain}/og/logo.svg`} />
 			</div>
-            {instructor ? (
+			{instructor ? (
 				<div
 					style={{
 						display: 'flex',
@@ -339,8 +339,8 @@ function OgLayout({
 					) : null}
 				</div>
 			) : null}
-            {children}
-            {workshopTitle ? (
+			{children}
+			{workshopTitle ? (
 				<div
 					style={{
 						display: 'flex',
@@ -356,7 +356,7 @@ function OgLayout({
 					{workshopTitle}
 				</div>
 			) : null}
-            {urlPathname == null ? null : (
+			{urlPathname == null ? null : (
 				<div
 					style={{
 						display: 'flex',
@@ -372,6 +372,6 @@ function OgLayout({
 					{protocolFreeDomain + urlPathname.replace(/\/$/, '')}
 				</div>
 			)}
-        </div>)
-    );
+		</div>
+	)
 }

@@ -1,8 +1,8 @@
 import { PassThrough } from 'stream'
-import { createReadableStreamFromReadable } from '@react-router/node';
+import { createReadableStreamFromReadable } from '@react-router/node'
 import { isbot } from 'isbot'
 import { renderToPipeableStream } from 'react-dom/server'
-import { type EntryContext, ServerRouter  } from 'react-router';
+import { type EntryContext, ServerRouter } from 'react-router'
 
 export const streamTimeout = 15000
 const ABORT_DELAY = streamTimeout + 1000
@@ -46,5 +46,5 @@ export default function handleRequest(
 			},
 		)
 		setTimeout(abort, ABORT_DELAY)
-	});
+	})
 }

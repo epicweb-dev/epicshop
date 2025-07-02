@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState } from 'react'
-import { useFetchers, useNavigation } from 'react-router';
+import { useFetchers, useNavigation } from 'react-router'
 import { useSpinDelay } from 'spin-delay'
 import { cn } from '#app/utils/misc.tsx'
 

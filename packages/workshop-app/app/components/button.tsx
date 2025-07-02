@@ -1,5 +1,5 @@
 import { clsx } from 'clsx'
-import { Link } from 'react-router';
+import { Link } from 'react-router'
 
 function PendingState() {
 	return <span className="inline-block animate-spin">🌀</span>

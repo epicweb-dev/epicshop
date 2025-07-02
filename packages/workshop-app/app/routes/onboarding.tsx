@@ -8,12 +8,14 @@ import { getEpicVideoInfos } from '@epic-web/workshop-utils/epic-api.server'
 import { makeTimings } from '@epic-web/workshop-utils/timing.server'
 import { type SEOHandle } from '@nasa-gcn/remix-seo'
 import {
-    data,
-    redirect,
-    type ActionFunctionArgs,
-    type HeadersFunction,
-    type LoaderFunctionArgs, Form, useLoaderData 
-} from 'react-router';
+	data,
+	redirect,
+	type ActionFunctionArgs,
+	type HeadersFunction,
+	type LoaderFunctionArgs,
+	Form,
+	useLoaderData,
+} from 'react-router'
 import { Button } from '#app/components/button.tsx'
 import {
 	DeferredEpicVideo,

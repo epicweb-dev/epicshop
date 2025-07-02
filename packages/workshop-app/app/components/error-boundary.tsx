@@ -1,4 +1,9 @@
-import { isRouteErrorResponse, useParams, useRouteError, type ErrorResponse } from 'react-router';
+import {
+	isRouteErrorResponse,
+	useParams,
+	useRouteError,
+	type ErrorResponse,
+} from 'react-router'
 import { getErrorMessage } from '#app/utils/misc.tsx'
 
 type StatusHandler = (info: {

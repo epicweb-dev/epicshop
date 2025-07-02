@@ -1,4 +1,4 @@
-import { type LoaderFunctionArgs } from 'react-router';
+import { type LoaderFunctionArgs } from 'react-router'
 import { eventStream } from 'remix-utils/sse/server'
 import { z } from 'zod'
 import { EVENTS } from '#app/utils/auth-events.ts'

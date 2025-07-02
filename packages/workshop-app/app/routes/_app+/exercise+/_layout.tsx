@@ -1,6 +1,6 @@
 import { getExercises } from '@epic-web/workshop-utils/apps.server'
 import { type SEOHandle } from '@nasa-gcn/remix-seo'
-import { Outlet } from 'react-router';
+import { Outlet } from 'react-router'
 import { serverOnly$ } from 'vite-env-only/macros'
 
 export const handle: SEOHandle = {

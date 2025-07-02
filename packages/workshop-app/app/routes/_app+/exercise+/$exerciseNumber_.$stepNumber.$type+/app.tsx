@@ -4,7 +4,12 @@ import {
 	makeTimings,
 } from '@epic-web/workshop-utils/timing.server'
 import { useRef } from 'react'
-import { data, type HeadersFunction, type LoaderFunctionArgs, useLoaderData  } from 'react-router';
+import {
+	data,
+	type HeadersFunction,
+	type LoaderFunctionArgs,
+	useLoaderData,
+} from 'react-router'
 import { type InBrowserBrowserRef } from '#app/components/in-browser-browser.js'
 import { Preview } from './__shared/preview.tsx'
 import { getAppRunningState } from './__shared/utils.tsx'
