@@ -1,13 +1,6 @@
 import * as Accordion from '@radix-ui/react-accordion'
 import * as Select from '@radix-ui/react-select'
-import {
-	Await,
-	Form,
-	Link,
-	useNavigation,
-	useSearchParams,
-	useSubmit,
-} from '@remix-run/react'
+import { Await, Form, Link, useNavigation, useSearchParams, useSubmit } from 'react-router';
 import { clsx } from 'clsx'
 import React, { Suspense } from 'react'
 import { useSpinDelay } from 'spin-delay'

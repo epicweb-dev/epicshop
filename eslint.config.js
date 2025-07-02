@@ -7,6 +7,8 @@ export default [
 			'**/.nx/**',
 			// not sure what's up with this one
 			'playwright.config.ts',
+			// Generated React Router files
+			'**/.react-router/**',
 		],
 	},
 	...defaultConfig,

@@ -1,7 +1,6 @@
 import { muteNotification } from '@epic-web/workshop-utils/db.server'
 import { type getUnmutedNotifications } from '@epic-web/workshop-utils/notifications.server'
-import { json, type ActionFunctionArgs } from '@remix-run/node'
-import { useFetcher } from '@remix-run/react'
+import { type ActionFunctionArgs, useFetcher } from 'react-router';
 import { useEffect, useRef } from 'react'
 import { toast } from 'sonner'
 
@@ -10,13 +9,13 @@ export async function action({ request }: ActionFunctionArgs) {
 	const intent = formData.get('intent')
 	const id = formData.get('id')
 	if (typeof id !== 'string') {
-		return json({ error: 'Invalid notification id' }, { status: 400 })
+		return Response.json({ error: 'Invalid notification id' }, { status: 400 })
 	}
 	if (intent === 'mute') {
 		await muteNotification(id)
-		return json({ success: true })
+		return Response.json({ success: true })
 	}
-	return json({ error: 'Invalid intent' }, { status: 400 })
+	return Response.json({ error: 'Invalid intent' }, { status: 400 })
 }
 
 export function Notifications({

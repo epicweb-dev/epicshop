@@ -22,14 +22,14 @@ import {
 	makeTimings,
 } from '@epic-web/workshop-utils/timing.server'
 import {
-	unstable_data as data,
-	redirect,
-	type HeadersFunction,
-	type LoaderFunctionArgs,
-	type MetaFunction,
-	type SerializeFrom,
-} from '@remix-run/node'
-import { Link, Outlet, useLoaderData } from '@remix-run/react'
+    unstable_data as data,
+    redirect,
+    type HeadersFunction,
+    type LoaderFunctionArgs,
+    type MetaFunction,
+    type SerializeFrom,
+} from 'react-router';
+import { Link, Outlet, useLoaderData } from 'react-router';
 import slugify from '@sindresorhus/slugify'
 import { useRef } from 'react'
 import { GeneralErrorBoundary } from '#app/components/error-boundary.tsx'

@@ -11,7 +11,7 @@ To reduce the annoyance, we'll have the host applications have a file like this:
 
 // Ignore this file please
 import { EpicShopIFrameSync } from '@epic-web/workshop-utils/iframe-sync'
-import { useNavigate } from '@remix-run/react'
+import { useNavigate } from 'react-router'
 import * as React from 'react'
 
 export function EpicShop() {

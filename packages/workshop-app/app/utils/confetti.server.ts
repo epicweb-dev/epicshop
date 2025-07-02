@@ -1,4 +1,4 @@
-import { redirect } from '@remix-run/node'
+import { redirect } from 'react-router';
 import * as cookie from 'cookie'
 import { combineHeaders } from './misc.tsx'
 

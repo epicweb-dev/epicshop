@@ -12,12 +12,12 @@ import {
 	time,
 } from '@epic-web/workshop-utils/timing.server'
 import {
-	unstable_data as data,
-	type HeadersFunction,
-	type LoaderFunctionArgs,
-	type SerializeFrom,
-} from '@remix-run/node'
-import { Link, useLoaderData } from '@remix-run/react'
+    unstable_data as data,
+    type HeadersFunction,
+    type LoaderFunctionArgs,
+    type SerializeFrom,
+} from 'react-router';
+import { Link, useLoaderData } from 'react-router';
 import slugify from '@sindresorhus/slugify'
 import { EpicVideoInfoProvider } from '#app/components/epic-video.tsx'
 import { GeneralErrorBoundary } from '#app/components/error-boundary.tsx'

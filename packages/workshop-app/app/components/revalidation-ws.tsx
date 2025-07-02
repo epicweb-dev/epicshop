@@ -1,4 +1,4 @@
-import { useRevalidator } from '@remix-run/react'
+import { useRevalidator } from 'react-router';
 import { useEffect, useRef } from 'react'
 import { z } from 'zod'
 import { useRequestInfo } from '#app/utils/request-info.js'

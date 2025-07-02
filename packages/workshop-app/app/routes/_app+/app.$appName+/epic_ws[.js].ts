@@ -1,5 +1,5 @@
 import { makeTimings } from '@epic-web/workshop-utils/timing.server'
-import { redirect, type LoaderFunctionArgs } from '@remix-run/node'
+import { redirect, type LoaderFunctionArgs } from 'react-router';
 import { getBaseUrl } from '#app/utils/misc.tsx'
 import { resolveApps } from './__utils.ts'
 

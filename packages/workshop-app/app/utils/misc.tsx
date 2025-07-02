@@ -1,10 +1,5 @@
 import { type ExerciseStepApp } from '@epic-web/workshop-utils/apps.server'
-import {
-	Link,
-	useFormAction,
-	useNavigation,
-	type LinkProps,
-} from '@remix-run/react'
+import { Link, useFormAction, useNavigation, type LinkProps } from 'react-router';
 import slugify from '@sindresorhus/slugify'
 import { clsx, type ClassValue } from 'clsx'
 import * as React from 'react'
