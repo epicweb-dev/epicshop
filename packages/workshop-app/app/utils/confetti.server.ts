@@ -1,5 +1,5 @@
-import { redirect } from '@remix-run/node'
 import * as cookie from 'cookie'
+import { redirect } from 'react-router'
 import { combineHeaders } from './misc.tsx'
 
 const cookieName = 'EpicShop_confetti'

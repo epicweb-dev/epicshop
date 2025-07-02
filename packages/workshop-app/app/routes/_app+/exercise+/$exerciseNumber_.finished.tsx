@@ -15,21 +15,15 @@ import {
 	getServerTimeHeader,
 	makeTimings,
 } from '@epic-web/workshop-utils/timing.server'
-import {
-	unstable_data as data,
-	type HeadersFunction,
-	type LoaderFunctionArgs,
-	type MetaFunction,
-} from '@remix-run/node'
-import { Link, useLoaderData } from '@remix-run/react'
 import slugify from '@sindresorhus/slugify'
 import * as React from 'react'
+import { data, type HeadersFunction, Link } from 'react-router'
 import { EpicVideoInfoProvider } from '#app/components/epic-video.tsx'
 import { Icon } from '#app/components/icons.tsx'
 import { Loading } from '#app/components/loading.tsx'
 import { NavChevrons } from '#app/components/nav-chevrons.tsx'
 import { useRevalidationWS } from '#app/components/revalidation-ws.js'
-import { type loader as rootLoader } from '#app/root.tsx'
+import { type RootLoaderData } from '#app/root.tsx'
 import { EditFileOnGitHub } from '#app/routes/launch-editor.tsx'
 import { ProgressToggle } from '#app/routes/progress.tsx'
 import { useTheme } from '#app/routes/theme/index.tsx'
@@ -37,14 +31,12 @@ import { Mdx } from '#app/utils/mdx.tsx'
 import { cn } from '#app/utils/misc.tsx'
 import { useIsOnline } from '#app/utils/online.ts'
 import { getSeoMetaTags } from '#app/utils/seo.js'
+import { type Route } from './+types/$exerciseNumber_.finished.tsx'
 
-export const meta: MetaFunction<typeof loader, { root: typeof rootLoader }> = ({
-	data,
-	matches,
-}) => {
+export const meta: Route.MetaFunction = ({ data, matches }) => {
 	const number = data?.exercise.exerciseNumber.toString().padStart(2, '0')
 
-	const rootData = matches.find((m) => m.id === 'root')?.data
+	const rootData = matches.find((m) => m?.id === 'root')?.data as RootLoaderData
 	if (!data || !rootData) return [{ title: '🦉 | Error' }]
 
 	return getSeoMetaTags({
@@ -57,7 +49,7 @@ export const meta: MetaFunction<typeof loader, { root: typeof rootLoader }> = ({
 	})
 }
 
-export async function loader({ request, params }: LoaderFunctionArgs) {
+export async function loader({ request, params }: Route.LoaderArgs) {
 	const timings = makeTimings('exerciseFinishedLoader')
 	invariantResponse(params.exerciseNumber, 'exerciseNumber is required')
 	const exercise = await getExercise(params.exerciseNumber, {
@@ -141,8 +133,9 @@ export const headers: HeadersFunction = ({ loaderHeaders, parentHeaders }) => {
 }
 
 const mdxComponents = { h1: () => null }
-export default function ExerciseFinished() {
-	const data = useLoaderData<typeof loader>()
+export default function ExerciseFinished({
+	loaderData: data,
+}: Route.ComponentProps) {
 	const exerciseNumber = data.exercise.exerciseNumber
 		.toString()
 		.padStart(2, '0')

@@ -1,11 +1,11 @@
+import * as React from 'react'
+import { type PropsWithChildren } from 'react'
 import {
 	Link,
 	useLoaderData,
 	useSearchParams,
 	type LinkProps,
-} from '@remix-run/react'
-import * as React from 'react'
-import { type PropsWithChildren } from 'react'
+} from 'react-router'
 import iconsSvg from '#app/assets/icons.svg'
 import { EpicVideoInfoProvider } from '#app/components/epic-video.tsx'
 import { Icon } from '#app/components/icons.tsx'

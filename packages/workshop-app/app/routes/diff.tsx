@@ -6,8 +6,12 @@ import {
 } from '@epic-web/workshop-utils/apps.server'
 import { getDiffCode } from '@epic-web/workshop-utils/diff.server'
 import { makeTimings } from '@epic-web/workshop-utils/timing.server'
-import { type LoaderFunctionArgs } from '@remix-run/node'
-import { useLoaderData, useNavigation, useSearchParams } from '@remix-run/react'
+import {
+	type LoaderFunctionArgs,
+	useLoaderData,
+	useNavigation,
+	useSearchParams,
+} from 'react-router'
 import { useSpinDelay } from 'spin-delay'
 import { Diff } from '#app/components/diff.tsx'
 import { NavChevrons } from '#app/components/nav-chevrons.tsx'

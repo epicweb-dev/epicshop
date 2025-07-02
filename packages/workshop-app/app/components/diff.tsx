@@ -1,5 +1,7 @@
 import * as Accordion from '@radix-ui/react-accordion'
 import * as Select from '@radix-ui/react-select'
+import { clsx } from 'clsx'
+import React, { Suspense } from 'react'
 import {
 	Await,
 	Form,
@@ -7,9 +9,7 @@ import {
 	useNavigation,
 	useSearchParams,
 	useSubmit,
-} from '@remix-run/react'
-import { clsx } from 'clsx'
-import React, { Suspense } from 'react'
+} from 'react-router'
 import { useSpinDelay } from 'spin-delay'
 import AccordionComponent from '#app/components/accordion.tsx'
 import { Mdx } from '#app/utils/mdx.tsx'
@@ -109,7 +109,7 @@ export function Diff({
 			<Await
 				resolve={diff}
 				errorElement={
-					<p className="text-foreground-destructive p-6">
+					<p className="p-6 text-foreground-destructive">
 						There was an error calculating the diff. Sorry.
 					</p>
 				}

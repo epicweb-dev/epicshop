@@ -1,4 +1,3 @@
-import { Form, useSearchParams, type NavigateFunction } from '@remix-run/react'
 import { clsx } from 'clsx'
 import {
 	forwardRef,
@@ -8,6 +7,7 @@ import {
 	useState,
 	type ForwardedRef,
 } from 'react'
+import { Form, useSearchParams, type NavigateFunction } from 'react-router'
 import { z } from 'zod'
 import { Icon } from '#app/components/icons.tsx'
 import { AppStarter, AppStopper, PortStopper } from '#app/routes/start.tsx'
@@ -324,7 +324,7 @@ function InBrowserBrowserForRealzImpl(
 		setPathnameInputValue(newPathnameInputValue)
 
 		const currentPathname = iframeContext.history[iframeContext.index]
-		navigateChild(newPathnameInputValue, {
+		void navigateChild(newPathnameInputValue, {
 			replace: currentPathname === newPathnameInputValue,
 		})
 	}

@@ -1,8 +1,13 @@
 import { getAuthInfo } from '@epic-web/workshop-utils/db.server'
 import { type SEOHandle } from '@nasa-gcn/remix-seo'
-import { redirect } from '@remix-run/node'
-import { Link, useFetcher, useNavigate, useRevalidator } from '@remix-run/react'
 import { useEffect, useState } from 'react'
+import {
+	redirect,
+	Link,
+	useFetcher,
+	useNavigate,
+	useRevalidator,
+} from 'react-router'
 import { useEventSource } from 'remix-utils/sse/react'
 import { Button, ButtonLink } from '#app/components/button.tsx'
 import { Loading } from '#app/components/loading.tsx'
@@ -59,8 +64,7 @@ export default function Login() {
 				break
 			}
 			case EVENTS.AUTH_RESOLVED: {
-				revalidator.revalidate()
-				navigate('/')
+				void revalidator.revalidate().then(() => navigate('/'))
 				break
 			}
 			case EVENTS.AUTH_REJECTED: {

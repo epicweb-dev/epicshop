@@ -1,5 +1,5 @@
-import { useRevalidator } from '@remix-run/react'
 import { useEffect, useRef } from 'react'
+import { useRevalidator } from 'react-router'
 import { z } from 'zod'
 import { useRequestInfo } from '#app/utils/request-info.js'
 
@@ -46,7 +46,7 @@ function useRevalidationWSImpl({ watchPaths }: { watchPaths: Array<string> }) {
 					'🐨 Revalidating due to file changes:',
 					event.data.filePaths,
 				)
-				latestRevalidatorRef.current.revalidate()
+				void latestRevalidatorRef.current.revalidate()
 			}
 
 			ws.onclose = (event) => {

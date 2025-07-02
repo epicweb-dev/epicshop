@@ -1,7 +1,7 @@
 import { type EpicVideoInfos } from '@epic-web/workshop-utils/epic-api.server'
 import { type MuxPlayerRefAttributes } from '@mux/mux-player-react'
-import { Await, Link } from '@remix-run/react'
 import * as React from 'react'
+import { Await, Link } from 'react-router'
 import { useTheme } from '#app/routes/theme/index.tsx'
 import { MuxPlayer } from '#app/routes/video-player/index.tsx'
 import { cn } from '#app/utils/misc.tsx'

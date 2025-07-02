@@ -3,7 +3,7 @@ import {
 	useParams,
 	useRouteError,
 	type ErrorResponse,
-} from '@remix-run/react'
+} from 'react-router'
 import { getErrorMessage } from '#app/utils/misc.tsx'
 
 type StatusHandler = (info: {

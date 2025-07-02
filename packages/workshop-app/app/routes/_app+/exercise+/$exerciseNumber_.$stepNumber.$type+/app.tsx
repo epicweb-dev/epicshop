@@ -3,13 +3,13 @@ import {
 	combineServerTimings,
 	makeTimings,
 } from '@epic-web/workshop-utils/timing.server'
+import { useRef } from 'react'
 import {
-	unstable_data as data,
+	data,
 	type HeadersFunction,
 	type LoaderFunctionArgs,
-} from '@remix-run/node'
-import { useLoaderData } from '@remix-run/react'
-import { useRef } from 'react'
+	useLoaderData,
+} from 'react-router'
 import { type InBrowserBrowserRef } from '#app/components/in-browser-browser.js'
 import { Preview } from './__shared/preview.tsx'
 import { getAppRunningState } from './__shared/utils.tsx'

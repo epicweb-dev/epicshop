@@ -1,7 +1,7 @@
+import { readFile } from 'node:fs/promises'
 import path from 'path'
-import { fileURLToPath, pathToFileURL } from 'url'
-import { vitePlugin as remix } from '@remix-run/dev'
-import { flatRoutes } from 'remix-flat-routes'
+import { fileURLToPath } from 'url'
+import { reactRouter } from '@react-router/dev/vite'
 import { defineConfig } from 'vite'
 import { envOnlyMacros } from 'vite-env-only'
 
@@ -10,8 +10,10 @@ const __dirname = path.dirname(__filename)
 const here = (...p: Array<string>) => path.join(__dirname, ...p)
 
 async function makeTshyAliases(moduleName: string, folderName: string) {
-	const filePath = pathToFileURL(here('..', folderName, 'package.json')).href
-	const { default: pkg } = await import(filePath, { with: { type: 'json' } })
+	const filePath = here('..', folderName, 'package.json')
+	const pkg = JSON.parse(await readFile(filePath, 'utf-8')) as {
+		tshy: { exports: Record<string, string> }
+	}
 
 	return Object.entries(pkg.tshy.exports).reduce<Record<string, string>>(
 		(acc, [key, value]) => {
@@ -34,7 +36,7 @@ const aliases = {
 
 const MODE = process.env.NODE_ENV
 
-declare module '@remix-run/server-runtime' {
+declare module 'react-router' {
 	// or cloudflare, deno, etc.
 	interface Future {
 		unstable_singleFetch: true
@@ -74,34 +76,5 @@ export default defineConfig({
 		},
 	},
 	resolve: { alias: aliases },
-	plugins: [
-		envOnlyMacros(),
-		remix({
-			future: {
-				v3_fetcherPersist: true,
-				v3_relativeSplatPath: true,
-				v3_throwAbortReason: true,
-				unstable_optimizeDeps: true,
-				unstable_lazyRouteDiscovery: true,
-				unstable_singleFetch: true,
-			},
-			ignoredRouteFiles: ['**/*'],
-			serverModuleFormat: 'esm',
-			routes: async (defineRoutes) => {
-				return flatRoutes('routes', defineRoutes, {
-					ignoredRouteFiles: [
-						'**/.*',
-						'**/*.css',
-						'**/*.test.{js,jsx,ts,tsx}',
-						'**/__*',
-						'**/*.server.*',
-						'**/*.client.*',
-						'**/__*/*',
-						'**/*.server/*',
-						'**/*.client/*',
-					],
-				})
-			},
-		}),
-	],
+	plugins: [envOnlyMacros(), reactRouter()],
 })

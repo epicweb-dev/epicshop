@@ -1,10 +1,9 @@
 import path from 'path'
 import { getAppByName } from '@epic-web/workshop-utils/apps.server'
-import { type ActionFunctionArgs } from '@remix-run/node'
-import { Link, useFetcher } from '@remix-run/react'
 import { clsx } from 'clsx'
 import fsExtra from 'fs-extra'
 import { useEffect } from 'react'
+import { Link, useFetcher, type ActionFunctionArgs } from 'react-router'
 import { z, type ZodTypeAny } from 'zod'
 import { useApps } from '#app/components/apps'
 import { showProgressBarField } from '#app/components/progress-bar.tsx'
@@ -335,7 +334,7 @@ export function EditFileOnGitHub({
 		if (appName) {
 			formData.append('appName', appName)
 		}
-		fetcher.submit(formData, { method: 'POST', action: '/launch-editor' })
+		void fetcher.submit(formData, { method: 'POST', action: '/launch-editor' })
 	}
 
 	const githubPath = ENV.EPICSHOP_GITHUB_ROOT.replace(

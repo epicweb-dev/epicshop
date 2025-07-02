@@ -1,5 +1,11 @@
 {
-	"include": ["env.d.ts", "deps.d.ts", "**/*.ts", "**/*.tsx"],
+	"include": [
+		"env.d.ts",
+		"deps.d.ts",
+		"**/*.ts",
+		"**/*.tsx",
+		".react-router/types/**/*"
+	],
 	"extends": ["@epic-web/config/typescript"],
 	"compilerOptions": {
 		"baseUrl": ".",
@@ -20,6 +26,8 @@
 				"./types/icon-name.d.ts"
 			]
 		},
+		"types": ["vite/client"],
+		"rootDirs": [".", "./.react-router/types"],
 		"skipLibCheck": true,
 		"typeRoots": ["./types", "./node_modules/@types"]
 	}

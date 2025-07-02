@@ -21,32 +21,31 @@ import {
 	getServerTimeHeader,
 	makeTimings,
 } from '@epic-web/workshop-utils/timing.server'
-import {
-	unstable_data as data,
-	redirect,
-	type HeadersFunction,
-	type LoaderFunctionArgs,
-	type MetaFunction,
-	type SerializeFrom,
-} from '@remix-run/node'
-import { Link, Outlet, useLoaderData } from '@remix-run/react'
 import slugify from '@sindresorhus/slugify'
 import { useRef } from 'react'
+import {
+	data,
+	redirect,
+	type HeadersFunction,
+	Link,
+	Outlet,
+} from 'react-router'
 import { GeneralErrorBoundary } from '#app/components/error-boundary.tsx'
 import { type InBrowserBrowserRef } from '#app/components/in-browser-browser.tsx'
 import { NavChevrons } from '#app/components/nav-chevrons.tsx'
 import { useRevalidationWS } from '#app/components/revalidation-ws.js'
-import { type loader as rootLoader } from '#app/root.tsx'
+import { type RootLoaderData } from '#app/root.tsx'
 import { EditFileOnGitHub } from '#app/routes/launch-editor.tsx'
 import { ProgressToggle } from '#app/routes/progress.tsx'
 import { SetAppToPlayground } from '#app/routes/set-playground.tsx'
 import { getExercisePath } from '#app/utils/misc.tsx'
 import { getSeoMetaTags } from '#app/utils/seo.js'
+import { type Route } from './+types/_layout.tsx'
 import { StepMdx } from './__shared/step-mdx.tsx'
 import TouchedFiles from './__shared/touched-files.tsx'
 
 function pageTitle(
-	data: SerializeFrom<typeof loader> | undefined,
+	data: Awaited<Route.ComponentProps['loaderData']> | undefined,
 	workshopTitle?: string,
 ) {
 	const exerciseNumber =
@@ -71,12 +70,8 @@ function pageTitle(
 	}
 }
 
-export const meta: MetaFunction<typeof loader, { root: typeof rootLoader }> = ({
-	data,
-	matches,
-	params,
-}) => {
-	const rootData = matches.find((m) => m.id === 'root')?.data
+export const meta: Route.MetaFunction = ({ data, matches, params }) => {
+	const rootData = matches.find((m) => m?.id === 'root')?.data as RootLoaderData
 	if (!data || !rootData) return [{ title: '🦉 | Error' }]
 	const { emoji, stepNumber, title, exerciseNumber, exerciseTitle } =
 		pageTitle(data)
@@ -91,7 +86,7 @@ export const meta: MetaFunction<typeof loader, { root: typeof rootLoader }> = ({
 	})
 }
 
-export async function loader({ request, params }: LoaderFunctionArgs) {
+export async function loader({ request, params }: Route.LoaderArgs) {
 	const timings = makeTimings('exerciseStepTypeLayoutLoader')
 	const url = new URL(request.url)
 	const { title: workshopTitle } = getWorkshopConfig()
@@ -276,9 +271,9 @@ export const headers: HeadersFunction = ({ loaderHeaders, parentHeaders }) => {
 	return headers
 }
 
-export default function ExercisePartRoute() {
-	const data = useLoaderData<typeof loader>()
-
+export default function ExercisePartRoute({
+	loaderData: data,
+}: Route.ComponentProps) {
 	const inBrowserBrowserRef = useRef<InBrowserBrowserRef>(null)
 
 	const titleBits = pageTitle(data)

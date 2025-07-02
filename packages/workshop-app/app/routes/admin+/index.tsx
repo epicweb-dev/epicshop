@@ -5,21 +5,16 @@ import {
 	makeTimings,
 } from '@epic-web/workshop-utils/timing.server'
 import { type SEOHandle } from '@nasa-gcn/remix-seo'
-import {
-	unstable_data as data,
-	type ActionFunctionArgs,
-	type LoaderFunctionArgs,
-	type MetaFunction,
-} from '@remix-run/node'
-import { Form, Link, useLoaderData, useNavigation } from '@remix-run/react'
+import { data, Form, Link, useNavigation } from 'react-router'
 import { Icon } from '#app/components/icons.tsx'
 import { SimpleTooltip } from '#app/components/ui/tooltip.tsx'
-import { type loader as rootLoader } from '#app/root.tsx'
+import { type RootLoaderData } from '#app/root.tsx'
 import {
 	useEpicProgress,
 	type SerializedProgress,
 } from '#app/routes/progress.tsx'
 import { ensureUndeployed } from '#app/utils/misc.tsx'
+import { type Route } from './+types/index.tsx'
 import {
 	clearCaches,
 	clearData,
@@ -35,14 +30,12 @@ export const handle: SEOHandle = {
 	getSitemapEntries: () => null,
 }
 
-export const meta: MetaFunction<typeof loader, { root: typeof rootLoader }> = ({
-	matches,
-}) => {
-	const rootData = matches.find((m) => m.id === 'root')?.data
+export const meta: Route.MetaFunction = ({ matches }) => {
+	const rootData = matches.find((m) => m?.id === 'root')?.data as RootLoaderData
 	return [{ title: `👷 | ${rootData?.workshopTitle}` }]
 }
 
-export async function loader({ request }: LoaderFunctionArgs) {
+export async function loader({ request }: Route.LoaderArgs) {
 	ensureUndeployed()
 	const timings = makeTimings('adminLoader')
 	const apps = (await getApps({ request, timings })).filter(
@@ -84,7 +77,7 @@ export async function loader({ request }: LoaderFunctionArgs) {
 	)
 }
 
-export async function action({ request }: ActionFunctionArgs) {
+export async function action({ request }: Route.ActionArgs) {
 	ensureUndeployed()
 	const formData = await request.formData()
 	const intent = formData.get('intent')
@@ -140,8 +133,9 @@ function linkProgress(progress: SerializedProgress) {
 	}
 }
 
-export default function AdminLayout() {
-	const data = useLoaderData<typeof loader>()
+export default function AdminLayout({
+	loaderData: data,
+}: Route.ComponentProps) {
 	const navigation = useNavigation()
 	const epicProgress = useEpicProgress()
 

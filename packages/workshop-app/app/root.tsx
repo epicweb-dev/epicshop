@@ -21,15 +21,11 @@ import {
 	getUserId,
 } from '@epic-web/workshop-utils/user.server'
 import { checkConnectionCached } from '@epic-web/workshop-utils/utils.server'
-import { cssBundleHref } from '@remix-run/css-bundle'
+
 import {
-	unstable_data as data,
+	data,
 	redirect,
 	type LinksFunction,
-	type LoaderFunctionArgs,
-	type MetaFunction,
-} from '@remix-run/node'
-import {
 	Links,
 	Meta,
 	Outlet,
@@ -37,26 +33,27 @@ import {
 	ScrollRestoration,
 	useLoaderData,
 	useNavigation,
-} from '@remix-run/react'
+} from 'react-router'
 import { promiseHash } from 'remix-utils/promise'
 import { useSpinDelay } from 'spin-delay'
-import { Confetti } from './components/confetti.tsx'
-import { GeneralErrorBoundary } from './components/error-boundary.tsx'
-import { EpicProgress } from './components/progress-bar.tsx'
-import { EpicToaster } from './components/toaster.tsx'
-import { TooltipProvider } from './components/ui/tooltip.tsx'
-import { UpdateToast } from './components/update-repo.tsx'
-import { Notifications } from './routes/admin+/notifications.tsx'
-import { useTheme } from './routes/theme/index.tsx'
-import { getTheme } from './routes/theme/theme-session.server.ts'
+import { type Route } from './+types/root.tsx'
+import { Confetti } from './components/confetti'
+import { GeneralErrorBoundary } from './components/error-boundary'
+import { EpicProgress } from './components/progress-bar'
+import { EpicToaster } from './components/toaster'
+import { TooltipProvider } from './components/ui/tooltip'
+import { UpdateToast } from './components/update-repo'
+import { Notifications } from './routes/admin+/notifications'
+import { useTheme } from './routes/theme/index'
+import { getTheme } from './routes/theme/theme-session.server'
 import appStylesheetUrl from './styles/app.css?url'
 import tailwindStylesheetUrl from './styles/tailwind.css?url'
-import { ClientHintCheck, getHints } from './utils/client-hints.tsx'
-import { getConfetti } from './utils/confetti.server.ts'
-import { cn, combineHeaders, getDomainUrl, useAltDown } from './utils/misc.tsx'
-import { Presence } from './utils/presence.tsx'
-import { getSeoMetaTags } from './utils/seo.ts'
-import { getToast } from './utils/toast.server.ts'
+import { ClientHintCheck, getHints } from './utils/client-hints'
+import { getConfetti } from './utils/confetti.server'
+import { cn, combineHeaders, getDomainUrl, useAltDown } from './utils/misc'
+import { Presence } from './utils/presence'
+import { getSeoMetaTags } from './utils/seo'
+import { getToast } from './utils/toast.server'
 
 export const links: LinksFunction = () => {
 	return [
@@ -67,7 +64,6 @@ export const links: LinksFunction = () => {
 		},
 		{ rel: 'stylesheet', href: tailwindStylesheetUrl },
 		{ rel: 'stylesheet', href: appStylesheetUrl },
-		...(cssBundleHref ? [{ rel: 'stylesheet', href: cssBundleHref }] : []),
 		{
 			rel: 'icon',
 			href: '/favicon.ico',
@@ -77,7 +73,7 @@ export const links: LinksFunction = () => {
 	]
 }
 
-export const meta: MetaFunction<typeof loader> = ({ data }) => {
+export const meta: Route.MetaFunction = ({ data }) => {
 	if (!data) return []
 
 	return getSeoMetaTags({
@@ -88,7 +84,9 @@ export const meta: MetaFunction<typeof loader> = ({ data }) => {
 	})
 }
 
-export async function loader({ request }: LoaderFunctionArgs) {
+export type RootLoaderData = Route.ComponentProps['loaderData']
+
+export async function loader({ request }: Route.LoaderArgs) {
 	const timings = makeTimings('rootLoader')
 	const workshopConfig = getWorkshopConfig()
 	const {

@@ -5,9 +5,9 @@ import {
 	type Timings,
 	makeTimings,
 } from '@epic-web/workshop-utils/timing.server'
-import { type LoaderFunctionArgs } from '@remix-run/node'
 import { Resvg } from '@resvg/resvg-js'
 import { renderToStaticMarkup } from 'react-dom/server'
+import { type LoaderFunctionArgs } from 'react-router'
 import satori, { type SatoriOptions } from 'satori'
 import { getDomainUrl, getErrorMessage } from '#app/utils/misc.js'
 

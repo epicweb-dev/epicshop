@@ -1,7 +1,6 @@
 import { getFormProps, useForm } from '@conform-to/react'
 import { parseWithZod } from '@conform-to/zod'
-import { unstable_data as data, type ActionFunctionArgs } from '@remix-run/node'
-import { useFetcher, useFetchers } from '@remix-run/react'
+import { data, useFetcher, useFetchers } from 'react-router'
 import { z } from 'zod'
 import { Icon } from '#app/components/icons.tsx'
 import { SimpleTooltip } from '#app/components/ui/tooltip.tsx'
@@ -9,6 +8,7 @@ import { useHints } from '#app/utils/client-hints.tsx'
 import { ErrorList } from '#app/utils/forms.tsx'
 import { dataWithPE, usePERedirectInput } from '#app/utils/pe.js'
 import { useRequestInfo } from '#app/utils/request-info.ts'
+import { type Route } from './+types/index.tsx'
 import { setTheme } from './theme-session.server.ts'
 
 const ROUTE_PATH = '/theme'
@@ -17,7 +17,7 @@ const ThemeFormSchema = z.object({
 	theme: z.enum(['system', 'light', 'dark']),
 })
 
-export async function action({ request }: ActionFunctionArgs) {
+export async function action({ request }: Route.ActionArgs) {
 	const formData = await request.formData()
 	const submission = parseWithZod(formData, {
 		schema: ThemeFormSchema,
@@ -39,7 +39,7 @@ export async function action({ request }: ActionFunctionArgs) {
 export function ThemeSwitch() {
 	const requestInfo = useRequestInfo()
 	const peRedirectInput = usePERedirectInput()
-	const fetcher = useFetcher<typeof action>()
+	const fetcher = useFetcher<Route.ComponentProps['actionData']>()
 
 	const [form] = useForm({
 		lastResult: fetcher.data,

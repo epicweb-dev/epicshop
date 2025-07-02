@@ -1,8 +1,8 @@
-import { useRouteLoaderData } from '@remix-run/react'
-import { type loader as rootLoader } from '#app/root.tsx'
+import { useRouteLoaderData } from 'react-router'
+import { type RootLoaderData } from '#app/root.tsx'
 
 export function useOptionalUser() {
-	const data = useRouteLoaderData<typeof rootLoader>('root')
+	const data = useRouteLoaderData('root') as RootLoaderData
 	return data?.user
 }
 
@@ -17,7 +17,7 @@ export function useUser() {
 }
 
 export function useOptionalDiscordMember() {
-	const data = useRouteLoaderData<typeof rootLoader>('root')
+	const data = useRouteLoaderData('root') as RootLoaderData
 	return data?.user?.discordProfile
 		? {
 				id: data.user.discordProfile.user.id,
@@ -40,6 +40,6 @@ export function useDiscordMember() {
 }
 
 export function useUserHasAccess() {
-	const data = useRouteLoaderData<typeof rootLoader>('root')
+	const data = useRouteLoaderData('root') as RootLoaderData
 	return data?.userHasAccess ?? false
 }

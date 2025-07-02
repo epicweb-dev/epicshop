@@ -9,18 +9,6 @@ import {
 	getServerTimeHeader,
 	makeTimings,
 } from '@epic-web/workshop-utils/timing.server'
-import {
-	unstable_data as data,
-	type HeadersFunction,
-	type LoaderFunctionArgs,
-} from '@remix-run/node'
-import {
-	Link,
-	NavLink,
-	Outlet,
-	useLoaderData,
-	useParams,
-} from '@remix-run/react'
 import { clsx } from 'clsx'
 import {
 	motion,
@@ -28,6 +16,16 @@ import {
 	type AnimationControls,
 } from 'framer-motion'
 import * as React from 'react'
+import {
+	Link,
+	NavLink,
+	Outlet,
+	useLoaderData,
+	useParams,
+	data,
+	type HeadersFunction,
+	type LoaderFunctionArgs,
+} from 'react-router'
 import { useHydrated } from 'remix-utils/use-hydrated'
 import { Icon } from '#app/components/icons.tsx'
 import { makeMediaQueryStore } from '#app/components/media-query.ts'

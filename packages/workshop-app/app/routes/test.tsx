@@ -6,13 +6,13 @@ import {
 	isTestRunning,
 	runAppTests,
 } from '@epic-web/workshop-utils/process-manager.server'
+import { useEffect, useReducer, useRef } from 'react'
 import {
-	unstable_data as data,
+	data,
 	type ActionFunctionArgs,
 	type LoaderFunctionArgs,
-} from '@remix-run/node'
-import { useFetcher } from '@remix-run/react'
-import { useEffect, useReducer, useRef } from 'react'
+	useFetcher,
+} from 'react-router'
 import { useEventSource } from 'remix-utils/sse/react'
 import { eventStream } from 'remix-utils/sse/server'
 import { z } from 'zod'

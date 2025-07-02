@@ -5,7 +5,6 @@ import {
 	type Message,
 	type User,
 } from '@epic-web/workshop-presence/presence'
-import { useParams, useRouteLoaderData } from '@remix-run/react'
 import { usePartySocket } from 'partysocket/react'
 import {
 	createContext,
@@ -15,8 +14,9 @@ import {
 	useRef,
 	useState,
 } from 'react'
+import { useParams, useRouteLoaderData } from 'react-router'
 import { z } from 'zod'
-import { type loader as rootLoader } from '#app/root.tsx'
+import { type RootLoaderData } from '#app/root.tsx'
 import { useIsOnline } from './online.ts'
 import { useRequestInfo } from './request-info.ts'
 
@@ -27,12 +27,12 @@ const PresenceContext = createContext<ReturnType<
 > | null>(null)
 
 export function usePresencePreferences() {
-	const data = useRouteLoaderData<typeof rootLoader>('root')
+	const data = useRouteLoaderData('root') as RootLoaderData
 	return data?.preferences?.presence ?? null
 }
 
 export function useOptionalWorkshopTitle() {
-	const data = useRouteLoaderData<typeof rootLoader>('root')
+	const data = useRouteLoaderData('root') as RootLoaderData
 	return data?.workshopTitle ?? null
 }
 
@@ -122,7 +122,7 @@ function usePresenceSocket(user?: User | null) {
 		userHasAccess = false,
 		userId,
 		presence,
-	} = useRouteLoaderData<typeof rootLoader>('root') ?? {}
+	} = (useRouteLoaderData('root') as RootLoaderData) ?? {}
 	const [users, setUsers] = useState(presence?.users ?? [])
 	const usersLocation = useUsersLocation()
 
@@ -243,7 +243,7 @@ function PresenceOffline({
 	children: React.ReactNode
 }) {
 	const usersLocation = useUsersLocation()
-	const { presence } = useRouteLoaderData<typeof rootLoader>('root') ?? {}
+	const { presence } = (useRouteLoaderData('root') as RootLoaderData) ?? {}
 	return (
 		<PresenceContext.Provider
 			value={{

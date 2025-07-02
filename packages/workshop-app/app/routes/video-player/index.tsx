@@ -7,11 +7,15 @@ import RealMuxPlayer, {
 	MinResolution,
 	MaxResolution,
 } from '@mux/mux-player-react'
-import { unstable_data as data, type ActionFunctionArgs } from '@remix-run/node'
-import { useFetcher, useRouteLoaderData } from '@remix-run/react'
 import * as React from 'react'
+import {
+	data,
+	type ActionFunctionArgs,
+	useFetcher,
+	useRouteLoaderData,
+} from 'react-router'
 import { z } from 'zod'
-import { type loader as rootLoader } from '#app/root.tsx'
+import { type RootLoaderData } from '#app/root.tsx'
 import { useDebounce } from '#app/utils/misc.tsx'
 import './mux-player.css'
 
@@ -25,7 +29,7 @@ const PlaybackTimeSchema = z
 	})
 
 export function usePlayerPreferences() {
-	const data = useRouteLoaderData<typeof rootLoader>('root')
+	const data = useRouteLoaderData('root') as RootLoaderData
 	return data?.preferences?.player ?? null
 }
 
@@ -161,7 +165,7 @@ export function MuxPlayer({
 		// don't update the preferences if there's no change...
 		if (isDeepEqual(newPrefs, playerPreferencesRef.current)) return
 
-		fetcherRef.current.submit(newPrefs, {
+		void fetcherRef.current.submit(newPrefs, {
 			method: 'POST',
 			action: '/video-player',
 			encType: 'application/json',

@@ -1,5 +1,5 @@
 import { getExercises } from '@epic-web/workshop-utils/apps.server'
-import { redirect, type LoaderFunctionArgs } from '@remix-run/node'
+import { redirect, type LoaderFunctionArgs } from 'react-router'
 
 export async function loader({ request }: LoaderFunctionArgs) {
 	const exercises = await getExercises({ request })

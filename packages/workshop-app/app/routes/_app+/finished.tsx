@@ -12,21 +12,15 @@ import {
 	time,
 } from '@epic-web/workshop-utils/timing.server'
 import { type SEOHandle } from '@nasa-gcn/remix-seo'
-import {
-	unstable_data as data,
-	type HeadersFunction,
-	type LoaderFunctionArgs,
-	type MetaFunction,
-} from '@remix-run/node'
-import { Link, useLoaderData } from '@remix-run/react'
 import slugify from '@sindresorhus/slugify'
 import * as React from 'react'
+import { data, type HeadersFunction, Link } from 'react-router'
 import { EpicVideoInfoProvider } from '#app/components/epic-video.tsx'
 import { Icon } from '#app/components/icons.tsx'
 import { Loading } from '#app/components/loading.tsx'
 import { NavChevrons } from '#app/components/nav-chevrons.tsx'
 import { useRevalidationWS } from '#app/components/revalidation-ws.js'
-import { type loader as rootLoader } from '#app/root.tsx'
+import { type RootLoaderData } from '#app/root.tsx'
 import { Mdx } from '#app/utils/mdx.tsx'
 import { cn } from '#app/utils/misc.tsx'
 import { useIsOnline } from '#app/utils/online.ts'
@@ -34,15 +28,14 @@ import { getSeoMetaTags } from '#app/utils/seo.js'
 import { EditFileOnGitHub } from '../launch-editor.tsx'
 import { ProgressToggle } from '../progress.tsx'
 import { useTheme } from '../theme/index.tsx'
+import { type Route } from './+types/finished.tsx'
 
 export const handle: SEOHandle = {
 	getSitemapEntries: () => [{ route: '/finished' }],
 }
 
-export const meta: MetaFunction<typeof loader, { root: typeof rootLoader }> = ({
-	matches,
-}) => {
-	const rootData = matches.find((m) => m.id === 'root')?.data
+export const meta: Route.MetaFunction = ({ matches }) => {
+	const rootData = matches.find((m) => m?.id === 'root')?.data as RootLoaderData
 	if (!rootData) return []
 
 	return getSeoMetaTags({
@@ -55,7 +48,7 @@ export const meta: MetaFunction<typeof loader, { root: typeof rootLoader }> = ({
 	})
 }
 
-export async function loader({ request }: LoaderFunctionArgs) {
+export async function loader({ request }: Route.LoaderArgs) {
 	const timings = makeTimings('finishedLoader')
 	const exercises = await getExercises({ request, timings })
 	const compiledFinished = await time(() => getWorkshopFinished({ request }), {
@@ -116,8 +109,9 @@ export const headers: HeadersFunction = ({ loaderHeaders, parentHeaders }) => {
 
 const mdxComponents = { h1: () => null }
 
-export default function ExerciseFinished() {
-	const data = useLoaderData<typeof loader>()
+export default function ExerciseFinished({
+	loaderData: data,
+}: Route.ComponentProps) {
 	useRevalidationWS({ watchPaths: ['./exercises/FINISHED.mdx'] })
 	return (
 		<div className="flex h-full flex-grow flex-col">

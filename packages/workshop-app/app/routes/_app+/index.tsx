@@ -11,22 +11,17 @@ import {
 	makeTimings,
 	time,
 } from '@epic-web/workshop-utils/timing.server'
-import {
-	unstable_data as data,
-	type HeadersFunction,
-	type LoaderFunctionArgs,
-	type SerializeFrom,
-} from '@remix-run/node'
-import { Link, useLoaderData } from '@remix-run/react'
 import slugify from '@sindresorhus/slugify'
+import { data, type HeadersFunction, Link } from 'react-router'
 import { EpicVideoInfoProvider } from '#app/components/epic-video.tsx'
 import { GeneralErrorBoundary } from '#app/components/error-boundary.tsx'
 import { EditFileOnGitHub } from '#app/routes/launch-editor.tsx'
 import { Mdx } from '#app/utils/mdx.tsx'
 import { cn } from '#app/utils/misc.tsx'
 import { ProgressToggle, useExerciseProgressClassName } from '../progress.tsx'
+import { type Route } from './+types/index.tsx'
 
-export async function loader({ request }: LoaderFunctionArgs) {
+export async function loader({ request }: Route.LoaderArgs) {
 	const timings = makeTimings('indexLoader')
 	const { title } = getWorkshopConfig()
 	const [exercises, workshopReadme] = await Promise.all([
@@ -80,7 +75,7 @@ export const headers: HeadersFunction = ({ loaderHeaders, parentHeaders }) => {
 function ExerciseListItem({
 	exercise,
 }: {
-	exercise: SerializeFrom<typeof loader>['exercises'][number]
+	exercise: Awaited<Route.ComponentProps['loaderData']>['exercises'][number]
 }) {
 	const progressClassName = useExerciseProgressClassName(
 		exercise.exerciseNumber,
@@ -105,9 +100,7 @@ function ExerciseListItem({
 
 const mdxComponents = { h1: () => null }
 
-export default function Index() {
-	const data = useLoaderData<typeof loader>()
-
+export default function Index({ loaderData: data }: Route.ComponentProps) {
 	const exerciseLinks = (
 		<ul className="flex flex-col divide-y divide-border dark:divide-border/50">
 			<strong className="px-10 pb-3 font-mono text-xs uppercase">

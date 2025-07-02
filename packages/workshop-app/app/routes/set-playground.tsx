@@ -8,9 +8,8 @@ import {
 } from '@epic-web/workshop-utils/apps.server'
 import { getDiffCode } from '@epic-web/workshop-utils/diff.server'
 import * as Select from '@radix-ui/react-select'
-import { unstable_data as data, type ActionFunctionArgs } from '@remix-run/node'
-import { useFetcher } from '@remix-run/react'
 import { clsx } from 'clsx'
+import { data, type ActionFunctionArgs, useFetcher } from 'react-router'
 import { z } from 'zod'
 import { Icon } from '#app/components/icons.tsx'
 import { showProgressBarField } from '#app/components/progress-bar.tsx'
@@ -137,7 +136,7 @@ export function PlaygroundChooser({
 			name="appName"
 			value={playgroundAppName}
 			onValueChange={(appName) => {
-				fetcher.submit(
+				void fetcher.submit(
 					{ appName },
 					{ method: 'POST', action: '/set-playground' },
 				)
