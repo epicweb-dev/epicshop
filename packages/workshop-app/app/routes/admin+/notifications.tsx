@@ -1,7 +1,8 @@
 import { muteNotification } from '@epic-web/workshop-utils/db.server'
 import { type getUnmutedNotifications } from '@epic-web/workshop-utils/notifications.server'
-import { json, type ActionFunctionArgs } from '@remix-run/node'
-import { useFetcher } from '@remix-run/react'
+import { json } from "@react-router/node";
+import { type ActionFunctionArgs } from 'react-router';
+import { useFetcher } from 'react-router';
 import { useEffect, useRef } from 'react'
 import { toast } from 'sonner'
 

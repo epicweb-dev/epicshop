@@ -2,7 +2,7 @@ import {
 	getPreferences,
 	setPreferences,
 } from '@epic-web/workshop-utils/db.server'
-import { Form, useNavigation, useRouteLoaderData } from '@remix-run/react'
+import { Form, useNavigation, useRouteLoaderData } from 'react-router';
 import { Button } from '#app/components/button.tsx'
 import { Icon } from '#app/components/icons.tsx'
 import { SimpleTooltip } from '#app/components/ui/tooltip.tsx'

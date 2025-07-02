@@ -6,8 +6,8 @@ import {
 	stopPort,
 	waitOnApp,
 } from '@epic-web/workshop-utils/process-manager.server'
-import { unstable_data as data, type ActionFunctionArgs } from '@remix-run/node'
-import { useFetcher } from '@remix-run/react'
+import { data, type ActionFunctionArgs } from 'react-router';
+import { useFetcher } from 'react-router';
 import { Button } from '#app/components/button.tsx'
 import { Loading } from '#app/components/loading.tsx'
 import { showProgressBarField } from '#app/components/progress-bar.tsx'

@@ -16,12 +16,12 @@ import {
 	makeTimings,
 } from '@epic-web/workshop-utils/timing.server'
 import {
-	unstable_data as data,
-	type HeadersFunction,
-	type LoaderFunctionArgs,
-	type MetaFunction,
-} from '@remix-run/node'
-import { Link, useLoaderData } from '@remix-run/react'
+    data,
+    type HeadersFunction,
+    type LoaderFunctionArgs,
+    type MetaFunction,
+} from 'react-router';
+import { Link, useLoaderData } from 'react-router';
 import slugify from '@sindresorhus/slugify'
 import * as React from 'react'
 import { EpicVideoInfoProvider } from '#app/components/epic-video.tsx'
@@ -152,8 +152,8 @@ export default function ExerciseFinished() {
 	})
 
 	return (
-		<div className="flex max-w-full flex-grow flex-col">
-			<main className="flex flex-grow flex-col sm:grid sm:h-full sm:min-h-[800px] sm:grid-cols-1 sm:grid-rows-2 md:min-h-[unset] lg:grid-cols-2 lg:grid-rows-1">
+        (<div className="flex max-w-full flex-grow flex-col">
+            <main className="flex flex-grow flex-col sm:grid sm:h-full sm:min-h-[800px] sm:grid-cols-1 sm:grid-rows-2 md:min-h-[unset] lg:grid-cols-2 lg:grid-rows-1">
 				<div className="relative flex flex-col sm:col-span-1 sm:row-span-1 sm:h-full lg:border-r">
 					<h1 className="h-14 border-b pl-10 pr-5 text-sm font-medium leading-tight">
 						<div className="flex h-14 flex-wrap items-center justify-between gap-x-2 py-2">
@@ -184,7 +184,7 @@ export default function ExerciseFinished() {
 							</EpicVideoInfoProvider>
 						) : (
 							// TODO: render a random dad joke...
-							'No finished instructions yet...'
+							('No finished instructions yet...')
 						)}
 					</article>
 					<ElementScrollRestoration elementQuery={`#${data.articleId}`} />
@@ -207,8 +207,8 @@ export default function ExerciseFinished() {
 					exerciseTitle={data.exercise.title}
 				/>
 			</main>
-		</div>
-	)
+        </div>)
+    );
 }
 
 function Survey({

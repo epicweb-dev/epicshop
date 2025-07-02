@@ -1,6 +1,6 @@
 import { type SEOHandle } from '@nasa-gcn/remix-seo'
-import { type LoaderFunction, type MetaFunction } from '@remix-run/node'
-import { Link, Outlet } from '@remix-run/react'
+import { type LoaderFunction, type MetaFunction } from 'react-router';
+import { Link, Outlet } from 'react-router';
 import { type loader as rootLoader } from '#app/root.tsx'
 
 export const handle: SEOHandle = {

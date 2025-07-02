@@ -8,8 +8,8 @@ import {
 } from '@epic-web/workshop-utils/apps.server'
 import { getDiffCode } from '@epic-web/workshop-utils/diff.server'
 import * as Select from '@radix-ui/react-select'
-import { unstable_data as data, type ActionFunctionArgs } from '@remix-run/node'
-import { useFetcher } from '@remix-run/react'
+import { data, type ActionFunctionArgs } from 'react-router';
+import { useFetcher } from 'react-router';
 import { clsx } from 'clsx'
 import { z } from 'zod'
 import { Icon } from '#app/components/icons.tsx'

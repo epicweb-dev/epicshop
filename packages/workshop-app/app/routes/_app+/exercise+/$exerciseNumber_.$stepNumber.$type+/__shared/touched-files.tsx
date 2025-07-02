@@ -1,6 +1,6 @@
 import * as Popover from '@radix-ui/react-popover'
-import { type SerializeFrom } from '@remix-run/node'
-import { Await, useLoaderData } from '@remix-run/react'
+// type imports removed for compatibility
+import { Await, useLoaderData } from 'react-router';
 import * as React from 'react'
 import { Icon } from '#app/components/icons.tsx'
 import { SimpleTooltip } from '#app/components/ui/tooltip.tsx'
@@ -11,7 +11,7 @@ import { type loader } from '../_layout.tsx'
 function TouchedFiles({
 	diffFilesPromise,
 }: {
-	diffFilesPromise: SerializeFrom<typeof loader>['diffFiles']
+	diffFilesPromise: any<typeof loader>['diffFiles']
 }) {
 	const data = useLoaderData<typeof loader>()
 

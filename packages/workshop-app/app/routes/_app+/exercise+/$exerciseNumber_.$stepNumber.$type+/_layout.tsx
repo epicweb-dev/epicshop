@@ -22,14 +22,14 @@ import {
 	makeTimings,
 } from '@epic-web/workshop-utils/timing.server'
 import {
-	unstable_data as data,
-	redirect,
-	type HeadersFunction,
-	type LoaderFunctionArgs,
-	type MetaFunction,
-	type SerializeFrom,
-} from '@remix-run/node'
-import { Link, Outlet, useLoaderData } from '@remix-run/react'
+    data,
+    redirect,
+    type HeadersFunction,
+    type LoaderFunctionArgs,
+    type MetaFunction,
+    type any,
+} from 'react-router';
+import { Link, Outlet, useLoaderData } from 'react-router';
 import slugify from '@sindresorhus/slugify'
 import { useRef } from 'react'
 import { GeneralErrorBoundary } from '#app/components/error-boundary.tsx'
@@ -46,7 +46,7 @@ import { StepMdx } from './__shared/step-mdx.tsx'
 import TouchedFiles from './__shared/touched-files.tsx'
 
 function pageTitle(
-	data: SerializeFrom<typeof loader> | undefined,
+	data: any<typeof loader> | undefined,
 	workshopTitle?: string,
 ) {
 	const exerciseNumber =

@@ -2,7 +2,7 @@
 // to the page they are on if the JavaScript hasn't had a chance to hydrate yet.
 // I think when Remix has middleware, this will be easier to do automatically.
 
-import { unstable_data as data, redirect, useLocation } from '@remix-run/react'
+import { data, redirect, useLocation } from 'react-router';
 import { safeRedirect } from 'remix-utils/safe-redirect'
 import { ServerOnly } from 'remix-utils/server-only'
 

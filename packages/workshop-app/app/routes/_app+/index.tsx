@@ -12,12 +12,12 @@ import {
 	time,
 } from '@epic-web/workshop-utils/timing.server'
 import {
-	unstable_data as data,
-	type HeadersFunction,
-	type LoaderFunctionArgs,
-	type SerializeFrom,
-} from '@remix-run/node'
-import { Link, useLoaderData } from '@remix-run/react'
+    data,
+    type HeadersFunction,
+    type LoaderFunctionArgs,
+    type any,
+} from 'react-router';
+import { Link, useLoaderData } from 'react-router';
 import slugify from '@sindresorhus/slugify'
 import { EpicVideoInfoProvider } from '#app/components/epic-video.tsx'
 import { GeneralErrorBoundary } from '#app/components/error-boundary.tsx'
@@ -80,7 +80,7 @@ export const headers: HeadersFunction = ({ loaderHeaders, parentHeaders }) => {
 function ExerciseListItem({
 	exercise,
 }: {
-	exercise: SerializeFrom<typeof loader>['exercises'][number]
+	exercise: any<typeof loader>['exercises'][number]
 }) {
 	const progressClassName = useExerciseProgressClassName(
 		exercise.exerciseNumber,

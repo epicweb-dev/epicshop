@@ -1,5 +1,4 @@
-import { type SerializeFrom } from '@remix-run/node'
-import { Await, Link, useLoaderData } from '@remix-run/react'
+import { Await, Link, useLoaderData } from 'react-router';
 import * as React from 'react'
 import { Icon } from '#app/components/icons.tsx'
 import { Loading } from '#app/components/loading.tsx'
@@ -38,8 +37,8 @@ function DiscordPosts() {
 		)
 	}
 	return (
-		<div className="flex h-full flex-col items-center justify-between">
-			<React.Suspense
+        (<div className="flex h-full flex-col items-center justify-between">
+            <React.Suspense
 				fallback={
 					<div className="flex h-full w-full flex-col items-center justify-center">
 						<Loading>Loading Discord Posts</Loading>
@@ -68,7 +67,7 @@ function DiscordPosts() {
 					)}
 				</Await>
 			</React.Suspense>
-			<div>
+            <div>
 				<Link
 					to={
 						altDown && !ctaLink.includes('oauth')
@@ -94,20 +93,20 @@ function DiscordPosts() {
 					Create Post <Icon name="ExternalLink" />
 				</Link>
 			</div>
-		</div>
-	)
+        </div>)
+    );
 }
 
 function DiscordPost({
 	thread,
 }: {
-	thread: Awaited<SerializeFrom<typeof loader>['discordPostsPromise']>[number]
+	thread: Awaited<ReturnType<typeof loader>['discordPostsPromise']>[number]
 }) {
 	const reactionsWithCounts = thread.reactions.filter((r) => r.count)
 
 	return (
-		<div>
-			<div className="flex flex-col gap-2 p-4">
+        (<div>
+            <div className="flex flex-col gap-2 p-4">
 				<div className="flex gap-4">
 					<div className="flex flex-col gap-1">
 						{thread.tags.length ? (
@@ -199,8 +198,8 @@ function DiscordPost({
 					</span>
 				</div>
 			</div>
-		</div>
-	)
+        </div>)
+    );
 }
 
 function Emoji({ name, url }: { name?: string; url?: string }) {

@@ -1,6 +1,6 @@
 import path from 'path'
 import { fileURLToPath, pathToFileURL } from 'url'
-import { vitePlugin as remix } from '@remix-run/dev'
+import { reactRouter } from '@react-router/dev/vite'
 import { flatRoutes } from 'remix-flat-routes'
 import { defineConfig } from 'vite'
 import { envOnlyMacros } from 'vite-env-only'
@@ -34,7 +34,7 @@ const aliases = {
 
 const MODE = process.env.NODE_ENV
 
-declare module '@remix-run/server-runtime' {
+declare module 'react-router' {
 	// or cloudflare, deno, etc.
 	interface Future {
 		unstable_singleFetch: true
@@ -76,32 +76,6 @@ export default defineConfig({
 	resolve: { alias: aliases },
 	plugins: [
 		envOnlyMacros(),
-		remix({
-			future: {
-				v3_fetcherPersist: true,
-				v3_relativeSplatPath: true,
-				v3_throwAbortReason: true,
-				unstable_optimizeDeps: true,
-				unstable_lazyRouteDiscovery: true,
-				unstable_singleFetch: true,
-			},
-			ignoredRouteFiles: ['**/*'],
-			serverModuleFormat: 'esm',
-			routes: async (defineRoutes) => {
-				return flatRoutes('routes', defineRoutes, {
-					ignoredRouteFiles: [
-						'**/.*',
-						'**/*.css',
-						'**/*.test.{js,jsx,ts,tsx}',
-						'**/__*',
-						'**/*.server.*',
-						'**/*.client.*',
-						'**/__*/*',
-						'**/*.server/*',
-						'**/*.client/*',
-					],
-				})
-			},
-		}),
+		reactRouter(),
 	],
 })

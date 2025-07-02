@@ -3,7 +3,7 @@ import {
 	getServerTimeHeader,
 	makeTimings,
 } from '@epic-web/workshop-utils/timing.server'
-import { unstable_data as data, type LoaderFunctionArgs } from '@remix-run/node'
+import { data, type LoaderFunctionArgs } from 'react-router';
 
 export async function loader({ request }: LoaderFunctionArgs) {
 	const timings = makeTimings('appsLoader')

@@ -9,18 +9,8 @@ import {
 	getServerTimeHeader,
 	makeTimings,
 } from '@epic-web/workshop-utils/timing.server'
-import {
-	unstable_data as data,
-	type HeadersFunction,
-	type LoaderFunctionArgs,
-} from '@remix-run/node'
-import {
-	Link,
-	NavLink,
-	Outlet,
-	useLoaderData,
-	useParams,
-} from '@remix-run/react'
+import { data, type HeadersFunction, type LoaderFunctionArgs } from 'react-router';
+import { Link, NavLink, Outlet, useLoaderData, useParams } from 'react-router';
 import { clsx } from 'clsx'
 import {
 	motion,

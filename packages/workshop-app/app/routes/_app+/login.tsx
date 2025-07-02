@@ -1,7 +1,7 @@
 import { getAuthInfo } from '@epic-web/workshop-utils/db.server'
 import { type SEOHandle } from '@nasa-gcn/remix-seo'
-import { redirect } from '@remix-run/node'
-import { Link, useFetcher, useNavigate, useRevalidator } from '@remix-run/react'
+import { redirect } from 'react-router';
+import { Link, useFetcher, useNavigate, useRevalidator } from 'react-router';
 import { useEffect, useState } from 'react'
 import { useEventSource } from 'remix-utils/sse/react'
 import { Button, ButtonLink } from '#app/components/button.tsx'

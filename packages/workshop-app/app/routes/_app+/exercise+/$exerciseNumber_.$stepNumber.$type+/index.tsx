@@ -19,17 +19,12 @@ import {
 } from '@epic-web/workshop-utils/timing.server'
 import * as Tabs from '@radix-ui/react-tabs'
 import {
-	unstable_data as data,
-	redirect,
-	type HeadersFunction,
-	type LoaderFunctionArgs,
-} from '@remix-run/node'
-import {
-	Link,
-	useLoaderData,
-	useNavigate,
-	useSearchParams,
-} from '@remix-run/react'
+    data,
+    redirect,
+    type HeadersFunction,
+    type LoaderFunctionArgs,
+} from 'react-router';
+import { Link, useLoaderData, useNavigate, useSearchParams } from 'react-router';
 import { clsx } from 'clsx'
 import * as React from 'react'
 import { useRef } from 'react'

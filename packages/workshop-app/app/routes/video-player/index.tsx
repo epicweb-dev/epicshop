@@ -7,8 +7,8 @@ import RealMuxPlayer, {
 	MinResolution,
 	MaxResolution,
 } from '@mux/mux-player-react'
-import { unstable_data as data, type ActionFunctionArgs } from '@remix-run/node'
-import { useFetcher, useRouteLoaderData } from '@remix-run/react'
+import { data, type ActionFunctionArgs } from 'react-router';
+import { useFetcher, useRouteLoaderData } from 'react-router';
 import * as React from 'react'
 import { z } from 'zod'
 import { type loader as rootLoader } from '#app/root.tsx'

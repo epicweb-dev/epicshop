@@ -6,12 +6,12 @@ import {
 } from '@epic-web/workshop-utils/timing.server'
 import { type SEOHandle } from '@nasa-gcn/remix-seo'
 import {
-	unstable_data as data,
-	type ActionFunctionArgs,
-	type LoaderFunctionArgs,
-	type MetaFunction,
-} from '@remix-run/node'
-import { Form, Link, useLoaderData, useNavigation } from '@remix-run/react'
+    data,
+    type ActionFunctionArgs,
+    type LoaderFunctionArgs,
+    type MetaFunction,
+} from 'react-router';
+import { Form, Link, useLoaderData, useNavigation } from 'react-router';
 import { Icon } from '#app/components/icons.tsx'
 import { SimpleTooltip } from '#app/components/ui/tooltip.tsx'
 import { type loader as rootLoader } from '#app/root.tsx'

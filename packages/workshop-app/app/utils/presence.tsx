@@ -5,7 +5,7 @@ import {
 	type Message,
 	type User,
 } from '@epic-web/workshop-presence/presence'
-import { useParams, useRouteLoaderData } from '@remix-run/react'
+import { useParams, useRouteLoaderData } from 'react-router';
 import { usePartySocket } from 'partysocket/react'
 import {
 	createContext,

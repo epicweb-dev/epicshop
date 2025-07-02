@@ -14,17 +14,12 @@ import {
 	time,
 } from '@epic-web/workshop-utils/timing.server'
 import {
-	unstable_data as data,
-	type HeadersFunction,
-	type LoaderFunctionArgs,
-	type MetaFunction,
-} from '@remix-run/node'
-import {
-	Link,
-	isRouteErrorResponse,
-	useLoaderData,
-	useRouteError,
-} from '@remix-run/react'
+    data,
+    type HeadersFunction,
+    type LoaderFunctionArgs,
+    type MetaFunction,
+} from 'react-router';
+import { Link, isRouteErrorResponse, useLoaderData, useRouteError } from 'react-router';
 import slugify from '@sindresorhus/slugify'
 import { EpicVideoInfoProvider } from '#app/components/epic-video.tsx'
 import { useRevalidationWS } from '#app/components/revalidation-ws.js'

@@ -6,12 +6,8 @@ import {
 	getServerTimeHeader,
 	makeTimings,
 } from '@epic-web/workshop-utils/timing.server'
-import {
-	unstable_data as data,
-	type HeadersFunction,
-	type LoaderFunctionArgs,
-} from '@remix-run/node'
-import { Outlet, isRouteErrorResponse, useRouteError } from '@remix-run/react'
+import { data, type HeadersFunction, type LoaderFunctionArgs } from 'react-router';
+import { Outlet, isRouteErrorResponse, useRouteError } from 'react-router';
 import { getErrorMessage } from '#app/utils/misc.tsx'
 
 export async function loader({ request, params }: LoaderFunctionArgs) {
