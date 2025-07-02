@@ -4,7 +4,6 @@ import { flatRoutes } from 'remix-flat-routes'
 export default {
 	future: {
 		unstable_optimizeDeps: true,
-		unstable_lazyRouteDiscovery: true,
 		unstable_singleFetch: true,
 	},
 	ignoredRouteFiles: ['**/*'],

@@ -9,13 +9,13 @@ export async function action({ request }: ActionFunctionArgs) {
 	const intent = formData.get('intent')
 	const id = formData.get('id')
 	if (typeof id !== 'string') {
-		return json({ error: 'Invalid notification id' }, { status: 400 })
+		return data({ error: 'Invalid notification id' }, { status: 400 })
 	}
 	if (intent === 'mute') {
 		await muteNotification(id)
-		return json({ success: true })
+		return data({ success: true })
 	}
-	return json({ error: 'Invalid intent' }, { status: 400 })
+	return data({ error: 'Invalid intent' }, { status: 400 })
 }
 
 export function Notifications({
