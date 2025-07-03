@@ -6,17 +6,18 @@
   },
   "type": "module",
   "scripts": {
+    "typecheck": "tsc --noEmit",
     "build": "tshy",
     "dev": "partykit dev",
     "deploy": "partykit deploy"
   },
   "dependencies": {
     "@epic-web/workshop-utils": "file:../workshop-utils",
-    "zod": "^3.23.8"
+    "zod": "^3.25.71"
   },
   "devDependencies": {
-    "partykit": "0.0.111",
-    "typescript": "^5.6.2",
+    "partykit": "0.0.115",
+    "typescript": "^5.8.3",
     "tshy": "^3.0.2"
   },
   "files": [

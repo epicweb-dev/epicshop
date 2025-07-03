@@ -1,13 +1,13 @@
 import fs from 'fs'
 import path from 'path'
-import { remarkCodeBlocksShiki } from '@kentcdodds/md-temp'
+import { rehypeCodeBlocksShiki } from '@kentcdodds/md-temp'
 import { type Element, type Root as HastRoot } from 'hast'
 import lz from 'lz-string'
 import { type Root as MdastRoot } from 'mdast'
 import { type MdxJsxFlowElement } from 'mdast-util-mdx-jsx'
 import { bundleMDX } from 'mdx-bundler'
 import PQueue from 'p-queue'
-import remarkAutolinkHeadings from 'remark-autolink-headings'
+import rehypeAutolinkHeadings from 'rehype-autolink-headings'
 import emoji from 'remark-emoji'
 import gfm from 'remark-gfm'
 import { type PluggableList } from 'unified'
@@ -161,8 +161,9 @@ function removePreContainerDivs() {
 }
 
 const rehypePlugins = [
+	[rehypeAutolinkHeadings, { behavior: 'wrap' }],
 	trimCodeBlocks,
-	remarkCodeBlocksShiki,
+	rehypeCodeBlocksShiki,
 	removePreContainerDivs,
 ] satisfies PluggableList
 
@@ -222,7 +223,6 @@ async function compileMdxImpl(file: string): Promise<{
 			mdxOptions(options) {
 				options.remarkPlugins = [
 					...(options.remarkPlugins ?? []),
-					[remarkAutolinkHeadings, { behavior: 'wrap' }],
 					gfm,
 					remarkMermaidCodeToSvg,
 					() => (tree: MdastRoot) => {

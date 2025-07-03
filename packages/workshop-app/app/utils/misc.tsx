@@ -19,14 +19,13 @@ type AnchorProps = React.DetailedHTMLProps<
 	HTMLAnchorElement
 >
 
-export const AnchorOrLink = React.forwardRef<
-	HTMLAnchorElement,
-	AnchorProps & {
+export const AnchorOrLink = function AnchorOrLink({
+	ref,
+	...props
+}: AnchorProps &
+	LinkProps & {
 		reload?: boolean
-		to?: LinkProps['to']
-		prefetch?: LinkProps['prefetch']
-	}
->(function AnchorOrLink(props, ref) {
+	}) {
 	const {
 		to,
 		href,
@@ -69,7 +68,7 @@ export const AnchorOrLink = React.forwardRef<
 			</Link>
 		)
 	}
-})
+}
 
 export function ensureUndeployed() {
 	if (ENV.EPICSHOP_DEPLOYED) {
@@ -106,12 +105,20 @@ export function useAltDown() {
 	return altDown
 }
 
-export const Heading = React.forwardRef<
-	HTMLHeadingElement,
-	React.ComponentPropsWithoutRef<'h1'> & {
-		as?: 'h1' | 'h2' | 'h3' | 'h4' | 'h5' | 'h6'
-	}
->(function Heading({ id, children, as: asProp, className, ...props }, ref) {
+export const Heading = function Heading({
+	ref,
+	id,
+	children,
+	as: asProp,
+	className,
+	...props
+}: {
+	ref: React.RefObject<HTMLHeadingElement>
+	id?: string
+	children: React.ReactNode
+	as?: React.ElementType
+	className?: string
+}) {
 	const Comp = asProp ?? 'h1'
 	const slugId = id ?? slugify(children ? String(children) : '')
 	return (
@@ -134,7 +141,7 @@ export const Heading = React.forwardRef<
 			{children}
 		</Comp>
 	)
-})
+}
 export function getUserImgSrc(imageId?: string | null) {
 	return imageId ? `/resources/user-images/${imageId}` : '/img/user.png'
 }

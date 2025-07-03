@@ -17,6 +17,7 @@ process.env.NODE_ENV ??= 'development'
 process.env.EPICSHOP_ENABLE_WATCHER ??= 'true'
 const EPICSHOP_CONTEXT_CWD = process.env.EPICSHOP_CONTEXT_CWD ?? process.cwd()
 dotenv.config({
+	quiet: true,
 	path: path.join(EPICSHOP_CONTEXT_CWD, '.env'),
 })
 

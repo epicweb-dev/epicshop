@@ -23,7 +23,7 @@ export function PlaygroundWindow({
 			<Icon
 				size="xl"
 				name="Unlinked"
-				className="text-foreground-destructive animate-pulse"
+				className="animate-pulse text-foreground-destructive"
 			/>
 		)
 	let setPlaygroundTooltipText = 'Click to reset Playground.'

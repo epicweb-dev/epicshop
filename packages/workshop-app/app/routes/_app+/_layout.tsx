@@ -10,11 +10,7 @@ import {
 	makeTimings,
 } from '@epic-web/workshop-utils/timing.server'
 import { clsx } from 'clsx'
-import {
-	motion,
-	useAnimationControls,
-	type AnimationControls,
-} from 'framer-motion'
+import { motion, useAnimationControls } from 'framer-motion'
 import * as React from 'react'
 import {
 	Link,
@@ -1297,7 +1293,7 @@ function NavToggle({
 	title: string
 	isMenuOpened: boolean
 	setMenuOpened: (value: boolean) => void
-	menuControls?: AnimationControls
+	menuControls?: ReturnType<typeof useAnimationControls>
 }) {
 	const initialOpenRef = React.useRef(isMenuOpened)
 	const menuButtonRef = React.useRef<HTMLButtonElement>(null)

@@ -10,7 +10,7 @@
   ],
   "type": "module",
   "dependencies": {
-    "execa": "^9.4.0"
+    "execa": "^9.6.0"
   },
   "repository": {
     "type": "git",

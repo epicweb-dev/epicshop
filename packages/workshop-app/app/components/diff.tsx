@@ -241,33 +241,39 @@ function SelectFileToDiff({
 	)
 }
 
-const SelectItem: React.FC<any> = React.forwardRef(
-	({ children, className, ...props }, forwardedRef) => {
-		return (
-			<Select.Item
-				className={clsx(
-					'relative flex cursor-pointer select-none items-center rounded px-10 py-2 leading-none opacity-80 radix-disabled:text-red-500 radix-highlighted:opacity-100 radix-highlighted:outline-none radix-state-checked:opacity-100',
+const SelectItem: React.FC<any> = ({
+	ref: forwardedRef,
+	children,
+	className,
+	...props
+}) => {
+	return (
+		<Select.Item
+			className={clsx(
+				'relative flex cursor-pointer select-none items-center rounded px-10 py-2 leading-none opacity-80 radix-disabled:text-red-500 radix-highlighted:opacity-100 radix-highlighted:outline-none radix-state-checked:opacity-100',
 
-					className,
-				)}
-				{...props}
-				ref={forwardedRef}
-			>
-				<Select.ItemText>{children}</Select.ItemText>
-				<Select.ItemIndicator className="absolute left-0 inline-flex w-[25px] items-center justify-center">
-					<Icon name="CheckSmall" />
-				</Select.ItemIndicator>
-			</Select.Item>
-		)
-	},
-)
+				className,
+			)}
+			{...props}
+			ref={forwardedRef}
+		>
+			<Select.ItemText>{children}</Select.ItemText>
+			<Select.ItemIndicator className="absolute left-0 inline-flex w-[25px] items-center justify-center">
+				<Icon name="CheckSmall" />
+			</Select.ItemIndicator>
+		</Select.Item>
+	)
+}
 
-const SelectValue: React.FC<any> = React.forwardRef(
-	({ children, className, ...props }, forwardedRef) => {
-		return (
-			<Select.Value {...props} ref={forwardedRef}>
-				{props.value}
-			</Select.Value>
-		)
-	},
-)
+const SelectValue: React.FC<any> = ({
+	ref: forwardedRef,
+	children,
+	className,
+	...props
+}) => {
+	return (
+		<Select.Value {...props} ref={forwardedRef}>
+			{props.value}
+		</Select.Value>
+	)
+}

@@ -92,42 +92,49 @@ const AccordionComponent: React.FC<AccordionProps> = ({
 
 export default AccordionComponent
 
-const AccordionTrigger: React.FC<any> = React.forwardRef(
-	({ children, className, variant, ...props }, forwardedRef) => (
-		<Accordion.Header className="flex" asChild>
-			<Accordion.Trigger
-				className={clsx(
-					'group flex w-full items-center justify-between border-b p-4 pr-3 font-mono text-sm font-medium leading-none hover:bg-foreground/20',
+const AccordionTrigger: React.FC<any> = ({
+	ref: forwardedRef,
+	children,
+	className,
+	variant,
+	...props
+}) => (
+	<Accordion.Header className="flex" asChild>
+		<Accordion.Trigger
+			className={clsx(
+				'group flex w-full items-center justify-between border-b p-4 pr-3 font-mono text-sm font-medium leading-none hover:bg-foreground/20',
 
-					className,
-				)}
-				{...props}
-				ref={forwardedRef}
-			>
-				<div className="flex items-center gap-1.5">{children}</div>
-				<div className="flex items-center gap-2">
-					<span className="font-mono text-xs font-normal uppercase text-muted-foreground">
-						{variant}
-					</span>
-					<Icon
-						name="TriangleDownSmall"
-						className="transition group-radix-state-open:rotate-180"
-						aria-hidden
-					/>
-				</div>
-			</Accordion.Trigger>
-		</Accordion.Header>
-	),
-)
-
-const AccordionContent: React.FC<any> = React.forwardRef(
-	({ children, className, ...props }, forwardedRef) => (
-		<Accordion.Content
-			className={clsx('', className)}
+				className,
+			)}
 			{...props}
 			ref={forwardedRef}
 		>
-			<div>{children}</div>
-		</Accordion.Content>
-	),
+			<div className="flex items-center gap-1.5">{children}</div>
+			<div className="flex items-center gap-2">
+				<span className="font-mono text-xs font-normal uppercase text-muted-foreground">
+					{variant}
+				</span>
+				<Icon
+					name="TriangleDownSmall"
+					className="transition group-radix-state-open:rotate-180"
+					aria-hidden
+				/>
+			</div>
+		</Accordion.Trigger>
+	</Accordion.Header>
+)
+
+const AccordionContent: React.FC<any> = ({
+	ref: forwardedRef,
+	children,
+	className,
+	...props
+}) => (
+	<Accordion.Content
+		className={clsx('', className)}
+		{...props}
+		ref={forwardedRef}
+	>
+		<div>{children}</div>
+	</Accordion.Content>
 )
