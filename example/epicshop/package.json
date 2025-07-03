@@ -1,5 +1,8 @@
 {
   "type": "module",
+  "scripts": {
+    "start": "epicshop start"
+  },
   "dependencies": {
     "@epic-web/workshop-app": "file:../../packages/workshop-app",
     "@epic-web/workshop-cli": "file:../../packages/workshop-cli",
