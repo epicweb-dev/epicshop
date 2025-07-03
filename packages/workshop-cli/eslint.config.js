@@ -1,3 +1,4 @@
-import { config } from '@epic-web/config/eslint'
+import defaultConfig from '@epic-web/config/eslint'
 
-export default config()
+/** @type {import("eslint").Linter.Config} */
+export default [...defaultConfig]

@@ -25,6 +25,7 @@
   ],
   "scripts": {
     "typecheck": "tsc --noEmit",
+    "lint": "eslint --cache --cache-location ./node_modules/.cache/eslint .",
     "build": "tshy",
     "build:watch": "nx watch --projects=@epic-web/workshop-cli -- nx run \\$NX_PROJECT_NAME:build"
   },
