@@ -37,6 +37,7 @@
     "yargs": "^17.7.2"
   },
   "devDependencies": {
+    "@epic-web/config": "^1.11.3",
     "@types/node": "^20.16.10",
     "@types/yargs": "^17.0.32",
     "tshy": "^3.0.2"
