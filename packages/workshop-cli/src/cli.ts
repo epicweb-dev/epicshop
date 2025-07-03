@@ -11,6 +11,8 @@ import chalk from 'chalk'
 import closeWithGrace from 'close-with-grace'
 import getPort from 'get-port'
 import open from 'open'
+import yargs, { type ArgumentsCamelCase, type Argv } from 'yargs'
+import { hideBin } from 'yargs/helpers'
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url))
 
@@ -352,22 +354,41 @@ function isPublished(appDir: string): boolean {
 	return !fs.existsSync(path.join(appDir, 'app'))
 }
 
-// Simple argument parsing with help support
-const args = process.argv.slice(2)
-const command = args[0] || 'start'
-
-if (args.includes('--help') || args.includes('-h') || command === 'help') {
-	console.log(`
-${chalk.bold('Usage:')} epicshop [command] [options]
-
-${chalk.bold('Commands:')}
-  start     Start the workshop application (default)
-  update    Update the workshop to the latest version
-  upgrade   Alias for update
-
-${chalk.bold('Options:')}
-  -h, --help     Show this help message
-
+// Set up yargs CLI
+const cli = yargs(hideBin(process.argv))
+	.scriptName('epicshop')
+	.usage('$0 <command> [options]')
+	.help('help')
+	.alias('h', 'help')
+	.version(false) // Disable default version command since we're not versioning CLI separately
+	.command(
+		['start', '$0'],
+		'Start the workshop application',
+		(yargs) => {
+			return yargs
+				.option('verbose', {
+					alias: 'v',
+					type: 'boolean',
+					description: 'Show verbose output',
+					default: false,
+				})
+				.example('$0 start', 'Start the workshop with interactive features')
+		},
+		async (argv) => {
+			await startCommand()
+		}
+	)
+	.command(
+		['update', 'upgrade'],
+		'Update the workshop to the latest version',
+		(yargs) => {
+			return yargs.example('$0 update', 'Update workshop to latest version')
+		},
+		async (argv) => {
+			await updateCommand()
+		}
+	)
+	.epilogue(`
 ${chalk.bold('Interactive keys (available during start command):')}
   o - open browser
   u - update repo  
@@ -377,19 +398,8 @@ ${chalk.bold('Interactive keys (available during start command):')}
 
 For more information, visit: https://github.com/epicweb-dev/epicshop
 `)
-	process.exit(0)
-}
+	.strict()
+	.demandCommand(0, 1, '', 'Too many commands specified')
 
-switch (command) {
-	case 'start':
-		await startCommand()
-		break
-	case 'update':
-	case 'upgrade':
-		await updateCommand()
-		break
-	default:
-		console.log(chalk.red(`❌ Unknown command: ${command}`))
-		console.log(chalk.gray('Run "epicshop --help" for available commands'))
-		process.exit(1)
-}
+// Parse and execute
+await cli.parse()

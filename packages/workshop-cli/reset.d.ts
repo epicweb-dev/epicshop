@@ -1,2 +1,2 @@
 // @ts-reset
-import '@total-typescript/ts-reset'
+import '@epic-web/config/reset'
