@@ -31,8 +31,8 @@
   },
   "type": "module",
   "scripts": {
-    "start": "npx --prefix ./epicshop epicshop start",
-    "dev": "npx --prefix ./epicshop epicshop start",
+    "start": "npm run --prefix ./epicshop start",
+    "dev": "npm run --prefix ./epicshop start",
     "setup": "node ./epicshop/setup.js",
     "setup:custom": "node ./epicshop/setup-custom.js",
     "lint": "eslint .",

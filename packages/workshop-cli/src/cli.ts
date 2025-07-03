@@ -1,6 +1,6 @@
 #!/usr/bin/env node
 
-import { spawn } from 'child_process'
+import { spawn, type ChildProcess } from 'child_process'
 import crypto from 'crypto'
 import fs from 'fs'
 import http from 'http'
@@ -11,39 +11,20 @@ import chalk from 'chalk'
 import closeWithGrace from 'close-with-grace'
 import getPort from 'get-port'
 import open from 'open'
+import yargs, { type ArgumentsCamelCase, type Argv } from 'yargs'
+import { hideBin } from 'yargs/helpers'
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url))
-const isPublished = !fs.existsSync(path.join(__dirname, '..', 'app'))
-const argv = process.argv.slice(2)
 
-const command = argv[0]
+async function startCommand() {
+	// Find workshop-app directory - need to locate it relative to CLI
+	const appDir = findWorkshopAppDir()
+	if (!appDir) {
+		console.error(chalk.red('❌ Could not locate workshop-app directory'))
+		process.exit(1)
+	}
 
-switch (command) {
-	case 'start': {
-		start()
-		break
-	}
-	case 'upgrade':
-	case 'update': {
-		const { updateLocalRepo } = await import(
-			'@epic-web/workshop-utils/git.server'
-		)
-		const result = await updateLocalRepo()
-		if (result.status === 'success') {
-			console.log(`✅ ${result.message}`)
-		} else {
-			console.error(`❌ ${result.message}`)
-		}
-		break
-	}
-	default: {
-		throw new Error(`Command ${command} is not supported`)
-	}
-}
-
-async function start() {
-	const appDir = path.join(__dirname, '..')
-	const isProd = process.env.NODE_ENV === 'production' || isPublished
+	const isProd = process.env.NODE_ENV === 'production' || isPublished(appDir)
 	const isDeployed =
 		process.env.EPICSHOP_DEPLOYED === 'true' ||
 		process.env.EPICSHOP_DEPLOYED === '1'
@@ -52,7 +33,7 @@ async function start() {
 	const parentToken = crypto.randomBytes(32).toString('hex')
 
 	const childCommand = isProd ? 'node ./start.js' : 'npm run dev'
-	const childEnv = {
+	const childEnv: NodeJS.ProcessEnv = {
 		...process.env,
 		EPICSHOP_CONTEXT_CWD: process.env.EPICSHOP_CONTEXT_CWD ?? process.cwd(),
 		EPICSHOP_PARENT_PORT: String(parentPort),
@@ -60,19 +41,19 @@ async function start() {
 	}
 	if (isProd) childEnv.NODE_ENV = 'production'
 
-	let server = null
-	let child = null
+	let server: http.Server | null = null
+	let child: ChildProcess | null = null
 	let restarting = false
-	let childPort = null
-	let childPortPromiseResolve = null
-	const childPortPromise = new Promise((resolve) => {
+	let childPort: number | null = null
+	let childPortPromiseResolve: ((port: number) => void) | null = null
+	const childPortPromise = new Promise<number>((resolve) => {
 		childPortPromiseResolve = resolve
 	}).then((port) => {
 		childPort = port
 		return port
 	})
 
-	function parsePortFromLine(line) {
+	function parsePortFromLine(line: string): number | null {
 		const match = line.match(/localhost:(\d+)/)
 		if (match) {
 			return Number(match[1])
@@ -80,7 +61,7 @@ async function start() {
 		return null
 	}
 
-	async function waitForChildReady() {
+	async function waitForChildReady(): Promise<boolean> {
 		const port = await childPortPromise
 		const url = `http://localhost:${port}/`
 		const maxAttempts = 40 // 20s max (500ms interval)
@@ -94,26 +75,32 @@ async function start() {
 		return false
 	}
 
-	async function doUpdateAndRestart() {
+	async function doUpdateAndRestart(): Promise<boolean> {
 		console.log('\n👀 Checking for updates...')
-		const { updateLocalRepo } = await import(
-			'@epic-web/workshop-utils/git.server'
-		)
-		const result = await updateLocalRepo()
-		if (result.status === 'success') {
-			console.log(`✅ ${result.message}`)
-			console.log('\n🔄 Restarting...')
-			restarting = true
-			await killChild(child)
-			restarting = false
-			spawnChild()
-			const ready = await waitForChildReady()
-			return ready
-		} else {
-			console.error(`❌ ${result.message}`)
-			console.error(
-				'Update failed. Please try again or see the repo for manual setup.',
+		try {
+			// Import the git update functionality
+			const { updateLocalRepo } = await import(
+				'@epic-web/workshop-utils/git.server'
 			)
+			const result = await updateLocalRepo()
+			if (result.status === 'success') {
+				console.log(`✅ ${result.message}`)
+				console.log('\n🔄 Restarting...')
+				restarting = true
+				await killChild(child)
+				restarting = false
+				spawnChild()
+				const ready = await waitForChildReady()
+				return ready
+			} else {
+				console.error(`❌ ${result.message}`)
+				console.error(
+					'Update failed. Please try again or see the repo for manual setup.',
+				)
+				return false
+			}
+		} catch (error) {
+			console.error('❌ Update functionality not available:', error)
 			return false
 		}
 	}
@@ -184,15 +171,18 @@ async function start() {
 	}
 
 	function spawnChild() {
-		child = spawn(childCommand, {
+		if (!appDir) return
+
+		child = spawn(childCommand, [], {
 			shell: true,
 			cwd: appDir,
-			// Parent handles stdin, child gets no stdin; capture stdout for parsing and piping
+			// Capture stdout for port detection
 			stdio: ['pipe', 'pipe', 'inherit'],
 			env: childEnv,
 		})
+
 		if (child.stdout) {
-			child.stdout.on('data', (data) => {
+			child.stdout.on('data', (data: Buffer) => {
 				process.stdout.write(data)
 				if (!childPort) {
 					const str = data.toString('utf8')
@@ -206,11 +196,11 @@ async function start() {
 				}
 			})
 		}
-		child.on('exit', async (code) => {
+		child.on('exit', async (code: number | null) => {
 			if (restarting) {
 				restarting = false
 			} else {
-				if (server) await new Promise((resolve) => server.close(resolve))
+				if (server) await new Promise((resolve) => server!.close(resolve))
 				process.exit(code ?? 0)
 			}
 		})
@@ -227,7 +217,7 @@ async function start() {
 		process.stdin.setRawMode(true)
 		process.stdin.resume()
 		process.stdin.setEncoding('utf8')
-		process.stdin.on('data', async (key) => {
+		process.stdin.on('data', async (key: string) => {
 			if (key === 'u') {
 				console.log(
 					'\n🔄 Update requested from terminal. Running update and restarting app process...',
@@ -277,8 +267,8 @@ async function start() {
 					chalk.bgRed.white,
 				]
 				const randomMessage =
-					messages[Math.floor(Math.random() * messages.length)]
-				const randomColor = colors[Math.floor(Math.random() * colors.length)]
+					messages[Math.floor(Math.random() * messages.length)]!
+				const randomColor = colors[Math.floor(Math.random() * colors.length)]!
 				const msg = randomColor(randomMessage)
 				console.log('\n' + msg + '\n')
 			} else if (key === '\u0003') {
@@ -290,17 +280,34 @@ async function start() {
 	}
 
 	async function cleanupBeforeExit() {
-		if (process.platform === 'win32' && child && child.pid) {
-			spawn('taskkill', ['/pid', child.pid, '/f', '/t'])
+		if (process.platform === 'win32' && child?.pid) {
+			spawn('taskkill', ['/pid', child.pid.toString(), '/f', '/t'])
 		}
 		await killChild(child)
-		if (server) await new Promise((resolve) => server.close(resolve))
+		if (server) await new Promise((resolve) => server!.close(resolve))
 	}
 
 	closeWithGrace(cleanupBeforeExit)
 }
 
-async function killChild(child) {
+async function updateCommand() {
+	try {
+		const { updateLocalRepo } = await import(
+			'@epic-web/workshop-utils/git.server'
+		)
+		const result = await updateLocalRepo()
+		if (result.status === 'success') {
+			console.log(`✅ ${result.message}`)
+		} else {
+			console.error(`❌ ${result.message}`)
+		}
+	} catch (error) {
+		console.error('❌ Update functionality not available:', error)
+		process.exit(1)
+	}
+}
+
+async function killChild(child: ChildProcess | null): Promise<void> {
 	if (!child) return
 	return new Promise((resolve) => {
 		const onExit = () => resolve()
@@ -319,3 +326,76 @@ ${chalk.bold.cyan('Supported keys:')}
   ${chalk.gray('q')} (or ${chalk.gray('Ctrl+C')}) - exit
 `)
 }
+
+function findWorkshopAppDir(): string | null {
+	try {
+		// Use Node's resolution algorithm to find the workshop-app package
+		const workshopAppPath = import.meta.resolve('@epic-web/workshop-app/package.json')
+		const packagePath = fileURLToPath(workshopAppPath)
+		return path.dirname(packagePath)
+	} catch {
+		// Fallback to relative path resolution for development
+		const relativePath = path.resolve(__dirname, '../../../workshop-app')
+		if (fs.existsSync(path.join(relativePath, 'package.json'))) {
+			return relativePath
+		}
+	}
+
+	return null
+}
+
+function isPublished(appDir: string): boolean {
+	return !fs.existsSync(path.join(appDir, 'app'))
+}
+
+// Set up yargs CLI
+const cli = yargs(hideBin(process.argv))
+	.scriptName('epicshop')
+	.usage('$0 <command> [options]')
+	.help('help')
+	.alias('h', 'help')
+	.version(false)
+	.command(
+		['start', '$0'],
+		'Start the workshop application',
+		(yargs: Argv) => {
+			return yargs
+				.option('verbose', {
+					alias: 'v',
+					type: 'boolean',
+					description: 'Show verbose output',
+					default: false,
+				})
+				.example('$0 start', 'Start the workshop with interactive features')
+		},
+		async (_argv: ArgumentsCamelCase<{ verbose?: boolean }>) => {
+			await startCommand()
+		},
+	)
+	.command(
+		['update', 'upgrade'],
+		'Update the workshop to the latest version',
+		(yargs: Argv) => {
+			return yargs.example('$0 update', 'Update workshop to latest version')
+		},
+		async (_argv: ArgumentsCamelCase<Record<string, unknown>>) => {
+			await updateCommand()
+		},
+	)
+	        .epilogue(
+                `
+${chalk.bold('Interactive keys (available during start command):')}
+  ${chalk.blue('o')} - open browser
+  ${chalk.green('u')} - update repo  
+  ${chalk.magenta('r')} - restart app
+  ${chalk.cyan('k')} - Kody kudos 🐨
+  ${chalk.gray('q')} - quit (or Ctrl+C)
+
+For more information, visit: https://github.com/epicweb-dev/epicshop
+`,
+        )
+	.strict()
+	.demandCommand(0, 1, '', 'Too many commands specified')
+
+// Parse and execute
+await cli.parse()
