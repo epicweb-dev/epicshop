@@ -20,6 +20,7 @@
 	"release": {
 		"projects": [
 			"@epic-web/workshop-app",
+			"@epic-web/workshop-cli",
 			"@epic-web/workshop-mcp",
 			"@epic-web/workshop-utils",
 			"@epic-web/workshop-presence",

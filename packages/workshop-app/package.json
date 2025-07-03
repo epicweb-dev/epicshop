@@ -5,11 +5,7 @@
   "publishConfig": {
     "access": "public"
   },
-  "bin": {
-    "epicshop": "./bin/epicshop.js"
-  },
   "files": [
-    "bin",
     "build",
     "dist",
     "start.js"

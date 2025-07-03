@@ -1,0 +1,4 @@
+{
+	"include": ["./**/*.ts", "./**/*.tsx", "./reset.d.ts"],
+	"extends": ["./tsconfig.build.json"]
+}
