@@ -328,19 +328,17 @@ ${chalk.bold.cyan('Supported keys:')}
 }
 
 function findWorkshopAppDir(): string | null {
-	// Try relative to current package first (development/local setup)
-	const relativePath = path.resolve(__dirname, '../../../workshop-app')
-	if (fs.existsSync(path.join(relativePath, 'package.json'))) {
-		return relativePath
-	}
-
-	// Try to find it in node_modules (published scenario)
-	const nodeModulesPath = path.resolve(
-		__dirname,
-		'../../../../node_modules/@epic-web/workshop-app',
-	)
-	if (fs.existsSync(path.join(nodeModulesPath, 'package.json'))) {
-		return nodeModulesPath
+	try {
+		// Use Node's resolution algorithm to find the workshop-app package
+		const workshopAppPath = import.meta.resolve('@epic-web/workshop-app/package.json')
+		const packagePath = fileURLToPath(workshopAppPath)
+		return path.dirname(packagePath)
+	} catch {
+		// Fallback to relative path resolution for development
+		const relativePath = path.resolve(__dirname, '../../../workshop-app')
+		if (fs.existsSync(path.join(relativePath, 'package.json'))) {
+			return relativePath
+		}
 	}
 
 	return null
@@ -384,18 +382,18 @@ const cli = yargs(hideBin(process.argv))
 			await updateCommand()
 		},
 	)
-	.epilogue(
-		`
+	        .epilogue(
+                `
 ${chalk.bold('Interactive keys (available during start command):')}
-  o - open browser
-  u - update repo  
-  r - restart app
-  k - Kody kudos 🐨
-  q - quit (or Ctrl+C)
+  ${chalk.blue('o')} - open browser
+  ${chalk.green('u')} - update repo  
+  ${chalk.magenta('r')} - restart app
+  ${chalk.cyan('k')} - Kody kudos 🐨
+  ${chalk.gray('q')} - quit (or Ctrl+C)
 
 For more information, visit: https://github.com/epicweb-dev/epicshop
 `,
-	)
+        )
 	.strict()
 	.demandCommand(0, 1, '', 'Too many commands specified')
 
