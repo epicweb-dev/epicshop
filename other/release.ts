@@ -40,7 +40,9 @@ try {
 	for (const project of projects) {
 		const projectNode = graph.nodes[project]
 		if (!projectNode) {
-			throw new Error('ahhhhhhhhhhhhhhhhhh! This should be unpossible!')
+			throw new Error(
+				`ahhhhhhhhhhhhhhhhhh! This should be unpossible! There is no projectNode in graph.nodes for "${project}"`,
+			)
 		}
 
 		const srcPath = path.join(workspaceRoot, projectNode.data.root)
@@ -95,6 +97,40 @@ try {
 		verbose: options.verbose,
 	})
 
+	// update local package references to the new version
+	for (const project of projects) {
+		const projectNode = graph.nodes[project]
+		if (!projectNode) {
+			throw new Error(
+				`ahhhhhhhhhhhhhhhhhh! This should be unpossible! There is no projectNode in graph.nodes for "${project}"`,
+			)
+		}
+
+		const publishPath = path.join(publishDir, projectNode.data.root)
+
+		const packageJsonPath = path.join(publishPath, 'package.json')
+		const packageJson = await fs.readJson(packageJsonPath)
+		packageJson.dependencies = packageJson.dependencies ?? {}
+		for (const [dependency, version] of Object.entries(
+			packageJson.dependencies,
+		)) {
+			if (typeof version !== 'string') continue
+			if (!version.startsWith('file:')) continue
+			const depVersionData = projectsVersionData[dependency]
+			if (!depVersionData) continue
+
+			if (depVersionData.newVersion) {
+				packageJson.dependencies[dependency] = `^${depVersionData.newVersion}`
+			} else if (depVersionData.currentVersion) {
+				packageJson.dependencies[dependency] =
+					`^${depVersionData.currentVersion}`
+			} else {
+				packageJson.dependencies[dependency] = `^${workspaceVersion}`
+			}
+		}
+		await fs.writeJson(packageJsonPath, packageJson)
+	}
+
 	if (workspaceVersion === null) {
 		console.log('No relevant changes detected, skipping release process.')
 		process.exit(0)
@@ -111,12 +147,28 @@ try {
 			})
 		}
 
-		const result = await releasePublish({
+		const publishProjectsResult = await releasePublish({
 			dryRun: options.dryRun,
 			verbose: options.verbose,
 		})
 
-		process.exit(result)
+		const nonZeroExitCodes: Array<number> = []
+		for (const [project, publishProjectResult] of Object.entries(
+			publishProjectsResult,
+		)) {
+			if (publishProjectResult.code !== 0) {
+				console.error(
+					`Error publishing ${project}: ${publishProjectResult.code}`,
+				)
+				nonZeroExitCodes.push(publishProjectResult.code)
+			}
+		}
+
+		if (nonZeroExitCodes.length > 0) {
+			process.exit(1)
+		} else {
+			process.exit(0)
+		}
 	}
 } catch (err) {
 	console.error(err)
