@@ -16,8 +16,6 @@ import { hideBin } from 'yargs/helpers'
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url))
 
-// Development timer removed - CLI is working!
-
 async function startCommand() {
 	// Find workshop-app directory - need to locate it relative to CLI
 	const appDir = findWorkshopAppDir()
@@ -178,7 +176,7 @@ async function startCommand() {
 		child = spawn(childCommand, [], {
 			shell: true,
 			cwd: appDir,
-			// Parent handles stdin, child gets no stdin; capture stdout for parsing and piping
+			// Capture stdout for port detection
 			stdio: ['pipe', 'pipe', 'inherit'],
 			env: childEnv,
 		})
@@ -330,9 +328,7 @@ ${chalk.bold.cyan('Supported keys:')}
 }
 
 function findWorkshopAppDir(): string | null {
-	// CLI is installed in workshop-cli package, need to find workshop-app
 	// Try relative to current package first (development/local setup)
-	// __dirname is dist/esm, so go up to package root, then to sibling package
 	const relativePath = path.resolve(__dirname, '../../../workshop-app')
 	if (fs.existsSync(path.join(relativePath, 'package.json'))) {
 		return relativePath
@@ -360,11 +356,11 @@ const cli = yargs(hideBin(process.argv))
 	.usage('$0 <command> [options]')
 	.help('help')
 	.alias('h', 'help')
-	.version(false) // Disable default version command since we're not versioning CLI separately
+	.version(false)
 	.command(
 		['start', '$0'],
 		'Start the workshop application',
-		(yargs) => {
+		(yargs: Argv) => {
 			return yargs
 				.option('verbose', {
 					alias: 'v',
@@ -374,21 +370,22 @@ const cli = yargs(hideBin(process.argv))
 				})
 				.example('$0 start', 'Start the workshop with interactive features')
 		},
-		async (argv) => {
+		async (_argv: ArgumentsCamelCase<{ verbose?: boolean }>) => {
 			await startCommand()
-		}
+		},
 	)
 	.command(
 		['update', 'upgrade'],
 		'Update the workshop to the latest version',
-		(yargs) => {
+		(yargs: Argv) => {
 			return yargs.example('$0 update', 'Update workshop to latest version')
 		},
-		async (argv) => {
+		async (_argv: ArgumentsCamelCase<Record<string, unknown>>) => {
 			await updateCommand()
-		}
+		},
 	)
-	.epilogue(`
+	.epilogue(
+		`
 ${chalk.bold('Interactive keys (available during start command):')}
   o - open browser
   u - update repo  
@@ -397,7 +394,8 @@ ${chalk.bold('Interactive keys (available during start command):')}
   q - quit (or Ctrl+C)
 
 For more information, visit: https://github.com/epicweb-dev/epicshop
-`)
+`,
+	)
 	.strict()
 	.demandCommand(0, 1, '', 'Too many commands specified')
 
