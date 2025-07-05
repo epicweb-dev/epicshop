@@ -14,8 +14,6 @@ import open from 'open'
 import yargs, { type ArgumentsCamelCase, type Argv } from 'yargs'
 import { hideBin } from 'yargs/helpers'
 
-const __dirname = path.dirname(fileURLToPath(import.meta.url))
-
 async function startCommand() {
 	// Find workshop-app directory - need to locate it relative to CLI
 	const appDir = findWorkshopAppDir()
@@ -335,8 +333,12 @@ function findWorkshopAppDir(): string | null {
 		const packagePath = fileURLToPath(workshopAppPath)
 		return path.dirname(packagePath)
 	} catch {
+		const cliPkgPath = import.meta.resolve(
+			'@epic-web/workshop-cli/package.json',
+		)
+		const cliPkgDir = path.dirname(fileURLToPath(cliPkgPath))
 		// Fallback to relative path resolution for development
-		const relativePath = path.resolve(__dirname, '../../../workshop-app')
+		const relativePath = path.resolve(cliPkgDir, '../workshop-app')
 		if (fs.existsSync(path.join(relativePath, 'package.json'))) {
 			return relativePath
 		}
