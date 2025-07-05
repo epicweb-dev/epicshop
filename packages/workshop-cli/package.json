@@ -31,6 +31,7 @@
   },
   "dependencies": {
     "@epic-web/workshop-utils": "file:../workshop-utils",
+    "@epic-web/workshop-app": "file:../workshop-app",
     "chalk": "^5.3.0",
     "close-with-grace": "^2.1.0",
     "get-port": "^7.1.0",
