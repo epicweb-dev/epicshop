@@ -108,11 +108,9 @@ jobs:
         with:
           useLockFile: false
 
-      - name: 📥 Download All Build Artifacts
-        uses: actions/download-artifact@v4
-        with:
-          name: all-build-artifacts
-          path: packages
+      # download artifacts didn't work 🤷‍♂️
+      - name: 🏗 Build
+        run: npm run build
 
       - name: 📥 Install Playwright Browsers
         run: npx playwright install --with-deps
