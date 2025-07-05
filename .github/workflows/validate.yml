@@ -108,9 +108,9 @@ jobs:
         with:
           useLockFile: false
 
-      # download artifacts didn't work 🤷‍♂️
+      # downloading artifacts didn't work 🤷‍♂️
       - name: 🏗 Build
-        run: npm run build
+        run: npm run build --workspace=packages/workshop-cli
 
       - name: 📥 Install Playwright Browsers
         run: npx playwright install --with-deps
