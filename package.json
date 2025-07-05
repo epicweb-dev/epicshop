@@ -7,6 +7,7 @@
     "lint": "nx lint",
     "build": "nx run-many --target build",
     "prestart": "npm run build -s",
+    "setup": "npm install && npm run validate",
     "go": "cross-env NODE_ENV=development EPICSHOP_CONTEXT_CWD=$PWD/packages/example tsx watch $@",
     "start": "cross-env NODE_ENV=production npm --prefix example run start",
     "dev": "npm --prefix example run start",
