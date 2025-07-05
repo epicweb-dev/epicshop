@@ -61,6 +61,7 @@ jobs:
             packages/workshop-presence/dist
             packages/workshop-utils/dist
             packages/workshop-mcp/dist
+            packages/workshop-cli/dist
 
   typecheck:
     name: ʦ TypeScript
@@ -108,9 +109,11 @@ jobs:
         with:
           useLockFile: false
 
-      # downloading artifacts didn't work 🤷‍♂️
-      - name: 🏗 Build
-        run: npm run build --workspace=packages/workshop-cli
+      - name: 📥 Download All Build Artifacts
+        uses: actions/download-artifact@v4
+        with:
+          name: all-build-artifacts
+          path: packages
 
       - name: 📥 Install Playwright Browsers
         run: npx playwright install --with-deps
