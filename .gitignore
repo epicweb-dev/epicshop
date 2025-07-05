@@ -27,3 +27,5 @@ vite.config.ts.timestamp-*
 *.tsbuildinfo
 
 /example/playgrounds
+.cursor/rules/nx-rules.mdc
+.github/instructions/nx.instructions.md
