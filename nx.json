@@ -17,9 +17,6 @@
 			"cache": true
 		}
 	},
-	"affected": {
-		"defaultBase": "main"
-	},
 	"release": {
 		"projects": [
 			"@epic-web/workshop-app",
@@ -30,9 +27,8 @@
 		],
 		"version": {
 			"conventionalCommits": true,
-			"generatorOptions": {
-				"packageRoot": "publish/{projectRoot}"
-			}
+			"preserveLocalDependencyProtocols": false,
+			"manifestRootsToUpdate": ["publish/{projectRoot}"]
 		},
 		"changelog": {
 			"workspaceChangelog": {
