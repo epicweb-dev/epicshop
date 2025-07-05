@@ -176,7 +176,7 @@ async function startCommand() {
 
 		child = spawn(childCommand, [], {
 			shell: true,
-			cwd: EPICSHOP_CONTEXT_CWD,
+			cwd: appDir,
 			// Capture stdout for port detection
 			stdio: ['pipe', 'pipe', 'inherit'],
 			env: childEnv,
