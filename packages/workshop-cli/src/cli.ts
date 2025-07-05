@@ -33,9 +33,10 @@ async function startCommand() {
 	const parentToken = crypto.randomBytes(32).toString('hex')
 
 	const childCommand = isProd ? 'node ./start.js' : 'npm run dev'
+	const EPICSHOP_CONTEXT_CWD = process.env.EPICSHOP_CONTEXT_CWD ?? process.cwd()
 	const childEnv: NodeJS.ProcessEnv = {
 		...process.env,
-		EPICSHOP_CONTEXT_CWD: process.env.EPICSHOP_CONTEXT_CWD ?? process.cwd(),
+		EPICSHOP_CONTEXT_CWD: EPICSHOP_CONTEXT_CWD,
 		EPICSHOP_PARENT_PORT: String(parentPort),
 		EPICSHOP_PARENT_TOKEN: parentToken,
 	}
@@ -175,7 +176,7 @@ async function startCommand() {
 
 		child = spawn(childCommand, [], {
 			shell: true,
-			cwd: appDir,
+			cwd: EPICSHOP_CONTEXT_CWD,
 			// Capture stdout for port detection
 			stdio: ['pipe', 'pipe', 'inherit'],
 			env: childEnv,
@@ -214,7 +215,7 @@ async function startCommand() {
 
 	if (process.stdin.isTTY && !isDeployed) {
 		console.log(chalk.bold.cyan('Supported keys:'))
-		console.log(supportedKeys.join('\n\t'))
+		console.log(`  ${supportedKeys.join('\n  ')}\n`)
 		process.stdin.setRawMode(true)
 		process.stdin.resume()
 		process.stdin.setEncoding('utf8')
@@ -385,7 +386,7 @@ const cli = yargs(hideBin(process.argv))
 	.epilogue(
 		`
 ${chalk.bold('Interactive keys (available during start command):')}
-	${supportedKeys.join('\n\t')}
+  ${supportedKeys.join('\n  ')}
 
 For more information, visit: https://github.com/epicweb-dev/epicshop
 `,

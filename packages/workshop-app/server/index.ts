@@ -23,6 +23,12 @@ import { type ServerBuild } from 'react-router'
 import sourceMapSupport from 'source-map-support'
 import { type WebSocket, WebSocketServer } from 'ws'
 
+// if we exit early with an error, log the error...
+closeWithGrace(({ err, manual }) => {
+	if (manual) return
+	if (err) console.error(err.stack)
+})
+
 const MODE = process.env.NODE_ENV ?? 'development'
 
 void initApps()
@@ -189,9 +195,10 @@ const server = app.listen(portToUse, async () => {
 		`
 ${chalk.bold('Local:')}            ${chalk.cyan(localUrl)}
 ${lanUrl ? `${chalk.bold('On Your Network:')}  ${chalk.cyan(lanUrl)}` : ''}
-${chalk.bold('Press Ctrl+C to stop')}
 	`.trim(),
 	)
+	// give it another line
+	console.log('')
 
 	if (
 		process.env.EPICSHOP_DEPLOYED !== 'true' &&

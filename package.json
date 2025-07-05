@@ -9,7 +9,6 @@
     "prestart": "npm run build -s",
     "go": "cross-env NODE_ENV=development EPICSHOP_CONTEXT_CWD=$PWD/packages/example tsx watch $@",
     "start": "cross-env NODE_ENV=production npm --prefix example run start",
-    "predev": "npm run build -s",
     "dev": "npm --prefix example run start",
     "test": "nx test",
     "format": "nx format:write",
