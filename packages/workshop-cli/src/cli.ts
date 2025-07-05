@@ -213,7 +213,8 @@ async function startCommand() {
 	spawnChild()
 
 	if (process.stdin.isTTY && !isDeployed) {
-		printSupportedKeys()
+		console.log(chalk.bold.cyan('Supported keys:'))
+		console.log(supportedKeys.join('\n\t'))
 		process.stdin.setRawMode(true)
 		process.stdin.resume()
 		process.stdin.setEncoding('utf8')
@@ -316,16 +317,13 @@ async function killChild(child: ChildProcess | null): Promise<void> {
 	})
 }
 
-function printSupportedKeys() {
-	console.log(`
-${chalk.bold.cyan('Supported keys:')}
-  ${chalk.blue('o')} - open browser
-  ${chalk.green('u')} - update repo
-  ${chalk.magenta('r')} - restart
-  ${chalk.cyan('k')} - Kody kudos 🐨
-  ${chalk.gray('q')} (or ${chalk.gray('Ctrl+C')}) - exit
-`)
-}
+const supportedKeys = [
+	`${chalk.blue('o')} - open workshop app`,
+	`${chalk.green('u')} - update workshop`,
+	`${chalk.magenta('r')} - restart workshop app`,
+	`${chalk.cyan('k')} - Kody kudos 🐨`,
+	`${chalk.gray('q')} - exit (or ${chalk.gray('Ctrl+C')})`,
+]
 
 function findWorkshopAppDir(): string | null {
 	try {
@@ -387,11 +385,7 @@ const cli = yargs(hideBin(process.argv))
 	.epilogue(
 		`
 ${chalk.bold('Interactive keys (available during start command):')}
-  ${chalk.blue('o')} - open browser
-  ${chalk.green('u')} - update repo  
-  ${chalk.magenta('r')} - restart app
-  ${chalk.cyan('k')} - Kody kudos 🐨
-  ${chalk.gray('q')} - quit (or Ctrl+C)
+	${supportedKeys.join('\n\t')}
 
 For more information, visit: https://github.com/epicweb-dev/epicshop
 `,
