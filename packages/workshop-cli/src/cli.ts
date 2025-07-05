@@ -330,7 +330,9 @@ ${chalk.bold.cyan('Supported keys:')}
 function findWorkshopAppDir(): string | null {
 	try {
 		// Use Node's resolution algorithm to find the workshop-app package
-		const workshopAppPath = import.meta.resolve('@epic-web/workshop-app/package.json')
+		const workshopAppPath = import.meta.resolve(
+			'@epic-web/workshop-app/package.json',
+		)
 		const packagePath = fileURLToPath(workshopAppPath)
 		return path.dirname(packagePath)
 	} catch {
@@ -382,8 +384,8 @@ const cli = yargs(hideBin(process.argv))
 			await updateCommand()
 		},
 	)
-	        .epilogue(
-                `
+	.epilogue(
+		`
 ${chalk.bold('Interactive keys (available during start command):')}
   ${chalk.blue('o')} - open browser
   ${chalk.green('u')} - update repo  
@@ -393,7 +395,7 @@ ${chalk.bold('Interactive keys (available during start command):')}
 
 For more information, visit: https://github.com/epicweb-dev/epicshop
 `,
-        )
+	)
 	.strict()
 	.demandCommand(0, 1, '', 'Too many commands specified')
 
