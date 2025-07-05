@@ -91,6 +91,7 @@ jobs:
 
   playwright:
     name: 🎭 Playwright
+    needs: [build]
     runs-on: ubuntu-latest
     timeout-minutes: 60
     steps:
@@ -106,6 +107,12 @@ jobs:
         uses: bahmutov/npm-install@v1
         with:
           useLockFile: false
+
+      - name: 📥 Download All Build Artifacts
+        uses: actions/download-artifact@v4
+        with:
+          name: all-build-artifacts
+          path: packages
 
       - name: 📥 Install Playwright Browsers
         run: npx playwright install --with-deps
