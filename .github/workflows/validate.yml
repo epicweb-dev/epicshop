@@ -62,6 +62,9 @@ jobs:
             packages/workshop-utils/dist
             packages/workshop-mcp/dist
             packages/workshop-cli/dist
+            node_modules/.bin/epicshop
+            node_modules/.bin/update-epic-workshop
+            node_modules/.bin/@epic-web/workshop-mcp
 
   typecheck:
     name: ʦ TypeScript
