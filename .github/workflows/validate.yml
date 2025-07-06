@@ -51,11 +51,19 @@ jobs:
       - name: 🏗 Build
         run: npm run build
 
+      # log all the files in node_modules/.bin
+      - name: 📝 Log node_modules/.bin
+        run: ls -la node_modules/.bin
+
       # run install again so the local .bin files get where they should go.
       - name: 📥 Download deps
         uses: bahmutov/npm-install@v1
         with:
           useLockFile: false
+
+      # log all the files in node_modules/.bin
+      - name: 📝 Log node_modules/.bin
+        run: ls -la node_modules/.bin
 
       - name: 📦 Upload All Build Artifacts
         uses: actions/upload-artifact@v4
@@ -124,12 +132,12 @@ jobs:
           name: all-build-artifacts
           path: packages
 
-      - name: 📥 Install Playwright Browsers
-        run: npx playwright install --with-deps
-
       # log all the files in node_modules/.bin
       - name: 📝 Log node_modules/.bin
         run: ls -la node_modules/.bin
+
+      - name: 📥 Install Playwright Browsers
+        run: npx playwright install --with-deps
 
       - name: 🎭 Playwright tests
         run: npx playwright test
