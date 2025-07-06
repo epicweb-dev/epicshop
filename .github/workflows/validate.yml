@@ -112,11 +112,17 @@ jobs:
         with:
           useLockFile: false
 
-      - name: 📥 Download All Build Artifacts
-        uses: actions/download-artifact@v4
-        with:
-          name: all-build-artifacts
-          path: packages
+      # for some reason, downloading build artifacts didn't work
+      # The workshop cli bin is not placed in the node_modules/.bin directory
+      # and that does not work for playwright tests
+      # - name: 📥 Download All Build Artifacts
+      #   uses: actions/download-artifact@v4
+      #   with:
+      #     name: all-build-artifacts
+      #     path: packages
+
+      - name: 🏗 Build
+        run: npm run build -- --skip-nx-cache
 
       - name: 📥 Install Playwright Browsers
         run: npx playwright install --with-deps
