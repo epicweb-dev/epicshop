@@ -31,7 +31,7 @@ async function startCommand() {
 	const parentToken = crypto.randomBytes(32).toString('hex')
 
 	const childCommand = isProd ? 'node ./start.js' : 'npm run dev'
-	const EPICSHOP_CONTEXT_CWD = process.env.EPICSHOP_CONTEXT_CWD ?? process.cwd()
+	const EPICSHOP_CONTEXT_CWD = await getEpicshopContextCwd()
 	const childEnv: NodeJS.ProcessEnv = {
 		...process.env,
 		EPICSHOP_CONTEXT_CWD: EPICSHOP_CONTEXT_CWD,
@@ -199,7 +199,7 @@ async function startCommand() {
 			if (restarting) {
 				restarting = false
 			} else {
-				if (server) await new Promise((resolve) => server!.close(resolve))
+				await new Promise((resolve) => server?.close(resolve))
 				process.exit(code ?? 0)
 			}
 		})
@@ -349,6 +349,27 @@ function findWorkshopAppDir(): string | null {
 
 function isPublished(appDir: string): boolean {
 	return !fs.existsSync(path.join(appDir, 'app'))
+}
+
+async function getEpicshopContextCwd(): Promise<string> {
+	if (process.env.EPICSHOP_CONTEXT_CWD) {
+		return process.env.EPICSHOP_CONTEXT_CWD
+	}
+	let dir = process.cwd()
+	while (true) {
+		const pkgPath = path.join(dir, 'package.json')
+		try {
+			const pkgRaw = await fs.promises.readFile(pkgPath, 'utf8')
+			const pkg = JSON.parse(pkgRaw)
+			if (pkg.epicshop) {
+				return dir
+			}
+		} catch {}
+		const parentDir = path.dirname(dir)
+		if (parentDir === dir) break
+		dir = parentDir
+	}
+	return process.cwd()
 }
 
 // Set up yargs CLI
