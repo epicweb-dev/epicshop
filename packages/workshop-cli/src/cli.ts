@@ -13,6 +13,37 @@ import getPort from 'get-port'
 import open from 'open'
 import yargs, { type ArgumentsCamelCase, type Argv } from 'yargs'
 import { hideBin } from 'yargs/helpers'
+import { z } from 'zod'
+import { 
+	loginTool, 
+	logoutTool, 
+	setPlaygroundTool, 
+	updateProgressTool,
+	loginSchema,
+	logoutSchema,
+	setPlaygroundSchema,
+	updateProgressSchema,
+} from './tools.js'
+import { 
+	getWorkshopContext, 
+	getExerciseContext, 
+	getDiffBetweenApps, 
+	getExerciseStepProgressDiff, 
+	getUserInfoResource, 
+	getUserAccessResource, 
+	getUserProgressResource,
+	getWorkshopContextSchema,
+	getExerciseContextSchema,
+	getDiffBetweenAppsSchema,
+	getExerciseStepProgressDiffSchema,
+	getUserInfoSchema,
+	getUserAccessSchema,
+	getUserProgressSchema,
+} from './resources.js'
+import { 
+	quizMe, 
+	quizMeSchema 
+} from './prompts.js'
 
 async function startCommand() {
 	// Find workshop-app directory - need to locate it relative to CLI
@@ -316,14 +347,6 @@ async function killChild(child: ChildProcess | null): Promise<void> {
 	})
 }
 
-const supportedKeys = [
-	`${chalk.blue('o')} - open workshop app`,
-	`${chalk.green('u')} - update workshop`,
-	`${chalk.magenta('r')} - restart workshop app`,
-	`${chalk.cyan('k')} - Kody kudos 🐨`,
-	`${chalk.gray('q')} - exit (or ${chalk.gray('Ctrl+C')})`,
-]
-
 function findWorkshopAppDir(): string | null {
 	try {
 		// Use Node's resolution algorithm to find the workshop-app package
@@ -360,7 +383,7 @@ async function getEpicshopContextCwd(): Promise<string> {
 		const pkgPath = path.join(dir, 'package.json')
 		try {
 			const pkgRaw = await fs.promises.readFile(pkgPath, 'utf8')
-			const pkg = JSON.parse(pkgRaw)
+			const pkg = JSON.parse(pkgRaw) as any
 			if (pkg.epicshop) {
 				return dir
 			}
@@ -372,6 +395,37 @@ async function getEpicshopContextCwd(): Promise<string> {
 	return process.cwd()
 }
 
+// Helper function to validate and parse CLI arguments
+function validateAndParseArgs<T extends z.ZodSchema>(
+	schema: T,
+	args: unknown,
+): z.infer<T> {
+	const result = schema.safeParse(args)
+	if (!result.success) {
+		console.error(chalk.red('❌ Invalid arguments:'))
+		console.error(result.error.format())
+		process.exit(1)
+	}
+	return result.data
+}
+
+// Helper function to output JSON results
+function outputResult(result: any, format: 'json' | 'pretty' = 'pretty') {
+	if (format === 'json') {
+		console.log(JSON.stringify(result, null, 0))
+	} else {
+		console.log(JSON.stringify(result, null, 2))
+	}
+}
+
+const supportedKeys = [
+	`${chalk.blue('o')} - open workshop app`,
+	`${chalk.green('u')} - update workshop`,
+	`${chalk.magenta('r')} - restart workshop app`,
+	`${chalk.cyan('k')} - Kody kudos 🐨`,
+	`${chalk.gray('q')} - exit (or ${chalk.gray('Ctrl+C')})`,
+]
+
 // Set up yargs CLI
 const cli = yargs(hideBin(process.argv))
 	.scriptName('epicshop')
@@ -379,6 +433,19 @@ const cli = yargs(hideBin(process.argv))
 	.help('help')
 	.alias('h', 'help')
 	.version(false)
+	.option('workshop-dir', {
+		alias: 'w',
+		type: 'string',
+		description: 'Workshop directory path',
+		default: process.cwd(),
+	})
+	.option('format', {
+		alias: 'f',
+		type: 'string',
+		choices: ['json', 'pretty'] as const,
+		default: 'pretty' as const,
+		description: 'Output format',
+	})
 	.command(
 		['start', '$0'],
 		'Start the workshop application',
@@ -404,6 +471,258 @@ const cli = yargs(hideBin(process.argv))
 		},
 		async (_argv: ArgumentsCamelCase<Record<string, unknown>>) => {
 			await updateCommand()
+		},
+	)
+	.command(
+		'login',
+		'Login to the workshop',
+		(yargs: Argv) => {
+			return yargs.example('$0 login', 'Login to the workshop')
+		},
+		async (argv: ArgumentsCamelCase<{ workshopDir?: string }>) => {
+			const args = validateAndParseArgs(loginSchema, {
+				workshopDirectory: path.resolve(argv.workshopDir || process.cwd()),
+			})
+			await loginTool(args)
+		},
+	)
+	.command(
+		'logout',
+		'Logout from the workshop',
+		(yargs: Argv) => {
+			return yargs.example('$0 logout', 'Logout from the workshop')
+		},
+		async (argv: ArgumentsCamelCase<{ workshopDir?: string }>) => {
+			const args = validateAndParseArgs(logoutSchema, {
+				workshopDirectory: path.resolve(argv.workshopDir || process.cwd()),
+			})
+			await logoutTool(args)
+		},
+	)
+	.command(
+		'set-playground',
+		'Set the playground environment',
+		(yargs: Argv) => {
+			return yargs
+				.option('exercise', {
+					alias: 'e',
+					type: 'number',
+					description: 'Exercise number',
+				})
+				.option('step', {
+					alias: 's',
+					type: 'number',
+					description: 'Step number',
+				})
+				.option('type', {
+					alias: 't',
+					type: 'string',
+					choices: ['problem', 'solution'],
+					description: 'App type',
+				})
+				.example('$0 set-playground', 'Set to next exercise')
+				.example('$0 set-playground -e 1 -s 2', 'Set to exercise 1, step 2')
+				.example('$0 set-playground -t solution', 'Set to solution of current step')
+		},
+		async (argv: ArgumentsCamelCase<{ 
+			workshopDir?: string
+			exercise?: number
+			step?: number
+			type?: 'problem' | 'solution'
+		}>) => {
+			const args = validateAndParseArgs(setPlaygroundSchema, {
+				workshopDirectory: path.resolve(argv.workshopDir || process.cwd()),
+				exerciseNumber: argv.exercise,
+				stepNumber: argv.step,
+				type: argv.type,
+			})
+			await setPlaygroundTool(args)
+		},
+	)
+	.command(
+		'update-progress',
+		'Update lesson progress',
+		(yargs: Argv) => {
+			return yargs
+				.option('lesson-slug', {
+					alias: 'l',
+					type: 'string',
+					description: 'Epic lesson slug',
+					demandOption: true,
+				})
+				.option('complete', {
+					alias: 'c',
+					type: 'boolean',
+					description: 'Mark as complete',
+					default: true,
+				})
+				.example('$0 update-progress -l lesson-slug', 'Mark lesson as complete')
+		},
+		async (argv: ArgumentsCamelCase<{ 
+			workshopDir?: string
+			lessonSlug?: string
+			complete?: boolean
+		}>) => {
+			const args = validateAndParseArgs(updateProgressSchema, {
+				workshopDirectory: path.resolve(argv.workshopDir || process.cwd()),
+				epicLessonSlug: argv.lessonSlug,
+				complete: argv.complete,
+			})
+			await updateProgressTool(args)
+		},
+	)
+	.command(
+		'get-workshop-context',
+		'Get workshop context information',
+		(yargs: Argv) => {
+			return yargs.example('$0 get-workshop-context', 'Get workshop context')
+		},
+		async (argv: ArgumentsCamelCase<{ workshopDir?: string; format?: 'json' | 'pretty' }>) => {
+			const args = validateAndParseArgs(getWorkshopContextSchema, {
+				workshopDirectory: path.resolve(argv.workshopDir || process.cwd()),
+			})
+			const result = await getWorkshopContext(args)
+			outputResult(result, argv.format)
+		},
+	)
+	.command(
+		'get-exercise-context',
+		'Get exercise context information',
+		(yargs: Argv) => {
+			return yargs
+				.option('exercise', {
+					alias: 'e',
+					type: 'number',
+					description: 'Exercise number',
+				})
+				.example('$0 get-exercise-context', 'Get current exercise context')
+				.example('$0 get-exercise-context -e 3', 'Get exercise 3 context')
+		},
+		async (argv: ArgumentsCamelCase<{ 
+			workshopDir?: string
+			exercise?: number
+			format?: 'json' | 'pretty'
+		}>) => {
+			const args = validateAndParseArgs(getExerciseContextSchema, {
+				workshopDirectory: path.resolve(argv.workshopDir || process.cwd()),
+				exerciseNumber: argv.exercise,
+			})
+			const result = await getExerciseContext(args)
+			outputResult(result, argv.format)
+		},
+	)
+	.command(
+		'get-diff',
+		'Get diff between two apps',
+		(yargs: Argv) => {
+			return yargs
+				.option('app1', {
+					type: 'string',
+					description: 'First app ID (e.g., "01.01.problem")',
+					demandOption: true,
+				})
+				.option('app2', {
+					type: 'string',
+					description: 'Second app ID (e.g., "01.01.solution")',
+					demandOption: true,
+				})
+				.example('$0 get-diff --app1 01.01.problem --app2 01.01.solution', 'Get diff between apps')
+		},
+		async (argv: ArgumentsCamelCase<{ 
+			workshopDir?: string
+			app1?: string
+			app2?: string
+			format?: 'json' | 'pretty'
+		}>) => {
+			const args = validateAndParseArgs(getDiffBetweenAppsSchema, {
+				workshopDirectory: path.resolve(argv.workshopDir || process.cwd()),
+				app1: argv.app1,
+				app2: argv.app2,
+			})
+			const result = await getDiffBetweenApps(args)
+			outputResult(result, argv.format)
+		},
+	)
+	.command(
+		'get-progress-diff',
+		'Get progress diff for current exercise step',
+		(yargs: Argv) => {
+			return yargs.example('$0 get-progress-diff', 'Get progress diff')
+		},
+		async (argv: ArgumentsCamelCase<{ workshopDir?: string; format?: 'json' | 'pretty' }>) => {
+			const args = validateAndParseArgs(getExerciseStepProgressDiffSchema, {
+				workshopDirectory: path.resolve(argv.workshopDir || process.cwd()),
+			})
+			const result = await getExerciseStepProgressDiff(args)
+			outputResult(result, argv.format)
+		},
+	)
+	.command(
+		'get-user-info',
+		'Get user information',
+		(yargs: Argv) => {
+			return yargs.example('$0 get-user-info', 'Get user information')
+		},
+		async (argv: ArgumentsCamelCase<{ workshopDir?: string; format?: 'json' | 'pretty' }>) => {
+			const args = validateAndParseArgs(getUserInfoSchema, {
+				workshopDirectory: path.resolve(argv.workshopDir || process.cwd()),
+			})
+			const result = await getUserInfoResource(args)
+			outputResult(result, argv.format)
+		},
+	)
+	.command(
+		'get-user-access',
+		'Get user access information',
+		(yargs: Argv) => {
+			return yargs.example('$0 get-user-access', 'Get user access information')
+		},
+		async (argv: ArgumentsCamelCase<{ workshopDir?: string; format?: 'json' | 'pretty' }>) => {
+			const args = validateAndParseArgs(getUserAccessSchema, {
+				workshopDirectory: path.resolve(argv.workshopDir || process.cwd()),
+			})
+			const result = await getUserAccessResource(args)
+			outputResult(result, argv.format)
+		},
+	)
+	.command(
+		'get-user-progress',
+		'Get user progress information',
+		(yargs: Argv) => {
+			return yargs.example('$0 get-user-progress', 'Get user progress information')
+		},
+		async (argv: ArgumentsCamelCase<{ workshopDir?: string; format?: 'json' | 'pretty' }>) => {
+			const args = validateAndParseArgs(getUserProgressSchema, {
+				workshopDirectory: path.resolve(argv.workshopDir || process.cwd()),
+			})
+			const result = await getUserProgressResource(args)
+			outputResult(result, argv.format)
+		},
+	)
+	.command(
+		'quiz-me',
+		'Generate a quiz for an exercise',
+		(yargs: Argv) => {
+			return yargs
+				.option('exercise', {
+					alias: 'e',
+					type: 'string',
+					description: 'Exercise number to quiz on',
+				})
+				.example('$0 quiz-me', 'Get a quiz for a random exercise')
+				.example('$0 quiz-me -e 3', 'Get a quiz for exercise 3')
+		},
+		async (argv: ArgumentsCamelCase<{ 
+			workshopDir?: string
+			exercise?: string
+			format?: 'json' | 'pretty'
+		}>) => {
+			const args = validateAndParseArgs(quizMeSchema, {
+				workshopDirectory: path.resolve(argv.workshopDir || process.cwd()),
+				exerciseNumber: argv.exercise,
+			})
+			const result = await quizMe(args)
+			outputResult(result, argv.format)
 		},
 	)
 	.epilogue(
