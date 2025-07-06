@@ -1,0 +1,52 @@
+{
+  "name": "@epic-web/workshop-cli",
+  "version": "0.0.0-semantically-released",
+  "publishConfig": {
+    "access": "public"
+  },
+  "type": "module",
+  "bin": {
+    "epicshop": "./dist/esm/cli.js"
+  },
+  "tshy": {
+    "project": "./tsconfig.build.json",
+    "dialects": [
+      "esm"
+    ],
+    "exports": {
+      "./package.json": "./package.json"
+    }
+  },
+  "exports": {
+    "./package.json": "./package.json"
+  },
+  "files": [
+    "dist"
+  ],
+  "scripts": {
+    "typecheck": "tsc --noEmit",
+    "lint": "eslint --cache --cache-location ./node_modules/.cache/eslint .",
+    "build": "tshy",
+    "build:watch": "nx watch --projects=@epic-web/workshop-cli -- nx run \\$NX_PROJECT_NAME:build"
+  },
+  "dependencies": {
+    "@epic-web/workshop-utils": "file:../workshop-utils",
+    "@epic-web/workshop-app": "file:../workshop-app",
+    "chalk": "^5.3.0",
+    "close-with-grace": "^2.1.0",
+    "get-port": "^7.1.0",
+    "open": "^8.4.2",
+    "yargs": "^17.7.2"
+  },
+  "devDependencies": {
+    "@epic-web/config": "^1.11.3",
+    "@types/node": "^20.16.10",
+    "@types/yargs": "^17.0.32",
+    "tshy": "^3.0.2"
+  },
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/epicweb-dev/epicshop.git",
+    "directory": "packages/workshop-cli"
+  }
+}

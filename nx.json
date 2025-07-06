@@ -1,5 +1,8 @@
 {
 	"$schema": "./node_modules/nx/schemas/nx-schema.json",
+	"tui": {
+		"autoExit": 0
+	},
 	"targetDefaults": {
 		"nx-release-publish": {
 			"options": {
@@ -20,6 +23,7 @@
 	"release": {
 		"projects": [
 			"@epic-web/workshop-app",
+			"@epic-web/workshop-cli",
 			"@epic-web/workshop-mcp",
 			"@epic-web/workshop-utils",
 			"@epic-web/workshop-presence",

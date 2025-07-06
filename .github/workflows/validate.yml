@@ -51,6 +51,12 @@ jobs:
       - name: 🏗 Build
         run: npm run build
 
+      # run install again so the local .bin files get where they should go.
+      - name: 📥 Download deps
+        uses: bahmutov/npm-install@v1
+        with:
+          useLockFile: false
+
       - name: 📦 Upload All Build Artifacts
         uses: actions/upload-artifact@v4
         with:
@@ -61,6 +67,7 @@ jobs:
             packages/workshop-presence/dist
             packages/workshop-utils/dist
             packages/workshop-mcp/dist
+            packages/workshop-cli/dist
 
   typecheck:
     name: ʦ TypeScript
@@ -75,22 +82,23 @@ jobs:
         with:
           node-version: 24
 
-      - name: 📥 Download deps
-        uses: bahmutov/npm-install@v1
-        with:
-          useLockFile: false
-
       - name: 📥 Download All Build Artifacts
         uses: actions/download-artifact@v4
         with:
           name: all-build-artifacts
           path: packages
 
+      - name: 📥 Download deps
+        uses: bahmutov/npm-install@v1
+        with:
+          useLockFile: false
+
       - name: 🔎 Type check
         run: npm run typecheck
 
   playwright:
     name: 🎭 Playwright
+    needs: [build]
     runs-on: ubuntu-latest
     timeout-minutes: 60
     steps:
@@ -101,6 +109,12 @@ jobs:
         uses: actions/setup-node@v4
         with:
           node-version: 24
+
+      - name: 📥 Download All Build Artifacts
+        uses: actions/download-artifact@v4
+        with:
+          name: all-build-artifacts
+          path: packages
 
       - name: 📥 Download deps
         uses: bahmutov/npm-install@v1
@@ -137,16 +151,16 @@ jobs:
         with:
           node-version: 24
 
-      - name: 📥 Download deps
-        uses: bahmutov/npm-install@v1
-        with:
-          useLockFile: false
-
       - name: 📥 Download All Build Artifacts
         uses: actions/download-artifact@v4
         with:
           name: all-build-artifacts
           path: packages
+
+      - name: 📥 Download deps
+        uses: bahmutov/npm-install@v1
+        with:
+          useLockFile: false
 
       - name: ▶️ Run setup script
         run: node setup.mjs
@@ -180,16 +194,16 @@ jobs:
           node-version: 24
           registry-url: 'https://registry.npmjs.org'
 
-      - name: 📥 Download deps
-        uses: bahmutov/npm-install@v1
-        with:
-          useLockFile: false
-
       - name: 📥 Download All Build Artifacts
         uses: actions/download-artifact@v4
         with:
           name: all-build-artifacts
           path: packages
+
+      - name: 📥 Download deps
+        uses: bahmutov/npm-install@v1
+        with:
+          useLockFile: false
 
       - name: 🚀 Release
         run: npx tsx other/release.ts --dry-run=false
