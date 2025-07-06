@@ -306,8 +306,9 @@ ${chalk.bold('Press Ctrl+C to stop')}
 	}
 })
 
-closeWithGrace(() => {
-	return new Promise((resolve, reject) => {
-		server.close((e) => (e ? reject(e) : resolve()))
+closeWithGrace(async () => {
+	const result = await new Promise((resolve, reject) => {
+		server.close((e) => (e ? reject(e) : resolve(null)))
 	})
+	return result
 })
