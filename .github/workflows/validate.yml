@@ -127,6 +127,10 @@ jobs:
       - name: 📥 Install Playwright Browsers
         run: npx playwright install --with-deps
 
+      # log all the files in node_modules/.bin
+      - name: 📝 Log node_modules/.bin
+        run: ls -la node_modules/.bin
+
       - name: 🎭 Playwright tests
         run: npx playwright test
 
