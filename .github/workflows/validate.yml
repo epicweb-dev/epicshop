@@ -120,15 +120,42 @@ jobs:
         with:
           node-version: 24
 
-      - name: 📥 Download deps
-        uses: bahmutov/npm-install@v1
-        with:
-          useLockFile: false
+      # log all the files in node_modules/.bin
+      - name: 📝 Log node_modules/.bin
+        run: ls -la node_modules/.bin
 
       - name: 📥 Download All Build Artifacts
         uses: actions/download-artifact@v4
         with:
           name: all-build-artifacts
+
+      # log all the files in node_modules/.bin
+      - name: 📝 Log node_modules/.bin
+        run: ls -la node_modules/.bin
+
+      - name: 📥 Download deps
+        uses: bahmutov/npm-install@v1
+        with:
+          useLockFile: false
+
+      # log all the files in node_modules/.bin
+      - name: 📝 Log node_modules/.bin
+        run: ls -la node_modules/.bin
+
+      - name: 📥 Download All Build Artifacts
+        uses: actions/download-artifact@v4
+        with:
+          name: all-build-artifacts
+
+      # log all the files in node_modules/.bin
+      - name: 📝 Log node_modules/.bin
+        run: ls -la node_modules/.bin
+
+      # install to get the local .bin files
+      - name: 📥 Download deps
+        uses: bahmutov/npm-install@v1
+        with:
+          useLockFile: false
 
       # log all the files in node_modules/.bin
       - name: 📝 Log node_modules/.bin
