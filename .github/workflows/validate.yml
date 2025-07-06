@@ -83,16 +83,16 @@ jobs:
         with:
           node-version: 24
 
-      - name: 📥 Download deps
-        uses: bahmutov/npm-install@v1
-        with:
-          useLockFile: false
-
       - name: 📥 Download All Build Artifacts
         uses: actions/download-artifact@v4
         with:
           name: all-build-artifacts
           path: packages
+
+      - name: 📥 Download deps
+        uses: bahmutov/npm-install@v1
+        with:
+          useLockFile: false
 
       - name: 🔎 Type check
         run: npm run typecheck
@@ -152,16 +152,16 @@ jobs:
         with:
           node-version: 24
 
-      - name: 📥 Download deps
-        uses: bahmutov/npm-install@v1
-        with:
-          useLockFile: false
-
       - name: 📥 Download All Build Artifacts
         uses: actions/download-artifact@v4
         with:
           name: all-build-artifacts
           path: packages
+
+      - name: 📥 Download deps
+        uses: bahmutov/npm-install@v1
+        with:
+          useLockFile: false
 
       - name: ▶️ Run setup script
         run: node setup.mjs
@@ -195,16 +195,16 @@ jobs:
           node-version: 24
           registry-url: 'https://registry.npmjs.org'
 
-      - name: 📥 Download deps
-        uses: bahmutov/npm-install@v1
-        with:
-          useLockFile: false
-
       - name: 📥 Download All Build Artifacts
         uses: actions/download-artifact@v4
         with:
           name: all-build-artifacts
           path: packages
+
+      - name: 📥 Download deps
+        uses: bahmutov/npm-install@v1
+        with:
+          useLockFile: false
 
       - name: 🚀 Release
         run: npx tsx other/release.ts --dry-run=false
