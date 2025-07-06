@@ -51,24 +51,17 @@ jobs:
       - name: 🏗 Build
         run: npm run build
 
-      # log all the files in node_modules/.bin
-      - name: 📝 Log node_modules/.bin
-        run: ls -la node_modules/.bin
-
       # run install again so the local .bin files get where they should go.
       - name: 📥 Download deps
         uses: bahmutov/npm-install@v1
         with:
           useLockFile: false
 
-      # log all the files in node_modules/.bin
-      - name: 📝 Log node_modules/.bin
-        run: ls -la node_modules/.bin
-
       - name: 📦 Upload All Build Artifacts
         uses: actions/upload-artifact@v4
         with:
           name: all-build-artifacts
+          path: packages
           path: |
             packages/workshop-app/build
             packages/workshop-app/dist
@@ -76,9 +69,6 @@ jobs:
             packages/workshop-utils/dist
             packages/workshop-mcp/dist
             packages/workshop-cli/dist
-            node_modules/.bin/epicshop
-            node_modules/.bin/update-epic-workshop
-            node_modules/.bin/@epic-web/workshop-mcp
 
   typecheck:
     name: ʦ TypeScript
@@ -102,6 +92,7 @@ jobs:
         uses: actions/download-artifact@v4
         with:
           name: all-build-artifacts
+          path: packages
 
       - name: 🔎 Type check
         run: npm run typecheck
@@ -120,46 +111,16 @@ jobs:
         with:
           node-version: 24
 
-      # log all the files in node_modules/.bin
-      - name: 📝 Log node_modules/.bin
-        run: ls -la node_modules/.bin || true
-
       - name: 📥 Download All Build Artifacts
         uses: actions/download-artifact@v4
         with:
           name: all-build-artifacts
-
-      # log all the files in node_modules/.bin
-      - name: 📝 Log node_modules/.bin
-        run: ls -la node_modules/.bin || true
+          path: packages
 
       - name: 📥 Download deps
         uses: bahmutov/npm-install@v1
         with:
           useLockFile: false
-
-      # log all the files in node_modules/.bin
-      - name: 📝 Log node_modules/.bin
-        run: ls -la node_modules/.bin || true
-
-      - name: 📥 Download All Build Artifacts
-        uses: actions/download-artifact@v4
-        with:
-          name: all-build-artifacts
-
-      # log all the files in node_modules/.bin
-      - name: 📝 Log node_modules/.bin
-        run: ls -la node_modules/.bin || true
-
-      # install to get the local .bin files
-      - name: 📥 Download deps
-        uses: bahmutov/npm-install@v1
-        with:
-          useLockFile: false
-
-      # log all the files in node_modules/.bin
-      - name: 📝 Log node_modules/.bin
-        run: ls -la node_modules/.bin || true
 
       - name: 📥 Install Playwright Browsers
         run: npx playwright install --with-deps
@@ -200,6 +161,7 @@ jobs:
         uses: actions/download-artifact@v4
         with:
           name: all-build-artifacts
+          path: packages
 
       - name: ▶️ Run setup script
         run: node setup.mjs
@@ -242,6 +204,7 @@ jobs:
         uses: actions/download-artifact@v4
         with:
           name: all-build-artifacts
+          path: packages
 
       - name: 🚀 Release
         run: npx tsx other/release.ts --dry-run=false
