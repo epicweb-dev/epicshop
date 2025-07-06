@@ -122,7 +122,7 @@ jobs:
 
       # log all the files in node_modules/.bin
       - name: 📝 Log node_modules/.bin
-        run: ls -la node_modules/.bin
+        run: ls -la node_modules/.bin || true
 
       - name: 📥 Download All Build Artifacts
         uses: actions/download-artifact@v4
@@ -131,7 +131,7 @@ jobs:
 
       # log all the files in node_modules/.bin
       - name: 📝 Log node_modules/.bin
-        run: ls -la node_modules/.bin
+        run: ls -la node_modules/.bin || true
 
       - name: 📥 Download deps
         uses: bahmutov/npm-install@v1
@@ -140,7 +140,7 @@ jobs:
 
       # log all the files in node_modules/.bin
       - name: 📝 Log node_modules/.bin
-        run: ls -la node_modules/.bin
+        run: ls -la node_modules/.bin || true
 
       - name: 📥 Download All Build Artifacts
         uses: actions/download-artifact@v4
@@ -149,7 +149,7 @@ jobs:
 
       # log all the files in node_modules/.bin
       - name: 📝 Log node_modules/.bin
-        run: ls -la node_modules/.bin
+        run: ls -la node_modules/.bin || true
 
       # install to get the local .bin files
       - name: 📥 Download deps
@@ -159,7 +159,7 @@ jobs:
 
       # log all the files in node_modules/.bin
       - name: 📝 Log node_modules/.bin
-        run: ls -la node_modules/.bin
+        run: ls -la node_modules/.bin || true
 
       - name: 📥 Install Playwright Browsers
         run: npx playwright install --with-deps
