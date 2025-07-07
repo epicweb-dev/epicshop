@@ -25,6 +25,7 @@ export async function action({ request }: { request: Request }) {
 	const fontSize = formData.get('fontSize')
 	const optOutPresence = formData.get('optOutPresence') === 'on'
 	const persistPlayground = formData.get('persistPlayground') === 'on'
+	const dismissExerciseWarning = formData.get('dismissExerciseWarning') === 'on'
 
 	await setPreferences({
 		player: {
@@ -34,6 +35,7 @@ export async function action({ request }: { request: Request }) {
 		fontSize: fontSize ? Number(fontSize) : undefined,
 		presence: { optOut: optOutPresence },
 		playground: { persist: persistPlayground },
+		exerciseWarning: { dismissed: dismissExerciseWarning },
 	})
 
 	return redirectWithToast('/preferences', {
@@ -49,6 +51,7 @@ export default function AccountSettings() {
 	const fontSizePreference = data?.preferences?.fontSize
 	const presencePreferences = data?.preferences?.presence
 	const playgroundPreferences = data?.preferences?.playground
+	const exerciseWarningPreferences = data?.preferences?.exerciseWarning
 	const navigation = useNavigation()
 
 	const isSubmitting = navigation.state === 'submitting'
@@ -150,6 +153,27 @@ export default function AccountSettings() {
 							defaultChecked={playgroundPreferences?.persist}
 						/>
 						<label htmlFor="persistPlayground">Enable saving playground</label>
+					</div>
+				</div>
+
+				<div>
+					<div className="mb-2 flex items-center gap-2">
+						<h2 className="text-body-xl">Exercise Directory Warning</h2>
+
+						<SimpleTooltip
+							content={`When enabled, you'll see a warning banner when you have changes in the exercises directory. This helps remind you to work in the playground directory instead.`}
+						>
+							<Icon name="Question" tabIndex={0} />
+						</SimpleTooltip>
+					</div>
+					<div className="flex items-center gap-2">
+						<input
+							type="checkbox"
+							id="dismissExerciseWarning"
+							name="dismissExerciseWarning"
+							defaultChecked={exerciseWarningPreferences?.dismissed}
+						/>
+						<label htmlFor="dismissExerciseWarning">Dismiss exercise directory warnings</label>
 					</div>
 				</div>
 
