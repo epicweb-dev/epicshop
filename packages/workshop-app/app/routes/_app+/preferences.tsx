@@ -57,138 +57,146 @@ export default function AccountSettings() {
 	const isSubmitting = navigation.state === 'submitting'
 
 	return (
-		<main className="container mt-12 flex h-full w-full max-w-3xl flex-grow flex-col gap-4">
-			<h1 className="mb-4 text-h1">Preferences</h1>
-			<Form method="post" className="flex w-full max-w-sm flex-col gap-4">
-				<div>
-					<h2 className="mb-2 text-body-xl">Video Player Preferences</h2>
-					<div className="flex items-center gap-2">
-						<label htmlFor="minResolution">Minimum Resolution:</label>
-						<select
-							id="minResolution"
-							name="minResolution"
-							defaultValue={playerPreferences?.minResolution}
-							className="rounded-md border border-border bg-background px-2 py-1 text-foreground"
-						>
-							<option value="">Auto</option>
-							<option value="480">480p</option>
-							<option value="720">720p</option>
-							<option value="1080">1080p</option>
-							<option value="1440">1440p</option>
-							<option value="2160">2160p (4K)</option>
-						</select>
+		<div className="h-full w-full overflow-y-auto">
+			<main className="container mt-12 flex w-full max-w-3xl flex-grow flex-col gap-4 pb-24">
+				<h1 className="mb-4 text-h1">Preferences</h1>
+				<Form method="post" className="flex w-full max-w-sm flex-col gap-4">
+					<div>
+						<h2 className="mb-2 text-body-xl">Video Player Preferences</h2>
+						<div className="flex items-center gap-2">
+							<label htmlFor="minResolution">Minimum Resolution:</label>
+							<select
+								id="minResolution"
+								name="minResolution"
+								defaultValue={playerPreferences?.minResolution}
+								className="rounded-md border border-border bg-background px-2 py-1 text-foreground"
+							>
+								<option value="">Auto</option>
+								<option value="480">480p</option>
+								<option value="720">720p</option>
+								<option value="1080">1080p</option>
+								<option value="1440">1440p</option>
+								<option value="2160">2160p (4K)</option>
+							</select>
+						</div>
+						<div className="flex items-center gap-2">
+							<label htmlFor="maxResolution">Maximum Resolution:</label>
+							<select
+								id="maxResolution"
+								name="maxResolution"
+								defaultValue={playerPreferences?.maxResolution}
+								className="rounded-md border border-border bg-background px-2 py-1 text-foreground"
+							>
+								<option value="">Auto</option>
+								<option value="720">720p</option>
+								<option value="1080">1080p</option>
+								<option value="1440">1440p</option>
+								<option value="2160">2160p (4K)</option>
+							</select>
+						</div>
 					</div>
-					<div className="flex items-center gap-2">
-						<label htmlFor="maxResolution">Maximum Resolution:</label>
-						<select
-							id="maxResolution"
-							name="maxResolution"
-							defaultValue={playerPreferences?.maxResolution}
-							className="rounded-md border border-border bg-background px-2 py-1 text-foreground"
-						>
-							<option value="">Auto</option>
-							<option value="720">720p</option>
-							<option value="1080">1080p</option>
-							<option value="1440">1440p</option>
-							<option value="2160">2160p (4K)</option>
-						</select>
+					<div>
+						<div className="mb-2 flex items-center gap-2">
+							<h2 className="text-body-xl">Font Size Preference</h2>
+							<SimpleTooltip content="Defaults to 16px">
+								<Icon name="Question" tabIndex={0} />
+							</SimpleTooltip>
+						</div>
+						<div className="flex items-center gap-2">
+							<label htmlFor="fontSize">Font Size</label>
+							<input
+								type="number"
+								id="fontSize"
+								name="fontSize"
+								defaultValue={fontSizePreference ?? 16}
+								step="1"
+								min="12"
+								max="26"
+								className="rounded-md border border-border bg-background px-2 py-1 text-foreground"
+							/>
+						</div>
 					</div>
-				</div>
-				<div>
-					<div className="mb-2 flex items-center gap-2">
-						<h2 className="text-body-xl">Font Size Preference</h2>
-						<SimpleTooltip content="Defaults to 16px">
-							<Icon name="Question" tabIndex={0} />
-						</SimpleTooltip>
-					</div>
-					<div className="flex items-center gap-2">
-						<label htmlFor="fontSize">Font Size</label>
-						<input
-							type="number"
-							id="fontSize"
-							name="fontSize"
-							defaultValue={fontSizePreference ?? 16}
-							step="1"
-							min="12"
-							max="26"
-							className="rounded-md border border-border bg-background px-2 py-1 text-foreground"
-						/>
-					</div>
-				</div>
 
-				<div>
-					<div className="mb-2 flex items-center gap-2">
-						<h2 className="text-body-xl">Presence Preference</h2>
+					<div>
+						<div className="mb-2 flex items-center gap-2">
+							<h2 className="text-body-xl">Presence Preference</h2>
 
-						<SimpleTooltip content="This controls whether your name and avatar are displayed in the pile of faces in navigation">
-							<Icon name="Question" tabIndex={0} />
-						</SimpleTooltip>
+							<SimpleTooltip content="This controls whether your name and avatar are displayed in the pile of faces in navigation">
+								<Icon name="Question" tabIndex={0} />
+							</SimpleTooltip>
+						</div>
+						<div className="flex items-center gap-2">
+							<input
+								type="checkbox"
+								id="optOutPresence"
+								name="optOutPresence"
+								defaultChecked={presencePreferences?.optOut}
+							/>
+							<label htmlFor="optOutPresence">
+								Opt out of presence features
+							</label>
+						</div>
 					</div>
-					<div className="flex items-center gap-2">
-						<input
-							type="checkbox"
-							id="optOutPresence"
-							name="optOutPresence"
-							defaultChecked={presencePreferences?.optOut}
-						/>
-						<label htmlFor="optOutPresence">Opt out of presence features</label>
+
+					<div>
+						<div className="mb-2 flex items-center gap-2">
+							<h2 className="text-body-xl">Persist Playground</h2>
+
+							<SimpleTooltip
+								content={`When enabled, clicking "Set to Playground" will save the current playground in the "saved-playgrounds" directory.`}
+							>
+								<Icon name="Question" tabIndex={0} />
+							</SimpleTooltip>
+						</div>
+						<div className="flex items-center gap-2">
+							<input
+								type="checkbox"
+								id="persistPlayground"
+								name="persistPlayground"
+								defaultChecked={playgroundPreferences?.persist}
+							/>
+							<label htmlFor="persistPlayground">
+								Enable saving playground
+							</label>
+						</div>
 					</div>
-				</div>
 
-				<div>
-					<div className="mb-2 flex items-center gap-2">
-						<h2 className="text-body-xl">Persist Playground</h2>
+					<div>
+						<div className="mb-2 flex items-center gap-2">
+							<h2 className="text-body-xl">Exercise Directory Warning</h2>
 
-						<SimpleTooltip
-							content={`When enabled, clicking "Set to Playground" will save the current playground in the "saved-playgrounds" directory.`}
-						>
-							<Icon name="Question" tabIndex={0} />
-						</SimpleTooltip>
+							<SimpleTooltip
+								content={`When enabled, you'll see a warning banner when you have changes in the exercises directory. This helps remind you to work in the playground directory instead.`}
+							>
+								<Icon name="Question" tabIndex={0} />
+							</SimpleTooltip>
+						</div>
+						<div className="flex items-center gap-2">
+							<input
+								type="checkbox"
+								id="dismissExerciseWarning"
+								name="dismissExerciseWarning"
+								defaultChecked={exerciseWarningPreferences?.dismissed}
+							/>
+							<label htmlFor="dismissExerciseWarning">
+								Dismiss exercise directory warnings
+							</label>
+						</div>
 					</div>
-					<div className="flex items-center gap-2">
-						<input
-							type="checkbox"
-							id="persistPlayground"
-							name="persistPlayground"
-							defaultChecked={playgroundPreferences?.persist}
-						/>
-						<label htmlFor="persistPlayground">Enable saving playground</label>
-					</div>
-				</div>
 
-				<div>
-					<div className="mb-2 flex items-center gap-2">
-						<h2 className="text-body-xl">Exercise Directory Warning</h2>
+					<div className="h-4" />
 
-						<SimpleTooltip
-							content={`When enabled, you'll see a warning banner when you have changes in the exercises directory. This helps remind you to work in the playground directory instead.`}
-						>
-							<Icon name="Question" tabIndex={0} />
-						</SimpleTooltip>
-					</div>
-					<div className="flex items-center gap-2">
-						<input
-							type="checkbox"
-							id="dismissExerciseWarning"
-							name="dismissExerciseWarning"
-							defaultChecked={exerciseWarningPreferences?.dismissed}
-						/>
-						<label htmlFor="dismissExerciseWarning">Dismiss exercise directory warnings</label>
-					</div>
-				</div>
-
-				<div className="h-4" />
-
-				<Button
-					varient="primary"
-					type="submit"
-					name="intent"
-					value="update-preferences"
-					disabled={isSubmitting}
-				>
-					{isSubmitting ? 'Updating...' : 'Update Preferences'}
-				</Button>
-			</Form>
-		</main>
+					<Button
+						varient="primary"
+						type="submit"
+						name="intent"
+						value="update-preferences"
+						disabled={isSubmitting}
+					>
+						{isSubmitting ? 'Updating...' : 'Update Preferences'}
+					</Button>
+				</Form>
+			</main>
+		</div>
 	)
 }
