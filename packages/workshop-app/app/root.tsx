@@ -13,7 +13,10 @@ import {
 	getUserInfo,
 	userHasAccessToWorkshop,
 } from '@epic-web/workshop-utils/epic-api.server'
-import { checkForUpdatesCached } from '@epic-web/workshop-utils/git.server'
+import {
+	checkForUpdatesCached,
+	checkForExerciseChanges,
+} from '@epic-web/workshop-utils/git.server'
 import { getUnmutedNotifications } from '@epic-web/workshop-utils/notifications.server'
 import { makeTimings } from '@epic-web/workshop-utils/timing.server'
 import {
@@ -39,6 +42,7 @@ import { useSpinDelay } from 'spin-delay'
 import { type Route } from './+types/root.tsx'
 import { Confetti } from './components/confetti'
 import { GeneralErrorBoundary } from './components/error-boundary'
+import { ExerciseWarningBanner } from './components/exercise-warning-banner'
 import { EpicProgress } from './components/progress-bar'
 import { EpicToaster } from './components/toaster'
 import { TooltipProvider } from './components/ui/tooltip'
@@ -123,6 +127,7 @@ export async function loader({ request }: Route.LoaderArgs) {
 		apps: getApps({ request, timings }),
 		repoUpdates: checkForUpdatesCached(),
 		unmutedNotifications: getUnmutedNotifications(),
+		exerciseChanges: checkForExerciseChanges(),
 	})
 
 	const presentUsers = await getPresentUsers({
@@ -172,6 +177,7 @@ export async function loader({ request }: Route.LoaderArgs) {
 				users: presentUsers,
 			},
 			repoUpdates,
+			exerciseChanges: asyncStuff.exerciseChanges,
 		},
 		{
 			headers: combineHeaders(
@@ -245,6 +251,10 @@ function App() {
 			)}
 			env={data.ENV}
 		>
+			{data.exerciseChanges &&
+				!data.preferences?.exerciseWarning?.dismissed && (
+					<ExerciseWarningBanner />
+				)}
 			<Outlet />
 			<Confetti id={data.confettiId} />
 			<EpicToaster toast={data.toast} />

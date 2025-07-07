@@ -172,3 +172,20 @@ export async function getLatestWorkshopAppVersion() {
 		return null
 	}
 }
+
+export async function checkForExerciseChanges() {
+	const cwd = getWorkshopRoot()
+	try {
+		const { stdout } = await execaCommand(
+			'git status --porcelain exercises/',
+			{ cwd },
+		)
+		return stdout.trim().length > 0
+	} catch (error) {
+		console.error(
+			'Failed to check for exercise changes:',
+			getErrorMessage(error),
+		)
+		return false
+	}
+}

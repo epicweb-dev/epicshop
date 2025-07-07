@@ -72,6 +72,12 @@ const DataSchema = z.object({
 				})
 				.optional(),
 			fontSize: z.number().optional(),
+			exerciseWarning: z
+				.object({
+					dismissed: z.boolean().default(false),
+				})
+				.optional()
+				.default({ dismissed: false }),
 		})
 		.optional()
 		.default({}),
@@ -238,6 +244,10 @@ export async function setPreferences(
 			presence: {
 				...data?.preferences?.presence,
 				...preferences?.presence,
+			},
+			exerciseWarning: {
+				...data?.preferences?.exerciseWarning,
+				...preferences?.exerciseWarning,
 			},
 		},
 	}
