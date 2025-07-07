@@ -251,7 +251,9 @@ function App() {
 			{data.exerciseChanges && !data.preferences?.exerciseWarning?.dismissed && (
 				<ExerciseWarningBanner />
 			)}
-			<Outlet />
+			<div className={data.exerciseChanges && !data.preferences?.exerciseWarning?.dismissed ? 'pt-24' : ''}>
+				<Outlet />
+			</div>
 			<Confetti id={data.confettiId} />
 			<EpicToaster toast={data.toast} />
 			<UpdateToast repoUpdates={data.repoUpdates} />

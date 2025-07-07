@@ -35,7 +35,7 @@ export default function WorkspaceStructure() {
 	const isSubmitting = navigation.state === 'submitting'
 
 	return (
-		<main className="container mt-12 flex h-full w-full max-w-4xl flex-grow flex-col gap-6">
+		<main className="container mt-12 flex h-full w-full max-w-4xl flex-grow flex-col gap-6 overflow-y-auto pb-8">
 			<h1 className="text-h1">Workshop Structure & Guidelines</h1>
 			
 			<div className="rounded-lg border border-destructive bg-destructive/10 p-4">

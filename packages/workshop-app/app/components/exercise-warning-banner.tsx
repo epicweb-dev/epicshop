@@ -3,7 +3,7 @@ import { Icon } from './icons.tsx'
 
 export function ExerciseWarningBanner() {
 	return (
-		<div className="border-b border-destructive bg-destructive/10 p-4">
+		<div className="fixed top-0 left-0 right-0 z-50 border-b border-destructive bg-destructive/10 p-4">
 			<div className="container flex items-center justify-between">
 				<div className="flex items-center gap-3">
 					<Icon name="Error" className="h-5 w-5 text-destructive" />
