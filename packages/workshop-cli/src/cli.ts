@@ -1,12 +1,12 @@
 #!/usr/bin/env node
 
-import { spawn, type ChildProcess } from 'node:child_process'
+import { spawn, type ChildProcess, execSync } from 'node:child_process'
 import crypto from 'node:crypto'
 import fs from 'node:fs'
 import http from 'node:http'
 import os from 'node:os'
 import path from 'node:path'
-import { fileURLToPath, createRequire } from 'node:url'
+import { fileURLToPath } from 'node:url'
 import chalk from 'chalk'
 import closeWithGrace from 'close-with-grace'
 import getPort from 'get-port'
@@ -16,7 +16,7 @@ import { hideBin } from 'yargs/helpers'
 
 async function startCommand(appLocation?: string) {
 	// Find workshop-app directory using new resolution order
-	const appDir = findWorkshopAppDir(appLocation)
+	const appDir = await findWorkshopAppDir(appLocation)
 	if (!appDir) {
 		console.error(chalk.red('❌ Could not locate workshop-app directory'))
 		console.error(chalk.yellow('Please ensure the workshop app is installed or specify its location using:'))
@@ -26,7 +26,7 @@ async function startCommand(appLocation?: string) {
 		process.exit(1)
 	}
 
-	const isProd = process.env.NODE_ENV === 'production' || isPublished(appDir)
+	const isProd = process.env.NODE_ENV === 'production' || await isPublished(appDir)
 	const isDeployed =
 		process.env.EPICSHOP_DEPLOYED === 'true' ||
 		process.env.EPICSHOP_DEPLOYED === '1'
@@ -328,20 +328,26 @@ const supportedKeys = [
 	`${chalk.gray('q')} - exit (or ${chalk.gray('Ctrl+C')})`,
 ]
 
-function findWorkshopAppDir(appLocation?: string): string | null {
+async function findWorkshopAppDir(appLocation?: string): Promise<string | null> {
 	// 1. Check process.env.EPICSHOP_APP_LOCATION
 	if (process.env.EPICSHOP_APP_LOCATION) {
 		const envDir = path.resolve(process.env.EPICSHOP_APP_LOCATION)
-		if (fs.existsSync(path.join(envDir, 'package.json'))) {
+		try {
+			await fs.promises.access(path.join(envDir, 'package.json'))
 			return envDir
+		} catch {
+			// Continue to next step
 		}
 	}
 
 	// 2. Check command line flag --app-location
 	if (appLocation) {
 		const flagDir = path.resolve(appLocation)
-		if (fs.existsSync(path.join(flagDir, 'package.json'))) {
+		try {
+			await fs.promises.access(path.join(flagDir, 'package.json'))
 			return flagDir
+		} catch {
+			// Continue to next step
 		}
 	}
 
@@ -358,7 +364,7 @@ function findWorkshopAppDir(appLocation?: string): string | null {
 
 	// 4. Global installation lookup
 	try {
-		const globalDir = findGlobalWorkshopApp()
+		const globalDir = await findGlobalWorkshopApp()
 		if (globalDir) {
 			return globalDir
 		}
@@ -373,8 +379,11 @@ function findWorkshopAppDir(appLocation?: string): string | null {
 		)
 		const cliPkgDir = path.dirname(fileURLToPath(cliPkgPath))
 		const relativePath = path.resolve(cliPkgDir, '../workshop-app')
-		if (fs.existsSync(path.join(relativePath, 'package.json'))) {
+		try {
+			await fs.promises.access(path.join(relativePath, 'package.json'))
 			return relativePath
+		} catch {
+			// Continue to final return
 		}
 	} catch {
 		// Continue to final return
@@ -383,37 +392,48 @@ function findWorkshopAppDir(appLocation?: string): string | null {
 	return null
 }
 
-function findGlobalWorkshopApp(): string | null {
+async function findGlobalWorkshopApp(): Promise<string | null> {
 	// Try to find globally installed workshop app
 	try {
-		const require = createRequire(import.meta.url)
-		const { execSync } = require('child_process')
 		const npmRoot = execSync('npm root -g', { encoding: 'utf-8' }).trim()
 		const globalAppPath = path.join(npmRoot, '@epic-web/workshop-app')
-		if (fs.existsSync(path.join(globalAppPath, 'package.json'))) {
+		try {
+			await fs.promises.access(path.join(globalAppPath, 'package.json'))
 			return globalAppPath
+		} catch {
+			// Continue to common global locations
 		}
 	} catch {
 		// If npm root -g fails, try common global locations
-		const commonGlobalPaths = [
-			path.join(os.homedir(), '.npm-global/lib/node_modules/@epic-web/workshop-app'),
-			path.join(os.homedir(), '.npm-packages/lib/node_modules/@epic-web/workshop-app'),
-			'/usr/local/lib/node_modules/@epic-web/workshop-app',
-			'/usr/lib/node_modules/@epic-web/workshop-app',
-		]
-		
-		for (const globalPath of commonGlobalPaths) {
-			if (fs.existsSync(path.join(globalPath, 'package.json'))) {
-				return globalPath
-			}
+	}
+
+	// Try common global locations
+	const commonGlobalPaths = [
+		path.join(os.homedir(), '.npm-global/lib/node_modules/@epic-web/workshop-app'),
+		path.join(os.homedir(), '.npm-packages/lib/node_modules/@epic-web/workshop-app'),
+		'/usr/local/lib/node_modules/@epic-web/workshop-app',
+		'/usr/lib/node_modules/@epic-web/workshop-app',
+	]
+	
+	for (const globalPath of commonGlobalPaths) {
+		try {
+			await fs.promises.access(path.join(globalPath, 'package.json'))
+			return globalPath
+		} catch {
+			// Continue to next path
 		}
 	}
 
 	return null
 }
 
-function isPublished(appDir: string): boolean {
-	return !fs.existsSync(path.join(appDir, 'app'))
+async function isPublished(appDir: string): Promise<boolean> {
+	try {
+		await fs.promises.access(path.join(appDir, 'app'))
+		return false
+	} catch {
+		return true
+	}
 }
 
 async function getEpicshopContextCwd(): Promise<string> {
