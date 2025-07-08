@@ -8,7 +8,6 @@ import {
 } from '@sentry/react-router'
 import { defineConfig } from 'vite'
 import { envOnlyMacros } from 'vite-env-only'
-import { sentryReactRouter } from '@sentry/react-router'
 
 const __filename = fileURLToPath(import.meta.url)
 const __dirname = path.dirname(__filename)
@@ -41,31 +40,21 @@ const aliases = {
 
 const MODE = process.env.NODE_ENV
 
-<<<<<<< HEAD
 const sentryConfig: SentryReactRouterBuildOptions = {
-=======
-const sentryConfig = {
->>>>>>> 7d50f44 (Add OpenTelemetry instrumentation packages and dependencies)
 	authToken: process.env.SENTRY_AUTH_TOKEN,
 	org: process.env.SENTRY_ORG,
 	project: process.env.SENTRY_PROJECT,
 	unstable_sentryVitePluginOptions: {
 		release: {
-<<<<<<< HEAD
-			name: process.env.EPICSHOP_APP_COMMIT_SHA,
+			name: process.env.COMMIT_SHA,
 			setCommits: {
 				auto: true,
 			},
-=======
-			name: process.env.COMMIT_SHA,
->>>>>>> 7d50f44 (Add OpenTelemetry instrumentation packages and dependencies)
 		},
 		sourcemaps: {
 			filesToDeleteAfterUpload: ['./build/**/*.map', '.server-build/**/*.map'],
 		},
 	},
-<<<<<<< HEAD
-=======
 }
 
 declare module 'react-router' {
@@ -73,7 +62,6 @@ declare module 'react-router' {
 	interface Future {
 		unstable_singleFetch: true
 	}
->>>>>>> 7d50f44 (Add OpenTelemetry instrumentation packages and dependencies)
 }
 
 export default defineConfig((config) => ({
@@ -109,25 +97,13 @@ export default defineConfig((config) => ({
 		},
 	},
 	resolve: { alias: aliases },
-<<<<<<< HEAD
-	sentryConfig,
 	plugins: [
 		envOnlyMacros(),
-		reactRouter(),
-		MODE === 'production' && process.env.SENTRY_AUTH_TOKEN
-			? sentryReactRouter(sentryConfig, config)
-			: null,
-	].filter(Boolean),
-}))
-=======
-	plugins: [
-		envOnlyMacros(), 
 		reactRouter(),
 		process.env.EPICSHOP_IS_PUBLISHED === 'true' &&
 		MODE === 'production' &&
 		process.env.SENTRY_AUTH_TOKEN
-			? sentryReactRouter(sentryConfig)
+			? sentryReactRouter(sentryConfig, config)
 			: null,
 	].filter(Boolean),
-})
->>>>>>> 7d50f44 (Add OpenTelemetry instrumentation packages and dependencies)
+}))

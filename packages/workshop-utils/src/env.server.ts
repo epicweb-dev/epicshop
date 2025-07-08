@@ -17,21 +17,11 @@ const schema = z
 		EPICSHOP_APP_LOCATION: z.string().optional(),
 		EPICSHOP_IS_PUBLISHED: z.string().optional(),
 		// Sentry configuration
-<<<<<<< HEAD
-		SENTRY_DSN: z
-			.string()
-			.default(
-				'https://kent-c-dodds-tech-llc.sentry.io/insights/projects/epicshop/?project=4509630082252800',
-			),
-		SENTRY_ORG: z.string().default('kent-c-dodds-tech-llc'),
-		SENTRY_PROJECT: z.string().default('epicshop'),
-=======
 		SENTRY_DSN: z.string().default('https://kent-c-dodds-tech-llc.sentry.io/insights/projects/epicshop/?project=4509630082252800'),
 		SENTRY_AUTH_TOKEN: z.string().optional(),
 		SENTRY_ORG: z.string().default('kent-c-dodds-tech-llc'),
 		SENTRY_PROJECT: z.string().default('epicshop'),
 		COMMIT_SHA: z.string().optional(),
->>>>>>> 7d50f44 (Add OpenTelemetry instrumentation packages and dependencies)
 	})
 	.transform(async (env) => {
 		if (env.EPICSHOP_IS_PUBLISHED === undefined) {
