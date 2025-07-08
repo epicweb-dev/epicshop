@@ -19,7 +19,8 @@
   "exports": {
     "./start": {
       "default": "./start.js"
-    }
+    },
+    "./package.json": "./package.json"
   },
   "scripts": {
     "build": "run-p --print-label --print-name build:*",

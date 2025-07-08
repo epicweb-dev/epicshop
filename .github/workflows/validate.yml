@@ -50,6 +50,8 @@ jobs:
 
       - name: 🏗 Build
         run: npm run build
+        env:
+          EPICSHOP_APP_COMMIT_SHA: ${{ github.sha }}
 
       # run install again so the local .bin files get where they should go.
       - name: 📥 Download deps

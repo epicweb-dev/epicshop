@@ -11,3 +11,21 @@ export function getErrorMessage(error: unknown) {
 	console.error('Unable to get error message for error', error)
 	return 'Unknown Error'
 }
+
+export function handleGitHubRepoAndRoot({
+	githubRepo,
+	githubRoot,
+}: {
+	githubRepo?: string
+	githubRoot?: string
+}) {
+	if (githubRepo) {
+		githubRoot = `${githubRepo.replace(/\/$/, '')}/tree/main`
+	} else if (githubRoot) {
+		githubRepo = githubRoot.replace(/\/(blob|tree)\/.*$/, '')
+		githubRoot = `${githubRepo}/tree/main`
+	} else {
+		throw new Error('Either githubRepo or githubRoot is required')
+	}
+	return { githubRepo, githubRoot }
+}

@@ -19,14 +19,25 @@ async function startCommand(appLocation?: string) {
 	const appDir = await findWorkshopAppDir(appLocation)
 	if (!appDir) {
 		console.error(chalk.red('❌ Could not locate workshop-app directory'))
-		console.error(chalk.yellow('Please ensure the workshop app is installed or specify its location using:'))
-		console.error(chalk.yellow('  - Environment variable: EPICSHOP_APP_LOCATION'))
+		console.error(
+			chalk.yellow(
+				'Please ensure the workshop app is installed or specify its location using:',
+			),
+		)
+		console.error(
+			chalk.yellow('  - Environment variable: EPICSHOP_APP_LOCATION'),
+		)
 		console.error(chalk.yellow('  - Command line flag: --app-location'))
-		console.error(chalk.yellow('  - Global installation: npm install -g @epic-web/workshop-app'))
+		console.error(
+			chalk.yellow(
+				'  - Global installation: npm install -g @epic-web/workshop-app',
+			),
+		)
 		process.exit(1)
 	}
 
-	const isProd = process.env.NODE_ENV === 'production' || await isPublished(appDir)
+	const isProd =
+		process.env.NODE_ENV === 'production' || (await isPublished(appDir))
 	const isDeployed =
 		process.env.EPICSHOP_DEPLOYED === 'true' ||
 		process.env.EPICSHOP_DEPLOYED === '1'
@@ -41,6 +52,7 @@ async function startCommand(appLocation?: string) {
 		EPICSHOP_CONTEXT_CWD: EPICSHOP_CONTEXT_CWD,
 		EPICSHOP_PARENT_PORT: String(parentPort),
 		EPICSHOP_PARENT_TOKEN: parentToken,
+		EPICSHOP_APP_LOCATION: appDir,
 	}
 	if (isProd) childEnv.NODE_ENV = 'production'
 
@@ -328,7 +340,9 @@ const supportedKeys = [
 	`${chalk.gray('q')} - exit (or ${chalk.gray('Ctrl+C')})`,
 ]
 
-async function findWorkshopAppDir(appLocation?: string): Promise<string | null> {
+async function findWorkshopAppDir(
+	appLocation?: string,
+): Promise<string | null> {
 	// 1. Check process.env.EPICSHOP_APP_LOCATION
 	if (process.env.EPICSHOP_APP_LOCATION) {
 		const envDir = path.resolve(process.env.EPICSHOP_APP_LOCATION)
@@ -409,12 +423,18 @@ async function findGlobalWorkshopApp(): Promise<string | null> {
 
 	// Try common global locations
 	const commonGlobalPaths = [
-		path.join(os.homedir(), '.npm-global/lib/node_modules/@epic-web/workshop-app'),
-		path.join(os.homedir(), '.npm-packages/lib/node_modules/@epic-web/workshop-app'),
+		path.join(
+			os.homedir(),
+			'.npm-global/lib/node_modules/@epic-web/workshop-app',
+		),
+		path.join(
+			os.homedir(),
+			'.npm-packages/lib/node_modules/@epic-web/workshop-app',
+		),
 		'/usr/local/lib/node_modules/@epic-web/workshop-app',
 		'/usr/lib/node_modules/@epic-web/workshop-app',
 	]
-	
+
 	for (const globalPath of commonGlobalPaths) {
 		try {
 			await fs.promises.access(path.join(globalPath, 'package.json'))
@@ -427,6 +447,8 @@ async function findGlobalWorkshopApp(): Promise<string | null> {
 	return null
 }
 
+// this is kinda cheating by checking whether the app directory exists, but it's
+// easier than reading the package.json so 🤷‍♂️
 async function isPublished(appDir: string): Promise<boolean> {
 	try {
 		await fs.promises.access(path.join(appDir, 'app'))
@@ -480,9 +502,14 @@ const cli = yargs(hideBin(process.argv))
 					description: 'Path to the workshop app directory',
 				})
 				.example('$0 start', 'Start the workshop with interactive features')
-				.example('$0 start --app-location /path/to/workshop-app', 'Start with custom app location')
+				.example(
+					'$0 start --app-location /path/to/workshop-app',
+					'Start with custom app location',
+				)
 		},
-		async (argv: ArgumentsCamelCase<{ verbose?: boolean; appLocation?: string }>) => {
+		async (
+			argv: ArgumentsCamelCase<{ verbose?: boolean; appLocation?: string }>,
+		) => {
 			await startCommand(argv.appLocation)
 		},
 	)

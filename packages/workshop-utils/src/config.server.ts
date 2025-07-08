@@ -1,6 +1,7 @@
 import fs from 'node:fs'
 import path from 'node:path'
 import { z } from 'zod'
+import { handleGitHubRepoAndRoot } from './utils.js'
 
 export const getWorkshopRoot = () =>
 	process.env.EPICSHOP_CONTEXT_CWD ?? process.cwd()
@@ -51,8 +52,12 @@ const WorkshopConfigSchema = z
 			.default(
 				'https://www.epicweb.dev/tips/get-started-with-the-epic-workshop-app',
 			),
-		githubRepo: z.string(),
-		githubRoot: z.string(),
+		githubRepo: z
+			.string()
+			.transform((githubRepo) => githubRepo ?? ENV.EPICSHOP_GITHUB_REPO),
+		githubRoot: z
+			.string()
+			.transform((githubRoot) => githubRoot ?? ENV.EPICSHOP_GITHUB_ROOT),
 		stackBlitzConfig: StackBlitzConfigSchema.optional(),
 		forms: z
 			.object({
@@ -150,19 +155,12 @@ export function getWorkshopConfig(): WorkshopConfig {
 	const epicshopConfig = packageJson.epicshop || {}
 
 	// Set githubRepo and githubRoot before parsing
-	if (epicshopConfig.githubRepo) {
-		epicshopConfig.githubRoot = `${epicshopConfig.githubRepo.replace(/\/$/, '')}/tree/main`
-	} else if (epicshopConfig.githubRoot) {
-		epicshopConfig.githubRepo = epicshopConfig.githubRoot.replace(
-			/\/(blob|tree)\/.*$/,
-			'',
-		)
-		epicshopConfig.githubRoot = `${epicshopConfig.githubRepo}/tree/main`
-	} else {
-		throw new Error(
-			'Either githubRepo or githubRoot is required in the epicshop configuration',
-		)
-	}
+	const { githubRepo, githubRoot } = handleGitHubRepoAndRoot({
+		githubRepo: epicshopConfig.githubRepo,
+		githubRoot: epicshopConfig.githubRoot,
+	})
+	epicshopConfig.githubRepo = githubRepo
+	epicshopConfig.githubRoot = githubRoot
 
 	try {
 		const parsedConfig = WorkshopConfigSchema.parse(epicshopConfig)

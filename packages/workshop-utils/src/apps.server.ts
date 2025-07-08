@@ -20,11 +20,7 @@ import {
 	solutionAppCache,
 } from './cache.server.js'
 import { compileMdx } from './compile-mdx.server.js'
-import {
-	getAppConfig,
-	getStackBlitzUrl,
-	getWorkshopConfig,
-} from './config.server.js'
+import { getAppConfig, getStackBlitzUrl } from './config.server.js'
 import { getPreferences } from './db.server.js'
 import { getEnv, init as initEnv } from './env.server.js'
 import { getDirModifiedTime } from './modified-time.server.js'
@@ -241,11 +237,8 @@ export async function init(workshopRoot?: string) {
 	if (global.__epicshop_apps_initialized__) return
 
 	global.__epicshop_apps_initialized__ = true
-	const config = getWorkshopConfig()
-	process.env.EPICSHOP_GITHUB_REPO = config.githubRepo
-	process.env.EPICSHOP_GITHUB_ROOT = config.githubRoot
 
-	initEnv()
+	await initEnv()
 
 	global.ENV = getEnv()
 

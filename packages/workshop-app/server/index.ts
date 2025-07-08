@@ -1,4 +1,3 @@
-import fs from 'fs'
 import path from 'path'
 import { fileURLToPath } from 'url'
 import { getPresentUsers } from '@epic-web/workshop-presence/presence.server'
@@ -8,6 +7,7 @@ import {
 	init as initApps,
 	setModifiedTimesForAppDirs,
 } from '@epic-web/workshop-utils/apps.server'
+import { init as initEnv } from '@epic-web/workshop-utils/env.server'
 import { checkForUpdatesCached } from '@epic-web/workshop-utils/git.server'
 import { checkConnectionCached } from '@epic-web/workshop-utils/utils.server'
 import { createRequestHandler } from '@react-router/express'
@@ -29,28 +29,25 @@ closeWithGrace(({ err, manual }) => {
 	if (err) console.error(err.stack)
 })
 
+await initEnv()
+
 const MODE = process.env.NODE_ENV ?? 'development'
+const isProd = MODE === 'production'
 
 void initApps()
 sourceMapSupport.install()
 
-const viteDevServer =
-	process.env.NODE_ENV === 'production'
-		? null
-		: await import('vite').then((vite) =>
-				vite.createServer({
-					server: { middlewareMode: true },
-					appType: 'custom',
-				}),
-			)
-
-const isProd = process.env.NODE_ENV === 'production'
+const viteDevServer = isProd
+	? null
+	: await import('vite').then((vite) =>
+			vite.createServer({
+				server: { middlewareMode: true },
+				appType: 'custom',
+			}),
+		)
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url))
-const isPublished = !fs.existsSync(path.join(__dirname, '..', 'app'))
-const isDeployed =
-	process.env.EPICSHOP_DEPLOYED === 'true' ||
-	process.env.EPICSHOP_DEPLOYED === '1'
+
 const isRunningInBuildDir = path.dirname(__dirname).endsWith('dist')
 const epicshopAppRootDir = isRunningInBuildDir
 	? path.join(__dirname, '..', '..')
@@ -95,7 +92,7 @@ if (viteDevServer) {
 	)
 }
 
-if ((process.env.NODE_ENV !== 'production' && !isPublished) || isDeployed) {
+if ((!isProd && !ENV.EPICSHOP_IS_PUBLISHED) || ENV.EPICSHOP_DEPLOYED) {
 	morgan.token('url', (req) => decodeURIComponent(req.url ?? ''))
 	app.use(morgan('tiny'))
 }
@@ -200,10 +197,7 @@ ${lanUrl ? `${chalk.bold('On Your Network:')}  ${chalk.cyan(lanUrl)}` : ''}
 	// give it another line
 	console.log('')
 
-	if (
-		process.env.EPICSHOP_DEPLOYED !== 'true' &&
-		process.env.EPICSHOP_ENABLE_WATCHER === 'true'
-	) {
+	if (!ENV.EPICSHOP_DEPLOYED && process.env.EPICSHOP_ENABLE_WATCHER) {
 		const watches = new Map<
 			string,
 			{ clients: Set<WebSocket>; chok: FSWatcher }

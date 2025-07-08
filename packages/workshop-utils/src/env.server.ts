@@ -1,16 +1,46 @@
+import fs from 'node:fs/promises'
+import path from 'node:path'
 import { z } from 'zod'
+import { handleGitHubRepoAndRoot } from './utils.js'
 
-const schema = z.object({
-	NODE_ENV: z
-		.enum(['production', 'development', 'test'] as const)
-		.default('development'),
-	EPICSHOP_GITHUB_REPO: z.string(),
-	EPICSHOP_GITHUB_ROOT: z.string(),
-	EPICSHOP_CONTEXT_CWD: z.string(),
-	EPICSHOP_APP_VERSION: z.string().optional(),
-	EPICSHOP_PARENT_PORT: z.string().optional(),
-	EPICSHOP_PARENT_TOKEN: z.string().optional(),
-})
+const schema = z
+	.object({
+		EPICSHOP_CONTEXT_CWD: z.string(),
+		NODE_ENV: z
+			.enum(['production', 'development', 'test'] as const)
+			.default('development'),
+		EPICSHOP_GITHUB_REPO: z.string().default(''),
+		EPICSHOP_GITHUB_ROOT: z.string().default(''),
+		EPICSHOP_APP_VERSION: z.string().default('0.0.0-unknown'),
+		EPICSHOP_PARENT_PORT: z.string().optional(),
+		EPICSHOP_PARENT_TOKEN: z.string().optional(),
+		EPICSHOP_APP_LOCATION: z.string().optional(),
+		EPICSHOP_IS_PUBLISHED: z.string().optional(),
+	})
+	.transform(async (env) => {
+		if (env.EPICSHOP_IS_PUBLISHED === undefined) {
+			env.EPICSHOP_IS_PUBLISHED = env.EPICSHOP_APP_VERSION.includes('0.0.0')
+				? 'false'
+				: 'true'
+		}
+		if (!env.EPICSHOP_GITHUB_REPO || !env.EPICSHOP_GITHUB_ROOT) {
+			const pkgJsonPath = path.join(env.EPICSHOP_CONTEXT_CWD, 'package.json')
+			const pkgJson = JSON.parse(await fs.readFile(pkgJsonPath, 'utf-8')) as {
+				epicshop?: {
+					githubRepo?: string
+					githubRoot?: string
+				}
+			}
+			const epicshopConfig = pkgJson.epicshop ?? {}
+			const { githubRepo, githubRoot } = handleGitHubRepoAndRoot({
+				githubRepo: epicshopConfig.githubRepo,
+				githubRoot: epicshopConfig.githubRoot,
+			})
+			env.EPICSHOP_GITHUB_REPO = githubRepo
+			env.EPICSHOP_GITHUB_ROOT = githubRoot
+		}
+		return env
+	})
 
 declare global {
 	namespace NodeJS {
@@ -18,8 +48,8 @@ declare global {
 	}
 }
 
-export function init() {
-	const parsed = schema.safeParse(process.env)
+export async function init() {
+	const parsed = await schema.safeParseAsync(process.env)
 
 	if (!parsed.success) {
 		console.error(
@@ -29,6 +59,8 @@ export function init() {
 
 		throw new Error('Invalid environment variables')
 	}
+
+	Object.assign(process.env, parsed.data)
 }
 
 /**
@@ -52,6 +84,7 @@ export function getEnv() {
 		EPICSHOP_APP_VERSION: process.env.EPICSHOP_APP_VERSION,
 		EPICSHOP_PARENT_PORT: process.env.EPICSHOP_PARENT_PORT,
 		EPICSHOP_PARENT_TOKEN: process.env.EPICSHOP_PARENT_TOKEN,
+		EPICSHOP_IS_PUBLISHED: process.env.EPICSHOP_IS_PUBLISHED === 'true',
 	}
 }
 
