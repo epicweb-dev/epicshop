@@ -4,7 +4,9 @@ import {
 	useRouteError,
 	type ErrorResponse,
 } from 'react-router'
+import { useEffect } from 'react'
 import { getErrorMessage } from '#app/utils/misc.tsx'
+import { captureException } from '#app/utils/sentry.client'
 
 type StatusHandler = (info: {
 	error: ErrorResponse
@@ -26,6 +28,13 @@ export function GeneralErrorBoundary({
 }) {
 	const error = useRouteError()
 	const params = useParams()
+
+	// Capture error with Sentry
+	useEffect(() => {
+		if (error) {
+			captureException(error, { extra: { params } })
+		}
+	}, [error, params])
 
 	if (typeof document !== 'undefined') {
 		console.error(error)

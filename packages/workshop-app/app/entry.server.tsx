@@ -3,6 +3,10 @@ import { createReadableStreamFromReadable } from '@react-router/node'
 import { isbot } from 'isbot'
 import { renderToPipeableStream } from 'react-dom/server'
 import { type EntryContext, ServerRouter } from 'react-router'
+import { initSentry, captureException } from './utils/sentry.server'
+
+// Initialize Sentry on the server
+initSentry()
 
 export const streamTimeout = 15000
 const ABORT_DELAY = streamTimeout + 1000
@@ -42,6 +46,7 @@ export default function handleRequest(
 				onError(error: unknown) {
 					didError = true
 					console.error(error)
+					captureException(error)
 				},
 			},
 		)

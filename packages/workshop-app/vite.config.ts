@@ -4,6 +4,7 @@ import { fileURLToPath } from 'url'
 import { reactRouter } from '@react-router/dev/vite'
 import { defineConfig } from 'vite'
 import { envOnlyMacros } from 'vite-env-only'
+import { sentryVitePlugin } from '@sentry/vite-plugin'
 
 const __filename = fileURLToPath(import.meta.url)
 const __dirname = path.dirname(__filename)
@@ -35,6 +36,7 @@ const aliases = {
 }
 
 const MODE = process.env.NODE_ENV
+const isProduction = MODE === 'production'
 
 declare module 'react-router' {
 	// or cloudflare, deno, etc.
@@ -76,5 +78,20 @@ export default defineConfig({
 		},
 	},
 	resolve: { alias: aliases },
-	plugins: [envOnlyMacros(), reactRouter()],
+	plugins: [
+		envOnlyMacros(), 
+		reactRouter(),
+		// Add Sentry plugin for production builds to upload sourcemaps
+		...(isProduction && process.env.SENTRY_DSN && process.env.SENTRY_AUTH_TOKEN ? [
+			sentryVitePlugin({
+				org: process.env.SENTRY_ORG,
+				project: process.env.SENTRY_PROJECT,
+				authToken: process.env.SENTRY_AUTH_TOKEN,
+				sourcemaps: {
+					assets: ['./build/**'],
+					filesToDeleteAfterUpload: ['./build/**/*.map'],
+				},
+			})
+		] : []),
+	],
 })

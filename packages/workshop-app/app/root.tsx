@@ -56,8 +56,10 @@ import { ClientHintCheck, getHints } from './utils/client-hints'
 import { getConfetti } from './utils/confetti.server'
 import { cn, combineHeaders, getDomainUrl, useAltDown } from './utils/misc'
 import { Presence } from './utils/presence'
+import { initSentry } from './utils/sentry.client'
 import { getSeoMetaTags } from './utils/seo'
 import { getToast } from './utils/toast.server'
+import { useEffect } from 'react'
 
 export const links: LinksFunction = () => {
 	return [
@@ -267,6 +269,12 @@ function App() {
 
 export default function AppWithProviders() {
 	const { user } = useLoaderData<typeof loader>()
+	
+	// Initialize Sentry on the client side
+	useEffect(() => {
+		initSentry()
+	}, [])
+	
 	return (
 		<Presence user={user}>
 			<TooltipProvider>

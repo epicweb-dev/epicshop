@@ -10,6 +10,7 @@ const schema = z.object({
 	EPICSHOP_APP_VERSION: z.string().optional(),
 	EPICSHOP_PARENT_PORT: z.string().optional(),
 	EPICSHOP_PARENT_TOKEN: z.string().optional(),
+	SENTRY_DSN: z.string().optional(),
 })
 
 declare global {
@@ -41,6 +42,9 @@ export function init() {
  * @returns all public ENV variables
  */
 export function getEnv() {
+	const isProduction = process.env.NODE_ENV === 'production'
+	const isPublished = !process.env.EPICSHOP_CONTEXT_CWD || process.env.EPICSHOP_DEPLOYED === 'true' || process.env.EPICSHOP_DEPLOYED === '1'
+	
 	return {
 		MODE: process.env.NODE_ENV,
 		EPICSHOP_CONTEXT_CWD: process.env.EPICSHOP_CONTEXT_CWD,
@@ -52,6 +56,8 @@ export function getEnv() {
 		EPICSHOP_APP_VERSION: process.env.EPICSHOP_APP_VERSION,
 		EPICSHOP_PARENT_PORT: process.env.EPICSHOP_PARENT_PORT,
 		EPICSHOP_PARENT_TOKEN: process.env.EPICSHOP_PARENT_TOKEN,
+		// Only include Sentry DSN in production/published environments
+		SENTRY_DSN: (isProduction || isPublished) ? process.env.SENTRY_DSN : undefined,
 	}
 }
 
