@@ -17,10 +17,9 @@
     "#build/*": "./build/*"
   },
   "exports": {
-    "./start": {
-      "default": "./start.js"
-    },
-    "./package.json": "./package.json"
+    "./start": "./start.js",
+    "./package.json": "./package.json",
+    "./instrument": "./instrument.js"
   },
   "scripts": {
     "build": "run-p --print-label --print-name build:*",

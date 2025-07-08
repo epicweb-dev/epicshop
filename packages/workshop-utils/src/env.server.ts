@@ -24,6 +24,7 @@ const schema = z
 			),
 		SENTRY_ORG: z.string().default('kent-c-dodds-tech-llc'),
 		SENTRY_PROJECT: z.string().default('epicshop'),
+		SENTRY_PROJECT_ID: z.string().default('4509630082252800'),
 	})
 	.transform(async (env) => {
 		if (env.EPICSHOP_IS_PUBLISHED === undefined) {
@@ -94,6 +95,7 @@ export function getEnv() {
 		EPICSHOP_PARENT_TOKEN: process.env.EPICSHOP_PARENT_TOKEN,
 		EPICSHOP_IS_PUBLISHED: process.env.EPICSHOP_IS_PUBLISHED === 'true',
 		SENTRY_DSN: process.env.SENTRY_DSN,
+		SENTRY_PROJECT_ID: process.env.SENTRY_PROJECT_ID,
 	}
 }
 

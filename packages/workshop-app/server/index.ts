@@ -32,12 +32,6 @@ closeWithGrace(({ err, manual }) => {
 await initEnv()
 global.ENV = getEnv()
 
-const SENTRY_ENABLED = ENV.EPICSHOP_IS_PUBLISHED && process.env.SENTRY_DSN
-
-if (SENTRY_ENABLED) {
-	void import('./utils/monitoring.js').then(({ init }) => init())
-}
-
 const MODE = process.env.NODE_ENV ?? 'development'
 const isProd = MODE === 'production'
 
@@ -68,6 +62,7 @@ void checkConnectionCached()
 void getPresentUsers()
 
 const app = express()
+
 app.get(
 	'/.well-known/appspecific/com.chrome.devtools.json',
 	(req: any, res: any) => {
@@ -160,6 +155,15 @@ app.all(
 		build: getBuild,
 	}),
 )
+
+const SENTRY_ENABLED = Boolean(
+	ENV.EPICSHOP_IS_PUBLISHED && process.env.SENTRY_DSN,
+)
+
+if (SENTRY_ENABLED) {
+	const Sentry = await import('@sentry/react-router')
+	Sentry.setupExpressErrorHandler(app)
+}
 
 const desiredPort = Number(process.env.PORT || 5639)
 const portToUse = await getPort({

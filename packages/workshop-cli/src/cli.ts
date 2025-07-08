@@ -36,16 +36,23 @@ async function startCommand(appLocation?: string) {
 		process.exit(1)
 	}
 
-	const isProd =
-		process.env.NODE_ENV === 'production' || (await isPublished(appDir))
+	const isPublished = await appIsPublished(appDir)
+	const isProd = process.env.NODE_ENV === 'production' || isPublished
 	const isDeployed =
 		process.env.EPICSHOP_DEPLOYED === 'true' ||
 		process.env.EPICSHOP_DEPLOYED === '1'
 
 	const parentPort = await getPort({ port: 3742 })
 	const parentToken = crypto.randomBytes(32).toString('hex')
+	const sentryImport =
+		isPublished && process.env.SENTRY_DSN
+			? `--import="${appDir}/instrument.js"`
+			: ''
 
-	const childCommand = isProd ? 'node ./start.js' : 'npm run dev'
+	const childCommand = isProd
+		? `node ${sentryImport} ./start.js`
+		: `node ${sentryImport} ./server/dev-server.js`
+
 	const EPICSHOP_CONTEXT_CWD = await getEpicshopContextCwd()
 	const childEnv: NodeJS.ProcessEnv = {
 		...process.env,
@@ -291,6 +298,11 @@ async function startCommand(appLocation?: string) {
 				// Ctrl+C
 				await cleanupBeforeExit()
 				process.exit(0)
+			} else {
+				// Forward unhandled keys to child process stdin
+				if (child?.stdin && !child.stdin.destroyed) {
+					child.stdin.write(key)
+				}
 			}
 		})
 	}
@@ -449,7 +461,13 @@ async function findGlobalWorkshopApp(): Promise<string | null> {
 
 // this is kinda cheating by checking whether the app directory exists, but it's
 // easier than reading the package.json so 🤷‍♂️
-async function isPublished(appDir: string): Promise<boolean> {
+async function appIsPublished(appDir: string): Promise<boolean> {
+	if (process.env.EPICSHOP_IS_PUBLISHED) {
+		return (
+			process.env.EPICSHOP_IS_PUBLISHED === 'true' ||
+			process.env.EPICSHOP_IS_PUBLISHED === '1'
+		)
+	}
 	try {
 		await fs.promises.access(path.join(appDir, 'app'))
 		return false
