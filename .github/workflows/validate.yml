@@ -56,6 +56,7 @@ jobs:
           SENTRY_ORG: ${{ secrets.SENTRY_ORG }}
           SENTRY_PROJECT: ${{ secrets.SENTRY_PROJECT }}
           SENTRY_DSN: ${{ secrets.SENTRY_DSN }}
+          NODE_ENV: production
 
       # run install again so the local .bin files get where they should go.
       - name: 📥 Download deps
