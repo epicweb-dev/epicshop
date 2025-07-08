@@ -7,7 +7,7 @@ import {
 	init as initApps,
 	setModifiedTimesForAppDirs,
 } from '@epic-web/workshop-utils/apps.server'
-import { init as initEnv } from '@epic-web/workshop-utils/env.server'
+import { getEnv, init as initEnv } from '@epic-web/workshop-utils/env.server'
 import { checkForUpdatesCached } from '@epic-web/workshop-utils/git.server'
 import { checkConnectionCached } from '@epic-web/workshop-utils/utils.server'
 import { createRequestHandler } from '@react-router/express'
@@ -30,6 +30,7 @@ closeWithGrace(({ err, manual }) => {
 })
 
 await initEnv()
+global.ENV = getEnv()
 
 const MODE = process.env.NODE_ENV ?? 'development'
 const isProd = MODE === 'production'
