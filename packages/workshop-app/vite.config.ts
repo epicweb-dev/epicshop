@@ -94,9 +94,7 @@ export default defineConfig((config) => ({
 	plugins: [
 		envOnlyMacros(),
 		reactRouter(),
-		process.env.EPICSHOP_IS_PUBLISHED === 'true' &&
-		MODE === 'production' &&
-		process.env.SENTRY_AUTH_TOKEN
+		MODE === 'production' && process.env.SENTRY_AUTH_TOKEN
 			? sentryReactRouter(sentryConfig, config)
 			: null,
 	].filter(Boolean),
