@@ -9,6 +9,7 @@ concurrency:
   cancel-in-progress: true
 env:
   NX_CLOUD_ACCESS_TOKEN: ${{ secrets.NX_CLOUD_ACCESS_TOKEN }}
+  EPICSHOP_APP_COMMIT_SHA: ${{ github.sha }}
 
 jobs:
   lint:
@@ -51,7 +52,11 @@ jobs:
       - name: 🏗 Build
         run: npm run build
         env:
-          EPICSHOP_APP_COMMIT_SHA: ${{ github.sha }}
+          SENTRY_AUTH_TOKEN: ${{ secrets.SENTRY_AUTH_TOKEN }}
+          SENTRY_ORG: ${{ secrets.SENTRY_ORG }}
+          SENTRY_PROJECT: ${{ secrets.SENTRY_PROJECT }}
+          SENTRY_DSN: ${{ secrets.SENTRY_DSN }}
+          NODE_ENV: production
 
       # run install again so the local .bin files get where they should go.
       - name: 📥 Download deps

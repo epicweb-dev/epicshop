@@ -16,6 +16,14 @@ const schema = z
 		EPICSHOP_PARENT_TOKEN: z.string().optional(),
 		EPICSHOP_APP_LOCATION: z.string().optional(),
 		EPICSHOP_IS_PUBLISHED: z.string().optional(),
+		// Sentry configuration
+		SENTRY_DSN: z
+			.string()
+			.default(
+				'https://kent-c-dodds-tech-llc.sentry.io/insights/projects/epicshop/?project=4509630082252800',
+			),
+		SENTRY_ORG: z.string().default('kent-c-dodds-tech-llc'),
+		SENTRY_PROJECT: z.string().default('epicshop'),
 	})
 	.transform(async (env) => {
 		if (env.EPICSHOP_IS_PUBLISHED === undefined) {
@@ -85,6 +93,7 @@ export function getEnv() {
 		EPICSHOP_PARENT_PORT: process.env.EPICSHOP_PARENT_PORT,
 		EPICSHOP_PARENT_TOKEN: process.env.EPICSHOP_PARENT_TOKEN,
 		EPICSHOP_IS_PUBLISHED: process.env.EPICSHOP_IS_PUBLISHED === 'true',
+		SENTRY_DSN: process.env.SENTRY_DSN,
 	}
 }
 

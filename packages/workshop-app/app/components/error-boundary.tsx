@@ -4,6 +4,8 @@ import {
 	useRouteError,
 	type ErrorResponse,
 } from 'react-router'
+import { captureException } from '@sentry/react-router'
+import { useEffect } from 'react'
 import { getErrorMessage } from '#app/utils/misc.tsx'
 
 type StatusHandler = (info: {
@@ -26,6 +28,14 @@ export function GeneralErrorBoundary({
 }) {
 	const error = useRouteError()
 	const params = useParams()
+	const isResponse = isRouteErrorResponse(error)
+
+	useEffect(() => {
+		if (isResponse) return
+		if (ENV.EPICSHOP_IS_PUBLISHED) {
+			captureException(error)
+		}
+	}, [error, isResponse])
 
 	if (typeof document !== 'undefined') {
 		console.error(error)

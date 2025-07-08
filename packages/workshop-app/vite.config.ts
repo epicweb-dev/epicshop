@@ -2,6 +2,10 @@ import { readFile } from 'node:fs/promises'
 import path from 'path'
 import { fileURLToPath } from 'url'
 import { reactRouter } from '@react-router/dev/vite'
+import {
+	sentryReactRouter,
+	type SentryReactRouterBuildOptions,
+} from '@sentry/react-router'
 import { defineConfig } from 'vite'
 import { envOnlyMacros } from 'vite-env-only'
 
@@ -36,14 +40,24 @@ const aliases = {
 
 const MODE = process.env.NODE_ENV
 
-declare module 'react-router' {
-	// or cloudflare, deno, etc.
-	interface Future {
-		unstable_singleFetch: true
-	}
+const sentryConfig: SentryReactRouterBuildOptions = {
+	authToken: process.env.SENTRY_AUTH_TOKEN,
+	org: process.env.SENTRY_ORG,
+	project: process.env.SENTRY_PROJECT,
+	unstable_sentryVitePluginOptions: {
+		release: {
+			name: process.env.EPICSHOP_APP_COMMIT_SHA,
+			setCommits: {
+				auto: true,
+			},
+		},
+		sourcemaps: {
+			filesToDeleteAfterUpload: ['./build/**/*.map', '.server-build/**/*.map'],
+		},
+	},
 }
 
-export default defineConfig({
+export default defineConfig((config) => ({
 	optimizeDeps: {
 		exclude: [
 			'fsevents',
@@ -76,5 +90,12 @@ export default defineConfig({
 		},
 	},
 	resolve: { alias: aliases },
-	plugins: [envOnlyMacros(), reactRouter()],
-})
+	sentryConfig,
+	plugins: [
+		envOnlyMacros(),
+		reactRouter(),
+		MODE === 'production' && process.env.SENTRY_AUTH_TOKEN
+			? sentryReactRouter(sentryConfig, config)
+			: null,
+	].filter(Boolean),
+}))
