@@ -2,9 +2,12 @@ import { readFile } from 'node:fs/promises'
 import path from 'path'
 import { fileURLToPath } from 'url'
 import { reactRouter } from '@react-router/dev/vite'
+import {
+	sentryReactRouter,
+	type SentryReactRouterBuildOptions,
+} from '@sentry/react-router'
 import { defineConfig } from 'vite'
 import { envOnlyMacros } from 'vite-env-only'
-import { sentryReactRouter } from '@sentry/react-router'
 
 const __filename = fileURLToPath(import.meta.url)
 const __dirname = path.dirname(__filename)
@@ -37,13 +40,16 @@ const aliases = {
 
 const MODE = process.env.NODE_ENV
 
-const sentryConfig = {
+const sentryConfig: SentryReactRouterBuildOptions = {
 	authToken: process.env.SENTRY_AUTH_TOKEN,
 	org: process.env.SENTRY_ORG,
 	project: process.env.SENTRY_PROJECT,
 	unstable_sentryVitePluginOptions: {
 		release: {
-			name: process.env.COMMIT_SHA,
+			name: process.env.EPICSHOP_APP_COMMIT_SHA,
+			setCommits: {
+				auto: true,
+			},
 		},
 		sourcemaps: {
 			filesToDeleteAfterUpload: ['./build/**/*.map', '.server-build/**/*.map'],
@@ -51,14 +57,7 @@ const sentryConfig = {
 	},
 }
 
-declare module 'react-router' {
-	// or cloudflare, deno, etc.
-	interface Future {
-		unstable_singleFetch: true
-	}
-}
-
-export default defineConfig({
+export default defineConfig((config) => ({
 	optimizeDeps: {
 		exclude: [
 			'fsevents',
@@ -91,13 +90,14 @@ export default defineConfig({
 		},
 	},
 	resolve: { alias: aliases },
+	sentryConfig,
 	plugins: [
-		envOnlyMacros(), 
+		envOnlyMacros(),
 		reactRouter(),
 		process.env.EPICSHOP_IS_PUBLISHED === 'true' &&
 		MODE === 'production' &&
 		process.env.SENTRY_AUTH_TOKEN
-			? sentryReactRouter(sentryConfig)
+			? sentryReactRouter(sentryConfig, config)
 			: null,
 	].filter(Boolean),
-})
+}))
