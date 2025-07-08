@@ -31,6 +31,12 @@ closeWithGrace(({ err, manual }) => {
 
 await initEnv()
 
+const SENTRY_ENABLED = ENV.EPICSHOP_IS_PUBLISHED && process.env.SENTRY_DSN
+
+if (SENTRY_ENABLED) {
+	void import('./utils/monitoring.js').then(({ init }) => init())
+}
+
 const MODE = process.env.NODE_ENV ?? 'development'
 const isProd = MODE === 'production'
 

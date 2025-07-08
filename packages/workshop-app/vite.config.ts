@@ -4,6 +4,7 @@ import { fileURLToPath } from 'url'
 import { reactRouter } from '@react-router/dev/vite'
 import { defineConfig } from 'vite'
 import { envOnlyMacros } from 'vite-env-only'
+import { sentryReactRouter } from '@sentry/react-router'
 
 const __filename = fileURLToPath(import.meta.url)
 const __dirname = path.dirname(__filename)
@@ -35,6 +36,20 @@ const aliases = {
 }
 
 const MODE = process.env.NODE_ENV
+
+const sentryConfig = {
+	authToken: process.env.SENTRY_AUTH_TOKEN,
+	org: process.env.SENTRY_ORG,
+	project: process.env.SENTRY_PROJECT,
+	unstable_sentryVitePluginOptions: {
+		release: {
+			name: process.env.COMMIT_SHA,
+		},
+		sourcemaps: {
+			filesToDeleteAfterUpload: ['./build/**/*.map', '.server-build/**/*.map'],
+		},
+	},
+}
 
 declare module 'react-router' {
 	// or cloudflare, deno, etc.
@@ -76,5 +91,13 @@ export default defineConfig({
 		},
 	},
 	resolve: { alias: aliases },
-	plugins: [envOnlyMacros(), reactRouter()],
+	plugins: [
+		envOnlyMacros(), 
+		reactRouter(),
+		process.env.EPICSHOP_IS_PUBLISHED === 'true' &&
+		MODE === 'production' &&
+		process.env.SENTRY_AUTH_TOKEN
+			? sentryReactRouter(sentryConfig)
+			: null,
+	].filter(Boolean),
 })
