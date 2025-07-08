@@ -20,7 +20,7 @@ const schema = z
 		SENTRY_DSN: z
 			.string()
 			.default(
-				'https://kent-c-dodds-tech-llc.sentry.io/insights/projects/epicshop/?project=4509630082252800',
+				'https://cd51fbf4ca0834f7b3529a478a8ece4c@o913766.ingest.us.sentry.io/4509630082252800',
 			),
 		SENTRY_ORG: z.string().default('kent-c-dodds-tech-llc'),
 		SENTRY_PROJECT: z.string().default('epicshop'),
