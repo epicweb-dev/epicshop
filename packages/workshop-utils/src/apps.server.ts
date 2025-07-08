@@ -238,9 +238,10 @@ export async function init(workshopRoot?: string) {
 
 	global.__epicshop_apps_initialized__ = true
 
-	await initEnv()
-
-	global.ENV = getEnv()
+	if (!global.ENV) {
+		await initEnv()
+		global.ENV = getEnv()
+	}
 
 	if (
 		!ENV.EPICSHOP_DEPLOYED &&
