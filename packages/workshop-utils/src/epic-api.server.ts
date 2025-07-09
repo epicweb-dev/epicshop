@@ -571,6 +571,9 @@ export async function userHasAccessToWorkshop({
 
 			return hasAccess
 		},
+	}).catch((e) => {
+		console.error('Failed to check workshop access', e)
+		return false
 	})
 }
 
@@ -702,6 +705,9 @@ export async function getUserInfo({
 			const data = await response.json()
 			return UserInfoSchema.parse(data)
 		},
+	}).catch((e) => {
+		console.error('Failed to get user info', e)
+		return null
 	})
 
 	// we used to md5 hash the email to get the id
