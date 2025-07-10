@@ -271,13 +271,15 @@ function LaunchGitHub({
 	}
 	if (file) {
 		const safePath = (s: string) => s.replace(/\\/g, '/')
+		// Convert tree to blob for individual files
+		const githubFileRoot = ENV.EPICSHOP_GITHUB_ROOT.replace('/tree/', '/blob/')
 		return (
 			<a
 				className="launch_button !no-underline"
 				href={
 					safePath(file).replace(
 						safePath(ENV.EPICSHOP_CONTEXT_CWD),
-						ENV.EPICSHOP_GITHUB_ROOT,
+						githubFileRoot,
 					) + (line ? `#L${line}` : '')
 				}
 				rel="noreferrer"
@@ -288,14 +290,16 @@ function LaunchGitHub({
 		)
 	}
 	const app = apps.find((a) => a.name === appName)
+	// Convert tree to blob for individual files
+	const githubFileRoot = ENV.EPICSHOP_GITHUB_ROOT.replace('/tree/', '/blob/')
 	const path = [
 		...(app?.relativePath.split(requestInfo.separator) ?? []),
-		appFile + (line ? `#L${line}` : ''),
+		appFile,
 	].join('/')
 	return (
 		<a
 			className="launch_button !no-underline"
-			href={`${ENV.EPICSHOP_GITHUB_ROOT}/${path}`}
+			href={`${githubFileRoot}/${path}${line ? `#L${line}` : ''}`}
 			rel="noreferrer"
 			target="_blank"
 		>
