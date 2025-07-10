@@ -401,6 +401,13 @@ export function ErrorBoundary() {
 		<GeneralErrorBoundary
 			statusHandlers={{
 				404: () => <p>Sorry, we couldn't find an app here.</p>,
+				503: () => (
+					<div>
+						<h1>Service Unavailable</h1>
+						<p>Sorry, we're having a temporary problem. Please try again later.</p>
+						<button onClick={() => window.location.reload()}>Refresh</button>
+					</div>
+				),
 			}}
 		/>
 	)
