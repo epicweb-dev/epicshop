@@ -8,8 +8,8 @@ export const getWorkshopRoot = () =>
 
 const getRootPkgJsonPath = () => path.join(getWorkshopRoot(), 'package.json')
 
-// Helper function to find the first existing file from the priority list
-async function findFirstExistingFile(fullPath: string): Promise<string | null> {
+// Helper function to find the first existing file from the priority list for StackBlitz simple exercises
+async function findDefaultFileForStackBlitzSimpleExercise(fullPath: string): Promise<string | null> {
 	const priorityFiles = [
 		'index.html',
 		'index.tsx',
@@ -241,13 +241,14 @@ export async function getStackBlitzUrl({
 
 	// For simple exercises without package.json, configure StackBlitz to show only editor
 	if (!packageJsonExists) {
-		const defaultFile = await findFirstExistingFile(fullPath)
+		const defaultFile = await findDefaultFileForStackBlitzSimpleExercise(fullPath)
 		
 		stackBlitzConfig = {
 			...stackBlitzConfig,
 			view: 'editor', // Show only editor, no preview or terminal
 			hidedevtools: '1', // Hide the console/devtools
 			terminalHeight: '0', // Hide the terminal completely
+			hideNavigation: '1', // Hide the preview's URL bar
 			...(defaultFile && { file: defaultFile }), // Set default file if found
 		}
 	}
