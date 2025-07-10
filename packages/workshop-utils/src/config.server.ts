@@ -8,30 +8,6 @@ export const getWorkshopRoot = () =>
 
 const getRootPkgJsonPath = () => path.join(getWorkshopRoot(), 'package.json')
 
-// Helper function to find the first existing file from the priority list for StackBlitz simple exercises
-async function findDefaultFileForStackBlitzSimpleExercise(fullPath: string): Promise<string | null> {
-	const priorityFiles = [
-		'index.html',
-		'index.tsx',
-		'index.ts',
-		'index.jsx',
-		'index.js',
-		'README.mdx',
-		'README.md',
-	]
-
-	for (const fileName of priorityFiles) {
-		const filePath = path.join(fullPath, fileName)
-		try {
-			await fs.promises.access(filePath, fs.constants.F_OK)
-			return fileName
-		} catch {
-			continue
-		}
-	}
-	return null
-}
-
 export const StackBlitzConfigSchema = z.object({
 	// we default this to `${exerciseTitle} (${type})`
 	title: z.string().optional(),
@@ -43,6 +19,9 @@ export const StackBlitzConfigSchema = z.object({
 		.union([z.literal('editor'), z.literal('preview'), z.literal('both')])
 		.optional(),
 	file: z.string().optional(),
+	hidedevtools: z.string().optional(),
+	terminalHeight: z.string().optional(),
+	hideNavigation: z.string().optional(),
 })
 
 const InstructorSchema = z.object({
@@ -241,8 +220,29 @@ export async function getStackBlitzUrl({
 
 	// For simple exercises without package.json, configure StackBlitz to show only editor
 	if (!packageJsonExists) {
-		const defaultFile = await findDefaultFileForStackBlitzSimpleExercise(fullPath)
-		
+		// Find the first existing file from the priority list
+		const priorityFiles = [
+			'index.html',
+			'index.tsx',
+			'index.ts',
+			'index.jsx',
+			'index.js',
+			'README.mdx',
+			'README.md',
+		]
+
+		let defaultFile: string | null = null
+		for (const fileName of priorityFiles) {
+			const filePath = path.join(fullPath, fileName)
+			try {
+				await fs.promises.access(filePath, fs.constants.F_OK)
+				defaultFile = fileName
+				break
+			} catch {
+				continue
+			}
+		}
+
 		stackBlitzConfig = {
 			...stackBlitzConfig,
 			view: 'editor', // Show only editor, no preview or terminal
