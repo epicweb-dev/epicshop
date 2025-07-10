@@ -8,6 +8,30 @@ export const getWorkshopRoot = () =>
 
 const getRootPkgJsonPath = () => path.join(getWorkshopRoot(), 'package.json')
 
+// Helper function to find the first existing file from the priority list
+async function findFirstExistingFile(fullPath: string): Promise<string | null> {
+	const priorityFiles = [
+		'index.html',
+		'index.tsx',
+		'index.ts',
+		'index.jsx',
+		'index.js',
+		'README.mdx',
+		'README.md',
+	]
+
+	for (const fileName of priorityFiles) {
+		const filePath = path.join(fullPath, fileName)
+		try {
+			await fs.promises.access(filePath, fs.constants.F_OK)
+			return fileName
+		} catch {
+			continue
+		}
+	}
+	return null
+}
+
 export const StackBlitzConfigSchema = z.object({
 	// we default this to `${exerciseTitle} (${type})`
 	title: z.string().optional(),
@@ -203,9 +227,29 @@ export async function getStackBlitzUrl({
 
 	const githubPart = githubRootUrl.pathname
 
-	const stackBlitzConfig = {
+	// Check if package.json exists to determine if this is a simple exercise
+	const packageJsonPath = path.join(fullPath, 'package.json')
+	const packageJsonExists = await fs.promises
+		.access(packageJsonPath, fs.constants.F_OK)
+		.then(() => true)
+		.catch(() => false)
+
+	let stackBlitzConfig = {
 		...appConfig.stackBlitzConfig,
 		title: appConfig.stackBlitzConfig?.title ?? `${title} (${type})`,
+	}
+
+	// For simple exercises without package.json, configure StackBlitz to show only editor
+	if (!packageJsonExists) {
+		const defaultFile = await findFirstExistingFile(fullPath)
+		
+		stackBlitzConfig = {
+			...stackBlitzConfig,
+			view: 'editor', // Show only editor, no preview or terminal
+			hidedevtools: '1', // Hide the console/devtools
+			terminalHeight: '0', // Hide the terminal completely
+			...(defaultFile && { file: defaultFile }), // Set default file if found
+		}
 	}
 
 	const params = new URLSearchParams(stackBlitzConfig as Record<string, string>)
