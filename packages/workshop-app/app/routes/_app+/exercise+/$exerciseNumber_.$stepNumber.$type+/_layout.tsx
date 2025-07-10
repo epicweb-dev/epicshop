@@ -404,7 +404,9 @@ export function ErrorBoundary() {
 				503: () => (
 					<div>
 						<h1>Service Unavailable</h1>
-						<p>Sorry, we're having a temporary problem. Please try again later.</p>
+						<p>
+							Sorry, we're having a temporary problem. Please try again later.
+						</p>
 						<button onClick={() => window.location.reload()}>Refresh</button>
 					</div>
 				),

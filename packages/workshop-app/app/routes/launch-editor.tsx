@@ -271,13 +271,15 @@ function LaunchGitHub({
 	}
 	if (file) {
 		const safePath = (s: string) => s.replace(/\\/g, '/')
+		// Convert tree to blob for individual files
+		const githubFileRoot = ENV.EPICSHOP_GITHUB_ROOT.replace('/tree/', '/blob/')
 		return (
 			<a
 				className="launch_button !no-underline"
 				href={
 					safePath(file).replace(
 						safePath(ENV.EPICSHOP_CONTEXT_CWD),
-						ENV.EPICSHOP_GITHUB_ROOT,
+						githubFileRoot,
 					) + (line ? `#L${line}` : '')
 				}
 				rel="noreferrer"
@@ -288,14 +290,21 @@ function LaunchGitHub({
 		)
 	}
 	const app = apps.find((a) => a.name === appName)
+	// Convert tree to blob for individual files
+	const githubFileRoot = ENV.EPICSHOP_GITHUB_ROOT.replace('/tree/', '/blob/')
+
+	// Parse appFile to extract filename and line number (format: "filename,line,column")
+	const [filename, appFileLine] = appFile ? appFile.split(',') : ['', '']
+	const lineNumber = line || (appFileLine ? Number(appFileLine) : undefined)
+
 	const path = [
 		...(app?.relativePath.split(requestInfo.separator) ?? []),
-		appFile + (line ? `#L${line}` : ''),
+		filename,
 	].join('/')
 	return (
 		<a
 			className="launch_button !no-underline"
-			href={`${ENV.EPICSHOP_GITHUB_ROOT}/${path}`}
+			href={`${githubFileRoot}/${path}${lineNumber ? `#L${lineNumber}` : ''}`}
 			rel="noreferrer"
 			target="_blank"
 		>

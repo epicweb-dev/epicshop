@@ -113,7 +113,10 @@ export async function checkForUpdatesCached() {
 export async function updateLocalRepo() {
 	const ENV = getEnv()
 	if (ENV.EPICSHOP_DEPLOYED) {
-		return { status: 'error', message: 'Updates are not available in deployed environments.' } as const
+		return {
+			status: 'error',
+			message: 'Updates are not available in deployed environments.',
+		} as const
 	}
 
 	const cwd = getWorkshopRoot()
@@ -192,10 +195,9 @@ export async function getLatestWorkshopAppVersion() {
 export async function checkForExerciseChanges() {
 	const cwd = getWorkshopRoot()
 	try {
-		const { stdout } = await execaCommand(
-			'git status --porcelain exercises/',
-			{ cwd },
-		)
+		const { stdout } = await execaCommand('git status --porcelain exercises/', {
+			cwd,
+		})
 		return stdout.trim().length > 0
 	} catch (error) {
 		console.error(
