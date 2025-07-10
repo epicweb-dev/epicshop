@@ -120,10 +120,9 @@ export function MuxPlayer({
 			if (e.key === ' ') {
 				e.preventDefault()
 				if (muxPlayerRef.current.paused) {
-					try {
+					// Only attempt to play if metadata is loaded to avoid AbortError
+					if (metadataLoaded) {
 						void muxPlayerRef.current.play().catch(() => {})
-					} catch (error) {
-						// ignore
 					}
 				} else {
 					muxPlayerRef.current.pause()
@@ -152,7 +151,7 @@ export function MuxPlayer({
 		return () => {
 			window.document.removeEventListener('keydown', handleUserKeyPress)
 		}
-	}, [muxPlayerRef])
+	}, [muxPlayerRef, metadataLoaded])
 
 	const updatePreferences = useDebounce(() => {
 		const player = muxPlayerRef.current
