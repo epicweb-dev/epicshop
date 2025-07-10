@@ -292,14 +292,19 @@ function LaunchGitHub({
 	const app = apps.find((a) => a.name === appName)
 	// Convert tree to blob for individual files
 	const githubFileRoot = ENV.EPICSHOP_GITHUB_ROOT.replace('/tree/', '/blob/')
+
+	// Parse appFile to extract filename and line number (format: "filename,line,column")
+	const [filename, appFileLine] = appFile ? appFile.split(',') : ['', '']
+	const lineNumber = line || (appFileLine ? Number(appFileLine) : undefined)
+
 	const path = [
 		...(app?.relativePath.split(requestInfo.separator) ?? []),
-		appFile,
+		filename,
 	].join('/')
 	return (
 		<a
 			className="launch_button !no-underline"
-			href={`${githubFileRoot}/${path}${line ? `#L${line}` : ''}`}
+			href={`${githubFileRoot}/${path}${lineNumber ? `#L${lineNumber}` : ''}`}
 			rel="noreferrer"
 			target="_blank"
 		>

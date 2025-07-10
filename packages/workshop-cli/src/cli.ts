@@ -327,7 +327,7 @@ async function updateCommand() {
 	const isDeployed =
 		process.env.EPICSHOP_DEPLOYED === 'true' ||
 		process.env.EPICSHOP_DEPLOYED === '1'
-	
+
 	if (isDeployed) {
 		console.log('❌ Updates are not available in deployed environments.')
 		process.exit(1)
