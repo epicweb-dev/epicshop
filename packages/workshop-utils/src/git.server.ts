@@ -2,6 +2,7 @@ import { execa, execaCommand } from 'execa'
 import { getWorkshopRoot } from './apps.server.js'
 import { cachified, checkForUpdatesCache } from './cache.server.js'
 import { getWorkshopConfig } from './config.server.js'
+import { getEnv } from './env.server.js'
 import { getErrorMessage } from './utils.js'
 import { checkConnection } from './utils.server.js'
 
@@ -23,6 +24,11 @@ async function getDiffUrl(commitBefore: string, commitAfter: string) {
 }
 
 export async function checkForUpdates() {
+	const ENV = getEnv()
+	if (ENV.EPICSHOP_DEPLOYED) {
+		return { updatesAvailable: false } as const
+	}
+
 	const cwd = getWorkshopRoot()
 	const online = await checkConnection()
 	if (!online) return { updatesAvailable: false } as const
@@ -89,6 +95,11 @@ export async function checkForUpdates() {
 }
 
 export async function checkForUpdatesCached() {
+	const ENV = getEnv()
+	if (ENV.EPICSHOP_DEPLOYED) {
+		return { updatesAvailable: false } as const
+	}
+
 	const key = 'checkForUpdates'
 	return cachified({
 		ttl: 1000 * 60,
@@ -100,6 +111,11 @@ export async function checkForUpdatesCached() {
 }
 
 export async function updateLocalRepo() {
+	const ENV = getEnv()
+	if (ENV.EPICSHOP_DEPLOYED) {
+		return { status: 'error', message: 'Updates are not available in deployed environments.' } as const
+	}
+
 	const cwd = getWorkshopRoot()
 	try {
 		const updates = await checkForUpdates()
