@@ -121,7 +121,7 @@ export function MuxPlayer({
 				e.preventDefault()
 				if (muxPlayerRef.current.paused) {
 					try {
-						void muxPlayerRef.current.play()
+						void muxPlayerRef.current.play().catch(() => {})
 					} catch (error) {
 						// ignore
 					}
