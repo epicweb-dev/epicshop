@@ -376,7 +376,11 @@ function EpicVideo({
 				onClick={(event) => {
 					if (muxPlayerRef.current) {
 						muxPlayerRef.current.currentTime = hmsToSeconds(timestamp)
-						void muxPlayerRef.current.play()
+						try {
+							void muxPlayerRef.current.play().catch(() => {})
+						} catch (error) {
+							// ignore
+						}
 						muxPlayerRef.current.scrollIntoView({
 							behavior: 'smooth',
 							inline: 'center',

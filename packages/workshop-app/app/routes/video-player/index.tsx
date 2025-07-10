@@ -119,9 +119,15 @@ export function MuxPlayer({
 
 			if (e.key === ' ') {
 				e.preventDefault()
-				void (muxPlayerRef.current.paused
-					? muxPlayerRef.current.play()
-					: muxPlayerRef.current.pause())
+				if (muxPlayerRef.current.paused) {
+					try {
+						void muxPlayerRef.current.play().catch(() => {})
+					} catch (error) {
+						// ignore
+					}
+				} else {
+					muxPlayerRef.current.pause()
+				}
 			}
 			if (e.key === 'ArrowRight') {
 				e.preventDefault()
