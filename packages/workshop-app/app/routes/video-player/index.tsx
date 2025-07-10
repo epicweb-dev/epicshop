@@ -111,7 +111,7 @@ export function MuxPlayer({
 
 	React.useEffect(() => {
 		function handleUserKeyPress(e: KeyboardEvent) {
-			if (!muxPlayerRef.current || !metadataLoaded) return
+			if (!muxPlayerRef.current) return
 			const activeElement = document.activeElement
 
 			if (shouldIgnoreHotkey(activeElement)) return
