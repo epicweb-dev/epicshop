@@ -98,6 +98,11 @@ async function startCommand(appLocation?: string) {
 	}
 
 	async function doUpdateAndRestart(): Promise<boolean> {
+		if (isDeployed) {
+			console.log('❌ Updates are not available in deployed environments.')
+			return false
+		}
+
 		console.log('\n👀 Checking for updates...')
 		try {
 			// Import the git update functionality
@@ -319,6 +324,15 @@ async function startCommand(appLocation?: string) {
 }
 
 async function updateCommand() {
+	const isDeployed =
+		process.env.EPICSHOP_DEPLOYED === 'true' ||
+		process.env.EPICSHOP_DEPLOYED === '1'
+	
+	if (isDeployed) {
+		console.log('❌ Updates are not available in deployed environments.')
+		process.exit(1)
+	}
+
 	try {
 		const { updateLocalRepo } = await import(
 			'@epic-web/workshop-utils/git.server'
