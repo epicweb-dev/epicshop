@@ -111,7 +111,7 @@ export function MuxPlayer({
 
 	React.useEffect(() => {
 		function handleUserKeyPress(e: KeyboardEvent) {
-			if (!muxPlayerRef.current) return
+			if (!muxPlayerRef.current || !metadataLoaded) return
 			const activeElement = document.activeElement
 
 			if (shouldIgnoreHotkey(activeElement)) return
@@ -119,9 +119,15 @@ export function MuxPlayer({
 
 			if (e.key === ' ') {
 				e.preventDefault()
-				void (muxPlayerRef.current.paused
-					? muxPlayerRef.current.play()
-					: muxPlayerRef.current.pause())
+				if (muxPlayerRef.current.paused) {
+					try {
+						void muxPlayerRef.current.play()
+					} catch (error) {
+						// ignore
+					}
+				} else {
+					muxPlayerRef.current.pause()
+				}
 			}
 			if (e.key === 'ArrowRight') {
 				e.preventDefault()
