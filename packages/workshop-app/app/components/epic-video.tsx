@@ -377,7 +377,7 @@ function EpicVideo({
 					if (muxPlayerRef.current) {
 						muxPlayerRef.current.currentTime = hmsToSeconds(timestamp)
 						try {
-							void muxPlayerRef.current.play()
+							void muxPlayerRef.current.play().catch(() => {})
 						} catch (error) {
 							// ignore
 						}
