@@ -208,6 +208,9 @@ ${lanUrl ? `${chalk.bold('On Your Network:')}  ${chalk.cyan(lanUrl)}` : ''}
 	// give it another line
 	console.log('')
 
+	// Kick off a request to the home route as soon as possible to warm up the server
+	void fetch(localUrl, { method: 'HEAD' }).catch(() => {})
+
 	if (!ENV.EPICSHOP_DEPLOYED && process.env.EPICSHOP_ENABLE_WATCHER) {
 		const watches = new Map<
 			string,
