@@ -1,5 +1,6 @@
 import { PassThrough } from 'stream'
 import { createReadableStreamFromReadable } from '@react-router/node'
+import * as Sentry from '@sentry/react-router'
 import { isbot } from 'isbot'
 import { renderToPipeableStream } from 'react-dom/server'
 import {
@@ -8,7 +9,6 @@ import {
 	type LoaderFunctionArgs,
 	type ActionFunctionArgs,
 } from 'react-router'
-import * as Sentry from '@sentry/react-router'
 
 export const streamTimeout = 15000
 const ABORT_DELAY = streamTimeout + 1000
