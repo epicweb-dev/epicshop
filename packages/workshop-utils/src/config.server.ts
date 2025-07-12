@@ -39,6 +39,7 @@ const WorkshopConfigSchema = z
 		instructor: InstructorSchema.optional(),
 		epicWorkshopHost: z.string().optional(),
 		epicWorkshopSlug: z.string().optional(),
+		subdomain: z.string().optional(),
 		product: z
 			.object({
 				host: z.string().default('www.epicweb.dev'),
@@ -123,6 +124,20 @@ const configCache: {
 } = {
 	config: null,
 	modified: 0,
+}
+
+/**
+ * Generate a URL with subdomain support
+ */
+export function getWorkshopUrl(port: number, subdomain?: string): string {
+	const config = getWorkshopConfig()
+	const subdomainToUse = subdomain ?? config.subdomain
+	
+	if (subdomainToUse) {
+		return `http://${subdomainToUse}.localhost:${port}`
+	}
+	
+	return `http://localhost:${port}`
 }
 
 export function getWorkshopConfig(): WorkshopConfig {
