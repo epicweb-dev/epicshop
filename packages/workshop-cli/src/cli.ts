@@ -7,12 +7,18 @@ import http from 'node:http'
 import os from 'node:os'
 import path from 'node:path'
 import { fileURLToPath } from 'node:url'
+import { getWorkshopUrl as utilsGetWorkshopUrl } from '@epic-web/workshop-utils/config.server'
+import { updateLocalRepo } from '@epic-web/workshop-utils/git.server'
 import chalk from 'chalk'
 import closeWithGrace from 'close-with-grace'
 import getPort from 'get-port'
 import open from 'open'
 import yargs, { type ArgumentsCamelCase, type Argv } from 'yargs'
 import { hideBin } from 'yargs/helpers'
+
+function getWorkshopUrl(port: number): string {
+	return utilsGetWorkshopUrl(port)
+}
 
 async function startCommand(appLocation?: string) {
 	// Find workshop-app directory using new resolution order
@@ -85,7 +91,7 @@ async function startCommand(appLocation?: string) {
 
 	async function waitForChildReady(): Promise<boolean> {
 		const port = await childPortPromise
-		const url = `http://localhost:${port}/`
+		const url = getWorkshopUrl(port)
 		const maxAttempts = 40 // 20s max (500ms interval)
 		for (let i = 0; i < maxAttempts; i++) {
 			try {
@@ -105,10 +111,6 @@ async function startCommand(appLocation?: string) {
 
 		console.log('\n👀 Checking for updates...')
 		try {
-			// Import the git update functionality
-			const { updateLocalRepo } = await import(
-				'@epic-web/workshop-utils/git.server'
-			)
 			const result = await updateLocalRepo()
 			if (result.status === 'success') {
 				console.log(`✅ ${result.message}`)
@@ -136,11 +138,9 @@ async function startCommand(appLocation?: string) {
 		server = http.createServer(async (req, res) => {
 			try {
 				if (req.url === '/__epicshop-restart') {
-					const port = await childPort
-					res.setHeader(
-						'Access-Control-Allow-Origin',
-						`http://localhost:${port}`,
-					)
+					const port = await childPortPromise
+					const workshopUrl = getWorkshopUrl(port)
+					res.setHeader('Access-Control-Allow-Origin', workshopUrl)
 					res.setHeader('Access-Control-Allow-Methods', 'POST, OPTIONS')
 					res.setHeader(
 						'Access-Control-Allow-Headers',
@@ -253,12 +253,9 @@ async function startCommand(appLocation?: string) {
 				await doUpdateAndRestart()
 			} else if (key === 'o') {
 				if (childPort) {
-					console.log(
-						chalk.blue(
-							`\n🌐 Opening browser to http://localhost:${childPort} ...`,
-						),
-					)
-					await open(`http://localhost:${childPort}`)
+					const workshopUrl = getWorkshopUrl(childPort)
+					console.log(chalk.blue(`\n🌐 Opening browser to ${workshopUrl} ...`))
+					await open(workshopUrl)
 				} else {
 					console.log(chalk.red('Local server URL not available yet.'))
 				}
@@ -334,9 +331,6 @@ async function updateCommand() {
 	}
 
 	try {
-		const { updateLocalRepo } = await import(
-			'@epic-web/workshop-utils/git.server'
-		)
 		const result = await updateLocalRepo()
 		if (result.status === 'success') {
 			console.log(`✅ ${result.message}`)

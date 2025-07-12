@@ -15,6 +15,7 @@ These options should be set in the root `package.json` of your workshop.
 | `instructor.name`                      | `string`  | Name of the instructor                   | Optional                                                                |
 | `instructor.avatar`                    | `string`  | Path to the instructor's avatar image    | Optional                                                                |
 | `instructor.𝕏` or `instructor.xHandle` | `string`  | Instructor's X (formerly Twitter) handle | Optional                                                                |
+| `subdomain`                            | `string`  | Subdomain for the workshop               | Optional                                                                |
 | `product`                              | `object`  | Product configuration                    | Optional                                                                |
 | `onboardingVideo`                      | `string`  | URL to the onboarding video              | `"https://www.epicweb.dev/tips/get-started-with-the-epic-workshop-app"` |
 | `githubRepo`                           | `string`  | URL to the GitHub repository             | Required if `githubRoot` is not provided                                |
@@ -43,6 +44,56 @@ The `product` object can have the following properties:
 > so you can more easily define custom messages throughout the workshop UI.
 > Until then, the `displayName` and `displayNameShort` will be used for all
 > messages where the product name is displayed.
+
+## Subdomain Configuration
+
+You can configure your workshop to use a custom subdomain by setting the
+`subdomain` option in your `epicshop` configuration. This is useful for branding
+your workshop or creating a more professional URL structure.
+
+### How it Works
+
+When you configure a subdomain, the workshop will be available at
+`{subdomain}.localhost:{PORT}` instead of the default `localhost:{PORT}`. The
+system automatically:
+
+1. **Generates subdomain URLs** - All workshop URLs will use the subdomain
+   format
+2. **Adds redirect functionality** - Requests to the non-subdomain URL will be
+   automatically redirected to the subdomain URL
+3. **Updates CLI output** - The command line interface will display the
+   subdomain URL and mention the redirect
+
+### Example
+
+```json
+{
+	"epicshop": {
+		"title": "Advanced React Patterns",
+		"subdomain": "react-patterns"
+		// ... other configuration
+	}
+}
+```
+
+With this configuration:
+
+- Workshop will be available at `http://react-patterns.localhost:5639`
+- Requests to `http://localhost:5639` will redirect to
+  `http://react-patterns.localhost:5639`
+- CLI will show:
+  `Local: http://react-patterns.localhost:5639 (redirects from http://localhost:5639)`
+
+### Notes
+
+- The subdomain only works with `localhost` - it's designed for local
+  development
+- The subdomain should be a valid hostname (lowercase letters, numbers, and
+  hyphens)
+- If no subdomain is configured, the workshop behaves as before using plain
+  `localhost`
+- All workshop functionality (hot reloading, WebSocket connections, etc.) works
+  normally with subdomains
 
 ### Logo
 
@@ -133,6 +184,7 @@ Here's an example of some configuration in the root `package.json`:
   "epicshop": {
     "title": "Advanced React Patterns",
     "subtitle": "Master complex React patterns",
+    "subdomain": "react-patterns",
     "instructor": {
       "name": "Kent C. Dodds",
       "avatar": "/images/instructor.png",

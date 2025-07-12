@@ -1,11 +1,11 @@
+import { captureException } from '@sentry/react-router'
+import { useEffect } from 'react'
 import {
 	isRouteErrorResponse,
 	useParams,
 	useRouteError,
 	type ErrorResponse,
 } from 'react-router'
-import { captureException } from '@sentry/react-router'
-import { useEffect } from 'react'
 import { getErrorMessage } from '#app/utils/misc.tsx'
 
 type StatusHandler = (info: {

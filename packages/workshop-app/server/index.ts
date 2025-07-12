@@ -7,6 +7,10 @@ import {
 	init as initApps,
 	setModifiedTimesForAppDirs,
 } from '@epic-web/workshop-utils/apps.server'
+import {
+	getWorkshopConfig,
+	getWorkshopUrl,
+} from '@epic-web/workshop-utils/config.server'
 import { getEnv, init as initEnv } from '@epic-web/workshop-utils/env.server'
 import { checkForUpdatesCached } from '@epic-web/workshop-utils/git.server'
 import { checkConnectionCached } from '@epic-web/workshop-utils/utils.server'
@@ -170,6 +174,29 @@ const portToUse = await getPort({
 	port: portNumbers(desiredPort, desiredPort + 100),
 })
 
+// Add subdomain redirect middleware now that we know the port - only applies when not deployed
+if (!ENV.EPICSHOP_DEPLOYED) {
+	app.use((req, res, next) => {
+		const config = getWorkshopConfig()
+
+		// Only redirect if subdomain is configured
+		if (!config.subdomain) {
+			return next()
+		}
+
+		const host = req.headers.host
+		const expectedHost = `${config.subdomain}.localhost`
+
+		// If request is not coming from the expected subdomain, redirect
+		if (host && !host.startsWith(expectedHost)) {
+			const redirectUrl = getWorkshopUrl(portToUse)
+			return res.redirect(301, `${redirectUrl}${req.url}`)
+		}
+
+		next()
+	})
+}
+
 const localIp: string = ipAddress() ?? 'Unknown'
 // Check if the address is a private ip
 // https://en.wikipedia.org/wiki/Private_network#Private_IPv4_address_spaces
@@ -197,7 +224,8 @@ const server = app.listen(portToUse, async () => {
 		)
 	}
 	console.log(`🐨  Let's get learning!`)
-	const localUrl = `http://localhost:${portUsed}`
+
+	const localUrl = getWorkshopUrl(portUsed)
 
 	console.log(
 		`
@@ -222,9 +250,11 @@ ${lanUrl ? `${chalk.bold('On Your Network:')}  ${chalk.cyan(lanUrl)}` : ''}
 			const url = new URL(request.url ?? '/', 'ws://localhost:0000')
 			if (url.pathname === '/__ws') {
 				const origin = request.headers.origin
+				const workshopUrl = getWorkshopUrl(portToUse)
 				const isValidOrigin =
 					origin &&
-					(origin === `http://localhost:${portToUse}` ||
+					(origin === workshopUrl ||
+						origin === `http://localhost:${portToUse}` ||
 						origin === `http://127.0.0.1:${portToUse}` ||
 						(lanUrl && origin === lanUrl))
 

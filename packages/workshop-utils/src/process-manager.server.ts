@@ -6,6 +6,7 @@ import closeWithGrace from 'close-with-grace'
 import findProcess from 'find-process'
 import fkill from 'fkill'
 import { type App } from './apps.server.js'
+import { getWorkshopUrl } from './config.server.js'
 import { getErrorMessage } from './utils.js'
 
 const isDeployed =
@@ -218,7 +219,8 @@ export async function waitOnApp(app: App) {
 		let lastError: unknown
 		while (Date.now() - startTime < timeout) {
 			try {
-				await fetch(`http://localhost:${app.dev.portNumber}`, {
+				const url = getWorkshopUrl(app.dev.portNumber)
+				await fetch(url, {
 					method: 'HEAD',
 					headers: { Accept: '*/*' },
 				})
