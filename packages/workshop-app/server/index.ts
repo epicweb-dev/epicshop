@@ -103,32 +103,7 @@ if ((!isProd && !ENV.EPICSHOP_IS_PUBLISHED) || ENV.EPICSHOP_DEPLOYED) {
 	app.use(morgan('tiny'))
 }
 
-// Subdomain redirect middleware - only applies when not deployed
-app.use((req, res, next) => {
-	// Skip subdomain logic when deployed
-	if (ENV.EPICSHOP_DEPLOYED) {
-		return next()
-	}
-	
-	const config = getWorkshopConfig()
-	
-	// Only redirect if subdomain is configured
-	if (!config.subdomain) {
-		return next()
-	}
-	
-	const host = req.headers.host
-	const expectedHost = `${config.subdomain}.localhost`
-	
-	// If request is not coming from the expected subdomain, redirect
-	if (host && !host.startsWith(expectedHost)) {
-		const port = host.split(':')[1]
-		const redirectUrl = getWorkshopUrl(port ? parseInt(port) : 80)
-		return res.redirect(301, `${redirectUrl}${req.url}`)
-	}
-	
-	next()
-})
+// (Subdomain redirect middleware is set up after port is determined)
 
 function getNumberOrNull(value: unknown) {
 	if (value == null) return null
@@ -201,6 +176,33 @@ const portToUse = await getPort({
 	port: portNumbers(desiredPort, desiredPort + 100),
 })
 
+// Set up subdomain redirect middleware now that we have the port
+app.use((req, res, next) => {
+	// Skip subdomain logic when deployed
+	if (ENV.EPICSHOP_DEPLOYED) {
+		return next()
+	}
+	
+	const config = getWorkshopConfig()
+	
+	// Only redirect if subdomain is configured
+	if (!config.subdomain) {
+		return next()
+	}
+	
+	const host = req.headers.host
+	const expectedHost = `${config.subdomain}.localhost`
+	
+	// If request is not coming from the expected subdomain, redirect
+	if (host && !host.startsWith(expectedHost)) {
+		// Use the actual server port
+		const redirectUrl = getWorkshopUrl(portToUse, config.subdomain)
+		return res.redirect(301, `${redirectUrl}${req.url}`)
+	}
+	
+	next()
+})
+
 const localIp: string = ipAddress() ?? 'Unknown'
 // Check if the address is a private ip
 // https://en.wikipedia.org/wiki/Private_network#Private_IPv4_address_spaces
@@ -229,6 +231,9 @@ const server = app.listen(portToUse, async () => {
 	}
 		console.log(`🐨  Let's get learning!`)
 	
+	// Make the port available to the middleware
+	app.set('serverPort', portUsed)
+	
 	const localUrl = getWorkshopUrl(portUsed)
 
 	console.log(
@@ -254,12 +259,14 @@ ${lanUrl ? `${chalk.bold('On Your Network:')}  ${chalk.cyan(lanUrl)}` : ''}
 			const url = new URL(request.url ?? '/', 'ws://localhost:0000')
 			if (url.pathname === '/__ws') {
 				const origin = request.headers.origin
-				const workshopUrl = getWorkshopUrl(portToUse)
+				const config = getWorkshopConfig()
+				const workshopUrl = getWorkshopUrl(portToUse, config.subdomain)
 				const isValidOrigin =
 					origin &&
 					(origin === workshopUrl ||
 						origin === `http://localhost:${portToUse}` ||
 						origin === `http://127.0.0.1:${portToUse}` ||
+						(config.subdomain && origin === `http://${config.subdomain}.localhost:${portToUse}`) ||
 						(lanUrl && origin === lanUrl))
 
 				if (!isValidOrigin) {
