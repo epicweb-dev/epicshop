@@ -103,33 +103,6 @@ if ((!isProd && !ENV.EPICSHOP_IS_PUBLISHED) || ENV.EPICSHOP_DEPLOYED) {
 	app.use(morgan('tiny'))
 }
 
-// Subdomain redirect middleware - only applies when not deployed
-app.use((req, res, next) => {
-	// Skip subdomain logic when deployed
-	if (ENV.EPICSHOP_DEPLOYED) {
-		return next()
-	}
-	
-	const config = getWorkshopConfig()
-	
-	// Only redirect if subdomain is configured
-	if (!config.subdomain) {
-		return next()
-	}
-	
-	const host = req.headers.host
-	const expectedHost = `${config.subdomain}.localhost`
-	
-	// If request is not coming from the expected subdomain, redirect
-	if (host && !host.startsWith(expectedHost)) {
-		const port = host.split(':')[1]
-		const redirectUrl = getWorkshopUrl(port ? parseInt(port) : 80)
-		return res.redirect(301, `${redirectUrl}${req.url}`)
-	}
-	
-	next()
-})
-
 function getNumberOrNull(value: unknown) {
 	if (value == null) return null
 	const number = Number(value)
@@ -201,6 +174,29 @@ const portToUse = await getPort({
 	port: portNumbers(desiredPort, desiredPort + 100),
 })
 
+// Add subdomain redirect middleware now that we know the port - only applies when not deployed
+if (!ENV.EPICSHOP_DEPLOYED) {
+	app.use((req, res, next) => {
+		const config = getWorkshopConfig()
+
+		// Only redirect if subdomain is configured
+		if (!config.subdomain) {
+			return next()
+		}
+
+		const host = req.headers.host
+		const expectedHost = `${config.subdomain}.localhost`
+
+		// If request is not coming from the expected subdomain, redirect
+		if (host && !host.startsWith(expectedHost)) {
+			const redirectUrl = getWorkshopUrl(portToUse)
+			return res.redirect(301, `${redirectUrl}${req.url}`)
+		}
+
+		next()
+	})
+}
+
 const localIp: string = ipAddress() ?? 'Unknown'
 // Check if the address is a private ip
 // https://en.wikipedia.org/wiki/Private_network#Private_IPv4_address_spaces
@@ -227,8 +223,8 @@ const server = app.listen(portToUse, async () => {
 			),
 		)
 	}
-		console.log(`🐨  Let's get learning!`)
-	
+	console.log(`🐨  Let's get learning!`)
+
 	const localUrl = getWorkshopUrl(portUsed)
 
 	console.log(
