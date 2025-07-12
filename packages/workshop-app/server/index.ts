@@ -7,6 +7,10 @@ import {
 	init as initApps,
 	setModifiedTimesForAppDirs,
 } from '@epic-web/workshop-utils/apps.server'
+import {
+	getWorkshopConfig,
+	getWorkshopUrl,
+} from '@epic-web/workshop-utils/config.server'
 import { getEnv, init as initEnv } from '@epic-web/workshop-utils/env.server'
 import { checkForUpdatesCached } from '@epic-web/workshop-utils/git.server'
 import { checkConnectionCached } from '@epic-web/workshop-utils/utils.server'
@@ -98,6 +102,33 @@ if ((!isProd && !ENV.EPICSHOP_IS_PUBLISHED) || ENV.EPICSHOP_DEPLOYED) {
 	morgan.token('url', (req) => decodeURIComponent(req.url ?? ''))
 	app.use(morgan('tiny'))
 }
+
+// Subdomain redirect middleware - only applies when not deployed
+app.use((req, res, next) => {
+	// Skip subdomain logic when deployed
+	if (ENV.EPICSHOP_DEPLOYED) {
+		return next()
+	}
+	
+	const config = getWorkshopConfig()
+	
+	// Only redirect if subdomain is configured
+	if (!config.subdomain) {
+		return next()
+	}
+	
+	const host = req.headers.host
+	const expectedHost = `${config.subdomain}.localhost`
+	
+	// If request is not coming from the expected subdomain, redirect
+	if (host && !host.startsWith(expectedHost)) {
+		const port = host.split(':')[1]
+		const redirectUrl = getWorkshopUrl(port ? parseInt(port) : 80)
+		return res.redirect(301, `${redirectUrl}${req.url}`)
+	}
+	
+	next()
+})
 
 function getNumberOrNull(value: unknown) {
 	if (value == null) return null
@@ -196,8 +227,9 @@ const server = app.listen(portToUse, async () => {
 			),
 		)
 	}
-	console.log(`🐨  Let's get learning!`)
-	const localUrl = `http://localhost:${portUsed}`
+		console.log(`🐨  Let's get learning!`)
+	
+	const localUrl = getWorkshopUrl(portUsed)
 
 	console.log(
 		`
@@ -222,9 +254,11 @@ ${lanUrl ? `${chalk.bold('On Your Network:')}  ${chalk.cyan(lanUrl)}` : ''}
 			const url = new URL(request.url ?? '/', 'ws://localhost:0000')
 			if (url.pathname === '/__ws') {
 				const origin = request.headers.origin
+				const workshopUrl = getWorkshopUrl(portToUse)
 				const isValidOrigin =
 					origin &&
-					(origin === `http://localhost:${portToUse}` ||
+					(origin === workshopUrl ||
+						origin === `http://localhost:${portToUse}` ||
 						origin === `http://127.0.0.1:${portToUse}` ||
 						(lanUrl && origin === lanUrl))
 
