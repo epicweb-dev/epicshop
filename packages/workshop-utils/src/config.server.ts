@@ -132,11 +132,11 @@ const configCache: {
 export function getWorkshopUrl(port: number, subdomain?: string): string {
 	const config = getWorkshopConfig()
 	const subdomainToUse = subdomain ?? config.subdomain
-	
+
 	if (subdomainToUse) {
 		return `http://${subdomainToUse}.localhost:${port}`
 	}
-	
+
 	return `http://localhost:${port}`
 }
 

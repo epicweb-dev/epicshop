@@ -14,6 +14,18 @@ import open from 'open'
 import yargs, { type ArgumentsCamelCase, type Argv } from 'yargs'
 import { hideBin } from 'yargs/helpers'
 
+async function getWorkshopUrl(port: number): Promise<string> {
+	try {
+		const { getWorkshopUrl: utilsGetWorkshopUrl } = await import(
+			'@epic-web/workshop-utils/config.server'
+		)
+		return utilsGetWorkshopUrl(port)
+	} catch (error) {
+		// Fallback to localhost if workshop-utils is not available
+		return `http://localhost:${port}`
+	}
+}
+
 async function startCommand(appLocation?: string) {
 	// Find workshop-app directory using new resolution order
 	const appDir = await findWorkshopAppDir(appLocation)
@@ -85,7 +97,7 @@ async function startCommand(appLocation?: string) {
 
 	async function waitForChildReady(): Promise<boolean> {
 		const port = await childPortPromise
-		const url = `http://localhost:${port}/`
+		const url = await getWorkshopUrl(port)
 		const maxAttempts = 40 // 20s max (500ms interval)
 		for (let i = 0; i < maxAttempts; i++) {
 			try {
@@ -137,10 +149,8 @@ async function startCommand(appLocation?: string) {
 			try {
 				if (req.url === '/__epicshop-restart') {
 					const port = await childPort
-					res.setHeader(
-						'Access-Control-Allow-Origin',
-						`http://localhost:${port}`,
-					)
+					const workshopUrl = await getWorkshopUrl(port)
+					res.setHeader('Access-Control-Allow-Origin', workshopUrl)
 					res.setHeader('Access-Control-Allow-Methods', 'POST, OPTIONS')
 					res.setHeader(
 						'Access-Control-Allow-Headers',
@@ -253,12 +263,9 @@ async function startCommand(appLocation?: string) {
 				await doUpdateAndRestart()
 			} else if (key === 'o') {
 				if (childPort) {
-					console.log(
-						chalk.blue(
-							`\n🌐 Opening browser to http://localhost:${childPort} ...`,
-						),
-					)
-					await open(`http://localhost:${childPort}`)
+					const workshopUrl = await getWorkshopUrl(childPort)
+					console.log(chalk.blue(`\n🌐 Opening browser to ${workshopUrl} ...`))
+					await open(workshopUrl)
 				} else {
 					console.log(chalk.red('Local server URL not available yet.'))
 				}

@@ -7,7 +7,10 @@ import {
 	init as initApps,
 	setModifiedTimesForAppDirs,
 } from '@epic-web/workshop-utils/apps.server'
-import { getWorkshopConfig, getWorkshopUrl } from '@epic-web/workshop-utils/config.server'
+import {
+	getWorkshopConfig,
+	getWorkshopUrl,
+} from '@epic-web/workshop-utils/config.server'
 import { getEnv, init as initEnv } from '@epic-web/workshop-utils/env.server'
 import { checkForUpdatesCached } from '@epic-web/workshop-utils/git.server'
 import { checkConnectionCached } from '@epic-web/workshop-utils/utils.server'
@@ -103,22 +106,22 @@ if ((!isProd && !ENV.EPICSHOP_IS_PUBLISHED) || ENV.EPICSHOP_DEPLOYED) {
 // Subdomain redirect middleware
 app.use((req, res, next) => {
 	const config = getWorkshopConfig()
-	
+
 	// Only redirect if subdomain is configured
 	if (!config.subdomain) {
 		return next()
 	}
-	
+
 	const host = req.headers.host
 	const expectedHost = `${config.subdomain}.localhost`
-	
+
 	// If request is not coming from the expected subdomain, redirect
 	if (host && !host.startsWith(expectedHost)) {
 		const port = host.split(':')[1]
 		const redirectUrl = getWorkshopUrl(port ? parseInt(port) : 80)
 		return res.redirect(301, `${redirectUrl}${req.url}`)
 	}
-	
+
 	next()
 })
 
@@ -220,7 +223,7 @@ const server = app.listen(portToUse, async () => {
 		)
 	}
 	console.log(`🐨  Let's get learning!`)
-	
+
 	const config = getWorkshopConfig()
 	const localUrl = getWorkshopUrl(portUsed)
 	const fallbackUrl = `http://localhost:${portUsed}`
