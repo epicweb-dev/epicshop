@@ -103,25 +103,30 @@ if ((!isProd && !ENV.EPICSHOP_IS_PUBLISHED) || ENV.EPICSHOP_DEPLOYED) {
 	app.use(morgan('tiny'))
 }
 
-// Subdomain redirect middleware
+// Subdomain redirect middleware - only applies when not deployed
 app.use((req, res, next) => {
+	// Skip subdomain logic when deployed
+	if (ENV.EPICSHOP_DEPLOYED) {
+		return next()
+	}
+	
 	const config = getWorkshopConfig()
-
+	
 	// Only redirect if subdomain is configured
 	if (!config.subdomain) {
 		return next()
 	}
-
+	
 	const host = req.headers.host
 	const expectedHost = `${config.subdomain}.localhost`
-
+	
 	// If request is not coming from the expected subdomain, redirect
 	if (host && !host.startsWith(expectedHost)) {
 		const port = host.split(':')[1]
 		const redirectUrl = getWorkshopUrl(port ? parseInt(port) : 80)
 		return res.redirect(301, `${redirectUrl}${req.url}`)
 	}
-
+	
 	next()
 })
 
@@ -222,15 +227,13 @@ const server = app.listen(portToUse, async () => {
 			),
 		)
 	}
-	console.log(`🐨  Let's get learning!`)
-
-	const config = getWorkshopConfig()
+		console.log(`🐨  Let's get learning!`)
+	
 	const localUrl = getWorkshopUrl(portUsed)
-	const fallbackUrl = `http://localhost:${portUsed}`
 
 	console.log(
 		`
-${chalk.bold('Local:')}            ${chalk.cyan(localUrl)}${config.subdomain ? ` ${chalk.gray(`(redirects from ${fallbackUrl})`)}` : ''}
+${chalk.bold('Local:')}            ${chalk.cyan(localUrl)}
 ${lanUrl ? `${chalk.bold('On Your Network:')}  ${chalk.cyan(lanUrl)}` : ''}
 	`.trim(),
 	)
@@ -251,9 +254,11 @@ ${lanUrl ? `${chalk.bold('On Your Network:')}  ${chalk.cyan(lanUrl)}` : ''}
 			const url = new URL(request.url ?? '/', 'ws://localhost:0000')
 			if (url.pathname === '/__ws') {
 				const origin = request.headers.origin
+				const workshopUrl = getWorkshopUrl(portToUse)
 				const isValidOrigin =
 					origin &&
-					(origin === `http://localhost:${portToUse}` ||
+					(origin === workshopUrl ||
+						origin === `http://localhost:${portToUse}` ||
 						origin === `http://127.0.0.1:${portToUse}` ||
 						(lanUrl && origin === lanUrl))
 

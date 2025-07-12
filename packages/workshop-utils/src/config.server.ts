@@ -128,15 +128,22 @@ const configCache: {
 
 /**
  * Generate a URL with subdomain support
+ * Only applies subdomain logic when not deployed
  */
 export function getWorkshopUrl(port: number, subdomain?: string): string {
-	const config = getWorkshopConfig()
-	const subdomainToUse = subdomain ?? config.subdomain
-
-	if (subdomainToUse) {
-		return `http://${subdomainToUse}.localhost:${port}`
+	// Check if deployed - use process.env directly since ENV might not be initialized yet
+	const isDeployed = process.env.EPICSHOP_DEPLOYED === 'true' || process.env.EPICSHOP_DEPLOYED === '1'
+	
+	// Only use subdomain logic when not deployed
+	if (!isDeployed) {
+		const config = getWorkshopConfig()
+		const subdomainToUse = subdomain ?? config.subdomain
+		
+		if (subdomainToUse) {
+			return `http://${subdomainToUse}.localhost:${port}`
+		}
 	}
-
+	
 	return `http://localhost:${port}`
 }
 
