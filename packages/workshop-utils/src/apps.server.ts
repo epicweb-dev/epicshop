@@ -15,6 +15,7 @@ import {
 	appsCache,
 	cachified,
 	exampleAppCache,
+	makeSingletonCache,
 	playgroundAppCache,
 	problemAppCache,
 	solutionAppCache,
@@ -290,6 +291,12 @@ export async function init(workshopRoot?: string) {
 
 function getForceFresh(cacheEntry: CacheEntry | null | undefined) {
 	if (!cacheEntry) return true
+	
+	// Add minimum cache time to prevent thrashing (5 minutes)
+	const minCacheTime = 1000 * 60 * 5
+	const cacheAge = Date.now() - cacheEntry.metadata.createdTime
+	if (cacheAge < minCacheTime) return false
+	
 	const latestModifiedTime = Math.max(...Array.from(modifiedTimes.values()))
 	if (!latestModifiedTime) return undefined
 	return latestModifiedTime > cacheEntry.metadata.createdTime ? true : undefined
@@ -316,6 +323,12 @@ export function getForceFreshForDir(
 		}
 	}
 	if (!cacheEntry) return true
+	
+	// Add minimum cache time to prevent thrashing (5 minutes)
+	const minCacheTime = 1000 * 60 * 5
+	const cacheAge = Date.now() - cacheEntry.metadata.createdTime
+	if (cacheAge < minCacheTime) return false
+	
 	const latestModifiedTime = truthyDirs.reduce((latest, dir) => {
 		const modifiedTime = modifiedTimes.get(dir)
 		return modifiedTime && modifiedTime > latest ? modifiedTime : latest
@@ -563,39 +576,61 @@ export function extractNumbersAndTypeFromAppNameOrPath(
 	return null
 }
 
+// Add a global cache for directory listings to reduce file system operations
+const directoryListingCache = makeSingletonCache<string[]>('DirectoryListingCache')
+
+async function getCachedDirectoryListing(dir: string) {
+	return await cachified({
+		key: `dir-listing-${dir}`,
+		cache: directoryListingCache,
+		ttl: 1000 * 60 * 5, // 5 minutes
+		async getFreshValue() {
+			return await readDir(dir)
+		},
+	})
+}
+
 async function getProblemDirs() {
 	const exercisesDir = path.join(getWorkshopRoot(), 'exercises')
 	const problemDirs = []
-	const exerciseSubDirs = await readDir(exercisesDir)
-	for (const subDir of exerciseSubDirs) {
+	const exerciseSubDirs = await getCachedDirectoryListing(exercisesDir)
+	
+	// Batch the directory reads
+	const subDirPromises = exerciseSubDirs.map(async (subDir) => {
 		const fullSubDir = path.join(exercisesDir, subDir)
-		// catch handles non-directories without us having to bother checking
-		// whether it's a directory
-		const subDirContents = await readDir(fullSubDir).catch(() => null)
-		if (!subDirContents) continue
-		const problemSubDirs = subDirContents
+		const subDirContents = await getCachedDirectoryListing(fullSubDir).catch(() => null)
+		if (!subDirContents) return []
+		
+		return subDirContents
 			.filter((dir) => dir.includes('.problem'))
 			.map((dir) => path.join(fullSubDir, dir))
-		problemDirs.push(...problemSubDirs)
-	}
+	})
+	
+	const allProblemDirs = await Promise.all(subDirPromises)
+	problemDirs.push(...allProblemDirs.flat())
+	
 	return problemDirs
 }
 
 async function getSolutionDirs() {
 	const exercisesDir = path.join(getWorkshopRoot(), 'exercises')
 	const solutionDirs = []
-	const exerciseSubDirs = await readDir(exercisesDir)
-	for (const subDir of exerciseSubDirs) {
+	const exerciseSubDirs = await getCachedDirectoryListing(exercisesDir)
+	
+	// Batch the directory reads
+	const subDirPromises = exerciseSubDirs.map(async (subDir) => {
 		const fullSubDir = path.join(exercisesDir, subDir)
-		// catch handles non-directories without us having to bother checking
-		// whether it's a directory
-		const subDirContents = await readDir(fullSubDir).catch(() => null)
-		if (!subDirContents) continue
-		const solutionSubDirs = subDirContents
+		const subDirContents = await getCachedDirectoryListing(fullSubDir).catch(() => null)
+		if (!subDirContents) return []
+		
+		return subDirContents
 			.filter((dir) => dir.includes('.solution'))
 			.map((dir) => path.join(fullSubDir, dir))
-		solutionDirs.push(...solutionSubDirs)
-	}
+	})
+	
+	const allSolutionDirs = await Promise.all(subDirPromises)
+	solutionDirs.push(...allSolutionDirs.flat())
+	
 	return solutionDirs
 }
 
