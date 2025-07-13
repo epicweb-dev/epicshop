@@ -1,7 +1,11 @@
 import fs from 'node:fs'
 import path from 'node:path'
+import { promisify } from 'node:util'
+import dns from 'node:dns'
 import { z } from 'zod'
 import { handleGitHubRepoAndRoot } from './utils.js'
+
+const dnsLookup = promisify(dns.lookup)
 
 export const getWorkshopRoot = () =>
 	process.env.EPICSHOP_CONTEXT_CWD ?? process.cwd()
@@ -12,28 +16,44 @@ const getRootPkgJsonPath = () => path.join(getWorkshopRoot(), 'package.json')
 const subdomainResolutionCache: {
 	checked: boolean
 	supportsSubdomains: boolean
+	checkPromise?: Promise<boolean>
 } = {
 	checked: false,
 	supportsSubdomains: false,
 }
 
 /**
- * Check if the system likely supports subdomain resolution on localhost
- * This check only happens once on startup
- * Uses a heuristic based on the operating system since Windows often has issues with localhost subdomains
+ * Check if the system supports subdomain resolution on localhost
+ * This check only happens once on startup by attempting to resolve a test subdomain
  */
-function checkSubdomainSupport(): boolean {
+async function checkSubdomainSupport(): Promise<boolean> {
 	if (subdomainResolutionCache.checked) {
 		return subdomainResolutionCache.supportsSubdomains
 	}
 
-	// Windows often has issues with localhost subdomain resolution
-	// On other platforms (Linux, macOS), subdomain resolution typically works
-	const isWindows = process.platform === 'win32'
-	subdomainResolutionCache.supportsSubdomains = !isWindows
+	// If a check is already in progress, return that promise
+	if (subdomainResolutionCache.checkPromise) {
+		return subdomainResolutionCache.checkPromise
+	}
 
-	subdomainResolutionCache.checked = true
-	return subdomainResolutionCache.supportsSubdomains
+	// Start the check and cache the promise
+	subdomainResolutionCache.checkPromise = (async () => {
+		try {
+			// Try to resolve a test subdomain
+			// We use 'test.localhost' as it's a safe test domain
+			await dnsLookup('test.localhost')
+			subdomainResolutionCache.supportsSubdomains = true
+		} catch (error: any) {
+			// If the error is ENOTFOUND or any other DNS error, 
+			// subdomain resolution likely isn't supported
+			subdomainResolutionCache.supportsSubdomains = false
+		}
+
+		subdomainResolutionCache.checked = true
+		return subdomainResolutionCache.supportsSubdomains
+	})()
+
+	return subdomainResolutionCache.checkPromise
 }
 
 export const StackBlitzConfigSchema = z.object({
