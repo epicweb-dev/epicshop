@@ -8,7 +8,7 @@ import os from 'node:os'
 import path from 'node:path'
 import { fileURLToPath } from 'node:url'
 import { getWorkshopUrl as utilsGetWorkshopUrl } from '@epic-web/workshop-utils/config.server'
-import { muteNotification } from '@epic-web/workshop-utils/db.server'
+import { muteNotification, getMutedNotifications } from '@epic-web/workshop-utils/db.server'
 import {
 	updateLocalRepo,
 	checkForUpdatesCached,
@@ -78,6 +78,37 @@ async function startCommand(appLocation?: string) {
 	let restarting = false
 	let childPort: number | null = null
 	let childPortPromiseResolve: ((port: number) => void) | null = null
+
+	// Check for updates on startup
+	async function checkAndDisplayUpdates() {
+		if (isDeployed) return
+		
+		try {
+			const updates = await checkForUpdatesCached()
+			if (updates.updatesAvailable && updates.remoteCommit) {
+							// Check if update notification is muted
+			const mutedNotifications = await getMutedNotifications()
+				const updateNotificationId = `update-repo-${updates.remoteCommit}`
+				
+				if (!mutedNotifications.includes(updateNotificationId)) {
+					const updateCommand = chalk.blue.bold.bgWhite(' npx update-epic-workshop ')
+					const updateLink = chalk.blue.bgWhite(` ${updates.diffLink} `)
+					console.log(
+						'\n',
+						`🎉  There are ${chalk.yellow(
+							'updates available',
+						)} for this workshop repository.  🎉\n\nTo get the updates, ${chalk.green.bold.bgWhite(
+							`press the "u" key`,
+						)} or stop the server and run the following command:\n\n  ${updateCommand}\n\nTo view a diff, check:\n  ${updateLink}\n\nTo dismiss this notification, ${chalk.red.bold.bgWhite(
+							`press the "d" key`,
+						)}\n`,
+					)
+				}
+			}
+		} catch (error) {
+			// Silently ignore update check errors
+		}
+	}
 	const childPortPromise = new Promise<number>((resolve) => {
 		childPortPromiseResolve = resolve
 	}).then((port) => {
@@ -242,6 +273,9 @@ async function startCommand(appLocation?: string) {
 	)
 
 	spawnChild()
+	
+	// Check for updates after starting
+	void checkAndDisplayUpdates()
 
 	if (process.stdin.isTTY && !isDeployed) {
 		console.log(chalk.bold.cyan('Supported keys:'))

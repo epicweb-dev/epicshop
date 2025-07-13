@@ -12,7 +12,6 @@ import {
 	getWorkshopUrl,
 } from '@epic-web/workshop-utils/config.server'
 import { getEnv, init as initEnv } from '@epic-web/workshop-utils/env.server'
-import { checkForUpdatesCached } from '@epic-web/workshop-utils/git.server'
 import { checkConnectionCached } from '@epic-web/workshop-utils/utils.server'
 import { createRequestHandler } from '@react-router/express'
 import { ip as ipAddress } from 'address'
@@ -334,32 +333,7 @@ ${lanUrl ? `${chalk.bold('On Your Network:')}  ${chalk.cyan(lanUrl)}` : ''}
 		})
 	}
 
-	const hasUpdates = await hasUpdatesPromise
-	if (hasUpdates.updatesAvailable && hasUpdates.remoteCommit) {
-		// Check if update notification is muted
-		const { getMutedNotifications } = await import(
-			'@epic-web/workshop-utils/db.server'
-		)
-		const mutedNotifications = await getMutedNotifications()
-		const updateNotificationId = `update-repo-${hasUpdates.remoteCommit}`
 
-		if (!mutedNotifications.includes(updateNotificationId)) {
-			const updateCommand = chalk.blue.bold.bgWhite(
-				' npx update-epic-workshop ',
-			)
-			const updateLink = chalk.blue.bgWhite(` ${hasUpdates.diffLink} `)
-			console.log(
-				'\n',
-				`🎉  There are ${chalk.yellow(
-					'updates available',
-				)} for this workshop repository.  🎉\n\nTo get the updates, ${chalk.green.bold.bgWhite(
-					`press the "u" key`,
-				)} or stop the server and run the following command:\n\n  ${updateCommand}\n\nTo view a diff, check:\n  ${updateLink}\n\nTo dismiss this notification, ${chalk.red.bold.bgWhite(
-					`press the "d" key`,
-				)}`,
-			)
-		}
-	}
 })
 
 closeWithGrace(async () => {
