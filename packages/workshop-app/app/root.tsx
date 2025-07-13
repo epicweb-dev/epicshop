@@ -140,6 +140,7 @@ export async function loader({ request }: Route.LoaderArgs) {
 	let repoUpdates = asyncStuff.repoUpdates
 	if (
 		repoUpdates &&
+		'remoteCommit' in repoUpdates &&
 		repoUpdates.remoteCommit &&
 		mutedNotifications.includes(`update-repo-${repoUpdates.remoteCommit}`)
 	) {

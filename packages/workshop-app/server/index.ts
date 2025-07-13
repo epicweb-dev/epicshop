@@ -12,7 +12,6 @@ import {
 	getWorkshopUrl,
 } from '@epic-web/workshop-utils/config.server'
 import { getEnv, init as initEnv } from '@epic-web/workshop-utils/env.server'
-import { checkForUpdatesCached } from '@epic-web/workshop-utils/git.server'
 import { checkConnectionCached } from '@epic-web/workshop-utils/utils.server'
 import { createRequestHandler } from '@react-router/express'
 import { ip as ipAddress } from 'address'
@@ -58,8 +57,6 @@ const epicshopAppRootDir = isRunningInBuildDir
 	? path.join(__dirname, '..', '..')
 	: path.join(__dirname, '..')
 
-// kick this off early...
-const hasUpdatesPromise = checkForUpdatesCached()
 // warm up some caches
 void getApps()
 void checkConnectionCached()
@@ -336,19 +333,7 @@ ${lanUrl ? `${chalk.bold('On Your Network:')}  ${chalk.cyan(lanUrl)}` : ''}
 		})
 	}
 
-	const hasUpdates = await hasUpdatesPromise
-	if (hasUpdates.updatesAvailable) {
-		const updateCommand = chalk.blue.bold.bgWhite(' npx update-epic-workshop ')
-		const updateLink = chalk.blue.bgWhite(` ${hasUpdates.diffLink} `)
-		console.log(
-			'\n',
-			`🎉  There are ${chalk.yellow(
-				'updates available',
-			)} for this workshop repository.  🎉\n\nTo get the updates, ${chalk.green.bold.bgWhite(
-				`press the "u" key`,
-			)} or stop the server and run the following command:\n\n  ${updateCommand}\n\nTo view a diff, check:\n  ${updateLink}`,
-		)
-	}
+
 })
 
 closeWithGrace(async () => {

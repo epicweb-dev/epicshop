@@ -2,13 +2,17 @@ import { type checkForUpdatesCached } from '@epic-web/workshop-utils/git.server'
 import { useEffect, useRef } from 'react'
 import { toast } from 'sonner'
 import { z } from 'zod'
+import { useFetcher } from 'react-router'
 
 export function UpdateToast({
 	repoUpdates,
 }: {
 	repoUpdates: Awaited<ReturnType<typeof checkForUpdatesCached>>
 }) {
-	const { updatesAvailable, diffLink, remoteCommit } = repoUpdates
+	const { updatesAvailable } = repoUpdates
+	const diffLink = 'diffLink' in repoUpdates ? repoUpdates.diffLink : null
+	const remoteCommit = 'remoteCommit' in repoUpdates ? repoUpdates.remoteCommit : undefined
+	const fetcher = useFetcher()
 
 	// Track the in-progress toast id and update notification id
 	const inProgressToastId = useRef<ReturnType<typeof toast.loading> | null>(
@@ -121,6 +125,21 @@ export function UpdateToast({
 								inProgressToastId.current = null
 							}
 						}
+					},
+				},
+				cancel: {
+					label: 'Dismiss',
+					onClick: () => {
+						// Dismiss the notification toast
+						if (updateNotificationId.current) {
+							toast.dismiss(updateNotificationId.current)
+							updateNotificationId.current = null
+						}
+						// Mute the notification persistently
+						void fetcher.submit(
+							{ intent: 'mute', id: `update-repo-${remoteCommit}` },
+							{ method: 'post', action: '/admin/notifications' },
+						)
 					},
 				},
 			})
