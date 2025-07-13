@@ -58,8 +58,6 @@ const epicshopAppRootDir = isRunningInBuildDir
 	? path.join(__dirname, '..', '..')
 	: path.join(__dirname, '..')
 
-// kick this off early...
-const hasUpdatesPromise = checkForUpdatesCached()
 // warm up some caches
 void getApps()
 void checkConnectionCached()
