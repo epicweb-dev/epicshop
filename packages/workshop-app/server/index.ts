@@ -169,7 +169,7 @@ if (!ENV.EPICSHOP_DEPLOYED) {
 		// If request is not coming from the expected subdomain, redirect
 		if (host && !host.startsWith(expectedHost)) {
 			const redirectUrl = getWorkshopUrl(portToUse)
-			return res.redirect(301, `${redirectUrl}${req.url}`)
+			return res.redirect(307, `${redirectUrl}${req.url}`)
 		}
 
 		next()
