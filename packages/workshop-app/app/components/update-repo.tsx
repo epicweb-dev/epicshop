@@ -14,7 +14,10 @@ export function UpdateToast({
 	const remoteCommit = 'remoteCommit' in repoUpdates ? repoUpdates.remoteCommit : undefined
 	const fetcher = useFetcher()
 	const fetcherRef = useRef(fetcher)
-	fetcherRef.current = fetcher
+
+	useEffect(() => {
+		fetcherRef.current = fetcher
+	}, [fetcher])
 
 	// Track the in-progress toast id and update notification id
 	const inProgressToastId = useRef<ReturnType<typeof toast.loading> | null>(
