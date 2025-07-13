@@ -1,7 +1,7 @@
+import dns from 'node:dns'
 import fs from 'node:fs'
 import path from 'node:path'
 import { promisify } from 'node:util'
-import dns from 'node:dns'
 import { z } from 'zod'
 import { handleGitHubRepoAndRoot } from './utils.js'
 
@@ -44,7 +44,7 @@ async function checkSubdomainSupport(): Promise<boolean> {
 			await dnsLookup('test.localhost')
 			subdomainResolutionCache.supportsSubdomains = true
 		} catch (error: any) {
-			// If the error is ENOTFOUND or any other DNS error, 
+			// If the error is ENOTFOUND or any other DNS error,
 			// subdomain resolution likely isn't supported
 			subdomainResolutionCache.supportsSubdomains = false
 		}
@@ -201,7 +201,10 @@ function readRootPkgJson(): any {
  * Generate a URL with subdomain support
  * Only applies subdomain logic when not deployed
  */
-export async function getWorkshopUrl(port: number, subdomain?: string): Promise<string> {
+export async function getWorkshopUrl(
+	port: number,
+	subdomain?: string,
+): Promise<string> {
 	// Check if deployed - use process.env directly since ENV might not be initialized yet
 	const isDeployed =
 		process.env.EPICSHOP_DEPLOYED === 'true' ||

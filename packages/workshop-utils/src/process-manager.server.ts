@@ -219,7 +219,7 @@ export async function waitOnApp(app: App) {
 		let lastError: unknown
 		while (Date.now() - startTime < timeout) {
 			try {
-				const url = getWorkshopUrl(app.dev.portNumber)
+				const url = await getWorkshopUrl(app.dev.portNumber)
 				await fetch(url, {
 					method: 'HEAD',
 					headers: { Accept: '*/*' },
