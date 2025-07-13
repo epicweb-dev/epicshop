@@ -35,17 +35,22 @@ function diffPathToRelative(filePath: string) {
 		normalizedPath = normalizedPath.slice(2)
 	}
 
-	// eslint-disable-next-line @typescript-eslint/no-unused-vars
-	const [workshopRootDirname, appId, id, ...relativePath] = normalizedPath
-		.replace(
-			process.platform === 'win32' || normalizedPath.startsWith(path.sep)
-				? `${diffTmpDir}${path.sep}`
-				: `${diffTmpDir.slice(1)}${path.sep}`,
-			'',
-		)
-		.split(path.sep)
-
-	return relativePath.join(path.sep)
+	// Remove the diffTmpDir prefix first
+	const diffTmpDirPrefix = process.platform === 'win32' || normalizedPath.startsWith(path.sep)
+		? `${diffTmpDir}${path.sep}`
+		: `${diffTmpDir.slice(1)}${path.sep}`
+	
+	const pathWithoutTmpDir = normalizedPath.replace(diffTmpDirPrefix, '')
+	
+	// Split the remaining path and extract only the file path
+	// Expected structure: workshopRoot/appName/randomId/actual/file/path
+	const pathParts = pathWithoutTmpDir.split(path.sep)
+	
+	// Skip the first 3 parts (workshopRoot, appName, randomId) to get the actual file path
+	const relativePath = pathParts.slice(3)
+	
+	// Return the path with normalized separators (always use forward slashes for consistency)
+	return relativePath.join('/')
 }
 
 function getLanguage(ext: string) {

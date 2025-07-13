@@ -21,12 +21,6 @@ function TouchedFiles({
 		setOpen(false)
 	}
 
-	// Helper function to normalize path display for playground
-	function getDisplayPath(filePath: string): string {
-		// Normalize path separators for consistent display
-		return filePath.replace(/\\/g, '/')
-	}
-
 	const appName = data.playground?.appName
 
 	return (
@@ -129,7 +123,7 @@ function TouchedFiles({
 																}
 																onUpdate={handleLaunchUpdate}
 															>
-																<code>{getDisplayPath(file.path)}</code>
+																<code>{file.path}</code>
 															</LaunchEditor>
 														</li>
 													))}
