@@ -8,6 +8,34 @@ export const getWorkshopRoot = () =>
 
 const getRootPkgJsonPath = () => path.join(getWorkshopRoot(), 'package.json')
 
+// Cache for subdomain resolution check
+const subdomainResolutionCache: {
+	checked: boolean
+	supportsSubdomains: boolean
+} = {
+	checked: false,
+	supportsSubdomains: false,
+}
+
+/**
+ * Check if the system likely supports subdomain resolution on localhost
+ * This check only happens once on startup
+ * Uses a heuristic based on the operating system since Windows often has issues with localhost subdomains
+ */
+function checkSubdomainSupport(): boolean {
+	if (subdomainResolutionCache.checked) {
+		return subdomainResolutionCache.supportsSubdomains
+	}
+
+	// Windows often has issues with localhost subdomain resolution
+	// On other platforms (Linux, macOS), subdomain resolution typically works
+	const isWindows = process.platform === 'win32'
+	subdomainResolutionCache.supportsSubdomains = !isWindows
+
+	subdomainResolutionCache.checked = true
+	return subdomainResolutionCache.supportsSubdomains
+}
+
 export const StackBlitzConfigSchema = z.object({
 	// we default this to `${exerciseTitle} (${type})`
 	title: z.string().optional(),
@@ -187,7 +215,14 @@ export function getWorkshopUrl(port: number, subdomain?: string): string {
 		}
 
 		if (subdomainToUse) {
-			return `http://${subdomainToUse}.localhost:${port}`
+			const supportsSubdomains = checkSubdomainSupport()
+			if (supportsSubdomains) {
+				return `http://${subdomainToUse}.localhost:${port}`
+			} else {
+				console.warn(
+					`Subdomain resolution on localhost is not supported on this platform. Falling back to localhost.`,
+				)
+			}
 		}
 	}
 
