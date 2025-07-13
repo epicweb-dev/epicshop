@@ -337,17 +337,30 @@ ${lanUrl ? `${chalk.bold('On Your Network:')}  ${chalk.cyan(lanUrl)}` : ''}
 	}
 
 	const hasUpdates = await hasUpdatesPromise
-	if (hasUpdates.updatesAvailable) {
-		const updateCommand = chalk.blue.bold.bgWhite(' npx update-epic-workshop ')
-		const updateLink = chalk.blue.bgWhite(` ${hasUpdates.diffLink} `)
-		console.log(
-			'\n',
-			`🎉  There are ${chalk.yellow(
-				'updates available',
-			)} for this workshop repository.  🎉\n\nTo get the updates, ${chalk.green.bold.bgWhite(
-				`press the "u" key`,
-			)} or stop the server and run the following command:\n\n  ${updateCommand}\n\nTo view a diff, check:\n  ${updateLink}`,
+	if (hasUpdates.updatesAvailable && hasUpdates.remoteCommit) {
+		// Check if update notification is muted
+		const { getMutedNotifications } = await import(
+			'@epic-web/workshop-utils/db.server'
 		)
+		const mutedNotifications = await getMutedNotifications()
+		const updateNotificationId = `update-repo-${hasUpdates.remoteCommit}`
+
+		if (!mutedNotifications.includes(updateNotificationId)) {
+			const updateCommand = chalk.blue.bold.bgWhite(
+				' npx update-epic-workshop ',
+			)
+			const updateLink = chalk.blue.bgWhite(` ${hasUpdates.diffLink} `)
+			console.log(
+				'\n',
+				`🎉  There are ${chalk.yellow(
+					'updates available',
+				)} for this workshop repository.  🎉\n\nTo get the updates, ${chalk.green.bold.bgWhite(
+					`press the "u" key`,
+				)} or stop the server and run the following command:\n\n  ${updateCommand}\n\nTo view a diff, check:\n  ${updateLink}\n\nTo dismiss this notification, ${chalk.red.bold.bgWhite(
+					`press the "d" key`,
+				)}`,
+			)
+		}
 	}
 })
 

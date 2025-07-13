@@ -8,7 +8,11 @@ import os from 'node:os'
 import path from 'node:path'
 import { fileURLToPath } from 'node:url'
 import { getWorkshopUrl as utilsGetWorkshopUrl } from '@epic-web/workshop-utils/config.server'
-import { updateLocalRepo } from '@epic-web/workshop-utils/git.server'
+import { muteNotification } from '@epic-web/workshop-utils/db.server'
+import {
+	updateLocalRepo,
+	checkForUpdatesCached,
+} from '@epic-web/workshop-utils/git.server'
 import chalk from 'chalk'
 import closeWithGrace from 'close-with-grace'
 import getPort from 'get-port'
@@ -296,6 +300,26 @@ async function startCommand(appLocation?: string) {
 				const randomColor = colors[Math.floor(Math.random() * colors.length)]!
 				const msg = randomColor(randomMessage)
 				console.log('\n' + msg + '\n')
+			} else if (key === 'd') {
+				// Dismiss update notification
+				try {
+					const updates = await checkForUpdatesCached()
+					if (updates.updatesAvailable && updates.remoteCommit) {
+						const updateNotificationId = `update-repo-${updates.remoteCommit}`
+						await muteNotification(updateNotificationId)
+						console.log(
+							chalk.green('\n✅ Update notification dismissed permanently.\n'),
+						)
+					} else {
+						console.log(
+							chalk.yellow('\n⚠️  No update notifications to dismiss.\n'),
+						)
+					}
+				} catch {
+					console.log(
+						chalk.red('\n❌ Failed to dismiss update notification.\n'),
+					)
+				}
 			} else if (key === '\u0003') {
 				// Ctrl+C
 				await cleanupBeforeExit()
@@ -356,6 +380,7 @@ const supportedKeys = [
 	`${chalk.blue('o')} - open workshop app`,
 	`${chalk.green('u')} - update workshop`,
 	`${chalk.magenta('r')} - restart workshop app`,
+	`${chalk.red('d')} - dismiss update notification`,
 	`${chalk.cyan('k')} - Kody kudos 🐨`,
 	`${chalk.gray('q')} - exit (or ${chalk.gray('Ctrl+C')})`,
 ]
