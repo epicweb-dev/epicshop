@@ -72,6 +72,7 @@ export async function loader({ request, params }: LoaderFunctionArgs) {
 		throw new Response('Not found', { status: 404 })
 	}
 
+	// Try to get allApps from parent loader first, fallback to fetching
 	const allAppsFull = await getApps(cacheOptions)
 	const playgroundApp = allAppsFull.find(isPlaygroundApp)
 
@@ -155,6 +156,13 @@ export async function loader({ request, params }: LoaderFunctionArgs) {
 		}
 	}
 
+	// Parallelize the expensive operations
+	const [playgroundState, problemState, solutionState] = await Promise.all([
+		playgroundApp ? getAppRunningState(playgroundApp) : Promise.resolve(null),
+		problemApp ? getAppRunningState(problemApp) : Promise.resolve(null),
+		solutionApp ? getAppRunningState(solutionApp) : Promise.resolve(null),
+	])
+
 	return data(
 		{
 			type: params.type as 'problem' | 'solution',
@@ -162,7 +170,7 @@ export async function loader({ request, params }: LoaderFunctionArgs) {
 			allApps,
 			// defer this promise so that we don't block the response from being sent
 			discordPostsPromise: fetchDiscordPosts({ request }),
-			playground: playgroundApp
+			playground: playgroundApp && playgroundState
 				? ({
 						type: 'playground',
 						fullPath: playgroundApp.fullPath,
@@ -173,10 +181,10 @@ export async function loader({ request, params }: LoaderFunctionArgs) {
 						appName: playgroundApp.appName,
 						isUpToDate: playgroundApp.isUpToDate,
 						stackBlitzUrl: playgroundApp.stackBlitzUrl,
-						...(await getAppRunningState(playgroundApp)),
+						...playgroundState,
 					} as const)
 				: null,
-			problem: problemApp
+			problem: problemApp && problemState
 				? ({
 						type: 'problem',
 						fullPath: problemApp.fullPath,
@@ -185,10 +193,10 @@ export async function loader({ request, params }: LoaderFunctionArgs) {
 						title: problemApp.title,
 						name: problemApp.name,
 						stackBlitzUrl: problemApp.stackBlitzUrl,
-						...(await getAppRunningState(problemApp)),
+						...problemState,
 					} as const)
 				: null,
-			solution: solutionApp
+			solution: solutionApp && solutionState
 				? ({
 						type: 'solution',
 						fullPath: solutionApp.fullPath,
@@ -197,11 +205,11 @@ export async function loader({ request, params }: LoaderFunctionArgs) {
 						title: solutionApp.title,
 						name: solutionApp.name,
 						stackBlitzUrl: solutionApp.stackBlitzUrl,
-						...(await getAppRunningState(solutionApp)),
+						...solutionState,
 					} as const)
 				: null,
 			diff: getDiffProp(),
-		} as const,
+		},
 		{
 			headers: {
 				'Server-Timing': getServerTimeHeader(timings),

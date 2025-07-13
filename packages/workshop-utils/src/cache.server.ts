@@ -92,7 +92,7 @@ export async function deleteCache() {
 export function makeSingletonCache<CacheEntryType>(name: string) {
 	return remember(name, () => {
 		const lruInstance = new LRUCache<string, CacheEntry<CacheEntryType>>({
-			max: 1000,
+			max: 5000, // Increased from 1000 to handle large workshops
 		})
 
 		const lru = {
