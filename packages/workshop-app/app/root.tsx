@@ -5,6 +5,7 @@ import { getWorkshopConfig } from '@epic-web/workshop-utils/config.server'
 import {
 	getPreferences,
 	readOnboardingData,
+	getMutedNotifications,
 } from '@epic-web/workshop-utils/db.server'
 import { getEnv } from '@epic-web/workshop-utils/env.server'
 import {
@@ -13,6 +14,7 @@ import {
 	userHasAccessToWorkshop,
 } from '@epic-web/workshop-utils/epic-api.server'
 import {
+	checkForUpdatesCached,
 	checkForExerciseChanges,
 } from '@epic-web/workshop-utils/git.server'
 import { getUnmutedNotifications } from '@epic-web/workshop-utils/notifications.server'
@@ -44,7 +46,7 @@ import { ExerciseWarningBanner } from './components/exercise-warning-banner'
 import { EpicProgress } from './components/progress-bar'
 import { EpicToaster } from './components/toaster'
 import { TooltipProvider } from './components/ui/tooltip'
-
+import { UpdateToast } from './components/update-repo'
 import { Notifications } from './routes/admin+/notifications'
 import { useTheme } from './routes/theme/index'
 import { getTheme } from './routes/theme/theme-session.server'
@@ -123,7 +125,7 @@ export async function loader({ request }: Route.LoaderArgs) {
 		user: getUserInfo(),
 		userHasAccess: userHasAccessToWorkshop({ request, timings }),
 		apps: getApps({ request, timings }),
-
+		repoUpdates: checkForUpdatesCached(),
 		unmutedNotifications: getUnmutedNotifications(),
 		exerciseChanges: checkForExerciseChanges(),
 	})
@@ -133,7 +135,17 @@ export async function loader({ request }: Route.LoaderArgs) {
 		timings,
 	})
 
-
+	// Filter out repoUpdates if muted
+	const mutedNotifications = await getMutedNotifications()
+	let repoUpdates = asyncStuff.repoUpdates
+	if (
+		repoUpdates &&
+		'remoteCommit' in repoUpdates &&
+		repoUpdates.remoteCommit &&
+		mutedNotifications.includes(`update-repo-${repoUpdates.remoteCommit}`)
+	) {
+		repoUpdates = { ...repoUpdates, updatesAvailable: false }
+	}
 
 	return data(
 		{
@@ -165,7 +177,7 @@ export async function loader({ request }: Route.LoaderArgs) {
 			presence: {
 				users: presentUsers,
 			},
-
+			repoUpdates,
 			exerciseChanges: asyncStuff.exerciseChanges,
 		},
 		{
@@ -247,7 +259,7 @@ function App() {
 			<Outlet />
 			<Confetti id={data.confettiId} />
 			<EpicToaster toast={data.toast} />
-
+			<UpdateToast repoUpdates={data.repoUpdates} />
 			<EpicProgress />
 			<Notifications unmutedNotifications={data.unmutedNotifications} />
 		</Document>
