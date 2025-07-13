@@ -148,24 +148,6 @@ async function getBuild() {
 	return build as ServerBuild
 }
 
-app.all(
-	'*splat',
-	createRequestHandler({
-		getLoadContext: () => ({ serverBuild: getBuild() }),
-		mode: MODE,
-		build: getBuild,
-	}),
-)
-
-const SENTRY_ENABLED = Boolean(
-	ENV.EPICSHOP_IS_PUBLISHED && process.env.SENTRY_DSN,
-)
-
-if (SENTRY_ENABLED) {
-	const Sentry = await import('@sentry/react-router')
-	Sentry.setupExpressErrorHandler(app)
-}
-
 const desiredPort = Number(process.env.PORT || 5639)
 const portToUse = await getPort({
 	port: portNumbers(desiredPort, desiredPort + 100),
@@ -192,6 +174,24 @@ if (!ENV.EPICSHOP_DEPLOYED) {
 
 		next()
 	})
+}
+
+app.all(
+	'*splat',
+	createRequestHandler({
+		getLoadContext: () => ({ serverBuild: getBuild() }),
+		mode: MODE,
+		build: getBuild,
+	}),
+)
+
+const SENTRY_ENABLED = Boolean(
+	ENV.EPICSHOP_IS_PUBLISHED && process.env.SENTRY_DSN,
+)
+
+if (SENTRY_ENABLED) {
+	const Sentry = await import('@sentry/react-router')
+	Sentry.setupExpressErrorHandler(app)
 }
 
 const localIp: string = ipAddress() ?? 'Unknown'
@@ -332,8 +332,6 @@ ${lanUrl ? `${chalk.bold('On Your Network:')}  ${chalk.cyan(lanUrl)}` : ''}
 			])
 		})
 	}
-
-
 })
 
 closeWithGrace(async () => {

@@ -4,6 +4,7 @@
   "epicshop": {
     "title": "Web App Fundamentals 🔭",
     "subtitle": "Learn the foundational tools and skills of building web applications",
+    "subdomain": "epicshop-example",
     "product": {
       "host": "www.epicreact.dev",
       "slug": "react-fundamentals",
