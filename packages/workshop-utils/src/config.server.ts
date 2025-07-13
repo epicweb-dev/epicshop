@@ -126,6 +126,29 @@ const configCache: {
 	modified: 0,
 }
 
+// Utility to read and parse the root package.json
+function readRootPkgJson(): any {
+	const packageJsonPath = getRootPkgJsonPath()
+	try {
+		const packageJsonContent = fs.readFileSync(packageJsonPath, 'utf8')
+		return JSON.parse(packageJsonContent)
+	} catch (error) {
+		console.error(`Error reading or parsing package.json:`, error)
+		if (error instanceof Error && error.message.includes('ENOENT')) {
+			throw new Error(
+				`package.json not found at ${packageJsonPath}. Please ensure you're running the command from the correct directory.`,
+			)
+		} else if (error instanceof SyntaxError) {
+			throw new Error(
+				`Invalid JSON in package.json at ${packageJsonPath}. Please check the file for syntax errors.`,
+			)
+		}
+		throw new Error(
+			`Could not find and parse package.json at ${packageJsonPath}`,
+		)
+	}
+}
+
 /**
  * Generate a URL with subdomain support
  * Only applies subdomain logic when not deployed
@@ -139,7 +162,29 @@ export function getWorkshopUrl(port: number, subdomain?: string): string {
 	// Only use subdomain logic when not deployed
 	if (!isDeployed) {
 		const config = getWorkshopConfig()
-		const subdomainToUse = subdomain ?? config.subdomain
+		let subdomainToUse = subdomain ?? config.subdomain
+
+		// Fallback to package.json name if subdomain is not set
+		if (!subdomainToUse) {
+			try {
+				const packageJson = readRootPkgJson()
+				if (
+					packageJson &&
+					typeof packageJson === 'object' &&
+					'name' in packageJson &&
+					typeof packageJson.name === 'string'
+				) {
+					let name = packageJson.name as string
+					// Sanitize: lowercased, non-alphanumeric to dashes, trim dashes
+					subdomainToUse = name
+						.toLowerCase()
+						.replace(/[^a-z0-9-]/g, '-')
+						.replace(/^-+|-+$/g, '')
+				}
+			} catch {
+				// ignore, fallback to localhost
+			}
+		}
 
 		if (subdomainToUse) {
 			return `http://${subdomainToUse}.localhost:${port}`
@@ -157,27 +202,7 @@ export function getWorkshopConfig(): WorkshopConfig {
 		return configCache.config
 	}
 
-	const packageJsonPath = path.join(getWorkshopRoot(), 'package.json')
-	let packageJson: any
-
-	try {
-		const packageJsonContent = fs.readFileSync(packageJsonPath, 'utf8')
-		packageJson = JSON.parse(packageJsonContent)
-	} catch (error) {
-		console.error(`Error reading or parsing package.json:`, error)
-		if (error instanceof Error && error.message.includes('ENOENT')) {
-			throw new Error(
-				`package.json not found at ${packageJsonPath}. Please ensure you're running the command from the correct directory.`,
-			)
-		} else if (error instanceof SyntaxError) {
-			throw new Error(
-				`Invalid JSON in package.json at ${packageJsonPath}. Please check the file for syntax errors.`,
-			)
-		}
-		throw new Error(
-			`Could not find and parse package.json at ${packageJsonPath}`,
-		)
-	}
+	const packageJson = readRootPkgJson()
 
 	const epicshopConfig = packageJson.epicshop || {}
 
@@ -201,7 +226,7 @@ export function getWorkshopConfig(): WorkshopConfig {
 				.map(([field, errors]) => `${field}: ${errors?.join(', ')}`)
 				.concat(flattenedErrors.formErrors)
 			throw new Error(
-				`Invalid epicshop configuration in ${packageJsonPath}:\n${errorMessages.join('\n')}`,
+				`Invalid epicshop configuration in ${getRootPkgJsonPath()}:\n${errorMessages.join('\n')}`,
 			)
 		}
 		throw error

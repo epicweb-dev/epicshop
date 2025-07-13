@@ -15,7 +15,7 @@ These options should be set in the root `package.json` of your workshop.
 | `instructor.name`                      | `string`  | Name of the instructor                   | Optional                                                                |
 | `instructor.avatar`                    | `string`  | Path to the instructor's avatar image    | Optional                                                                |
 | `instructor.𝕏` or `instructor.xHandle` | `string`  | Instructor's X (formerly Twitter) handle | Optional                                                                |
-| `subdomain`                            | `string`  | Subdomain for the workshop               | Optional                                                                |
+| `subdomain`                            | `string`  | Subdomain for the workshop               | Optional (falls back to sanitized `name` property if not set)           |
 | `product`                              | `object`  | Product configuration                    | Optional                                                                |
 | `onboardingVideo`                      | `string`  | URL to the onboarding video              | `"https://www.epicweb.dev/tips/get-started-with-the-epic-workshop-app"` |
 | `githubRepo`                           | `string`  | URL to the GitHub repository             | Required if `githubRoot` is not provided                                |
@@ -63,6 +63,12 @@ system automatically:
    automatically redirected to the subdomain URL
 3. **Updates CLI output** - The command line interface will display the
    subdomain URL and mention the redirect
+4. **Fallback to package name** - If no `subdomain` is configured, the workshop
+   will automatically use the sanitized `name` property from your root
+   `package.json` as the subdomain. This means your workshop will be available
+   at `{sanitized-name}.localhost:{PORT}`. The name is lowercased,
+   non-alphanumeric characters are replaced with dashes, and leading/trailing
+   dashes are removed.
 
 ### Example
 
@@ -90,8 +96,8 @@ With this configuration:
   development
 - The subdomain should be a valid hostname (lowercase letters, numbers, and
   hyphens)
-- If no subdomain is configured, the workshop behaves as before using plain
-  `localhost`
+- If no subdomain is configured, the workshop will use the sanitized `name`
+  property from your root `package.json` as the subdomain
 - All workshop functionality (hot reloading, WebSocket connections, etc.) works
   normally with subdomains
 
