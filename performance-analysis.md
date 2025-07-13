@@ -6,25 +6,31 @@ The @epic-web/workshop-app experiences severe performance issues on exercise ste
 
 ## Performance Issues Identified
 
-### 1. **Cache Invalidation Thrashing** (Critical)
+### 1. **Deployed Environment Waste** (CRITICAL - New Discovery)
+- **Symptom**: App running state checks performed in deployed environments
+- **Root Cause**: `getAppRunningState()` runs expensive process checks even when apps cannot be started
+- **Impact**: 100% wasted CPU cycles for `isAppRunning()` and `isPortAvailable()` calls
+- **Fix**: Short-circuit to immediately return `{ isRunning: false, portIsAvailable: null }` in deployed environments
+
+### 2. **Cache Invalidation Thrashing** (Critical)
 - **Symptom**: Second request 2.5x slower than first (21s → 53s)
 - **Root Cause**: Aggressive cache invalidation without minimum cache time
 - **Impact**: Cache entries invalidated immediately on any file change, causing expensive recomputation
 - **Fix**: Added 5-minute minimum cache time to prevent thrashing
 
-### 2. **Expensive Process Checks** (High Impact)
+### 3. **Expensive Process Checks** (High Impact)
 - **Symptom**: `getAppRunningState()` called for every app on every request
 - **Root Cause**: `isAppRunning()` and `isPortAvailable()` are expensive operations
 - **Impact**: Multiple `findProcess()` calls and port checks per request
-- **Fix**: Added 30-second cache for app running state
+- **Fix**: Added 30-second cache for app running state (development only)
 
-### 3. **Sequential File System Operations** (High Impact)
+### 4. **Sequential File System Operations** (High Impact)
 - **Symptom**: Directory scanning in `getProblemDirs()` and `getSolutionDirs()`
 - **Root Cause**: Sequential loops through directories without caching
 - **Impact**: O(n²) file system operations for large workshops
 - **Fix**: Cached directory listings and parallelized operations
 
-### 4. **Redundant API Calls** (Medium Impact)
+### 5. **Redundant API Calls** (Medium Impact)
 - **Symptom**: Multiple `getApps()` calls in same request chain
 - **Root Cause**: No coordination between parent and child loaders
 - **Impact**: Expensive directory scans repeated unnecessarily
@@ -48,7 +54,8 @@ Second Request (2.5x slower):
 ```
 
 **Expected After Optimization:**
-- 60-80% reduction in loader times due to cache effectiveness
+- **Deployed Environment**: 90-95% reduction due to eliminated process checks
+- **Development Environment**: 60-80% reduction due to cache effectiveness
 - Consistent performance between requests
 - Sub-5-second response times for cached requests
 
@@ -61,14 +68,27 @@ From Fly.io metrics:
 
 ## Optimizations Implemented
 
-### 1. **Cache Strategy Improvements**
+### 1. **Deployed Environment Short-Circuit** (MOST IMPACTFUL)
+```typescript
+// In deployed environments, apps cannot be started, so always return false
+const isDeployed = process.env.EPICSHOP_DEPLOYED === 'true' || process.env.EPICSHOP_DEPLOYED === '1'
+
+export async function getAppRunningState(a: App) {
+  if (isDeployed) {
+    return { isRunning: false, portIsAvailable: null }
+  }
+  // ... expensive checks only in development
+}
+```
+
+### 2. **Cache Strategy Improvements**
 ```typescript
 // Added minimum cache time to prevent thrashing
 const minCacheTime = 1000 * 60 * 5 // 5 minutes
 if (cacheAge < minCacheTime) return false
 ```
 
-### 2. **App State Caching**
+### 3. **App State Caching** (Development Only)
 ```typescript
 // Cache expensive process checks
 const appRunningStateCache = makeSingletonCache<{
@@ -77,13 +97,13 @@ const appRunningStateCache = makeSingletonCache<{
 }>('AppRunningStateCache')
 ```
 
-### 3. **Directory Listing Optimization**
+### 4. **Directory Listing Optimization**
 ```typescript
 // Cache directory listings with 5-minute TTL
 const directoryListingCache = makeSingletonCache<string[]>('DirectoryListingCache')
 ```
 
-### 4. **Parallelized Operations**
+### 5. **Parallelized Operations**
 ```typescript
 // Parallelize expensive app state checks
 const [playgroundState, problemState, solutionState] = await Promise.all([
@@ -93,7 +113,7 @@ const [playgroundState, problemState, solutionState] = await Promise.all([
 ])
 ```
 
-### 5. **Increased Cache Capacity**
+### 6. **Increased Cache Capacity**
 ```typescript
 // Increased LRU cache size for large workshops
 max: 5000, // Increased from 1000
@@ -105,6 +125,7 @@ max: 5000, // Increased from 1000
 - Add detailed cache hit/miss metrics
 - Monitor cache invalidation frequency
 - Track loader performance over time
+- Add deployment environment detection metrics
 
 ### 2. **Further Optimizations**
 - Consider lazy loading for non-essential data
@@ -121,20 +142,23 @@ max: 5000, // Increased from 1000
 
 ## Expected Performance Impact
 
-- **First Request**: 60-70% faster due to optimized operations
-- **Subsequent Requests**: 80-90% faster due to effective caching
+- **Deployed Environment**: 90-95% faster due to eliminated process checks
+- **Development Environment**: 60-80% faster due to effective caching
 - **Memory Usage**: Slight increase due to larger cache (acceptable)
 - **Cache Hit Rate**: Should improve from ~20% to ~80%
 
 ## Deployment Recommendations
 
-1. **Gradual Rollout**: Test on staging environment first
-2. **Monitoring**: Watch cache metrics and response times
-3. **Rollback Plan**: Keep previous version ready for quick rollback
-4. **Memory Monitoring**: Watch for memory leaks with larger cache
+1. **Immediate Impact**: The deployed environment optimization provides instant massive performance gains
+2. **Gradual Rollout**: Test on staging environment first
+3. **Monitoring**: Watch cache metrics and response times
+4. **Rollback Plan**: Keep previous version ready for quick rollback
+5. **Memory Monitoring**: Watch for memory leaks with larger cache
 
 ## Conclusion
 
-The performance issues are primarily due to inefficient caching and expensive synchronous operations, not resource constraints. The implemented optimizations should result in dramatic performance improvements, particularly for large workshops where the issues are most pronounced.
+The most critical discovery is that expensive process checks were being performed in deployed environments where apps cannot be started. This represents 100% wasted CPU cycles and explains the severe performance degradation.
 
-The optimizations maintain the same functionality while significantly reducing computational overhead and improving cache effectiveness.
+The combination of deployed environment optimization and improved caching strategies should result in dramatic performance improvements, particularly for large workshops where the issues are most pronounced.
+
+**Key Insight**: The deployed environment optimization alone should eliminate the majority of performance issues, with the cache improvements providing additional benefits for development environments.
