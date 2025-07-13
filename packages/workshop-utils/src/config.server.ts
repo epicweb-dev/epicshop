@@ -201,7 +201,7 @@ function readRootPkgJson(): any {
  * Generate a URL with subdomain support
  * Only applies subdomain logic when not deployed
  */
-export function getWorkshopUrl(port: number, subdomain?: string): string {
+export async function getWorkshopUrl(port: number, subdomain?: string): Promise<string> {
 	// Check if deployed - use process.env directly since ENV might not be initialized yet
 	const isDeployed =
 		process.env.EPICSHOP_DEPLOYED === 'true' ||
@@ -235,13 +235,9 @@ export function getWorkshopUrl(port: number, subdomain?: string): string {
 		}
 
 		if (subdomainToUse) {
-			const supportsSubdomains = checkSubdomainSupport()
+			const supportsSubdomains = await checkSubdomainSupport()
 			if (supportsSubdomains) {
 				return `http://${subdomainToUse}.localhost:${port}`
-			} else {
-				console.warn(
-					`Subdomain resolution on localhost is not supported on this platform. Falling back to localhost.`,
-				)
 			}
 		}
 	}
