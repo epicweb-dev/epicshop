@@ -155,7 +155,7 @@ const portToUse = await getPort({
 
 // Add subdomain redirect middleware now that we know the port - only applies when not deployed
 if (!ENV.EPICSHOP_DEPLOYED) {
-	app.use((req, res, next) => {
+	app.use(async (req, res, next) => {
 		const config = getWorkshopConfig()
 
 		// Only redirect if subdomain is configured
@@ -168,7 +168,7 @@ if (!ENV.EPICSHOP_DEPLOYED) {
 
 		// If request is not coming from the expected subdomain, redirect
 		if (host && !host.startsWith(expectedHost)) {
-			const redirectUrl = getWorkshopUrl(portToUse)
+			const redirectUrl = await getWorkshopUrl(portToUse)
 			return res.redirect(307, `${redirectUrl}${req.url}`)
 		}
 
@@ -222,7 +222,7 @@ const server = app.listen(portToUse, async () => {
 	}
 	console.log(`🐨  Let's get learning!`)
 
-	const localUrl = getWorkshopUrl(portUsed)
+	const localUrl = await getWorkshopUrl(portUsed)
 
 	console.log(
 		`
@@ -243,11 +243,11 @@ ${lanUrl ? `${chalk.bold('On Your Network:')}  ${chalk.cyan(lanUrl)}` : ''}
 		>()
 		const wss = new WebSocketServer({ noServer: true })
 
-		server.on('upgrade', (request, socket, head) => {
+		server.on('upgrade', async (request, socket, head) => {
 			const url = new URL(request.url ?? '/', 'ws://localhost:0000')
 			if (url.pathname === '/__ws') {
 				const origin = request.headers.origin
-				const workshopUrl = getWorkshopUrl(portToUse)
+				const workshopUrl = await getWorkshopUrl(portToUse)
 				const isValidOrigin =
 					origin &&
 					(origin === workshopUrl ||
