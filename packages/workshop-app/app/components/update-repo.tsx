@@ -13,11 +13,6 @@ export function UpdateToast({
 	const diffLink = 'diffLink' in repoUpdates ? repoUpdates.diffLink : null
 	const remoteCommit = 'remoteCommit' in repoUpdates ? repoUpdates.remoteCommit : undefined
 	const fetcher = useFetcher()
-	const fetcherRef = useRef(fetcher)
-
-	useEffect(() => {
-		fetcherRef.current = fetcher
-	}, [fetcher])
 
 	// Track the in-progress toast id and update notification id
 	const inProgressToastId = useRef<ReturnType<typeof toast.loading> | null>(
@@ -141,7 +136,7 @@ export function UpdateToast({
 							updateNotificationId.current = null
 						}
 						// Mute the notification persistently
-						void fetcherRef.current.submit(
+						void fetcher.submit(
 							{ intent: 'mute', id: `update-repo-${remoteCommit}` },
 							{ method: 'post', action: '/admin/notifications' },
 						)
