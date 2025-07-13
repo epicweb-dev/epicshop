@@ -414,7 +414,6 @@ const supportedKeys = [
 	`${chalk.blue('o')} - open workshop app`,
 	`${chalk.green('u')} - update workshop`,
 	`${chalk.magenta('r')} - restart workshop app`,
-	`${chalk.red('d')} - dismiss update notification`,
 	`${chalk.cyan('k')} - Kody kudos 🐨`,
 	`${chalk.gray('q')} - exit (or ${chalk.gray('Ctrl+C')})`,
 ]
