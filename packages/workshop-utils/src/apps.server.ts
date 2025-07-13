@@ -281,8 +281,21 @@ export async function init(workshopRoot?: string) {
 			},
 		})
 
-		chok.on('all', (_event, filePath) => {
-			setModifiedTimesForAppDirs(path.join(getWorkshopRoot(), filePath))
+		chok.on('all', (event, filePath) => {
+			const fullPath = path.join(getWorkshopRoot(), filePath)
+			setModifiedTimesForAppDirs(fullPath)
+			
+			// Also invalidate directory listings when files are added/removed/renamed
+			// This handles cases where new exercise directories are created or removed
+			if (event === 'add' || event === 'unlink' || event === 'addDir' || event === 'unlinkDir') {
+				const parentDir = path.dirname(fullPath)
+				setDirectoryModifiedTime(parentDir)
+				
+				// Also invalidate the exercises directory itself if we're dealing with exercise subdirs
+				if (filePath.startsWith('exercises/')) {
+					setDirectoryModifiedTime(path.join(getWorkshopRoot(), 'exercises'))
+				}
+			}
 		})
 
 		closeWithGrace(() => chok.close())
@@ -308,6 +321,10 @@ export function setModifiedTimesForAppDirs(...filePaths: Array<string>) {
 		const appDir = getAppPathFromFilePath(filePath)
 		if (appDir) {
 			modifiedTimes.set(appDir, now)
+			
+			// Also invalidate parent directory listings when app directories are modified
+			const parentDir = path.dirname(appDir)
+			setDirectoryModifiedTime(parentDir)
 		}
 	}
 }
@@ -329,10 +346,17 @@ export function getForceFreshForDir(
 	const cacheAge = Date.now() - cacheEntry.metadata.createdTime
 	if (cacheAge < minCacheTime) return false
 	
+	// Check both app modification times and directory modification times
 	const latestModifiedTime = truthyDirs.reduce((latest, dir) => {
 		const modifiedTime = modifiedTimes.get(dir)
-		return modifiedTime && modifiedTime > latest ? modifiedTime : latest
+		const directoryModifiedTime = directoryModifiedTimes.get(dir)
+		const maxTime = Math.max(
+			modifiedTime || 0,
+			directoryModifiedTime || 0
+		)
+		return maxTime && maxTime > latest ? maxTime : latest
 	}, 0)
+	
 	if (!latestModifiedTime) return undefined
 	return latestModifiedTime > cacheEntry.metadata.createdTime ? true : undefined
 }
@@ -579,11 +603,27 @@ export function extractNumbersAndTypeFromAppNameOrPath(
 // Add a global cache for directory listings to reduce file system operations
 const directoryListingCache = makeSingletonCache<string[]>('DirectoryListingCache')
 
+// Also track directory modification times for cache invalidation
+const directoryModifiedTimes = remember(
+	'directory_modified_times',
+	() => new Map<string, number>(),
+)
+
+// Function to set directory modification times when directory structure changes
+export function setDirectoryModifiedTime(dir: string) {
+	directoryModifiedTimes.set(dir, Date.now())
+}
+
 async function getCachedDirectoryListing(dir: string) {
 	return await cachified({
 		key: `dir-listing-${dir}`,
 		cache: directoryListingCache,
 		ttl: 1000 * 60 * 5, // 5 minutes
+		swr: 1000 * 60 * 60 * 24, // 24 hours stale-while-revalidate
+		forceFresh: getForceFreshForDir(
+			directoryListingCache.get(`dir-listing-${dir}`),
+			dir,
+		),
 		async getFreshValue() {
 			return await readDir(dir)
 		},

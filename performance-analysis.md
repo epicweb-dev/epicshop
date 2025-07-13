@@ -97,11 +97,46 @@ const appRunningStateCache = makeSingletonCache<{
 }>('AppRunningStateCache')
 ```
 
-### 4. **Directory Listing Optimization**
+### 4. **Directory Listing Optimization with File Watcher Integration**
 ```typescript
-// Cache directory listings with 5-minute TTL
+// Cache directory listings with SWR and file watcher invalidation
 const directoryListingCache = makeSingletonCache<string[]>('DirectoryListingCache')
+
+async function getCachedDirectoryListing(dir: string) {
+  return await cachified({
+    key: `dir-listing-${dir}`,
+    cache: directoryListingCache,
+    ttl: 1000 * 60 * 5, // 5 minutes
+    swr: 1000 * 60 * 60 * 24, // 24 hours stale-while-revalidate
+    forceFresh: getForceFreshForDir(directoryListingCache.get(`dir-listing-${dir}`), dir),
+    async getFreshValue() {
+      return await readDir(dir)
+    },
+  })
+}
+
+// File watcher integration for cache invalidation
+chok.on('all', (event, filePath) => {
+  const fullPath = path.join(getWorkshopRoot(), filePath)
+  setModifiedTimesForAppDirs(fullPath)
+  
+  // Also invalidate directory listings when files are added/removed/renamed
+  if (event === 'add' || event === 'unlink' || event === 'addDir' || event === 'unlinkDir') {
+    const parentDir = path.dirname(fullPath)
+    setDirectoryModifiedTime(parentDir)
+    
+    // Also invalidate the exercises directory itself if we're dealing with exercise subdirs
+    if (filePath.startsWith('exercises/')) {
+      setDirectoryModifiedTime(path.join(getWorkshopRoot(), 'exercises'))
+    }
+  }
+})
 ```
+
+**Key Benefits:**
+- **Stale-While-Revalidate**: Users get immediate responses from cache while fresh data loads in background
+- **File Watcher Integration**: Cache automatically invalidates when directory structure changes
+- **No Stale Data Issues**: Proper cache invalidation prevents stale data in development
 
 ### 5. **Parallelized Operations**
 ```typescript
