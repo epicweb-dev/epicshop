@@ -6,6 +6,52 @@ import { getEnv } from './env.server.js'
 import { getErrorMessage } from './utils.js'
 import { checkConnection } from './utils.server.js'
 
+async function cleanupEmptyExerciseDirectories(cwd: string) {
+	try {
+		console.log('🧹 Cleaning up empty exercise directories...')
+		
+		// Find all directories under exercises/* and exercises/*/*
+		const { stdout: allDirs } = await execaCommand(
+			'find exercises -type d 2>/dev/null || echo ""',
+			{ cwd, shell: true }
+		)
+		
+		if (!allDirs.trim()) {
+			console.log('   No exercises directory found, skipping cleanup.')
+			return
+		}
+		
+		const directories = allDirs.trim().split('\n').filter(Boolean)
+		let deletedCount = 0
+		
+		for (const dir of directories) {
+			if (dir === 'exercises') continue // Skip the root exercises directory
+			
+			// Check if directory has any files (excluding gitignored files)
+			const [trackedFiles, untrackedFiles] = await Promise.all([
+				execaCommand(`git ls-files "${dir}" 2>/dev/null || echo ""`, { cwd, shell: true }),
+				execaCommand(`git ls-files --others --exclude-standard "${dir}" 2>/dev/null || echo ""`, { cwd, shell: true })
+			])
+			
+			const totalFiles = (trackedFiles.stdout.trim() + untrackedFiles.stdout.trim()).trim()
+			
+			if (!totalFiles) {
+				console.log(`   Deleting empty directory: ${dir}`)
+				await execaCommand(`rmdir "${dir}" 2>/dev/null || true`, { cwd, shell: true })
+				deletedCount++
+			}
+		}
+		
+		if (deletedCount > 0) {
+			console.log(`   Deleted ${deletedCount} empty directories.`)
+		} else {
+			console.log('   No empty directories found.')
+		}
+	} catch (error) {
+		console.warn('   Warning: Failed to cleanup empty directories:', getErrorMessage(error))
+	}
+}
+
 async function getDiffUrl(commitBefore: string, commitAfter: string) {
 	const cwd = getWorkshopRoot()
 	try {
@@ -145,6 +191,8 @@ export async function updateLocalRepo() {
 
 		console.log('📦 Re-installing dependencies...')
 		await execaCommand('npm install', { cwd, stdio: 'inherit' })
+
+		await cleanupEmptyExerciseDirectories(cwd)
 
 		const postUpdateScript = getWorkshopConfig().scripts?.postupdate
 		if (postUpdateScript) {
