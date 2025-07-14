@@ -23,6 +23,9 @@ async function cleanupEmptyExerciseDirectories(cwd) {
 		}
 		
 		const directories = allDirs.trim().split('\n').filter(Boolean)
+		// Sort directories in reverse order (deepest first) to ensure proper cleanup of nested empty directories
+		directories.sort((a, b) => b.length - a.length)
+		
 		let deletedCount = 0
 		
 		for (const dir of directories) {
@@ -30,16 +33,25 @@ async function cleanupEmptyExerciseDirectories(cwd) {
 			
 			// Check if directory has any files (excluding gitignored files)
 			const [trackedFiles, untrackedFiles] = await Promise.all([
-				execaCommand(`git ls-files "${dir}" 2>/dev/null || echo ""`, { cwd, shell: true }),
-				execaCommand(`git ls-files --others --exclude-standard "${dir}" 2>/dev/null || echo ""`, { cwd, shell: true })
+				execa('git', ['ls-files', dir], { cwd, reject: false }).catch(() => ({ stdout: '' })),
+				execa('git', ['ls-files', '--others', '--exclude-standard', dir], { cwd, reject: false }).catch(() => ({ stdout: '' }))
 			])
 			
-			const totalFiles = (trackedFiles.stdout.trim() + untrackedFiles.stdout.trim()).trim()
+			// Fix: Use proper boolean logic to check if both outputs are empty
+			const hasTrackedFiles = trackedFiles.stdout.trim().length > 0
+			const hasUntrackedFiles = untrackedFiles.stdout.trim().length > 0
+			const hasFiles = hasTrackedFiles || hasUntrackedFiles
 			
-			if (!totalFiles) {
+			if (!hasFiles) {
 				console.log(`   Deleting empty directory: ${dir}`)
-				await execaCommand(`rmdir "${dir}" 2>/dev/null || true`, { cwd, shell: true })
-				deletedCount++
+				try {
+					// Use fs.rmdir instead of shell command to avoid shell injection
+					await fs.rmdir(path.join(cwd, dir))
+					deletedCount++
+				} catch (error) {
+					// Directory might not be empty or might not exist, which is fine
+					// We'll just continue with the next directory
+				}
 			}
 		}
 		
