@@ -1,4 +1,4 @@
-import { promises as fs } from 'node:fs'
+import fs from 'node:fs/promises'
 import path from 'node:path'
 import { execa, execaCommand } from 'execa'
 import { getWorkshopRoot } from './apps.server.js'
