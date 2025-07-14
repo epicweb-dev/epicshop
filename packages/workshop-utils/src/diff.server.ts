@@ -24,16 +24,19 @@ const isDeployed = ENV.EPICSHOP_DEPLOYED
 
 const diffTmpDir = path.join(epicshopTempDir, 'diff')
 
+/**
+ * Converts a diff file path to a relative path for display and lookup.
+ * - Removes leading/trailing quotes.
+ * - Strips diff prefixes like a/, b/, .\a\, .\b\, ./a/, ./b/ (for both POSIX and Windows).
+ * - Normalizes the path separators.
+ * - Removes the diff temp directory prefix and splits out the actual relative path.
+ */
 function diffPathToRelative(filePath: string) {
-	let normalizedPath = path.normalize(filePath.replace(/^("|')|("|')$/g, ''))
-	if (
-		normalizedPath.startsWith('a\\') ||
-		normalizedPath.startsWith('b\\') ||
-		normalizedPath.startsWith('a/') ||
-		normalizedPath.startsWith('b/')
-	) {
-		normalizedPath = normalizedPath.slice(2)
-	}
+	let normalizedPath = path.normalize(
+		filePath
+			.replace(/^["']|["']$/g, '')
+			.replace(/^(\.\\[ab]\\|\.\/[ab]\/|[ab][\\/])/, ''),
+	)
 
 	// eslint-disable-next-line @typescript-eslint/no-unused-vars
 	const [workshopRootDirname, appId, id, ...relativePath] = normalizedPath
