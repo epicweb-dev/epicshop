@@ -29,6 +29,7 @@
       "./notifications.server": "./src/notifications.server.ts",
       "./process-manager.server": "./src/process-manager.server.ts",
       "./test": "./src/test.ts",
+      "./request-context.server": "./src/request-context.server.ts",
       "./utils.server": "./src/utils.server.ts",
       "./utils": "./src/utils.ts"
     }
@@ -135,6 +136,12 @@
       "import": {
         "types": "./dist/esm/test.d.ts",
         "default": "./dist/esm/test.js"
+      }
+    },
+    "./request-context.server": {
+      "import": {
+        "types": "./dist/esm/request-context.server.d.ts",
+        "default": "./dist/esm/request-context.server.js"
       }
     },
     "./utils.server": {

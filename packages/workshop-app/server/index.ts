@@ -9,6 +9,7 @@ import {
 } from '@epic-web/workshop-utils/apps.server'
 import { getWorkshopUrl } from '@epic-web/workshop-utils/config.server'
 import { getEnv, init as initEnv } from '@epic-web/workshop-utils/env.server'
+import { requestContext } from '@epic-web/workshop-utils/request-context.server'
 import { checkConnectionCached } from '@epic-web/workshop-utils/utils.server'
 import { createRequestHandler } from '@react-router/express'
 import { ip as ipAddress } from 'address'
@@ -23,7 +24,6 @@ import morgan from 'morgan'
 import { type ServerBuild } from 'react-router'
 import sourceMapSupport from 'source-map-support'
 import { type WebSocket, WebSocketServer } from 'ws'
-import { requestContext } from '@epic-web/workshop-utils/request-context.server'
 
 // if we exit early with an error, log the error...
 closeWithGrace(({ err, manual }) => {
