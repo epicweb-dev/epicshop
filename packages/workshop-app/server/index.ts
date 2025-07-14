@@ -7,10 +7,7 @@ import {
 	init as initApps,
 	setModifiedTimesForAppDirs,
 } from '@epic-web/workshop-utils/apps.server'
-import {
-	getWorkshopConfig,
-	getWorkshopUrl,
-} from '@epic-web/workshop-utils/config.server'
+import { getWorkshopUrl } from '@epic-web/workshop-utils/config.server'
 import { getEnv, init as initEnv } from '@epic-web/workshop-utils/env.server'
 import { checkConnectionCached } from '@epic-web/workshop-utils/utils.server'
 import { createRequestHandler } from '@react-router/express'
@@ -19,6 +16,7 @@ import chalk from 'chalk'
 import chokidar, { type FSWatcher } from 'chokidar'
 import closeWithGrace from 'close-with-grace'
 import compression from 'compression'
+import cookie from 'cookie'
 import express from 'express'
 import getPort, { portNumbers } from 'get-port'
 import morgan from 'morgan'
@@ -153,26 +151,46 @@ const portToUse = await getPort({
 	port: portNumbers(desiredPort, desiredPort + 100),
 })
 
-// Add subdomain redirect middleware now that we know the port - only applies when not deployed
 if (!ENV.EPICSHOP_DEPLOYED) {
 	app.use((req, res, next) => {
-		const config = getWorkshopConfig()
+		const intendedUrlString = getWorkshopUrl(portToUse)
+		const intendedUrl = new URL(intendedUrlString)
 
-		// Only redirect if subdomain is configured
-		if (!config.subdomain) {
+		const host = req.headers.host
+		const cookieName = 'EPICSHOP_SUBDOMAIN_REDIRECTED'
+		const cookies = cookie.parse(req.headers.cookie || '')
+
+		if (cookies[cookieName]) {
+			// Clear the cookie and skip redirect
+			res.appendHeader(
+				'Set-Cookie',
+				cookie.serialize(cookieName, '', { path: '/', maxAge: 0 }),
+			)
 			return next()
 		}
 
-		const host = req.headers.host
-		const expectedHost = `${config.subdomain}.localhost`
+		// Only redirect if we should use the subdomain and the intended hostname is not just 'localhost' or '127.0.0.1'
+		const intendedIsSubdomain =
+			intendedUrl.hostname.endsWith('.localhost') &&
+			intendedUrl.hostname !== 'localhost' &&
+			intendedUrl.hostname !== '127.0.0.1'
 
-		// If request is not coming from the expected subdomain, redirect
-		if (host && !host.startsWith(expectedHost)) {
-			const redirectUrl = getWorkshopUrl(portToUse)
-			return res.redirect(307, `${redirectUrl}${req.url}`)
+		if (!intendedIsSubdomain) {
+			return next()
 		}
 
-		next()
+		// Never redirect if the current host is 127.0.0.1
+		if (host && host.startsWith('127.0.0.1')) {
+			return next()
+		}
+
+		// If request is not coming from the expected subdomain, redirect
+		const redirectUrl = new URL(req.url, intendedUrl.toString())
+		res.setHeader(
+			'Set-Cookie',
+			cookie.serialize(cookieName, '1', { path: '/', httpOnly: true }),
+		)
+		return res.redirect(307, redirectUrl.toString())
 	})
 }
 
