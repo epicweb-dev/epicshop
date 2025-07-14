@@ -6,10 +6,6 @@ export function init() {
 		dsn: ENV.SENTRY_DSN,
 		environment: ENV.MODE,
 		tunnel: '/resources/lookout',
-		denyUrls: [
-			/extensions\//i,
-			/^chrome:\/\//i
-		],
 		beforeSend(event) {
 			if (event.request?.url) {
 				const url = new URL(event.request.url)
