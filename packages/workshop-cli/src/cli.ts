@@ -106,7 +106,7 @@ async function startCommand(appLocation?: string) {
 					)
 				}
 			}
-		} catch (error) {
+		} catch {
 			// Silently ignore update check errors
 		}
 	}
