@@ -7,8 +7,11 @@ import http from 'node:http'
 import os from 'node:os'
 import path from 'node:path'
 import { fileURLToPath } from 'node:url'
-import { getWorkshopUrl as utilsGetWorkshopUrl } from '@epic-web/workshop-utils/config.server'
-import { muteNotification, getMutedNotifications } from '@epic-web/workshop-utils/db.server'
+import { getWorkshopUrl } from '@epic-web/workshop-utils/config.server'
+import {
+	muteNotification,
+	getMutedNotifications,
+} from '@epic-web/workshop-utils/db.server'
 import {
 	updateLocalRepo,
 	checkForUpdatesCached,
@@ -19,10 +22,6 @@ import getPort from 'get-port'
 import open from 'open'
 import yargs, { type ArgumentsCamelCase, type Argv } from 'yargs'
 import { hideBin } from 'yargs/helpers'
-
-function getWorkshopUrl(port: number): string {
-	return utilsGetWorkshopUrl(port)
-}
 
 async function startCommand(appLocation?: string) {
 	// Find workshop-app directory using new resolution order
@@ -82,16 +81,18 @@ async function startCommand(appLocation?: string) {
 	// Check for updates on startup
 	async function checkAndDisplayUpdates() {
 		if (isDeployed) return
-		
+
 		try {
 			const updates = await checkForUpdatesCached()
 			if (updates.updatesAvailable && updates.remoteCommit) {
-							// Check if update notification is muted
-			const mutedNotifications = await getMutedNotifications()
+				// Check if update notification is muted
+				const mutedNotifications = await getMutedNotifications()
 				const updateNotificationId = `update-repo-${updates.remoteCommit}`
-				
+
 				if (!mutedNotifications.includes(updateNotificationId)) {
-					const updateCommand = chalk.blue.bold.bgWhite(' npx update-epic-workshop ')
+					const updateCommand = chalk.blue.bold.bgWhite(
+						' npx update-epic-workshop ',
+					)
 					const updateLink = chalk.blue.bgWhite(` ${updates.diffLink} `)
 					console.log(
 						'\n',
@@ -273,7 +274,7 @@ async function startCommand(appLocation?: string) {
 	)
 
 	spawnChild()
-	
+
 	// Check for updates after starting
 	void checkAndDisplayUpdates()
 

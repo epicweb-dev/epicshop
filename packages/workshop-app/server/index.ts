@@ -153,10 +153,15 @@ const portToUse = await getPort({
 
 if (!ENV.EPICSHOP_DEPLOYED) {
 	app.use((req, res, next) => {
+		const host = req.headers.host
+		// Never redirect if the current host does not include "localhost"
+		if (host && !host.includes('localhost')) {
+			return next()
+		}
+
 		const intendedUrlString = getWorkshopUrl(portToUse)
 		const intendedUrl = new URL(intendedUrlString)
 
-		const host = req.headers.host
 		const cookieName = 'EPICSHOP_SUBDOMAIN_REDIRECTED'
 		const cookies = cookie.parse(req.headers.cookie || '')
 
@@ -179,13 +184,9 @@ if (!ENV.EPICSHOP_DEPLOYED) {
 			return next()
 		}
 
-		// Never redirect if the current host is 127.0.0.1
-		if (host && host.startsWith('127.0.0.1')) {
-			return next()
-		}
-
 		// If request is not coming from the expected subdomain, redirect
 		const redirectUrl = new URL(req.url, intendedUrl.toString())
+		// set a cookie to avoid infinite redirects
 		res.setHeader(
 			'Set-Cookie',
 			cookie.serialize(cookieName, '1', { path: '/', httpOnly: true }),
