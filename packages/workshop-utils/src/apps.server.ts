@@ -18,6 +18,7 @@ import {
 	playgroundAppCache,
 	problemAppCache,
 	solutionAppCache,
+	directoryEmptyCache,
 } from './cache.server.js'
 import { compileMdx } from './compile-mdx.server.js'
 import { getAppConfig, getStackBlitzUrl } from './config.server.js'
@@ -222,19 +223,24 @@ function exists(file: string) {
 }
 
 async function isDirectoryEmpty(dirPath: string): Promise<boolean> {
-	try {
-		const files = await fs.promises.readdir(dirPath)
-		if (files.length === 0) return true
-
-		// Check if all files are gitignored
-		const isIgnored = await isGitIgnored({ cwd: dirPath })
-		const nonIgnoredFiles = files.filter((file) => !isIgnored(file))
-
-		return nonIgnoredFiles.length === 0
-	} catch {
-		// If we can't read the directory, consider it empty
-		return true
-	}
+	return cachified({
+		key: dirPath,
+		cache: directoryEmptyCache,
+		ttl: 1000 * 60 * 5,
+		swr: 1000 * 60 * 20,
+		forceFresh: getForceFreshForDir(directoryEmptyCache.get(dirPath), dirPath),
+		getFreshValue: async () => {
+			try {
+				const files = await fs.promises.readdir(dirPath)
+				if (files.length === 0) return true
+				const isIgnored = await isGitIgnored({ cwd: dirPath })
+				const nonIgnoredFiles = files.filter((file) => !isIgnored(file))
+				return nonIgnoredFiles.length === 0
+			} catch {
+				return true
+			}
+		},
+	})
 }
 
 async function firstToExist(...files: Array<string>) {

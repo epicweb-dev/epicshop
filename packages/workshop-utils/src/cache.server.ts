@@ -48,6 +48,9 @@ export const checkForUpdatesCache = makeSingletonCache<{
 }>('CheckForUpdatesCache')
 export const notificationsCache =
 	makeSingletonCache<Array<Notification>>('NotificationsCache')
+export const directoryEmptyCache = makeSingletonCache<boolean>(
+	'DirectoryEmptyCache',
+)
 
 const cacheDir = path.join(os.homedir(), '.epicshop', 'cache')
 
