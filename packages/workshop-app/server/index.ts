@@ -23,6 +23,7 @@ import morgan from 'morgan'
 import { type ServerBuild } from 'react-router'
 import sourceMapSupport from 'source-map-support'
 import { type WebSocket, WebSocketServer } from 'ws'
+import { requestContext } from '@epic-web/workshop-utils/request-context.server'
 
 // if we exit early with an error, log the error...
 closeWithGrace(({ err, manual }) => {
@@ -97,6 +98,8 @@ if ((!isProd && !ENV.EPICSHOP_IS_PUBLISHED) || ENV.EPICSHOP_DEPLOYED) {
 	morgan.token('url', (req) => decodeURIComponent(req.url ?? ''))
 	app.use(morgan('tiny'))
 }
+
+app.use((_req, _res, next) => requestContext.run({}, next))
 
 function getNumberOrNull(value: unknown) {
 	if (value == null) return null

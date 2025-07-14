@@ -90,34 +90,28 @@ export async function loader({ request, params }: Route.LoaderArgs) {
 	const timings = makeTimings('exerciseStepTypeLayoutLoader')
 	const url = new URL(request.url)
 	const { title: workshopTitle } = getWorkshopConfig()
-	const cacheOptions = { request, timings }
-	const exerciseStepApp = await requireExerciseApp(params, cacheOptions)
-	const exercise = await requireExercise(
-		exerciseStepApp.exerciseNumber,
-		cacheOptions,
-	)
-	const reqUrl = new URL(request.url)
 
+	const cacheOptions = { request, timings }
+
+	const [exerciseStepApp, allAppsFull, problemApp, solutionApp] =
+		await Promise.all([
+			requireExerciseApp(params, cacheOptions),
+			getApps(cacheOptions),
+			getExerciseApp({ ...params, type: 'problem' }, cacheOptions),
+			getExerciseApp({ ...params, type: 'solution' }, cacheOptions),
+		])
+
+	const reqUrl = new URL(request.url)
 	const pathnameParam = reqUrl.searchParams.get('pathname')
 	if (pathnameParam === '' || pathnameParam === '/') {
 		reqUrl.searchParams.delete('pathname')
 		throw redirect(reqUrl.toString())
 	}
 
-	const problemApp = await getExerciseApp(
-		{ ...params, type: 'problem' },
-		cacheOptions,
-	)
-	const solutionApp = await getExerciseApp(
-		{ ...params, type: 'solution' },
-		cacheOptions,
-	)
-
 	if (!problemApp && !solutionApp) {
 		throw new Response('Not found', { status: 404 })
 	}
 
-	const allAppsFull = await getApps(cacheOptions)
 	const playgroundApp = allAppsFull.find(isPlaygroundApp)
 
 	function getStepId(a: ExerciseStepApp) {
@@ -164,15 +158,19 @@ export async function loader({ request, params }: Route.LoaderArgs) {
 	const exerciseId = getStepId(exerciseStepApp)
 	const exerciseIndex = allApps.findIndex((step) => step.stepId === exerciseId)
 
+	// These depend on exerciseStepApp
+	const [exercise, nextApp, prevApp] = await Promise.all([
+		requireExercise(exerciseStepApp.exerciseNumber, cacheOptions),
+		getNextExerciseApp(exerciseStepApp, cacheOptions),
+		getPrevExerciseApp(exerciseStepApp, cacheOptions),
+	])
+
 	const exerciseApps = allAppsFull
 		.filter(isExerciseStepApp)
 		.filter((app) => app.exerciseNumber === exerciseStepApp.exerciseNumber)
 	const isLastStep =
 		exerciseApps[exerciseApps.length - 1]?.name === exerciseStepApp.name
 	const isFirstStep = exerciseApps[0]?.name === exerciseStepApp.name
-
-	const nextApp = await getNextExerciseApp(exerciseStepApp, cacheOptions)
-	const prevApp = await getPrevExerciseApp(exerciseStepApp, cacheOptions)
 
 	const articleId = `workshop-${slugify(workshopTitle)}-${
 		exercise.exerciseNumber

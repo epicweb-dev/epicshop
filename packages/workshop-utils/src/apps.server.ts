@@ -30,6 +30,7 @@ import {
 	runAppDev,
 	waitOnApp,
 } from './process-manager.server.js'
+import { requestStorageify } from './request-context.server.js'
 import { getServerTimeHeader, time, type Timings } from './timing.server.js'
 import { getErrorMessage } from './utils.js'
 import { dayjs } from './utils.server.js'
@@ -224,13 +225,13 @@ async function isDirectoryEmpty(dirPath: string): Promise<boolean> {
 	try {
 		const files = await fs.promises.readdir(dirPath)
 		if (files.length === 0) return true
-		
+
 		// Check if all files are gitignored
 		const isIgnored = await isGitIgnored({ cwd: dirPath })
-		const nonIgnoredFiles = files.filter(file => !isIgnored(file))
-		
+		const nonIgnoredFiles = files.filter((file) => !isIgnored(file))
+
 		return nonIgnoredFiles.length === 0
-	} catch (error) {
+	} catch {
 		// If we can't read the directory, consider it empty
 		return true
 	}
@@ -393,7 +394,7 @@ function extractExerciseNumber(dir: string) {
 	return Number(number)
 }
 
-export async function getExercises({
+async function _getExercises({
 	timings,
 	request,
 }: CachifiedOptions = {}): Promise<Array<Exercise>> {
@@ -403,7 +404,7 @@ export async function getExercises({
 	for (const dirName of exerciseDirs) {
 		const exerciseNumber = extractExerciseNumber(dirName)
 		if (!exerciseNumber) continue
-		
+
 		// Skip empty exercise directories (excluding gitignored files)
 		const exerciseDir = path.join(getWorkshopRoot(), 'exercises', dirName)
 		const isEmpty = await isDirectoryEmpty(exerciseDir)
@@ -450,9 +451,11 @@ export async function getExercises({
 	return exercises
 }
 
+export const getExercises = requestStorageify(_getExercises)
+
 let appCallCount = 0
 
-export async function getApps({
+async function _getApps({
 	timings,
 	request,
 	forceFresh,
@@ -541,6 +544,7 @@ export async function getApps({
 	})
 	return apps
 }
+export const getApps = requestStorageify(_getApps)
 
 const AppIdInfoSchema = z.object({
 	exerciseNumber: z.string(),
@@ -597,7 +601,7 @@ async function getProblemDirs() {
 		const problemSubDirs = subDirContents
 			.filter((dir) => dir.includes('.problem'))
 			.map((dir) => path.join(fullSubDir, dir))
-		
+
 		// Filter out empty directories (excluding gitignored files)
 		const nonEmptyProblemDirs = []
 		for (const problemDir of problemSubDirs) {
@@ -624,7 +628,7 @@ async function getSolutionDirs() {
 		const solutionSubDirs = subDirContents
 			.filter((dir) => dir.includes('.solution'))
 			.map((dir) => path.join(fullSubDir, dir))
-		
+
 		// Filter out empty directories (excluding gitignored files)
 		const nonEmptySolutionDirs = []
 		for (const solutionDir of solutionSubDirs) {
