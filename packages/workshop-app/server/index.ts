@@ -153,20 +153,34 @@ const portToUse = await getPort({
 
 if (!ENV.EPICSHOP_DEPLOYED) {
 	app.use((req, res, next) => {
-		const host = req.headers.host
+		const requestUrl = new URL(
+			req.originalUrl,
+			`${req.protocol}://${req.get('host')}`,
+		)
+
 		// Never redirect if the current host does not include "localhost"
-		if (host && !host.includes('localhost')) {
+		if (!requestUrl.host.includes('localhost')) {
 			return next()
 		}
 
 		const intendedUrlString = getWorkshopUrl(portToUse)
 		const intendedUrl = new URL(intendedUrlString)
 
+		// Only redirect if we should use the subdomain
+		if (!intendedUrl.hostname.endsWith('.localhost')) {
+			return next()
+		}
+
+		// exit early if we won't be changing the host
+		if (intendedUrl.host === requestUrl.host) {
+			return next()
+		}
+
 		const cookieName = 'EPICSHOP_SUBDOMAIN_REDIRECTED'
 		const cookies = cookie.parse(req.headers.cookie || '')
 
 		if (cookies[cookieName]) {
-			// Clear the cookie and skip redirect
+			// Clear the cookie and skip redirect to avoid infinite redirects
 			res.appendHeader(
 				'Set-Cookie',
 				cookie.serialize(cookieName, '', { path: '/', maxAge: 0 }),
@@ -174,22 +188,20 @@ if (!ENV.EPICSHOP_DEPLOYED) {
 			return next()
 		}
 
-		// Only redirect if we should use the subdomain and the intended hostname is not just 'localhost' or '127.0.0.1'
-		const intendedIsSubdomain =
-			intendedUrl.hostname.endsWith('.localhost') &&
-			intendedUrl.hostname !== 'localhost' &&
-			intendedUrl.hostname !== '127.0.0.1'
-
-		if (!intendedIsSubdomain) {
+		// If request is not coming from the expected subdomain, redirect
+		const redirectUrl = new URL(req.url, intendedUrl.toString())
+		if (redirectUrl.toString() === requestUrl.toString()) {
 			return next()
 		}
 
-		// If request is not coming from the expected subdomain, redirect
-		const redirectUrl = new URL(req.url, intendedUrl.toString())
 		// set a cookie to avoid infinite redirects
 		res.setHeader(
 			'Set-Cookie',
-			cookie.serialize(cookieName, '1', { path: '/', httpOnly: true }),
+			cookie.serialize(cookieName, '1', {
+				path: '/',
+				httpOnly: true,
+				maxAge: 2,
+			}),
 		)
 		return res.redirect(307, redirectUrl.toString())
 	})
