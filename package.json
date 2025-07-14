@@ -3,17 +3,17 @@
   "private": true,
   "type": "module",
   "scripts": {
-    "typecheck": "nx typecheck",
-    "lint": "nx lint",
-    "build": "nx run-many --target build",
+    "typecheck": "./nx-fallback.sh typecheck",
+    "lint": "./nx-fallback.sh lint",
+    "build": "./nx-fallback.sh run-many --target build",
     "prestart": "npm run build -s",
     "setup": "npm install && npm run validate",
     "go": "cross-env NODE_ENV=development EPICSHOP_CONTEXT_CWD=$PWD/packages/example tsx watch $@",
     "start": "cross-env NODE_ENV=production npm --prefix example run start",
     "dev": "npm --prefix example run start",
-    "test": "nx test",
-    "format": "nx format:write",
-    "validate": "nx run-many --target build,typecheck,lint,test --parallel"
+    "test": "./nx-fallback.sh test",
+    "format": "./nx-fallback.sh format:write",
+    "validate": "./nx-fallback.sh run-many --target build,typecheck,lint,test --parallel"
   },
   "author": "Kent C. Dodds <me@kentcdodds.com> (https://kentcdodds.com/)",
   "license": "GPL-3.0-only",
