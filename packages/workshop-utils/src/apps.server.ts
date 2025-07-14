@@ -223,6 +223,18 @@ function exists(file: string) {
 }
 
 async function isDirectoryEmpty(dirPath: string): Promise<boolean> {
+	// Use the new virtual file system for exercises and examples directories
+	const workshopRoot = getWorkshopRoot()
+	const relativePath = path.relative(workshopRoot, dirPath)
+	const pathParts = relativePath.split(path.sep)
+	
+	// Use virtual file system for exercises and examples
+	if (pathParts[0] === 'exercises' || pathParts[0] === 'examples') {
+		const { isDirectoryEmpty: virtualIsDirectoryEmpty } = await import('./files.server.js')
+		return virtualIsDirectoryEmpty(dirPath)
+	}
+	
+	// For other directories, use the existing cached implementation
 	return cachified({
 		key: dirPath,
 		cache: directoryEmptyCache,
@@ -272,9 +284,10 @@ export async function init(workshopRoot?: string) {
 	) {
 		const isIgnored = await isGitIgnored({ cwd: getWorkshopRoot() })
 
-		// watch the README, FINISHED, and package.json for changes that affect the apps
+		// The virtual file system handles exercises and examples directories
+		// We still need to watch playground and other files manually
 		const filesToWatch = ['README.mdx', 'FINISHED.mdx', 'package.json']
-		const chok = chokidar.watch(['examples', 'playground', 'exercises'], {
+		const chok = chokidar.watch(['playground'], {
 			cwd: getWorkshopRoot(),
 			ignoreInitial: true,
 			ignored(filePath, stats) {
@@ -283,17 +296,6 @@ export async function init(workshopRoot?: string) {
 
 				if (stats?.isDirectory()) {
 					if (filePath.endsWith('playground')) return false
-					const pathParts = filePath.split(path.sep)
-					if (pathParts.at(-2) === 'examples') return false
-
-					// steps
-					if (pathParts.at(-3) === 'exercises') return false
-
-					// exercises
-					if (pathParts.at(-2) === 'exercises') return false
-
-					// the exercise dir itself
-					if (pathParts.at(-1) === 'exercises') return false
 					return true
 				}
 
@@ -320,11 +322,29 @@ function getForceFresh(cacheEntry: CacheEntry | null | undefined) {
 
 export function setModifiedTimesForAppDirs(...filePaths: Array<string>) {
 	const now = Date.now()
+	let shouldRefreshVirtualFS = false
+	
 	for (const filePath of filePaths) {
 		const appDir = getAppPathFromFilePath(filePath)
 		if (appDir) {
 			modifiedTimes.set(appDir, now)
 		}
+		
+		// Check if this change affects exercises or examples directories
+		const relativePath = path.relative(getWorkshopRoot(), filePath)
+		const pathParts = relativePath.split(path.sep)
+		if (pathParts[0] === 'exercises' || pathParts[0] === 'examples') {
+			shouldRefreshVirtualFS = true
+		}
+	}
+	
+	// Refresh virtual file system if needed
+	if (shouldRefreshVirtualFS) {
+		import('./files.server.js').then(({ refreshVirtualFileSystem }) => {
+			refreshVirtualFileSystem().catch((error) => {
+				console.error('Failed to refresh virtual file system:', error)
+			})
+		})
 	}
 }
 
@@ -933,9 +953,11 @@ async function getExampleApps({
 	request,
 }: CachifiedOptions = {}): Promise<Array<ExampleApp>> {
 	const examplesDir = path.join(getWorkshopRoot(), 'examples')
-	const exampleDirs = (await readDir(examplesDir)).map((p) =>
-		path.join(examplesDir, p),
-	)
+	
+	// Use virtual file system for reading examples directory
+	const { getDirectoryContents } = await import('./files.server.js')
+	const exampleDirNames = await getDirectoryContents(examplesDir)
+	const exampleDirs = exampleDirNames.map((p) => path.join(examplesDir, p))
 
 	const exampleApps: Array<ExampleApp> = []
 
