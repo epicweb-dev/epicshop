@@ -195,6 +195,25 @@ if (!ENV.EPICSHOP_DEPLOYED) {
 	})
 }
 
+// Add correlation ID middleware before React Router handler
+app.use((req, res, next) => {
+	const correlationId = req.headers['x-correlation-id'] as string
+	if (correlationId && ENV.EPICSHOP_IS_PUBLISHED) {
+		// Add correlation ID to current Sentry scope
+		import('@sentry/react-router').then(({ withScope }) => {
+			withScope((scope) => {
+				scope.setTag('correlationId', correlationId)
+				scope.setExtra('correlationId', correlationId)
+				scope.setContext('correlation', {
+					id: correlationId,
+					timestamp: new Date().toISOString(),
+				})
+			})
+		})
+	}
+	next()
+})
+
 app.all(
 	'*splat',
 	createRequestHandler({

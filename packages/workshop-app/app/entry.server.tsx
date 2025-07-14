@@ -19,7 +19,23 @@ export function handleError(
 ): void {
 	if (request.signal.aborted) return
 	if (ENV.EPICSHOP_IS_PUBLISHED) {
-		Sentry.captureException(error)
+		// Add correlation ID to error context
+		const correlationId = request.headers.get('x-correlation-id')
+		if (correlationId) {
+			Sentry.withScope((scope) => {
+				scope.setTag('correlationId', correlationId)
+				scope.setExtra('correlationId', correlationId)
+				scope.setContext('correlation', {
+					id: correlationId,
+					timestamp: new Date().toISOString(),
+					url: request.url,
+					method: request.method,
+				})
+				Sentry.captureException(error)
+			})
+		} else {
+			Sentry.captureException(error)
+		}
 	}
 }
 

@@ -1,4 +1,4 @@
-import { captureException } from '@sentry/react-router'
+import { captureException, withScope } from '@sentry/react-router'
 import { useEffect } from 'react'
 import {
 	isRouteErrorResponse,
@@ -7,6 +7,7 @@ import {
 	type ErrorResponse,
 } from 'react-router'
 import { getErrorMessage } from '#app/utils/misc.tsx'
+import { getCorrelationId } from '#app/utils/request-correlation'
 
 type StatusHandler = (info: {
 	error: ErrorResponse
@@ -33,7 +34,21 @@ export function GeneralErrorBoundary({
 	useEffect(() => {
 		if (isResponse) return
 		if (ENV.EPICSHOP_IS_PUBLISHED) {
-			captureException(error)
+			const correlationId = getCorrelationId()
+			if (correlationId) {
+				withScope((scope) => {
+					scope.setTag('correlationId', correlationId)
+					scope.setExtra('correlationId', correlationId)
+					scope.setContext('correlation', {
+						id: correlationId,
+						timestamp: new Date().toISOString(),
+						component: 'ErrorBoundary',
+					})
+					captureException(error)
+				})
+			} else {
+				captureException(error)
+			}
 		}
 	}, [error, isResponse])
 
