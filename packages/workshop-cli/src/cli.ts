@@ -8,10 +8,7 @@ import os from 'node:os'
 import path from 'node:path'
 import { fileURLToPath } from 'node:url'
 import { getWorkshopUrl as utilsGetWorkshopUrl } from '@epic-web/workshop-utils/config.server'
-import {
-	muteNotification,
-	getMutedNotifications,
-} from '@epic-web/workshop-utils/db.server'
+import { muteNotification, getMutedNotifications } from '@epic-web/workshop-utils/db.server'
 import {
 	updateLocalRepo,
 	checkForUpdatesCached,
@@ -23,7 +20,7 @@ import open from 'open'
 import yargs, { type ArgumentsCamelCase, type Argv } from 'yargs'
 import { hideBin } from 'yargs/helpers'
 
-async function getWorkshopUrl(port: number): Promise<string> {
+function getWorkshopUrl(port: number): string {
 	return utilsGetWorkshopUrl(port)
 }
 
@@ -85,18 +82,16 @@ async function startCommand(appLocation?: string) {
 	// Check for updates on startup
 	async function checkAndDisplayUpdates() {
 		if (isDeployed) return
-
+		
 		try {
 			const updates = await checkForUpdatesCached()
 			if (updates.updatesAvailable && updates.remoteCommit) {
-				// Check if update notification is muted
-				const mutedNotifications = await getMutedNotifications()
+							// Check if update notification is muted
+			const mutedNotifications = await getMutedNotifications()
 				const updateNotificationId = `update-repo-${updates.remoteCommit}`
-
+				
 				if (!mutedNotifications.includes(updateNotificationId)) {
-					const updateCommand = chalk.blue.bold.bgWhite(
-						' npx update-epic-workshop ',
-					)
+					const updateCommand = chalk.blue.bold.bgWhite(' npx update-epic-workshop ')
 					const updateLink = chalk.blue.bgWhite(` ${updates.diffLink} `)
 					console.log(
 						'\n',
@@ -131,7 +126,7 @@ async function startCommand(appLocation?: string) {
 
 	async function waitForChildReady(): Promise<boolean> {
 		const port = await childPortPromise
-		const url = await getWorkshopUrl(port)
+		const url = getWorkshopUrl(port)
 		const maxAttempts = 40 // 20s max (500ms interval)
 		for (let i = 0; i < maxAttempts; i++) {
 			try {
@@ -179,7 +174,7 @@ async function startCommand(appLocation?: string) {
 			try {
 				if (req.url === '/__epicshop-restart') {
 					const port = await childPortPromise
-					const workshopUrl = await getWorkshopUrl(port)
+					const workshopUrl = getWorkshopUrl(port)
 					res.setHeader('Access-Control-Allow-Origin', workshopUrl)
 					res.setHeader('Access-Control-Allow-Methods', 'POST, OPTIONS')
 					res.setHeader(
@@ -278,7 +273,7 @@ async function startCommand(appLocation?: string) {
 	)
 
 	spawnChild()
-
+	
 	// Check for updates after starting
 	void checkAndDisplayUpdates()
 
@@ -296,7 +291,7 @@ async function startCommand(appLocation?: string) {
 				await doUpdateAndRestart()
 			} else if (key === 'o') {
 				if (childPort) {
-					const workshopUrl = await getWorkshopUrl(childPort)
+					const workshopUrl = getWorkshopUrl(childPort)
 					console.log(chalk.blue(`\n🌐 Opening browser to ${workshopUrl} ...`))
 					await open(workshopUrl)
 				} else {

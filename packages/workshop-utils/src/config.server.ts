@@ -1,60 +1,12 @@
-import dns from 'node:dns'
 import fs from 'node:fs'
 import path from 'node:path'
-import { promisify } from 'node:util'
 import { z } from 'zod'
 import { handleGitHubRepoAndRoot } from './utils.js'
-
-const dnsLookup = promisify(dns.lookup)
 
 export const getWorkshopRoot = () =>
 	process.env.EPICSHOP_CONTEXT_CWD ?? process.cwd()
 
 const getRootPkgJsonPath = () => path.join(getWorkshopRoot(), 'package.json')
-
-// Cache for subdomain resolution check
-const subdomainResolutionCache: {
-	checked: boolean
-	supportsSubdomains: boolean
-	checkPromise?: Promise<boolean>
-} = {
-	checked: false,
-	supportsSubdomains: false,
-}
-
-/**
- * Check if the system supports subdomain resolution on localhost
- * This check only happens once on startup by attempting to resolve a test subdomain
- */
-async function checkSubdomainSupport(): Promise<boolean> {
-	if (subdomainResolutionCache.checked) {
-		return subdomainResolutionCache.supportsSubdomains
-	}
-
-	// If a check is already in progress, return that promise
-	if (subdomainResolutionCache.checkPromise) {
-		return subdomainResolutionCache.checkPromise
-	}
-
-	// Start the check and cache the promise
-	subdomainResolutionCache.checkPromise = (async () => {
-		try {
-			// Try to resolve a test subdomain
-			// We use 'test.localhost' as it's a safe test domain
-			await dnsLookup('test.localhost')
-			subdomainResolutionCache.supportsSubdomains = true
-		} catch (error: any) {
-			// If the error is ENOTFOUND or any other DNS error,
-			// subdomain resolution likely isn't supported
-			subdomainResolutionCache.supportsSubdomains = false
-		}
-
-		subdomainResolutionCache.checked = true
-		return subdomainResolutionCache.supportsSubdomains
-	})()
-
-	return subdomainResolutionCache.checkPromise
-}
 
 export const StackBlitzConfigSchema = z.object({
 	// we default this to `${exerciseTitle} (${type})`
@@ -201,10 +153,7 @@ function readRootPkgJson(): any {
  * Generate a URL with subdomain support
  * Only applies subdomain logic when not deployed
  */
-export async function getWorkshopUrl(
-	port: number,
-	subdomain?: string,
-): Promise<string> {
+export function getWorkshopUrl(port: number, subdomain?: string): string {
 	// Check if deployed - use process.env directly since ENV might not be initialized yet
 	const isDeployed =
 		process.env.EPICSHOP_DEPLOYED === 'true' ||
@@ -238,10 +187,7 @@ export async function getWorkshopUrl(
 		}
 
 		if (subdomainToUse) {
-			const supportsSubdomains = await checkSubdomainSupport()
-			if (supportsSubdomains) {
-				return `http://${subdomainToUse}.localhost:${port}`
-			}
+			return `http://${subdomainToUse}.localhost:${port}`
 		}
 	}
 
