@@ -212,12 +212,12 @@ export async function isDirectoryEmpty(dirPath: string): Promise<boolean> {
 		if (pathParts.length === 1) {
 			// Check if exercises directory is empty
 			return virtualFileSystem.exercises.size === 0
-		} else if (pathParts.length === 2) {
+		} else if (pathParts.length === 2 && pathParts[1]) {
 			// Check if specific exercise directory is empty
 			const exerciseNode = virtualFileSystem.exercises.get(pathParts[1])
 			if (!exerciseNode || exerciseNode.type !== 'directory') return true
 			return !exerciseNode.children || exerciseNode.children.size === 0
-		} else if (pathParts.length === 3) {
+		} else if (pathParts.length === 3 && pathParts[1] && pathParts[2]) {
 			// Check if specific exercise step directory is empty
 			const exerciseNode = virtualFileSystem.exercises.get(pathParts[1])
 			if (!exerciseNode || exerciseNode.type !== 'directory' || !exerciseNode.children) return true
@@ -232,7 +232,7 @@ export async function isDirectoryEmpty(dirPath: string): Promise<boolean> {
 		if (pathParts.length === 1) {
 			// Check if examples directory is empty
 			return virtualFileSystem.examples.size === 0
-		} else if (pathParts.length === 2) {
+		} else if (pathParts.length === 2 && pathParts[1]) {
 			// Check if specific example directory is empty
 			const exampleNode = virtualFileSystem.examples.get(pathParts[1])
 			if (!exampleNode || exampleNode.type !== 'directory') return true
@@ -259,12 +259,12 @@ export async function getDirectoryContents(dirPath: string): Promise<string[]> {
 		if (pathParts.length === 1) {
 			// Return exercise directories
 			return Array.from(virtualFileSystem.exercises.keys())
-		} else if (pathParts.length === 2) {
+		} else if (pathParts.length === 2 && pathParts[1]) {
 			// Return exercise step directories
 			const exerciseNode = virtualFileSystem.exercises.get(pathParts[1])
 			if (!exerciseNode || exerciseNode.type !== 'directory' || !exerciseNode.children) return []
 			return Array.from(exerciseNode.children.keys())
-		} else if (pathParts.length === 3) {
+		} else if (pathParts.length === 3 && pathParts[1] && pathParts[2]) {
 			// Return exercise step contents
 			const exerciseNode = virtualFileSystem.exercises.get(pathParts[1])
 			if (!exerciseNode || exerciseNode.type !== 'directory' || !exerciseNode.children) return []
@@ -279,7 +279,7 @@ export async function getDirectoryContents(dirPath: string): Promise<string[]> {
 		if (pathParts.length === 1) {
 			// Return example directories
 			return Array.from(virtualFileSystem.examples.keys())
-		} else if (pathParts.length === 2) {
+		} else if (pathParts.length === 2 && pathParts[1]) {
 			// Return example directory contents
 			const exampleNode = virtualFileSystem.examples.get(pathParts[1])
 			if (!exampleNode || exampleNode.type !== 'directory' || !exampleNode.children) return []
@@ -305,9 +305,9 @@ export async function pathExists(targetPath: string): Promise<boolean> {
 	if (pathParts[0] === 'exercises') {
 		if (pathParts.length === 1) {
 			return true // exercises directory always exists in our virtual system
-		} else if (pathParts.length === 2) {
+		} else if (pathParts.length === 2 && pathParts[1]) {
 			return virtualFileSystem.exercises.has(pathParts[1])
-		} else if (pathParts.length === 3) {
+		} else if (pathParts.length === 3 && pathParts[1] && pathParts[2]) {
 			const exerciseNode = virtualFileSystem.exercises.get(pathParts[1])
 			if (!exerciseNode || exerciseNode.type !== 'directory' || !exerciseNode.children) return false
 			return exerciseNode.children.has(pathParts[2])
@@ -318,7 +318,7 @@ export async function pathExists(targetPath: string): Promise<boolean> {
 	if (pathParts[0] === 'examples') {
 		if (pathParts.length === 1) {
 			return true // examples directory always exists in our virtual system
-		} else if (pathParts.length === 2) {
+		} else if (pathParts.length === 2 && pathParts[1]) {
 			return virtualFileSystem.examples.has(pathParts[1])
 		}
 	}
@@ -375,15 +375,9 @@ async function isDirectoryEmptyFallback(dirPath: string): Promise<boolean> {
 }
 
 // Initialize on module load
-const initializeOnLoad = remember('virtual-file-system-init', async () => {
-	if (ENV.EPICSHOP_DEPLOYED || process.env.EPICSHOP_ENABLE_WATCHER !== 'true') {
-		return
-	}
-	
+if (!ENV.EPICSHOP_DEPLOYED && process.env.EPICSHOP_ENABLE_WATCHER === 'true') {
 	// Initialize in background
 	initializeVirtualFileSystem().catch((error) => {
 		console.error('Failed to initialize virtual file system on load:', error)
 	})
-})
-
-initializeOnLoad()
+}

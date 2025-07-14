@@ -425,7 +425,10 @@ async function _getExercises({
 	request,
 }: CachifiedOptions = {}): Promise<Array<Exercise>> {
 	const apps = await getApps({ request, timings })
-	const exerciseDirs = await readDir(path.join(getWorkshopRoot(), 'exercises'))
+	
+	// Use virtual file system for reading exercises directory
+	const { getDirectoryContents } = await import('./files.server.js')
+	const exerciseDirs = await getDirectoryContents(path.join(getWorkshopRoot(), 'exercises'))
 	const exercises: Array<Exercise> = []
 	for (const dirName of exerciseDirs) {
 		const exerciseNumber = extractExerciseNumber(dirName)
@@ -617,12 +620,15 @@ export function extractNumbersAndTypeFromAppNameOrPath(
 async function getProblemDirs() {
 	const exercisesDir = path.join(getWorkshopRoot(), 'exercises')
 	const problemDirs = []
-	const exerciseSubDirs = await readDir(exercisesDir)
+	
+	// Use virtual file system for reading exercises directory
+	const { getDirectoryContents } = await import('./files.server.js')
+	const exerciseSubDirs = await getDirectoryContents(exercisesDir)
+	
 	for (const subDir of exerciseSubDirs) {
 		const fullSubDir = path.join(exercisesDir, subDir)
-		// catch handles non-directories without us having to bother checking
-		// whether it's a directory
-		const subDirContents = await readDir(fullSubDir).catch(() => null)
+		// Use virtual file system for reading exercise subdirectory
+		const subDirContents = await getDirectoryContents(fullSubDir).catch(() => null)
 		if (!subDirContents) continue
 		const problemSubDirs = subDirContents
 			.filter((dir) => dir.includes('.problem'))
@@ -644,12 +650,15 @@ async function getProblemDirs() {
 async function getSolutionDirs() {
 	const exercisesDir = path.join(getWorkshopRoot(), 'exercises')
 	const solutionDirs = []
-	const exerciseSubDirs = await readDir(exercisesDir)
+	
+	// Use virtual file system for reading exercises directory
+	const { getDirectoryContents } = await import('./files.server.js')
+	const exerciseSubDirs = await getDirectoryContents(exercisesDir)
+	
 	for (const subDir of exerciseSubDirs) {
 		const fullSubDir = path.join(exercisesDir, subDir)
-		// catch handles non-directories without us having to bother checking
-		// whether it's a directory
-		const subDirContents = await readDir(fullSubDir).catch(() => null)
+		// Use virtual file system for reading exercise subdirectory
+		const subDirContents = await getDirectoryContents(fullSubDir).catch(() => null)
 		if (!subDirContents) continue
 		const solutionSubDirs = subDirContents
 			.filter((dir) => dir.includes('.solution'))
