@@ -220,6 +220,22 @@ function exists(file: string) {
 	)
 }
 
+async function isDirectoryEmpty(dirPath: string): Promise<boolean> {
+	try {
+		const files = await fs.promises.readdir(dirPath)
+		if (files.length === 0) return true
+		
+		// Check if all files are gitignored
+		const isIgnored = await isGitIgnored({ cwd: dirPath })
+		const nonIgnoredFiles = files.filter(file => !isIgnored(file))
+		
+		return nonIgnoredFiles.length === 0
+	} catch (error) {
+		// If we can't read the directory, consider it empty
+		return true
+	}
+}
+
 async function firstToExist(...files: Array<string>) {
 	const results = await Promise.all(files.map(exists))
 	const index = results.findIndex(Boolean)
@@ -387,6 +403,11 @@ export async function getExercises({
 	for (const dirName of exerciseDirs) {
 		const exerciseNumber = extractExerciseNumber(dirName)
 		if (!exerciseNumber) continue
+		
+		// Skip empty exercise directories (excluding gitignored files)
+		const exerciseDir = path.join(getWorkshopRoot(), 'exercises', dirName)
+		const isEmpty = await isDirectoryEmpty(exerciseDir)
+		if (isEmpty) continue
 		const compiledReadme = await compileMdxIfExists(
 			path.join(getWorkshopRoot(), 'exercises', dirName, 'README.mdx'),
 			{ request },
@@ -576,7 +597,16 @@ async function getProblemDirs() {
 		const problemSubDirs = subDirContents
 			.filter((dir) => dir.includes('.problem'))
 			.map((dir) => path.join(fullSubDir, dir))
-		problemDirs.push(...problemSubDirs)
+		
+		// Filter out empty directories (excluding gitignored files)
+		const nonEmptyProblemDirs = []
+		for (const problemDir of problemSubDirs) {
+			const isEmpty = await isDirectoryEmpty(problemDir)
+			if (!isEmpty) {
+				nonEmptyProblemDirs.push(problemDir)
+			}
+		}
+		problemDirs.push(...nonEmptyProblemDirs)
 	}
 	return problemDirs
 }
@@ -594,7 +624,16 @@ async function getSolutionDirs() {
 		const solutionSubDirs = subDirContents
 			.filter((dir) => dir.includes('.solution'))
 			.map((dir) => path.join(fullSubDir, dir))
-		solutionDirs.push(...solutionSubDirs)
+		
+		// Filter out empty directories (excluding gitignored files)
+		const nonEmptySolutionDirs = []
+		for (const solutionDir of solutionSubDirs) {
+			const isEmpty = await isDirectoryEmpty(solutionDir)
+			if (!isEmpty) {
+				nonEmptySolutionDirs.push(solutionDir)
+			}
+		}
+		solutionDirs.push(...nonEmptySolutionDirs)
 	}
 	return solutionDirs
 }
