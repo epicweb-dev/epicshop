@@ -50,7 +50,16 @@ export async function loader({ request, params }: LoaderFunctionArgs) {
 	})
 	const searchParams = new URL(request.url).searchParams
 	const cacheOptions = { request, timings }
-	const exerciseStepApp = await requireExerciseApp(params, cacheOptions)
+
+	const [exerciseStepApp, allAppsFull, problemApp, solutionApp] =
+		await Promise.all([
+			requireExerciseApp(params, cacheOptions),
+			getApps(cacheOptions),
+			getExerciseApp({ ...params, type: 'problem' }, cacheOptions),
+			getExerciseApp({ ...params, type: 'solution' }, cacheOptions),
+		])
+
+	const playgroundApp = allAppsFull.find(isPlaygroundApp)
 	const reqUrl = new URL(request.url)
 
 	const pathnameParam = reqUrl.searchParams.get('pathname')
@@ -58,22 +67,6 @@ export async function loader({ request, params }: LoaderFunctionArgs) {
 		reqUrl.searchParams.delete('pathname')
 		throw redirect(reqUrl.toString())
 	}
-
-	const problemApp = await getExerciseApp(
-		{ ...params, type: 'problem' },
-		cacheOptions,
-	)
-	const solutionApp = await getExerciseApp(
-		{ ...params, type: 'solution' },
-		cacheOptions,
-	)
-
-	if (!problemApp && !solutionApp) {
-		throw new Response('Not found', { status: 404 })
-	}
-
-	const allAppsFull = await getApps(cacheOptions)
-	const playgroundApp = allAppsFull.find(isPlaygroundApp)
 
 	const app1Name = reqUrl.searchParams.get('app1')
 	const app2Name = reqUrl.searchParams.get('app2')
