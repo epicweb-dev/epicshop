@@ -13,7 +13,16 @@ Sentry.init({
 		/\/favicon.ico/,
 		/\/site\.webmanifest/,
 	],
-	integrations: [Sentry.httpIntegration(), nodeProfilingIntegration()],
+	integrations: [
+		Sentry.httpIntegration(),
+		nodeProfilingIntegration(),
+		{
+			name: 'CorrelationIdIntegration',
+			setupOnce() {
+				// This will be used to add correlation IDs to all events
+			},
+		},
+	],
 	tracesSampler(samplingContext) {
 		if (samplingContext.request?.url?.includes('/resources/healthcheck')) {
 			return 0
@@ -23,6 +32,21 @@ Sentry.init({
 	beforeSendTransaction(event) {
 		if (event.request?.headers?.['x-healthcheck'] === 'true') {
 			return null
+		}
+		return event
+	},
+	beforeSend(event) {
+		// Add correlation ID to server-side events
+		const correlationId = Sentry.getActiveSpan()?.getAttribute('correlationId')
+		if (correlationId) {
+			event.extra = {
+				...event.extra,
+				correlationId,
+			}
+			event.tags = {
+				...event.tags,
+				correlationId,
+			}
 		}
 		return event
 	},
