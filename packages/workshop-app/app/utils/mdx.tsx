@@ -4,6 +4,7 @@ import { type MDXContentProps } from 'mdx-bundler/client'
 import * as mdxBundler from 'mdx-bundler/client/index.js'
 import { useEffect, useMemo, useState } from 'react'
 import { Link, useLoaderData } from 'react-router'
+import { toast } from 'sonner'
 import { DeferredEpicVideo, VideoEmbed } from '#app/components/epic-video.tsx'
 import { Icon } from '#app/components/icons.tsx'
 import { Mermaid } from '#app/components/mermaid.tsx'
@@ -113,13 +114,19 @@ function CopyButton(): React.ReactNode {
 	return (
 		<button
 			className={cn(buttonClassName, 'w-12 uppercase')}
-			onClick={(event) => {
-				setCopied(true)
-				const button = event.currentTarget
-				const code =
-					button.parentElement?.parentElement?.querySelector('pre')
-						?.textContent || ''
-				void navigator.clipboard.writeText(code)
+			onClick={async (event) => {
+				if (navigator.clipboard) {
+					setCopied(true)
+					const button = event.currentTarget
+					const code =
+						button.parentElement?.parentElement?.querySelector('pre')
+							?.textContent || ''
+					await navigator.clipboard.writeText(code)
+				} else {
+					toast.error('Copying is only available in secure contexts (HTTPS or localhost).', {
+						description: 'Please access the workshop via localhost instead of an IP address to enable this feature.',
+					})
+				}
 			}}
 		>
 			{copied ? 'copied' : 'copy'}
