@@ -43,18 +43,21 @@ export const modifiedTimes = remember(
  */
 export async function initializeVirtualFileSystem(): Promise<void> {
 	if (isInitialized || isInitializing) return
-	
+
 	isInitializing = true
-	
+
 	try {
 		// Build initial virtual file system
 		await buildVirtualFileSystem()
-		
+
 		// Set up file watcher if not in production
-		if (!ENV.EPICSHOP_DEPLOYED && process.env.EPICSHOP_ENABLE_WATCHER === 'true') {
+		if (
+			!ENV.EPICSHOP_DEPLOYED &&
+			process.env.EPICSHOP_ENABLE_WATCHER === 'true'
+		) {
 			await setupFileWatcher()
 		}
-		
+
 		isInitialized = true
 	} catch (error) {
 		console.error('Failed to initialize virtual file system:', error)
@@ -69,13 +72,13 @@ export async function initializeVirtualFileSystem(): Promise<void> {
  */
 async function buildVirtualFileSystem(): Promise<void> {
 	const workshopRoot = getWorkshopRoot()
-	
+
 	// Clear existing virtual file system
 	virtualFileSystem = {
 		exercises: new Map(),
 		examples: new Map(),
 	}
-	
+
 	// Build exercises virtual file system (exercises/*/*)
 	const exercisesPath = path.join(workshopRoot, 'exercises')
 	if (await exists(exercisesPath)) {
@@ -88,7 +91,7 @@ async function buildVirtualFileSystem(): Promise<void> {
 			}
 		}
 	}
-	
+
 	// Build examples virtual file system (examples/*)
 	const examplesPath = path.join(workshopRoot, 'examples')
 	if (await exists(examplesPath)) {
@@ -110,11 +113,11 @@ async function buildVirtualNode(fullPath: string): Promise<VirtualNode | null> {
 	try {
 		const stats = await fs.promises.stat(fullPath)
 		const name = path.basename(fullPath)
-		
+
 		if (stats.isDirectory()) {
 			const children = new Map<string, VirtualNode>()
 			const dirContents = await readDir(fullPath)
-			
+
 			for (const item of dirContents) {
 				const itemPath = path.join(fullPath, item)
 				const childNode = await buildVirtualNode(itemPath)
@@ -122,7 +125,7 @@ async function buildVirtualNode(fullPath: string): Promise<VirtualNode | null> {
 					children.set(item, childNode)
 				}
 			}
-			
+
 			return {
 				type: 'directory',
 				name,
@@ -136,7 +139,7 @@ async function buildVirtualNode(fullPath: string): Promise<VirtualNode | null> {
 				path: fullPath,
 			}
 		}
-	} catch (error) {
+	} catch {
 		// If we can't read the path, return null
 		return null
 	}
@@ -148,46 +151,46 @@ async function buildVirtualNode(fullPath: string): Promise<VirtualNode | null> {
 async function setupFileWatcher(): Promise<void> {
 	const workshopRoot = getWorkshopRoot()
 	const isIgnored = await isGitIgnored({ cwd: workshopRoot })
-	
+
 	// Files to watch for changes that affect apps
 	const filesToWatch = ['README.mdx', 'FINISHED.mdx', 'package.json']
-	
+
 	const watcher = chokidar.watch(['exercises', 'examples', 'playground'], {
 		cwd: workshopRoot,
 		ignoreInitial: true,
 		ignored(filePath, stats) {
 			if (isIgnored(filePath)) return true
 			if (filePath.includes('.git')) return true
-			
+
 			const pathParts = filePath.split(path.sep)
 			const rootDir = pathParts[0]
-			
+
 			if (rootDir === 'exercises') {
 				// Allow exercises/*/* (max depth 2)
 				return pathParts.length > 3
 			}
-			
+
 			if (rootDir === 'examples') {
 				// Allow examples/* (max depth 1)
 				return pathParts.length > 2
 			}
-			
+
 			if (rootDir === 'playground') {
 				// For playground, allow directories but filter files
 				if (stats?.isDirectory()) {
 					if (filePath.endsWith('playground')) return false
 					return true
 				}
-				
+
 				return stats?.isFile()
 					? !filesToWatch.some((file) => filePath.endsWith(file))
 					: false
 			}
-			
+
 			return false
 		},
 	})
-	
+
 	watcher.on('all', async (event, filePath) => {
 		try {
 			const fullPath = path.join(workshopRoot, filePath)
@@ -198,21 +201,24 @@ async function setupFileWatcher(): Promise<void> {
 			console.error('Error handling file system change:', error)
 		}
 	})
-	
+
 	closeWithGrace(() => watcher.close())
 }
 
 /**
  * Handle file system changes and update virtual file system
  */
-async function handleFileSystemChange(event: string, fullPath: string): Promise<void> {
+async function handleFileSystemChange(
+	event: string,
+	fullPath: string,
+): Promise<void> {
 	const workshopRoot = getWorkshopRoot()
 	const relativePath = path.relative(workshopRoot, fullPath)
 	const pathParts = relativePath.split(path.sep)
-	
+
 	// Determine which root directory this change affects
 	const rootDir = pathParts[0]
-	
+
 	if (rootDir === 'exercises' || rootDir === 'examples') {
 		// Rebuild the entire virtual file system for simplicity
 		// This ensures consistency and handles complex scenarios like directory moves
@@ -225,11 +231,11 @@ async function handleFileSystemChange(event: string, fullPath: string): Promise<
  */
 export async function isDirectoryEmpty(dirPath: string): Promise<boolean> {
 	await initializeVirtualFileSystem()
-	
+
 	const workshopRoot = getWorkshopRoot()
 	const relativePath = path.relative(workshopRoot, dirPath)
 	const pathParts = relativePath.split(path.sep)
-	
+
 	// Handle exercises directory
 	if (pathParts[0] === 'exercises') {
 		if (pathParts.length === 1) {
@@ -243,13 +249,18 @@ export async function isDirectoryEmpty(dirPath: string): Promise<boolean> {
 		} else if (pathParts.length === 3 && pathParts[1] && pathParts[2]) {
 			// Check if specific exercise step directory is empty
 			const exerciseNode = virtualFileSystem.exercises.get(pathParts[1])
-			if (!exerciseNode || exerciseNode.type !== 'directory' || !exerciseNode.children) return true
+			if (
+				!exerciseNode ||
+				exerciseNode.type !== 'directory' ||
+				!exerciseNode.children
+			)
+				return true
 			const stepNode = exerciseNode.children.get(pathParts[2])
 			if (!stepNode || stepNode.type !== 'directory') return true
 			return !stepNode.children || stepNode.children.size === 0
 		}
 	}
-	
+
 	// Handle examples directory
 	if (pathParts[0] === 'examples') {
 		if (pathParts.length === 1) {
@@ -262,7 +273,7 @@ export async function isDirectoryEmpty(dirPath: string): Promise<boolean> {
 			return !exampleNode.children || exampleNode.children.size === 0
 		}
 	}
-	
+
 	// For paths outside our virtual file system, fall back to actual file system
 	return await isDirectoryEmptyFallback(dirPath)
 }
@@ -272,11 +283,11 @@ export async function isDirectoryEmpty(dirPath: string): Promise<boolean> {
  */
 export async function getDirectoryContents(dirPath: string): Promise<string[]> {
 	await initializeVirtualFileSystem()
-	
+
 	const workshopRoot = getWorkshopRoot()
 	const relativePath = path.relative(workshopRoot, dirPath)
 	const pathParts = relativePath.split(path.sep)
-	
+
 	// Handle exercises directory
 	if (pathParts[0] === 'exercises') {
 		if (pathParts.length === 1) {
@@ -285,18 +296,29 @@ export async function getDirectoryContents(dirPath: string): Promise<string[]> {
 		} else if (pathParts.length === 2 && pathParts[1]) {
 			// Return exercise step directories
 			const exerciseNode = virtualFileSystem.exercises.get(pathParts[1])
-			if (!exerciseNode || exerciseNode.type !== 'directory' || !exerciseNode.children) return []
+			if (
+				!exerciseNode ||
+				exerciseNode.type !== 'directory' ||
+				!exerciseNode.children
+			)
+				return []
 			return Array.from(exerciseNode.children.keys())
 		} else if (pathParts.length === 3 && pathParts[1] && pathParts[2]) {
 			// Return exercise step contents
 			const exerciseNode = virtualFileSystem.exercises.get(pathParts[1])
-			if (!exerciseNode || exerciseNode.type !== 'directory' || !exerciseNode.children) return []
+			if (
+				!exerciseNode ||
+				exerciseNode.type !== 'directory' ||
+				!exerciseNode.children
+			)
+				return []
 			const stepNode = exerciseNode.children.get(pathParts[2])
-			if (!stepNode || stepNode.type !== 'directory' || !stepNode.children) return []
+			if (!stepNode || stepNode.type !== 'directory' || !stepNode.children)
+				return []
 			return Array.from(stepNode.children.keys())
 		}
 	}
-	
+
 	// Handle examples directory
 	if (pathParts[0] === 'examples') {
 		if (pathParts.length === 1) {
@@ -305,11 +327,16 @@ export async function getDirectoryContents(dirPath: string): Promise<string[]> {
 		} else if (pathParts.length === 2 && pathParts[1]) {
 			// Return example directory contents
 			const exampleNode = virtualFileSystem.examples.get(pathParts[1])
-			if (!exampleNode || exampleNode.type !== 'directory' || !exampleNode.children) return []
+			if (
+				!exampleNode ||
+				exampleNode.type !== 'directory' ||
+				!exampleNode.children
+			)
+				return []
 			return Array.from(exampleNode.children.keys())
 		}
 	}
-	
+
 	// For paths outside our virtual file system, fall back to actual file system
 	return await readDir(dirPath)
 }
@@ -319,11 +346,11 @@ export async function getDirectoryContents(dirPath: string): Promise<string[]> {
  */
 export async function pathExists(targetPath: string): Promise<boolean> {
 	await initializeVirtualFileSystem()
-	
+
 	const workshopRoot = getWorkshopRoot()
 	const relativePath = path.relative(workshopRoot, targetPath)
 	const pathParts = relativePath.split(path.sep)
-	
+
 	// Handle exercises directory
 	if (pathParts[0] === 'exercises') {
 		if (pathParts.length === 1) {
@@ -332,11 +359,16 @@ export async function pathExists(targetPath: string): Promise<boolean> {
 			return virtualFileSystem.exercises.has(pathParts[1])
 		} else if (pathParts.length === 3 && pathParts[1] && pathParts[2]) {
 			const exerciseNode = virtualFileSystem.exercises.get(pathParts[1])
-			if (!exerciseNode || exerciseNode.type !== 'directory' || !exerciseNode.children) return false
+			if (
+				!exerciseNode ||
+				exerciseNode.type !== 'directory' ||
+				!exerciseNode.children
+			)
+				return false
 			return exerciseNode.children.has(pathParts[2])
 		}
 	}
-	
+
 	// Handle examples directory
 	if (pathParts[0] === 'examples') {
 		if (pathParts.length === 1) {
@@ -345,7 +377,7 @@ export async function pathExists(targetPath: string): Promise<boolean> {
 			return virtualFileSystem.examples.has(pathParts[1])
 		}
 	}
-	
+
 	// For paths outside our virtual file system, fall back to actual file system
 	return await exists(targetPath)
 }
@@ -371,13 +403,13 @@ export async function refreshVirtualFileSystem(): Promise<void> {
 export function setModifiedTimesForAppDirs(...filePaths: Array<string>) {
 	const now = Date.now()
 	let shouldRefreshVirtualFS = false
-	
+
 	for (const filePath of filePaths) {
 		const appDir = getAppPathFromFilePath(filePath)
 		if (appDir) {
 			modifiedTimes.set(appDir, now)
 		}
-		
+
 		// Check if this change affects exercises or examples directories
 		const relativePath = path.relative(getWorkshopRoot(), filePath)
 		const pathParts = relativePath.split(path.sep)
@@ -385,7 +417,7 @@ export function setModifiedTimesForAppDirs(...filePaths: Array<string>) {
 			shouldRefreshVirtualFS = true
 		}
 	}
-	
+
 	// Refresh virtual file system if needed
 	if (shouldRefreshVirtualFS) {
 		refreshVirtualFileSystem().catch((error) => {
@@ -481,7 +513,7 @@ async function isDirectoryEmptyFallback(dirPath: string): Promise<boolean> {
 	try {
 		const files = await fs.promises.readdir(dirPath)
 		if (files.length === 0) return true
-		
+
 		const isIgnored = await isGitIgnored({ cwd: dirPath })
 		const nonIgnoredFiles = files.filter((file) => !isIgnored(file))
 		return nonIgnoredFiles.length === 0

@@ -1,8 +1,6 @@
 import fs from 'node:fs'
 import path from 'node:path'
-import { type CacheEntry } from '@epic-web/cachified'
 import { invariant } from '@epic-web/invariant'
-import { remember } from '@epic-web/remember'
 /// TODO: figure out why this import is necessary (without it tsc seems to not honor the boolean reset 🤷‍♂️)
 import '@total-typescript/ts-reset'
 import { execa } from 'execa'
@@ -22,6 +20,14 @@ import { compileMdx } from './compile-mdx.server.js'
 import { getAppConfig, getStackBlitzUrl } from './config.server.js'
 import { getPreferences } from './db.server.js'
 import { getEnv, init as initEnv } from './env.server.js'
+import {
+	isDirectoryEmpty as virtualIsDirectoryEmpty,
+	getDirectoryContents,
+	getForceFreshForDir,
+	getForceFresh,
+	modifiedTimes,
+	initializeVirtualFileSystem,
+} from './files.server.js'
 import { getDirModifiedTime } from './modified-time.server.js'
 import {
 	closeProcess,
@@ -33,16 +39,6 @@ import { requestStorageify } from './request-context.server.js'
 import { getServerTimeHeader, time, type Timings } from './timing.server.js'
 import { getErrorMessage } from './utils.js'
 import { dayjs } from './utils.server.js'
-import { 
-	isDirectoryEmpty as virtualIsDirectoryEmpty, 
-	getDirectoryContents,
-	setModifiedTimesForAppDirs,
-	getForceFreshForDir,
-	getForceFresh,
-	modifiedTimes,
-	getAppPathFromFilePath,
-	initializeVirtualFileSystem
-} from './files.server.js'
 
 declare global {
 	var __epicshop_apps_initialized__: boolean | undefined
@@ -235,12 +231,12 @@ async function isDirectoryEmpty(dirPath: string): Promise<boolean> {
 	const workshopRoot = getWorkshopRoot()
 	const relativePath = path.relative(workshopRoot, dirPath)
 	const pathParts = relativePath.split(path.sep)
-	
+
 	// Use virtual file system for exercises and examples
 	if (pathParts[0] === 'exercises' || pathParts[0] === 'examples') {
 		return virtualIsDirectoryEmpty(dirPath)
 	}
-	
+
 	// For other directories, use the existing cached implementation
 	return cachified({
 		key: dirPath,
@@ -268,8 +264,6 @@ async function firstToExist(...files: Array<string>) {
 	return index === -1 ? null : files[index]
 }
 
-
-
 export async function init(workshopRoot?: string) {
 	setWorkshopRoot(workshopRoot)
 
@@ -293,14 +287,6 @@ export async function init(workshopRoot?: string) {
 }
 
 
-
-
-async function readDir(dir: string) {
-	if (await exists(dir)) {
-		return fs.promises.readdir(dir)
-	}
-	return []
-}
 
 async function compileMdxIfExists(
 	filepath: string,
@@ -353,9 +339,11 @@ async function _getExercises({
 	request,
 }: CachifiedOptions = {}): Promise<Array<Exercise>> {
 	const apps = await getApps({ request, timings })
-	
+
 	// Use virtual file system for reading exercises directory
-	const exerciseDirs = await getDirectoryContents(path.join(getWorkshopRoot(), 'exercises'))
+	const exerciseDirs = await getDirectoryContents(
+		path.join(getWorkshopRoot(), 'exercises'),
+	)
 	const exercises: Array<Exercise> = []
 	for (const dirName of exerciseDirs) {
 		const exerciseNumber = extractExerciseNumber(dirName)
@@ -547,14 +535,16 @@ export function extractNumbersAndTypeFromAppNameOrPath(
 async function getProblemDirs() {
 	const exercisesDir = path.join(getWorkshopRoot(), 'exercises')
 	const problemDirs = []
-	
+
 	// Use virtual file system for reading exercises directory
 	const exerciseSubDirs = await getDirectoryContents(exercisesDir)
-	
+
 	for (const subDir of exerciseSubDirs) {
 		const fullSubDir = path.join(exercisesDir, subDir)
 		// Use virtual file system for reading exercise subdirectory
-		const subDirContents = await getDirectoryContents(fullSubDir).catch(() => null)
+		const subDirContents = await getDirectoryContents(fullSubDir).catch(
+			() => null,
+		)
 		if (!subDirContents) continue
 		const problemSubDirs = subDirContents
 			.filter((dir) => dir.includes('.problem'))
@@ -576,14 +566,16 @@ async function getProblemDirs() {
 async function getSolutionDirs() {
 	const exercisesDir = path.join(getWorkshopRoot(), 'exercises')
 	const solutionDirs = []
-	
+
 	// Use virtual file system for reading exercises directory
 	const exerciseSubDirs = await getDirectoryContents(exercisesDir)
-	
+
 	for (const subDir of exerciseSubDirs) {
 		const fullSubDir = path.join(exercisesDir, subDir)
 		// Use virtual file system for reading exercise subdirectory
-		const subDirContents = await getDirectoryContents(fullSubDir).catch(() => null)
+		const subDirContents = await getDirectoryContents(fullSubDir).catch(
+			() => null,
+		)
 		if (!subDirContents) continue
 		const solutionSubDirs = subDirContents
 			.filter((dir) => dir.includes('.solution'))
@@ -887,7 +879,7 @@ async function getExampleApps({
 	request,
 }: CachifiedOptions = {}): Promise<Array<ExampleApp>> {
 	const examplesDir = path.join(getWorkshopRoot(), 'examples')
-	
+
 	// Use virtual file system for reading examples directory
 	const exampleDirNames = await getDirectoryContents(examplesDir)
 	const exampleDirs = exampleDirNames.map((p) => path.join(examplesDir, p))
@@ -1506,4 +1498,3 @@ export function getRelativePath(filePath: string) {
 /**
  * Given a file path, this will determine the path to the app that file belongs to.
  */
-
