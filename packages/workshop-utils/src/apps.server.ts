@@ -3,10 +3,8 @@ import path from 'node:path'
 import { type CacheEntry } from '@epic-web/cachified'
 import { invariant } from '@epic-web/invariant'
 import { remember } from '@epic-web/remember'
-import chokidar from 'chokidar'
 /// TODO: figure out why this import is necessary (without it tsc seems to not honor the boolean reset 🤷‍♂️)
 import '@total-typescript/ts-reset'
-import closeWithGrace from 'close-with-grace'
 import { execa } from 'execa'
 import fsExtra from 'fs-extra'
 import { globby, isGitIgnored } from 'globby'
@@ -42,7 +40,8 @@ import {
 	getForceFreshForDir,
 	getForceFresh,
 	modifiedTimes,
-	getAppPathFromFilePath
+	getAppPathFromFilePath,
+	initializeVirtualFileSystem
 } from './files.server.js'
 
 declare global {
@@ -283,38 +282,13 @@ export async function init(workshopRoot?: string) {
 		global.ENV = getEnv()
 	}
 
+	// Initialize virtual file system which handles all file watching
+	// (exercises, examples, and playground directories)
 	if (
 		!ENV.EPICSHOP_DEPLOYED &&
 		process.env.EPICSHOP_ENABLE_WATCHER === 'true'
 	) {
-		const isIgnored = await isGitIgnored({ cwd: getWorkshopRoot() })
-
-		// The virtual file system handles exercises and examples directories
-		// We still need to watch playground and other files manually
-		const filesToWatch = ['README.mdx', 'FINISHED.mdx', 'package.json']
-		const chok = chokidar.watch(['playground'], {
-			cwd: getWorkshopRoot(),
-			ignoreInitial: true,
-			ignored(filePath, stats) {
-				if (isIgnored(filePath)) return true
-				if (filePath.includes('.git')) return true
-
-				if (stats?.isDirectory()) {
-					if (filePath.endsWith('playground')) return false
-					return true
-				}
-
-				return stats?.isFile()
-					? !filesToWatch.some((file) => filePath.endsWith(file))
-					: false
-			},
-		})
-
-		chok.on('all', (_event, filePath) => {
-			setModifiedTimesForAppDirs(path.join(getWorkshopRoot(), filePath))
-		})
-
-		closeWithGrace(() => chok.close())
+		await initializeVirtualFileSystem()
 	}
 }
 

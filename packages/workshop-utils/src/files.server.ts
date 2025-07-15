@@ -41,7 +41,7 @@ export const modifiedTimes = remember(
 /**
  * Initialize the virtual file system and set up file watching
  */
-async function initializeVirtualFileSystem(): Promise<void> {
+export async function initializeVirtualFileSystem(): Promise<void> {
 	if (isInitialized || isInitializing) return
 	
 	isInitializing = true
@@ -143,21 +143,22 @@ async function buildVirtualNode(fullPath: string): Promise<VirtualNode | null> {
 }
 
 /**
- * Set up file watcher for exercises and examples directories
+ * Set up file watcher for exercises, examples, and playground directories
  */
 async function setupFileWatcher(): Promise<void> {
 	const workshopRoot = getWorkshopRoot()
 	const isIgnored = await isGitIgnored({ cwd: workshopRoot })
 	
-	const watcher = chokidar.watch(['exercises', 'examples'], {
+	// Files to watch for changes that affect apps
+	const filesToWatch = ['README.mdx', 'FINISHED.mdx', 'package.json']
+	
+	const watcher = chokidar.watch(['exercises', 'examples', 'playground'], {
 		cwd: workshopRoot,
 		ignoreInitial: true,
 		ignored(filePath, stats) {
 			if (isIgnored(filePath)) return true
 			if (filePath.includes('.git')) return true
 			
-			// Allow all files and directories in exercises and examples
-			// We'll filter later based on our depth requirements
 			const pathParts = filePath.split(path.sep)
 			const rootDir = pathParts[0]
 			
@@ -171,13 +172,28 @@ async function setupFileWatcher(): Promise<void> {
 				return pathParts.length > 2
 			}
 			
+			if (rootDir === 'playground') {
+				// For playground, allow directories but filter files
+				if (stats?.isDirectory()) {
+					if (filePath.endsWith('playground')) return false
+					return true
+				}
+				
+				return stats?.isFile()
+					? !filesToWatch.some((file) => filePath.endsWith(file))
+					: false
+			}
+			
 			return false
 		},
 	})
 	
 	watcher.on('all', async (event, filePath) => {
 		try {
-			await handleFileSystemChange(event, path.join(workshopRoot, filePath))
+			const fullPath = path.join(workshopRoot, filePath)
+			await handleFileSystemChange(event, fullPath)
+			// Also update modified times for cache invalidation
+			setModifiedTimesForAppDirs(fullPath)
 		} catch (error) {
 			console.error('Error handling file system change:', error)
 		}
