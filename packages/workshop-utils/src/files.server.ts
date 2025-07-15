@@ -1,5 +1,6 @@
 import fs from 'node:fs'
 import path from 'node:path'
+import { type CacheEntry } from '@epic-web/cachified'
 import { remember } from '@epic-web/remember'
 import chokidar from 'chokidar'
 import closeWithGrace from 'close-with-grace'
@@ -30,6 +31,12 @@ let isInitialized = false
 let isInitializing = false
 
 const ENV = getEnv()
+
+// Modified times tracking for cache invalidation
+export const modifiedTimes = remember(
+	'modified_times',
+	() => new Map<string, number>(),
+)
 
 /**
  * Initialize the virtual file system and set up file watching
@@ -340,6 +347,99 @@ export async function getVirtualFileSystemState(): Promise<VirtualFileSystem> {
  */
 export async function refreshVirtualFileSystem(): Promise<void> {
 	await buildVirtualFileSystem()
+}
+
+/**
+ * Set modified times for app directories and refresh virtual file system if needed
+ */
+export function setModifiedTimesForAppDirs(...filePaths: Array<string>) {
+	const now = Date.now()
+	let shouldRefreshVirtualFS = false
+	
+	for (const filePath of filePaths) {
+		const appDir = getAppPathFromFilePath(filePath)
+		if (appDir) {
+			modifiedTimes.set(appDir, now)
+		}
+		
+		// Check if this change affects exercises or examples directories
+		const relativePath = path.relative(getWorkshopRoot(), filePath)
+		const pathParts = relativePath.split(path.sep)
+		if (pathParts[0] === 'exercises' || pathParts[0] === 'examples') {
+			shouldRefreshVirtualFS = true
+		}
+	}
+	
+	// Refresh virtual file system if needed
+	if (shouldRefreshVirtualFS) {
+		refreshVirtualFileSystem().catch((error) => {
+			console.error('Failed to refresh virtual file system:', error)
+		})
+	}
+}
+
+/**
+ * Get force fresh value for cache entries based on directory modification times
+ */
+export function getForceFreshForDir(
+	cacheEntry: CacheEntry | null | undefined,
+	...dirs: Array<string | undefined | null>
+) {
+	const truthyDirs = dirs.filter(Boolean)
+	for (const d of truthyDirs) {
+		if (!path.isAbsolute(d)) {
+			throw new Error(`Trying to get force fresh for non-absolute path: ${d}`)
+		}
+	}
+	if (!cacheEntry) return true
+	const latestModifiedTime = truthyDirs.reduce((latest, dir) => {
+		const modifiedTime = modifiedTimes.get(dir)
+		return modifiedTime && modifiedTime > latest ? modifiedTime : latest
+	}, 0)
+	if (!latestModifiedTime) return undefined
+	return latestModifiedTime > cacheEntry.metadata.createdTime ? true : undefined
+}
+
+/**
+ * Get force fresh value for cache entries based on global modification times
+ */
+export function getForceFresh(cacheEntry: CacheEntry | null | undefined) {
+	if (!cacheEntry) return true
+	const latestModifiedTime = Math.max(...Array.from(modifiedTimes.values()))
+	if (!latestModifiedTime) return undefined
+	return latestModifiedTime > cacheEntry.metadata.createdTime ? true : undefined
+}
+
+/**
+ * Get app path from file path for modified time tracking
+ */
+export function getAppPathFromFilePath(filePath: string): string | null {
+	const [, withinWorkshopRootHalf] = filePath.split(getWorkshopRoot())
+	if (!withinWorkshopRootHalf) {
+		return null
+	}
+
+	const [part1, part2, part3] = withinWorkshopRootHalf
+		.split(path.sep)
+		.filter(Boolean)
+
+	// Check if the file is in the playground
+	if (part1 === 'playground') {
+		return path.join(getWorkshopRoot(), 'playground')
+	}
+
+	// Check if the file is in an example
+	if (part1 === 'examples' && part2) {
+		return path.join(getWorkshopRoot(), 'examples', part2)
+	}
+
+	// Check if the file is in an exercise
+	if (part1 === 'exercises' && part2 && part3) {
+		return path.join(getWorkshopRoot(), 'exercises', part2, part3)
+	}
+
+	// If we couldn't determine the app path, return null
+	return null
 }
 
 // Helper functions

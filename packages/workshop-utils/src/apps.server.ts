@@ -35,6 +35,15 @@ import { requestStorageify } from './request-context.server.js'
 import { getServerTimeHeader, time, type Timings } from './timing.server.js'
 import { getErrorMessage } from './utils.js'
 import { dayjs } from './utils.server.js'
+import { 
+	isDirectoryEmpty as virtualIsDirectoryEmpty, 
+	getDirectoryContents,
+	setModifiedTimesForAppDirs,
+	getForceFreshForDir,
+	getForceFresh,
+	modifiedTimes,
+	getAppPathFromFilePath
+} from './files.server.js'
 
 declare global {
 	var __epicshop_apps_initialized__: boolean | undefined
@@ -230,7 +239,6 @@ async function isDirectoryEmpty(dirPath: string): Promise<boolean> {
 	
 	// Use virtual file system for exercises and examples
 	if (pathParts[0] === 'exercises' || pathParts[0] === 'examples') {
-		const { isDirectoryEmpty: virtualIsDirectoryEmpty } = await import('./files.server.js')
 		return virtualIsDirectoryEmpty(dirPath)
 	}
 	
@@ -261,10 +269,7 @@ async function firstToExist(...files: Array<string>) {
 	return index === -1 ? null : files[index]
 }
 
-export const modifiedTimes = remember(
-	'modified_times',
-	() => new Map<string, number>(),
-)
+
 
 export async function init(workshopRoot?: string) {
 	setWorkshopRoot(workshopRoot)
@@ -313,59 +318,8 @@ export async function init(workshopRoot?: string) {
 	}
 }
 
-function getForceFresh(cacheEntry: CacheEntry | null | undefined) {
-	if (!cacheEntry) return true
-	const latestModifiedTime = Math.max(...Array.from(modifiedTimes.values()))
-	if (!latestModifiedTime) return undefined
-	return latestModifiedTime > cacheEntry.metadata.createdTime ? true : undefined
-}
 
-export function setModifiedTimesForAppDirs(...filePaths: Array<string>) {
-	const now = Date.now()
-	let shouldRefreshVirtualFS = false
-	
-	for (const filePath of filePaths) {
-		const appDir = getAppPathFromFilePath(filePath)
-		if (appDir) {
-			modifiedTimes.set(appDir, now)
-		}
-		
-		// Check if this change affects exercises or examples directories
-		const relativePath = path.relative(getWorkshopRoot(), filePath)
-		const pathParts = relativePath.split(path.sep)
-		if (pathParts[0] === 'exercises' || pathParts[0] === 'examples') {
-			shouldRefreshVirtualFS = true
-		}
-	}
-	
-	// Refresh virtual file system if needed
-	if (shouldRefreshVirtualFS) {
-		import('./files.server.js').then(({ refreshVirtualFileSystem }) => {
-			refreshVirtualFileSystem().catch((error) => {
-				console.error('Failed to refresh virtual file system:', error)
-			})
-		})
-	}
-}
 
-export function getForceFreshForDir(
-	cacheEntry: CacheEntry | null | undefined,
-	...dirs: Array<string | undefined | null>
-) {
-	const truthyDirs = dirs.filter(Boolean)
-	for (const d of truthyDirs) {
-		if (!path.isAbsolute(d)) {
-			throw new Error(`Trying to get force fresh for non-absolute path: ${d}`)
-		}
-	}
-	if (!cacheEntry) return true
-	const latestModifiedTime = truthyDirs.reduce((latest, dir) => {
-		const modifiedTime = modifiedTimes.get(dir)
-		return modifiedTime && modifiedTime > latest ? modifiedTime : latest
-	}, 0)
-	if (!latestModifiedTime) return undefined
-	return latestModifiedTime > cacheEntry.metadata.createdTime ? true : undefined
-}
 
 async function readDir(dir: string) {
 	if (await exists(dir)) {
@@ -427,7 +381,6 @@ async function _getExercises({
 	const apps = await getApps({ request, timings })
 	
 	// Use virtual file system for reading exercises directory
-	const { getDirectoryContents } = await import('./files.server.js')
 	const exerciseDirs = await getDirectoryContents(path.join(getWorkshopRoot(), 'exercises'))
 	const exercises: Array<Exercise> = []
 	for (const dirName of exerciseDirs) {
@@ -622,7 +575,6 @@ async function getProblemDirs() {
 	const problemDirs = []
 	
 	// Use virtual file system for reading exercises directory
-	const { getDirectoryContents } = await import('./files.server.js')
 	const exerciseSubDirs = await getDirectoryContents(exercisesDir)
 	
 	for (const subDir of exerciseSubDirs) {
@@ -652,7 +604,6 @@ async function getSolutionDirs() {
 	const solutionDirs = []
 	
 	// Use virtual file system for reading exercises directory
-	const { getDirectoryContents } = await import('./files.server.js')
 	const exerciseSubDirs = await getDirectoryContents(exercisesDir)
 	
 	for (const subDir of exerciseSubDirs) {
@@ -964,7 +915,6 @@ async function getExampleApps({
 	const examplesDir = path.join(getWorkshopRoot(), 'examples')
 	
 	// Use virtual file system for reading examples directory
-	const { getDirectoryContents } = await import('./files.server.js')
 	const exampleDirNames = await getDirectoryContents(examplesDir)
 	const exampleDirs = exampleDirNames.map((p) => path.join(examplesDir, p))
 
@@ -1582,31 +1532,4 @@ export function getRelativePath(filePath: string) {
 /**
  * Given a file path, this will determine the path to the app that file belongs to.
  */
-export function getAppPathFromFilePath(filePath: string): string | null {
-	const [, withinWorkshopRootHalf] = filePath.split(getWorkshopRoot())
-	if (!withinWorkshopRootHalf) {
-		return null
-	}
 
-	const [part1, part2, part3] = withinWorkshopRootHalf
-		.split(path.sep)
-		.filter(Boolean)
-
-	// Check if the file is in the playground
-	if (part1 === 'playground') {
-		return path.join(getWorkshopRoot(), 'playground')
-	}
-
-	// Check if the file is in an example
-	if (part1 === 'examples' && part2) {
-		return path.join(getWorkshopRoot(), 'examples', part2)
-	}
-
-	// Check if the file is in an exercise
-	if (part1 === 'exercises' && part2 && part3) {
-		return path.join(getWorkshopRoot(), 'exercises', part2, part3)
-	}
-
-	// If we couldn't determine the app path, return null
-	return null
-}
