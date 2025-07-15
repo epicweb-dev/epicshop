@@ -5,8 +5,8 @@ import {
 	getApps,
 	getWorkshopRoot,
 	init as initApps,
-	setModifiedTimesForAppDirs,
 } from '@epic-web/workshop-utils/apps.server'
+import { setModifiedTimesForAppDirs } from '@epic-web/workshop-utils/files.server'
 import { getWorkshopUrl } from '@epic-web/workshop-utils/config.server'
 import { getEnv, init as initEnv } from '@epic-web/workshop-utils/env.server'
 import { requestContext } from '@epic-web/workshop-utils/request-context.server'

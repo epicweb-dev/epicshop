@@ -1,12 +1,8 @@
 import fs from 'node:fs'
 import path from 'node:path'
-import { type CacheEntry } from '@epic-web/cachified'
 import { invariant } from '@epic-web/invariant'
-import { remember } from '@epic-web/remember'
-import chokidar from 'chokidar'
 /// TODO: figure out why this import is necessary (without it tsc seems to not honor the boolean reset 🤷‍♂️)
 import '@total-typescript/ts-reset'
-import closeWithGrace from 'close-with-grace'
 import { execa } from 'execa'
 import fsExtra from 'fs-extra'
 import { globby, isGitIgnored } from 'globby'
@@ -24,6 +20,14 @@ import { compileMdx } from './compile-mdx.server.js'
 import { getAppConfig, getStackBlitzUrl } from './config.server.js'
 import { getPreferences } from './db.server.js'
 import { getEnv, init as initEnv } from './env.server.js'
+import {
+	isDirectoryEmpty as virtualIsDirectoryEmpty,
+	getDirectoryContents,
+	getForceFreshForDir,
+	getForceFresh,
+	modifiedTimes,
+	initializeVirtualFileSystem,
+} from './files.server.js'
 import { getDirModifiedTime } from './modified-time.server.js'
 import {
 	closeProcess,
@@ -223,6 +227,17 @@ function exists(file: string) {
 }
 
 async function isDirectoryEmpty(dirPath: string): Promise<boolean> {
+	// Use the new virtual file system for exercises and examples directories
+	const workshopRoot = getWorkshopRoot()
+	const relativePath = path.relative(workshopRoot, dirPath)
+	const pathParts = relativePath.split(path.sep)
+
+	// Use virtual file system for exercises and examples
+	if (pathParts[0] === 'exercises' || pathParts[0] === 'examples') {
+		return virtualIsDirectoryEmpty(dirPath)
+	}
+
+	// For other directories, use the existing cached implementation
 	return cachified({
 		key: dirPath,
 		cache: directoryEmptyCache,
@@ -249,11 +264,6 @@ async function firstToExist(...files: Array<string>) {
 	return index === -1 ? null : files[index]
 }
 
-export const modifiedTimes = remember(
-	'modified_times',
-	() => new Map<string, number>(),
-)
-
 export async function init(workshopRoot?: string) {
 	setWorkshopRoot(workshopRoot)
 
@@ -266,92 +276,14 @@ export async function init(workshopRoot?: string) {
 		global.ENV = getEnv()
 	}
 
+	// Initialize virtual file system which handles all file watching
+	// (exercises, examples, and playground directories)
 	if (
 		!ENV.EPICSHOP_DEPLOYED &&
 		process.env.EPICSHOP_ENABLE_WATCHER === 'true'
 	) {
-		const isIgnored = await isGitIgnored({ cwd: getWorkshopRoot() })
-
-		// watch the README, FINISHED, and package.json for changes that affect the apps
-		const filesToWatch = ['README.mdx', 'FINISHED.mdx', 'package.json']
-		const chok = chokidar.watch(['examples', 'playground', 'exercises'], {
-			cwd: getWorkshopRoot(),
-			ignoreInitial: true,
-			ignored(filePath, stats) {
-				if (isIgnored(filePath)) return true
-				if (filePath.includes('.git')) return true
-
-				if (stats?.isDirectory()) {
-					if (filePath.endsWith('playground')) return false
-					const pathParts = filePath.split(path.sep)
-					if (pathParts.at(-2) === 'examples') return false
-
-					// steps
-					if (pathParts.at(-3) === 'exercises') return false
-
-					// exercises
-					if (pathParts.at(-2) === 'exercises') return false
-
-					// the exercise dir itself
-					if (pathParts.at(-1) === 'exercises') return false
-					return true
-				}
-
-				return stats?.isFile()
-					? !filesToWatch.some((file) => filePath.endsWith(file))
-					: false
-			},
-		})
-
-		chok.on('all', (_event, filePath) => {
-			setModifiedTimesForAppDirs(path.join(getWorkshopRoot(), filePath))
-		})
-
-		closeWithGrace(() => chok.close())
+		await initializeVirtualFileSystem()
 	}
-}
-
-function getForceFresh(cacheEntry: CacheEntry | null | undefined) {
-	if (!cacheEntry) return true
-	const latestModifiedTime = Math.max(...Array.from(modifiedTimes.values()))
-	if (!latestModifiedTime) return undefined
-	return latestModifiedTime > cacheEntry.metadata.createdTime ? true : undefined
-}
-
-export function setModifiedTimesForAppDirs(...filePaths: Array<string>) {
-	const now = Date.now()
-	for (const filePath of filePaths) {
-		const appDir = getAppPathFromFilePath(filePath)
-		if (appDir) {
-			modifiedTimes.set(appDir, now)
-		}
-	}
-}
-
-export function getForceFreshForDir(
-	cacheEntry: CacheEntry | null | undefined,
-	...dirs: Array<string | undefined | null>
-) {
-	const truthyDirs = dirs.filter(Boolean)
-	for (const d of truthyDirs) {
-		if (!path.isAbsolute(d)) {
-			throw new Error(`Trying to get force fresh for non-absolute path: ${d}`)
-		}
-	}
-	if (!cacheEntry) return true
-	const latestModifiedTime = truthyDirs.reduce((latest, dir) => {
-		const modifiedTime = modifiedTimes.get(dir)
-		return modifiedTime && modifiedTime > latest ? modifiedTime : latest
-	}, 0)
-	if (!latestModifiedTime) return undefined
-	return latestModifiedTime > cacheEntry.metadata.createdTime ? true : undefined
-}
-
-async function readDir(dir: string) {
-	if (await exists(dir)) {
-		return fs.promises.readdir(dir)
-	}
-	return []
 }
 
 async function compileMdxIfExists(
@@ -405,7 +337,11 @@ async function _getExercises({
 	request,
 }: CachifiedOptions = {}): Promise<Array<Exercise>> {
 	const apps = await getApps({ request, timings })
-	const exerciseDirs = await readDir(path.join(getWorkshopRoot(), 'exercises'))
+
+	// Use virtual file system for reading exercises directory
+	const exerciseDirs = await getDirectoryContents(
+		path.join(getWorkshopRoot(), 'exercises'),
+	)
 	const exercises: Array<Exercise> = []
 	for (const dirName of exerciseDirs) {
 		const exerciseNumber = extractExerciseNumber(dirName)
@@ -597,12 +533,16 @@ export function extractNumbersAndTypeFromAppNameOrPath(
 async function getProblemDirs() {
 	const exercisesDir = path.join(getWorkshopRoot(), 'exercises')
 	const problemDirs = []
-	const exerciseSubDirs = await readDir(exercisesDir)
+
+	// Use virtual file system for reading exercises directory
+	const exerciseSubDirs = await getDirectoryContents(exercisesDir)
+
 	for (const subDir of exerciseSubDirs) {
 		const fullSubDir = path.join(exercisesDir, subDir)
-		// catch handles non-directories without us having to bother checking
-		// whether it's a directory
-		const subDirContents = await readDir(fullSubDir).catch(() => null)
+		// Use virtual file system for reading exercise subdirectory
+		const subDirContents = await getDirectoryContents(fullSubDir).catch(
+			() => null,
+		)
 		if (!subDirContents) continue
 		const problemSubDirs = subDirContents
 			.filter((dir) => dir.includes('.problem'))
@@ -624,12 +564,16 @@ async function getProblemDirs() {
 async function getSolutionDirs() {
 	const exercisesDir = path.join(getWorkshopRoot(), 'exercises')
 	const solutionDirs = []
-	const exerciseSubDirs = await readDir(exercisesDir)
+
+	// Use virtual file system for reading exercises directory
+	const exerciseSubDirs = await getDirectoryContents(exercisesDir)
+
 	for (const subDir of exerciseSubDirs) {
 		const fullSubDir = path.join(exercisesDir, subDir)
-		// catch handles non-directories without us having to bother checking
-		// whether it's a directory
-		const subDirContents = await readDir(fullSubDir).catch(() => null)
+		// Use virtual file system for reading exercise subdirectory
+		const subDirContents = await getDirectoryContents(fullSubDir).catch(
+			() => null,
+		)
 		if (!subDirContents) continue
 		const solutionSubDirs = subDirContents
 			.filter((dir) => dir.includes('.solution'))
@@ -933,9 +877,10 @@ async function getExampleApps({
 	request,
 }: CachifiedOptions = {}): Promise<Array<ExampleApp>> {
 	const examplesDir = path.join(getWorkshopRoot(), 'examples')
-	const exampleDirs = (await readDir(examplesDir)).map((p) =>
-		path.join(examplesDir, p),
-	)
+
+	// Use virtual file system for reading examples directory
+	const exampleDirNames = await getDirectoryContents(examplesDir)
+	const exampleDirs = exampleDirNames.map((p) => path.join(examplesDir, p))
 
 	const exampleApps: Array<ExampleApp> = []
 
@@ -1551,31 +1496,3 @@ export function getRelativePath(filePath: string) {
 /**
  * Given a file path, this will determine the path to the app that file belongs to.
  */
-export function getAppPathFromFilePath(filePath: string): string | null {
-	const [, withinWorkshopRootHalf] = filePath.split(getWorkshopRoot())
-	if (!withinWorkshopRootHalf) {
-		return null
-	}
-
-	const [part1, part2, part3] = withinWorkshopRootHalf
-		.split(path.sep)
-		.filter(Boolean)
-
-	// Check if the file is in the playground
-	if (part1 === 'playground') {
-		return path.join(getWorkshopRoot(), 'playground')
-	}
-
-	// Check if the file is in an example
-	if (part1 === 'examples' && part2) {
-		return path.join(getWorkshopRoot(), 'examples', part2)
-	}
-
-	// Check if the file is in an exercise
-	if (part1 === 'exercises' && part2 && part3) {
-		return path.join(getWorkshopRoot(), 'exercises', part2, part3)
-	}
-
-	// If we couldn't determine the app path, return null
-	return null
-}

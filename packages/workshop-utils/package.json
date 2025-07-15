@@ -16,6 +16,7 @@
       "./diff.server": "./src/diff.server.ts",
       "./env.server": "./src/env.server.ts",
       "./epic-api.server": "./src/epic-api.server.ts",
+      "./files.server": "./src/files.server.ts",
       "./user.server": "./src/user.server.ts",
       "./cache.server": "./src/cache.server.ts",
       "./config.server": "./src/config.server.ts",
@@ -58,6 +59,12 @@
       "import": {
         "types": "./dist/esm/epic-api.server.d.ts",
         "default": "./dist/esm/epic-api.server.js"
+      }
+    },
+    "./files.server": {
+      "import": {
+        "types": "./dist/esm/files.server.d.ts",
+        "default": "./dist/esm/files.server.js"
       }
     },
     "./user.server": {
