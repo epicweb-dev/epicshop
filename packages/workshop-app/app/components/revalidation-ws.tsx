@@ -35,7 +35,12 @@ function useRevalidationWSImpl({ watchPaths }: { watchPaths: Array<string> }) {
 		function createWebSocket() {
 			if (ws) ws.close()
 
-			ws = new WebSocket(socketPath)
+			try {
+				ws = new WebSocket(socketPath)
+			} catch (error) {
+				console.error('🐨 EpicShop WebSocket failed to connect:', error)
+				return
+			}
 
 			ws.onmessage = (message) => {
 				const eventParsed = eventSchema.safeParse(JSON.parse(message.data))
