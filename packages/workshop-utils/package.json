@@ -163,7 +163,12 @@
   "scripts": {
     "typecheck": "tsc --noEmit",
     "build": "tshy",
-    "build:watch": "nx watch --projects=@epic-web/workshop-utils -- nx run \\$NX_PROJECT_NAME:build"
+    "build:watch": "nx watch --projects=@epic-web/workshop-utils -- nx run \\$NX_PROJECT_NAME:build",
+    "test": "vitest",
+    "test:watch": "vitest --watch",
+    "test:run": "vitest run",
+    "test:ui": "vitest --ui",
+    "test:coverage": "vitest run --coverage"
   },
   "dependencies": {
     "@epic-web/cachified": "^5.6.0",
@@ -218,7 +223,10 @@
     "@types/hast": "^3.0.4",
     "@types/mdast": "^4.0.4",
     "@types/node": "^24.0.10",
-    "tshy": "^3.0.2"
+    "@vitest/coverage-v8": "^3.2.4",
+    "@vitest/ui": "^3.2.4",
+    "tshy": "^3.0.2",
+    "vitest": "^3.2.4"
   },
   "repository": {
     "type": "git",
