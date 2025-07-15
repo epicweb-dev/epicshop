@@ -116,12 +116,19 @@ function CopyButton(): React.ReactNode {
 			className={cn(buttonClassName, 'w-12 uppercase')}
 			onClick={async (event) => {
 				if (navigator.clipboard) {
-					setCopied(true)
-					const button = event.currentTarget
-					const code =
-						button.parentElement?.parentElement?.querySelector('pre')
-							?.textContent || ''
-					await navigator.clipboard.writeText(code)
+					try {
+						const button = event.currentTarget
+						const code =
+							button.parentElement?.parentElement?.querySelector('pre')
+								?.textContent || ''
+						await navigator.clipboard.writeText(code)
+						setCopied(true)
+					} catch (error) {
+						console.error('Failed to copy to clipboard:', error)
+						toast.error('Failed to copy to clipboard', {
+							description: 'Please try again or copy the code manually.',
+						})
+					}
 				} else {
 					toast.error('Copying is only available in secure contexts (HTTPS or localhost).', {
 						description: 'Please access the workshop via localhost instead of an IP address to enable this feature.',
