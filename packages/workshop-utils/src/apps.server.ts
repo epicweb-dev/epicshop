@@ -286,8 +286,6 @@ export async function init(workshopRoot?: string) {
 	}
 }
 
-
-
 async function compileMdxIfExists(
 	filepath: string,
 	{ request }: { request?: Request } = {},
