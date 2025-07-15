@@ -150,47 +150,9 @@ function readRootPkgJson(): any {
 }
 
 /**
- * Generate a URL with subdomain support
- * Only applies subdomain logic when not deployed
+ * This used to support subdomains on localhost, but that caused too many issues.
  */
-export function getWorkshopUrl(port: number, subdomain?: string): string {
-	// Check if deployed - use process.env directly since ENV might not be initialized yet
-	const isDeployed =
-		process.env.EPICSHOP_DEPLOYED === 'true' ||
-		process.env.EPICSHOP_DEPLOYED === '1'
-
-	// Only use subdomain logic when not deployed
-	if (!isDeployed) {
-		const config = getWorkshopConfig()
-		let subdomainToUse = subdomain ?? config.subdomain
-
-		// Fallback to package.json name if subdomain is not set
-		if (!subdomainToUse) {
-			try {
-				const packageJson = readRootPkgJson()
-				if (
-					packageJson &&
-					typeof packageJson === 'object' &&
-					'name' in packageJson &&
-					typeof packageJson.name === 'string'
-				) {
-					let name = packageJson.name as string
-					// Sanitize: lowercased, non-alphanumeric to dashes, trim dashes
-					subdomainToUse = name
-						.toLowerCase()
-						.replace(/[^a-z0-9-]/g, '-')
-						.replace(/^-+|-+$/g, '')
-				}
-			} catch {
-				// ignore, fallback to localhost
-			}
-		}
-
-		if (subdomainToUse) {
-			return `http://${subdomainToUse}.localhost:${port}`
-		}
-	}
-
+export function getWorkshopUrl(port: number) {
 	return `http://localhost:${port}`
 }
 
