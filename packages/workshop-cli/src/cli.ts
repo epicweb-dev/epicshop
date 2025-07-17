@@ -426,7 +426,6 @@ async function warmCommand() {
 		)
 
 		let diffCount = 0
-		const diffPromises = []
 
 		for (const problemApp of problemApps) {
 			// Find the corresponding solution app
@@ -439,24 +438,18 @@ async function warmCommand() {
 			if (solutionApp) {
 				const pairName = `${problemApp.exerciseNumber.toString().padStart(2, '0')}.${problemApp.stepNumber.toString().padStart(2, '0')}.problem vs ${solutionApp.exerciseNumber.toString().padStart(2, '0')}.${solutionApp.stepNumber.toString().padStart(2, '0')}.solution`
 
-				diffPromises.push(
-					getDiffOutputWithRelativePaths(problemApp, solutionApp)
-						.then(() => {
-							diffCount++
-							console.log(chalk.gray(`  ✓ ${pairName}`))
-						})
-						.catch((error) => {
-							console.error(
-								chalk.red(`  ❌ ${pairName}:`),
-								error instanceof Error ? error.message : String(error),
-							)
-						}),
-				)
+				try {
+					await getDiffOutputWithRelativePaths(problemApp, solutionApp)
+					diffCount++
+					console.log(chalk.gray(`  ✓ ${pairName}`))
+				} catch (error) {
+					console.error(
+						chalk.red(`  ❌ ${pairName}:`),
+						error instanceof Error ? error.message : String(error),
+					)
+				}
 			}
 		}
-
-		// Execute all diff operations in parallel
-		await Promise.all(diffPromises)
 
 		console.log(chalk.green(`✅ Generated ${diffCount} diffs`))
 		console.log(chalk.green('🔥 Cache warming complete!'))
