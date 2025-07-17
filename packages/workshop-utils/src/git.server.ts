@@ -263,6 +263,9 @@ export async function getLatestWorkshopAppVersion() {
 }
 
 export async function checkForExerciseChanges() {
+	const ENV = getEnv()
+	if (ENV.EPICSHOP_DEPLOYED) return false
+
 	const cwd = getWorkshopRoot()
 	try {
 		const { stdout } = await execaCommand('git status --porcelain exercises/', {
