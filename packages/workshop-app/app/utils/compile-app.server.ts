@@ -12,8 +12,13 @@ import * as esbuild from 'esbuild'
 
 async function getForceFresh(
 	filePath: string,
-	cacheEntry: CacheEntry | null | undefined,
+	cacheEntry:
+		| CacheEntry
+		| null
+		| undefined
+		| Promise<CacheEntry | null | undefined>,
 ) {
+	cacheEntry = await cacheEntry
 	if (!cacheEntry) return true
 	const app = await getAppFromFile(filePath)
 	if (!app) return true
