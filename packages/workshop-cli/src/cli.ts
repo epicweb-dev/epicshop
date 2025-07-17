@@ -16,6 +16,8 @@ import {
 	updateLocalRepo,
 	checkForUpdatesCached,
 } from '@epic-web/workshop-utils/git.server'
+import { getApps, isProblemApp, isSolutionApp } from '@epic-web/workshop-utils/apps.server'
+import { getDiffOutputWithRelativePaths } from '@epic-web/workshop-utils/diff.server'
 import chalk from 'chalk'
 import closeWithGrace from 'close-with-grace'
 import getPort from 'get-port'
@@ -402,6 +404,58 @@ async function updateCommand() {
 	}
 }
 
+async function warmCommand() {
+	console.log(chalk.blue('🔥 Warming up caches...'))
+	
+	try {
+		// Warm up the apps cache
+		console.log(chalk.yellow('📱 Loading apps...'))
+		const apps = await getApps()
+		console.log(chalk.green(`✅ Loaded ${apps.length} apps`))
+		
+		// Get problem/solution pairs and generate diffs to warm the diff cache
+		const problemApps = apps.filter(isProblemApp)
+		const solutionApps = apps.filter(isSolutionApp)
+		
+		console.log(chalk.yellow('🔄 Generating diffs for problem/solution pairs...'))
+		
+		let diffCount = 0
+		const diffPromises = []
+		
+		for (const problemApp of problemApps) {
+			// Find the corresponding solution app
+			const solutionApp = solutionApps.find(
+				(sol) => 
+					sol.exerciseNumber === problemApp.exerciseNumber &&
+					sol.stepNumber === problemApp.stepNumber
+			)
+			
+			if (solutionApp) {
+				diffPromises.push(
+					getDiffOutputWithRelativePaths(problemApp, solutionApp)
+						.then(() => {
+							diffCount++
+							process.stdout.write(chalk.gray('.'))
+						})
+						.catch((error) => {
+							console.error(chalk.red(`\n❌ Error generating diff for ${problemApp.name} vs ${solutionApp.name}:`), error instanceof Error ? error.message : String(error))
+						})
+				)
+			}
+		}
+		
+		// Execute all diff operations in parallel
+		await Promise.all(diffPromises)
+		
+		console.log(chalk.green(`\n✅ Generated ${diffCount} diffs`))
+		console.log(chalk.green('🔥 Cache warming complete!'))
+		
+	} catch (error) {
+		console.error(chalk.red('❌ Error warming caches:'), error)
+		process.exit(1)
+	}
+}
+
 async function killChild(child: ChildProcess | null): Promise<void> {
 	if (!child) return
 	return new Promise((resolve) => {
@@ -552,7 +606,7 @@ async function getEpicshopContextCwd(): Promise<string> {
 		const pkgPath = path.join(dir, 'package.json')
 		try {
 			const pkgRaw = await fs.promises.readFile(pkgPath, 'utf8')
-			const pkg = JSON.parse(pkgRaw)
+			const pkg = JSON.parse(pkgRaw) as { epicshop?: boolean }
 			if (pkg.epicshop) {
 				return dir
 			}
@@ -606,6 +660,16 @@ const cli = yargs(hideBin(process.argv))
 		},
 		async (_argv: ArgumentsCamelCase<Record<string, unknown>>) => {
 			await updateCommand()
+		},
+	)
+	.command(
+		['warm'],
+		'Warm up the workshop application caches (apps, diffs)',
+		(yargs: Argv) => {
+			return yargs.example('$0 warm', 'Warm up workshop caches')
+		},
+		async (_argv: ArgumentsCamelCase<Record<string, unknown>>) => {
+			await warmCommand()
 		},
 	)
 	.epilogue(
