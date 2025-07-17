@@ -5,20 +5,23 @@
     "access": "public"
   },
   "type": "module",
-  "bin": {
-    "epicshop": "./dist/esm/cli.js"
-  },
+
   "tshy": {
     "project": "./tsconfig.build.json",
     "dialects": [
       "esm"
     ],
     "exports": {
-      "./package.json": "./package.json"
-    }
+      "./package.json": "./package.json",
+      ".": "./src/programmatic.js"
+    },
+    "exclude": [
+      "src/cli.ts"
+    ]
   },
   "exports": {
-    "./package.json": "./package.json"
+    "./package.json": "./package.json",
+    ".": "./dist/esm/programmatic.js"
   },
   "files": [
     "dist"
