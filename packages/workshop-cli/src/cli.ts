@@ -17,7 +17,10 @@ import {
 	muteNotification,
 	getMutedNotifications,
 } from '@epic-web/workshop-utils/db.server'
-import { getDiffOutputWithRelativePaths } from '@epic-web/workshop-utils/diff.server'
+import {
+	getDiffOutputWithRelativePaths,
+	getDiffFiles,
+} from '@epic-web/workshop-utils/diff.server'
 import {
 	updateLocalRepo,
 	checkForUpdatesCached,
@@ -422,7 +425,9 @@ async function warmCommand() {
 		const solutionApps = apps.filter(isSolutionApp)
 
 		console.log(
-			chalk.yellow('🔄 Generating diffs for problem/solution pairs...'),
+			chalk.yellow(
+				'🔄 Generating diffs and diff files for problem/solution pairs...',
+			),
 		)
 
 		let diffCount = 0
@@ -440,6 +445,7 @@ async function warmCommand() {
 
 				try {
 					await getDiffOutputWithRelativePaths(problemApp, solutionApp)
+					await getDiffFiles(problemApp, solutionApp)
 					diffCount++
 					console.log(chalk.gray(`  ✓ ${pairName}`))
 				} catch (error) {
@@ -451,7 +457,7 @@ async function warmCommand() {
 			}
 		}
 
-		console.log(chalk.green(`✅ Generated ${diffCount} diffs`))
+		console.log(chalk.green(`✅ Generated ${diffCount} diffs and diff files`))
 		console.log(chalk.green('🔥 Cache warming complete!'))
 	} catch (error) {
 		console.error(chalk.red('❌ Error warming caches:'), error)
