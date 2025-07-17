@@ -130,9 +130,13 @@ function CopyButton(): React.ReactNode {
 						})
 					}
 				} else {
-					toast.error('Copying is only available in secure contexts (HTTPS or localhost).', {
-						description: 'Please access the workshop via localhost instead of an IP address to enable this feature.',
-					})
+					toast.error(
+						'Copying is only available in secure contexts (HTTPS or localhost).',
+						{
+							description:
+								'Please access the workshop via localhost instead of an IP address to enable this feature.',
+						},
+					)
 				}
 			}}
 		>

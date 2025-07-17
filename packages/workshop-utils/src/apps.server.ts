@@ -228,7 +228,10 @@ async function isDirectoryEmpty(dirPath: string): Promise<boolean> {
 		cache: directoryEmptyCache,
 		ttl: 1000 * 60 * 5,
 		swr: 1000 * 60 * 20,
-		forceFresh: getForceFreshForDir(directoryEmptyCache.get(dirPath), dirPath),
+		forceFresh: await getForceFreshForDir(
+			directoryEmptyCache.get(dirPath),
+			dirPath,
+		),
 		getFreshValue: async () => {
 			try {
 				const files = await fs.promises.readdir(dirPath)
@@ -311,11 +314,20 @@ export async function init(workshopRoot?: string) {
 	}
 }
 
-function getForceFresh(cacheEntry: CacheEntry | null | undefined) {
-	if (!cacheEntry) return true
+async function getForceFresh(
+	cacheEntry:
+		| CacheEntry
+		| null
+		| undefined
+		| Promise<CacheEntry | null | undefined>,
+) {
+	const resolvedCacheEntry = await cacheEntry
+	if (!resolvedCacheEntry) return true
 	const latestModifiedTime = Math.max(...Array.from(modifiedTimes.values()))
 	if (!latestModifiedTime) return undefined
-	return latestModifiedTime > cacheEntry.metadata.createdTime ? true : undefined
+	return latestModifiedTime > resolvedCacheEntry.metadata.createdTime
+		? true
+		: undefined
 }
 
 export function setModifiedTimesForAppDirs(...filePaths: Array<string>) {
@@ -328,8 +340,12 @@ export function setModifiedTimesForAppDirs(...filePaths: Array<string>) {
 	}
 }
 
-export function getForceFreshForDir(
-	cacheEntry: CacheEntry | null | undefined,
+export async function getForceFreshForDir(
+	cacheEntry:
+		| CacheEntry
+		| null
+		| undefined
+		| Promise<CacheEntry | null | undefined>,
 	...dirs: Array<string | undefined | null>
 ) {
 	const truthyDirs = dirs.filter(Boolean)
@@ -338,13 +354,16 @@ export function getForceFreshForDir(
 			throw new Error(`Trying to get force fresh for non-absolute path: ${d}`)
 		}
 	}
-	if (!cacheEntry) return true
+	const resolvedCacheEntry = await cacheEntry
+	if (!resolvedCacheEntry) return true
 	const latestModifiedTime = truthyDirs.reduce((latest, dir) => {
 		const modifiedTime = modifiedTimes.get(dir)
 		return modifiedTime && modifiedTime > latest ? modifiedTime : latest
 	}, 0)
 	if (!latestModifiedTime) return undefined
-	return latestModifiedTime > cacheEntry.metadata.createdTime ? true : undefined
+	return latestModifiedTime > resolvedCacheEntry.metadata.createdTime
+		? true
+		: undefined
 }
 
 async function readDir(dir: string) {
@@ -478,7 +497,7 @@ async function _getApps({
 		// This entire cache is to avoid a single request getting a fresh value
 		// multiple times unnecessarily (because getApps is called many times)
 		ttl: 1000 * 60 * 60 * 24,
-		forceFresh: forceFresh ?? getForceFresh(appsCache.get(key)),
+		forceFresh: forceFresh ?? (await getForceFresh(appsCache.get(key))),
 		getFreshValue: async () => {
 			const [playgroundApp, problemApps, solutionApps, exampleApps] =
 				await Promise.all([
@@ -841,7 +860,7 @@ export async function getPlaygroundApp({
 		timings,
 		timingKey: playgroundDir.replace(`${playgroundDir}${path.sep}`, ''),
 		request,
-		forceFresh: getForceFreshForDir(
+		forceFresh: await getForceFreshForDir(
 			playgroundCacheEntry,
 			playgroundDir,
 			baseAppFullPath,
@@ -950,7 +969,10 @@ async function getExampleApps({
 			timings,
 			timingKey: exampleDir.replace(`${examplesDir}${path.sep}`, ''),
 			request,
-			forceFresh: getForceFreshForDir(exampleAppCache.get(key), exampleDir),
+			forceFresh: await getForceFreshForDir(
+				exampleAppCache.get(key),
+				exampleDir,
+			),
 			getFreshValue: async () => {
 				return getExampleAppFromPath(exampleDir, index, request).catch(
 					(error) => {
@@ -1032,7 +1054,7 @@ async function getSolutionApps({
 			request,
 			ttl: 1000 * 60 * 60 * 24,
 
-			forceFresh: getForceFreshForDir(
+			forceFresh: await getForceFreshForDir(
 				solutionAppCache.get(solutionDir),
 				solutionDir,
 			),
@@ -1115,7 +1137,7 @@ async function getProblemApps({
 			request,
 			ttl: 1000 * 60 * 60 * 24,
 
-			forceFresh: getForceFreshForDir(
+			forceFresh: await getForceFreshForDir(
 				problemAppCache.get(problemDir),
 				problemDir,
 				solutionDir,

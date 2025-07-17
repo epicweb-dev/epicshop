@@ -212,7 +212,7 @@ async function copyUnignoredFiles(
 	await cachified({
 		key,
 		cache: diffCodeCache,
-		forceFresh: getForceFreshForDir(diffCodeCache.get(key), srcDir),
+		forceFresh: await getForceFreshForDir(diffCodeCache.get(key), srcDir),
 		async getFreshValue() {
 			// @ts-ignore 🤷‍♂️ weird module stuff
 			const ig = ignore().add(ignoreList)
@@ -310,10 +310,15 @@ async function getDiffIgnore(filePath: string): Promise<Array<string>> {
 async function getForceFreshForDiff(
 	app1: App,
 	app2: App,
-	cacheEntry: CacheEntry | null | undefined,
+	cacheEntry:
+		| CacheEntry
+		| null
+		| undefined
+		| Promise<CacheEntry | null | undefined>,
 ) {
 	// don't know when the cache was created? force refresh
-	const cacheModified = cacheEntry?.metadata.createdTime
+	const resolvedCacheEntry = await cacheEntry
+	const cacheModified = resolvedCacheEntry?.metadata.createdTime
 	if (!cacheModified) return true
 
 	// app1 modified after cache? force refresh
