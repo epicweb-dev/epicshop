@@ -5,7 +5,7 @@ import { handleGitHubRepoAndRoot } from './utils.js'
 
 const schema = z
 	.object({
-		EPICSHOP_CONTEXT_CWD: z.string(),
+		EPICSHOP_CONTEXT_CWD: z.string().default(process.cwd()),
 		NODE_ENV: z
 			.enum(['production', 'development', 'test'] as const)
 			.default('development'),
@@ -27,20 +27,25 @@ const schema = z
 		SENTRY_PROJECT_ID: z.string().default('4509630082252800'),
 	})
 	.transform(async (env) => {
+		const pkgJsonPath = path.join(env.EPICSHOP_CONTEXT_CWD, 'package.json')
+		const pkgJson = JSON.parse(await fs.readFile(pkgJsonPath, 'utf-8')) as {
+			epicshop?: {
+				githubRepo?: string
+				githubRoot?: string
+			}
+		}
+		const epicshopConfig = pkgJson.epicshop ?? {}
+		if (!epicshopConfig) {
+			throw new Error(
+				`No epicshop configuration found in "${pkgJsonPath}". If this is a workshop directory, please add an "epicshop" section to your package.json. If this is not a workshop directory, please set the EPICSHOP_CONTEXT_CWD environment variable to the directory containing your package.json with the "epicshop" config section.`,
+			)
+		}
 		if (env.EPICSHOP_IS_PUBLISHED === undefined) {
 			env.EPICSHOP_IS_PUBLISHED = env.EPICSHOP_APP_VERSION.includes('0.0.0')
 				? 'false'
 				: 'true'
 		}
 		if (!env.EPICSHOP_GITHUB_REPO || !env.EPICSHOP_GITHUB_ROOT) {
-			const pkgJsonPath = path.join(env.EPICSHOP_CONTEXT_CWD, 'package.json')
-			const pkgJson = JSON.parse(await fs.readFile(pkgJsonPath, 'utf-8')) as {
-				epicshop?: {
-					githubRepo?: string
-					githubRoot?: string
-				}
-			}
-			const epicshopConfig = pkgJson.epicshop ?? {}
 			const { githubRepo, githubRoot } = handleGitHubRepoAndRoot({
 				githubRepo: epicshopConfig.githubRepo,
 				githubRoot: epicshopConfig.githubRoot,

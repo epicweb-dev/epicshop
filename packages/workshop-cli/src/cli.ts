@@ -7,20 +7,12 @@ import http from 'node:http'
 import os from 'node:os'
 import path from 'node:path'
 import { fileURLToPath } from 'node:url'
-import {
-	getApps,
-	isProblemApp,
-	isSolutionApp,
-} from '@epic-web/workshop-utils/apps.server'
 import { getWorkshopUrl } from '@epic-web/workshop-utils/config.server'
 import {
 	muteNotification,
 	getMutedNotifications,
 } from '@epic-web/workshop-utils/db.server'
-import {
-	getDiffOutputWithRelativePaths,
-	getDiffFiles,
-} from '@epic-web/workshop-utils/diff.server'
+import { getEnv, init as initEnv } from '@epic-web/workshop-utils/env.server'
 import {
 	updateLocalRepo,
 	checkForUpdatesCached,
@@ -415,6 +407,12 @@ async function warmCommand() {
 	console.log(chalk.blue('🔥 Warming up caches...'))
 
 	try {
+		const { getApps, isProblemApp, isSolutionApp } = await import(
+			'@epic-web/workshop-utils/apps.server'
+		)
+		const { getDiffOutputWithRelativePaths, getDiffFiles } = await import(
+			'@epic-web/workshop-utils/diff.server'
+		)
 		// Warm up the apps cache
 		console.log(chalk.yellow('📱 Loading apps...'))
 		const apps = await getApps()
@@ -693,4 +691,11 @@ For more information, visit: https://github.com/epicweb-dev/epicshop
 	.demandCommand(0, 1, '', 'Too many commands specified')
 
 // Parse and execute
-await cli.parse()
+try {
+	await initEnv()
+	global.ENV = getEnv()
+	await cli.parse()
+} catch (error) {
+	console.error(chalk.red('❌ Error:'), error)
+	process.exit(1)
+}
