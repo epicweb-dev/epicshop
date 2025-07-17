@@ -33,6 +33,7 @@
   "scripts": {
     "start": "npx --prefix ./epicshop epicshop start",
     "dev": "npx --prefix ./epicshop epicshop start",
+    "warm": "npx --prefix ./epicshop epicshop warm",
     "setup": "node ./epicshop/setup.js",
     "setup:custom": "node ./epicshop/setup-custom.js",
     "lint": "eslint .",

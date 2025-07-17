@@ -11,6 +11,7 @@
     "go": "cross-env NODE_ENV=development EPICSHOP_CONTEXT_CWD=$PWD/packages/example tsx watch $@",
     "start": "cross-env NODE_ENV=production npm --prefix example run start",
     "dev": "npm --prefix example run start",
+    "warm": "npm --prefix example run warm",
     "test": "./other/nx-fallback.js test",
     "format": "./other/nx-fallback.js format:write",
     "validate": "./other/nx-fallback.js run-many --target build,typecheck,lint,test --parallel"
