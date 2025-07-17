@@ -18,18 +18,21 @@ import { cachifiedTimingReporter, type Timings } from './timing.server.js'
 import { checkConnectionCached } from './utils.server.js'
 
 export const solutionAppCache =
-	makeSingletonCache<SolutionApp>('SolutionAppCache')
-export const problemAppCache = makeSingletonCache<ProblemApp>('ProblemAppCache')
-export const exampleAppCache = makeSingletonCache<ExampleApp>('ExampleAppCache')
+	makeSingletonFsCache<SolutionApp>('SolutionAppCache')
+export const problemAppCache =
+	makeSingletonFsCache<ProblemApp>('ProblemAppCache')
+export const exampleAppCache =
+	makeSingletonFsCache<ExampleApp>('ExampleAppCache')
 export const playgroundAppCache =
-	makeSingletonCache<PlaygroundApp>('PlaygroundAppCache')
-export const appsCache = makeSingletonCache<App>('AppsCache')
-export const diffCodeCache = makeSingletonCache<string>('DiffCodeCache')
-export const diffFilesCache = makeSingletonCache<string>('DiffFilesCache')
-export const compiledMarkdownCache = makeSingletonCache<string>(
+	makeSingletonFsCache<PlaygroundApp>('PlaygroundAppCache')
+export const appsCache = makeSingletonFsCache<App>('AppsCache')
+export const diffCodeCache = makeSingletonFsCache<string>('DiffCodeCache')
+export const diffFilesCache = makeSingletonFsCache<string>('DiffFilesCache')
+export const compiledMarkdownCache = makeSingletonFsCache<string>(
 	'CompiledMarkdownCache',
 )
-export const compiledCodeCache = makeSingletonCache<string>('CompiledCodeCache')
+export const compiledCodeCache =
+	makeSingletonFsCache<string>('CompiledCodeCache')
 export const ogCache = makeSingletonCache<string>('OgCache')
 export const compiledInstructionMarkdownCache = makeSingletonFsCache<{
 	code: string
