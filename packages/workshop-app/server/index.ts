@@ -9,7 +9,7 @@ import {
 } from '@epic-web/workshop-utils/apps.server'
 import { getWorkshopUrl } from '@epic-web/workshop-utils/config.server'
 import { getEnv, init as initEnv } from '@epic-web/workshop-utils/env.server'
-import { requestContext } from '@epic-web/workshop-utils/request-context.server'
+import { requestContext, initializeRequestContext } from '@epic-web/workshop-utils/request-context.server'
 import { checkConnectionCached } from '@epic-web/workshop-utils/utils.server'
 import { createRequestHandler } from '@react-router/express'
 import { ip as ipAddress } from 'address'
@@ -98,7 +98,10 @@ if ((!isProd && !ENV.EPICSHOP_IS_PUBLISHED) || ENV.EPICSHOP_DEPLOYED) {
 	app.use(morgan('tiny'))
 }
 
-app.use((_req, _res, next) => requestContext.run({}, next))
+app.use((req, _res, next) => {
+	const contextStore = initializeRequestContext(req)
+	requestContext.run(contextStore, next)
+})
 
 function getNumberOrNull(value: unknown) {
 	if (value == null) return null

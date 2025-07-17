@@ -9,6 +9,7 @@ import {
 	type LoaderFunctionArgs,
 	type ActionFunctionArgs,
 } from 'react-router'
+import { getServerTimeHeader } from '@epic-web/workshop-utils/request-context.server'
 
 export const streamTimeout = 15000
 const ABORT_DELAY = streamTimeout + 1000
@@ -43,6 +44,16 @@ export default function handleRequest(
 					const body = new PassThrough()
 
 					responseHeaders.set('Content-Type', 'text/html')
+
+					// Add Server-Timing header automatically
+					try {
+						const serverTimingHeader = getServerTimeHeader()
+						if (serverTimingHeader) {
+							responseHeaders.set('Server-Timing', serverTimingHeader)
+						}
+					} catch (error) {
+						// Ignore errors if no request context is available
+					}
 
 					if (ENV.EPICSHOP_IS_PUBLISHED && process.env.SENTRY_DSN) {
 						responseHeaders.append('Document-Policy', 'js-profiling')
