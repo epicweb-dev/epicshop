@@ -1,6 +1,7 @@
 import { getFormProps, useForm } from '@conform-to/react'
 import { parseWithZod } from '@conform-to/zod'
 import { data, redirect, useFetcher, useFetchers } from 'react-router'
+import { safeRedirect } from 'remix-utils/safe-redirect'
 import { z } from 'zod'
 import { Icon } from '#app/components/icons.tsx'
 import { SimpleTooltip } from '#app/components/ui/tooltip.tsx'
@@ -19,7 +20,7 @@ const ThemeFormSchema = z.object({
 
 export async function loader({ request }: Route.LoaderArgs) {
 	const referrer = request.headers.get('Referer')
-	return redirect(referrer ?? '/', {
+	return redirect(safeRedirect(referrer ?? '/'), {
 		headers: { 'Cache-Control': 'no-cache' },
 	})
 }
