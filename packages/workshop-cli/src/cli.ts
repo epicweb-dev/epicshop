@@ -4,14 +4,6 @@ import chalk from 'chalk'
 import yargs, { type ArgumentsCamelCase, type Argv } from 'yargs'
 import { hideBin } from 'yargs/helpers'
 
-const supportedKeys = [
-	`${chalk.blue('o')} - open workshop app`,
-	`${chalk.green('u')} - update workshop`,
-	`${chalk.magenta('r')} - restart workshop app`,
-	`${chalk.cyan('k')} - Kody kudos 🐨`,
-	`${chalk.gray('q')} - exit (or ${chalk.gray('Ctrl+C')})`,
-]
-
 // Set up yargs CLI
 const cli = yargs(hideBin(process.argv))
 	.scriptName('epicshop')
@@ -97,12 +89,7 @@ const cli = yargs(hideBin(process.argv))
 		},
 	)
 	.epilogue(
-		`
-${chalk.bold('Interactive keys (available during start command):')}
-  ${supportedKeys.join('\n  ')}
-
-For more information, visit: https://github.com/epicweb-dev/epicshop
-`,
+		`For more information, visit: https://github.com/epicweb-dev/epicshop`,
 	)
 	.strict()
 	.demandCommand(0, 1, '', 'Too many commands specified')
