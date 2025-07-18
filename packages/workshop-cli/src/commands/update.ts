@@ -27,13 +27,17 @@ export async function update({
 		)
 		const result = await updateLocalRepo()
 		if (result.status === 'success') {
-			console.log(`✅ ${result.message}`)
+			if (!silent) {
+				console.log(`✅ ${result.message}`)
+			}
 			return {
 				success: true,
 				message: result.message,
 			}
 		} else {
-			console.error(`❌ ${result.message}`)
+			if (!silent) {
+				console.error(`❌ ${result.message}`)
+			}
 			return {
 				success: false,
 				message: result.message,
