@@ -1,6 +1,7 @@
 import fs from 'node:fs/promises'
 import path from 'node:path'
 import { fileURLToPath } from 'node:url'
+import md5 from 'md5-hex'
 import { z } from 'zod'
 import { handleGitHubRepoAndRoot } from './utils.js'
 
@@ -9,6 +10,7 @@ const __dirname = path.dirname(new URL(import.meta.url).pathname)
 const schema = z
 	.object({
 		EPICSHOP_CONTEXT_CWD: z.string().default(''),
+		EPICSHOP_WORKSHOP_INSTANCE_ID: z.string().default(''),
 		NODE_ENV: z
 			.enum(['production', 'development', 'test'] as const)
 			.default('development'),
@@ -34,6 +36,9 @@ const schema = z
 	.transform(async (env) => {
 		if (env.EPICSHOP_CONTEXT_CWD === '') {
 			env.EPICSHOP_CONTEXT_CWD = await getEpicshopContextCwd()
+		}
+		if (env.EPICSHOP_WORKSHOP_INSTANCE_ID === '') {
+			env.EPICSHOP_WORKSHOP_INSTANCE_ID = md5(env.EPICSHOP_CONTEXT_CWD)
 		}
 		const pkgJsonPath = path.join(env.EPICSHOP_CONTEXT_CWD, 'package.json')
 		const pkgJson = JSON.parse(await fs.readFile(pkgJsonPath, 'utf-8')) as {

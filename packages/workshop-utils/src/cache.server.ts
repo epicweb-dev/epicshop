@@ -154,7 +154,13 @@ export function makeSingletonCache<CacheEntryType>(name: string) {
 
 export function makeSingletonFsCache<CacheEntryType>(name: string) {
 	return remember(name, () => {
-		const cacheDir = path.join(os.homedir(), '.epicshop', 'cache', name)
+		const cacheDir = path.join(
+			os.homedir(),
+			'.epicshop',
+			'cache',
+			process.env.EPICSHOP_WORKSHOP_INSTANCE_ID,
+			name,
+		)
 
 		const fsCache: C.Cache<CacheEntryType> = {
 			name: `Filesystem cache (${name})`,
