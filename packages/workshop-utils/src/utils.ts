@@ -22,7 +22,8 @@ export function handleGitHubRepoAndRoot({
 	githubRoot?: string
 }) {
 	if (githubRepo) {
-		githubRoot = `${githubRepo.replace(/\/$/, '')}/tree/main`
+		githubRepo = githubRepo.replace(/\/$/, '')
+		githubRoot = `${githubRepo}/tree/main`
 	} else if (githubRoot) {
 		githubRepo = githubRoot.replace(/\/(blob|tree)\/.*$/, '')
 		githubRoot = `${githubRepo}/tree/main`
