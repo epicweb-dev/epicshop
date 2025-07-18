@@ -19,6 +19,8 @@ import { type Notification } from './notifications.server.js'
 import { cachifiedTimingReporter, type Timings } from './timing.server.js'
 import { checkConnectionCached } from './utils.server.js'
 
+const cacheDir = path.join(process.env.EPICSHOP_HOME_DIR, 'cache')
+
 export const solutionAppCache =
 	makeSingletonFsCache<SolutionApp>('SolutionAppCache')
 export const problemAppCache =
@@ -59,8 +61,6 @@ export const notificationsCache =
 export const directoryEmptyCache = makeSingletonCache<boolean>(
 	'DirectoryEmptyCache',
 )
-
-const cacheDir = path.join(process.env.EPICSHOP_HOME_DIR, 'cache')
 
 export const fsCache = makeSingletonFsCache('FsCache')
 
