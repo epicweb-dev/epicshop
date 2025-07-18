@@ -454,7 +454,14 @@ async function killChild(child: ChildProcess | null): Promise<void> {
 	if (!child) return
 
 	return new Promise((resolve) => {
-		const onExit = () => resolve()
+		let timeoutId: NodeJS.Timeout | null = null
+
+		const onExit = () => {
+			if (timeoutId) {
+				clearTimeout(timeoutId)
+			}
+			resolve()
+		}
 		child.once('exit', onExit)
 
 		if (process.platform === 'win32') {
@@ -472,14 +479,14 @@ async function killChild(child: ChildProcess | null): Promise<void> {
 			child.kill('SIGTERM')
 
 			// If it doesn't exit quickly, force kill and resolve
-			setTimeout(() => {
+			timeoutId = setTimeout(() => {
 				try {
 					child.kill('SIGKILL')
 				} catch {
 					// Process might already be dead
 				}
 				resolve()
-			}, 1000)
+			}, 2500)
 		}
 	})
 }
