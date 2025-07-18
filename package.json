@@ -3,7 +3,7 @@
   "private": true,
   "type": "module",
   "scripts": {
-    "typecheck": "./other/nx-fallback.js typecheck",
+    "typecheck": "./other/nx-fallback.js run-many --target typecheck",
     "lint": "./other/nx-fallback.js lint",
     "build": "./other/nx-fallback.js run-many --target build",
     "prestart": "npm run build -s",
