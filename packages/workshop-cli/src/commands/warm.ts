@@ -1,9 +1,5 @@
 import chalk from 'chalk'
 
-export type WarmOptions = {
-	silent?: boolean
-}
-
 export type WarmResult = {
 	success: boolean
 	message?: string
@@ -13,9 +9,11 @@ export type WarmResult = {
 /**
  * Warm up the workshop application caches (apps, diffs)
  */
-export async function warm(options: WarmOptions = {}): Promise<WarmResult> {
-	const { silent = false } = options
-
+export async function warm({
+	silent = false,
+}: {
+	silent?: boolean
+} = {}): Promise<WarmResult> {
 	if (!silent) {
 		console.log(chalk.blue('🔥 Warming up caches...'))
 	}

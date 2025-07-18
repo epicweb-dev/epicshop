@@ -7,7 +7,9 @@ export type UpdateResult = {
 /**
  * Update the workshop to the latest version
  */
-export async function update(): Promise<UpdateResult> {
+export async function update({
+	silent = false,
+}: { silent?: boolean } = {}): Promise<UpdateResult> {
 	const isDeployed =
 		process.env.EPICSHOP_DEPLOYED === 'true' ||
 		process.env.EPICSHOP_DEPLOYED === '1'
@@ -25,17 +27,23 @@ export async function update(): Promise<UpdateResult> {
 		)
 		const result = await updateLocalRepo()
 		if (result.status === 'success') {
+			console.log(`✅ ${result.message}`)
 			return {
 				success: true,
 				message: result.message,
 			}
 		} else {
+			console.error(`❌ ${result.message}`)
 			return {
 				success: false,
 				message: result.message,
 			}
 		}
 	} catch (error) {
+		if (!silent) {
+			const message = error instanceof Error ? error.message : String(error)
+			console.error(`❌ ${message}`)
+		}
 		return {
 			success: false,
 			message: 'Update functionality not available',

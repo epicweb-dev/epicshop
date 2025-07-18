@@ -54,11 +54,22 @@ const cli = yargs(hideBin(process.argv))
 		['update', 'upgrade'],
 		'Update the workshop to the latest version',
 		(yargs: Argv) => {
-			return yargs.example('$0 update', 'Update workshop to latest version')
+			return yargs
+				.option('silent', {
+					alias: 's',
+					type: 'boolean',
+					description: 'Run without output logs',
+					default: false,
+				})
+				.example('$0 update', 'Update workshop to latest version')
+				.example(
+					'$0 update --silent',
+					'Update workshop to latest version silently',
+				)
 		},
-		async (_argv: ArgumentsCamelCase<Record<string, unknown>>) => {
+		async (argv: ArgumentsCamelCase<{ silent?: boolean }>) => {
 			const { update } = await import('./commands/update.js')
-			await update()
+			await update({ silent: argv.silent })
 		},
 	)
 	.command(
