@@ -31,6 +31,7 @@ epicshop [options]
 #### Options
 
 - `--verbose, -v` - Show verbose output (default: false)
+- `--silent, -s` - Run without output logs (default: false)
 - `--app-location <path>` - Path to the workshop app directory
 
 #### Examples
@@ -44,6 +45,9 @@ epicshop start --verbose
 
 # Start with a custom app location
 epicshop start --app-location /path/to/workshop-app
+
+# Start without output logs
+epicshop start --silent
 ```
 
 #### Features
@@ -149,6 +153,7 @@ const result = await start()
 const result = await start({
 	appLocation: '/path/to/workshop-app',
 	verbose: true,
+	silent: false,
 })
 
 // Check result
@@ -206,7 +211,8 @@ import { warm, type WarmResult } from '@epic-web/workshop-cli/warm'
 
 const options: StartOptions = {
   appLocation: '/path/to/workshop',
-  verbose: true
+  verbose: true,
+  silent: false
 }
 
 const result: StartResult = await start(options)
@@ -327,6 +333,9 @@ epicshop warm
 ```bash
 # Start with custom app location and verbose output
 epicshop start --app-location ./my-workshop --verbose
+
+# Start silently for programmatic usage
+epicshop start --silent
 
 # Update silently
 epicshop update --silent

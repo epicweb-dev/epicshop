@@ -22,6 +22,12 @@ const cli = yargs(hideBin(process.argv))
 					description: 'Show verbose output',
 					default: false,
 				})
+				.option('silent', {
+					alias: 's',
+					type: 'boolean',
+					description: 'Run without output logs',
+					default: false,
+				})
 				.option('app-location', {
 					type: 'string',
 					description: 'Path to the workshop app directory',
@@ -31,9 +37,14 @@ const cli = yargs(hideBin(process.argv))
 					'$0 start --app-location /path/to/workshop-app',
 					'Start with custom app location',
 				)
+				.example('$0 start --silent', 'Start the workshop without output logs')
 		},
 		async (
-			argv: ArgumentsCamelCase<{ verbose?: boolean; appLocation?: string }>,
+			argv: ArgumentsCamelCase<{
+				verbose?: boolean
+				silent?: boolean
+				appLocation?: string
+			}>,
 		) => {
 			// kick off a warmup while we start the server
 			void import('./commands/warm.js').then(({ warm }) =>
@@ -44,6 +55,7 @@ const cli = yargs(hideBin(process.argv))
 			await start({
 				appLocation: argv.appLocation,
 				verbose: argv.verbose,
+				silent: argv.silent,
 			})
 		},
 	)

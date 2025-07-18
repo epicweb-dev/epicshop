@@ -13,6 +13,7 @@ import open from 'open'
 export type StartOptions = {
 	appLocation?: string
 	verbose?: boolean
+	silent?: boolean
 }
 
 export type StartResult = {
@@ -29,22 +30,32 @@ export async function start(options: StartOptions = {}): Promise<StartResult> {
 		// Find workshop-app directory using new resolution order
 		const appDir = await findWorkshopAppDir(options.appLocation)
 		if (!appDir) {
-			console.error(chalk.red('❌ Could not locate workshop-app directory'))
-			console.error(
-				chalk.yellow(
-					'Please ensure the workshop app is installed or specify its location using:',
-				),
-			)
-			console.error(
-				chalk.yellow('  - Environment variable: EPICSHOP_APP_LOCATION'),
-			)
-			console.error(chalk.yellow('  - Command line flag: --app-location'))
-			console.error(
-				chalk.yellow(
-					'  - Global installation: npm install -g @epic-web/workshop-app',
-				),
-			)
-			process.exit(1)
+			const errorMessage =
+				'Could not locate workshop-app directory. Please ensure the workshop app is installed or specify its location using:\n  - Environment variable: EPICSHOP_APP_LOCATION\n  - Command line flag: --app-location\n  - Global installation: npm install -g @epic-web/workshop-app'
+
+			if (!options.silent) {
+				console.error(chalk.red('❌ Could not locate workshop-app directory'))
+				console.error(
+					chalk.yellow(
+						'Please ensure the workshop app is installed or specify its location using:',
+					),
+				)
+				console.error(
+					chalk.yellow('  - Environment variable: EPICSHOP_APP_LOCATION'),
+				)
+				console.error(chalk.yellow('  - Command line flag: --app-location'))
+				console.error(
+					chalk.yellow(
+						'  - Global installation: npm install -g @epic-web/workshop-app',
+					),
+				)
+			}
+
+			return {
+				success: false,
+				message: errorMessage,
+				error: new Error(errorMessage),
+			}
 		}
 
 		const isPublished = await appIsPublished(appDir)
