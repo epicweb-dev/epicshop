@@ -15,7 +15,6 @@
     ],
     "exports": {
       "./package.json": "./package.json",
-      ".": "./src/programmatic.js",
       "./warm": "./src/commands/warm.js",
       "./start": "./src/commands/start.js",
       "./update": "./src/commands/update.js"
@@ -23,12 +22,6 @@
   },
   "exports": {
     "./package.json": "./package.json",
-    ".": {
-      "import": {
-        "types": "./dist/esm/programmatic.d.ts",
-        "default": "./dist/esm/programmatic.js"
-      }
-    },
     "./warm": {
       "import": {
         "types": "./dist/esm/commands/warm.d.ts",
@@ -75,6 +68,5 @@
     "type": "git",
     "url": "https://github.com/epicweb-dev/epicshop.git",
     "directory": "packages/workshop-cli"
-  },
-  "module": "./dist/esm/programmatic.js"
+  }
 }
