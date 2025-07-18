@@ -1,3 +1,4 @@
+import '../init-env.js'
 import { spawn, type ChildProcess, execSync } from 'node:child_process'
 import crypto from 'node:crypto'
 import fs from 'node:fs'

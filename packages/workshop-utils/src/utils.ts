@@ -25,7 +25,9 @@ export function handleGitHubRepoAndRoot({
 		githubRepo = githubRoot.replace(/\/(blob|tree)\/.*$/, '')
 		githubRoot = `${githubRepo}/tree/main`
 	} else {
-		throw new Error('Either githubRepo or githubRoot is required')
+		throw new Error(
+			`Either githubRepo or githubRoot is required. Please ensure your epicshop package.json config includes either githubRepo or githubRoot configuration.`,
+		)
 	}
 	return { githubRepo, githubRoot }
 }
