@@ -283,8 +283,6 @@ export async function start(options: StartOptions = {}): Promise<StartResult> {
 				env: childEnv,
 			})
 
-
-
 			if (child.stdout) {
 				child.stdout.on('data', (data: Buffer) => {
 					process.stdout.write(data)
@@ -469,15 +467,20 @@ export async function start(options: StartOptions = {}): Promise<StartResult> {
 
 async function killChild(child: ChildProcess | null): Promise<void> {
 	if (!child) return
-	
+
 	return new Promise((resolve) => {
 		const onExit = () => resolve()
 		child.once('exit', onExit)
-		
+
 		if (process.platform === 'win32') {
 			// On Windows, use taskkill to kill the process tree
 			if (child.pid) {
-				const killer = spawn('taskkill', ['/pid', child.pid.toString(), '/f', '/t'])
+				const killer = spawn('taskkill', [
+					'/pid',
+					child.pid.toString(),
+					'/f',
+					'/t',
+				])
 				killer.on('exit', () => resolve())
 				killer.on('error', () => {
 					// If taskkill fails, fall back to regular kill
@@ -491,7 +494,7 @@ async function killChild(child: ChildProcess | null): Promise<void> {
 		} else {
 			// On Unix-like systems, just kill the process normally
 			child.kill('SIGTERM')
-			
+
 			// If it doesn't exit quickly, force kill and resolve
 			setTimeout(() => {
 				try {
