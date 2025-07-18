@@ -14,11 +14,32 @@
       "esm"
     ],
     "exports": {
-      "./package.json": "./package.json"
+      "./package.json": "./package.json",
+      "./warm": "./src/commands/warm.js",
+      "./start": "./src/commands/start.js",
+      "./update": "./src/commands/update.js"
     }
   },
   "exports": {
-    "./package.json": "./package.json"
+    "./package.json": "./package.json",
+    "./warm": {
+      "import": {
+        "types": "./dist/esm/commands/warm.d.ts",
+        "default": "./dist/esm/commands/warm.js"
+      }
+    },
+    "./start": {
+      "import": {
+        "types": "./dist/esm/commands/start.d.ts",
+        "default": "./dist/esm/commands/start.js"
+      }
+    },
+    "./update": {
+      "import": {
+        "types": "./dist/esm/commands/update.d.ts",
+        "default": "./dist/esm/commands/update.js"
+      }
+    }
   },
   "files": [
     "dist"
