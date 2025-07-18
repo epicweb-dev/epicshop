@@ -281,6 +281,8 @@ export async function start(options: StartOptions = {}): Promise<StartResult> {
 				// Capture stdout for port detection
 				stdio: ['pipe', 'pipe', 'inherit'],
 				env: childEnv,
+				// Create a new process group on Unix-like systems so we can kill the entire tree
+				detached: process.platform !== 'win32',
 			})
 
 			if (child.stdout) {
@@ -431,6 +433,7 @@ export async function start(options: StartOptions = {}): Promise<StartResult> {
 		async function cleanupBeforeExit() {
 			if (process.platform === 'win32' && child?.pid) {
 				// Use a Promise to wait for taskkill to finish
+				// The /t flag kills the process tree, which is what we want
 				await new Promise<void>((resolve) => {
 					const killer = spawn('taskkill', [
 						'/pid',
@@ -440,8 +443,10 @@ export async function start(options: StartOptions = {}): Promise<StartResult> {
 					])
 					killer.on('exit', resolve)
 				})
+			} else {
+				// On Unix-like systems, use our improved killChild function
+				await killChild(child)
 			}
-			await killChild(child)
 			if (server) await new Promise((resolve) => server!.close(resolve))
 		}
 
@@ -463,11 +468,44 @@ export async function start(options: StartOptions = {}): Promise<StartResult> {
 // Helper functions
 
 async function killChild(child: ChildProcess | null): Promise<void> {
-	if (!child) return
+	if (!child || !child.pid) return
+	
 	return new Promise((resolve) => {
 		const onExit = () => resolve()
 		child.once('exit', onExit)
-		child.kill()
+		
+		// On Unix-like systems, when using shell: true, we need to kill the entire process tree
+		// because the shell spawns child processes that won't be killed by just killing the shell
+		if (process.platform !== 'win32') {
+			try {
+				// Kill the entire process group to ensure all child processes are terminated
+				// The negative PID means kill the process group
+				process.kill(-child.pid!, 'SIGTERM')
+				
+				// Give processes time to gracefully shut down
+				setTimeout(() => {
+					try {
+						// Force kill if still running
+						process.kill(-child.pid!, 'SIGKILL')
+					} catch {
+						// Process might already be dead, ignore errors
+					}
+				}, 5000)
+			} catch (error) {
+				// If process group killing fails, fall back to killing just the main process
+				child.kill('SIGTERM')
+				setTimeout(() => {
+					try {
+						child.kill('SIGKILL')
+					} catch {
+						// Process might already be dead, ignore errors
+					}
+				}, 5000)
+			}
+		} else {
+			// On Windows, just kill the process normally
+			child.kill()
+		}
 	})
 }
 
