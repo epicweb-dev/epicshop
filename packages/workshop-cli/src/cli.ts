@@ -66,9 +66,13 @@ const cli = yargs(hideBin(process.argv))
 
 			if (!result.success) {
 				if (!argv.silent) {
-					console.error(chalk.red('❌ Failed to start workshop application'))
-					if (result.message) {
-						console.error(chalk.red(result.message))
+					console.error(
+						chalk.red(
+							`❌ ${result.message || 'Failed to start workshop application'}`,
+						),
+					)
+					if (result.error) {
+						console.error(chalk.red(result.error.message))
 					}
 				}
 				process.exit(1)
@@ -95,7 +99,18 @@ const cli = yargs(hideBin(process.argv))
 		async (argv: ArgumentsCamelCase<{ silent?: boolean }>) => {
 			try {
 				const { update } = await import('./commands/update.js')
-				await update({ silent: argv.silent })
+				const result = await update({ silent: argv.silent })
+				if (!result.success) {
+					if (!argv.silent) {
+						console.error(
+							chalk.red(`❌ ${result.message || 'Failed to update workshop'}`),
+						)
+						if (result.error) {
+							console.error(chalk.red(result.error.message))
+						}
+					}
+					process.exit(1)
+				}
 			} catch (error) {
 				if (!argv.silent) {
 					console.error(chalk.red('❌ Update failed:'), error)
@@ -121,7 +136,18 @@ const cli = yargs(hideBin(process.argv))
 		async (argv: ArgumentsCamelCase<{ silent?: boolean }>) => {
 			try {
 				const { warm } = await import('./commands/warm.js')
-				await warm({ silent: argv.silent })
+				const result = await warm({ silent: argv.silent })
+				if (!result.success) {
+					if (!argv.silent) {
+						console.error(
+							chalk.red(`❌ ${result.message || 'Failed to warm up workshop'}`),
+						)
+						if (result.error) {
+							console.error(chalk.red(result.error.message))
+						}
+					}
+					process.exit(1)
+				}
 			} catch (error) {
 				if (!argv.silent) {
 					console.error(chalk.red('❌ Warmup failed:'), error)
