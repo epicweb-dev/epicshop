@@ -48,16 +48,31 @@ const cli = yargs(hideBin(process.argv))
 			}>,
 		) => {
 			// kick off a warmup while we start the server
-			void import('./commands/warm.js').then(({ warm }) =>
-				warm({ silent: true }),
-			)
+			import('./commands/warm.js')
+				.then(({ warm }) => warm({ silent: true }))
+				.catch((error) => {
+					// Log warmup errors but don't fail the start command
+					if (!argv.silent) {
+						console.error(chalk.yellow('⚠️  Warmup failed:'), error)
+					}
+				})
 
 			const { start } = await import('./commands/start.js')
-			await start({
+			const result = await start({
 				appLocation: argv.appLocation,
 				verbose: argv.verbose,
 				silent: argv.silent,
 			})
+
+			if (!result.success) {
+				if (!argv.silent) {
+					console.error(chalk.red('❌ Failed to start workshop application'))
+					if (result.message) {
+						console.error(chalk.red(result.message))
+					}
+				}
+				process.exit(1)
+			}
 		},
 	)
 	.command(
@@ -78,8 +93,15 @@ const cli = yargs(hideBin(process.argv))
 				)
 		},
 		async (argv: ArgumentsCamelCase<{ silent?: boolean }>) => {
-			const { update } = await import('./commands/update.js')
-			await update({ silent: argv.silent })
+			try {
+				const { update } = await import('./commands/update.js')
+				await update({ silent: argv.silent })
+			} catch (error) {
+				if (!argv.silent) {
+					console.error(chalk.red('❌ Update failed:'), error)
+				}
+				process.exit(1)
+			}
 		},
 	)
 	.command(
@@ -97,8 +119,15 @@ const cli = yargs(hideBin(process.argv))
 				.example('$0 warm --silent', 'Warm up workshop caches silently')
 		},
 		async (argv: ArgumentsCamelCase<{ silent?: boolean }>) => {
-			const { warm } = await import('./commands/warm.js')
-			await warm({ silent: argv.silent })
+			try {
+				const { warm } = await import('./commands/warm.js')
+				await warm({ silent: argv.silent })
+			} catch (error) {
+				if (!argv.silent) {
+					console.error(chalk.red('❌ Warmup failed:'), error)
+				}
+				process.exit(1)
+			}
 		},
 	)
 	.epilogue(
