@@ -1,6 +1,5 @@
 import './init-env.js'
 
-import os from 'os'
 import path from 'path'
 import { createId as cuid } from '@paralleldrive/cuid2'
 import fsExtra from 'fs-extra'
@@ -91,15 +90,15 @@ const DataSchema = z.object({
 	mutedNotifications: MutedNotificationSchema.optional(),
 })
 
-const appDir = path.join(os.homedir(), '.epicshop')
-const dbPath = path.join(appDir, 'data.json')
+const homeDir = process.env.EPICSHOP_HOME_DIR
+const dbPath = path.join(homeDir, 'data.json')
 
 export async function getClientId() {
 	const data = await readDb()
 	if (data?.clientId) return data.clientId
 
 	const clientId = cuid()
-	await fsExtra.ensureDir(appDir)
+	await fsExtra.ensureDir(homeDir)
 	await fsExtra.writeJSON(dbPath, { ...data, clientId })
 	return clientId
 }
@@ -248,7 +247,7 @@ export async function setAuthInfo({
 }) {
 	const data = await readDb()
 	const authInfo = AuthInfoSchema.parse({ id, tokenSet, email, name })
-	await fsExtra.ensureDir(appDir)
+	await fsExtra.ensureDir(homeDir)
 	const config = getWorkshopConfig()
 	if (config.product.host) {
 		await fsExtra.writeJSON(dbPath, {
@@ -292,7 +291,7 @@ export async function setPreferences(
 			},
 		},
 	}
-	await fsExtra.ensureDir(appDir)
+	await fsExtra.ensureDir(homeDir)
 	await fsExtra.writeJSON(dbPath, updatedData)
 	return updatedData.preferences
 }
@@ -311,7 +310,7 @@ export async function muteNotification(id: string) {
 		...data,
 		mutedNotifications,
 	}
-	await fsExtra.ensureDir(appDir)
+	await fsExtra.ensureDir(homeDir)
 	await fsExtra.writeJSON(dbPath, updatedData)
 	return mutedNotifications
 }
@@ -322,7 +321,7 @@ export async function setFontSizePreference(fontSize: number | undefined) {
 		...data,
 		preferences: { ...data?.preferences, fontSize },
 	}
-	await fsExtra.ensureDir(appDir)
+	await fsExtra.ensureDir(homeDir)
 	await fsExtra.writeJSON(dbPath, updatedData)
 	return updatedData.preferences.fontSize
 }
@@ -349,7 +348,7 @@ export async function markOnboardingVideoWatched(videoUrl: string) {
 			].filter(Boolean),
 		},
 	}
-	await fsExtra.ensureDir(appDir)
+	await fsExtra.ensureDir(homeDir)
 	await fsExtra.writeJSON(dbPath, updatedData)
 	return updatedData.onboarding
 }

@@ -1,7 +1,6 @@
 // eslint-disable-next-line import/order -- this must be first
 import { ENV } from './init-env.js'
 
-import os from 'os'
 import path from 'path'
 import * as C from '@epic-web/cachified'
 import { verboseReporter, type CacheEntry } from '@epic-web/cachified'
@@ -61,7 +60,7 @@ export const directoryEmptyCache = makeSingletonCache<boolean>(
 	'DirectoryEmptyCache',
 )
 
-const cacheDir = path.join(os.homedir(), '.epicshop', 'cache')
+const cacheDir = path.join(process.env.EPICSHOP_HOME_DIR, 'cache')
 
 export const fsCache = makeSingletonFsCache('FsCache')
 
@@ -160,10 +159,8 @@ export function makeSingletonCache<CacheEntryType>(name: string) {
 
 export function makeSingletonFsCache<CacheEntryType>(name: string) {
 	return remember(name, () => {
-		const cacheDir = path.join(
-			os.homedir(),
-			'.epicshop',
-			'cache',
+		const cacheInstanceDir = path.join(
+			cacheDir,
 			ENV.EPICSHOP_WORKSHOP_INSTANCE_ID,
 			name,
 		)
@@ -171,7 +168,7 @@ export function makeSingletonFsCache<CacheEntryType>(name: string) {
 		const fsCache: C.Cache<CacheEntryType> = {
 			name: `Filesystem cache (${name})`,
 			async get(key) {
-				const filePath = path.join(cacheDir, md5(key))
+				const filePath = path.join(cacheInstanceDir, md5(key))
 				const maxRetries = 3
 				const baseDelay = 10
 
@@ -254,12 +251,12 @@ export function makeSingletonFsCache<CacheEntryType>(name: string) {
 				return null
 			},
 			async set(key, entry) {
-				const filePath = path.join(cacheDir, md5(key))
+				const filePath = path.join(cacheInstanceDir, md5(key))
 				await fsExtra.ensureDir(path.dirname(filePath))
 				await fsExtra.writeJSON(filePath, { key, entry })
 			},
 			async delete(key) {
-				const filePath = path.join(cacheDir, md5(key))
+				const filePath = path.join(cacheInstanceDir, md5(key))
 				await fsExtra.remove(filePath)
 			},
 		}

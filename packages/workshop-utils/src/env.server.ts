@@ -1,4 +1,5 @@
 import fs from 'node:fs/promises'
+import os from 'node:os'
 import path from 'node:path'
 import { fileURLToPath } from 'node:url'
 import md5 from 'md5-hex'
@@ -20,6 +21,7 @@ const schema = z
 		EPICSHOP_PARENT_PORT: z.string().optional(),
 		EPICSHOP_PARENT_TOKEN: z.string().optional(),
 		EPICSHOP_APP_LOCATION: z.string().optional(),
+		EPICSHOP_HOME_DIR: z.string().default(path.join(os.homedir(), '.epicshop')),
 		EPICSHOP_IS_PUBLISHED: z
 			.string()
 			.default(__dirname.includes('node_modules') ? 'true' : 'false'),
