@@ -431,8 +431,22 @@ export async function start(options: StartOptions = {}): Promise<StartResult> {
 		}
 
 		async function cleanupBeforeExit() {
-			// Use the unified killChild function for all platforms
-			await killChild(child)
+			if (process.platform === 'win32' && child?.pid) {
+				// On Windows, use taskkill to kill the process tree
+				await new Promise<void>((resolve) => {
+					const killer = spawn('taskkill', [
+						'/pid',
+						child!.pid!.toString(),
+						'/f',
+						'/t',
+					])
+					killer.on('exit', resolve)
+					killer.on('error', resolve) // Resolve even if taskkill fails
+				})
+			} else {
+				// On Unix-like systems, use the killChild function
+				await killChild(child)
+			}
 			if (server) await new Promise((resolve) => server!.close(resolve))
 		}
 
@@ -460,18 +474,34 @@ async function killChild(child: ChildProcess | null): Promise<void> {
 		const onExit = () => resolve()
 		child.once('exit', onExit)
 		
-		// Just kill the process normally
-		child.kill('SIGTERM')
-		
-		// If it doesn't exit quickly, force kill and resolve
-		setTimeout(() => {
-			try {
-				child.kill('SIGKILL')
-			} catch {
-				// Process might already be dead
+		if (process.platform === 'win32') {
+			// On Windows, use taskkill to kill the process tree
+			if (child.pid) {
+				const killer = spawn('taskkill', ['/pid', child.pid.toString(), '/f', '/t'])
+				killer.on('exit', () => resolve())
+				killer.on('error', () => {
+					// If taskkill fails, fall back to regular kill
+					child.kill()
+					resolve()
+				})
+			} else {
+				child.kill()
+				resolve()
 			}
-			resolve()
-		}, 1000)
+		} else {
+			// On Unix-like systems, just kill the process normally
+			child.kill('SIGTERM')
+			
+			// If it doesn't exit quickly, force kill and resolve
+			setTimeout(() => {
+				try {
+					child.kill('SIGKILL')
+				} catch {
+					// Process might already be dead
+				}
+				resolve()
+			}, 1000)
+		}
 	})
 }
 
