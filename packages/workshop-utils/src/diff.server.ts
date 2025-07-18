@@ -1,5 +1,5 @@
 // eslint-disable-next-line import/order -- this must be first
-import { ENV } from './init-env.js'
+import { getEnv } from './init-env.js'
 
 import os from 'os'
 import path from 'path'
@@ -28,7 +28,7 @@ import { type Timings } from './timing.server.js'
 
 const epicshopTempDir = path.join(os.tmpdir(), 'epicshop')
 
-const isDeployed = ENV.EPICSHOP_DEPLOYED
+const isDeployed = getEnv().EPICSHOP_DEPLOYED
 
 const diffTmpDir = path.join(epicshopTempDir, 'diff')
 

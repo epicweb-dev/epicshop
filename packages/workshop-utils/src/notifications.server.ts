@@ -1,5 +1,5 @@
 // eslint-disable-next-line import/order -- this must be first
-import { ENV } from './init-env.js'
+import { getEnv } from './init-env.js'
 
 import json5 from 'json5'
 import { z } from 'zod'
@@ -50,7 +50,7 @@ async function getRemoteNotifications() {
 }
 
 export async function getUnmutedNotifications() {
-	if (ENV.EPICSHOP_DEPLOYED) return []
+	if (getEnv().EPICSHOP_DEPLOYED) return []
 
 	const remoteNotifications = await getRemoteNotifications()
 

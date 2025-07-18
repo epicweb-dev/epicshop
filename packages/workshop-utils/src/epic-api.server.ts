@@ -1,5 +1,5 @@
 // eslint-disable-next-line import/order -- this must be first
-import { ENV } from './init-env.js'
+import { getEnv } from './init-env.js'
 
 import * as cookie from 'cookie'
 import md5 from 'md5-hex'
@@ -72,7 +72,7 @@ export async function getEpicVideoInfos(
 ) {
 	if (!epicWebUrls) return {}
 	const authInfo = await getAuthInfo()
-	if (ENV.EPICSHOP_DEPLOYED) return {}
+	if (getEnv().EPICSHOP_DEPLOYED) return {}
 
 	const epicVideoInfos: EpicVideoInfos = {}
 	for (const epicVideoEmbed of epicWebUrls) {
@@ -242,7 +242,7 @@ async function getEpicProgress({
 	request,
 	forceFresh,
 }: { timings?: Timings; request?: Request; forceFresh?: boolean } = {}) {
-	if (ENV.EPICSHOP_DEPLOYED) return []
+	if (getEnv().EPICSHOP_DEPLOYED) return []
 	const authInfo = await getAuthInfo()
 	const {
 		product: { host },
@@ -293,7 +293,7 @@ export async function getProgress({
 	timings?: Timings
 	request?: Request
 } = {}) {
-	if (ENV.EPICSHOP_DEPLOYED) return []
+	if (getEnv().EPICSHOP_DEPLOYED) return []
 	const authInfo = await getAuthInfo()
 	if (!authInfo) return []
 	const {
@@ -421,7 +421,7 @@ export async function updateProgress(
 		request?: Request
 	} = {},
 ) {
-	if (ENV.EPICSHOP_DEPLOYED) {
+	if (getEnv().EPICSHOP_DEPLOYED) {
 		return {
 			status: 'error',
 			error: 'cannot update progress when deployed',
@@ -488,7 +488,7 @@ export async function getWorkshopData(
 		forceFresh?: boolean
 	} = {},
 ) {
-	if (ENV.EPICSHOP_DEPLOYED) return { resources: [] }
+	if (getEnv().EPICSHOP_DEPLOYED) return { resources: [] }
 	const authInfo = await getAuthInfo()
 	// auth is not required, but we only use it for progress which is only needed
 	// if you're authenticated anyway.
@@ -537,7 +537,7 @@ export async function userHasAccessToWorkshop({
 	} = config
 	if (!slug) return true
 
-	if (ENV.EPICSHOP_DEPLOYED) {
+	if (getEnv().EPICSHOP_DEPLOYED) {
 		const cookieHeader = request?.headers.get('Cookie')
 		if (!cookieHeader) return false
 		const cookies = cookie.parse(cookieHeader)

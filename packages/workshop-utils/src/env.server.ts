@@ -17,7 +17,7 @@ const schema = z
 			.default('development'),
 		EPICSHOP_GITHUB_REPO: z.string().default(''),
 		EPICSHOP_GITHUB_ROOT: z.string().default(''),
-		EPICSHOP_APP_VERSION: z.string().default('0.0.0-unknown'),
+		EPICSHOP_APP_VERSION: z.string().optional(),
 		EPICSHOP_PARENT_PORT: z.string().optional(),
 		EPICSHOP_PARENT_TOKEN: z.string().optional(),
 		EPICSHOP_APP_LOCATION: z.string().optional(),
@@ -37,47 +37,54 @@ const schema = z
 	})
 	.transform(async (env) => {
 		if (env.EPICSHOP_CONTEXT_CWD === '') {
-			env.EPICSHOP_CONTEXT_CWD = await getEpicshopContextCwd()
+			const contextCwd = await getEpicshopContextCwd()
+			if (contextCwd) {
+				env.EPICSHOP_CONTEXT_CWD = contextCwd
+			}
 		}
 		if (env.EPICSHOP_WORKSHOP_INSTANCE_ID === '') {
 			env.EPICSHOP_WORKSHOP_INSTANCE_ID = md5(env.EPICSHOP_CONTEXT_CWD)
 		}
-		const pkgJsonPath = path.join(env.EPICSHOP_CONTEXT_CWD, 'package.json')
-		const pkgJson = JSON.parse(await fs.readFile(pkgJsonPath, 'utf-8')) as {
-			epicshop?: {
-				githubRepo?: string
-				githubRoot?: string
+		if (env.EPICSHOP_CONTEXT_CWD) {
+			const pkgJsonPath = path.join(env.EPICSHOP_CONTEXT_CWD, 'package.json')
+			const pkgJson = JSON.parse(await fs.readFile(pkgJsonPath, 'utf-8')) as {
+				epicshop: {
+					githubRepo?: string
+					githubRoot?: string
+				}
+			}
+			const epicshopConfig = pkgJson.epicshop
+
+			if (!env.EPICSHOP_GITHUB_REPO || !env.EPICSHOP_GITHUB_ROOT) {
+				const { githubRepo, githubRoot } = handleGitHubRepoAndRoot({
+					githubRepo: epicshopConfig.githubRepo,
+					githubRoot: epicshopConfig.githubRoot,
+				})
+				env.EPICSHOP_GITHUB_REPO = githubRepo
+				env.EPICSHOP_GITHUB_ROOT = githubRoot
 			}
 		}
-		const epicshopConfig = pkgJson.epicshop ?? {}
-		if (!epicshopConfig) {
-			throw new Error(
-				`No epicshop configuration found in "${pkgJsonPath}". If this is a workshop directory, please add an "epicshop" section to your package.json. If this is not a workshop directory, please set the EPICSHOP_CONTEXT_CWD environment variable to the directory containing your package.json with the "epicshop" config section.`,
-			)
-		}
 		if (env.EPICSHOP_APP_LOCATION === undefined) {
-			const workshopAppPath = import.meta.resolve(
-				'@epic-web/workshop-app/package.json',
-			)
-			const packagePath = fileURLToPath(workshopAppPath)
-			env.EPICSHOP_APP_LOCATION = path.dirname(packagePath)
+			try {
+				const workshopAppPath = import.meta.resolve(
+					'@epic-web/workshop-app/package.json',
+				)
+				const packagePath = fileURLToPath(workshopAppPath)
+				env.EPICSHOP_APP_LOCATION = path.dirname(packagePath)
+			} catch {
+				// we may be running outside the context of a workshop app
+			}
 		}
-		if (env.EPICSHOP_APP_VERSION === '0.0.0-unknown') {
-			const packageJson = JSON.parse(
-				await fs.readFile(
-					path.join(env.EPICSHOP_APP_LOCATION, 'package.json'),
-					'utf-8',
-				),
-			) as { version: string }
-			env.EPICSHOP_APP_VERSION = packageJson.version
-		}
-		if (!env.EPICSHOP_GITHUB_REPO || !env.EPICSHOP_GITHUB_ROOT) {
-			const { githubRepo, githubRoot } = handleGitHubRepoAndRoot({
-				githubRepo: epicshopConfig.githubRepo,
-				githubRoot: epicshopConfig.githubRoot,
-			})
-			env.EPICSHOP_GITHUB_REPO = githubRepo
-			env.EPICSHOP_GITHUB_ROOT = githubRoot
+		if (!env.EPICSHOP_APP_VERSION) {
+			if (env.EPICSHOP_APP_LOCATION) {
+				const packageJson = JSON.parse(
+					await fs.readFile(
+						path.join(env.EPICSHOP_APP_LOCATION, 'package.json'),
+						'utf-8',
+					),
+				) as { version: string }
+				env.EPICSHOP_APP_VERSION = packageJson.version
+			}
 		}
 		return env
 	})
@@ -100,7 +107,7 @@ async function getEpicshopContextCwd() {
 		if (parentDir === dir) break
 		dir = parentDir
 	}
-	return process.cwd()
+	return null
 }
 
 declare global {

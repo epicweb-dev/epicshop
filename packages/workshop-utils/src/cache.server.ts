@@ -1,5 +1,5 @@
 // eslint-disable-next-line import/order -- this must be first
-import { ENV } from './init-env.js'
+import { getEnv } from './init-env.js'
 
 import path from 'path'
 import * as C from '@epic-web/cachified'
@@ -122,7 +122,7 @@ export async function getAllFileCacheEntries() {
 }
 
 export async function deleteCache() {
-	if (process.env.EPICSHOP_DEPLOYED) return null
+	if (getEnv().EPICSHOP_DEPLOYED) return null
 
 	try {
 		if (await fsExtra.exists(cacheDir)) {
@@ -161,7 +161,7 @@ export function makeSingletonFsCache<CacheEntryType>(name: string) {
 	return remember(name, () => {
 		const cacheInstanceDir = path.join(
 			cacheDir,
-			ENV.EPICSHOP_WORKSHOP_INSTANCE_ID,
+			getEnv().EPICSHOP_WORKSHOP_INSTANCE_ID,
 			name,
 		)
 
@@ -203,7 +203,7 @@ export function makeSingletonFsCache<CacheEntryType>(name: string) {
 
 							// Final attempt failed, treat as corrupted file
 							// Log to Sentry if available
-							if (process.env.SENTRY_DSN && process.env.EPICSHOP_IS_PUBLISHED) {
+							if (getEnv().SENTRY_DSN && getEnv().EPICSHOP_IS_PUBLISHED) {
 								try {
 									const Sentry = await import('@sentry/react-router')
 									Sentry.captureException(error, {

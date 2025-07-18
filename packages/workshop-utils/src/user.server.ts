@@ -1,12 +1,12 @@
 // eslint-disable-next-line import/order -- this must be first
-import { ENV } from './init-env.js'
+import { getEnv } from './init-env.js'
 
 import { createId as cuid } from '@paralleldrive/cuid2'
 import * as cookie from 'cookie'
 import { getAuthInfo, getClientId } from './db.server.js'
 
 export async function getUserId({ request }: { request: Request }) {
-	if (ENV.EPICSHOP_DEPLOYED) {
+	if (getEnv().EPICSHOP_DEPLOYED) {
 		const cookieHeader = request.headers.get('cookie')
 		const cookieValue = cookie.parse(cookieHeader ?? '')
 

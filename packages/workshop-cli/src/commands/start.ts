@@ -1,5 +1,5 @@
 // eslint-disable-next-line import/order -- must appear first
-import { ENV } from '@epic-web/workshop-utils/init-env'
+import { getEnv } from '@epic-web/workshop-utils/init-env'
 
 import { spawn, type ChildProcess, execSync } from 'node:child_process'
 import crypto from 'node:crypto'
@@ -81,8 +81,8 @@ export async function start(options: StartOptions = {}): Promise<StartResult> {
 
 		const childEnv: NodeJS.ProcessEnv = {
 			...process.env,
-			EPICSHOP_CONTEXT_CWD: ENV.EPICSHOP_CONTEXT_CWD,
-			EPICSHOP_GITHUB_REPO: ENV.EPICSHOP_GITHUB_REPO,
+			EPICSHOP_CONTEXT_CWD: getEnv().EPICSHOP_CONTEXT_CWD,
+			EPICSHOP_GITHUB_REPO: getEnv().EPICSHOP_GITHUB_REPO,
 			EPICSHOP_PARENT_PORT: String(parentPort),
 			EPICSHOP_PARENT_TOKEN: parentToken,
 			EPICSHOP_APP_LOCATION: appDir,

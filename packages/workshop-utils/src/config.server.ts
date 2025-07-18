@@ -1,5 +1,5 @@
 // eslint-disable-next-line import/order -- this must be first
-import { ENV } from './init-env.js'
+import { getEnv } from './init-env.js'
 
 import fs from 'node:fs'
 import path from 'node:path'
@@ -7,7 +7,7 @@ import { z } from 'zod'
 import { handleGitHubRepoAndRoot } from './utils.js'
 
 const getRootPkgJsonPath = () =>
-	path.join(ENV.EPICSHOP_CONTEXT_CWD, 'package.json')
+	path.join(getEnv().EPICSHOP_CONTEXT_CWD, 'package.json')
 
 export const StackBlitzConfigSchema = z.object({
 	// we default this to `${exerciseTitle} (${type})`
@@ -59,10 +59,10 @@ const WorkshopConfigSchema = z
 			),
 		githubRepo: z
 			.string()
-			.transform((githubRepo) => githubRepo ?? ENV.EPICSHOP_GITHUB_REPO),
+			.transform((githubRepo) => githubRepo ?? getEnv().EPICSHOP_GITHUB_REPO),
 		githubRoot: z
 			.string()
-			.transform((githubRoot) => githubRoot ?? ENV.EPICSHOP_GITHUB_ROOT),
+			.transform((githubRoot) => githubRoot ?? getEnv().EPICSHOP_GITHUB_ROOT),
 		stackBlitzConfig: StackBlitzConfigSchema.optional(),
 		forms: z
 			.object({
@@ -268,7 +268,7 @@ export async function getStackBlitzUrl({
 	const params = new URLSearchParams(stackBlitzConfig as Record<string, string>)
 
 	const relativePath = fullPath.replace(
-		`${ENV.EPICSHOP_CONTEXT_CWD}${path.sep}`,
+		`${getEnv().EPICSHOP_CONTEXT_CWD}${path.sep}`,
 		'',
 	)
 

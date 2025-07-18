@@ -1,5 +1,5 @@
 // eslint-disable-next-line import/order -- this must be first
-import { ENV } from './init-env.js'
+import { getEnv } from './init-env.js'
 
 import fs from 'node:fs'
 import path from 'node:path'
@@ -267,7 +267,7 @@ export async function init(workshopRoot?: string) {
 	global.__epicshop_apps_initialized__ = true
 
 	if (
-		!ENV.EPICSHOP_DEPLOYED &&
+		!getEnv().EPICSHOP_DEPLOYED &&
 		process.env.EPICSHOP_ENABLE_WATCHER === 'true'
 	) {
 		const isIgnored = await isGitIgnored({ cwd: getWorkshopRoot() })
