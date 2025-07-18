@@ -43,6 +43,11 @@ const cli = yargs(hideBin(process.argv))
 		async (
 			argv: ArgumentsCamelCase<{ verbose?: boolean; appLocation?: string }>,
 		) => {
+			// kick off a warmup while we start the server
+			void import('./commands/warm.js').then(({ warm }) =>
+				warm({ silent: true }),
+			)
+
 			const { start } = await import('./commands/start.js')
 			await start({
 				appLocation: argv.appLocation,
