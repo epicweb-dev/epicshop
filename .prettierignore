@@ -1,0 +1,14 @@
+node_modules/
+package-lock.json
+package.json
+test-results/
+publish/
+playwright-report/
+.nx/
+tsconfig.tsbuildinfo
+.cache/
+.react-router/
+dist/
+build/
+server-build/
+.tshy/
