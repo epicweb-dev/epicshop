@@ -7,7 +7,7 @@ import fs from 'node:fs'
 import http from 'node:http'
 import os from 'node:os'
 import path from 'node:path'
-import { fileURLToPath } from 'node:url'
+import { fileURLToPath, pathToFileURL } from 'node:url'
 import chalk from 'chalk'
 import closeWithGrace from 'close-with-grace'
 import getPort from 'get-port'
@@ -69,9 +69,10 @@ export async function start(options: StartOptions = {}): Promise<StartResult> {
 
 		const parentPort = await getPort({ port: 3742 })
 		const parentToken = crypto.randomBytes(32).toString('hex')
+		const instrumentModule = pathToFileURL(path.join(appDir, 'instrument.js'))
 		const sentryImport =
 			isPublished && process.env.SENTRY_DSN
-				? `--import="${appDir}/instrument.js"`
+				? `--import="${instrumentModule.href}"`
 				: ''
 
 		const childCommand = isProd
