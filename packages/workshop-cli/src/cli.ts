@@ -1,5 +1,6 @@
 #!/usr/bin/env node
 
+import './init-env.js'
 import chalk from 'chalk'
 import yargs, { type ArgumentsCamelCase, type Argv } from 'yargs'
 import { hideBin } from 'yargs/helpers'
@@ -108,11 +109,6 @@ const cli = yargs(hideBin(process.argv))
 
 // Parse and execute
 try {
-	const { init: initEnv, getEnv } = await import(
-		'@epic-web/workshop-utils/env.server'
-	)
-	await initEnv()
-	;(global as any).ENV = getEnv()
 	await cli.parse()
 } catch (error) {
 	console.error(chalk.red('❌ Error:'), error)
