@@ -281,8 +281,6 @@ export async function start(options: StartOptions = {}): Promise<StartResult> {
 				// Capture stdout for port detection
 				stdio: ['pipe', 'pipe', 'inherit'],
 				env: childEnv,
-				// Create a new process group on Unix-like systems so we can kill the entire tree
-				detached: process.platform !== 'win32',
 			})
 
 
@@ -456,67 +454,24 @@ export async function start(options: StartOptions = {}): Promise<StartResult> {
 // Helper functions
 
 async function killChild(child: ChildProcess | null): Promise<void> {
-	if (!child || !child.pid) return
+	if (!child) return
 	
 	return new Promise((resolve) => {
-		let resolved = false
-		const resolveOnce = () => {
-			if (!resolved) {
-				resolved = true
-				resolve()
-			}
-		}
+		const onExit = () => resolve()
+		child.once('exit', onExit)
 		
-		// Set up exit handler
-		child.once('exit', resolveOnce)
+		// Just kill the process normally
+		child.kill('SIGTERM')
 		
-		// On Unix-like systems, when using shell: true, we need to kill the entire process tree
-		// because the shell spawns child processes that won't be killed by just killing the shell
-		if (process.platform !== 'win32') {
+		// If it doesn't exit quickly, force kill and resolve
+		setTimeout(() => {
 			try {
-				// Kill the entire process group to ensure all child processes are terminated
-				// The negative PID means kill the process group
-				process.kill(-child.pid!, 'SIGTERM')
-				
-				// Give processes time to gracefully shut down, then force kill
-				setTimeout(() => {
-					if (!resolved) {
-						try {
-							// Force kill the process group if still running
-							process.kill(-child.pid!, 'SIGKILL')
-						} catch {
-							// Process might already be dead, ignore errors
-						}
-						// Give a bit more time for the kill signal to take effect
-						setTimeout(resolveOnce, 500)
-					}
-				}, 1000)
-			} catch (error) {
-				// If process group killing fails, fall back to killing just the main process
-				child.kill('SIGTERM')
-				setTimeout(() => {
-					if (!resolved) {
-						try {
-							child.kill('SIGKILL')
-						} catch {
-							// Process might already be dead, ignore errors
-						}
-						setTimeout(resolveOnce, 500)
-					}
-				}, 1000)
+				child.kill('SIGKILL')
+			} catch {
+				// Process might already be dead
 			}
-		} else {
-			// On Windows, kill the process tree using taskkill
-			if (child.pid) {
-				const killer = spawn('taskkill', ['/pid', child.pid.toString(), '/f', '/t'])
-				killer.on('exit', resolveOnce)
-			} else {
-				child.kill()
-			}
-		}
-		
-		// Fallback timeout to ensure we don't hang forever (shorter for tests)
-		setTimeout(resolveOnce, 5000)
+			resolve()
+		}, 1000)
 	})
 }
 
