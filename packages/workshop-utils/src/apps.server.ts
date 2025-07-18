@@ -1,3 +1,6 @@
+// eslint-disable-next-line import/order -- this must be first
+import { ENV } from './init-env.js'
+
 import fs from 'node:fs'
 import path from 'node:path'
 import { type CacheEntry } from '@epic-web/cachified'
@@ -23,7 +26,6 @@ import {
 import { compileMdx } from './compile-mdx.server.js'
 import { getAppConfig, getStackBlitzUrl } from './config.server.js'
 import { getPreferences } from './db.server.js'
-import { getEnv, init as initEnv } from './env.server.js'
 import { getDirModifiedTime } from './modified-time.server.js'
 import {
 	closeProcess,
@@ -263,11 +265,6 @@ export async function init(workshopRoot?: string) {
 	if (global.__epicshop_apps_initialized__) return
 
 	global.__epicshop_apps_initialized__ = true
-
-	if (!global.ENV) {
-		await initEnv()
-		global.ENV = getEnv()
-	}
 
 	if (
 		!ENV.EPICSHOP_DEPLOYED &&

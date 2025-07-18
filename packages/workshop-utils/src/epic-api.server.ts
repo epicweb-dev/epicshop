@@ -1,3 +1,6 @@
+// eslint-disable-next-line import/order -- this must be first
+import { ENV } from './init-env.js'
+
 import * as cookie from 'cookie'
 import md5 from 'md5-hex'
 import { z } from 'zod'

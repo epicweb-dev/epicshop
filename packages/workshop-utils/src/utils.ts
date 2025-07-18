@@ -1,3 +1,5 @@
+import './init-env.js'
+
 export function getErrorMessage(error: unknown) {
 	if (typeof error === 'string') return error
 	if (

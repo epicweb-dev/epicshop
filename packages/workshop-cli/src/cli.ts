@@ -1,6 +1,6 @@
 #!/usr/bin/env node
 
-import './init-env.js'
+import '@epic-web/workshop-utils/init-env'
 import chalk from 'chalk'
 import yargs, { type ArgumentsCamelCase, type Argv } from 'yargs'
 import { hideBin } from 'yargs/helpers'

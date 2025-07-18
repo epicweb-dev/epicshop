@@ -1,5 +1,5 @@
 // eslint-disable-next-line import/order -- must appear first
-import { ENV } from '../init-env.js'
+import { ENV } from '@epic-web/workshop-utils/init-env'
 
 import { spawn, type ChildProcess, execSync } from 'node:child_process'
 import crypto from 'node:crypto'

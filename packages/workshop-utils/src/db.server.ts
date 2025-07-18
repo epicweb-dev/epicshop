@@ -1,3 +1,5 @@
+import './init-env.js'
+
 import os from 'os'
 import path from 'path'
 import { createId as cuid } from '@paralleldrive/cuid2'

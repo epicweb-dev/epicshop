@@ -1,3 +1,5 @@
+import './init-env.js'
+
 import fs from 'node:fs'
 import path from 'node:path'
 import { isGitIgnored } from 'globby'

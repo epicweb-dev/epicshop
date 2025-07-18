@@ -1,3 +1,6 @@
+// eslint-disable-next-line import/order -- this must be first
+import { ENV } from './init-env.js'
+
 import os from 'os'
 import path from 'path'
 import * as C from '@epic-web/cachified'
@@ -158,7 +161,7 @@ export function makeSingletonFsCache<CacheEntryType>(name: string) {
 			os.homedir(),
 			'.epicshop',
 			'cache',
-			process.env.EPICSHOP_WORKSHOP_INSTANCE_ID,
+			ENV.EPICSHOP_WORKSHOP_INSTANCE_ID,
 			name,
 		)
 

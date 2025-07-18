@@ -1,3 +1,6 @@
+// eslint-disable-next-line import/order -- this must be first
+import { ENV } from './init-env.js'
+
 import json5 from 'json5'
 import { z } from 'zod'
 import { cachified, notificationsCache } from './cache.server.js'

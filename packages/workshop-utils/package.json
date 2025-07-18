@@ -114,6 +114,12 @@
         "default": "./dist/esm/iframe-sync.js"
       }
     },
+    "./init-env": {
+      "import": {
+        "types": "./dist/esm/init-env.d.ts",
+        "default": "./dist/esm/init-env.js"
+      }
+    },
     "./playwright.server": {
       "import": {
         "types": "./dist/esm/playwright.server.d.ts",

@@ -1,12 +1,13 @@
+// eslint-disable-next-line import/order -- this must be first
+import { ENV } from './init-env.js'
+
 import fs from 'node:fs'
 import path from 'node:path'
 import { z } from 'zod'
 import { handleGitHubRepoAndRoot } from './utils.js'
 
-export const getWorkshopRoot = () =>
-	process.env.EPICSHOP_CONTEXT_CWD ?? process.cwd()
-
-const getRootPkgJsonPath = () => path.join(getWorkshopRoot(), 'package.json')
+const getRootPkgJsonPath = () =>
+	path.join(ENV.EPICSHOP_CONTEXT_CWD, 'package.json')
 
 export const StackBlitzConfigSchema = z.object({
 	// we default this to `${exerciseTitle} (${type})`
@@ -266,7 +267,10 @@ export async function getStackBlitzUrl({
 
 	const params = new URLSearchParams(stackBlitzConfig as Record<string, string>)
 
-	const relativePath = fullPath.replace(`${getWorkshopRoot()}${path.sep}`, '')
+	const relativePath = fullPath.replace(
+		`${ENV.EPICSHOP_CONTEXT_CWD}${path.sep}`,
+		'',
+	)
 
 	const stackBlitzUrl = new URL(
 		`/github${githubPart}/${relativePath}?${params}`,

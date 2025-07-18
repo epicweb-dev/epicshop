@@ -1,4 +1,4 @@
-import '../init-env.js'
+import '@epic-web/workshop-utils/init-env'
 
 import chalk from 'chalk'
 

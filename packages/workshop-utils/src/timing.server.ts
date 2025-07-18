@@ -1,3 +1,5 @@
+import './init-env.js'
+
 import { type CreateReporter } from '@epic-web/cachified'
 
 export type Timings = Record<

@@ -1,3 +1,5 @@
+import './init-env.js'
+
 import fs from 'fs'
 import path from 'path'
 import { rehypeCodeBlocksShiki } from '@kentcdodds/md-temp'

@@ -1,3 +1,5 @@
+import './init-env.js'
+
 import { expect, test } from '@playwright/test'
 import crossSpawn from 'cross-spawn'
 import z from 'zod'

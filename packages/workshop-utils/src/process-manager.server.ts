@@ -1,3 +1,5 @@
+import './init-env.js'
+
 import { spawn, type ChildProcess } from 'child_process'
 import net from 'node:net'
 import { remember } from '@epic-web/remember'

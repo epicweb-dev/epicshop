@@ -1,3 +1,6 @@
+// eslint-disable-next-line import/order -- this must be first
+import { ENV } from './init-env.js'
+
 import os from 'os'
 import path from 'path'
 import { type CacheEntry } from '@epic-web/cachified'

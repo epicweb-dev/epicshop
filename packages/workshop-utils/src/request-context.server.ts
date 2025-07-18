@@ -1,3 +1,5 @@
+import './init-env.js'
+
 import { AsyncLocalStorage } from 'node:async_hooks'
 import { remember } from '@epic-web/remember'
 
