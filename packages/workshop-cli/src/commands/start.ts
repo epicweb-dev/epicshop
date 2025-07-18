@@ -429,18 +429,6 @@ export async function start(options: StartOptions = {}): Promise<StartResult> {
 		}
 
 		async function cleanupBeforeExit() {
-			if (process.platform === 'win32' && child?.pid) {
-				// Use a Promise to wait for taskkill to finish
-				await new Promise<void>((resolve) => {
-					const killer = spawn('taskkill', [
-						'/pid',
-						child!.pid!.toString(),
-						'/f',
-						'/t',
-					])
-					killer.on('exit', resolve)
-				})
-			}
 			await killChild(child)
 			if (server) await new Promise((resolve) => server!.close(resolve))
 		}
@@ -464,10 +452,42 @@ export async function start(options: StartOptions = {}): Promise<StartResult> {
 
 async function killChild(child: ChildProcess | null): Promise<void> {
 	if (!child) return
+
 	return new Promise((resolve) => {
-		const onExit = () => resolve()
+		let timeoutId: NodeJS.Timeout | null = null
+
+		const onExit = () => {
+			if (timeoutId) {
+				clearTimeout(timeoutId)
+			}
+			resolve()
+		}
 		child.once('exit', onExit)
-		child.kill()
+
+		if (process.platform === 'win32') {
+			// On Windows, use taskkill to kill the process tree
+			if (child.pid) {
+				const killer = spawn('taskkill', ['/pid', child.pid.toString(), '/f', '/t'])
+				killer.on('exit', resolve)
+				killer.on('error', resolve) // Resolve even if taskkill fails
+			} else {
+				child.kill()
+				resolve()
+			}
+		} else {
+			// On Unix-like systems, just kill the process normally
+			child.kill('SIGTERM')
+
+			// If it doesn't exit quickly, force kill and resolve
+			timeoutId = setTimeout(() => {
+				try {
+					child.kill('SIGKILL')
+				} catch {
+					// Process might already be dead
+				}
+				resolve()
+			}, 2500)
+		}
 	})
 }
 

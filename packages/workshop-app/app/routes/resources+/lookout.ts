@@ -27,6 +27,8 @@ export async function action({ request }: Route.ActionArgs) {
 		return await fetch(upstreamSentryURL, { method: 'POST', body: envelope })
 	} catch (error) {
 		console.error(`Error forwarding Sentry event: ${error}`)
-		return new Response('Sentry event not forwarded due to network error', { status: 200 })
+		return new Response('Sentry event not forwarded due to network error', {
+			status: 200,
+		})
 	}
 }
