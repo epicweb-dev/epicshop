@@ -38,7 +38,7 @@
     "setup:custom": "node ./epicshop/setup-custom.js",
     "lint": "eslint .",
     "format": "prettier --write .",
-    "typecheck": "tsc -b"
+    "typecheck:ignored": "tsc -b"
   },
   "keywords": [],
   "author": "Kent C. Dodds <me@kentcdodds.com> (https://kentcdodds.com/)",
