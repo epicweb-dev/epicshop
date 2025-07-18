@@ -1,5 +1,4 @@
 {
-	"extends": "./tsconfig.json",
 	"compilerOptions": {
 		"declaration": true,
 		"declarationMap": true,
@@ -7,17 +6,13 @@
 		"forceConsistentCasingInFileNames": true,
 		"inlineSources": true,
 		"jsx": "react",
-		"module": "esnext",
-		"moduleResolution": "bundler",
+		"module": "nodenext",
+		"moduleResolution": "nodenext",
 		"noUncheckedIndexedAccess": true,
 		"resolveJsonModule": true,
 		"skipLibCheck": true,
 		"sourceMap": true,
 		"strict": true,
-		"target": "es2022",
-		"outDir": "./dist",
-		"rootDir": "./src"
-	},
-	"include": ["src/**/*"],
-	"exclude": ["node_modules", "dist"]
+		"target": "es2022"
+	}
 }

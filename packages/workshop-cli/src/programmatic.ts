@@ -1,6 +1,6 @@
 import { spawn } from 'node:child_process'
-import { fileURLToPath } from 'node:url'
 import path from 'node:path'
+import { fileURLToPath } from 'node:url'
 
 export type StartCommandOptions = {
 	appLocation?: string
@@ -58,10 +58,16 @@ async function executeCliCommand(args: string[]): Promise<CommandResult> {
 		child.on('close', (code) => {
 			resolve({
 				success: code === 0,
-				message: code === 0 ? 'Command executed successfully' : `Command failed with exit code ${code}`,
+				message:
+					code === 0
+						? 'Command executed successfully'
+						: `Command failed with exit code ${code}`,
 				stdout,
 				stderr,
-				error: code !== 0 ? new Error(`Command failed with exit code ${code}`) : undefined,
+				error:
+					code !== 0
+						? new Error(`Command failed with exit code ${code}`)
+						: undefined,
 			})
 		})
 
@@ -80,13 +86,15 @@ async function executeCliCommand(args: string[]): Promise<CommandResult> {
 /**
  * Start the workshop application programmatically
  */
-export async function startCommand(options: StartCommandOptions = {}): Promise<CommandResult> {
+export async function startCommand(
+	options: StartCommandOptions = {},
+): Promise<CommandResult> {
 	const args = ['start']
-	
+
 	if (options.verbose) {
 		args.push('--verbose')
 	}
-	
+
 	if (options.appLocation) {
 		args.push('--app-location', options.appLocation)
 	}
@@ -111,13 +119,16 @@ export async function warmCommand(): Promise<CommandResult> {
 /**
  * Check for available updates (using the CLI help as a simple check)
  */
-export async function checkForUpdates(): Promise<CommandResult & { updatesAvailable?: number; diffLink?: string }> {
+export async function checkForUpdates(): Promise<
+	CommandResult & { updatesAvailable?: number; diffLink?: string }
+> {
 	// This is a simplified version - in a real implementation you'd need to
 	// either expose a separate command or parse the output differently
 	const result = await executeCliCommand(['--help'])
 	return {
 		...result,
-		message: 'Check for updates functionality would need to be exposed as a separate CLI command',
+		message:
+			'Check for updates functionality would need to be exposed as a separate CLI command',
 	}
 }
 
@@ -128,7 +139,8 @@ export async function checkForUpdates(): Promise<CommandResult & { updatesAvaila
 export async function openWorkshop(): Promise<CommandResult> {
 	return {
 		success: false,
-		message: 'Open workshop functionality would need to be exposed as a separate CLI command',
+		message:
+			'Open workshop functionality would need to be exposed as a separate CLI command',
 	}
 }
 
@@ -139,7 +151,8 @@ export async function openWorkshop(): Promise<CommandResult> {
 export async function dismissUpdateNotification(): Promise<CommandResult> {
 	return {
 		success: false,
-		message: 'Dismiss notification functionality would need to be exposed as a separate CLI command',
+		message:
+			'Dismiss notification functionality would need to be exposed as a separate CLI command',
 	}
 }
 
@@ -157,18 +170,30 @@ export async function initializeEnvironment(): Promise<CommandResult> {
 /**
  * Execute a custom CLI command with arguments
  */
-export async function executeCommand(command: string, args: string[] = []): Promise<CommandResult> {
+export async function executeCommand(
+	command: string,
+	args: string[] = [],
+): Promise<CommandResult> {
 	return executeCliCommand([command, ...args])
 }
 
 /**
  * Get the CLI version
  */
-export async function getVersion(): Promise<CommandResult & { version?: string }> {
+export async function getVersion(): Promise<
+	CommandResult & { version?: string }
+> {
 	try {
-		const packageJsonPath = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '../package.json')
-		const packageJson = JSON.parse(await import('fs').then(fs => fs.promises.readFile(packageJsonPath, 'utf8')))
-		
+		const packageJsonPath = path.resolve(
+			path.dirname(fileURLToPath(import.meta.url)),
+			'../package.json',
+		)
+		const packageJson = JSON.parse(
+			await import('fs').then((fs) =>
+				fs.promises.readFile(packageJsonPath, 'utf8'),
+			),
+		) as { version: string }
+
 		return {
 			success: true,
 			message: `CLI version: ${packageJson.version}`,

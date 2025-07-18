@@ -30,7 +30,8 @@ export async function start(options: StartOptions = {}): Promise<StartResult> {
 		if (!appDir) {
 			return {
 				success: false,
-				message: 'Could not locate workshop-app directory. Please ensure the workshop app is installed or specify its location.',
+				message:
+					'Could not locate workshop-app directory. Please ensure the workshop app is installed or specify its location.',
 			}
 		}
 
@@ -72,9 +73,13 @@ export async function start(options: StartOptions = {}): Promise<StartResult> {
 			if (isDeployed) return
 
 			try {
-				const { checkForUpdatesCached } = await import('@epic-web/workshop-utils/git.server')
-				const { getMutedNotifications } = await import('@epic-web/workshop-utils/db.server')
-				
+				const { checkForUpdatesCached } = await import(
+					'@epic-web/workshop-utils/git.server'
+				)
+				const { getMutedNotifications } = await import(
+					'@epic-web/workshop-utils/db.server'
+				)
+
 				const updates = await checkForUpdatesCached()
 				if (updates.updatesAvailable && updates.remoteCommit) {
 					// Check if update notification is muted
@@ -92,9 +97,7 @@ export async function start(options: StartOptions = {}): Promise<StartResult> {
 								updates.updatesAvailable,
 							)} update(s) available! Run ${updateCommand} to update.`,
 						)
-						console.log(
-							`📖  View the changes: ${updateLink}`,
-						)
+						console.log(`📖  View the changes: ${updateLink}`)
 						console.log(
 							`${chalk.gray('💡 Press')} ${chalk.blue('u')} ${chalk.gray(
 								'to update or',
@@ -174,7 +177,10 @@ export async function start(options: StartOptions = {}): Promise<StartResult> {
 
 		// Create parent server for communication
 		server = http.createServer((req, res) => {
-			if (req.url === '/ping' && req.headers.authorization === `Bearer ${parentToken}`) {
+			if (
+				req.url === '/ping' &&
+				req.headers.authorization === `Bearer ${parentToken}`
+			) {
 				res.writeHead(200, { 'Content-Type': 'application/json' })
 				res.end(JSON.stringify({ status: 'ok' }))
 			} else {
@@ -185,7 +191,9 @@ export async function start(options: StartOptions = {}): Promise<StartResult> {
 
 		server.listen(parentPort, () => {
 			if (options.verbose) {
-				console.log(chalk.green(`✅ Parent server listening on port ${parentPort}`))
+				console.log(
+					chalk.green(`✅ Parent server listening on port ${parentPort}`),
+				)
 			}
 		})
 

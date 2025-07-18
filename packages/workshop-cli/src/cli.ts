@@ -65,11 +65,19 @@ const cli = yargs(hideBin(process.argv))
 		['warm'],
 		'Warm up the workshop application caches (apps, diffs)',
 		(yargs: Argv) => {
-			return yargs.example('$0 warm', 'Warm up workshop caches')
+			return yargs
+				.option('silent', {
+					alias: 's',
+					type: 'boolean',
+					description: 'Run without output logs',
+					default: false,
+				})
+				.example('$0 warm', 'Warm up workshop caches')
+				.example('$0 warm --silent', 'Warm up workshop caches silently')
 		},
-		async (_argv: ArgumentsCamelCase<Record<string, unknown>>) => {
+		async (argv: ArgumentsCamelCase<{ silent?: boolean }>) => {
 			const { warm } = await import('./commands/warm.js')
-			await warm()
+			await warm({ silent: argv.silent })
 		},
 	)
 	.epilogue(
@@ -85,7 +93,9 @@ For more information, visit: https://github.com/epicweb-dev/epicshop
 
 // Parse and execute
 try {
-	const { init: initEnv, getEnv } = await import('@epic-web/workshop-utils/env.server')
+	const { init: initEnv, getEnv } = await import(
+		'@epic-web/workshop-utils/env.server'
+	)
 	await initEnv()
 	;(global as any).ENV = getEnv()
 	await cli.parse()

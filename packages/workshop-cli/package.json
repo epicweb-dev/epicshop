@@ -4,16 +4,49 @@
   "publishConfig": {
     "access": "public"
   },
-    "type": "module",
-    "bin": {
-    "epicshop": "./dist/cli.js"
+  "type": "module",
+  "bin": {
+    "epicshop": "./dist/esm/cli.js"
+  },
+  "tshy": {
+    "project": "./tsconfig.build.json",
+    "dialects": [
+      "esm"
+    ],
+    "exports": {
+      "./package.json": "./package.json",
+      ".": "./src/programmatic.js",
+      "./warm": "./src/commands/warm.js",
+      "./start": "./src/commands/start.js",
+      "./update": "./src/commands/update.js"
+    }
   },
   "exports": {
     "./package.json": "./package.json",
-    ".": "./dist/programmatic.js",
-    "./warm": "./dist/commands/warm.js",
-    "./start": "./dist/commands/start.js",
-    "./update": "./dist/commands/update.js"
+    ".": {
+      "import": {
+        "types": "./dist/esm/programmatic.d.ts",
+        "default": "./dist/esm/programmatic.js"
+      }
+    },
+    "./warm": {
+      "import": {
+        "types": "./dist/esm/commands/warm.d.ts",
+        "default": "./dist/esm/commands/warm.js"
+      }
+    },
+    "./start": {
+      "import": {
+        "types": "./dist/esm/commands/start.d.ts",
+        "default": "./dist/esm/commands/start.js"
+      }
+    },
+    "./update": {
+      "import": {
+        "types": "./dist/esm/commands/update.d.ts",
+        "default": "./dist/esm/commands/update.js"
+      }
+    }
   },
   "files": [
     "dist"
@@ -21,7 +54,7 @@
   "scripts": {
     "typecheck": "tsc --noEmit",
     "lint": "eslint --cache --cache-location ./node_modules/.cache/eslint .",
-    "build": "tsc --project tsconfig.build.json",
+    "build": "tshy",
     "build:watch": "nx watch --projects=@epic-web/workshop-cli -- nx run \\$NX_PROJECT_NAME:build"
   },
   "dependencies": {
@@ -42,5 +75,6 @@
     "type": "git",
     "url": "https://github.com/epicweb-dev/epicshop.git",
     "directory": "packages/workshop-cli"
-  }
+  },
+  "module": "./dist/esm/programmatic.js"
 }

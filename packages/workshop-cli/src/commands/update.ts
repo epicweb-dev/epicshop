@@ -20,7 +20,9 @@ export async function update(): Promise<UpdateResult> {
 	}
 
 	try {
-		const { updateLocalRepo } = await import('@epic-web/workshop-utils/git.server')
+		const { updateLocalRepo } = await import(
+			'@epic-web/workshop-utils/git.server'
+		)
 		const result = await updateLocalRepo()
 		if (result.status === 'success') {
 			return {
