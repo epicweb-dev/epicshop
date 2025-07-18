@@ -1,7 +1,6 @@
 import { getFormProps, useForm } from '@conform-to/react'
 import { parseWithZod } from '@conform-to/zod'
-import { redirect, type LoaderFunctionArgs } from '@remix-run/node'
-import { data, useFetcher, useFetchers } from 'react-router'
+import { data, redirect, useFetcher, useFetchers } from 'react-router'
 import { z } from 'zod'
 import { Icon } from '#app/components/icons.tsx'
 import { SimpleTooltip } from '#app/components/ui/tooltip.tsx'
@@ -18,7 +17,7 @@ const ThemeFormSchema = z.object({
 	theme: z.enum(['system', 'light', 'dark']),
 })
 
-export async function loader({ request }: LoaderFunctionArgs) {
+export async function loader({ request }: Route.LoaderArgs) {
 	const referrer = request.headers.get('Referer')
 	return redirect(referrer ?? '/', {
 		headers: { 'Cache-Control': 'no-cache' },
