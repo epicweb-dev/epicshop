@@ -1,5 +1,6 @@
 import { getFormProps, useForm } from '@conform-to/react'
 import { parseWithZod } from '@conform-to/zod'
+import { redirect, type LoaderFunctionArgs } from '@remix-run/node'
 import { data, useFetcher, useFetchers } from 'react-router'
 import { z } from 'zod'
 import { Icon } from '#app/components/icons.tsx'
@@ -16,6 +17,13 @@ const ROUTE_PATH = '/theme'
 const ThemeFormSchema = z.object({
 	theme: z.enum(['system', 'light', 'dark']),
 })
+
+export async function loader({ request }: LoaderFunctionArgs) {
+	const referrer = request.headers.get('Referer')
+	return redirect(referrer ?? '/', {
+		headers: { 'Cache-Control': 'no-cache' },
+	})
+}
 
 export async function action({ request }: Route.ActionArgs) {
 	const formData = await request.formData()
