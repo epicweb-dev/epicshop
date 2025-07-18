@@ -4,24 +4,16 @@
   "publishConfig": {
     "access": "public"
   },
-  "type": "module",
-
-  "tshy": {
-    "project": "./tsconfig.build.json",
-    "dialects": [
-      "esm"
-    ],
-    "exports": {
-      "./package.json": "./package.json",
-      ".": "./src/programmatic.js"
-    },
-    "exclude": [
-      "src/cli.ts"
-    ]
+    "type": "module",
+    "bin": {
+    "epicshop": "./dist/cli.js"
   },
   "exports": {
     "./package.json": "./package.json",
-    ".": "./dist/esm/programmatic.js"
+    ".": "./dist/programmatic.js",
+    "./warm": "./dist/commands/warm.js",
+    "./start": "./dist/commands/start.js",
+    "./update": "./dist/commands/update.js"
   },
   "files": [
     "dist"
@@ -29,7 +21,7 @@
   "scripts": {
     "typecheck": "tsc --noEmit",
     "lint": "eslint --cache --cache-location ./node_modules/.cache/eslint .",
-    "build": "tshy",
+    "build": "tsc --project tsconfig.build.json",
     "build:watch": "nx watch --projects=@epic-web/workshop-cli -- nx run \\$NX_PROJECT_NAME:build"
   },
   "dependencies": {
