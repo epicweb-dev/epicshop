@@ -25,6 +25,7 @@
       "./compile-mdx.server": "./src/compile-mdx.server.ts",
       "./git.server": "./src/git.server.ts",
       "./iframe-sync": "./src/iframe-sync.ts",
+      "./init-env": "./src/init-env.ts",
       "./playwright.server": "./src/playwright.server.ts",
       "./notifications.server": "./src/notifications.server.ts",
       "./process-manager.server": "./src/process-manager.server.ts",

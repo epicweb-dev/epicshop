@@ -1,4 +1,4 @@
-import { init, getEnv } from '@epic-web/workshop-utils/env.server'
+import { init, getEnv } from './env.server.js'
 
 await init()
 const ENV = getEnv()
