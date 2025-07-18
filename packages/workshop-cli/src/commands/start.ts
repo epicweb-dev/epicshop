@@ -455,74 +455,69 @@ export async function start(options: StartOptions = {}): Promise<StartResult> {
 
 // Helper functions
 
-async function killProcessTree(pid: number): Promise<void> {
-	if (process.platform === 'win32') {
-		// On Windows, use taskkill to kill the process tree
-		return new Promise((resolve) => {
-			const killer = spawn('taskkill', ['/pid', pid.toString(), '/f', '/t'])
-			killer.on('exit', () => resolve())
-		})
-	} else {
-		// On Unix-like systems, find all child processes and kill them
-		try {
-			// First, try to get all child processes
-			const result = execSync(`pgrep -P ${pid}`, { encoding: 'utf8' }).trim()
-			if (result) {
-				const childPids = result.split('\n').map(p => parseInt(p.trim())).filter(p => !isNaN(p))
-				
-				// Recursively kill child processes first
-				for (const childPid of childPids) {
-					try {
-						await killProcessTree(childPid)
-					} catch {
-						// Ignore errors for child processes that might already be dead
-					}
-				}
-			}
-		} catch {
-			// pgrep might fail if no children exist, which is fine
-		}
-		
-		// Kill the main process
-		try {
-			process.kill(pid, 'SIGTERM')
-			// Give it time to exit gracefully
-			await new Promise(resolve => setTimeout(resolve, 2000))
-			
-			// Check if it's still alive and force kill if needed
-			try {
-				process.kill(pid, 0) // Test if process still exists
-				process.kill(pid, 'SIGKILL') // Force kill if still alive
-				await new Promise(resolve => setTimeout(resolve, 1000))
-			} catch {
-				// Process is already dead, which is what we want
-			}
-		} catch {
-			// Process might already be dead
-		}
-	}
-}
-
 async function killChild(child: ChildProcess | null): Promise<void> {
 	if (!child || !child.pid) return
 	
-	try {
-		// Use the robust process tree killing function
-		await killProcessTree(child.pid)
-	} catch (error) {
-		// If the process tree killing fails, fall back to the basic kill
-		try {
-			child.kill('SIGTERM')
-			await new Promise(resolve => setTimeout(resolve, 2000))
-			try {
-				child.kill('SIGKILL')
-			} catch {
-				// Process might already be dead
+	return new Promise((resolve) => {
+		let resolved = false
+		const resolveOnce = () => {
+			if (!resolved) {
+				resolved = true
+				resolve()
 			}
-		} catch {
-			// Process might already be dead
 		}
-	}
+		
+		// Set up exit handler
+		child.once('exit', resolveOnce)
+		
+		// On Unix-like systems, when using shell: true, we need to kill the entire process tree
+		// because the shell spawns child processes that won't be killed by just killing the shell
+		if (process.platform !== 'win32') {
+			try {
+				// Kill the entire process group to ensure all child processes are terminated
+				// The negative PID means kill the process group
+				process.kill(-child.pid!, 'SIGTERM')
+				
+				// Give processes time to gracefully shut down, then force kill
+				setTimeout(() => {
+					if (!resolved) {
+						try {
+							// Force kill the process group if still running
+							process.kill(-child.pid!, 'SIGKILL')
+						} catch {
+							// Process might already be dead, ignore errors
+						}
+						// Give a bit more time for the kill signal to take effect
+						setTimeout(resolveOnce, 500)
+					}
+				}, 1000)
+			} catch (error) {
+				// If process group killing fails, fall back to killing just the main process
+				child.kill('SIGTERM')
+				setTimeout(() => {
+					if (!resolved) {
+						try {
+							child.kill('SIGKILL')
+						} catch {
+							// Process might already be dead, ignore errors
+						}
+						setTimeout(resolveOnce, 500)
+					}
+				}, 1000)
+			}
+		} else {
+			// On Windows, kill the process tree using taskkill
+			if (child.pid) {
+				const killer = spawn('taskkill', ['/pid', child.pid.toString(), '/f', '/t'])
+				killer.on('exit', resolveOnce)
+			} else {
+				child.kill()
+			}
+		}
+		
+		// Fallback timeout to ensure we don't hang forever (shorter for tests)
+		setTimeout(resolveOnce, 5000)
+	})
 }
 
 async function findWorkshopAppDir(
