@@ -6,10 +6,15 @@ import fsExtra from 'fs-extra'
 import mimeTypes from 'mime-types'
 import { redirect, type LoaderFunctionArgs } from 'react-router'
 import { compileTs } from '#app/utils/compile-app.server.ts'
-import { combineHeaders, getBaseUrl } from '#app/utils/misc.tsx'
+import {
+	combineHeaders,
+	ensureUndeployed,
+	getBaseUrl,
+} from '#app/utils/misc.tsx'
 import { firstExisting, resolveApps } from './__utils.ts'
 
 export async function loader({ request, params }: LoaderFunctionArgs) {
+	ensureUndeployed()
 	const timings = makeTimings('app-file')
 	const { fileApp, app } = await resolveApps({ request, params, timings })
 	if (!fileApp || !app) {
