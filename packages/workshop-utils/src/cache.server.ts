@@ -161,7 +161,7 @@ export function makeSingletonFsCache<CacheEntryType>(name: string) {
 			async get(key) {
 				const filePath = path.join(cacheDir, md5(key))
 				const maxRetries = 3
-				const baseDelay = 50 // 50ms base delay
+				const baseDelay = 10
 
 				for (let attempt = 0; attempt <= maxRetries; attempt++) {
 					try {
