@@ -73,7 +73,7 @@ export const AnchorOrLink = function AnchorOrLink({
 export function ensureUndeployed() {
 	if (ENV.EPICSHOP_DEPLOYED) {
 		throw new Response(
-			'EPICSHOP_DEPLOYED is true, cannot perform this action',
+			'EPICSHOP_DEPLOYED is true, cannot perform this action. Run this locally instead.',
 			{
 				status: 400,
 			},
@@ -84,7 +84,7 @@ export function ensureUndeployed() {
 export function ensureDeployed() {
 	if (!ENV.EPICSHOP_DEPLOYED) {
 		throw new Response(
-			'EPICSHOP_DEPLOYED is false, cannot perform this action',
+			'EPICSHOP_DEPLOYED is false, cannot perform this action. Run deployed version instead.',
 			{ status: 400 },
 		)
 	}

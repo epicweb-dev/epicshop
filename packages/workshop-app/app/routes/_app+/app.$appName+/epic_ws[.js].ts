@@ -1,9 +1,10 @@
 import { makeTimings } from '@epic-web/workshop-utils/timing.server'
 import { redirect, type LoaderFunctionArgs } from 'react-router'
-import { getBaseUrl } from '#app/utils/misc.tsx'
+import { ensureUndeployed, getBaseUrl } from '#app/utils/misc.tsx'
 import { resolveApps } from './__utils.ts'
 
 export async function loader({ request, params }: LoaderFunctionArgs) {
+	ensureUndeployed()
 	const timings = makeTimings('epic_ws script')
 	const { fileApp, app } = await resolveApps({ request, params, timings })
 	if (!fileApp || !app) {

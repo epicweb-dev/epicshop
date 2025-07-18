@@ -14,10 +14,12 @@ import {
 } from '@epic-web/workshop-utils/timing.server'
 import fsExtra from 'fs-extra'
 import { type LoaderFunctionArgs } from 'react-router'
+import { ensureUndeployed } from '#app/utils/misc.tsx'
 import { redirectWithToast } from '#app/utils/toast.server.ts'
 import { resolveApps } from './__utils.ts'
 
 export async function loader({ request, params }: LoaderFunctionArgs) {
+	ensureUndeployed()
 	const timings = makeTimings('app_test_loader')
 	const userHasAccess = await userHasAccessToWorkshop({
 		request,

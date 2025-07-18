@@ -9,10 +9,11 @@ import {
 } from 'react-router'
 import { z } from 'zod'
 import { compileTs } from '#app/utils/compile-app.server.ts'
-import { getBaseUrl } from '#app/utils/misc.tsx'
+import { ensureUndeployed, getBaseUrl } from '#app/utils/misc.tsx'
 import { resolveApps } from './__utils'
 
 export async function loader(args: LoaderFunctionArgs) {
+	ensureUndeployed()
 	const api = await getApiModule(args)
 	invariantResponse(
 		api.mod.loader,
@@ -28,6 +29,7 @@ export async function loader(args: LoaderFunctionArgs) {
 }
 
 export async function action(args: ActionFunctionArgs) {
+	ensureUndeployed()
 	const api = await getApiModule(args)
 	invariantResponse(
 		api.mod.action,

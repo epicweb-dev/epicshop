@@ -15,10 +15,11 @@ import {
 } from '@epic-web/workshop-utils/timing.server'
 import fsExtra from 'fs-extra'
 import { redirect, type LoaderFunctionArgs } from 'react-router'
-import { getBaseUrl } from '#app/utils/misc.tsx'
+import { ensureUndeployed, getBaseUrl } from '#app/utils/misc.tsx'
 import { resolveApps } from './__utils.ts'
 
 export async function loader({ request, params }: LoaderFunctionArgs) {
+	ensureUndeployed()
 	const timings = makeTimings('app')
 	const { fileApp, app } = await resolveApps({ request, params, timings })
 	const baseApp = isPlaygroundApp(app) ? await getAppByName(app.appName) : app
