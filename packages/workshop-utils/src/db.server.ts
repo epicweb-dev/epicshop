@@ -131,17 +131,56 @@ export async function deleteDb() {
 async function readDb() {
 	if (process.env.EPICSHOP_DEPLOYED) return null
 
-	try {
-		if (await fsExtra.exists(dbPath)) {
-			const db = DataSchema.parse(await fsExtra.readJSON(dbPath))
-			return db
+	const maxRetries = 3
+	const baseDelay = 10
+
+	for (let attempt = 0; attempt <= maxRetries; attempt++) {
+		try {
+			if (await fsExtra.exists(dbPath)) {
+				const db = DataSchema.parse(await fsExtra.readJSON(dbPath))
+				return db
+			}
+			return null
+		} catch (error) {
+			// If this is a retry attempt, it might be a race condition
+			if (attempt < maxRetries) {
+				const delay = baseDelay * Math.pow(2, attempt)
+				console.warn(
+					`Database read error on attempt ${attempt + 1}/${maxRetries + 1}, retrying in ${delay}ms...`,
+				)
+				await new Promise((resolve) => setTimeout(resolve, delay))
+				continue
+			}
+
+			// Final attempt failed, handle as corrupted file
+			console.error(
+				`Error reading the database in ${dbPath} after ${attempt + 1} attempts, moving it to a .bkp file to avoid parsing errors in the future`,
+				error,
+			)
+
+			// Log to Sentry if available
+			if (process.env.SENTRY_DSN && process.env.EPICSHOP_IS_PUBLISHED) {
+				try {
+					const Sentry = await import('@sentry/react-router')
+					Sentry.captureException(error, {
+						tags: {
+							error_type: 'corrupted_database_file',
+							retry_attempts: attempt.toString(),
+						},
+						extra: {
+							filePath: dbPath,
+							errorMessage:
+								error instanceof Error ? error.message : String(error),
+							retryAttempts: attempt,
+						},
+					})
+				} catch (sentryError) {
+					console.error('Failed to log to Sentry:', sentryError)
+				}
+			}
+
+			void fsExtra.move(dbPath, `${dbPath}.bkp`).catch(() => {})
 		}
-	} catch (error) {
-		console.error(
-			`Error reading the database in ${dbPath}, moving it to a .bkp file to avoid parsing errors in the future`,
-			error,
-		)
-		void fsExtra.move(dbPath, `${dbPath}.bkp`).catch(() => {})
 	}
 	return null
 }

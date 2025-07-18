@@ -71,8 +71,41 @@ async function readJsonFilesInDirectory(
 				const subEntries = await readJsonFilesInDirectory(filePath)
 				return [file, subEntries]
 			} else {
-				const data = await fsExtra.readJSON(filePath)
-				return [file, data]
+				const maxRetries = 2
+				const baseDelay = 25 // shorter delay for directory listing
+
+				for (let attempt = 0; attempt <= maxRetries; attempt++) {
+					try {
+						const data = await fsExtra.readJSON(filePath)
+						return [file, data]
+					} catch (error: unknown) {
+						// Handle JSON parsing errors (could be race condition or corruption)
+						if (
+							error instanceof SyntaxError &&
+							error.message.includes('JSON')
+						) {
+							// If this is a retry attempt, it might be a race condition
+							if (attempt < maxRetries) {
+								const delay = baseDelay * Math.pow(2, attempt)
+								console.warn(
+									`JSON parsing error on attempt ${attempt + 1}/${maxRetries + 1} for directory listing ${filePath}, retrying in ${delay}ms...`,
+								)
+								await new Promise((resolve) => setTimeout(resolve, delay))
+								continue
+							}
+
+							// Final attempt failed, skip the file
+							console.warn(
+								`Skipping corrupted JSON file in directory listing after ${attempt + 1} attempts: ${filePath}`,
+							)
+							return [file, null]
+						}
+						throw error
+					}
+				}
+
+				// This should never be reached, but just in case
+				return [file, null]
 			}
 		}),
 	)
@@ -126,21 +159,87 @@ export function makeSingletonFsCache<CacheEntryType>(name: string) {
 		const fsCache: C.Cache<CacheEntryType> = {
 			name: `Filesystem cache (${name})`,
 			async get(key) {
-				try {
-					const filePath = path.join(cacheDir, md5(key))
-					const data = await fsExtra.readJSON(filePath)
-					if (data.entry) return data.entry
-					return null
-				} catch (error: unknown) {
-					if (
-						error instanceof Error &&
-						'code' in error &&
-						error.code === 'ENOENT'
-					) {
+				const filePath = path.join(cacheDir, md5(key))
+				const maxRetries = 3
+				const baseDelay = 50 // 50ms base delay
+
+				for (let attempt = 0; attempt <= maxRetries; attempt++) {
+					try {
+						const data = await fsExtra.readJSON(filePath)
+						if (data.entry) return data.entry
 						return null
+					} catch (error: unknown) {
+						if (
+							error instanceof Error &&
+							'code' in error &&
+							error.code === 'ENOENT'
+						) {
+							return null
+						}
+
+						// Handle JSON parsing errors (could be race condition or corruption)
+						if (
+							error instanceof SyntaxError &&
+							error.message.includes('JSON')
+						) {
+							// If this is a retry attempt, it might be a race condition
+							if (attempt < maxRetries) {
+								const delay = baseDelay * Math.pow(2, attempt) // exponential backoff
+								console.warn(
+									`JSON parsing error on attempt ${attempt + 1}/${maxRetries + 1} for ${filePath}, retrying in ${delay}ms...`,
+								)
+								await new Promise((resolve) => setTimeout(resolve, delay))
+								continue
+							}
+
+							// Final attempt failed, treat as corrupted file
+							// Log to Sentry if available
+							if (process.env.SENTRY_DSN && process.env.EPICSHOP_IS_PUBLISHED) {
+								try {
+									const Sentry = await import('@sentry/react-router')
+									Sentry.captureException(error, {
+										tags: {
+											error_type: 'corrupted_cache_file',
+											cache_name: name,
+											cache_key: key,
+											retry_attempts: attempt.toString(),
+										},
+										extra: {
+											filePath,
+											errorMessage: error.message,
+											cacheName: name,
+											cacheKey: key,
+											retryAttempts: attempt,
+										},
+									})
+								} catch (sentryError) {
+									console.error('Failed to log to Sentry:', sentryError)
+								}
+							}
+
+							// Delete the corrupted file
+							try {
+								await fsExtra.remove(filePath)
+								console.warn(
+									`Deleted corrupted cache file after ${attempt + 1} attempts: ${filePath}`,
+								)
+							} catch (deleteError) {
+								console.error(
+									`Failed to delete corrupted cache file ${filePath}:`,
+									deleteError,
+								)
+							}
+
+							return null
+						}
+
+						// For other errors, don't retry
+						throw error
 					}
-					throw error
 				}
+
+				// This should never be reached, but just in case
+				return null
 			},
 			async set(key, entry) {
 				const filePath = path.join(cacheDir, md5(key))
