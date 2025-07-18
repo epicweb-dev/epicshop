@@ -1,13 +1,13 @@
-import { spawn, execSync } from 'node:child_process'
+import { spawn } from 'node:child_process'
 import { fileURLToPath } from 'node:url'
 import path from 'node:path'
 
-export interface StartCommandOptions {
+export type StartCommandOptions = {
 	appLocation?: string
 	verbose?: boolean
 }
 
-export interface CommandResult {
+export type CommandResult = {
 	success: boolean
 	message?: string
 	error?: Error

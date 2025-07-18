@@ -1,13 +1,10 @@
 import {
 	startCommand,
-	updateCommand,
 	warmCommand,
 	openWorkshop,
 	checkForUpdates,
-	dismissUpdateNotification,
 	initializeEnvironment,
 	type StartCommandOptions,
-	type CommandResult,
 } from '@epic-web/workshop-cli'
 
 // Example usage of the programmatic CLI interface
