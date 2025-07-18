@@ -69,7 +69,6 @@ const schema = z
 			env.EPICSHOP_GITHUB_REPO = githubRepo
 			env.EPICSHOP_GITHUB_ROOT = githubRoot
 		}
-		console.log(env)
 		return env
 	})
 
