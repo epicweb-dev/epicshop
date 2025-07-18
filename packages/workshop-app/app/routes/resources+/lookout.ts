@@ -23,5 +23,10 @@ export async function action({ request }: Route.ActionArgs) {
 	)
 
 	const upstreamSentryURL = `https://${SENTRY_HOST}/api/${projectId}/envelope/`
-	return fetch(upstreamSentryURL, { method: 'POST', body: envelope })
+	try {
+		return await fetch(upstreamSentryURL, { method: 'POST', body: envelope })
+	} catch (error) {
+		console.error(`Error forwarding Sentry event: ${error}`)
+		return new Response('Sentry event not forwarded due to network error', { status: 200 })
+	}
 }
