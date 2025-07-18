@@ -16,8 +16,7 @@
     "validate": "run-p \"test -- --run\" lint typecheck"
   },
   "dependencies": {
-    "@epic-web/config": "^1.21.0",
-    "@epic-web/workshop-utils": "^4.22.2",
+    "@epic-web/workshop-utils": "file:../../../packages/workshop-utils",
     "@remix-run/css-bundle": "^2.9.2",
     "@remix-run/express": "^2.9.2",
     "@remix-run/node": "^2.9.2",
@@ -40,10 +39,11 @@
     "tsx": "^4.11.0"
   },
   "devDependencies": {
+    "@epic-web/config": "^1.21.0",
     "@remix-run/dev": "^2.9.2",
     "@types/node": "^20.16.10",
-    "@types/react": "^19.0.0",
-    "@types/react-dom": "^19.0.0",
+    "@types/react": "^19.1.8",
+    "@types/react-dom": "^19.1.6",
     "autoprefixer": "^10.4.19",
     "esbuild": "0.17.6",
     "eslint": "^9.3.0",
