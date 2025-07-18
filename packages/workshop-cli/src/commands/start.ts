@@ -8,6 +8,7 @@ import { fileURLToPath } from 'node:url'
 import chalk from 'chalk'
 import closeWithGrace from 'close-with-grace'
 import getPort from 'get-port'
+import open from 'open'
 
 export type StartOptions = {
 	appLocation?: string
@@ -28,11 +29,22 @@ export async function start(options: StartOptions = {}): Promise<StartResult> {
 		// Find workshop-app directory using new resolution order
 		const appDir = await findWorkshopAppDir(options.appLocation)
 		if (!appDir) {
-			return {
-				success: false,
-				message:
-					'Could not locate workshop-app directory. Please ensure the workshop app is installed or specify its location.',
-			}
+			console.error(chalk.red('❌ Could not locate workshop-app directory'))
+			console.error(
+				chalk.yellow(
+					'Please ensure the workshop app is installed or specify its location using:',
+				),
+			)
+			console.error(
+				chalk.yellow('  - Environment variable: EPICSHOP_APP_LOCATION'),
+			)
+			console.error(chalk.yellow('  - Command line flag: --app-location'))
+			console.error(
+				chalk.yellow(
+					'  - Global installation: npm install -g @epic-web/workshop-app',
+				),
+			)
+			process.exit(1)
 		}
 
 		const isPublished = await appIsPublished(appDir)
@@ -94,110 +106,313 @@ export async function start(options: StartOptions = {}): Promise<StartResult> {
 						console.log(
 							'\n',
 							`🎉  There are ${chalk.yellow(
-								updates.updatesAvailable,
-							)} update(s) available! Run ${updateCommand} to update.`,
+								'updates available',
+							)} for this workshop repository.  🎉\n\nTo get the updates, ${chalk.green.bold.bgWhite(
+								`press the "u" key`,
+							)} or stop the server and run the following command:\n\n  ${updateCommand}\n\nTo view a diff, check:\n  ${updateLink}\n\nTo dismiss this notification, ${chalk.red.bold.bgWhite(
+								`press the "d" key`,
+							)}\n`,
 						)
-						console.log(`📖  View the changes: ${updateLink}`)
-						console.log(
-							`${chalk.gray('💡 Press')} ${chalk.blue('u')} ${chalk.gray(
-								'to update or',
-							)} ${chalk.blue('d')} ${chalk.gray('to dismiss this notification')}`,
-						)
-						console.log()
 					}
 				}
-			} catch (error) {
-				if (options.verbose) {
-					console.error('Failed to check for updates:', error)
-				}
+			} catch {
+				// Silently ignore update check errors
 			}
 		}
 
-		function spawnChild() {
-			if (options.verbose) {
-				console.log(chalk.blue(`🚀 Starting workshop app...`))
+		const childPortPromise = new Promise<number>((resolve) => {
+			childPortPromiseResolve = resolve
+		}).then((port) => {
+			childPort = port
+			return port
+		})
+
+		function parsePortFromLine(line: string): number | null {
+			const match = line.match(/localhost:(\d+)/)
+			if (match) {
+				return Number(match[1])
+			}
+			return null
+		}
+
+		async function waitForChildReady(): Promise<boolean> {
+			const port = await childPortPromise
+			const { getWorkshopUrl } = await import(
+				'@epic-web/workshop-utils/config.server'
+			)
+			const url = getWorkshopUrl(port)
+			const maxAttempts = 40 // 20s max (500ms interval)
+			for (let i = 0; i < maxAttempts; i++) {
+				try {
+					const res = await fetch(url, { method: 'GET' })
+					if (res.ok) return true
+				} catch {}
+				await new Promise((r) => setTimeout(r, 500))
+			}
+			return false
+		}
+
+		async function doUpdateAndRestart(): Promise<boolean> {
+			if (isDeployed) {
+				console.log('❌ Updates are not available in deployed environments.')
+				return false
 			}
 
-			if (!appDir) {
-				throw new Error('App directory not found')
+			console.log('\n👀 Checking for updates...')
+			try {
+				const { updateLocalRepo } = await import(
+					'@epic-web/workshop-utils/git.server'
+				)
+				const result = await updateLocalRepo()
+				if (result.status === 'success') {
+					console.log(`✅ ${result.message}`)
+					console.log('\n🔄 Restarting...')
+					restarting = true
+					await killChild(child)
+					restarting = false
+					spawnChild()
+					const ready = await waitForChildReady()
+					return ready
+				} else {
+					console.error(`❌ ${result.message}`)
+					console.error(
+						'Update failed. Please try again or see the repo for manual setup.',
+					)
+					return false
+				}
+			} catch (error) {
+				console.error('❌ Update functionality not available:', error)
+				return false
 			}
+		}
 
-			child = spawn('sh', ['-c', childCommand], {
-				cwd: appDir,
-				env: childEnv,
-				stdio: ['pipe', 'pipe', 'pipe'],
-			})
+		if (!isDeployed) {
+			server = http.createServer(async (req, res) => {
+				try {
+					if (req.url === '/__epicshop-restart') {
+						const port = await childPortPromise
+						const { getWorkshopUrl } = await import(
+							'@epic-web/workshop-utils/config.server'
+						)
+						const workshopUrl = getWorkshopUrl(port)
+						res.setHeader('Access-Control-Allow-Origin', workshopUrl)
+						res.setHeader('Access-Control-Allow-Methods', 'POST, OPTIONS')
+						res.setHeader(
+							'Access-Control-Allow-Headers',
+							'x-epicshop-token, content-type',
+						)
+						res.setHeader('Access-Control-Max-Age', '86400')
 
-			if (child?.stdout) {
-				child.stdout.on('data', (data: Buffer) => {
-					const output = data.toString()
-					if (options.verbose) {
-						process.stdout.write(output)
+						// Handle preflight OPTIONS request
+						if (req.method === 'OPTIONS') {
+							res.statusCode = 204
+							res.end()
+							return
+						}
+						if (req.method === 'POST') {
+							res.setHeader('Content-Type', 'application/json')
+							const token = req.headers['x-epicshop-token']
+							if (token !== parentToken) {
+								res.statusCode = 403
+								res.end(
+									JSON.stringify({ status: 'error', message: 'Forbidden' }),
+								)
+								return
+							}
+							console.log(
+								'\n🔄 Update requested from web UI. Running update and restarting app process...',
+							)
+							const ready = await doUpdateAndRestart()
+							if (ready) {
+								res.statusCode = 200
+								res.end(JSON.stringify({ status: 'ok' }))
+							} else {
+								res.statusCode = 500
+								res.end(
+									JSON.stringify({
+										status: 'error',
+										message: 'Restarted but not ready in time',
+									}),
+								)
+							}
+							return
+						}
 					}
 
-					// Extract port from output
-					const portMatch = output.match(/Local:\s+http:\/\/localhost:(\d+)/)
-					if (portMatch && portMatch[1] && !childPort) {
-						childPort = parseInt(portMatch[1], 10)
-						if (childPortPromiseResolve) {
-							childPortPromiseResolve(childPort)
-							childPortPromiseResolve = null
+					res.statusCode = 404
+					res.end(JSON.stringify({ status: 'error', message: 'Not found' }))
+					return
+				} catch (error) {
+					console.error(error)
+					res.statusCode = 500
+					res.end(
+						JSON.stringify({
+							status: 'error',
+							message: 'Internal server error',
+						}),
+					)
+					return
+				}
+			})
+			server.listen(parentPort, '127.0.0.1')
+		}
+
+		function spawnChild() {
+			if (!appDir) return
+
+			child = spawn(childCommand, [], {
+				shell: true,
+				cwd: appDir,
+				// Capture stdout for port detection
+				stdio: ['pipe', 'pipe', 'inherit'],
+				env: childEnv,
+			})
+
+			if (child.stdout) {
+				child.stdout.on('data', (data: Buffer) => {
+					process.stdout.write(data)
+					if (!childPort) {
+						const str = data.toString('utf8')
+						const lines = str.split(/\r?\n/)
+						for (const line of lines) {
+							const port = parsePortFromLine(line)
+							if (port) {
+								childPortPromiseResolve?.(port)
+							}
 						}
 					}
 				})
 			}
-
-			if (child?.stderr) {
-				child.stderr.on('data', (data: Buffer) => {
-					if (options.verbose) {
-						process.stderr.write(data.toString())
-					}
-				})
-			}
-
-			child?.on('exit', (code, signal) => {
-				if (options.verbose) {
-					console.log(
-						chalk.yellow(
-							`Workshop app exited with code ${code} and signal ${signal}`,
-						),
-					)
-				}
-				if (!restarting) {
-					process.exit(code || 0)
+			child.on('exit', async (code: number | null) => {
+				if (restarting) {
+					restarting = false
+				} else {
+					await new Promise((resolve) => server?.close(resolve))
+					process.exit(code ?? 0)
 				}
 			})
 		}
 
-		// Start the child process
+		console.log(
+			`🐨 Welcome to the workshop, ${chalk.bold.italic(os.userInfo().username)}!`,
+		)
+
 		spawnChild()
 
 		// Check for updates after starting
-		await checkAndDisplayUpdates()
+		void checkAndDisplayUpdates()
 
-		// Create parent server for communication
-		server = http.createServer((req, res) => {
-			if (
-				req.url === '/ping' &&
-				req.headers.authorization === `Bearer ${parentToken}`
-			) {
-				res.writeHead(200, { 'Content-Type': 'application/json' })
-				res.end(JSON.stringify({ status: 'ok' }))
-			} else {
-				res.writeHead(404)
-				res.end()
-			}
-		})
+		const supportedKeys = [
+			`${chalk.blue('o')} - open workshop app`,
+			`${chalk.green('u')} - update workshop`,
+			`${chalk.magenta('r')} - restart workshop app`,
+			`${chalk.cyan('k')} - Kody kudos 🐨`,
+			`${chalk.gray('q')} - exit (or ${chalk.gray('Ctrl+C')})`,
+		]
 
-		server.listen(parentPort, () => {
-			if (options.verbose) {
-				console.log(
-					chalk.green(`✅ Parent server listening on port ${parentPort}`),
-				)
-			}
-		})
+		if (process.stdin.isTTY && !isDeployed) {
+			console.log(chalk.bold.cyan('Supported keys:'))
+			console.log(`  ${supportedKeys.join('\n  ')}\n`)
+			process.stdin.setRawMode(true)
+			process.stdin.resume()
+			process.stdin.setEncoding('utf8')
+			process.stdin.on('data', async (key: string) => {
+				if (key === 'u') {
+					console.log(
+						'\n🔄 Update requested from terminal. Running update and restarting app process...',
+					)
+					await doUpdateAndRestart()
+				} else if (key === 'o') {
+					if (childPort) {
+						const { getWorkshopUrl } = await import(
+							'@epic-web/workshop-utils/config.server'
+						)
+						const workshopUrl = getWorkshopUrl(childPort)
+						console.log(
+							chalk.blue(`\n🌐 Opening browser to ${workshopUrl} ...`),
+						)
+						await open(workshopUrl)
+					} else {
+						console.log(chalk.red('Local server URL not available yet.'))
+					}
+				} else if (key === 'q') {
+					console.log(chalk.yellow('\n👋 Exiting...'))
+					await cleanupBeforeExit()
+					process.exit(0)
+				} else if (key === 'r') {
+					console.log(chalk.magenta('\n🔄 Restarting app process...'))
+					restarting = true
+					await killChild(child)
+					restarting = false
+					spawnChild()
+				} else if (key === 'k') {
+					const messages = [
+						'🐨 Kody says: You are koalafied for greatness!',
+						'🐨 Kody says: Keep going, you are pawsome!',
+						'🐨 Kody says: Eucalyptus up and code on!',
+						'🐨 Kody says: You can do it, fur real!',
+						'🐨 Kody says: Stay curious, stay cuddly!',
+						"🐨 Kody says: Don't leaf your dreams behind!",
+						'🐨 Kody says: Time to branch out and grow!',
+						'🐨 Kody says: You are tree-mendous at this!',
+						'🐨 Kody says: Leaf your worries behind!',
+						'🐨 Kody says: You are absolutely koala-fied!',
+						'🐨 Kody says: Keep climbing, you are doing great!',
+					]
+					const colors = [
+						chalk.bgCyan.black,
+						chalk.bgGreen.black,
+						chalk.bgMagenta.white,
+						chalk.bgYellow.black,
+						chalk.bgBlue.white,
+						chalk.bgRed.white,
+					]
+					const randomMessage =
+						messages[Math.floor(Math.random() * messages.length)]!
+					const randomColor = colors[Math.floor(Math.random() * colors.length)]!
+					const msg = randomColor(randomMessage)
+					console.log('\n' + msg + '\n')
+				} else if (key === 'd') {
+					// Dismiss update notification
+					try {
+						const { checkForUpdatesCached } = await import(
+							'@epic-web/workshop-utils/git.server'
+						)
+						const { muteNotification } = await import(
+							'@epic-web/workshop-utils/db.server'
+						)
+						const updates = await checkForUpdatesCached()
+						if (updates.updatesAvailable && updates.remoteCommit) {
+							const updateNotificationId = `update-repo-${updates.remoteCommit}`
+							await muteNotification(updateNotificationId)
+							console.log(
+								chalk.green(
+									'\n✅ Update notification dismissed permanently.\n',
+								),
+							)
+						} else {
+							console.log(
+								chalk.yellow('\n⚠️  No update notifications to dismiss.\n'),
+							)
+						}
+					} catch {
+						console.log(
+							chalk.red('\n❌ Failed to dismiss update notification.\n'),
+						)
+					}
+				} else if (key === '\u0003') {
+					// Ctrl+C
+					await cleanupBeforeExit()
+					process.exit(0)
+				} else {
+					// Forward unhandled keys to child process stdin
+					if (child?.stdin && !child.stdin.destroyed) {
+						child.stdin.write(key)
+					}
+				}
+			})
+		}
 
-		// Cleanup function
 		async function cleanupBeforeExit() {
 			if (process.platform === 'win32' && child?.pid) {
 				spawn('taskkill', ['/pid', child.pid.toString(), '/f', '/t'])
