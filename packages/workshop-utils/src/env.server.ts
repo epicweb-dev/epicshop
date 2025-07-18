@@ -1,7 +1,10 @@
 import fs from 'node:fs/promises'
 import path from 'node:path'
+import { fileURLToPath } from 'node:url'
 import { z } from 'zod'
 import { handleGitHubRepoAndRoot } from './utils.js'
+
+const __dirname = path.dirname(new URL(import.meta.url).pathname)
 
 const schema = z
 	.object({
@@ -15,7 +18,9 @@ const schema = z
 		EPICSHOP_PARENT_PORT: z.string().optional(),
 		EPICSHOP_PARENT_TOKEN: z.string().optional(),
 		EPICSHOP_APP_LOCATION: z.string().optional(),
-		EPICSHOP_IS_PUBLISHED: z.string().optional(),
+		EPICSHOP_IS_PUBLISHED: z
+			.string()
+			.default(__dirname.includes('node_modules') ? 'true' : 'false'),
 		// Sentry configuration
 		SENTRY_DSN: z
 			.string()
@@ -40,10 +45,21 @@ const schema = z
 				`No epicshop configuration found in "${pkgJsonPath}". If this is a workshop directory, please add an "epicshop" section to your package.json. If this is not a workshop directory, please set the EPICSHOP_CONTEXT_CWD environment variable to the directory containing your package.json with the "epicshop" config section.`,
 			)
 		}
-		if (env.EPICSHOP_IS_PUBLISHED === undefined) {
-			env.EPICSHOP_IS_PUBLISHED = env.EPICSHOP_APP_VERSION.includes('0.0.0')
-				? 'false'
-				: 'true'
+		if (env.EPICSHOP_APP_LOCATION === undefined) {
+			const workshopAppPath = import.meta.resolve(
+				'@epic-web/workshop-app/package.json',
+			)
+			const packagePath = fileURLToPath(workshopAppPath)
+			env.EPICSHOP_APP_LOCATION = path.dirname(packagePath)
+		}
+		if (env.EPICSHOP_APP_VERSION === '0.0.0-unknown') {
+			const packageJson = JSON.parse(
+				await fs.readFile(
+					path.join(env.EPICSHOP_APP_LOCATION, 'package.json'),
+					'utf-8',
+				),
+			) as { version: string }
+			env.EPICSHOP_APP_VERSION = packageJson.version
 		}
 		if (!env.EPICSHOP_GITHUB_REPO || !env.EPICSHOP_GITHUB_ROOT) {
 			const { githubRepo, githubRoot } = handleGitHubRepoAndRoot({
@@ -53,6 +69,7 @@ const schema = z
 			env.EPICSHOP_GITHUB_REPO = githubRepo
 			env.EPICSHOP_GITHUB_ROOT = githubRoot
 		}
+		console.log(env)
 		return env
 	})
 

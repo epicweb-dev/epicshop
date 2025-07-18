@@ -511,7 +511,7 @@ async function findWorkshopAppDir(
 			'@epic-web/workshop-cli/package.json',
 		)
 		const cliPkgDir = path.dirname(fileURLToPath(cliPkgPath))
-		const relativePath = path.resolve(cliPkgDir, '../workshop-app')
+		const relativePath = path.resolve(cliPkgDir, '..', '..', 'workshop-app')
 		try {
 			await fs.promises.access(path.join(relativePath, 'package.json'))
 			return relativePath
