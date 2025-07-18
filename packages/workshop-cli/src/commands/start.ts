@@ -450,14 +450,6 @@ export async function start(options: StartOptions = {}): Promise<StartResult> {
 
 // Helper functions
 
-async function killProcessWithTaskkill(pid: number): Promise<void> {
-	return new Promise((resolve) => {
-		const killer = spawn('taskkill', ['/pid', pid.toString(), '/f', '/t'])
-		killer.on('exit', resolve)
-		killer.on('error', resolve) // Resolve even if taskkill fails
-	})
-}
-
 async function killChild(child: ChildProcess | null): Promise<void> {
 	if (!child) return
 
@@ -468,7 +460,9 @@ async function killChild(child: ChildProcess | null): Promise<void> {
 		if (process.platform === 'win32') {
 			// On Windows, use taskkill to kill the process tree
 			if (child.pid) {
-				void killProcessWithTaskkill(child.pid).then(resolve)
+				const killer = spawn('taskkill', ['/pid', child.pid.toString(), '/f', '/t'])
+				killer.on('exit', resolve)
+				killer.on('error', resolve) // Resolve even if taskkill fails
 			} else {
 				child.kill()
 				resolve()
