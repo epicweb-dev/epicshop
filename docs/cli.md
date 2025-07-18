@@ -205,14 +205,18 @@ if (result.success) {
 All commands are fully typed with TypeScript:
 
 ```typescript
-import { start, type StartOptions, type StartResult } from '@epic-web/workshop-cli/start'
+import {
+	start,
+	type StartOptions,
+	type StartResult,
+} from '@epic-web/workshop-cli/start'
 import { update, type UpdateResult } from '@epic-web/workshop-cli/update'
 import { warm, type WarmResult } from '@epic-web/workshop-cli/warm'
 
 const options: StartOptions = {
-  appLocation: '/path/to/workshop',
-  verbose: true,
-  silent: false
+	appLocation: '/path/to/workshop',
+	verbose: true,
+	silent: false,
 }
 
 const result: StartResult = await start(options)
