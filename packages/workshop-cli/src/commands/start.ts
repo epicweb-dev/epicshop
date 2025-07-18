@@ -429,7 +429,16 @@ export async function start(options: StartOptions = {}): Promise<StartResult> {
 
 		async function cleanupBeforeExit() {
 			if (process.platform === 'win32' && child?.pid) {
-				spawn('taskkill', ['/pid', child.pid.toString(), '/f', '/t'])
+				// Use a Promise to wait for taskkill to finish
+				await new Promise<void>((resolve) => {
+					const killer = spawn('taskkill', [
+						'/pid',
+						child!.pid!.toString(),
+						'/f',
+						'/t',
+					])
+					killer.on('exit', resolve)
+				})
 			}
 			await killChild(child)
 			if (server) await new Promise((resolve) => server!.close(resolve))
