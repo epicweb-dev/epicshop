@@ -22,7 +22,7 @@
 		"typecheck": {
 			"command": "tsc --noEmit"
 		},
-		"test": {
+		"test:e2e": {
 			"executor": "@nx/playwright:playwright",
 			"dependsOn": ["@epic-web/workshop-app:build"]
 		}
