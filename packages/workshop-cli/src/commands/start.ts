@@ -1,4 +1,6 @@
-import '../init-env.js'
+// eslint-disable-next-line import/order -- must appear first
+import { ENV } from '../init-env.js'
+
 import { spawn, type ChildProcess, execSync } from 'node:child_process'
 import crypto from 'node:crypto'
 import fs from 'node:fs'
@@ -76,10 +78,10 @@ export async function start(options: StartOptions = {}): Promise<StartResult> {
 			? `node ${sentryImport} ./start.js`
 			: `node ${sentryImport} ./server/dev-server.js`
 
-		const EPICSHOP_CONTEXT_CWD = await getEpicshopContextCwd()
 		const childEnv: NodeJS.ProcessEnv = {
 			...process.env,
-			EPICSHOP_CONTEXT_CWD: EPICSHOP_CONTEXT_CWD,
+			EPICSHOP_CONTEXT_CWD: ENV.EPICSHOP_CONTEXT_CWD,
+			EPICSHOP_GITHUB_REPO: ENV.EPICSHOP_GITHUB_REPO,
 			EPICSHOP_PARENT_PORT: String(parentPort),
 			EPICSHOP_PARENT_TOKEN: parentToken,
 			EPICSHOP_APP_LOCATION: appDir,
@@ -579,25 +581,4 @@ async function appIsPublished(appDir: string): Promise<boolean> {
 	} catch {
 		return true
 	}
-}
-
-async function getEpicshopContextCwd(): Promise<string> {
-	if (process.env.EPICSHOP_CONTEXT_CWD) {
-		return process.env.EPICSHOP_CONTEXT_CWD
-	}
-	let dir = process.cwd()
-	while (true) {
-		const pkgPath = path.join(dir, 'package.json')
-		try {
-			const pkgRaw = await fs.promises.readFile(pkgPath, 'utf8')
-			const pkg = JSON.parse(pkgRaw) as { epicshop?: boolean }
-			if (pkg.epicshop) {
-				return dir
-			}
-		} catch {}
-		const parentDir = path.dirname(dir)
-		if (parentDir === dir) break
-		dir = parentDir
-	}
-	return process.cwd()
 }

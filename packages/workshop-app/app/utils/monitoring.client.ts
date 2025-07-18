@@ -25,5 +25,13 @@ export function init() {
 		tracesSampleRate: 1.0,
 		replaysSessionSampleRate: 0.1,
 		replaysOnErrorSampleRate: 1.0,
+		initialScope: {
+			tags: {
+				github_repo: ENV.EPICSHOP_GITHUB_REPO || 'unknown',
+				deployed: ENV.EPICSHOP_DEPLOYED ? 'true' : 'false',
+				app_version: ENV.EPICSHOP_APP_VERSION || 'unknown',
+				environment: ENV.MODE || 'development',
+			},
+		},
 	})
 }

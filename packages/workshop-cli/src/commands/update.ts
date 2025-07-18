@@ -1,4 +1,5 @@
 import '../init-env.js'
+
 export type UpdateResult = {
 	success: boolean
 	message?: string

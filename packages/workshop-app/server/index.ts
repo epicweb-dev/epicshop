@@ -168,6 +168,10 @@ const SENTRY_ENABLED = Boolean(
 
 if (SENTRY_ENABLED) {
 	const Sentry = await import('@sentry/react-router')
+	Sentry.setTag('github_repo', ENV.EPICSHOP_GITHUB_REPO || 'unknown')
+	Sentry.setTag('deployed', ENV.EPICSHOP_DEPLOYED ? 'true' : 'false')
+	Sentry.setTag('app_version', ENV.EPICSHOP_APP_VERSION || 'unknown')
+	Sentry.setTag('environment', ENV.MODE || 'development')
 	Sentry.setupExpressErrorHandler(app)
 }
 

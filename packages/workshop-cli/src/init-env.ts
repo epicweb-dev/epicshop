@@ -1,4 +1,6 @@
 import { init, getEnv } from '@epic-web/workshop-utils/env.server'
 
 await init()
-;(global as any).ENV = getEnv()
+const ENV = getEnv()
+;(global as any).ENV = ENV
+export { ENV }

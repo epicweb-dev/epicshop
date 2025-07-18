@@ -26,4 +26,16 @@ Sentry.init({
 		}
 		return event
 	},
+	initialScope: {
+		tags: {
+			github_repo: process.env.EPICSHOP_GITHUB_REPO || 'unknown',
+			deployed:
+				process.env.EPICSHOP_DEPLOYED === 'true' ||
+				process.env.EPICSHOP_DEPLOYED === '1'
+					? 'true'
+					: 'false',
+			app_version: process.env.EPICSHOP_APP_VERSION || 'unknown',
+			environment: process.env.NODE_ENV || 'development',
+		},
+	},
 })

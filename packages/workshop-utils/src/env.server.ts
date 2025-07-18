@@ -8,7 +8,7 @@ const __dirname = path.dirname(new URL(import.meta.url).pathname)
 
 const schema = z
 	.object({
-		EPICSHOP_CONTEXT_CWD: z.string().default(process.cwd()),
+		EPICSHOP_CONTEXT_CWD: z.string().default(''),
 		NODE_ENV: z
 			.enum(['production', 'development', 'test'] as const)
 			.default('development'),
@@ -32,6 +32,9 @@ const schema = z
 		SENTRY_PROJECT_ID: z.string().default('4509630082252800'),
 	})
 	.transform(async (env) => {
+		if (env.EPICSHOP_CONTEXT_CWD === '') {
+			env.EPICSHOP_CONTEXT_CWD = await getEpicshopContextCwd()
+		}
 		const pkgJsonPath = path.join(env.EPICSHOP_CONTEXT_CWD, 'package.json')
 		const pkgJson = JSON.parse(await fs.readFile(pkgJsonPath, 'utf-8')) as {
 			epicshop?: {
@@ -71,6 +74,27 @@ const schema = z
 		}
 		return env
 	})
+
+async function getEpicshopContextCwd() {
+	if (process.env.EPICSHOP_CONTEXT_CWD) {
+		return process.env.EPICSHOP_CONTEXT_CWD
+	}
+	let dir = process.cwd()
+	while (true) {
+		const pkgPath = path.join(dir, 'package.json')
+		try {
+			const pkgRaw = await fs.readFile(pkgPath, 'utf8')
+			const pkg = JSON.parse(pkgRaw) as { epicshop?: boolean }
+			if (pkg.epicshop) {
+				return dir
+			}
+		} catch {}
+		const parentDir = path.dirname(dir)
+		if (parentDir === dir) break
+		dir = parentDir
+	}
+	return process.cwd()
+}
 
 declare global {
 	namespace NodeJS {
