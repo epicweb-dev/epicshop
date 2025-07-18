@@ -31,6 +31,9 @@ export const playgroundAppCache =
 export const appsCache = makeSingletonFsCache<App>('AppsCache')
 export const diffCodeCache = makeSingletonFsCache<string>('DiffCodeCache')
 export const diffFilesCache = makeSingletonFsCache<string>('DiffFilesCache')
+export const copyUnignoredFilesCache = makeSingletonCache<string>(
+	'CopyUnignoredFilesCache',
+)
 export const compiledMarkdownCache = makeSingletonFsCache<string>(
 	'CompiledMarkdownCache',
 )

@@ -24,7 +24,7 @@ export async function warm({
 		const { getApps, isProblemApp, isSolutionApp } = await import(
 			'@epic-web/workshop-utils/apps.server'
 		)
-		const { getDiffOutputWithRelativePaths, getDiffFiles } = await import(
+		const { getDiffFiles, getDiffCode } = await import(
 			'@epic-web/workshop-utils/diff.server'
 		)
 
@@ -63,7 +63,7 @@ export async function warm({
 				const pairName = `${problemApp.exerciseNumber.toString().padStart(2, '0')}.${problemApp.stepNumber.toString().padStart(2, '0')}.problem vs ${solutionApp.exerciseNumber.toString().padStart(2, '0')}.${solutionApp.stepNumber.toString().padStart(2, '0')}.solution`
 
 				try {
-					await getDiffOutputWithRelativePaths(problemApp, solutionApp)
+					await getDiffCode(problemApp, solutionApp)
 					await getDiffFiles(problemApp, solutionApp)
 					diffCount++
 					if (!silent) {

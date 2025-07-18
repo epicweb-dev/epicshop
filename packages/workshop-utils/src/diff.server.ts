@@ -16,7 +16,12 @@ import {
 	modifiedTimes,
 	type App,
 } from './apps.server.js'
-import { cachified, diffCodeCache, diffFilesCache } from './cache.server.js'
+import {
+	cachified,
+	copyUnignoredFilesCache,
+	diffCodeCache,
+	diffFilesCache,
+} from './cache.server.js'
 import { compileMarkdownString } from './compile-mdx.server.js'
 import { modifiedMoreRecentlyThan } from './modified-time.server.js'
 import { type Timings } from './timing.server.js'
@@ -214,8 +219,11 @@ async function copyUnignoredFiles(
 	const key = `COPY_${srcDir}__${destDir}__${ignoreList.join('_')}`
 	await cachified({
 		key,
-		cache: diffCodeCache,
-		forceFresh: await getForceFreshForDir(diffCodeCache.get(key), srcDir),
+		cache: copyUnignoredFilesCache,
+		forceFresh: await getForceFreshForDir(
+			copyUnignoredFilesCache.get(key),
+			srcDir,
+		),
 		async getFreshValue() {
 			// @ts-ignore 🤷‍♂️ weird module stuff
 			const ig = ignore().add(ignoreList)
@@ -355,7 +363,7 @@ export async function getDiffFiles(
 	}: { forceFresh?: boolean; timings?: Timings; request?: Request } = {},
 ) {
 	const key = `${app1.relativePath}__vs__${app2.relativePath}`
-	const cacheEntry = diffFilesCache.get(key)
+	const cacheEntry = await diffFilesCache.get(key)
 	const result = await cachified({
 		key,
 		cache: diffFilesCache,
@@ -443,7 +451,7 @@ export async function getDiffCode(
 	}: { forceFresh?: boolean; timings?: Timings; request?: Request } = {},
 ) {
 	const key = `${app1.relativePath}__vs__${app2.relativePath}`
-	const cacheEntry = diffCodeCache.get(key)
+	const cacheEntry = await diffCodeCache.get(key)
 	const result = await cachified({
 		key,
 		cache: diffCodeCache,

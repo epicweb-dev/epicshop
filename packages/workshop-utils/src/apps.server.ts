@@ -848,7 +848,7 @@ export async function getPlaygroundApp({
 	const baseAppFullPath = baseAppName
 		? await getFullPathFromAppName(baseAppName)
 		: null
-	const playgroundCacheEntry = playgroundAppCache.get(key)
+	const playgroundCacheEntry = await playgroundAppCache.get(key)
 	return cachified({
 		key,
 		cache: playgroundAppCache,
