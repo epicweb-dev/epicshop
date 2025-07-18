@@ -72,7 +72,7 @@ export async function start(options: StartOptions = {}): Promise<StartResult> {
 		const instrumentModule = pathToFileURL(path.join(appDir, 'instrument.js'))
 		const sentryImport =
 			isPublished && process.env.SENTRY_DSN
-				? `--import="${instrumentModule.href}"`
+				? `--import=${JSON.stringify(instrumentModule.href)}`
 				: ''
 
 		const childCommand = isProd
