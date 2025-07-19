@@ -45,6 +45,7 @@
     "dist"
   ],
   "scripts": {
+    "test": "vitest",
     "typecheck": "tsc --noEmit",
     "lint": "eslint --cache --cache-location ./node_modules/.cache/eslint .",
     "build": "tshy",
@@ -62,7 +63,8 @@
     "@epic-web/config": "^1.21.0",
     "@types/node": "^20.16.10",
     "@types/yargs": "^17.0.32",
-    "tshy": "^3.0.2"
+    "tshy": "^3.0.2",
+    "vitest": "^3.2.4"
   },
   "repository": {
     "type": "git",
