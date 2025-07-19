@@ -32,6 +32,26 @@ jobs:
       - name: 🔬 Lint
         run: npm run lint
 
+  test:
+    name: 🧪 Tests
+    runs-on: ubuntu-latest
+    steps:
+      - name: ⬇️ Checkout repo
+        uses: actions/checkout@v4
+
+      - name: ⎔ Setup node
+        uses: actions/setup-node@v4
+        with:
+          node-version: 24
+
+      - name: 📥 Download deps
+        uses: bahmutov/npm-install@v1
+        with:
+          useLockFile: false
+
+      - name: 🧪 Run tests
+        run: npm test -- --no-watch
+
   build:
     name: 🏗 Build
     runs-on: ubuntu-latest
@@ -176,7 +196,7 @@ jobs:
 
   release:
     name: 🚀 Release
-    needs: [lint, typecheck, build, playwright]
+    needs: [lint, test, typecheck, build, playwright]
     runs-on: ubuntu-latest
     permissions:
       contents: write

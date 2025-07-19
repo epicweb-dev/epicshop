@@ -24,6 +24,7 @@
     "dist"
   ],
   "scripts": {
+    "test": "vitest",
     "dev": "tsx src/index.ts",
     "typecheck": "tsc --noEmit",
     "build": "tshy",
@@ -42,7 +43,8 @@
     "@types/node": "^24.0.10",
     "tshy": "^3.0.2",
     "tsx": "^4.20.3",
-    "typescript": "^5.8.3"
+    "typescript": "^5.8.3",
+    "vitest": "^3.2.4"
   },
   "repository": {
     "type": "git",
