@@ -114,9 +114,6 @@ export async function start(options: StartOptions = {}): Promise<StartResult> {
 					const updateNotificationId = `update-repo-${updates.remoteCommit}`
 
 					if (!mutedNotifications.includes(updateNotificationId)) {
-						const updateCommand = chalk.blue.bold.bgWhite(
-							' npx update-epic-workshop ',
-						)
 						const updateLink = chalk.blue.bgWhite(` ${updates.diffLink} `)
 						console.log(
 							'\n',
@@ -124,7 +121,7 @@ export async function start(options: StartOptions = {}): Promise<StartResult> {
 								'updates available',
 							)} for this workshop repository.  🎉\n\nTo get the updates, ${chalk.green.bold.bgWhite(
 								`press the "u" key`,
-							)} or stop the server and run the following command:\n\n  ${updateCommand}\n\nTo view a diff, check:\n  ${updateLink}\n\nTo dismiss this notification, ${chalk.red.bold.bgWhite(
+							)}\n\nTo view a diff, check:\n  ${updateLink}\n\nTo dismiss this notification, ${chalk.red.bold.bgWhite(
 								`press the "d" key`,
 							)}\n`,
 						)
@@ -467,7 +464,12 @@ async function killChild(child: ChildProcess | null): Promise<void> {
 		if (process.platform === 'win32') {
 			// On Windows, use taskkill to kill the process tree
 			if (child.pid) {
-				const killer = spawn('taskkill', ['/pid', child.pid.toString(), '/f', '/t'])
+				const killer = spawn('taskkill', [
+					'/pid',
+					child.pid.toString(),
+					'/f',
+					'/t',
+				])
 				killer.on('exit', resolve)
 				killer.on('error', resolve) // Resolve even if taskkill fails
 			} else {

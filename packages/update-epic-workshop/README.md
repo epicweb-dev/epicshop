@@ -7,4 +7,7 @@ This is intended to be run in repositories that are a part of the
 npx update-epic-workshop
 ```
 
-That should get your local version up-to-date with the latest in the repo.
+This now simply runs `npx --yes @epic-web/workshop-cli@latest update` to update
+via the workshop-cli.
+
+It will no longer be recommended to run this script.

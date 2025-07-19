@@ -9,9 +9,6 @@
     "bin.js"
   ],
   "type": "module",
-  "dependencies": {
-    "execa": "^9.6.0"
-  },
   "repository": {
     "type": "git",
     "url": "https://github.com/epicweb-dev/epicshop.git",

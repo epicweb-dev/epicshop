@@ -6,6 +6,7 @@
   },
   "type": "module",
   "scripts": {
+    "test": "vitest",
     "typecheck": "tsc --noEmit",
     "build": "tshy",
     "dev": "partykit dev",
@@ -18,7 +19,8 @@
   "devDependencies": {
     "partykit": "0.0.115",
     "typescript": "^5.8.3",
-    "tshy": "^3.0.2"
+    "tshy": "^3.0.2",
+    "vitest": "^3.2.4"
   },
   "files": [
     "dist"
