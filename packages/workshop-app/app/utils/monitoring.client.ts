@@ -6,6 +6,9 @@ export function init() {
 		dsn: ENV.SENTRY_DSN,
 		environment: ENV.MODE,
 		tunnel: '/resources/lookout',
+		ignoreErrors: [
+			"Failed to execute 'requestPictureInPicture' on 'HTMLVideoElement'"
+		],
 		beforeSend(event) {
 			if (event.request?.url) {
 				const url = new URL(event.request.url)
