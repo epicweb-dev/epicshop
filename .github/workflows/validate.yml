@@ -15,6 +15,7 @@ jobs:
   lint:
     name: ⬣ ESLint
     runs-on: ubuntu-latest
+    timeout-minutes: 10
     steps:
       - name: ⬇️ Checkout repo
         uses: actions/checkout@v4
@@ -28,6 +29,7 @@ jobs:
         uses: bahmutov/npm-install@v1
         with:
           useLockFile: false
+          install-command: npm install --no-audit --no-fund --legacy-peer-deps
 
       - name: 🔬 Lint
         run: npm run lint
@@ -35,6 +37,7 @@ jobs:
   test:
     name: 🧪 Tests
     runs-on: ubuntu-latest
+    timeout-minutes: 15
     steps:
       - name: ⬇️ Checkout repo
         uses: actions/checkout@v4
@@ -48,6 +51,7 @@ jobs:
         uses: bahmutov/npm-install@v1
         with:
           useLockFile: false
+          install-command: npm install --no-audit --no-fund --legacy-peer-deps
 
       - name: 🧪 Run tests
         run: npm test -- --no-watch
@@ -55,6 +59,7 @@ jobs:
   build:
     name: 🏗 Build
     runs-on: ubuntu-latest
+    timeout-minutes: 20
     steps:
       - name: ⬇️ Checkout repo
         uses: actions/checkout@v4
@@ -68,6 +73,7 @@ jobs:
         uses: bahmutov/npm-install@v1
         with:
           useLockFile: false
+          install-command: npm install --no-audit --no-fund --legacy-peer-deps
 
       - name: 🏗 Build
         run: npm run build
@@ -83,6 +89,7 @@ jobs:
         uses: bahmutov/npm-install@v1
         with:
           useLockFile: false
+          install-command: npm install --no-audit --no-fund --legacy-peer-deps
 
       - name: 📦 Upload All Build Artifacts
         uses: actions/upload-artifact@v4
@@ -100,6 +107,7 @@ jobs:
     name: ʦ TypeScript
     needs: [build]
     runs-on: ubuntu-latest
+    timeout-minutes: 10
     steps:
       - name: ⬇️ Checkout repo
         uses: actions/checkout@v4
@@ -119,6 +127,7 @@ jobs:
         uses: bahmutov/npm-install@v1
         with:
           useLockFile: false
+          install-command: npm install --no-audit --no-fund --legacy-peer-deps
 
       - name: 🔎 Type check
         run: npm run typecheck
@@ -147,6 +156,7 @@ jobs:
         uses: bahmutov/npm-install@v1
         with:
           useLockFile: false
+          install-command: npm install --no-audit --no-fund --legacy-peer-deps
 
       - name: 📥 Install Playwright Browsers
         run: npx playwright install --with-deps
@@ -165,6 +175,7 @@ jobs:
   example:
     name: 🤹‍♂️ Example
     needs: [build]
+    timeout-minutes: 15
     strategy:
       matrix:
         os: [ubuntu-latest, windows-latest, macos-latest]
@@ -188,11 +199,12 @@ jobs:
         uses: bahmutov/npm-install@v1
         with:
           useLockFile: false
+          install-command: npm install --no-audit --no-fund --legacy-peer-deps
 
       - name: ▶️ Run setup script
-        run: node setup.mjs
+        run: timeout 600 node setup.mjs || timeout 600 node setup.mjs
+        shell: bash
         working-directory: ./example
-        continue-on-error: true
 
   release:
     name: 🚀 Release
@@ -231,6 +243,7 @@ jobs:
         uses: bahmutov/npm-install@v1
         with:
           useLockFile: false
+          install-command: npm install --no-audit --no-fund --legacy-peer-deps
 
       - name: 🚀 Release
         run: npx tsx other/release.ts --dry-run=false
