@@ -3,7 +3,7 @@
   "private": true,
   "type": "module",
   "scripts": {
-    "postinstall": "cd ./example && npm install",
+    "postinstall": "cd ./example && npm install --prefer-offline --no-audit --no-fund",
     "typecheck": "./other/nx-fallback.js run-many --target typecheck",
     "lint": "./other/nx-fallback.js lint",
     "build": "./other/nx-fallback.js run-many --target build",

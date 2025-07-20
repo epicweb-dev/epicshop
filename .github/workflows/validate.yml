@@ -27,7 +27,7 @@ jobs:
           cache: 'npm'
 
       - name: 📥 Download deps
-        run: npm ci
+        run: npm install --prefer-offline --no-audit --no-fund
 
       - name: 🔬 Lint
         run: npm run lint
@@ -47,7 +47,7 @@ jobs:
           cache: 'npm'
 
       - name: 📥 Download deps
-        run: npm ci
+        run: npm install --prefer-offline --no-audit --no-fund
 
       - name: 🧪 Run tests
         run: npm test -- --no-watch
@@ -67,7 +67,7 @@ jobs:
           cache: 'npm'
 
       - name: 📥 Download deps
-        run: npm ci
+        run: npm install --prefer-offline --no-audit --no-fund
 
       - name: 🏗 Build
         run: npm run build
@@ -80,7 +80,7 @@ jobs:
 
       # run install again so the local .bin files get where they should go.
       - name: 📥 Download deps
-        run: npm ci
+        run: npm install --prefer-offline --no-audit --no-fund
 
       - name: 📦 Upload All Build Artifacts
         uses: actions/upload-artifact@v4
@@ -116,7 +116,7 @@ jobs:
           path: packages
 
       - name: 📥 Download deps
-        run: npm ci
+        run: npm install --prefer-offline --no-audit --no-fund
 
       - name: 🔎 Type check
         run: npm run typecheck
@@ -143,7 +143,7 @@ jobs:
           path: packages
 
       - name: 📥 Download deps
-        run: npm ci
+        run: npm install --prefer-offline --no-audit --no-fund
 
       - name: 📥 Install Playwright Browsers
         run: npx playwright install --with-deps
@@ -184,7 +184,7 @@ jobs:
           path: packages
 
       - name: 📥 Download deps
-        run: npm ci
+        run: npm install --prefer-offline --no-audit --no-fund
 
       - name: ▶️ Run setup script
         run: node setup.mjs
@@ -227,7 +227,7 @@ jobs:
           path: packages
 
       - name: 📥 Download deps
-        run: npm ci
+        run: npm install --prefer-offline --no-audit --no-fund
 
       - name: 🚀 Release
         run: npx tsx other/release.ts --dry-run=false
