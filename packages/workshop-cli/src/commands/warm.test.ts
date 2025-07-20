@@ -74,9 +74,12 @@ describe('warm command', () => {
 		const result = await warm({ silent: true })
 		
 		if (!result.success) {
+			expect(result.message).toBeDefined()
 			expect(result.message).toBeTruthy()
 			expect(typeof result.message).toBe('string')
-			expect(result.message.length).toBeGreaterThan(0)
+			if (result.message) {
+				expect(result.message.length).toBeGreaterThan(0)
+			}
 		}
 	})
 

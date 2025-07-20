@@ -1,20 +1,8 @@
 import { vi } from 'vitest'
 
 /**
- * Test utilities for consistent and reliable testing across the workshop packages
+ * Test helper utilities for consistent testing patterns
  */
-
-/**
- * Creates a mock function with better type safety and debugging capabilities
- */
-export function createMockFn<T extends (...args: any[]) => any>(
-	name?: string,
-	implementation?: T,
-): T & { mockName: string } {
-	const mockFn = vi.fn(implementation) as T & { mockName: string }
-	mockFn.mockName = name || 'anonymous-mock'
-	return mockFn
-}
 
 // Simple timer state tracking
 let _fakeTimersEnabled = false
