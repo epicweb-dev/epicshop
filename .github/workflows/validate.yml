@@ -32,26 +32,6 @@ jobs:
       - name: 🔬 Lint
         run: npm run lint
 
-  test:
-    name: 🧪 Tests
-    runs-on: ubuntu-latest
-    timeout-minutes: 5
-    steps:
-      - name: ⬇️ Checkout repo
-        uses: actions/checkout@v4
-
-      - name: ⎔ Setup node
-        uses: actions/setup-node@v4
-        with:
-          node-version: 24
-          cache: 'npm'
-
-      - name: 📥 Download deps
-        run: npm install --prefer-offline --no-audit --no-fund
-
-      - name: 🧪 Run tests
-        run: npm test -- --no-watch
-
   build:
     name: 🏗 Build
     runs-on: ubuntu-latest
@@ -93,6 +73,27 @@ jobs:
             packages/workshop-utils/dist
             packages/workshop-mcp/dist
             packages/workshop-cli/dist
+
+  test:
+    name: 🧪 Tests
+    needs: [build]
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - name: ⬇️ Checkout repo
+        uses: actions/checkout@v4
+
+      - name: ⎔ Setup node
+        uses: actions/setup-node@v4
+        with:
+          node-version: 24
+          cache: 'npm'
+
+      - name: 📥 Download deps
+        run: npm install --prefer-offline --no-audit --no-fund
+
+      - name: 🧪 Run tests
+        run: npm test -- --no-watch
 
   typecheck:
     name: ʦ TypeScript

@@ -1,5 +1,5 @@
 import { test, expect, vi, beforeEach, afterEach } from 'vitest'
-import { update, type UpdateResult } from './update.js'
+import { update } from './update.js'
 
 // Mock console methods to clean up test output
 beforeEach(() => {
@@ -67,30 +67,6 @@ test('update should return success result when no updates are available', async 
 		// Restore original environment
 		process.env.EPICSHOP_DEPLOYED = originalEnv
 	}
-})
-
-test('UpdateResult type should have correct structure', () => {
-	const result: UpdateResult = {
-		success: true,
-		message: 'Test message',
-	}
-
-	expect(result.success).toBe(true)
-	expect(result.message).toBe('Test message')
-	expect(result.error).toBeUndefined()
-})
-
-test('UpdateResult type should handle error case', () => {
-	const error = new Error('Test error')
-	const result: UpdateResult = {
-		success: false,
-		message: 'Error occurred',
-		error,
-	}
-
-	expect(result.success).toBe(false)
-	expect(result.message).toBe('Error occurred')
-	expect(result.error).toBe(error)
 })
 
 test('update function should accept silent parameter', async () => {
