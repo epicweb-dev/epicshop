@@ -15,13 +15,119 @@ function checkNodeVersion() {
 		return // No engines specified, skip check
 	}
 	
-	// Parse the semver range (e.g., "20 || 22 || 24")
-	const majorVersions = requiredVersions.split('||').map(v => v.trim())
-	const currentMajorVersion = parseInt(currentNodeVersion.split('.')[0])
+	// Parse current version
+	const [currentMajor, currentMinor = 0, currentPatch = 0] = currentNodeVersion
+		.split('.')
+		.map(v => parseInt(v, 10))
 	
-	const isSupported = majorVersions.some(version => {
-		const requiredMajorVersion = parseInt(version)
-		return currentMajorVersion === requiredMajorVersion
+	// Check if current version satisfies any of the requirements
+	const isSupported = requiredVersions.split('||').some(versionRange => {
+		const range = versionRange.trim()
+		
+		// Handle simple major version (e.g., "20", "22", "24")
+		if (/^\d+$/.test(range)) {
+			const requiredMajor = parseInt(range, 10)
+			return currentMajor === requiredMajor
+		}
+		
+		// Handle x.x format (e.g., "18.x", "20.x")
+		if (/^\d+\.x$/i.test(range)) {
+			const requiredMajor = parseInt(range.split('.')[0], 10)
+			return currentMajor === requiredMajor
+		}
+		
+		// Handle >= operator (e.g., ">=18.0.0")
+		if (range.startsWith('>=')) {
+			const version = range.slice(2).trim()
+			const [reqMajor, reqMinor = 0, reqPatch = 0] = version
+				.split('.')
+				.map(v => parseInt(v, 10))
+			
+			if (currentMajor > reqMajor) return true
+			if (currentMajor === reqMajor && currentMinor > reqMinor) return true
+			if (currentMajor === reqMajor && currentMinor === reqMinor && currentPatch >= reqPatch) return true
+			return false
+		}
+		
+		// Handle > operator (e.g., ">18.0.0")
+		if (range.startsWith('>') && !range.startsWith('>=')) {
+			const version = range.slice(1).trim()
+			const [reqMajor, reqMinor = 0, reqPatch = 0] = version
+				.split('.')
+				.map(v => parseInt(v, 10))
+			
+			if (currentMajor > reqMajor) return true
+			if (currentMajor === reqMajor && currentMinor > reqMinor) return true
+			if (currentMajor === reqMajor && currentMinor === reqMinor && currentPatch > reqPatch) return true
+			return false
+		}
+		
+		// Handle <= operator (e.g., "<=20.0.0")
+		if (range.startsWith('<=')) {
+			const version = range.slice(2).trim()
+			const [reqMajor, reqMinor = 0, reqPatch = 0] = version
+				.split('.')
+				.map(v => parseInt(v, 10))
+			
+			if (currentMajor < reqMajor) return true
+			if (currentMajor === reqMajor && currentMinor < reqMinor) return true
+			if (currentMajor === reqMajor && currentMinor === reqMinor && currentPatch <= reqPatch) return true
+			return false
+		}
+		
+		// Handle < operator (e.g., "<22.0.0")
+		if (range.startsWith('<') && !range.startsWith('<=')) {
+			const version = range.slice(1).trim()
+			const [reqMajor, reqMinor = 0, reqPatch = 0] = version
+				.split('.')
+				.map(v => parseInt(v, 10))
+			
+			if (currentMajor < reqMajor) return true
+			if (currentMajor === reqMajor && currentMinor < reqMinor) return true
+			if (currentMajor === reqMajor && currentMinor === reqMinor && currentPatch < reqPatch) return true
+			return false
+		}
+		
+		// Handle caret range (e.g., "^18.0.0") - compatible within same major version
+		if (range.startsWith('^')) {
+			const version = range.slice(1).trim()
+			const [reqMajor, reqMinor = 0, reqPatch = 0] = version
+				.split('.')
+				.map(v => parseInt(v, 10))
+			
+			if (currentMajor !== reqMajor) return false
+			if (currentMinor > reqMinor) return true
+			if (currentMinor === reqMinor && currentPatch >= reqPatch) return true
+			return false
+		}
+		
+		// Handle tilde range (e.g., "~22.1.0") - compatible within same minor version
+		if (range.startsWith('~')) {
+			const version = range.slice(1).trim()
+			const [reqMajor, reqMinor = 0, reqPatch = 0] = version
+				.split('.')
+				.map(v => parseInt(v, 10))
+			
+			if (currentMajor !== reqMajor || currentMinor !== reqMinor) return false
+			return currentPatch >= reqPatch
+		}
+		
+		// Handle exact version (e.g., "18.0.0")
+		if (/^\d+\.\d+\.\d+$/.test(range)) {
+			const [reqMajor, reqMinor, reqPatch] = range
+				.split('.')
+				.map(v => parseInt(v, 10))
+			
+			return currentMajor === reqMajor && currentMinor === reqMinor && currentPatch === reqPatch
+		}
+		
+		// Fallback: try to parse as simple major version
+		const parsedMajor = parseInt(range, 10)
+		if (!isNaN(parsedMajor)) {
+			return currentMajor === parsedMajor
+		}
+		
+		return false
 	})
 	
 	if (!isSupported) {
