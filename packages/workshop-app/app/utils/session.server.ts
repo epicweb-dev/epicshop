@@ -7,7 +7,6 @@ const storage = createCookieSessionStorage({
 		secure: false,
 		path: '/',
 		sameSite: 'lax',
-		secrets: [`I'm local only anyway 🤷‍♂️`],
 	},
 })
 
