@@ -20,7 +20,7 @@ export function _resetTimerState() {
  * Compatible with both real and fake timers
  */
 export function delay(ms: number): Promise<void> {
-	return new Promise(resolve => {
+	return new Promise((resolve) => {
 		setTimeout(resolve, ms)
 	})
 }
@@ -47,14 +47,14 @@ export async function waitForCondition(
 	intervalMs = 100,
 ): Promise<void> {
 	const startTime = Date.now()
-	
+
 	while (Date.now() - startTime < timeoutMs) {
 		if (await condition()) {
 			return
 		}
 		await delay(intervalMs)
 	}
-	
+
 	throw new Error(`Condition not met within ${timeoutMs}ms`)
 }
 
@@ -66,19 +66,19 @@ export async function withFakeTimers<T>(
 	operation: (advanceTime: (ms: number) => Promise<void>) => Promise<T>,
 ): Promise<T> {
 	const wasUsingRealTimers = !_fakeTimersEnabled
-	
+
 	if (wasUsingRealTimers) {
 		vi.useFakeTimers()
 		_fakeTimersEnabled = true
 	}
-	
+
 	try {
 		const advanceTime = async (ms: number): Promise<void> => {
 			vi.advanceTimersByTime(ms)
 			// Allow promises to resolve
 			await vi.runOnlyPendingTimersAsync()
 		}
-		
+
 		return await operation(advanceTime)
 	} finally {
 		if (wasUsingRealTimers) {
@@ -96,12 +96,12 @@ export async function withRealTimers<T>(
 	operation: () => Promise<T>,
 ): Promise<T> {
 	const wasUsingFakeTimers = _fakeTimersEnabled
-	
+
 	if (wasUsingFakeTimers) {
 		vi.useRealTimers()
 		_fakeTimersEnabled = false
 	}
-	
+
 	try {
 		return await operation()
 	} finally {
@@ -119,7 +119,7 @@ export function createMockConsole() {
 	const logs: string[] = []
 	const errors: string[] = []
 	const warns: string[] = []
-	
+
 	const mockConsole = {
 		log: vi.fn((...args: any[]) => {
 			logs.push(args.map(String).join(' '))
@@ -139,28 +139,30 @@ export function createMockConsole() {
 			warns.length = 0
 		},
 	}
-	
+
 	return mockConsole
 }
 
 /**
  * Creates a test environment with common mocks and utilities
  */
-export function createTestEnvironment(options: { useFakeTimers?: boolean } = {}) {
+export function createTestEnvironment(
+	options: { useFakeTimers?: boolean } = {},
+) {
 	const { useFakeTimers = true } = options
 	const mockConsole = createMockConsole()
-	
+
 	// Mock global console
 	vi.spyOn(console, 'log').mockImplementation(mockConsole.log)
 	vi.spyOn(console, 'error').mockImplementation(mockConsole.error)
 	vi.spyOn(console, 'warn').mockImplementation(mockConsole.warn)
-	
+
 	// Conditionally mock timers
 	if (useFakeTimers) {
 		vi.useFakeTimers()
 		_fakeTimersEnabled = true
 	}
-	
+
 	return {
 		console: mockConsole,
 		cleanup: () => {
@@ -189,7 +191,9 @@ export function createTestEnvironment(options: { useFakeTimers?: boolean } = {})
 			if (_fakeTimersEnabled) {
 				await vi.runOnlyPendingTimersAsync()
 			} else {
-				console.warn('runOnlyPendingTimers called but fake timers are not enabled')
+				console.warn(
+					'runOnlyPendingTimers called but fake timers are not enabled',
+				)
 			}
 		},
 		useFakeTimers: () => {
@@ -262,7 +266,7 @@ export async function expectToThrow(
 		if (!expectedError) {
 			return error as Error
 		}
-		
+
 		if (typeof expectedError === 'string') {
 			if (!(error as Error).message.includes(expectedError)) {
 				throw new Error(
@@ -282,7 +286,7 @@ export async function expectToThrow(
 				)
 			}
 		}
-		
+
 		return error as Error
 	}
 }
@@ -295,7 +299,7 @@ export function createTestFixture<T>(
 	teardown?: (fixture: T) => void | Promise<void>,
 ) {
 	let fixture: T | undefined
-	
+
 	return {
 		async getFixture(): Promise<T> {
 			if (!fixture) {

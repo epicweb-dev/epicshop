@@ -54,7 +54,7 @@ describe('warm command', () => {
 		const startTime = Date.now()
 		const result = await warm({ silent: true })
 		const endTime = Date.now()
-		
+
 		expect(endTime - startTime).toBeLessThan(10000) // Should complete within 10 seconds
 		expect(result).toBeDefined()
 	})
@@ -63,8 +63,8 @@ describe('warm command', () => {
 		// Test multiple concurrent warm calls
 		const promises = Array.from({ length: 3 }, () => warm({ silent: true }))
 		const results = await Promise.all(promises)
-		
-		results.forEach(result => {
+
+		results.forEach((result) => {
 			expect(result).toHaveProperty('success')
 			expect(result).toHaveProperty('message')
 		})
@@ -72,7 +72,7 @@ describe('warm command', () => {
 
 	test('should provide meaningful error messages on failure', async () => {
 		const result = await warm({ silent: true })
-		
+
 		if (!result.success) {
 			expect(result.message).toBeDefined()
 			expect(result.message).toBeTruthy()
@@ -85,10 +85,10 @@ describe('warm command', () => {
 
 	test('should respect silent mode for console output', async () => {
 		const consoleSpy = vi.spyOn(console, 'log')
-		
+
 		// Silent mode should not produce console output
 		await warm({ silent: true })
-		
+
 		// Verify that console.log was not called in silent mode
 		// Note: This test assumes the warm function respects the silent parameter
 		// If it doesn't internally use console.log, this test may need adjustment

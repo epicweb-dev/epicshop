@@ -11,21 +11,23 @@ const packageJson = JSON.parse(
 function checkNodeVersion() {
 	const currentNodeVersion = process.version.slice(1) // Remove 'v' prefix
 	const requiredVersions = packageJson.engines?.node
-	
+
 	if (!requiredVersions) {
 		return // No engines specified, skip check
 	}
-	
+
 	// Use semver to check if current version satisfies the requirement
 	const isSupported = semver.satisfies(currentNodeVersion, requiredVersions)
-	
+
 	if (!isSupported) {
 		console.error('\n❌ Node.js version compatibility error')
 		console.error(`Current Node.js version: v${currentNodeVersion}`)
 		console.error(`Required Node.js versions: ${requiredVersions}`)
 		console.error('\nThis project only supports LTS versions of Node.js.')
 		console.error('Please update to a supported Node.js version and try again.')
-		console.error('\nYou can download the latest LTS version from: https://nodejs.org/')
+		console.error(
+			'\nYou can download the latest LTS version from: https://nodejs.org/',
+		)
 		process.exit(1)
 	}
 }

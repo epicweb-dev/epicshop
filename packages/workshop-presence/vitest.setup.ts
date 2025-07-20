@@ -6,7 +6,7 @@ beforeEach(() => {
 	vi.spyOn(console, 'error').mockImplementation(() => {})
 	vi.spyOn(console, 'warn').mockImplementation(() => {})
 	vi.spyOn(console, 'log').mockImplementation(() => {})
-	
+
 	// Mock timers for consistent test execution
 	vi.useFakeTimers()
 })

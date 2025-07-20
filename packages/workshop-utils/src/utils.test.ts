@@ -89,7 +89,7 @@ describe('getErrorMessage', () => {
 	test('should handle circular reference objects safely', () => {
 		const error: any = { message: 'Circular error' }
 		error.self = error
-		
+
 		expect(getErrorMessage(error)).toBe('Circular error')
 	})
 
@@ -97,7 +97,7 @@ describe('getErrorMessage', () => {
 		const error = new Error('Base error')
 		;(error as any).code = 'ERR_TEST'
 		;(error as any).statusCode = 500
-		
+
 		expect(getErrorMessage(error)).toBe('Base error')
 	})
 })
@@ -214,26 +214,28 @@ describe('handleGitHubRepoAndRoot', () => {
 	test('should handle malformed GitHub URLs gracefully', () => {
 		// The function doesn't validate URL format, it just processes strings
 		const result = handleGitHubRepoAndRoot({
-			githubRoot: 'not-a-valid-url'
+			githubRoot: 'not-a-valid-url',
 		})
-		
+
 		expect(result.githubRepo).toBe('not-a-valid-url')
 		expect(result.githubRoot).toBe('not-a-valid-url/tree/main')
 	})
 
 	test('should handle empty strings', () => {
-		expect(() => handleGitHubRepoAndRoot({
-			githubRepo: '',
-			githubRoot: ''
-		})).toThrow()
+		expect(() =>
+			handleGitHubRepoAndRoot({
+				githubRepo: '',
+				githubRoot: '',
+			}),
+		).toThrow()
 	})
 
 	test('should handle non-GitHub URLs', () => {
 		// The function doesn't validate that it's a GitHub URL, it just processes strings
 		const result = handleGitHubRepoAndRoot({
-			githubRepo: 'https://gitlab.com/user/repo'
+			githubRepo: 'https://gitlab.com/user/repo',
 		})
-		
+
 		expect(result.githubRepo).toBe('https://gitlab.com/user/repo')
 		expect(result.githubRoot).toBe('https://gitlab.com/user/repo/tree/main')
 	})

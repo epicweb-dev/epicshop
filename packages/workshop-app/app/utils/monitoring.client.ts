@@ -7,7 +7,7 @@ export function init() {
 		environment: ENV.MODE,
 		tunnel: '/resources/lookout',
 		ignoreErrors: [
-			"Failed to execute 'requestPictureInPicture' on 'HTMLVideoElement'"
+			"Failed to execute 'requestPictureInPicture' on 'HTMLVideoElement'",
 		],
 		beforeSend(event) {
 			if (event.request?.url) {
