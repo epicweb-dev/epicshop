@@ -15,6 +15,7 @@ jobs:
   lint:
     name: ⬣ ESLint
     runs-on: ubuntu-latest
+    timeout-minutes: 5
     steps:
       - name: ⬇️ Checkout repo
         uses: actions/checkout@v4
@@ -23,11 +24,10 @@ jobs:
         uses: actions/setup-node@v4
         with:
           node-version: 24
+          cache: 'npm'
 
       - name: 📥 Download deps
-        uses: bahmutov/npm-install@v1
-        with:
-          useLockFile: false
+        run: npm ci
 
       - name: 🔬 Lint
         run: npm run lint
@@ -35,6 +35,7 @@ jobs:
   test:
     name: 🧪 Tests
     runs-on: ubuntu-latest
+    timeout-minutes: 5
     steps:
       - name: ⬇️ Checkout repo
         uses: actions/checkout@v4
@@ -43,11 +44,10 @@ jobs:
         uses: actions/setup-node@v4
         with:
           node-version: 24
+          cache: 'npm'
 
       - name: 📥 Download deps
-        uses: bahmutov/npm-install@v1
-        with:
-          useLockFile: false
+        run: npm ci
 
       - name: 🧪 Run tests
         run: npm test -- --no-watch
@@ -55,6 +55,7 @@ jobs:
   build:
     name: 🏗 Build
     runs-on: ubuntu-latest
+    timeout-minutes: 5
     steps:
       - name: ⬇️ Checkout repo
         uses: actions/checkout@v4
@@ -63,11 +64,10 @@ jobs:
         uses: actions/setup-node@v4
         with:
           node-version: 24
+          cache: 'npm'
 
       - name: 📥 Download deps
-        uses: bahmutov/npm-install@v1
-        with:
-          useLockFile: false
+        run: npm ci
 
       - name: 🏗 Build
         run: npm run build
@@ -80,9 +80,7 @@ jobs:
 
       # run install again so the local .bin files get where they should go.
       - name: 📥 Download deps
-        uses: bahmutov/npm-install@v1
-        with:
-          useLockFile: false
+        run: npm ci
 
       - name: 📦 Upload All Build Artifacts
         uses: actions/upload-artifact@v4
@@ -100,6 +98,7 @@ jobs:
     name: ʦ TypeScript
     needs: [build]
     runs-on: ubuntu-latest
+    timeout-minutes: 5
     steps:
       - name: ⬇️ Checkout repo
         uses: actions/checkout@v4
@@ -108,6 +107,7 @@ jobs:
         uses: actions/setup-node@v4
         with:
           node-version: 24
+          cache: 'npm'
 
       - name: 📥 Download All Build Artifacts
         uses: actions/download-artifact@v4
@@ -116,9 +116,7 @@ jobs:
           path: packages
 
       - name: 📥 Download deps
-        uses: bahmutov/npm-install@v1
-        with:
-          useLockFile: false
+        run: npm ci
 
       - name: 🔎 Type check
         run: npm run typecheck
@@ -127,7 +125,7 @@ jobs:
     name: 🎭 Playwright
     needs: [build]
     runs-on: ubuntu-latest
-    timeout-minutes: 60
+    timeout-minutes: 10
     steps:
       - name: ⬇️ Checkout repo
         uses: actions/checkout@v4
@@ -136,6 +134,7 @@ jobs:
         uses: actions/setup-node@v4
         with:
           node-version: 24
+          cache: 'npm'
 
       - name: 📥 Download All Build Artifacts
         uses: actions/download-artifact@v4
@@ -144,9 +143,7 @@ jobs:
           path: packages
 
       - name: 📥 Download deps
-        uses: bahmutov/npm-install@v1
-        with:
-          useLockFile: false
+        run: npm ci
 
       - name: 📥 Install Playwright Browsers
         run: npx playwright install --with-deps
@@ -169,6 +166,7 @@ jobs:
       matrix:
         os: [ubuntu-latest, windows-latest, macos-latest]
     runs-on: ${{ matrix.os }}
+    timeout-minutes: 5
     steps:
       - name: ⬇️ Checkout repo
         uses: actions/checkout@v4
@@ -177,6 +175,7 @@ jobs:
         uses: actions/setup-node@v4
         with:
           node-version: 24
+          cache: 'npm'
 
       - name: 📥 Download All Build Artifacts
         uses: actions/download-artifact@v4
@@ -185,9 +184,7 @@ jobs:
           path: packages
 
       - name: 📥 Download deps
-        uses: bahmutov/npm-install@v1
-        with:
-          useLockFile: false
+        run: npm ci
 
       - name: ▶️ Run setup script
         run: node setup.mjs
@@ -198,6 +195,7 @@ jobs:
     name: 🚀 Release
     needs: [lint, test, typecheck, build, playwright]
     runs-on: ubuntu-latest
+    timeout-minutes: 5
     permissions:
       contents: write
       id-token: write
@@ -220,6 +218,7 @@ jobs:
         with:
           node-version: 24
           registry-url: 'https://registry.npmjs.org'
+          cache: 'npm'
 
       - name: 📥 Download All Build Artifacts
         uses: actions/download-artifact@v4
@@ -228,9 +227,7 @@ jobs:
           path: packages
 
       - name: 📥 Download deps
-        uses: bahmutov/npm-install@v1
-        with:
-          useLockFile: false
+        run: npm ci
 
       - name: 🚀 Release
         run: npx tsx other/release.ts --dry-run=false
