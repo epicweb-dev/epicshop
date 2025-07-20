@@ -1,7 +1,9 @@
 import { devices, type PlaywrightTestConfig } from '@playwright/test'
+import path from 'path'
 import 'dotenv/config'
 
 const PORT = process.env.PORT ?? 5639
+const WORKSHOP_ROOT = path.resolve('./example')
 
 /**
  * See https://playwright.dev/docs/test-configuration.
@@ -71,8 +73,8 @@ const config: PlaywrightTestConfig = {
 	/* Run your local dev server before starting the tests */
 	webServer: {
 		command: process.env.CI
-			? `npx cross-env PORT=${PORT} npm run start --workspace=@epic-web/workshop-app`
-			: `npx cross-env PORT=${PORT} npm run dev --workspace=@epic-web/workshop-app`,
+			? `npx cross-env PORT=${PORT} EPICSHOP_CONTEXT_CWD=${WORKSHOP_ROOT} npm run start --workspace=@epic-web/workshop-app`
+			: `npx cross-env PORT=${PORT} EPICSHOP_CONTEXT_CWD=${WORKSHOP_ROOT} npm run dev --workspace=@epic-web/workshop-app`,
 		port: Number(PORT),
 		reuseExistingServer: !process.env.CI,
 		timeout: 120 * 1000, // Increased server startup timeout
