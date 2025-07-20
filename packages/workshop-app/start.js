@@ -1,6 +1,7 @@
 import fs from 'fs/promises'
 import path from 'path'
 import dotenv from 'dotenv'
+import semver from 'semver'
 
 const packageJson = JSON.parse(
 	await fs.readFile(path.resolve(process.cwd(), 'package.json'), 'utf-8'),
@@ -15,14 +16,8 @@ function checkNodeVersion() {
 		return // No engines specified, skip check
 	}
 	
-	// Parse the semver range (e.g., "20 || 22 || 24")
-	const majorVersions = requiredVersions.split('||').map(v => v.trim())
-	const currentMajorVersion = parseInt(currentNodeVersion.split('.')[0])
-	
-	const isSupported = majorVersions.some(version => {
-		const requiredMajorVersion = parseInt(version)
-		return currentMajorVersion === requiredMajorVersion
-	})
+	// Use semver to check if current version satisfies the requirement
+	const isSupported = semver.satisfies(currentNodeVersion, requiredVersions)
 	
 	if (!isSupported) {
 		console.error('\n❌ Node.js version compatibility error')
