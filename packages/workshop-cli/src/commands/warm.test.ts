@@ -86,9 +86,11 @@ describe('warm command', () => {
 		// Silent mode should not produce console output
 		await warm({ silent: true })
 		
-		// Note: We can't easily test this without knowing the internal implementation
-		// but we can ensure the function accepts the parameter
-		expect(consoleSpy).not.toThrow()
+		// Verify that console.log was not called in silent mode
+		// Note: This test assumes the warm function respects the silent parameter
+		// If it doesn't internally use console.log, this test may need adjustment
+		// based on the actual implementation
+		expect(consoleSpy).not.toHaveBeenCalled()
 	})
 })
 

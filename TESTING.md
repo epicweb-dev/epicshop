@@ -156,6 +156,20 @@ If tests are timing out:
 2. Check for infinite loops or hanging promises
 3. Use `vi.useFakeTimers()` for timer-dependent code
 
+#### Timer-Related Issues
+If timer-dependent tests are hanging or not working:
+1. Use `withFakeTimers()` for controlled timer testing
+2. Use `withRealTimers()` when you need actual time passage
+3. Always advance fake timers manually with `advanceTime()`
+4. Use `vi.runOnlyPendingTimersAsync()` to resolve pending promises
+
+#### Console Testing Issues
+If console-related tests are failing:
+1. Use `vi.spyOn(console, 'method')` to create spies
+2. Check calls with `.toHaveBeenCalled()` or `.not.toHaveBeenCalled()`
+3. Never use `.toThrow()` on spy objects - that's for function calls
+4. Use the mock console utilities from test helpers for better control
+
 #### Flaky Tests
 If tests are inconsistent:
 1. Use proper async/await patterns
@@ -221,15 +235,57 @@ test('should handle errors gracefully', async () => {
 
 ### Time-based Testing
 ```typescript
-test('should handle timeouts', async () => {
-  vi.useFakeTimers()
+import { withFakeTimers, withRealTimers, delay } from '../test-helpers'
+
+test('should handle timeouts with fake timers', async () => {
+  await withFakeTimers(async (advanceTime) => {
+    let completed = false
+    
+    const operation = delay(1000).then(() => {
+      completed = true
+    })
+    
+    // Advance time to complete the operation
+    await advanceTime(1000)
+    await operation
+    
+    expect(completed).toBe(true)
+  })
+})
+
+test('should handle real-time operations', async () => {
+  const result = await withRealTimers(async () => {
+    // This will use real timers even if fake timers are globally enabled
+    const start = Date.now()
+    await delay(50)
+    return Date.now() - start
+  })
   
-  const promise = functionWithTimeout()
-  vi.advanceTimersByTime(5000)
+  expect(result).toBeGreaterThan(45)
+})
+```
+
+### Timer Compatibility
+The test helpers now properly handle both fake and real timers:
+
+- **`delay()`**: Works with both fake and real timers
+- **`delayedReject()`**: Compatible with timer mocking
+- **`waitForCondition()`**: Handles fake timers with manual advancement
+- **`withFakeTimers()`**: Provides controlled timer environment
+- **`withRealTimers()`**: Temporarily switches to real timers
+
+### Console Testing
+```typescript
+test('should handle console output correctly', async () => {
+  const consoleSpy = vi.spyOn(console, 'log')
   
-  await expect(promise).resolves.toBe('timeout result')
+  await functionThatMightLog()
   
-  vi.useRealTimers()
+  // Correct: Check if console.log was called
+  expect(consoleSpy).toHaveBeenCalledWith('expected message')
+  
+  // Or check that it was NOT called
+  expect(consoleSpy).not.toHaveBeenCalled()
 })
 ```
 

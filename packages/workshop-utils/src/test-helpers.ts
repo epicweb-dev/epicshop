@@ -16,25 +16,42 @@ export function createMockFn<T extends (...args: any[]) => any>(
 	return mockFn
 }
 
+// Simple timer state tracking
+let _fakeTimersEnabled = false
+
+/**
+ * Reset timer state tracking (for testing purposes)
+ */
+export function _resetTimerState() {
+	_fakeTimersEnabled = false
+}
+
 /**
  * Creates a promise that resolves after a specified delay
  * Useful for testing async operations with controlled timing
+ * Compatible with both real and fake timers
  */
 export function delay(ms: number): Promise<void> {
-	return new Promise(resolve => setTimeout(resolve, ms))
+	return new Promise(resolve => {
+		setTimeout(resolve, ms)
+	})
 }
 
 /**
  * Creates a promise that rejects after a specified delay
  * Useful for testing error handling with timeouts
+ * Compatible with both real and fake timers
  */
 export function delayedReject(ms: number, error: Error): Promise<never> {
-	return new Promise((_, reject) => setTimeout(() => reject(error), ms))
+	return new Promise((_, reject) => {
+		setTimeout(() => reject(error), ms)
+	})
 }
 
 /**
  * Waits for a condition to become true with a timeout
  * Useful for testing async state changes
+ * Note: When using fake timers, you need to manually advance them
  */
 export async function waitForCondition(
 	condition: () => boolean | Promise<boolean>,
@@ -51,6 +68,60 @@ export async function waitForCondition(
 	}
 	
 	throw new Error(`Condition not met within ${timeoutMs}ms`)
+}
+
+/**
+ * Utility for testing operations with fake timers
+ * Automatically advances timers and handles async operations
+ */
+export async function withFakeTimers<T>(
+	operation: (advanceTime: (ms: number) => Promise<void>) => Promise<T>,
+): Promise<T> {
+	const wasUsingRealTimers = !_fakeTimersEnabled
+	
+	if (wasUsingRealTimers) {
+		vi.useFakeTimers()
+		_fakeTimersEnabled = true
+	}
+	
+	try {
+		const advanceTime = async (ms: number): Promise<void> => {
+			vi.advanceTimersByTime(ms)
+			// Allow promises to resolve
+			await vi.runOnlyPendingTimersAsync()
+		}
+		
+		return await operation(advanceTime)
+	} finally {
+		if (wasUsingRealTimers) {
+			vi.useRealTimers()
+			_fakeTimersEnabled = false
+		}
+	}
+}
+
+/**
+ * Utility for testing operations that should complete within real time
+ * Temporarily switches to real timers for the duration of the operation
+ */
+export async function withRealTimers<T>(
+	operation: () => Promise<T>,
+): Promise<T> {
+	const wasUsingFakeTimers = _fakeTimersEnabled
+	
+	if (wasUsingFakeTimers) {
+		vi.useRealTimers()
+		_fakeTimersEnabled = false
+	}
+	
+	try {
+		return await operation()
+	} finally {
+		if (wasUsingFakeTimers) {
+			vi.useFakeTimers()
+			_fakeTimersEnabled = true
+		}
+	}
 }
 
 /**
@@ -87,7 +158,8 @@ export function createMockConsole() {
 /**
  * Creates a test environment with common mocks and utilities
  */
-export function createTestEnvironment() {
+export function createTestEnvironment(options: { useFakeTimers?: boolean } = {}) {
+	const { useFakeTimers = true } = options
 	const mockConsole = createMockConsole()
 	
 	// Mock global console
@@ -95,22 +167,52 @@ export function createTestEnvironment() {
 	vi.spyOn(console, 'error').mockImplementation(mockConsole.error)
 	vi.spyOn(console, 'warn').mockImplementation(mockConsole.warn)
 	
-	// Mock timers
-	vi.useFakeTimers()
+	// Conditionally mock timers
+	if (useFakeTimers) {
+		vi.useFakeTimers()
+		_fakeTimersEnabled = true
+	}
 	
 	return {
 		console: mockConsole,
 		cleanup: () => {
 			vi.restoreAllMocks()
-			vi.useRealTimers()
+			if (useFakeTimers) {
+				vi.useRealTimers()
+				_fakeTimersEnabled = false
+			}
 			mockConsole.clear()
 		},
 		advanceTime: (ms: number) => {
-			vi.advanceTimersByTime(ms)
+			if (_fakeTimersEnabled) {
+				vi.advanceTimersByTime(ms)
+			} else {
+				console.warn('advanceTime called but fake timers are not enabled')
+			}
 		},
 		runAllTimers: () => {
-			vi.runAllTimers()
+			if (_fakeTimersEnabled) {
+				vi.runAllTimers()
+			} else {
+				console.warn('runAllTimers called but fake timers are not enabled')
+			}
 		},
+		runOnlyPendingTimers: async () => {
+			if (_fakeTimersEnabled) {
+				await vi.runOnlyPendingTimersAsync()
+			} else {
+				console.warn('runOnlyPendingTimers called but fake timers are not enabled')
+			}
+		},
+		useFakeTimers: () => {
+			vi.useFakeTimers()
+			_fakeTimersEnabled = true
+		},
+		useRealTimers: () => {
+			vi.useRealTimers()
+			_fakeTimersEnabled = false
+		},
+		isFakeTimers: () => _fakeTimersEnabled,
 	}
 }
 
