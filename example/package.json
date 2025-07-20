@@ -31,7 +31,7 @@
   },
   "type": "module",
   "scripts": {
-    "postinstall": "cd ./epicshop && npm install",
+    "postinstall": "cd ./epicshop && npm install --prefer-offline --no-audit --no-fund",
     "start": "npx --prefix ./epicshop epicshop start",
     "dev": "npx --prefix ./epicshop epicshop start",
     "warm": "npx --prefix ./epicshop epicshop warm",

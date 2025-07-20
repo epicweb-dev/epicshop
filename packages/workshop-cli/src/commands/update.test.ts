@@ -1,5 +1,10 @@
 import { test, expect, vi, beforeEach, afterEach } from 'vitest'
-import { update, type UpdateResult } from './update.js'
+import { update } from './update.js'
+
+// Mock the dynamic import of updateLocalRepo
+vi.mock('@epic-web/workshop-utils/git.server', () => ({
+	updateLocalRepo: vi.fn(),
+}))
 
 // Mock console methods to clean up test output
 beforeEach(() => {
@@ -54,6 +59,15 @@ test('update should return success result when no updates are available', async 
 	const originalEnv = process.env.EPICSHOP_DEPLOYED
 	delete process.env.EPICSHOP_DEPLOYED
 
+	// Mock updateLocalRepo to return success with "no updates available" message
+	const { updateLocalRepo } = await import(
+		'@epic-web/workshop-utils/git.server'
+	)
+	vi.mocked(updateLocalRepo).mockResolvedValue({
+		status: 'success',
+		message: 'No updates available.',
+	})
+
 	try {
 		const result = await update({ silent: true })
 
@@ -69,52 +83,153 @@ test('update should return success result when no updates are available', async 
 	}
 })
 
-test('UpdateResult type should have correct structure', () => {
-	const result: UpdateResult = {
-		success: true,
-		message: 'Test message',
-	}
-
-	expect(result.success).toBe(true)
-	expect(result.message).toBe('Test message')
-	expect(result.error).toBeUndefined()
-})
-
-test('UpdateResult type should handle error case', () => {
-	const error = new Error('Test error')
-	const result: UpdateResult = {
-		success: false,
-		message: 'Error occurred',
-		error,
-	}
-
-	expect(result.success).toBe(false)
-	expect(result.message).toBe('Error occurred')
-	expect(result.error).toBe(error)
-})
-
-test('update function should accept silent parameter', async () => {
+test('update should return success result when updates are applied successfully', async () => {
 	// Ensure not in deployed environment
 	const originalEnv = process.env.EPICSHOP_DEPLOYED
 	delete process.env.EPICSHOP_DEPLOYED
 
+	// Mock updateLocalRepo to return success with update applied message
+	const { updateLocalRepo } = await import(
+		'@epic-web/workshop-utils/git.server'
+	)
+	vi.mocked(updateLocalRepo).mockResolvedValue({
+		status: 'success',
+		message: 'Updated successfully.',
+	})
+
 	try {
-		// Test with silent: true
-		const result1 = await update({ silent: true })
-		expect(result1).toHaveProperty('success')
-		expect(result1).toHaveProperty('message')
+		const result = await update({ silent: true })
 
-		// Test with silent: false
-		const result2 = await update({ silent: false })
-		expect(result2).toHaveProperty('success')
-		expect(result2).toHaveProperty('message')
-
-		// Test with default parameter
-		const result3 = await update()
-		expect(result3).toHaveProperty('success')
-		expect(result3).toHaveProperty('message')
+		// Should succeed with update applied message
+		expect(result).toMatchObject({
+			success: true,
+			message: 'Updated successfully.',
+		})
+		expect(result.error).toBeUndefined()
 	} finally {
 		// Restore original environment
 		process.env.EPICSHOP_DEPLOYED = originalEnv
 	}
-}, 10000) // 10 second timeout
+})
+
+test('update should return failure result when updateLocalRepo fails', async () => {
+	// Ensure not in deployed environment
+	const originalEnv = process.env.EPICSHOP_DEPLOYED
+	delete process.env.EPICSHOP_DEPLOYED
+
+	// Mock updateLocalRepo to return error status
+	const { updateLocalRepo } = await import(
+		'@epic-web/workshop-utils/git.server'
+	)
+	vi.mocked(updateLocalRepo).mockResolvedValue({
+		status: 'error',
+		message: 'Git pull failed: network error',
+	})
+
+	try {
+		const result = await update({ silent: true })
+
+		// Should fail with error message from updateLocalRepo
+		expect(result).toMatchObject({
+			success: false,
+			message: 'Git pull failed: network error',
+		})
+		expect(result.error).toBeUndefined()
+	} finally {
+		// Restore original environment
+		process.env.EPICSHOP_DEPLOYED = originalEnv
+	}
+})
+
+test('update should return failure result when updateLocalRepo throws an error', async () => {
+	// Ensure not in deployed environment
+	const originalEnv = process.env.EPICSHOP_DEPLOYED
+	delete process.env.EPICSHOP_DEPLOYED
+
+	// Mock updateLocalRepo to throw an error
+	const { updateLocalRepo } = await import(
+		'@epic-web/workshop-utils/git.server'
+	)
+	vi.mocked(updateLocalRepo).mockRejectedValue(new Error('Module not found'))
+
+	try {
+		const result = await update({ silent: true })
+
+		// Should fail with generic error message
+		expect(result).toMatchObject({
+			success: false,
+			message: 'Update functionality not available',
+		})
+		expect(result.error).toBeInstanceOf(Error)
+		expect(result.error?.message).toBe('Module not found')
+	} finally {
+		// Restore original environment
+		process.env.EPICSHOP_DEPLOYED = originalEnv
+	}
+})
+
+test('update should log success message when silent is false', async () => {
+	// Ensure not in deployed environment
+	const originalEnv = process.env.EPICSHOP_DEPLOYED
+	delete process.env.EPICSHOP_DEPLOYED
+
+	// Mock updateLocalRepo to return success
+	const { updateLocalRepo } = await import(
+		'@epic-web/workshop-utils/git.server'
+	)
+	vi.mocked(updateLocalRepo).mockResolvedValue({
+		status: 'success',
+		message: 'Updated successfully.',
+	})
+
+	const consoleLogSpy = vi.spyOn(console, 'log')
+
+	try {
+		const result = await update({ silent: false })
+
+		// Should succeed
+		expect(result).toMatchObject({
+			success: true,
+			message: 'Updated successfully.',
+		})
+		// Should log the success message
+		expect(consoleLogSpy).toHaveBeenCalledWith('✅ Updated successfully.')
+	} finally {
+		// Restore original environment
+		process.env.EPICSHOP_DEPLOYED = originalEnv
+	}
+})
+
+test('update should log error message when silent is false and updateLocalRepo fails', async () => {
+	// Ensure not in deployed environment
+	const originalEnv = process.env.EPICSHOP_DEPLOYED
+	delete process.env.EPICSHOP_DEPLOYED
+
+	// Mock updateLocalRepo to return error
+	const { updateLocalRepo } = await import(
+		'@epic-web/workshop-utils/git.server'
+	)
+	vi.mocked(updateLocalRepo).mockResolvedValue({
+		status: 'error',
+		message: 'Git pull failed: network error',
+	})
+
+	const consoleErrorSpy = vi.spyOn(console, 'error')
+
+	try {
+		const result = await update({ silent: false })
+
+		// Should fail
+		expect(result).toMatchObject({
+			success: false,
+			message: 'Git pull failed: network error',
+		})
+		// Should log the error message
+		expect(consoleErrorSpy).toHaveBeenCalledWith(
+			'❌ Git pull failed: network error',
+		)
+	} finally {
+		// Restore original environment
+		process.env.EPICSHOP_DEPLOYED = originalEnv
+	}
+})

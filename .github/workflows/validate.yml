@@ -15,6 +15,7 @@ jobs:
   lint:
     name: ⬣ ESLint
     runs-on: ubuntu-latest
+    timeout-minutes: 5
     steps:
       - name: ⬇️ Checkout repo
         uses: actions/checkout@v4
@@ -23,38 +24,18 @@ jobs:
         uses: actions/setup-node@v4
         with:
           node-version: 24
+          cache: 'npm'
 
       - name: 📥 Download deps
-        uses: bahmutov/npm-install@v1
-        with:
-          useLockFile: false
+        run: npm install --prefer-offline --no-audit --no-fund
 
       - name: 🔬 Lint
         run: npm run lint
 
-  test:
-    name: 🧪 Tests
-    runs-on: ubuntu-latest
-    steps:
-      - name: ⬇️ Checkout repo
-        uses: actions/checkout@v4
-
-      - name: ⎔ Setup node
-        uses: actions/setup-node@v4
-        with:
-          node-version: 24
-
-      - name: 📥 Download deps
-        uses: bahmutov/npm-install@v1
-        with:
-          useLockFile: false
-
-      - name: 🧪 Run tests
-        run: npm test -- --no-watch
-
   build:
     name: 🏗 Build
     runs-on: ubuntu-latest
+    timeout-minutes: 5
     steps:
       - name: ⬇️ Checkout repo
         uses: actions/checkout@v4
@@ -63,11 +44,10 @@ jobs:
         uses: actions/setup-node@v4
         with:
           node-version: 24
+          cache: 'npm'
 
       - name: 📥 Download deps
-        uses: bahmutov/npm-install@v1
-        with:
-          useLockFile: false
+        run: npm install --prefer-offline --no-audit --no-fund
 
       - name: 🏗 Build
         run: npm run build
@@ -80,9 +60,7 @@ jobs:
 
       # run install again so the local .bin files get where they should go.
       - name: 📥 Download deps
-        uses: bahmutov/npm-install@v1
-        with:
-          useLockFile: false
+        run: npm install --prefer-offline --no-audit --no-fund
 
       - name: 📦 Upload All Build Artifacts
         uses: actions/upload-artifact@v4
@@ -96,10 +74,11 @@ jobs:
             packages/workshop-mcp/dist
             packages/workshop-cli/dist
 
-  typecheck:
-    name: ʦ TypeScript
+  test:
+    name: 🧪 Tests
     needs: [build]
     runs-on: ubuntu-latest
+    timeout-minutes: 5
     steps:
       - name: ⬇️ Checkout repo
         uses: actions/checkout@v4
@@ -108,6 +87,7 @@ jobs:
         uses: actions/setup-node@v4
         with:
           node-version: 24
+          cache: 'npm'
 
       - name: 📥 Download All Build Artifacts
         uses: actions/download-artifact@v4
@@ -116,9 +96,34 @@ jobs:
           path: packages
 
       - name: 📥 Download deps
-        uses: bahmutov/npm-install@v1
+        run: npm install --prefer-offline --no-audit --no-fund
+
+      - name: 🧪 Run tests
+        run: npm test -- --no-watch
+
+  typecheck:
+    name: ʦ TypeScript
+    needs: [build]
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - name: ⬇️ Checkout repo
+        uses: actions/checkout@v4
+
+      - name: ⎔ Setup node
+        uses: actions/setup-node@v4
         with:
-          useLockFile: false
+          node-version: 24
+          cache: 'npm'
+
+      - name: 📥 Download All Build Artifacts
+        uses: actions/download-artifact@v4
+        with:
+          name: all-build-artifacts
+          path: packages
+
+      - name: 📥 Download deps
+        run: npm install --prefer-offline --no-audit --no-fund
 
       - name: 🔎 Type check
         run: npm run typecheck
@@ -127,7 +132,7 @@ jobs:
     name: 🎭 Playwright
     needs: [build]
     runs-on: ubuntu-latest
-    timeout-minutes: 60
+    timeout-minutes: 10
     steps:
       - name: ⬇️ Checkout repo
         uses: actions/checkout@v4
@@ -136,6 +141,7 @@ jobs:
         uses: actions/setup-node@v4
         with:
           node-version: 24
+          cache: 'npm'
 
       - name: 📥 Download All Build Artifacts
         uses: actions/download-artifact@v4
@@ -144,9 +150,7 @@ jobs:
           path: packages
 
       - name: 📥 Download deps
-        uses: bahmutov/npm-install@v1
-        with:
-          useLockFile: false
+        run: npm install --prefer-offline --no-audit --no-fund
 
       - name: 📥 Install Playwright Browsers
         run: npx playwright install --with-deps
@@ -169,6 +173,7 @@ jobs:
       matrix:
         os: [ubuntu-latest, windows-latest, macos-latest]
     runs-on: ${{ matrix.os }}
+    timeout-minutes: 5
     steps:
       - name: ⬇️ Checkout repo
         uses: actions/checkout@v4
@@ -177,6 +182,7 @@ jobs:
         uses: actions/setup-node@v4
         with:
           node-version: 24
+          cache: 'npm'
 
       - name: 📥 Download All Build Artifacts
         uses: actions/download-artifact@v4
@@ -185,9 +191,7 @@ jobs:
           path: packages
 
       - name: 📥 Download deps
-        uses: bahmutov/npm-install@v1
-        with:
-          useLockFile: false
+        run: npm install --prefer-offline --no-audit --no-fund
 
       - name: ▶️ Run setup script
         run: node setup.mjs
@@ -198,6 +202,7 @@ jobs:
     name: 🚀 Release
     needs: [lint, test, typecheck, build, playwright]
     runs-on: ubuntu-latest
+    timeout-minutes: 5
     permissions:
       contents: write
       id-token: write
@@ -220,6 +225,7 @@ jobs:
         with:
           node-version: 24
           registry-url: 'https://registry.npmjs.org'
+          cache: 'npm'
 
       - name: 📥 Download All Build Artifacts
         uses: actions/download-artifact@v4
@@ -228,9 +234,7 @@ jobs:
           path: packages
 
       - name: 📥 Download deps
-        uses: bahmutov/npm-install@v1
-        with:
-          useLockFile: false
+        run: npm install --prefer-offline --no-audit --no-fund
 
       - name: 🚀 Release
         run: npx tsx other/release.ts --dry-run=false
