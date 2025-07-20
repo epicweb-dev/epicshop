@@ -71,8 +71,8 @@ const config: PlaywrightTestConfig = {
 	/* Run your local dev server before starting the tests */
 	webServer: {
 		command: process.env.CI
-			? `npx cross-env PORT=${PORT} npm run start`
-			: `npx cross-env PORT=${PORT} npm run dev`,
+			? `npx cross-env PORT=${PORT} npm run start --workspace=@epic-web/workshop-app`
+			: `npx cross-env PORT=${PORT} npm run dev --workspace=@epic-web/workshop-app`,
 		port: Number(PORT),
 		reuseExistingServer: !process.env.CI,
 		timeout: 120 * 1000, // Increased server startup timeout
@@ -81,8 +81,8 @@ const config: PlaywrightTestConfig = {
 	},
 
 	/* Global setup and teardown */
-	globalSetup: require.resolve('./tests/global-setup.ts'),
-	globalTeardown: require.resolve('./tests/global-teardown.ts'),
+	globalSetup: './tests/global-setup.ts',
+	globalTeardown: './tests/global-teardown.ts',
 }
 
 export default config
