@@ -146,7 +146,7 @@ function getFileCodeblocks(
 		const launchEditorClassName =
 			'border hover:bg-foreground/20 rounded px-2 py-0.5 font-mono text-xs font-semibold'
 
-		function launchEditor(appNum: number, line: number) {
+		function launchEditor(appNum: number, line: number = 1) {
 			if (isDeployed) {
 				if (type === 'DeletedFile' && appNum === 2) return ''
 				if (type === 'AddedFile' && appNum === 1) return ''
@@ -174,7 +174,7 @@ ${lines.join('\n')}
 \`\`\`
 
 <div className="flex gap-4 absolute top-1 right-3 items-center">
-	${launchEditor(1, startLine || 1)}
+	${launchEditor(1, startLine)}
 	<div className="display-alt-down flex gap-2">
 		<LaunchEditor file=${JSON.stringify(
 			filePathApp1,
@@ -191,7 +191,7 @@ ${lines.join('\n')}
 			</span>
 		</LaunchEditor>
 	</div>
-	${launchEditor(2, toStartLine || 1)}
+	${launchEditor(2, toStartLine)}
 </div>
 
 </div>
