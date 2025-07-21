@@ -174,7 +174,7 @@ ${lines.join('\n')}
 \`\`\`
 
 <div className="flex gap-4 absolute top-1 right-3 items-center">
-	${launchEditor(1, startLine)}
+	${launchEditor(1, startLine || 1)}
 	<div className="display-alt-down flex gap-2">
 		<LaunchEditor file=${JSON.stringify(
 			filePathApp1,
@@ -191,7 +191,7 @@ ${lines.join('\n')}
 			</span>
 		</LaunchEditor>
 	</div>
-	${launchEditor(2, toStartLine)}
+	${launchEditor(2, toStartLine || 1)}
 </div>
 
 </div>
