@@ -147,6 +147,7 @@ function getFileCodeblocks(
 			'border hover:bg-foreground/20 rounded px-2 py-0.5 font-mono text-xs font-semibold'
 
 		function launchEditor(appNum: number, line: number) {
+			line ||= 1 // handle 0
 			if (isDeployed) {
 				if (type === 'DeletedFile' && appNum === 2) return ''
 				if (type === 'AddedFile' && appNum === 1) return ''
