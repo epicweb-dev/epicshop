@@ -9,23 +9,34 @@ const packageJson = JSON.parse(
 
 // Check Node.js version against the engines requirement
 function checkNodeVersion() {
+	if (
+		process.env.EPICSHOP_SKIP_NODE_VERSION_CHECK === 'true' ||
+		process.env.EPICSHOP_SKIP_NODE_VERSION_CHECK === '1'
+	) {
+		return
+	}
+
 	const currentNodeVersion = process.version.slice(1) // Remove 'v' prefix
 	const requiredVersions = packageJson.engines?.node
-	
+
 	if (!requiredVersions) {
 		return // No engines specified, skip check
 	}
-	
+
 	// Use semver to check if current version satisfies the requirement
 	const isSupported = semver.satisfies(currentNodeVersion, requiredVersions)
-	
+
 	if (!isSupported) {
 		console.error('\n❌ Node.js version compatibility error')
 		console.error(`Current Node.js version: v${currentNodeVersion}`)
 		console.error(`Required Node.js versions: ${requiredVersions}`)
-		console.error('\nThis project only supports LTS versions of Node.js.')
+		console.error(
+			`\nThis project only supports versions of Node.js which match the semver range specified in the package.json file`,
+		)
 		console.error('Please update to a supported Node.js version and try again.')
-		console.error('\nYou can download the latest LTS version from: https://nodejs.org/')
+		console.error(
+			'\nYou can download the latest LTS version from: https://nodejs.org/',
+		)
 		process.exit(1)
 	}
 }
