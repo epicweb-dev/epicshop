@@ -10,6 +10,17 @@ export function init() {
 			"Failed to execute 'requestPictureInPicture' on 'HTMLVideoElement'"
 		],
 		beforeSend(event) {
+			if (
+				event.exception?.values?.some(value =>
+					value.stacktrace?.frames?.some(
+						frame =>
+							frame.filename?.includes('chrome-extension:') ||
+							frame.filename?.includes('moz-extension:')
+					)
+				)
+			) {
+				return null
+			}
 			if (event.request?.url) {
 				const url = new URL(event.request.url)
 				if (
