@@ -10,7 +10,7 @@ import {
 	type ActionFunctionArgs,
 } from 'react-router'
 
-export const streamTimeout = 15000
+export const streamTimeout = 60000
 const ABORT_DELAY = streamTimeout + 1000
 
 export function handleError(
