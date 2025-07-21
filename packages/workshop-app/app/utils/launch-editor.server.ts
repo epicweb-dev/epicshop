@@ -451,7 +451,14 @@ export async function launchEditor(
 			}
 		})
 
-		_childProcess.on('error', async (error) => {
+		_childProcess.on('error', async (error: Error & { code?: string }) => {
+			if (error.code === 'EBADF') {
+				return res({
+					status: 'error',
+					message:
+						'Unable to launch editor. This commonly happens when running in a containerized or server environment without terminal access.',
+				})
+			}
 			return res({ status: 'error', message: error.message })
 		})
 	})
