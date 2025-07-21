@@ -1,5 +1,6 @@
 import path from 'path'
 import { fileURLToPath } from 'url'
+import { webcrypto } from 'node:crypto'
 import { getPresentUsers } from '@epic-web/workshop-presence/presence.server'
 import {
 	getApps,
@@ -23,6 +24,10 @@ import morgan from 'morgan'
 import { type ServerBuild } from 'react-router'
 import sourceMapSupport from 'source-map-support'
 import { type WebSocket, WebSocketServer } from 'ws'
+
+if (typeof crypto === 'undefined') {
+	global.crypto = webcrypto
+}
 
 // if we exit early with an error, log the error...
 closeWithGrace(({ err, manual }) => {
