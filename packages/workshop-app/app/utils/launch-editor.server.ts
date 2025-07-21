@@ -418,11 +418,11 @@ export async function launchEditor(
 			_childProcess = child_process.spawn(
 				'cmd.exe',
 				['/C', editor].concat(args).filter(Boolean),
-				{ stdio: ['ignore', 'ignore', 'pipe'] },
+				{ stdio: ['inherit', 'inherit', 'pipe'] },
 			)
 		} else {
 			_childProcess = child_process.spawn(editor, args, {
-				stdio: ['ignore', 'ignore', 'pipe'],
+				stdio: ['inherit', 'inherit', 'pipe'],
 			})
 		}
 		_childProcess.stderr?.on('data', (data: string | Uint8Array) => {
