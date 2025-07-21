@@ -14,8 +14,8 @@ export function init() {
 				event.exception?.values?.some(value =>
 					value.stacktrace?.frames?.some(
 						frame =>
-							frame.filename?.startsWith('chrome-extension:') ||
-							frame.filename?.startsWith('moz-extension:')
+							frame.filename?.includes('chrome-extension:') ||
+							frame.filename?.includes('moz-extension:')
 					)
 				)
 			) {
