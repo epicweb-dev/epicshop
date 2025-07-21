@@ -94,6 +94,17 @@ export async function start(options: StartOptions = {}): Promise<StartResult> {
 		let restarting = false
 		let childPort: number | null = null
 		let childPortPromiseResolve: ((port: number) => void) | null = null
+		let childPortPromise: Promise<number>
+
+		// Function to create a new port promise
+		function createChildPortPromise(): Promise<number> {
+			return new Promise<number>((resolve) => {
+				childPortPromiseResolve = resolve
+			}).then((port) => {
+				childPort = port
+				return port
+			})
+		}
 
 		// Check for updates on startup
 		async function checkAndDisplayUpdates() {
@@ -132,12 +143,8 @@ export async function start(options: StartOptions = {}): Promise<StartResult> {
 			}
 		}
 
-		const childPortPromise = new Promise<number>((resolve) => {
-			childPortPromiseResolve = resolve
-		}).then((port) => {
-			childPort = port
-			return port
-		})
+		// Initialize the child port promise
+		childPortPromise = createChildPortPromise()
 
 		function parsePortFromLine(line: string): number | null {
 			const match = line.match(/localhost:(\d+)/)
@@ -271,6 +278,10 @@ export async function start(options: StartOptions = {}): Promise<StartResult> {
 
 		function spawnChild() {
 			if (!appDir) return
+
+			// Reset port tracking when spawning a new child
+			childPort = null
+			childPortPromise = createChildPortPromise()
 
 			child = spawn(childCommand, [], {
 				shell: true,
