@@ -221,7 +221,7 @@ function LaunchEditorImpl({
 	const peRedirectInput = usePERedirectInput()
 
 	const fileList = typeof appFile === 'string' ? [appFile] : appFile
-	const type = file ? 'file' : 'appFile';
+	const type = file ? 'file' : 'appFile'
 	const syncToType = syncTo?.file ? 'file' : syncTo?.appFile ? 'appFile' : ''
 
 	return (
