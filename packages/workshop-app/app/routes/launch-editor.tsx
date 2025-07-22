@@ -212,10 +212,9 @@ function LaunchEditorImpl({
 	children,
 	onUpdate,
 }: LaunchEditorProps) {
-	// Inside LaunchEditorImpl function
 	if (!file && !appFile) {
-		console.error('LaunchEditor: requires either "file" or "appFile" prop.');
-		return null;
+		console.error('LaunchEditor: requires either "file" or "appFile" prop.')
+		return null
 	}
 
 	const fetcher = useLaunchFetcher(onUpdate)
