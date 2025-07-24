@@ -413,7 +413,7 @@ function EpicVideo({
 				<VideoLink url={urlString} title={title} />
 				<details>
 					<summary>Transcript</summary>
-					<div className="whitespace-pre-line rounded-md bg-accent p-2 text-accent-foreground">
+					<div className="notranslate whitespace-pre-line rounded-md bg-accent p-2 text-accent-foreground">
 						{transcriptElements}
 					</div>
 				</details>
