@@ -1,0 +1,1 @@
+const re = /^[a-zA-Z\s]*$/;
