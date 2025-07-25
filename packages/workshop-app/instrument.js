@@ -20,6 +20,15 @@ Sentry.init({
 		}
 		return process.env.NODE_ENV === 'production' ? 1 : 0
 	},
+	beforeSend(event) {
+		const isPlaygroundError = event.exception?.values?.some(value =>
+			value.stacktrace?.frames?.some(frame => frame.filename?.includes('/playground/'))
+		)
+		if (isPlaygroundError) {
+			return null
+		}
+		return event
+	},
 	beforeSendTransaction(event) {
 		if (event.request?.headers?.['x-healthcheck'] === 'true') {
 			return null
