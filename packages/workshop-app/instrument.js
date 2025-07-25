@@ -1,5 +1,6 @@
 import { nodeProfilingIntegration } from '@sentry/profiling-node'
 import * as Sentry from '@sentry/react-router'
+import path from 'node:path'
 
 Sentry.init({
 	dsn: process.env.SENTRY_DSN,
@@ -19,6 +20,15 @@ Sentry.init({
 			return 0
 		}
 		return process.env.NODE_ENV === 'production' ? 1 : 0
+	},
+	beforeSend(event) {
+		const isPlaygroundError = event.exception?.values?.some(value =>
+			value.stacktrace?.frames?.some(frame => frame.filename?.includes(`${path.sep}playground${path.sep}`))
+		)
+		if (isPlaygroundError) {
+			return null
+		}
+		return event
 	},
 	beforeSendTransaction(event) {
 		if (event.request?.headers?.['x-healthcheck'] === 'true') {
