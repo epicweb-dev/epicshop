@@ -55,6 +55,10 @@ export function getWorkshopRoot() {
 	return process.env.EPICSHOP_CONTEXT_CWD
 }
 
+function getSanitizedPath(fullPath: string) {
+	return fullPath.replace(getWorkshopRoot(), '~');
+}
+
 function getPlaygroundAppNameInfoPath() {
 	return path.join(
 		getWorkshopRoot(),
@@ -452,7 +456,7 @@ async function _getExercises({
 			}
 		}
 		const exercise = ExerciseSchema.parse({
-			fullPath: path.join(getWorkshopRoot(), 'exercises', dirName),
+			fullPath: getSanitizedPath(path.join(getWorkshopRoot(), 'exercises', dirName)),
 			exerciseNumber,
 			dirName,
 			instructionsCode: compiledReadme?.code,
@@ -887,11 +891,11 @@ export async function getPlaygroundApp({
 				appName: baseAppName,
 				type,
 				isUpToDate: appModifiedTime <= playgroundAppModifiedTime,
-				fullPath: playgroundDir,
-				relativePath: playgroundDir.replace(
+				fullPath: getSanitizedPath(playgroundDir),
+				relativePath: getSanitizedPath(playgroundDir.replace(
 					`${getWorkshopRoot()}${path.sep}`,
 					'',
-				),
+				)),
 				title,
 				epicVideoEmbeds: compiledReadme?.epicVideoEmbeds,
 				dirName,
@@ -928,8 +932,8 @@ async function getExampleAppFromPath(
 	return {
 		name,
 		type,
-		fullPath,
-		relativePath: fullPath.replace(`${getWorkshopRoot()}${path.sep}`, ''),
+		fullPath: getSanitizedPath(fullPath),
+		relativePath: getSanitizedPath(fullPath.replace(`${getWorkshopRoot()}${path.sep}`, '')),
 		title,
 		epicVideoEmbeds: compiledReadme?.epicVideoEmbeds,
 		dirName,
@@ -1021,8 +1025,8 @@ async function getSolutionAppFromPath(
 		exerciseNumber,
 		stepNumber,
 		dirName,
-		fullPath,
-		relativePath: fullPath.replace(`${getWorkshopRoot()}${path.sep}`, ''),
+		fullPath: getSanitizedPath(fullPath),
+		relativePath: getSanitizedPath(fullPath.replace(`${getWorkshopRoot()}${path.sep}`, '')),
 		instructionsCode: compiledReadme?.code,
 		test,
 		dev,
@@ -1104,8 +1108,8 @@ async function getProblemAppFromPath(
 		exerciseNumber,
 		stepNumber,
 		dirName,
-		fullPath,
-		relativePath: fullPath.replace(`${getWorkshopRoot()}${path.sep}`, ''),
+		fullPath: getSanitizedPath(fullPath),
+		relativePath: getSanitizedPath(fullPath.replace(`${getWorkshopRoot()}${path.sep}`, '')),
 		instructionsCode: compiledReadme?.code,
 		test,
 		dev,
