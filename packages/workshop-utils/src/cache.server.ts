@@ -8,6 +8,7 @@ import { remember } from '@epic-web/remember'
 import fsExtra from 'fs-extra'
 import { LRUCache } from 'lru-cache'
 import md5 from 'md5-hex'
+import { lock } from 'proper-lockfile'
 import {
 	type App,
 	type ExampleApp,
@@ -169,91 +170,93 @@ export function makeSingletonFsCache<CacheEntryType>(name: string) {
 			name: `Filesystem cache (${name})`,
 			async get(key) {
 				const filePath = path.join(cacheInstanceDir, md5(key))
-				const maxRetries = 3
-				const baseDelay = 10
-
-				for (let attempt = 0; attempt <= maxRetries; attempt++) {
+				let release
+				try {
+					// Try to acquire lock with 1000ms timeout
+					const lockPromise = lock(filePath, { stale: 60000, retries: 5, factor: 2, minTimeout: 100 })
+					const timeoutPromise = new Promise<never>((_, reject) => {
+						setTimeout(() => reject(new Error('Lock timeout')), 1000)
+					})
+					
 					try {
-						const data = await fsExtra.readJSON(filePath)
-						if (data.entry) return data.entry
-						return null
-					} catch (error: unknown) {
-						if (
-							error instanceof Error &&
-							'code' in error &&
-							error.code === 'ENOENT'
-						) {
-							return null
-						}
-
-						// Handle JSON parsing errors (could be race condition or corruption)
-						if (
-							error instanceof SyntaxError &&
-							error.message.includes('JSON')
-						) {
-							// If this is a retry attempt, it might be a race condition
-							if (attempt < maxRetries) {
-								const delay = baseDelay * Math.pow(2, attempt) // exponential backoff
-								console.warn(
-									`JSON parsing error on attempt ${attempt + 1}/${maxRetries + 1} for ${filePath}, retrying in ${delay}ms...`,
-								)
-								await new Promise((resolve) => setTimeout(resolve, delay))
-								continue
-							}
-
-							// Final attempt failed, treat as corrupted file
-							// Log to Sentry if available
-							if (getEnv().SENTRY_DSN && getEnv().EPICSHOP_IS_PUBLISHED) {
-								try {
-									const Sentry = await import('@sentry/react-router')
-									Sentry.captureException(error, {
-										tags: {
-											error_type: 'corrupted_cache_file',
-											cache_name: name,
-											cache_key: key,
-											retry_attempts: attempt.toString(),
-										},
-										extra: {
-											filePath,
-											errorMessage: error.message,
-											cacheName: name,
-											cacheKey: key,
-											retryAttempts: attempt,
-										},
-									})
-								} catch (sentryError) {
-									console.error('Failed to log to Sentry:', sentryError)
-								}
-							}
-
-							// Delete the corrupted file
+						release = await Promise.race([lockPromise, timeoutPromise])
+					} catch (lockError) {
+						// If lock times out, delete the file and throw to trigger computation
+						if (lockError instanceof Error && lockError.message === 'Lock timeout') {
 							try {
 								await fsExtra.remove(filePath)
-								console.warn(
-									`Deleted corrupted cache file after ${attempt + 1} attempts: ${filePath}`,
-								)
+								console.warn(`Deleted stale cache file due to lock timeout: ${filePath}`)
 							} catch (deleteError) {
-								console.error(
-									`Failed to delete corrupted cache file ${filePath}:`,
-									deleteError,
-								)
+								console.error(`Failed to delete stale cache file ${filePath}:`, deleteError)
 							}
-
-							return null
 						}
-
-						// For other errors, don't retry
-						throw error
+						throw lockError
 					}
+					
+					const data = await fsExtra.readJSON(filePath)
+					if (data.entry) return data.entry
+					return null
+				} catch (error) {
+					if (error instanceof Error && 'code' in error && error.code === 'ENOENT') {
+						return null
+					}
+					
+					// If there's an error while lock exists, clean up both lock and file
+					if (release) {
+						try {
+							await fsExtra.remove(filePath)
+							console.warn(`Deleted cache file due to error: ${filePath}`)
+						} catch (deleteError) {
+							console.error(`Failed to delete cache file ${filePath}:`, deleteError)
+						}
+					}
+					
+					throw error
+				} finally {
+					if (release) await release()
 				}
-
-				// This should never be reached, but just in case
-				return null
 			},
 			async set(key, entry) {
 				const filePath = path.join(cacheInstanceDir, md5(key))
 				await fsExtra.ensureDir(path.dirname(filePath))
-				await fsExtra.writeJSON(filePath, { key, entry })
+				let release
+				try {
+					// Try to acquire lock with 1000ms timeout
+					const lockPromise = lock(filePath, { stale: 60000, retries: 5, factor: 2, minTimeout: 100 })
+					const timeoutPromise = new Promise<never>((_, reject) => {
+						setTimeout(() => reject(new Error('Lock timeout')), 1000)
+					})
+					
+					try {
+						release = await Promise.race([lockPromise, timeoutPromise])
+					} catch (lockError) {
+						// If lock times out, delete the file
+						if (lockError instanceof Error && lockError.message === 'Lock timeout') {
+							try {
+								await fsExtra.remove(filePath)
+								console.warn(`Deleted stale cache file due to lock timeout: ${filePath}`)
+							} catch (deleteError) {
+								console.error(`Failed to delete stale cache file ${filePath}:`, deleteError)
+							}
+						}
+						throw lockError
+					}
+					
+					await fsExtra.writeJSON(filePath, { key, entry })
+				} catch (error) {
+					// If there's an error while lock exists, clean up both lock and file
+					if (release) {
+						try {
+							await fsExtra.remove(filePath)
+							console.warn(`Deleted cache file due to error: ${filePath}`)
+						} catch (deleteError) {
+							console.error(`Failed to delete cache file ${filePath}:`, deleteError)
+						}
+					}
+					throw error
+				} finally {
+					if (release) await release()
+				}
 			},
 			async delete(key) {
 				const filePath = path.join(cacheInstanceDir, md5(key))
