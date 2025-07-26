@@ -30,6 +30,14 @@ export function init() {
 					return null
 				}
 			}
+			if (
+				ENV.MODE === 'development' &&
+				event.exception?.values?.some(value =>
+					value.value?.includes('Failed to fetch'),
+				)
+			) {
+				return null;
+			}
 			return event
 		},
 		integrations: [
