@@ -175,6 +175,7 @@
   },
   "dependencies": {
     "@epic-web/cachified": "^5.6.0",
+    "proper-lockfile": "^4.1.2",
     "@epic-web/invariant": "^1.0.0",
     "@epic-web/remember": "^1.1.0",
     "@kentcdodds/md-temp": "^10.0.1",
