@@ -129,7 +129,7 @@ async function go() {
 					packageJson.dependencies[dependency] = `^${workspaceVersion}`
 				}
 			}
-			await fs.writeJson(packageJsonPath, packageJson)
+			await fs.writeJson(packageJsonPath, packageJson, { spaces: 2 })
 		}
 
 		if (workspaceVersion === null) {
