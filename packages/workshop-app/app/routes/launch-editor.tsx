@@ -212,14 +212,13 @@ function LaunchEditorImpl({
 	children,
 	onUpdate,
 }: LaunchEditorProps) {
+	const fetcher = useLaunchFetcher(onUpdate)
+	const peRedirectInput = usePERedirectInput()
+
 	if (!file && !appFile) {
 		console.error('LaunchEditor: requires either "file" or "appFile" prop.')
 		return null
 	}
-
-	const fetcher = useLaunchFetcher(onUpdate)
-	const peRedirectInput = usePERedirectInput()
-
 	const fileList = typeof appFile === 'string' ? [appFile] : appFile
 	const type = file ? 'file' : 'appFile'
 	const syncToType = syncTo?.file ? 'file' : syncTo?.appFile ? 'appFile' : ''
