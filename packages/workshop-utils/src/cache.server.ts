@@ -252,8 +252,12 @@ export function makeSingletonFsCache<CacheEntryType>(name: string) {
 			},
 			async set(key, entry) {
 				const filePath = path.join(cacheInstanceDir, md5(key))
+				const tempPath = `${filePath}.tmp`
 				await fsExtra.ensureDir(path.dirname(filePath))
-				await fsExtra.writeJSON(filePath, { key, entry })
+				// Write to temp file first, then atomically move to final location
+				// This prevents race conditions where readers see partially written JSON files
+				await fsExtra.writeJSON(tempPath, { key, entry })
+				await fsExtra.move(tempPath, filePath, { overwrite: true })
 			},
 			async delete(key) {
 				const filePath = path.join(cacheInstanceDir, md5(key))
