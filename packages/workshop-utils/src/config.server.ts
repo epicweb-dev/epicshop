@@ -102,6 +102,10 @@ const WorkshopConfigSchema = z
 			)
 			.optional()
 			.default([]),
+		sidecarProcesses: z
+			.record(z.string(), z.string())
+			.optional()
+			.default({}),
 	})
 	.transform((data) => {
 		return {

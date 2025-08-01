@@ -27,6 +27,9 @@
       "name": "Kent C. Dodds",
       "avatar": "/images/instructor.png",
       "𝕏": "kentcdodds"
+    },
+    "sidecarProcesses": {
+      "EpicMeApp": "npm run dev --prefix ./epicshop/epic-me"
     }
   },
   "type": "module",

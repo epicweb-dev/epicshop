@@ -24,6 +24,14 @@ type DevProcessesMap = Map<
 	}
 >
 
+type SidecarProcessesMap = Map<
+	string,
+	{
+		color: (typeof colors)[number]
+		process: ChildProcess
+	}
+>
+
 type OutputLine = {
 	type: 'stdout' | 'stderr'
 	content: string
@@ -41,11 +49,13 @@ declare global {
 	var __process_dev_close_with_grace_return__: ReturnType<
 			typeof closeWithGrace
 		>,
-		__process_test_close_with_grace_return__: ReturnType<typeof closeWithGrace>
+		__process_test_close_with_grace_return__: ReturnType<typeof closeWithGrace>,
+		__process_sidecar_close_with_grace_return__: ReturnType<typeof closeWithGrace>
 }
 
 const devProcesses = remember('dev_processes', getDevProcessesMap)
 const testProcesses = remember('test_processes', getTestProcessesMap)
+const sidecarProcesses = remember('sidecar_processes', getSidecarProcessesMap)
 
 function getDevProcessesMap() {
 	const procs: DevProcessesMap = new Map()
@@ -72,6 +82,20 @@ function getTestProcessesMap() {
 				console.log('closing', id)
 				proc.process.kill()
 			}
+		}
+	})
+	return procs
+}
+
+function getSidecarProcessesMap() {
+	const procs: SidecarProcessesMap = new Map()
+
+	global.__process_sidecar_close_with_grace_return__?.uninstall()
+
+	global.__process_sidecar_close_with_grace_return__ = closeWithGrace(async () => {
+		for (const [name, proc] of procs.entries()) {
+			console.log('closing sidecar', name)
+			proc.process.kill()
 		}
 	})
 	return procs
@@ -284,7 +308,92 @@ export function clearTestProcessEntry(app: { name: string }) {
 }
 
 export function getProcesses() {
-	return { devProcesses, testProcesses }
+	return { devProcesses, testProcesses, sidecarProcesses }
+}
+
+export function startSidecarProcesses(processes: Record<string, string>) {
+	if (isDeployed) {
+		console.log('Sidecar processes are not supported in deployed mode')
+		return
+	}
+
+	for (const [name, command] of Object.entries(processes)) {
+		startSidecarProcess(name, command)
+	}
+}
+
+export function startSidecarProcess(name: string, command: string) {
+	if (isDeployed) throw new Error('cannot run sidecar processes in deployed mode')
+	
+	// if the process is already running, don't start it again
+	if (sidecarProcesses.has(name)) {
+		console.log(`Sidecar process ${name} is already running`)
+		return
+	}
+
+	const availableColors = colors.filter((color) =>
+		Array.from(devProcesses.values()).every((p) => p.color !== color) &&
+		Array.from(sidecarProcesses.values()).every((p) => p.color !== color),
+	)
+	const color =
+		availableColors[
+			(devProcesses.size + sidecarProcesses.size) % availableColors.length
+		] ?? 'blue'
+
+	// Spawn the command using shell to handle complex commands properly
+	const sidecarProcess = spawn(command, [], {
+		shell: true,
+		stdio: ['ignore', 'pipe', 'pipe'],
+		env: {
+			...process.env,
+			NODE_ENV: 'development',
+		},
+	})
+
+	const prefix = chalk[color](`[${name}]`)
+	
+	function handleStdOutData(data: Buffer) {
+		console.log(
+			data
+				.toString('utf-8')
+				.split('\n')
+				.map((line) => `${prefix} ${line}`)
+				.join('\n'),
+		)
+	}
+	sidecarProcess.stdout?.on('data', handleStdOutData)
+	
+	function handleStdErrData(data: Buffer) {
+		console.error(
+			data
+				.toString('utf-8')
+				.split('\n')
+				.map((line) => `${prefix} ${line}`)
+				.join('\n'),
+		)
+	}
+	sidecarProcess.stderr?.on('data', handleStdErrData)
+	
+	sidecarProcesses.set(name, { color, process: sidecarProcess })
+	
+	sidecarProcess.on('exit', (code: number | null) => {
+		sidecarProcess.stdout?.off('data', handleStdOutData)
+		sidecarProcess.stderr?.off('data', handleStdErrData)
+		console.log(`${prefix} exited (${code})`)
+		sidecarProcesses.delete(name)
+	})
+
+	console.log(`${prefix} started`)
+}
+
+export function stopSidecarProcesses() {
+	if (isDeployed) throw new Error('cannot stop sidecar processes in deployed mode')
+	
+	for (const [name, proc] of sidecarProcesses.entries()) {
+		console.log(`Stopping sidecar process: ${name}`)
+		proc.process.kill()
+	}
+	sidecarProcesses.clear()
 }
 
 export async function closeProcess(key: string) {

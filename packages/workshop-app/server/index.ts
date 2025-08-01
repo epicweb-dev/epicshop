@@ -7,7 +7,7 @@ import {
 	init as initApps,
 	setModifiedTimesForAppDirs,
 } from '@epic-web/workshop-utils/apps.server'
-import { getWorkshopUrl } from '@epic-web/workshop-utils/config.server'
+import { getWorkshopConfig, getWorkshopUrl } from '@epic-web/workshop-utils/config.server'
 import { getEnv, init as initEnv } from '@epic-web/workshop-utils/env.server'
 import { requestContext } from '@epic-web/workshop-utils/request-context.server'
 import { checkConnectionCached } from '@epic-web/workshop-utils/utils.server'
@@ -214,6 +214,18 @@ ${lanUrl ? `${chalk.bold('On Your Network:')}  ${chalk.cyan(lanUrl)}` : ''}
 	// give it another line
 	console.log('')
 
+	// Start sidecar processes if configured
+	try {
+		const workshopConfig = getWorkshopConfig()
+		if (workshopConfig.sidecarProcesses && Object.keys(workshopConfig.sidecarProcesses).length > 0) {
+			console.log(chalk.blue('🚀 Starting sidecar processes...'))
+			const { startSidecarProcesses } = await import('@epic-web/workshop-utils/process-manager.server')
+			startSidecarProcesses(workshopConfig.sidecarProcesses)
+		}
+	} catch (error) {
+		console.error(chalk.red('❌ Failed to start sidecar processes:'), error)
+	}
+
 	if (!ENV.EPICSHOP_DEPLOYED && process.env.EPICSHOP_ENABLE_WATCHER) {
 		const watches = new Map<
 			string,
@@ -313,6 +325,14 @@ ${lanUrl ? `${chalk.bold('On Your Network:')}  ${chalk.cyan(lanUrl)}` : ''}
 })
 
 closeWithGrace(async () => {
+	// Stop sidecar processes before closing the server
+	try {
+		const { stopSidecarProcesses } = await import('@epic-web/workshop-utils/process-manager.server')
+		stopSidecarProcesses()
+	} catch (error) {
+		console.error('Error stopping sidecar processes:', error)
+	}
+
 	const result = await new Promise((resolve, reject) => {
 		server.close((e) => (e ? reject(e) : resolve(null)))
 	})
