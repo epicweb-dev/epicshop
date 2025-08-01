@@ -325,14 +325,6 @@ ${lanUrl ? `${chalk.bold('On Your Network:')}  ${chalk.cyan(lanUrl)}` : ''}
 })
 
 closeWithGrace(async () => {
-	// Stop sidecar processes before closing the server
-	try {
-		const { stopSidecarProcesses } = await import('@epic-web/workshop-utils/process-manager.server')
-		stopSidecarProcesses()
-	} catch (error) {
-		console.error('Error stopping sidecar processes:', error)
-	}
-
 	const result = await new Promise((resolve, reject) => {
 		server.close((e) => (e ? reject(e) : resolve(null)))
 	})

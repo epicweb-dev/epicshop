@@ -114,6 +114,32 @@ const colors = [
 	'magentaBright',
 ] as const
 
+function getNextAvailableColor(): (typeof colors)[number] {
+	const usedColors = new Set<(typeof colors)[number]>()
+	
+	// Collect colors used by dev processes
+	for (const proc of devProcesses.values()) {
+		usedColors.add(proc.color)
+	}
+	
+	// Collect colors used by sidecar processes
+	for (const proc of sidecarProcesses.values()) {
+		usedColors.add(proc.color)
+	}
+	
+	// Find available colors
+	const availableColors = colors.filter(color => !usedColors.has(color))
+	
+	if (availableColors.length === 0) {
+		// If all colors are used, cycle through them based on total process count
+		const totalProcesses = devProcesses.size + sidecarProcesses.size
+		return colors[totalProcesses % colors.length] ?? 'blue'
+	}
+	
+	// Use the first available color
+	return availableColors[0] ?? 'blue'
+}
+
 export async function runAppDev(app: App) {
 	if (isDeployed) throw new Error('cannot run apps in deployed mode')
 	const key = app.name
@@ -130,11 +156,7 @@ export async function runAppDev(app: App) {
 	if (!(await isPortAvailable(portNumber))) {
 		return { status: 'port-unavailable', running: false, portNumber } as const
 	}
-	const availableColors = colors.filter((color) =>
-		Array.from(devProcesses.values()).every((p) => p.color !== color),
-	)
-	const color =
-		availableColors[devProcesses.size % availableColors.length] ?? 'blue'
+	const color = getNextAvailableColor()
 	const appProcess = spawn('npm', ['run', 'dev', '--silent'], {
 		cwd: app.fullPath,
 		shell: true,
@@ -331,14 +353,7 @@ export function startSidecarProcess(name: string, command: string) {
 		return
 	}
 
-	const availableColors = colors.filter((color) =>
-		Array.from(devProcesses.values()).every((p) => p.color !== color) &&
-		Array.from(sidecarProcesses.values()).every((p) => p.color !== color),
-	)
-	const color =
-		availableColors[
-			(devProcesses.size + sidecarProcesses.size) % availableColors.length
-		] ?? 'blue'
+	const color = getNextAvailableColor()
 
 	// Spawn the command using shell to handle complex commands properly
 	const sidecarProcess = spawn(command, [], {
