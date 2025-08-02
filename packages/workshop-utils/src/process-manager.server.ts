@@ -9,6 +9,7 @@ import findProcess from 'find-process'
 import fkill from 'fkill'
 import { type App } from './apps.server.js'
 import { getWorkshopUrl } from './config.server.js'
+import { getEnv } from './env.server.js'
 import { getErrorMessage } from './utils.js'
 
 const isDeployed =
@@ -356,8 +357,10 @@ export function startSidecarProcess(name: string, command: string) {
 	const color = getNextAvailableColor()
 
 	// Spawn the command using shell to handle complex commands properly
+	const workshopRoot = getEnv().EPICSHOP_CONTEXT_CWD
 	const sidecarProcess = spawn(command, [], {
 		shell: true,
+		cwd: workshopRoot,
 		stdio: ['ignore', 'pipe', 'pipe'],
 		env: {
 			...process.env,
@@ -391,10 +394,19 @@ export function startSidecarProcess(name: string, command: string) {
 	
 	sidecarProcesses.set(name, { color, process: sidecarProcess })
 	
-	sidecarProcess.on('exit', (code: number | null) => {
+	sidecarProcess.on('exit', (code: number | null, signal: string | null) => {
 		sidecarProcess.stdout?.off('data', handleStdOutData)
 		sidecarProcess.stderr?.off('data', handleStdErrData)
-		console.log(`${prefix} exited (${code})`)
+		if (code === 0) {
+			console.log(`${prefix} exited successfully`)
+		} else {
+			console.log(`${prefix} exited with code ${code}${signal ? ` (signal: ${signal})` : ''}`)
+		}
+		sidecarProcesses.delete(name)
+	})
+
+	sidecarProcess.on('error', (error) => {
+		console.error(`${prefix} failed to start: ${error.message}`)
 		sidecarProcesses.delete(name)
 	})
 
