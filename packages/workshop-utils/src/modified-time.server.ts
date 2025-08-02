@@ -21,39 +21,57 @@ async function getDirModifiedTime(
 }
 
 async function getDirModifiedTimeImpl(dir: string): Promise<number> {
-	const isIgnored = await isGitIgnored({ cwd: dir })
-	const files = await fs.promises
-		.readdir(dir, { withFileTypes: true })
-		.catch(() => [])
+	try {
+		const isIgnored = await isGitIgnored({ cwd: dir })
+		const files = await fs.promises
+			.readdir(dir, { withFileTypes: true })
+			.catch(() => [])
 
-	const modifiedTimes: Array<number> = []
+		const modifiedTimes: Array<number> = []
 
-	for (const file of files) {
-		// Skip ignored files
-		if (isIgnored(file.name)) continue
+		for (const file of files) {
+			// Skip ignored files
+			if (isIgnored(file.name)) continue
 
-		const filePath = path.join(dir, file.name)
+			const filePath = path.join(dir, file.name)
 
-		if (file.isDirectory()) {
-			modifiedTimes.push(await getDirModifiedTime(filePath))
-		} else {
-			try {
-				const { mtimeMs } = await fs.promises.stat(filePath)
-				modifiedTimes.push(mtimeMs)
-			} catch {
-				// ignore errors (e.g., file access permissions, file has been moved or deleted)
+			if (file.isDirectory()) {
+				modifiedTimes.push(await getDirModifiedTime(filePath))
+			} else {
+				try {
+					const { mtimeMs } = await fs.promises.stat(filePath)
+					modifiedTimes.push(mtimeMs)
+				} catch (error) {
+					// Log ENOENT errors for debugging but continue processing
+					if (error && error.code === 'ENOENT') {
+						console.warn(`File not found during modified time check: ${filePath}`)
+					}
+					// ignore errors (e.g., file access permissions, file has been moved or deleted)
+				}
 			}
 		}
-	}
 
-	try {
-		const { mtimeMs } = await fs.promises.stat(dir)
-		modifiedTimes.push(mtimeMs)
-	} catch {
-		// ignore errors (e.g., file access permissions, file has been moved or deleted)
-	}
+		try {
+			const { mtimeMs } = await fs.promises.stat(dir)
+			modifiedTimes.push(mtimeMs)
+		} catch (error) {
+			// Log ENOENT errors for debugging but continue processing
+			if (error && error.code === 'ENOENT') {
+				console.warn(`Directory not found during modified time check: ${dir}`)
+			}
+			// ignore errors (e.g., file access permissions, file has been moved or deleted)
+		}
 
-	return Math.max(-1, ...modifiedTimes)
+		return Math.max(-1, ...modifiedTimes)
+	} catch (error) {
+		// If the entire directory operation fails, log it and return -1
+		if (error && error.code === 'ENOENT') {
+			console.warn(`Directory not accessible for modified time check: ${dir}`)
+		} else {
+			console.error(`Error getting modified time for ${dir}:`, error)
+		}
+		return -1
+	}
 }
 
 // this will return true as soon as one of the directories has been found to
