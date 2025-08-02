@@ -856,7 +856,8 @@ export async function getPlaygroundApp({
 		key,
 		cache: playgroundAppCache,
 		ttl: 1000 * 60 * 60 * 24,
-
+		// Fall back to cache if fresh value fails due to ENOENT (stale cache)
+		fallbackToCache: true,
 		timings,
 		timingKey: playgroundDir.replace(`${playgroundDir}${path.sep}`, ''),
 		request,
@@ -865,116 +866,68 @@ export async function getPlaygroundApp({
 			playgroundDir,
 			baseAppFullPath,
 		),
-		getFreshValue: async () => {
-			if (!(await exists(playgroundDir))) return null
-			if (!baseAppName) return null
-
-			const dirName = path.basename(playgroundDir)
-			const name = getAppName(playgroundDir)
-			const portNumber = 4000
-			const [compiledReadme, test, dev] = await Promise.all([
-				compileMdxIfExists(path.join(playgroundDir, 'README.mdx'), { request }),
-				getTestInfo({ fullPath: playgroundDir }),
-				getDevInfo({ fullPath: playgroundDir, portNumber }),
-			])
-
-			const appModifiedTime = await getDirModifiedTime(
-				await getFullPathFromAppName(baseAppName),
-			)
-			const playgroundAppModifiedTime = await getDirModifiedTime(playgroundDir)
-			const type = 'playground'
-
-			const title = compiledReadme?.title ?? name
-			return {
-				name,
-				appName: baseAppName,
-				type,
-				isUpToDate: appModifiedTime <= playgroundAppModifiedTime,
-				fullPath: playgroundDir,
-				relativePath: playgroundDir.replace(
-					`${getWorkshopRoot()}${path.sep}`,
-					'',
-				),
-				title,
-				epicVideoEmbeds: compiledReadme?.epicVideoEmbeds,
-				dirName,
-				instructionsCode: compiledReadme?.code,
-				test,
-				dev,
-				stackBlitzUrl: await getStackBlitzUrl({
-					fullPath: playgroundDir,
-					title,
-					type,
-				}),
-			} satisfies PlaygroundApp
+		checkValue(value) {
+			// If we have a valid playground app, it's good
+			if (value && typeof value === 'object' && 'type' in value && value.type === 'playground') {
+				return true
+			}
+			// Invalid/missing value, force refresh
+			return false
 		},
-	}).catch(async (error) => {
-		// If we get an ENOENT error, try again without cache
-		if (error && error.code === 'ENOENT' && error.syscall === 'lstat') {
-			console.warn(`Retrying playground app without cache due to ENOENT error:`, error.path)
+		getFreshValue: async () => {
 			try {
-				// Clear the cache entry for this path
-				await playgroundAppCache.delete(key)
-				// Retry with forceFresh to bypass cache
-				return await cachified({
-					key,
-					cache: playgroundAppCache,
-					ttl: 1000 * 60 * 60 * 24,
-					timings,
-					timingKey: playgroundDir.replace(`${playgroundDir}${path.sep}`, ''),
-					request,
-					forceFresh: true, // Force fresh to bypass cache
-					getFreshValue: async () => {
-						if (!(await exists(playgroundDir))) return null
-						if (!baseAppName) return null
+				if (!(await exists(playgroundDir))) return null
+				if (!baseAppName) return null
 
-						const dirName = path.basename(playgroundDir)
-						const name = getAppName(playgroundDir)
-						const portNumber = 4000
-						const [compiledReadme, test, dev] = await Promise.all([
-							compileMdxIfExists(path.join(playgroundDir, 'README.mdx'), { request }),
-							getTestInfo({ fullPath: playgroundDir }),
-							getDevInfo({ fullPath: playgroundDir, portNumber }),
-						])
+				const dirName = path.basename(playgroundDir)
+				const name = getAppName(playgroundDir)
+				const portNumber = 4000
+				const [compiledReadme, test, dev] = await Promise.all([
+					compileMdxIfExists(path.join(playgroundDir, 'README.mdx'), { request }),
+					getTestInfo({ fullPath: playgroundDir }),
+					getDevInfo({ fullPath: playgroundDir, portNumber }),
+				])
 
-						const appModifiedTime = await getDirModifiedTime(
-							await getFullPathFromAppName(baseAppName),
-						)
-						const playgroundAppModifiedTime = await getDirModifiedTime(playgroundDir)
-						const type = 'playground'
+				const appModifiedTime = await getDirModifiedTime(
+					await getFullPathFromAppName(baseAppName),
+				)
+				const playgroundAppModifiedTime = await getDirModifiedTime(playgroundDir)
+				const type = 'playground'
 
-						const title = compiledReadme?.title ?? name
-						return {
-							name,
-							appName: baseAppName,
-							type,
-							isUpToDate: appModifiedTime <= playgroundAppModifiedTime,
-							fullPath: playgroundDir,
-							relativePath: playgroundDir.replace(
-								`${getWorkshopRoot()}${path.sep}`,
-								'',
-							),
-							title,
-							epicVideoEmbeds: compiledReadme?.epicVideoEmbeds,
-							dirName,
-							instructionsCode: compiledReadme?.code,
-							test,
-							dev,
-							stackBlitzUrl: await getStackBlitzUrl({
-								fullPath: playgroundDir,
-								title,
-								type,
-							}),
-						} satisfies PlaygroundApp
-					},
-				})
-			} catch (retryError) {
-				console.error('Failed to retry playground app without cache:', retryError)
+				const title = compiledReadme?.title ?? name
+				return {
+					name,
+					appName: baseAppName,
+					type,
+					isUpToDate: appModifiedTime <= playgroundAppModifiedTime,
+					fullPath: playgroundDir,
+					relativePath: playgroundDir.replace(
+						`${getWorkshopRoot()}${path.sep}`,
+						'',
+					),
+					title,
+					epicVideoEmbeds: compiledReadme?.epicVideoEmbeds,
+					dirName,
+					instructionsCode: compiledReadme?.code,
+					test,
+					dev,
+					stackBlitzUrl: await getStackBlitzUrl({
+						fullPath: playgroundDir,
+						title,
+						type,
+					}),
+				} satisfies PlaygroundApp
+			} catch (error) {
+				// If we get an ENOENT error, it likely means stale cache - clear it and return null
+				if (error && error.code === 'ENOENT' && error.syscall === 'lstat') {
+					console.warn(`ENOENT error for playground, clearing stale cache:`, error.path)
+					await playgroundAppCache.delete(key)
+				} else {
+					console.error(`Error getting playground app:`, error)
+				}
 				return null
 			}
-		}
-		console.error(error)
-		return null
+		},
 	})
 }
 
@@ -1026,12 +979,12 @@ async function getExampleApps({
 		const index = exampleDirs.indexOf(exampleDir)
 		const key = `${exampleDir}-${index}`
 		
-		// First attempt with cache
-		let exampleApp = await cachified({
+		const exampleApp = await cachified({
 			key,
 			cache: exampleAppCache,
 			ttl: 1000 * 60 * 60 * 24,
-
+			// Fall back to cache if fresh value fails due to ENOENT (stale cache)
+			fallbackToCache: true,
 			timings,
 			timingKey: exampleDir.replace(`${examplesDir}${path.sep}`, ''),
 			request,
@@ -1039,48 +992,28 @@ async function getExampleApps({
 				exampleAppCache.get(key),
 				exampleDir,
 			),
-			getFreshValue: async () => {
-				return getExampleAppFromPath(exampleDir, index, request).catch(
-					(error) => {
-						// Check if this is an ENOENT error related to stale cache
-						if (error && error.code === 'ENOENT' && error.syscall === 'lstat') {
-							console.warn(`ENOENT error for ${exampleDir}, will retry without cache:`, error.path)
-							throw error // Re-throw to trigger retry without cache
-						}
-						console.error(error)
-						return null
-					},
-				)
+			checkValue(value) {
+				// If we have a valid example app, it's good
+				if (value && typeof value === 'object' && 'type' in value && value.type === 'example') {
+					return true
+				}
+				// Invalid/missing value, force refresh
+				return false
 			},
-		}).catch(async (error) => {
-			// If we get an ENOENT error, try again without cache
-			if (error && error.code === 'ENOENT' && error.syscall === 'lstat') {
-				console.warn(`Retrying ${exampleDir} without cache due to ENOENT error`)
+			getFreshValue: async () => {
 				try {
-					// Clear the cache entry for this path
-					await exampleAppCache.delete(key)
-					// Retry with forceFresh to bypass cache
-					return await cachified({
-						key,
-						cache: exampleAppCache,
-						ttl: 1000 * 60 * 60 * 24,
-						timings,
-						timingKey: exampleDir.replace(`${examplesDir}${path.sep}`, ''),
-						request,
-						forceFresh: true, // Force fresh to bypass cache
-						getFreshValue: async () => {
-							return getExampleAppFromPath(exampleDir, index, request).catch((retryError) => {
-								console.error('Retry also failed:', retryError)
-								return null
-							})
-						},
-					})
-				} catch (retryError) {
-					console.error('Failed to retry without cache:', retryError)
+					return await getExampleAppFromPath(exampleDir, index, request)
+				} catch (error) {
+					// If we get an ENOENT error, it likely means stale cache - clear it and return null
+					if (error && error.code === 'ENOENT' && error.syscall === 'lstat') {
+						console.warn(`ENOENT error for ${exampleDir}, clearing stale cache:`, error.path)
+						await exampleAppCache.delete(key)
+					} else {
+						console.error(`Error getting example app from ${exampleDir}:`, error)
+					}
 					return null
 				}
-			}
-			throw error // Re-throw non-ENOENT errors
+			},
 		})
 		
 		if (exampleApp) exampleApps.push(exampleApp)
@@ -1147,61 +1080,42 @@ async function getSolutionApps({
 	const solutionApps: Array<SolutionApp> = []
 
 	for (const solutionDir of solutionDirs) {
-		// First attempt with cache
-		let solutionApp = await cachified({
+		const solutionApp = await cachified({
 			key: solutionDir,
 			cache: solutionAppCache,
 			timings,
 			timingKey: solutionDir.replace(`${exercisesDir}${path.sep}`, ''),
 			request,
 			ttl: 1000 * 60 * 60 * 24,
-
+			// Fall back to cache if fresh value fails due to ENOENT (stale cache)
+			fallbackToCache: true,
 			forceFresh: await getForceFreshForDir(
 				solutionAppCache.get(solutionDir),
 				solutionDir,
 			),
-			getFreshValue: async () => {
-				return getSolutionAppFromPath(solutionDir, request).catch((error) => {
-					// Check if this is an ENOENT error related to stale cache
-					if (error && error.code === 'ENOENT' && error.syscall === 'lstat') {
-						console.warn(`ENOENT error for ${solutionDir}, will retry without cache:`, error.path)
-						throw error // Re-throw to trigger retry without cache
-					}
-					console.error(error)
-					return null
-				})
+			checkValue(value) {
+				// If we have a valid solution app, it's good
+				if (value && typeof value === 'object' && 'type' in value && value.type === 'solution') {
+					return true
+				}
+				// Invalid/missing value, force refresh
+				return false
 			},
-		}).catch(async (error) => {
-			// If we get an ENOENT error, try again without cache
-			if (error && error.code === 'ENOENT' && error.syscall === 'lstat') {
-				console.warn(`Retrying ${solutionDir} without cache due to ENOENT error`)
+			getFreshValue: async () => {
 				try {
-					// Clear the cache entry for this path
-					await solutionAppCache.delete(solutionDir)
-					// Retry with forceFresh to bypass cache
-					return await cachified({
-						key: solutionDir,
-						cache: solutionAppCache,
-						timings,
-						timingKey: solutionDir.replace(`${exercisesDir}${path.sep}`, ''),
-						request,
-						ttl: 1000 * 60 * 60 * 24,
-						forceFresh: true, // Force fresh to bypass cache
-						getFreshValue: async () => {
-							return getSolutionAppFromPath(solutionDir, request).catch((retryError) => {
-								console.error('Retry also failed:', retryError)
-								return null
-							})
-						},
-					})
-				} catch (retryError) {
-					console.error('Failed to retry without cache:', retryError)
+					return await getSolutionAppFromPath(solutionDir, request)
+				} catch (error) {
+					// If we get an ENOENT error, it likely means stale cache - clear it and return null
+					if (error && error.code === 'ENOENT' && error.syscall === 'lstat') {
+						console.warn(`ENOENT error for ${solutionDir}, clearing stale cache:`, error.path)
+						await solutionAppCache.delete(solutionDir)
+					} else {
+						console.error(`Error getting solution app from ${solutionDir}:`, error)
+					}
 					return null
 				}
-			}
-			throw error // Re-throw non-ENOENT errors
+			},
 		})
-		
 		if (solutionApp) solutionApps.push(solutionApp)
 	}
 
@@ -1266,63 +1180,43 @@ async function getProblemApps({
 	const problemApps: Array<ProblemApp> = []
 	for (const problemDir of problemDirs) {
 		const solutionDir = await findSolutionDir({ fullPath: problemDir })
-		
-		// First attempt with cache
-		let problemApp = await cachified({
+		const problemApp = await cachified({
 			key: problemDir,
 			cache: problemAppCache,
 			timings,
 			timingKey: problemDir.replace(`${exercisesDir}${path.sep}`, ''),
 			request,
 			ttl: 1000 * 60 * 60 * 24,
-
+			// Fall back to cache if fresh value fails due to ENOENT (stale cache)
+			fallbackToCache: true,
 			forceFresh: await getForceFreshForDir(
 				problemAppCache.get(problemDir),
 				problemDir,
 				solutionDir,
 			),
-			getFreshValue: async () => {
-				return getProblemAppFromPath(problemDir).catch((error) => {
-					// Check if this is an ENOENT error related to stale cache
-					if (error && error.code === 'ENOENT' && error.syscall === 'lstat') {
-						console.warn(`ENOENT error for ${problemDir}, will retry without cache:`, error.path)
-						throw error // Re-throw to trigger retry without cache
-					}
-					console.error(error)
-					return null
-				})
+			checkValue(value) {
+				// If we have a valid problem app, it's good
+				if (value && typeof value === 'object' && 'type' in value && value.type === 'problem') {
+					return true
+				}
+				// Invalid/missing value, force refresh
+				return false
 			},
-		}).catch(async (error) => {
-			// If we get an ENOENT error, try again without cache
-			if (error && error.code === 'ENOENT' && error.syscall === 'lstat') {
-				console.warn(`Retrying ${problemDir} without cache due to ENOENT error`)
+			getFreshValue: async () => {
 				try {
-					// Clear the cache entry for this path
-					await problemAppCache.delete(problemDir)
-					// Retry with forceFresh to bypass cache
-					return await cachified({
-						key: problemDir,
-						cache: problemAppCache,
-						timings,
-						timingKey: problemDir.replace(`${exercisesDir}${path.sep}`, ''),
-						request,
-						ttl: 1000 * 60 * 60 * 24,
-						forceFresh: true, // Force fresh to bypass cache
-						getFreshValue: async () => {
-							return getProblemAppFromPath(problemDir).catch((retryError) => {
-								console.error('Retry also failed:', retryError)
-								return null
-							})
-						},
-					})
-				} catch (retryError) {
-					console.error('Failed to retry without cache:', retryError)
+					return await getProblemAppFromPath(problemDir)
+				} catch (error) {
+					// If we get an ENOENT error, it likely means stale cache - clear it and return null
+					if (error && error.code === 'ENOENT' && error.syscall === 'lstat') {
+						console.warn(`ENOENT error for ${problemDir}, clearing stale cache:`, error.path)
+						await problemAppCache.delete(problemDir)
+					} else {
+						console.error(`Error getting problem app from ${problemDir}:`, error)
+					}
 					return null
 				}
-			}
-			throw error // Re-throw non-ENOENT errors
+			},
 		})
-		
 		if (problemApp) problemApps.push(problemApp)
 	}
 	return problemApps
