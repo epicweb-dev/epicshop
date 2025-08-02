@@ -137,25 +137,28 @@ const ExerciseSchema = z.object({
 	finishedCode: z.string().optional(),
 	instructionsEpicVideoEmbeds: z.array(z.string()).optional(),
 	finishedEpicVideoEmbeds: z.array(z.string()).optional(),
-	steps: z.array(
-		z.union([
-			z.object({
-				stepNumber: z.number(),
-				problem: ProblemAppSchema,
-				solution: SolutionAppSchema,
-			}),
-			z.object({
-				stepNumber: z.number(),
-				problem: ProblemAppSchema,
-				solution: z.never().optional(),
-			}),
-			z.object({
-				stepNumber: z.number(),
-				problem: z.never().optional(),
-				solution: SolutionAppSchema,
-			}),
-		]),
-	),
+	steps: z
+		.array(
+			z.union([
+				z.object({
+					stepNumber: z.number(),
+					problem: ProblemAppSchema,
+					solution: SolutionAppSchema,
+				}),
+				z.object({
+					stepNumber: z.number(),
+					problem: ProblemAppSchema,
+					solution: z.never().optional(),
+				}),
+				z.object({
+					stepNumber: z.number(),
+					problem: z.never().optional(),
+					solution: SolutionAppSchema,
+				}),
+				z.undefined(),
+			]),
+		)
+		.transform((steps) => steps.filter((step) => step !== undefined)),
 	problems: z.array(ProblemAppSchema),
 	solutions: z.array(SolutionAppSchema),
 })
