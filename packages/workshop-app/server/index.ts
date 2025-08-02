@@ -7,7 +7,10 @@ import {
 	init as initApps,
 	setModifiedTimesForAppDirs,
 } from '@epic-web/workshop-utils/apps.server'
-import { getWorkshopConfig, getWorkshopUrl } from '@epic-web/workshop-utils/config.server'
+import {
+	getWorkshopConfig,
+	getWorkshopUrl,
+} from '@epic-web/workshop-utils/config.server'
 import { getEnv, init as initEnv } from '@epic-web/workshop-utils/env.server'
 import { requestContext } from '@epic-web/workshop-utils/request-context.server'
 import { checkConnectionCached } from '@epic-web/workshop-utils/utils.server'
@@ -217,9 +220,15 @@ ${lanUrl ? `${chalk.bold('On Your Network:')}  ${chalk.cyan(lanUrl)}` : ''}
 	// Start sidecar processes if configured
 	try {
 		const workshopConfig = getWorkshopConfig()
-		if (workshopConfig.sidecarProcesses && Object.keys(workshopConfig.sidecarProcesses).length > 0) {
+		if (
+			workshopConfig.sidecarProcesses &&
+			Object.keys(workshopConfig.sidecarProcesses).length > 0 &&
+			!ENV.EPICSHOP_DEPLOYED
+		) {
 			console.log(chalk.blue('🚀 Starting sidecar processes...'))
-			const { startSidecarProcesses } = await import('@epic-web/workshop-utils/process-manager.server')
+			const { startSidecarProcesses } = await import(
+				'@epic-web/workshop-utils/process-manager.server'
+			)
 			startSidecarProcesses(workshopConfig.sidecarProcesses)
 		}
 	} catch (error) {
