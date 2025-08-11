@@ -3,7 +3,7 @@ import { promises as fs } from 'node:fs'
 import * as os from 'node:os'
 import * as path from 'node:path'
 
-const APP_NAME = 'EpicShop'
+const APP_NAME = 'epicshop'
 const FILE_NAME = 'data.json'
 
 export function resolvePrimaryDir(appName = APP_NAME) {
@@ -20,6 +20,22 @@ export function resolvePrimaryDir(appName = APP_NAME) {
 	}
 	const base =
 		process.env.XDG_STATE_HOME || path.join(os.homedir(), '.local', 'state')
+	return path.join(base, appName)
+}
+
+export function resolveCacheDir(appName = APP_NAME) {
+	const p = process.platform
+	if (p === 'darwin') {
+		return path.join(os.homedir(), 'Library', 'Caches', appName)
+	}
+	if (p === 'win32') {
+		const base =
+			process.env.LOCALAPPDATA ||
+			process.env.APPDATA ||
+			path.join(os.homedir(), 'AppData', 'Local')
+		return path.join(base, appName, 'Cache')
+	}
+	const base = process.env.XDG_CACHE_HOME || path.join(os.homedir(), '.cache')
 	return path.join(base, appName)
 }
 

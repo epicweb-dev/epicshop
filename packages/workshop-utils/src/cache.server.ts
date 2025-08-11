@@ -15,11 +15,12 @@ import {
 	type ProblemApp,
 	type SolutionApp,
 } from './apps.server.js'
+import { resolveCacheDir } from './data-storage.server.js'
 import { type Notification } from './notifications.server.js'
 import { cachifiedTimingReporter, type Timings } from './timing.server.js'
 import { checkConnectionCached } from './utils.server.js'
 
-const cacheDir = path.join(process.env.EPICSHOP_HOME_DIR, 'cache')
+const cacheDir = resolveCacheDir()
 
 export const solutionAppCache =
 	makeSingletonFsCache<SolutionApp>('SolutionAppCache')

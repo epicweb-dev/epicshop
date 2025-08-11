@@ -11,8 +11,8 @@ import {
 	migrateLegacyDotfile,
 } from './data-storage.server.js'
 
-// Attempt migration from legacy ~/.epicshop/data.json (non-blocking)
-void migrateLegacyDotfile().catch(() => {})
+// Attempt migration from legacy ~/.epicshop/data.json (blocking)
+await migrateLegacyDotfile().catch(() => {})
 
 const TokenSetSchema = z.object({
 	access_token: z.string(),
