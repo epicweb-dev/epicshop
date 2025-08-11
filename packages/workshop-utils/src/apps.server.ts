@@ -856,7 +856,8 @@ export async function getPlaygroundApp({
 		key,
 		cache: playgroundAppCache,
 		ttl: 1000 * 60 * 60 * 24,
-
+		// Fall back to cache if fresh value fails due to ENOENT (stale cache)
+		fallbackToCache: true,
 		timings,
 		timingKey: playgroundDir.replace(`${playgroundDir}${path.sep}`, ''),
 		request,
@@ -865,52 +866,68 @@ export async function getPlaygroundApp({
 			playgroundDir,
 			baseAppFullPath,
 		),
-		getFreshValue: async () => {
-			if (!(await exists(playgroundDir))) return null
-			if (!baseAppName) return null
-
-			const dirName = path.basename(playgroundDir)
-			const name = getAppName(playgroundDir)
-			const portNumber = 4000
-			const [compiledReadme, test, dev] = await Promise.all([
-				compileMdxIfExists(path.join(playgroundDir, 'README.mdx'), { request }),
-				getTestInfo({ fullPath: playgroundDir }),
-				getDevInfo({ fullPath: playgroundDir, portNumber }),
-			])
-
-			const appModifiedTime = await getDirModifiedTime(
-				await getFullPathFromAppName(baseAppName),
-			)
-			const playgroundAppModifiedTime = await getDirModifiedTime(playgroundDir)
-			const type = 'playground'
-
-			const title = compiledReadme?.title ?? name
-			return {
-				name,
-				appName: baseAppName,
-				type,
-				isUpToDate: appModifiedTime <= playgroundAppModifiedTime,
-				fullPath: playgroundDir,
-				relativePath: playgroundDir.replace(
-					`${getWorkshopRoot()}${path.sep}`,
-					'',
-				),
-				title,
-				epicVideoEmbeds: compiledReadme?.epicVideoEmbeds,
-				dirName,
-				instructionsCode: compiledReadme?.code,
-				test,
-				dev,
-				stackBlitzUrl: await getStackBlitzUrl({
-					fullPath: playgroundDir,
-					title,
-					type,
-				}),
-			} satisfies PlaygroundApp
+		checkValue(value) {
+			// If we have a valid playground app, it's good
+			if (value && typeof value === 'object' && 'type' in value && value.type === 'playground') {
+				return true
+			}
+			// Invalid/missing value, force refresh
+			return false
 		},
-	}).catch((error) => {
-		console.error(error)
-		return null
+		getFreshValue: async () => {
+			try {
+				if (!(await exists(playgroundDir))) return null
+				if (!baseAppName) return null
+
+				const dirName = path.basename(playgroundDir)
+				const name = getAppName(playgroundDir)
+				const portNumber = 4000
+				const [compiledReadme, test, dev] = await Promise.all([
+					compileMdxIfExists(path.join(playgroundDir, 'README.mdx'), { request }),
+					getTestInfo({ fullPath: playgroundDir }),
+					getDevInfo({ fullPath: playgroundDir, portNumber }),
+				])
+
+				const appModifiedTime = await getDirModifiedTime(
+					await getFullPathFromAppName(baseAppName),
+				)
+				const playgroundAppModifiedTime = await getDirModifiedTime(playgroundDir)
+				const type = 'playground'
+
+				const title = compiledReadme?.title ?? name
+				return {
+					name,
+					appName: baseAppName,
+					type,
+					isUpToDate: appModifiedTime <= playgroundAppModifiedTime,
+					fullPath: playgroundDir,
+					relativePath: playgroundDir.replace(
+						`${getWorkshopRoot()}${path.sep}`,
+						'',
+					),
+					title,
+					epicVideoEmbeds: compiledReadme?.epicVideoEmbeds,
+					dirName,
+					instructionsCode: compiledReadme?.code,
+					test,
+					dev,
+					stackBlitzUrl: await getStackBlitzUrl({
+						fullPath: playgroundDir,
+						title,
+						type,
+					}),
+				} satisfies PlaygroundApp
+			} catch (error) {
+				// If we get an ENOENT error, it likely means stale cache - clear it and return null
+				if (error && error.code === 'ENOENT' && error.syscall === 'lstat') {
+					console.warn(`ENOENT error for playground, clearing stale cache:`, error.path)
+					await playgroundAppCache.delete(key)
+				} else {
+					console.error(`Error getting playground app:`, error)
+				}
+				return null
+			}
+		},
 	})
 }
 
@@ -961,11 +978,13 @@ async function getExampleApps({
 	for (const exampleDir of exampleDirs) {
 		const index = exampleDirs.indexOf(exampleDir)
 		const key = `${exampleDir}-${index}`
+		
 		const exampleApp = await cachified({
 			key,
 			cache: exampleAppCache,
 			ttl: 1000 * 60 * 60 * 24,
-
+			// Fall back to cache if fresh value fails due to ENOENT (stale cache)
+			fallbackToCache: true,
 			timings,
 			timingKey: exampleDir.replace(`${examplesDir}${path.sep}`, ''),
 			request,
@@ -973,15 +992,30 @@ async function getExampleApps({
 				exampleAppCache.get(key),
 				exampleDir,
 			),
+			checkValue(value) {
+				// If we have a valid example app, it's good
+				if (value && typeof value === 'object' && 'type' in value && value.type === 'example') {
+					return true
+				}
+				// Invalid/missing value, force refresh
+				return false
+			},
 			getFreshValue: async () => {
-				return getExampleAppFromPath(exampleDir, index, request).catch(
-					(error) => {
-						console.error(error)
-						return null
-					},
-				)
+				try {
+					return await getExampleAppFromPath(exampleDir, index, request)
+				} catch (error) {
+					// If we get an ENOENT error, it likely means stale cache - clear it and return null
+					if (error && error.code === 'ENOENT' && error.syscall === 'lstat') {
+						console.warn(`ENOENT error for ${exampleDir}, clearing stale cache:`, error.path)
+						await exampleAppCache.delete(key)
+					} else {
+						console.error(`Error getting example app from ${exampleDir}:`, error)
+					}
+					return null
+				}
 			},
 		})
+		
 		if (exampleApp) exampleApps.push(exampleApp)
 	}
 
@@ -1053,16 +1087,33 @@ async function getSolutionApps({
 			timingKey: solutionDir.replace(`${exercisesDir}${path.sep}`, ''),
 			request,
 			ttl: 1000 * 60 * 60 * 24,
-
+			// Fall back to cache if fresh value fails due to ENOENT (stale cache)
+			fallbackToCache: true,
 			forceFresh: await getForceFreshForDir(
 				solutionAppCache.get(solutionDir),
 				solutionDir,
 			),
+			checkValue(value) {
+				// If we have a valid solution app, it's good
+				if (value && typeof value === 'object' && 'type' in value && value.type === 'solution') {
+					return true
+				}
+				// Invalid/missing value, force refresh
+				return false
+			},
 			getFreshValue: async () => {
-				return getSolutionAppFromPath(solutionDir, request).catch((error) => {
-					console.error(error)
+				try {
+					return await getSolutionAppFromPath(solutionDir, request)
+				} catch (error) {
+					// If we get an ENOENT error, it likely means stale cache - clear it and return null
+					if (error && error.code === 'ENOENT' && error.syscall === 'lstat') {
+						console.warn(`ENOENT error for ${solutionDir}, clearing stale cache:`, error.path)
+						await solutionAppCache.delete(solutionDir)
+					} else {
+						console.error(`Error getting solution app from ${solutionDir}:`, error)
+					}
 					return null
-				})
+				}
 			},
 		})
 		if (solutionApp) solutionApps.push(solutionApp)
@@ -1136,17 +1187,34 @@ async function getProblemApps({
 			timingKey: problemDir.replace(`${exercisesDir}${path.sep}`, ''),
 			request,
 			ttl: 1000 * 60 * 60 * 24,
-
+			// Fall back to cache if fresh value fails due to ENOENT (stale cache)
+			fallbackToCache: true,
 			forceFresh: await getForceFreshForDir(
 				problemAppCache.get(problemDir),
 				problemDir,
 				solutionDir,
 			),
+			checkValue(value) {
+				// If we have a valid problem app, it's good
+				if (value && typeof value === 'object' && 'type' in value && value.type === 'problem') {
+					return true
+				}
+				// Invalid/missing value, force refresh
+				return false
+			},
 			getFreshValue: async () => {
-				return getProblemAppFromPath(problemDir).catch((error) => {
-					console.error(error)
+				try {
+					return await getProblemAppFromPath(problemDir)
+				} catch (error) {
+					// If we get an ENOENT error, it likely means stale cache - clear it and return null
+					if (error && error.code === 'ENOENT' && error.syscall === 'lstat') {
+						console.warn(`ENOENT error for ${problemDir}, clearing stale cache:`, error.path)
+						await problemAppCache.delete(problemDir)
+					} else {
+						console.error(`Error getting problem app from ${problemDir}:`, error)
+					}
 					return null
-				})
+				}
 			},
 		})
 		if (problemApp) problemApps.push(problemApp)
