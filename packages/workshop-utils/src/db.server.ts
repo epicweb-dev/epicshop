@@ -1,11 +1,18 @@
 import './init-env.js'
 
-import path from 'path'
 import { createId as cuid } from '@paralleldrive/cuid2'
 import fsExtra from 'fs-extra'
 import { redirect } from 'react-router'
 import { z } from 'zod'
 import { getWorkshopConfig } from './config.server.js'
+import {
+	saveJSON,
+	loadJSON,
+	migrateLegacyDotfile,
+} from './data-storage.server.js'
+
+// Attempt migration from legacy ~/.epicshop/data.json (non-blocking)
+void migrateLegacyDotfile().catch(() => {})
 
 const TokenSetSchema = z.object({
 	access_token: z.string(),
@@ -90,16 +97,12 @@ const DataSchema = z.object({
 	mutedNotifications: MutedNotificationSchema.optional(),
 })
 
-const homeDir = process.env.EPICSHOP_HOME_DIR
-const dbPath = path.join(homeDir, 'data.json')
-
 export async function getClientId() {
 	const data = await readDb()
 	if (data?.clientId) return data.clientId
 
 	const clientId = cuid()
-	await fsExtra.ensureDir(homeDir)
-	await fsExtra.writeJSON(dbPath, { ...data, clientId })
+	await saveJSON(undefined, undefined, { ...data, clientId })
 	return clientId
 }
 
@@ -110,7 +113,7 @@ export async function logout() {
 		const data = await readDb()
 		const newAuthInfos = { ...data?.authInfos }
 		delete newAuthInfos[host]
-		await fsExtra.writeJSON(dbPath, {
+		await saveJSON(undefined, undefined, {
 			...data,
 			authInfos: newAuthInfos,
 		})
@@ -121,11 +124,12 @@ export async function deleteDb() {
 	if (process.env.EPICSHOP_DEPLOYED) return null
 
 	try {
-		if (await fsExtra.exists(dbPath)) {
+		const { path: dbPath } = await loadJSON()
+		if (dbPath && (await fsExtra.exists(dbPath))) {
 			await fsExtra.remove(dbPath)
 		}
 	} catch (error) {
-		console.error(`Error deleting the database in ${dbPath}`, error)
+		console.error(`Error deleting the database`, error)
 	}
 }
 
@@ -137,8 +141,9 @@ async function readDb() {
 
 	for (let attempt = 0; attempt <= maxRetries; attempt++) {
 		try {
-			if (await fsExtra.exists(dbPath)) {
-				const db = DataSchema.parse(await fsExtra.readJSON(dbPath))
+			const { data, path: dbPath } = await loadJSON()
+			if (data && dbPath) {
+				const db = DataSchema.parse(data)
 				return db
 			}
 			return null
@@ -155,7 +160,7 @@ async function readDb() {
 
 			// Final attempt failed, handle as corrupted file
 			console.error(
-				`Error reading the database in ${dbPath} after ${attempt + 1} attempts, moving it to a .bkp file to avoid parsing errors in the future`,
+				`Error reading the database after ${attempt + 1} attempts, moving it to a .bkp file to avoid parsing errors in the future`,
 				error,
 			)
 
@@ -169,7 +174,6 @@ async function readDb() {
 							retry_attempts: attempt.toString(),
 						},
 						extra: {
-							filePath: dbPath,
 							errorMessage:
 								error instanceof Error ? error.message : String(error),
 							retryAttempts: attempt,
@@ -180,7 +184,13 @@ async function readDb() {
 				}
 			}
 
-			void fsExtra.move(dbPath, `${dbPath}.bkp`).catch(() => {})
+			// Try to move corrupted file to backup if we can determine the path
+			try {
+				const { path: dbPath } = await loadJSON()
+				if (dbPath && (await fsExtra.exists(dbPath))) {
+					void fsExtra.move(dbPath, `${dbPath}.bkp`).catch(() => {})
+				}
+			} catch {}
 		}
 	}
 	return null
@@ -247,10 +257,9 @@ export async function setAuthInfo({
 }) {
 	const data = await readDb()
 	const authInfo = AuthInfoSchema.parse({ id, tokenSet, email, name })
-	await fsExtra.ensureDir(homeDir)
 	const config = getWorkshopConfig()
 	if (config.product.host) {
-		await fsExtra.writeJSON(dbPath, {
+		await saveJSON(undefined, undefined, {
 			...data,
 			authInfos: {
 				...data?.authInfos,
@@ -258,7 +267,7 @@ export async function setAuthInfo({
 			},
 		})
 	} else {
-		await fsExtra.writeJSON(dbPath, { ...data, authInfo })
+		await saveJSON(undefined, undefined, { ...data, authInfo })
 	}
 	return authInfo
 }
@@ -291,8 +300,7 @@ export async function setPreferences(
 			},
 		},
 	}
-	await fsExtra.ensureDir(homeDir)
-	await fsExtra.writeJSON(dbPath, updatedData)
+	await saveJSON(undefined, undefined, updatedData)
 	return updatedData.preferences
 }
 
@@ -310,8 +318,7 @@ export async function muteNotification(id: string) {
 		...data,
 		mutedNotifications,
 	}
-	await fsExtra.ensureDir(homeDir)
-	await fsExtra.writeJSON(dbPath, updatedData)
+	await saveJSON(undefined, undefined, updatedData)
 	return mutedNotifications
 }
 
@@ -321,8 +328,7 @@ export async function setFontSizePreference(fontSize: number | undefined) {
 		...data,
 		preferences: { ...data?.preferences, fontSize },
 	}
-	await fsExtra.ensureDir(homeDir)
-	await fsExtra.writeJSON(dbPath, updatedData)
+	await saveJSON(undefined, undefined, updatedData)
 	return updatedData.preferences.fontSize
 }
 
@@ -348,7 +354,6 @@ export async function markOnboardingVideoWatched(videoUrl: string) {
 			].filter(Boolean),
 		},
 	}
-	await fsExtra.ensureDir(homeDir)
-	await fsExtra.writeJSON(dbPath, updatedData)
+	await saveJSON(undefined, undefined, updatedData)
 	return updatedData.onboarding
 }
