@@ -2,7 +2,7 @@
 const Sentry = await import('@sentry/react-router').catch((error) => {
 	console.warn(
 		'Failed to import @sentry/react-router:',
-		error.message,
+		error instanceof Error ? error.message : String(error),
 		'- Sentry monitoring will be disabled but the application will continue to work normally',
 	)
 	return null
