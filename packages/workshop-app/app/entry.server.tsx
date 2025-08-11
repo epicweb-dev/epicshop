@@ -1,8 +1,12 @@
 import { PassThrough } from 'stream'
 import { createReadableStreamFromReadable } from '@react-router/node'
 // Dynamic import of Sentry with error handling
-const Sentry = await import('@sentry/react-router').catch(error => {
-	console.warn('Failed to import @sentry/react-router:', error.message, '- Sentry monitoring will be disabled but the application will continue to work normally')
+const Sentry = await import('@sentry/react-router').catch((error) => {
+	console.warn(
+		'Failed to import @sentry/react-router:',
+		error.message,
+		'- Sentry monitoring will be disabled but the application will continue to work normally',
+	)
 	return null
 })
 
@@ -23,8 +27,8 @@ export function handleError(
 	{ request }: LoaderFunctionArgs | ActionFunctionArgs,
 ): void {
 	if (request.signal.aborted) return
-	if (ENV.EPICSHOP_IS_PUBLISHED && Sentry) {
-		Sentry.captureException(error)
+	if (ENV.EPICSHOP_IS_PUBLISHED) {
+		Sentry?.captureException(error)
 	}
 }
 

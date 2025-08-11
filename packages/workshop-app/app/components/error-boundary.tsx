@@ -1,6 +1,10 @@
 // Dynamic import of Sentry with error handling
-const Sentry = await import('@sentry/react-router').catch(error => {
-	console.warn('Failed to import @sentry/react-router:', error.message, '- Sentry monitoring will be disabled but the application will continue to work normally')
+const Sentry = await import('@sentry/react-router').catch((error) => {
+	console.warn(
+		'Failed to import @sentry/react-router:',
+		error.message,
+		'- Sentry monitoring will be disabled but the application will continue to work normally',
+	)
 	return null
 })
 
@@ -37,8 +41,8 @@ export function GeneralErrorBoundary({
 
 	useEffect(() => {
 		if (isResponse) return
-		if (ENV.EPICSHOP_IS_PUBLISHED && Sentry) {
-			Sentry.captureException(error)
+		if (ENV.EPICSHOP_IS_PUBLISHED) {
+			Sentry?.captureException(error)
 		}
 	}, [error, isResponse])
 
