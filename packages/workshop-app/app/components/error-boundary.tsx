@@ -1,4 +1,13 @@
-import { captureException } from '@sentry/react-router'
+// Dynamic import of Sentry with error handling
+let captureException: any = null
+
+try {
+	const Sentry = await import('@sentry/react-router')
+	captureException = Sentry.captureException
+} catch (error) {
+	console.warn('Failed to import @sentry/react-router:', error.message)
+}
+
 import { useEffect } from 'react'
 import {
 	isRouteErrorResponse,
@@ -32,7 +41,7 @@ export function GeneralErrorBoundary({
 
 	useEffect(() => {
 		if (isResponse) return
-		if (ENV.EPICSHOP_IS_PUBLISHED) {
+		if (ENV.EPICSHOP_IS_PUBLISHED && captureException) {
 			captureException(error)
 		}
 	}, [error, isResponse])
