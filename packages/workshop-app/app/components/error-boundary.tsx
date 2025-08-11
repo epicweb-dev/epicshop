@@ -1,12 +1,9 @@
 // Dynamic import of Sentry with error handling
 let captureException: any = null
 
-try {
-	const Sentry = await import('@sentry/react-router')
-	captureException = Sentry.captureException
-} catch (error) {
-	console.warn('Failed to import @sentry/react-router:', error.message)
-}
+await import('@sentry/react-router')
+	.then(module => { captureException = module.captureException })
+	.catch(error => console.warn('Failed to import @sentry/react-router:', error.message))
 
 import { useEffect } from 'react'
 import {

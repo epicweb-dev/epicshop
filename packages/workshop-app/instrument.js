@@ -4,26 +4,22 @@ import path from 'node:path'
 let Sentry = null
 let nodeProfilingIntegration = null
 
-try {
-	// Try to import Sentry modules dynamically
-	const [sentryModule, profilingModule] = await Promise.allSettled([
-		import('@sentry/react-router'),
-		import('@sentry/profiling-node')
-	])
-	
-	if (sentryModule.status === 'fulfilled') {
-		Sentry = sentryModule.value
-	} else {
-		console.warn('Failed to import @sentry/react-router:', sentryModule.reason?.message)
-	}
-	
-	if (profilingModule.status === 'fulfilled') {
-		nodeProfilingIntegration = profilingModule.value.nodeProfilingIntegration
-	} else {
-		console.warn('Failed to import @sentry/profiling-node:', profilingModule.reason?.message)
-	}
-} catch (error) {
-	console.warn('Failed to import Sentry modules:', error.message)
+// Try to import Sentry modules dynamically
+const [sentryModule, profilingModule] = await Promise.allSettled([
+	import('@sentry/react-router'),
+	import('@sentry/profiling-node')
+])
+
+if (sentryModule.status === 'fulfilled') {
+	Sentry = sentryModule.value
+} else {
+	console.warn('Failed to import @sentry/react-router:', sentryModule.reason?.message)
+}
+
+if (profilingModule.status === 'fulfilled') {
+	nodeProfilingIntegration = profilingModule.value.nodeProfilingIntegration
+} else {
+	console.warn('Failed to import @sentry/profiling-node:', profilingModule.reason?.message)
 }
 
 // Only initialize Sentry if we successfully imported the required modules
