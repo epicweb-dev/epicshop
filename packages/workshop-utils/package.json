@@ -20,6 +20,7 @@
       "./cache.server": "./src/cache.server.ts",
       "./config.server": "./src/config.server.ts",
       "./db.server": "./src/db.server.ts",
+      "./data-storage.server": "./src/data-storage.server.ts",
       "./timing.server": "./src/timing.server.ts",
       "./modified-time.server": "./src/modified-time.server.ts",
       "./compile-mdx.server": "./src/compile-mdx.server.ts",
@@ -83,6 +84,12 @@
       "import": {
         "types": "./dist/esm/db.server.d.ts",
         "default": "./dist/esm/db.server.js"
+      }
+    },
+    "./data-storage.server": {
+      "import": {
+        "types": "./dist/esm/data-storage.server.d.ts",
+        "default": "./dist/esm/data-storage.server.js"
       }
     },
     "./timing.server": {
