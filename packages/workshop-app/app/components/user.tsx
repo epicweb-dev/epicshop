@@ -18,12 +18,14 @@ export function useUser() {
 
 export function useOptionalDiscordMember() {
 	const data = useRouteLoaderData('root') as RootLoaderData
-	return data?.user?.discordProfile
+	return data?.user?.discordProfile?.user
 		? {
 				id: data.user.discordProfile.user.id,
 				displayName:
 					data.user.discordProfile.nick ??
-					data.user.discordProfile.user.global_name,
+					data.user.discordProfile.user.global_name ??
+					data.user.name ??
+					data.user.email,
 				avatarUrl: data.user.imageUrlLarge,
 			}
 		: null
