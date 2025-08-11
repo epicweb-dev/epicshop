@@ -1,22 +1,31 @@
-import * as Sentry from '@sentry/react-router'
+// Dynamic import of Sentry with error handling
+const Sentry = await import('@sentry/react-router').catch((error) => {
+	console.warn(
+		'Failed to import @sentry/react-router:',
+		error instanceof Error ? error.message : String(error),
+		'- Sentry monitoring will be disabled but the application will continue to work normally',
+	)
+	return null
+})
 
 export function init() {
 	if (!ENV.EPICSHOP_IS_PUBLISHED) return
-	Sentry.init({
+
+	Sentry?.init({
 		dsn: ENV.SENTRY_DSN,
 		environment: ENV.MODE,
 		tunnel: '/resources/lookout',
 		ignoreErrors: [
-			"Failed to execute 'requestPictureInPicture' on 'HTMLVideoElement'"
+			"Failed to execute 'requestPictureInPicture' on 'HTMLVideoElement'",
 		],
 		beforeSend(event) {
 			if (
-				event.exception?.values?.some(value =>
+				event.exception?.values?.some((value) =>
 					value.stacktrace?.frames?.some(
-						frame =>
+						(frame) =>
 							frame.filename?.includes('chrome-extension:') ||
-							frame.filename?.includes('moz-extension:')
-					)
+							frame.filename?.includes('moz-extension:'),
+					),
 				)
 			) {
 				return null

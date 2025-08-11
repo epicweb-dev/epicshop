@@ -1,8 +1,30 @@
 import path from 'node:path'
-import { nodeProfilingIntegration } from '@sentry/profiling-node'
-import * as Sentry from '@sentry/react-router'
 
-Sentry.init({
+// Dynamic import of Sentry modules with error handling
+const Sentry = await import('@sentry/react-router').catch((error) => {
+	console.warn(
+		'Failed to import @sentry/react-router:',
+		error instanceof Error ? error.message : String(error),
+		'- Sentry monitoring will be disabled but the application will continue to work normally',
+	)
+	return null
+})
+
+const profilingModule = await import('@sentry/profiling-node').catch(
+	(error) => {
+		console.warn(
+			'Failed to import @sentry/profiling-node:',
+			error instanceof Error ? error.message : String(error),
+			'- Sentry profiling will be disabled but the application will continue to work normally',
+		)
+		return null
+	},
+)
+
+const nodeProfilingIntegration = profilingModule?.nodeProfilingIntegration
+
+// Only initialize Sentry if we successfully imported the required modules
+Sentry?.init({
 	dsn: process.env.SENTRY_DSN,
 	environment: process.env.NODE_ENV ?? 'development',
 	denyUrls: [
@@ -22,8 +44,10 @@ Sentry.init({
 		return process.env.NODE_ENV === 'production' ? 1 : 0
 	},
 	beforeSend(event) {
-		const isPlaygroundError = event.exception?.values?.some(value =>
-			value.stacktrace?.frames?.some(frame => frame.filename?.includes(`${path.sep}playground${path.sep}`))
+		const isPlaygroundError = event.exception?.values?.some((value) =>
+			value.stacktrace?.frames?.some((frame) =>
+				frame.filename?.includes(`${path.sep}playground${path.sep}`),
+			),
 		)
 		if (isPlaygroundError) {
 			return null
