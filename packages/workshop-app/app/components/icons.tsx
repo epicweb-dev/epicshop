@@ -73,6 +73,7 @@ export type IconName =
 	| 'Chat'
 	| 'House'
 	| 'WifiNoConnection'
+	| 'GitBranch'
 
 const sizeClassName = {
 	font: 'w-[1em] h-[1em]',

@@ -566,5 +566,36 @@
 		<path stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M18.25 5.75L6.75 17.25"/>
 	</symbol>
 
+	<symbol id="GitBranch" viewBox="0 0 24 24" fill="none">
+		<path
+			d="M6 3v12"
+			stroke="currentColor"
+			strokeWidth="1.5"
+			strokeLinecap="round"
+			strokeLinejoin="round"
+		/>
+		<path
+			d="M18 9a3 3 0 1 0 0-6 3 3 0 0 0 0 6z"
+			stroke="currentColor"
+			strokeWidth="1.5"
+			strokeLinecap="round"
+			strokeLinejoin="round"
+		/>
+		<path
+			d="M6 21a3 3 0 1 0 0-6 3 3 0 0 0 0 6z"
+			stroke="currentColor"
+			strokeWidth="1.5"
+			strokeLinecap="round"
+			strokeLinejoin="round"
+		/>
+		<path
+			d="M18 9a9 9 0 0 1-9 9"
+			stroke="currentColor"
+			strokeWidth="1.5"
+			strokeLinecap="round"
+			strokeLinejoin="round"
+		/>
+	</symbol>
+
 
 </svg>

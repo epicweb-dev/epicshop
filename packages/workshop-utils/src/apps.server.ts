@@ -571,6 +571,50 @@ async function _getApps({
 }
 export const getApps = requestStorageify(_getApps)
 
+export async function forkApp(
+	originalAppName: string,
+	newAppName: string,
+	{ request, timings }: CachifiedOptions = {},
+) {
+	const originalApp = await getAppByName(originalAppName, { request, timings })
+	if (!originalApp) {
+		throw new Error(`App "${originalAppName}" not found`)
+	}
+
+	// Validate new app name
+	if (await getAppByName(newAppName, { request, timings })) {
+		throw new Error(`App "${newAppName}" already exists`)
+	}
+
+	// Create new app directory
+	const newAppPath = path.join(
+		getWorkshopRoot(),
+		originalApp.relativePath.replace(originalApp.dirName, newAppName),
+	)
+
+	// Copy all files from original app to new app
+	await fsExtra.copy(originalApp.fullPath, newAppPath)
+
+	// Update package.json if it exists
+	const packageJsonPath = path.join(newAppPath, 'package.json')
+	if (await fsExtra.pathExists(packageJsonPath)) {
+		const packageJson = await fsExtra.readJson(packageJsonPath)
+		packageJson.name = newAppName
+		packageJson.title = `${packageJson.title} (Fork)`
+		await fsExtra.writeJson(packageJsonPath, packageJson, { spaces: 2 })
+	}
+
+	// Clear caches to ensure new app is recognized
+	appsCache.clear()
+	exampleAppCache.clear()
+	playgroundAppCache.clear()
+	problemAppCache.clear()
+	solutionAppCache.clear()
+
+	// Return the new app
+	return await getAppByName(newAppName, { request, timings })
+}
+
 const AppIdInfoSchema = z.object({
 	exerciseNumber: z.string(),
 	stepNumber: z.string(),

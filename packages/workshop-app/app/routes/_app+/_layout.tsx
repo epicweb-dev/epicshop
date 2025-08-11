@@ -46,6 +46,7 @@ import { useWorkshopConfig } from '#app/components/workshop-config.js'
 import { cn, getExercisePath, getExerciseStepPath } from '#app/utils/misc.tsx'
 import { useIsOnline } from '#app/utils/online.ts'
 import { usePresence, type User } from '#app/utils/presence.tsx'
+import { ForkApp } from '#app/components/ForkApp.tsx'
 import {
 	useExerciseProgressClassName,
 	useNextExerciseRoute,
@@ -1189,6 +1190,15 @@ function Navigation({
 									</Link>
 								) : null}
 							</div>
+							{app?.name && (
+								<div className="mt-2 flex justify-center">
+									<ForkApp
+										appName={app.name}
+										appTitle={app.title || app.name}
+										className="text-xs"
+									/>
+								</div>
+							)}
 						</div>
 					)}
 					{isOnline ? null : (
