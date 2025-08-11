@@ -13,13 +13,13 @@ const [sentryModule, profilingModule] = await Promise.allSettled([
 if (sentryModule.status === 'fulfilled') {
 	Sentry = sentryModule.value
 } else {
-	console.warn('Failed to import @sentry/react-router:', sentryModule.reason?.message)
+	console.warn('Failed to import @sentry/react-router:', sentryModule.reason?.message, '- Sentry monitoring will be disabled but the application will continue to work normally')
 }
 
 if (profilingModule.status === 'fulfilled') {
 	nodeProfilingIntegration = profilingModule.value.nodeProfilingIntegration
 } else {
-	console.warn('Failed to import @sentry/profiling-node:', profilingModule.reason?.message)
+	console.warn('Failed to import @sentry/profiling-node:', profilingModule.reason?.message, '- Sentry profiling will be disabled but the application will continue to work normally')
 }
 
 // Only initialize Sentry if we successfully imported the required modules
@@ -72,5 +72,5 @@ if (Sentry && nodeProfilingIntegration) {
 		},
 	})
 } else {
-	console.warn('Sentry initialization skipped due to import failures')
+	console.warn('Sentry initialization skipped due to import failures - application will continue without error monitoring')
 }

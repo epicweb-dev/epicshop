@@ -3,9 +3,11 @@ import { createReadableStreamFromReadable } from '@react-router/node'
 // Dynamic import of Sentry with error handling
 let Sentry: any = null
 
-await import('@sentry/react-router')
-	.then(module => { Sentry = module })
-	.catch(error => console.warn('Failed to import @sentry/react-router:', error.message))
+try {
+	Sentry = await import('@sentry/react-router')
+} catch (error) {
+	console.warn('Failed to import @sentry/react-router:', error.message, '- Sentry monitoring will be disabled but the application will continue to work normally')
+}
 
 import { isbot } from 'isbot'
 import { renderToPipeableStream } from 'react-dom/server'
