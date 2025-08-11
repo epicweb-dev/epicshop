@@ -1,11 +1,8 @@
 // Dynamic import of Sentry with error handling
-let Sentry: any = null
-
-try {
-	Sentry = await import('@sentry/react-router')
-} catch (error) {
+const Sentry = await import('@sentry/react-router').catch(error => {
 	console.warn('Failed to import @sentry/react-router:', error.message, '- Sentry monitoring will be disabled but the application will continue to work normally')
-}
+	return null
+})
 
 export function init() {
 	if (!ENV.EPICSHOP_IS_PUBLISHED) return
