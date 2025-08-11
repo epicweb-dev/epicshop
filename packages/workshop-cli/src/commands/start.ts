@@ -529,61 +529,15 @@ async function findWorkshopAppDir(
 		}
 	}
 
-	// 3. Resolve via Node's module resolution (broadly compatible)
+	// 3. Node's ESM import.meta.resolve (Node 20+)
 	try {
-		// Prefer createRequire for Node 16/18 compatibility where import.meta.resolve may be unavailable
-		const { createRequire } = await import('node:module')
-		const requireFromHere = createRequire(import.meta.url)
-		const pkgPath = requireFromHere.resolve(
+		const workshopAppPath = import.meta.resolve(
 			'@epic-web/workshop-app/package.json',
 		)
-		return path.dirname(pkgPath)
-	} catch {
-		// Continue to alternate resolution
-	}
-
-	// 3b. Node's ESM import.meta.resolve when available
-	try {
-		const esmResolved: unknown = (import.meta as unknown as { resolve?: unknown }).resolve
-		if (typeof esmResolved === 'function') {
-			const workshopAppPath = (esmResolved as (id: string) => string)(
-				'@epic-web/workshop-app/package.json',
-			)
-			const packagePath = fileURLToPath(workshopAppPath)
-			return path.dirname(packagePath)
-		}
+		const packagePath = fileURLToPath(workshopAppPath)
+		return path.dirname(packagePath)
 	} catch {
 		// Continue to next step
-	}
-
-	// 3c. Heuristic lookups relative to common bases (process.cwd, INIT_CWD, EPICSHOP_CONTEXT_CWD)
-	const candidateBases = [
-		process.cwd(),
-		process.env.INIT_CWD,
-		process.env.EPICSHOP_CONTEXT_CWD,
-	].filter(Boolean) as string[]
-	for (const base of candidateBases) {
-		const directNodeModules = path.join(
-			base,
-			'node_modules',
-			'@epic-web',
-			'workshop-app',
-		)
-		const prefixedNodeModules = path.join(
-			base,
-			'epicshop',
-			'node_modules',
-			'@epic-web',
-			'workshop-app',
-		)
-		for (const candidate of [directNodeModules, prefixedNodeModules]) {
-			try {
-				await fs.promises.access(path.join(candidate, 'package.json'))
-				return candidate
-			} catch {
-				// try next candidate
-			}
-		}
 	}
 
 	// 4. Global installation lookup
