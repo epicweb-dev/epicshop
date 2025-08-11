@@ -556,15 +556,40 @@ async function findWorkshopAppDir(
 			'@epic-web/workshop-cli/package.json',
 		)
 		const cliPkgDir = path.dirname(fileURLToPath(cliPkgPath))
-		const relativePath = path.resolve(cliPkgDir, '..', '..', 'workshop-app')
+		
+		// Try monorepo structure first (../../workshop-app)
+		const monoRepoPath = path.resolve(cliPkgDir, '..', '..', 'workshop-app')
 		try {
-			await fs.promises.access(path.join(relativePath, 'package.json'))
-			return relativePath
+			await fs.promises.access(path.join(monoRepoPath, 'package.json'))
+			return monoRepoPath
+		} catch {
+			// Try scoped package structure (../../@epic-web/workshop-app)
+			const scopedPath = path.resolve(cliPkgDir, '..', '@epic-web', 'workshop-app')
+			try {
+				await fs.promises.access(path.join(scopedPath, 'package.json'))
+				return scopedPath
+			} catch {
+				// Continue to final return
+			}
+		}
+	} catch {
+		// If CLI package resolution fails (e.g., during development/testing)
+		// try to resolve relative to the current source file
+		try {
+			const currentFile = fileURLToPath(import.meta.url)
+			const currentDir = path.dirname(currentFile)
+			
+			// From CLI src/commands/, workshop-app should be at ../../../workshop-app
+			const devMonoRepoPath = path.resolve(currentDir, '..', '..', '..', 'workshop-app')
+			try {
+				await fs.promises.access(path.join(devMonoRepoPath, 'package.json'))
+				return devMonoRepoPath
+			} catch {
+				// Continue to final return
+			}
 		} catch {
 			// Continue to final return
 		}
-	} catch {
-		// Continue to final return
 	}
 
 	return null
