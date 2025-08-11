@@ -6,45 +6,45 @@ import * as path from 'node:path'
 const APP_NAME = 'epicshop'
 const FILE_NAME = 'data.json'
 
-export function resolvePrimaryDir(appName = APP_NAME) {
+export function resolvePrimaryDir() {
 	const p = process.platform
 	if (p === 'darwin') {
-		return path.join(os.homedir(), 'Library', 'Application Support', appName)
+		return path.join(os.homedir(), 'Library', 'Application Support', APP_NAME)
 	}
 	if (p === 'win32') {
 		const base =
 			process.env.LOCALAPPDATA ||
 			process.env.APPDATA ||
 			path.join(os.homedir(), 'AppData', 'Local')
-		return path.join(base, appName)
+		return path.join(base, APP_NAME)
 	}
 	const base =
 		process.env.XDG_STATE_HOME || path.join(os.homedir(), '.local', 'state')
-	return path.join(base, appName)
+	return path.join(base, APP_NAME)
 }
 
-export function resolveCacheDir(appName = APP_NAME) {
+export function resolveCacheDir() {
 	const p = process.platform
 	if (p === 'darwin') {
-		return path.join(os.homedir(), 'Library', 'Caches', appName)
+		return path.join(os.homedir(), 'Library', 'Caches', APP_NAME)
 	}
 	if (p === 'win32') {
 		const base =
 			process.env.LOCALAPPDATA ||
 			process.env.APPDATA ||
 			path.join(os.homedir(), 'AppData', 'Local')
-		return path.join(base, appName, 'Cache')
+		return path.join(base, APP_NAME, 'Cache')
 	}
 	const base = process.env.XDG_CACHE_HOME || path.join(os.homedir(), '.cache')
-	return path.join(base, appName)
+	return path.join(base, APP_NAME)
 }
 
-export function resolvePrimaryPath(appName = APP_NAME, fileName = FILE_NAME) {
-	return path.join(resolvePrimaryDir(appName), fileName)
+export function resolvePrimaryPath(fileName = FILE_NAME) {
+	return path.join(resolvePrimaryDir(), fileName)
 }
 
-export function resolveFallbackPath(appName = APP_NAME, fileName = FILE_NAME) {
-	const dir = path.join(os.tmpdir(), appName)
+export function resolveFallbackPath(fileName = FILE_NAME) {
+	const dir = path.join(os.tmpdir(), APP_NAME)
 	return path.join(dir, fileName)
 }
 
@@ -65,12 +65,8 @@ async function atomicWriteJSON(filePath: string, data: unknown) {
 	await fs.rename(tmp, filePath)
 }
 
-export async function saveJSON(
-	appName = APP_NAME,
-	fileName = FILE_NAME,
-	data: unknown,
-) {
-	const primary = resolvePrimaryPath(appName, fileName)
+export async function saveJSON(data: unknown) {
+	const primary = resolvePrimaryPath(FILE_NAME)
 	try {
 		await atomicWriteJSON(primary, data)
 		return { path: primary, fallbackUsed: false }
@@ -84,20 +80,17 @@ export async function saveJSON(
 			return { path: primary, fallbackUsed: false }
 		} catch {}
 
-		const fallback = resolveFallbackPath(appName, fileName)
+		const fallback = resolveFallbackPath(FILE_NAME)
 		await ensureDir(path.dirname(fallback))
 		await atomicWriteJSON(fallback, data)
 		return { path: fallback, fallbackUsed: true }
 	}
 }
 
-export async function loadJSON<T = unknown>(
-	appName = APP_NAME,
-	fileName = FILE_NAME,
-) {
+export async function loadJSON<T = unknown>() {
 	const candidates = [
-		resolvePrimaryPath(appName, fileName),
-		resolveFallbackPath(appName, fileName),
+		resolvePrimaryPath(FILE_NAME),
+		resolveFallbackPath(FILE_NAME),
 	]
 	for (const p of candidates) {
 		try {
@@ -105,45 +98,74 @@ export async function loadJSON<T = unknown>(
 			return { path: p, data: JSON.parse(txt) as T | null }
 		} catch {}
 	}
-	return { path: resolvePrimaryPath(appName, fileName), data: null }
+	return { path: resolvePrimaryPath(FILE_NAME), data: null }
 }
 
-export async function migrateLegacyDotfile(
-	appName = APP_NAME,
-	fileName = FILE_NAME,
-) {
+export async function migrateLegacyData() {
 	const legacyDir = path.join(os.homedir(), '.epicshop')
-	const legacyPath = path.join(legacyDir, fileName)
-	const primaryPath = resolvePrimaryPath(appName, fileName)
+	const legacyDataPath = path.join(legacyDir, FILE_NAME)
+	const legacyCachePath = path.join(legacyDir, 'cache')
+	const primaryDataPath = resolvePrimaryPath(FILE_NAME)
+	const primaryCachePath = resolveCacheDir()
 
 	try {
-		const stat = await fs.stat(legacyPath)
-		if (!stat.isFile()) return { migrated: false, reason: 'not-a-file' }
-		const data = await fs.readFile(legacyPath, 'utf8')
+		// Check if legacy directory exists
+		const legacyDirStat = await fs.stat(legacyDir)
+		if (!legacyDirStat.isDirectory()) {
+			return
+		}
 
-		await ensureDir(path.dirname(primaryPath))
-		// Write new first (atomic), then remove old to minimize data-loss window
-		await atomicWriteJSON(primaryPath, JSON.parse(data))
+		// Migrate data file if it exists
 		try {
-			await fs.chmod(primaryPath, 0o600)
-		} catch {}
-		try {
-			await fs.unlink(legacyPath)
-			// Optionally remove empty legacy dir (ignore errors)
-			await fs.rmdir(legacyDir)
-		} catch {}
-		return { migrated: true, path: primaryPath }
-	} catch (err: any) {
-		// If we can't read due to perms, surface info and continue
-		if (err?.code === 'EACCES' || err?.code === 'EPERM') {
-			return {
-				migrated: false,
-				reason: 'unreadable',
-				message:
-					`Legacy file exists but is unreadable: ${legacyPath}. ` +
-					`You can fix ownership or manually import it in-app.`,
+			const dataStat = await fs.stat(legacyDataPath)
+			if (dataStat.isFile()) {
+				await ensureDir(path.dirname(primaryDataPath))
+				await fs.rename(legacyDataPath, primaryDataPath)
+				try {
+					await fs.chmod(primaryDataPath, 0o600)
+				} catch {}
+			}
+		} catch (err: any) {
+			// Log permission errors but continue with other migrations
+			if (err?.code === 'EACCES' || err?.code === 'EPERM') {
+				console.warn(
+					`Legacy data file exists but is unreadable: ${legacyDataPath}. You can fix ownership or manually import it in-app.`,
+				)
 			}
 		}
-		return { migrated: false, reason: 'missing-or-other' }
+
+		// Migrate cache directory if it exists
+		try {
+			const cacheStat = await fs.stat(legacyCachePath)
+			if (cacheStat.isDirectory()) {
+				await ensureDir(path.dirname(primaryCachePath))
+				await fs.rename(legacyCachePath, primaryCachePath)
+				try {
+					await fs.chmod(primaryCachePath, 0o700)
+				} catch {}
+			}
+		} catch (err: any) {
+			// Log permission errors but continue with other migrations
+			if (err?.code === 'EACCES' || err?.code === 'EPERM') {
+				console.warn(
+					`Legacy cache directory exists but is unreadable: ${legacyCachePath}. You can fix ownership or manually move it.`,
+				)
+			}
+		}
+
+		// Try to remove the legacy directory if it's empty
+		try {
+			const remainingFiles = await fs.readdir(legacyDir)
+			if (remainingFiles.length === 0) {
+				await fs.rmdir(legacyDir)
+			}
+		} catch {}
+	} catch (err: any) {
+		// If we can't access the legacy directory at all, log and continue
+		if (err?.code === 'EACCES' || err?.code === 'EPERM') {
+			console.warn(
+				`Legacy directory exists but is unreadable: ${legacyDir}. You can fix delete it and start fresh, fix ownership, or manually migrate the data.`,
+			)
+		}
 	}
 }

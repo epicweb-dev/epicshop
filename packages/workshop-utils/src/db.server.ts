@@ -5,14 +5,10 @@ import fsExtra from 'fs-extra'
 import { redirect } from 'react-router'
 import { z } from 'zod'
 import { getWorkshopConfig } from './config.server.js'
-import {
-	saveJSON,
-	loadJSON,
-	migrateLegacyDotfile,
-} from './data-storage.server.js'
+import { saveJSON, loadJSON, migrateLegacyData } from './data-storage.server.js'
 
-// Attempt migration from legacy ~/.epicshop/data.json (blocking)
-await migrateLegacyDotfile().catch(() => {})
+// Attempt migration from legacy ~/.epicshop
+await migrateLegacyData().catch(() => {})
 
 const TokenSetSchema = z.object({
 	access_token: z.string(),
@@ -102,7 +98,7 @@ export async function getClientId() {
 	if (data?.clientId) return data.clientId
 
 	const clientId = cuid()
-	await saveJSON(undefined, undefined, { ...data, clientId })
+	await saveJSON({ ...data, clientId })
 	return clientId
 }
 
@@ -113,7 +109,7 @@ export async function logout() {
 		const data = await readDb()
 		const newAuthInfos = { ...data?.authInfos }
 		delete newAuthInfos[host]
-		await saveJSON(undefined, undefined, {
+		await saveJSON({
 			...data,
 			authInfos: newAuthInfos,
 		})
@@ -259,7 +255,7 @@ export async function setAuthInfo({
 	const authInfo = AuthInfoSchema.parse({ id, tokenSet, email, name })
 	const config = getWorkshopConfig()
 	if (config.product.host) {
-		await saveJSON(undefined, undefined, {
+		await saveJSON({
 			...data,
 			authInfos: {
 				...data?.authInfos,
@@ -267,7 +263,7 @@ export async function setAuthInfo({
 			},
 		})
 	} else {
-		await saveJSON(undefined, undefined, { ...data, authInfo })
+		await saveJSON({ ...data, authInfo })
 	}
 	return authInfo
 }
@@ -300,7 +296,7 @@ export async function setPreferences(
 			},
 		},
 	}
-	await saveJSON(undefined, undefined, updatedData)
+	await saveJSON(updatedData)
 	return updatedData.preferences
 }
 
@@ -318,7 +314,7 @@ export async function muteNotification(id: string) {
 		...data,
 		mutedNotifications,
 	}
-	await saveJSON(undefined, undefined, updatedData)
+	await saveJSON(updatedData)
 	return mutedNotifications
 }
 
@@ -328,7 +324,7 @@ export async function setFontSizePreference(fontSize: number | undefined) {
 		...data,
 		preferences: { ...data?.preferences, fontSize },
 	}
-	await saveJSON(undefined, undefined, updatedData)
+	await saveJSON(updatedData)
 	return updatedData.preferences.fontSize
 }
 
@@ -354,6 +350,6 @@ export async function markOnboardingVideoWatched(videoUrl: string) {
 			].filter(Boolean),
 		},
 	}
-	await saveJSON(undefined, undefined, updatedData)
+	await saveJSON(updatedData)
 	return updatedData.onboarding
 }
