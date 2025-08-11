@@ -588,13 +588,15 @@ const UserInfoSchema = z
 		image: z.string().nullable(),
 		discordProfile: z
 			.object({
-				nick: z.string().nullable(),
-				user: z.object({
-					id: z.string(),
-					username: z.string(),
-					avatar: z.string().nullable().optional(),
-					global_name: z.string().nullable().optional(),
-				}),
+				nick: z.string().nullable().optional(),
+				user: z
+					.object({
+						id: z.string(),
+						username: z.string(),
+						avatar: z.string().nullable().optional(),
+						global_name: z.string().nullable().optional(),
+					})
+					.optional(),
 			})
 			.nullable()
 			.optional(),
