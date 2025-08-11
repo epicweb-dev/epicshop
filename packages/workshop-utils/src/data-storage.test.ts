@@ -126,12 +126,74 @@ test('resolveCacheDir returns correct path for linux', () => {
 	expect(result).toBe('/mock/home/.cache/epicshop')
 })
 
-test('migrateLegacyData successfully migrates both data and cache', async () => {
+test('migrateLegacyData successfully migrates both data and cache on darwin', async () => {
+	using _ = withPlatform('darwin')
+
 	const legacyDataPath = '/mock/home/.epicshop/data.json'
 	const legacyCachePath = '/mock/home/.epicshop/cache'
 	const primaryDataPath =
 		'/mock/home/Library/Application Support/epicshop/data.json'
 	const primaryCachePath = '/mock/home/Library/Caches/epicshop'
+
+	// Mock directory exists
+	mockFs.stat
+		.mockResolvedValueOnce({ isDirectory: () => true } as any) // legacyDir
+		.mockResolvedValueOnce({ isFile: () => true } as any) // data file
+		.mockResolvedValueOnce({ isDirectory: () => true } as any) // cache dir
+
+	mockFs.mkdir.mockResolvedValue(undefined)
+	mockFs.rename.mockResolvedValue(undefined)
+	mockFs.chmod.mockResolvedValue(undefined)
+	mockFs.readdir.mockResolvedValue([]) // empty directory
+	mockFs.rmdir.mockResolvedValue(undefined)
+
+	await migrateLegacyData()
+
+	expect(mockFs.rename).toHaveBeenCalledWith(legacyDataPath, primaryDataPath)
+	expect(mockFs.rename).toHaveBeenCalledWith(legacyCachePath, primaryCachePath)
+	expect(mockFs.rmdir).toHaveBeenCalledWith('/mock/home/.epicshop')
+})
+
+test('migrateLegacyData successfully migrates both data and cache on win32', async () => {
+	using _ = withPlatform('win32', {
+		LOCALAPPDATA: undefined,
+		APPDATA: undefined,
+	})
+
+	const legacyDataPath = '/mock/home/.epicshop/data.json'
+	const legacyCachePath = '/mock/home/.epicshop/cache'
+	const primaryDataPath = '/mock/home/AppData/Local/epicshop/data.json'
+	const primaryCachePath = '/mock/home/AppData/Local/epicshop/Cache'
+
+	// Mock directory exists
+	mockFs.stat
+		.mockResolvedValueOnce({ isDirectory: () => true } as any) // legacyDir
+		.mockResolvedValueOnce({ isFile: () => true } as any) // data file
+		.mockResolvedValueOnce({ isDirectory: () => true } as any) // cache dir
+
+	mockFs.mkdir.mockResolvedValue(undefined)
+	mockFs.rename.mockResolvedValue(undefined)
+	mockFs.chmod.mockResolvedValue(undefined)
+	mockFs.readdir.mockResolvedValue([]) // empty directory
+	mockFs.rmdir.mockResolvedValue(undefined)
+
+	await migrateLegacyData()
+
+	expect(mockFs.rename).toHaveBeenCalledWith(legacyDataPath, primaryDataPath)
+	expect(mockFs.rename).toHaveBeenCalledWith(legacyCachePath, primaryCachePath)
+	expect(mockFs.rmdir).toHaveBeenCalledWith('/mock/home/.epicshop')
+})
+
+test('migrateLegacyData successfully migrates both data and cache on linux', async () => {
+	using _ = withPlatform('linux', {
+		XDG_STATE_HOME: undefined,
+		XDG_CACHE_HOME: undefined,
+	})
+
+	const legacyDataPath = '/mock/home/.epicshop/data.json'
+	const legacyCachePath = '/mock/home/.epicshop/cache'
+	const primaryDataPath = '/mock/home/.local/state/epicshop/data.json'
+	const primaryCachePath = '/mock/home/.cache/epicshop'
 
 	// Mock directory exists
 	mockFs.stat
