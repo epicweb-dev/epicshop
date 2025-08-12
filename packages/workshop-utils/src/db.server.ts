@@ -164,6 +164,25 @@ async function readDb() {
 			if (process.env.SENTRY_DSN && process.env.EPICSHOP_IS_PUBLISHED) {
 				try {
 					const Sentry = await import('@sentry/react-router')
+					
+					// Get user information for Sentry context
+					const authInfo = await getAuthInfo()
+					const clientId = await getClientId()
+					
+					if (authInfo) {
+						Sentry.setUser({
+							id: authInfo.id,
+							email: authInfo.email,
+							username: authInfo.name || authInfo.email,
+							ip_address: undefined, // Don't capture IP for privacy
+						})
+					} else if (clientId) {
+						Sentry.setUser({
+							id: `client-${clientId}`,
+							username: 'Anonymous User',
+						})
+					}
+					
 					Sentry.captureException(error, {
 						tags: {
 							error_type: 'corrupted_database_file',
