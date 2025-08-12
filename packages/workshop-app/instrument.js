@@ -60,6 +60,8 @@ Sentry?.init({
 		}
 		return event
 	},
+	// Enable automatic user context detection
+	sendDefaultPii: true,
 	initialScope: {
 		tags: {
 			github_repo: process.env.EPICSHOP_GITHUB_REPO || 'unknown',

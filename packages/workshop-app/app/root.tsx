@@ -58,6 +58,7 @@ import { cn, combineHeaders, getDomainUrl, useAltDown } from './utils/misc'
 import { Presence } from './utils/presence'
 import { getSeoMetaTags } from './utils/seo'
 import { getToast } from './utils/toast.server'
+import { useSentryUser } from './hooks/use-sentry-user'
 
 export const links: LinksFunction = () => {
 	return [
@@ -237,6 +238,9 @@ function App() {
 	const altDown = useAltDown()
 
 	const theme = useTheme()
+	
+	// Set Sentry user context for error reporting
+	useSentryUser(data.userId?.id, data.userId?.type)
 	return (
 		<Document
 			style={

@@ -56,5 +56,7 @@ export function init() {
 				environment: ENV.MODE || 'development',
 			},
 		},
+		// Enable automatic user context detection
+		sendDefaultPii: true,
 	})
 }

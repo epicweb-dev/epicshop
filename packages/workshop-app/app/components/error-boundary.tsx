@@ -13,9 +13,11 @@ import {
 	isRouteErrorResponse,
 	useParams,
 	useRouteError,
+	useLoaderData,
 	type ErrorResponse,
 } from 'react-router'
 import { getErrorMessage } from '#app/utils/misc.tsx'
+import { useSentryUser } from '../hooks/use-sentry-user'
 
 type StatusHandler = (info: {
 	error: ErrorResponse
@@ -29,7 +31,7 @@ export function GeneralErrorBoundary({
 		</p>
 	),
 	statusHandlers,
-	unexpectedErrorHandler = (error) => <p>{getErrorMessage(error)}</p>,
+	unexpectedErrorHandler?: (error: unknown) => React.ReactNode | null
 }: {
 	defaultStatusHandler?: StatusHandler
 	statusHandlers?: Record<number, StatusHandler>
@@ -38,6 +40,23 @@ export function GeneralErrorBoundary({
 	const error = useRouteError()
 	const params = useParams()
 	const isResponse = isRouteErrorResponse(error)
+	
+	// Try to get user data from loader data if available
+	let userId: string | undefined
+	let userType: string | undefined
+	
+	try {
+		const loaderData = useLoaderData()
+		if (loaderData?.userId) {
+			userId = loaderData.userId.id
+			userType = loaderData.userId.type
+		}
+	} catch {
+		// Ignore errors when loader data is not available
+	}
+	
+	// Set Sentry user context for error reporting
+	useSentryUser(userId, userType)
 
 	useEffect(() => {
 		if (isResponse) return

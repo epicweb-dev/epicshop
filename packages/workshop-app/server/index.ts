@@ -175,6 +175,32 @@ if (SENTRY_ENABLED) {
 	Sentry.setTag('deployed', ENV.EPICSHOP_DEPLOYED ? 'true' : 'false')
 	Sentry.setTag('app_version', ENV.EPICSHOP_APP_VERSION || 'unknown')
 	Sentry.setTag('environment', ENV.MODE || 'development')
+	
+	// Set up middleware to capture user context for each request
+	app.use(async (req, res, next) => {
+		try {
+			// Import the user utility function
+			const { getUserId } = await import('@epic-web/workshop-utils/user.server')
+			
+			// Get user ID from the request
+			const userInfo = await getUserId({ request: req as any })
+			
+			// Set user context in Sentry for this request
+			if (userInfo?.id) {
+				Sentry.setUser({
+					id: userInfo.id,
+					ip_address: '{{auto}}', // Sentry will automatically detect IP
+				})
+				Sentry.setTag('user_type', userInfo.type)
+			}
+		} catch (error) {
+			// Silently fail if user context cannot be determined
+			console.warn('Failed to set Sentry user context:', error)
+		}
+		
+		next()
+	})
+	
 	Sentry.setupExpressErrorHandler(app)
 }
 
