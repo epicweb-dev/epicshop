@@ -6,6 +6,7 @@ import {
 	getPreferences,
 	readOnboardingData,
 	getMutedNotifications,
+	getClientId,
 } from '@epic-web/workshop-utils/db.server'
 import { getEnv } from '@epic-web/workshop-utils/env.server'
 import {
@@ -50,6 +51,7 @@ import { UpdateToast } from './components/update-repo'
 import { Notifications } from './routes/admin+/notifications'
 import { useTheme } from './routes/theme/index'
 import { getTheme } from './routes/theme/theme-session.server'
+import { useSentryUserContext } from './components/user'
 import appStylesheetUrl from './styles/app.css?url'
 import tailwindStylesheetUrl from './styles/tailwind.css?url'
 import { ClientHintCheck, getHints } from './utils/client-hints'
@@ -128,6 +130,7 @@ export async function loader({ request }: Route.LoaderArgs) {
 		repoUpdates: checkForUpdatesCached(),
 		unmutedNotifications: getUnmutedNotifications(),
 		exerciseChanges: checkForExerciseChanges(),
+		clientId: getClientId(),
 	})
 
 	const presentUsers = await getPresentUsers({
@@ -171,6 +174,7 @@ export async function loader({ request }: Route.LoaderArgs) {
 				session: { theme },
 				separator: path.sep,
 				online: await isOnlinePromise,
+				clientId: asyncStuff.clientId,
 			},
 			toast,
 			confettiId,
@@ -230,13 +234,16 @@ function Document({
 function App() {
 	const data = useLoaderData<typeof loader>()
 	const navigation = useNavigation()
-	const showSpinner = useSpinDelay(navigation.state !== 'idle', {
-		delay: 400,
+	const isNavigating = useSpinDelay(navigation.state !== 'idle', {
+		delay: 500,
 		minDuration: 200,
 	})
+	const theme = useTheme()
 	const altDown = useAltDown()
 
-	const theme = useTheme()
+	// Update Sentry user context when user data changes
+	useSentryUserContext()
+
 	return (
 		<Document
 			style={
@@ -247,7 +254,7 @@ function App() {
 			className={cn(
 				'antialiased h-screen-safe',
 				theme,
-				{ 'cursor-progress': showSpinner },
+				{ 'cursor-progress': isNavigating },
 				altDown ? 'alt-down' : null,
 			)}
 			env={data.ENV}

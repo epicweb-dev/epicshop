@@ -57,4 +57,54 @@ export function init() {
 			},
 		},
 	})
+
+	// Set up user context when available
+	setupUserContext()
+}
+
+function setupUserContext() {
+	// We need to wait for the app to hydrate before we can access user data
+	// This will be called after the app is hydrated
+	setTimeout(() => {
+		try {
+			// Dynamic import to avoid SSR issues
+			const { useOptionalUser } = require('./components/user.tsx')
+			const { useRequestInfo } = require('./request-info.ts')
+			
+			// This will be called in the context of a React component
+			// We'll set up a listener for when the user context changes
+			setupUserContextListener()
+		} catch (error) {
+			console.warn('Failed to set up user context for Sentry:', error)
+		}
+	}, 100)
+}
+
+function setupUserContextListener() {
+	// Create a custom event listener to update Sentry user context
+	// This will be triggered when user data changes
+	document.addEventListener('sentry:update-user', (event) => {
+		const { user, clientId } = (event as CustomEvent).detail
+		updateSentryUserContext(user, clientId)
+	})
+}
+
+export function updateSentryUserContext(user: any, clientId: string) {
+	if (!Sentry) return
+
+	if (user) {
+		Sentry.setUser({
+			id: user.id,
+			email: user.email,
+			username: user.name || user.email,
+			ip_address: undefined, // Don't capture IP for privacy
+		})
+	} else if (clientId) {
+		Sentry.setUser({
+			id: `client-${clientId}`,
+			username: 'Anonymous User',
+		})
+	} else {
+		Sentry.setUser(null)
+	}
 }

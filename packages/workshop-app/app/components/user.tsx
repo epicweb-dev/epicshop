@@ -1,5 +1,6 @@
 import { useRouteLoaderData } from 'react-router'
 import { type RootLoaderData } from '#app/root.tsx'
+import { useEffect } from 'react'
 
 export function useOptionalUser() {
 	const data = useRouteLoaderData('root') as RootLoaderData
@@ -44,4 +45,20 @@ export function useDiscordMember() {
 export function useUserHasAccess() {
 	const data = useRouteLoaderData('root') as RootLoaderData
 	return data?.userHasAccess ?? false
+}
+
+// Hook to automatically update Sentry user context
+export function useSentryUserContext() {
+	const user = useOptionalUser()
+	const data = useRouteLoaderData('root') as RootLoaderData
+	const clientId = data?.requestInfo?.clientId
+
+	useEffect(() => {
+		// Dispatch custom event to update Sentry user context
+		document.dispatchEvent(
+			new CustomEvent('sentry:update-user', {
+				detail: { user, clientId },
+			})
+		)
+	}, [user, clientId])
 }
