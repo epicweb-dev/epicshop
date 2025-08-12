@@ -51,7 +51,6 @@ import { UpdateToast } from './components/update-repo'
 import { Notifications } from './routes/admin+/notifications'
 import { useTheme } from './routes/theme/index'
 import { getTheme } from './routes/theme/theme-session.server'
-import { useSentryUserContext } from './components/user'
 import appStylesheetUrl from './styles/app.css?url'
 import tailwindStylesheetUrl from './styles/tailwind.css?url'
 import { ClientHintCheck, getHints } from './utils/client-hints'
@@ -240,9 +239,6 @@ function App() {
 	})
 	const theme = useTheme()
 	const altDown = useAltDown()
-
-	// Update Sentry user context when user data changes
-	useSentryUserContext()
 
 	return (
 		<Document

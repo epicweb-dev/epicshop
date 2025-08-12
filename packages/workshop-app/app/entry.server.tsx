@@ -1,4 +1,5 @@
 import { PassThrough } from 'stream'
+import { getAuthInfo, getClientId } from '@epic-web/workshop-utils/db.server'
 import { createReadableStreamFromReadable } from '@react-router/node'
 // Dynamic import of Sentry with error handling
 const Sentry = await import('@sentry/react-router').catch((error) => {
@@ -18,7 +19,6 @@ import {
 	type LoaderFunctionArgs,
 	type ActionFunctionArgs,
 } from 'react-router'
-import { getAuthInfo, getClientId } from '@epic-web/workshop-utils/db.server'
 
 export const streamTimeout = 60000
 const ABORT_DELAY = streamTimeout + 1000
@@ -33,7 +33,7 @@ export async function handleError(
 			// Get user information for Sentry context
 			const authInfo = await getAuthInfo()
 			const clientId = await getClientId()
-			
+
 			if (Sentry) {
 				if (authInfo) {
 					Sentry.setUser({
@@ -48,7 +48,7 @@ export async function handleError(
 						username: 'Anonymous User',
 					})
 				}
-				
+
 				Sentry.captureException(error)
 			}
 		} catch (sentryError) {
