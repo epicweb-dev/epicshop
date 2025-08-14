@@ -6,101 +6,47 @@ Ask your LLM what it can do. And it'll tell you.
 
 ## Sentry Monitoring
 
-This MCP server includes comprehensive Sentry monitoring for production-ready error tracking and performance monitoring.
+This MCP server includes Sentry monitoring following the pattern described in [Sentry's MCP server monitoring blog post](https://blog.sentry.io/introducing-mcp-server-monitoring/).
 
 ### Features
 
-- **Error Monitoring**: Automatic capture of MCP server errors, uncaught exceptions, and unhandled rejections
-- **Performance Monitoring**: Transaction tracking for server initialization and main operations
-- **Breadcrumbs**: Detailed logging of server operations for debugging
-- **Environment-aware**: Different sampling rates for development vs production
-- **Security**: Automatic filtering of sensitive data before sending to Sentry
+- **Simple Integration**: Uses the `wrapMcpServerWithSentry(McpServer)` pattern
+- **Automatic Configuration**: Uses environment variables from your workshop configuration
+- **Production Only**: Only enables monitoring when `EPICSHOP_IS_PUBLISHED` is true
+- **Graceful Shutdown**: Uses `close-with-grace` for clean server termination
 
 ### Setup
 
-1. **Install Dependencies**: The Sentry dependency is already included in the package.
+The Sentry integration is automatically configured using your existing workshop environment variables:
 
-2. **Configure Environment Variables**: Copy `.env.example` to `.env` and configure your Sentry DSN:
+- `SENTRY_DSN`: Your Sentry project DSN (already configured in workshop-utils)
+- `EPICSHOP_IS_PUBLISHED`: Automatically determined based on your deployment context
 
-```bash
-cp .env.example .env
-```
+No additional configuration is needed - the monitoring is automatically enabled when running in production.
 
-Edit `.env` and add your Sentry DSN:
-```env
-SENTRY_DSN=https://your-sentry-dsn-here@sentry.io/your-project-id
-SENTRY_ENVIRONMENT=production
-```
+### How It Works
 
-3. **Get Your Sentry DSN**:
-   - Go to your Sentry project settings
-   - Navigate to Settings → Projects → [Your Project] → Client Keys (DSN)
-   - Copy the DSN URL
-
-### Configuration Options
-
-| Environment Variable | Default | Description |
-|---------------------|---------|-------------|
-| `SENTRY_DSN` | Required | Your Sentry project DSN |
-| `SENTRY_ENVIRONMENT` | `NODE_ENV` or `development` | Environment name |
-| `SENTRY_RELEASE` | `npm_package_version` or `1.0.0` | Release version |
-| `SENTRY_TRACES_SAMPLE_RATE` | `1.0` (dev) / `0.1` (prod) | Performance monitoring sample rate |
-| `SENTRY_PROFILES_SAMPLE_RATE` | `1.0` (dev) / `0.1` (prod) | Profiling sample rate |
-
-### What Gets Monitored
-
-- **Server Initialization**: Component loading, tool registration, resource setup
-- **Main Server Loop**: Connection establishment, transport setup
-- **Error Handling**: All errors with context and stack traces
-- **Process Events**: Graceful shutdown, uncaught exceptions
-- **Performance**: Transaction timing for key operations
-
-### Security Features
-
-- Automatic filtering of sensitive fields (password, token, secret)
-- Environment-based sampling to control data volume
-- Graceful fallback if Sentry is unavailable
-
-### Development vs Production
-
-- **Development**: 100% sampling for comprehensive debugging
-- **Production**: 10% sampling by default to manage costs
-- **Customizable**: Adjust sampling rates via environment variables
-
-### Troubleshooting
-
-If Sentry isn't working:
-
-1. Check that `SENTRY_DSN` is set correctly
-2. Verify your Sentry project is active
-3. Check console logs for initialization messages
-4. Ensure your DSN has the correct permissions
-
-### Example Usage
-
-The monitoring is automatically enabled when you set the `SENTRY_DSN` environment variable. No code changes are needed - the server will automatically:
-
-- Track all errors and performance metrics
-- Add breadcrumbs for debugging
-- Handle graceful shutdowns
-- Filter sensitive data
-
-For custom monitoring in your MCP tools, you can import the Sentry utilities:
+The server is wrapped with Sentry monitoring using:
 
 ```typescript
-import { captureMcpError, startMcpTransaction, addMcpBreadcrumb } from './sentry.js'
-
-// Track custom operations
-const transaction = startMcpTransaction('custom_operation', 'mcp.tool.custom')
-addMcpBreadcrumb('Starting custom operation', 'tool.operation')
-
-try {
-  // Your tool logic here
-  transaction?.setStatus('ok')
-} catch (error) {
-  transaction?.setStatus('internal_error')
-  captureMcpError(error, { context: 'custom_tool' })
-} finally {
-  transaction?.finish()
-}
+const monitoredServer = wrapMcpServerWithSentry(server)
 ```
+
+This follows the exact pattern mentioned in the Sentry blog post and provides:
+
+- Protocol-aware visibility into MCP server usage
+- Performance monitoring for tool calls and resources
+- Error tracking with proper context
+- Client and transport segmentation
+
+### Future Enhancements
+
+When Sentry's official MCP server monitoring SDK becomes available, this integration will automatically provide:
+
+- Detailed tracing of JSON-RPC requests
+- Tool usage analytics
+- Resource access patterns
+- Performance insights
+- Error correlation
+
+For now, this serves as a foundation that follows the recommended pattern and will be enhanced as the official SDK becomes available.
