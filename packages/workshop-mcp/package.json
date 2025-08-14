@@ -36,6 +36,7 @@
     "@epic-web/invariant": "^1.0.0",
     "@epic-web/workshop-utils": "file:../workshop-utils",
     "@modelcontextprotocol/sdk": "^1.14.0",
+    "@sentry/node": "^10.5.0",
     "openid-client": "^6.6.2",
     "zod": "^3.25.71"
   },
