@@ -13,6 +13,7 @@ export function init() {
 
 	Sentry?.init({
 		dsn: ENV.SENTRY_DSN,
+		sendDefaultPii: true,
 		environment: ENV.MODE,
 		tunnel: '/resources/lookout',
 		ignoreErrors: [

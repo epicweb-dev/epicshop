@@ -26,6 +26,7 @@ const nodeProfilingIntegration = profilingModule?.nodeProfilingIntegration
 // Only initialize Sentry if we successfully imported the required modules
 Sentry?.init({
 	dsn: process.env.SENTRY_DSN,
+	sendDefaultPii: true,
 	environment: process.env.NODE_ENV ?? 'development',
 	denyUrls: [
 		/\/resources\/healthcheck/,

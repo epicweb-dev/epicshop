@@ -15,8 +15,9 @@ const env = getEnv()
 if (env.EPICSHOP_IS_PUBLISHED && env.SENTRY_DSN) {
 	Sentry.init({
 		dsn: env.SENTRY_DSN,
-		tracesSampleRate: 1.0,
+		sendDefaultPii: true,
 		environment: env.EPICSHOP_IS_PUBLISHED ? 'production' : 'development',
+		tracesSampleRate: 1.0,
 	})
 }
 
@@ -42,9 +43,10 @@ ask you to make should be in this directory.
 )
 
 // Wrap with Sentry if enabled
-const monitoredServer = env.EPICSHOP_IS_PUBLISHED && env.SENTRY_DSN 
-	? Sentry.wrapMcpServerWithSentry(server)
-	: server
+const monitoredServer =
+	env.EPICSHOP_IS_PUBLISHED && env.SENTRY_DSN
+		? Sentry.wrapMcpServerWithSentry(server)
+		: server
 
 initTools(monitoredServer)
 initResourceTools(monitoredServer)
