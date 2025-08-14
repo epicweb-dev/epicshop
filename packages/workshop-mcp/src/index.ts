@@ -1,6 +1,6 @@
 #!/usr/bin/env node
 
-import { getEnv } from '@epic-web/workshop-utils/env.server'
+import { getEnv } from '@epic-web/workshop-utils/init-env'
 import { McpServer } from '@modelcontextprotocol/sdk/server/mcp.js'
 import { StdioServerTransport } from '@modelcontextprotocol/sdk/server/stdio.js'
 import * as Sentry from '@sentry/node'
