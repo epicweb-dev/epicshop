@@ -13,8 +13,8 @@
     "start": "cross-env NODE_ENV=production npm --prefix example run start",
     "dev": "npm --prefix example run start",
     "warm": "npm --prefix example run warm",
-    "test": "vitest",
-    "test:no-watch": "vitest --no-watch",
+    "test": "vitest run",
+    "test:watch": "vitest",
     "test:e2e": "./other/nx-fallback.js test:e2e",
     "format": "./other/nx-fallback.js format:write",
     "validate": "./other/nx-fallback.js run-many --target build,typecheck,lint,test --parallel"

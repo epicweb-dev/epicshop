@@ -6,7 +6,8 @@
   },
   "type": "module",
   "scripts": {
-    "test": "vitest",
+    "test": "vitest run",
+    "test:watch": "vitest",
     "typecheck": "tsc --noEmit",
     "build": "tshy",
     "dev": "partykit dev",

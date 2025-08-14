@@ -45,7 +45,8 @@
     "dist"
   ],
   "scripts": {
-    "test": "vitest",
+    "test": "vitest run",
+    "test:watch": "vitest",
     "typecheck": "tsc --noEmit",
     "lint": "eslint --cache --cache-location ./node_modules/.cache/eslint .",
     "build": "tshy",

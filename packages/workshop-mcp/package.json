@@ -24,7 +24,8 @@
     "dist"
   ],
   "scripts": {
-    "test": "vitest",
+    "test": "vitest run",
+    "test:watch": "vitest",
     "dev": "tsx src/index.ts",
     "typecheck": "tsc --noEmit",
     "build": "tshy",

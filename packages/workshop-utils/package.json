@@ -175,7 +175,8 @@
     "dist"
   ],
   "scripts": {
-    "test": "vitest",
+    "test": "vitest run",
+    "test:watch": "vitest",
     "typecheck": "tsc --noEmit",
     "build": "tshy",
     "build:watch": "nx watch --projects=@epic-web/workshop-utils -- nx run \\$NX_PROJECT_NAME:build"
