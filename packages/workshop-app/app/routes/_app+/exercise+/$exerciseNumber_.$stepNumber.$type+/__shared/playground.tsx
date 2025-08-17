@@ -28,10 +28,12 @@ export function Playground({
 			{playgroundAppInfo?.dev.type === 'none' ? (
 				<div>
 					<div className="text-foreground-secondary flex h-full items-center justify-center text-2xl">
-						Non-UI playground
+						Non-UI exercise
 					</div>
 					<div>
 						<div className="text-foreground-secondary flex flex-wrap gap-1 text-center">
+							This exercise has no application or other UI associated with it.{' '}
+							<br />
 							Navigate to{' '}
 							<SimpleTooltip content={playgroundAppInfo.fullPath}>
 								<span
@@ -46,7 +48,7 @@ export function Playground({
 									the playground directory
 								</span>
 							</SimpleTooltip>{' '}
-							in your editor and terminal to work on this exercise!
+							in your editor and follow the exercise instructions to complete it.
 						</div>
 					</div>
 				</div>
