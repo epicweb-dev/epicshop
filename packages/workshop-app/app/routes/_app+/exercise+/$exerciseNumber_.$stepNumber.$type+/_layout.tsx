@@ -22,7 +22,8 @@ import {
 	makeTimings,
 } from '@epic-web/workshop-utils/timing.server'
 import slugify from '@sindresorhus/slugify'
-import { useEffect, useRef, useState } from 'react'
+import * as cookie from 'cookie'
+import { useRef, useState } from 'react'
 import {
 	data,
 	redirect,
@@ -179,6 +180,20 @@ export async function loader({ request, params }: Route.LoaderArgs) {
 	const subroute = url.pathname.split(
 		`/exercise/${params.exerciseNumber}/${params.stepNumber}/${params.type}/`,
 	)[1]
+
+	// read persisted split percentage from cookie (10-90, default 50)
+	const cookieHeader = request.headers.get('cookie')
+	const rawSplit = cookieHeader
+		? cookie.parse(cookieHeader)['es_split_pct']
+		: null
+	const splitPercent = (() => {
+		const asNum = rawSplit ? Number(rawSplit) : NaN
+		if (Number.isFinite(asNum)) {
+			return Math.min(90, Math.max(10, Math.round(asNum)))
+		}
+		return 50
+	})()
+
 	return data(
 		{
 			articleId,
@@ -188,6 +203,7 @@ export async function loader({ request, params }: Route.LoaderArgs) {
 			epicVideoInfosPromise: getEpicVideoInfos(exerciseStepApp.epicVideoEmbeds),
 			exerciseIndex,
 			allApps,
+			splitPercent,
 			prevStepLink: isFirstStep
 				? {
 						to: `/exercise/${exerciseStepApp.exerciseNumber
@@ -274,21 +290,8 @@ export default function ExercisePartRoute({
 }: Route.ComponentProps) {
 	const inBrowserBrowserRef = useRef<InBrowserBrowserRef>(null)
 	const containerRef = useRef<HTMLDivElement>(null)
-	const [splitPercent, setSplitPercent] = useState<number>(50)
+	const [splitPercent, setSplitPercent] = useState<number>(data.splitPercent)
 	const cookieName = 'es_split_pct'
-
-	useEffect(() => {
-		try {
-			const cookies = document.cookie.split(';').map((c) => c.trim())
-			const cookie = cookies.find((c) => c.startsWith(cookieName + '='))
-			if (cookie) {
-				const value = Number(cookie.split('=')[1])
-				if (!Number.isNaN(value)) {
-					setSplitPercent(Math.min(90, Math.max(10, value)))
-				}
-			}
-		} catch {}
-	}, [])
 
 	function setCookie(percent: number) {
 		const clamped = Math.min(90, Math.max(10, Math.round(percent)))
@@ -347,8 +350,8 @@ export default function ExercisePartRoute({
 				className="flex flex-grow flex-col sm:h-full sm:min-h-[800px] md:min-h-[unset] lg:flex-row"
 			>
 				<div
-					className="relative flex flex-col sm:col-span-1 sm:row-span-1 sm:h-full"
-					style={{ flexBasis: `${splitPercent}%` }}
+					className="relative flex flex-none flex-col sm:col-span-1 sm:row-span-1 sm:h-full"
+					style={{ width: `${splitPercent}%` }}
 				>
 					<h1 className="h-14 border-b pl-10 pr-5 text-sm font-medium leading-tight">
 						<div className="flex h-14 flex-wrap items-center justify-between gap-x-2 py-2">
@@ -465,10 +468,7 @@ export default function ExercisePartRoute({
 						if (firstTouch) startDrag(firstTouch.clientX)
 					}}
 				/>
-				<div
-					style={{ flexBasis: `${100 - splitPercent}%` }}
-					className="flex min-w-0 flex-grow"
-				>
+				<div className="flex min-w-0 flex-1">
 					<Outlet />
 				</div>
 			</main>

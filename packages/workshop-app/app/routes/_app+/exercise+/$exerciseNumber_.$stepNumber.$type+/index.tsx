@@ -288,7 +288,7 @@ export default function ExercisePartRoute() {
 			// intentionally no onValueChange here because the Link will trigger the
 			// change.
 		>
-			<Tabs.List className="h-14 min-h-14 overflow-x-hidden border-b scrollbar-thin scrollbar-thumb-scrollbar">
+			<Tabs.List className="h-14 min-h-14 overflow-x-auto whitespace-nowrap border-b scrollbar-thin scrollbar-thumb-scrollbar">
 				{tabs.map((tab) => {
 					const hidden = shouldHideTab(tab)
 					return (
