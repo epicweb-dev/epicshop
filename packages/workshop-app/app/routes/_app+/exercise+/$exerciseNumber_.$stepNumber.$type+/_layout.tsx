@@ -350,7 +350,7 @@ export default function ExercisePartRoute({
 				className="flex flex-grow flex-col sm:h-full sm:min-h-[800px] md:min-h-[unset] lg:flex-row"
 			>
 				<div
-					className="relative flex flex-none basis-full flex-col sm:col-span-1 sm:row-span-1 sm:h-full lg:basis-[var(--split-pct)]"
+					className="relative flex min-w-0 flex-none basis-full flex-col sm:col-span-1 sm:row-span-1 sm:h-full lg:basis-[var(--split-pct)]"
 					style={{ ['--split-pct' as any]: `${splitPercent}%` }}
 				>
 					<h1 className="h-14 border-b pl-10 pr-5 text-sm font-medium leading-tight">
