@@ -22,7 +22,7 @@ import {
 	makeTimings,
 } from '@epic-web/workshop-utils/timing.server'
 import slugify from '@sindresorhus/slugify'
-import { useRef } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import {
 	data,
 	redirect,
@@ -273,6 +273,66 @@ export default function ExercisePartRoute({
 	loaderData: data,
 }: Route.ComponentProps) {
 	const inBrowserBrowserRef = useRef<InBrowserBrowserRef>(null)
+	const containerRef = useRef<HTMLDivElement>(null)
+	const [splitPercent, setSplitPercent] = useState<number>(50)
+	const cookieName = 'es_split_pct'
+
+	useEffect(() => {
+		try {
+			const cookies = document.cookie.split(';').map((c) => c.trim())
+			const cookie = cookies.find((c) => c.startsWith(cookieName + '='))
+			if (cookie) {
+				const value = Number(cookie.split('=')[1])
+				if (!Number.isNaN(value)) {
+					setSplitPercent(Math.min(90, Math.max(10, value)))
+				}
+			}
+		} catch {}
+	}, [])
+
+	function setCookie(percent: number) {
+		const clamped = Math.min(90, Math.max(10, Math.round(percent)))
+		document.cookie = `${cookieName}=${clamped}; path=/; SameSite=Lax;`
+	}
+
+	function startDrag(initialClientX: number) {
+		const container = containerRef.current
+		if (!container) return
+		const rect = container.getBoundingClientRect()
+
+		function handleMove(clientX: number) {
+			const relativeX = clientX - rect.left
+			const percent = (relativeX / rect.width) * 100
+			const clamped = Math.min(90, Math.max(10, percent))
+			setSplitPercent(clamped)
+			setCookie(clamped)
+		}
+
+		function onMouseMove(e: MouseEvent) {
+			handleMove(e.clientX)
+		}
+		function onTouchMove(e: TouchEvent) {
+			const firstTouch = e.touches?.[0]
+			if (firstTouch) {
+				handleMove(firstTouch.clientX)
+			}
+		}
+		function cleanup() {
+			window.removeEventListener('mousemove', onMouseMove)
+			window.removeEventListener('mouseup', cleanup)
+			window.removeEventListener('touchmove', onTouchMove)
+			window.removeEventListener('touchend', cleanup)
+			document.body.style.cursor = ''
+			document.body.style.userSelect = ''
+		}
+		window.addEventListener('mousemove', onMouseMove)
+		window.addEventListener('mouseup', cleanup)
+		window.addEventListener('touchmove', onTouchMove, { passive: false })
+		window.addEventListener('touchend', cleanup)
+		document.body.style.cursor = 'col-resize'
+		document.body.style.userSelect = 'none'
+		handleMove(initialClientX)
+	}
 
 	const titleBits = pageTitle(data)
 
@@ -282,8 +342,14 @@ export default function ExercisePartRoute({
 
 	return (
 		<div className="flex max-w-full flex-grow flex-col">
-			<main className="flex flex-grow flex-col sm:grid sm:h-full sm:min-h-[800px] sm:grid-cols-1 sm:grid-rows-2 md:min-h-[unset] lg:grid-cols-2 lg:grid-rows-1">
-				<div className="relative flex flex-col sm:col-span-1 sm:row-span-1 sm:h-full lg:border-r">
+			<main
+				ref={containerRef}
+				className="flex flex-grow flex-col sm:h-full sm:min-h-[800px] md:min-h-[unset] lg:flex-row"
+			>
+				<div
+					className="relative flex flex-col sm:col-span-1 sm:row-span-1 sm:h-full"
+					style={{ flexBasis: `${splitPercent}%` }}
+				>
 					<h1 className="h-14 border-b pl-10 pr-5 text-sm font-medium leading-tight">
 						<div className="flex h-14 flex-wrap items-center justify-between gap-x-2 py-2">
 							<div className="flex items-center justify-start gap-x-2 uppercase">
@@ -388,7 +454,23 @@ export default function ExercisePartRoute({
 						/>
 					</div>
 				</div>
-				<Outlet />
+				<div
+					role="separator"
+					aria-orientation="vertical"
+					title="Drag to resize"
+					className="hidden w-1 cursor-col-resize bg-border hover:bg-accent lg:block"
+					onMouseDown={(e) => startDrag(e.clientX)}
+					onTouchStart={(e) => {
+						const firstTouch = e.touches?.[0]
+						if (firstTouch) startDrag(firstTouch.clientX)
+					}}
+				/>
+				<div
+					style={{ flexBasis: `${100 - splitPercent}%` }}
+					className="flex min-w-0 flex-grow"
+				>
+					<Outlet />
+				</div>
 			</main>
 		</div>
 	)
