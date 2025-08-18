@@ -322,7 +322,20 @@ export default function ExercisePartRoute({
 		const rect = container.getBoundingClientRect()
 		let dragging = true
 
+		// Disable pointer events on iframes so the drag keeps receiving events
+		const iframes = Array.from(
+			document.querySelectorAll('iframe'),
+		) as HTMLIFrameElement[]
+		const originalPointerEvents = iframes.map((el) => el.style.pointerEvents)
+		iframes.forEach((el) => (el.style.pointerEvents = 'none'))
+
 		function handleMove(clientX: number) {
+			// Safety check: ensure user is still dragging
+			if (!dragging) {
+				cleanup()
+				return
+			}
+
 			const relativeX = clientX - rect.left
 			const percent = (relativeX / rect.width) * 100
 			const clamped = computeSplitPercent(percent)
@@ -348,6 +361,9 @@ export default function ExercisePartRoute({
 		function cleanup() {
 			if (!dragging) return
 			dragging = false
+			iframes.forEach(
+				(el, i) => (el.style.pointerEvents = originalPointerEvents[i] ?? ''),
+			)
 			window.removeEventListener('mousemove', onMouseMove)
 			window.removeEventListener('mouseup', cleanup)
 			window.removeEventListener('touchmove', onTouchMove)
@@ -355,9 +371,10 @@ export default function ExercisePartRoute({
 			document.body.style.cursor = ''
 			document.body.style.userSelect = ''
 		}
+
 		window.addEventListener('mousemove', onMouseMove)
 		window.addEventListener('mouseup', cleanup)
-		window.addEventListener('touchmove', onTouchMove, { passive: false })
+		window.addEventListener('touchmove', onTouchMove)
 		window.addEventListener('touchend', cleanup)
 		document.body.style.cursor = 'col-resize'
 		document.body.style.userSelect = 'none'
