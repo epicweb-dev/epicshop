@@ -331,7 +331,10 @@ export default function ExercisePartRoute({
 
 		function handleMove(clientX: number) {
 			// Safety check: ensure user is still dragging
-			if (!dragging) return
+			if (!dragging) {
+				cleanup()
+				return
+			}
 
 			const relativeX = clientX - rect.left
 			const percent = (relativeX / rect.width) * 100
