@@ -330,6 +330,9 @@ export default function ExercisePartRoute({
 		iframes.forEach((el) => (el.style.pointerEvents = 'none'))
 
 		function handleMove(clientX: number) {
+			// Safety check: ensure user is still dragging
+			if (!dragging) return
+
 			const relativeX = clientX - rect.left
 			const percent = (relativeX / rect.width) * 100
 			const clamped = computeSplitPercent(percent)
