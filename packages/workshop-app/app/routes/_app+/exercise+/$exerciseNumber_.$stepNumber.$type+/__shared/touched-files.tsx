@@ -9,8 +9,10 @@ import { type Route as LayoutRoute } from '../+types/_layout.tsx'
 
 function TouchedFiles({
 	diffFilesPromise,
+	compact = false,
 }: {
 	diffFilesPromise: LayoutRoute.ComponentProps['loaderData']['diffFiles']
+	compact?: boolean
 }) {
 	const data = useLoaderData<LayoutRoute.ComponentProps['loaderData']>()
 
@@ -32,7 +34,7 @@ function TouchedFiles({
 						aria-label="Relevant Files"
 					>
 						<Icon name="Files" />
-						Files
+						{compact ? null : <span className="hidden xl:inline">Files</span>}
 					</button>
 				</Popover.Trigger>
 				<Popover.Portal>

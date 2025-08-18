@@ -22,7 +22,8 @@ import {
 	makeTimings,
 } from '@epic-web/workshop-utils/timing.server'
 import slugify from '@sindresorhus/slugify'
-import { useRef } from 'react'
+import * as cookie from 'cookie'
+import { useEffect, useRef, useState } from 'react'
 import {
 	data,
 	redirect,
@@ -43,6 +44,16 @@ import { getSeoMetaTags } from '#app/utils/seo.js'
 import { type Route } from './+types/_layout.tsx'
 import { StepMdx } from './__shared/step-mdx.tsx'
 import TouchedFiles from './__shared/touched-files.tsx'
+
+// shared split state helpers
+const splitCookieName = 'es_split_pct'
+function computeSplitPercent(input: unknown, defaultValue = 50): number {
+	const value = typeof input === 'number' ? input : Number(input)
+	if (Number.isFinite(value)) {
+		return Math.min(80, Math.max(20, Math.round(value * 100) / 100))
+	}
+	return defaultValue
+}
 
 function pageTitle(
 	data: Awaited<Route.ComponentProps['loaderData']> | undefined,
@@ -179,6 +190,14 @@ export async function loader({ request, params }: Route.LoaderArgs) {
 	const subroute = url.pathname.split(
 		`/exercise/${params.exerciseNumber}/${params.stepNumber}/${params.type}/`,
 	)[1]
+
+	// read persisted split percentage from cookie (10-90, default 50)
+	const cookieHeader = request.headers.get('cookie')
+	const rawSplit = cookieHeader
+		? cookie.parse(cookieHeader)[splitCookieName]
+		: null
+	const splitPercent = computeSplitPercent(rawSplit, 50)
+
 	return data(
 		{
 			articleId,
@@ -188,6 +207,7 @@ export async function loader({ request, params }: Route.LoaderArgs) {
 			epicVideoInfosPromise: getEpicVideoInfos(exerciseStepApp.epicVideoEmbeds),
 			exerciseIndex,
 			allApps,
+			splitPercent,
 			prevStepLink: isFirstStep
 				? {
 						to: `/exercise/${exerciseStepApp.exerciseNumber
@@ -273,6 +293,76 @@ export default function ExercisePartRoute({
 	loaderData: data,
 }: Route.ComponentProps) {
 	const inBrowserBrowserRef = useRef<InBrowserBrowserRef>(null)
+	const containerRef = useRef<HTMLDivElement>(null)
+	const leftPaneRef = useRef<HTMLDivElement>(null)
+	const [splitPercent, setSplitPercent] = useState<number>(data.splitPercent)
+	const [leftWidthPx, setLeftWidthPx] = useState<number>(0)
+
+	useEffect(() => {
+		const left = leftPaneRef.current
+		if (!left) return
+		const ro = new ResizeObserver((entries) => {
+			for (const entry of entries) {
+				setLeftWidthPx(entry.contentRect.width)
+			}
+		})
+		ro.observe(left)
+		setLeftWidthPx(left.getBoundingClientRect().width)
+		return () => ro.disconnect()
+	}, [])
+
+	function setCookie(percent: number) {
+		const clamped = computeSplitPercent(percent)
+		document.cookie = `${splitCookieName}=${clamped}; path=/; SameSite=Lax;`
+	}
+
+	function startDrag(initialClientX: number) {
+		const container = containerRef.current
+		if (!container) return
+		const rect = container.getBoundingClientRect()
+		let dragging = true
+
+		function handleMove(clientX: number) {
+			const relativeX = clientX - rect.left
+			const percent = (relativeX / rect.width) * 100
+			const clamped = computeSplitPercent(percent)
+			setSplitPercent(clamped)
+			setCookie(clamped)
+		}
+
+		function onMouseMove(e: MouseEvent) {
+			if (!dragging || e.buttons === 0) {
+				cleanup()
+				return
+			}
+			handleMove(e.clientX)
+		}
+		function onTouchMove(e: TouchEvent) {
+			const firstTouch = e.touches?.[0]
+			if (!dragging || !firstTouch) {
+				cleanup()
+				return
+			}
+			handleMove(firstTouch.clientX)
+		}
+		function cleanup() {
+			if (!dragging) return
+			dragging = false
+			window.removeEventListener('mousemove', onMouseMove)
+			window.removeEventListener('mouseup', cleanup)
+			window.removeEventListener('touchmove', onTouchMove)
+			window.removeEventListener('touchend', cleanup)
+			document.body.style.cursor = ''
+			document.body.style.userSelect = ''
+		}
+		window.addEventListener('mousemove', onMouseMove)
+		window.addEventListener('mouseup', cleanup)
+		window.addEventListener('touchmove', onTouchMove, { passive: false })
+		window.addEventListener('touchend', cleanup)
+		document.body.style.cursor = 'col-resize'
+		document.body.style.userSelect = 'none'
+		handleMove(initialClientX)
+	}
 
 	const titleBits = pageTitle(data)
 
@@ -282,10 +372,17 @@ export default function ExercisePartRoute({
 
 	return (
 		<div className="flex max-w-full flex-grow flex-col">
-			<main className="flex flex-grow flex-col sm:grid sm:h-full sm:min-h-[800px] sm:grid-cols-1 sm:grid-rows-2 md:min-h-[unset] lg:grid-cols-2 lg:grid-rows-1">
-				<div className="relative flex flex-col sm:col-span-1 sm:row-span-1 sm:h-full lg:border-r">
+			<main
+				ref={containerRef}
+				className="flex flex-grow flex-col sm:h-full sm:min-h-[800px] md:min-h-[unset] lg:flex-row"
+			>
+				<div
+					className="relative flex min-w-0 flex-none basis-full flex-col sm:col-span-1 sm:row-span-1 sm:h-full lg:basis-[var(--split-pct)]"
+					style={{ ['--split-pct' as any]: `${splitPercent}%` }}
+					ref={leftPaneRef}
+				>
 					<h1 className="h-14 border-b pl-10 pr-5 text-sm font-medium leading-tight">
-						<div className="flex h-14 flex-wrap items-center justify-between gap-x-2 py-2">
+						<div className="flex h-14 items-center justify-between gap-x-2 overflow-x-auto whitespace-nowrap py-2">
 							<div className="flex items-center justify-start gap-x-2 uppercase">
 								<Link
 									to={getExercisePath(data.exerciseStepApp.exerciseNumber)}
@@ -328,7 +425,8 @@ export default function ExercisePartRoute({
 									aria-label="Previous Step"
 									prefetch="intent"
 								>
-									← Previous
+									<span aria-hidden>←</span>
+									<span className="hidden xl:inline"> Previous</span>
 								</Link>
 							) : (
 								<span />
@@ -339,7 +437,8 @@ export default function ExercisePartRoute({
 									aria-label="Next Step"
 									prefetch="intent"
 								>
-									Next →
+									<span className="hidden xl:inline">Next </span>
+									<span aria-hidden>→</span>
 								</Link>
 							) : (
 								<span />
@@ -361,12 +460,16 @@ export default function ExercisePartRoute({
 					<div className="flex h-16 justify-between border-b-4 border-t lg:border-b-0">
 						<div>
 							<div className="h-full">
-								<TouchedFiles diffFilesPromise={data.diffFiles} />
+								<TouchedFiles
+									diffFilesPromise={data.diffFiles}
+									compact={leftWidthPx < 640}
+								/>
 							</div>
 						</div>
 						<EditFileOnGitHub
 							appName={data.exerciseStepApp.name}
 							relativePath={data.exerciseStepApp.relativePath}
+							compact={leftWidthPx < 720}
 						/>
 						<NavChevrons
 							prev={
@@ -388,7 +491,24 @@ export default function ExercisePartRoute({
 						/>
 					</div>
 				</div>
-				<Outlet />
+				<div
+					role="separator"
+					aria-orientation="vertical"
+					title="Drag to resize"
+					className="hidden w-1 cursor-col-resize bg-border hover:bg-accent lg:block"
+					onMouseDown={(e) => startDrag(e.clientX)}
+					onDoubleClick={() => {
+						setSplitPercent(50)
+						setCookie(50)
+					}}
+					onTouchStart={(e) => {
+						const firstTouch = e.touches?.[0]
+						if (firstTouch) startDrag(firstTouch.clientX)
+					}}
+				/>
+				<div className="flex min-w-0 flex-1">
+					<Outlet />
+				</div>
 			</main>
 		</div>
 	)

@@ -283,12 +283,12 @@ export default function ExercisePartRoute() {
 
 	return (
 		<Tabs.Root
-			className="relative flex flex-col overflow-y-auto sm:col-span-1 sm:row-span-1"
+			className="relative flex min-w-0 flex-1 flex-col overflow-y-auto sm:col-span-1 sm:row-span-1"
 			value={activeTab}
 			// intentionally no onValueChange here because the Link will trigger the
 			// change.
 		>
-			<Tabs.List className="h-14 min-h-14 overflow-x-hidden border-b scrollbar-thin scrollbar-thumb-scrollbar">
+			<Tabs.List className="h-14 min-h-14 overflow-x-auto whitespace-nowrap border-b scrollbar-thin scrollbar-thumb-scrollbar">
 				{tabs.map((tab) => {
 					const hidden = shouldHideTab(tab)
 					return (

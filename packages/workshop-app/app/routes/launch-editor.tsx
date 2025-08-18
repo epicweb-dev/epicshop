@@ -322,9 +322,11 @@ export function EditFileOnGitHub({
 	appName,
 	file,
 	relativePath,
+	compact = false,
 }: {
 	appFile?: string
 	relativePath: string
+	compact?: boolean
 } & (
 	| {
 			file: string
@@ -362,8 +364,14 @@ export function EditFileOnGitHub({
 			target="_blank"
 			to={`${githubPath}/${relativePath}/${appFile}`.replace(/\\/g, '/')}
 		>
-			<span className="block md:hidden">Edit on GitHub</span>
-			<span className="hidden md:block">Edit this page on GitHub</span>
+			{compact ? (
+				<span>Edit</span>
+			) : (
+				<>
+					<span className="block md:hidden">Edit on GitHub</span>
+					<span className="hidden md:block">Edit this page on GitHub</span>
+				</>
+			)}
 		</Link>
 	)
 }
