@@ -362,7 +362,7 @@ export function EditFileOnGitHub({
 			target="_blank"
 			to={`${githubPath}/${relativePath}/${appFile}`.replace(/\\/g, '/')}
 		>
-			<span className="block md:hidden">Edit on GitHub</span>
+			<span className="block md:hidden">Edit</span>
 			<span className="hidden md:block">Edit this page on GitHub</span>
 		</Link>
 	)

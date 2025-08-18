@@ -32,7 +32,7 @@ function TouchedFiles({
 						aria-label="Relevant Files"
 					>
 						<Icon name="Files" />
-						Files
+						<span className="hidden xl:inline">Files</span>
 					</button>
 				</Popover.Trigger>
 				<Popover.Portal>
