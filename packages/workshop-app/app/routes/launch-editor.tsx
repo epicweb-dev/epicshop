@@ -368,7 +368,7 @@ export function EditFileOnGitHub({
 				<span>Edit</span>
 			) : (
 				<>
-					<span className="block md:hidden">Edit</span>
+					<span className="block md:hidden">Edit on GitHub</span>
 					<span className="hidden md:block">Edit this page on GitHub</span>
 				</>
 			)}
