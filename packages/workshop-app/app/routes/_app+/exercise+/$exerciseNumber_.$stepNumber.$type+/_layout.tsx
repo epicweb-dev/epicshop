@@ -189,7 +189,7 @@ export async function loader({ request, params }: Route.LoaderArgs) {
 	const splitPercent = (() => {
 		const asNum = rawSplit ? Number(rawSplit) : NaN
 		if (Number.isFinite(asNum)) {
-			return Math.min(90, Math.max(10, Math.round(asNum)))
+			return Math.min(80, Math.max(20, Math.round(asNum)))
 		}
 		return 50
 	})()
@@ -294,7 +294,7 @@ export default function ExercisePartRoute({
 	const cookieName = 'es_split_pct'
 
 	function setCookie(percent: number) {
-		const clamped = Math.min(90, Math.max(10, Math.round(percent)))
+		const clamped = Math.min(80, Math.max(20, Math.round(percent)))
 		document.cookie = `${cookieName}=${clamped}; path=/; SameSite=Lax;`
 	}
 
@@ -306,7 +306,7 @@ export default function ExercisePartRoute({
 		function handleMove(clientX: number) {
 			const relativeX = clientX - rect.left
 			const percent = (relativeX / rect.width) * 100
-			const clamped = Math.min(90, Math.max(10, percent))
+			const clamped = Math.min(80, Math.max(20, percent))
 			setSplitPercent(clamped)
 			setCookie(clamped)
 		}
@@ -350,11 +350,11 @@ export default function ExercisePartRoute({
 				className="flex flex-grow flex-col sm:h-full sm:min-h-[800px] md:min-h-[unset] lg:flex-row"
 			>
 				<div
-					className="relative flex flex-none flex-col sm:col-span-1 sm:row-span-1 sm:h-full"
-					style={{ width: `${splitPercent}%` }}
+					className="relative flex flex-none basis-full flex-col sm:col-span-1 sm:row-span-1 sm:h-full lg:basis-[var(--split-pct)]"
+					style={{ ['--split-pct' as any]: `${splitPercent}%` }}
 				>
 					<h1 className="h-14 border-b pl-10 pr-5 text-sm font-medium leading-tight">
-						<div className="flex h-14 flex-wrap items-center justify-between gap-x-2 py-2">
+						<div className="flex h-14 items-center justify-between gap-x-2 overflow-x-auto whitespace-nowrap py-2">
 							<div className="flex items-center justify-start gap-x-2 uppercase">
 								<Link
 									to={getExercisePath(data.exerciseStepApp.exerciseNumber)}
@@ -397,7 +397,8 @@ export default function ExercisePartRoute({
 									aria-label="Previous Step"
 									prefetch="intent"
 								>
-									← Previous
+									<span aria-hidden>←</span>
+									<span className="hidden xl:inline"> Previous</span>
 								</Link>
 							) : (
 								<span />
@@ -408,7 +409,8 @@ export default function ExercisePartRoute({
 									aria-label="Next Step"
 									prefetch="intent"
 								>
-									Next →
+									<span className="hidden xl:inline">Next </span>
+									<span aria-hidden>→</span>
 								</Link>
 							) : (
 								<span />

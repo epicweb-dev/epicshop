@@ -283,7 +283,7 @@ export default function ExercisePartRoute() {
 
 	return (
 		<Tabs.Root
-			className="relative flex flex-col overflow-y-auto sm:col-span-1 sm:row-span-1"
+			className="relative flex min-w-0 flex-1 flex-col overflow-y-auto sm:col-span-1 sm:row-span-1"
 			value={activeTab}
 			// intentionally no onValueChange here because the Link will trigger the
 			// change.
