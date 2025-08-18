@@ -45,6 +45,16 @@ import { type Route } from './+types/_layout.tsx'
 import { StepMdx } from './__shared/step-mdx.tsx'
 import TouchedFiles from './__shared/touched-files.tsx'
 
+// shared split state helpers
+const splitCookieName = 'es_split_pct'
+function computeSplitPercent(input: unknown, defaultValue = 50): number {
+	const value = typeof input === 'number' ? input : Number(input)
+	if (Number.isFinite(value)) {
+		return Math.min(80, Math.max(20, Math.round(value)))
+	}
+	return defaultValue
+}
+
 function pageTitle(
 	data: Awaited<Route.ComponentProps['loaderData']> | undefined,
 	workshopTitle?: string,
@@ -184,15 +194,9 @@ export async function loader({ request, params }: Route.LoaderArgs) {
 	// read persisted split percentage from cookie (10-90, default 50)
 	const cookieHeader = request.headers.get('cookie')
 	const rawSplit = cookieHeader
-		? cookie.parse(cookieHeader)['es_split_pct']
+		? cookie.parse(cookieHeader)[splitCookieName]
 		: null
-	const splitPercent = (() => {
-		const asNum = rawSplit ? Number(rawSplit) : NaN
-		if (Number.isFinite(asNum)) {
-			return Math.min(80, Math.max(20, Math.round(asNum)))
-		}
-		return 50
-	})()
+	const splitPercent = computeSplitPercent(rawSplit, 50)
 
 	return data(
 		{
@@ -292,7 +296,6 @@ export default function ExercisePartRoute({
 	const containerRef = useRef<HTMLDivElement>(null)
 	const leftPaneRef = useRef<HTMLDivElement>(null)
 	const [splitPercent, setSplitPercent] = useState<number>(data.splitPercent)
-	const cookieName = 'es_split_pct'
 	const [leftWidthPx, setLeftWidthPx] = useState<number>(0)
 
 	useEffect(() => {
@@ -309,33 +312,42 @@ export default function ExercisePartRoute({
 	}, [])
 
 	function setCookie(percent: number) {
-		const clamped = Math.min(80, Math.max(20, Math.round(percent)))
-		document.cookie = `${cookieName}=${clamped}; path=/; SameSite=Lax;`
+		const clamped = computeSplitPercent(percent)
+		document.cookie = `${splitCookieName}=${clamped}; path=/; SameSite=Lax;`
 	}
 
 	function startDrag(initialClientX: number) {
 		const container = containerRef.current
 		if (!container) return
 		const rect = container.getBoundingClientRect()
+		let dragging = true
 
 		function handleMove(clientX: number) {
 			const relativeX = clientX - rect.left
 			const percent = (relativeX / rect.width) * 100
-			const clamped = Math.min(80, Math.max(20, percent))
+			const clamped = computeSplitPercent(percent)
 			setSplitPercent(clamped)
 			setCookie(clamped)
 		}
 
 		function onMouseMove(e: MouseEvent) {
+			if (!dragging || e.buttons === 0) {
+				cleanup()
+				return
+			}
 			handleMove(e.clientX)
 		}
 		function onTouchMove(e: TouchEvent) {
 			const firstTouch = e.touches?.[0]
-			if (firstTouch) {
-				handleMove(firstTouch.clientX)
+			if (!dragging || !firstTouch) {
+				cleanup()
+				return
 			}
+			handleMove(firstTouch.clientX)
 		}
 		function cleanup() {
+			if (!dragging) return
+			dragging = false
 			window.removeEventListener('mousemove', onMouseMove)
 			window.removeEventListener('mouseup', cleanup)
 			window.removeEventListener('touchmove', onTouchMove)
@@ -457,7 +469,7 @@ export default function ExercisePartRoute({
 						<EditFileOnGitHub
 							appName={data.exerciseStepApp.name}
 							relativePath={data.exerciseStepApp.relativePath}
-							shortLabel={leftWidthPx < 720}
+							compact={leftWidthPx < 720}
 						/>
 						<NavChevrons
 							prev={
