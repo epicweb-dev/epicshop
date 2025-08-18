@@ -485,6 +485,10 @@ export default function ExercisePartRoute({
 					title="Drag to resize"
 					className="hidden w-1 cursor-col-resize bg-border hover:bg-accent lg:block"
 					onMouseDown={(e) => startDrag(e.clientX)}
+					onDoubleClick={() => {
+						setSplitPercent(50)
+						setCookie(50)
+					}}
 					onTouchStart={(e) => {
 						const firstTouch = e.touches?.[0]
 						if (firstTouch) startDrag(firstTouch.clientX)
