@@ -23,7 +23,7 @@ import {
 } from '@epic-web/workshop-utils/timing.server'
 import slugify from '@sindresorhus/slugify'
 import * as cookie from 'cookie'
-import { useRef, useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import {
 	data,
 	redirect,
@@ -290,8 +290,23 @@ export default function ExercisePartRoute({
 }: Route.ComponentProps) {
 	const inBrowserBrowserRef = useRef<InBrowserBrowserRef>(null)
 	const containerRef = useRef<HTMLDivElement>(null)
+	const leftPaneRef = useRef<HTMLDivElement>(null)
 	const [splitPercent, setSplitPercent] = useState<number>(data.splitPercent)
 	const cookieName = 'es_split_pct'
+	const [leftWidthPx, setLeftWidthPx] = useState<number>(0)
+
+	useEffect(() => {
+		const left = leftPaneRef.current
+		if (!left) return
+		const ro = new ResizeObserver((entries) => {
+			for (const entry of entries) {
+				setLeftWidthPx(entry.contentRect.width)
+			}
+		})
+		ro.observe(left)
+		setLeftWidthPx(left.getBoundingClientRect().width)
+		return () => ro.disconnect()
+	}, [])
 
 	function setCookie(percent: number) {
 		const clamped = Math.min(80, Math.max(20, Math.round(percent)))
@@ -352,6 +367,7 @@ export default function ExercisePartRoute({
 				<div
 					className="relative flex min-w-0 flex-none basis-full flex-col sm:col-span-1 sm:row-span-1 sm:h-full lg:basis-[var(--split-pct)]"
 					style={{ ['--split-pct' as any]: `${splitPercent}%` }}
+					ref={leftPaneRef}
 				>
 					<h1 className="h-14 border-b pl-10 pr-5 text-sm font-medium leading-tight">
 						<div className="flex h-14 items-center justify-between gap-x-2 overflow-x-auto whitespace-nowrap py-2">
@@ -432,12 +448,16 @@ export default function ExercisePartRoute({
 					<div className="flex h-16 justify-between border-b-4 border-t lg:border-b-0">
 						<div>
 							<div className="h-full">
-								<TouchedFiles diffFilesPromise={data.diffFiles} />
+								<TouchedFiles
+									diffFilesPromise={data.diffFiles}
+									compact={leftWidthPx < 640}
+								/>
 							</div>
 						</div>
 						<EditFileOnGitHub
 							appName={data.exerciseStepApp.name}
 							relativePath={data.exerciseStepApp.relativePath}
+							shortLabel={leftWidthPx < 720}
 						/>
 						<NavChevrons
 							prev={
