@@ -321,200 +321,20 @@ export default function ExercisePartRoute({
 		if (!container) return
 		const rect = container.getBoundingClientRect()
 		let dragging = true
-		let lastKnownX = initialClientX
 
-		// Create a global overlay to capture all mouse events during drag
-		const overlay = document.createElement('div')
-		overlay.style.position = 'fixed'
-		overlay.style.top = '0'
-		overlay.style.left = '0'
-		overlay.style.width = '100vw'
-		overlay.style.height = '100vh'
-		overlay.style.zIndex = '9999'
-		overlay.style.cursor = 'col-resize'
-		overlay.style.pointerEvents = 'auto'
-		overlay.style.backgroundColor = 'transparent'
-		// Add a subtle visual indicator that dragging is active
-		overlay.style.border = '2px dashed rgba(59, 130, 246, 0.3)'
-		overlay.style.boxSizing = 'border-box'
-		// Add a subtle background to make it clear the overlay is active
-		overlay.style.background = 'linear-gradient(90deg, rgba(59, 130, 246, 0.02) 0%, rgba(59, 130, 246, 0.02) 100%)'
-		
-		// Add a split percentage indicator
-		const indicator = document.createElement('div')
-		indicator.style.position = 'fixed'
-		indicator.style.top = '20px'
-		indicator.style.right = '20px'
-		indicator.style.padding = '8px 12px'
-		indicator.style.backgroundColor = 'rgba(0, 0, 0, 0.8)'
-		indicator.style.color = 'white'
-		indicator.style.borderRadius = '6px'
-		indicator.style.fontSize = '14px'
-		indicator.style.fontWeight = '500'
-		indicator.style.zIndex = '10000'
-		indicator.style.pointerEvents = 'none'
-		indicator.textContent = `${Math.round(splitPercent)}%`
-		document.body.appendChild(indicator)
-		
-		// Add a message to inform users they can press Escape to cancel
-		const helpText = document.createElement('div')
-		helpText.style.position = 'fixed'
-		helpText.style.bottom = '20px'
-		helpText.style.left = '50%'
-		helpText.style.transform = 'translateX(-50%)'
-		helpText.style.padding = '8px 16px'
-		helpText.style.backgroundColor = 'rgba(0, 0, 0, 0.7)'
-		helpText.style.color = 'white'
-		helpText.style.borderRadius = '6px'
-		helpText.style.fontSize = '12px'
-		helpText.style.zIndex = '10000'
-		helpText.style.pointerEvents = 'none'
-		helpText.textContent = 'Press Escape to cancel dragging'
-		document.body.appendChild(helpText)
-		
-		// Add a visual indicator for the current drag position
-		const dragLine = document.createElement('div')
-		dragLine.style.position = 'fixed'
-		dragLine.style.top = '0'
-		dragLine.style.bottom = '0'
-		dragLine.style.width = '2px'
-		dragLine.style.backgroundColor = 'rgba(59, 130, 246, 0.8)'
-		dragLine.style.zIndex = '9998'
-		dragLine.style.pointerEvents = 'none'
-		dragLine.style.transition = 'left 0.05s ease-out'
-		// Position the drag line at the initial split position
-		const initialLeft = (splitPercent / 100) * rect.width
-		dragLine.style.left = `${initialLeft}px`
-		document.body.appendChild(dragLine)
-		
-		// Add a subtle animation to the overlay to indicate it's active
-		overlay.style.animation = 'pulse 2s ease-in-out infinite'
-		overlay.style.animationDelay = '0.5s'
-		
-		// Add CSS animation for the pulse effect
-		if (!document.getElementById('drag-pulse-animation')) {
-			const style = document.createElement('style')
-			style.id = 'drag-pulse-animation'
-			style.textContent = `
-				@keyframes pulse {
-					0%, 100% { opacity: 0.3; }
-					50% { opacity: 0.6; }
-				}
-			`
-			document.head.appendChild(style)
-		}
-		
-		// Add a subtle shadow to the drag line for better visibility
-		dragLine.style.boxShadow = '0 0 8px rgba(59, 130, 246, 0.4)'
-		
-		// Add a subtle glow effect to the overlay
-		overlay.style.boxShadow = 'inset 0 0 20px rgba(59, 130, 246, 0.1)'
-
-		document.body.appendChild(overlay)
-
-		// Add event listeners to the overlay to ensure we capture all events
-		overlay.addEventListener('mousemove', onMouseMove)
-		overlay.addEventListener('pointermove', onPointerMove)
-		overlay.addEventListener('mouseup', cleanup)
-		overlay.addEventListener('pointerup', cleanup)
-		overlay.addEventListener('mouseleave', cleanup)
-		
-		// Store the mousedown handler reference for proper cleanup
-		const onMouseDown = (e: MouseEvent) => {
-			// If user clicks anywhere on the overlay, start tracking from that position
-			if (e.buttons === 1) { // Left mouse button
-				handleMove(e.clientX)
-			}
-		}
-		overlay.addEventListener('mousedown', onMouseDown)
-		
-		// Add keyboard support for accessibility and escape hatch
-		const onKeyDown = (e: KeyboardEvent) => {
-			if (e.key === 'Escape') {
-				cleanup()
-			}
-		}
-		overlay.addEventListener('keydown', onKeyDown)
-		overlay.setAttribute('tabindex', '0') // Make overlay focusable for keyboard events
-		
-		// Capture the pointer to ensure we get all mouse events
-		const divider = container.querySelector('[role="separator"]') as HTMLElement
-		if (divider) {
-			divider.setPointerCapture(0)
-		}
-
-		// Disable pointer events on all iframes during drag to prevent interference
-		const iframes = document.querySelectorAll('iframe')
-		const originalIframeStyles: Array<{ element: HTMLIFrameElement; originalStyle: string }> = []
-		iframes.forEach(iframe => {
-			originalIframeStyles.push({
-				element: iframe,
-				originalStyle: iframe.style.pointerEvents
-			})
-			iframe.style.pointerEvents = 'none'
-		})
-
-		// Fallback mechanism: periodically check if we're still dragging
-		// This helps catch cases where pointer events are lost
-		const fallbackInterval = setInterval(() => {
-			if (!dragging) {
-				clearInterval(fallbackInterval)
-				return
-			}
-			
-			// Check if we're still dragging by verifying the mouse button state
-			// This is more reliable than just checking position
-			if (window.event?.buttons === 0) {
-				cleanup()
-				return
-			}
-			
-			// Also check if we need to recover from lost events
-			// by looking at the current mouse position
-			if (window.event && window.event.clientX !== undefined) {
-				const currentX = window.event.clientX
-				if (Math.abs(currentX - lastKnownX) > 5) { // If mouse moved significantly
-					handleMove(currentX)
-				}
-			}
-			
-			// Check if mouse has re-entered the viewport after being outside
-			// This helps recover from cases where the mouse left and came back
-			if (window.event && window.event.clientX !== undefined) {
-				const currentX = window.event.clientX
-				if (currentX >= 0 && currentX <= window.innerWidth && 
-					Math.abs(currentX - lastKnownX) > 10) { // Significant movement after re-entry
-					handleMove(currentX)
-				}
-			}
-		}, 100) // Check every 100ms for button state
+		// Disable pointer events on iframes so the drag keeps receiving events
+		const iframes = Array.from(
+			document.querySelectorAll('iframe'),
+		) as HTMLIFrameElement[]
+		const originalPointerEvents = iframes.map((el) => el.style.pointerEvents)
+		iframes.forEach((el) => (el.style.pointerEvents = 'none'))
 
 		function handleMove(clientX: number) {
-			lastKnownX = clientX
-			
-			// Clamp the clientX to the viewport bounds to prevent extreme values
-			const clampedClientX = Math.max(0, Math.min(clientX, window.innerWidth))
-			
-			const relativeX = clampedClientX - rect.left
+			const relativeX = clientX - rect.left
 			const percent = (relativeX / rect.width) * 100
 			const clamped = computeSplitPercent(percent)
-			
-			// Provide visual feedback when near boundaries
-			if (clamped <= 22 || clamped >= 78) {
-				overlay.style.border = '2px dashed rgba(239, 68, 68, 0.6)' // Red border near limits
-				dragLine.style.backgroundColor = 'rgba(239, 68, 68, 0.8)' // Red drag line near limits
-			} else {
-				overlay.style.border = '2px dashed rgba(59, 130, 246, 0.3)' // Blue border normally
-				dragLine.style.backgroundColor = 'rgba(59, 130, 246, 0.8)' // Blue drag line normally
-			}
-			
 			setSplitPercent(clamped)
 			setCookie(clamped)
-			indicator.textContent = `${Math.round(clamped)}%`
-			
-			// Update the drag line position relative to the container
-			const dragLineLeft = Math.max(0, Math.min(relativeX, rect.width))
-			dragLine.style.left = `${dragLineLeft}px`
 		}
 
 		function onMouseMove(e: MouseEvent) {
@@ -522,29 +342,8 @@ export default function ExercisePartRoute({
 				cleanup()
 				return
 			}
-			// Ensure the mouse position is within reasonable bounds
-			if (e.clientX < 0 || e.clientX > window.innerWidth) {
-				// If mouse is outside viewport, use the last known position
-				// but don't update the split - just maintain the current state
-				return
-			}
 			handleMove(e.clientX)
 		}
-
-		function onPointerMove(e: PointerEvent) {
-			if (!dragging || e.buttons === 0) {
-				cleanup()
-				return
-			}
-			// Ensure the pointer position is within reasonable bounds
-			if (e.clientX < 0 || e.clientX > window.innerWidth) {
-				// If pointer is outside viewport, use the last known position
-				// but don't update the split - just maintain the current state
-				return
-			}
-			handleMove(e.clientX)
-		}
-
 		function onTouchMove(e: TouchEvent) {
 			const firstTouch = e.touches?.[0]
 			if (!dragging || !firstTouch) {
@@ -553,67 +352,23 @@ export default function ExercisePartRoute({
 			}
 			handleMove(firstTouch.clientX)
 		}
-
 		function cleanup() {
 			if (!dragging) return
 			dragging = false
-			
-			// Remove event listeners from overlay
-			overlay.removeEventListener('mousemove', onMouseMove)
-			overlay.removeEventListener('pointermove', onPointerMove)
-			overlay.removeEventListener('mouseup', cleanup)
-			overlay.removeEventListener('pointerup', cleanup)
-			overlay.removeEventListener('mouseleave', cleanup)
-			overlay.removeEventListener('mousedown', onMouseDown) // Remove mousedown listener
-			overlay.removeEventListener('keydown', onKeyDown) // Remove keyboard listener
-			overlay.removeAttribute('tabindex') // Remove tabindex
-			
-			// Remove the global overlay
-			if (overlay.parentNode) {
-				overlay.parentNode.removeChild(overlay)
-			}
-			// Remove the indicator
-			if (indicator.parentNode) {
-				indicator.parentNode.removeChild(indicator)
-			}
-			// Remove the help text
-			if (helpText.parentNode) {
-				helpText.parentNode.removeChild(helpText)
-			}
-			// Remove the drag line
-			if (dragLine.parentNode) {
-				dragLine.parentNode.removeChild(dragLine)
-			}
-			
-			// Clear the fallback interval
-			clearInterval(fallbackInterval)
-			
-			// Release pointer capture
-			if (divider) {
-				divider.releasePointerCapture(0)
-			}
-
-			// Restore iframe pointer events
-			originalIframeStyles.forEach(({ element, originalStyle }) => {
-				element.style.pointerEvents = originalStyle
-			})
-
+			iframes.forEach(
+				(el, i) => (el.style.pointerEvents = originalPointerEvents[i] ?? ''),
+			)
 			window.removeEventListener('mousemove', onMouseMove)
-			window.removeEventListener('pointermove', onPointerMove)
 			window.removeEventListener('mouseup', cleanup)
-			window.removeEventListener('pointerup', cleanup)
-			window.removeEventListener('touchmove', onTouchMove, { passive: false })
+			window.removeEventListener('touchmove', onTouchMove)
 			window.removeEventListener('touchend', cleanup)
 			document.body.style.cursor = ''
 			document.body.style.userSelect = ''
 		}
 
-		// Use both mousemove and pointermove for better compatibility
 		window.addEventListener('mousemove', onMouseMove)
-		window.addEventListener('pointermove', onPointerMove)
 		window.addEventListener('mouseup', cleanup)
-		window.addEventListener('pointerup', cleanup)
-		window.addEventListener('touchmove', onTouchMove, { passive: false })
+		window.addEventListener('touchmove', onTouchMove)
 		window.addEventListener('touchend', cleanup)
 		document.body.style.cursor = 'col-resize'
 		document.body.style.userSelect = 'none'
