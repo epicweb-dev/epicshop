@@ -231,7 +231,7 @@ function LaunchEditorImpl({
 		>
 			{peRedirectInput}
 			{showProgressBarField}
-			<input type="hidden" name="line" value={line} />
+			<input type="hidden" name="line" value={typeof line === 'number' ? line : undefined} />
 			<input type="hidden" name="column" value={column} />
 			<input type="hidden" name="type" value={type} />
 			<input type="hidden" name="file" value={file} />
