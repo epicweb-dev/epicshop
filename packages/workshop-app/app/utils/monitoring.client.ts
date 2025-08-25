@@ -59,3 +59,32 @@ export function init() {
 		},
 	})
 }
+
+// Helper function to capture errors with user context
+export function captureExceptionWithUser(
+	error: Error,
+	user?: any,
+	clientId?: string,
+) {
+	if (!Sentry) return
+
+	const userContext = user
+		? {
+				id: user.id,
+				email: user.email,
+				username: user.name || user.email,
+				ip_address: undefined, // Don't capture IP for privacy
+			}
+		: clientId
+			? {
+					id: `client-${clientId}`,
+					username: 'Anonymous User',
+				}
+			: null
+
+	if (userContext) {
+		Sentry.setUser(userContext)
+	}
+
+	Sentry.captureException(error)
+}
