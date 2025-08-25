@@ -51,7 +51,10 @@ script to `epicshop.scripts` in the root `package.json`:
 		"title": "Full Stack Foundations 🔭",
 		"githubRoot": "https://github.com/epicweb-dev/full-stack-foundations/blob/main",
 		"root": true,
-		"epicWorkshopSlug": "full-stack-foundations",
+		"product": {
+			"host": "www.epicweb.dev",
+			"slug": "full-stack-foundations"
+		},
 		"scripts": {
 			"postupdate": "echo '🎉🎉🎉'"
 		}

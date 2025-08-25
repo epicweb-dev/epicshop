@@ -17,16 +17,25 @@ component.
 <EpicVideo url="https://www.epicweb.dev/workshops/full-stack-foundations/styling/intro-to-full-stack-foundations-workshop" />
 ```
 
-You must also add the `epicWorkshopSlug` to the `epicshop` section in
-`package.json`:
+You must also add the `product.slug` and `product.host` to the `epicshop`
+section in `package.json`:
 
 ```json
 {
 	"epicshop": {
-		"epicWorkshopSlug": "full-stack-foundations"
+		"product": {
+			"slug": "full-stack-foundations",
+			"host": "www.epicweb.dev"
+		}
 	}
 }
 ```
 
-The `epicWorkshopSlug` is used to fetch the workshop data from the `epicweb.dev`
-API and is necessary for progress tracking.
+The `product.slug` and `product.host` are used to fetch the workshop data from
+the `epicweb.dev` API and are necessary for progress tracking.
+
+To get chat working, you must also add a `discordChannelId` pointing to the
+Discord forum channel for the workshop and `discordTags` pointing to one or more
+tags for the workshop.
+
+Check out the [configuration](./configuration.md) page for more information.
