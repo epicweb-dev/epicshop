@@ -21,7 +21,7 @@ async function getDirModifiedTime(
 }
 
 async function getDirModifiedTimeImpl(dir: string): Promise<number> {
-	const isIgnored = await isGitIgnored({ cwd: dir })
+	const isIgnored = await isGitIgnored({ cwd: dir }).catch(() => () => false)
 	const files = await fs.promises
 		.readdir(dir, { withFileTypes: true })
 		.catch(() => [])
