@@ -80,6 +80,9 @@ export async function start(options: StartOptions = {}): Promise<StartResult> {
 			: `node ${sentryImport} ./server/dev-server.js`
 
 		const childEnv: NodeJS.ProcessEnv = {
+			TERM: 'xterm-256color',
+			FORCE_COLOR: '1',
+			COLORTERM: 'truecolor',
 			...process.env,
 			EPICSHOP_CONTEXT_CWD: getEnv().EPICSHOP_CONTEXT_CWD,
 			EPICSHOP_GITHUB_REPO: getEnv().EPICSHOP_GITHUB_REPO,
