@@ -593,7 +593,7 @@ export const userProgressResource = {
 }
 
 export function initResources(server: McpServer) {
-	server.resource(
+	server.registerResource(
 		workshopContextResource.name,
 		workshopContextResource.uriTemplate,
 		{ description: workshopContextResource.description },
@@ -610,7 +610,7 @@ export function initResources(server: McpServer) {
 		},
 	)
 
-	server.resource(
+	server.registerResource(
 		exerciseContextResource.name,
 		exerciseContextResource.uriTemplate,
 		{ description: exerciseContextResource.description },
@@ -644,7 +644,7 @@ export function initResources(server: McpServer) {
 		},
 	)
 
-	server.resource(
+	server.registerResource(
 		diffBetweenAppsResource.name,
 		diffBetweenAppsResource.uriTemplate,
 		{ description: diffBetweenAppsResource.description },
@@ -668,7 +668,7 @@ export function initResources(server: McpServer) {
 		},
 	)
 
-	server.resource(
+	server.registerResource(
 		exerciseStepProgressDiffResource.name,
 		exerciseStepProgressDiffResource.uriTemplate,
 		{ description: exerciseStepProgressDiffResource.description },
@@ -688,7 +688,7 @@ export function initResources(server: McpServer) {
 		},
 	)
 
-	server.resource(
+	server.registerResource(
 		userInfoResource.name,
 		userInfoResource.uriTemplate,
 		{ description: userInfoResource.description },
@@ -703,7 +703,7 @@ export function initResources(server: McpServer) {
 		},
 	)
 
-	server.resource(
+	server.registerResource(
 		userAccessResource.name,
 		userAccessResource.uriTemplate,
 		{ description: userAccessResource.description },
@@ -719,7 +719,7 @@ export function initResources(server: McpServer) {
 		},
 	)
 
-	server.resource(
+	server.registerResource(
 		userProgressResource.name,
 		userProgressResource.uriTemplate,
 		{ description: userProgressResource.description },

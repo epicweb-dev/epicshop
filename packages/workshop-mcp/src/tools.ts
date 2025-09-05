@@ -43,11 +43,14 @@ import {
 const clientSupportsEmbeddedResources = false
 
 export function initTools(server: McpServer) {
-	server.tool(
+	server.registerTool(
 		'login',
-		`Allow the user to login (or sign up) to the workshop. First`.trim(),
 		{
-			workshopDirectory: workshopDirectoryInputSchema,
+			description:
+				`Allow the user to login (or sign up) to the epic workshop.`.trim(),
+			inputSchema: {
+				workshopDirectory: workshopDirectoryInputSchema,
+			},
 		},
 		async ({ workshopDirectory }) => {
 			await handleWorkshopDirectory(workshopDirectory)
@@ -147,11 +150,13 @@ export function initTools(server: McpServer) {
 		},
 	)
 
-	server.tool(
+	server.registerTool(
 		'logout',
-		`Allow the user to logout of the workshop (based on the workshop's host) and delete cache data.`,
 		{
-			workshopDirectory: workshopDirectoryInputSchema,
+			description: `Allow the user to logout of the workshop (based on the workshop's host) and delete cache data.`,
+			inputSchema: {
+				workshopDirectory: workshopDirectoryInputSchema,
+			},
 		},
 		async ({ workshopDirectory }) => {
 			await handleWorkshopDirectory(workshopDirectory)
@@ -163,9 +168,10 @@ export function initTools(server: McpServer) {
 		},
 	)
 
-	server.tool(
+	server.registerTool(
 		'set_playground',
-		`
+		{
+			description: `
 Sets the playground environment so the user can continue to that exercise or see
 what that step looks like in their playground environment.
 
@@ -195,20 +201,21 @@ F. Set to the first step problem of the fifth exercise
 
 An error will be returned if no app is found for the given arguments.
 	`.trim(),
-		{
-			workshopDirectory: workshopDirectoryInputSchema,
-			exerciseNumber: z.coerce
-				.number()
-				.optional()
-				.describe('The exercise number to set the playground to'),
-			stepNumber: z.coerce
-				.number()
-				.optional()
-				.describe('The step number to set the playground to'),
-			type: z
-				.enum(['problem', 'solution'])
-				.optional()
-				.describe('The type of app to set the playground to'),
+			inputSchema: {
+				workshopDirectory: workshopDirectoryInputSchema,
+				exerciseNumber: z.coerce
+					.number()
+					.optional()
+					.describe('The exercise number to set the playground to'),
+				stepNumber: z.coerce
+					.number()
+					.optional()
+					.describe('The step number to set the playground to'),
+				type: z
+					.enum(['problem', 'solution'])
+					.optional()
+					.describe('The type of app to set the playground to'),
+			},
 		},
 		async ({ workshopDirectory, exerciseNumber, stepNumber, type }) => {
 			workshopDirectory = await handleWorkshopDirectory(workshopDirectory)
@@ -326,27 +333,29 @@ An error will be returned if no app is found for the given arguments.
 		},
 	)
 
-	server.tool(
+	server.registerTool(
 		'update_progress',
-		`
+		{
+			description: `
 Intended to help you mark an Epic lesson as complete or incomplete.
 
 This will mark the Epic lesson as complete or incomplete and update the user's progress (get updated progress with the \`get_user_progress\` tool, the \`get_exercise_context\` tool, or the \`get_workshop_context\` tool).
 		`.trim(),
-		{
-			workshopDirectory: workshopDirectoryInputSchema,
-			epicLessonSlug: z
-				.string()
-				.describe(
-					'The slug of the Epic lesson to mark as complete (can be retrieved from the `get_exercise_context` tool or the `get_workshop_context` tool)',
-				),
-			complete: z
-				.boolean()
-				.optional()
-				.default(true)
-				.describe(
-					'Whether to mark the lesson as complete or incomplete (defaults to true)',
-				),
+			inputSchema: {
+				workshopDirectory: workshopDirectoryInputSchema,
+				epicLessonSlug: z
+					.string()
+					.describe(
+						'The slug of the Epic lesson to mark as complete (can be retrieved from the `get_exercise_context` tool or the `get_workshop_context` tool)',
+					),
+				complete: z
+					.boolean()
+					.optional()
+					.default(true)
+					.describe(
+						'Whether to mark the lesson as complete or incomplete (defaults to true)',
+					),
+			},
 		},
 		async ({ workshopDirectory, epicLessonSlug, complete }) => {
 			await handleWorkshopDirectory(workshopDirectory)
@@ -369,15 +378,17 @@ This will mark the Epic lesson as complete or incomplete and update the user's p
 // accessible via tools, but allowing the LLM to access them on demand is useful
 // for some situations.
 export function initResourceTools(server: McpServer) {
-	server.tool(
+	server.registerTool(
 		'get_workshop_context',
-		`
+		{
+			description: `
 Indended to help you get wholistic context of the topics covered in this
 workshop. This doesn't go into as much detail per exercise as the
 \`get_exercise_context\` tool, but it is a good starting point to orient
 yourself on the workshop as a whole.
 		`.trim(),
-		workshopContextResource.inputSchema,
+			inputSchema: workshopContextResource.inputSchema,
+		},
 		async ({ workshopDirectory }) => {
 			workshopDirectory = await handleWorkshopDirectory(workshopDirectory)
 			const resource = await workshopContextResource.getResource({
@@ -389,9 +400,10 @@ yourself on the workshop as a whole.
 		},
 	)
 
-	server.tool(
+	server.registerTool(
 		'get_exercise_context',
-		`
+		{
+			description: `
 Intended to help a student understand what they need to do for the current
 exercise step.
 
@@ -406,7 +418,8 @@ more than once.
 \`get_exercise_step_progress_diff\` tool to help a student understand what
 work they still need to do and answer any questions about the exercise.
 		`.trim(),
-		exerciseContextResource.inputSchema,
+			inputSchema: exerciseContextResource.inputSchema,
+		},
 		async ({ workshopDirectory, exerciseNumber }) => {
 			workshopDirectory = await handleWorkshopDirectory(workshopDirectory)
 			const resource = await exerciseContextResource.getResource({
@@ -419,9 +432,10 @@ work they still need to do and answer any questions about the exercise.
 		},
 	)
 
-	server.tool(
+	server.registerTool(
 		'get_diff_between_apps',
-		`
+		{
+			description: `
 Intended to give context about the changes between two apps.
 
 The output is a git diff of the playground directory as BASE (their work in
@@ -434,7 +448,8 @@ App IDs are formatted as \`{exerciseNumber}.{stepNumber}.{type}\`.
 
 If the user asks for the diff for 2.3, then use 02.03.problem for app1 and 02.03.solution for app2.
 		`,
-		diffBetweenAppsResource.inputSchema,
+			inputSchema: diffBetweenAppsResource.inputSchema,
+		},
 		async ({ workshopDirectory, app1, app2 }) => {
 			workshopDirectory = await handleWorkshopDirectory(workshopDirectory)
 			const resource = await diffBetweenAppsResource.getResource({
@@ -448,9 +463,10 @@ If the user asks for the diff for 2.3, then use 02.03.problem for app1 and 02.03
 		},
 	)
 
-	server.tool(
+	server.registerTool(
 		'get_exercise_step_progress_diff',
-		`
+		{
+			description: `
 Intended to help a student understand what work they still have to complete.
 
 This is not a typical diff. It's a diff of the user's work in progress against
@@ -475,7 +491,8 @@ For additional context, you can use the \`get_exercise_instructions\` tool
 to get the instructions for the current exercise step to help explain the
 significance of changes.
 		`.trim(),
-		exerciseStepProgressDiffResource.inputSchema,
+			inputSchema: exerciseStepProgressDiffResource.inputSchema,
+		},
 		async ({ workshopDirectory }) => {
 			workshopDirectory = await handleWorkshopDirectory(workshopDirectory)
 			const resource = await exerciseStepProgressDiffResource.getResource({
@@ -487,9 +504,10 @@ significance of changes.
 		},
 	)
 
-	server.tool(
+	server.registerTool(
 		'get_user_info',
-		`
+		{
+			description: `
 Intended to help you get information about the current user.
 
 This includes the user's name, email, etc. It's mostly useful to determine
@@ -497,7 +515,8 @@ whether the user is logged in and know who they are.
 
 If the user is not logged in, tell them to log in by running the \`login\` tool.
 		`.trim(),
-		userInfoResource.inputSchema,
+			inputSchema: userInfoResource.inputSchema,
+		},
 		async ({ workshopDirectory }) => {
 			workshopDirectory = await handleWorkshopDirectory(workshopDirectory)
 			const resource = await userInfoResource.getResource({ workshopDirectory })
@@ -507,9 +526,10 @@ If the user is not logged in, tell them to log in by running the \`login\` tool.
 		},
 	)
 
-	server.tool(
+	server.registerTool(
 		'get_user_access',
-		`
+		{
+			description: `
 Will tell you whether the user has access to the paid features of the workshop.
 
 Paid features include:
@@ -522,7 +542,8 @@ Paid features include:
 
 Encourage the user to upgrade if they need access to the paid features.
 		`.trim(),
-		userAccessResource.inputSchema,
+			inputSchema: userAccessResource.inputSchema,
+		},
 		async ({ workshopDirectory }) => {
 			workshopDirectory = await handleWorkshopDirectory(workshopDirectory)
 			const resource = await userAccessResource.getResource({
@@ -534,15 +555,17 @@ Encourage the user to upgrade if they need access to the paid features.
 		},
 	)
 
-	server.tool(
+	server.registerTool(
 		'get_user_progress',
-		`
+		{
+			description: `
 Intended to help you get the progress of the current user. Can often be helpful
 to know what the next step that needs to be completed is. Make sure to provide
 the user with the URL of relevant incomplete lessons so they can watch them and
 then mark them as complete.
 		`.trim(),
-		userProgressResource.inputSchema,
+			inputSchema: userProgressResource.inputSchema,
+		},
 		async ({ workshopDirectory }) => {
 			workshopDirectory = await handleWorkshopDirectory(workshopDirectory)
 			const resource = await userProgressResource.getResource({
@@ -557,9 +580,10 @@ then mark them as complete.
 
 // Sometimes the user will ask the LLM to select a prompt to use so they don't have to.
 export function initPromptTools(server: McpServer) {
-	server.tool(
+	server.registerTool(
 		'get_quiz_instructions',
-		`
+		{
+			description: `
 If the user asks you to quiz them on a topic from the workshop, use this tool to
 retrieve the instructions for how to do so.
 
@@ -567,7 +591,8 @@ retrieve the instructions for how to do so.
 - If they ask for a specific exericse, supply that exercise number.
 - If they ask for a topic and you don't know which exercise that topic is in, use \`get_workshop_context\` to get the list of exercises and their topics and then supply the appropriate exercise number.
 		`.trim(),
-		quizMeInputSchema,
+			inputSchema: quizMeInputSchema,
+		},
 		async ({ workshopDirectory, exerciseNumber }) => {
 			workshopDirectory = await handleWorkshopDirectory(workshopDirectory)
 			const result = await quizMe({ workshopDirectory, exerciseNumber })

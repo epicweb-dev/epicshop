@@ -65,10 +65,14 @@ Please use this context to provide quiz questions, one at a time, to me to help 
 }
 
 export function initPrompts(server: McpServer) {
-	server.prompt(
+	server.registerPrompt(
 		'quiz_me',
-		'Have the LLM quiz you on topics from the workshop exercises',
-		quizMeInputSchema,
+		{
+			title: 'Quiz Me',
+			description:
+				'Have the LLM quiz you on topics from the workshop exercises',
+			argsSchema: quizMeInputSchema,
+		},
 		quizMe,
 	)
 }

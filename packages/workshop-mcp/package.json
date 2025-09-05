@@ -35,13 +35,13 @@
   "dependencies": {
     "@epic-web/invariant": "^1.0.0",
     "@epic-web/workshop-utils": "file:../workshop-utils",
-    "@modelcontextprotocol/sdk": "^1.14.0",
+    "@modelcontextprotocol/sdk": "^1.17.5",
     "@sentry/node": "^10.5.0",
     "openid-client": "^6.6.2",
     "zod": "^3.25.71"
   },
   "devDependencies": {
-    "@modelcontextprotocol/inspector": "^0.16.1",
+    "@modelcontextprotocol/inspector": "^0.16.6",
     "@types/node": "^24.0.10",
     "tshy": "^3.0.2",
     "tsx": "^4.20.3",
