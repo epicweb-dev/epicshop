@@ -61,6 +61,7 @@ export async function loader({ request, params }: LoaderFunctionArgs) {
 		if (ifNoneMatch === etagValue) {
 			return new Response(null, { status: 304 })
 		}
+		// @ts-ignore 🤷‍♂️ CLI doesn't like this but editor is fine 🙃
 		return new Response(file, {
 			headers: combineHeaders(
 				{

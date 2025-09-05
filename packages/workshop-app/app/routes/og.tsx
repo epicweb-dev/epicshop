@@ -104,6 +104,7 @@ export async function loader({ request }: LoaderFunctionArgs) {
 				return await getOgImg(element, { request, timings })
 			},
 		})
+		// @ts-ignore 🤷‍♂️ CLI doesn't like this but editor is fine 🙃
 		return new Response(ogImg, {
 			headers: {
 				'Cache-Control':
