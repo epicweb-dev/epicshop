@@ -89,6 +89,8 @@ export async function loader({ request, params }: LoaderFunctionArgs) {
 	)
 		.filter(Boolean)
 		.join(' | ')
+		// Fix Unicode right single quotation mark (') to regular ASCII apostrophe (')
+		.replace(/'/g, "'")
 	const html = /* html */ `
 <!DOCTYPE html>
 <html>
