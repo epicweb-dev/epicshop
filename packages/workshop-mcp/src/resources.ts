@@ -689,13 +689,41 @@ export function initResources(server: McpServer) {
 				'exerciseNumber must be greater than or equal to 0',
 			)
 			workshopDirectory = await handleWorkshopDirectory(workshopDirectory)
-			return {
-				contents: [
-					await exerciseContextResource.getResource({
-						workshopDirectory,
-						exerciseNumber,
-					}),
-				],
+			
+			try {
+				return {
+					contents: [
+						await exerciseContextResource.getResource({
+							workshopDirectory,
+							exerciseNumber,
+						}),
+					],
+				}
+			} catch (error) {
+				// Handle case where playground is not set gracefully
+				if (error instanceof Error && error.message.includes('No playground app found')) {
+					return {
+						contents: [
+							{
+								uri: exerciseContextUriTemplate.uriTemplate.expand({
+									workshopDirectory,
+									exerciseNumber: exerciseNumber.toString(),
+								}),
+								mimeType: 'application/json',
+								text: JSON.stringify({
+									currentContext: {
+										playground: 'playground not set',
+									},
+									notes: [
+										'The playground has not been set yet. Use the set_playground tool to set the playground.',
+										'Once set, you can get detailed exercise context and work on the problems.'
+									],
+								}),
+							},
+						],
+					}
+				}
+				throw error
 			}
 		},
 	)
@@ -734,12 +762,31 @@ export function initResources(server: McpServer) {
 				'A single workshopDirectory is required',
 			)
 			workshopDirectory = await handleWorkshopDirectory(workshopDirectory)
-			return {
-				contents: [
-					await exerciseStepProgressDiffResource.getResource({
-						workshopDirectory,
-					}),
-				],
+			
+			try {
+				return {
+					contents: [
+						await exerciseStepProgressDiffResource.getResource({
+							workshopDirectory,
+						}),
+					],
+				}
+			} catch (error) {
+				// Handle case where playground is not set gracefully
+				if (error instanceof Error && error.message.includes('No playground app found')) {
+					return {
+						contents: [
+							{
+								uri: exerciseStepProgressDiffUriTemplate.uriTemplate.expand({
+									workshopDirectory,
+								}),
+								mimeType: 'application/json',
+								text: JSON.stringify('The playground has not been set yet. Use the set_playground tool to set the playground.'),
+							},
+						],
+					}
+				}
+				throw error
 			}
 		},
 	)
