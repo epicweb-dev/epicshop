@@ -244,7 +244,16 @@ An error will be returned if no app is found for the given arguments.
 							stepNumber: nextProgress.stepNumber.toString(),
 							type: 'problem',
 						})
-						invariant(exerciseApp, 'No exercise app found')
+						if (!exerciseApp) {
+							return {
+								content: [
+									{
+										type: 'text',
+										text: `No exercise app found for exercise ${nextProgress.exerciseNumber}, step ${nextProgress.stepNumber} (problem). This exercise may not be available or may be configured incorrectly.`,
+									},
+								],
+							}
+						}
 						await setPlayground(exerciseApp.fullPath)
 						return {
 							content: [
@@ -294,7 +303,16 @@ An error will be returned if no app is found for the given arguments.
 				desiredApp = exerciseStepApps
 					.slice(currentExerciseStepAppIndex + 1)
 					.find(isProblemApp)
-				invariant(desiredApp, 'No next problem app found to set playground to')
+				if (!desiredApp) {
+					return {
+						content: [
+							{
+								type: 'text',
+								text: 'No next problem app found to set playground to. You may have completed all available exercises, or there may be no problem apps configured in this workshop.',
+							},
+						],
+					}
+				}
 			} else {
 				const currentExerciseStepApp =
 					exerciseStepApps[currentExerciseStepAppIndex]
@@ -312,10 +330,16 @@ An error will be returned if no app is found for the given arguments.
 				)
 			}
 
-			invariant(
-				desiredApp,
-				`No app found for values derived by the arguments: ${exerciseNumber}.${stepNumber}.${type}`,
-			)
+			if (!desiredApp) {
+				return {
+					content: [
+						{
+							type: 'text',
+							text: `No app found for the specified values: ${exerciseNumber}.${stepNumber}.${type}. Please check that the exercise number, step number, and type (problem/solution) are correct.`,
+						},
+					],
+				}
+			}
 			await setPlayground(desiredApp.fullPath)
 			const exerciseContext = await exerciseContextResource.getResource({
 				workshopDirectory,
