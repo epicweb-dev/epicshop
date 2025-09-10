@@ -168,15 +168,58 @@ async function getExerciseContext({
 	const progress = await getProgress()
 	let stepNumber = 1
 	const playgroundApp = await getPlaygroundApp()
-	invariant(playgroundApp, 'No playground app found')
-	const numbers = extractNumbersAndTypeFromAppNameOrPath(playgroundApp.appName)
-	const isCurrentExercise =
-		exerciseNumber === undefined ||
-		exerciseNumber === Number(numbers?.exerciseNumber)
-	if (exerciseNumber === undefined) {
-		invariant(numbers, 'No numbers found in playground app name')
-		exerciseNumber = Number(numbers.exerciseNumber)
-		stepNumber = Number(numbers.stepNumber)
+	
+	// Handle case where playground is not set
+	let isCurrentExercise = false
+	if (!playgroundApp) {
+		// If no specific exercise is requested and no playground, return helpful message
+		if (exerciseNumber === undefined) {
+			return {
+				currentContext: {
+					user: {
+						hasAccess: userHasAccess,
+						isAuthenticated: Boolean(authInfo),
+						email: authInfo?.email,
+					},
+					playground: 'not set - use the Epic Workshop app to set your playground to an exercise step',
+				},
+				exerciseInfo: {
+					number: 1, // Default to exercise 1
+					intro: {
+						content: { path: 'N/A', content: 'Playground has not been set. Please set your playground to an exercise step using the Epic Workshop app.' },
+						transcripts: [],
+						progress: undefined,
+					},
+					outro: {
+						content: { path: 'N/A', content: 'Playground has not been set. Please set your playground to an exercise step using the Epic Workshop app.' },
+						transcripts: [],
+						progress: undefined,
+					},
+				},
+				steps: [],
+				notes: [
+					'The playground has not been set yet. To set your playground:',
+					'1. Open the Epic Workshop app in your browser',
+					'2. Navigate to an exercise step',
+					'3. Click "Set to Playground" to copy that step to your playground directory',
+					'Once set, you can get detailed exercise context and work on the problems.'
+				],
+			}
+		}
+		// If a specific exercise is requested, we can provide that exercise's info
+		// even without playground context. Default to step 1.
+		stepNumber = 1
+		isCurrentExercise = false
+	} else {
+		const numbers = extractNumbersAndTypeFromAppNameOrPath(playgroundApp.appName)
+		isCurrentExercise =
+			exerciseNumber === undefined ||
+			exerciseNumber === Number(numbers?.exerciseNumber)
+		if (exerciseNumber === undefined) {
+			invariant(numbers, 'No numbers found in playground app name')
+			exerciseNumber = Number(numbers.exerciseNumber)
+			stepNumber = Number(numbers.stepNumber)
+		}
 	}
 	const exercise = await getExercise(exerciseNumber)
 	invariant(exercise, `No exercise found for exercise number ${exerciseNumber}`)
@@ -250,12 +293,14 @@ async function getExerciseContext({
 				isAuthenticated: Boolean(authInfo),
 				email: authInfo?.email,
 			},
-			playground: isCurrentExercise
-				? {
-						exerciseNumber,
-						stepNumber,
-					}
-				: 'currently set to a different exercise',
+			playground: !playgroundApp
+				? 'not set - use the Epic Workshop app to set your playground to an exercise step'
+				: isCurrentExercise
+					? {
+							exerciseNumber,
+							stepNumber,
+						}
+					: 'currently set to a different exercise',
 		},
 		exerciseInfo: {
 			number: exerciseNumber,
@@ -320,6 +365,15 @@ async function getExerciseContext({
 		}
 	} else {
 		context.notes.push('Unusually, this exercise has no steps.')
+	}
+
+	if (!playgroundApp) {
+		context.notes.push(
+			'The playground has not been set yet. To set your playground:',
+			'1. Open the Epic Workshop app in your browser',
+			'2. Navigate to an exercise step',
+			'3. Click "Set to Playground" to copy that step to your playground directory',
+		)
 	}
 
 	return context
@@ -449,14 +503,16 @@ async function getExerciseStepProgressDiff({
 }: InputSchemaType<typeof getExerciseStepProgressDiffInputSchema>) {
 	await handleWorkshopDirectory(workshopDirectory)
 
-	const { getDiffOutputWithRelativePaths } = await import(
-		'@epic-web/workshop-utils/diff.server'
-	)
-
 	const apps = await getApps()
 	const playgroundApp = apps.find(isPlaygroundApp)
 
-	invariant(playgroundApp, 'No playground app found')
+	if (!playgroundApp) {
+		return 'The playground has not been set yet. Please set your playground to an exercise step using the Epic Workshop app to see the diff between your current progress and the solution.'
+	}
+
+	const { getDiffOutputWithRelativePaths } = await import(
+		'@epic-web/workshop-utils/diff.server'
+	)
 
 	const baseApp = playgroundApp
 	const solutionDir = await findSolutionDir({
