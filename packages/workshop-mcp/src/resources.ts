@@ -168,8 +168,9 @@ async function getExerciseContext({
 	const progress = await getProgress()
 	let stepNumber = 1
 	const playgroundApp = await getPlaygroundApp()
-	invariant(playgroundApp, 'No playground app found')
-	const numbers = extractNumbersAndTypeFromAppNameOrPath(playgroundApp.appName)
+	const numbers = playgroundApp
+		? extractNumbersAndTypeFromAppNameOrPath(playgroundApp.appName)
+		: null
 	const isCurrentExercise =
 		exerciseNumber === undefined ||
 		exerciseNumber === Number(numbers?.exerciseNumber)
