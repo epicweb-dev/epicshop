@@ -226,7 +226,12 @@ async function getEpicVideoInfo({
 			}
 		},
 	}).catch((e) => {
-		console.error(`Failed to fetch epic video info for ${epicVideoEmbed}`, e)
+		const errorMessage = e instanceof Error ? e.message : String(e)
+		const stackTrace = e instanceof Error ? e.stack : undefined
+		log.error(`failed to fetch epic video info for ${epicVideoEmbed}: ${errorMessage}`, { 
+			videoUrl: epicVideoEmbed,
+			stackTrace 
+		})
 		throw e
 	})
 }
@@ -792,8 +797,8 @@ export async function getUserInfo({
 		},
 	}).catch((e) => {
 		const errorMessage = e instanceof Error ? e.message : String(e)
-		log(`failed to get user info: ${errorMessage}`)
-		console.error('Failed to get user info', e)
+		const stackTrace = e instanceof Error ? e.stack : undefined
+		log.error(`failed to get user info: ${errorMessage}`, { stackTrace })
 		return null
 	})
 

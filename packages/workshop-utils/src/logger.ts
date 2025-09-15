@@ -1,9 +1,17 @@
 import { debuglog } from 'node:util'
 
-export function logger(ns: string) {
+type LogFunction = (...args: Parameters<ReturnType<typeof debuglog>>) => void
+
+interface Logger extends LogFunction {
+	error: LogFunction
+	warn: LogFunction
+	info: LogFunction
+}
+
+export function logger(ns: string): Logger {
 	const log = debuglog(ns)
 	
-	const loggerFn = (...args: Parameters<typeof log>) => log(...args)
+	const loggerFn = ((...args: Parameters<typeof log>) => log(...args)) as Logger
 	
 	loggerFn.error = (...args: Parameters<typeof log>) => log('🚨', ...args)
 	loggerFn.warn = (...args: Parameters<typeof log>) => log('⚠️', ...args)
