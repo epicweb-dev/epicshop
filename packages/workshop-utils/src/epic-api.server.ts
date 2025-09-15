@@ -17,7 +17,7 @@ import { type Timings } from './timing.server.js'
 import { getErrorMessage } from './utils.js'
 
 // Module-level logger for epic-api operations
-const log = logger('epic-api')
+const log = logger('epic:api')
 
 const Transcript = z
 	.string()

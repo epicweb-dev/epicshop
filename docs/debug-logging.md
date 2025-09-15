@@ -11,7 +11,7 @@ The logger utility provides a simple interface for debug logging:
 ```typescript
 import { logger } from '@epic-web/workshop-utils/logger'
 
-const log = logger('epic-api')
+const log = logger('epic:api')
 log('Processing request')
 log.error('API request failed:', error)
 log.warn('Deprecated endpoint used')
@@ -23,14 +23,14 @@ log.info('Successfully processed data')
 To see debug output, set the `NODE_DEBUG` environment variable with the namespace pattern:
 
 ```bash
-# Enable all epic-api logging
-NODE_DEBUG=epic-api npm run dev
+# Enable all epic:api logging
+NODE_DEBUG=epic:api npm run dev
 
-# Enable all API logging (if you have multiple api namespaces)
-NODE_DEBUG=api:* npm run dev
+# Enable all epic logging (if you have multiple epic namespaces)
+NODE_DEBUG=epic:* npm run dev
 
 # Enable multiple specific namespaces
-NODE_DEBUG=epic-api,other-namespace npm run dev
+NODE_DEBUG=epic:api,other-namespace npm run dev
 ```
 
 ### Log Levels
@@ -44,7 +44,7 @@ The logger supports different log levels with emoji prefixes for visual distinct
 
 ### API Debugging
 
-The `epic-api` utilities automatically include debug logging for:
+The `epic:api` utilities automatically include debug logging for:
 
 - Video information fetching
 - User progress tracking
@@ -52,13 +52,13 @@ The `epic-api` utilities automatically include debug logging for:
 - API response parsing
 - Error handling
 
-Enable epic-api logging to see detailed information about API interactions:
+Enable epic:api logging to see detailed information about API interactions:
 
 ```bash
-NODE_DEBUG=epic-api npm run dev
+NODE_DEBUG=epic:api npm run dev
 ```
 
-This will show logs for all epic-api operations including:
+This will show logs for all epic:api operations including:
 - API requests and responses
 - Cache operations
 - Error conditions with stack traces
