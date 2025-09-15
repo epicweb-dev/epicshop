@@ -27,6 +27,7 @@
       "./git.server": "./src/git.server.ts",
       "./iframe-sync": "./src/iframe-sync.ts",
       "./init-env": "./src/init-env.ts",
+      "./logger": "./src/logger.ts",
       "./playwright.server": "./src/playwright.server.ts",
       "./notifications.server": "./src/notifications.server.ts",
       "./process-manager.server": "./src/process-manager.server.ts",
@@ -126,6 +127,12 @@
       "import": {
         "types": "./dist/esm/init-env.d.ts",
         "default": "./dist/esm/init-env.js"
+      }
+    },
+    "./logger": {
+      "import": {
+        "types": "./dist/esm/logger.d.ts",
+        "default": "./dist/esm/logger.js"
       }
     },
     "./playwright.server": {
