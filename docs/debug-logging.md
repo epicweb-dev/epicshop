@@ -52,7 +52,7 @@ The `epic:api` utilities automatically include debug logging for:
 - API response parsing
 - Error handling
 
-Enable epic:api logging to see detailed information about API interactions:
+Enable `epic:api` logging to see detailed information about API interactions:
 
 ```bash
 NODE_DEBUG=epic:api npm run dev
