@@ -45,6 +45,7 @@ installed in individual repositories which resemble the structure of the
 
 - The docs are in the `docs` folder. Please update them as features change or
   are added.
+- Debug logging is available via `NODE_DEBUG` environment variable (see `docs/debug-logging.md`)
 
 ## Code style
 
