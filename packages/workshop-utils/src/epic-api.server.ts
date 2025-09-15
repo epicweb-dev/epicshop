@@ -16,6 +16,9 @@ import { logger } from './logger.js'
 import { type Timings } from './timing.server.js'
 import { getErrorMessage } from './utils.js'
 
+// Module-level logger for epic-api operations
+const log = logger('epic-api')
+
 const Transcript = z
 	.string()
 	.nullable()
@@ -71,18 +74,13 @@ export async function getEpicVideoInfos(
 	epicWebUrls?: Array<string> | null,
 	{ request, timings }: { request?: Request; timings?: Timings } = {},
 ) {
-	const log = logger('epic-api:video-infos')
-	
 	if (!epicWebUrls) {
 		log('no epic web URLs provided, returning empty object')
 		return {}
 	}
 	
 	const authInfo = await getAuthInfo()
-	if (getEnv().EPICSHOP_DEPLOYED) {
-		log('deployed mode, skipping epic video info fetch')
-		return {}
-	}
+	if (getEnv().EPICSHOP_DEPLOYED) return {}
 
 	log(`fetching epic video infos for ${epicWebUrls.length} URLs`)
 	const epicVideoInfos: EpicVideoInfos = {}
@@ -112,7 +110,6 @@ async function getEpicVideoInfo({
 	request?: Request
 	timings?: Timings
 }) {
-	const log = logger('epic-api:video-info')
 	const tokenPortion = accessToken ? md5(accessToken) : 'unauthenticated'
 	const key = `epic-video-info:${tokenPortion}:${epicVideoEmbed}`
 
@@ -171,6 +168,7 @@ async function getEpicVideoInfo({
 				}
 				const infoResult = EpicVideoInfoSchema.safeParse(rawInfo)
 				if (infoResult.success) {
+					log(`successfully parsed video info for ${epicVideoEmbed}`)
 					return {
 						status: 'success',
 						statusCode: status,
@@ -184,6 +182,7 @@ async function getEpicVideoInfo({
 					const restrictedResult =
 						EpicVideoRegionRestrictedErrorSchema.safeParse(rawInfo)
 					if (restrictedResult.success) {
+						log.warn(`video is region restricted: ${epicVideoEmbed}`)
 						return {
 							status: 'error',
 							statusCode: status,
@@ -192,6 +191,11 @@ async function getEpicVideoInfo({
 							...restrictedResult.data,
 						} as const
 					} else {
+						log.error(`API response parsing failed for ${epicVideoEmbed}`, {
+							url: epicUrl.pathname,
+							rawInfo,
+							parseError: infoResult.error,
+						})
 						console.warn(
 							`Response from EpicWeb for "${epicUrl.pathname}" does not match expectation`,
 							infoResult.error,
@@ -208,6 +212,11 @@ async function getEpicVideoInfo({
 				// don't cache errors for long...
 				context.metadata.ttl = 1000 * 2
 				context.metadata.swr = 0
+				log.error(`video API request failed for ${epicVideoEmbed}`, {
+					status,
+					statusText,
+					url: apiUrl,
+				})
 				return {
 					status: 'error',
 					statusCode: status,
@@ -260,21 +269,13 @@ async function getEpicProgress({
 	request,
 	forceFresh,
 }: { timings?: Timings; request?: Request; forceFresh?: boolean } = {}) {
-	const log = logger('epic-api:progress')
-	
-	if (getEnv().EPICSHOP_DEPLOYED) {
-		log('deployed mode, returning empty progress array')
-		return []
-	}
+	if (getEnv().EPICSHOP_DEPLOYED) return []
 	
 	const authInfo = await getAuthInfo()
 	const {
 		product: { host },
 	} = getWorkshopConfig()
-	if (!authInfo) {
-		log('no auth info available, returning empty progress array')
-		return []
-	}
+	if (!authInfo) return []
 	
 	const tokenPart = md5(authInfo.tokenSet.access_token)
 	const EpicProgressSchema = z.array(
@@ -308,7 +309,10 @@ async function getEpicProgress({
 			log(`progress API response: ${response.status} ${response.statusText}`)
 			
 			if (response.status < 200 || response.status >= 300) {
-				log(`failed to fetch progress from EpicWeb: ${response.status} ${response.statusText}`)
+				log.error(`failed to fetch progress from EpicWeb: ${response.status} ${response.statusText}`)
+				console.error(
+					`Failed to fetch progress from EpicWeb: ${response.status} ${response.statusText}`,
+				)
 				// don't cache errors for long...
 				context.metadata.ttl = 1000 * 2
 				context.metadata.swr = 0
@@ -331,26 +335,15 @@ export async function getProgress({
 	timings?: Timings
 	request?: Request
 } = {}) {
-	const log = logger('epic-api:progress-aggregated')
-	
-	if (getEnv().EPICSHOP_DEPLOYED) {
-		log('deployed mode, returning empty progress array')
-		return []
-	}
+	if (getEnv().EPICSHOP_DEPLOYED) return []
 	
 	const authInfo = await getAuthInfo()
-	if (!authInfo) {
-		log('no auth info available, returning empty progress array')
-		return []
-	}
+	if (!authInfo) return []
 	
 	const {
 		product: { slug, host },
 	} = getWorkshopConfig()
-	if (!slug) {
-		log('no workshop slug configured, returning empty progress array')
-		return []
-	}
+	if (!slug) return []
 
 	log(`aggregating progress data for workshop: ${slug}`)
 	const [
@@ -474,10 +467,7 @@ export async function updateProgress(
 		request?: Request
 	} = {},
 ) {
-	const log = logger('epic-api:update-progress')
-	
 	if (getEnv().EPICSHOP_DEPLOYED) {
-		log('deployed mode, cannot update progress')
 		return {
 			status: 'error',
 			error: 'cannot update progress when deployed',
@@ -486,7 +476,6 @@ export async function updateProgress(
 	
 	const authInfo = await getAuthInfo()
 	if (!authInfo) {
-		log('not authenticated, cannot update progress')
 		return { status: 'error', error: 'not authenticated' } as const
 	}
 	
@@ -556,20 +545,12 @@ export async function getWorkshopData(
 		forceFresh?: boolean
 	} = {},
 ) {
-	const log = logger('epic-api:workshop-data')
-	
-	if (getEnv().EPICSHOP_DEPLOYED) {
-		log(`deployed mode, returning empty workshop data for slug: ${slug}`)
-		return { resources: [] }
-	}
+	if (getEnv().EPICSHOP_DEPLOYED) return { resources: [] }
 	
 	const authInfo = await getAuthInfo()
 	// auth is not required, but we only use it for progress which is only needed
 	// if you're authenticated anyway.
-	if (!authInfo) {
-		log(`no auth info available, returning empty workshop data for slug: ${slug}`)
-		return { resources: [] }
-	}
+	if (!authInfo) return { resources: [] }
 
 	const {
 		product: { host },
@@ -593,7 +574,10 @@ export async function getWorkshopData(
 			log(`workshop data response: ${response.status} ${response.statusText}`)
 			
 			if (response.status < 200 || response.status >= 300) {
-				log(`failed to fetch workshop data from EpicWeb for ${slug}: ${response.status} ${response.statusText}`)
+				log.error(`failed to fetch workshop data from EpicWeb for ${slug}: ${response.status} ${response.statusText}`)
+				console.error(
+					`Failed to fetch workshop data from EpicWeb for ${slug}: ${response.status} ${response.statusText}`,
+				)
 				return { resources: [] }
 			}
 			
@@ -614,34 +598,21 @@ export async function userHasAccessToWorkshop({
 	timings?: Timings
 	forceFresh?: boolean
 } = {}) {
-	const log = logger('epic-api:workshop-access')
-	
 	const config = getWorkshopConfig()
 	const {
 		product: { host, slug },
 	} = config
-	if (!slug) {
-		log('no workshop slug configured, allowing access')
-		return true
-	}
+	if (!slug) return true
 
 	if (getEnv().EPICSHOP_DEPLOYED) {
 		const cookieHeader = request?.headers.get('Cookie')
-		if (!cookieHeader) {
-			log(`deployed mode: no cookie header, denying access to workshop: ${slug}`)
-			return false
-		}
+		if (!cookieHeader) return false
 		const cookies = cookie.parse(cookieHeader)
-		const hasAccess = cookies.skill?.split(',').includes(slug) ?? false
-		log(`deployed mode: workshop access check for ${slug}: ${hasAccess}`)
-		return hasAccess
+		return cookies.skill?.split(',').includes(slug) ?? false
 	}
 
 	const authInfo = await getAuthInfo()
-	if (!authInfo) {
-		log(`no auth info available, denying access to workshop: ${slug}`)
-		return false
-	}
+	if (!authInfo) return false
 
 	return cachified({
 		key: `user-has-access-to-workshop:${host}:${slug}`,
@@ -768,13 +739,8 @@ export async function getUserInfo({
 	request?: Request
 	forceFresh?: boolean
 } = {}) {
-	const log = logger('epic-api:user-info')
-	
 	const authInfo = await getAuthInfo()
-	if (!authInfo) {
-		log('no auth info available, returning null')
-		return null
-	}
+	if (!authInfo) return null
 	
 	const { tokenSet } = authInfo
 	const {
