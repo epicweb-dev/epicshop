@@ -58,7 +58,7 @@ Enable epic:api logging to see detailed information about API interactions:
 NODE_DEBUG=epic:api npm run dev
 ```
 
-This will show logs for all epic:api operations including:
+This will show logs for all `epic:api` operations including:
 - API requests and responses
 - Cache operations
 - Error conditions with stack traces
