@@ -71,10 +71,10 @@ You can create your own debug loggers for custom functionality:
 ```typescript
 import { logger } from '@epic-web/workshop-utils/logger'
 
-const log = logger('custom-feature')
+const log = logger('epic:custom-feature')
 
 // Enable with:
-// NODE_DEBUG=custom-feature npm run dev
+// NODE_DEBUG=epic:custom-feature npm run dev
 log('Custom feature executed')
 log.error('Custom feature failed:', error)
 ```
