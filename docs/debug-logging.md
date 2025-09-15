@@ -11,7 +11,7 @@ The logger utility provides a simple interface for debug logging:
 ```typescript
 import { logger } from '@epic-web/workshop-utils/logger'
 
-const log = logger('api:epic')
+const log = logger('epic-api')
 log('Processing request')
 log.error('API request failed:', error)
 log.warn('Deprecated endpoint used')
@@ -24,13 +24,13 @@ To see debug output, set the `NODE_DEBUG` environment variable with the namespac
 
 ```bash
 # Enable all epic-api logging
-NODE_DEBUG=epic-api:* npm run dev
+NODE_DEBUG=epic-api npm run dev
 
-# Enable specific namespaces
-NODE_DEBUG=epic-api:video,epic-api:progress npm run dev
-
-# Enable all API logging
+# Enable all API logging (if you have multiple api namespaces)
 NODE_DEBUG=api:* npm run dev
+
+# Enable multiple specific namespaces
+NODE_DEBUG=epic-api,other-namespace npm run dev
 ```
 
 ### Log Levels
@@ -71,10 +71,10 @@ You can create your own debug loggers for custom functionality:
 ```typescript
 import { logger } from '@epic-web/workshop-utils/logger'
 
-const log = logger('custom:feature')
+const log = logger('custom-feature')
 
 // Enable with:
-// NODE_DEBUG=custom:feature npm run dev
+// NODE_DEBUG=custom-feature npm run dev
 log('Custom feature executed')
 log.error('Custom feature failed:', error)
 ```
