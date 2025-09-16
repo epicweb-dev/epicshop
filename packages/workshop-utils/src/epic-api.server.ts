@@ -78,7 +78,7 @@ export async function getEpicVideoInfos(
 		log('no epic web URLs provided, returning empty object')
 		return {}
 	}
-	
+
 	const authInfo = await getAuthInfo()
 	if (getEnv().EPICSHOP_DEPLOYED) return {}
 
@@ -95,7 +95,9 @@ export async function getEpicVideoInfos(
 			epicVideoInfos[epicVideoEmbed] = epicVideoInfo
 		}
 	}
-	log(`successfully fetched ${Object.keys(epicVideoInfos).length} epic video infos`)
+	log(
+		`successfully fetched ${Object.keys(epicVideoInfos).length} epic video infos`,
+	)
 	return epicVideoInfos
 }
 
@@ -159,7 +161,7 @@ async function getEpicVideoInfo({
 			)
 			const { status, statusText } = infoResponse
 			log(`API response: ${status} ${statusText}`)
-			
+
 			if (infoResponse.status >= 200 && infoResponse.status < 300) {
 				let rawInfo = await infoResponse.json()
 				// another special case for epicai.pro videos
@@ -236,11 +238,11 @@ function getEpicAIVideoAPIUrl(epicVideoEmbed: string) {
 	const slug = epicUrl.pathname.split('/').at(-1)!
 
 	if (epicUrl.pathname.includes('/workshops')) {
-		return `https://epicai.pro/api/lessons?slugOrId=${slug}`
+		return `https://www.epicai.pro/api/lessons?slugOrId=${slug}`
 	} else if (epicUrl.pathname.endsWith('/solution')) {
-		return `https://epicai.pro/api/lessons/${slug}/solution`
+		return `https://www.epicai.pro/api/lessons/${slug}/solution`
 	} else {
-		return `https://epicai.pro/api/posts?slugOrId=${slug}`
+		return `https://www.epicai.pro/api/posts?slugOrId=${slug}`
 	}
 }
 
@@ -277,13 +279,13 @@ async function getEpicProgress({
 	forceFresh,
 }: { timings?: Timings; request?: Request; forceFresh?: boolean } = {}) {
 	if (getEnv().EPICSHOP_DEPLOYED) return []
-	
+
 	const authInfo = await getAuthInfo()
 	const {
 		product: { host },
 	} = getWorkshopConfig()
 	if (!authInfo) return []
-	
+
 	const tokenPart = md5(authInfo.tokenSet.access_token)
 	const EpicProgressSchema = z.array(
 		z.object({
@@ -291,7 +293,7 @@ async function getEpicProgress({
 			completedAt: z.string().nullable(),
 		}),
 	)
-	
+
 	log(`fetching progress from EpicWeb host: ${host}`)
 	return cachified({
 		key: `epic-progress:${host}:${tokenPart}`,
@@ -306,17 +308,19 @@ async function getEpicProgress({
 		async getFreshValue(context): Promise<z.infer<typeof EpicProgressSchema>> {
 			const progressUrl = `https://${host}/api/progress`
 			log(`making progress API request to: ${progressUrl}`)
-			
+
 			const response = await fetch(progressUrl, {
 				headers: {
 					authorization: `Bearer ${authInfo.tokenSet.access_token}`,
 				},
 			}).catch((e) => new Response(getErrorMessage(e), { status: 500 }))
-			
+
 			log(`progress API response: ${response.status} ${response.statusText}`)
-			
+
 			if (response.status < 200 || response.status >= 300) {
-				log.error(`failed to fetch progress from EpicWeb: ${response.status} ${response.statusText}`)
+				log.error(
+					`failed to fetch progress from EpicWeb: ${response.status} ${response.statusText}`,
+				)
 				console.error(
 					`Failed to fetch progress from EpicWeb: ${response.status} ${response.statusText}`,
 				)
@@ -325,7 +329,7 @@ async function getEpicProgress({
 				context.metadata.swr = 0
 				return []
 			}
-			
+
 			const progressData = await response.json()
 			const parsedProgress = EpicProgressSchema.parse(progressData)
 			log(`successfully fetched ${parsedProgress.length} progress entries`)
@@ -343,10 +347,10 @@ export async function getProgress({
 	request?: Request
 } = {}) {
 	if (getEnv().EPICSHOP_DEPLOYED) return []
-	
+
 	const authInfo = await getAuthInfo()
 	if (!authInfo) return []
-	
+
 	const {
 		product: { slug, host },
 	} = getWorkshopConfig()
@@ -480,22 +484,24 @@ export async function updateProgress(
 			error: 'cannot update progress when deployed',
 		} as const
 	}
-	
+
 	const authInfo = await getAuthInfo()
 	if (!authInfo) {
 		return { status: 'error', error: 'not authenticated' } as const
 	}
-	
+
 	const {
 		product: { host },
 	} = getWorkshopConfig()
 
 	const progressUrl = `https://${host}/api/progress`
 	const payload = complete ? { lessonSlug } : { lessonSlug, remove: true }
-	
+
 	log(`updating progress for lesson: ${lessonSlug} (complete: ${complete})`)
-	log(`making POST request to: ${progressUrl} with payload: ${JSON.stringify(payload)}`)
-	
+	log(
+		`making POST request to: ${progressUrl} with payload: ${JSON.stringify(payload)}`,
+	)
+
 	const response = await fetch(progressUrl, {
 		method: 'POST',
 		headers: {
@@ -504,9 +510,9 @@ export async function updateProgress(
 		},
 		body: JSON.stringify(payload),
 	}).catch((e) => new Response(getErrorMessage(e), { status: 500 }))
-	
+
 	log(`progress update response: ${response.status} ${response.statusText}`)
-	
+
 	// force the progress to be fresh whether or not we're successful
 	await getEpicProgress({ forceFresh: true, request, timings })
 
@@ -553,7 +559,7 @@ export async function getWorkshopData(
 	} = {},
 ) {
 	if (getEnv().EPICSHOP_DEPLOYED) return { resources: [] }
-	
+
 	const authInfo = await getAuthInfo()
 	// auth is not required, but we only use it for progress which is only needed
 	// if you're authenticated anyway.
@@ -575,22 +581,28 @@ export async function getWorkshopData(
 		async getFreshValue(): Promise<z.infer<typeof ModuleSchema>> {
 			const workshopUrl = `https://${host}/api/workshops/${encodeURIComponent(slug)}`
 			log(`making workshop data request to: ${workshopUrl}`)
-			
-			const response = await fetch(workshopUrl).catch((e) => new Response(getErrorMessage(e), { status: 500 }))
-			
+
+			const response = await fetch(workshopUrl).catch(
+				(e) => new Response(getErrorMessage(e), { status: 500 }),
+			)
+
 			log(`workshop data response: ${response.status} ${response.statusText}`)
-			
+
 			if (response.status < 200 || response.status >= 300) {
-				log.error(`failed to fetch workshop data from EpicWeb for ${slug}: ${response.status} ${response.statusText}`)
+				log.error(
+					`failed to fetch workshop data from EpicWeb for ${slug}: ${response.status} ${response.statusText}`,
+				)
 				console.error(
 					`Failed to fetch workshop data from EpicWeb for ${slug}: ${response.status} ${response.statusText}`,
 				)
 				return { resources: [] }
 			}
-			
+
 			const jsonResponse = await response.json()
 			const parsedData = ModuleSchema.parse(jsonResponse)
-			log(`successfully fetched workshop data for ${slug} with ${parsedData.resources?.length ?? 0} resources`)
+			log(
+				`successfully fetched workshop data for ${slug} with ${parsedData.resources?.length ?? 0} resources`,
+			)
 			return parsedData
 		},
 	})
@@ -633,15 +645,17 @@ export async function userHasAccessToWorkshop({
 		async getFreshValue(context) {
 			const accessUrl = `https://${host}/api/workshops/${encodeURIComponent(slug)}/access`
 			log(`checking workshop access via API: ${accessUrl}`)
-			
+
 			const response = await fetch(accessUrl, {
 				headers: {
 					authorization: `Bearer ${authInfo.tokenSet.access_token}`,
 				},
 			}).catch((e) => new Response(getErrorMessage(e), { status: 500 }))
-			
-			log(`workshop access API response: ${response.status} ${response.statusText}`)
-			
+
+			log(
+				`workshop access API response: ${response.status} ${response.statusText}`,
+			)
+
 			const hasAccess = response.ok ? (await response.json()) === true : false
 			log(`workshop access result for ${slug}: ${hasAccess}`)
 
@@ -748,7 +762,7 @@ export async function getUserInfo({
 } = {}) {
 	const authInfo = await getAuthInfo()
 	if (!authInfo) return null
-	
+
 	const { tokenSet } = authInfo
 	const {
 		product: { host },
@@ -770,7 +784,7 @@ export async function getUserInfo({
 		checkValue: UserInfoSchema,
 		async getFreshValue(): Promise<UserInfo> {
 			log(`making user info API request to: ${url}`)
-			
+
 			const response = await fetch(url, {
 				headers: { authorization: `Bearer ${accessToken}` },
 			}).catch((e) => new Response(getErrorMessage(e), { status: 500 }))
@@ -778,7 +792,9 @@ export async function getUserInfo({
 			log(`user info API response: ${response.status} ${response.statusText}`)
 
 			if (!response.ok) {
-				log(`user info API request failed: ${response.status} ${response.statusText}`)
+				log(
+					`user info API request failed: ${response.status} ${response.statusText}`,
+				)
 				if (
 					response.headers.get('content-type')?.includes('application/json')
 				) {
@@ -794,7 +810,9 @@ export async function getUserInfo({
 
 			const data = await response.json()
 			const parsedUserInfo = UserInfoSchema.parse(data)
-			log(`successfully fetched user info for user: ${parsedUserInfo.id} (${parsedUserInfo.email})`)
+			log(
+				`successfully fetched user info for user: ${parsedUserInfo.id} (${parsedUserInfo.email})`,
+			)
 			return parsedUserInfo
 		},
 	}).catch((e) => {
