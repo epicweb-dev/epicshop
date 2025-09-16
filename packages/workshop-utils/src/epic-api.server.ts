@@ -234,7 +234,14 @@ async function getEpicVideoInfo({
 function getEpicAIVideoAPIUrl(epicVideoEmbed: string) {
 	const epicUrl = new URL(epicVideoEmbed)
 	const slug = epicUrl.pathname.split('/').at(-1)!
-	return `https://epicai.pro/api/posts?slugOrId=${slug}`
+
+	if (epicUrl.pathname.includes('/workshops')) {
+		return `https://epicai.pro/api/lessons?slugOrId=${slug}`
+	} else if (epicUrl.pathname.endsWith('/solution')) {
+		return `https://epicai.pro/api/lessons/${slug}/solution`
+	} else {
+		return `https://epicai.pro/api/posts?slugOrId=${slug}`
+	}
 }
 
 function preprocessEpicAIVideoAPIResult(result: any) {
