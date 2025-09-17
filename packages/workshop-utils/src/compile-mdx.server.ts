@@ -232,7 +232,7 @@ async function compileMdxImpl(file: string): Promise<{
 							if (title) return
 							if (node.depth === 1) {
 								// Extract plain text content, preserving inline code but stripping other formatting
-								const extractText = (nodes: PhrasingContent[]): string => {
+								const extractText = (nodes: Array<PhrasingContent>): string => {
 									return nodes.map((childNode: PhrasingContent) => {
 										if (childNode.type === 'text') {
 											return childNode.value

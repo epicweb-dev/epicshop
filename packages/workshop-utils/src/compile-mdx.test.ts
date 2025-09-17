@@ -4,6 +4,24 @@ import path from 'path'
 import { describe, it, expect } from 'vitest'
 import { compileMdx } from './compile-mdx.server.js'
 
+// Disposable object for temporary files
+function createTempFile(name: string, content: string) {
+	const tempDir = os.tmpdir()
+	const testFile = path.join(tempDir, name)
+	fs.writeFileSync(testFile, content)
+	
+	return {
+		path: testFile,
+		[Symbol.dispose]() {
+			try {
+				fs.unlinkSync(testFile)
+			} catch {
+				// Ignore cleanup errors
+			}
+		}
+	}
+}
+
 describe('compileMdx title parsing', () => {
 	it('should extract title with backticks correctly', async () => {
 		// Create a temporary MDX file with backticks in title
@@ -12,24 +30,12 @@ describe('compileMdx title parsing', () => {
 This is some content.
 `
 		
-		const tempDir = os.tmpdir()
-		const testFile = path.join(tempDir, 'test-backtick-title.mdx')
+		using tempFile = createTempFile('test-backtick-title.mdx', testMdxContent)
 		
-		try {
-			fs.writeFileSync(testFile, testMdxContent)
-			
-			const result = await compileMdx(testFile)
-			
-			// The title should be extracted correctly, preserving the full text
-			expect(result.title).toBe('Title with `something` highlighted')
-		} finally {
-			// Clean up the temporary file
-			try {
-				fs.unlinkSync(testFile)
-			} catch {
-				// Ignore cleanup errors
-			}
-		}
+		const result = await compileMdx(tempFile.path)
+		
+		// The title should be extracted correctly, preserving the full text
+		expect(result.title).toBe('Title with `something` highlighted')
 	})
 
 	it('should extract title with multiple backticks correctly', async () => {
@@ -38,22 +44,11 @@ This is some content.
 This is some content.
 `
 		
-		const tempDir = os.tmpdir()
-		const testFile = path.join(tempDir, 'test-multiple-backticks.mdx')
+		using tempFile = createTempFile('test-multiple-backticks.mdx', testMdxContent)
 		
-		try {
-			fs.writeFileSync(testFile, testMdxContent)
-			
-			const result = await compileMdx(testFile)
-			
-			expect(result.title).toBe('`Code` and `more code` in title')
-		} finally {
-			try {
-				fs.unlinkSync(testFile)
-			} catch {
-				// Ignore cleanup errors
-			}
-		}
+		const result = await compileMdx(tempFile.path)
+		
+		expect(result.title).toBe('`Code` and `more code` in title')
 	})
 
 	it('should extract title with mixed markdown correctly', async () => {
@@ -62,22 +57,11 @@ This is some content.
 This is some content.
 `
 		
-		const tempDir = os.tmpdir()
-		const testFile = path.join(tempDir, 'test-mixed-markdown.mdx')
+		using tempFile = createTempFile('test-mixed-markdown.mdx', testMdxContent)
 		
-		try {
-			fs.writeFileSync(testFile, testMdxContent)
-			
-			const result = await compileMdx(testFile)
-			
-			// Bold formatting should be stripped, but backticks preserved
-			expect(result.title).toBe('Title with `code` and bold text')
-		} finally {
-			try {
-				fs.unlinkSync(testFile)
-			} catch {
-				// Ignore cleanup errors
-			}
-		}
+		const result = await compileMdx(tempFile.path)
+		
+		// Bold formatting should be stripped, but backticks preserved
+		expect(result.title).toBe('Title with `code` and bold text')
 	})
 })
