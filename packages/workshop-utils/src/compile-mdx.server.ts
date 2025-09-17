@@ -5,7 +5,7 @@ import path from 'path'
 import { rehypeCodeBlocksShiki } from '@kentcdodds/md-temp'
 import { type Element, type Root as HastRoot } from 'hast'
 import lz from 'lz-string'
-import { type Root as MdastRoot } from 'mdast'
+import { type Root as MdastRoot, type PhrasingContent } from 'mdast'
 import { type MdxJsxFlowElement } from 'mdast-util-mdx-jsx'
 import { bundleMDX } from 'mdx-bundler'
 import PQueue from 'p-queue'
@@ -231,9 +231,25 @@ async function compileMdxImpl(file: string): Promise<{
 						visit(tree, 'heading', (node) => {
 							if (title) return
 							if (node.depth === 1) {
-								visit(node, 'text', (textNode) => {
-									title = textNode.value.trim()
-								})
+								// Extract plain text content, preserving inline code but stripping other formatting
+								const extractText = (nodes: Array<PhrasingContent>): string => {
+									return nodes.map((childNode: PhrasingContent) => {
+										if (childNode.type === 'text') {
+											return childNode.value
+										} else if (childNode.type === 'inlineCode') {
+											return `\`${childNode.value}\``
+										} else if (childNode.type === 'strong' || childNode.type === 'emphasis') {
+											// For formatting like bold/italic, just extract the text content
+											return extractText(childNode.children || [])
+										} else if ('children' in childNode && childNode.children) {
+											// For other nodes with children, recursively extract text
+											return extractText(childNode.children || [])
+										}
+										return ''
+									}).join('')
+								}
+								
+								title = extractText(node.children || []).trim()
 							}
 						})
 						title = title ? title.replace(/^\d+\. /, '').trim() : null
