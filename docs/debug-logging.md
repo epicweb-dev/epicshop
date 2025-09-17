@@ -69,6 +69,31 @@ This will show logs for all `epic:api` operations including:
 - Error conditions with stack traces
 - Performance timing information
 
+### Cache Debugging
+
+The workshop app includes integrated cache logging that shows detailed cache operations:
+
+```bash
+NODE_DEBUG=epic:cache:* npm run dev
+```
+
+This will show logs for all cache operations including:
+
+- Cache hits and misses
+- Fresh value generation timing
+- Cache errors and recovery
+- Background refresh operations
+
+You can also enable logging for specific caches:
+
+```bash
+# Enable logging for ExampleAppCache only
+NODE_DEBUG=epic:cache:exampleappcache npm run dev
+
+# Enable logging for LRU caches
+NODE_DEBUG=epic:cache:lru npm run dev
+```
+
 ### Custom Logging
 
 You can create your own debug loggers for custom functionality:
