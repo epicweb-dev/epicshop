@@ -3,7 +3,11 @@ import { getEnv } from './init-env.js'
 
 import path from 'path'
 import * as C from '@epic-web/cachified'
-import { verboseReporter, type CacheEntry, type CreateReporter } from '@epic-web/cachified'
+import {
+	verboseReporter,
+	type CacheEntry,
+	type CreateReporter,
+} from '@epic-web/cachified'
 import { remember } from '@epic-web/remember'
 import fsExtra from 'fs-extra'
 import { LRUCache } from 'lru-cache'
@@ -55,8 +59,9 @@ export function epicCacheReporter<Value>({
 } = {}): CreateReporter<Value> {
 	return ({ key, fallbackToCache, forceFresh, metadata, cache }) => {
 		// Determine cache name for logger namespace
-		const cacheName = cache.name || cache.toString().replace(/^\[object (.*?)]$/, '$1')
-		
+		const cacheName =
+			cache.name || cache.toString().replace(/^\[object (.*?)]$/, '$1')
+
 		// Create logger with epic:cache:{name} pattern
 		// Extract a reasonable cache name from longer descriptions
 		let loggerSuffix = 'unknown'
@@ -70,17 +75,17 @@ export function epicCacheReporter<Value>({
 		} else {
 			loggerSuffix = cacheName.toLowerCase()
 		}
-		
+
 		const namespace = `epic:cache:${loggerSuffix}`
-		
+
 		// Only create logger if cache logging is enabled for this namespace
 		if (!isLoggingEnabled(namespace)) {
 			// Return a no-op reporter if logging is not enabled
 			return () => {}
 		}
-		
+
 		const log = logger(namespace)
-		
+
 		let cached: unknown
 		let freshValue: unknown
 		let getFreshValueStartTs: number

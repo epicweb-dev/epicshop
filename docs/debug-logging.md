@@ -71,7 +71,8 @@ This will show logs for all `epic:api` operations including:
 
 ### Cache Debugging
 
-The workshop app includes integrated cache logging that shows detailed cache operations:
+The workshop app includes integrated cache logging that shows detailed cache
+operations:
 
 ```bash
 NODE_DEBUG=epic:cache:* npm run dev
