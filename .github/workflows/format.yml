@@ -1,0 +1,52 @@
+name: Auto Format
+on:
+  push:
+    branches: ['main']
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  format:
+    name: 🧹 Auto Format
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    permissions:
+      contents: write
+    steps:
+      - name: ⬇️ Checkout repo
+        uses: actions/checkout@v4
+        with:
+          token: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: ⎔ Setup node
+        uses: actions/setup-node@v4
+        with:
+          node-version: 24
+          cache: 'npm'
+
+      - name: 📥 Download deps
+        run: npm install --prefer-offline --no-audit --no-fund
+
+      - name: 🔧 Configure git
+        run: |
+          git config --local user.email "action@github.com"
+          git config --local user.name "GitHub Action"
+
+      - name: 🎨 Run Prettier
+        run: npx prettier --write "**/*.{js,jsx,ts,tsx,md,css}" --ignore-path .prettierignore
+
+      - name: 🔍 Run ESLint --fix
+        run: npx eslint --fix "**/*.{js,jsx,ts,tsx}"
+
+      - name: 💾 Commit changes
+        run: |
+          if [ -n "$(git status --porcelain)" ]; then
+            git add .
+            git commit -m "chore: cleanup 🧹"
+            git push
+            echo "Changes committed and pushed."
+          else
+            echo "No changes to commit."
+          fi
