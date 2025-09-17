@@ -248,6 +248,12 @@ export async function compileMdx(
 					ttl: Infinity,
 				}
 			})
+			
+			// CRITICAL FIX: Update modifiedTimes to invalidate higher-level caches
+			// When we detect a file change and compile fresh, we need to notify
+			// the app-level cache that this directory has been modified
+			const { setModifiedTimesForAppDirs } = await import('./apps.server.js')
+			setModifiedTimesForAppDirs(file)
 		} catch (error) {
 			// Don't fail the entire operation if file info caching fails
 			console.warn('Failed to cache file info:', error)
