@@ -1,7 +1,6 @@
-// eslint-disable-next-line import/order -- this must be first
-import { getEnv } from './init-env.js'
-
+import { invariant } from '@epic-web/invariant'
 import * as cookie from 'cookie'
+
 import md5 from 'md5-hex'
 import { z } from 'zod'
 import {
@@ -12,6 +11,7 @@ import {
 import { cachified, fsCache } from './cache.server.js'
 import { getWorkshopConfig } from './config.server.js'
 import { getAuthInfo, setAuthInfo } from './db.server.js'
+import { getEnv } from './init-env.js'
 import { logger } from './logger.js'
 import { type Timings } from './timing.server.js'
 import { getErrorMessage } from './utils.js'
@@ -235,13 +235,20 @@ async function getEpicVideoInfo({
 
 function getEpicAIVideoAPIUrl(epicVideoEmbed: string) {
 	const epicUrl = new URL(epicVideoEmbed)
-	const slug = epicUrl.pathname.split('/').at(-1)!
+	const pathSegments = epicUrl.pathname.split('/').filter(Boolean)
 
-	if (epicUrl.pathname.includes('/workshops')) {
-		return `https://www.epicai.pro/api/lessons?slugOrId=${slug}`
-	} else if (epicUrl.pathname.endsWith('/solution')) {
+	if (epicUrl.pathname.endsWith('/solution')) {
+		// slug is right before 'solution'
+		const slug = pathSegments.at(-2)
+		invariant(slug, 'Expected slug before /solution in pathname')
 		return `https://www.epicai.pro/api/lessons/${slug}/solution`
+	} else if (epicUrl.pathname.includes('/workshops')) {
+		const slug = pathSegments.at(-1)
+		invariant(slug, 'Expected slug at end of /workshops pathname')
+		return `https://www.epicai.pro/api/lessons?slugOrId=${slug}`
 	} else {
+		const slug = pathSegments.at(-1)
+		invariant(slug, 'Expected slug at end of pathname')
 		return `https://www.epicai.pro/api/posts?slugOrId=${slug}`
 	}
 }
