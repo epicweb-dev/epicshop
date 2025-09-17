@@ -24,6 +24,43 @@ import {
 	directoryEmptyCache,
 } from './cache.server.js'
 import { compileMdx } from './compile-mdx.server.js'
+import { getMdxContentHashes, haveMdxFilesChanged } from './file-content-hash.server.js'
+
+/**
+ * Enhanced cachified that tracks MDX content for automatic invalidation.
+ * This ensures that caches are invalidated when MDX files they depend on change.
+ */
+async function cachifiedWithMdxTracking<T>(
+	options: Parameters<typeof cachified>[0] & {
+		mdxDirs?: Array<string>
+	},
+): Promise<T> {
+	const { mdxDirs = [], ...cachifiedOptions } = options
+	
+	// Get current MDX content hashes
+	const currentMdxHashes = mdxDirs.length > 0 ? await getMdxContentHashes(mdxDirs) : {}
+	
+	// Wrap the getFreshValue to include MDX hashes in a side store
+	const originalGetFreshValue = cachifiedOptions.getFreshValue
+	const wrappedGetFreshValue = async () => {
+		const result = await originalGetFreshValue()
+		
+		// Store the MDX hashes alongside the cache entry for later comparison
+		if (mdxDirs.length > 0) {
+			mdxHashStore.set(cachifiedOptions.key, currentMdxHashes)
+		}
+		
+		return result
+	}
+	
+	return cachified({
+		...cachifiedOptions,
+		getFreshValue: wrappedGetFreshValue,
+	})
+}
+
+// Simple in-memory store for MDX hashes (could be replaced with persistent storage if needed)
+const mdxHashStore = new Map<string, Record<string, string | null>>()
 import { getAppConfig, getStackBlitzUrl } from './config.server.js'
 import { getPreferences } from './db.server.js'
 import { getDirModifiedTime } from './modified-time.server.js'
@@ -235,6 +272,7 @@ async function isDirectoryEmpty(dirPath: string): Promise<boolean> {
 		swr: 1000 * 60 * 20,
 		forceFresh: await getForceFreshForDir(
 			directoryEmptyCache.get(dirPath),
+			dirPath, // cache key
 			dirPath,
 		),
 		getFreshValue: async () => {
@@ -323,11 +361,27 @@ async function getForceFresh(
 ) {
 	const resolvedCacheEntry = await cacheEntry
 	if (!resolvedCacheEntry) return true
+	
+	// Check timestamp-based invalidation (existing logic)
 	const latestModifiedTime = Math.max(...Array.from(modifiedTimes.values()))
-	if (!latestModifiedTime) return undefined
-	return latestModifiedTime > resolvedCacheEntry.metadata.createdTime
-		? true
-		: undefined
+	if (latestModifiedTime && latestModifiedTime > resolvedCacheEntry.metadata.createdTime) {
+		return true
+	}
+	
+	// Check if any MDX files that apps depend on have changed
+	// For the global apps cache, we need to check workshop-level MDX files
+	const workshopRoot = getWorkshopRoot()
+	const mdxChanged = await haveMdxFilesChanged(
+		[workshopRoot], // Check workshop root for README.mdx, FINISHED.mdx
+		'apps', // Use the apps cache key
+		mdxHashStore,
+	)
+	
+	if (mdxChanged === true) {
+		return true
+	}
+	
+	return latestModifiedTime ? undefined : false
 }
 
 export function setModifiedTimesForAppDirs(...filePaths: Array<string>) {
@@ -346,6 +400,7 @@ export async function getForceFreshForDir(
 		| null
 		| undefined
 		| Promise<CacheEntry | null | undefined>,
+	cacheKey: string,
 	...dirs: Array<string | undefined | null>
 ) {
 	const truthyDirs = dirs.filter(Boolean)
@@ -354,16 +409,32 @@ export async function getForceFreshForDir(
 			throw new Error(`Trying to get force fresh for non-absolute path: ${d}`)
 		}
 	}
+	
 	const resolvedCacheEntry = await cacheEntry
 	if (!resolvedCacheEntry) return true
+	
+	// Check timestamp-based invalidation (existing logic)
 	const latestModifiedTime = truthyDirs.reduce((latest, dir) => {
 		const modifiedTime = modifiedTimes.get(dir)
 		return modifiedTime && modifiedTime > latest ? modifiedTime : latest
 	}, 0)
-	if (!latestModifiedTime) return undefined
-	return latestModifiedTime > resolvedCacheEntry.metadata.createdTime
-		? true
-		: undefined
+	
+	if (latestModifiedTime && latestModifiedTime > resolvedCacheEntry.metadata.createdTime) {
+		return true
+	}
+	
+	// Check if any MDX files in the specified directories have changed
+	const mdxChanged = await haveMdxFilesChanged(
+		truthyDirs,
+		cacheKey,
+		mdxHashStore,
+	)
+	
+	if (mdxChanged === true) {
+		return true
+	}
+	
+	return latestModifiedTime ? undefined : false
 }
 
 async function readDir(dir: string) {
@@ -852,16 +923,18 @@ export async function getPlaygroundApp({
 		? await getFullPathFromAppName(baseAppName)
 		: null
 	const playgroundCacheEntry = await playgroundAppCache.get(key)
-	return cachified({
+	return cachifiedWithMdxTracking({
 		key,
 		cache: playgroundAppCache,
 		ttl: 1000 * 60 * 60 * 24,
+		mdxDirs: [playgroundDir], // Track README.mdx in playground directory
 
 		timings,
 		timingKey: playgroundDir.replace(`${playgroundDir}${path.sep}`, ''),
 		request,
 		forceFresh: await getForceFreshForDir(
 			playgroundCacheEntry,
+			key, // cache key
 			playgroundDir,
 			baseAppFullPath,
 		),
@@ -961,16 +1034,18 @@ async function getExampleApps({
 	for (const exampleDir of exampleDirs) {
 		const index = exampleDirs.indexOf(exampleDir)
 		const key = `${exampleDir}-${index}`
-		const exampleApp = await cachified({
+		const exampleApp = await cachifiedWithMdxTracking({
 			key,
 			cache: exampleAppCache,
 			ttl: 1000 * 60 * 60 * 24,
+			mdxDirs: [exampleDir], // Track README.mdx in example directory
 
 			timings,
 			timingKey: exampleDir.replace(`${examplesDir}${path.sep}`, ''),
 			request,
 			forceFresh: await getForceFreshForDir(
 				exampleAppCache.get(key),
+				key, // cache key
 				exampleDir,
 			),
 			getFreshValue: async () => {
@@ -1046,16 +1121,18 @@ async function getSolutionApps({
 	const solutionApps: Array<SolutionApp> = []
 
 	for (const solutionDir of solutionDirs) {
-		const solutionApp = await cachified({
+		const solutionApp = await cachifiedWithMdxTracking({
 			key: solutionDir,
 			cache: solutionAppCache,
 			timings,
 			timingKey: solutionDir.replace(`${exercisesDir}${path.sep}`, ''),
 			request,
 			ttl: 1000 * 60 * 60 * 24,
+			mdxDirs: [solutionDir], // Track README.mdx in solution directory
 
 			forceFresh: await getForceFreshForDir(
 				solutionAppCache.get(solutionDir),
+				solutionDir, // cache key
 				solutionDir,
 			),
 			getFreshValue: async () => {
@@ -1129,16 +1206,18 @@ async function getProblemApps({
 	const problemApps: Array<ProblemApp> = []
 	for (const problemDir of problemDirs) {
 		const solutionDir = await findSolutionDir({ fullPath: problemDir })
-		const problemApp = await cachified({
+		const problemApp = await cachifiedWithMdxTracking({
 			key: problemDir,
 			cache: problemAppCache,
 			timings,
 			timingKey: problemDir.replace(`${exercisesDir}${path.sep}`, ''),
 			request,
 			ttl: 1000 * 60 * 60 * 24,
+			mdxDirs: [problemDir], // Track README.mdx in problem directory
 
 			forceFresh: await getForceFreshForDir(
 				problemAppCache.get(problemDir),
+				problemDir, // cache key
 				problemDir,
 				solutionDir,
 			),

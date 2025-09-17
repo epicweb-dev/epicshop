@@ -2,7 +2,7 @@ import fs from 'fs'
 import os from 'os'
 import path from 'path'
 import { describe, it, expect, beforeEach, afterEach } from 'vitest'
-import { getFileContentHash, createContentBasedCacheKey } from './file-content-hash.server.js'
+import { getFileContentHash, createContentBasedCacheKey, getMdxContentHashes, haveMdxFilesChanged } from './file-content-hash.server.js'
 
 // Disposable object for temporary files following the pattern from the docs
 function createTempFile(name: string, content: string) {
@@ -18,6 +18,29 @@ function createTempFile(name: string, content: string) {
 		[Symbol.dispose]() {
 			try {
 				fs.unlinkSync(testFile)
+			} catch {
+				// Ignore cleanup errors
+			}
+		},
+	}
+}
+
+// Disposable object for temporary directories
+function createTempDir(name: string) {
+	const tempDir = os.tmpdir()
+	const testDir = path.join(tempDir, name)
+	fs.mkdirSync(testDir, { recursive: true })
+
+	return {
+		path: testDir,
+		createFile(fileName: string, content: string) {
+			const filePath = path.join(testDir, fileName)
+			fs.writeFileSync(filePath, content)
+			return filePath
+		},
+		[Symbol.dispose]() {
+			try {
+				fs.rmSync(testDir, { recursive: true, force: true })
 			} catch {
 				// Ignore cleanup errors
 			}
@@ -138,6 +161,128 @@ This is some MDX content with \`code\` and **bold** text.
 			const key2 = await createContentBasedCacheKey(tempFile.path, 'test:key')
 			
 			expect(key1).not.toBe(key2)
+		})
+	})
+
+	describe('getMdxContentHashes', () => {
+		it('should get hashes for MDX files in directories', async () => {
+			using tempDir = createTempDir('mdx-test-dir')
+			
+			// Create README.mdx and FINISHED.mdx files
+			tempDir.createFile('README.mdx', '# README Content\nThis is a readme.')
+			tempDir.createFile('FINISHED.mdx', '# Finished Content\nWorkshop complete!')
+			tempDir.createFile('other.txt', 'Not an MDX file')
+			
+			const hashes = await getMdxContentHashes([tempDir.path])
+			
+			const readmePath = path.join(tempDir.path, 'README.mdx')
+			const finishedPath = path.join(tempDir.path, 'FINISHED.mdx')
+			
+			expect(hashes[readmePath]).toEqual(expect.any(String))
+			expect(hashes[finishedPath]).toEqual(expect.any(String))
+			expect(hashes[readmePath]).not.toBe(hashes[finishedPath])
+		})
+
+		it('should handle directories without MDX files', async () => {
+			using tempDir = createTempDir('no-mdx-dir')
+			
+			tempDir.createFile('other.txt', 'Not an MDX file')
+			
+			const hashes = await getMdxContentHashes([tempDir.path])
+			
+			const readmePath = path.join(tempDir.path, 'README.mdx')
+			const finishedPath = path.join(tempDir.path, 'FINISHED.mdx')
+			
+			expect(hashes[readmePath]).toBeNull()
+			expect(hashes[finishedPath]).toBeNull()
+		})
+
+		it('should handle multiple directories', async () => {
+			using tempDir1 = createTempDir('mdx-dir-1')
+			using tempDir2 = createTempDir('mdx-dir-2')
+			
+			tempDir1.createFile('README.mdx', '# Dir 1 README')
+			tempDir2.createFile('FINISHED.mdx', '# Dir 2 FINISHED')
+			
+			const hashes = await getMdxContentHashes([tempDir1.path, tempDir2.path])
+			
+			const readme1Path = path.join(tempDir1.path, 'README.mdx')
+			const finished2Path = path.join(tempDir2.path, 'FINISHED.mdx')
+			
+			expect(hashes[readme1Path]).toEqual(expect.any(String))
+			expect(hashes[finished2Path]).toEqual(expect.any(String))
+		})
+
+		it('should handle empty directory list', async () => {
+			const hashes = await getMdxContentHashes([])
+			expect(hashes).toEqual({})
+		})
+	})
+
+	describe('haveMdxFilesChanged', () => {
+		it('should detect when MDX files have changed', async () => {
+			using tempDir = createTempDir('change-test-dir')
+			
+			tempDir.createFile('README.mdx', '# Initial Content')
+			
+			const initialHashes = await getMdxContentHashes([tempDir.path])
+			const mockHashStore = new Map([['test-key', initialHashes]])
+			
+			// Initially, no changes detected
+			const changed1 = await haveMdxFilesChanged([tempDir.path], 'test-key', mockHashStore)
+			expect(changed1).toBe(false)
+			
+			// Update the file
+			tempDir.createFile('README.mdx', '# Modified Content')
+			
+			// Should detect the change
+			const changed2 = await haveMdxFilesChanged([tempDir.path], 'test-key', mockHashStore)
+			expect(changed2).toBe(true)
+		})
+
+		it('should return undefined when no baseline exists', async () => {
+			using tempDir = createTempDir('no-baseline-dir')
+			
+			tempDir.createFile('README.mdx', '# Some Content')
+			
+			const mockHashStore = new Map() // Empty store
+			
+			const changed = await haveMdxFilesChanged([tempDir.path], 'nonexistent-key', mockHashStore)
+			expect(changed).toBeUndefined()
+		})
+
+		it('should handle new files correctly', async () => {
+			using tempDir = createTempDir('new-file-dir')
+			
+			// Start with only README.mdx
+			tempDir.createFile('README.mdx', '# README')
+			const initialHashes = await getMdxContentHashes([tempDir.path])
+			const mockHashStore = new Map([['test-key', initialHashes]])
+			
+			// Add FINISHED.mdx
+			tempDir.createFile('FINISHED.mdx', '# FINISHED')
+			
+			// Should detect the new file as a change
+			const changed = await haveMdxFilesChanged([tempDir.path], 'test-key', mockHashStore)
+			expect(changed).toBe(true)
+		})
+
+		it('should handle deleted files correctly', async () => {
+			using tempDir = createTempDir('delete-file-dir')
+			
+			// Start with both files
+			const readmePath = tempDir.createFile('README.mdx', '# README')
+			tempDir.createFile('FINISHED.mdx', '# FINISHED')
+			
+			const initialHashes = await getMdxContentHashes([tempDir.path])
+			const mockHashStore = new Map([['test-key', initialHashes]])
+			
+			// Delete one file
+			fs.unlinkSync(readmePath)
+			
+			// Should detect the deletion as a change
+			const changed = await haveMdxFilesChanged([tempDir.path], 'test-key', mockHashStore)
+			expect(changed).toBe(true)
 		})
 	})
 })
