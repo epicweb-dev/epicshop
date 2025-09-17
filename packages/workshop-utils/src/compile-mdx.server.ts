@@ -5,7 +5,7 @@ import path from 'path'
 import { rehypeCodeBlocksShiki } from '@kentcdodds/md-temp'
 import { type Element, type Root as HastRoot } from 'hast'
 import lz from 'lz-string'
-import { type Root as MdastRoot } from 'mdast'
+import { type Root as MdastRoot, type PhrasingContent } from 'mdast'
 import { type MdxJsxFlowElement } from 'mdast-util-mdx-jsx'
 import { bundleMDX } from 'mdx-bundler'
 import PQueue from 'p-queue'
@@ -232,8 +232,8 @@ async function compileMdxImpl(file: string): Promise<{
 							if (title) return
 							if (node.depth === 1) {
 								// Extract plain text content, preserving inline code but stripping other formatting
-								const extractText = (nodes: any[]): string => {
-									return nodes.map((childNode) => {
+								const extractText = (nodes: PhrasingContent[]): string => {
+									return nodes.map((childNode: PhrasingContent) => {
 										if (childNode.type === 'text') {
 											return childNode.value
 										} else if (childNode.type === 'inlineCode') {
@@ -241,7 +241,7 @@ async function compileMdxImpl(file: string): Promise<{
 										} else if (childNode.type === 'strong' || childNode.type === 'emphasis') {
 											// For formatting like bold/italic, just extract the text content
 											return extractText(childNode.children || [])
-										} else if (childNode.children) {
+										} else if ('children' in childNode && childNode.children) {
 											// For other nodes with children, recursively extract text
 											return extractText(childNode.children)
 										}
