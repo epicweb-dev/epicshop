@@ -3,10 +3,7 @@ import { getEnv } from './init-env.js'
 
 import path from 'path'
 import * as C from '@epic-web/cachified'
-import {
-	type CacheEntry,
-	type CreateReporter,
-} from '@epic-web/cachified'
+import { type CacheEntry, type CreateReporter } from '@epic-web/cachified'
 import { remember } from '@epic-web/remember'
 import fsExtra from 'fs-extra'
 import { LRUCache } from 'lru-cache'
