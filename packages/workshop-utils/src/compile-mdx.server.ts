@@ -20,6 +20,7 @@ import {
 	compiledMarkdownCache,
 	shouldForceFresh,
 } from './cache.server.js'
+import { createContentBasedCacheKey } from './file-content-hash.server.js'
 import { type Timings } from './timing.server.js'
 import { checkConnectionCached } from './utils.server.js'
 
@@ -191,13 +192,9 @@ export async function compileMdx(
 		throw new Error(`File stat cannot be read: ${stat.error}`)
 	}
 
-	const key = `file:${file}`
+	// Use content-based cache key to ensure invalidation when file contents change
+	const key = await createContentBasedCacheKey(file)
 	forceFresh = await shouldForceFresh({ forceFresh, request, key })
-
-	const existingCacheEntry = await compiledInstructionMarkdownCache.get(key)
-	if (!forceFresh && existingCacheEntry) {
-		forceFresh = stat.mtimeMs > existingCacheEntry.metadata.createdTime
-	}
 
 	return cachified({
 		key,
