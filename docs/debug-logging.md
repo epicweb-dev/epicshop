@@ -1,6 +1,8 @@
 # Debug Logging
 
-Epic Workshop App includes a built-in debug logging system based on Node.js's `debuglog` utility. This allows you to enable detailed logging for API interactions and other operations using environment variables.
+Epic Workshop App includes a built-in debug logging system based on Node.js's
+`debuglog` utility. This allows you to enable detailed logging for API
+interactions and other operations using environment variables.
 
 ## Usage
 
@@ -20,7 +22,8 @@ log.info('Successfully processed data')
 
 ### Enabling Debug Output
 
-To see debug output, set the `NODE_DEBUG` environment variable with the namespace pattern:
+To see debug output, set the `NODE_DEBUG` environment variable with the
+namespace pattern:
 
 ```bash
 # Enable all epic:api logging
@@ -35,11 +38,12 @@ NODE_DEBUG=epic:api,other-namespace npm run dev
 
 ### Log Levels
 
-The logger supports different log levels with emoji prefixes for visual distinction:
+The logger supports different log levels with emoji prefixes for visual
+distinction:
 
 - `log('message')` - Standard debug logging (no emoji)
 - `log.error('message')` - Error logging with 🚨 prefix
-- `log.warn('message')` - Warning logging with ⚠️ prefix  
+- `log.warn('message')` - Warning logging with ⚠️ prefix
 - `log.info('message')` - Info logging with ℹ️ prefix
 
 ### API Debugging
@@ -59,6 +63,7 @@ NODE_DEBUG=epic:api npm run dev
 ```
 
 This will show logs for all `epic:api` operations including:
+
 - API requests and responses
 - Cache operations
 - Error conditions with stack traces
@@ -81,11 +86,13 @@ log.error('Custom feature failed:', error)
 
 ## Implementation
 
-The logger is built on top of Node.js's built-in `debuglog` utility, which provides:
+The logger is built on top of Node.js's built-in `debuglog` utility, which
+provides:
 
 - Conditional logging based on environment variables
 - Zero performance impact when logging is disabled
 - Automatic formatting and output handling
 - Namespace-based filtering
 
-The logger extends the base `debuglog` functionality with additional methods for different log levels while maintaining the same performance characteristics.
+The logger extends the base `debuglog` functionality with additional methods for
+different log levels while maintaining the same performance characteristics.

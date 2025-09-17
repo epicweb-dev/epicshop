@@ -430,6 +430,9 @@ export async function start(options: StartOptions = {}): Promise<StartResult> {
 					// Ctrl+C
 					await cleanupBeforeExit()
 					process.exit(0)
+				} else if (key === '\r' || key === '\n') {
+					// Enter key - add a newline to terminal output for visual separation
+					process.stdout.write('\n')
 				} else {
 					// Forward unhandled keys to child process stdin
 					if (child?.stdin && !child.stdin.destroyed) {

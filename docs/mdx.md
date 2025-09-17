@@ -94,7 +94,6 @@ Link to diff route or diff preview, to show git diff between two examples app.
   `app1=EXERCISES_NAME&app2=EXERCISES_NAME`
 
 - `app1`, `app2`: string | number - one of this format:
-
   - `EXERCISES_NAME` - `01.01.problem`
   - `EXERCISENUMBERSTR/STEPNUMBERSTR.TYPE` - `app1="02/02.problem"`
   - offset step - 0, ±1, ±2... `app1={1}` - next step, step are in order of
@@ -102,7 +101,6 @@ Link to diff route or diff preview, to show git diff between two examples app.
     from `01/01.problem` to `01/03.problem`
 
 - `fullPage`: boolean (defaults to `false`)
-
   - when false link to `?preview=diff&...`
   - when true link to diff route
 

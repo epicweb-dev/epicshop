@@ -10,13 +10,13 @@ interface Logger extends LogFunction {
 
 export function logger(ns: string): Logger {
 	const log = debuglog(ns)
-	
+
 	const loggerFn = ((...args: Parameters<typeof log>) => log(...args)) as Logger
-	
+
 	loggerFn.error = (...args: Parameters<typeof log>) => log('🚨', ...args)
 	loggerFn.warn = (...args: Parameters<typeof log>) => log('⚠️', ...args)
 	loggerFn.info = (...args: Parameters<typeof log>) => log('ℹ️', ...args)
-	
+
 	return loggerFn
 }
 
