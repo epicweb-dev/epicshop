@@ -18,6 +18,7 @@ import {
 	cachified,
 	compiledInstructionMarkdownCache,
 	compiledMarkdownCache,
+	fileInfoCache,
 	shouldForceFresh,
 } from './cache.server.js'
 import { type Timings } from './timing.server.js'
@@ -197,11 +198,11 @@ export async function compileMdx(
 
 	if (!forceFresh) {
 		const existingCacheEntry = await compiledInstructionMarkdownCache.get(key)
-		const cachedFileInfo = await compiledInstructionMarkdownCache.get(fileInfoKey)
+		const cachedFileInfo = await fileInfoCache.get(fileInfoKey)
 		
 		if (existingCacheEntry && cachedFileInfo?.value) {
 			// More robust cache invalidation logic using cached file info
-			const { size: cachedSize, mtimeMs: cachedMtime } = cachedFileInfo.value as { size: number; mtimeMs: number }
+			const { size: cachedSize, mtimeMs: cachedMtime } = cachedFileInfo.value
 			const fileModTime = stat.mtimeMs
 			
 			// Check multiple conditions for cache invalidation:
@@ -237,7 +238,7 @@ export async function compileMdx(
 	// Only update if we actually compiled fresh content
 	if (forceFresh) {
 		try {
-			await compiledInstructionMarkdownCache.set(fileInfoKey, {
+			await fileInfoCache.set(fileInfoKey, {
 				value: {
 					mtimeMs: stat.mtimeMs,
 					size: stat.size,

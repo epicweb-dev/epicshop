@@ -47,6 +47,10 @@ export const compiledInstructionMarkdownCache = makeSingletonFsCache<{
 	title: string | null
 	epicVideoEmbeds: Array<string>
 }>('CompiledInstructionMarkdownCache')
+export const fileInfoCache = makeSingletonFsCache<{
+	size: number
+	mtimeMs: number
+}>('FileInfoCache')
 export const dirModifiedTimeCache = makeSingletonCache<number>(
 	'DirModifiedTimeCache',
 )

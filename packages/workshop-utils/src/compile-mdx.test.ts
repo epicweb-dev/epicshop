@@ -183,9 +183,15 @@ This tests concurrent file operations.
 	const results = await Promise.all(compilationPromises)
 
 	// All results should be the same since file didn't change
+	expect(results.length).toBeGreaterThan(0)
+	const firstResult = results[0]
+	expect(firstResult).toBeDefined()
+	
 	for (let i = 1; i < results.length; i++) {
-		expect(results[i].code).toBe(results[0].code)
-		expect(results[i].title).toBe(results[0].title)
+		const currentResult = results[i]
+		expect(currentResult).toBeDefined()
+		expect(currentResult!.code).toBe(firstResult!.code)
+		expect(currentResult!.title).toBe(firstResult!.title)
 	}
 })
 
@@ -341,9 +347,15 @@ Testing concurrent access to the same file.
 	const results = await Promise.all(promises)
 
 	// All results should be identical since file didn't change
+	expect(results.length).toBeGreaterThan(0)
+	const firstResult = results[0]
+	expect(firstResult).toBeDefined()
+	
 	for (let i = 1; i < results.length; i++) {
-		expect(results[i].result.code).toBe(results[0].result.code)
-		expect(results[i].result.title).toBe(results[0].result.title)
+		const currentResult = results[i]
+		expect(currentResult).toBeDefined()
+		expect(currentResult!.result.code).toBe(firstResult!.result.code)
+		expect(currentResult!.result.title).toBe(firstResult!.result.title)
 	}
 
 	// Wait a bit to ensure cache is stable before updating
@@ -366,12 +378,18 @@ File has been updated during concurrent access test.
 	)
 
 	// All updated results should be identical and different from original
+	expect(updatedResults.length).toBeGreaterThan(0)
+	const firstUpdatedResult = updatedResults[0]
+	expect(firstUpdatedResult).toBeDefined()
+	
 	for (let i = 1; i < updatedResults.length; i++) {
-		expect(updatedResults[i].code).toBe(updatedResults[0].code)
-		expect(updatedResults[i].title).toBe(updatedResults[0].title)
+		const currentUpdatedResult = updatedResults[i]
+		expect(currentUpdatedResult).toBeDefined()
+		expect(currentUpdatedResult!.code).toBe(firstUpdatedResult!.code)
+		expect(currentUpdatedResult!.title).toBe(firstUpdatedResult!.title)
 	}
 
 	// Updated results should be different from original
-	expect(updatedResults[0].code).not.toBe(results[0].result.code)
-	expect(updatedResults[0].code).toContain('updated during concurrent')
+	expect(firstUpdatedResult!.code).not.toBe(firstResult!.result.code)
+	expect(firstUpdatedResult!.code).toContain('updated during concurrent')
 })
