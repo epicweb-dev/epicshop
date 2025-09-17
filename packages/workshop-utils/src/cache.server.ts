@@ -16,7 +16,7 @@ import {
 	type SolutionApp,
 } from './apps.server.js'
 import { resolveCacheDir } from './data-storage.server.js'
-import { logger } from './logger.js'
+import { logger, isLoggingEnabled } from './logger.js'
 import { type Notification } from './notifications.server.js'
 import { cachifiedTimingReporter, type Timings } from './timing.server.js'
 import { checkConnectionCached } from './utils.server.js'
@@ -44,6 +44,7 @@ function defaultFormatDuration(ms: number): string {
 /**
  * Creates a cachified reporter that integrates with the Epic Workshop logger system.
  * Uses the pattern `epic:cache:{name-of-cache}` for logger namespaces.
+ * Only logs when the specific cache namespace is enabled via NODE_DEBUG.
  */
 export function epicCacheReporter<Value>({
 	formatDuration = defaultFormatDuration,
@@ -70,7 +71,15 @@ export function epicCacheReporter<Value>({
 			loggerSuffix = cacheName.toLowerCase()
 		}
 		
-		const log = logger(`epic:cache:${loggerSuffix}`)
+		const namespace = `epic:cache:${loggerSuffix}`
+		
+		// Only create logger if cache logging is enabled for this namespace
+		if (!isLoggingEnabled(namespace)) {
+			// Return a no-op reporter if logging is not enabled
+			return () => {}
+		}
+		
+		const log = logger(namespace)
 		
 		let cached: unknown
 		let freshValue: unknown
@@ -160,6 +169,10 @@ export function epicCacheReporter<Value>({
 					break
 				case 'refreshValueError':
 					log.error(`Background refresh for ${key} failed.`, event.error)
+					break
+				default:
+					// Defensive programming: log unknown events for debugging
+					log(`Unknown cache event: ${event.name}`)
 					break
 			}
 		}
@@ -458,7 +471,7 @@ export async function cachified<Value>({
 		},
 		C.mergeReporters(
 			cachifiedTimingReporter(timings, timingKey),
-			process.env.EPICSHOP_DEBUG_CACHE ? epicCacheReporter() : undefined,
+			epicCacheReporter(),
 		),
 	)
 }
