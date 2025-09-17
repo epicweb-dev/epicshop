@@ -2,6 +2,7 @@ name: Auto Format
 on:
   push:
     branches: ['main']
+  workflow_dispatch:
 
 concurrency:
   group: ${{ github.workflow }}-${{ github.ref }}
@@ -35,7 +36,9 @@ jobs:
           git config --local user.name "GitHub Action"
 
       - name: 🎨 Run Prettier
-        run: npx prettier --write "**/*.{js,jsx,ts,tsx,md,css}" --ignore-path .prettierignore
+        run:
+          npx prettier --write "**/*.{js,jsx,ts,tsx,md,css}" --ignore-path
+          .prettierignore
 
       - name: 🔍 Run ESLint --fix
         run: npx eslint --fix "**/*.{js,jsx,ts,tsx}"
