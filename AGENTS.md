@@ -36,7 +36,8 @@ installed in individual repositories which resemble the structure of the
 - Run higher-level tests with `npm run test:e2e` (uses playwright)
 - Run basic build, type checking, linting, and tests with `npm run validate`
 - Find the CI plan in the .github/workflows folder.
-- Before committing:
+- Commit your changes, then run the following and commit any changes that are
+  made separately:
   - Run `npm run lint -- --fix` to fix linting errors
   - Run `npm run format` to fix formatting errors
   - Run `npm run validate` to run all tests and checks
