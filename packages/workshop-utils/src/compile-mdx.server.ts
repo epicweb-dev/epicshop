@@ -233,22 +233,30 @@ async function compileMdxImpl(file: string): Promise<{
 							if (node.depth === 1) {
 								// Extract plain text content, preserving inline code but stripping other formatting
 								const extractText = (nodes: Array<PhrasingContent>): string => {
-									return nodes.map((childNode: PhrasingContent) => {
-										if (childNode.type === 'text') {
-											return childNode.value
-										} else if (childNode.type === 'inlineCode') {
-											return `\`${childNode.value}\``
-										} else if (childNode.type === 'strong' || childNode.type === 'emphasis') {
-											// For formatting like bold/italic, just extract the text content
-											return extractText(childNode.children || [])
-										} else if ('children' in childNode && childNode.children) {
-											// For other nodes with children, recursively extract text
-											return extractText(childNode.children || [])
-										}
-										return ''
-									}).join('')
+									return nodes
+										.map((childNode: PhrasingContent) => {
+											if (childNode.type === 'text') {
+												return childNode.value
+											} else if (childNode.type === 'inlineCode') {
+												return `\`${childNode.value}\``
+											} else if (
+												childNode.type === 'strong' ||
+												childNode.type === 'emphasis'
+											) {
+												// For formatting like bold/italic, just extract the text content
+												return extractText(childNode.children || [])
+											} else if (
+												'children' in childNode &&
+												childNode.children
+											) {
+												// For other nodes with children, recursively extract text
+												return extractText(childNode.children || [])
+											}
+											return ''
+										})
+										.join('')
 								}
-								
+
 								title = extractText(node.children || []).trim()
 							}
 						})
