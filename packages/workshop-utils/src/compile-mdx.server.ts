@@ -198,30 +198,30 @@ export async function compileMdx(
 
 	if (!forceFresh) {
 		const existingCacheEntry = await compiledInstructionMarkdownCache.get(key)
-		const cachedFileInfo = await fileInfoCache.get(fileInfoKey)
 		
-		if (existingCacheEntry && cachedFileInfo?.value) {
-			// More robust cache invalidation logic using cached file info
-			const { size: cachedSize, mtimeMs: cachedMtime } = cachedFileInfo.value
-			const fileModTime = stat.mtimeMs
-			
-			// Check multiple conditions for cache invalidation:
-			// 1. File size changed - most reliable indicator
-			const isSizeDifferent = cachedSize !== stat.size
-			
-			// 2. File modification time changed (with tolerance for precision)
-			const isMtimeDifferent = Math.abs(cachedMtime - fileModTime) > 0.5
-			
-			// 3. File modification time is newer than cache creation (fallback)
-			const cacheCreatedTime = existingCacheEntry.metadata.createdTime
-			const isFileNewer = fileModTime >= (cacheCreatedTime - 1)
-			
-			forceFresh = isSizeDifferent || isMtimeDifferent || isFileNewer
-		} else if (existingCacheEntry) {
-			// Fallback to original logic if we don't have cached file info
+		if (existingCacheEntry) {
+			const cachedFileInfo = await fileInfoCache.get(fileInfoKey)
 			const fileModTime = stat.mtimeMs
 			const cacheCreatedTime = existingCacheEntry.metadata.createdTime
-			forceFresh = fileModTime >= (cacheCreatedTime - 1)
+			
+			if (cachedFileInfo?.value) {
+				// Use robust cache invalidation with cached file info
+				const { size: cachedSize, mtimeMs: cachedMtime } = cachedFileInfo.value
+				
+				const isSizeDifferent = cachedSize !== stat.size
+				const isMtimeDifferent = Math.abs(cachedMtime - fileModTime) > 0.5
+				const isFileNewer = fileModTime >= (cacheCreatedTime - 1)
+				
+				forceFresh = isSizeDifferent || isMtimeDifferent || isFileNewer
+			} else {
+				// If we don't have file info, we must be more conservative
+				// Use the original comparison but with better tolerance
+				forceFresh = fileModTime >= (cacheCreatedTime - 1)
+				
+				// Additionally, if file info cache is missing, always refresh to ensure we populate it
+				// This ensures we don't get stuck in a state where fileInfoCache is missing
+				forceFresh = true
+			}
 		}
 	}
 
@@ -234,8 +234,8 @@ export async function compileMdx(
 		getFreshValue: () => compileMdxImpl(file),
 	})
 
-	// Store file info for future cache invalidation checks
-	// Only update if we actually compiled fresh content
+	// Always store file info when we compile fresh content
+	// This ensures the fileInfoCache is consistently populated
 	if (forceFresh) {
 		try {
 			await fileInfoCache.set(fileInfoKey, {
