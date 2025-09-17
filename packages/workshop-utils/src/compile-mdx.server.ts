@@ -252,8 +252,20 @@ export async function compileMdx(
 			// CRITICAL FIX: Update modifiedTimes to invalidate higher-level caches
 			// When we detect a file change and compile fresh, we need to notify
 			// the app-level cache that this directory has been modified
-			const { setModifiedTimesForAppDirs } = await import('./apps.server.js')
-			setModifiedTimesForAppDirs(file)
+			const { setModifiedTimesForAppDirs, getAppPathFromFilePath } = await import('./apps.server.js')
+			
+			// Debug logging to understand the issue
+			console.log('[DEBUG] compileMdx: File path for cache invalidation:', file)
+			const appPath = getAppPathFromFilePath(file)
+			console.log('[DEBUG] compileMdx: Resolved app path:', appPath)
+			
+			if (appPath) {
+				setModifiedTimesForAppDirs(file)
+				console.log('[DEBUG] compileMdx: Updated modifiedTimes for app path:', appPath)
+			} else {
+				console.warn('[DEBUG] compileMdx: Could not resolve app path for file:', file)
+				console.warn('[DEBUG] compileMdx: This means higher-level cache won\'t be invalidated!')
+			}
 		} catch (error) {
 			// Don't fail the entire operation if file info caching fails
 			console.warn('Failed to cache file info:', error)
