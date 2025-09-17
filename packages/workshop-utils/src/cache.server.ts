@@ -3,7 +3,7 @@ import { getEnv } from './init-env.js'
 
 import path from 'path'
 import * as C from '@epic-web/cachified'
-import { verboseReporter, type CacheEntry } from '@epic-web/cachified'
+import { verboseReporter, type CacheEntry, type CreateReporter } from '@epic-web/cachified'
 import { remember } from '@epic-web/remember'
 import fsExtra from 'fs-extra'
 import { LRUCache } from 'lru-cache'
@@ -16,11 +16,168 @@ import {
 	type SolutionApp,
 } from './apps.server.js'
 import { resolveCacheDir } from './data-storage.server.js'
+import { logger, isLoggingEnabled } from './logger.js'
 import { type Notification } from './notifications.server.js'
 import { cachifiedTimingReporter, type Timings } from './timing.server.js'
 import { checkConnectionCached } from './utils.server.js'
 
 const cacheDir = resolveCacheDir()
+
+// Format cache time helper function (copied from @epic-web/cachified for consistency)
+function formatCacheTime(
+	metadata: any,
+	formatDuration: (ms: number) => string,
+): string {
+	const ttl = metadata?.ttl
+	if (ttl === undefined || ttl === Infinity) return 'forever'
+	return formatDuration(ttl)
+}
+
+// Default duration formatter (copied from @epic-web/cachified for consistency)
+function defaultFormatDuration(ms: number): string {
+	if (ms < 1000) return `${Math.round(ms)}ms`
+	if (ms < 60000) return `${Math.round(ms / 1000)}s`
+	if (ms < 3600000) return `${Math.round(ms / 60000)}m`
+	return `${Math.round(ms / 3600000)}h`
+}
+
+/**
+ * Creates a cachified reporter that integrates with the Epic Workshop logger system.
+ * Uses the pattern `epic:cache:{name-of-cache}` for logger namespaces.
+ * Only logs when the specific cache namespace is enabled via NODE_DEBUG.
+ */
+export function epicCacheReporter<Value>({
+	formatDuration = defaultFormatDuration,
+	performance = globalThis.performance || Date,
+}: {
+	formatDuration?: (ms: number) => string
+	performance?: Pick<typeof Date, 'now'>
+} = {}): CreateReporter<Value> {
+	return ({ key, fallbackToCache, forceFresh, metadata, cache }) => {
+		// Determine cache name for logger namespace
+		const cacheName = cache.name || cache.toString().replace(/^\[object (.*?)]$/, '$1')
+		
+		// Create logger with epic:cache:{name} pattern
+		// Extract a reasonable cache name from longer descriptions
+		let loggerSuffix = 'unknown'
+		if (cacheName.includes('(') && cacheName.includes(')')) {
+			// Extract name from "Filesystem cache (CacheName)" format
+			const match = cacheName.match(/\(([^)]+)\)/)
+			loggerSuffix = (match?.[1] ?? 'unknown').toLowerCase()
+		} else if (cacheName === 'LRUCache') {
+			// For LRU caches, we can't determine the name from the cache object alone
+			loggerSuffix = 'lru'
+		} else {
+			loggerSuffix = cacheName.toLowerCase()
+		}
+		
+		const namespace = `epic:cache:${loggerSuffix}`
+		
+		// Only create logger if cache logging is enabled for this namespace
+		if (!isLoggingEnabled(namespace)) {
+			// Return a no-op reporter if logging is not enabled
+			return () => {}
+		}
+		
+		const log = logger(namespace)
+		
+		let cached: unknown
+		let freshValue: unknown
+		let getFreshValueStartTs: number
+		let refreshValueStartTS: number
+
+		return (event) => {
+			switch (event.name) {
+				case 'getCachedValueRead':
+					cached = event.entry
+					break
+				case 'checkCachedValueError':
+					log.warn(
+						`check failed for cached value of ${key}\nReason: ${event.reason}.\nDeleting the cache key and trying to get a fresh value.`,
+						cached,
+					)
+					break
+				case 'getCachedValueError':
+					log.error(
+						`error with cache at ${key}. Deleting the cache key and trying to get a fresh value.`,
+						event.error,
+					)
+					break
+				case 'getFreshValueError':
+					log.error(
+						`getting a fresh value for ${key} failed`,
+						{ fallbackToCache, forceFresh },
+						event.error,
+					)
+					break
+				case 'getFreshValueStart':
+					getFreshValueStartTs = performance.now()
+					break
+				case 'writeFreshValueSuccess': {
+					const totalTime = performance.now() - getFreshValueStartTs
+					if (event.written) {
+						log(
+							`Updated the cache value for ${key}.`,
+							`Getting a fresh value for this took ${formatDuration(
+								totalTime,
+							)}.`,
+							`Caching for ${formatCacheTime(
+								metadata,
+								formatDuration,
+							)} in ${cacheName}.`,
+						)
+					} else {
+						log(
+							`Not updating the cache value for ${key}.`,
+							`Getting a fresh value for this took ${formatDuration(
+								totalTime,
+							)}.`,
+							`Thereby exceeding caching time of ${formatCacheTime(
+								metadata,
+								formatDuration,
+							)}`,
+						)
+					}
+					break
+				}
+				case 'writeFreshValueError':
+					log.error(`error setting cache: ${key}`, event.error)
+					break
+				case 'getFreshValueSuccess':
+					freshValue = event.value
+					break
+				case 'checkFreshValueError':
+					log.error(
+						`check failed for fresh value of ${key}\nReason: ${event.reason}.`,
+						freshValue,
+					)
+					break
+				case 'refreshValueStart':
+					refreshValueStartTS = performance.now()
+					break
+				case 'refreshValueSuccess':
+					log(
+						`Background refresh for ${key} successful.`,
+						`Getting a fresh value for this took ${formatDuration(
+							performance.now() - refreshValueStartTS,
+						)}.`,
+						`Caching for ${formatCacheTime(
+							metadata,
+							formatDuration,
+						)} in ${cacheName}.`,
+					)
+					break
+				case 'refreshValueError':
+					log.error(`Background refresh for ${key} failed.`, event.error)
+					break
+				default:
+					// Defensive programming: log unknown events for debugging
+					log(`Unknown cache event: ${event.name}`)
+					break
+			}
+		}
+	}
+}
 
 export const solutionAppCache =
 	makeSingletonFsCache<SolutionApp>('SolutionAppCache')
@@ -318,7 +475,7 @@ export async function cachified<Value>({
 		},
 		C.mergeReporters(
 			cachifiedTimingReporter(timings, timingKey),
-			process.env.EPICSHOP_DEBUG_CACHE ? verboseReporter() : undefined,
+			epicCacheReporter(),
 		),
 	)
 }
