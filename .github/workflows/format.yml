@@ -1,6 +1,9 @@
 name: Auto Format
 on:
-  push:
+  workflow_run:
+    workflows: ["validate"]
+    types:
+      - completed
     branches: ['main']
   workflow_dispatch:
 
@@ -13,6 +16,8 @@ jobs:
     name: 🧹 Auto Format
     runs-on: ubuntu-latest
     timeout-minutes: 10
+    # Only run if the validate workflow completed successfully and was triggered by a push to main
+    if: ${{ github.event.workflow_run.conclusion == 'success' && github.event.workflow_run.event == 'push' }}
     permissions:
       contents: write
       actions: write
