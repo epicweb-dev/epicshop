@@ -204,10 +204,6 @@ export async function compileMdx(
 			const { size: cachedSize, mtimeMs: cachedMtime } = cachedFileInfo.value as { size: number; mtimeMs: number }
 			const fileModTime = stat.mtimeMs
 			
-			verboseLog(`Cache invalidation check for ${file}:`)
-			verboseLog(`  Current size: ${stat.size}, cached size: ${cachedSize}`)
-			verboseLog(`  Current mtime: ${fileModTime}, cached mtime: ${cachedMtime}`)
-			
 			// Check multiple conditions for cache invalidation:
 			// 1. File size changed - most reliable indicator
 			const isSizeDifferent = cachedSize !== stat.size
@@ -219,20 +215,12 @@ export async function compileMdx(
 			const cacheCreatedTime = existingCacheEntry.metadata.createdTime
 			const isFileNewer = fileModTime >= (cacheCreatedTime - 1)
 			
-			verboseLog(`  Size different: ${isSizeDifferent}`)
-			verboseLog(`  Mtime different: ${isMtimeDifferent}`)
-			verboseLog(`  File newer: ${isFileNewer}`)
-			
 			forceFresh = isSizeDifferent || isMtimeDifferent || isFileNewer
-			verboseLog(`  Force fresh: ${forceFresh}`)
 		} else if (existingCacheEntry) {
 			// Fallback to original logic if we don't have cached file info
 			const fileModTime = stat.mtimeMs
 			const cacheCreatedTime = existingCacheEntry.metadata.createdTime
 			forceFresh = fileModTime >= (cacheCreatedTime - 1)
-			verboseLog(`Fallback cache invalidation: file newer = ${forceFresh}`)
-		} else {
-			verboseLog(`No existing cache entry found for ${file}`)
 		}
 	}
 
@@ -249,7 +237,6 @@ export async function compileMdx(
 	// Only update if we actually compiled fresh content
 	if (forceFresh) {
 		try {
-			verboseLog(`Storing file info for ${file}: size=${stat.size}, mtime=${stat.mtimeMs}`)
 			await compiledInstructionMarkdownCache.set(fileInfoKey, {
 				value: {
 					mtimeMs: stat.mtimeMs,
