@@ -51,7 +51,9 @@ declare global {
 			typeof closeWithGrace
 		>,
 		__process_test_close_with_grace_return__: ReturnType<typeof closeWithGrace>,
-		__process_sidecar_close_with_grace_return__: ReturnType<typeof closeWithGrace>
+		__process_sidecar_close_with_grace_return__: ReturnType<
+			typeof closeWithGrace
+		>
 }
 
 const devProcesses = remember('dev_processes', getDevProcessesMap)
@@ -93,12 +95,14 @@ function getSidecarProcessesMap() {
 
 	global.__process_sidecar_close_with_grace_return__?.uninstall()
 
-	global.__process_sidecar_close_with_grace_return__ = closeWithGrace(async () => {
-		for (const [name, proc] of procs.entries()) {
-			console.log('closing sidecar', name)
-			proc.process.kill()
-		}
-	})
+	global.__process_sidecar_close_with_grace_return__ = closeWithGrace(
+		async () => {
+			for (const [name, proc] of procs.entries()) {
+				console.log('closing sidecar', name)
+				proc.process.kill()
+			}
+		},
+	)
 	return procs
 }
 
@@ -117,26 +121,26 @@ const colors = [
 
 function getNextAvailableColor(): (typeof colors)[number] {
 	const usedColors = new Set<(typeof colors)[number]>()
-	
+
 	// Collect colors used by dev processes
 	for (const proc of devProcesses.values()) {
 		usedColors.add(proc.color)
 	}
-	
+
 	// Collect colors used by sidecar processes
 	for (const proc of sidecarProcesses.values()) {
 		usedColors.add(proc.color)
 	}
-	
+
 	// Find available colors
-	const availableColors = colors.filter(color => !usedColors.has(color))
-	
+	const availableColors = colors.filter((color) => !usedColors.has(color))
+
 	if (availableColors.length === 0) {
 		// If all colors are used, cycle through them based on total process count
 		const totalProcesses = devProcesses.size + sidecarProcesses.size
 		return colors[totalProcesses % colors.length] ?? 'blue'
 	}
-	
+
 	// Use the first available color
 	return availableColors[0] ?? 'blue'
 }
@@ -346,8 +350,9 @@ export function startSidecarProcesses(processes: Record<string, string>) {
 }
 
 export function startSidecarProcess(name: string, command: string) {
-	if (isDeployed) throw new Error('cannot run sidecar processes in deployed mode')
-	
+	if (isDeployed)
+		throw new Error('cannot run sidecar processes in deployed mode')
+
 	// if the process is already running, don't start it again
 	if (sidecarProcesses.has(name)) {
 		console.log(`Sidecar process ${name} is already running`)
@@ -369,7 +374,7 @@ export function startSidecarProcess(name: string, command: string) {
 	})
 
 	const prefix = chalk[color](`[${name}]`)
-	
+
 	function handleStdOutData(data: Buffer) {
 		console.log(
 			data
@@ -380,7 +385,7 @@ export function startSidecarProcess(name: string, command: string) {
 		)
 	}
 	sidecarProcess.stdout?.on('data', handleStdOutData)
-	
+
 	function handleStdErrData(data: Buffer) {
 		console.error(
 			data
@@ -391,16 +396,18 @@ export function startSidecarProcess(name: string, command: string) {
 		)
 	}
 	sidecarProcess.stderr?.on('data', handleStdErrData)
-	
+
 	sidecarProcesses.set(name, { color, process: sidecarProcess })
-	
+
 	sidecarProcess.on('exit', (code: number | null, signal: string | null) => {
 		sidecarProcess.stdout?.off('data', handleStdOutData)
 		sidecarProcess.stderr?.off('data', handleStdErrData)
 		if (code === 0) {
 			console.log(`${prefix} exited successfully`)
 		} else {
-			console.log(`${prefix} exited with code ${code}${signal ? ` (signal: ${signal})` : ''}`)
+			console.log(
+				`${prefix} exited with code ${code}${signal ? ` (signal: ${signal})` : ''}`,
+			)
 		}
 		sidecarProcesses.delete(name)
 	})
@@ -414,8 +421,9 @@ export function startSidecarProcess(name: string, command: string) {
 }
 
 export function stopSidecarProcesses() {
-	if (isDeployed) throw new Error('cannot stop sidecar processes in deployed mode')
-	
+	if (isDeployed)
+		throw new Error('cannot stop sidecar processes in deployed mode')
+
 	for (const [name, proc] of sidecarProcesses.entries()) {
 		console.log(`Stopping sidecar process: ${name}`)
 		proc.process.kill()

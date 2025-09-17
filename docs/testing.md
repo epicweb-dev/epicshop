@@ -42,7 +42,9 @@ import { testStep, expect, dtl } from '@epic-web/workshop-utils/test'
 import './index.tsx'
 
 await testStep('The counter button should be rendered', async () => {
-	expect(await dt.screen.findByRole('button', {name: /Click me please/i})).toBeInTheDocument()
+	expect(
+		await dt.screen.findByRole('button', { name: /Click me please/i }),
+	).toBeInTheDocument()
 })
 ```
 

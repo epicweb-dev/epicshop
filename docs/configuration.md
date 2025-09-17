@@ -7,27 +7,27 @@ The Epic Workshop app can be configured using the `epicshop` field in the
 
 These options should be set in the root `package.json` of your workshop.
 
-| Option                                 | Type      | Description                              | Default                                                                 |
-| -------------------------------------- | --------- | ---------------------------------------- | ----------------------------------------------------------------------- |
-| `title`                                | `string`  | The title of your workshop               | Required                                                                |
-| `subtitle`                             | `string`  | A subtitle for your workshop             | Optional                                                                |
-| `instructor`                           | `object`  | Information about the instructor         | Optional                                                                |
-| `instructor.name`                      | `string`  | Name of the instructor                   | Optional                                                                |
-| `instructor.avatar`                    | `string`  | Path to the instructor's avatar image    | Optional                                                                |
-| `instructor.𝕏` or `instructor.xHandle` | `string`  | Instructor's X (formerly Twitter) handle | Optional                                                                |
-| `subdomain`                            | `string`  | Subdomain for the workshop               | Optional (falls back to sanitized `name` property if not set)           |
-| `product`                              | `object`  | Product configuration                    | Optional                                                                |
-| `onboardingVideo`                      | `string`  | URL to the onboarding video              | `"https://www.epicweb.dev/tips/get-started-with-the-epic-workshop-app"` |
-| `githubRepo`                           | `string`  | URL to the GitHub repository             | Required if `githubRoot` is not provided                                |
-| `githubRoot`                           | `string`  | Root URL for GitHub file links           | Required if `githubRepo` is not provided                                |
-| `stackBlitzConfig`                     | `object`  | Configuration for StackBlitz             | Optional                                                                |
-| `forms.workshop`                       | `string`  | URL template for workshop feedback form  | Has a default value                                                     |
-| `forms.exercise`                       | `string`  | URL template for exercise feedback form  | Has a default value                                                     |
-| `testTab.enabled`                      | `boolean` | Whether to enable the test tab           | `true`                                                                  |
-| `scripts.postupdate`                   | `string`  | Script to run after workshop update      | Optional                                                                |
-| `initialRoute`                         | `string`  | Initial route for the app                | `"/"`                                                                   |
-| `notifications`                        | `array`   | Custom notifications for this workshop   | `[]`                                                                    |
-| `sidecarProcesses`                     | `object`  | Additional processes to run alongside the workshop | `{}`                                                             |
+| Option                                 | Type      | Description                                        | Default                                                                 |
+| -------------------------------------- | --------- | -------------------------------------------------- | ----------------------------------------------------------------------- |
+| `title`                                | `string`  | The title of your workshop                         | Required                                                                |
+| `subtitle`                             | `string`  | A subtitle for your workshop                       | Optional                                                                |
+| `instructor`                           | `object`  | Information about the instructor                   | Optional                                                                |
+| `instructor.name`                      | `string`  | Name of the instructor                             | Optional                                                                |
+| `instructor.avatar`                    | `string`  | Path to the instructor's avatar image              | Optional                                                                |
+| `instructor.𝕏` or `instructor.xHandle` | `string`  | Instructor's X (formerly Twitter) handle           | Optional                                                                |
+| `subdomain`                            | `string`  | Subdomain for the workshop                         | Optional (falls back to sanitized `name` property if not set)           |
+| `product`                              | `object`  | Product configuration                              | Optional                                                                |
+| `onboardingVideo`                      | `string`  | URL to the onboarding video                        | `"https://www.epicweb.dev/tips/get-started-with-the-epic-workshop-app"` |
+| `githubRepo`                           | `string`  | URL to the GitHub repository                       | Required if `githubRoot` is not provided                                |
+| `githubRoot`                           | `string`  | Root URL for GitHub file links                     | Required if `githubRepo` is not provided                                |
+| `stackBlitzConfig`                     | `object`  | Configuration for StackBlitz                       | Optional                                                                |
+| `forms.workshop`                       | `string`  | URL template for workshop feedback form            | Has a default value                                                     |
+| `forms.exercise`                       | `string`  | URL template for exercise feedback form            | Has a default value                                                     |
+| `testTab.enabled`                      | `boolean` | Whether to enable the test tab                     | `true`                                                                  |
+| `scripts.postupdate`                   | `string`  | Script to run after workshop update                | Optional                                                                |
+| `initialRoute`                         | `string`  | Initial route for the app                          | `"/"`                                                                   |
+| `notifications`                        | `array`   | Custom notifications for this workshop             | `[]`                                                                    |
+| `sidecarProcesses`                     | `object`  | Additional processes to run alongside the workshop | `{}`                                                                    |
 
 ## Product Configuration
 
@@ -48,11 +48,15 @@ The `product` object can have the following properties:
 
 ## Sidecar Processes
 
-The `sidecarProcesses` configuration allows you to run additional processes alongside your workshop app. This is useful for running backend services, databases, or other supporting applications that your workshop exercises might need.
+The `sidecarProcesses` configuration allows you to run additional processes
+alongside your workshop app. This is useful for running backend services,
+databases, or other supporting applications that your workshop exercises might
+need.
 
 ### Configuration
 
 The `sidecarProcesses` field is an object where:
+
 - **Keys** are the display names for your processes (used in console output)
 - **Values** are the shell commands to run
 
@@ -60,23 +64,27 @@ The `sidecarProcesses` field is an object where:
 
 ```json
 {
-  "epicshop": {
-    "title": "My Workshop",
-    "sidecarProcesses": {
-      "BackendAPI": "npm run dev --prefix ./backend",
-      "Database": "docker run --rm -p 5432:5432 postgres:15",
-      "MockServer": "npx json-server --watch db.json --port 3001"
-    }
-  }
+	"epicshop": {
+		"title": "My Workshop",
+		"sidecarProcesses": {
+			"BackendAPI": "npm run dev --prefix ./backend",
+			"Database": "docker run --rm -p 5432:5432 postgres:15",
+			"MockServer": "npx json-server --watch db.json --port 3001"
+		}
+	}
 }
 ```
 
 ### Features
 
-- **Colored Output**: Each sidecar process gets its own color in the console output for easy identification
-- **Prefixed Logs**: All output is prefixed with the process name (e.g., `[BackendAPI]`)
-- **Automatic Cleanup**: Processes are automatically stopped when the workshop app shuts down
-- **Error Handling**: If a sidecar process fails to start, it won't prevent the workshop app from running
+- **Colored Output**: Each sidecar process gets its own color in the console
+  output for easy identification
+- **Prefixed Logs**: All output is prefixed with the process name (e.g.,
+  `[BackendAPI]`)
+- **Automatic Cleanup**: Processes are automatically stopped when the workshop
+  app shuts down
+- **Error Handling**: If a sidecar process fails to start, it won't prevent the
+  workshop app from running
 
 ### Console Output Example
 
@@ -95,10 +103,13 @@ When you start your workshop, you'll see output like this:
 
 ### Best Practices
 
-1. **Use relative paths** for npm scripts to ensure they work across different environments
+1. **Use relative paths** for npm scripts to ensure they work across different
+   environments
 2. **Include `--prefix`** when running npm commands in subdirectories
-3. **Use appropriate ports** that don't conflict with the workshop app (which typically runs on port 5639)
-4. **Test locally** to ensure all processes start correctly before sharing your workshop
+3. **Use appropriate ports** that don't conflict with the workshop app (which
+   typically runs on port 5639)
+4. **Test locally** to ensure all processes start correctly before sharing your
+   workshop
 
 ## Subdomain Configuration
 

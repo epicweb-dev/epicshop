@@ -48,7 +48,8 @@ export function Playground({
 									the playground directory
 								</span>
 							</SimpleTooltip>{' '}
-							in your editor and follow the exercise instructions to complete it.
+							in your editor and follow the exercise instructions to complete
+							it.
 						</div>
 					</div>
 				</div>
