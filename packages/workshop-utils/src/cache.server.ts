@@ -4,7 +4,6 @@ import { getEnv } from './init-env.js'
 import path from 'path'
 import * as C from '@epic-web/cachified'
 import {
-	verboseReporter,
 	type CacheEntry,
 	type CreateReporter,
 } from '@epic-web/cachified'
