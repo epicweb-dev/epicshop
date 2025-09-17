@@ -12,31 +12,36 @@ beforeEach(() => {
 	vi.clearAllMocks()
 })
 
-test('epicCacheReporter creates logger with correct namespace', () => {
+function createMockLogger() {
 	const mockLog = vi.fn()
 	const mockLogger = Object.assign(mockLog, {
 		info: vi.fn(),
 		warn: vi.fn(),
 		error: vi.fn(),
 	})
-	
-	// Set up the mocks
+	return { mockLog, mockLogger }
+}
+
+function setupMocks(loggingEnabled: boolean = true) {
+	const { mockLog, mockLogger } = createMockLogger()
 	const loggerMock = vi.mocked(logger)
 	const isLoggingEnabledMock = vi.mocked(isLoggingEnabled)
 	
 	loggerMock.mockReturnValue(mockLogger)
-	isLoggingEnabledMock.mockReturnValue(true) // Enable logging for this test
-
-	const reporter = epicCacheReporter()
+	isLoggingEnabledMock.mockReturnValue(loggingEnabled)
 	
-	// Create a minimal cache context that satisfies the types
-	const cacheContext = {
+	return { mockLog, mockLogger, loggerMock, isLoggingEnabledMock }
+}
+
+function createCacheContext(cacheConfig: Partial<{ name: string; toString: () => string }> = {}) {
+	return {
 		key: 'test-key',
 		fallbackToCache: false,
 		forceFresh: false,
 		metadata: { ttl: 1000 },
 		cache: {
-			name: 'Filesystem cache (TestCache)',
+			name: 'name' in cacheConfig ? cacheConfig.name : 'Filesystem cache (TestCache)',
+			toString: cacheConfig.toString ?? (() => '[object Cache]'),
 			get: vi.fn(),
 			set: vi.fn(),
 			delete: vi.fn(),
@@ -47,132 +52,46 @@ test('epicCacheReporter creates logger with correct namespace', () => {
 		checkValue: vi.fn(),
 		report: vi.fn(),
 	} as any
+}
 
-	// Initialize the reporter
+function createReporterAndEventHandler(
+	cacheConfig?: Partial<{ name: string; toString: () => string }>,
+	loggingEnabled: boolean = true
+) {
+	const mocks = setupMocks(loggingEnabled)
+	const reporter = epicCacheReporter()
+	const cacheContext = createCacheContext(cacheConfig)
 	const eventHandler = reporter(cacheContext)
+	
+	return { ...mocks, eventHandler }
+}
 
-	// Verify the isLoggingEnabled was called with correct namespace
+test('epicCacheReporter creates logger with correct namespace', () => {
+	const { isLoggingEnabledMock, loggerMock } = createReporterAndEventHandler()
+
 	expect(isLoggingEnabledMock).toHaveBeenCalledWith('epic:cache:testcache')
-	// Verify the logger was called with correct namespace
 	expect(loggerMock).toHaveBeenCalledWith('epic:cache:testcache')
 })
 
 test('epicCacheReporter handles LRU cache naming', () => {
-	const mockLog = vi.fn()
-	const mockLogger = Object.assign(mockLog, {
-		info: vi.fn(),
-		warn: vi.fn(),
-		error: vi.fn(),
-	})
-	
-	const loggerMock = vi.mocked(logger)
-	const isLoggingEnabledMock = vi.mocked(isLoggingEnabled)
-	
-	loggerMock.mockReturnValue(mockLogger)
-	isLoggingEnabledMock.mockReturnValue(true) // Enable logging for this test
-
-	const reporter = epicCacheReporter()
-	
-	const cacheContext = {
-		key: 'test-key',
-		fallbackToCache: false,
-		forceFresh: false,
-		metadata: { ttl: 1000 },
-		cache: {
-			name: 'LRUCache',
-			get: vi.fn(),
-			set: vi.fn(),
-			delete: vi.fn(),
-		},
-		getFreshValue: vi.fn(),
-		ttl: 1000,
-		staleWhileRevalidate: 0,
-		checkValue: vi.fn(),
-		report: vi.fn(),
-	} as any
-
-	const eventHandler = reporter(cacheContext)
+	const { isLoggingEnabledMock, loggerMock } = createReporterAndEventHandler({ name: 'LRUCache' })
 
 	expect(isLoggingEnabledMock).toHaveBeenCalledWith('epic:cache:lru')
 	expect(loggerMock).toHaveBeenCalledWith('epic:cache:lru')
 })
 
 test('epicCacheReporter handles unknown cache naming', () => {
-	const mockLog = vi.fn()
-	const mockLogger = Object.assign(mockLog, {
-		info: vi.fn(),
-		warn: vi.fn(),
-		error: vi.fn(),
+	const { isLoggingEnabledMock, loggerMock } = createReporterAndEventHandler({
+		name: undefined,
+		toString: () => '[object Object]'
 	})
-	
-	const loggerMock = vi.mocked(logger)
-	const isLoggingEnabledMock = vi.mocked(isLoggingEnabled)
-	
-	loggerMock.mockReturnValue(mockLogger)
-	isLoggingEnabledMock.mockReturnValue(true) // Enable logging for this test
-
-	const reporter = epicCacheReporter()
-	
-	const cacheContext = {
-		key: 'test-key',
-		fallbackToCache: false,
-		forceFresh: false,
-		metadata: { ttl: 1000 },
-		cache: {
-			name: undefined,
-			toString: () => '[object Object]',
-			get: vi.fn(),
-			set: vi.fn(),
-			delete: vi.fn(),
-		},
-		getFreshValue: vi.fn(),
-		ttl: 1000,
-		staleWhileRevalidate: 0,
-		checkValue: vi.fn(),
-		report: vi.fn(),
-	} as any
-
-	const eventHandler = reporter(cacheContext)
 
 	expect(isLoggingEnabledMock).toHaveBeenCalledWith('epic:cache:object')
 	expect(loggerMock).toHaveBeenCalledWith('epic:cache:object')
 })
 
 test('epicCacheReporter logs cache events correctly', () => {
-	const mockLog = vi.fn()
-	const mockLogger = Object.assign(mockLog, {
-		info: vi.fn(),
-		warn: vi.fn(),
-		error: vi.fn(),
-	})
-	
-	const loggerMock = vi.mocked(logger)
-	const isLoggingEnabledMock = vi.mocked(isLoggingEnabled)
-	
-	loggerMock.mockReturnValue(mockLogger)
-	isLoggingEnabledMock.mockReturnValue(true) // Enable logging for this test
-
-	const reporter = epicCacheReporter()
-	
-	const cacheContext = {
-		key: 'test-key',
-		fallbackToCache: false,
-		forceFresh: false,
-		metadata: { ttl: 1000 },
-		cache: {
-			name: 'Filesystem cache (TestCache)',
-			get: vi.fn(),
-			set: vi.fn(),
-			delete: vi.fn(),
-		},
-		getFreshValue: vi.fn(),
-		ttl: 1000,
-		staleWhileRevalidate: 0,
-		checkValue: vi.fn(),
-		report: vi.fn(),
-	} as any
-
-	const eventHandler = reporter(cacheContext)
+	const { mockLog, mockLogger, eventHandler } = createReporterAndEventHandler()
 
 	// Test a cache error event
 	eventHandler({
@@ -202,40 +121,8 @@ test('epicCacheReporter logs cache events correctly', () => {
 })
 
 test('epicCacheReporter returns no-op when logging is disabled', () => {
-	const mockLog = vi.fn()
-	const mockLogger = Object.assign(mockLog, {
-		info: vi.fn(),
-		warn: vi.fn(),
-		error: vi.fn(),
-	})
-	
-	const loggerMock = vi.mocked(logger)
-	const isLoggingEnabledMock = vi.mocked(isLoggingEnabled)
-	
-	loggerMock.mockReturnValue(mockLogger)
-	isLoggingEnabledMock.mockReturnValue(false) // Disable logging for this test
-
-	const reporter = epicCacheReporter()
-	
-	const cacheContext = {
-		key: 'test-key',
-		fallbackToCache: false,
-		forceFresh: false,
-		metadata: { ttl: 1000 },
-		cache: {
-			name: 'Filesystem cache (TestCache)',
-			get: vi.fn(),
-			set: vi.fn(),
-			delete: vi.fn(),
-		},
-		getFreshValue: vi.fn(),
-		ttl: 1000,
-		staleWhileRevalidate: 0,
-		checkValue: vi.fn(),
-		report: vi.fn(),
-	} as any
-
-	const eventHandler = reporter(cacheContext)
+	const { mockLog, mockLogger, loggerMock, isLoggingEnabledMock, eventHandler } = 
+		createReporterAndEventHandler(undefined, false)
 
 	// Verify isLoggingEnabled was called
 	expect(isLoggingEnabledMock).toHaveBeenCalledWith('epic:cache:testcache')
