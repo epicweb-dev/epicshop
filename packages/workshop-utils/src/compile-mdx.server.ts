@@ -231,9 +231,25 @@ async function compileMdxImpl(file: string): Promise<{
 						visit(tree, 'heading', (node) => {
 							if (title) return
 							if (node.depth === 1) {
-								visit(node, 'text', (textNode) => {
-									title = textNode.value.trim()
-								})
+								// Extract plain text content, preserving inline code but stripping other formatting
+								const extractText = (nodes: any[]): string => {
+									return nodes.map((childNode) => {
+										if (childNode.type === 'text') {
+											return childNode.value
+										} else if (childNode.type === 'inlineCode') {
+											return `\`${childNode.value}\``
+										} else if (childNode.type === 'strong' || childNode.type === 'emphasis') {
+											// For formatting like bold/italic, just extract the text content
+											return extractText(childNode.children || [])
+										} else if (childNode.children) {
+											// For other nodes with children, recursively extract text
+											return extractText(childNode.children)
+										}
+										return ''
+									}).join('')
+								}
+								
+								title = extractText(node.children || []).trim()
 							}
 						})
 						title = title ? title.replace(/^\d+\. /, '').trim() : null
