@@ -237,19 +237,5 @@ jobs:
       - name: 📥 Download deps
         run: npm install --prefer-offline --no-audit --no-fund
 
-      - name: 🔍 Check if this is the latest commit
-        run: |
-          git fetch origin main
-          LOCAL_SHA=$(git rev-parse HEAD)
-          REMOTE_SHA=$(git rev-parse origin/main)
-          echo "Local SHA: $LOCAL_SHA"
-          echo "Remote SHA: $REMOTE_SHA"
-          if [ "$LOCAL_SHA" != "$REMOTE_SHA" ]; then
-            echo "::warning::This commit is not the latest on main. Skipping release to avoid conflicts."
-            echo "This usually happens when the auto-format workflow commits changes after this workflow started."
-            echo "The auto-format workflow will trigger a new validation run that includes the release."
-            exit 1
-          fi
-
       - name: 🚀 Release
         run: npx tsx other/release.ts --dry-run=false

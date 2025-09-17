@@ -42,7 +42,7 @@ jobs:
           .prettierignore
 
       - name: 🔍 Run ESLint --fix
-        run: npx eslint --fix "**/*.{js,jsx,ts,tsx}"
+        run: npm run lint -- --fix
 
       - name: 💾 Commit changes
         run: |
@@ -51,22 +51,6 @@ jobs:
             git commit -m "chore: cleanup 🧹"
             git push
             echo "Changes committed and pushed."
-            echo "CHANGES_COMMITTED=true" >> $GITHUB_ENV
           else
             echo "No changes to commit."
-            echo "CHANGES_COMMITTED=false" >> $GITHUB_ENV
           fi
-
-      - name: 🚀 Trigger validation after formatting
-        if: env.CHANGES_COMMITTED == 'true'
-        uses: actions/github-script@v7
-        with:
-          github-token: ${{ secrets.GITHUB_TOKEN }}
-          script: |
-            await github.rest.actions.createWorkflowDispatch({
-              owner: context.repo.owner,
-              repo: context.repo.repo,
-              workflow_id: 'validate.yml',
-              ref: 'main'
-            });
-            console.log('Triggered validate workflow after formatting changes');
