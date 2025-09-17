@@ -243,7 +243,7 @@ async function compileMdxImpl(file: string): Promise<{
 											return extractText(childNode.children || [])
 										} else if ('children' in childNode && childNode.children) {
 											// For other nodes with children, recursively extract text
-											return extractText(childNode.children)
+											return extractText(childNode.children || [])
 										}
 										return ''
 									}).join('')
