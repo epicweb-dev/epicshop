@@ -228,6 +228,9 @@ function exists(file: string) {
 }
 
 async function isDirectoryEmpty(dirPath: string): Promise<boolean> {
+	// Update modified time before attempting to retrieve entry
+	modifiedTimes.set(dirPath, Date.now())
+	
 	return cachified({
 		key: dirPath,
 		cache: directoryEmptyCache,
@@ -243,15 +246,8 @@ async function isDirectoryEmpty(dirPath: string): Promise<boolean> {
 				if (files.length === 0) return true
 				const isIgnored = await isGitIgnored({ cwd: dirPath })
 				const nonIgnoredFiles = files.filter((file) => !isIgnored(file))
-				const result = nonIgnoredFiles.length === 0
-				
-				// Update modified time since we retrieved fresh value
-				modifiedTimes.set(dirPath, Date.now())
-				
-				return result
+				return nonIgnoredFiles.length === 0
 			} catch {
-				// Update modified time even on error since we attempted to get fresh value
-				modifiedTimes.set(dirPath, Date.now())
 				return true
 			}
 		},
@@ -871,6 +867,14 @@ export async function getPlaygroundApp({
 		? await getFullPathFromAppName(baseAppName)
 		: null
 	const playgroundCacheEntry = await playgroundAppCache.get(key)
+	
+	// Update modified times before attempting to retrieve entry
+	const now = Date.now()
+	modifiedTimes.set(playgroundDir, now)
+	if (baseAppFullPath) {
+		modifiedTimes.set(baseAppFullPath, now)
+	}
+	
 	return cachified({
 		key,
 		cache: playgroundAppCache,
@@ -927,13 +931,6 @@ export async function getPlaygroundApp({
 				}),
 			} satisfies PlaygroundApp
 			
-			// Update modified times since we retrieved fresh value
-			const now = Date.now()
-			modifiedTimes.set(playgroundDir, now)
-			if (baseAppFullPath) {
-				modifiedTimes.set(baseAppFullPath, now)
-			}
-			
 			return result
 		},
 	}).catch((error) => {
@@ -989,6 +986,10 @@ async function getExampleApps({
 	for (const exampleDir of exampleDirs) {
 		const index = exampleDirs.indexOf(exampleDir)
 		const key = `${exampleDir}-${index}`
+		
+		// Update modified time before attempting to retrieve entry
+		modifiedTimes.set(exampleDir, Date.now())
+		
 		const exampleApp = await cachified({
 			key,
 			cache: exampleAppCache,
@@ -1002,17 +1003,12 @@ async function getExampleApps({
 				exampleDir,
 			),
 			getFreshValue: async () => {
-				const result = await getExampleAppFromPath(exampleDir, index, request).catch(
+				return getExampleAppFromPath(exampleDir, index, request).catch(
 					(error) => {
 						console.error(error)
 						return null
 					},
 				)
-				
-				// Update modified time since we retrieved fresh value
-				modifiedTimes.set(exampleDir, Date.now())
-				
-				return result
 			},
 		})
 		if (exampleApp) exampleApps.push(exampleApp)
@@ -1079,6 +1075,9 @@ async function getSolutionApps({
 	const solutionApps: Array<SolutionApp> = []
 
 	for (const solutionDir of solutionDirs) {
+		// Update modified time before attempting to retrieve entry
+		modifiedTimes.set(solutionDir, Date.now())
+		
 		const solutionApp = await cachified({
 			key: solutionDir,
 			cache: solutionAppCache,
@@ -1092,15 +1091,10 @@ async function getSolutionApps({
 				solutionDir,
 			),
 			getFreshValue: async () => {
-				const result = await getSolutionAppFromPath(solutionDir, request).catch((error) => {
+				return getSolutionAppFromPath(solutionDir, request).catch((error) => {
 					console.error(error)
 					return null
 				})
-				
-				// Update modified time since we retrieved fresh value
-				modifiedTimes.set(solutionDir, Date.now())
-				
-				return result
 			},
 		})
 		if (solutionApp) solutionApps.push(solutionApp)
@@ -1167,6 +1161,14 @@ async function getProblemApps({
 	const problemApps: Array<ProblemApp> = []
 	for (const problemDir of problemDirs) {
 		const solutionDir = await findSolutionDir({ fullPath: problemDir })
+		
+		// Update modified times before attempting to retrieve entry
+		const now = Date.now()
+		modifiedTimes.set(problemDir, now)
+		if (solutionDir) {
+			modifiedTimes.set(solutionDir, now)
+		}
+		
 		const problemApp = await cachified({
 			key: problemDir,
 			cache: problemAppCache,
@@ -1181,19 +1183,10 @@ async function getProblemApps({
 				solutionDir,
 			),
 			getFreshValue: async () => {
-				const result = await getProblemAppFromPath(problemDir).catch((error) => {
+				return getProblemAppFromPath(problemDir).catch((error) => {
 					console.error(error)
 					return null
 				})
-				
-				// Update modified times since we retrieved fresh value
-				const now = Date.now()
-				modifiedTimes.set(problemDir, now)
-				if (solutionDir) {
-					modifiedTimes.set(solutionDir, now)
-				}
-				
-				return result
 			},
 		})
 		if (problemApp) problemApps.push(problemApp)
