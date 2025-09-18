@@ -27,6 +27,8 @@ export function handleError(
 	{ request }: LoaderFunctionArgs | ActionFunctionArgs,
 ): void {
 	if (request.signal.aborted) return
+	// Don't send errors to Sentry for bot requests
+	if (isbot(request.headers.get('user-agent'))) return
 	if (ENV.EPICSHOP_IS_PUBLISHED) {
 		Sentry?.captureException(error)
 	}

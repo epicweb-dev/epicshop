@@ -20,6 +20,21 @@ export function init() {
 			"Failed to execute 'requestPictureInPicture' on 'HTMLVideoElement'",
 		],
 		beforeSend(event) {
+			// Don't send errors to Sentry for bot requests
+			if (typeof navigator !== 'undefined' && navigator.userAgent) {
+				// Basic bot detection for client-side - check for common bot indicators
+				const userAgent = navigator.userAgent.toLowerCase()
+				const botKeywords = [
+					'bot', 'crawl', 'spider', 'scrape', 'fetch', 'monitor', 'test',
+					'headless', 'phantom', 'puppeteer', 'selenium', 'webdriver',
+					'lighthouse', 'pagespeed', 'facebookexternalhit', 'twitterbot',
+					'googlebot', 'bingbot', 'slackbot', 'whatsapp', 'linkedinbot'
+				]
+				if (botKeywords.some(keyword => userAgent.includes(keyword))) {
+					return null
+				}
+			}
+			
 			// Very common when learners shut down the local server and the browser keeps trying to fetch
 			const failedToFetch =
 				event.exception?.values?.some(
