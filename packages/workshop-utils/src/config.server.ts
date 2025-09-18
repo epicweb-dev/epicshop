@@ -159,11 +159,20 @@ export function getWorkshopUrl(port: number) {
 }
 
 export function getWorkshopConfig(): WorkshopConfig {
-	if (
-		configCache.config &&
-		configCache.modified > fs.statSync(getRootPkgJsonPath()).mtimeMs
-	) {
-		return configCache.config
+	const packageJsonPath = getRootPkgJsonPath()
+	
+	if (configCache.config) {
+		try {
+			const packageJsonStats = fs.statSync(packageJsonPath)
+			if (configCache.modified > packageJsonStats.mtimeMs) {
+				return configCache.config
+			}
+		} catch (error) {
+			console.error(`Failed to stat package.json at ${packageJsonPath}:`, error)
+			throw new Error(
+				`Critical error: Cannot stat package.json file at ${packageJsonPath}. This should never happen and indicates a severe configuration issue. Please ensure the file exists and the path is correct.`,
+			)
+		}
 	}
 
 	const packageJson = readRootPkgJson()
@@ -181,7 +190,16 @@ export function getWorkshopConfig(): WorkshopConfig {
 	try {
 		const parsedConfig = WorkshopConfigSchema.parse(epicshopConfig)
 		configCache.config = parsedConfig
-		configCache.modified = fs.statSync(getRootPkgJsonPath()).mtimeMs
+		
+		try {
+			configCache.modified = fs.statSync(packageJsonPath).mtimeMs
+		} catch (error) {
+			console.error(`Failed to stat package.json at ${packageJsonPath} for cache:`, error)
+			throw new Error(
+				`Critical error: Cannot stat package.json file at ${packageJsonPath} for caching. This should never happen and indicates a severe configuration issue.`,
+			)
+		}
+		
 		return parsedConfig
 	} catch (error) {
 		if (error instanceof z.ZodError) {
@@ -190,7 +208,7 @@ export function getWorkshopConfig(): WorkshopConfig {
 				.map(([field, errors]) => `${field}: ${errors?.join(', ')}`)
 				.concat(flattenedErrors.formErrors)
 			throw new Error(
-				`Invalid epicshop configuration in ${getRootPkgJsonPath()}:\n${errorMessages.join('\n')}`,
+				`Invalid epicshop configuration in ${packageJsonPath}:\n${errorMessages.join('\n')}`,
 			)
 		}
 		throw error
