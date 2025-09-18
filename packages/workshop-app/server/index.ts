@@ -3,6 +3,7 @@ import { fileURLToPath } from 'url'
 import { getPresentUsers } from '@epic-web/workshop-presence/presence.server'
 import {
 	getApps,
+	getModifiedTimeForFile,
 	getWorkshopRoot,
 	init as initApps,
 	setModifiedTimesForAppDirs,
@@ -287,8 +288,15 @@ ${lanUrl ? `${chalk.bold('On Your Network:')}  ${chalk.cyan(lanUrl)}` : ''}
 
 						let timer: NodeJS.Timeout | null = null
 						let fileChanges = new Set<string>()
-						watcher.chok.on('all', (event, filePath) => {
-							fileChanges.add(path.join(getWorkshopRoot(), filePath))
+						watcher.chok.on('all', async (event, filePath, stats) => {
+							const absoluteFilepath = path.join(getWorkshopRoot(), filePath)
+							setModifiedTimesForAppDirs(
+								stats?.mtimeMs ??
+									(await getModifiedTimeForFile(absoluteFilepath)) ??
+									Date.now(),
+								absoluteFilepath,
+							)
+							fileChanges.add(absoluteFilepath)
 							if (timer) return
 
 							timer = setTimeout(async () => {
@@ -300,7 +308,6 @@ ${lanUrl ? `${chalk.bold('On Your Network:')}  ${chalk.cyan(lanUrl)}` : ''}
 										}),
 									)
 								}
-								setModifiedTimesForAppDirs(...Array.from(fileChanges))
 
 								fileChanges = new Set()
 								timer = null

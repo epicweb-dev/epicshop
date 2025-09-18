@@ -308,11 +308,11 @@ export async function init(workshopRoot?: string) {
 		})
 
 		chok.on('all', async (_event, filePath) => {
-			const modifiedAt = await fs.promises.stat(
+			const modifiedAt = await getModifiedTimeForFile(
 				path.join(getWorkshopRoot(), filePath),
 			)
 			setModifiedTimesForAppDirs(
-				modifiedAt.mtimeMs,
+				modifiedAt ?? Date.now(),
 				path.join(getWorkshopRoot(), filePath),
 			)
 		})
@@ -335,6 +335,12 @@ async function getForceFresh(
 	return latestModifiedTime > resolvedCacheEntry.metadata.createdTime
 		? true
 		: undefined
+}
+
+export async function getModifiedTimeForFile(filepath?: string) {
+	if (!filepath) return null
+	const modifiedAt = await fs.promises.stat(path.join(filepath))
+	return modifiedAt.mtimeMs
 }
 
 export function setModifiedTimesForAppDirs(
