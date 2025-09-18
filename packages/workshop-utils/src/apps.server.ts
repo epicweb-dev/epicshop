@@ -279,7 +279,8 @@ export async function init(workshopRoot?: string) {
 		const filesToWatch = ['README.mdx', 'FINISHED.mdx', 'package.json']
 		const chok = chokidar.watch(['examples', 'playground', 'exercises'], {
 			cwd: getWorkshopRoot(),
-			ignoreInitial: true,
+			// we want to load up the modified times immediately
+			ignoreInitial: false,
 			ignored(filePath, stats) {
 				if (isIgnored(filePath)) return true
 				if (filePath.includes('.git')) return true
@@ -306,8 +307,14 @@ export async function init(workshopRoot?: string) {
 			},
 		})
 
-		chok.on('all', (_event, filePath) => {
-			setModifiedTimesForAppDirs(path.join(getWorkshopRoot(), filePath))
+		chok.on('all', async (_event, filePath) => {
+			const modifiedAt = await fs.promises.stat(
+				path.join(getWorkshopRoot(), filePath),
+			)
+			setModifiedTimesForAppDirs(
+				modifiedAt.mtimeMs,
+				path.join(getWorkshopRoot(), filePath),
+			)
 		})
 
 		closeWithGrace(() => chok.close())
@@ -324,18 +331,20 @@ async function getForceFresh(
 	const resolvedCacheEntry = await cacheEntry
 	if (!resolvedCacheEntry) return true
 	const latestModifiedTime = Math.max(...Array.from(modifiedTimes.values()))
-	if (!latestModifiedTime) return undefined
+	if (latestModifiedTime <= 0) return undefined
 	return latestModifiedTime > resolvedCacheEntry.metadata.createdTime
 		? true
 		: undefined
 }
 
-export function setModifiedTimesForAppDirs(...filePaths: Array<string>) {
-	const now = Date.now()
+export function setModifiedTimesForAppDirs(
+	modifiedAt: number,
+	...filePaths: Array<string>
+) {
 	for (const filePath of filePaths) {
 		const appDir = getAppPathFromFilePath(filePath)
 		if (appDir) {
-			modifiedTimes.set(appDir, now)
+			modifiedTimes.set(appDir, modifiedAt)
 		}
 	}
 }
