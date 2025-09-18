@@ -194,21 +194,9 @@ export async function compileMdx(
 	const key = `file:${file}`
 	forceFresh = await shouldForceFresh({ forceFresh, request, key })
 
-	// Quick exit for deployed environments where contents never change
+	// For non-deployed environments, validate cache against file modification time
 	const isDeployed = process.env.EPICSHOP_DEPLOYED === 'true' || process.env.EPICSHOP_DEPLOYED === '1'
-	if (isDeployed && !forceFresh) {
-		return cachified({
-			key,
-			cache: compiledInstructionMarkdownCache,
-			request,
-			timings,
-			forceFresh: false,
-			getFreshValue: () => compileMdxImpl(file),
-		})
-	}
-
-	// For non-deployed environments, always validate cache against file modification time
-	if (!forceFresh) {
+	if (!isDeployed && !forceFresh) {
 		const existingCacheEntry = await compiledInstructionMarkdownCache.get(key)
 		if (existingCacheEntry) {
 			// Cache is invalid if file was modified after cache was created

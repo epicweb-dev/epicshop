@@ -323,11 +323,17 @@ async function getForceFresh(
 ) {
 	const resolvedCacheEntry = await cacheEntry
 	if (!resolvedCacheEntry) return true
+	
+	// Quick exit for deployed environments where contents never change
+	const isDeployed = process.env.EPICSHOP_DEPLOYED === 'true' || process.env.EPICSHOP_DEPLOYED === '1'
+	if (isDeployed) return false
+	
 	const latestModifiedTime = Math.max(...Array.from(modifiedTimes.values()))
-	if (!latestModifiedTime) return undefined
+	// If no modified time is set, assume cache is invalid
+	if (!latestModifiedTime) return true
 	return latestModifiedTime > resolvedCacheEntry.metadata.createdTime
 		? true
-		: undefined
+		: false
 }
 
 export function setModifiedTimesForAppDirs(...filePaths: Array<string>) {
@@ -356,14 +362,20 @@ export async function getForceFreshForDir(
 	}
 	const resolvedCacheEntry = await cacheEntry
 	if (!resolvedCacheEntry) return true
+	
+	// Quick exit for deployed environments where contents never change
+	const isDeployed = process.env.EPICSHOP_DEPLOYED === 'true' || process.env.EPICSHOP_DEPLOYED === '1'
+	if (isDeployed) return false
+	
 	const latestModifiedTime = truthyDirs.reduce((latest, dir) => {
 		const modifiedTime = modifiedTimes.get(dir)
 		return modifiedTime && modifiedTime > latest ? modifiedTime : latest
 	}, 0)
-	if (!latestModifiedTime) return undefined
+	// If no modified time is set, assume cache is invalid
+	if (!latestModifiedTime) return true
 	return latestModifiedTime > resolvedCacheEntry.metadata.createdTime
 		? true
-		: undefined
+		: false
 }
 
 async function readDir(dir: string) {
