@@ -120,13 +120,7 @@ const WorkshopConfigSchema = z
 
 export type WorkshopConfig = z.infer<typeof WorkshopConfigSchema>
 
-const configCache: {
-	config: WorkshopConfig | null
-	modified: number
-} = {
-	config: null,
-	modified: 0,
-}
+let configCache: WorkshopConfig | null = null
 
 // Utility to read and parse the root package.json
 function readRootPkgJson(): any {
@@ -159,28 +153,8 @@ export function getWorkshopUrl(port: number) {
 }
 
 export function getWorkshopConfig(): WorkshopConfig {
-	const packageJsonPath = getRootPkgJsonPath()
-	
-	// Try to get package.json stats for cache validation
-	let packageJsonMtimeMs: number | null = null
-	try {
-		packageJsonMtimeMs = fs.statSync(packageJsonPath).mtimeMs
-	} catch (error: any) {
-		if (error.code !== 'ENOENT') {
-			console.error(`Failed to stat package.json at ${packageJsonPath}:`, error)
-			throw new Error(
-				`Critical error: Cannot stat package.json file at ${packageJsonPath}. This indicates a severe configuration issue. Please ensure the file exists and the path is correct.`,
-			)
-		}
-		// If ENOENT, packageJsonMtimeMs stays null and we skip cache validation
-	}
-	
-	// Check cache if we have both cached config and file stats
-	if (configCache.config && packageJsonMtimeMs !== null) {
-		if (configCache.modified >= packageJsonMtimeMs) {
-			return configCache.config
-		}
-	}
+	// If config is cached, use it
+	if (configCache) return configCache
 
 	const packageJson = readRootPkgJson()
 
@@ -196,9 +170,8 @@ export function getWorkshopConfig(): WorkshopConfig {
 
 	try {
 		const parsedConfig = WorkshopConfigSchema.parse(epicshopConfig)
-		configCache.config = parsedConfig
-		configCache.modified = packageJsonMtimeMs ?? Date.now()
-		
+		configCache = parsedConfig
+
 		return parsedConfig
 	} catch (error) {
 		if (error instanceof z.ZodError) {
@@ -207,7 +180,7 @@ export function getWorkshopConfig(): WorkshopConfig {
 				.map(([field, errors]) => `${field}: ${errors?.join(', ')}`)
 				.concat(flattenedErrors.formErrors)
 			throw new Error(
-				`Invalid epicshop configuration in ${packageJsonPath}:\n${errorMessages.join('\n')}`,
+				`Invalid epicshop configuration in ${getRootPkgJsonPath()}:\n${errorMessages.join('\n')}`,
 			)
 		}
 		throw error
