@@ -20,6 +20,15 @@ export function init() {
 			"Failed to execute 'requestPictureInPicture' on 'HTMLVideoElement'",
 		],
 		beforeSend(event) {
+			// Very common when learners shut down the local server and the browser keeps trying to fetch
+			const failedToFetch =
+				event.exception?.values?.some(
+					(v) =>
+						typeof v.value === 'string' && /Failed to fetch/i.test(v.value),
+				) ?? false
+
+			if (failedToFetch && !ENV.EPICSHOP_DEPLOYED) return null
+
 			if (
 				event.exception?.values?.some((value) =>
 					value.stacktrace?.frames?.some(
