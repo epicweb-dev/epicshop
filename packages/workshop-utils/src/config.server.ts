@@ -120,13 +120,7 @@ const WorkshopConfigSchema = z
 
 export type WorkshopConfig = z.infer<typeof WorkshopConfigSchema>
 
-const configCache: {
-	config: WorkshopConfig | null
-	modified: number
-} = {
-	config: null,
-	modified: 0,
-}
+let configCache: WorkshopConfig | null = null
 
 // Utility to read and parse the root package.json
 function readRootPkgJson(): any {
@@ -159,12 +153,8 @@ export function getWorkshopUrl(port: number) {
 }
 
 export function getWorkshopConfig(): WorkshopConfig {
-	if (
-		configCache.config &&
-		configCache.modified > fs.statSync(getRootPkgJsonPath()).mtimeMs
-	) {
-		return configCache.config
-	}
+	// If config is cached, use it
+	if (configCache) return configCache
 
 	const packageJson = readRootPkgJson()
 
@@ -180,8 +170,8 @@ export function getWorkshopConfig(): WorkshopConfig {
 
 	try {
 		const parsedConfig = WorkshopConfigSchema.parse(epicshopConfig)
-		configCache.config = parsedConfig
-		configCache.modified = fs.statSync(getRootPkgJsonPath()).mtimeMs
+		configCache = parsedConfig
+
 		return parsedConfig
 	} catch (error) {
 		if (error instanceof z.ZodError) {
