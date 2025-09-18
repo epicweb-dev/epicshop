@@ -82,38 +82,84 @@ export function epicCacheReporter<Value>({
 
 		const log = logger(namespace)
 
-		let cached: unknown
 		let freshValue: unknown
 		let getFreshValueStartTs: number
 		let refreshValueStartTS: number
 
 		return (event) => {
 			switch (event.name) {
-				case 'getCachedValueRead':
-					cached = event.entry
+				case 'getCachedValueStart': {
+					log(`Starting cache lookup for ${key}`)
 					break
-				case 'checkCachedValueError':
+				}
+				case 'getCachedValueEmpty': {
+					log(`Cache miss for ${key}`)
+					break
+				}
+				case 'getCachedValueSuccess': {
+					log(`Cache hit for ${key}`)
+					break
+				}
+				case 'done': {
+					log(`Cache operation done for ${key}`)
+					break
+				}
+				case 'getCachedValueRead': {
+					log(`Read cached value for ${key}`)
+					break
+				}
+				case 'getFreshValueHookPending': {
+					log(`Waiting for ongoing fetch for fresh value for ${key}`)
+					break
+				}
+				case 'getCachedValueOutdated': {
+					log(`Cached value for ${key} is outdated`)
+					break
+				}
+				case 'checkCachedValueErrorObj': {
 					log.warn(
 						`check failed for cached value of ${key}\nReason: ${event.reason}.\nDeleting the cache key and trying to get a fresh value.`,
-						cached,
 					)
 					break
-				case 'getCachedValueError':
+				}
+				case 'checkFreshValueErrorObj': {
+					log.error(
+						`check failed for fresh value of ${key}\nReason: ${event.reason}.`,
+						freshValue,
+					)
+					break
+				}
+				case 'getFreshValueCacheFallback': {
+					log(
+						`Falling back to cached value for ${key} due to error getting fresh value.`,
+					)
+					break
+				}
+				case 'checkCachedValueError': {
+					log.warn(
+						`check failed for cached value of ${key}\nReason: ${event.reason}.\nDeleting the cache key and trying to get a fresh value.`,
+					)
+					break
+				}
+				case 'getCachedValueError': {
 					log.error(
 						`error with cache at ${key}. Deleting the cache key and trying to get a fresh value.`,
 						event.error,
 					)
 					break
-				case 'getFreshValueError':
+				}
+				case 'getFreshValueError': {
 					log.error(
 						`getting a fresh value for ${key} failed`,
 						{ fallbackToCache, forceFresh },
 						event.error,
 					)
 					break
-				case 'getFreshValueStart':
+				}
+				case 'getFreshValueStart': {
 					getFreshValueStartTs = performance.now()
 					break
+				}
 				case 'writeFreshValueSuccess': {
 					const totalTime = performance.now() - getFreshValueStartTs
 					if (event.written) {
@@ -141,22 +187,26 @@ export function epicCacheReporter<Value>({
 					}
 					break
 				}
-				case 'writeFreshValueError':
+				case 'writeFreshValueError': {
 					log.error(`error setting cache: ${key}`, event.error)
 					break
-				case 'getFreshValueSuccess':
+				}
+				case 'getFreshValueSuccess': {
 					freshValue = event.value
 					break
-				case 'checkFreshValueError':
+				}
+				case 'checkFreshValueError': {
 					log.error(
 						`check failed for fresh value of ${key}\nReason: ${event.reason}.`,
 						freshValue,
 					)
 					break
-				case 'refreshValueStart':
+				}
+				case 'refreshValueStart': {
 					refreshValueStartTS = performance.now()
 					break
-				case 'refreshValueSuccess':
+				}
+				case 'refreshValueSuccess': {
 					log(
 						`Background refresh for ${key} successful.`,
 						`Getting a fresh value for this took ${formatDuration(
@@ -168,13 +218,16 @@ export function epicCacheReporter<Value>({
 						)} in ${cacheName}.`,
 					)
 					break
-				case 'refreshValueError':
+				}
+				case 'refreshValueError': {
 					log.error(`Background refresh for ${key} failed.`, event.error)
 					break
-				default:
-					// Defensive programming: log unknown events for debugging
-					log(`Unknown cache event: ${event.name}`)
+				}
+				default: {
+					// @ts-expect-error Defensive programming: log unknown events for debugging
+					log(`Unknown cache event "${event.name}" for key ${key}`)
 					break
+				}
 			}
 		}
 	}
