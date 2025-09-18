@@ -47,8 +47,10 @@ Sentry?.init({
 	},
 	beforeSend(event) {
 		// Don't send errors to Sentry for bot requests
-		if (event.request?.headers?.['user-agent'] && 
-			isbot(event.request.headers['user-agent'])) {
+		if (
+			event.request?.headers?.['user-agent'] &&
+			isbot(event.request.headers['user-agent'])
+		) {
 			return null
 		}
 		const isPlaygroundError = event.exception?.values?.some((value) =>
@@ -63,8 +65,10 @@ Sentry?.init({
 	},
 	beforeSendTransaction(event) {
 		// Don't send transaction spans to Sentry for bot requests
-		if (event.request?.headers?.['user-agent'] && 
-			isbot(event.request.headers['user-agent'])) {
+		if (
+			event.request?.headers?.['user-agent'] &&
+			isbot(event.request.headers['user-agent'])
+		) {
 			return null
 		}
 		if (event.request?.headers?.['x-healthcheck'] === 'true') {

@@ -25,16 +25,33 @@ export function init() {
 				// Basic bot detection for client-side - check for common bot indicators
 				const userAgent = navigator.userAgent.toLowerCase()
 				const botKeywords = [
-					'bot', 'crawl', 'spider', 'scrape', 'fetch', 'monitor', 'test',
-					'headless', 'phantom', 'puppeteer', 'selenium', 'webdriver',
-					'lighthouse', 'pagespeed', 'facebookexternalhit', 'twitterbot',
-					'googlebot', 'bingbot', 'slackbot', 'whatsapp', 'linkedinbot'
+					'bot',
+					'crawl',
+					'spider',
+					'scrape',
+					'fetch',
+					'monitor',
+					'test',
+					'headless',
+					'phantom',
+					'puppeteer',
+					'selenium',
+					'webdriver',
+					'lighthouse',
+					'pagespeed',
+					'facebookexternalhit',
+					'twitterbot',
+					'googlebot',
+					'bingbot',
+					'slackbot',
+					'whatsapp',
+					'linkedinbot',
 				]
-				if (botKeywords.some(keyword => userAgent.includes(keyword))) {
+				if (botKeywords.some((keyword) => userAgent.includes(keyword))) {
 					return null
 				}
 			}
-			
+
 			// Very common when learners shut down the local server and the browser keeps trying to fetch
 			const failedToFetch =
 				event.exception?.values?.some(
