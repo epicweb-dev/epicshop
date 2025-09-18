@@ -1,11 +1,17 @@
 console.log('🚀 Epic Me App starting...')
 
+const logStuff = false
+
 setInterval(() => {
-	console.log('📊 Epic Me App is running at', new Date().toISOString())
+	if (logStuff) {
+		console.log('📊 Epic Me App is running at', new Date().toISOString())
+	}
 }, 5000)
 
 setInterval(() => {
-	console.error('⚠️ Epic Me App warning message')
+	if (logStuff) {
+		console.error('⚠️ Epic Me App warning message')
+	}
 }, 7000)
 
 console.log('✅ Epic Me App started successfully')
