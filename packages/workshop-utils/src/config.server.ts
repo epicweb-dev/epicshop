@@ -160,24 +160,25 @@ export function getWorkshopUrl(port: number) {
 
 export function getWorkshopConfig(): WorkshopConfig {
 	const packageJsonPath = getRootPkgJsonPath()
-	let packageJsonMtimeMs: number | null = null
 	
-	if (configCache.config) {
-		try {
-			const packageJsonStats = fs.statSync(packageJsonPath)
-			packageJsonMtimeMs = packageJsonStats.mtimeMs
-			if (configCache.modified >= packageJsonMtimeMs) {
-				return configCache.config
-			}
-		} catch (error: any) {
-			if (error.code === 'ENOENT') {
-				// package.json does not exist, skip cache and proceed
-			} else {
-				console.error(`Failed to stat package.json at ${packageJsonPath}:`, error)
-				throw new Error(
-					`Critical error: Cannot stat package.json file at ${packageJsonPath}. This should never happen and indicates a severe configuration issue. Please ensure the file exists and the path is correct.`,
-				)
-			}
+	// Try to get package.json stats for cache validation
+	let packageJsonMtimeMs: number | null = null
+	try {
+		packageJsonMtimeMs = fs.statSync(packageJsonPath).mtimeMs
+	} catch (error: any) {
+		if (error.code !== 'ENOENT') {
+			console.error(`Failed to stat package.json at ${packageJsonPath}:`, error)
+			throw new Error(
+				`Critical error: Cannot stat package.json file at ${packageJsonPath}. This indicates a severe configuration issue. Please ensure the file exists and the path is correct.`,
+			)
+		}
+		// If ENOENT, packageJsonMtimeMs stays null and we skip cache validation
+	}
+	
+	// Check cache if we have both cached config and file stats
+	if (configCache.config && packageJsonMtimeMs !== null) {
+		if (configCache.modified >= packageJsonMtimeMs) {
+			return configCache.config
 		}
 	}
 
@@ -196,19 +197,7 @@ export function getWorkshopConfig(): WorkshopConfig {
 	try {
 		const parsedConfig = WorkshopConfigSchema.parse(epicshopConfig)
 		configCache.config = parsedConfig
-		
-		// Reuse mtimeMs if we already got it, otherwise get it now
-		if (packageJsonMtimeMs === null) {
-			try {
-				packageJsonMtimeMs = fs.statSync(packageJsonPath).mtimeMs
-			} catch (error) {
-				console.error(`Failed to stat package.json at ${packageJsonPath} for cache:`, error)
-				throw new Error(
-					`Critical error: Failed to stat package.json at ${packageJsonPath} for caching. The file was successfully read earlier, so this likely indicates a race condition (file deleted or moved after read), a permission issue, or a filesystem error. Please check file permissions and filesystem integrity. This is not a simple "file not found" error and requires investigation.`,
-				)
-			}
-		}
-		configCache.modified = packageJsonMtimeMs
+		configCache.modified = packageJsonMtimeMs ?? Date.now()
 		
 		return parsedConfig
 	} catch (error) {
