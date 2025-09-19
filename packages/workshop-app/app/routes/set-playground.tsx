@@ -9,7 +9,8 @@ import {
 import { getDiffCode } from '@epic-web/workshop-utils/diff.server'
 import * as Select from '@radix-ui/react-select'
 import { clsx } from 'clsx'
-import { data, type ActionFunctionArgs, useFetcher } from 'react-router'
+import { data, redirect, type ActionFunctionArgs, type LoaderFunctionArgs, useFetcher } from 'react-router'
+import { safeRedirect } from 'remix-utils/safe-redirect'
 import { z } from 'zod'
 import { Icon } from '#app/components/icons.tsx'
 import { showProgressBarField } from '#app/components/progress-bar.tsx'
@@ -26,6 +27,23 @@ const SetPlaygroundSchema = z.object({
 		.optional()
 		.transform((v) => v === 'true'),
 })
+
+export async function loader({ request }: LoaderFunctionArgs) {
+	// Clients should not be making GET requests to /set-playground.
+	// If the request does not accept JSON, redirect to the referrer or homepage.
+	const accept = request.headers.get('Accept') || ''
+	const acceptsJson = accept.includes('application/json')
+	
+	if (!acceptsJson) {
+		const referrer = request.headers.get('Referer')
+		return redirect(safeRedirect(referrer ?? '/'))
+	}
+	
+	// For requests that do accept JSON, return an appropriate response
+	return data({ status: 'error', error: 'GET requests to this endpoint are not supported' } as const, {
+		status: 405
+	})
+}
 
 export async function action({ request }: ActionFunctionArgs) {
 	ensureUndeployed()
