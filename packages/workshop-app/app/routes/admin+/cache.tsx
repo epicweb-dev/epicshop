@@ -1,6 +1,6 @@
 import { 
 	getAllFileCacheEntries,
-	getCacheEntriesGroupedByWorkshop,
+	getCacheEntriesGroupedByType,
 	deleteCache,
 	deleteCacheEntry,
 	updateCacheEntryByKey,
@@ -21,17 +21,17 @@ export async function loader({ request }: Route.LoaderArgs) {
 	ensureUndeployed()
 	
 	const url = new URL(request.url)
-	const workshopFilters = url.searchParams.getAll('workshop')
+	const cacheFilters = url.searchParams.getAll('cache')
 	const searchQuery = url.searchParams.get('q') || ''
 	
 	const [groupedCaches] = await Promise.all([
-		getCacheEntriesGroupedByWorkshop(),
+		getCacheEntriesGroupedByType(),
 	])
 	
 	return data(
 		{
 			groupedCaches,
-			workshopFilters,
+			cacheFilters,
 			searchQuery,
 		},
 		{
@@ -88,68 +88,65 @@ export async function action({ request }: Route.ActionArgs) {
 }
 
 export default function CacheManagement({ loaderData }: Route.ComponentProps) {
-	const { groupedCaches, workshopFilters, searchQuery } = loaderData
+	const { groupedCaches, cacheFilters, searchQuery } = loaderData
 	const navigation = useNavigation()
 	const [searchParams, setSearchParams] = useSearchParams()
-	const [selectedWorkshops, setSelectedWorkshops] = React.useState(new Set(workshopFilters))
+	const [selectedCaches, setSelectedCaches] = React.useState(new Set(cacheFilters))
 	const [localSearchQuery, setLocalSearchQuery] = React.useState(searchQuery)
 	
 	const isSubmitting = navigation.formAction?.includes('/admin/cache')
 	
-	// Get all workshop paths
-	const workshopPaths = React.useMemo(() => {
+	// Get all cache names
+	const cacheNames = React.useMemo(() => {
 		return Object.keys(groupedCaches).sort()
 	}, [groupedCaches])
 	
-	// Filter cache entries based on selected workshops and search query
-	const filteredWorkshops = React.useMemo(() => {
+	// Filter cache entries based on selected caches and search query
+	const filteredCaches = React.useMemo(() => {
 		let filtered = Object.entries(groupedCaches)
 		
-		if (selectedWorkshops.size > 0 && !selectedWorkshops.has('all')) {
-			filtered = filtered.filter(([workshopPath]) => selectedWorkshops.has(workshopPath))
+		if (selectedCaches.size > 0 && !selectedCaches.has('all')) {
+			filtered = filtered.filter(([cacheName]) => selectedCaches.has(cacheName))
 		}
 		
 		if (localSearchQuery) {
 			const query = localSearchQuery.toLowerCase()
-			filtered = filtered.filter(([workshopPath, caches]) => {
-				return workshopPath.toLowerCase().includes(query) ||
-					Object.entries(caches).some(([cacheName, entries]) => {
-						return cacheName.toLowerCase().includes(query) ||
-							Object.entries(entries).some(([entryKey, entryValue]) => {
-								return entryKey.toLowerCase().includes(query) ||
-									JSON.stringify(entryValue).toLowerCase().includes(query)
-							})
+			filtered = filtered.filter(([cacheName, entries]) => {
+				return cacheName.toLowerCase().includes(query) ||
+					Object.entries(entries).some(([entryKey, entryValue]) => {
+						return entryKey.toLowerCase().includes(query) ||
+							JSON.stringify(entryValue).toLowerCase().includes(query)
 					})
 			})
 		}
 		
 		return Object.fromEntries(filtered)
-	}, [groupedCaches, selectedWorkshops, localSearchQuery])
+	}, [groupedCaches, selectedCaches, localSearchQuery])
 	
-	const handleWorkshopToggle = (workshop: string) => {
-		const newSelected = new Set(selectedWorkshops)
-		if (workshop === 'all') {
+	const handleCacheToggle = (cache: string) => {
+		const newSelected = new Set(selectedCaches)
+		if (cache === 'all') {
 			newSelected.clear()
 			newSelected.add('all')
 		} else {
 			newSelected.delete('all')
-			if (newSelected.has(workshop)) {
-				newSelected.delete(workshop)
+			if (newSelected.has(cache)) {
+				newSelected.delete(cache)
 			} else {
-				newSelected.add(workshop)
+				newSelected.add(cache)
 			}
 			if (newSelected.size === 0) {
 				newSelected.add('all')
 			}
 		}
 		
-		setSelectedWorkshops(newSelected)
+		setSelectedCaches(newSelected)
 		
 		const newSearchParams = new URLSearchParams(searchParams)
-		newSearchParams.delete('workshop')
+		newSearchParams.delete('cache')
 		if (!newSelected.has('all')) {
-			for (const workshop of newSelected) {
-				newSearchParams.append('workshop', workshop)
+			for (const cache of newSelected) {
+				newSearchParams.append('cache', cache)
 			}
 		}
 		setSearchParams(newSearchParams)
@@ -166,16 +163,12 @@ export default function CacheManagement({ loaderData }: Route.ComponentProps) {
 		setSearchParams(newSearchParams)
 	}
 	
-	const totalEntries = Object.values(groupedCaches).reduce((total, caches) => {
-		return total + Object.values(caches).reduce((cacheTotal, entries) => {
-			return cacheTotal + Object.keys(entries).length
-		}, 0)
+	const totalEntries = Object.values(groupedCaches).reduce((total, entries) => {
+		return total + Object.keys(entries).length
 	}, 0)
 	
-	const filteredEntries = Object.values(filteredWorkshops).reduce((total, caches) => {
-		return total + Object.values(caches).reduce((cacheTotal, entries) => {
-			return cacheTotal + Object.keys(entries).length
-		}, 0)
+	const filteredEntries = Object.values(filteredCaches).reduce((total, entries) => {
+		return total + Object.keys(entries).length
 	}, 0)
 	
 	return (
@@ -206,35 +199,35 @@ export default function CacheManagement({ loaderData }: Route.ComponentProps) {
 						type="text"
 						value={localSearchQuery}
 						onChange={(e) => handleSearchChange(e.target.value)}
-						placeholder="Search by workshop, cache name, or content..."
+						placeholder="Search by cache name or content..."
 						className="w-full rounded border border-gray-300 px-3 py-2 text-sm focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500"
 					/>
 				</div>
 				
 				<div className="min-w-64">
 					<label className="block text-sm font-medium mb-1">
-						Workshops (select multiple)
+						Cache Types (select multiple)
 					</label>
 					<div className="border border-gray-300 rounded p-2 bg-white max-h-40 overflow-y-auto">
 						<label className="flex items-center gap-2 p-1 hover:bg-gray-50 cursor-pointer">
 							<input
 								type="checkbox"
-								checked={selectedWorkshops.has('all')}
-								onChange={() => handleWorkshopToggle('all')}
+								checked={selectedCaches.has('all')}
+								onChange={() => handleCacheToggle('all')}
 								className="rounded"
 							/>
-							<span className="text-sm font-medium">All Workshops</span>
+							<span className="text-sm font-medium">All Cache Types</span>
 						</label>
 						<hr className="my-2" />
-						{workshopPaths.map((workshopPath) => (
-							<label key={workshopPath} className="flex items-center gap-2 p-1 hover:bg-gray-50 cursor-pointer">
+						{cacheNames.map((cacheName) => (
+							<label key={cacheName} className="flex items-center gap-2 p-1 hover:bg-gray-50 cursor-pointer">
 								<input
 									type="checkbox"
-									checked={selectedWorkshops.has(workshopPath)}
-									onChange={() => handleWorkshopToggle(workshopPath)}
+									checked={selectedCaches.has(cacheName)}
+									onChange={() => handleCacheToggle(cacheName)}
 									className="rounded"
 								/>
-								<span className="text-sm">{workshopPath}</span>
+								<span className="text-sm">{cacheName}</span>
 							</label>
 						))}
 					</div>
@@ -244,22 +237,22 @@ export default function CacheManagement({ loaderData }: Route.ComponentProps) {
 			{/* Cache entries summary */}
 			<div className="mb-4">
 				<p className="text-sm text-gray-600">
-					Showing {filteredEntries} of {totalEntries} cache entries across {Object.keys(filteredWorkshops).length} workshops
+					Showing {filteredEntries} of {totalEntries} cache entries across {Object.keys(filteredCaches).length} cache types
 				</p>
 			</div>
 			
-			{/* Workshop and cache entries list */}
+			{/* Cache entries list */}
 			<div className="space-y-6">
-				{Object.keys(filteredWorkshops).length === 0 ? (
+				{Object.keys(filteredCaches).length === 0 ? (
 					<div className="rounded border border-gray-200 p-8 text-center">
 						<p className="text-gray-500">No cache entries found matching your criteria.</p>
 					</div>
 				) : (
-					Object.entries(filteredWorkshops).map(([workshopPath, caches]) => (
-						<WorkshopCacheSection
-							key={workshopPath}
-							workshopPath={workshopPath}
-							caches={caches}
+					Object.entries(filteredCaches).map(([cacheName, entries]) => (
+						<CacheSection
+							key={cacheName}
+							cacheName={cacheName}
+							entries={entries}
 							isSubmitting={isSubmitting ?? false}
 						/>
 					))
@@ -269,58 +262,7 @@ export default function CacheManagement({ loaderData }: Route.ComponentProps) {
 	)
 }
 
-function WorkshopCacheSection({ 
-	workshopPath, 
-	caches, 
-	isSubmitting 
-}: { 
-	workshopPath: string
-	caches: Record<string, Record<string, any>>
-	isSubmitting: boolean
-}) {
-	const [isWorkshopExpanded, setIsWorkshopExpanded] = React.useState(false)
-	
-	const totalCacheEntries = Object.values(caches).reduce((total, entries) => {
-		return total + Object.keys(entries).length
-	}, 0)
-	
-	return (
-		<div className="rounded border border-gray-200 bg-white shadow-sm">
-			<div className="flex items-center justify-between border-b border-gray-100 p-4 bg-gray-50">
-				<div className="flex-1">
-					<h2 className="font-medium text-lg text-gray-900">
-						{workshopPath}
-					</h2>
-					<p className="text-sm text-gray-500 mt-1">
-						{Object.keys(caches).length} cache types, {totalCacheEntries} total entries
-					</p>
-				</div>
-				
-				<button
-					onClick={() => setIsWorkshopExpanded(!isWorkshopExpanded)}
-					className="rounded p-2 text-gray-400 hover:bg-gray-100 hover:text-gray-600"
-				>
-					<Icon name={isWorkshopExpanded ? "ChevronUp" : "ChevronDown"} className="h-5 w-5" />
-				</button>
-			</div>
-			
-			{isWorkshopExpanded && (
-				<div className="p-4 space-y-4">
-					{Object.entries(caches).map(([cacheName, entries]) => (
-						<CacheTypeSection
-							key={cacheName}
-							cacheName={cacheName}
-							entries={entries}
-							isSubmitting={isSubmitting}
-						/>
-					))}
-				</div>
-			)}
-		</div>
-	)
-}
-
-function CacheTypeSection({ 
+function CacheSection({ 
 	cacheName, 
 	entries, 
 	isSubmitting 
@@ -332,27 +274,27 @@ function CacheTypeSection({
 	const [isCacheExpanded, setIsCacheExpanded] = React.useState(false)
 	
 	return (
-		<div className="border border-gray-200 rounded bg-gray-50">
-			<div className="flex items-center justify-between p-3 border-b border-gray-200">
+		<div className="rounded border border-gray-200 bg-white shadow-sm">
+			<div className="flex items-center justify-between border-b border-gray-100 p-4 bg-gray-50">
 				<div className="flex-1">
-					<h3 className="font-medium text-gray-900">
+					<h2 className="font-medium text-lg text-gray-900">
 						{cacheName}
-					</h3>
-					<p className="text-sm text-gray-500">
+					</h2>
+					<p className="text-sm text-gray-500 mt-1">
 						{Object.keys(entries).length} entries
 					</p>
 				</div>
 				
 				<button
 					onClick={() => setIsCacheExpanded(!isCacheExpanded)}
-					className="rounded p-1 text-gray-400 hover:bg-gray-100 hover:text-gray-600"
+					className="rounded p-2 text-gray-400 hover:bg-gray-100 hover:text-gray-600"
 				>
-					<Icon name={isCacheExpanded ? "ChevronUp" : "ChevronDown"} className="h-4 w-4" />
+					<Icon name={isCacheExpanded ? "ChevronUp" : "ChevronDown"} className="h-5 w-5" />
 				</button>
 			</div>
 			
 			{isCacheExpanded && (
-				<div className="p-3 space-y-2">
+				<div className="p-4 space-y-2">
 					{Object.entries(entries).map(([entryKey, entryValue]) => (
 						<CacheEntryCard
 							key={entryKey}

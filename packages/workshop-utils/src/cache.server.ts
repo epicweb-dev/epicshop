@@ -343,80 +343,36 @@ export async function getAllFileCacheEntries() {
 	return readJsonFilesInDirectory(cacheDir)
 }
 
-export async function getCacheEntriesGroupedByWorkshop() {
+export async function getCacheEntriesGroupedByType() {
 	const allEntries = await getAllFileCacheEntries()
-	const grouped: Record<string, Record<string, Record<string, any>>> = {}
+	const grouped: Record<string, Record<string, any>> = {}
 	
-	// Group entries by cache type/name and workshop
+	// Group entries by cache type (each makeSingletonFsCache is its own cache)
 	for (const [entryPath, content] of Object.entries(allEntries)) {
 		if (content && typeof content === 'object') {
 			// Extract cache name from directory structure
 			const pathParts = entryPath.split('/')
 			const cacheName = pathParts[0] || 'Unknown'
 			
-			// Determine the actual entry content and workshop path
+			// Determine the actual entry content
 			let entryContent = content
-			let workshopPath = 'Unknown Workshop'
 			
 			// If this is a file-based cache with entry structure, use the entry
 			if (content.entry) {
 				entryContent = content.entry
-				workshopPath = extractWorkshopPath(content.entry)
-			} else {
-				// For caches without entry wrapper, use the content directly
-				workshopPath = extractWorkshopPath(content)
 			}
 			
-			if (!grouped[workshopPath]) {
-				grouped[workshopPath] = {}
+			if (!grouped[cacheName]) {
+				grouped[cacheName] = {}
 			}
 			
-			if (!grouped[workshopPath]![cacheName]) {
-				grouped[workshopPath]![cacheName] = {}
-			}
-			
-			grouped[workshopPath]![cacheName]![entryPath] = entryContent
+			grouped[cacheName][entryPath] = entryContent
 		}
 	}
 	
 	return grouped
 }
 
-function extractWorkshopPath(entry: any): string {
-	// Try to extract workshop path from the entry content
-	if (typeof entry === 'object' && entry) {
-		// Look for common fields that might contain workshop paths
-		if (entry.workshopRoot) return entry.workshopRoot
-		if (entry.path && typeof entry.path === 'string') {
-			// Extract workshop-like path from file paths
-			const pathMatch = entry.path.match(/^([^/]+(?:\/[^/]+)*)/)
-			if (pathMatch) return pathMatch[1]
-		}
-		if (entry.name && typeof entry.name === 'string') {
-			return entry.name
-		}
-		if (entry.displayName && typeof entry.displayName === 'string') {
-			return entry.displayName
-		}
-		// For app-related caches, look for app directory structure
-		if (entry.dir && typeof entry.dir === 'string') {
-			// Extract the last meaningful part of the directory path
-			const dirParts = entry.dir.split('/').filter(Boolean)
-			if (dirParts.length > 0) {
-				return dirParts[dirParts.length - 1]
-			}
-		}
-		// For compiled content, try to extract from compiled paths
-		if (entry.file && typeof entry.file === 'string') {
-			const fileParts = entry.file.split('/').filter(Boolean)
-			if (fileParts.length > 1) {
-				return fileParts.slice(0, -1).join('/')
-			}
-		}
-	}
-	
-	return 'Current Workshop'
-}
 
 export async function getCacheEntry(cacheName: string, entryKey: string) {
 	const allEntries = await getAllFileCacheEntries()
