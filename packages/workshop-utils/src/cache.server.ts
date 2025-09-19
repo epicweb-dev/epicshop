@@ -333,6 +333,91 @@ export async function getAllFileCacheEntries() {
 	return readJsonFilesInDirectory(cacheDir)
 }
 
+export async function getCacheEntriesGroupedByWorkshop() {
+	const allEntries = await getAllFileCacheEntries()
+	const grouped: Record<string, Record<string, Record<string, any>>> = {}
+	
+	// Group entries by cache type/name and workshop
+	for (const [entryPath, content] of Object.entries(allEntries)) {
+		if (content && typeof content === 'object') {
+			// Extract cache name from directory structure
+			const pathParts = entryPath.split('/')
+			const cacheName = pathParts[0] || 'Unknown'
+			
+			// If this is a file-based cache with entry structure
+			if (content.entry) {
+				const workshopPath = extractWorkshopPath(content.entry)
+				
+				if (!grouped[workshopPath]) {
+					grouped[workshopPath] = {}
+				}
+				
+				if (!grouped[workshopPath][cacheName]) {
+					grouped[workshopPath][cacheName] = {}
+				}
+				
+				grouped[workshopPath][cacheName][entryPath] = content.entry
+			}
+		}
+	}
+	
+	return grouped
+}
+
+function extractWorkshopPath(entry: any): string {
+	// Try to extract workshop path from the entry content
+	if (typeof entry === 'object' && entry) {
+		// Look for common fields that might contain workshop paths
+		if (entry.workshopRoot) return entry.workshopRoot
+		if (entry.path && typeof entry.path === 'string') {
+			// Extract workshop-like path from file paths
+			const pathMatch = entry.path.match(/^([^/]+(?:\/[^/]+)*)/)
+			if (pathMatch) return pathMatch[1]
+		}
+		if (entry.name && typeof entry.name === 'string') {
+			return entry.name
+		}
+	}
+	
+	return 'Unknown Workshop'
+}
+
+export async function getCacheEntry(cacheName: string, entryKey: string) {
+	const allEntries = await getAllFileCacheEntries()
+	const entryPath = `${cacheName}/${entryKey}`
+	const content = allEntries[entryPath]
+	
+	if (!content) {
+		return null
+	}
+	
+	// Return the entry data, not the wrapper
+	return content.entry || content
+}
+
+export async function updateCacheEntryByKey(cacheName: string, entryKey: string, newValue: any) {
+	if (getEnv().EPICSHOP_DEPLOYED) return null
+
+	try {
+		const entryPath = `${cacheName}/${entryKey}`
+		const fullPath = path.join(cacheDir, entryPath)
+		
+		// Read existing content to preserve structure
+		const existingContent = await fsExtra.readJSON(fullPath)
+		
+		// Update only the entry part
+		const updatedContent = {
+			...existingContent,
+			entry: newValue
+		}
+		
+		await fsExtra.writeJSON(fullPath, updatedContent, { spaces: 2 })
+	} catch (error) {
+		console.error(`Error updating cache entry ${cacheName}/${entryKey}`, error)
+		throw error
+	}
+}
+
 export async function deleteCacheEntry(entryPath: string) {
 	if (getEnv().EPICSHOP_DEPLOYED) return null
 	
