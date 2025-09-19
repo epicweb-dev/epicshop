@@ -354,20 +354,28 @@ export async function getCacheEntriesGroupedByWorkshop() {
 			const pathParts = entryPath.split('/')
 			const cacheName = pathParts[0] || 'Unknown'
 			
-			// If this is a file-based cache with entry structure
+			// Determine the actual entry content and workshop path
+			let entryContent = content
+			let workshopPath = 'Unknown Workshop'
+			
+			// If this is a file-based cache with entry structure, use the entry
 			if (content.entry) {
-				const workshopPath = extractWorkshopPath(content.entry)
-				
-				if (!grouped[workshopPath]) {
-					grouped[workshopPath] = {}
-				}
-				
-				if (!grouped[workshopPath][cacheName]) {
-					grouped[workshopPath][cacheName] = {}
-				}
-				
-				grouped[workshopPath][cacheName][entryPath] = content.entry
+				entryContent = content.entry
+				workshopPath = extractWorkshopPath(content.entry)
+			} else {
+				// For caches without entry wrapper, use the content directly
+				workshopPath = extractWorkshopPath(content)
 			}
+			
+			if (!grouped[workshopPath]) {
+				grouped[workshopPath] = {}
+			}
+			
+			if (!grouped[workshopPath]![cacheName]) {
+				grouped[workshopPath]![cacheName] = {}
+			}
+			
+			grouped[workshopPath]![cacheName]![entryPath] = entryContent
 		}
 	}
 	
@@ -387,9 +395,27 @@ function extractWorkshopPath(entry: any): string {
 		if (entry.name && typeof entry.name === 'string') {
 			return entry.name
 		}
+		if (entry.displayName && typeof entry.displayName === 'string') {
+			return entry.displayName
+		}
+		// For app-related caches, look for app directory structure
+		if (entry.dir && typeof entry.dir === 'string') {
+			// Extract the last meaningful part of the directory path
+			const dirParts = entry.dir.split('/').filter(Boolean)
+			if (dirParts.length > 0) {
+				return dirParts[dirParts.length - 1]
+			}
+		}
+		// For compiled content, try to extract from compiled paths
+		if (entry.file && typeof entry.file === 'string') {
+			const fileParts = entry.file.split('/').filter(Boolean)
+			if (fileParts.length > 1) {
+				return fileParts.slice(0, -1).join('/')
+			}
+		}
 	}
 	
-	return 'Unknown Workshop'
+	return 'Current Workshop'
 }
 
 export async function getCacheEntry(cacheName: string, entryKey: string) {
