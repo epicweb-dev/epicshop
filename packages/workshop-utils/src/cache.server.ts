@@ -333,6 +333,33 @@ export async function getAllFileCacheEntries() {
 	return readJsonFilesInDirectory(cacheDir)
 }
 
+export async function deleteCacheEntry(entryPath: string) {
+	if (getEnv().EPICSHOP_DEPLOYED) return null
+	
+	try {
+		const fullPath = path.join(cacheDir, entryPath)
+		if (await fsExtra.exists(fullPath)) {
+			await fsExtra.remove(fullPath)
+		}
+	} catch (error) {
+		console.error(`Error deleting cache entry at ${entryPath}`, error)
+		throw error
+	}
+}
+
+export async function updateCacheEntry(entryPath: string, content: any) {
+	if (getEnv().EPICSHOP_DEPLOYED) return null
+	
+	try {
+		const fullPath = path.join(cacheDir, entryPath)
+		await fsExtra.ensureDir(path.dirname(fullPath))
+		await fsExtra.writeJSON(fullPath, content, { spaces: 2 })
+	} catch (error) {
+		console.error(`Error updating cache entry at ${entryPath}`, error)
+		throw error
+	}
+}
+
 export async function deleteCache() {
 	if (getEnv().EPICSHOP_DEPLOYED) return null
 
