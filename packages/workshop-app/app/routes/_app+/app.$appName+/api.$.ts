@@ -21,7 +21,15 @@ export async function loader(args: LoaderFunctionArgs) {
 		{ status: 405 },
 	)
 	try {
-		const result = await api.mod.loader(args)
+		// Ensure args has a properly initialized site object with enabledFeatures
+		const safeArgs = {
+			...args,
+			site: {
+				enabledFeatures: [],
+				...args.site,
+			},
+		}
+		const result = await api.mod.loader(safeArgs)
 		return result
 	} catch (error) {
 		api.cleanupError(error)
@@ -37,7 +45,15 @@ export async function action(args: ActionFunctionArgs) {
 		{ status: 405 },
 	)
 	try {
-		const result = await api.mod.action(args)
+		// Ensure args has a properly initialized site object with enabledFeatures
+		const safeArgs = {
+			...args,
+			site: {
+				enabledFeatures: [],
+				...args.site,
+			},
+		}
+		const result = await api.mod.action(safeArgs)
 		return result
 	} catch (error) {
 		api.cleanupError(error)
