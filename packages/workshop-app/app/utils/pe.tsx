@@ -24,6 +24,7 @@ export function usePERedirectInput() {
 }
 
 export function ensureProgressiveEnhancement(
+	request: Request,
 	formData: FormData,
 	responseInit?: () => Parameters<typeof redirect>[1],
 ) {
@@ -31,13 +32,21 @@ export function ensureProgressiveEnhancement(
 	if (typeof redirectTo === 'string') {
 		throw redirect(safeRedirect(redirectTo), responseInit?.())
 	}
+
+	// if request does not accept application/json, it means JS hasn't hydrated yet
+	const accept = request.headers.get('Accept') ?? ''
+	if (!accept.includes('application/json')) {
+		const redirectToReferrer = request.headers.get('Referer') ?? '/'
+		throw redirect(safeRedirect(redirectToReferrer), responseInit?.())
+	}
 }
 
 export function dataWithPE<Data>(
+	request: Request,
 	formData: FormData,
 	...args: Parameters<typeof data<Data>>
 ) {
-	ensureProgressiveEnhancement(formData, () => ({
+	ensureProgressiveEnhancement(request, formData, () => ({
 		statusText: JSON.stringify(args[0]),
 		...(typeof args[1] === 'number' ? { status: args[1] } : args[1]),
 	}))

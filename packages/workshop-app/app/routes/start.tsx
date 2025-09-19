@@ -41,7 +41,9 @@ export async function action({ request }: ActionFunctionArgs) {
 				if (appRunningResult?.status === 'success') {
 					// wait another 200ms just in case the build output for assets isn't finished
 					await new Promise((resolve) => setTimeout(resolve, 200))
-					return dataWithPE(formData, { status: 'app-started' } as const)
+					return dataWithPE(request, formData, {
+						status: 'app-started',
+					} as const)
 				} else if (app.dev.type === 'script') {
 					const errorMessage = appRunningResult
 						? appRunningResult.error
@@ -64,7 +66,7 @@ export async function action({ request }: ActionFunctionArgs) {
 					)
 				}
 			} else if (result.portNumber) {
-				return dataWithPE(formData, {
+				return dataWithPE(request, formData, {
 					status: 'app-not-started',
 					error: result.status,
 					port: result.portNumber,
@@ -80,7 +82,7 @@ export async function action({ request }: ActionFunctionArgs) {
 		async function stopApp() {
 			invariant(app, 'app must be defined')
 			await closeProcess(app.name)
-			return dataWithPE(formData, { status: 'app-stopped' } as const)
+			return dataWithPE(request, formData, { status: 'app-stopped' } as const)
 		}
 
 		switch (intent) {
@@ -101,7 +103,7 @@ export async function action({ request }: ActionFunctionArgs) {
 		const port = formData.get('port')
 		invariantResponse(typeof port === 'string', 'port is required')
 		await stopPort(port)
-		return dataWithPE(formData, { status: 'port-stopped' } as const)
+		return dataWithPE(request, formData, { status: 'port-stopped' } as const)
 	}
 	throw new Error(`Unknown intent: ${intent}`)
 }

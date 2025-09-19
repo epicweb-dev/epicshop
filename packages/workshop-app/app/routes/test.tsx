@@ -154,6 +154,7 @@ export async function action({ request }: ActionFunctionArgs) {
 	})
 	if (!userHasAccess) {
 		return dataWithPE(
+			request,
 			formData,
 			{
 				success: false,
@@ -176,6 +177,7 @@ export async function action({ request }: ActionFunctionArgs) {
 	})
 	if (!result.success) {
 		return dataWithPE(
+			request,
 			formData,
 			{ success: false, error: result.error.flatten() },
 			{ status: 400 },
@@ -184,6 +186,7 @@ export async function action({ request }: ActionFunctionArgs) {
 	const app = await getAppByName(result.data.name)
 	if (!app) {
 		return dataWithPE(
+			request,
 			formData,
 			{ success: false, error: 'App not found' },
 			{ status: 404 },
@@ -192,18 +195,18 @@ export async function action({ request }: ActionFunctionArgs) {
 	switch (result.data.intent) {
 		case 'run': {
 			void runAppTests(app)
-			return dataWithPE(formData, { success: true })
+			return dataWithPE(request, formData, { success: true })
 		}
 		case 'stop': {
 			const processEntry = getTestProcessEntry(app)
 			if (processEntry) {
 				processEntry.process?.kill()
 			}
-			return dataWithPE(formData, { success: true })
+			return dataWithPE(request, formData, { success: true })
 		}
 		case 'clear': {
 			clearTestProcessEntry(app)
-			return dataWithPE(formData, { success: true })
+			return dataWithPE(request, formData, { success: true })
 		}
 	}
 }

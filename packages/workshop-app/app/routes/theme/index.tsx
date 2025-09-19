@@ -41,7 +41,7 @@ export async function action({ request }: Route.ActionArgs) {
 	const responseInit = {
 		headers: { 'set-cookie': setTheme(theme) },
 	}
-	return dataWithPE(formData, submission.reply(), responseInit)
+	return dataWithPE(request, formData, submission.reply(), responseInit)
 }
 
 export function ThemeSwitch() {

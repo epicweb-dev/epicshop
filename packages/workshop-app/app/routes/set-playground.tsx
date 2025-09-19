@@ -9,7 +9,7 @@ import {
 import { getDiffCode } from '@epic-web/workshop-utils/diff.server'
 import * as Select from '@radix-ui/react-select'
 import { clsx } from 'clsx'
-import { data, type ActionFunctionArgs, useFetcher } from 'react-router'
+import { type ActionFunctionArgs, useFetcher } from 'react-router'
 import { z } from 'zod'
 import { Icon } from '#app/components/icons.tsx'
 import { showProgressBarField } from '#app/components/progress-bar.tsx'
@@ -37,6 +37,7 @@ export async function action({ request }: ActionFunctionArgs) {
 	const result = SetPlaygroundSchema.safeParse(rawData)
 	if (!result.success) {
 		return dataWithPE(
+			request,
 			formData,
 			{ status: 'error', error: result.error.message } as const,
 			{ status: 400 },
@@ -46,6 +47,7 @@ export async function action({ request }: ActionFunctionArgs) {
 	const app = await getAppByName(form.appName)
 	if (!app) {
 		return dataWithPE(
+			request,
 			formData,
 			{ status: 'error', error: `App ${form.appName} not found` } as const,
 			{ status: 404 },
@@ -62,22 +64,27 @@ export async function action({ request }: ActionFunctionArgs) {
 	} catch (error: unknown) {
 		const message = getErrorMessage(error)
 		console.error('Error setting playground', message)
-		return data({ status: 'error', error: message } as const, {
-			status: 500,
-			headers: await createToastHeaders({
-				type: 'error',
-				title: 'Error',
-				description:
-					'There was an error setting the playground. Check the terminal for details.',
-			}),
-		})
+		return dataWithPE(
+			request,
+			formData,
+			{ status: 'error', error: message } as const,
+			{
+				status: 500,
+				headers: await createToastHeaders({
+					type: 'error',
+					title: 'Error',
+					description:
+						'There was an error setting the playground. Check the terminal for details.',
+				}),
+			},
+		)
 	}
 	const apps = await getApps({ forceFresh: true })
 	const playground = apps.find(isPlaygroundApp)
 	if (playground && converseApp) {
 		void getDiffCode(playground, converseApp, { forceFresh: true })
 	}
-	return dataWithPE(formData, { status: 'success' } as const)
+	return dataWithPE(request, formData, { status: 'success' } as const)
 }
 
 export function SetPlayground({

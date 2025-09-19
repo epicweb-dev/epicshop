@@ -248,7 +248,7 @@ export async function action({ request }: ActionFunctionArgs) {
 	}
 	const announcement = getCompletionAnnouncement()
 
-	return dataWithPE(formData, result, {
+	return dataWithPE(request, formData, result, {
 		headers: combineHeaders(
 			announcement ? createConfettiHeaders() : null,
 			announcement

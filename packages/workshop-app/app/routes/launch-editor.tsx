@@ -143,7 +143,7 @@ export async function action({ request }: ActionFunctionArgs) {
 	}
 
 	if (results.every((r) => r.status === 'success')) {
-		return dataWithPE(formData, { status: 'success' } as const)
+		return dataWithPE(request, formData, { status: 'success' } as const)
 	} else {
 		const messages = results
 			.map((r, index, array) =>
@@ -157,6 +157,7 @@ export async function action({ request }: ActionFunctionArgs) {
 			.join('\n')
 		console.error('Launch editor error:', messages)
 		return dataWithPE(
+			request,
 			formData,
 			{ status: 'error', message: messages } as const,
 			{
