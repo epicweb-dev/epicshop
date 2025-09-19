@@ -281,50 +281,60 @@ async function readJsonFilesInDirectory(
 ): Promise<Record<string, any>> {
 	const files = await fsExtra.readdir(dir)
 	const entries = await Promise.all(
-		files.map(async (file) => {
-			const filePath = path.join(dir, file)
-			const stats = await fsExtra.stat(filePath)
-			if (stats.isDirectory()) {
-				const subEntries = await readJsonFilesInDirectory(filePath)
-				return [file, subEntries]
-			} else {
-				const maxRetries = 2
-				const baseDelay = 25 // shorter delay for directory listing
+		files
+			.filter((file) => {
+				// Filter out system files that should not be parsed as JSON
+				const lowercaseFile = file.toLowerCase()
+				return (
+					!lowercaseFile.startsWith('.ds_store') &&
+					!lowercaseFile.startsWith('.') &&
+					!lowercaseFile.includes('thumbs.db')
+				)
+			})
+			.map(async (file) => {
+				const filePath = path.join(dir, file)
+				const stats = await fsExtra.stat(filePath)
+				if (stats.isDirectory()) {
+					const subEntries = await readJsonFilesInDirectory(filePath)
+					return [file, subEntries]
+				} else {
+					const maxRetries = 2
+					const baseDelay = 25 // shorter delay for directory listing
 
-				for (let attempt = 0; attempt <= maxRetries; attempt++) {
-					try {
-						const data = await fsExtra.readJSON(filePath)
-						return [file, data]
-					} catch (error: unknown) {
-						// Handle JSON parsing errors (could be race condition or corruption)
-						if (
-							error instanceof SyntaxError &&
-							error.message.includes('JSON')
-						) {
-							// If this is a retry attempt, it might be a race condition
-							if (attempt < maxRetries) {
-								const delay = baseDelay * Math.pow(2, attempt)
+					for (let attempt = 0; attempt <= maxRetries; attempt++) {
+						try {
+							const data = await fsExtra.readJSON(filePath)
+							return [file, data]
+						} catch (error: unknown) {
+							// Handle JSON parsing errors (could be race condition or corruption)
+							if (
+								error instanceof SyntaxError &&
+								error.message.includes('JSON')
+							) {
+								// If this is a retry attempt, it might be a race condition
+								if (attempt < maxRetries) {
+									const delay = baseDelay * Math.pow(2, attempt)
+									console.warn(
+										`JSON parsing error on attempt ${attempt + 1}/${maxRetries + 1} for directory listing ${filePath}, retrying in ${delay}ms...`,
+									)
+									await new Promise((resolve) => setTimeout(resolve, delay))
+									continue
+								}
+
+								// Final attempt failed, skip the file
 								console.warn(
-									`JSON parsing error on attempt ${attempt + 1}/${maxRetries + 1} for directory listing ${filePath}, retrying in ${delay}ms...`,
+									`Skipping corrupted JSON file in directory listing after ${attempt + 1} attempts: ${filePath}`,
 								)
-								await new Promise((resolve) => setTimeout(resolve, delay))
-								continue
+								return [file, null]
 							}
-
-							// Final attempt failed, skip the file
-							console.warn(
-								`Skipping corrupted JSON file in directory listing after ${attempt + 1} attempts: ${filePath}`,
-							)
-							return [file, null]
+							throw error
 						}
-						throw error
 					}
-				}
 
-				// This should never be reached, but just in case
-				return [file, null]
-			}
-		}),
+					// This should never be reached, but just in case
+					return [file, null]
+				}
+			}),
 	)
 	return Object.fromEntries(entries)
 }
