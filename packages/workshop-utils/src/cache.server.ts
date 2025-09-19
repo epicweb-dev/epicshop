@@ -353,6 +353,7 @@ export async function getCacheEntriesGroupedByType() {
 			// Extract cache name from directory structure
 			const pathParts = entryPath.split('/')
 			const cacheName = pathParts[0] || 'Unknown'
+			const entryFileName = pathParts[pathParts.length - 1] || 'unknown'
 			
 			// Determine the actual entry content
 			let entryContent = content
@@ -366,7 +367,9 @@ export async function getCacheEntriesGroupedByType() {
 				grouped[cacheName] = {}
 			}
 			
-			grouped[cacheName][entryPath] = entryContent
+			// Use just the filename (without .json extension) as the key for individual entries
+			const entryKey = entryFileName.replace('.json', '')
+			grouped[cacheName][entryKey] = entryContent
 		}
 	}
 	

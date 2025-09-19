@@ -91,7 +91,12 @@ export default function CacheManagement({ loaderData }: Route.ComponentProps) {
 	const { groupedCaches, cacheFilters, searchQuery } = loaderData
 	const navigation = useNavigation()
 	const [searchParams, setSearchParams] = useSearchParams()
-	const [selectedCaches, setSelectedCaches] = React.useState(new Set(cacheFilters))
+	const [selectedCaches, setSelectedCaches] = React.useState(() => {
+		if (cacheFilters.length > 0) {
+			return new Set(cacheFilters)
+		}
+		return new Set(['all'])
+	})
 	const [localSearchQuery, setLocalSearchQuery] = React.useState(searchQuery)
 	
 	const isSubmitting = navigation.formAction?.includes('/admin/cache')
@@ -206,7 +211,7 @@ export default function CacheManagement({ loaderData }: Route.ComponentProps) {
 				
 				<div className="min-w-64">
 					<label className="block text-sm font-medium mb-1">
-						Cache Types (select multiple)
+						Workshops (select multiple)
 					</label>
 					<div className="border border-gray-300 rounded p-2 bg-white max-h-40 overflow-y-auto">
 						<label className="flex items-center gap-2 p-1 hover:bg-gray-50 cursor-pointer">
@@ -216,7 +221,7 @@ export default function CacheManagement({ loaderData }: Route.ComponentProps) {
 								onChange={() => handleCacheToggle('all')}
 								className="rounded"
 							/>
-							<span className="text-sm font-medium">All Cache Types</span>
+							<span className="text-sm font-medium">All Workshops</span>
 						</label>
 						<hr className="my-2" />
 						{cacheNames.map((cacheName) => (
@@ -237,7 +242,7 @@ export default function CacheManagement({ loaderData }: Route.ComponentProps) {
 			{/* Cache entries summary */}
 			<div className="mb-4">
 				<p className="text-sm text-gray-600">
-					Showing {filteredEntries} of {totalEntries} cache entries across {Object.keys(filteredCaches).length} cache types
+					Showing {filteredEntries} of {totalEntries} cache entries across {Object.keys(filteredCaches).length} workshops
 				</p>
 			</div>
 			
