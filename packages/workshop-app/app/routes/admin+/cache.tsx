@@ -3,6 +3,7 @@ import {
 	getCacheEntriesGroupedByType,
 	deleteCache,
 	deleteCacheEntry,
+	deleteCacheEntryByKey,
 	updateCacheEntryByKey,
 } from '@epic-web/workshop-utils/cache.server'
 import { 
@@ -54,12 +55,13 @@ export async function action({ request }: Route.ActionArgs) {
 			return data({ success: true, message: 'All caches cleared successfully' })
 		}
 		case 'delete-cache-entry': {
-			const path = formData.get('path')
-			if (typeof path !== 'string') {
-				throw new Response('Path is required', { status: 400 })
+			const cacheName = formData.get('cacheName')
+			const entryKey = formData.get('entryKey')
+			if (typeof cacheName !== 'string' || typeof entryKey !== 'string') {
+				throw new Response('Cache name and entry key are required', { status: 400 })
 			}
-			await deleteCacheEntry(path)
-			return data({ success: true, message: `Cache entry "${path}" deleted successfully` })
+			await deleteCacheEntryByKey(cacheName, entryKey)
+			return data({ success: true, message: `Cache entry "${entryKey}" deleted successfully` })
 		}
 		case 'update-cache-entry': {
 			const cacheName = formData.get('cacheName')
@@ -71,8 +73,10 @@ export async function action({ request }: Route.ActionArgs) {
 			}
 			
 			try {
-				const parsedContent = JSON.parse(content)
-				await updateCacheEntryByKey(cacheName, entryKey, parsedContent)
+				// Validate that content is valid JSON
+				JSON.parse(content)
+				// Pass the string content, the function will parse it
+				await updateCacheEntryByKey(cacheName, entryKey, content)
 				return data({ success: true, message: `Cache entry "${entryKey}" updated successfully` })
 			} catch (error) {
 				if (error instanceof SyntaxError) {
@@ -332,7 +336,9 @@ function CacheEntryCard({
 	
 	React.useEffect(() => {
 		if (isEditing) {
-			setEditContent(JSON.stringify(content, null, 2))
+			// Allow editing of the entry.value, not the entire structure
+			const entryValue = content?.entry?.value
+			setEditContent(JSON.stringify(entryValue, null, 2))
 		}
 	}, [isEditing, content])
 	
@@ -344,7 +350,12 @@ function CacheEntryCard({
 		}
 	}
 	
-	const displayKey = entryKey.split('/').pop() || entryKey
+	// Extract the actual cached value from the entry structure
+	const entryValue = content?.entry?.value
+	const cacheKey = content?.key || entryKey
+	const metadata = content?.entry?.metadata
+	
+	const displayKey = cacheKey || entryKey
 	
 	return (
 		<div className="rounded border border-gray-200 bg-white shadow-sm">
@@ -354,8 +365,11 @@ function CacheEntryCard({
 						{displayKey}
 					</h4>
 					<p className="text-xs text-gray-500 mt-1">
-						{typeof content === 'object' ? 'Object' : typeof content} 
-						{Array.isArray(content) && ` (${content.length} items)`}
+						{typeof entryValue === 'object' ? 'Object' : typeof entryValue} 
+						{Array.isArray(entryValue) && ` (${entryValue.length} items)`}
+						{metadata?.createdTime && (
+							<span className="ml-2">• Created {new Date(metadata.createdTime).toLocaleString()}</span>
+						)}
 					</p>
 				</div>
 				
@@ -389,7 +403,8 @@ function CacheEntryCard({
 					
 					<Form method="POST">
 						<input type="hidden" name="intent" value="delete-cache-entry" />
-						<input type="hidden" name="path" value={`${cacheName}/${entryKey}`} />
+						<input type="hidden" name="cacheName" value={cacheName} />
+						<input type="hidden" name="entryKey" value={entryKey} />
 						<SimpleTooltip content="Delete">
 							<button
 								type="submit"
@@ -437,7 +452,7 @@ function CacheEntryCard({
 						</div>
 					) : (
 						<pre className="overflow-auto rounded bg-gray-50 p-2 text-xs">
-							<code>{JSON.stringify(content, null, 2)}</code>
+							<code>{JSON.stringify(entryValue, null, 2)}</code>
 						</pre>
 					)}
 				</div>

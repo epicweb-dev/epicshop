@@ -345,31 +345,33 @@ export async function getAllFileCacheEntries() {
 
 export async function getCacheEntriesGroupedByType() {
 	const allEntries = await getAllFileCacheEntries()
+	
+	// allEntries structure is already:
+	// {
+	//   "CacheName": {
+	//     "md5hash": {
+	//       "key": "original-cache-key",
+	//       "entry": {
+	//         "value": actualCachedData,
+	//         "metadata": { ttl, swr, createdTime }
+	//       }
+	//     }
+	//   }
+	// }
+	
 	const grouped: Record<string, Record<string, any>> = {}
 	
-	// Group entries by cache type (each makeSingletonFsCache is its own cache)
-	for (const [entryPath, content] of Object.entries(allEntries)) {
-		if (content && typeof content === 'object') {
-			// Extract cache name from directory structure
-			const pathParts = entryPath.split('/')
-			const cacheName = pathParts[0] || 'Unknown'
-			const entryFileName = pathParts[pathParts.length - 1] || 'unknown'
+	for (const [cacheName, cacheEntries] of Object.entries(allEntries)) {
+		if (cacheEntries && typeof cacheEntries === 'object') {
+			grouped[cacheName] = {}
 			
-			// Determine the actual entry content
-			let entryContent = content
-			
-			// If this is a file-based cache with entry structure, use the entry
-			if (content.entry) {
-				entryContent = content.entry
+			for (const [md5Hash, entryData] of Object.entries(cacheEntries)) {
+				if (entryData && typeof entryData === 'object' && 'entry' in entryData) {
+					// Use the MD5 hash as the key and store the entire entry data
+					// The UI will display entry.value in the <pre> element
+					grouped[cacheName][md5Hash] = entryData
+				}
 			}
-			
-			if (!grouped[cacheName]) {
-				grouped[cacheName] = {}
-			}
-			
-			// Use just the filename (without .json extension) as the key for individual entries
-			const entryKey = entryFileName.replace('.json', '')
-			grouped[cacheName][entryKey] = entryContent
 		}
 	}
 	
@@ -379,31 +381,70 @@ export async function getCacheEntriesGroupedByType() {
 
 export async function getCacheEntry(cacheName: string, entryKey: string) {
 	const allEntries = await getAllFileCacheEntries()
-	const entryPath = `${cacheName}/${entryKey}`
-	const content = allEntries[entryPath]
 	
-	if (!content) {
+	// allEntries structure is:
+	// {
+	//   "CacheName": {
+	//     "md5hash": {
+	//       "key": "original-cache-key",
+	//       "entry": { "value": actualData, "metadata": {...} }
+	//     }
+	//   }
+	// }
+	
+	const cacheEntries = allEntries[cacheName]
+	if (!cacheEntries) {
 		return null
 	}
 	
-	// Return the entry data, not the wrapper
-	return content.entry || content
+	const entryData = cacheEntries[entryKey]
+	if (!entryData) {
+		return null
+	}
+	
+	// Return the entry.value (the actual cached data) for raw JSON viewing
+	return entryData.entry?.value || entryData
 }
 
 export async function updateCacheEntryByKey(cacheName: string, entryKey: string, newValue: any) {
 	if (getEnv().EPICSHOP_DEPLOYED) return null
 
 	try {
-		const entryPath = `${cacheName}/${entryKey}`
-		const fullPath = path.join(cacheDir, entryPath)
+		// The cache structure is organized as:
+		// cacheDir/WORKSHOP_INSTANCE_ID/CacheName/md5hash.json
+		const cacheInstanceDir = path.join(
+			cacheDir,
+			getEnv().EPICSHOP_WORKSHOP_INSTANCE_ID,
+			cacheName,
+		)
+		const fullPath = path.join(cacheInstanceDir, `${entryKey}.json`)
 		
 		// Read existing content to preserve structure
-		const existingContent = await fsExtra.readJSON(fullPath)
+		let existingContent
+		try {
+			existingContent = await fsExtra.readJSON(fullPath)
+		} catch (error) {
+			// If file doesn't exist, create a new entry structure
+			existingContent = {
+				key: '',
+				entry: {
+					value: null,
+					metadata: {
+						ttl: null,
+						swr: 0,
+						createdTime: Date.now()
+					}
+				}
+			}
+		}
 		
-		// Update only the entry part
+		// Update only the entry.value part, preserve the rest
 		const updatedContent = {
 			...existingContent,
-			entry: newValue
+			entry: {
+				...existingContent.entry,
+				value: JSON.parse(newValue) // Parse the JSON from the form
+			}
 		}
 		
 		await fsExtra.writeJSON(fullPath, updatedContent, { spaces: 2 })
@@ -423,6 +464,28 @@ export async function deleteCacheEntry(entryPath: string) {
 		}
 	} catch (error) {
 		console.error(`Error deleting cache entry at ${entryPath}`, error)
+		throw error
+	}
+}
+
+export async function deleteCacheEntryByKey(cacheName: string, entryKey: string) {
+	if (getEnv().EPICSHOP_DEPLOYED) return null
+	
+	try {
+		// The cache structure is organized as:
+		// cacheDir/WORKSHOP_INSTANCE_ID/CacheName/md5hash.json
+		const cacheInstanceDir = path.join(
+			cacheDir,
+			getEnv().EPICSHOP_WORKSHOP_INSTANCE_ID,
+			cacheName,
+		)
+		const fullPath = path.join(cacheInstanceDir, `${entryKey}.json`)
+		
+		if (await fsExtra.exists(fullPath)) {
+			await fsExtra.remove(fullPath)
+		}
+	} catch (error) {
+		console.error(`Error deleting cache entry ${cacheName}/${entryKey}`, error)
 		throw error
 	}
 }
