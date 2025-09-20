@@ -281,56 +281,226 @@ async function readJsonFilesInDirectory(
 ): Promise<Record<string, any>> {
 	const files = await fsExtra.readdir(dir)
 	const entries = await Promise.all(
-		files.map(async (file) => {
-			const filePath = path.join(dir, file)
-			const stats = await fsExtra.stat(filePath)
-			if (stats.isDirectory()) {
-				const subEntries = await readJsonFilesInDirectory(filePath)
-				return [file, subEntries]
-			} else {
-				const maxRetries = 2
-				const baseDelay = 25 // shorter delay for directory listing
+		files
+			.filter((file) => {
+				// Filter out system files that should not be parsed as JSON
+				const lowercaseFile = file.toLowerCase()
+				return (
+					!lowercaseFile.startsWith('.ds_store') &&
+					!lowercaseFile.startsWith('.') &&
+					!lowercaseFile.includes('thumbs.db')
+				)
+			})
+			.map(async (file) => {
+				const filePath = path.join(dir, file)
+				const stats = await fsExtra.stat(filePath)
+				if (stats.isDirectory()) {
+					const subEntries = await readJsonFilesInDirectory(filePath)
+					return [file, subEntries]
+				} else {
+					const maxRetries = 2
+					const baseDelay = 25 // shorter delay for directory listing
 
-				for (let attempt = 0; attempt <= maxRetries; attempt++) {
-					try {
-						const data = await fsExtra.readJSON(filePath)
-						return [file, data]
-					} catch (error: unknown) {
-						// Handle JSON parsing errors (could be race condition or corruption)
-						if (
-							error instanceof SyntaxError &&
-							error.message.includes('JSON')
-						) {
-							// If this is a retry attempt, it might be a race condition
-							if (attempt < maxRetries) {
-								const delay = baseDelay * Math.pow(2, attempt)
+					for (let attempt = 0; attempt <= maxRetries; attempt++) {
+						try {
+							const data = await fsExtra.readJSON(filePath)
+							return [file, data]
+						} catch (error: unknown) {
+							// Handle JSON parsing errors (could be race condition or corruption)
+							if (
+								error instanceof SyntaxError &&
+								error.message.includes('JSON')
+							) {
+								// If this is a retry attempt, it might be a race condition
+								if (attempt < maxRetries) {
+									const delay = baseDelay * Math.pow(2, attempt)
+									console.warn(
+										`JSON parsing error on attempt ${attempt + 1}/${maxRetries + 1} for directory listing ${filePath}, retrying in ${delay}ms...`,
+									)
+									await new Promise((resolve) => setTimeout(resolve, delay))
+									continue
+								}
+
+								// Final attempt failed, skip the file
 								console.warn(
-									`JSON parsing error on attempt ${attempt + 1}/${maxRetries + 1} for directory listing ${filePath}, retrying in ${delay}ms...`,
+									`Skipping corrupted JSON file in directory listing after ${attempt + 1} attempts: ${filePath}`,
 								)
-								await new Promise((resolve) => setTimeout(resolve, delay))
-								continue
+								return [file, null]
 							}
-
-							// Final attempt failed, skip the file
-							console.warn(
-								`Skipping corrupted JSON file in directory listing after ${attempt + 1} attempts: ${filePath}`,
-							)
-							return [file, null]
+							throw error
 						}
-						throw error
 					}
-				}
 
-				// This should never be reached, but just in case
-				return [file, null]
-			}
-		}),
+					// This should never be reached, but just in case
+					return [file, null]
+				}
+			}),
 	)
 	return Object.fromEntries(entries)
 }
 
 export async function getAllFileCacheEntries() {
 	return readJsonFilesInDirectory(cacheDir)
+}
+
+export async function getCacheEntriesGroupedByType() {
+	const allEntries = await getAllFileCacheEntries()
+	
+	// allEntries structure is already:
+	// {
+	//   "CacheName": {
+	//     "md5hash": {
+	//       "key": "original-cache-key",
+	//       "entry": {
+	//         "value": actualCachedData,
+	//         "metadata": { ttl, swr, createdTime }
+	//       }
+	//     }
+	//   }
+	// }
+	
+	const grouped: Record<string, Record<string, any>> = {}
+	
+	for (const [cacheName, cacheEntries] of Object.entries(allEntries)) {
+		if (cacheEntries && typeof cacheEntries === 'object') {
+			// Initialize the cache group
+			grouped[cacheName] = {}
+			
+			for (const [md5Hash, entryData] of Object.entries(cacheEntries)) {
+				if (entryData && typeof entryData === 'object') {
+					// Store the entire entry data - UI will access entry.value for display
+					grouped[cacheName][md5Hash] = entryData
+				}
+			}
+		}
+	}
+	
+	return grouped
+}
+
+
+export async function getCacheEntry(cacheName: string, entryKey: string) {
+	const allEntries = await getAllFileCacheEntries()
+	
+	// allEntries structure is:
+	// {
+	//   "CacheName": {
+	//     "md5hash": {
+	//       "key": "original-cache-key",
+	//       "entry": { "value": actualData, "metadata": {...} }
+	//     }
+	//   }
+	// }
+	
+	const cacheEntries = allEntries[cacheName]
+	if (!cacheEntries) {
+		return null
+	}
+	
+	const entryData = cacheEntries[entryKey]
+	if (!entryData) {
+		return null
+	}
+	
+	// Return the entry.value (the actual cached data) for raw JSON viewing
+	return entryData.entry?.value || entryData
+}
+
+export async function updateCacheEntryByKey(cacheName: string, entryKey: string, newValue: any) {
+	if (getEnv().EPICSHOP_DEPLOYED) return null
+
+	try {
+		// The cache structure is organized as:
+		// cacheDir/WORKSHOP_INSTANCE_ID/CacheName/md5hash.json
+		const cacheInstanceDir = path.join(
+			cacheDir,
+			getEnv().EPICSHOP_WORKSHOP_INSTANCE_ID,
+			cacheName,
+		)
+		const fullPath = path.join(cacheInstanceDir, `${entryKey}.json`)
+		
+		// Read existing content to preserve structure
+		let existingContent
+		try {
+			existingContent = await fsExtra.readJSON(fullPath)
+		} catch (error) {
+			// If file doesn't exist, create a new entry structure
+			existingContent = {
+				key: '',
+				entry: {
+					value: null,
+					metadata: {
+						ttl: null,
+						swr: 0,
+						createdTime: Date.now()
+					}
+				}
+			}
+		}
+		
+		// Update only the entry.value part, preserve the rest
+		const updatedContent = {
+			...existingContent,
+			entry: {
+				...existingContent.entry,
+				value: JSON.parse(newValue) // Parse the JSON from the form
+			}
+		}
+		
+		await fsExtra.writeJSON(fullPath, updatedContent, { spaces: 2 })
+	} catch (error) {
+		console.error(`Error updating cache entry ${cacheName}/${entryKey}`, error)
+		throw error
+	}
+}
+
+export async function deleteCacheEntry(entryPath: string) {
+	if (getEnv().EPICSHOP_DEPLOYED) return null
+	
+	try {
+		const fullPath = path.join(cacheDir, entryPath)
+		if (await fsExtra.exists(fullPath)) {
+			await fsExtra.remove(fullPath)
+		}
+	} catch (error) {
+		console.error(`Error deleting cache entry at ${entryPath}`, error)
+		throw error
+	}
+}
+
+export async function deleteCacheEntryByKey(cacheName: string, entryKey: string) {
+	if (getEnv().EPICSHOP_DEPLOYED) return null
+	
+	try {
+		// The cache structure is organized as:
+		// cacheDir/WORKSHOP_INSTANCE_ID/CacheName/md5hash.json
+		const cacheInstanceDir = path.join(
+			cacheDir,
+			getEnv().EPICSHOP_WORKSHOP_INSTANCE_ID,
+			cacheName,
+		)
+		const fullPath = path.join(cacheInstanceDir, `${entryKey}.json`)
+		
+		if (await fsExtra.exists(fullPath)) {
+			await fsExtra.remove(fullPath)
+		}
+	} catch (error) {
+		console.error(`Error deleting cache entry ${cacheName}/${entryKey}`, error)
+		throw error
+	}
+}
+
+export async function updateCacheEntry(entryPath: string, content: any) {
+	if (getEnv().EPICSHOP_DEPLOYED) return null
+	
+	try {
+		const fullPath = path.join(cacheDir, entryPath)
+		await fsExtra.ensureDir(path.dirname(fullPath))
+		await fsExtra.writeJSON(fullPath, content, { spaces: 2 })
+	} catch (error) {
+		console.error(`Error updating cache entry at ${entryPath}`, error)
+		throw error
+	}
 }
 
 export async function deleteCache() {
