@@ -189,7 +189,7 @@ export default function CacheManagement({ loaderData }: Route.ComponentProps) {
 						type="submit"
 						name="intent"
 						value="delete-all-caches"
-						className="rounded bg-red-600 px-4 py-2 text-white hover:bg-red-700 disabled:opacity-50"
+						className="rounded bg-destructive px-4 py-2 text-destructive-foreground hover:bg-destructive/90 disabled:opacity-50"
 						disabled={isSubmitting}
 					>
 						{isSubmitting ? 'Clearing...' : 'Clear All Caches'}
@@ -200,7 +200,7 @@ export default function CacheManagement({ loaderData }: Route.ComponentProps) {
 			{/* Filters */}
 			<div className="mb-6 flex flex-col gap-4 md:flex-row md:items-start">
 				<div className="flex-1">
-					<label htmlFor="search" className="block text-sm font-medium mb-1">
+					<label htmlFor="search" className="block text-sm font-medium mb-1 text-foreground">
 						Search cache entries
 					</label>
 					<input
@@ -209,32 +209,32 @@ export default function CacheManagement({ loaderData }: Route.ComponentProps) {
 						value={localSearchQuery}
 						onChange={(e) => handleSearchChange(e.target.value)}
 						placeholder="Search by cache name or content..."
-						className="w-full rounded border border-gray-300 px-3 py-2 text-sm focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500"
+						className="w-full rounded border border-input bg-background px-3 py-2 text-sm text-foreground placeholder:text-muted-foreground focus:border-ring focus:outline-none focus:ring-1 focus:ring-ring"
 					/>
 				</div>
 				
 				<div className="min-w-64">
-					<label className="block text-sm font-medium mb-1">
+					<label className="block text-sm font-medium mb-1 text-foreground">
 						Workshops (select multiple)
 					</label>
-					<div className="border border-gray-300 rounded p-2 bg-white max-h-40 overflow-y-auto">
-						<label className="flex items-center gap-2 p-1 hover:bg-gray-50 cursor-pointer">
+					<div className="border border-input rounded p-2 bg-background max-h-40 overflow-y-auto">
+						<label className="flex items-center gap-2 p-1 hover:bg-accent hover:text-accent-foreground cursor-pointer rounded">
 							<input
 								type="checkbox"
 								checked={selectedCaches.has('all')}
 								onChange={() => handleCacheToggle('all')}
-								className="rounded"
+								className="rounded border-input"
 							/>
 							<span className="text-sm font-medium">All Workshops</span>
 						</label>
-						<hr className="my-2" />
+						<hr className="my-2 border-border" />
 						{cacheNames.map((cacheName) => (
-							<label key={cacheName} className="flex items-center gap-2 p-1 hover:bg-gray-50 cursor-pointer">
+							<label key={cacheName} className="flex items-center gap-2 p-1 hover:bg-accent hover:text-accent-foreground cursor-pointer rounded">
 								<input
 									type="checkbox"
 									checked={selectedCaches.has(cacheName)}
 									onChange={() => handleCacheToggle(cacheName)}
-									className="rounded"
+									className="rounded border-input"
 								/>
 								<span className="text-sm">{cacheName}</span>
 							</label>
@@ -245,7 +245,7 @@ export default function CacheManagement({ loaderData }: Route.ComponentProps) {
 			
 			{/* Cache entries summary */}
 			<div className="mb-4">
-				<p className="text-sm text-gray-600">
+				<p className="text-sm text-muted-foreground">
 					Showing {filteredEntries} of {totalEntries} cache entries across {Object.keys(filteredCaches).length} workshops
 				</p>
 			</div>
@@ -253,8 +253,8 @@ export default function CacheManagement({ loaderData }: Route.ComponentProps) {
 			{/* Cache entries list */}
 			<div className="space-y-6">
 				{Object.keys(filteredCaches).length === 0 ? (
-					<div className="rounded border border-gray-200 p-8 text-center">
-						<p className="text-gray-500">No cache entries found matching your criteria.</p>
+					<div className="rounded border border-border bg-card p-8 text-center">
+						<p className="text-muted-foreground">No cache entries found matching your criteria.</p>
 					</div>
 				) : (
 					Object.entries(filteredCaches).map(([cacheName, entries]) => (
@@ -281,22 +281,23 @@ function CacheSection({
 	isSubmitting: boolean
 }) {
 	const [isCacheExpanded, setIsCacheExpanded] = React.useState(false)
+	const entryCount = Object.keys(entries || {}).length
 	
 	return (
-		<div className="rounded border border-gray-200 bg-white shadow-sm">
-			<div className="flex items-center justify-between border-b border-gray-100 p-4 bg-gray-50">
+		<div className="rounded border border-border bg-card shadow-sm">
+			<div className="flex items-center justify-between border-b border-border p-4 bg-muted/50">
 				<div className="flex-1">
-					<h2 className="font-medium text-lg text-gray-900">
+					<h2 className="font-medium text-lg text-card-foreground">
 						{cacheName}
 					</h2>
-					<p className="text-sm text-gray-500 mt-1">
-						{Object.keys(entries).length} entries
+					<p className="text-sm text-muted-foreground mt-1">
+						{entryCount} {entryCount === 1 ? 'entry' : 'entries'}
 					</p>
 				</div>
 				
 				<button
 					onClick={() => setIsCacheExpanded(!isCacheExpanded)}
-					className="rounded p-2 text-gray-400 hover:bg-gray-100 hover:text-gray-600"
+					className="rounded p-2 text-muted-foreground hover:bg-accent hover:text-accent-foreground"
 				>
 					<Icon name={isCacheExpanded ? "ChevronUp" : "ChevronDown"} className="h-5 w-5" />
 				</button>
@@ -304,15 +305,19 @@ function CacheSection({
 			
 			{isCacheExpanded && (
 				<div className="p-4 space-y-2">
-					{Object.entries(entries).map(([entryKey, entryValue]) => (
-						<CacheEntryCard
-							key={entryKey}
-							cacheName={cacheName}
-							entryKey={entryKey}
-							content={entryValue}
-							isSubmitting={isSubmitting}
-						/>
-					))}
+					{entryCount === 0 ? (
+						<p className="text-muted-foreground text-center py-4">No entries in this cache</p>
+					) : (
+						Object.entries(entries).map(([entryKey, entryValue]) => (
+							<CacheEntryCard
+								key={entryKey}
+								cacheName={cacheName}
+								entryKey={entryKey}
+								content={entryValue}
+								isSubmitting={isSubmitting}
+							/>
+						))
+					)}
 				</div>
 			)}
 		</div>
@@ -355,18 +360,27 @@ function CacheEntryCard({
 	const cacheKey = content?.key || entryKey
 	const metadata = content?.entry?.metadata
 	
-	const displayKey = cacheKey || entryKey
+	// Use the original cache key if available, otherwise use the MD5 hash
+	const displayKey = cacheKey && cacheKey !== entryKey ? cacheKey : entryKey
+	
+	// Determine the data type description
+	const getTypeDescription = (value: any) => {
+		if (value === null) return 'null'
+		if (value === undefined) return 'undefined'
+		if (Array.isArray(value)) return `Array (${value.length} items)`
+		if (typeof value === 'object') return 'Object'
+		return typeof value
+	}
 	
 	return (
-		<div className="rounded border border-gray-200 bg-white shadow-sm">
-			<div className="flex items-center justify-between border-b border-gray-100 p-3">
+		<div className="rounded border border-border bg-card shadow-sm">
+			<div className="flex items-center justify-between border-b border-border p-3">
 				<div className="flex-1">
-					<h4 className="font-mono text-sm font-medium text-gray-900">
+					<h4 className="font-mono text-sm font-medium text-card-foreground truncate">
 						{displayKey}
 					</h4>
-					<p className="text-xs text-gray-500 mt-1">
-						{typeof entryValue === 'object' ? 'Object' : typeof entryValue} 
-						{Array.isArray(entryValue) && ` (${entryValue.length} items)`}
+					<p className="text-xs text-muted-foreground mt-1">
+						{getTypeDescription(entryValue)}
 						{metadata?.createdTime && (
 							<span className="ml-2">• Created {new Date(metadata.createdTime).toLocaleString()}</span>
 						)}
@@ -377,7 +391,7 @@ function CacheEntryCard({
 					<SimpleTooltip content="View Raw JSON">
 						<Link
 							to={`/admin/cache/${encodeURIComponent(cacheName)}/${encodeURIComponent(entryKey)}`}
-							className="rounded p-1 text-gray-400 hover:bg-gray-100 hover:text-gray-600"
+							className="rounded p-1 text-muted-foreground hover:bg-accent hover:text-accent-foreground"
 						>
 							<Icon name="ExternalLink" className="h-3 w-3" />
 						</Link>
@@ -386,7 +400,7 @@ function CacheEntryCard({
 					<SimpleTooltip content={isExpanded ? "Collapse" : "Expand"}>
 						<button
 							onClick={toggleExpanded}
-							className="rounded p-1 text-gray-400 hover:bg-gray-100 hover:text-gray-600"
+							className="rounded p-1 text-muted-foreground hover:bg-accent hover:text-accent-foreground"
 						>
 							<Icon name={isExpanded ? "ChevronUp" : "ChevronDown"} className="h-3 w-3" />
 						</button>
@@ -395,7 +409,7 @@ function CacheEntryCard({
 					<SimpleTooltip content={isEditing ? "Cancel editing" : "Edit"}>
 						<button
 							onClick={toggleEditing}
-							className="rounded p-1 text-gray-400 hover:bg-gray-100 hover:text-gray-600"
+							className="rounded p-1 text-muted-foreground hover:bg-accent hover:text-accent-foreground"
 						>
 							<Icon name={isEditing ? "Close" : "Keyboard"} className="h-3 w-3" />
 						</button>
@@ -409,7 +423,7 @@ function CacheEntryCard({
 							<button
 								type="submit"
 								disabled={isSubmitting}
-								className="rounded p-1 text-red-400 hover:bg-red-50 hover:text-red-600 disabled:opacity-50"
+								className="rounded p-1 text-foreground-destructive hover:bg-destructive/10 hover:text-destructive-foreground disabled:opacity-50"
 							>
 								<Icon name="Remove" className="h-3 w-3" />
 							</button>
@@ -426,12 +440,12 @@ function CacheEntryCard({
 								value={editContent}
 								onChange={(e) => setEditContent(e.target.value)}
 								rows={8}
-								className="w-full rounded border border-gray-300 p-2 font-mono text-xs focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500"
+								className="w-full rounded border border-input bg-background p-2 font-mono text-xs text-foreground focus:border-ring focus:outline-none focus:ring-1 focus:ring-ring"
 							/>
 							<div className="flex justify-end gap-2">
 								<button
 									onClick={toggleEditing}
-									className="rounded border border-gray-300 px-3 py-1 text-sm hover:bg-gray-50"
+									className="rounded border border-input bg-background px-3 py-1 text-sm text-foreground hover:bg-accent hover:text-accent-foreground"
 								>
 									Cancel
 								</button>
@@ -443,7 +457,7 @@ function CacheEntryCard({
 									<button
 										type="submit"
 										disabled={isSubmitting}
-										className="rounded bg-blue-600 px-3 py-1 text-sm text-white hover:bg-blue-700 disabled:opacity-50"
+										className="rounded bg-primary px-3 py-1 text-sm text-primary-foreground hover:bg-primary/90 disabled:opacity-50"
 									>
 										{isSubmitting ? 'Saving...' : 'Save Changes'}
 									</button>
@@ -451,8 +465,8 @@ function CacheEntryCard({
 							</div>
 						</div>
 					) : (
-						<pre className="overflow-auto rounded bg-gray-50 p-2 text-xs">
-							<code>{JSON.stringify(entryValue, null, 2)}</code>
+						<pre className="rounded bg-muted p-3 text-xs overflow-auto border border-border font-mono text-foreground">
+							{JSON.stringify(entryValue, null, 2)}
 						</pre>
 					)}
 				</div>
