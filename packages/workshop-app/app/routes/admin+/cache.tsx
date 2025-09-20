@@ -22,6 +22,22 @@ import {
 import { ensureUndeployed } from '#app/utils/misc.js'
 import { type Route } from './+types/cache.ts'
 
+// Icon-only button component without clip-path styling
+function IconButton({ 
+	children, 
+	className = '', 
+	...props 
+}: React.ComponentPropsWithoutRef<'button'>) {
+	return (
+		<button
+			{...props}
+			className={`inline-flex items-center justify-center w-8 h-8 rounded border border-border bg-background text-foreground hover:bg-muted focus:bg-muted focus:outline-none focus:ring-2 focus:ring-ring ${className}`}
+		>
+			{children}
+		</button>
+	)
+}
+
 const ActionSchema = z.discriminatedUnion('intent', [
 	z.object({
 		intent: z.literal('delete-entry'),
@@ -201,16 +217,15 @@ function SearchFilter({ filterQuery }: { filterQuery: string }) {
 					placeholder="Search by key or cache name..."
 					defaultValue={filterQuery}
 					onChange={(e) => handleSearch(e.target.value)}
-					className="flex-1 px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+					className="flex-1 px-3 py-2 border border-border rounded-md bg-background text-foreground focus:outline-none focus:ring-2 focus:ring-ring"
 				/>
 				{filterQuery && (
-					<Button 
-						varient="mono" 
+					<IconButton 
 						onClick={() => handleSearch('')}
 						title="Clear search"
 					>
-						<Icon name="Close" />
-					</Button>
+						<Icon name="Close" className="w-4 h-4" />
+					</IconButton>
 				)}
 			</div>
 		</div>
@@ -250,10 +265,10 @@ function UpdateEntryDialog({
 			<DialogTrigger asChild>
 				{children}
 			</DialogTrigger>
-			<DialogContent className="max-w-2xl">
+			<DialogContent className="max-w-2xl bg-popover border border-border">
 				<DialogHeader>
-					<DialogTitle>Update Cache Entry</DialogTitle>
-					<DialogDescription>
+					<DialogTitle className="text-popover-foreground">Update Cache Entry</DialogTitle>
+					<DialogDescription className="text-muted-foreground">
 						Edit the JSON value for cache entry: {filename}
 					</DialogDescription>
 				</DialogHeader>
@@ -261,7 +276,7 @@ function UpdateEntryDialog({
 					<textarea
 						value={newValue}
 						onChange={(e) => setNewValue(e.target.value)}
-						className="w-full h-64 p-3 font-mono text-sm border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+						className="w-full h-64 p-3 font-mono text-sm border border-border rounded-md bg-background text-foreground focus:outline-none focus:ring-2 focus:ring-ring"
 						placeholder="Enter JSON value..."
 					/>
 				</div>
@@ -305,10 +320,10 @@ function DeleteConfirmDialog({
 			<DialogTrigger asChild>
 				{children}
 			</DialogTrigger>
-			<DialogContent>
+			<DialogContent className="bg-popover border border-border">
 				<DialogHeader>
-					<DialogTitle>{title}</DialogTitle>
-					<DialogDescription>{description}</DialogDescription>
+					<DialogTitle className="text-popover-foreground">{title}</DialogTitle>
+					<DialogDescription className="text-muted-foreground">{description}</DialogDescription>
 				</DialogHeader>
 				<DialogFooter>
 					<Button varient="mono" onClick={() => setIsOpen(false)}>
@@ -362,8 +377,8 @@ export default function CacheManagement({ loaderData }: Route.ComponentProps) {
 		<div className="space-y-6">
 			<div>
 				<h2 className="text-2xl font-bold mb-2">Cache Management</h2>
-				<p className="text-gray-600">
-					Current Workshop: <span className="font-semibold">{currentWorkshopId}</span>
+				<p className="text-muted-foreground">
+					Current Workshop: <span className="font-semibold text-foreground">{currentWorkshopId}</span>
 				</p>
 			</div>
 			
@@ -376,32 +391,32 @@ export default function CacheManagement({ loaderData }: Route.ComponentProps) {
 			<SearchFilter filterQuery={filterQuery} />
 			
 			{fetcher.data?.status === 'success' && (
-				<div className="p-4 bg-green-100 border border-green-400 text-green-700 rounded">
+				<div className="p-4 bg-accent text-accent-foreground rounded border border-border">
 					{fetcher.data.message}
 				</div>
 			)}
 			
 			{fetcher.data?.status === 'error' && (
-				<div className="p-4 bg-red-100 border border-red-400 text-red-700 rounded">
+				<div className="p-4 bg-destructive text-destructive-foreground rounded border border-border">
 					{fetcher.data.error}
 				</div>
 			)}
 			
 			{filteredCaches.length === 0 && (
-				<div className="text-center py-8 text-gray-500">
+				<div className="text-center py-8 text-muted-foreground">
 					No caches found matching your criteria.
 				</div>
 			)}
 			
 			<div className="space-y-6">
 				{filteredCaches.map((workshopCache) => (
-					<div key={workshopCache.workshopId} className="border border-gray-200 rounded-lg p-4">
+					<div key={workshopCache.workshopId} className="border border-border rounded-lg p-4 bg-card">
 						<div className="flex items-center justify-between mb-4">
-							<h3 className="text-lg font-semibold flex items-center gap-2">
+							<h3 className="text-lg font-semibold flex items-center gap-2 text-card-foreground">
 								<Icon name="Files" className="w-5 h-5" />
 								{workshopCache.workshopId}
 								{workshopCache.workshopId === currentWorkshopId && (
-									<span className="text-xs bg-blue-100 text-blue-800 px-2 py-1 rounded">
+									<span className="text-xs bg-primary text-primary-foreground px-2 py-1 rounded">
 										Current
 									</span>
 								)}
@@ -411,21 +426,20 @@ export default function CacheManagement({ loaderData }: Route.ComponentProps) {
 								description={`Are you sure you want to delete all caches for workshop "${workshopCache.workshopId}"? This action cannot be undone.`}
 								onConfirm={() => deleteWorkshopCache(workshopCache.workshopId)}
 							>
-								<Button varient="mono" className="text-red-600 hover:text-red-800">
+								<IconButton className="text-destructive hover:bg-destructive hover:text-destructive-foreground">
 									<Icon name="Remove" className="w-4 h-4" />
-									Delete All
-								</Button>
+								</IconButton>
 							</DeleteConfirmDialog>
 						</div>
 						
 						<div className="space-y-4">
 							{workshopCache.caches.map((cache) => (
-								<div key={cache.name} className="bg-gray-50 rounded-md p-3">
+								<div key={cache.name} className="bg-muted rounded-md p-3">
 									<div className="flex items-center justify-between mb-3">
-										<h4 className="font-medium flex items-center gap-2">
+										<h4 className="font-medium flex items-center gap-2 text-muted-foreground">
 											<Icon name="Files" className="w-4 h-4" />
 											{cache.name} 
-											<span className="text-sm text-gray-500">
+											<span className="text-sm">
 												({cache.entries.length} entries)
 											</span>
 										</h4>
@@ -434,37 +448,37 @@ export default function CacheManagement({ loaderData }: Route.ComponentProps) {
 											description={`Are you sure you want to delete the "${cache.name}" cache? This action cannot be undone.`}
 											onConfirm={() => deleteCache(workshopCache.workshopId, cache.name)}
 										>
-											<Button varient="mono" className="text-red-600 hover:text-red-800 text-sm">
-												<Icon name="Remove" className="w-3 h-3" />
-												Delete Cache
-											</Button>
+											<IconButton className="text-destructive hover:bg-destructive hover:text-destructive-foreground">
+												<Icon name="Remove" className="w-4 h-4" />
+											</IconButton>
 										</DeleteConfirmDialog>
 									</div>
 									
 									{cache.entries.length === 0 && (
-										<p className="text-gray-500 text-sm">No entries match your search.</p>
+										<p className="text-muted-foreground text-sm">No entries match your search.</p>
 									)}
 									
 									<div className="space-y-2">
 										{cache.entries.map(({ key, entry, filename }) => (
-											<div key={key} className="bg-white border border-gray-200 rounded p-3">
+											<div key={key} className="bg-background border border-border rounded p-3">
 												<div className="flex items-start justify-between">
-													<div className="flex-1">
-														<div className="font-mono text-sm font-medium mb-1">{key}</div>
-														<div className="text-xs text-gray-500">
+													<div className="flex-1 min-w-0">
+														<div className="font-mono text-sm font-medium mb-1 truncate" title={key}>{key}</div>
+														<div className="text-xs text-muted-foreground">
 															Created: {new Date(entry.metadata.createdTime).toLocaleString()}
 														</div>
 													</div>
-													<div className="flex gap-1 ml-4">
+													<div className="flex gap-1 ml-4 flex-shrink-0">
 														<a
 															href={href('/admin/cache/*', {
 																'*': `${workshopCache.workshopId}/${cache.name}/${filename}`,
 															})}
 															target="_blank"
 															rel="noopener noreferrer"
-															className="text-blue-600 hover:text-blue-800 text-sm px-2 py-1 border border-blue-300 rounded hover:bg-blue-50"
+															className="inline-flex items-center justify-center w-8 h-8 rounded border border-border bg-background text-foreground hover:bg-muted focus:outline-none focus:ring-2 focus:ring-ring"
+															title="View JSON"
 														>
-															<Icon name="ExternalLink" className="w-3 h-3" />
+															<Icon name="ExternalLink" className="w-4 h-4" />
 														</a>
 														<UpdateEntryDialog
 															workshopId={workshopCache.workshopId}
@@ -472,18 +486,21 @@ export default function CacheManagement({ loaderData }: Route.ComponentProps) {
 															filename={filename}
 															currentValue={entry.value}
 														>
-															<Button varient="mono" className="text-sm">
-																<Icon name="Question" className="w-3 h-3" />
-															</Button>
+															<IconButton title="Edit value">
+																<Icon name="Question" className="w-4 h-4" />
+															</IconButton>
 														</UpdateEntryDialog>
 														<DeleteConfirmDialog
 															title="Delete Cache Entry"
 															description={`Are you sure you want to delete the cache entry "${key}"? This action cannot be undone.`}
 															onConfirm={() => deleteEntry(workshopCache.workshopId, cache.name, filename)}
 														>
-															<Button varient="mono" className="text-red-600 hover:text-red-800 text-sm">
-																<Icon name="Remove" className="w-3 h-3" />
-															</Button>
+															<IconButton 
+																className="text-destructive hover:bg-destructive hover:text-destructive-foreground"
+																title="Delete entry"
+															>
+																<Icon name="Remove" className="w-4 h-4" />
+															</IconButton>
 														</DeleteConfirmDialog>
 													</div>
 												</div>
