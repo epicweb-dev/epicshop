@@ -27,6 +27,11 @@ export async function warm({
 		const { getDiffFiles, getDiffCode } = await import(
 			'@epic-web/workshop-utils/diff.server'
 		)
+		const { warmEpicAPICache } = await import(
+			'@epic-web/workshop-utils/epic-api.server'
+		)
+
+		void warmEpicAPICache().catch(() => {}) // ignore failure
 
 		// Warm up the apps cache
 		if (!silent) {

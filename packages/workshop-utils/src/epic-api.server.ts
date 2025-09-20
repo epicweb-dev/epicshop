@@ -839,3 +839,7 @@ export async function getUserInfo({
 
 	return userInfo
 }
+
+export async function warmCache() {
+	await Promise.all([getUserInfo(), getProgress()])
+}

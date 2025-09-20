@@ -13,6 +13,7 @@ import {
 	getWorkshopUrl,
 } from '@epic-web/workshop-utils/config.server'
 import { getEnv, init as initEnv } from '@epic-web/workshop-utils/env.server'
+import { warmCache as warmEpicAPICache } from '@epic-web/workshop-utils/epic-api.server'
 import { requestContext } from '@epic-web/workshop-utils/request-context.server'
 import { checkConnectionCached } from '@epic-web/workshop-utils/utils.server'
 import { createRequestHandler } from '@react-router/express'
@@ -63,6 +64,7 @@ const epicshopAppRootDir = isRunningInBuildDir
 void getApps()
 void checkConnectionCached()
 void getPresentUsers()
+void warmEpicAPICache()
 
 const app = express()
 
