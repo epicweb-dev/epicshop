@@ -6,6 +6,9 @@ interface Logger extends LogFunction {
 	error: LogFunction
 	warn: LogFunction
 	info: LogFunction
+	namespace: string
+	logger: typeof logger
+	isEnabled: () => boolean
 }
 
 export function logger(ns: string): Logger {
@@ -16,11 +19,9 @@ export function logger(ns: string): Logger {
 	loggerFn.error = (...args: Parameters<typeof log>) => log('🚨', ...args)
 	loggerFn.warn = (...args: Parameters<typeof log>) => log('⚠️', ...args)
 	loggerFn.info = (...args: Parameters<typeof log>) => log('ℹ️', ...args)
+	loggerFn.namespace = ns
+	loggerFn.logger = (ns: string) => logger(`${ns}:${ns}`)
+	loggerFn.isEnabled = () => debuglog(ns).enabled
 
 	return loggerFn
-}
-
-// Convenience function to check if logging is enabled for a namespace
-export function isLoggingEnabled(ns: string): boolean {
-	return debuglog(ns).enabled
 }

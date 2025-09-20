@@ -35,6 +35,11 @@ export default function AdminLayout() {
 							</Link>
 						</li>
 						<li>
+							<Link className="underline" to="cache">
+								Cache Management
+							</Link>
+						</li>
+						<li>
 							<Link className="underline" to="version">
 								Version
 							</Link>

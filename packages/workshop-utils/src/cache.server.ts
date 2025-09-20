@@ -8,6 +8,7 @@ import { remember } from '@epic-web/remember'
 import fsExtra from 'fs-extra'
 import { LRUCache } from 'lru-cache'
 import md5 from 'md5-hex'
+import z from 'zod'
 import {
 	type App,
 	type ExampleApp,
@@ -16,12 +17,13 @@ import {
 	type SolutionApp,
 } from './apps.server.js'
 import { resolveCacheDir } from './data-storage.server.js'
-import { logger, isLoggingEnabled } from './logger.js'
+import { logger } from './logger.js'
 import { type Notification } from './notifications.server.js'
 import { cachifiedTimingReporter, type Timings } from './timing.server.js'
 import { checkConnectionCached } from './utils.server.js'
 
 const cacheDir = resolveCacheDir()
+const log = logger('epic:cache')
 
 // Format cache time helper function (copied from @epic-web/cachified for consistency)
 function formatCacheTime(
@@ -72,15 +74,7 @@ export function epicCacheReporter<Value>({
 			loggerSuffix = cacheName.toLowerCase()
 		}
 
-		const namespace = `epic:cache:${loggerSuffix}`
-
-		// Only create logger if cache logging is enabled for this namespace
-		if (!isLoggingEnabled(namespace)) {
-			// Return a no-op reporter if logging is not enabled
-			return () => {}
-		}
-
-		const log = logger(namespace)
+		const cacheLog = log.logger(loggerSuffix)
 
 		let freshValue: unknown
 		let getFreshValueStartTs: number
@@ -89,31 +83,31 @@ export function epicCacheReporter<Value>({
 		return (event) => {
 			switch (event.name) {
 				case 'getCachedValueStart': {
-					log(`Starting cache lookup for ${key}`)
+					cacheLog(`Starting cache lookup for ${key}`)
 					break
 				}
 				case 'getCachedValueEmpty': {
-					log(`Cache miss for ${key}`)
+					cacheLog(`Cache miss for ${key}`)
 					break
 				}
 				case 'getCachedValueSuccess': {
-					log(`Cache hit for ${key}`)
+					cacheLog(`Cache hit for ${key}`)
 					break
 				}
 				case 'done': {
-					log(`Cache operation done for ${key}`)
+					cacheLog(`Cache operation done for ${key}`)
 					break
 				}
 				case 'getCachedValueRead': {
-					log(`Read cached value for ${key}`)
+					cacheLog(`Read cached value for ${key}`)
 					break
 				}
 				case 'getFreshValueHookPending': {
-					log(`Waiting for ongoing fetch for fresh value for ${key}`)
+					cacheLog(`Waiting for ongoing fetch for fresh value for ${key}`)
 					break
 				}
 				case 'getCachedValueOutdated': {
-					log(`Cached value for ${key} is outdated`)
+					cacheLog(`Cached value for ${key} is outdated`)
 					break
 				}
 				case 'checkCachedValueErrorObj': {
@@ -130,7 +124,7 @@ export function epicCacheReporter<Value>({
 					break
 				}
 				case 'getFreshValueCacheFallback': {
-					log(
+					cacheLog(
 						`Falling back to cached value for ${key} due to error getting fresh value.`,
 					)
 					break
@@ -163,7 +157,7 @@ export function epicCacheReporter<Value>({
 				case 'writeFreshValueSuccess': {
 					const totalTime = performance.now() - getFreshValueStartTs
 					if (event.written) {
-						log(
+						cacheLog(
 							`Updated the cache value for ${key}.`,
 							`Getting a fresh value for this took ${formatDuration(
 								totalTime,
@@ -174,7 +168,7 @@ export function epicCacheReporter<Value>({
 							)} in ${cacheName}.`,
 						)
 					} else {
-						log(
+						cacheLog(
 							`Not updating the cache value for ${key}.`,
 							`Getting a fresh value for this took ${formatDuration(
 								totalTime,
@@ -207,7 +201,7 @@ export function epicCacheReporter<Value>({
 					break
 				}
 				case 'refreshValueSuccess': {
-					log(
+					cacheLog(
 						`Background refresh for ${key} successful.`,
 						`Getting a fresh value for this took ${formatDuration(
 							performance.now() - refreshValueStartTS,
@@ -225,7 +219,7 @@ export function epicCacheReporter<Value>({
 				}
 				default: {
 					// @ts-expect-error Defensive programming: log unknown events for debugging
-					log(`Unknown cache event "${event.name}" for key ${key}`)
+					cacheLog(`Unknown cache event "${event.name}" for key ${key}`)
 					break
 				}
 			}
@@ -281,56 +275,119 @@ async function readJsonFilesInDirectory(
 ): Promise<Record<string, any>> {
 	const files = await fsExtra.readdir(dir)
 	const entries = await Promise.all(
-		files.map(async (file) => {
-			const filePath = path.join(dir, file)
-			const stats = await fsExtra.stat(filePath)
-			if (stats.isDirectory()) {
-				const subEntries = await readJsonFilesInDirectory(filePath)
-				return [file, subEntries]
-			} else {
-				const maxRetries = 2
-				const baseDelay = 25 // shorter delay for directory listing
+		files
+			.filter((file) => {
+				// Filter out system files that should not be parsed as JSON
+				const lowercaseFile = file.toLowerCase()
+				return (
+					!lowercaseFile.startsWith('.ds_store') &&
+					!lowercaseFile.startsWith('.') &&
+					!lowercaseFile.includes('thumbs.db')
+				)
+			})
+			.map(async (file) => {
+				const filePath = path.join(dir, file)
+				const stats = await fsExtra.stat(filePath)
+				if (stats.isDirectory()) {
+					const subEntries = await readJsonFilesInDirectory(filePath)
+					return [file, subEntries]
+				} else {
+					const maxRetries = 2
+					const baseDelay = 25 // shorter delay for directory listing
 
-				for (let attempt = 0; attempt <= maxRetries; attempt++) {
-					try {
-						const data = await fsExtra.readJSON(filePath)
-						return [file, data]
-					} catch (error: unknown) {
-						// Handle JSON parsing errors (could be race condition or corruption)
-						if (
-							error instanceof SyntaxError &&
-							error.message.includes('JSON')
-						) {
-							// If this is a retry attempt, it might be a race condition
-							if (attempt < maxRetries) {
-								const delay = baseDelay * Math.pow(2, attempt)
+					for (let attempt = 0; attempt <= maxRetries; attempt++) {
+						try {
+							const data = await fsExtra.readJSON(filePath)
+							return [file, data]
+						} catch (error: unknown) {
+							// Handle JSON parsing errors (could be race condition or corruption)
+							if (
+								error instanceof SyntaxError &&
+								error.message.includes('JSON')
+							) {
+								// If this is a retry attempt, it might be a race condition
+								if (attempt < maxRetries) {
+									const delay = baseDelay * Math.pow(2, attempt)
+									console.warn(
+										`JSON parsing error on attempt ${attempt + 1}/${maxRetries + 1} for directory listing ${filePath}, retrying in ${delay}ms...`,
+									)
+									await new Promise((resolve) => setTimeout(resolve, delay))
+									continue
+								}
+
+								// Final attempt failed, skip the file
 								console.warn(
-									`JSON parsing error on attempt ${attempt + 1}/${maxRetries + 1} for directory listing ${filePath}, retrying in ${delay}ms...`,
+									`Skipping corrupted JSON file in directory listing after ${attempt + 1} attempts: ${filePath}`,
 								)
-								await new Promise((resolve) => setTimeout(resolve, delay))
-								continue
+								return [file, null]
 							}
-
-							// Final attempt failed, skip the file
-							console.warn(
-								`Skipping corrupted JSON file in directory listing after ${attempt + 1} attempts: ${filePath}`,
-							)
-							return [file, null]
+							throw error
 						}
-						throw error
 					}
-				}
 
-				// This should never be reached, but just in case
-				return [file, null]
-			}
-		}),
+					// This should never be reached, but just in case
+					return [file, null]
+				}
+			}),
 	)
 	return Object.fromEntries(entries)
 }
 
-export async function getAllFileCacheEntries() {
-	return readJsonFilesInDirectory(cacheDir)
+const CacheEntrySchema = z.object({
+	key: z.string(),
+	entry: z.object({
+		value: z.unknown(),
+		metadata: z.object({
+			createdTime: z.number(),
+			// Stored JSON may serialize Infinity as null; allow number | null | undefined
+			ttl: z.number().nullable().optional(),
+			// Some entries may omit swr; allow optional
+			swr: z.number().optional(),
+		}),
+	}),
+})
+
+type CacheEntryType = z.infer<typeof CacheEntrySchema>
+
+export const WorkshopCacheSchema = z
+	.record(z.record(z.record(CacheEntrySchema)))
+	.transform((workshopCaches) => {
+		type Cache = { name: string; entries: Array<CacheEntryType> }
+
+		const cachesArray: Array<{
+			workshopId: string
+			caches: Array<Cache>
+		}> = []
+
+		for (const [workshopId, caches] of Object.entries(workshopCaches)) {
+			const cachesInDir: Array<Cache> = []
+			for (const [cacheName, entriesObj] of Object.entries(caches)) {
+				const entries = Object.values(entriesObj)
+				cachesInDir.push({ name: cacheName, entries })
+			}
+			cachesArray.push({ workshopId, caches: cachesInDir })
+		}
+
+		return cachesArray
+	})
+
+export async function getAllWorkshopCaches() {
+	const files = await readJsonFilesInDirectory(cacheDir)
+	const parseResult = WorkshopCacheSchema.safeParse(files)
+	if (!parseResult.success) {
+		log.error('Failed to parse workshop caches:', parseResult.error)
+		return []
+	}
+	return parseResult.data
+}
+
+export async function getWorkshopFileCaches() {
+	const workshopCacheDir = path.join(
+		cacheDir,
+		getEnv().EPICSHOP_WORKSHOP_INSTANCE_ID,
+	)
+	const caches = readJsonFilesInDirectory(workshopCacheDir)
+	return caches
 }
 
 export async function deleteCache() {

@@ -1,11 +1,10 @@
 import { expect, test, vi, beforeEach } from 'vitest'
 import { epicCacheReporter } from './cache.server.js'
-import { logger, isLoggingEnabled } from './logger.js'
+import { logger } from './logger.js'
 
 // Mock the logger module
 vi.mock('./logger.js', () => ({
 	logger: vi.fn(),
-	isLoggingEnabled: vi.fn(),
 }))
 
 beforeEach(() => {
@@ -18,6 +17,9 @@ function createMockLogger() {
 		info: vi.fn(),
 		warn: vi.fn(),
 		error: vi.fn(),
+		isEnabled: vi.fn(),
+		namespace: 'mock-namespace',
+		logger: vi.fn(),
 	})
 	return { mockLog, mockLogger }
 }
@@ -25,12 +27,11 @@ function createMockLogger() {
 function setupMocks(loggingEnabled: boolean = true) {
 	const { mockLog, mockLogger } = createMockLogger()
 	const loggerMock = vi.mocked(logger)
-	const isLoggingEnabledMock = vi.mocked(isLoggingEnabled)
 
 	loggerMock.mockReturnValue(mockLogger)
-	isLoggingEnabledMock.mockReturnValue(loggingEnabled)
+	mockLogger.isEnabled.mockReturnValue(loggingEnabled)
 
-	return { mockLog, mockLogger, loggerMock, isLoggingEnabledMock }
+	return { mockLog, mockLogger, loggerMock }
 }
 
 function createCacheContext(
@@ -72,28 +73,28 @@ function createReporterAndEventHandler(
 }
 
 test('epicCacheReporter creates logger with correct namespace', () => {
-	const { isLoggingEnabledMock, loggerMock } = createReporterAndEventHandler()
+	const { mockLogger, loggerMock } = createReporterAndEventHandler()
 
-	expect(isLoggingEnabledMock).toHaveBeenCalledWith('epic:cache:testcache')
+	expect(mockLogger.isEnabled).toHaveBeenCalled()
 	expect(loggerMock).toHaveBeenCalledWith('epic:cache:testcache')
 })
 
 test('epicCacheReporter handles LRU cache naming', () => {
-	const { isLoggingEnabledMock, loggerMock } = createReporterAndEventHandler({
+	const { mockLogger, loggerMock } = createReporterAndEventHandler({
 		name: 'LRUCache',
 	})
 
-	expect(isLoggingEnabledMock).toHaveBeenCalledWith('epic:cache:lru')
+	expect(mockLogger.isEnabled).toHaveBeenCalled()
 	expect(loggerMock).toHaveBeenCalledWith('epic:cache:lru')
 })
 
 test('epicCacheReporter handles unknown cache naming', () => {
-	const { isLoggingEnabledMock, loggerMock } = createReporterAndEventHandler({
+	const { mockLogger, loggerMock } = createReporterAndEventHandler({
 		name: undefined,
 		toString: () => '[object Object]',
 	})
 
-	expect(isLoggingEnabledMock).toHaveBeenCalledWith('epic:cache:object')
+	expect(mockLogger.isEnabled).toHaveBeenCalled()
 	expect(loggerMock).toHaveBeenCalledWith('epic:cache:object')
 })
 
@@ -128,18 +129,14 @@ test('epicCacheReporter logs cache events correctly', () => {
 })
 
 test('epicCacheReporter returns no-op when logging is disabled', () => {
-	const {
-		mockLog,
-		mockLogger,
-		loggerMock,
-		isLoggingEnabledMock,
-		eventHandler,
-	} = createReporterAndEventHandler(undefined, false)
+	const { mockLog, mockLogger, loggerMock, eventHandler } =
+		createReporterAndEventHandler(undefined, false)
 
-	// Verify isLoggingEnabled was called
-	expect(isLoggingEnabledMock).toHaveBeenCalledWith('epic:cache:testcache')
-	// Verify logger was NOT called since logging is disabled
-	expect(loggerMock).not.toHaveBeenCalled()
+	// Verify logger was called
+	expect(loggerMock).toHaveBeenCalledWith('epic:cache:testcache')
+	// Verify isEnabled was called and returned false
+	expect(mockLogger.isEnabled).toHaveBeenCalled()
+	expect(mockLogger.isEnabled).toHaveReturnedWith(false)
 
 	// Test that events are ignored when logging is disabled
 	eventHandler({
