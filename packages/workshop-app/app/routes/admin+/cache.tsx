@@ -173,11 +173,11 @@ export default function CacheManagement({ loaderData }: Route.ComponentProps) {
 	}
 	
 	const totalEntries = Object.values(groupedCaches).reduce((total, entries) => {
-		return total + Object.keys(entries).length
+		return total + (entries && typeof entries === 'object' ? Object.keys(entries).length : 0)
 	}, 0)
 	
 	const filteredEntries = Object.values(filteredCaches).reduce((total, entries) => {
-		return total + Object.keys(entries).length
+		return total + (entries && typeof entries === 'object' ? Object.keys(entries).length : 0)
 	}, 0)
 	
 	return (

@@ -363,12 +363,12 @@ export async function getCacheEntriesGroupedByType() {
 	
 	for (const [cacheName, cacheEntries] of Object.entries(allEntries)) {
 		if (cacheEntries && typeof cacheEntries === 'object') {
+			// Initialize the cache group
 			grouped[cacheName] = {}
 			
 			for (const [md5Hash, entryData] of Object.entries(cacheEntries)) {
-				if (entryData && typeof entryData === 'object' && 'entry' in entryData) {
-					// Use the MD5 hash as the key and store the entire entry data
-					// The UI will display entry.value in the <pre> element
+				if (entryData && typeof entryData === 'object') {
+					// Store the entire entry data - UI will access entry.value for display
 					grouped[cacheName][md5Hash] = entryData
 				}
 			}
