@@ -5,10 +5,9 @@ import {
 	updateCacheEntry 
 } from '@epic-web/workshop-utils/cache.server'
 import { getEnv } from '@epic-web/workshop-utils/env.server'
-import { Form, href, useFetcher, useSearchParams } from 'react-router'
+import { useState } from 'react'
+import { href, useFetcher, useSearchParams } from 'react-router'
 import { z } from 'zod'
-import { ensureUndeployed } from '#app/utils/misc.js'
-import { type Route } from './+types/cache.ts'
 import { Button } from '#app/components/button.tsx'
 import { Icon } from '#app/components/icons.tsx'
 import { 
@@ -20,8 +19,8 @@ import {
 	DialogTitle,
 	DialogTrigger 
 } from '#app/components/ui/dialog.tsx'
-import * as Select from '@radix-ui/react-select'
-import { useState } from 'react'
+import { ensureUndeployed } from '#app/utils/misc.js'
+import { type Route } from './+types/cache.ts'
 
 const ActionSchema = z.discriminatedUnion('intent', [
 	z.object({
@@ -236,7 +235,7 @@ function UpdateEntryDialog({
 	const [isOpen, setIsOpen] = useState(false)
 	
 	const handleSubmit = () => {
-		fetcher.submit({
+		void fetcher.submit({
 			intent: 'update-entry',
 			workshopId,
 			cacheName,
@@ -328,7 +327,7 @@ export default function CacheManagement({ loaderData }: Route.ComponentProps) {
 	const fetcher = useFetcher<typeof action>()
 	
 	const deleteEntry = (workshopId: string, cacheName: string, filename: string) => {
-		fetcher.submit({
+		void fetcher.submit({
 			intent: 'delete-entry',
 			workshopId,
 			cacheName,
@@ -337,7 +336,7 @@ export default function CacheManagement({ loaderData }: Route.ComponentProps) {
 	}
 	
 	const deleteCache = (workshopId: string, cacheName: string) => {
-		fetcher.submit({
+		void fetcher.submit({
 			intent: 'delete-cache',
 			workshopId,
 			cacheName
@@ -345,7 +344,7 @@ export default function CacheManagement({ loaderData }: Route.ComponentProps) {
 	}
 	
 	const deleteWorkshopCache = (workshopId: string) => {
-		fetcher.submit({
+		void fetcher.submit({
 			intent: 'delete-workshop-cache',
 			workshopId
 		}, { method: 'POST' })
