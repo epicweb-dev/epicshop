@@ -1,5 +1,6 @@
 import { getAllWorkshopCaches } from '@epic-web/workshop-utils/cache.server'
 import { getEnv } from '@epic-web/workshop-utils/env.server'
+import { href } from 'react-router'
 import { ensureUndeployed } from '#app/utils/misc.js'
 import { type Route } from './+types/cache.ts'
 
@@ -25,10 +26,17 @@ export default function CacheManagement({ loaderData }: Route.ComponentProps) {
 								<li key={cache.name}>
 									{cache.name} ({cache.entries.length} entries)
 									<ul>
-										{cache.entries.map(({ key, entry }) => (
+										{cache.entries.map(({ key, entry, filename }) => (
 											<li key={key}>
 												{key} -{' '}
 												{new Date(entry.metadata.createdTime).toLocaleString()}
+												<a
+													href={href('/admin/cache/*', {
+														'*': `${workshopCache.workshopId}/${cache.name}/${filename}`,
+													})}
+												>
+													[view]
+												</a>
 											</li>
 										))}
 									</ul>

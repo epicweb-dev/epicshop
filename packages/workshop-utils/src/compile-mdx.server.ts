@@ -5,6 +5,7 @@ import path from 'path'
 import { rehypeCodeBlocksShiki } from '@kentcdodds/md-temp'
 import { type Element, type Root as HastRoot } from 'hast'
 import lz from 'lz-string'
+import md5 from 'md5-hex'
 import { type Root as MdastRoot, type PhrasingContent } from 'mdast'
 import { type MdxJsxFlowElement } from 'mdast-util-mdx-jsx'
 import { bundleMDX } from 'mdx-bundler'
@@ -301,7 +302,7 @@ async function compileMdxImpl(file: string): Promise<{
 
 export async function compileMarkdownString(markdownString: string) {
 	return cachified({
-		key: markdownString,
+		key: md5(markdownString),
 		cache: compiledMarkdownCache,
 		ttl: 1000 * 60 * 60 * 24,
 		getFreshValue: async () => {

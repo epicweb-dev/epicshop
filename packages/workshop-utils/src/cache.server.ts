@@ -352,7 +352,8 @@ type CacheEntryType = z.infer<typeof CacheEntrySchema>
 export const WorkshopCacheSchema = z
 	.record(z.record(z.record(CacheEntrySchema)))
 	.transform((workshopCaches) => {
-		type Cache = { name: string; entries: Array<CacheEntryType> }
+		type CacheEntryWithFilename = CacheEntryType & { filename: string }
+		type Cache = { name: string; entries: Array<CacheEntryWithFilename> }
 
 		const cachesArray: Array<{
 			workshopId: string
@@ -362,7 +363,10 @@ export const WorkshopCacheSchema = z
 		for (const [workshopId, caches] of Object.entries(workshopCaches)) {
 			const cachesInDir: Array<Cache> = []
 			for (const [cacheName, entriesObj] of Object.entries(caches)) {
-				const entries = Object.values(entriesObj)
+				const entries: Array<CacheEntryWithFilename> = []
+				for (const [key, value] of Object.entries(entriesObj)) {
+					entries.push({ ...value, filename: key })
+				}
 				cachesInDir.push({ name: cacheName, entries })
 			}
 			cachesArray.push({ workshopId, caches: cachesInDir })
@@ -388,6 +392,12 @@ export async function getWorkshopFileCaches() {
 	)
 	const caches = readJsonFilesInDirectory(workshopCacheDir)
 	return caches
+}
+
+export async function readEntryByPath(cacheFilePath: string) {
+	const filePath = path.join(cacheDir, cacheFilePath)
+	const data = await fsExtra.readJSON(filePath)
+	return data.entry
 }
 
 export async function deleteCache() {
