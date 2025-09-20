@@ -1,4 +1,5 @@
 import { PassThrough } from 'stream'
+import { getAuthInfo, getClientId } from '@epic-web/workshop-utils/db.server'
 import { createReadableStreamFromReadable } from '@react-router/node'
 // Dynamic import of Sentry with error handling
 const Sentry = await import('@sentry/react-router').catch((error) => {
@@ -22,15 +23,41 @@ import {
 export const streamTimeout = 60000
 const ABORT_DELAY = streamTimeout + 1000
 
-export function handleError(
+export async function handleError(
 	error: unknown,
 	{ request }: LoaderFunctionArgs | ActionFunctionArgs,
-): void {
+): Promise<void> {
 	if (request.signal.aborted) return
 	// Don't send errors to Sentry for bot requests
 	if (isbot(request.headers.get('user-agent'))) return
 	if (ENV.EPICSHOP_IS_PUBLISHED) {
-		Sentry?.captureException(error)
+		try {
+			// Get user information for Sentry context
+			const authInfo = await getAuthInfo()
+			const clientId = await getClientId()
+
+			if (Sentry) {
+				if (authInfo) {
+					Sentry.setUser({
+						id: authInfo.id,
+						email: authInfo.email,
+						username: authInfo.name || authInfo.email,
+						ip_address: undefined, // Don't capture IP for privacy
+					})
+				} else if (clientId) {
+					Sentry.setUser({
+						id: `client-${clientId}`,
+						username: 'Anonymous User',
+					})
+				}
+
+				Sentry.captureException(error)
+			}
+		} catch (sentryError) {
+			console.error('Failed to capture error in Sentry:', sentryError)
+			// Fallback to basic error capture
+			Sentry?.captureException(error)
+		}
 	}
 }
 
