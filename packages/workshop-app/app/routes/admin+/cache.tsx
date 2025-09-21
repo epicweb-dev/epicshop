@@ -5,6 +5,7 @@ import {
 	updateCacheEntry,
 } from '@epic-web/workshop-utils/cache.server'
 import { getEnv } from '@epic-web/workshop-utils/env.server'
+import { dayjs } from '@epic-web/workshop-utils/utils.server'
 import { useState, useEffect, useRef } from 'react'
 import { href, useFetcher, useSearchParams } from 'react-router'
 import { z } from 'zod'
@@ -12,6 +13,122 @@ import { Button } from '#app/components/button.tsx'
 import { Icon } from '#app/components/icons.tsx'
 import { ensureUndeployed, useDoubleCheck } from '#app/utils/misc.js'
 import { type Route } from './+types/cache.ts'
+
+// Cache expiration utilities
+function calculateExpirationTime(metadata: {
+	createdTime: number
+	ttl?: number | null
+}): number | null {
+	const { createdTime, ttl } = metadata
+	if (ttl === undefined || ttl === null || ttl === Infinity) {
+		return null // Never expires
+	}
+	return createdTime + ttl
+}
+
+function formatTimeRemaining(expirationTime: number): {
+	text: string
+	isExpired: boolean
+	isExpiringSoon: boolean
+} {
+	const now = Date.now()
+	const remaining = expirationTime - now
+
+	if (remaining <= 0) {
+		return { text: 'Expired', isExpired: true, isExpiringSoon: false }
+	}
+
+	const seconds = Math.floor(remaining / 1000)
+	const minutes = Math.floor(seconds / 60)
+	const hours = Math.floor(minutes / 60)
+	const days = Math.floor(hours / 24)
+
+	let text: string
+	let isExpiringSoon: boolean
+
+	if (days > 0) {
+		text = `${days}d ${hours % 24}h`
+		isExpiringSoon = days < 1
+	} else if (hours > 0) {
+		text = `${hours}h ${minutes % 60}m`
+		isExpiringSoon = hours < 2
+	} else if (minutes > 0) {
+		text = `${minutes}m ${seconds % 60}s`
+		isExpiringSoon = minutes < 10
+	} else {
+		text = `${seconds}s`
+		isExpiringSoon = true
+	}
+
+	return { text, isExpired: false, isExpiringSoon }
+}
+
+function formatDuration(ms: number): string {
+	if (ms < 1000) return `${Math.round(ms)}ms`
+	if (ms < 60000) return `${Math.round(ms / 1000)}s`
+	if (ms < 3600000) return `${Math.round(ms / 60000)}m`
+	return `${Math.round(ms / 3600000)}h`
+}
+
+// Component for displaying cache metadata with live countdown
+function CacheMetadata({
+	metadata,
+}: {
+	metadata: {
+		createdTime: number
+		ttl?: number | null
+		swr?: number
+	}
+}) {
+	const [, setCurrentTime] = useState(Date.now())
+	const expirationTime = calculateExpirationTime(metadata)
+
+	// Update time every second for live countdown
+	useEffect(() => {
+		const interval = setInterval(() => {
+			setCurrentTime(Date.now())
+		}, 1000)
+
+		return () => clearInterval(interval)
+	}, [])
+
+	const createdDate = dayjs(metadata.createdTime)
+	const timeRemaining = expirationTime
+		? formatTimeRemaining(expirationTime)
+		: { text: 'Never', isExpired: false, isExpiringSoon: false }
+
+	return (
+		<div className="space-y-1 text-xs text-muted-foreground">
+			<div>Created: {createdDate.format('MMM D, YYYY HH:mm:ss')} ({createdDate.fromNow()})</div>
+			{metadata.ttl !== undefined && metadata.ttl !== null && (
+				<div>
+					TTL: {metadata.ttl === Infinity ? 'Forever' : formatDuration(metadata.ttl)}
+				</div>
+			)}
+			{metadata.swr !== undefined && (
+				<div>SWR: {formatDuration(metadata.swr)}</div>
+			)}
+			<div
+				className={`font-medium ${
+					timeRemaining.isExpired
+						? 'text-destructive'
+						: timeRemaining.isExpiringSoon
+							? 'text-yellow-600 dark:text-yellow-400'
+							: 'text-foreground'
+				}`}
+			>
+				{expirationTime
+					? `Expires in: ${timeRemaining.text}`
+					: 'Expires: Never'}
+			</div>
+			{expirationTime && (
+				<div>
+					Expires: {dayjs(expirationTime).format('MMM D, YYYY HH:mm:ss')}
+				</div>
+			)}
+		</div>
+	)
+}
 
 // Icon-only button component without clip-path styling
 function IconButton({
@@ -513,12 +630,7 @@ export default function CacheManagement({ loaderData }: Route.ComponentProps) {
 															>
 																{key}
 															</div>
-															<div className="text-xs text-muted-foreground">
-																Created:{' '}
-																{new Date(
-																	entry.metadata.createdTime,
-																).toLocaleString()}
-															</div>
+															<CacheMetadata metadata={entry.metadata} />
 														</div>
 														<div className="ml-4 flex flex-shrink-0 gap-1">
 															<a
