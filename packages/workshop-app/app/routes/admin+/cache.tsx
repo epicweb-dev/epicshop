@@ -5,21 +5,12 @@ import {
 	updateCacheEntry 
 } from '@epic-web/workshop-utils/cache.server'
 import { getEnv } from '@epic-web/workshop-utils/env.server'
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { href, useFetcher, useSearchParams } from 'react-router'
 import { z } from 'zod'
 import { Button } from '#app/components/button.tsx'
 import { Icon } from '#app/components/icons.tsx'
-import { 
-	Dialog, 
-	DialogContent, 
-	DialogDescription,
-	DialogFooter,
-	DialogHeader,
-	DialogTitle,
-	DialogTrigger 
-} from '#app/components/ui/dialog.tsx'
-import { ensureUndeployed } from '#app/utils/misc.js'
+import { ensureUndeployed, useDoubleCheck } from '#app/utils/misc.js'
 import { type Route } from './+types/cache.ts'
 
 // Icon-only button component without clip-path styling
@@ -35,6 +26,33 @@ function IconButton({
 		>
 			{children}
 		</button>
+	)
+}
+
+// Double-check delete button
+function DoubleCheckButton({ 
+	onConfirm, 
+	children, 
+	...props 
+}: React.ComponentPropsWithoutRef<'button'> & {
+	onConfirm: () => void
+}) {
+	const doubleCheck = useDoubleCheck()
+	
+	return (
+		<IconButton
+			{...doubleCheck.getButtonProps({
+				onClick: doubleCheck.doubleCheck ? onConfirm : undefined,
+				...props,
+			})}
+			className={`${props.className} ${
+				doubleCheck.doubleCheck 
+					? 'bg-destructive text-destructive-foreground' 
+					: 'text-destructive hover:bg-destructive hover:text-destructive-foreground'
+			}`}
+		>
+			{doubleCheck.doubleCheck ? '✓' : children}
+		</IconButton>
 	)
 }
 
@@ -185,7 +203,7 @@ function WorkshopChooser({
 							onChange={(e) => handleWorkshopChange(workshop, e.target.checked)}
 							className="rounded"
 						/>
-						<span className={`text-sm ${workshop === currentWorkshopId ? 'font-bold text-blue-600' : ''}`}>
+						<span className={`text-sm ${workshop === currentWorkshopId ? 'font-bold text-primary' : ''}`}>
 							{workshop} {workshop === currentWorkshopId && '(current)'}
 						</span>
 					</label>
@@ -197,6 +215,12 @@ function WorkshopChooser({
 
 function SearchFilter({ filterQuery }: { filterQuery: string }) {
 	const [searchParams, setSearchParams] = useSearchParams()
+	const [inputValue, setInputValue] = useState(filterQuery)
+	
+	// Update input value when filterQuery changes (e.g., from URL)
+	useEffect(() => {
+		setInputValue(filterQuery)
+	}, [filterQuery])
 	
 	const handleSearch = (query: string) => {
 		const params = new URLSearchParams(searchParams)
@@ -208,6 +232,11 @@ function SearchFilter({ filterQuery }: { filterQuery: string }) {
 		setSearchParams(params)
 	}
 	
+	const handleClear = () => {
+		setInputValue('')
+		handleSearch('')
+	}
+	
 	return (
 		<div className="mb-6">
 			<h3 className="text-lg font-semibold mb-3">Search Cache Entries</h3>
@@ -215,13 +244,16 @@ function SearchFilter({ filterQuery }: { filterQuery: string }) {
 				<input
 					type="text"
 					placeholder="Search by key or cache name..."
-					defaultValue={filterQuery}
-					onChange={(e) => handleSearch(e.target.value)}
+					value={inputValue}
+					onChange={(e) => {
+						setInputValue(e.target.value)
+						handleSearch(e.target.value)
+					}}
 					className="flex-1 px-3 py-2 border border-border rounded-md bg-background text-foreground focus:outline-none focus:ring-2 focus:ring-ring"
 				/>
-				{filterQuery && (
+				{inputValue && (
 					<IconButton 
-						onClick={() => handleSearch('')}
+						onClick={handleClear}
 						title="Clear search"
 					>
 						<Icon name="Close" className="w-4 h-4" />
@@ -232,109 +264,82 @@ function SearchFilter({ filterQuery }: { filterQuery: string }) {
 	)
 }
 
-function UpdateEntryDialog({ 
+// Inline entry editor component
+function InlineEntryEditor({ 
 	workshopId, 
 	cacheName, 
 	filename, 
 	currentValue, 
-	children 
+	entryKey
 }: {
 	workshopId: string
 	cacheName: string
 	filename: string
 	currentValue: any
-	children: React.ReactNode
+	entryKey: string
 }) {
 	const fetcher = useFetcher<typeof action>()
-	const [newValue, setNewValue] = useState(JSON.stringify(currentValue, null, 2))
-	const [isOpen, setIsOpen] = useState(false)
+	const [editValue, setEditValue] = useState(JSON.stringify(currentValue, null, 2))
+	const [hasChanges, setHasChanges] = useState(false)
 	
-	const handleSubmit = () => {
+	const handleSave = () => {
 		void fetcher.submit({
 			intent: 'update-entry',
 			workshopId,
 			cacheName,
 			filename,
-			newValue
+			newValue: editValue
 		}, { method: 'POST' })
-		setIsOpen(false)
+		setHasChanges(false)
+	}
+	
+	const handleChange = (value: string) => {
+		setEditValue(value)
+		setHasChanges(value !== JSON.stringify(currentValue, null, 2))
+	}
+	
+	const handleReset = () => {
+		setEditValue(JSON.stringify(currentValue, null, 2))
+		setHasChanges(false)
 	}
 	
 	return (
-		<Dialog open={isOpen} onOpenChange={setIsOpen}>
-			<DialogTrigger asChild>
-				{children}
-			</DialogTrigger>
-			<DialogContent className="max-w-2xl bg-popover border border-border">
-				<DialogHeader>
-					<DialogTitle className="text-popover-foreground">Update Cache Entry</DialogTitle>
-					<DialogDescription className="text-muted-foreground">
-						Edit the JSON value for cache entry: {filename}
-					</DialogDescription>
-				</DialogHeader>
-				<div className="py-4">
+		<details className="mt-2">
+			<summary className="cursor-pointer text-sm text-muted-foreground hover:text-foreground">
+				Edit entry details
+			</summary>
+			<div className="mt-2 space-y-3 p-3 border border-border rounded bg-muted">
+				<div>
+					<label className="block text-sm font-medium mb-1">Key:</label>
+					<code className="text-sm bg-background px-2 py-1 rounded border">{entryKey}</code>
+				</div>
+				<div>
+					<label className="block text-sm font-medium mb-1">Value:</label>
 					<textarea
-						value={newValue}
-						onChange={(e) => setNewValue(e.target.value)}
-						className="w-full h-64 p-3 font-mono text-sm border border-border rounded-md bg-background text-foreground focus:outline-none focus:ring-2 focus:ring-ring"
+						value={editValue}
+						onChange={(e) => handleChange(e.target.value)}
+						className="w-full h-32 p-2 font-mono text-sm border border-border rounded bg-background text-foreground focus:outline-none focus:ring-2 focus:ring-ring resize-vertical"
 						placeholder="Enter JSON value..."
 					/>
 				</div>
-				<DialogFooter>
-					<Button varient="mono" onClick={() => setIsOpen(false)}>
-						Cancel
-					</Button>
+				<div className="flex gap-2">
 					<Button 
 						varient="primary" 
-						onClick={handleSubmit}
-						disabled={fetcher.state !== 'idle'}
+						onClick={handleSave}
+						disabled={!hasChanges || fetcher.state !== 'idle'}
 					>
-						{fetcher.state !== 'idle' ? 'Updating...' : 'Update'}
+						{fetcher.state !== 'idle' ? 'Saving...' : 'Save'}
 					</Button>
-				</DialogFooter>
-			</DialogContent>
-		</Dialog>
-	)
-}
-
-function DeleteConfirmDialog({ 
-	onConfirm, 
-	title, 
-	description, 
-	children 
-}: {
-	onConfirm: () => void
-	title: string
-	description: string
-	children: React.ReactNode
-}) {
-	const [isOpen, setIsOpen] = useState(false)
-	
-	const handleConfirm = () => {
-		onConfirm()
-		setIsOpen(false)
-	}
-	
-	return (
-		<Dialog open={isOpen} onOpenChange={setIsOpen}>
-			<DialogTrigger asChild>
-				{children}
-			</DialogTrigger>
-			<DialogContent className="bg-popover border border-border">
-				<DialogHeader>
-					<DialogTitle className="text-popover-foreground">{title}</DialogTitle>
-					<DialogDescription className="text-muted-foreground">{description}</DialogDescription>
-				</DialogHeader>
-				<DialogFooter>
-					<Button varient="mono" onClick={() => setIsOpen(false)}>
-						Cancel
+					<Button 
+						varient="mono" 
+						onClick={handleReset}
+						disabled={!hasChanges}
+					>
+						Reset
 					</Button>
-					<Button varient="primary" onClick={handleConfirm}>
-						Delete
-					</Button>
-				</DialogFooter>
-			</DialogContent>
-		</Dialog>
+				</div>
+			</div>
+		</details>
 	)
 }
 
@@ -410,107 +415,98 @@ export default function CacheManagement({ loaderData }: Route.ComponentProps) {
 			
 			<div className="space-y-6">
 				{filteredCaches.map((workshopCache) => (
-					<div key={workshopCache.workshopId} className="border border-border rounded-lg p-4 bg-card">
-						<div className="flex items-center justify-between mb-4">
-							<h3 className="text-lg font-semibold flex items-center gap-2 text-card-foreground">
-								<Icon name="Files" className="w-5 h-5" />
-								{workshopCache.workshopId}
-								{workshopCache.workshopId === currentWorkshopId && (
-									<span className="text-xs bg-primary text-primary-foreground px-2 py-1 rounded">
-										Current
-									</span>
-								)}
-							</h3>
-							<DeleteConfirmDialog
-								title="Delete Workshop Cache"
-								description={`Are you sure you want to delete all caches for workshop "${workshopCache.workshopId}"? This action cannot be undone.`}
-								onConfirm={() => deleteWorkshopCache(workshopCache.workshopId)}
-							>
-								<IconButton className="text-destructive hover:bg-destructive hover:text-destructive-foreground">
-									<Icon name="Remove" className="w-4 h-4" />
-								</IconButton>
-							</DeleteConfirmDialog>
-						</div>
-						
-						<div className="space-y-4">
-							{workshopCache.caches.map((cache) => (
-								<div key={cache.name} className="bg-muted rounded-md p-3">
-									<div className="flex items-center justify-between mb-3">
-										<h4 className="font-medium flex items-center gap-2 text-muted-foreground">
-											<Icon name="Files" className="w-4 h-4" />
-											{cache.name} 
-											<span className="text-sm">
-												({cache.entries.length} entries)
-											</span>
-										</h4>
-										<DeleteConfirmDialog
-											title="Delete Cache"
-											description={`Are you sure you want to delete the "${cache.name}" cache? This action cannot be undone.`}
-											onConfirm={() => deleteCache(workshopCache.workshopId, cache.name)}
-										>
-											<IconButton className="text-destructive hover:bg-destructive hover:text-destructive-foreground">
-												<Icon name="Remove" className="w-4 h-4" />
-											</IconButton>
-										</DeleteConfirmDialog>
-									</div>
-									
-									{cache.entries.length === 0 && (
-										<p className="text-muted-foreground text-sm">No entries match your search.</p>
+					<details key={workshopCache.workshopId} open={workshopCache.workshopId === currentWorkshopId}>
+						<summary className="cursor-pointer border border-border rounded-lg p-4 bg-card hover:bg-muted">
+							<div className="flex items-center justify-between">
+								<h3 className="text-lg font-semibold flex items-center gap-2 text-card-foreground">
+									<Icon name="Files" className="w-5 h-5" />
+									{workshopCache.workshopId}
+									{workshopCache.workshopId === currentWorkshopId && (
+										<span className="text-xs bg-primary text-primary-foreground px-2 py-1 rounded">
+											Current
+										</span>
 									)}
+								</h3>
+								<DoubleCheckButton
+									onConfirm={() => deleteWorkshopCache(workshopCache.workshopId)}
+									title="Delete all workshop caches"
+								>
+									<Icon name="Remove" className="w-4 h-4" />
+								</DoubleCheckButton>
+							</div>
+						</summary>
+						
+						<div className="space-y-4 mt-4 pl-4">
+							{workshopCache.caches.map((cache) => (
+								<details key={cache.name} className="bg-muted rounded-md">
+									<summary className="cursor-pointer p-3 hover:bg-background">
+										<div className="flex items-center justify-between">
+											<h4 className="font-medium flex items-center gap-2 text-muted-foreground">
+												<Icon name="Files" className="w-4 h-4" />
+												{cache.name} 
+												<span className="text-sm">
+													({cache.entries.length} entries)
+												</span>
+											</h4>
+											<DoubleCheckButton
+												onConfirm={() => deleteCache(workshopCache.workshopId, cache.name)}
+												title="Delete cache"
+											>
+												<Icon name="Remove" className="w-4 h-4" />
+											</DoubleCheckButton>
+										</div>
+									</summary>
 									
-									<div className="space-y-2">
-										{cache.entries.map(({ key, entry, filename }) => (
-											<div key={key} className="bg-background border border-border rounded p-3">
-												<div className="flex items-start justify-between">
-													<div className="flex-1 min-w-0">
-														<div className="font-mono text-sm font-medium mb-1 truncate" title={key}>{key}</div>
-														<div className="text-xs text-muted-foreground">
-															Created: {new Date(entry.metadata.createdTime).toLocaleString()}
+									<div className="p-3 pt-0">
+										{cache.entries.length === 0 && (
+											<p className="text-muted-foreground text-sm">No entries match your search.</p>
+										)}
+										
+										<div className="space-y-2">
+											{cache.entries.map(({ key, entry, filename }) => (
+												<div key={key} className="bg-background border border-border rounded p-3">
+													<div className="flex items-start justify-between">
+														<div className="flex-1 min-w-0">
+															<div className="font-mono text-sm font-medium mb-1 truncate" title={key}>{key}</div>
+															<div className="text-xs text-muted-foreground">
+																Created: {new Date(entry.metadata.createdTime).toLocaleString()}
+															</div>
 														</div>
-													</div>
-													<div className="flex gap-1 ml-4 flex-shrink-0">
-														<a
-															href={href('/admin/cache/*', {
-																'*': `${workshopCache.workshopId}/${cache.name}/${filename}`,
-															})}
-															target="_blank"
-															rel="noopener noreferrer"
-															className="inline-flex items-center justify-center w-8 h-8 rounded border border-border bg-background text-foreground hover:bg-muted focus:outline-none focus:ring-2 focus:ring-ring"
-															title="View JSON"
-														>
-															<Icon name="ExternalLink" className="w-4 h-4" />
-														</a>
-														<UpdateEntryDialog
-															workshopId={workshopCache.workshopId}
-															cacheName={cache.name}
-															filename={filename}
-															currentValue={entry.value}
-														>
-															<IconButton title="Edit value">
-																<Icon name="Question" className="w-4 h-4" />
-															</IconButton>
-														</UpdateEntryDialog>
-														<DeleteConfirmDialog
-															title="Delete Cache Entry"
-															description={`Are you sure you want to delete the cache entry "${key}"? This action cannot be undone.`}
-															onConfirm={() => deleteEntry(workshopCache.workshopId, cache.name, filename)}
-														>
-															<IconButton 
-																className="text-destructive hover:bg-destructive hover:text-destructive-foreground"
+														<div className="flex gap-1 ml-4 flex-shrink-0">
+															<a
+																href={href('/admin/cache/*', {
+																	'*': `${workshopCache.workshopId}/${cache.name}/${filename}`,
+																})}
+																target="_blank"
+																rel="noopener noreferrer"
+																className="inline-flex items-center justify-center w-8 h-8 rounded border border-border bg-background text-foreground hover:bg-muted focus:outline-none focus:ring-2 focus:ring-ring"
+																title="View JSON"
+															>
+																<Icon name="ExternalLink" className="w-4 h-4" />
+															</a>
+															<DoubleCheckButton
+																onConfirm={() => deleteEntry(workshopCache.workshopId, cache.name, filename)}
 																title="Delete entry"
 															>
 																<Icon name="Remove" className="w-4 h-4" />
-															</IconButton>
-														</DeleteConfirmDialog>
+															</DoubleCheckButton>
+														</div>
 													</div>
+													<InlineEntryEditor
+														workshopId={workshopCache.workshopId}
+														cacheName={cache.name}
+														filename={filename}
+														currentValue={entry.value}
+														entryKey={key}
+													/>
 												</div>
-											</div>
-										))}
+											))}
+										</div>
 									</div>
-								</div>
+								</details>
 							))}
 						</div>
-					</div>
+					</details>
 				))}
 			</div>
 		</div>
