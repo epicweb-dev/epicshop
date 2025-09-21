@@ -10,10 +10,15 @@ import relativeTimePlugin from 'dayjs/plugin/relativeTime.js'
 import utcPlugin from 'dayjs/plugin/utc.js'
 import { useState, useEffect, useRef } from 'react'
 import { href, useFetcher, useSearchParams } from 'react-router'
+import { ClientOnly } from 'remix-utils/client-only'
 import { z } from 'zod'
 import { Button } from '#app/components/button.tsx'
 import { Icon } from '#app/components/icons.tsx'
-import { ensureUndeployed, useDoubleCheck } from '#app/utils/misc.js'
+import {
+	ensureUndeployed,
+	useDoubleCheck,
+	useInterval,
+} from '#app/utils/misc.js'
 import { type Route } from './+types/cache.ts'
 
 // Set up dayjs for client-side use - do this in a function to avoid hydration issues
@@ -94,13 +99,9 @@ function CacheMetadata({
 	const expirationTime = calculateExpirationTime(metadata)
 
 	// Update time every second for live countdown
-	useEffect(() => {
-		const interval = setInterval(() => {
-			setCurrentTime(Date.now())
-		}, 1000)
-
-		return () => clearInterval(interval)
-	}, [])
+	useInterval(() => {
+		setCurrentTime(Date.now())
+	}, 1000)
 
 	const createdDate = dayjs(metadata.createdTime)
 	const timeRemaining = expirationTime
@@ -110,8 +111,8 @@ function CacheMetadata({
 	return (
 		<div className="space-y-1 text-xs text-muted-foreground">
 			<div>
-				Created: {createdDate.format('MMM D, YYYY HH:mm:ss')} (
-				{createdDate.fromNow()})
+				Created: {createdDate.format('MMM D, YYYY HH:mm:ss')}{' '}
+				<ClientOnly>{() => `(${createdDate.fromNow()})`}</ClientOnly>
 			</div>
 			<div className="flex flex-wrap gap-4">
 				{metadata.ttl !== undefined && metadata.ttl !== null && (
@@ -138,7 +139,10 @@ function CacheMetadata({
 				{expirationTime ? (
 					<>
 						Expires: {dayjs(expirationTime).format('MMM D, YYYY HH:mm:ss')} (
-						<span className="tabular-nums">{timeRemaining.text}</span>)
+						<span className="tabular-nums">
+							<ClientOnly>{() => timeRemaining.text}</ClientOnly>
+						</span>
+						)
 					</>
 				) : (
 					'Expires: Never'
