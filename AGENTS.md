@@ -75,13 +75,6 @@ installed). Only the most important bits are enforced by eslint.
   `.server` in the filename (e.g., `utils.server`, `cache.server`) is
   server-only and cannot be imported in client-side components. This will cause
   module resolution errors in the browser.
-- **Client-side alternatives**: For client-side components that need utilities
-  like dayjs, import directly from the source packages rather than from
-  workshop-utils. Example: `import dayjs from 'dayjs'` instead of
-  `import { dayjs } from '@epic-web/workshop-utils/utils.server'`.
-- **Plugin setup**: When setting up libraries like dayjs with plugins in client
-  components, do the setup in a function rather than at module level to avoid
-  hydration mismatches.
 
 ### Build Dependencies and Workspace Management
 
@@ -93,11 +86,3 @@ installed). Only the most important bits are enforced by eslint.
 - **Always build before testing**: After making code changes, always run the
   build process before starting the dev server to test changes, especially when
   working with client-side functionality.
-
-### Live Updating UI Components
-
-- **Prevent layout jumping**: For components that update frequently (like
-  countdowns), use the `tabular-nums` Tailwind class on elements with changing
-  numbers to maintain consistent character width.
-- **useEffect cleanup**: Always clean up intervals in useEffect to prevent
-  memory leaks: `return () => clearInterval(interval)`
