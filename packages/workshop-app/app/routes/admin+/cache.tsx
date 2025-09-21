@@ -108,11 +108,17 @@ function CacheMetadata({
 
 	return (
 		<div className="space-y-1 text-xs text-muted-foreground">
-			<div>Created: {createdDate.format('MMM D, YYYY HH:mm:ss')} ({createdDate.fromNow()})</div>
+			<div>
+				Created: {createdDate.format('MMM D, YYYY HH:mm:ss')} (
+				{createdDate.fromNow()})
+			</div>
 			<div className="flex flex-wrap gap-4">
 				{metadata.ttl !== undefined && metadata.ttl !== null && (
 					<span>
-						TTL: {metadata.ttl === Infinity ? 'Forever' : formatDuration(metadata.ttl)}
+						TTL:{' '}
+						{metadata.ttl === Infinity
+							? 'Forever'
+							: formatDuration(metadata.ttl)}
 					</span>
 				)}
 				{metadata.swr !== undefined && (
@@ -130,7 +136,8 @@ function CacheMetadata({
 			>
 				{expirationTime ? (
 					<>
-						Expires: {setupDayjs()(expirationTime).format('MMM D, YYYY HH:mm:ss')} (
+						Expires:{' '}
+						{setupDayjs()(expirationTime).format('MMM D, YYYY HH:mm:ss')} (
 						<span className="tabular-nums">{timeRemaining.text}</span>)
 					</>
 				) : (

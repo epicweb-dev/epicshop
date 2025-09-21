@@ -424,7 +424,10 @@ export async function deleteCacheEntry(cacheFilePath: string) {
 	}
 }
 
-export async function deleteWorkshopCache(workshopId: string, cacheName?: string) {
+export async function deleteWorkshopCache(
+	workshopId: string,
+	cacheName?: string,
+) {
 	if (getEnv().EPICSHOP_DEPLOYED) return null
 
 	try {
@@ -442,7 +445,10 @@ export async function deleteWorkshopCache(workshopId: string, cacheName?: string
 			}
 		}
 	} catch (error) {
-		console.error(`Error deleting workshop cache ${workshopId}/${cacheName || 'all'}:`, error)
+		console.error(
+			`Error deleting workshop cache ${workshopId}/${cacheName || 'all'}:`,
+			error,
+		)
 	}
 }
 
@@ -460,8 +466,8 @@ export async function updateCacheEntry(cacheFilePath: string, newEntry: any) {
 				metadata: {
 					...existingData.entry.metadata,
 					createdTime: Date.now(), // Update timestamp
-				}
-			}
+				},
+			},
 		}
 		await fsExtra.writeJSON(filePath, updatedData)
 		return updatedData.entry
