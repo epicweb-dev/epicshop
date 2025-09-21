@@ -5,7 +5,9 @@ import {
 	updateCacheEntry,
 } from '@epic-web/workshop-utils/cache.server'
 import { getEnv } from '@epic-web/workshop-utils/env.server'
-import { dayjs } from '@epic-web/workshop-utils/utils.server'
+import dayjsLib from 'dayjs'
+import relativeTimePlugin from 'dayjs/plugin/relativeTime.js'
+import utcPlugin from 'dayjs/plugin/utc.js'
 import { useState, useEffect, useRef } from 'react'
 import { href, useFetcher, useSearchParams } from 'react-router'
 import { z } from 'zod'
@@ -13,6 +15,13 @@ import { Button } from '#app/components/button.tsx'
 import { Icon } from '#app/components/icons.tsx'
 import { ensureUndeployed, useDoubleCheck } from '#app/utils/misc.js'
 import { type Route } from './+types/cache.ts'
+
+// Set up dayjs for client-side use - do this in a function to avoid hydration issues
+function setupDayjs() {
+	dayjsLib.extend(utcPlugin)
+	dayjsLib.extend(relativeTimePlugin)
+	return dayjsLib
+}
 
 // Cache expiration utilities
 function calculateExpirationTime(metadata: {
@@ -92,7 +101,7 @@ function CacheMetadata({
 		return () => clearInterval(interval)
 	}, [])
 
-	const createdDate = dayjs(metadata.createdTime)
+	const createdDate = setupDayjs()(metadata.createdTime)
 	const timeRemaining = expirationTime
 		? formatTimeRemaining(expirationTime)
 		: { text: 'Never', isExpired: false, isExpiringSoon: false }
@@ -121,7 +130,7 @@ function CacheMetadata({
 			>
 				{expirationTime ? (
 					<>
-						Expires: {dayjs(expirationTime).format('MMM D, YYYY HH:mm:ss')} (
+						Expires: {setupDayjs()(expirationTime).format('MMM D, YYYY HH:mm:ss')} (
 						<span className="tabular-nums">{timeRemaining.text}</span>)
 					</>
 				) : (
