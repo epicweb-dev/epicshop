@@ -2,7 +2,7 @@ import { type ExerciseStepApp } from '@epic-web/workshop-utils/apps.server'
 import slugify from '@sindresorhus/slugify'
 import { clsx, type ClassValue } from 'clsx'
 import * as React from 'react'
-import { useEffect, useMemo, useRef, useState } from 'react'
+import { useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react'
 import {
 	Link,
 	useFormAction,
@@ -13,6 +13,9 @@ import { useSpinDelay } from 'spin-delay'
 import { extendTailwindMerge } from 'tailwind-merge'
 import { Icon } from '#app/components/icons.tsx'
 import { extendedTheme } from './extended-theme.ts'
+
+const useServerSafeLayoutEffect =
+	typeof window === 'undefined' ? () => {} : useLayoutEffect
 
 type AnchorProps = React.DetailedHTMLProps<
 	React.AnchorHTMLAttributes<HTMLAnchorElement>,
@@ -394,6 +397,32 @@ export function useDoubleCheck() {
 	}
 
 	return { doubleCheck, getButtonProps }
+}
+
+export function useInterval(callback: () => void, delay: number | null) {
+	const savedCallback = useRef(callback)
+
+	// Remember the latest callback if it changes.
+	useServerSafeLayoutEffect(() => {
+		savedCallback.current = callback
+	}, [callback])
+
+	// Set up the interval.
+	useEffect(() => {
+		// Don't schedule if no delay is specified.
+		// Note: 0 is a valid value for delay.
+		if (delay === null) {
+			return
+		}
+
+		const id = setInterval(() => {
+			savedCallback.current()
+		}, delay)
+
+		return () => {
+			clearInterval(id)
+		}
+	}, [delay])
 }
 
 /**

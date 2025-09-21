@@ -66,3 +66,23 @@ installed). Only the most important bits are enforced by eslint.
   and semantic colors for hover states.
 - **Truncate long text**: Use Tailwind's `truncate` class for text that might
   overflow, especially in constrained layouts like tables or cards.
+
+## Important Development Gotchas
+
+### Module Imports and Client/Server Separation
+
+- **Server-only modules**: Any module in `@epic-web/workshop-utils` with
+  `.server` in the filename (e.g., `utils.server`, `cache.server`) is
+  server-only and cannot be imported in client-side components. This will cause
+  module resolution errors in the browser.
+
+### Build Dependencies and Workspace Management
+
+- **Build order matters**: In this monorepo, you must build workspace
+  dependencies before building the main app:
+  1. `npm run build --workspace=@epic-web/workshop-utils`
+  2. `npm run build --workspace=@epic-web/workshop-presence`
+  3. `npm run build --workspace=@epic-web/workshop-app`
+- **Always build before testing**: After making code changes, always run the
+  build process before starting the dev server to test changes, especially when
+  working with client-side functionality.
