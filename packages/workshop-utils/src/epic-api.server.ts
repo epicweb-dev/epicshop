@@ -8,7 +8,7 @@ import {
 	getWorkshopFinished,
 	getWorkshopInstructions,
 } from './apps.server.js'
-import { cachified, fsCache } from './cache.server.js'
+import { cachified, epicApiCache } from './cache.server.js'
 import { getWorkshopConfig } from './config.server.js'
 import { getAuthInfo, setAuthInfo } from './db.server.js'
 import { getEnv } from './init-env.js'
@@ -119,7 +119,7 @@ async function getEpicVideoInfo({
 	return cachified({
 		key,
 		request,
-		cache: fsCache,
+		cache: epicApiCache,
 		timings,
 		ttl: 1000 * 60 * 60,
 		swr: 1000 * 60 * 60 * 24 * 365 * 10,
@@ -304,7 +304,7 @@ async function getEpicProgress({
 	log(`fetching progress from EpicWeb host: ${host}`)
 	return cachified({
 		key: `epic-progress:${host}:${tokenPart}`,
-		cache: fsCache,
+		cache: epicApiCache,
 		request,
 		timings,
 		forceFresh,
@@ -579,7 +579,7 @@ export async function getWorkshopData(
 	log(`fetching workshop data for slug: ${slug} from host: ${host}`)
 	return cachified({
 		key: `epic-workshop-data:${host}:${slug}`,
-		cache: fsCache,
+		cache: epicApiCache,
 		request,
 		forceFresh,
 		timings,
@@ -642,7 +642,7 @@ export async function userHasAccessToWorkshop({
 
 	return cachified({
 		key: `user-has-access-to-workshop:${host}:${slug}`,
-		cache: fsCache,
+		cache: epicApiCache,
 		request,
 		forceFresh,
 		timings,
@@ -781,7 +781,7 @@ export async function getUserInfo({
 	log('fetching user info from: %s', url)
 	const userInfo = await cachified({
 		key: `${url}:${md5(accessToken)}`,
-		cache: fsCache,
+		cache: epicApiCache,
 		request,
 		forceFresh,
 		timings,

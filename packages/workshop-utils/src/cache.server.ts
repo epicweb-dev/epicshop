@@ -269,6 +269,7 @@ export const directoryEmptyCache = makeSingletonCache<boolean>(
 )
 
 export const fsCache = makeSingletonFsCache('FsCache')
+export const epicApiCache = makeSingletonFsCache('EpicApiCache')
 
 async function readJsonFilesInDirectory(
 	dir: string,
@@ -409,6 +410,64 @@ export async function deleteCache() {
 		}
 	} catch (error) {
 		console.error(`Error deleting the cache in ${cacheDir}`, error)
+	}
+}
+
+export async function deleteCacheEntry(cacheFilePath: string) {
+	if (getEnv().EPICSHOP_DEPLOYED) return null
+
+	try {
+		const filePath = path.join(cacheDir, cacheFilePath)
+		await fsExtra.remove(filePath)
+	} catch (error) {
+		console.error(`Error deleting cache entry ${cacheFilePath}:`, error)
+	}
+}
+
+export async function deleteWorkshopCache(workshopId: string, cacheName?: string) {
+	if (getEnv().EPICSHOP_DEPLOYED) return null
+
+	try {
+		if (cacheName) {
+			// Delete specific cache within workshop
+			const cachePath = path.join(cacheDir, workshopId, cacheName)
+			if (await fsExtra.exists(cachePath)) {
+				await fsExtra.remove(cachePath)
+			}
+		} else {
+			// Delete entire workshop cache directory
+			const workshopCachePath = path.join(cacheDir, workshopId)
+			if (await fsExtra.exists(workshopCachePath)) {
+				await fsExtra.remove(workshopCachePath)
+			}
+		}
+	} catch (error) {
+		console.error(`Error deleting workshop cache ${workshopId}/${cacheName || 'all'}:`, error)
+	}
+}
+
+export async function updateCacheEntry(cacheFilePath: string, newEntry: any) {
+	if (getEnv().EPICSHOP_DEPLOYED) return null
+
+	try {
+		const filePath = path.join(cacheDir, cacheFilePath)
+		const existingData = await fsExtra.readJSON(filePath)
+		const updatedData = {
+			...existingData,
+			entry: {
+				...existingData.entry,
+				value: newEntry,
+				metadata: {
+					...existingData.entry.metadata,
+					createdTime: Date.now(), // Update timestamp
+				}
+			}
+		}
+		await fsExtra.writeJSON(filePath, updatedData)
+		return updatedData.entry
+	} catch (error) {
+		console.error(`Error updating cache entry ${cacheFilePath}:`, error)
+		throw error
 	}
 }
 

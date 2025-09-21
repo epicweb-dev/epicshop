@@ -54,3 +54,9 @@ installed in individual repositories which resemble the structure of the
 The code style guide can be found in
 `node_modules/@epic-web/config/docs/style-guide.md` (once dependencies have been
 installed). Only the most important bits are enforced by eslint.
+
+### UI Components and Styling
+
+- **Use semantic colors**: Always use semantic color classes from the theme (e.g., `text-foreground`, `bg-background`, `border-border`, `text-muted-foreground`) instead of hardcoded colors like `text-red-600`, `bg-white`, etc. This ensures proper dark mode support and consistent theming.
+- **Icon-only buttons**: For small action buttons (edit, delete, etc.), create simple icon-only buttons without the clip-path styling. Use minimal padding and semantic colors for hover states.
+- **Truncate long text**: Use Tailwind's `truncate` class for text that might overflow, especially in constrained layouts like tables or cards.
