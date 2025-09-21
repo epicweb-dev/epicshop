@@ -269,6 +269,7 @@ export const directoryEmptyCache = makeSingletonCache<boolean>(
 )
 
 export const fsCache = makeSingletonFsCache('FsCache')
+export const epicApiCache = makeSingletonFsCache('EpicApiCache')
 
 async function readJsonFilesInDirectory(
 	dir: string,

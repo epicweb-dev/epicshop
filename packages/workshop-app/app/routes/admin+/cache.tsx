@@ -447,7 +447,7 @@ export default function CacheManagement({ loaderData }: Route.ComponentProps) {
 						key={workshopCache.workshopId}
 						open={workshopCache.workshopId === currentWorkshopId}
 					>
-						<summary className="cursor-pointer rounded-lg border border-border bg-card p-4 hover:bg-muted">
+						<summary className="cursor-pointer rounded-lg border border-border bg-card p-4 hover:bg-accent">
 							<div className="flex items-center justify-between">
 								<h3 className="flex items-center gap-2 text-lg font-semibold text-card-foreground">
 									<Icon name="Files" className="h-5 w-5" />
@@ -472,7 +472,7 @@ export default function CacheManagement({ loaderData }: Route.ComponentProps) {
 						<div className="mt-4 space-y-4 pl-4">
 							{workshopCache.caches.map((cache) => (
 								<details key={cache.name} className="rounded-md bg-muted">
-									<summary className="cursor-pointer p-3 hover:bg-background">
+									<summary className="cursor-pointer p-3 hover:bg-accent">
 										<div className="flex items-center justify-between">
 											<h4 className="flex items-center gap-2 font-medium text-muted-foreground">
 												<Icon name="Files" className="h-4 w-4" />
