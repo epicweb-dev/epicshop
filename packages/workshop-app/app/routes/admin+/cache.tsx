@@ -89,6 +89,7 @@ function CacheMetadata({
 		swr?: number
 	}
 }) {
+	const [dayjs] = useState(() => setupDayjs())
 	const [, setCurrentTime] = useState(Date.now())
 	const expirationTime = calculateExpirationTime(metadata)
 
@@ -101,7 +102,7 @@ function CacheMetadata({
 		return () => clearInterval(interval)
 	}, [])
 
-	const createdDate = setupDayjs()(metadata.createdTime)
+	const createdDate = dayjs(metadata.createdTime)
 	const timeRemaining = expirationTime
 		? formatTimeRemaining(expirationTime)
 		: { text: 'Never', isExpired: false, isExpiringSoon: false }
@@ -136,8 +137,7 @@ function CacheMetadata({
 			>
 				{expirationTime ? (
 					<>
-						Expires:{' '}
-						{setupDayjs()(expirationTime).format('MMM D, YYYY HH:mm:ss')} (
+						Expires: {dayjs(expirationTime).format('MMM D, YYYY HH:mm:ss')} (
 						<span className="tabular-nums">{timeRemaining.text}</span>)
 					</>
 				) : (
