@@ -100,14 +100,16 @@ function CacheMetadata({
 	return (
 		<div className="space-y-1 text-xs text-muted-foreground">
 			<div>Created: {createdDate.format('MMM D, YYYY HH:mm:ss')} ({createdDate.fromNow()})</div>
-			{metadata.ttl !== undefined && metadata.ttl !== null && (
-				<div>
-					TTL: {metadata.ttl === Infinity ? 'Forever' : formatDuration(metadata.ttl)}
-				</div>
-			)}
-			{metadata.swr !== undefined && (
-				<div>SWR: {formatDuration(metadata.swr)}</div>
-			)}
+			<div className="flex flex-wrap gap-4">
+				{metadata.ttl !== undefined && metadata.ttl !== null && (
+					<span>
+						TTL: {metadata.ttl === Infinity ? 'Forever' : formatDuration(metadata.ttl)}
+					</span>
+				)}
+				{metadata.swr !== undefined && (
+					<span>SWR: {formatDuration(metadata.swr)}</span>
+				)}
+			</div>
 			<div
 				className={`font-medium ${
 					timeRemaining.isExpired
@@ -117,15 +119,15 @@ function CacheMetadata({
 							: 'text-foreground'
 				}`}
 			>
-				{expirationTime
-					? `Expires in: ${timeRemaining.text}`
-					: 'Expires: Never'}
+				{expirationTime ? (
+					<>
+						Expires: {dayjs(expirationTime).format('MMM D, YYYY HH:mm:ss')} (
+						<span className="tabular-nums">{timeRemaining.text}</span>)
+					</>
+				) : (
+					'Expires: Never'
+				)}
 			</div>
-			{expirationTime && (
-				<div>
-					Expires: {dayjs(expirationTime).format('MMM D, YYYY HH:mm:ss')}
-				</div>
-			)}
 		</div>
 	)
 }
