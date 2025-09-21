@@ -34,11 +34,20 @@ export function ensureProgressiveEnhancement(
 	}
 
 	// if request does not accept application/json, it means JS hasn't hydrated yet
-	const accept = request.headers.get('Accept') ?? ''
-	if (!accept.includes('application/json')) {
+	if (!acceptsJson(request)) {
 		const redirectToReferrer = request.headers.get('Referer') ?? '/'
 		throw redirect(safeRedirect(redirectToReferrer), responseInit?.())
 	}
+}
+
+function acceptsJson(request: Request) {
+	const accept = request.headers.get('Accept') ?? ''
+	return (
+		accept.includes('application/json') ||
+		accept.includes('*/*') ||
+		accept.includes('application/*') ||
+		accept.includes('*/json')
+	)
 }
 
 export function dataWithPE<Data>(
