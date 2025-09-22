@@ -35,7 +35,7 @@ function extractEpicTitle(urlString: string) {
 		url = new URL(urlString)
 	} catch (error) {
 		console.error(error)
-		return 'EpicWeb.dev Video'
+		return 'Epic Video'
 	}
 	const urlSegments = url.pathname.split('/').filter(Boolean)
 	const isSolution = urlSegments.includes('solution')
@@ -44,7 +44,11 @@ function extractEpicTitle(urlString: string) {
 	const isTitleSegment = (str?: string) => str && !nonTitles.includes(str)
 	while (!isTitleSegment(titleSegment)) titleSegment = urlSegments.pop()
 
-	if (!titleSegment) return 'EpicWeb.dev Video'
+	if (!titleSegment) return 'Epic Video'
+
+	// Chop off anything after ~ if no spaces follow anywhere after the ~
+	// that's common for EpicAI videos
+	titleSegment = titleSegment.replace(/~[^ ]*$/, '')
 
 	const titleWords = titleSegment.split('-')
 	// prettier-ignore
@@ -454,7 +458,10 @@ function EpicVideoEmbed({
 		: `${url.pathname}/embed`
 	url.searchParams.set('theme', theme)
 	// special case for epicai.pro videos
-	if (url.host === 'www.epicai.pro') {
+	if (
+		url.host === 'www.epicai.pro' &&
+		!url.pathname.startsWith('/workshops/')
+	) {
 		url.pathname = `/posts/${url.pathname}`
 	}
 	return (
