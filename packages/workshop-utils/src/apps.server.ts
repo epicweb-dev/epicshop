@@ -15,7 +15,6 @@ import fsExtra from 'fs-extra'
 import { globby, isGitIgnored } from 'globby'
 import { z } from 'zod'
 import {
-	appsCache,
 	cachified,
 	exampleAppCache,
 	playgroundAppCache,
@@ -321,22 +320,6 @@ export async function init(workshopRoot?: string) {
 	}
 }
 
-async function getForceFresh(
-	cacheEntry:
-		| CacheEntry
-		| null
-		| undefined
-		| Promise<CacheEntry | null | undefined>,
-) {
-	const resolvedCacheEntry = await cacheEntry
-	if (!resolvedCacheEntry) return true
-	const latestModifiedTime = Math.max(...Array.from(modifiedTimes.values()))
-	if (latestModifiedTime <= 0) return undefined
-	return latestModifiedTime > resolvedCacheEntry.metadata.createdTime
-		? true
-		: undefined
-}
-
 export async function getModifiedTimeForFile(filepath?: string) {
 	if (!filepath) return null
 	const modifiedAt = await fs.promises
@@ -495,27 +478,13 @@ async function _getExercises({
 
 export const getExercises = requestStorageify(_getExercises)
 
-let appCallCount = 0
-
 async function _getApps({
 	timings,
 	request,
-	forceFresh,
 }: CachifiedOptions & { forceFresh?: boolean } = {}): Promise<Array<App>> {
 	await init()
-
-	const key = 'apps'
-	const apps = await cachified({
-		key,
-		cache: appsCache,
-		timings,
-		timingKey: `apps_${appCallCount++}`,
-		request,
-		// This entire cache is to avoid a single request getting a fresh value
-		// multiple times unnecessarily (because getApps is called many times)
-		ttl: 1000 * 60 * 60 * 24,
-		forceFresh: forceFresh ?? (await getForceFresh(appsCache.get(key))),
-		getFreshValue: async () => {
+	const apps = await time(
+		async () => {
 			const [playgroundApp, problemApps, solutionApps, exampleApps] =
 				await Promise.all([
 					time(() => getPlaygroundApp({ request, timings }), {
@@ -583,7 +552,8 @@ async function _getApps({
 				})
 			return sortedApps
 		},
-	})
+		{ type: 'get_apps', timings },
+	)
 	return apps
 }
 export const getApps = requestStorageify(_getApps)
