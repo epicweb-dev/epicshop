@@ -339,8 +339,10 @@ async function getForceFresh(
 
 export async function getModifiedTimeForFile(filepath?: string) {
 	if (!filepath) return null
-	const modifiedAt = await fs.promises.stat(path.join(filepath))
-	return modifiedAt.mtimeMs
+	const modifiedAt = await fs.promises
+		.stat(path.join(filepath))
+		.catch(() => null)
+	return modifiedAt?.mtimeMs ?? null
 }
 
 export function setModifiedTimesForAppDirs(
