@@ -579,6 +579,8 @@ export async function getWorkshopData(
 	log(`fetching workshop data for slug: ${slug} from host: ${host}`)
 	return cachified({
 		key: `epic-workshop-data:${host}:${slug}`,
+		ttl: 1000 * 60 * 5,
+		swr: 1000 * 60 * 60 * 24 * 365 * 10,
 		cache: epicApiCache,
 		request,
 		forceFresh,
