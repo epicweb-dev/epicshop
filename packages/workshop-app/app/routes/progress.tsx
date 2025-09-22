@@ -253,7 +253,7 @@ export async function action({ request }: ActionFunctionArgs) {
 			announcement ? createConfettiHeaders() : null,
 			announcement
 				? await createToastHeaders({
-						title: 'Congratulations! 🎉',
+						title: 'Congratulations!',
 						description: announcement,
 						type: 'success',
 					})
