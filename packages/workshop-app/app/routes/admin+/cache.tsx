@@ -62,7 +62,7 @@ function formatTimeRemaining(expirationTime: number): {
 
 	if (days > 0) {
 		text = `${days}d ${hours % 24}h`
-		isExpiringSoon = days < 1
+		isExpiringSoon = days < 1.5
 	} else if (hours > 0) {
 		text = `${hours}h ${minutes % 60}m`
 		isExpiringSoon = hours < 2
