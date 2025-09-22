@@ -1,5 +1,6 @@
 import { clsx } from 'clsx'
 import { Link } from 'react-router'
+import { cn } from '#app/utils/misc.tsx'
 
 function PendingState() {
 	return <span className="inline-block animate-spin">🌀</span>
@@ -85,4 +86,22 @@ export function LinkButton({
 	...props
 }: React.ComponentPropsWithoutRef<'button'>) {
 	return <button {...props} className={clsx('underline', className)} />
+}
+
+export function IconButton({
+	children,
+	className = '',
+	...props
+}: React.ComponentPropsWithoutRef<'button'>) {
+	return (
+		<button
+			{...props}
+			className={cn(
+				`inline-flex h-8 w-8 items-center justify-center rounded border focus:outline-none focus:ring-2 focus:ring-ring`,
+				className,
+			)}
+		>
+			{children}
+		</button>
+	)
 }

@@ -10,7 +10,6 @@ import { LRUCache } from 'lru-cache'
 import md5 from 'md5-hex'
 import z from 'zod'
 import {
-	type App,
 	type ExampleApp,
 	type PlaygroundApp,
 	type ProblemApp,
@@ -22,6 +21,7 @@ import { type Notification } from './notifications.server.js'
 import { cachifiedTimingReporter, type Timings } from './timing.server.js'
 import { checkConnectionCached } from './utils.server.js'
 
+const MAX_CACHE_FILE_SIZE = 3 * 1024 * 1024 // 3MB in bytes
 const cacheDir = resolveCacheDir()
 const log = logger('epic:cache')
 
@@ -235,7 +235,6 @@ export const exampleAppCache =
 	makeSingletonFsCache<ExampleApp>('ExampleAppCache')
 export const playgroundAppCache =
 	makeSingletonFsCache<PlaygroundApp>('PlaygroundAppCache')
-export const appsCache = makeSingletonFsCache<App>('AppsCache')
 export const diffCodeCache = makeSingletonFsCache<string>('DiffCodeCache')
 export const diffFilesCache = makeSingletonFsCache<string>('DiffFilesCache')
 export const copyUnignoredFilesCache = makeSingletonCache<string>(
@@ -244,8 +243,7 @@ export const copyUnignoredFilesCache = makeSingletonCache<string>(
 export const compiledMarkdownCache = makeSingletonFsCache<string>(
 	'CompiledMarkdownCache',
 )
-export const compiledCodeCache =
-	makeSingletonFsCache<string>('CompiledCodeCache')
+export const compiledCodeCache = makeSingletonCache<string>('CompiledCodeCache')
 export const ogCache = makeSingletonCache<string>('OgCache')
 export const compiledInstructionMarkdownCache = makeSingletonFsCache<{
 	code: string
@@ -268,7 +266,7 @@ export const directoryEmptyCache = makeSingletonCache<boolean>(
 	'DirectoryEmptyCache',
 )
 
-export const fsCache = makeSingletonFsCache('FsCache')
+export const discordCache = makeSingletonFsCache('DiscordCache')
 export const epicApiCache = makeSingletonFsCache('EpicApiCache')
 
 async function readJsonFilesInDirectory(
@@ -293,13 +291,31 @@ async function readJsonFilesInDirectory(
 					const subEntries = await readJsonFilesInDirectory(filePath)
 					return [file, subEntries]
 				} else {
+					// Check file size before attempting to read JSON
+					if (stats.size > MAX_CACHE_FILE_SIZE) {
+						const sizeInMB = (stats.size / (1024 * 1024)).toFixed(2)
+						log.warn(
+							`Skipping large cache file ${filePath} (${sizeInMB}MB > 3MB limit). ` +
+								`Consider clearing cache or excluding this file type from the admin interface.`,
+						)
+						return [
+							file,
+							{
+								error: `File too large (${sizeInMB}MB > 3MB limit)`,
+								size: stats.size,
+								skipped: true,
+							},
+						]
+					}
+
 					const maxRetries = 2
 					const baseDelay = 25 // shorter delay for directory listing
 
 					for (let attempt = 0; attempt <= maxRetries; attempt++) {
 						try {
 							const data = await fsExtra.readJSON(filePath)
-							return [file, data]
+							// Include file size information with the data
+							return [file, { ...data, size: stats.size }]
 						} catch (error: unknown) {
 							// Handle JSON parsing errors (could be race condition or corruption)
 							if (
@@ -346,15 +362,36 @@ const CacheEntrySchema = z.object({
 			swr: z.number().optional(),
 		}),
 	}),
+	size: z.number().optional(), // File size in bytes
 })
+
+// Schema for files that were skipped due to size limits
+const SkippedFileSchema = z.object({
+	error: z.string(),
+	size: z.number(),
+	skipped: z.literal(true),
+})
+
+// Combined schema that can handle both cache entries and skipped files
+const CacheFileSchema = z.union([CacheEntrySchema, SkippedFileSchema])
 
 type CacheEntryType = z.infer<typeof CacheEntrySchema>
 
 export const WorkshopCacheSchema = z
-	.record(z.record(z.record(CacheEntrySchema)))
+	.record(z.record(z.record(CacheFileSchema)))
 	.transform((workshopCaches) => {
 		type CacheEntryWithFilename = CacheEntryType & { filename: string }
-		type Cache = { name: string; entries: Array<CacheEntryWithFilename> }
+		type SkippedFileWithFilename = {
+			filename: string
+			error: string
+			size: number
+			skipped: true
+		}
+		type Cache = {
+			name: string
+			entries: Array<CacheEntryWithFilename>
+			skippedFiles?: Array<SkippedFileWithFilename>
+		}
 
 		const cachesArray: Array<{
 			workshopId: string
@@ -365,10 +402,33 @@ export const WorkshopCacheSchema = z
 			const cachesInDir: Array<Cache> = []
 			for (const [cacheName, entriesObj] of Object.entries(caches)) {
 				const entries: Array<CacheEntryWithFilename> = []
+				const skippedFiles: Array<SkippedFileWithFilename> = []
+
 				for (const [key, value] of Object.entries(entriesObj)) {
-					entries.push({ ...value, filename: key })
+					if (
+						value &&
+						typeof value === 'object' &&
+						'skipped' in value &&
+						value.skipped
+					) {
+						// This is a skipped file
+						skippedFiles.push({
+							filename: key,
+							error: value.error as string,
+							size: value.size as number,
+							skipped: true,
+						})
+					} else {
+						// This is a regular cache entry
+						entries.push({ ...(value as CacheEntryType), filename: key })
+					}
 				}
-				cachesInDir.push({ name: cacheName, entries })
+
+				const cache: Cache = { name: cacheName, entries }
+				if (skippedFiles.length > 0) {
+					cache.skippedFiles = skippedFiles
+				}
+				cachesInDir.push(cache)
 			}
 			cachesArray.push({ workshopId, caches: cachesInDir })
 		}
@@ -515,6 +575,28 @@ export function makeSingletonFsCache<CacheEntryType>(name: string) {
 				const filePath = path.join(cacheInstanceDir, md5(key))
 				const maxRetries = 3
 				const baseDelay = 10
+
+				// Check file size before attempting to read
+				try {
+					const stats = await fsExtra.stat(filePath)
+					if (stats.size > MAX_CACHE_FILE_SIZE) {
+						const sizeInMB = (stats.size / (1024 * 1024)).toFixed(2)
+						log.warn(
+							`Skipping large cache file ${filePath} (${sizeInMB}MB > 3MB limit). ` +
+								`Consider clearing "${name}" cache for key: ${key}`,
+						)
+						return null
+					}
+				} catch (error: unknown) {
+					if (
+						error instanceof Error &&
+						'code' in error &&
+						error.code === 'ENOENT'
+					) {
+						return null
+					}
+					// For other stat errors, continue with the read attempt
+				}
 
 				for (let attempt = 0; attempt <= maxRetries; attempt++) {
 					try {

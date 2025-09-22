@@ -842,7 +842,8 @@ export async function getPlaygroundApp({
 	return cachified({
 		key,
 		cache: playgroundAppCache,
-		ttl: 1000 * 60 * 60 * 24,
+		ttl: 1000 * 60 * 5,
+		swr: 1000 * 60 * 60 * 24 * 30,
 
 		timings,
 		timingKey: playgroundDir.replace(`${playgroundDir}${path.sep}`, ''),
@@ -951,7 +952,8 @@ async function getExampleApps({
 		const exampleApp = await cachified({
 			key,
 			cache: exampleAppCache,
-			ttl: 1000 * 60 * 60 * 24,
+			ttl: 1000 * 60 * 5,
+			swr: 1000 * 60 * 60 * 24 * 30,
 
 			timings,
 			timingKey: exampleDir.replace(`${examplesDir}${path.sep}`, ''),
@@ -1039,7 +1041,8 @@ async function getSolutionApps({
 			timings,
 			timingKey: solutionDir.replace(`${exercisesDir}${path.sep}`, ''),
 			request,
-			ttl: 1000 * 60 * 60 * 24,
+			ttl: 1000 * 60 * 5,
+			swr: 1000 * 60 * 60 * 24 * 30,
 
 			forceFresh: await getForceFreshForDir(
 				solutionAppCache.get(solutionDir),
@@ -1122,7 +1125,8 @@ async function getProblemApps({
 			timings,
 			timingKey: problemDir.replace(`${exercisesDir}${path.sep}`, ''),
 			request,
-			ttl: 1000 * 60 * 60 * 24,
+			ttl: 1000 * 60 * 5,
+			swr: 1000 * 60 * 60 * 24 * 30,
 
 			forceFresh: await getForceFreshForDir(
 				problemAppCache.get(problemDir),

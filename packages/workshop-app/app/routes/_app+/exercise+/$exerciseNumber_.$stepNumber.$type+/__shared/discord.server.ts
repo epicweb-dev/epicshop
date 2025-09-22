@@ -1,6 +1,6 @@
 import {
 	cachified,
-	fsCache,
+	discordCache,
 	shouldForceFresh,
 } from '@epic-web/workshop-utils/cache.server'
 import { getWorkshopConfig } from '@epic-web/workshop-utils/config.server'
@@ -84,7 +84,7 @@ export async function fetchDiscordPosts({ request }: { request: Request }) {
 		key: url,
 		request,
 		forceFresh,
-		cache: fsCache,
+		cache: discordCache,
 		ttl: 1000 * 60 * 2,
 		swr: 1000 * 60 * 60 * 24 * 365 * 100,
 		offlineFallbackValue: [],

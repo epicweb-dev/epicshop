@@ -12,9 +12,10 @@ import { useState, useEffect, useRef } from 'react'
 import { href, useFetcher, useSearchParams } from 'react-router'
 import { ClientOnly } from 'remix-utils/client-only'
 import { z } from 'zod'
-import { Button } from '#app/components/button.tsx'
+import { Button, IconButton } from '#app/components/button.tsx'
 import { Icon } from '#app/components/icons.tsx'
 import {
+	cn,
 	ensureUndeployed,
 	useDoubleCheck,
 	useInterval,
@@ -84,6 +85,12 @@ function formatDuration(ms: number): string {
 	return `${Math.round(ms / 3600000)}h`
 }
 
+function formatFileSize(bytes: number): string {
+	if (bytes < 1024) return `${bytes} B`
+	if (bytes < 1024 * 1024) return `${(bytes / 1024).toFixed(1)} KB`
+	return `${(bytes / (1024 * 1024)).toFixed(1)} MB`
+}
+
 // Component for displaying cache metadata with live countdown
 function CacheMetadata({
 	metadata,
@@ -132,7 +139,7 @@ function CacheMetadata({
 					timeRemaining.isExpired
 						? 'text-destructive'
 						: timeRemaining.isExpiringSoon
-							? 'text-yellow-600 dark:text-yellow-400'
+							? 'text-warning'
 							: 'text-foreground'
 				}`}
 			>
@@ -152,26 +159,11 @@ function CacheMetadata({
 	)
 }
 
-// Icon-only button component without clip-path styling
-function IconButton({
-	children,
-	className = '',
-	...props
-}: React.ComponentPropsWithoutRef<'button'>) {
-	return (
-		<button
-			{...props}
-			className={`inline-flex h-8 w-8 items-center justify-center rounded border border-border bg-background text-foreground hover:bg-muted focus:bg-muted focus:outline-none focus:ring-2 focus:ring-ring ${className}`}
-		>
-			{children}
-		</button>
-	)
-}
-
 // Double-check delete button
 function DoubleCheckButton({
 	onConfirm,
 	children,
+	className,
 	...props
 }: React.ComponentPropsWithoutRef<'button'> & {
 	onConfirm: () => void
@@ -184,11 +176,12 @@ function DoubleCheckButton({
 				onClick: doubleCheck.doubleCheck ? onConfirm : undefined,
 				...props,
 			})}
-			className={`${props.className} ${
+			className={cn(
 				doubleCheck.doubleCheck
 					? 'bg-destructive text-destructive-foreground'
-					: 'text-destructive hover:bg-destructive hover:text-destructive-foreground'
-			}`}
+					: null,
+				className,
+			)}
 		>
 			{doubleCheck.doubleCheck ? '✓' : children}
 		</IconButton>
@@ -494,6 +487,78 @@ function InlineEntryEditor({
 	)
 }
 
+function SkippedFilesSection({
+	skippedFiles,
+	workshopId,
+	cacheName,
+}: {
+	skippedFiles: Array<{
+		filename: string
+		error: string
+		size: number
+		skipped: true
+	}>
+	workshopId: string
+	cacheName: string
+}) {
+	const fetcher = useFetcher<typeof action>()
+
+	if (skippedFiles.length === 0) return null
+
+	return (
+		<div className="border-warning bg-warning mt-4 rounded border p-3">
+			<div className="mb-2 flex items-center gap-2">
+				<Icon
+					name="TriangleAlert"
+					className="text-warning-foreground h-4 w-4"
+				/>
+				<h5 className="text-warning-foreground font-medium">
+					Skipped Files ({skippedFiles.length})
+				</h5>
+			</div>
+			<p className="text-warning-foreground/80 mb-3 text-sm">
+				These cache files were skipped because they exceed the 3MB size limit:
+			</p>
+			<div className="space-y-2">
+				{skippedFiles.map((skippedFile) => (
+					<div
+						key={skippedFile.filename}
+						className="border-warning/20 bg-warning/5 flex items-center justify-between rounded border p-2"
+					>
+						<div className="min-w-0 flex-1">
+							<div className="text-warning-foreground truncate font-mono text-sm font-medium">
+								{skippedFile.filename}
+							</div>
+							<div className="text-warning-foreground/70 text-xs">
+								{skippedFile.error} • Size: {formatFileSize(skippedFile.size)}
+							</div>
+						</div>
+						<div className="ml-2 flex flex-shrink-0">
+							<DoubleCheckButton
+								onConfirm={() => {
+									void fetcher.submit(
+										{
+											intent: 'delete-entry',
+											workshopId,
+											cacheName,
+											filename: skippedFile.filename,
+										},
+										{ method: 'POST' },
+									)
+								}}
+								title="Delete large cache file"
+								className="text-warning-foreground hover:bg-warning/20 hover:text-warning-foreground"
+							>
+								<Icon name="Remove" className="h-4 w-4" />
+							</DoubleCheckButton>
+						</div>
+					</div>
+				))}
+			</div>
+		</div>
+	)
+}
+
 export default function CacheManagement({ loaderData }: Route.ComponentProps) {
 	const fetcher = useFetcher<typeof action>()
 
@@ -563,7 +628,7 @@ export default function CacheManagement({ loaderData }: Route.ComponentProps) {
 			<SearchFilter filterQuery={filterQuery} />
 
 			{fetcher.data?.status === 'success' && (
-				<div className="rounded border border-border bg-accent p-4 text-accent-foreground">
+				<div className="bg-success text-success-foreground rounded border border-border p-4">
 					{fetcher.data.message}
 				</div>
 			)}
@@ -609,90 +674,132 @@ export default function CacheManagement({ loaderData }: Route.ComponentProps) {
 						</summary>
 
 						<div className="mt-4 space-y-4 pl-4">
-							{workshopCache.caches.map((cache) => (
-								<details key={cache.name} className="rounded-md bg-muted">
-									<summary className="cursor-pointer p-3 hover:bg-accent">
-										<div className="flex items-center justify-between">
-											<h4 className="flex items-center gap-2 font-medium text-muted-foreground">
-												<Icon name="Files" className="h-4 w-4" />
-												{cache.name}
-												<span className="text-sm">
-													({cache.entries.length} entries)
-												</span>
-											</h4>
-											<DoubleCheckButton
-												onConfirm={() =>
-													deleteCache(workshopCache.workshopId, cache.name)
-												}
-												title="Delete cache"
-											>
-												<Icon name="Remove" className="h-4 w-4" />
-											</DoubleCheckButton>
-										</div>
-									</summary>
+							{workshopCache.caches.map((cache) => {
+								const totalSize = cache.entries.reduce(
+									(sum, entry) => sum + (entry.size || 0),
+									0,
+								)
+								const skippedSize = (cache.skippedFiles || []).reduce(
+									(sum, file) => sum + file.size,
+									0,
+								)
+								const grandTotal = totalSize + skippedSize
 
-									<div className="p-3 pt-0">
-										{cache.entries.length === 0 && (
-											<p className="text-sm text-muted-foreground">
-												No entries match your search.
-											</p>
-										)}
-
-										<div className="space-y-2">
-											{cache.entries.map(({ key, entry, filename }) => (
-												<div
-													key={key}
-													className="rounded border border-border bg-background p-3"
+								return (
+									<details key={cache.name} className="rounded-md bg-muted">
+										<summary className="cursor-pointer p-3 hover:bg-accent">
+											<div className="flex items-center justify-between">
+												<h4 className="flex items-center gap-2 font-medium text-muted-foreground">
+													<Icon name="Files" className="h-4 w-4" />
+													{cache.name}
+													<span className="text-sm">
+														({cache.entries.length} entr
+														{cache.entries.length === 1 ? 'y' : 'ies'})
+													</span>
+													{grandTotal > 0 && (
+														<span className="text-sm text-muted-foreground">
+															• {formatFileSize(grandTotal)} total
+															{skippedSize > 0 && (
+																<span className="text-warning">
+																	{' '}
+																	({formatFileSize(skippedSize)} skipped)
+																</span>
+															)}
+														</span>
+													)}
+												</h4>
+												<DoubleCheckButton
+													onConfirm={() =>
+														deleteCache(workshopCache.workshopId, cache.name)
+													}
+													title="Delete cache"
 												>
-													<div className="flex items-start justify-between">
-														<div className="min-w-0 flex-1">
-															<div
-																className="mb-1 truncate font-mono text-sm font-medium"
-																title={key}
-															>
-																{key}
+													<Icon name="Remove" className="h-4 w-4" />
+												</DoubleCheckButton>
+											</div>
+										</summary>
+
+										<div className="p-3 pt-0">
+											{cache.entries.length === 0 && (
+												<p className="text-sm text-muted-foreground">
+													No entries match your search.
+												</p>
+											)}
+
+											{cache.skippedFiles && cache.skippedFiles.length > 0 && (
+												<SkippedFilesSection
+													skippedFiles={cache.skippedFiles}
+													workshopId={workshopCache.workshopId}
+													cacheName={cache.name}
+												/>
+											)}
+
+											<div className="space-y-2">
+												{cache.entries.map(({ key, entry, filename, size }) => (
+													<div
+														key={key}
+														className="rounded border border-border bg-background p-3"
+													>
+														<div className="flex items-start justify-between">
+															<div className="min-w-0 flex-1">
+																<div className="mb-1 flex items-center gap-2">
+																	<div
+																		className="truncate font-mono text-sm font-medium"
+																		title={key}
+																	>
+																		{key}
+																	</div>
+																	{size ? (
+																		<span className="inline-flex items-center whitespace-nowrap rounded bg-muted px-1.5 py-0.5 text-xs text-muted-foreground">
+																			{formatFileSize(size)}
+																		</span>
+																	) : null}
+																</div>
+																<CacheMetadata metadata={entry.metadata} />
 															</div>
-															<CacheMetadata metadata={entry.metadata} />
+															<div className="ml-4 flex flex-shrink-0 gap-1">
+																<a
+																	href={href('/admin/cache/*', {
+																		'*': `${workshopCache.workshopId}/${cache.name}/${filename}`,
+																	})}
+																	target="_blank"
+																	rel="noopener noreferrer"
+																	className="inline-flex h-8 w-8 items-center justify-center rounded border border-border bg-background text-foreground hover:bg-muted focus:outline-none focus:ring-2 focus:ring-ring"
+																	title="View JSON"
+																>
+																	<Icon
+																		name="ExternalLink"
+																		className="h-4 w-4"
+																	/>
+																</a>
+																<DoubleCheckButton
+																	onConfirm={() =>
+																		deleteEntry(
+																			workshopCache.workshopId,
+																			cache.name,
+																			filename,
+																		)
+																	}
+																	title="Delete entry"
+																>
+																	<Icon name="Remove" className="h-4 w-4" />
+																</DoubleCheckButton>
+															</div>
 														</div>
-														<div className="ml-4 flex flex-shrink-0 gap-1">
-															<a
-																href={href('/admin/cache/*', {
-																	'*': `${workshopCache.workshopId}/${cache.name}/${filename}`,
-																})}
-																target="_blank"
-																rel="noopener noreferrer"
-																className="inline-flex h-8 w-8 items-center justify-center rounded border border-border bg-background text-foreground hover:bg-muted focus:outline-none focus:ring-2 focus:ring-ring"
-																title="View JSON"
-															>
-																<Icon name="ExternalLink" className="h-4 w-4" />
-															</a>
-															<DoubleCheckButton
-																onConfirm={() =>
-																	deleteEntry(
-																		workshopCache.workshopId,
-																		cache.name,
-																		filename,
-																	)
-																}
-																title="Delete entry"
-															>
-																<Icon name="Remove" className="h-4 w-4" />
-															</DoubleCheckButton>
-														</div>
+														<InlineEntryEditor
+															workshopId={workshopCache.workshopId}
+															cacheName={cache.name}
+															filename={filename}
+															currentValue={entry.value}
+															entryKey={key}
+														/>
 													</div>
-													<InlineEntryEditor
-														workshopId={workshopCache.workshopId}
-														cacheName={cache.name}
-														filename={filename}
-														currentValue={entry.value}
-														entryKey={key}
-													/>
-												</div>
-											))}
+												))}
+											</div>
 										</div>
-									</div>
-								</details>
-							))}
+									</details>
+								)
+							})}
 						</div>
 					</details>
 				))}

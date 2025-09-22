@@ -35,6 +35,7 @@ export type IconName =
 	| 'Keyboard'
 	| 'Linked'
 	| 'Unlinked'
+	| 'TriangleAlert'
 	| 'TriangleSmall'
 	| 'ArrowLeft'
 	| 'ArrowRight'
