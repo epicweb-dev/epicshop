@@ -440,7 +440,11 @@ export async function closeProcess(key: string) {
 		)
 		if (process.platform === 'win32') {
 			const { execa } = await import('execa')
-			await execa('taskkill', ['/pid', String(proc.process.pid), '/f', '/t'])
+			try {
+				await execa('taskkill', ['/pid', String(proc.process.pid), '/f', '/t'])
+			} catch (err) {
+				console.error(`Failed to taskkill process ${proc.process.pid}:`, err)
+			}
 		} else {
 			proc.process.kill()
 		}
