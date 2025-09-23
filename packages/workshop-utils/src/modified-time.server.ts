@@ -30,7 +30,7 @@ async function getDirModifiedTimeImpl(dir: string): Promise<number> {
 
 	for (const file of files) {
 		// Skip ignored files
-		if (isIgnored(file.name)) continue
+		if (isIgnored(path.join(dir, file.name))) continue
 
 		const filePath = path.join(dir, file.name)
 
