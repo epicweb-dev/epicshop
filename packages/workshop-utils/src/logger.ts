@@ -20,7 +20,7 @@ export function logger(ns: string): Logger {
 	loggerFn.warn = (...args: Parameters<typeof log>) => log('⚠️', ...args)
 	loggerFn.info = (...args: Parameters<typeof log>) => log('ℹ️', ...args)
 	loggerFn.namespace = ns
-	loggerFn.logger = (ns: string) => logger(`${ns}:${ns}`)
+	loggerFn.logger = (subNs: string) => logger(`${ns}:${subNs}`)
 	loggerFn.isEnabled = () => debuglog(ns).enabled
 
 	return loggerFn
