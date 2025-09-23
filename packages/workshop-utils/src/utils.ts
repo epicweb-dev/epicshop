@@ -13,7 +13,10 @@ export const dayjs = remember('dayjs', () => {
 	return dayjsLib
 })
 
-export function getErrorMessage(error: unknown) {
+export function getErrorMessage(
+	error: unknown,
+	fallbackMessage = 'Unknown Error',
+): string {
 	if (typeof error === 'string') return error
 	if (
 		error &&
@@ -24,7 +27,7 @@ export function getErrorMessage(error: unknown) {
 		return error.message
 	}
 	console.error('Unable to get error message for error', error)
-	return 'Unknown Error'
+	return fallbackMessage
 }
 
 export function handleGitHubRepoAndRoot({
