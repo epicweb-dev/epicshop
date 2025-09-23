@@ -47,6 +47,16 @@ const cli = yargs(hideBin(process.argv))
 				appLocation?: string
 			}>,
 		) => {
+			// run migrations before starting
+			await import('./commands/migrate.js')
+				.then(({ migrate }) => migrate())
+				.catch((error) => {
+					// Log migration errors but don't fail the start command
+					if (!argv.silent) {
+						console.error(chalk.yellow('⚠️  Migration failed:'), error)
+					}
+				})
+
 			// kick off a warmup while we start the server
 			import('./commands/warm.js')
 				.then(({ warm }) => warm({ silent: true }))
@@ -151,6 +161,53 @@ const cli = yargs(hideBin(process.argv))
 			} catch (error) {
 				if (!argv.silent) {
 					console.error(chalk.red('❌ Warmup failed:'), error)
+				}
+				process.exit(1)
+			}
+		},
+	)
+	.command(
+		['migrate'],
+		'Run any necessary migrations for workshop data',
+		(yargs: Argv) => {
+			return yargs
+				.option('silent', {
+					alias: 's',
+					type: 'boolean',
+					description: 'Run without output logs',
+					default: false,
+				})
+				.example('$0 migrate', 'Run necessary migrations')
+				.example('$0 migrate --silent', 'Run migrations silently')
+		},
+		async (argv: ArgumentsCamelCase<{ silent?: boolean }>) => {
+			try {
+				const { migrate } = await import('./commands/migrate.js')
+				const result = await migrate()
+				if (argv.silent) return
+				if (result === null) {
+					console.log(chalk.green('✅ No migrations needed'))
+					return
+				}
+
+				if (result.success) {
+					console.log(
+						chalk.green(
+							result.message || '✅ Migrations completed successfully',
+						),
+					)
+				} else {
+					console.error(
+						chalk.red(`❌ ${result.message || 'Failed to run migrations'}`),
+					)
+					if (result.error) {
+						console.error(chalk.red(result.error.message))
+					}
+					process.exit(1)
+				}
+			} catch (error) {
+				if (!argv.silent) {
+					console.error(chalk.red('❌ Migration failed:'), error)
 				}
 				process.exit(1)
 			}
