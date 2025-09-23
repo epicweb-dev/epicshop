@@ -82,13 +82,20 @@ function formatDuration(ms: number): string {
 	if (ms < 1000) return `${Math.round(ms)}ms`
 	if (ms < 60000) return `${Math.round(ms / 1000)}s`
 	if (ms < 3600000) return `${Math.round(ms / 60000)}m`
-	return `${Math.round(ms / 3600000)}h`
+	if (ms < 86400000) return `${Math.round(ms / 3600000)}h`
+	if (ms < 604800000) return `${Math.round(ms / 86400000)}d`
+	if (ms < 2629746000) return `${Math.round(ms / 604800000)}w`
+	if (ms < 31556952000) return `${Math.round(ms / 2629746000)}mo`
+	return `${Math.round(ms / 31556952000)}y`
 }
 
 function formatFileSize(bytes: number): string {
 	if (bytes < 1024) return `${bytes} B`
 	if (bytes < 1024 * 1024) return `${(bytes / 1024).toFixed(1)} KB`
-	return `${(bytes / (1024 * 1024)).toFixed(1)} MB`
+	if (bytes < 1024 * 1024 * 1024) {
+		return `${(bytes / (1024 * 1024)).toFixed(1)} MB`
+	}
+	return `${(bytes / (1024 * 1024 * 1024)).toFixed(1)} GB`
 }
 
 // Component for displaying cache metadata with live countdown
@@ -127,11 +134,11 @@ function CacheMetadata({
 						TTL:{' '}
 						{metadata.ttl === Infinity
 							? 'Forever'
-							: formatDuration(metadata.ttl)}
+							: <span title={`${metadata.ttl}ms`}>{formatDuration(metadata.ttl)}</span>}
 					</span>
 				)}
 				{metadata.swr !== undefined && (
-					<span>SWR: {formatDuration(metadata.swr)}</span>
+					<span>SWR: <span title={`${metadata.swr}ms`}>{formatDuration(metadata.swr)}</span></span>
 				)}
 			</div>
 			<div
@@ -530,7 +537,7 @@ function SkippedFilesSection({
 								{skippedFile.filename}
 							</div>
 							<div className="text-warning-foreground/70 text-xs">
-								{skippedFile.error} • Size: {formatFileSize(skippedFile.size)}
+								{skippedFile.error} • Size: <span title={`${skippedFile.size} bytes`}>{formatFileSize(skippedFile.size)}</span>
 							</div>
 						</div>
 						<div className="ml-2 flex flex-shrink-0">
@@ -698,11 +705,11 @@ export default function CacheManagement({ loaderData }: Route.ComponentProps) {
 													</span>
 													{grandTotal > 0 && (
 														<span className="text-sm text-muted-foreground">
-															• {formatFileSize(grandTotal)} total
+															• <span title={`${grandTotal} bytes`}>{formatFileSize(grandTotal)}</span> total
 															{skippedSize > 0 && (
 																<span className="text-warning">
 																	{' '}
-																	({formatFileSize(skippedSize)} skipped)
+																	(<span title={`${skippedSize} bytes`}>{formatFileSize(skippedSize)}</span> skipped)
 																</span>
 															)}
 														</span>
@@ -750,7 +757,7 @@ export default function CacheManagement({ loaderData }: Route.ComponentProps) {
 																		{key}
 																	</div>
 																	{size ? (
-																		<span className="inline-flex items-center whitespace-nowrap rounded bg-muted px-1.5 py-0.5 text-xs text-muted-foreground">
+																		<span className="inline-flex items-center whitespace-nowrap rounded bg-muted px-1.5 py-0.5 text-xs text-muted-foreground" title={`${size} bytes`}>
 																			{formatFileSize(size)}
 																		</span>
 																	) : null}
