@@ -88,19 +88,14 @@ export function LinkButton({
 	return <button {...props} className={clsx('underline', className)} />
 }
 
+export const iconButtonClassName = `inline-flex h-8 w-8 items-center justify-center rounded border focus:outline-none focus:ring-2 focus:ring-ring`
 export function IconButton({
 	children,
 	className = '',
 	...props
 }: React.ComponentPropsWithoutRef<'button'>) {
 	return (
-		<button
-			{...props}
-			className={cn(
-				`inline-flex h-8 w-8 items-center justify-center rounded border focus:outline-none focus:ring-2 focus:ring-ring`,
-				className,
-			)}
-		>
+		<button {...props} className={cn(iconButtonClassName, className)}>
 			{children}
 		</button>
 	)

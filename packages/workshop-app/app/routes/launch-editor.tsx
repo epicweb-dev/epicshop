@@ -1,6 +1,5 @@
 import path from 'path'
 import { getAppByName } from '@epic-web/workshop-utils/apps.server'
-import { clsx } from 'clsx'
 import fsExtra from 'fs-extra'
 import { useEffect } from 'react'
 import { Link, useFetcher, type ActionFunctionArgs } from 'react-router'
@@ -8,7 +7,7 @@ import { z, type ZodTypeAny } from 'zod'
 import { useApps } from '#app/components/apps'
 import { showProgressBarField } from '#app/components/progress-bar.tsx'
 import { launchEditor } from '#app/utils/launch-editor.server.ts'
-import { ensureUndeployed } from '#app/utils/misc.tsx'
+import { cn, ensureUndeployed } from '#app/utils/misc.tsx'
 import { dataWithPE, usePERedirectInput } from '#app/utils/pe.js'
 import { useRequestInfo } from '#app/utils/request-info'
 import { createToastHeaders } from '#app/utils/toast.server.ts'
@@ -184,6 +183,7 @@ type FileDescriptorProps<AppFile> =
 	  }
 
 type LaunchEditorProps = {
+	className?: string
 	line?: number
 	column?: number
 	syncTo?: FileDescriptorProps<string>
@@ -204,6 +204,7 @@ function useLaunchFetcher(onUpdate?: ((state: string) => void) | undefined) {
 }
 
 function LaunchEditorImpl({
+	className,
 	file,
 	appFile,
 	appName,
@@ -254,10 +255,11 @@ function LaunchEditorImpl({
 			) : null}
 			<button
 				type="submit"
-				className={clsx(
+				className={cn(
 					'launch_button',
 					fetcher.state === 'idle' ? null : 'cursor-progress',
 					fetcher.data?.status === 'error' ? 'cursor-not-allowed' : null,
+					className,
 				)}
 			>
 				{children}
@@ -267,6 +269,7 @@ function LaunchEditorImpl({
 }
 
 function LaunchGitHub({
+	className,
 	file,
 	appFile,
 	appName,
@@ -312,7 +315,7 @@ function LaunchGitHub({
 	].join('/')
 	return (
 		<a
-			className="launch_button !no-underline"
+			className={cn('launch_button !no-underline', className)}
 			href={`${githubFileRoot}/${path}${lineNumber ? `#L${lineNumber}` : ''}`}
 			rel="noreferrer"
 			target="_blank"

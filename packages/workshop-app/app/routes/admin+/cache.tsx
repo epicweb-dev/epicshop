@@ -12,8 +12,13 @@ import { useState, useEffect, useRef } from 'react'
 import { href, useFetcher, useSearchParams } from 'react-router'
 import { ClientOnly } from 'remix-utils/client-only'
 import { z } from 'zod'
-import { Button, IconButton } from '#app/components/button.tsx'
+import {
+	Button,
+	IconButton,
+	iconButtonClassName,
+} from '#app/components/button.tsx'
 import { Icon } from '#app/components/icons.tsx'
+import { LaunchEditor } from '#app/routes/launch-editor.tsx'
 import {
 	cn,
 	ensureUndeployed,
@@ -762,29 +767,30 @@ export default function CacheManagement({ loaderData }: Route.ComponentProps) {
 											)}
 
 											<div className="space-y-2">
-												{cache.entries.map(({ key, entry, filename, size }) => (
-													<div
-														key={key}
-														className="rounded border border-border bg-background p-3"
-													>
-														<div className="flex items-start justify-between">
-															<div className="min-w-0 flex-1">
-																<div className="mb-1 flex items-center gap-2">
-																	<div
-																		className="truncate font-mono text-sm font-medium"
-																		title={key}
-																	>
-																		{key}
-																	</div>
-																	{size ? (
-																		<span
-																			className="inline-flex items-center whitespace-nowrap rounded bg-muted px-1.5 py-0.5 text-xs text-muted-foreground"
-																			title={`${size} bytes`}
+												{cache.entries.map(
+													({ key, entry, filename, size, filepath }) => (
+														<div
+															key={key}
+															className="rounded border border-border bg-background p-3"
+														>
+															<div className="flex items-start justify-between">
+																<div className="min-w-0 flex-1">
+																	<div className="mb-1 flex items-center gap-2">
+																		<div
+																			className="truncate font-mono text-sm font-medium"
+																			title={key}
 																		>
-																			{formatFileSize(size)}
-																		</span>
-																	) : null}
-																</div>
+																			{key}
+																		</div>
+																		{size ? (
+																			<span
+																				className="inline-flex items-center whitespace-nowrap rounded bg-muted px-1.5 py-0.5 text-xs text-muted-foreground"
+																				title={`${size} bytes`}
+																			>
+																				{formatFileSize(size)}
+																			</span>
+																		) : null}
+																	</div>
 																<CacheMetadata metadata={entry.metadata} />
 															</div>
 															<div className="ml-4 flex flex-shrink-0 gap-1">
@@ -802,6 +808,18 @@ export default function CacheManagement({ loaderData }: Route.ComponentProps) {
 																		className="h-4 w-4"
 																	/>
 																</a>
+																{filepath && (
+																	<LaunchEditor
+																		file={filepath}
+																		className={iconButtonClassName}
+																	>
+																		<Icon
+																			name="Files"
+																			className="h-4 w-4"
+																			title="Open in editor"
+																		/>
+																	</LaunchEditor>
+																)}
 																<DoubleCheckButton
 																	onConfirm={() =>
 																		deleteEntry(
@@ -815,16 +833,17 @@ export default function CacheManagement({ loaderData }: Route.ComponentProps) {
 																	<Icon name="Remove" className="h-4 w-4" />
 																</DoubleCheckButton>
 															</div>
+															</div>
+															<InlineEntryEditor
+																workshopId={workshopCache.workshopId}
+																cacheName={cache.name}
+																filename={filename}
+																currentValue={entry.value}
+																entryKey={key}
+															/>
 														</div>
-														<InlineEntryEditor
-															workshopId={workshopCache.workshopId}
-															cacheName={cache.name}
-															filename={filename}
-															currentValue={entry.value}
-															entryKey={key}
-														/>
-													</div>
-												))}
+													),
+												)}
 											</div>
 										</div>
 									</details>

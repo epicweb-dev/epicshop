@@ -314,8 +314,8 @@ async function readJsonFilesInDirectory(
 					for (let attempt = 0; attempt <= maxRetries; attempt++) {
 						try {
 							const data = await fsExtra.readJSON(filePath)
-							// Include file size information with the data
-							return [file, { ...data, size: stats.size }]
+							// Include file size and filepath information with the data
+							return [file, { ...data, size: stats.size, filepath: filePath }]
 						} catch (error: unknown) {
 							// Handle JSON parsing errors (could be race condition or corruption)
 							if (
@@ -363,6 +363,7 @@ const CacheEntrySchema = z.object({
 		}),
 	}),
 	size: z.number().optional(), // File size in bytes
+	filepath: z.string().optional(), // Full filesystem path to the cache file
 })
 
 // Schema for files that were skipped due to size limits
