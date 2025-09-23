@@ -134,7 +134,7 @@ function CacheMetadata({
 				<ClientOnly>{() => `(${createdDate.fromNow()})`}</ClientOnly>
 			</div>
 			<div className="flex flex-wrap gap-4">
-				{metadata.ttl !== undefined && metadata.ttl !== null && (
+				{metadata.ttl !== undefined && metadata.ttl !== null ? (
 					<span>
 						TTL:{' '}
 						{metadata.ttl === Infinity ? (
@@ -145,15 +145,15 @@ function CacheMetadata({
 							</span>
 						)}
 					</span>
-				)}
-				{metadata.swr !== undefined && (
+				) : null}
+				{metadata.swr !== undefined ? (
 					<span>
 						SWR:{' '}
 						<span title={`${metadata.swr}ms`}>
 							{formatDuration(metadata.swr)}
 						</span>
 					</span>
-				)}
+				) : null}
 			</div>
 			<div
 				className={`font-medium ${
@@ -366,7 +366,7 @@ function WorkshopChooser({
 						<span
 							className={`text-sm ${workshop === currentWorkshopId ? 'font-bold text-primary' : ''}`}
 						>
-							{workshop} {workshop === currentWorkshopId && '(current)'}
+							{workshop} {workshop === currentWorkshopId ? '(current)' : null}
 						</span>
 					</label>
 				))}
@@ -416,11 +416,11 @@ function SearchFilter({ filterQuery }: { filterQuery: string }) {
 					}}
 					className="flex-1 rounded-md border border-border bg-background px-3 py-2 text-foreground focus:outline-none focus:ring-2 focus:ring-ring"
 				/>
-				{inputValue && (
+				{inputValue ? (
 					<IconButton onClick={handleClear} title="Clear search">
 						<Icon name="Close" className="h-4 w-4" />
 					</IconButton>
-				)}
+				) : null}
 			</div>
 		</div>
 	)
@@ -651,23 +651,23 @@ export default function CacheManagement({ loaderData }: Route.ComponentProps) {
 
 			<SearchFilter filterQuery={filterQuery} />
 
-			{fetcher.data?.status === 'success' && (
+			{fetcher.data?.status === 'success' ? (
 				<div className="bg-success text-success-foreground rounded border border-border p-4">
 					{fetcher.data.message}
 				</div>
-			)}
+			) : null}
 
-			{fetcher.data?.status === 'error' && (
+			{fetcher.data?.status === 'error' ? (
 				<div className="rounded border border-border bg-destructive p-4 text-destructive-foreground">
 					{fetcher.data.error}
 				</div>
-			)}
+			) : null}
 
-			{filteredCaches.length === 0 && (
+			{filteredCaches.length === 0 ? (
 				<div className="py-8 text-center text-muted-foreground">
 					No caches found matching your criteria.
 				</div>
-			)}
+			) : null}
 
 			<div className="space-y-6">
 				{filteredCaches.map((workshopCache) => (
@@ -680,11 +680,11 @@ export default function CacheManagement({ loaderData }: Route.ComponentProps) {
 								<h3 className="flex items-center gap-2 text-lg font-semibold text-card-foreground">
 									<Icon name="Files" className="h-5 w-5" />
 									{workshopCache.workshopId}
-									{workshopCache.workshopId === currentWorkshopId && (
+									{workshopCache.workshopId === currentWorkshopId ? (
 										<span className="rounded bg-primary px-2 py-1 text-xs text-primary-foreground">
 											Current
 										</span>
-									)}
+									) : null}
 								</h3>
 								<DoubleCheckButton
 									onConfirm={() =>
@@ -720,14 +720,14 @@ export default function CacheManagement({ loaderData }: Route.ComponentProps) {
 														({cache.entries.length} entr
 														{cache.entries.length === 1 ? 'y' : 'ies'})
 													</span>
-													{grandTotal > 0 && (
+													{grandTotal > 0 ? (
 														<span className="text-sm text-muted-foreground">
 															•{' '}
 															<span title={`${grandTotal} bytes`}>
 																{formatFileSize(grandTotal)}
 															</span>{' '}
 															total
-															{skippedSize > 0 && (
+															{skippedSize > 0 ? (
 																<span className="text-warning">
 																	{' '}
 																	(
@@ -736,9 +736,9 @@ export default function CacheManagement({ loaderData }: Route.ComponentProps) {
 																	</span>{' '}
 																	skipped)
 																</span>
-															)}
+															) : null}
 														</span>
-													)}
+													) : null}
 												</h4>
 												<DoubleCheckButton
 													onConfirm={() =>
@@ -752,19 +752,19 @@ export default function CacheManagement({ loaderData }: Route.ComponentProps) {
 										</summary>
 
 										<div className="p-3 pt-0">
-											{cache.entries.length === 0 && (
+											{cache.entries.length === 0 ? (
 												<p className="text-sm text-muted-foreground">
 													No entries match your search.
 												</p>
-											)}
+											) : null}
 
-											{cache.skippedFiles && cache.skippedFiles.length > 0 && (
+											{cache.skippedFiles && cache.skippedFiles.length > 0 ? (
 												<SkippedFilesSection
 													skippedFiles={cache.skippedFiles}
 													workshopId={workshopCache.workshopId}
 													cacheName={cache.name}
 												/>
-											)}
+											) : null}
 
 											<div className="space-y-2">
 												{cache.entries.map(
@@ -791,48 +791,48 @@ export default function CacheManagement({ loaderData }: Route.ComponentProps) {
 																			</span>
 																		) : null}
 																	</div>
-																<CacheMetadata metadata={entry.metadata} />
-															</div>
-															<div className="ml-4 flex flex-shrink-0 gap-1">
-																<a
-																	href={href('/admin/cache/*', {
-																		'*': `${workshopCache.workshopId}/${cache.name}/${filename}`,
-																	})}
-																	target="_blank"
-																	rel="noopener noreferrer"
-																	className="inline-flex h-8 w-8 items-center justify-center rounded border border-border bg-background text-foreground hover:bg-muted focus:outline-none focus:ring-2 focus:ring-ring"
-																	title="View JSON"
-																>
-																	<Icon
-																		name="ExternalLink"
-																		className="h-4 w-4"
-																	/>
-																</a>
-																{filepath && (
-																	<LaunchEditor
-																		file={filepath}
-																		className={iconButtonClassName}
+																	<CacheMetadata metadata={entry.metadata} />
+																</div>
+																<div className="ml-4 flex flex-shrink-0 gap-1">
+																	<a
+																		href={href('/admin/cache/*', {
+																			'*': `${workshopCache.workshopId}/${cache.name}/${filename}`,
+																		})}
+																		target="_blank"
+																		rel="noopener noreferrer"
+																		className="inline-flex h-8 w-8 items-center justify-center rounded border border-border bg-background text-foreground hover:bg-muted focus:outline-none focus:ring-2 focus:ring-ring"
+																		title="View JSON"
 																	>
 																		<Icon
-																			name="Files"
+																			name="ExternalLink"
 																			className="h-4 w-4"
-																			title="Open in editor"
 																		/>
-																	</LaunchEditor>
-																)}
-																<DoubleCheckButton
-																	onConfirm={() =>
-																		deleteEntry(
-																			workshopCache.workshopId,
-																			cache.name,
-																			filename,
-																		)
-																	}
-																	title="Delete entry"
-																>
-																	<Icon name="Remove" className="h-4 w-4" />
-																</DoubleCheckButton>
-															</div>
+																	</a>
+																	{filepath ? (
+																		<LaunchEditor
+																			file={filepath}
+																			className={iconButtonClassName}
+																		>
+																			<Icon
+																				name="Files"
+																				className="h-4 w-4"
+																				title="Open in editor"
+																			/>
+																		</LaunchEditor>
+																	) : null}
+																	<DoubleCheckButton
+																		onConfirm={() =>
+																			deleteEntry(
+																				workshopCache.workshopId,
+																				cache.name,
+																				filename,
+																			)
+																		}
+																		title="Delete entry"
+																	>
+																		<Icon name="Remove" className="h-4 w-4" />
+																	</DoubleCheckButton>
+																</div>
 															</div>
 															<InlineEntryEditor
 																workshopId={workshopCache.workshopId}
