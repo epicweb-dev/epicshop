@@ -132,13 +132,22 @@ function CacheMetadata({
 				{metadata.ttl !== undefined && metadata.ttl !== null && (
 					<span>
 						TTL:{' '}
-						{metadata.ttl === Infinity
-							? 'Forever'
-							: <span title={`${metadata.ttl}ms`}>{formatDuration(metadata.ttl)}</span>}
+						{metadata.ttl === Infinity ? (
+							'Forever'
+						) : (
+							<span title={`${metadata.ttl}ms`}>
+								{formatDuration(metadata.ttl)}
+							</span>
+						)}
 					</span>
 				)}
 				{metadata.swr !== undefined && (
-					<span>SWR: <span title={`${metadata.swr}ms`}>{formatDuration(metadata.swr)}</span></span>
+					<span>
+						SWR:{' '}
+						<span title={`${metadata.swr}ms`}>
+							{formatDuration(metadata.swr)}
+						</span>
+					</span>
 				)}
 			</div>
 			<div
@@ -537,7 +546,10 @@ function SkippedFilesSection({
 								{skippedFile.filename}
 							</div>
 							<div className="text-warning-foreground/70 text-xs">
-								{skippedFile.error} • Size: <span title={`${skippedFile.size} bytes`}>{formatFileSize(skippedFile.size)}</span>
+								{skippedFile.error} • Size:{' '}
+								<span title={`${skippedFile.size} bytes`}>
+									{formatFileSize(skippedFile.size)}
+								</span>
 							</div>
 						</div>
 						<div className="ml-2 flex flex-shrink-0">
@@ -705,11 +717,19 @@ export default function CacheManagement({ loaderData }: Route.ComponentProps) {
 													</span>
 													{grandTotal > 0 && (
 														<span className="text-sm text-muted-foreground">
-															• <span title={`${grandTotal} bytes`}>{formatFileSize(grandTotal)}</span> total
+															•{' '}
+															<span title={`${grandTotal} bytes`}>
+																{formatFileSize(grandTotal)}
+															</span>{' '}
+															total
 															{skippedSize > 0 && (
 																<span className="text-warning">
 																	{' '}
-																	(<span title={`${skippedSize} bytes`}>{formatFileSize(skippedSize)}</span> skipped)
+																	(
+																	<span title={`${skippedSize} bytes`}>
+																		{formatFileSize(skippedSize)}
+																	</span>{' '}
+																	skipped)
 																</span>
 															)}
 														</span>
@@ -757,7 +777,10 @@ export default function CacheManagement({ loaderData }: Route.ComponentProps) {
 																		{key}
 																	</div>
 																	{size ? (
-																		<span className="inline-flex items-center whitespace-nowrap rounded bg-muted px-1.5 py-0.5 text-xs text-muted-foreground" title={`${size} bytes`}>
+																		<span
+																			className="inline-flex items-center whitespace-nowrap rounded bg-muted px-1.5 py-0.5 text-xs text-muted-foreground"
+																			title={`${size} bytes`}
+																		>
 																			{formatFileSize(size)}
 																		</span>
 																	) : null}
