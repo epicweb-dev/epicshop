@@ -335,7 +335,10 @@ export function setModifiedTimesForAppDirs(
 	for (const filePath of filePaths) {
 		const appDir = getAppPathFromFilePath(filePath)
 		if (appDir) {
-			modifiedTimes.set(appDir, modifiedAt)
+			const existingModifiedTime = modifiedTimes.get(appDir)
+			if (!existingModifiedTime || modifiedAt > existingModifiedTime) {
+				modifiedTimes.set(appDir, modifiedAt)
+			}
 		}
 	}
 }
