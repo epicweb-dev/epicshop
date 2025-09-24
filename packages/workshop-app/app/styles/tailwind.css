@@ -45,8 +45,8 @@
 		--destructive: 0 100% 50%;
 		--destructive-foreground: 210 40% 98%;
 
-		--warning: 38 92% 50%;
-		--warning-foreground: 48 96% 89%;
+		--warning: 51 100% 95%;
+		--warning-foreground: 56 100% 20%;
 
 		--success: 142 76% 36%;
 		--success-foreground: 355 25% 95%;
@@ -98,8 +98,8 @@
 		--destructive: 0 63% 31%;
 		--destructive-foreground: 210 40% 98%;
 
-		--warning: 48 96% 53%;
-		--warning-foreground: 20 14.3% 4.1%;
+		--warning: 36 23% 9%;
+		--warning-foreground: 47 100% 63%;
 
 		--success: 142 76% 36%;
 		--success-foreground: 355 25% 95%;
