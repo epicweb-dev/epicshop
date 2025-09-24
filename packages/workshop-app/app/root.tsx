@@ -4,7 +4,6 @@ import { getApps } from '@epic-web/workshop-utils/apps.server'
 import { getWorkshopConfig } from '@epic-web/workshop-utils/config.server'
 import {
 	getPreferences,
-	readOnboardingData,
 	getMutedNotifications,
 	areAllOnboardingVideosWatched,
 } from '@epic-web/workshop-utils/db.server'
@@ -100,8 +99,6 @@ export async function loader({ request }: Route.LoaderArgs) {
 		instructor,
 		onboardingVideo: onboardingVideos,
 	} = workshopConfig
-
-	const onboardingVideos = workshopConfig.onboardingVideo
 
 	if (
 		!ENV.EPICSHOP_DEPLOYED &&
