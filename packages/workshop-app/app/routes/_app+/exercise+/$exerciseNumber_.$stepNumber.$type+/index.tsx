@@ -34,6 +34,7 @@ import {
 import { Diff } from '#app/components/diff.tsx'
 import { GeneralErrorBoundary } from '#app/components/error-boundary.tsx'
 import { type InBrowserBrowserRef } from '#app/components/in-browser-browser.tsx'
+import { useWorkshopConfig } from '#app/components/workshop-config.tsx'
 import { useAltDown } from '#app/utils/misc.tsx'
 import { fetchDiscordPosts } from './__shared/discord.server.ts'
 import { DiscordChat } from './__shared/discord.tsx'
@@ -237,6 +238,7 @@ function withParam(
 
 export default function ExercisePartRoute() {
 	const data = useLoaderData<typeof loader>()
+	const workshopConfig = useWorkshopConfig()
 	const [searchParams] = useSearchParams()
 
 	const preview = searchParams.get('preview')
@@ -260,6 +262,10 @@ export default function ExercisePartRoute() {
 			}
 		}
 		if (tab === 'playground' && ENV.EPICSHOP_DEPLOYED) return true
+
+		if (tab === 'chat') {
+			return !workshopConfig.product.discordChannelId
+		}
 		return false
 	}
 

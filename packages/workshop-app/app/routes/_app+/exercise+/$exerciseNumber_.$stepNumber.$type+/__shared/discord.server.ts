@@ -67,6 +67,8 @@ const EpicForumResponseSchema = z
 
 export async function fetchDiscordPosts({ request }: { request: Request }) {
 	const config = getWorkshopConfig()
+	if (!config.product.discordChannelId) return []
+
 	const forceFresh = await shouldForceFresh({ request })
 	const searchParams = new URLSearchParams({
 		channelId: config.product.discordChannelId,

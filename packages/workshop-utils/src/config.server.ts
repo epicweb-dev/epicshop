@@ -48,7 +48,7 @@ const WorkshopConfigSchema = z
 				displayNameShort: z.string().default('Epic Web'),
 				logo: z.string().default('/logo.svg'),
 				slug: z.string().optional(),
-				discordChannelId: z.string().default('1161045224907341972'),
+				discordChannelId: z.string().optional(),
 				discordTags: z.array(z.string()).optional(),
 			})
 			.default({}),
