@@ -6,6 +6,7 @@ import {
 	getPreferences,
 	readOnboardingData,
 	getMutedNotifications,
+	areAllOnboardingVideosWatched,
 } from '@epic-web/workshop-utils/db.server'
 import { getEnv } from '@epic-web/workshop-utils/env.server'
 import {
@@ -97,13 +98,14 @@ export async function loader({ request }: Route.LoaderArgs) {
 		title: workshopTitle,
 		subtitle: workshopSubtitle,
 		instructor,
-		onboardingVideo,
+		onboardingVideo: onboardingVideos,
 	} = workshopConfig
 
-	const onboarding = await readOnboardingData()
+	const onboardingVideos = workshopConfig.onboardingVideo
+
 	if (
 		!ENV.EPICSHOP_DEPLOYED &&
-		!onboarding?.tourVideosWatched.includes(onboardingVideo)
+		!(await areAllOnboardingVideosWatched(onboardingVideos))
 	) {
 		if (new URL(request.url).pathname !== '/onboarding') {
 			throw redirect('/onboarding')

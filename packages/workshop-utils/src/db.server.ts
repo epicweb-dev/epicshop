@@ -353,3 +353,11 @@ export async function markOnboardingVideoWatched(videoUrl: string) {
 	await saveJSON(updatedData)
 	return updatedData.onboarding
 }
+
+export async function areAllOnboardingVideosWatched(
+	onboardingVideos: string[],
+) {
+	const data = await readDb()
+	const watchedVideos = data?.onboarding?.tourVideosWatched ?? []
+	return onboardingVideos.every((video) => watchedVideos.includes(video))
+}

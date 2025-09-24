@@ -53,10 +53,11 @@ const WorkshopConfigSchema = z
 			})
 			.default({}),
 		onboardingVideo: z
-			.string()
+			.union([z.string(), z.array(z.string())])
 			.default(
 				'https://www.epicweb.dev/tips/get-started-with-the-epic-workshop-app',
-			),
+			)
+			.transform((value) => (Array.isArray(value) ? value : [value])),
 		githubRepo: z
 			.string()
 			.transform((githubRepo) => githubRepo ?? getEnv().EPICSHOP_GITHUB_REPO),
