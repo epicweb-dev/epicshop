@@ -1,5 +1,6 @@
 import path from 'path'
 import { fileURLToPath } from 'url'
+import { debuglog } from 'util'
 import { getPresentUsers } from '@epic-web/workshop-presence/presence.server'
 import {
 	getApps,
@@ -103,9 +104,18 @@ if (viteDevServer) {
 	)
 }
 
-if ((!isProd && !ENV.EPICSHOP_IS_PUBLISHED) || ENV.EPICSHOP_DEPLOYED) {
+if (
+	(!isProd && !ENV.EPICSHOP_IS_PUBLISHED) ||
+	ENV.EPICSHOP_DEPLOYED ||
+	debuglog('epic:req').enabled
+) {
 	morgan.token('url', (req) => decodeURIComponent(req.url ?? ''))
-	app.use(morgan('tiny'))
+	const ignore = [/^\/__manifest/]
+	app.use(
+		morgan('tiny', {
+			skip: (req, _res) => ignore.some((pattern) => pattern.test(req.url)),
+		}),
+	)
 }
 
 app.use((_req, _res, next) => requestContext.run({}, next))

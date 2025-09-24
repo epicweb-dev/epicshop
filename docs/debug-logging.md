@@ -95,6 +95,14 @@ NODE_DEBUG=epic:cache:exampleappcache npm run dev
 NODE_DEBUG=epic:cache:lru npm run dev
 ```
 
+### Request Debugging
+
+To see detailed request logging, enable the `epic:req` namespace:
+
+```bash
+NODE_DEBUG=epic:req npm run dev
+```
+
 ### Custom Logging
 
 You can create your own debug loggers for custom functionality:
