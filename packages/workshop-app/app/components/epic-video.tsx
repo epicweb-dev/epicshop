@@ -185,11 +185,13 @@ export function DeferredEpicVideo({
 	} = useWorkshopConfig()
 	const user = useOptionalUser()
 	const epicVideoInfosPromise = React.useContext(EpicVideoInfoContext)
-	const linkUI = (
+	const linkUI = bottomRightUI ? (
 		<div className="flex justify-between">
 			<VideoLink url={url} title={title} />
 			{bottomRightUI}
 		</div>
+	) : (
+		<VideoLink url={url} title={title} />
 	)
 	return (
 		<div>
