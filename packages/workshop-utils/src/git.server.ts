@@ -31,10 +31,12 @@ async function cleanupEmptyExerciseDirectories(cwd: string) {
 
 		let deletedCount = 0
 
+		// Determine which directories contain any files (tracked or untracked), and
+		// which are "fileless" (contain only subdirectories or are empty).
+		const hasFilesMap = new Map<string, boolean>()
 		for (const dir of directories) {
 			if (dir === 'exercises') continue // Skip the root exercises directory
 
-			// Check if directory has any files (excluding gitignored files)
 			const [trackedFiles, untrackedFiles] = await Promise.all([
 				execa('git', ['ls-files', dir], { cwd, reject: false }).catch(() => ({
 					stdout: '',
@@ -45,26 +47,43 @@ async function cleanupEmptyExerciseDirectories(cwd: string) {
 				}).catch(() => ({ stdout: '' })),
 			])
 
-			// Fix: Use proper boolean logic to check if both outputs are empty
 			const hasTrackedFiles = trackedFiles.stdout.trim().length > 0
 			const hasUntrackedFiles = untrackedFiles.stdout.trim().length > 0
-			const hasFiles = hasTrackedFiles || hasUntrackedFiles
+			hasFilesMap.set(dir, hasTrackedFiles || hasUntrackedFiles)
+		}
 
-			if (!hasFiles) {
-				console.log(`   Deleting empty directory: ${dir}`)
-				try {
-					// Use fs.rmdir instead of shell command to avoid shell injection
-					await fs.rmdir(path.join(cwd, dir))
-					deletedCount++
-				} catch {
-					// Directory might not be empty or might not exist, which is fine
-					// We'll just continue with the next directory
-				}
+		// Build a set of directories that have no files anywhere in their subtree
+		const emptyDirs = directories.filter(
+			(dir) => dir !== 'exercises' && hasFilesMap.get(dir) === false,
+		)
+		const emptySet = new Set(emptyDirs)
+
+		// From the empty directories, pick only the top-most ones (those that do not
+		// have an ancestor also in the empty set). Deleting these recursively is
+		// faster and removes entire empty trees in one go.
+		const topLevelEmptyDirs = emptyDirs.filter((dir) => {
+			let parent = path.posix.dirname(dir)
+			while (parent && parent !== '.' && parent !== 'exercises') {
+				if (emptySet.has(parent)) return false
+				parent = path.posix.dirname(parent)
+			}
+			return true
+		})
+
+		for (const dir of topLevelEmptyDirs) {
+			console.log(`   Deleting empty directory tree: ${dir}`)
+			try {
+				// Recursively remove the directory tree. This is safe because we've
+				// confirmed there are no files (tracked or untracked) anywhere within.
+				await fs.rm(path.join(cwd, dir), { recursive: true, force: true })
+				deletedCount++
+			} catch {
+				// Directory might not exist due to race conditions; continue.
 			}
 		}
 
 		if (deletedCount > 0) {
-			console.log(`   Deleted ${deletedCount} empty directories.`)
+			console.log(`   Deleted ${deletedCount} empty directory tree(s).`)
 		} else {
 			console.log('   No empty directories found.')
 		}
