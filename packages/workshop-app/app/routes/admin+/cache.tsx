@@ -5,6 +5,7 @@ import {
 	updateCacheEntry,
 } from '@epic-web/workshop-utils/cache.server'
 import { getEnv } from '@epic-web/workshop-utils/env.server'
+import { getErrorMessage } from '@epic-web/workshop-utils/utils'
 import dayjsLib from 'dayjs'
 import relativeTimePlugin from 'dayjs/plugin/relativeTime.js'
 import utcPlugin from 'dayjs/plugin/utc.js'
@@ -128,12 +129,12 @@ function CacheMetadata({
 		: { text: 'Never', isExpired: false, isExpiringSoon: false }
 
 	return (
-		<div className="space-y-1 text-xs text-muted-foreground">
+		<div className="flex flex-col gap-1 text-xs text-muted-foreground">
 			<div>
 				Created: {createdDate.format('MMM D, YYYY HH:mm:ss')}{' '}
 				<ClientOnly>{() => `(${createdDate.fromNow()})`}</ClientOnly>
 			</div>
-			<div className="flex flex-wrap gap-4">
+			<div className="flex flex-wrap items-center gap-3">
 				{metadata.ttl !== undefined && metadata.ttl !== null ? (
 					<span>
 						TTL:{' '}
@@ -154,27 +155,27 @@ function CacheMetadata({
 						</span>
 					</span>
 				) : null}
-			</div>
-			<div
-				className={`font-medium ${
-					timeRemaining.isExpired
-						? 'text-destructive'
-						: timeRemaining.isExpiringSoon
-							? 'text-warning'
-							: 'text-foreground'
-				}`}
-			>
-				{expirationTime ? (
-					<>
-						Expires: {dayjs(expirationTime).format('MMM D, YYYY HH:mm:ss')} (
-						<span className="tabular-nums">
-							<ClientOnly>{() => timeRemaining.text}</ClientOnly>
-						</span>
-						)
-					</>
-				) : (
-					'Expires: Never'
-				)}
+				<div
+					className={`inline-flex w-auto rounded-full px-2 py-[2px] font-medium ${
+						timeRemaining.isExpired
+							? 'bg-destructive text-destructive-foreground'
+							: timeRemaining.isExpiringSoon
+								? 'bg-warning text-warning-foreground'
+								: 'text-foreground'
+					}`}
+				>
+					{expirationTime ? (
+						<>
+							Expires: {dayjs(expirationTime).format('MMM D, YYYY HH:mm:ss')} (
+							<span className="tabular-nums">
+								<ClientOnly>{() => timeRemaining.text}</ClientOnly>
+							</span>
+							)
+						</>
+					) : (
+						'Expires: Never'
+					)}
+				</div>
 			</div>
 		</div>
 	)
@@ -268,8 +269,11 @@ export async function action({ request }: Route.ActionArgs) {
 					const parsedValue = JSON.parse(data.newValue)
 					await updateCacheEntry(path, parsedValue)
 					return { status: 'success', message: 'Cache entry updated' } as const
-				} catch {
-					return { status: 'error', error: 'Invalid JSON value' } as const
+				} catch (error) {
+					return {
+						status: 'error',
+						error: getErrorMessage(error, 'Invalid JSON value'),
+					} as const
 				}
 			}
 		}
@@ -571,7 +575,7 @@ function SkippedFilesSection({
 									)
 								}}
 								title="Delete large cache file"
-								className="text-warning-foreground hover:bg-warning/20 hover:text-warning-foreground"
+								className="text-destructive-foreground hover:bg-destructive/20 hover:text-destructive-foreground"
 							>
 								<Icon name="Remove" className="h-4 w-4" />
 							</DoubleCheckButton>

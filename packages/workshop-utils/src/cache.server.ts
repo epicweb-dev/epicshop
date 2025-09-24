@@ -25,6 +25,12 @@ const MAX_CACHE_FILE_SIZE = 3 * 1024 * 1024 // 3MB in bytes
 const cacheDir = resolveCacheDir()
 const log = logger('epic:cache')
 
+// Throttle repeated Sentry reports for corrupted cache files to reduce noise
+const corruptedReportThrottle = remember(
+	'epic:cache:corruption-throttle',
+	() => new LRUCache<string, number>({ max: 2000, ttl: 60_000 }),
+)
+
 // Format cache time helper function (copied from @epic-web/cachified for consistency)
 function formatCacheTime(
 	metadata: any,
@@ -308,46 +314,91 @@ async function readJsonFilesInDirectory(
 						]
 					}
 
-					const maxRetries = 2
-					const baseDelay = 25 // shorter delay for directory listing
-
-					for (let attempt = 0; attempt <= maxRetries; attempt++) {
-						try {
-							const data = await fsExtra.readJSON(filePath)
-							// Include file size and filepath information with the data
-							return [file, { ...data, size: stats.size, filepath: filePath }]
-						} catch (error: unknown) {
-							// Handle JSON parsing errors (could be race condition or corruption)
-							if (
-								error instanceof SyntaxError &&
-								error.message.includes('JSON')
-							) {
-								// If this is a retry attempt, it might be a race condition
-								if (attempt < maxRetries) {
-									const delay = baseDelay * Math.pow(2, attempt)
-									console.warn(
-										`JSON parsing error on attempt ${attempt + 1}/${maxRetries + 1} for directory listing ${filePath}, retrying in ${delay}ms...`,
-									)
-									await new Promise((resolve) => setTimeout(resolve, delay))
-									continue
-								}
-
-								// Final attempt failed, skip the file
-								console.warn(
-									`Skipping corrupted JSON file in directory listing after ${attempt + 1} attempts: ${filePath}`,
-								)
-								return [file, null]
-							}
-							throw error
-						}
+					const data = await readJSONWithRetries(filePath)
+					if (data) {
+						return [file, { ...data, size: stats.size, filepath: filePath }]
 					}
 
-					// This should never be reached, but just in case
 					return [file, null]
 				}
 			}),
 	)
 	return Object.fromEntries(entries)
+}
+
+// Helper to read JSON with a couple retries; deletes corrupted files and warns
+async function readJSONWithRetries(filePath: string): Promise<any | null> {
+	const maxRetries = 3
+	const baseDelay = 10
+	for (let attempt = 0; attempt <= maxRetries; attempt++) {
+		try {
+			return await fsExtra.readJSON(filePath)
+		} catch (error: unknown) {
+			if (
+				error instanceof Error &&
+				'code' in error &&
+				(error as NodeJS.ErrnoException).code === 'ENOENT'
+			) {
+				return null
+			}
+
+			const isJsonParseError =
+				error instanceof SyntaxError ||
+				(error instanceof Error && error.message.includes('JSON'))
+
+			if (isJsonParseError) {
+				if (attempt < maxRetries) {
+					const delay = baseDelay * Math.pow(2, attempt)
+					console.warn(
+						`JSON parsing error on attempt ${attempt + 1}/${maxRetries + 1} for ${filePath}, retrying in ${delay}ms...`,
+					)
+					await new Promise((r) => setTimeout(r, delay))
+					continue
+				}
+
+				// Final attempt failed: optionally report and delete file
+				if (getEnv().SENTRY_DSN && getEnv().EPICSHOP_IS_PUBLISHED) {
+					const throttleKey = `readJSON:${md5(filePath)}`
+					if (!corruptedReportThrottle.has(throttleKey)) {
+						corruptedReportThrottle.set(throttleKey, Date.now())
+						try {
+							const Sentry = await import('@sentry/react-router')
+							Sentry.withScope((scope) => {
+								scope.setLevel('warning')
+								scope.setTag('error_type', 'corrupted_cache_file')
+								scope.setExtra('filePath', filePath)
+								scope.setExtra('errorMessage', (error as Error).message)
+								scope.setExtra('retryAttempts', attempt)
+								Sentry.captureException(error)
+							})
+						} catch (sentryError) {
+							console.error('Failed to log to Sentry:', sentryError)
+						}
+					}
+				}
+
+				// Always delete corrupted files so subsequent reads can refetch
+				try {
+					await fsExtra.remove(filePath)
+					console.warn(
+						`Deleted corrupted cache file after ${attempt + 1} attempts: ${filePath}`,
+					)
+				} catch (deleteError) {
+					console.error(
+						`Failed to delete corrupted cache file ${filePath}:`,
+						deleteError,
+					)
+				}
+
+				return null
+			}
+
+			// Other errors: do not retry
+			throw error
+		}
+	}
+
+	return null
 }
 
 const CacheEntrySchema = z.object({
@@ -458,8 +509,8 @@ export async function getWorkshopFileCaches() {
 
 export async function readEntryByPath(cacheFilePath: string) {
 	const filePath = path.join(cacheDir, cacheFilePath)
-	const data = await fsExtra.readJSON(filePath)
-	return data.entry
+	const data = await readJSONWithRetries(filePath)
+	return data?.entry ?? null
 }
 
 export async function deleteCache() {
@@ -518,7 +569,11 @@ export async function updateCacheEntry(cacheFilePath: string, newEntry: any) {
 
 	try {
 		const filePath = path.join(cacheDir, cacheFilePath)
-		const existingData = await fsExtra.readJSON(filePath)
+		const existingData = await readJSONWithRetries(filePath)
+		if (!existingData) {
+			throw new Error(`Cache file does not exist: ${cacheFilePath}`)
+		}
+
 		const updatedData = {
 			...existingData,
 			entry: {
@@ -574,8 +629,6 @@ export function makeSingletonFsCache<CacheEntryType>(name: string) {
 			name: `Filesystem cache (${name})`,
 			async get(key) {
 				const filePath = path.join(cacheInstanceDir, md5(key))
-				const maxRetries = 3
-				const baseDelay = 10
 
 				// Check file size before attempting to read
 				try {
@@ -599,80 +652,10 @@ export function makeSingletonFsCache<CacheEntryType>(name: string) {
 					// For other stat errors, continue with the read attempt
 				}
 
-				for (let attempt = 0; attempt <= maxRetries; attempt++) {
-					try {
-						const data = await fsExtra.readJSON(filePath)
-						if (data.entry) return data.entry
-						return null
-					} catch (error: unknown) {
-						if (
-							error instanceof Error &&
-							'code' in error &&
-							error.code === 'ENOENT'
-						) {
-							return null
-						}
-
-						// Handle JSON parsing errors (could be race condition or corruption)
-						if (
-							error instanceof SyntaxError &&
-							error.message.includes('JSON')
-						) {
-							// If this is a retry attempt, it might be a race condition
-							if (attempt < maxRetries) {
-								const delay = baseDelay * Math.pow(2, attempt) // exponential backoff
-								console.warn(
-									`JSON parsing error on attempt ${attempt + 1}/${maxRetries + 1} for ${filePath}, retrying in ${delay}ms...`,
-								)
-								await new Promise((resolve) => setTimeout(resolve, delay))
-								continue
-							}
-
-							// Final attempt failed, treat as corrupted file
-							// Log to Sentry if available
-							if (getEnv().SENTRY_DSN && getEnv().EPICSHOP_IS_PUBLISHED) {
-								try {
-									const Sentry = await import('@sentry/react-router')
-									Sentry.captureException(error, {
-										tags: {
-											error_type: 'corrupted_cache_file',
-											cache_name: name,
-											cache_key: key,
-											retry_attempts: attempt.toString(),
-										},
-										extra: {
-											filePath,
-											errorMessage: error.message,
-											cacheName: name,
-											cacheKey: key,
-											retryAttempts: attempt,
-										},
-									})
-								} catch (sentryError) {
-									console.error('Failed to log to Sentry:', sentryError)
-								}
-							}
-
-							// Delete the corrupted file
-							try {
-								await fsExtra.remove(filePath)
-								console.warn(
-									`Deleted corrupted cache file after ${attempt + 1} attempts: ${filePath}`,
-								)
-							} catch (deleteError) {
-								console.error(
-									`Failed to delete corrupted cache file ${filePath}:`,
-									deleteError,
-								)
-							}
-
-							return null
-						}
-
-						// For other errors, don't retry
-						throw error
-					}
-				}
+				// Use the shared helper which retries and deletes corrupted files
+				const data = await readJSONWithRetries(filePath)
+				if (data?.entry) return data.entry
+				return null
 
 				// This should never be reached, but just in case
 				return null
