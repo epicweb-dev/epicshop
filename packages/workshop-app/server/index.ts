@@ -204,6 +204,9 @@ const server = app.listen(portToUse, async () => {
 				? addy.port
 				: 0
 
+	// send request to self to warm things up
+	void fetch(`http://localhost:${portUsed}`, { method: 'HEAD' }).catch(() => {})
+
 	if (portUsed !== desiredPort) {
 		console.warn(
 			chalk.yellow(
