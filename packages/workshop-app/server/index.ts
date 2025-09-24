@@ -41,7 +41,7 @@ global.ENV = getEnv()
 const MODE = process.env.NODE_ENV ?? 'development'
 const isProd = MODE === 'production'
 
-void initApps()
+void initApps().catch(() => {})
 sourceMapSupport.install()
 
 const viteDevServer = isProd
@@ -61,10 +61,12 @@ const epicshopAppRootDir = isRunningInBuildDir
 	: path.join(__dirname, '..')
 
 // warm up some caches
-void getApps()
-void checkConnectionCached()
-void getPresentUsers()
-void warmEpicAPICache()
+void Promise.all([
+	getApps(),
+	checkConnectionCached(),
+	getPresentUsers(),
+	warmEpicAPICache(),
+]).catch(() => {}) // don't block startup
 
 const app = express()
 
@@ -322,7 +324,7 @@ ${lanUrl ? `${chalk.bold('On Your Network:')}  ${chalk.cyan(lanUrl)}` : ''}
 						watcher?.clients.delete(ws)
 						if (watcher?.clients.size === 0) {
 							watches.delete(key)
-							void watcher.chok.close()
+							void watcher.chok.close().catch(() => {})
 						}
 					})
 				})

@@ -64,7 +64,7 @@ export function initTools(server: McpServer) {
 				{},
 			)
 
-			void handleAuthFlow()
+			void handleAuthFlow().catch(() => {})
 
 			return {
 				content: [
@@ -83,12 +83,14 @@ export function initTools(server: McpServer) {
 				})
 
 				const timeout = setTimeout(() => {
-					void server.server.notification({
-						method: 'notification',
-						params: {
-							message: 'Device authorization timed out',
-						},
-					})
+					void server.server
+						.notification({
+							method: 'notification',
+							params: {
+								message: 'Device authorization timed out',
+							},
+						})
+						.catch(() => {})
 				}, deviceResponse.expires_in * 1000)
 
 				try {

@@ -326,7 +326,7 @@ export async function start(options: StartOptions = {}): Promise<StartResult> {
 		spawnChild()
 
 		// Check for updates after starting
-		void checkAndDisplayUpdates()
+		void checkAndDisplayUpdates().catch(() => {})
 
 		const supportedKeys = [
 			`${chalk.blue('o')} - open workshop app`,

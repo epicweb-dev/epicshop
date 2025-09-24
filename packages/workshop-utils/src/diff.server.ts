@@ -401,8 +401,8 @@ async function getDiffFilesImpl(app1: App, app2: App) {
 		// --no-index implies --exit-code, so we need to use the error output
 	).catch((e) => e as { stdout: string })
 
-	void fsExtra.remove(app1CopyPath)
-	void fsExtra.remove(app2CopyPath)
+	void fsExtra.remove(app1CopyPath).catch(() => {})
+	void fsExtra.remove(app2CopyPath).catch(() => {})
 
 	const typesMap = {
 		ChangedFile: 'modified',
@@ -495,8 +495,8 @@ async function getDiffCodeImpl(app1: App, app2: App) {
 		// --no-index implies --exit-code, so we need to use the error output
 	).catch((e) => e as { stdout: string })
 
-	void fsExtra.remove(app1CopyPath)
-	void fsExtra.remove(app2CopyPath)
+	void fsExtra.remove(app1CopyPath).catch(() => {})
+	void fsExtra.remove(app2CopyPath).catch(() => {})
 
 	const parsed = parseGitDiff(diffOutput)
 
@@ -596,8 +596,8 @@ export async function getDiffOutputWithRelativePaths(app1: App, app2: App) {
 		// --no-index implies --exit-code, so we need to use the error output
 	).catch((e) => e as { stdout: string })
 
-	void fsExtra.remove(app1CopyPath)
-	void fsExtra.remove(app2CopyPath)
+	void fsExtra.remove(app1CopyPath).catch(() => {})
+	void fsExtra.remove(app2CopyPath).catch(() => {})
 
 	return diffOutput
 		.replaceAll(app1CopyPath.slice(1), '.')
