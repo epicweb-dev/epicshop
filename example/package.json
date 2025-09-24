@@ -16,6 +16,7 @@
         "1285245484432228375"
       ]
     },
+    "onboardingVideo": ["https://www.epicweb.dev/tips/get-started-with-the-epic-workshop-app", "https://www.epicweb.dev/tips/get-started-with-the-epic-workshop-app-for-react"],
     "githubRoot": "https://github.com/epicweb-dev/epicshop/tree/main/example",
     "root": true,
     "initialRoute": "/whatever",

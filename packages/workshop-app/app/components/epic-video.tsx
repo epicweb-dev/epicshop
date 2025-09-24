@@ -169,9 +169,11 @@ function VideoLink({ url, title }: { url: string; title: string }) {
 export function DeferredEpicVideo({
 	url,
 	title: providedTitle,
+	bottomRightUI = null,
 }: {
 	url: string
 	title?: string
+	bottomRightUI?: React.ReactNode
 }) {
 	// we need to distinguish between the provided title and the fallback because the priority is:
 	// 1. provided title
@@ -184,8 +186,9 @@ export function DeferredEpicVideo({
 	const user = useOptionalUser()
 	const epicVideoInfosPromise = React.useContext(EpicVideoInfoContext)
 	const linkUI = (
-		<div>
+		<div className="flex justify-between">
 			<VideoLink url={url} title={title} />
+			{bottomRightUI}
 		</div>
 	)
 	return (
@@ -245,6 +248,7 @@ export function DeferredEpicVideo({
 									title={providedTitle ?? info.title ?? title}
 									muxPlaybackId={info.muxPlaybackId}
 									transcript={info.transcript}
+									bottomRightUI={bottomRightUI}
 								/>
 							)
 						} else if (info.type === 'region-restricted') {
@@ -348,11 +352,13 @@ function EpicVideo({
 	title = extractEpicTitle(urlString),
 	muxPlaybackId,
 	transcript,
+	bottomRightUI = null,
 }: {
 	url: string
 	title?: string
 	muxPlaybackId: string
 	transcript: string
+	bottomRightUI?: React.ReactNode
 }) {
 	const muxPlayerRef = React.useRef<MuxPlayerRefAttributes>(null)
 	const timestampRegex = /(\d+:\d+)/g
@@ -414,7 +420,14 @@ function EpicVideo({
 				/>
 			</div>
 			<div className="mt-4 flex flex-col gap-2">
-				<VideoLink url={urlString} title={title} />
+				{bottomRightUI ? (
+					<div className="flex justify-between">
+						<VideoLink url={urlString} title={title} />
+						{bottomRightUI}
+					</div>
+				) : (
+					<VideoLink url={urlString} title={title} />
+				)}
 				<details>
 					<summary>Transcript</summary>
 					<div className="whitespace-pre-line rounded-md bg-accent p-2 text-accent-foreground">
