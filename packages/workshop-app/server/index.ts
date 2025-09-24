@@ -15,7 +15,7 @@ import {
 import { getEnv, init as initEnv } from '@epic-web/workshop-utils/env.server'
 import { warmCache as warmEpicAPICache } from '@epic-web/workshop-utils/epic-api.server'
 import { requestContext } from '@epic-web/workshop-utils/request-context.server'
-import { checkConnectionCached } from '@epic-web/workshop-utils/utils.server'
+import { checkConnection } from '@epic-web/workshop-utils/utils.server'
 import { createRequestHandler } from '@react-router/express'
 import { ip as ipAddress } from 'address'
 import chalk from 'chalk'
@@ -63,7 +63,7 @@ const epicshopAppRootDir = isRunningInBuildDir
 // warm up some caches
 void Promise.all([
 	getApps(),
-	checkConnectionCached(),
+	checkConnection(),
 	getPresentUsers(),
 	warmEpicAPICache(),
 ]).catch(() => {}) // don't block startup

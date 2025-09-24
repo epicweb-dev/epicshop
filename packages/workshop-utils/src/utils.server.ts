@@ -15,18 +15,7 @@ export const dayjs = remember('dayjs', () => {
 	return dayjsLib
 })
 
-export async function checkConnection() {
-	try {
-		const response = await fetch('https://www.cloudflare.com', {
-			method: 'HEAD',
-		})
-		return response.ok
-	} catch {
-		return false
-	}
-}
-
-export async function checkConnectionCached({
+export async function checkConnection({
 	request,
 	timings,
 }: {
@@ -40,8 +29,10 @@ export async function checkConnectionCached({
 		key: 'connected',
 		ttl: 1000 * 10,
 		async getFreshValue(context) {
-			const result = await checkConnection()
-			if (result) {
+			const response = await fetch('https://www.cloudflare.com', {
+				method: 'HEAD',
+			})
+			if (response.ok) {
 				context.metadata.ttl = 1000 * 60
 				context.metadata.swr = 1000 * 60 * 30
 				return true

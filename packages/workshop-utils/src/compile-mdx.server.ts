@@ -22,7 +22,7 @@ import {
 	shouldForceFresh,
 } from './cache.server.js'
 import { type Timings } from './timing.server.js'
-import { checkConnectionCached } from './utils.server.js'
+import { checkConnection } from './utils.server.js'
 
 function remarkMermaidCodeToSvg() {
 	return async (tree: MdastRoot) => {
@@ -30,7 +30,7 @@ function remarkMermaidCodeToSvg() {
 		visit(tree, 'code', (node, index, parent) => {
 			if (node.lang === 'mermaid' && parent && typeof index === 'number') {
 				const promise = (async () => {
-					const isConnected = await checkConnectionCached()
+					const isConnected = await checkConnection()
 					if (isConnected) {
 						const compressed = lz.compressToEncodedURIComponent(node.value)
 						const url = `https://mermaid-to-svg.kentcdodds.workers.dev/svg?mermaid=${compressed}`

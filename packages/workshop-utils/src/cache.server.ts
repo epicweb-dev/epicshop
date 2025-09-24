@@ -19,7 +19,7 @@ import { resolveCacheDir } from './data-storage.server.js'
 import { logger } from './logger.js'
 import { type Notification } from './notifications.server.js'
 import { cachifiedTimingReporter, type Timings } from './timing.server.js'
-import { checkConnectionCached } from './utils.server.js'
+import { checkConnection } from './utils.server.js'
 
 const MAX_CACHE_FILE_SIZE = 3 * 1024 * 1024 // 3MB in bytes
 const cacheDir = resolveCacheDir()
@@ -704,7 +704,7 @@ export async function cachified<Value>({
 	offlineFallbackValue?: Value
 }): Promise<Value> {
 	if (offlineFallbackValue !== undefined) {
-		const isOnline = await checkConnectionCached({ request, timings })
+		const isOnline = await checkConnection({ request, timings })
 		if (!isOnline) {
 			const cacheEntry = await options.cache.get(key)
 			return cacheEntry?.value ?? offlineFallbackValue

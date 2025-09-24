@@ -23,7 +23,7 @@ import {
 	getSetClientIdCookieHeader,
 	getUserId,
 } from '@epic-web/workshop-utils/user.server'
-import { checkConnectionCached } from '@epic-web/workshop-utils/utils.server'
+import { checkConnection } from '@epic-web/workshop-utils/utils.server'
 
 import {
 	data,
@@ -111,7 +111,7 @@ export async function loader({ request }: Route.LoaderArgs) {
 	const theme = getTheme(request)
 	const { confettiId, headers: confettiHeaders } = getConfetti(request)
 	const { toast, headers: toastHeaders } = await getToast(request)
-	const isOnlinePromise = checkConnectionCached({ request, timings })
+	const isOnlinePromise = checkConnection({ request, timings })
 
 	const asyncStuff = await promiseHash({
 		userId: getUserId({ request }),
