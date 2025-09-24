@@ -68,6 +68,8 @@ void Promise.all([
 	warmEpicAPICache(),
 ]).catch(() => {}) // don't block startup
 
+const serverBuildPromise = getBuild()
+
 const app = express()
 
 app.get(
@@ -164,9 +166,9 @@ const portToUse = await getPort({
 app.all(
 	'*splat',
 	createRequestHandler({
-		getLoadContext: () => ({ serverBuild: getBuild() }),
+		getLoadContext: () => ({ serverBuild: serverBuildPromise }),
 		mode: MODE,
-		build: getBuild,
+		build: () => serverBuildPromise,
 	}),
 )
 
