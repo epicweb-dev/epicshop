@@ -527,30 +527,30 @@ function SkippedFilesSection({
 	if (skippedFiles.length === 0) return null
 
 	return (
-		<div className="border-warning bg-warning mt-4 rounded border p-3">
+		<div className="mt-4 rounded border border-warning bg-warning p-3">
 			<div className="mb-2 flex items-center gap-2">
 				<Icon
 					name="TriangleAlert"
-					className="text-warning-foreground h-4 w-4"
+					className="h-4 w-4 text-warning-foreground"
 				/>
-				<h5 className="text-warning-foreground font-medium">
+				<h5 className="font-medium text-warning-foreground">
 					Skipped Files ({skippedFiles.length})
 				</h5>
 			</div>
-			<p className="text-warning-foreground/80 mb-3 text-sm">
+			<p className="mb-3 text-sm text-warning-foreground/80">
 				These cache files were skipped because they exceed the 3MB size limit:
 			</p>
 			<div className="space-y-2">
 				{skippedFiles.map((skippedFile) => (
 					<div
 						key={skippedFile.filename}
-						className="border-warning/20 bg-warning/5 flex items-center justify-between rounded border p-2"
+						className="flex items-center justify-between rounded border border-warning/20 bg-warning/5 p-2"
 					>
 						<div className="min-w-0 flex-1">
-							<div className="text-warning-foreground truncate font-mono text-sm font-medium">
+							<div className="truncate font-mono text-sm font-medium text-warning-foreground">
 								{skippedFile.filename}
 							</div>
-							<div className="text-warning-foreground/70 text-xs">
+							<div className="text-xs text-warning-foreground/70">
 								{skippedFile.error} • Size:{' '}
 								<span title={`${skippedFile.size} bytes`}>
 									{formatFileSize(skippedFile.size)}
@@ -652,7 +652,7 @@ export default function CacheManagement({ loaderData }: Route.ComponentProps) {
 			<SearchFilter filterQuery={filterQuery} />
 
 			{fetcher.data?.status === 'success' ? (
-				<div className="bg-success text-success-foreground rounded border border-border p-4">
+				<div className="rounded border border-border bg-success p-4 text-success-foreground">
 					{fetcher.data.message}
 				</div>
 			) : null}
