@@ -25,11 +25,11 @@ import slugify from '@sindresorhus/slugify'
 import * as cookie from 'cookie'
 import { useEffect, useRef, useState } from 'react'
 import {
+	Link,
+	Outlet,
 	data,
 	redirect,
 	type HeadersFunction,
-	Link,
-	Outlet,
 } from 'react-router'
 import { GeneralErrorBoundary } from '#app/components/error-boundary.tsx'
 import { type InBrowserBrowserRef } from '#app/components/in-browser-browser.tsx'
@@ -41,12 +41,15 @@ import { ProgressToggle } from '#app/routes/progress.tsx'
 import { SetAppToPlayground } from '#app/routes/set-playground.tsx'
 import { getExercisePath } from '#app/utils/misc.tsx'
 import { getSeoMetaTags } from '#app/utils/seo.js'
+import { getStep404Data } from '../__shared/error-boundary.server.ts'
+import { Exercise404ErrorBoundary } from '../__shared/error-boundary.tsx'
 import { type Route } from './+types/_layout.tsx'
 import { StepMdx } from './__shared/step-mdx.tsx'
 import TouchedFiles from './__shared/touched-files.tsx'
 
 // shared split state helpers
 const splitCookieName = 'es_split_pct'
+
 function computeSplitPercent(input: unknown, defaultValue = 50): number {
 	const value = typeof input === 'number' ? input : Number(input)
 	if (Number.isFinite(value)) {
@@ -100,17 +103,16 @@ export const meta: Route.MetaFunction = ({ data, matches, params }) => {
 export async function loader({ request, params }: Route.LoaderArgs) {
 	const timings = makeTimings('exerciseStepTypeLayoutLoader')
 	const url = new URL(request.url)
+	const { type } = params
 	const { title: workshopTitle } = getWorkshopConfig()
 
 	const cacheOptions = { request, timings }
 
-	const [exerciseStepApp, allAppsFull, problemApp, solutionApp] =
-		await Promise.all([
-			requireExerciseApp(params, cacheOptions),
-			getApps(cacheOptions),
-			getExerciseApp({ ...params, type: 'problem' }, cacheOptions),
-			getExerciseApp({ ...params, type: 'solution' }, cacheOptions),
-		])
+	const [allAppsFull, problemApp, solutionApp] = await Promise.all([
+		getApps(cacheOptions),
+		getExerciseApp({ ...params, type: 'problem' }, cacheOptions),
+		getExerciseApp({ ...params, type: 'solution' }, cacheOptions),
+	])
 
 	const reqUrl = new URL(request.url)
 	const pathnameParam = reqUrl.searchParams.get('pathname')
@@ -119,9 +121,17 @@ export async function loader({ request, params }: Route.LoaderArgs) {
 		throw redirect(reqUrl.toString())
 	}
 
-	if (!problemApp && !solutionApp) {
-		throw new Response('Not found', { status: 404 })
+	if (
+		(type === 'problem' && !problemApp) ||
+		(type === 'solution' && !solutionApp)
+	) {
+		const errorData = await getStep404Data({
+			exerciseNumber: params.exerciseNumber,
+		})
+		throw Response.json(errorData, { status: 404 })
 	}
+
+	const exerciseStepApp = await requireExerciseApp(params, cacheOptions)
 
 	const playgroundApp = allAppsFull.find(isPlaygroundApp)
 
@@ -539,17 +549,9 @@ export default function ExercisePartRoute({
 export function ErrorBoundary() {
 	return (
 		<GeneralErrorBoundary
+			className="container flex items-center justify-center"
 			statusHandlers={{
-				404: () => <p>Sorry, we couldn't find an app here.</p>,
-				503: () => (
-					<div>
-						<h1>Service Unavailable</h1>
-						<p>
-							Sorry, we're having a temporary problem. Please try again later.
-						</p>
-						<button onClick={() => window.location.reload()}>Refresh</button>
-					</div>
-				),
+				404: Exercise404ErrorBoundary,
 			}}
 		/>
 	)

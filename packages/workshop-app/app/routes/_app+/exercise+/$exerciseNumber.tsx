@@ -14,22 +14,18 @@ import {
 	time,
 } from '@epic-web/workshop-utils/timing.server'
 import slugify from '@sindresorhus/slugify'
-import {
-	data,
-	type HeadersFunction,
-	Link,
-	isRouteErrorResponse,
-	useRouteError,
-} from 'react-router'
+import { data, type HeadersFunction, Link } from 'react-router'
 import { EpicVideoInfoProvider } from '#app/components/epic-video.tsx'
+import { GeneralErrorBoundary } from '#app/components/error-boundary.tsx'
 import { useRevalidationWS } from '#app/components/revalidation-ws.js'
 import { type RootLoaderData } from '#app/root.tsx'
 import { EditFileOnGitHub } from '#app/routes/launch-editor.tsx'
 import { ProgressToggle } from '#app/routes/progress.tsx'
 import { Mdx } from '#app/utils/mdx.tsx'
-import { getErrorMessage } from '#app/utils/misc.tsx'
 import { getSeoMetaTags } from '#app/utils/seo.js'
 import { type Route } from './+types/$exerciseNumber.tsx'
+import { getExercise404Data } from './__shared/error-boundary.server.ts'
+import { Exercise404ErrorBoundary } from './__shared/error-boundary.tsx'
 
 export const meta: Route.MetaFunction = ({ data, matches }) => {
 	const number = data?.exercise.exerciseNumber.toString().padStart(2, '0')
@@ -60,7 +56,7 @@ export async function loader({ request, params }: Route.LoaderArgs) {
 		(e) => e.exerciseNumber === Number(params.exerciseNumber),
 	)
 	if (!exercise) {
-		throw new Response('Not found', { status: 404 })
+		throw Response.json(getExercise404Data({ exercises }), { status: 404 })
 	}
 
 	const readmeFilepath = path.join(
@@ -181,21 +177,12 @@ export default function ExerciseNumberRoute({
 }
 
 export function ErrorBoundary() {
-	const error = useRouteError()
-
-	if (typeof document !== 'undefined') {
-		console.error(error)
-	}
-
-	return isRouteErrorResponse(error) ? (
-		error.status === 404 ? (
-			<p>Sorry, we couldn't find that step.</p>
-		) : (
-			<p>
-				{error.status} {error.data}
-			</p>
-		)
-	) : (
-		<p>{getErrorMessage(error)}</p>
+	return (
+		<GeneralErrorBoundary
+			className="container flex items-center justify-center"
+			statusHandlers={{
+				404: Exercise404ErrorBoundary,
+			}}
+		/>
 	)
 }
