@@ -29,11 +29,9 @@ export async function checkConnection({
 		key: 'connected',
 		ttl: 1000 * 10,
 		async getFreshValue(context) {
-			console.time('checkConnection')
 			const response = await fetch('https://one.one.one.one/cdn-cgi/trace', {
 				method: 'HEAD',
 			})
-			console.timeEnd('checkConnection')
 			if (response.ok) {
 				context.metadata.ttl = 1000 * 60
 				context.metadata.swr = 1000 * 60 * 30
