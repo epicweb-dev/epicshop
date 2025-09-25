@@ -1,27 +1,40 @@
-import { debuglog } from 'node:util'
+import { debuglog, type DebugLogger } from 'node:util'
 
-type LogFunction = (...args: Parameters<ReturnType<typeof debuglog>>) => void
+type Msg = string | (() => string)
+type Params = unknown[]
+type LogFunction = (msg: Msg, ...param: Params) => void
 
-interface Logger extends LogFunction {
+interface Logger extends LogFunction, DebugLogger {
 	error: LogFunction
 	warn: LogFunction
 	info: LogFunction
 	namespace: string
 	logger: typeof logger
-	isEnabled: () => boolean
 }
 
 export function logger(ns: string): Logger {
 	const log = debuglog(ns)
 
-	const loggerFn = ((...args: Parameters<typeof log>) => log(...args)) as Logger
+	const prefixedLoggerFn = (
+		prefix: string | null,
+		stringOrFn: Msg,
+		...params: Params
+	) => {
+		if (!debuglog(ns).enabled) return
+		const string = typeof stringOrFn === 'function' ? stringOrFn() : stringOrFn
+		log(prefix ? `${prefix} ${string}` : string, ...params)
+	}
 
-	loggerFn.error = (...args: Parameters<typeof log>) => log('🚨', ...args)
-	loggerFn.warn = (...args: Parameters<typeof log>) => log('⚠️', ...args)
-	loggerFn.info = (...args: Parameters<typeof log>) => log('ℹ️', ...args)
+	const loggerFn = prefixedLoggerFn.bind(null, null) as Logger
+
+	loggerFn.error = prefixedLoggerFn.bind(null, '🚨')
+	loggerFn.warn = prefixedLoggerFn.bind(null, '⚠️')
+	loggerFn.info = prefixedLoggerFn.bind(null, 'ℹ️')
 	loggerFn.namespace = ns
 	loggerFn.logger = (subNs: string) => logger(`${ns}:${subNs}`)
-	loggerFn.isEnabled = () => debuglog(ns).enabled
+	Object.defineProperty(loggerFn, 'enabled', {
+		get: () => log.enabled,
+	})
 
 	return loggerFn
 }
