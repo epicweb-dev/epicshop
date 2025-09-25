@@ -70,19 +70,21 @@ export type EpicVideoInfos = Record<
 	Awaited<ReturnType<typeof getEpicVideoInfo>>
 >
 
+const videoInfoLog = log.logger('video-info')
+
 export async function getEpicVideoInfos(
 	epicWebUrls?: Array<string> | null,
 	{ request, timings }: { request?: Request; timings?: Timings } = {},
 ) {
 	if (!epicWebUrls) {
-		log('no epic web URLs provided, returning empty object')
+		videoInfoLog.warn('no epic web URLs provided, returning empty object')
 		return {}
 	}
 
 	const authInfo = await getAuthInfo()
 	if (getEnv().EPICSHOP_DEPLOYED) return {}
 
-	log(`fetching epic video infos for ${epicWebUrls.length} URLs`)
+	videoInfoLog(`fetching epic video infos for ${epicWebUrls.length} URLs`)
 	const epicVideoInfos: EpicVideoInfos = {}
 	for (const epicVideoEmbed of epicWebUrls) {
 		const epicVideoInfo = await getEpicVideoInfo({
@@ -95,7 +97,7 @@ export async function getEpicVideoInfos(
 			epicVideoInfos[epicVideoEmbed] = epicVideoInfo
 		}
 	}
-	log(
+	videoInfoLog(
 		`successfully fetched ${Object.keys(epicVideoInfos).length} epic video infos`,
 	)
 	return epicVideoInfos
@@ -115,7 +117,7 @@ async function getEpicVideoInfo({
 	const tokenPortion = accessToken ? md5(accessToken) : 'unauthenticated'
 	const key = `epic-video-info:${tokenPortion}:${epicVideoEmbed}`
 
-	log(`fetching video info for URL: ${epicVideoEmbed}`)
+	videoInfoLog(`fetching video info for URL: ${epicVideoEmbed}`)
 	return cachified({
 		key,
 		request,
@@ -134,7 +136,7 @@ async function getEpicVideoInfo({
 				epicUrl.host !== 'www.epicreact.dev' &&
 				epicUrl.host !== 'www.epicai.pro'
 			) {
-				log(`unsupported host for video URL: ${epicUrl.host}`)
+				videoInfoLog.error(`unsupported host for video URL: ${epicUrl.host}`)
 				return null
 			}
 
@@ -152,7 +154,7 @@ async function getEpicVideoInfo({
 					? getEpicAIVideoAPIUrl(epicVideoEmbed)
 					: `https://${epicUrl.host}/api${epicUrl.pathname}`
 
-			log(`making API request to: ${apiUrl}`)
+			videoInfoLog(`making API request to: ${apiUrl}`)
 			const infoResponse = await fetch(
 				apiUrl,
 				accessToken
@@ -160,7 +162,7 @@ async function getEpicVideoInfo({
 					: undefined,
 			)
 			const { status, statusText } = infoResponse
-			log(`API response: ${status} ${statusText}`)
+			videoInfoLog(`API response: ${status} ${statusText}`)
 
 			if (infoResponse.status >= 200 && infoResponse.status < 300) {
 				let rawInfo = await infoResponse.json()
@@ -170,7 +172,7 @@ async function getEpicVideoInfo({
 				}
 				const infoResult = EpicVideoInfoSchema.safeParse(rawInfo)
 				if (infoResult.success) {
-					log(`successfully parsed video info for ${epicVideoEmbed}`)
+					videoInfoLog(`successfully parsed video info for ${epicVideoEmbed}`)
 					return {
 						status: 'success',
 						statusCode: status,
@@ -184,7 +186,7 @@ async function getEpicVideoInfo({
 					const restrictedResult =
 						EpicVideoRegionRestrictedErrorSchema.safeParse(rawInfo)
 					if (restrictedResult.success) {
-						log.warn(`video is region restricted: ${epicVideoEmbed}`)
+						videoInfoLog.warn(`video is region restricted: ${epicVideoEmbed}`)
 						return {
 							status: 'error',
 							statusCode: status,
@@ -193,14 +195,13 @@ async function getEpicVideoInfo({
 							...restrictedResult.data,
 						} as const
 					} else {
-						log.error(`API response parsing failed for ${epicVideoEmbed}`, {
-							url: epicUrl.pathname,
-							rawInfo,
-							parseError: infoResult.error,
-						})
-						console.warn(
-							`Response from EpicWeb for "${epicUrl.pathname}" does not match expectation`,
-							infoResult.error,
+						videoInfoLog.error(
+							`API response parsing failed for ${epicVideoEmbed}`,
+							{
+								url: epicUrl.pathname,
+								rawInfo,
+								parseError: infoResult.error,
+							},
 						)
 						return {
 							status: 'error',
@@ -214,7 +215,7 @@ async function getEpicVideoInfo({
 				// don't cache errors for long...
 				context.metadata.ttl = 1000 * 2
 				context.metadata.swr = 0
-				log.error(`video API request failed for ${epicVideoEmbed}`, {
+				videoInfoLog.error(`video API request failed for ${epicVideoEmbed}`, {
 					status,
 					statusText,
 					url: apiUrl,
@@ -228,7 +229,10 @@ async function getEpicVideoInfo({
 			}
 		},
 	}).catch((e) => {
-		log.error(`failed to fetch epic video info for ${epicVideoEmbed}:`, e)
+		videoInfoLog.error(
+			`failed to fetch epic video info for ${epicVideoEmbed}:`,
+			e,
+		)
 		throw e
 	})
 }
@@ -760,6 +764,7 @@ function resolveDiscordAvatar(
 
 export type UserInfo = z.infer<typeof UserInfoSchema>
 
+const userinfoLog = log.logger('userinfo')
 export async function getUserInfo({
 	timings,
 	request,
@@ -780,7 +785,7 @@ export async function getUserInfo({
 	const accessToken = tokenSet.access_token
 	const url = `https://${host}/oauth/userinfo`
 
-	log('fetching user info from: %s', url)
+	userinfoLog(`calling cachified to get user info from: ${url}`)
 	const userInfo = await cachified({
 		key: `${url}:${md5(accessToken)}`,
 		cache: epicApiCache,
@@ -792,16 +797,18 @@ export async function getUserInfo({
 		offlineFallbackValue: null,
 		checkValue: UserInfoSchema,
 		async getFreshValue(): Promise<UserInfo> {
-			log(`making user info API request to: ${url}`)
+			userinfoLog(`getting fresh value for user info from: ${url}`)
 
 			const response = await fetch(url, {
 				headers: { authorization: `Bearer ${accessToken}` },
 			}).catch((e) => new Response(getErrorMessage(e), { status: 500 }))
 
-			log(`user info API response: ${response.status} ${response.statusText}`)
+			userinfoLog(
+				`user info API response: ${response.status} ${response.statusText}`,
+			)
 
 			if (!response.ok) {
-				log(
+				userinfoLog(
 					`user info API request failed: ${response.status} ${response.statusText}`,
 				)
 				if (
@@ -819,13 +826,13 @@ export async function getUserInfo({
 
 			const data = await response.json()
 			const parsedUserInfo = UserInfoSchema.parse(data)
-			log(
+			userinfoLog(
 				`successfully fetched user info for user: ${parsedUserInfo.id} (${parsedUserInfo.email})`,
 			)
 			return parsedUserInfo
 		},
 	}).catch((e) => {
-		log.error(`failed to get user info:`, e)
+		userinfoLog.error(`failed to get user info:`, e)
 		return null
 	})
 
