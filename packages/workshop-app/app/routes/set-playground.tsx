@@ -226,7 +226,7 @@ export function SetAppToPlayground({
 	isOutdated,
 }: {
 	appName: string
-	isOutdated: boolean
+	isOutdated?: boolean
 }) {
 	if (ENV.EPICSHOP_DEPLOYED) return null
 	return (
