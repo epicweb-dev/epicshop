@@ -129,7 +129,7 @@ export async function deleteDb() {
 	}
 }
 
-async function readDb() {
+export async function readDb() {
 	if (process.env.EPICSHOP_DEPLOYED) return null
 
 	const maxRetries = 3
