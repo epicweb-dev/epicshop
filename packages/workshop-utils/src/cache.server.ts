@@ -706,6 +706,9 @@ export async function cachified<Value>({
 	if (offlineFallbackValue !== undefined) {
 		const isOnline = await checkConnection({ request, timings })
 		if (!isOnline) {
+			log.warn(
+				`Offline: using cached value for ${key} or offline fallback if no cache is present`,
+			)
 			const cacheEntry = await options.cache.get(key)
 			return cacheEntry?.value ?? offlineFallbackValue
 		}

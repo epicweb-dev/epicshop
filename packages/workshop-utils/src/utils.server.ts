@@ -30,7 +30,8 @@ export async function checkConnection({
 		ttl: 1000 * 10,
 		async getFreshValue(context) {
 			const response = await fetch('https://one.one.one.one/cdn-cgi/trace', {
-				method: 'HEAD',
+				// don't try a HEAD request. I guess they don't like HEAD requests...
+				method: 'GET',
 			})
 			if (response.ok) {
 				context.metadata.ttl = 1000 * 60
