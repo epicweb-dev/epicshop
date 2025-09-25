@@ -1,15 +1,12 @@
 import {
-	getAllWorkshopCaches,
 	deleteCacheEntry,
 	deleteWorkshopCache,
+	getAllWorkshopCaches,
 	updateCacheEntry,
 } from '@epic-web/workshop-utils/cache.server'
 import { getEnv } from '@epic-web/workshop-utils/env.server'
 import { getErrorMessage } from '@epic-web/workshop-utils/utils'
-import dayjsLib from 'dayjs'
-import relativeTimePlugin from 'dayjs/plugin/relativeTime.js'
-import utcPlugin from 'dayjs/plugin/utc.js'
-import { useState, useEffect, useRef } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import { href, useFetcher, useSearchParams } from 'react-router'
 import { ClientOnly } from 'remix-utils/client-only'
 import { z } from 'zod'
@@ -21,193 +18,63 @@ import {
 import { Icon } from '#app/components/icons.tsx'
 import { LaunchEditor } from '#app/routes/launch-editor.tsx'
 import {
+	calculateExpirationTime,
 	cn,
 	ensureUndeployed,
+	formatDuration,
+	formatFileSize,
+	formatTimeRemaining,
+	useDayjs,
 	useDoubleCheck,
 	useInterval,
 } from '#app/utils/misc.js'
 import { type Route } from './+types/cache.ts'
 
-// Set up dayjs for client-side use - do this in a function to avoid hydration issues
-function setupDayjs() {
-	dayjsLib.extend(utcPlugin)
-	dayjsLib.extend(relativeTimePlugin)
-	return dayjsLib
-}
+export async function loader({ request }: Route.LoaderArgs) {
+	ensureUndeployed()
+	const currentWorkshopId = getEnv().EPICSHOP_WORKSHOP_INSTANCE_ID
+	const allWorkshopCaches = await getAllWorkshopCaches()
 
-// Cache expiration utilities
-function calculateExpirationTime(metadata: {
-	createdTime: number
-	ttl?: number | null
-}): number | null {
-	const { createdTime, ttl } = metadata
-	if (ttl === undefined || ttl === null || ttl === Infinity) {
-		return null // Never expires
+	const url = new URL(request.url)
+	const filterQuery = url.searchParams.get('q') || ''
+	const selectedWorkshops = url.searchParams
+		.get('workshops')
+		?.split(',')
+		.filter(Boolean) || [currentWorkshopId]
+
+	// Filter caches based on search query and selected workshops
+	const filteredCaches = allWorkshopCaches
+		.filter(
+			(workshopCache) =>
+				selectedWorkshops.includes(workshopCache.workshopId) ||
+				selectedWorkshops.length === 0,
+		)
+		.map((workshopCache) => ({
+			...workshopCache,
+			caches: workshopCache.caches
+				.map((cache) => ({
+					...cache,
+					entries: cache.entries.filter(
+						(entry) =>
+							filterQuery === '' ||
+							entry.key.toLowerCase().includes(filterQuery.toLowerCase()) ||
+							cache.name.toLowerCase().includes(filterQuery.toLowerCase()),
+					),
+				}))
+				.filter((cache) => cache.entries.length > 0 || filterQuery === ''),
+		}))
+		.filter(
+			(workshopCache) => workshopCache.caches.length > 0 || filterQuery === '',
+		)
+
+	return {
+		currentWorkshopId,
+		allWorkshopCaches,
+		filteredCaches,
+		filterQuery,
+		selectedWorkshops,
+		availableWorkshops: allWorkshopCaches.map((w) => w.workshopId),
 	}
-	return createdTime + ttl
-}
-
-function formatTimeRemaining(expirationTime: number): {
-	text: string
-	isExpired: boolean
-	isExpiringSoon: boolean
-} {
-	const now = Date.now()
-	const remaining = expirationTime - now
-
-	if (remaining <= 0) {
-		return { text: 'Expired', isExpired: true, isExpiringSoon: false }
-	}
-
-	const seconds = Math.floor(remaining / 1000)
-	const minutes = Math.floor(seconds / 60)
-	const hours = Math.floor(minutes / 60)
-	const days = Math.floor(hours / 24)
-
-	let text: string
-	let isExpiringSoon: boolean
-
-	if (days > 0) {
-		text = `${days}d ${hours % 24}h`
-		isExpiringSoon = days < 1.5
-	} else if (hours > 0) {
-		text = `${hours}h ${minutes % 60}m`
-		isExpiringSoon = hours < 2
-	} else if (minutes > 0) {
-		text = `${minutes}m ${seconds % 60}s`
-		isExpiringSoon = minutes < 10
-	} else {
-		text = `${seconds}s`
-		isExpiringSoon = true
-	}
-
-	return { text, isExpired: false, isExpiringSoon }
-}
-
-function formatDuration(ms: number): string {
-	if (ms < 1000) return `${Math.round(ms)}ms`
-	if (ms < 60000) return `${Math.round(ms / 1000)}s`
-	if (ms < 3600000) return `${Math.round(ms / 60000)}m`
-	if (ms < 86400000) return `${Math.round(ms / 3600000)}h`
-	if (ms < 604800000) return `${Math.round(ms / 86400000)}d`
-	if (ms < 2629746000) return `${Math.round(ms / 604800000)}w`
-	if (ms < 31556952000) return `${Math.round(ms / 2629746000)}mo`
-	return `${Math.round(ms / 31556952000)}y`
-}
-
-function formatFileSize(bytes: number): string {
-	if (bytes < 1024) return `${bytes} B`
-	if (bytes < 1024 * 1024) return `${(bytes / 1024).toFixed(1)} KB`
-	if (bytes < 1024 * 1024 * 1024) {
-		return `${(bytes / (1024 * 1024)).toFixed(1)} MB`
-	}
-	return `${(bytes / (1024 * 1024 * 1024)).toFixed(1)} GB`
-}
-
-// Component for displaying cache metadata with live countdown
-function CacheMetadata({
-	metadata,
-}: {
-	metadata: {
-		createdTime: number
-		ttl?: number | null
-		swr?: number
-	}
-}) {
-	const [dayjs] = useState(() => setupDayjs())
-	const [, setCurrentTime] = useState(Date.now())
-	const expirationTime = calculateExpirationTime(metadata)
-
-	// Update time every second for live countdown
-	useInterval(() => {
-		setCurrentTime(Date.now())
-	}, 1000)
-
-	const createdDate = dayjs(metadata.createdTime)
-	const timeRemaining = expirationTime
-		? formatTimeRemaining(expirationTime)
-		: { text: 'Never', isExpired: false, isExpiringSoon: false }
-
-	return (
-		<div className="flex flex-col gap-1 text-xs text-muted-foreground">
-			<div>
-				Created: {createdDate.format('MMM D, YYYY HH:mm:ss')}{' '}
-				<ClientOnly>{() => `(${createdDate.fromNow()})`}</ClientOnly>
-			</div>
-			<div className="flex flex-wrap items-center gap-3">
-				{metadata.ttl !== undefined && metadata.ttl !== null ? (
-					<span>
-						TTL:{' '}
-						{metadata.ttl === Infinity ? (
-							'Forever'
-						) : (
-							<span title={`${metadata.ttl}ms`}>
-								{formatDuration(metadata.ttl)}
-							</span>
-						)}
-					</span>
-				) : null}
-				{metadata.swr !== undefined ? (
-					<span>
-						SWR:{' '}
-						<span title={`${metadata.swr}ms`}>
-							{formatDuration(metadata.swr)}
-						</span>
-					</span>
-				) : null}
-				<div
-					className={`inline-flex w-auto rounded-full px-2 py-[2px] font-medium ${
-						timeRemaining.isExpired
-							? 'bg-destructive text-destructive-foreground'
-							: timeRemaining.isExpiringSoon
-								? 'bg-warning text-warning-foreground'
-								: 'text-foreground'
-					}`}
-				>
-					{expirationTime ? (
-						<>
-							Expires: {dayjs(expirationTime).format('MMM D, YYYY HH:mm:ss')} (
-							<span className="tabular-nums">
-								<ClientOnly>{() => timeRemaining.text}</ClientOnly>
-							</span>
-							)
-						</>
-					) : (
-						'Expires: Never'
-					)}
-				</div>
-			</div>
-		</div>
-	)
-}
-
-// Double-check delete button
-function DoubleCheckButton({
-	onConfirm,
-	children,
-	className,
-	...props
-}: React.ComponentPropsWithoutRef<'button'> & {
-	onConfirm: () => void
-}) {
-	const doubleCheck = useDoubleCheck()
-
-	return (
-		<IconButton
-			{...doubleCheck.getButtonProps({
-				onClick: doubleCheck.doubleCheck ? onConfirm : undefined,
-				...props,
-			})}
-			className={cn(
-				doubleCheck.doubleCheck
-					? 'bg-destructive text-destructive-foreground'
-					: null,
-				className,
-			)}
-		>
-			{doubleCheck.doubleCheck ? '✓' : children}
-		</IconButton>
-	)
 }
 
 const ActionSchema = z.discriminatedUnion('intent', [
@@ -280,53 +147,6 @@ export async function action({ request }: Route.ActionArgs) {
 	} catch (error) {
 		console.error('Cache action error:', error)
 		return { status: 'error', error: 'Operation failed' } as const
-	}
-}
-
-export async function loader({ request }: Route.LoaderArgs) {
-	ensureUndeployed()
-	const currentWorkshopId = getEnv().EPICSHOP_WORKSHOP_INSTANCE_ID
-	const allWorkshopCaches = await getAllWorkshopCaches()
-
-	const url = new URL(request.url)
-	const filterQuery = url.searchParams.get('q') || ''
-	const selectedWorkshops = url.searchParams
-		.get('workshops')
-		?.split(',')
-		.filter(Boolean) || [currentWorkshopId]
-
-	// Filter caches based on search query and selected workshops
-	const filteredCaches = allWorkshopCaches
-		.filter(
-			(workshopCache) =>
-				selectedWorkshops.includes(workshopCache.workshopId) ||
-				selectedWorkshops.length === 0,
-		)
-		.map((workshopCache) => ({
-			...workshopCache,
-			caches: workshopCache.caches
-				.map((cache) => ({
-					...cache,
-					entries: cache.entries.filter(
-						(entry) =>
-							filterQuery === '' ||
-							entry.key.toLowerCase().includes(filterQuery.toLowerCase()) ||
-							cache.name.toLowerCase().includes(filterQuery.toLowerCase()),
-					),
-				}))
-				.filter((cache) => cache.entries.length > 0 || filterQuery === ''),
-		}))
-		.filter(
-			(workshopCache) => workshopCache.caches.length > 0 || filterQuery === '',
-		)
-
-	return {
-		currentWorkshopId,
-		allWorkshopCaches,
-		filteredCaches,
-		filterQuery,
-		selectedWorkshops,
-		availableWorkshops: allWorkshopCaches.map((w) => w.workshopId),
 	}
 }
 
@@ -858,5 +678,111 @@ export default function CacheManagement({ loaderData }: Route.ComponentProps) {
 				))}
 			</div>
 		</div>
+	)
+}
+
+// Component for displaying cache metadata with live countdown
+function CacheMetadata({
+	metadata,
+}: {
+	metadata: {
+		createdTime: number
+		ttl?: number | null
+		swr?: number
+	}
+}) {
+	const dayjs = useDayjs()
+	const [, setCurrentTime] = useState(Date.now())
+	const expirationTime = calculateExpirationTime(metadata)
+
+	// Update time every second for live countdown
+	useInterval(() => {
+		setCurrentTime(Date.now())
+	}, 1000)
+
+	const createdDate = dayjs(metadata.createdTime)
+	const timeRemaining = expirationTime
+		? formatTimeRemaining(expirationTime)
+		: { text: 'Never', isExpired: false, isExpiringSoon: false }
+
+	return (
+		<div className="flex flex-col gap-1 text-xs text-muted-foreground">
+			<div>
+				Created: {createdDate.format('MMM D, YYYY HH:mm:ss')}{' '}
+				<ClientOnly>{() => `(${createdDate.fromNow()})`}</ClientOnly>
+			</div>
+			<div className="flex flex-wrap items-center gap-3">
+				{metadata.ttl !== undefined && metadata.ttl !== null ? (
+					<span>
+						TTL:{' '}
+						{metadata.ttl === Infinity ? (
+							'Forever'
+						) : (
+							<span title={`${metadata.ttl}ms`}>
+								{formatDuration(metadata.ttl)}
+							</span>
+						)}
+					</span>
+				) : null}
+				{metadata.swr !== undefined ? (
+					<span>
+						SWR:{' '}
+						<span title={`${metadata.swr}ms`}>
+							{formatDuration(metadata.swr)}
+						</span>
+					</span>
+				) : null}
+				<div
+					className={`inline-flex w-auto rounded-full px-2 py-[2px] font-medium ${
+						timeRemaining.isExpired
+							? 'bg-destructive text-destructive-foreground'
+							: timeRemaining.isExpiringSoon
+								? 'bg-warning text-warning-foreground'
+								: 'text-foreground'
+					}`}
+				>
+					{expirationTime ? (
+						<>
+							Expires: {dayjs(expirationTime).format('MMM D, YYYY HH:mm:ss')} (
+							<span className="tabular-nums">
+								<ClientOnly>{() => timeRemaining.text}</ClientOnly>
+							</span>
+							)
+						</>
+					) : (
+						'Expires: Never'
+					)}
+				</div>
+			</div>
+		</div>
+	)
+}
+
+// Double-check delete button
+function DoubleCheckButton({
+	onConfirm,
+	children,
+	className,
+	...props
+}: React.ComponentPropsWithoutRef<'button'> & {
+	onConfirm: () => void
+}) {
+	const doubleCheck = useDoubleCheck()
+
+	return (
+		<IconButton
+			{...doubleCheck.getButtonProps({
+				onClick: doubleCheck.doubleCheck ? onConfirm : undefined,
+				...props,
+			})}
+			className={cn(
+				doubleCheck.doubleCheck
+					? 'bg-destructive text-destructive-foreground'
+					: null,
+				className,
+			)}
+		>
+			{doubleCheck.doubleCheck ? '✓' : children}
+		</IconButton>
 	)
 }

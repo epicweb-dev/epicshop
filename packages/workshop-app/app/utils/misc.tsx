@@ -1,6 +1,9 @@
 import { type ExerciseStepApp } from '@epic-web/workshop-utils/apps.server'
 import slugify from '@sindresorhus/slugify'
 import { clsx, type ClassValue } from 'clsx'
+import dayjsLib from 'dayjs'
+import relativeTimePlugin from 'dayjs/plugin/relativeTime.js'
+import utcPlugin from 'dayjs/plugin/utc.js'
 import * as React from 'react'
 import { useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react'
 import {
@@ -71,6 +74,17 @@ export const AnchorOrLink = function AnchorOrLink({
 			</Link>
 		)
 	}
+}
+
+function setupDayjs() {
+	dayjsLib.extend(utcPlugin)
+	dayjsLib.extend(relativeTimePlugin)
+	return dayjsLib
+}
+
+export function useDayjs() {
+	const [dayjs] = useState(() => setupDayjs())
+	return dayjs
 }
 
 export function ensureUndeployed() {
@@ -496,4 +510,72 @@ export function getExerciseStepPath(
 	if (!type) return `/exercise/${exerciseNumberStr}/${stepNumberStr}`
 
 	return `/exercise/${exerciseNumberStr}/${stepNumberStr}/${type}`
+}
+
+export function calculateExpirationTime(metadata: {
+	createdTime: number
+	ttl?: number | null
+}): number | null {
+	const { createdTime, ttl } = metadata
+	if (ttl === undefined || ttl === null || ttl === Infinity) {
+		return null // Never expires
+	}
+	return createdTime + ttl
+}
+
+export function formatTimeRemaining(expirationTime: number): {
+	text: string
+	isExpired: boolean
+	isExpiringSoon: boolean
+} {
+	const now = Date.now()
+	const remaining = expirationTime - now
+
+	if (remaining <= 0) {
+		return { text: 'Expired', isExpired: true, isExpiringSoon: false }
+	}
+
+	const seconds = Math.floor(remaining / 1000)
+	const minutes = Math.floor(seconds / 60)
+	const hours = Math.floor(minutes / 60)
+	const days = Math.floor(hours / 24)
+
+	let text: string
+	let isExpiringSoon: boolean
+
+	if (days > 0) {
+		text = `${days}d ${hours % 24}h`
+		isExpiringSoon = days < 1.5
+	} else if (hours > 0) {
+		text = `${hours}h ${minutes % 60}m`
+		isExpiringSoon = hours < 2
+	} else if (minutes > 0) {
+		text = `${minutes}m ${seconds % 60}s`
+		isExpiringSoon = minutes < 10
+	} else {
+		text = `${seconds}s`
+		isExpiringSoon = true
+	}
+
+	return { text, isExpired: false, isExpiringSoon }
+}
+
+export function formatDuration(ms: number): string {
+	if (ms < 1000) return `${Math.round(ms)}ms`
+	if (ms < 60000) return `${Math.round(ms / 1000)}s`
+	if (ms < 3600000) return `${Math.round(ms / 60000)}m`
+	if (ms < 86400000) return `${Math.round(ms / 3600000)}h`
+	if (ms < 604800000) return `${Math.round(ms / 86400000)}d`
+	if (ms < 2629746000) return `${Math.round(ms / 604800000)}w`
+	if (ms < 31556952000) return `${Math.round(ms / 2629746000)}mo`
+	return `${Math.round(ms / 31556952000)}y`
+}
+
+export function formatFileSize(bytes: number): string {
+	if (bytes < 1024) return `${bytes} B`
+	if (bytes < 1024 * 1024) return `${(bytes / 1024).toFixed(1)} KB`
+	if (bytes < 1024 * 1024 * 1024) {
+		return `${(bytes / (1024 * 1024)).toFixed(1)} MB`
+	}
+	return `${(bytes / (1024 * 1024 * 1024)).toFixed(1)} GB`
 }
