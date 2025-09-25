@@ -221,16 +221,28 @@ function SelectItem({
 	)
 }
 
-export function SetAppToPlayground({ appName }: { appName: string }) {
+export function SetAppToPlayground({
+	appName,
+	isOutdated,
+}: {
+	appName: string
+	isOutdated: boolean
+}) {
 	if (ENV.EPICSHOP_DEPLOYED) return null
 	return (
 		<SetPlayground
 			appName={appName}
-			tooltipText="Playground is not set to the right app. Click to set Playground."
+			tooltipText={
+				isOutdated
+					? 'The app the playground was set to has been updated. Click to update to the latest version.'
+					: 'Playground is not set to the right app. Click to set Playground.'
+			}
 		>
 			<span className="flex items-center justify-center gap-1 text-foreground-destructive hover:underline">
 				<Icon name="Unlinked" className="animate-ping" />{' '}
-				<span className="uppercase">Set to Playground</span>
+				<span className="uppercase">
+					{isOutdated ? 'Playground Outdated' : 'Set to Playground'}
+				</span>
 			</span>
 		</SetPlayground>
 	)

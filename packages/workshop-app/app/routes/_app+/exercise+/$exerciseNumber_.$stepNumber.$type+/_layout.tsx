@@ -243,6 +243,7 @@ export async function loader({ request, params }: Route.LoaderArgs) {
 						name: playgroundApp.name,
 						fullPath: playgroundApp.fullPath,
 						dev: playgroundApp.dev,
+						isUpToDate: playgroundApp.isUpToDate,
 					} as const)
 				: null,
 			problem: problemApp
@@ -416,9 +417,13 @@ export default function ExercisePartRoute({
 								</Link>
 							</div>
 							{data.problem &&
-							data.playground?.appName !== data.problem.name ? (
+							(data.playground?.appName !== data.problem.name ||
+								!data.playground?.isUpToDate) ? (
 								<div className="hidden md:block">
-									<SetAppToPlayground appName={data.problem.name} />
+									<SetAppToPlayground
+										appName={data.problem.name}
+										isOutdated={data.playground?.isUpToDate === false}
+									/>
 								</div>
 							) : null}
 						</div>
