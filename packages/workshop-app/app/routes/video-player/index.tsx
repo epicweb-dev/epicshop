@@ -13,6 +13,7 @@ import {
 	type ActionFunctionArgs,
 	useFetcher,
 	useRouteLoaderData,
+	useFetchers,
 } from 'react-router'
 import { z } from 'zod'
 import { type RootLoaderData } from '#app/root.tsx'
@@ -30,40 +31,24 @@ const PlaybackTimeSchema = z
 
 export function usePlayerPreferences() {
 	const data = useRouteLoaderData('root') as RootLoaderData
+	const fetchers = useFetchers()
+	const pendingPreferencesFetcher = fetchers.find(
+		(f) => f.formAction === '/video-player',
+	)
+	if (pendingPreferencesFetcher && pendingPreferencesFetcher.state !== 'idle') {
+		const submittingData = pendingPreferencesFetcher.json
+		if (submittingData) {
+			const optimisticPlayerPrefs = {
+				...data?.preferences?.player,
+				...(submittingData as z.input<typeof PlayerPreferencesSchema>),
+			} as z.input<typeof PlayerPreferencesSchema>
+			return optimisticPlayerPrefs
+		}
+	}
 	return data?.preferences?.player ?? null
 }
 
 type MuxPlayerProps = React.ComponentProps<typeof RealMuxPlayer>
-
-const ignoredInputs = ['INPUT', 'SELECT', 'BUTTON', 'TEXTAREA', 'SUMMARY']
-
-const ignoredRoles = ['button', 'option', 'combobox', 'tab', 'tablist']
-
-function isInMuxPlayer(el: unknown) {
-	let current = el
-	while (current) {
-		if (!(current instanceof HTMLElement)) return false
-		if (current.tagName === 'MUX-PLAYER') return true
-		current = current.parentElement
-	}
-	return false
-}
-
-function shouldIgnoreHotkey(el: unknown) {
-	let current = el
-	while (current) {
-		if (!(current instanceof HTMLElement)) return false
-
-		const isIgnored =
-			ignoredInputs.includes(current.tagName) ||
-			ignoredRoles.includes(current.getAttribute('role') || '') ||
-			current.isContentEditable
-		if (isIgnored) return true
-		current = current.parentElement
-	}
-
-	return false
-}
 
 export async function action({ request }: ActionFunctionArgs) {
 	const result = PlayerPreferencesSchema.safeParse(await request.json())
@@ -92,7 +77,6 @@ export function MuxPlayer({
 }) {
 	const playerPreferences = usePlayerPreferences()
 	const playerPreferencesFetcher = useFetcher<typeof action>()
-	const [metadataLoaded, setMetadataLoaded] = React.useState(false)
 	const currentTimeSessionKey = `${props.playbackId}:currentTime`
 	const [currentTime, setCurrentTime] = React.useState(0)
 
@@ -111,153 +95,6 @@ export function MuxPlayer({
 			sessionStorage.removeItem(currentTimeSessionKey)
 		}
 	}, [currentTimeSessionKey])
-
-	React.useEffect(() => {
-		function handleUserKeyPress(e: KeyboardEvent) {
-			if (!muxPlayerRef.current) return
-			const activeElement = document.activeElement
-
-			if (shouldIgnoreHotkey(activeElement)) return
-			if (shouldIgnoreHotkey(e.target)) return
-
-			if (!isInMuxPlayer(activeElement)) {
-				// these are hotkeys the video player handles for us when focus is on the video player
-				// but we want them to apply globally
-				if (e.key === ' ') {
-					e.preventDefault()
-					if (muxPlayerRef.current.paused) {
-						// Only attempt to play if metadata is loaded to avoid AbortError
-						if (metadataLoaded) {
-							void muxPlayerRef.current.play().catch(() => {})
-						}
-					} else {
-						muxPlayerRef.current.pause()
-					}
-				}
-				if (e.key === 'ArrowRight') {
-					e.preventDefault()
-					muxPlayerRef.current.currentTime =
-						muxPlayerRef.current.currentTime +
-						(muxPlayerRef.current.forwardSeekOffset || 10)
-				}
-				if (e.key === 'ArrowLeft') {
-					e.preventDefault()
-					muxPlayerRef.current.currentTime =
-						muxPlayerRef.current.currentTime -
-						(muxPlayerRef.current.forwardSeekOffset || 10)
-				}
-				if (e.key === 'f' && !e.metaKey && !e.ctrlKey) {
-					e.preventDefault()
-					void (document.fullscreenElement
-						? document.exitFullscreen()
-						: muxPlayerRef.current.requestFullscreen())
-				}
-				// k to play/pause
-				if (e.key === 'k') {
-					e.preventDefault()
-					if (muxPlayerRef.current.paused) {
-						// Only attempt to play if metadata is loaded to avoid AbortError
-						if (metadataLoaded) {
-							void muxPlayerRef.current.play().catch(() => {})
-						}
-					} else {
-						muxPlayerRef.current.pause()
-					}
-				}
-				// c to toggle captions
-				if (e.key === 'c') {
-					e.preventDefault()
-					const textTracks = Array.from(muxPlayerRef.current.textTracks ?? [])
-					const subtitleTrack = textTracks.find((track) => track.kind === 'subtitles')
-					if (subtitleTrack) {
-						subtitleTrack.mode = subtitleTrack.mode === 'showing' ? 'disabled' : 'showing'
-					}
-				}
-			}
-
-			// these are hot keys the video player does not handle for us
-
-			// j to go backward
-			if (e.key === 'j') {
-				e.preventDefault()
-				muxPlayerRef.current.currentTime = Math.max(
-					0, 
-					muxPlayerRef.current.currentTime - (muxPlayerRef.current.forwardSeekOffset || 10)
-				)
-			}
-			// l to go forward
-			if (e.key === 'l') {
-				e.preventDefault()
-				muxPlayerRef.current.currentTime = Math.min(
-					muxPlayerRef.current.duration || Infinity,
-					muxPlayerRef.current.currentTime + (muxPlayerRef.current.forwardSeekOffset || 10)
-				)
-			}
-			// , (when paused) to go to the previous frame
-			if (e.key === ',' && muxPlayerRef.current.paused) {
-				e.preventDefault()
-				// Step backward by approximately 1/30 second (one frame at 30fps)
-				muxPlayerRef.current.currentTime = Math.max(
-					0,
-					muxPlayerRef.current.currentTime - (1 / 30)
-				)
-			}
-			// . (when paused) to go to the next frame
-			if (e.key === '.' && muxPlayerRef.current.paused && !e.shiftKey) {
-				e.preventDefault()
-				// Step forward by approximately 1/30 second (one frame at 30fps)
-				muxPlayerRef.current.currentTime = Math.min(
-					muxPlayerRef.current.duration || Infinity,
-					muxPlayerRef.current.currentTime + (1 / 30)
-				)
-			}
-			// Seek to specific point in the video (7 advances to 70% of duration) 0..9
-			if (/^[0-9]$/.test(e.key)) {
-				e.preventDefault()
-				const percentage = parseInt(e.key) / 10
-				const duration = muxPlayerRef.current.duration
-				if (duration) {
-					muxPlayerRef.current.currentTime = duration * percentage
-				}
-			}
-			// i toggle picture in picture
-			if (e.key === 'i') {
-				e.preventDefault()
-				if (document.pictureInPictureElement) {
-					void document.exitPictureInPicture().catch(() => {})
-				} else {
-					void muxPlayerRef.current.requestPictureInPicture().catch(() => {})
-				}
-			}
-			// arrow up/down to adjust volume
-			if (e.key === 'ArrowUp') {
-				e.preventDefault()
-				muxPlayerRef.current.volume = Math.min(1, muxPlayerRef.current.volume + 0.1)
-			}
-			if (e.key === 'ArrowDown') {
-				e.preventDefault()
-				muxPlayerRef.current.volume = Math.max(0, muxPlayerRef.current.volume - 0.1)
-			}
-
-			// Speed control shortcuts: Shift+> (increase) and Shift+< (decrease)
-			if (e.shiftKey && (e.key === '>' || e.key === '.')) {
-				e.preventDefault()
-				const currentRate = muxPlayerRef.current.playbackRate || 1
-				const newRate = Math.min(currentRate + 0.25, 4) // Cap at 4x speed
-				muxPlayerRef.current.playbackRate = newRate
-			}
-			if (e.shiftKey && (e.key === '<' || e.key === ',')) {
-				e.preventDefault()
-				const currentRate = muxPlayerRef.current.playbackRate || 1
-				const newRate = Math.max(currentRate - 0.25, 0.25) // Min at 0.25x speed
-				muxPlayerRef.current.playbackRate = newRate
-			}
-		}
-		window.document.addEventListener('keydown', handleUserKeyPress)
-		return () => {
-			window.document.removeEventListener('keydown', handleUserKeyPress)
-		}
-	}, [muxPlayerRef, metadataLoaded])
 
 	const updatePreferences = useDebounce(() => {
 		const player = muxPlayerRef.current
@@ -287,7 +124,7 @@ export function MuxPlayer({
 		// as the video player gets loaded, mux fires a bunch of change events which
 		// we don't want. So we wait until the metadata is loaded before we start
 		// listening to the events.
-		if (!metadataLoaded) return
+		if (!muxPlayerRef.current?.metadata) return
 
 		const textTracks = muxPlayerRef.current?.textTracks
 		if (!textTracks) return
@@ -304,7 +141,12 @@ export function MuxPlayer({
 		return () => {
 			textTracks.removeEventListener('change', updatePreferences)
 		}
-	}, [metadataLoaded, muxPlayerRef, playerPreferencesRef, updatePreferences])
+	}, [
+		muxPlayerRef.current?.metadata,
+		muxPlayerRef,
+		playerPreferencesRef,
+		updatePreferences,
+	])
 
 	return (
 		<div className="flex aspect-video flex-col">
@@ -335,7 +177,6 @@ export function MuxPlayer({
 				}
 				accentColor="#427cf0"
 				targetLiveWindow={NaN} // this has gotta be a bug. Without this prop, we get SSR warnings 🤷‍♂️
-				onLoadedMetadata={() => setMetadataLoaded(true)}
 				minResolution={getMinResolutionValue(playerPreferences?.minResolution)}
 				maxResolution={getMaxResolutionValue(playerPreferences?.maxResolution)}
 				{...props}
