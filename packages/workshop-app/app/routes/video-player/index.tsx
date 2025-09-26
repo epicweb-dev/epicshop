@@ -77,6 +77,7 @@ export function MuxPlayer({
 }) {
 	const playerPreferences = usePlayerPreferences()
 	const playerPreferencesFetcher = useFetcher<typeof action>()
+	const [metadataLoaded, setMetadataLoaded] = React.useState(false)
 	const currentTimeSessionKey = `${props.playbackId}:currentTime`
 	const [currentTime, setCurrentTime] = React.useState(0)
 
@@ -124,7 +125,7 @@ export function MuxPlayer({
 		// as the video player gets loaded, mux fires a bunch of change events which
 		// we don't want. So we wait until the metadata is loaded before we start
 		// listening to the events.
-		if (!muxPlayerRef.current?.metadata) return
+		if (!metadataLoaded) return
 
 		const textTracks = muxPlayerRef.current?.textTracks
 		if (!textTracks) return
@@ -141,12 +142,7 @@ export function MuxPlayer({
 		return () => {
 			textTracks.removeEventListener('change', updatePreferences)
 		}
-	}, [
-		muxPlayerRef.current?.metadata,
-		muxPlayerRef,
-		playerPreferencesRef,
-		updatePreferences,
-	])
+	}, [metadataLoaded, muxPlayerRef, playerPreferencesRef, updatePreferences])
 
 	return (
 		<div className="flex aspect-video flex-col">
@@ -179,6 +175,7 @@ export function MuxPlayer({
 				targetLiveWindow={NaN} // this has gotta be a bug. Without this prop, we get SSR warnings 🤷‍♂️
 				minResolution={getMinResolutionValue(playerPreferences?.minResolution)}
 				maxResolution={getMaxResolutionValue(playerPreferences?.maxResolution)}
+				onLoadedMetadata={() => setMetadataLoaded(true)}
 				{...props}
 			/>
 		</div>
