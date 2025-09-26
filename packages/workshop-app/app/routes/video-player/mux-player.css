@@ -20,34 +20,3 @@ mux-player::part(center play button) {
 mux-player::part(vertical-layer) {
 	background-color: rgba(0, 0, 0, 0);
 }
-
-mux-player::part(listbox) {
-	--media-listbox-layout: column;
-}
-
-/* Allow video players to expand beyond prose container width while keeping text content constrained */
-.prose .relative.aspect-video,
-.prose [data-video-embed] {
-	/* Break out of prose container constraints */
-	width: 100vw;
-	max-width: none;
-	position: relative;
-	left: 50%;
-	right: 50%;
-	margin-left: -50vw;
-	margin-right: -50vw;
-	margin-top: 2rem;
-	margin-bottom: 2rem;
-}
-
-/* On larger screens, limit the expansion to a reasonable max-width */
-@media (min-width: 1024px) {
-	.prose .relative.aspect-video,
-	.prose [data-video-embed] {
-		max-width: 1200px;
-		width: 100%;
-		left: 50%;
-		margin-left: -600px;
-		margin-right: 0;
-	}
-}

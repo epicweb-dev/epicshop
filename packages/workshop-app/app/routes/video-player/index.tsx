@@ -35,16 +35,19 @@ export function usePlayerPreferences() {
 
 type MuxPlayerProps = React.ComponentProps<typeof RealMuxPlayer>
 
-const ignoredInputs = [
-	'INPUT',
-	'SELECT',
-	'BUTTON',
-	'TEXTAREA',
-	'MUX-PLAYER',
-	'SUMMARY',
-]
+const ignoredInputs = ['INPUT', 'SELECT', 'BUTTON', 'TEXTAREA', 'SUMMARY']
 
 const ignoredRoles = ['button', 'option', 'combobox', 'tab', 'tablist']
+
+function isInMuxPlayer(el: unknown) {
+	let current = el
+	while (current) {
+		if (!(current instanceof HTMLElement)) return false
+		if (current.tagName === 'MUX-PLAYER') return true
+		current = current.parentElement
+	}
+	return false
+}
 
 function shouldIgnoreHotkey(el: unknown) {
 	let current = el
@@ -117,35 +120,52 @@ export function MuxPlayer({
 			if (shouldIgnoreHotkey(activeElement)) return
 			if (shouldIgnoreHotkey(e.target)) return
 
-			if (e.key === ' ') {
-				e.preventDefault()
-				if (muxPlayerRef.current.paused) {
-					// Only attempt to play if metadata is loaded to avoid AbortError
-					if (metadataLoaded) {
-						void muxPlayerRef.current.play().catch(() => {})
+			if (!isInMuxPlayer(activeElement)) {
+				// these are hotkeys the video player handles for us when focus is on the video player
+				// but we want them to apply globally
+				if (e.key === ' ') {
+					e.preventDefault()
+					if (muxPlayerRef.current.paused) {
+						// Only attempt to play if metadata is loaded to avoid AbortError
+						if (metadataLoaded) {
+							void muxPlayerRef.current.play().catch(() => {})
+						}
+					} else {
+						muxPlayerRef.current.pause()
 					}
-				} else {
-					muxPlayerRef.current.pause()
 				}
+				if (e.key === 'ArrowRight') {
+					e.preventDefault()
+					muxPlayerRef.current.currentTime =
+						muxPlayerRef.current.currentTime +
+						(muxPlayerRef.current.forwardSeekOffset || 10)
+				}
+				if (e.key === 'ArrowLeft') {
+					e.preventDefault()
+					muxPlayerRef.current.currentTime =
+						muxPlayerRef.current.currentTime -
+						(muxPlayerRef.current.forwardSeekOffset || 10)
+				}
+				if (e.key === 'f' && !e.metaKey && !e.ctrlKey) {
+					e.preventDefault()
+					void (document.fullscreenElement
+						? document.exitFullscreen()
+						: muxPlayerRef.current.requestFullscreen())
+				}
+				// k to play/pause
+				// c to toggle captions
 			}
-			if (e.key === 'ArrowRight') {
-				e.preventDefault()
-				muxPlayerRef.current.currentTime =
-					muxPlayerRef.current.currentTime +
-					(muxPlayerRef.current.forwardSeekOffset || 10)
-			}
-			if (e.key === 'ArrowLeft') {
-				e.preventDefault()
-				muxPlayerRef.current.currentTime =
-					muxPlayerRef.current.currentTime -
-					(muxPlayerRef.current.forwardSeekOffset || 10)
-			}
-			if (e.key === 'f' && !e.metaKey && !e.ctrlKey) {
-				e.preventDefault()
-				void (document.fullscreenElement
-					? document.exitFullscreen()
-					: muxPlayerRef.current.requestFullscreen())
-			}
+
+			// these are hot keys the video player does not handle for us
+
+			// j to go backward
+			// l to go forward
+			// , (when paused) to go to the previous frame
+			// . (when paused) to go to the next frame
+			// Seek to specific point in the video (7 advances to 70% of duration) 0..9
+			// i toggle picture in picture
+			// arrow up/down to adjust volume
+
 			// Speed control shortcuts: Shift+> (increase) and Shift+< (decrease)
 			if (e.shiftKey && (e.key === '>' || e.key === '.')) {
 				e.preventDefault()
