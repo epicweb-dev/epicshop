@@ -153,18 +153,91 @@ export function MuxPlayer({
 						: muxPlayerRef.current.requestFullscreen())
 				}
 				// k to play/pause
+				if (e.key === 'k') {
+					e.preventDefault()
+					if (muxPlayerRef.current.paused) {
+						// Only attempt to play if metadata is loaded to avoid AbortError
+						if (metadataLoaded) {
+							void muxPlayerRef.current.play().catch(() => {})
+						}
+					} else {
+						muxPlayerRef.current.pause()
+					}
+				}
 				// c to toggle captions
+				if (e.key === 'c') {
+					e.preventDefault()
+					const textTracks = Array.from(muxPlayerRef.current.textTracks ?? [])
+					const subtitleTrack = textTracks.find((track) => track.kind === 'subtitles')
+					if (subtitleTrack) {
+						subtitleTrack.mode = subtitleTrack.mode === 'showing' ? 'disabled' : 'showing'
+					}
+				}
 			}
 
 			// these are hot keys the video player does not handle for us
 
 			// j to go backward
+			if (e.key === 'j') {
+				e.preventDefault()
+				muxPlayerRef.current.currentTime = Math.max(
+					0, 
+					muxPlayerRef.current.currentTime - (muxPlayerRef.current.forwardSeekOffset || 10)
+				)
+			}
 			// l to go forward
+			if (e.key === 'l') {
+				e.preventDefault()
+				muxPlayerRef.current.currentTime = Math.min(
+					muxPlayerRef.current.duration || Infinity,
+					muxPlayerRef.current.currentTime + (muxPlayerRef.current.forwardSeekOffset || 10)
+				)
+			}
 			// , (when paused) to go to the previous frame
+			if (e.key === ',' && muxPlayerRef.current.paused) {
+				e.preventDefault()
+				// Step backward by approximately 1/30 second (one frame at 30fps)
+				muxPlayerRef.current.currentTime = Math.max(
+					0,
+					muxPlayerRef.current.currentTime - (1 / 30)
+				)
+			}
 			// . (when paused) to go to the next frame
+			if (e.key === '.' && muxPlayerRef.current.paused && !e.shiftKey) {
+				e.preventDefault()
+				// Step forward by approximately 1/30 second (one frame at 30fps)
+				muxPlayerRef.current.currentTime = Math.min(
+					muxPlayerRef.current.duration || Infinity,
+					muxPlayerRef.current.currentTime + (1 / 30)
+				)
+			}
 			// Seek to specific point in the video (7 advances to 70% of duration) 0..9
+			if (/^[0-9]$/.test(e.key)) {
+				e.preventDefault()
+				const percentage = parseInt(e.key) / 10
+				const duration = muxPlayerRef.current.duration
+				if (duration) {
+					muxPlayerRef.current.currentTime = duration * percentage
+				}
+			}
 			// i toggle picture in picture
+			if (e.key === 'i') {
+				e.preventDefault()
+				if (document.pictureInPictureElement) {
+					void document.exitPictureInPicture().catch(() => {})
+				} else {
+					void muxPlayerRef.current.requestPictureInPicture().catch(() => {})
+				}
+			}
 			// arrow up/down to adjust volume
+			if (e.key === 'ArrowUp') {
+				e.preventDefault()
+				muxPlayerRef.current.volume = Math.min(1, muxPlayerRef.current.volume + 0.1)
+			}
+			if (e.key === 'ArrowDown') {
+				e.preventDefault()
+				muxPlayerRef.current.volume = Math.max(0, muxPlayerRef.current.volume - 0.1)
+			}
 
 			// Speed control shortcuts: Shift+> (increase) and Shift+< (decrease)
 			if (e.shiftKey && (e.key === '>' || e.key === '.')) {
