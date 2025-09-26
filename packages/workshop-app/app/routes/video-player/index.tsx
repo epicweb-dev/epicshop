@@ -13,6 +13,7 @@ import {
 	type ActionFunctionArgs,
 	useFetcher,
 	useRouteLoaderData,
+	useFetchers,
 } from 'react-router'
 import { z } from 'zod'
 import { type RootLoaderData } from '#app/root.tsx'
@@ -30,37 +31,24 @@ const PlaybackTimeSchema = z
 
 export function usePlayerPreferences() {
 	const data = useRouteLoaderData('root') as RootLoaderData
+	const fetchers = useFetchers()
+	const pendingPreferencesFetcher = fetchers.find(
+		(f) => f.formAction === '/video-player',
+	)
+	if (pendingPreferencesFetcher && pendingPreferencesFetcher.state !== 'idle') {
+		const submittingData = pendingPreferencesFetcher.json
+		if (submittingData) {
+			const optimisticPlayerPrefs = {
+				...data?.preferences?.player,
+				...(submittingData as z.input<typeof PlayerPreferencesSchema>),
+			} as z.input<typeof PlayerPreferencesSchema>
+			return optimisticPlayerPrefs
+		}
+	}
 	return data?.preferences?.player ?? null
 }
 
 type MuxPlayerProps = React.ComponentProps<typeof RealMuxPlayer>
-
-const ignoredInputs = [
-	'INPUT',
-	'SELECT',
-	'BUTTON',
-	'TEXTAREA',
-	'MUX-PLAYER',
-	'SUMMARY',
-]
-
-const ignoredRoles = ['button', 'option', 'combobox', 'tab', 'tablist']
-
-function shouldIgnoreHotkey(el: unknown) {
-	let current = el
-	while (current) {
-		if (!(current instanceof HTMLElement)) return false
-
-		const isIgnored =
-			ignoredInputs.includes(current.tagName) ||
-			ignoredRoles.includes(current.getAttribute('role') || '') ||
-			current.isContentEditable
-		if (isIgnored) return true
-		current = current.parentElement
-	}
-
-	return false
-}
 
 export async function action({ request }: ActionFunctionArgs) {
 	const result = PlayerPreferencesSchema.safeParse(await request.json())
@@ -108,50 +96,6 @@ export function MuxPlayer({
 			sessionStorage.removeItem(currentTimeSessionKey)
 		}
 	}, [currentTimeSessionKey])
-
-	React.useEffect(() => {
-		function handleUserKeyPress(e: KeyboardEvent) {
-			if (!muxPlayerRef.current) return
-			const activeElement = document.activeElement
-
-			if (shouldIgnoreHotkey(activeElement)) return
-			if (shouldIgnoreHotkey(e.target)) return
-
-			if (e.key === ' ') {
-				e.preventDefault()
-				if (muxPlayerRef.current.paused) {
-					// Only attempt to play if metadata is loaded to avoid AbortError
-					if (metadataLoaded) {
-						void muxPlayerRef.current.play().catch(() => {})
-					}
-				} else {
-					muxPlayerRef.current.pause()
-				}
-			}
-			if (e.key === 'ArrowRight') {
-				e.preventDefault()
-				muxPlayerRef.current.currentTime =
-					muxPlayerRef.current.currentTime +
-					(muxPlayerRef.current.forwardSeekOffset || 10)
-			}
-			if (e.key === 'ArrowLeft') {
-				e.preventDefault()
-				muxPlayerRef.current.currentTime =
-					muxPlayerRef.current.currentTime -
-					(muxPlayerRef.current.forwardSeekOffset || 10)
-			}
-			if (e.key === 'f' && !e.metaKey && !e.ctrlKey) {
-				e.preventDefault()
-				void (document.fullscreenElement
-					? document.exitFullscreen()
-					: muxPlayerRef.current.requestFullscreen())
-			}
-		}
-		window.document.addEventListener('keydown', handleUserKeyPress)
-		return () => {
-			window.document.removeEventListener('keydown', handleUserKeyPress)
-		}
-	}, [muxPlayerRef, metadataLoaded])
 
 	const updatePreferences = useDebounce(() => {
 		const player = muxPlayerRef.current
@@ -229,9 +173,9 @@ export function MuxPlayer({
 				}
 				accentColor="#427cf0"
 				targetLiveWindow={NaN} // this has gotta be a bug. Without this prop, we get SSR warnings 🤷‍♂️
-				onLoadedMetadata={() => setMetadataLoaded(true)}
 				minResolution={getMinResolutionValue(playerPreferences?.minResolution)}
 				maxResolution={getMaxResolutionValue(playerPreferences?.maxResolution)}
+				onLoadedMetadata={() => setMetadataLoaded(true)}
 				{...props}
 			/>
 		</div>
