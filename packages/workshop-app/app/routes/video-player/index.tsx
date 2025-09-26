@@ -146,6 +146,19 @@ export function MuxPlayer({
 					? document.exitFullscreen()
 					: muxPlayerRef.current.requestFullscreen())
 			}
+			// Speed control shortcuts: Shift+> (increase) and Shift+< (decrease)
+			if (e.shiftKey && (e.key === '>' || e.key === '.')) {
+				e.preventDefault()
+				const currentRate = muxPlayerRef.current.playbackRate || 1
+				const newRate = Math.min(currentRate + 0.25, 4) // Cap at 4x speed
+				muxPlayerRef.current.playbackRate = newRate
+			}
+			if (e.shiftKey && (e.key === '<' || e.key === ',')) {
+				e.preventDefault()
+				const currentRate = muxPlayerRef.current.playbackRate || 1
+				const newRate = Math.max(currentRate - 0.25, 0.25) // Min at 0.25x speed
+				muxPlayerRef.current.playbackRate = newRate
+			}
 		}
 		window.document.addEventListener('keydown', handleUserKeyPress)
 		return () => {
