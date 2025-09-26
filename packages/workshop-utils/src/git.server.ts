@@ -7,89 +7,56 @@ import { getWorkshopRoot } from './apps.server.js'
 import { cachified, checkForUpdatesCache } from './cache.server.js'
 import { getWorkshopConfig } from './config.server.js'
 import { getEnv } from './env.server.js'
+import { logger } from './logger.js'
 import { getErrorMessage } from './utils.js'
 import { checkConnection } from './utils.server.js'
 
+const gitLog = logger('epic:git')
+
+function dirHasTrackedFiles(cwd: string, dirPath: string) {
+	return execa('git', ['ls-files', dirPath], { cwd }).then(
+		(s) => s.stdout.trim().length > 0,
+		() => true,
+	)
+}
+
+function isDirectory(dirPath: string) {
+	return fs.stat(dirPath).then(
+		(s) => s.isDirectory(),
+		() => false,
+	)
+}
+
 async function cleanupEmptyExerciseDirectories(cwd: string) {
+	console.log('🧹 Cleaning up empty exercise directories...')
 	try {
-		console.log('🧹 Cleaning up empty exercise directories...')
+		const exercisesDirPath = path.join(cwd, 'exercises')
+		const exercisesDirs = (await fs.readdir(exercisesDirPath)).sort()
+		for (const exerciseDir of exercisesDirs) {
+			const exerciseDirPath = path.join(exercisesDirPath, exerciseDir)
+			if (!(await isDirectory(exerciseDirPath))) continue
 
-		// Find all directories under exercises/* and exercises/*/*
-		const { stdout: allDirs } = await execaCommand(
-			'find exercises -type d 2>/dev/null || echo ""',
-			{ cwd, shell: true },
-		)
-
-		if (!allDirs.trim()) {
-			console.log('   No exercises directory found, skipping cleanup.')
-			return
-		}
-
-		const directories = allDirs.trim().split('\n').filter(Boolean)
-		// Sort directories in reverse order (deepest first) to ensure proper cleanup of nested empty directories
-		directories.sort((a, b) => b.length - a.length)
-
-		let deletedCount = 0
-
-		// Determine which directories contain any files (tracked or untracked), and
-		// which are "fileless" (contain only subdirectories or are empty).
-		const hasFilesMap = new Map<string, boolean>()
-		for (const dir of directories) {
-			if (dir === 'exercises') continue // Skip the root exercises directory
-
-			const [trackedFiles, untrackedFiles] = await Promise.all([
-				execa('git', ['ls-files', dir], { cwd, reject: false }).catch(() => ({
-					stdout: '',
-				})),
-				execa('git', ['ls-files', '--others', '--exclude-standard', dir], {
-					cwd,
-					reject: false,
-				}).catch(() => ({ stdout: '' })),
-			])
-
-			const hasTrackedFiles = trackedFiles.stdout.trim().length > 0
-			const hasUntrackedFiles = untrackedFiles.stdout.trim().length > 0
-			hasFilesMap.set(dir, hasTrackedFiles || hasUntrackedFiles)
-		}
-
-		// Build a set of directories that have no files anywhere in their subtree
-		const emptyDirs = directories.filter(
-			(dir) => dir !== 'exercises' && hasFilesMap.get(dir) === false,
-		)
-		const emptySet = new Set(emptyDirs)
-
-		// From the empty directories, pick only the top-most ones (those that do not
-		// have an ancestor also in the empty set). Deleting these recursively is
-		// faster and removes entire empty trees in one go.
-		const topLevelEmptyDirs = emptyDirs.filter((dir) => {
-			let parent = path.posix.dirname(dir)
-			while (parent && parent !== '.' && parent !== 'exercises') {
-				if (emptySet.has(parent)) return false
-				parent = path.posix.dirname(parent)
+			if (!(await dirHasTrackedFiles(cwd, exerciseDirPath))) {
+				gitLog.info(`Deleting empty exercise directory: ${exerciseDirPath}`)
+				await fs.rm(exerciseDirPath, { recursive: true, force: true })
+				continue
 			}
-			return true
-		})
 
-		for (const dir of topLevelEmptyDirs) {
-			console.log(`   Deleting empty directory tree: ${dir}`)
-			try {
-				// Recursively remove the directory tree. This is safe because we've
-				// confirmed there are no files (tracked or untracked) anywhere within.
-				await fs.rm(path.join(cwd, dir), { recursive: true, force: true })
-				deletedCount++
-			} catch {
-				// Directory might not exist due to race conditions; continue.
+			const stepDirs = (await fs.readdir(exerciseDirPath)).sort()
+			for (const stepDir of stepDirs) {
+				const stepDirPath = path.join(exerciseDirPath, stepDir)
+				if (!(await isDirectory(stepDirPath))) continue
+
+				if (!(await dirHasTrackedFiles(cwd, stepDirPath))) {
+					gitLog.info(`Deleting empty step directory: ${stepDirPath}`)
+					await fs.rm(stepDirPath, { recursive: true, force: true })
+					continue
+				}
 			}
-		}
-
-		if (deletedCount > 0) {
-			console.log(`   Deleted ${deletedCount} empty directory tree(s).`)
-		} else {
-			console.log('   No empty directories found.')
 		}
 	} catch (error) {
 		console.warn(
-			'   Warning: Failed to cleanup empty directories:',
+			'⚠️ Warning: Failed to cleanup empty directories:',
 			getErrorMessage(error),
 		)
 	}
@@ -115,12 +82,14 @@ async function getDiffUrl(commitBefore: string, commitAfter: string) {
 export async function checkForUpdates() {
 	const ENV = getEnv()
 	if (ENV.EPICSHOP_DEPLOYED) {
-		return { updatesAvailable: false } as const
+		return { updatesAvailable: false, message: 'The app is deployed' } as const
 	}
 
 	const cwd = getWorkshopRoot()
 	const online = await checkConnection()
-	if (!online) return { updatesAvailable: false } as const
+	if (!online) {
+		return { updatesAvailable: false, message: 'You are offline' } as const
+	}
 
 	const isInRepo = await execaCommand('git rev-parse --is-inside-work-tree', {
 		cwd,
@@ -129,12 +98,12 @@ export async function checkForUpdates() {
 		() => false,
 	)
 	if (!isInRepo) {
-		return { updatesAvailable: false } as const
+		return { updatesAvailable: false, message: 'Not in a git repo' } as const
 	}
 
 	const { stdout: remote } = await execaCommand('git remote', { cwd })
 	if (!remote) {
-		return { updatesAvailable: false } as const
+		return { updatesAvailable: false, message: 'Cannot find remote' } as const
 	}
 
 	let localCommit, remoteCommit
@@ -168,6 +137,7 @@ export async function checkForUpdates() {
 			localCommit,
 			remoteCommit,
 			diffLink: await getDiffUrl(localCommit, remoteCommit),
+			message: null,
 		} as const
 	} catch (error) {
 		console.error('Unable to check for updates', getErrorMessage(error))
@@ -212,7 +182,10 @@ export async function updateLocalRepo() {
 	try {
 		const updates = await checkForUpdates()
 		if (!updates.updatesAvailable) {
-			return { status: 'success', message: 'No updates available.' } as const
+			return {
+				status: 'success',
+				message: updates.message ?? 'No updates available.',
+			} as const
 		}
 
 		const uncommittedChanges =
