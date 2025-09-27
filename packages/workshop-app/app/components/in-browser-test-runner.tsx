@@ -151,6 +151,7 @@ export function InBrowserTestRunner({
 								src={pathname + testFile}
 								className="mt-5 min-h-[420px] w-full border bg-white"
 								style={{ colorScheme: theme }}
+								allow="clipboard-write"
 							/>
 						</div>
 						<div className="flex border-y">
