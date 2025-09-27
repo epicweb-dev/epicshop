@@ -146,7 +146,6 @@ export function VideoEmbed({
 				)}
 				title={title}
 				sandbox="allow-forms allow-scripts allow-same-origin allow-popups allow-popups-to-escape-sandbox"
-				allow="clipboard-write"
 				allowFullScreen
 				style={{ colorScheme: theme }}
 			/>
