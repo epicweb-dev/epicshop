@@ -94,6 +94,7 @@ export function Preview({
 					src={dev.pathname}
 					className="yo yo h-full w-full flex-grow bg-white"
 					style={{ colorScheme: theme }}
+					allow="clipboard-write"
 				/>
 			</div>
 		)
@@ -138,6 +139,7 @@ export function StackBlitzEmbed({
 				)}
 				title={title}
 				sandbox="allow-forms allow-scripts allow-same-origin allow-popups allow-popups-to-escape-sandbox"
+				allow="clipboard-write"
 				style={{ colorScheme: theme }}
 			/>
 		</div>

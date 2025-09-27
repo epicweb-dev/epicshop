@@ -445,6 +445,7 @@ function InBrowserBrowserForRealzImpl(
 						src={iframeSrcUrl.toString()}
 						className="h-full w-full flex-grow bg-white"
 						style={{ colorScheme: theme }}
+						allow="clipboard-write"
 					/>
 				</div>
 			</div>

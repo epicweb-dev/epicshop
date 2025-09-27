@@ -217,6 +217,7 @@ function Survey({
 					iframeLoaded ? 'opacity-100' : 'opacity-0',
 				)}
 				style={{ colorScheme: theme }}
+				allow="clipboard-write"
 			/>
 		</div>
 	)
