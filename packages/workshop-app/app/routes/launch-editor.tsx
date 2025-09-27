@@ -370,7 +370,7 @@ export function EditFileOnGitHub({
 			className="self-center font-mono text-sm"
 			onClick={handleClick}
 			target="_blank"
-			to={`${githubPath}/${relativePath}/${appFile}`.replace(/\\/g, '/')}
+			to={`${githubPath}/${relativePath}`.replace(/\\/g, '/')}
 		>
 			{compact ? (
 				<span>Edit</span>

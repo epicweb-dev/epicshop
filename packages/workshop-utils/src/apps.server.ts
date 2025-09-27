@@ -1550,7 +1550,7 @@ export async function getWorkshopFinished({
 	return {
 		compiled,
 		file: finishedFilepath,
-		relativePath: 'exercises/finished.mdx',
+		relativePath: 'exercises/FINISHED.mdx',
 	} as const
 }
 

@@ -79,7 +79,7 @@ export async function loader({ request, params }: Route.LoaderArgs) {
 			exerciseNumber: exercise.exerciseNumber,
 			exerciseReadme: {
 				file: readmeFilepath,
-				relativePath: `exercises/${exercise.dirName}`,
+				relativePath: `exercises/${exercise.dirName}/README.mdx`,
 			},
 			exerciseTitle: exercise.title,
 			firstStep,

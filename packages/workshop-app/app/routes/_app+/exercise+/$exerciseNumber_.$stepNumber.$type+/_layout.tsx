@@ -500,7 +500,7 @@ export default function ExercisePartRoute({
 						</div>
 						<EditFileOnGitHub
 							appName={data.exerciseStepApp.name}
-							relativePath={data.exerciseStepApp.relativePath}
+							relativePath={`${data.exerciseStepApp.relativePath}/README.mdx`}
 							compact={leftWidthPx < 720}
 						/>
 						<NavChevrons
