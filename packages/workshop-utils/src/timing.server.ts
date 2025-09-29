@@ -76,14 +76,25 @@ export function getServerTimeHeader(timings?: Timings) {
 				.filter(Boolean)
 				.join(' & ')
 			return [
-				key.replaceAll(/(:| |@|=|;|,|\/|\\|\{|\})/g, '_'),
-				desc ? `desc=${JSON.stringify(desc)}` : null,
+				sanitizeHeaderValue(key).replaceAll(/(:| |@|=|;|,|\/|\\|\{|\})/g, '_'),
+				desc ? `desc=${sanitizeHeaderValue(desc)}` : null,
 				`dur=${dur}`,
 			]
 				.filter(Boolean)
 				.join(';')
 		})
 		.join(',')
+}
+
+function sanitizeHeaderValue(value: string): string {
+	// Replace non-ASCII characters with ASCII equivalents
+	// This ensures HTTP header compliance
+	return value
+		.replace(/['']/g, "'") // Replace smart quotes with regular apostrophe
+		.replace(/[""]/g, '"') // Replace smart quotes with regular quotes
+		.replace(/[–—]/g, '-') // Replace em/en dashes with hyphen
+		.replace(/[…]/g, '...') // Replace ellipsis with three dots
+		.replace(/[^\x20-\x7E]/g, '') // Remove any remaining non-printable ASCII characters
 }
 
 export function combineServerTimings(headers1: Headers, headers2: Headers) {
