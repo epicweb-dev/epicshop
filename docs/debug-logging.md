@@ -103,6 +103,41 @@ To see detailed request logging, enable the `epic:req` namespace:
 NODE_DEBUG=epic:req npm run dev
 ```
 
+### Authentication Debugging
+
+The authentication system includes comprehensive logging for OAuth device flow
+operations:
+
+```bash
+NODE_DEBUG=epic:auth npm run dev
+```
+
+This will show logs for all authentication operations including:
+
+- Device registration process initiation
+- OAuth configuration discovery
+- Device authorization initiation with user codes
+- Token polling and grant reception
+- User info fetching from protected resources
+- Database auth info storage
+- Error conditions and timeouts
+- Authentication completion status
+
+Enable `epic:auth` logging to troubleshoot authentication issues:
+
+```bash
+NODE_DEBUG=epic:auth npm run dev
+```
+
+This will show detailed information about:
+
+- OAuth issuer configuration
+- Device authorization flow progress
+- Token set validation
+- User info parsing and validation
+- Database operations for auth storage
+- API calls for fresh user data
+
 ### Custom Logging
 
 You can create your own debug loggers for custom functionality:
