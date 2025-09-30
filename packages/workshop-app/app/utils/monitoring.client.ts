@@ -61,6 +61,7 @@ export function init() {
 
 			if (failedToFetch && !ENV.EPICSHOP_DEPLOYED) return null
 
+			// Filter out browser extension related errors
 			if (
 				event.exception?.values?.some((value) =>
 					value.stacktrace?.frames?.some(
@@ -69,6 +70,22 @@ export function init() {
 							frame.filename?.includes('moz-extension:'),
 					),
 				)
+			) {
+				return null
+			}
+
+			// Filter out ReferenceErrors for browser extension global variables
+			if (
+				event.exception?.values?.some((value) => {
+					const isReferenceError = value.type === 'ReferenceError'
+					const isBrowserExtensionGlobal = 
+						typeof value.value === 'string' && 
+						(value.value.includes('__firefox__') ||
+						 value.value.includes('ethereum') ||
+						 value.value.includes('chrome') ||
+						 value.value.includes('browser'))
+					return isReferenceError && isBrowserExtensionGlobal
+				})
 			) {
 				return null
 			}

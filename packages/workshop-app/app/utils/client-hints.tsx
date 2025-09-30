@@ -60,10 +60,30 @@ export function ClientHintCheck() {
 		[revalidate],
 	)
 
+	// Wrap the client hint check script in a try-catch to handle browser extension global variable errors
+	const safeClientHintScript = `
+		try {
+			${hintsUtils.getClientHintCheckScript()}
+		} catch (error) {
+			// Ignore errors from browser extension global variables like __firefox__, window.ethereum, etc.
+			if (error instanceof ReferenceError && (
+				error.message.includes('__firefox__') || 
+				error.message.includes('ethereum') ||
+				error.message.includes('chrome') ||
+				error.message.includes('browser')
+			)) {
+				// Browser extension global not available, continue normally
+				return;
+			}
+			// Re-throw other errors
+			throw error;
+		}
+	`
+
 	return (
 		<script
 			dangerouslySetInnerHTML={{
-				__html: hintsUtils.getClientHintCheckScript(),
+				__html: safeClientHintScript,
 			}}
 		/>
 	)
