@@ -1,4 +1,4 @@
-import { useEffect, useRef } from 'react'
+import { useEffect, useId, useRef } from 'react'
 
 export function Mermaid({
 	code,
@@ -7,6 +7,7 @@ export function Mermaid({
 	code: string
 	onSvg?: (svg: string) => void
 }) {
+	const id = `mermaid-svg-${useId()}`
 	const ref = useRef<HTMLDivElement>(null)
 	const latestOnSvg = useRef(onSvg)
 	useEffect(() => {
@@ -19,7 +20,7 @@ export function Mermaid({
 		void import('mermaid').then((mermaid) => {
 			mermaid.default.initialize({ startOnLoad: false })
 			mermaid.default
-				.render('mermaid-svg', code)
+				.render(id, code)
 				.then(({ svg }) => {
 					if (!cancelled && ref.current) {
 						ref.current.innerHTML = svg
@@ -35,6 +36,10 @@ export function Mermaid({
 		return () => {
 			cancelled = true
 		}
-	}, [code])
-	return <div ref={ref} />
+	}, [code, id])
+	return (
+		<div className="mermaid not-prose">
+			<div ref={ref} />
+		</div>
+	)
 }

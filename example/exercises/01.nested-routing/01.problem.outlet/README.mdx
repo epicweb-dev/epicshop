@@ -21,6 +21,16 @@ sequenceDiagram
     Alice->>John: See you later!!
 ```
 
+```mermaid
+sequenceDiagram
+  participant Client
+  participant Server
+  Client->>Server: Request (id: 123)
+  Note over Client,Server: Request is in progress
+  Client-->>Server: notifications/cancelled (requestId: 123, reason)
+  Server--xClient: (No response for cancelled request)
+```
+
 ### DiffLink example
 
 <DiffLink app1={0} app2={4} />
