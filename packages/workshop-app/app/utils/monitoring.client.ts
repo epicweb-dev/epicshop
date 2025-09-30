@@ -61,17 +61,26 @@ export function init() {
 
 			if (failedToFetch && !ENV.EPICSHOP_DEPLOYED) return null
 
-			if (
-				event.exception?.values?.some((value) =>
-					value.stacktrace?.frames?.some(
-						(frame) =>
-							frame.filename?.includes('chrome-extension:') ||
-							frame.filename?.includes('moz-extension:'),
+			// Filter out browser extension related errors
+			const extensionError = event.exception?.values?.some((value) =>
+				value.stacktrace?.frames?.some(
+					(frame) =>
+						frame.filename?.includes('chrome-extension:') ||
+						frame.filename?.includes('moz-extension:'),
+				),
+			)
+			if (extensionError) return null
+
+			// Filter out errors containing browser extension globals
+			const extensionGlobalKeywords = ['__firefox__', 'ethereum']
+			const extensionGlobalError = event.exception?.values?.some(
+				(value) =>
+					typeof value.value === 'string' &&
+					extensionGlobalKeywords.some((keyword) =>
+						value.value?.includes(keyword),
 					),
-				)
-			) {
-				return null
-			}
+			)
+			if (extensionGlobalError) return null
 			if (event.request?.url) {
 				const url = new URL(event.request.url)
 				if (
