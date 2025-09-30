@@ -60,10 +60,23 @@ export function ClientHintCheck() {
 		[revalidate],
 	)
 
+	// Get the original script from the package
+	const originalScript = hintsUtils.getClientHintCheckScript()
+	
+	// Wrap the original script with error handling to prevent Firefox-specific API crashes
+	const safeScript = `
+try {
+	${originalScript}
+} catch (error) {
+	// Suppress Firefox-specific API errors that break non-Firefox browsers
+	console.warn('Client hint check failed:', error.message);
+}
+	`.trim()
+
 	return (
 		<script
 			dangerouslySetInnerHTML={{
-				__html: hintsUtils.getClientHintCheckScript(),
+				__html: safeScript,
 			}}
 		/>
 	)
