@@ -440,19 +440,26 @@ export function useInterval(callback: () => void, delay: number | null) {
 }
 
 /**
- * Simple debounce implementation
+ * Simple debounce implementation with cleanup support
  */
 function debounce<Callback extends (...args: Parameters<Callback>) => void>(
 	fn: Callback,
 	delay: number,
 ) {
 	let timer: ReturnType<typeof setTimeout> | null = null
-	return (...args: Parameters<Callback>) => {
+	const debouncedFn = (...args: Parameters<Callback>) => {
 		if (timer) clearTimeout(timer)
 		timer = setTimeout(() => {
 			fn(...args)
 		}, delay)
 	}
+	debouncedFn.cancel = () => {
+		if (timer) {
+			clearTimeout(timer)
+			timer = null
+		}
+	}
+	return debouncedFn
 }
 
 /**
@@ -465,7 +472,7 @@ export function useDebounce<
 	useEffect(() => {
 		callbackRef.current = callback
 	})
-	return useMemo(
+	const debouncedFn = useMemo(
 		() =>
 			debounce(
 				(...args: Parameters<Callback>) => callbackRef.current(...args),
@@ -473,6 +480,15 @@ export function useDebounce<
 			),
 		[delay],
 	)
+	
+	// Cancel pending timeouts on unmount
+	useEffect(() => {
+		return () => {
+			debouncedFn.cancel()
+		}
+	}, [debouncedFn])
+	
+	return debouncedFn
 }
 
 export async function downloadFile(url: string, retries: number = 0) {
