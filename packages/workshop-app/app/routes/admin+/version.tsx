@@ -1,3 +1,4 @@
+import { getEnv } from '@epic-web/workshop-utils/env.server'
 import {
 	getCommitInfo,
 	getLatestWorkshopAppVersion,
@@ -32,6 +33,8 @@ export async function loader() {
 
 	return data(
 		{
+			workshopInstanceId: getEnv().EPICSHOP_WORKSHOP_INSTANCE_ID,
+			workshopContextCwd: getEnv().EPICSHOP_CONTEXT_CWD,
 			workshopCommit: commitInfo
 				? {
 						...commitInfo,
@@ -65,6 +68,8 @@ export default function Version() {
 	return (
 		<div>
 			<h2 className="text-lg font-bold">Workshop Version Information</h2>
+			<p>Workshop Instance ID: {data.workshopInstanceId}</p>
+			<p>Workshop Context CWD: {data.workshopContextCwd}</p>
 			<h3 className="text-md font-bold">Workshop Commit</h3>
 			{data.workshopCommit ? (
 				<>

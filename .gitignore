@@ -31,3 +31,4 @@ vite.config.ts.timestamp-*
 .github/instructions/nx.instructions.md
 
 .env
+nanobot/*.db

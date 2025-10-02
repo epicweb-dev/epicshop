@@ -30,6 +30,7 @@ const server = new McpServer(
 			tools: {},
 		},
 	},
+	// TODO: add some common workflows to the instructions
 	{
 		instructions: `
 This is intended to be used within a workshop using the Epic Workshop App

@@ -1,3 +1,4 @@
+import path from 'node:path'
 import { invariant } from '@epic-web/invariant'
 import {
 	getAppByName,
@@ -638,13 +639,14 @@ Call this to open the files for the exercise step the playground is currently se
 				'There was a problem generating the diff. Check the terminal output.',
 			)
 			for (const file of diffFiles) {
-				await launchEditor(file.path, file.line)
+				const fullPath = path.join(playgroundApp.fullPath, file.path)
+				await launchEditor(fullPath, file.line)
 			}
 			return {
 				content: [
 					{
 						type: 'text',
-						text: 'Files opened successfully',
+						text: `Opened ${diffFiles.length} file${diffFiles.length === 1 ? '' : 's'}:\n${diffFiles.map((file) => `${file.path}:${file.line}`).join('\n')}`,
 					},
 				],
 			}
