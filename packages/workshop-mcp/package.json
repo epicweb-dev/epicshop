@@ -35,6 +35,7 @@
   "dependencies": {
     "@epic-web/invariant": "^1.0.0",
     "@epic-web/workshop-utils": "file:../workshop-utils",
+    "@mcp-ui/server": "^5.11.0",
     "@modelcontextprotocol/sdk": "^1.17.5",
     "@sentry/node": "^10.5.0",
     "openid-client": "^6.6.2",

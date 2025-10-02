@@ -162,15 +162,10 @@ async function getExerciseContext({
 	workshopDirectory: string
 	exerciseNumber?: number
 }) {
-	await handleWorkshopDirectory(workshopDirectory)
-	const userHasAccess = await userHasAccessToWorkshop()
-	const authInfo = await getAuthInfo()
-	const progress = await getProgress()
+	const { userHasAccess, authInfo, progress, numbers } =
+		await getCommonContextData(workshopDirectory)
+
 	let stepNumber = 1
-	const playgroundApp = await getPlaygroundApp()
-	const numbers = playgroundApp
-		? extractNumbersAndTypeFromAppNameOrPath(playgroundApp.appName)
-		: null
 	const isCurrentExercise =
 		exerciseNumber === undefined ||
 		exerciseNumber === Number(numbers?.exerciseNumber)
@@ -188,61 +183,6 @@ async function getExerciseContext({
 		...exercise.steps.flatMap((s) => s.solution?.epicVideoEmbeds ?? []),
 		...(exercise.finishedEpicVideoEmbeds ?? []),
 	])
-
-	function getTranscripts(embeds?: Array<string>) {
-		if (!embeds) return []
-		if (!userHasAccess && embeds.length) {
-			return [
-				{
-					message: `User must upgrade before they can get access to ${embeds.length} transcript${embeds.length === 1 ? '' : 's'}.`,
-				},
-			]
-		}
-		return embeds.map((embed) => {
-			const info = videoInfos[embed]
-			if (info) {
-				if (info.status === 'error') {
-					if (info.type === 'region-restricted') {
-						return {
-							embed,
-							status: 'error',
-							type: info.type,
-							requestedCountry: info.requestCountry,
-							restrictedCountry: info.restrictedCountry,
-						}
-					} else {
-						return {
-							embed,
-							status: 'error',
-							type: info.type,
-							statusCode: info.statusCode,
-							statusText: info.statusText,
-						}
-					}
-				} else {
-					return {
-						embed,
-						status: 'success',
-						transcript: info.transcript,
-					}
-				}
-			} else {
-				return {
-					embed,
-					status: 'error',
-					type: 'not-found',
-					message: 'No transcript found',
-				}
-			}
-		})
-	}
-
-	async function getFileContent(filePath: string) {
-		return {
-			path: filePath,
-			content: (await safeReadFile(filePath)) ?? 'None found',
-		}
-	}
 
 	const context = {
 		currentContext: {
@@ -264,7 +204,11 @@ async function getExerciseContext({
 				content: await getFileContent(
 					path.join(exercise.fullPath, 'README.mdx'),
 				),
-				transcripts: getTranscripts(exercise.instructionsEpicVideoEmbeds),
+				transcripts: getTranscripts(
+					exercise.instructionsEpicVideoEmbeds,
+					videoInfos,
+					userHasAccess,
+				),
 				progress: progress.find(
 					(p) =>
 						p.type === 'instructions' && p.exerciseNumber === exerciseNumber,
@@ -274,7 +218,11 @@ async function getExerciseContext({
 				content: await getFileContent(
 					path.join(exercise.fullPath, 'FINISHED.mdx'),
 				),
-				transcripts: getTranscripts(exercise.finishedEpicVideoEmbeds),
+				transcripts: getTranscripts(
+					exercise.finishedEpicVideoEmbeds,
+					videoInfos,
+					userHasAccess,
+				),
 				progress: progress.find(
 					(p) => p.type === 'finished' && p.exerciseNumber === exerciseNumber,
 				),
@@ -297,7 +245,11 @@ async function getExerciseContext({
 										path.join(app.problem.fullPath, 'README.mdx'),
 									)
 								: 'No problem found',
-							transcripts: getTranscripts(app.problem?.epicVideoEmbeds),
+							transcripts: getTranscripts(
+								app.problem?.epicVideoEmbeds,
+								videoInfos,
+								userHasAccess,
+							),
 						},
 						solution: {
 							content: app.solution
@@ -305,7 +257,11 @@ async function getExerciseContext({
 										path.join(app.solution.fullPath, 'README.mdx'),
 									)
 								: 'No solution found',
-							transcripts: getTranscripts(app.solution?.epicVideoEmbeds),
+							transcripts: getTranscripts(
+								app.solution?.epicVideoEmbeds,
+								videoInfos,
+								userHasAccess,
+							),
 						},
 					})),
 				)
@@ -358,6 +314,222 @@ export const exerciseContextResource = {
 	uriTemplate: exerciseContextUriTemplate,
 	getResource: getExerciseContextResource,
 	inputSchema: getExerciseContextInputSchema,
+}
+
+// Common helper functions extracted from getExerciseContext
+async function getCommonContextData(workshopDirectory: string) {
+	await handleWorkshopDirectory(workshopDirectory)
+	const userHasAccess = await userHasAccessToWorkshop()
+	const authInfo = await getAuthInfo()
+	const progress = await getProgress()
+	const playgroundApp = await getPlaygroundApp()
+	const numbers = playgroundApp
+		? extractNumbersAndTypeFromAppNameOrPath(playgroundApp.appName)
+		: null
+
+	return {
+		userHasAccess,
+		authInfo,
+		progress,
+		playgroundApp,
+		numbers,
+	}
+}
+
+function getTranscripts(
+	embeds: Array<string> | undefined,
+	videoInfos: Record<string, any>,
+	userHasAccess: boolean,
+) {
+	if (!embeds) return []
+	if (!userHasAccess && embeds.length) {
+		return [
+			{
+				message: `User must upgrade before they can get access to ${embeds.length} transcript${embeds.length === 1 ? '' : 's'}.`,
+			},
+		]
+	}
+	return embeds.map((embed) => {
+		const info = videoInfos[embed]
+		if (info) {
+			if (info.status === 'error') {
+				if (info.type === 'region-restricted') {
+					return {
+						embed,
+						status: 'error',
+						type: info.type,
+						requestedCountry: info.requestCountry,
+						restrictedCountry: info.restrictedCountry,
+					}
+				} else {
+					return {
+						embed,
+						status: 'error',
+						type: info.type,
+						statusCode: info.statusCode,
+						statusText: info.statusText,
+					}
+				}
+			} else {
+				return {
+					embed,
+					status: 'success',
+					transcript: info.transcript,
+				}
+			}
+		} else {
+			return {
+				embed,
+				status: 'error',
+				type: 'not-found',
+				message: 'No transcript found',
+			}
+		}
+	})
+}
+
+async function getFileContent(filePath: string) {
+	return {
+		path: filePath,
+		content: (await safeReadFile(filePath)) ?? 'None found',
+	}
+}
+
+const getExerciseStepContextInputSchema = {
+	workshopDirectory: workshopDirectoryInputSchema,
+	exerciseNumber: z.coerce
+		.number()
+		.describe('The exercise number to get the context for'),
+	stepNumber: z.coerce
+		.number()
+		.describe('The step number to get the context for'),
+}
+
+async function getExerciseStepContext({
+	workshopDirectory,
+	exerciseNumber,
+	stepNumber,
+}: {
+	workshopDirectory: string
+	exerciseNumber: number
+	stepNumber: number
+}) {
+	const { userHasAccess, authInfo, progress, numbers } =
+		await getCommonContextData(workshopDirectory)
+
+	const isCurrentExercise =
+		exerciseNumber === Number(numbers?.exerciseNumber) &&
+		stepNumber === Number(numbers?.stepNumber)
+
+	const exercise = await getExercise(exerciseNumber)
+	invariant(exercise, `No exercise found for exercise number ${exerciseNumber}`)
+
+	const step = exercise.steps.find((s) => s.stepNumber === stepNumber)
+	invariant(
+		step,
+		`No step found for exercise ${exerciseNumber}, step ${stepNumber}`,
+	)
+
+	const videoInfos = await getEpicVideoInfos([
+		...(step.problem?.epicVideoEmbeds ?? []),
+		...(step.solution?.epicVideoEmbeds ?? []),
+	])
+
+	const context = {
+		currentContext: {
+			user: {
+				hasAccess: userHasAccess,
+				isAuthenticated: Boolean(authInfo),
+				email: authInfo?.email,
+			},
+			playground: isCurrentExercise
+				? {
+						exerciseNumber,
+						stepNumber,
+					}
+				: 'currently set to a different exercise step',
+		},
+		exerciseInfo: {
+			number: exerciseNumber,
+			title: exercise.title,
+		},
+		stepInfo: {
+			number: stepNumber,
+			isCurrent: isCurrentExercise,
+			progress: progress.find(
+				(p) =>
+					p.type === 'step' &&
+					p.exerciseNumber === exerciseNumber &&
+					p.stepNumber === stepNumber,
+			),
+			title: step.problem?.title ?? step.solution?.title ?? null,
+		},
+		problem: {
+			content: step.problem
+				? await getFileContent(path.join(step.problem.fullPath, 'README.mdx'))
+				: 'No problem found',
+			transcripts: getTranscripts(
+				step.problem?.epicVideoEmbeds,
+				videoInfos,
+				userHasAccess,
+			),
+		},
+		solution: {
+			content: step.solution
+				? await getFileContent(path.join(step.solution.fullPath, 'README.mdx'))
+				: 'No solution found',
+			transcripts: getTranscripts(
+				step.solution?.epicVideoEmbeds,
+				videoInfos,
+				userHasAccess,
+			),
+		},
+		notes: [] as Array<string>,
+	}
+
+	if (isCurrentExercise) {
+		context.notes.push(
+			`This is the current step the user is working on. The playground is set to exercise ${exerciseNumber}, step ${stepNumber}.`,
+		)
+	}
+
+	return context
+}
+
+const exerciseStepContextUriTemplate = new ResourceTemplate(
+	'epicshop://{workshopDirectory}/exercise/{exerciseNumber}/{stepNumber}',
+	{ list: undefined },
+)
+
+async function getExerciseStepContextResource({
+	workshopDirectory,
+	exerciseNumber,
+	stepNumber,
+}: InputSchemaType<typeof getExerciseStepContextInputSchema>): Promise<
+	ReadResourceResult['contents'][number]
+> {
+	const context = await getExerciseStepContext({
+		workshopDirectory,
+		exerciseNumber,
+		stepNumber,
+	})
+	return {
+		uri: exerciseStepContextUriTemplate.uriTemplate.expand({
+			workshopDirectory,
+			exerciseNumber: String(exerciseNumber),
+			stepNumber: String(stepNumber),
+		}),
+		mimeType: 'application/json',
+		text: JSON.stringify(context),
+	}
+}
+
+export const exerciseStepContextResource = {
+	name: 'exercise_step_context',
+	description: 'The context of a specific exercise step',
+	uriTemplate: exerciseStepContextUriTemplate,
+	getResource: getExerciseStepContextResource,
+	inputSchema: getExerciseStepContextInputSchema,
 }
 
 const diffBetweenAppsInputSchema = {
@@ -639,6 +811,55 @@ export function initResources(server: McpServer) {
 					await exerciseContextResource.getResource({
 						workshopDirectory,
 						exerciseNumber,
+					}),
+				],
+			}
+		},
+	)
+
+	server.registerResource(
+		exerciseStepContextResource.name,
+		exerciseStepContextResource.uriTemplate,
+		{ description: exerciseStepContextResource.description },
+		async (
+			_uri,
+			{
+				workshopDirectory,
+				exerciseNumber: providedExerciseNumber,
+				stepNumber: providedStepNumber,
+			},
+		) => {
+			invariant(
+				typeof workshopDirectory === 'string',
+				'A single workshopDirectory is required',
+			)
+			invariant(
+				typeof providedExerciseNumber === 'string',
+				'A single exerciseNumber is required',
+			)
+			invariant(
+				typeof providedStepNumber === 'string',
+				'A single stepNumber is required',
+			)
+			const exerciseNumber = Number(providedExerciseNumber)
+			const stepNumber = Number(providedStepNumber)
+			invariant(!isNaN(exerciseNumber), 'exerciseNumber must be a number')
+			invariant(!isNaN(stepNumber), 'stepNumber must be a number')
+			invariant(
+				exerciseNumber >= 0,
+				'exerciseNumber must be greater than or equal to 0',
+			)
+			invariant(
+				stepNumber >= 0,
+				'stepNumber must be greater than or equal to 0',
+			)
+			workshopDirectory = await handleWorkshopDirectory(workshopDirectory)
+			return {
+				contents: [
+					await exerciseStepContextResource.getResource({
+						workshopDirectory,
+						exerciseNumber,
+						stepNumber,
 					}),
 				],
 			}

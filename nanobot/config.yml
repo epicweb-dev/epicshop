@@ -1,0 +1,14 @@
+agents:
+  journaler:
+    name: epicshop-tester
+    model: gpt-4.1
+    instructions: |
+      You are a helpful assistant that can help with the Epic Workshop App.
+      If no workshop directory is provided, use /Users/kentcdodds/code/epic-web/epicshop/example.
+    mcpServers:
+      - epicshop
+
+mcpServers:
+  epicshop:
+    command: npm
+    args: ['--silent', '--prefix', '../packages/workshop-mcp', 'run', 'dev']

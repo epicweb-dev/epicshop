@@ -5,9 +5,9 @@ import child_process from 'child_process'
 import fs from 'fs'
 import os from 'os'
 import path from 'path'
-import { getRelativePath } from '@epic-web/workshop-utils/apps.server'
 import fsExtra from 'fs-extra'
 import shellQuote from 'shell-quote'
+import { getRelativePath } from './apps.server.js'
 
 function readablePath(filePath: string = '') {
 	const relative = getRelativePath(filePath)

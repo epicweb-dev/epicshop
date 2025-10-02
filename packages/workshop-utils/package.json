@@ -21,6 +21,7 @@
       "./config.server": "./src/config.server.ts",
       "./db.server": "./src/db.server.ts",
       "./data-storage.server": "./src/data-storage.server.ts",
+      "./launch-editor.server": "./src/launch-editor.server.ts",
       "./timing.server": "./src/timing.server.ts",
       "./modified-time.server": "./src/modified-time.server.ts",
       "./compile-mdx.server": "./src/compile-mdx.server.ts",
@@ -91,6 +92,12 @@
       "import": {
         "types": "./dist/esm/data-storage.server.d.ts",
         "default": "./dist/esm/data-storage.server.js"
+      }
+    },
+    "./launch-editor.server": {
+      "import": {
+        "types": "./dist/esm/launch-editor.server.d.ts",
+        "default": "./dist/esm/launch-editor.server.js"
       }
     },
     "./timing.server": {
@@ -235,6 +242,7 @@
     "remark": "^15.0.1",
     "remark-emoji": "^5.0.1",
     "remark-gfm": "^4.0.1",
+    "shell-quote": "^1.8.3",
     "shiki": "^3.7.0",
     "unified": "^11.0.5",
     "unist-util-remove-position": "^5.0.0",
@@ -247,6 +255,7 @@
     "@types/node": "^24.0.10",
     "@types/react": "^19.1.8",
     "@types/react-dom": "^19.1.6",
+    "@types/shell-quote": "^1.7.5",
     "tshy": "^3.0.2",
     "vitest": "^3.2.4"
   },

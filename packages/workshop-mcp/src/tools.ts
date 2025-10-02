@@ -1,7 +1,9 @@
 import { invariant } from '@epic-web/invariant'
 import {
+	getAppByName,
 	getApps,
 	getExerciseApp,
+	getPlaygroundApp,
 	getPlaygroundAppName,
 	isExerciseStepApp,
 	isProblemApp,
@@ -15,11 +17,14 @@ import {
 	logout,
 	setAuthInfo,
 } from '@epic-web/workshop-utils/db.server'
+import { getDiffFiles } from '@epic-web/workshop-utils/diff.server'
 import {
 	getProgress,
 	getUserInfo,
 	updateProgress,
 } from '@epic-web/workshop-utils/epic-api.server'
+import { launchEditor } from '@epic-web/workshop-utils/launch-editor.server'
+import { createUIResource } from '@mcp-ui/server'
 import { type McpServer } from '@modelcontextprotocol/sdk/server/mcp.js'
 import { type ReadResourceResult } from '@modelcontextprotocol/sdk/types.js'
 import * as client from 'openid-client'
@@ -28,6 +33,7 @@ import { quizMe, quizMeInputSchema } from './prompts.js'
 import {
 	diffBetweenAppsResource,
 	exerciseContextResource,
+	exerciseStepContextResource,
 	exerciseStepProgressDiffResource,
 	userAccessResource,
 	userInfoResource,
@@ -223,61 +229,63 @@ An error will be returned if no app is found for the given arguments.
 			workshopDirectory = await handleWorkshopDirectory(workshopDirectory)
 			const authInfo = await getAuthInfo()
 
-			if (authInfo) {
-				const progress = await getProgress()
-				const scoreProgress = (a: (typeof progress)[number]) => {
-					if (a.type === 'workshop-instructions') return 0
-					if (a.type === 'workshop-finished') return 10000
-					if (a.type === 'instructions') return a.exerciseNumber * 100
-					if (a.type === 'step') return a.exerciseNumber * 100 + a.stepNumber
-					if (a.type === 'finished') return a.exerciseNumber * 100 + 100
+			if (!exerciseNumber) {
+				if (authInfo) {
+					const progress = await getProgress()
+					const scoreProgress = (a: (typeof progress)[number]) => {
+						if (a.type === 'workshop-instructions') return 0
+						if (a.type === 'workshop-finished') return 10000
+						if (a.type === 'instructions') return a.exerciseNumber * 100
+						if (a.type === 'step') return a.exerciseNumber * 100 + a.stepNumber
+						if (a.type === 'finished') return a.exerciseNumber * 100 + 100
 
-					if (a.type === 'unknown') return 100000
-					return -1
-				}
-				const sortedProgress = progress.sort((a, b) => {
-					return scoreProgress(a) - scoreProgress(b)
-				})
-				const nextProgress = sortedProgress.find((p) => !p.epicCompletedAt)
-				if (nextProgress) {
-					if (nextProgress.type === 'step') {
-						const exerciseApp = await getExerciseApp({
-							exerciseNumber: nextProgress.exerciseNumber.toString(),
-							stepNumber: nextProgress.stepNumber.toString(),
-							type: 'problem',
-						})
-						invariant(exerciseApp, 'No exercise app found')
-						await setPlayground(exerciseApp.fullPath)
-						return {
-							content: [
-								{
-									type: 'text',
-									text: `Playground set to ${exerciseApp.exerciseNumber}.${exerciseApp.stepNumber}.${exerciseApp.type}`,
-								},
-							],
+						if (a.type === 'unknown') return 100000
+						return -1
+					}
+					const sortedProgress = progress.sort((a, b) => {
+						return scoreProgress(a) - scoreProgress(b)
+					})
+					const nextProgress = sortedProgress.find((p) => !p.epicCompletedAt)
+					if (nextProgress) {
+						if (nextProgress.type === 'step') {
+							const exerciseApp = await getExerciseApp({
+								exerciseNumber: nextProgress.exerciseNumber.toString(),
+								stepNumber: nextProgress.stepNumber.toString(),
+								type: 'problem',
+							})
+							invariant(exerciseApp, 'No exercise app found')
+							await setPlayground(exerciseApp.fullPath)
+							return {
+								content: [
+									{
+										type: 'text',
+										text: `Playground set to ${exerciseApp.exerciseNumber}.${exerciseApp.stepNumber}.${exerciseApp.type}`,
+									},
+								],
+							}
 						}
-					}
 
-					if (
-						nextProgress.type === 'instructions' ||
-						nextProgress.type === 'finished'
-					) {
+						if (
+							nextProgress.type === 'instructions' ||
+							nextProgress.type === 'finished'
+						) {
+							throw new Error(
+								`The user needs to mark the ${nextProgress.exerciseNumber} ${nextProgress.type === 'instructions' ? 'instructions' : 'finished'} as complete before they can continue. Have them watch the video at ${nextProgress.epicLessonUrl}, then mark it as complete.`,
+							)
+						}
+						if (
+							nextProgress.type === 'workshop-instructions' ||
+							nextProgress.type === 'workshop-finished'
+						) {
+							throw new Error(
+								`The user needs to mark the ${nextProgress.exerciseNumber} ${nextProgress.type === 'workshop-instructions' ? 'Workshop instructions' : 'Workshop finished'} as complete before they can continue. Have them watch the video at ${nextProgress.epicLessonUrl}, then mark it as complete.`,
+							)
+						}
+
 						throw new Error(
-							`The user needs to mark the ${nextProgress.exerciseNumber} ${nextProgress.type === 'instructions' ? 'instructions' : 'finished'} as complete before they can continue. Have them watch the video at ${nextProgress.epicLessonUrl}, then mark it as complete.`,
+							`The user needs to mark ${nextProgress.epicLessonSlug} as complete before they can continue. Have them watch the video at ${nextProgress.epicLessonUrl}, then mark it as complete.`,
 						)
 					}
-					if (
-						nextProgress.type === 'workshop-instructions' ||
-						nextProgress.type === 'workshop-finished'
-					) {
-						throw new Error(
-							`The user needs to mark the ${nextProgress.exerciseNumber} ${nextProgress.type === 'workshop-instructions' ? 'Workshop instructions' : 'Workshop finished'} as complete before they can continue. Have them watch the video at ${nextProgress.epicLessonUrl}, then mark it as complete.`,
-						)
-					}
-
-					throw new Error(
-						`The user needs to mark ${nextProgress.epicLessonSlug} as complete before they can continue. Have them watch the video at ${nextProgress.epicLessonUrl}, then mark it as complete.`,
-					)
 				}
 			}
 
@@ -502,6 +510,143 @@ significance of changes.
 			})
 			return {
 				content: [getEmbeddedResourceContent(resource)],
+			}
+		},
+	)
+
+	server.registerTool(
+		'get_exercise_step_context',
+		{
+			description: `
+Intended to help a student understand what they need to do for a specific
+exercise step.
+
+This returns the instructions MDX content for the specified exercise step's
+problem and solution. If the user has the paid version of the workshop, it will also
+include the transcript from each of the videos as well.
+
+The output for this will rarely change, so it's unnecessary to call this tool
+more than once for the same exercise step.
+
+\`get_exercise_step_context\` is often best when used with the
+\`get_exercise_step_progress_diff\` tool to help a student understand what
+work they still need to do and answer any questions about the exercise step.
+		`.trim(),
+			inputSchema: exerciseStepContextResource.inputSchema,
+		},
+		async ({ workshopDirectory, exerciseNumber, stepNumber }) => {
+			workshopDirectory = await handleWorkshopDirectory(workshopDirectory)
+			const resource = await exerciseStepContextResource.getResource({
+				workshopDirectory,
+				exerciseNumber,
+				stepNumber,
+			})
+			return {
+				content: [getEmbeddedResourceContent(resource)],
+			}
+		},
+	)
+
+	server.registerTool(
+		'view_video',
+		{
+			description: `
+Intended to help a student view a video.
+Only call this tool if you support MCP-UI resources.
+This returns an MCP-UI resource you can use if you support MCP-UI.
+Otherwise, instead of calling this tool, just tell the user to open the video URL directly.
+		`.trim(),
+			inputSchema: {
+				videoUrl: z
+					.string()
+					.describe(
+						'The URL of the video to view. Get this from the `get_exercise_step_context` tool or the `get_exercise_context` tool depending on what you need.',
+					),
+			},
+		},
+		async ({ videoUrl }) => {
+			let url: URL = new URL('https://epicweb.dev')
+			try {
+				url = new URL(videoUrl)
+			} catch {
+				return {
+					content: [{ type: 'text', text: `Invalid URL: "${videoUrl}"` }],
+					isError: true,
+				}
+			}
+			url.pathname = url.pathname.endsWith('/')
+				? `${url.pathname}embed`
+				: `${url.pathname}/embed`
+			// special case for epicai.pro videos
+			if (
+				url.host === 'www.epicai.pro' &&
+				!url.pathname.startsWith('/workshops/')
+			) {
+				url.pathname = `/posts/${url.pathname}`
+			}
+
+			return {
+				content: [
+					createUIResource({
+						content: {
+							type: 'externalUrl',
+							iframeUrl: url.toString(),
+						},
+						uri: `ui://${url.toString()}`,
+						encoding: 'text',
+					}),
+				],
+			}
+		},
+	)
+
+	server.registerTool(
+		'open_exercise_step_files',
+		{
+			title: 'Open Exercise Step Files',
+			description: `
+Call this to open the files for the exercise step the playground is currently set to.
+		`.trim(),
+			inputSchema: {
+				workshopDirectory: workshopDirectoryInputSchema,
+			},
+		},
+		async ({ workshopDirectory }) => {
+			await handleWorkshopDirectory(workshopDirectory)
+			const playgroundApp = await getPlaygroundApp()
+			invariant(
+				playgroundApp,
+				'The playground app is not currently set. Use the `set_playground` tool to set the playground to an exercise step.',
+			)
+			const problemApp = await getAppByName(playgroundApp.appName)
+			invariant(
+				problemApp,
+				'Cannot find the problem app for the playground app. This is unexpected. The playground app may need to be reset using the `set_playground` tool.',
+			)
+			invariant(
+				isProblemApp(problemApp) && problemApp.solutionName,
+				'The playground app is not set to a problem app with a solution. The playground app may need to be reset using the `set_playground` tool.',
+			)
+			const solutionApp = await getAppByName(problemApp.solutionName)
+			invariant(
+				solutionApp,
+				'Cannot find the solution app for the problem app. Cannot open the files for a step that does not have both a problem and solution.',
+			)
+			const diffFiles = await getDiffFiles(problemApp, solutionApp)
+			invariant(
+				diffFiles,
+				'There was a problem generating the diff. Check the terminal output.',
+			)
+			for (const file of diffFiles) {
+				await launchEditor(file.path, file.line)
+			}
+			return {
+				content: [
+					{
+						type: 'text',
+						text: 'Files opened successfully',
+					},
+				],
 			}
 		},
 	)
