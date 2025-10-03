@@ -25,6 +25,7 @@ import {
 } from '@epic-web/workshop-utils/user.server'
 import { checkConnection } from '@epic-web/workshop-utils/utils.server'
 
+import * as React from 'react'
 import {
 	data,
 	redirect,
@@ -43,6 +44,7 @@ import { type Route } from './+types/root.tsx'
 import { Confetti } from './components/confetti'
 import { GeneralErrorBoundary } from './components/error-boundary'
 import { ExerciseWarningBanner } from './components/exercise-warning-banner'
+import { KeyboardShortcutsDialog } from './components/keyboard-shortcuts-dialog'
 import { EpicProgress } from './components/progress-bar'
 import { EpicToaster } from './components/toaster'
 import { TooltipProvider } from './components/ui/tooltip'
@@ -234,6 +236,18 @@ function App() {
 		minDuration: 200,
 	})
 	const altDown = useAltDown()
+	const [showKeyboardShortcuts, setShowKeyboardShortcuts] =
+		React.useState(false)
+
+	React.useEffect(() => {
+		const handleToggle = () => {
+			setShowKeyboardShortcuts((prev) => !prev)
+		}
+		window.addEventListener('toggle-keyboard-shortcuts', handleToggle)
+		return () => {
+			window.removeEventListener('toggle-keyboard-shortcuts', handleToggle)
+		}
+	}, [])
 
 	const theme = useTheme()
 	return (
@@ -261,6 +275,10 @@ function App() {
 			<UpdateToast repoUpdates={data.repoUpdates} />
 			<EpicProgress />
 			<Notifications unmutedNotifications={data.unmutedNotifications} />
+			<KeyboardShortcutsDialog
+				open={showKeyboardShortcuts}
+				onOpenChange={setShowKeyboardShortcuts}
+			/>
 		</Document>
 	)
 }
