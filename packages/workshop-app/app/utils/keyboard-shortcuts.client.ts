@@ -21,7 +21,7 @@ function isMuxPlayer(el: unknown): el is MuxPlayerRefAttributes {
 
 function handleUserKeyPressForMuxPlayer(e: KeyboardEvent) {
 	// Handle '?' to open keyboard shortcuts dialog
-	if (e.key === '?' && !e.shiftKey) {
+	if (e.key === '?') {
 		const activeElement = document.activeElement
 		if (!shouldIgnoreHotkey(activeElement) && !shouldIgnoreHotkey(e.target)) {
 			e.preventDefault()
