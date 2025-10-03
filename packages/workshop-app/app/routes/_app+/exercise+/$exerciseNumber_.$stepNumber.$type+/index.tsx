@@ -34,6 +34,7 @@ import {
 import { Diff } from '#app/components/diff.tsx'
 import { GeneralErrorBoundary } from '#app/components/error-boundary.tsx'
 import { type InBrowserBrowserRef } from '#app/components/in-browser-browser.tsx'
+import { StatusIndicator } from '#app/components/status-indicator.tsx'
 import { useWorkshopConfig } from '#app/components/workshop-config.tsx'
 import { useAltDown } from '#app/utils/misc.tsx'
 import { fetchDiscordPosts } from './__shared/discord.server.ts'
@@ -41,7 +42,7 @@ import { DiscordChat } from './__shared/discord.tsx'
 import { Playground } from './__shared/playground.tsx'
 import { Preview } from './__shared/preview.tsx'
 import { Tests } from './__shared/tests.tsx'
-import { getAppRunningState } from './__shared/utils.tsx'
+import { getAppRunningState, getTestState } from './__shared/utils.tsx'
 
 export async function loader({ request, params }: LoaderFunctionArgs) {
 	const timings = makeTimings('exerciseStepTypeIndexLoader')
@@ -168,6 +169,7 @@ export async function loader({ request, params }: LoaderFunctionArgs) {
 						isUpToDate: playgroundApp.isUpToDate,
 						stackBlitzUrl: playgroundApp.stackBlitzUrl,
 						...(await getAppRunningState(playgroundApp)),
+						...getTestState(playgroundApp),
 					} as const)
 				: null,
 			problem: problemApp
@@ -269,6 +271,24 @@ export default function ExercisePartRoute() {
 		return false
 	}
 
+	function getTabStatus(
+		tab: (typeof tabs)[number],
+	): 'running' | 'passed' | 'failed' | null {
+		if (tab === 'tests') {
+			if (!data.playground) return null
+			const { isTestRunning, testExitCode } = data.playground
+			if (isTestRunning) return 'running'
+			if (testExitCode === 0) return 'passed'
+			if (testExitCode !== null && testExitCode !== 0) return 'failed'
+			return null
+		}
+		if (tab === 'problem' || tab === 'solution' || tab === 'playground') {
+			const appData = tab === 'playground' ? data.playground : data[tab]
+			if (appData?.isRunning) return 'running'
+		}
+		return null
+	}
+
 	const activeTab = isValidPreview(preview)
 		? preview
 		: tabs.find((t) => !shouldHideTab(t))
@@ -297,6 +317,7 @@ export default function ExercisePartRoute() {
 			<Tabs.List className="h-14 min-h-14 overflow-x-auto whitespace-nowrap border-b scrollbar-thin scrollbar-thumb-scrollbar">
 				{tabs.map((tab) => {
 					const hidden = shouldHideTab(tab)
+					const status = getTabStatus(tab)
 					return (
 						<Tabs.Trigger key={tab} value={tab} hidden={hidden} asChild>
 							<Link
@@ -318,7 +339,10 @@ export default function ExercisePartRoute() {
 											)}`
 								}
 							>
-								{tab}
+								<span className="flex items-center gap-2">
+									{status && <StatusIndicator status={status} />}
+									<span>{tab}</span>
+								</span>
 							</Link>
 						</Tabs.Trigger>
 					)
