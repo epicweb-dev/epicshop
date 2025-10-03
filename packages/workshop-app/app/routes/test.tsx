@@ -12,6 +12,7 @@ import {
 	type ActionFunctionArgs,
 	type LoaderFunctionArgs,
 	useFetcher,
+	useRevalidator,
 } from 'react-router'
 import { useEventSource } from 'remix-utils/sse/react'
 import { eventStream } from 'remix-utils/sse/server'
@@ -233,6 +234,11 @@ export function TestOutput({ name }: { name: string }) {
 		exitCode: undefined,
 		lines: [],
 	})
+	const revalidator = useRevalidator()
+	const latestRevalidatorRef = useRef(revalidator)
+	useEffect(() => {
+		latestRevalidatorRef.current = revalidator
+	}, [revalidator])
 	const ansi = useAnsiToHtml()
 	const { version, isRunning, exitCode, lines } = state
 	const lastMessage = useEventSource(
@@ -252,6 +258,7 @@ export function TestOutput({ name }: { name: string }) {
 				case 'exit': {
 					const { isRunning, code: exitCode } = event
 					dispatch((prev) => ({ ...prev, isRunning, exitCode }))
+					void latestRevalidatorRef.current.revalidate()
 					break
 				}
 				case 'init': {
