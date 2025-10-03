@@ -39,6 +39,8 @@ workshop exercises and understanding the learning outcomes.
 
 The user's work in progress is in the \`playground\` directory. Any changes they
 ask you to make should be in this directory.
+
+Most of the time you should use the \`get_what_is_next\` tool to get the next step the user needs to complete.
 		`.trim(),
 	},
 )

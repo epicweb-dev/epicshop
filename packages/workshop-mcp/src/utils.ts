@@ -1,6 +1,9 @@
 import fs from 'node:fs/promises'
 import path from 'node:path'
-import { init as initApps } from '@epic-web/workshop-utils/apps.server'
+import {
+	getWorkshopRoot,
+	init as initApps,
+} from '@epic-web/workshop-utils/apps.server'
 import { z } from 'zod'
 
 export const workshopDirectoryInputSchema = z
@@ -56,6 +59,11 @@ export async function handleWorkshopDirectory(workshopDirectory: string) {
 	await initApps(workshopDirectory)
 	return workshopDirectory
 }
+
+export const inWorkshop = (...d: Array<string>) =>
+	path.join(getWorkshopRoot(), ...d)
+export const readInWorkshop = (...d: Array<string>) =>
+	safeReadFile(inWorkshop(...d))
 
 export async function safeReadFile(filePath: string) {
 	try {

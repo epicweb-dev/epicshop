@@ -27,6 +27,7 @@ import { z } from 'zod'
 import {
 	handleWorkshopDirectory,
 	type InputSchemaType,
+	readInWorkshop,
 	safeReadFile,
 	workshopDirectoryInputSchema,
 } from './utils.js'
@@ -38,9 +39,7 @@ export const getWorkshopContextInputSchema = {
 export async function getWorkshopContext({
 	workshopDirectory,
 }: InputSchemaType<typeof getWorkshopContextInputSchema>) {
-	const workshopRoot = await handleWorkshopDirectory(workshopDirectory)
-	const inWorkshop = (...d: Array<string>) => path.join(workshopRoot, ...d)
-	const readInWorkshop = (...d: Array<string>) => safeReadFile(inWorkshop(...d))
+	await handleWorkshopDirectory(workshopDirectory)
 	const progress = await getProgress()
 
 	const output = {
@@ -50,11 +49,11 @@ export async function getWorkshopContext({
 				JSON.parse((await readInWorkshop('package.json')) || '{}') as any
 			).epicshop,
 			instructions: {
-				content: await readInWorkshop('exercise', 'README.mdx'),
+				content: await readInWorkshop('exercises', 'README.mdx'),
 				progress: progress.find((p) => p.type === 'instructions'),
 			},
 			finishedInstructions: {
-				content: await readInWorkshop('exercise', 'FINISHED.mdx'),
+				content: await readInWorkshop('exercises', 'FINISHED.mdx'),
 				progress: progress.find((p) => p.type === 'finished'),
 			},
 		},

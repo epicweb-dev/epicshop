@@ -43,6 +43,7 @@ export async function loader() {
 					}
 				: null,
 			latestWorkshopAppVersion: latestVersion,
+			workshopAppVersion: getEnv().EPICSHOP_APP_VERSION,
 			startTime: startDate.toISOString(),
 			startTimeFormatted: dayjs(startDate).format('YYYY-MM-DD HH:mm:ss'),
 			startTimeFromNow: dayjs(startDate).fromNow(),
@@ -94,12 +95,12 @@ export default function Version() {
 			<h3 className="text-md font-bold">Workshop App</h3>
 			<p>
 				{'Current Version: '}
-				{ENV.EPICSHOP_APP_VERSION ? (
+				{data.workshopAppVersion ? (
 					<a
-						href={`https://github.com/epicweb-dev/epicshop/releases/tag/v${ENV.EPICSHOP_APP_VERSION}`}
+						href={`https://github.com/epicweb-dev/epicshop/releases/tag/v${data.workshopAppVersion}`}
 						className="underline"
 					>
-						{ENV.EPICSHOP_APP_VERSION}
+						{data.workshopAppVersion}
 					</a>
 				) : (
 					'Unknown'

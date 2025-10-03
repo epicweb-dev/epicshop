@@ -1,7 +1,7 @@
 agents:
   journaler:
     name: epicshop-tester
-    model: gpt-4.1
+    model: gpt-5-mini
     instructions: |
       You are a helpful assistant that can help with the Epic Workshop App.
       If no workshop directory is provided, use /Users/kentcdodds/code/epic-web/epicshop/example.
