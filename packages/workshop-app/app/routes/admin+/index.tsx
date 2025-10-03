@@ -315,3 +315,4 @@ function Pinger({
 		</span>
 	)
 }
+// Note: Kept Pinger component here for backward compatibility with admin-specific statuses 'starting' and 'taken'
