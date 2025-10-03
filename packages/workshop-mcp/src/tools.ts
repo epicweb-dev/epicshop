@@ -27,6 +27,7 @@ import {
 	updateProgress,
 } from '@epic-web/workshop-utils/epic-api.server'
 import { launchEditor } from '@epic-web/workshop-utils/launch-editor.server'
+// @ts-ignore 🤷‍♂️ tshy doesn't like this
 import { createUIResource } from '@mcp-ui/server'
 import { type McpServer } from '@modelcontextprotocol/sdk/server/mcp.js'
 import {
@@ -234,7 +235,7 @@ An error will be returned if no app is found for the given arguments.
 			},
 		},
 		async ({ workshopDirectory, exerciseNumber, stepNumber, type }) => {
-			workshopDirectory = await handleWorkshopDirectory(workshopDirectory)
+			await handleWorkshopDirectory(workshopDirectory)
 			const authInfo = await getAuthInfo()
 
 			if (!exerciseNumber) {
