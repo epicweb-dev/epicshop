@@ -20,6 +20,16 @@ function isMuxPlayer(el: unknown): el is MuxPlayerRefAttributes {
 }
 
 function handleUserKeyPressForMuxPlayer(e: KeyboardEvent) {
+	// Handle '?' to open keyboard shortcuts dialog
+	if (e.key === '?' && !e.shiftKey) {
+		const activeElement = document.activeElement
+		if (!shouldIgnoreHotkey(activeElement) && !shouldIgnoreHotkey(e.target)) {
+			e.preventDefault()
+			window.dispatchEvent(new CustomEvent('toggle-keyboard-shortcuts'))
+			return
+		}
+	}
+
 	// don't apply hotkeys when meta or ctrl is pressed
 	if (e.metaKey || e.ctrlKey) return
 
