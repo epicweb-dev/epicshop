@@ -19,23 +19,20 @@ function isMuxPlayer(el: unknown): el is MuxPlayerRefAttributes {
 	return typeof el === 'object' && el !== null && 'mux' in el
 }
 
-function handleUserKeyPressForMuxPlayer(e: KeyboardEvent) {
-	// Handle '?' to open keyboard shortcuts dialog
-	if (e.key === '?') {
-		const activeElement = document.activeElement
-		if (!shouldIgnoreHotkey(activeElement) && !shouldIgnoreHotkey(e.target)) {
-			e.preventDefault()
-			window.dispatchEvent(new CustomEvent('toggle-keyboard-shortcuts'))
-			return
-		}
-	}
-
-	// don't apply hotkeys when meta or ctrl is pressed
+function handleKeyDown(e: KeyboardEvent) {
+	// don't apply hotkeys below when meta or ctrl is pressed
 	if (e.metaKey || e.ctrlKey) return
 
 	const activeElement = document.activeElement
 	if (shouldIgnoreHotkey(activeElement)) return
 	if (shouldIgnoreHotkey(e.target)) return
+
+	// Handle '?' to open keyboard shortcuts dialog
+	if (e.key === '?') {
+		e.preventDefault()
+		window.dispatchEvent(new CustomEvent('toggle-keyboard-shortcuts'))
+		return
+	}
 
 	// if there are multiple players then we control the one that has focus
 	// and if neither has focus, we control the first one
@@ -188,5 +185,5 @@ function handleUserKeyPressForMuxPlayer(e: KeyboardEvent) {
 }
 
 export function init() {
-	window.document.addEventListener('keydown', handleUserKeyPressForMuxPlayer)
+	window.document.addEventListener('keydown', handleKeyDown)
 }
