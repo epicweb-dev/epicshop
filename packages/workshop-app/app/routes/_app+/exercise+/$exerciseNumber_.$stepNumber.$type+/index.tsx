@@ -169,7 +169,7 @@ export async function loader({ request, params }: LoaderFunctionArgs) {
 						isUpToDate: playgroundApp.isUpToDate,
 						stackBlitzUrl: playgroundApp.stackBlitzUrl,
 						...(await getAppRunningState(playgroundApp)),
-					...getTestState(playgroundApp),
+						...getTestState(playgroundApp),
 					} as const)
 				: null,
 			problem: problemApp
