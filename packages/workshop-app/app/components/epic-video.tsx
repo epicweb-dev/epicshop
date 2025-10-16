@@ -379,11 +379,11 @@ function EpicVideo({
 			timestampIndexStart - 1,
 		)
 		transcriptElements.push(
-			<span key={timestampIndexStart}>{textBeforeTimestamp}</span>,
+			<span key={`span-${timestampIndexStart}`}>{textBeforeTimestamp}</span>,
 		)
 		transcriptElements.push(
 			<button
-				key={timestamp}
+				key={`button-${timestampIndexStart}`}
 				className="underline"
 				onClick={(event) => {
 					if (muxPlayerRef.current) {
