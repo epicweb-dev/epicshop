@@ -10,9 +10,13 @@ import fsExtra from 'fs-extra'
 import { type Params } from 'react-router'
 
 function parseAppNameFromReferer(request: Request) {
-	const url = new URL(request.headers.get('referer') ?? '')
-	const appName = url.pathname.split('/').pop()
-	return appName
+	try {
+		const url = new URL(request.headers.get('referer') ?? '')
+		const appName = url.pathname.split('/').pop()
+		return appName ?? null
+	} catch {
+		return null
+	}
 }
 
 export async function resolveApps({
