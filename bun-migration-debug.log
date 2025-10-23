@@ -17,4 +17,4 @@ Notes:
 [2025-10-23T00:12:00Z] Built packages with Bun: workshop-utils, workshop-presence, workshop-app, workshop-cli
 [2025-10-23T00:14:00Z] bun test failed in workshop-utils (vi.mocked not supported); switch to vitest via bunx
 [2025-10-23T00:16:00Z] bunx vitest run succeeded in workshop-utils, workshop-cli, workshop-presence, workshop-mcp
-[2025-10-23T00:19:00Z] Validated CLI warm using Bun by running built CLI directly (dist/esm/cli.js)
+[2025-10-23T00:22:00Z] Updated CI workflow validate.yml to install Bun (oven-sh/setup-bun@v2) and use bun install in all jobs to prevent "/bin/sh: 1: bun: not found" errors.
