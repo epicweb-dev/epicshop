@@ -1,0 +1,20 @@
+[2025-10-23T00:00:00Z] Bun migration started
+
+Plan:
+- Assess repo scripts and Node assumptions
+- Install Bun runtime
+- Install dependencies with Bun at repo root (will trigger example postinstall via npm)
+- Build packages with Bun in dependency order: workshop-utils → workshop-presence → workshop-app → workshop-cli
+- Run targeted tests with Bun (workshop-utils)
+- Provide commands to run dev server with Bun (cannot run long-lived dev server here)
+
+Notes:
+- Keep Node available for CLI and server runtime; focus on using Bun for install/run.
+- Log each action and outcome here.
+
+[2025-10-23T00:05:00Z] Installed Bun version 1.3.1
+[2025-10-23T00:07:00Z] bun install completed at repo root; example postinstall executed via npm
+[2025-10-23T00:12:00Z] Built packages with Bun: workshop-utils, workshop-presence, workshop-app, workshop-cli
+[2025-10-23T00:14:00Z] bun test failed in workshop-utils (vi.mocked not supported); switch to vitest via bunx
+[2025-10-23T00:16:00Z] bunx vitest run succeeded in workshop-utils, workshop-cli, workshop-presence, workshop-mcp
+[2025-10-23T00:19:00Z] Validated CLI warm using Bun by running built CLI directly (dist/esm/cli.js)
