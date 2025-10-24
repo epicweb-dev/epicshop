@@ -21,17 +21,16 @@ jobs:
       - name: ⬇️ Checkout repo
         uses: actions/checkout@v5
 
-      - name: ⎔ Setup node
-        uses: actions/setup-node@v6
+      - name: 🥖 Setup Bun
+        uses: oven-sh/setup-bun@v2
         with:
-          node-version: 24
-          cache: 'npm'
+          bun-version: latest
 
       - name: 📥 Download deps
-        run: npm install --prefer-offline --no-audit --no-fund
+        run: bun install
 
       - name: 🔬 Lint
-        run: npm run lint
+        run: bun run lint
 
   build:
     name: 🏗 Build
@@ -41,17 +40,16 @@ jobs:
       - name: ⬇️ Checkout repo
         uses: actions/checkout@v5
 
-      - name: ⎔ Setup node
-        uses: actions/setup-node@v6
+      - name: 🥖 Setup Bun
+        uses: oven-sh/setup-bun@v2
         with:
-          node-version: 24
-          cache: 'npm'
+          bun-version: latest
 
       - name: 📥 Download deps
-        run: npm install --prefer-offline --no-audit --no-fund
+        run: bun install
 
       - name: 🏗 Build
-        run: npm run build
+        run: bun run build
         env:
           SENTRY_AUTH_TOKEN: ${{ secrets.SENTRY_AUTH_TOKEN }}
           SENTRY_ORG: ${{ secrets.SENTRY_ORG }}
@@ -61,7 +59,7 @@ jobs:
 
       # run install again so the local .bin files get where they should go.
       - name: 📥 Download deps
-        run: npm install --prefer-offline --no-audit --no-fund
+        run: bun install
 
       - name: 📦 Upload All Build Artifacts
         uses: actions/upload-artifact@v4
@@ -84,11 +82,10 @@ jobs:
       - name: ⬇️ Checkout repo
         uses: actions/checkout@v5
 
-      - name: ⎔ Setup node
-        uses: actions/setup-node@v6
+      - name: 🥖 Setup Bun
+        uses: oven-sh/setup-bun@v2
         with:
-          node-version: 24
-          cache: 'npm'
+          bun-version: latest
 
       - name: 📥 Download All Build Artifacts
         uses: actions/download-artifact@v4
@@ -97,10 +94,10 @@ jobs:
           path: packages
 
       - name: 📥 Download deps
-        run: npm install --prefer-offline --no-audit --no-fund
+        run: bun install
 
       - name: 🧪 Run tests
-        run: npm test -- --no-watch
+        run: bun run test -- --no-watch
 
   typecheck:
     name: ʦ TypeScript
@@ -111,11 +108,10 @@ jobs:
       - name: ⬇️ Checkout repo
         uses: actions/checkout@v5
 
-      - name: ⎔ Setup node
-        uses: actions/setup-node@v6
+      - name: 🥖 Setup Bun
+        uses: oven-sh/setup-bun@v2
         with:
-          node-version: 24
-          cache: 'npm'
+          bun-version: latest
 
       - name: 📥 Download All Build Artifacts
         uses: actions/download-artifact@v4
@@ -124,10 +120,10 @@ jobs:
           path: packages
 
       - name: 📥 Download deps
-        run: npm install --prefer-offline --no-audit --no-fund
+        run: bun install
 
       - name: 🔎 Type check
-        run: npm run typecheck
+        run: bun run typecheck
 
   playwright:
     name: 🎭 Playwright
@@ -138,11 +134,10 @@ jobs:
       - name: ⬇️ Checkout repo
         uses: actions/checkout@v5
 
-      - name: ⎔ Setup node
-        uses: actions/setup-node@v6
+      - name: 🥖 Setup Bun
+        uses: oven-sh/setup-bun@v2
         with:
-          node-version: 24
-          cache: 'npm'
+          bun-version: latest
 
       - name: 📥 Download All Build Artifacts
         uses: actions/download-artifact@v4
@@ -151,7 +146,7 @@ jobs:
           path: packages
 
       - name: 📥 Download deps
-        run: npm install --prefer-offline --no-audit --no-fund
+        run: bun install
 
       - name: 📦 Cache Playwright Browsers
         uses: actions/cache@v4
@@ -190,11 +185,10 @@ jobs:
       - name: ⬇️ Checkout repo
         uses: actions/checkout@v5
 
-      - name: ⎔ Setup node
-        uses: actions/setup-node@v6
+      - name: 🥖 Setup Bun
+        uses: oven-sh/setup-bun@v2
         with:
-          node-version: 24
-          cache: 'npm'
+          bun-version: latest
 
       - name: 📥 Download All Build Artifacts
         uses: actions/download-artifact@v4
@@ -203,10 +197,10 @@ jobs:
           path: packages
 
       - name: 📥 Download deps
-        run: npm install --prefer-offline --no-audit --no-fund
+        run: bun install
 
       - name: ▶️ Run setup script
-        run: node setup.mjs
+        run: bun setup.mjs
         working-directory: ./example
         continue-on-error: true
 
@@ -232,12 +226,10 @@ jobs:
         with:
           fetch-depth: 0
 
-      - name: ⎔ Setup node
-        uses: actions/setup-node@v6
+      - name: 🥖 Setup Bun
+        uses: oven-sh/setup-bun@v2
         with:
-          node-version: 24
-          registry-url: 'https://registry.npmjs.org'
-          cache: 'npm'
+          bun-version: latest
 
       - name: 📥 Download All Build Artifacts
         uses: actions/download-artifact@v4
@@ -246,7 +238,7 @@ jobs:
           path: packages
 
       - name: 📥 Download deps
-        run: npm install --prefer-offline --no-audit --no-fund
+        run: bun install
 
       - name: 🚀 Release
-        run: npx tsx other/release.ts --dry-run=false
+        run: bun other/release.ts --dry-run=false

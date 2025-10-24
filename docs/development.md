@@ -12,14 +12,14 @@ installed locally. You can find examples of usage below.
 ## Unix
 
 ```sh
-EPICSHOP_CONTEXT_CWD=/Users/kentcdodds/code/epicweb-dev/data-modeling npm run dev
+EPICSHOP_CONTEXT_CWD=/Users/kentcdodds/code/epicweb-dev/data-modeling bun run dev
 ```
 
 ## Windows PowerShell
 
 ```sh
 $env:EPICSHOP_CONTEXT_CWD='"C:\Users\kentcdodds\code\epicweb-dev\data-modeling"'
-npm run dev
+bun run dev
 ```
 
 > Note: On Windows, you must use backslashes `\`.
@@ -28,7 +28,7 @@ npm run dev
 
 ```sh
 set EPICSHOP_CONTEXT_CWD='"C:\Users\kentcdodds\code\epicweb-dev\data-modeling"'
-npm run dev
+bun run dev
 ```
 
 Make sure that if the path includes spaces, you wrap the path in quotes as shown

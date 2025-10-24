@@ -6,7 +6,7 @@
 			"options": {
 				"parallel": true,
 				"cwd": "packages/workshop-app",
-				"commands": ["npm run build:app", "npm run build:server"]
+				"commands": ["bun run build:app", "bun run build:server"]
 			}
 		}
 	}

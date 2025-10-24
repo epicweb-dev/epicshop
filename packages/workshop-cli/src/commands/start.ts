@@ -34,7 +34,7 @@ export async function start(options: StartOptions = {}): Promise<StartResult> {
 		const appDir = await findWorkshopAppDir(options.appLocation)
 		if (!appDir) {
 			const errorMessage =
-				'Could not locate workshop-app directory. Please ensure the workshop app is installed or specify its location using:\n  - Environment variable: EPICSHOP_APP_LOCATION\n  - Command line flag: --app-location\n  - Global installation: npm install -g @epic-web/workshop-app'
+				'Could not locate workshop-app directory. Please ensure the workshop app is installed or specify its location using:\n  - Environment variable: EPICSHOP_APP_LOCATION\n  - Command line flag: --app-location\n  - Global installation: bun install -g @epic-web/workshop-app'
 
 			if (!options.silent) {
 				console.error(chalk.red('❌ Could not locate workshop-app directory'))
@@ -49,7 +49,7 @@ export async function start(options: StartOptions = {}): Promise<StartResult> {
 				console.error(chalk.yellow('  - Command line flag: --app-location'))
 				console.error(
 					chalk.yellow(
-						'  - Global installation: npm install -g @epic-web/workshop-app',
+						'  - Global installation: bun install -g @epic-web/workshop-app',
 					),
 				)
 			}

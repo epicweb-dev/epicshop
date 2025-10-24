@@ -32,15 +32,15 @@ installed in individual repositories which resemble the structure of the
 
 ## Dev environment tips
 
-- Run lower-level tests with `npm run test`
-- Run higher-level tests with `npm run test:e2e` (uses playwright)
-- Run basic build, type checking, linting, and tests with `npm run validate`
+- Run lower-level tests with `bun run test`
+- Run higher-level tests with `bun run test:e2e` (uses playwright)
+- Run basic build, type checking, linting, and tests with `bun run validate`
 - Find the CI plan in the .github/workflows folder.
 - Commit your changes, then run the following and commit any changes that are
   made separately:
-  - Run `npm run lint -- --fix` to fix linting errors
-  - Run `npm run format` to fix formatting errors
-  - Run `npm run validate` to run all tests and checks
+  - Run `bun run lint -- --fix` to fix linting errors
+  - Run `bun run format` to fix formatting errors
+  - Run `bun run validate` to run all tests and checks
 
 ## Docs
 
@@ -80,9 +80,9 @@ installed). Only the most important bits are enforced by eslint.
 
 - **Build order matters**: In this monorepo, you must build workspace
   dependencies before building the main app:
-  1. `npm run build --workspace=@epic-web/workshop-utils`
-  2. `npm run build --workspace=@epic-web/workshop-presence`
-  3. `npm run build --workspace=@epic-web/workshop-app`
+  1. `bun run build --workspace=@epic-web/workshop-utils`
+  2. `bun run build --workspace=@epic-web/workshop-presence`
+  3. `bun run build --workspace=@epic-web/workshop-app`
 - **Always build before testing**: After making code changes, always run the
   build process before starting the dev server to test changes, especially when
   working with client-side functionality.

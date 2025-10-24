@@ -27,13 +27,13 @@ namespace pattern:
 
 ```bash
 # Enable all epic:api logging
-NODE_DEBUG=epic:api npm run dev
+NODE_DEBUG=epic:api bun run dev
 
 # Enable all epic logging (if you have multiple epic namespaces)
-NODE_DEBUG=epic:* npm run dev
+NODE_DEBUG=epic:* bun run dev
 
 # Enable multiple specific namespaces
-NODE_DEBUG=epic:api,other-namespace npm run dev
+NODE_DEBUG=epic:api,other-namespace bun run dev
 ```
 
 ### Log Levels
@@ -59,7 +59,7 @@ The `epic:api` utilities automatically include debug logging for:
 Enable `epic:api` logging to see detailed information about API interactions:
 
 ```bash
-NODE_DEBUG=epic:api npm run dev
+NODE_DEBUG=epic:api bun run dev
 ```
 
 This will show logs for all `epic:api` operations including:
@@ -75,7 +75,7 @@ The workshop app includes integrated cache logging that shows detailed cache
 operations:
 
 ```bash
-NODE_DEBUG=epic:cache:* npm run dev
+NODE_DEBUG=epic:cache:* bun run dev
 ```
 
 This will show logs for all cache operations including:
@@ -89,10 +89,10 @@ You can also enable logging for specific caches:
 
 ```bash
 # Enable logging for ExampleAppCache only
-NODE_DEBUG=epic:cache:exampleappcache npm run dev
+NODE_DEBUG=epic:cache:exampleappcache bun run dev
 
 # Enable logging for LRU caches
-NODE_DEBUG=epic:cache:lru npm run dev
+NODE_DEBUG=epic:cache:lru bun run dev
 ```
 
 ### Request Debugging
@@ -100,7 +100,7 @@ NODE_DEBUG=epic:cache:lru npm run dev
 To see detailed request logging, enable the `epic:req` namespace:
 
 ```bash
-NODE_DEBUG=epic:req npm run dev
+NODE_DEBUG=epic:req bun run dev
 ```
 
 ### Authentication Debugging
@@ -109,7 +109,7 @@ The authentication system includes comprehensive logging for OAuth device flow
 operations:
 
 ```bash
-NODE_DEBUG=epic:auth npm run dev
+NODE_DEBUG=epic:auth bun run dev
 ```
 
 This will show logs for all authentication operations including:
@@ -126,7 +126,7 @@ This will show logs for all authentication operations including:
 Enable `epic:auth` logging to troubleshoot authentication issues:
 
 ```bash
-NODE_DEBUG=epic:auth npm run dev
+NODE_DEBUG=epic:auth bun run dev
 ```
 
 This will show detailed information about:
@@ -148,7 +148,7 @@ import { logger } from '@epic-web/workshop-utils/logger'
 const log = logger('epic:custom-feature')
 
 // Enable with:
-// NODE_DEBUG=epic:custom-feature npm run dev
+// NODE_DEBUG=epic:custom-feature bun run dev
 log('Custom feature executed')
 log.error('Custom feature failed:', error)
 ```

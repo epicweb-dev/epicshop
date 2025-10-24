@@ -33,7 +33,7 @@ if (major < 8 || (major === 8 && minor < 16)) {
 }
 
 const command =
-	'npx --yes "https://gist.github.com/kentcdodds/bb452ffe53a5caa3600197e1d8005733" -q'
+	'bunx --yes "https://gist.github.com/kentcdodds/bb452ffe53a5caa3600197e1d8005733" -q'
 console.log(
 	color('subtitle', `      Running the following command: ${command}`),
 )
