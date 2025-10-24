@@ -177,7 +177,7 @@ exercises by adding the following to the `package.json`:
 	"epicshop": {
 		"stackBlitzConfig": {
 			"title": "Title of the StackBlitz",
-			"startScript": "npm run dev",
+			"startScript": "bun run dev",
 			"view": "preview",
 			"file": "src/index.tsx"
 		}

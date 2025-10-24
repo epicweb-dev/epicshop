@@ -30,15 +30,15 @@
       "𝕏": "kentcdodds"
     },
     "sidecarProcesses": {
-      "EpicMeApp": "npm run dev --prefix ./epicshop/epic-me"
+      "EpicMeApp": "bun run dev --prefix ./epicshop/epic-me"
     }
   },
   "type": "module",
   "scripts": {
-    "postinstall": "cd ./epicshop && npm install --prefer-offline --no-audit --no-fund",
-    "start": "npx --prefix ./epicshop epicshop start",
-    "dev": "npx --prefix ./epicshop epicshop start",
-    "warm": "npx --prefix ./epicshop epicshop warm",
+    "postinstall": "cd ./epicshop && bun install",
+    "start": "bunx --prefix ./epicshop epicshop start",
+    "dev": "bunx --prefix ./epicshop epicshop start",
+    "warm": "bunx --prefix ./epicshop epicshop warm",
     "setup": "node ./epicshop/setup.js",
     "setup:custom": "node ./epicshop/setup-custom.js",
     "lint": "eslint .",

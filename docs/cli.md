@@ -13,7 +13,7 @@ The CLI is typically installed as part of the EpicShop workshop setup. If you
 need to install it separately:
 
 ```bash
-npm install -g @epic-web/workshop-cli
+bun install -g @epic-web/workshop-cli
 ```
 
 ## Commands
@@ -65,7 +65,7 @@ The CLI will look for the workshop app in the following order:
 
 1. `--app-location` command line argument
 2. `EPICSHOP_APP_LOCATION` environment variable
-3. Global installation (`npm install -g @epic-web/workshop-app`)
+3. Global installation (`bun install -g @epic-web/workshop-app`)
 4. Local `node_modules/@epic-web/workshop-app`
 
 ### `update` / `upgrade`
@@ -295,7 +295,7 @@ The CLI automatically detects the environment:
 
 If the CLI can't find the workshop app:
 
-1. Ensure the workshop app is installed: `npm install -g @epic-web/workshop-app`
+1. Ensure the workshop app is installed: `bun install -g @epic-web/workshop-app`
 2. Set the `EPICSHOP_APP_LOCATION` environment variable
 3. Use the `--app-location` flag to specify the path
 
@@ -323,7 +323,7 @@ If updates fail:
 
 ```bash
 # Install the workshop app globally
-npm install -g @epic-web/workshop-app
+bun install -g @epic-web/workshop-app
 
 # Start the workshop
 epicshop start

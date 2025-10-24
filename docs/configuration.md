@@ -67,9 +67,9 @@ The `sidecarProcesses` field is an object where:
 	"epicshop": {
 		"title": "My Workshop",
 		"sidecarProcesses": {
-			"BackendAPI": "npm run dev --prefix ./backend",
+			"BackendAPI": "bun run dev --prefix ./backend",
 			"Database": "docker run --rm -p 5432:5432 postgres:15",
-			"MockServer": "npx json-server --watch db.json --port 3001"
+			"MockServer": "bunx json-server --watch db.json --port 3001"
 		}
 	}
 }
@@ -280,7 +280,7 @@ Here's an example of some configuration in the root `package.json`:
       "enabled": true
     },
     "scripts": {
-      "postupdate": "npm run build"
+      "postupdate": "bun run build"
     },
     "initialRoute": "/welcome"
   }

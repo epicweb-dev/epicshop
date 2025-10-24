@@ -54,8 +54,8 @@ const config: PlaywrightTestConfig = {
 	/* Run your local dev server before starting the tests */
 	webServer: {
 		command: process.env.CI
-			? `npx cross-env PORT=${PORT} npm run start`
-			: `npx cross-env PORT=${PORT} npm run dev`,
+			? `bunx cross-env PORT=${PORT} bun run start`
+			: `bunx cross-env PORT=${PORT} bun run dev`,
 		port: Number(PORT),
 		reuseExistingServer: true,
 	},

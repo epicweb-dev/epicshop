@@ -10,10 +10,10 @@ handling WebSocket events and HTTP requests.
 [`presence.tsx`](../workshop-app/app/utils/presence.tsx) is the client-side
 code, which connects to the server and listens for events.
 
-You can start developing by running `npm run dev` and opening
+You can start developing by running `bun run dev` and opening
 [http://localhost:1999](http://localhost:1999) in your browser. When you're
 ready, you can deploy your application on to the PartyKit cloud with
-`npm run deploy`.
+`bun run deploy`.
 
 Refer to our docs for more information:
 https://github.com/partykit/partykit/blob/main/README.md. For more help, reach

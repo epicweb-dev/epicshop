@@ -36,7 +36,7 @@ jobs:
           cache: 'npm'
 
       - name: 📥 Download deps
-        run: npm install --prefer-offline --no-audit --no-fund
+        run: bun install --prefer-offline --no-audit --no-fund
 
       - name: 🔧 Configure git
         run: |
@@ -45,11 +45,11 @@ jobs:
 
       - name: 🎨 Run Prettier
         run:
-          npx prettier --write "**/*.{js,jsx,ts,tsx,md,css}" --ignore-path
+          bunx prettier --write "**/*.{js,jsx,ts,tsx,md,css}" --ignore-path
           .prettierignore
 
       - name: 🔍 Run ESLint --fix
-        run: npm run lint -- --fix
+        run: bun run lint -- --fix
 
       - name: 💾 Commit changes
         run: |

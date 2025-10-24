@@ -206,7 +206,7 @@ export async function updateLocalRepo() {
 		}
 
 		console.log('📦 Re-installing dependencies...')
-		await execaCommand('npm install', { cwd, stdio: 'inherit' })
+		await execaCommand('bun install', { cwd, stdio: 'inherit' })
 
 		await cleanupEmptyExerciseDirectories(cwd)
 
