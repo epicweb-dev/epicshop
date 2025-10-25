@@ -15,13 +15,13 @@
   },
   "dependencies": {
     "@epic-web/workshop-utils": "file:../workshop-utils",
-    "zod": "^3.25.71"
+    "zod": "^3.25.76"
   },
   "devDependencies": {
     "partykit": "0.0.115",
-    "typescript": "^5.8.3",
-    "tshy": "^3.0.2",
-    "vitest": "^3.2.4"
+    "typescript": "^5.9.3",
+    "tshy": "^3.0.3",
+    "vitest": "^4.0.3"
   },
   "files": [
     "dist"

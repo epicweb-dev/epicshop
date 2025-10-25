@@ -307,6 +307,8 @@ export async function isAppRunning(app: { name: string }) {
 	try {
 		const devProcess = devProcesses.get(app.name)
 		if (!devProcess?.process.pid) return false
+		// @ts-ignore - find-process is not typed correctly
+		// https://github.com/yibn2008/find-process/issues/85
 		const found = await findProcess('pid', devProcess.process.pid)
 		return found.length > 0
 	} catch {

@@ -1,6 +1,6 @@
 import './init-env.js'
 
-import { createId as cuid } from '@paralleldrive/cuid2'
+import { randomUUID as cuid } from 'crypto'
 import fsExtra from 'fs-extra'
 import { redirect } from 'react-router'
 import { z } from 'zod'

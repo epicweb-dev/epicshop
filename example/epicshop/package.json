@@ -4,6 +4,6 @@
     "@epic-web/workshop-app": "file:../../packages/workshop-app",
     "@epic-web/workshop-cli": "file:../../packages/workshop-cli",
     "@epic-web/workshop-utils": "file:../../packages/workshop-utils",
-    "fs-extra": "^11.2.0"
+    "fs-extra": "^11.3.2"
   }
 }

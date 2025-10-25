@@ -35,19 +35,19 @@
   "dependencies": {
     "@epic-web/invariant": "^1.0.0",
     "@epic-web/workshop-utils": "file:../workshop-utils",
-    "@mcp-ui/server": "^5.11.0",
-    "@modelcontextprotocol/sdk": "^1.17.5",
-    "@sentry/node": "^10.5.0",
-    "openid-client": "^6.6.2",
-    "zod": "^3.25.71"
+    "@mcp-ui/server": "^5.13.0",
+    "@modelcontextprotocol/sdk": "^1.20.2",
+    "@sentry/node": "^10.22.0",
+    "openid-client": "^6.8.1",
+    "zod": "^3.25.76"
   },
   "devDependencies": {
-    "@modelcontextprotocol/inspector": "^0.16.6",
-    "@types/node": "^24.0.10",
-    "tshy": "^3.0.2",
-    "tsx": "^4.20.3",
-    "typescript": "^5.8.3",
-    "vitest": "^3.2.4"
+    "@modelcontextprotocol/inspector": "^0.17.2",
+    "@types/node": "^24.9.1",
+    "tshy": "^3.0.3",
+    "tsx": "^4.20.6",
+    "typescript": "^5.9.3",
+    "vitest": "^4.0.3"
   },
   "repository": {
     "type": "git",

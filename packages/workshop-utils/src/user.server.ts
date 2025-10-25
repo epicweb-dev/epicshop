@@ -1,7 +1,7 @@
 // eslint-disable-next-line import/order -- this must be first
 import { getEnv } from './init-env.js'
 
-import { createId as cuid } from '@paralleldrive/cuid2'
+import { randomUUID as cuid } from 'crypto'
 import * as cookie from 'cookie'
 import { getAuthInfo, getClientId } from './db.server.js'
 
