@@ -6,6 +6,10 @@ import { redirect } from 'react-router'
 import { z } from 'zod'
 import { getWorkshopConfig } from './config.server.js'
 import { saveJSON, loadJSON, migrateLegacyData } from './data-storage.server.js'
+import {
+	requestStorageify,
+	resetRequestContext,
+} from './request-context.server.js'
 
 // Attempt migration from legacy ~/.epicshop
 await migrateLegacyData().catch(() => {})
@@ -32,22 +36,19 @@ export const PlayerPreferencesSchema = z
 					.nullable()
 					.default('disabled'),
 			})
-			.optional()
 			.default({}),
-		muted: z.boolean().optional(),
-		theater: z.boolean().optional(),
+		muted: z.boolean().default(false),
+		theater: z.boolean().default(false),
 		defaultView: z.string().optional(),
 		activeSidebarTab: z.number().optional(),
 	})
-	.optional()
 	.default({})
 
 const PresencePreferencesSchema = z
 	.object({
-		optOut: z.boolean(),
+		optOut: z.boolean().default(false),
 	})
-	.optional()
-	.default({ optOut: false })
+	.default({})
 
 const AuthInfoSchema = z.object({
 	id: z.string(),
@@ -58,14 +59,43 @@ const AuthInfoSchema = z.object({
 
 const MutedNotificationSchema = z.array(z.string()).default([])
 
+export type TipId =
+	| 'visited-home'
+	| 'opened-exercise'
+	| 'viewed-problem'
+	| 'viewed-solution'
+	| 'signed-in'
+	| 'set-playground'
+	| 'opened-files'
+	| 'started-app'
+	| 'ran-tests'
+	| 'viewed-diff'
+	| 'configured-editor'
+	| 'configured-preferences'
+	| 'used-keyboard-shortcuts'
+	| 'marked-exercise-lesson-as-complete'
+	| 'installed-mcp'
+
+export const TipSchema = z.object({
+	id: z.string(),
+	discoveredAt: z.number().nullable().default(null),
+	dismissedAt: z.number().nullable().default(null),
+	showAgainAt: z.number().nullable().default(null),
+})
+
+export type Tip = z.infer<typeof TipSchema>
+
+export const OnboardingDataSchema = z
+	.object({
+		tourVideosWatched: z.array(z.string()).default([]),
+		tips: z.array(TipSchema).default([]),
+	})
+	.default({})
+
+export type OnboardingData = z.infer<typeof OnboardingDataSchema>
+
 const DataSchema = z.object({
-	onboarding: z
-		.object({
-			tourVideosWatched: z.array(z.string()).default([]),
-		})
-		.passthrough()
-		.optional()
-		.default({ tourVideosWatched: [] }),
+	onboarding: OnboardingDataSchema,
 	preferences: z
 		.object({
 			player: PlayerPreferencesSchema,
@@ -74,23 +104,20 @@ const DataSchema = z.object({
 				.object({
 					persist: z.boolean().default(false),
 				})
-				.optional(),
+				.default({}),
 			fontSize: z.number().optional(),
 			exerciseWarning: z
 				.object({
 					dismissed: z.boolean().default(false),
 				})
-				.optional()
-				.default({ dismissed: false }),
+				.default({}),
 		})
-		.optional()
 		.default({}),
 	// deprecated. Probably safe to remove in May 2026:
 	authInfo: AuthInfoSchema.optional(),
-	// new:
 	authInfos: z.record(z.string(), AuthInfoSchema).optional(),
 	clientId: z.string().optional(),
-	mutedNotifications: MutedNotificationSchema.optional(),
+	mutedNotifications: MutedNotificationSchema,
 })
 
 export async function getClientId() {
@@ -98,7 +125,7 @@ export async function getClientId() {
 	if (data?.clientId) return data.clientId
 
 	const clientId = cuid()
-	await saveJSON({ ...data, clientId })
+	await updateDb({ ...data, clientId })
 	return clientId
 }
 
@@ -109,7 +136,7 @@ export async function logout() {
 		const data = await readDb()
 		const newAuthInfos = { ...data?.authInfos }
 		delete newAuthInfos[host]
-		await saveJSON({
+		await updateDb({
 			...data,
 			authInfos: newAuthInfos,
 		})
@@ -129,7 +156,7 @@ export async function deleteDb() {
 	}
 }
 
-export async function readDb() {
+async function _readDb() {
 	if (process.env.EPICSHOP_DEPLOYED) return null
 
 	const maxRetries = 3
@@ -190,6 +217,14 @@ export async function readDb() {
 		}
 	}
 	return null
+}
+
+const requestStorageKey = 'readDb'
+export const readDb = requestStorageify(_readDb, requestStorageKey)
+
+async function updateDb(data: z.input<typeof DataSchema>) {
+	await saveJSON(data)
+	resetRequestContext(requestStorageKey)
 }
 
 export async function getAuthInfo() {
@@ -255,7 +290,7 @@ export async function setAuthInfo({
 	const authInfo = AuthInfoSchema.parse({ id, tokenSet, email, name })
 	const config = getWorkshopConfig()
 	if (config.product.host) {
-		await saveJSON({
+		await updateDb({
 			...data,
 			authInfos: {
 				...data?.authInfos,
@@ -263,7 +298,7 @@ export async function setAuthInfo({
 			},
 		})
 	} else {
-		await saveJSON({ ...data, authInfo })
+		await updateDb({ ...data, authInfo })
 	}
 	return authInfo
 }
@@ -296,7 +331,7 @@ export async function setPreferences(
 			},
 		},
 	}
-	await saveJSON(updatedData)
+	await updateDb(updatedData)
 	return updatedData.preferences
 }
 
@@ -314,7 +349,7 @@ export async function muteNotification(id: string) {
 		...data,
 		mutedNotifications,
 	}
-	await saveJSON(updatedData)
+	await updateDb(updatedData)
 	return mutedNotifications
 }
 
@@ -324,7 +359,7 @@ export async function setFontSizePreference(fontSize: number | undefined) {
 		...data,
 		preferences: { ...data?.preferences, fontSize },
 	}
-	await saveJSON(updatedData)
+	await updateDb(updatedData)
 	return updatedData.preferences.fontSize
 }
 
@@ -335,43 +370,179 @@ export async function getFontSizePreference() {
 
 export async function readOnboardingData() {
 	const data = await readDb()
-	return data?.onboarding ?? null
+	const onboarding = data?.onboarding
+	if (!onboarding) return null
+	return OnboardingDataSchema.parse(onboarding)
 }
 
 export async function markOnboardingVideoWatched(videoUrl: string) {
 	const data = await readDb()
+	const currentOnboarding = data?.onboarding ?? {
+		tourVideosWatched: [],
+		tips: [],
+	}
+	const updatedOnboarding = OnboardingDataSchema.parse({
+		...currentOnboarding,
+		tourVideosWatched: [
+			...(currentOnboarding.tourVideosWatched ?? []),
+			videoUrl,
+		].filter(Boolean),
+	})
 	const updatedData = {
 		...data,
-		onboarding: {
-			...data?.onboarding,
-			tourVideosWatched: [
-				...(data?.onboarding.tourVideosWatched ?? []),
-				videoUrl,
-			].filter(Boolean),
-		},
+		onboarding: updatedOnboarding,
 	}
-	await saveJSON(updatedData)
-	return updatedData.onboarding
+	await updateDb(updatedData)
+	return updatedOnboarding
 }
 
 export async function unmarkOnboardingVideoWatched(videoUrl: string) {
 	const data = await readDb()
-	const watchedVideos = data?.onboarding?.tourVideosWatched ?? []
+	const currentOnboarding = data?.onboarding ?? {
+		tourVideosWatched: [],
+		tips: [],
+	}
+	const watchedVideos = currentOnboarding.tourVideosWatched ?? []
+	const updatedOnboarding = OnboardingDataSchema.parse({
+		...currentOnboarding,
+		tourVideosWatched: watchedVideos.filter((url) => url !== videoUrl),
+	})
 	const updatedData = {
 		...data,
-		onboarding: {
-			...data?.onboarding,
-			tourVideosWatched: watchedVideos.filter((url) => url !== videoUrl),
-		},
+		onboarding: updatedOnboarding,
 	}
-	await saveJSON(updatedData)
-	return updatedData.onboarding
+	await updateDb(updatedData)
+	return updatedOnboarding
 }
 
 export async function areAllOnboardingVideosWatched(
 	onboardingVideos: string[],
 ) {
 	const data = await readDb()
-	const watchedVideos = data?.onboarding?.tourVideosWatched ?? []
+	const onboarding = data?.onboarding
+	const watchedVideos = onboarding?.tourVideosWatched ?? []
 	return onboardingVideos.every((video) => watchedVideos.includes(video))
+}
+
+export async function getOnboardingTips() {
+	const data = await readDb()
+	if (!data) return []
+	return data.onboarding.tips
+}
+
+export async function recordDiscoveredTip(tipId: TipId) {
+	const data = await readDb()
+	if (!data) return null
+
+	const currentOnboarding = data.onboarding
+	const existingTips = currentOnboarding.tips
+	const existingTip = existingTips.find((tip) => tip.id === tipId)
+	const now = Date.now()
+
+	if (existingTip) {
+		if (existingTip.discoveredAt) {
+			return existingTip
+		}
+		const updatedTips = existingTips.map((tip) =>
+			tip.id === tipId ? { ...tip, discoveredAt: now } : tip,
+		)
+		const updatedOnboarding = OnboardingDataSchema.parse({
+			...currentOnboarding,
+			tips: updatedTips,
+		})
+		const updatedData = {
+			...data,
+			onboarding: updatedOnboarding,
+		}
+		await updateDb(updatedData)
+		return updatedTips.find((tip) => tip.id === tipId)!
+	}
+
+	const newTip = TipSchema.parse({
+		id: tipId,
+		discoveredAt: now,
+		dismissedAt: null,
+		showAgainAt: null,
+	})
+	const updatedTips = [...existingTips, newTip]
+	const updatedOnboarding = OnboardingDataSchema.parse({
+		...currentOnboarding,
+		tips: updatedTips,
+	})
+	const updatedData = {
+		...data,
+		onboarding: updatedOnboarding,
+	}
+	await updateDb(updatedData)
+	return newTip
+}
+
+export async function dismissTip(
+	tipId: TipId,
+	options?: { showAgainMs?: number },
+) {
+	const data = await readDb()
+	if (!data) return null
+
+	const currentOnboarding = data.onboarding
+	const existingTips = currentOnboarding.tips
+	const existingTip = existingTips.find((tip) => tip.id === tipId)
+	const now = Date.now()
+
+	if (!existingTip) {
+		const newTip = TipSchema.parse({
+			id: tipId,
+			discoveredAt: null,
+			dismissedAt: now,
+			showAgainAt: options?.showAgainMs ? now + options.showAgainMs : null,
+		})
+		const updatedTips = [...existingTips, newTip]
+		const updatedOnboarding = OnboardingDataSchema.parse({
+			...currentOnboarding,
+			tips: updatedTips,
+		})
+		const updatedData = {
+			...data,
+			onboarding: updatedOnboarding,
+		}
+		await updateDb(updatedData)
+		return newTip
+	}
+
+	const updatedTips = existingTips.map((tip) =>
+		tip.id === tipId
+			? {
+					...tip,
+					dismissedAt: now,
+					showAgainAt: options?.showAgainMs ? now + options.showAgainMs : null,
+				}
+			: tip,
+	)
+	const updatedOnboarding = OnboardingDataSchema.parse({
+		...currentOnboarding,
+		tips: updatedTips,
+	})
+	const updatedData = {
+		...data,
+		onboarding: updatedOnboarding,
+	}
+	await updateDb(updatedData)
+	return updatedTips.find((tip) => tip.id === tipId)!
+}
+
+export async function hasTip(tipId: TipId) {
+	const tips = await getOnboardingTips()
+	const tip = tips.find((t) => t.id === tipId)
+	return tip?.discoveredAt !== null && tip?.discoveredAt !== undefined
+}
+
+export async function isTipDismissed(tipId: TipId) {
+	const tips = await getOnboardingTips()
+	const tip = tips.find((t) => t.id === tipId)
+	if (!tip) return false
+	if (!tip.dismissedAt) return false
+	if (tip.showAgainAt && Date.now() >= tip.showAgainAt) {
+		return false
+	}
+	return true
 }

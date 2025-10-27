@@ -5,6 +5,7 @@ import * as path from 'node:path'
 
 const APP_NAME = 'epicshop'
 const FILE_NAME = 'data.json'
+let jsonPath: string | null = null
 
 export function resolvePrimaryDir() {
 	const p = process.platform
@@ -87,6 +88,12 @@ export async function saveJSON(data: unknown) {
 	}
 }
 
+export async function getJSONPath() {
+	if (jsonPath) return jsonPath
+	const { path: p } = await loadJSON()
+	return p
+}
+
 export async function loadJSON<T = unknown>() {
 	const candidates = [
 		resolvePrimaryPath(FILE_NAME),
@@ -95,6 +102,7 @@ export async function loadJSON<T = unknown>() {
 	for (const p of candidates) {
 		try {
 			const txt = await fs.readFile(p, 'utf8')
+			jsonPath = p
 			return { path: p, data: JSON.parse(txt) as T | null }
 		} catch {}
 	}
