@@ -8,6 +8,7 @@ import {
 } from '@sentry/react-router'
 import { defineConfig } from 'vite'
 import { envOnlyMacros } from 'vite-env-only'
+import devtoolsJson from 'vite-plugin-devtools-json'
 
 const __filename = fileURLToPath(import.meta.url)
 const __dirname = path.dirname(__filename)
@@ -97,5 +98,6 @@ export default defineConfig((config) => ({
 		MODE === 'production' && process.env.SENTRY_AUTH_TOKEN
 			? sentryReactRouter(sentryConfig, config)
 			: null,
+		devtoolsJson(),
 	].filter(Boolean),
 }))
