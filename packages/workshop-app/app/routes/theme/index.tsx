@@ -8,7 +8,7 @@ import { SimpleTooltip } from '#app/components/ui/tooltip.tsx'
 import { useHints } from '#app/utils/client-hints.tsx'
 import { ErrorList } from '#app/utils/forms.tsx'
 import { dataWithPE, usePERedirectInput } from '#app/utils/pe.js'
-import { useRequestInfo } from '#app/utils/request-info.ts'
+import { useRequestInfo } from '#app/utils/root-loader.ts'
 import { type Route } from './+types/index.tsx'
 import { setTheme } from './theme-session.server.ts'
 

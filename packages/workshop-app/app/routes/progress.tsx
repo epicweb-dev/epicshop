@@ -13,21 +13,20 @@ import {
 	useFetchers,
 	useLocation,
 	useNavigation,
-	useRouteLoaderData,
 	type ActionFunctionArgs,
 } from 'react-router'
-import { type RootLoaderData } from '#app/root.tsx'
 import { createConfettiHeaders } from '#app/utils/confetti.server.ts'
 import { combineHeaders, ensureUndeployed } from '#app/utils/misc.tsx'
 import { dataWithPE, usePERedirectInput } from '#app/utils/pe.js'
+import { useRootLoaderData } from '#app/utils/root-loader.ts'
 import { createToastHeaders } from '#app/utils/toast.server.ts'
 
 export function useEpicProgress() {
-	const data = useRouteLoaderData('root') as RootLoaderData
+	const data = useRootLoaderData()
 	const progressFetcher = useFetchers().find(
 		(f) => f.formAction === '/progress' && f.formData?.has('complete'),
 	)
-	if (!progressFetcher || !data?.progress) return data?.progress ?? null
+	if (!progressFetcher || !data.progress) return data.progress ?? null
 	return data.progress.map((p) => {
 		const optimisticCompleted =
 			progressFetcher.formData?.get('complete') === 'true'

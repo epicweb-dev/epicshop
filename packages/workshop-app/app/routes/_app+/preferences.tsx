@@ -2,12 +2,12 @@ import {
 	getPreferences,
 	setPreferences,
 } from '@epic-web/workshop-utils/db.server'
-import { Form, useNavigation, useRouteLoaderData } from 'react-router'
+import { Form, useNavigation } from 'react-router'
 import { Button } from '#app/components/button.tsx'
 import { Icon } from '#app/components/icons.tsx'
 import { SimpleTooltip } from '#app/components/ui/tooltip.tsx'
-import { type RootLoaderData } from '#app/root.tsx'
 import { ensureUndeployed } from '#app/utils/misc.tsx'
+import { useRootLoaderData } from '#app/utils/root-loader.ts'
 import { redirectWithToast } from '#app/utils/toast.server.ts'
 
 export async function loader() {
@@ -46,12 +46,12 @@ export async function action({ request }: { request: Request }) {
 }
 
 export default function AccountSettings() {
-	const data = useRouteLoaderData('root') as RootLoaderData
-	const playerPreferences = data?.preferences?.player
-	const fontSizePreference = data?.preferences?.fontSize
-	const presencePreferences = data?.preferences?.presence
-	const playgroundPreferences = data?.preferences?.playground
-	const exerciseWarningPreferences = data?.preferences?.exerciseWarning
+	const rootData = useRootLoaderData()
+	const playerPreferences = rootData.preferences?.player
+	const fontSizePreference = rootData.preferences?.fontSize
+	const presencePreferences = rootData.preferences?.presence
+	const playgroundPreferences = rootData.preferences?.playground
+	const exerciseWarningPreferences = rootData.preferences?.exerciseWarning
 	const navigation = useNavigation()
 
 	const isSubmitting = navigation.state === 'submitting'

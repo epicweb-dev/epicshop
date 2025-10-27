@@ -1,6 +1,6 @@
 import { type SEOHandle } from '@nasa-gcn/remix-seo'
 import { Link, Outlet } from 'react-router'
-import { type RootLoaderData } from '#app/root.tsx'
+import { getRootMatchLoaderData } from '#app/utils/root-loader.ts'
 import { type Route } from './+types/_layout.tsx'
 
 export const handle: SEOHandle = {
@@ -8,7 +8,7 @@ export const handle: SEOHandle = {
 }
 
 export const meta: Route.MetaFunction = ({ matches }) => {
-	const rootData = matches.find((m) => m?.id === 'root')?.data as RootLoaderData
+	const rootData = getRootMatchLoaderData(matches)
 	return [{ title: `👷 | ${rootData?.workshopTitle}` }]
 }
 

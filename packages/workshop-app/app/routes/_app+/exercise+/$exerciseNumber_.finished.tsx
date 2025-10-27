@@ -23,26 +23,26 @@ import { Icon } from '#app/components/icons.tsx'
 import { Loading } from '#app/components/loading.tsx'
 import { NavChevrons } from '#app/components/nav-chevrons.tsx'
 import { useRevalidationWS } from '#app/components/revalidation-ws.js'
-import { type RootLoaderData } from '#app/root.tsx'
 import { EditFileOnGitHub } from '#app/routes/launch-editor.tsx'
 import { ProgressToggle } from '#app/routes/progress.tsx'
 import { useTheme } from '#app/routes/theme/index.tsx'
 import { Mdx } from '#app/utils/mdx.tsx'
 import { cn } from '#app/utils/misc.tsx'
 import { useIsOnline } from '#app/utils/online.ts'
+import { getRootMatchLoaderData } from '#app/utils/root-loader.ts'
 import { getSeoMetaTags } from '#app/utils/seo.js'
 import { type Route } from './+types/$exerciseNumber_.finished.tsx'
 
-export const meta: Route.MetaFunction = ({ data, matches }) => {
-	const number = data?.exercise.exerciseNumber.toString().padStart(2, '0')
+export const meta: Route.MetaFunction = ({ loaderData, matches }) => {
+	const number = loaderData?.exercise.exerciseNumber.toString().padStart(2, '0')
 
-	const rootData = matches.find((m) => m?.id === 'root')?.data as RootLoaderData
-	if (!data || !rootData) return [{ title: '🦉 | Error' }]
+	const rootData = getRootMatchLoaderData(matches)
+	if (!loaderData || !rootData) return [{ title: '🦉 | Error' }]
 
 	return getSeoMetaTags({
-		title: `🦉 | ${number}. ${data.exercise.title} | ${rootData?.workshopTitle}`,
-		description: `Elaboration for ${number}. ${data.exercise.title}`,
-		ogTitle: `Finished: ${data.exercise.title}`,
+		title: `🦉 | ${number}. ${loaderData.exercise.title} | ${rootData?.workshopTitle}`,
+		description: `Elaboration for ${number}. ${loaderData.exercise.title}`,
+		ogTitle: `Finished: ${loaderData.exercise.title}`,
 		ogDescription: `Elaboration for exercise ${Number(number)}`,
 		instructor: rootData.instructor,
 		requestInfo: rootData.requestInfo,

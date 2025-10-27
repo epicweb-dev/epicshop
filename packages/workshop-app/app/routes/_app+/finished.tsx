@@ -20,10 +20,10 @@ import { Icon } from '#app/components/icons.tsx'
 import { Loading } from '#app/components/loading.tsx'
 import { NavChevrons } from '#app/components/nav-chevrons.tsx'
 import { useRevalidationWS } from '#app/components/revalidation-ws.js'
-import { type RootLoaderData } from '#app/root.tsx'
 import { Mdx } from '#app/utils/mdx.tsx'
 import { cn } from '#app/utils/misc.tsx'
 import { useIsOnline } from '#app/utils/online.ts'
+import { getRootMatchLoaderData } from '#app/utils/root-loader.ts'
 import { getSeoMetaTags } from '#app/utils/seo.js'
 import { EditFileOnGitHub } from '../launch-editor.tsx'
 import { ProgressToggle } from '../progress.tsx'
@@ -35,7 +35,7 @@ export const handle: SEOHandle = {
 }
 
 export const meta: Route.MetaFunction = ({ matches }) => {
-	const rootData = matches.find((m) => m?.id === 'root')?.data as RootLoaderData
+	const rootData = getRootMatchLoaderData(matches)
 	if (!rootData) return []
 
 	return getSeoMetaTags({

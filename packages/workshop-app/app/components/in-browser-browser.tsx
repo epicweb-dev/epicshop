@@ -13,7 +13,7 @@ import { Icon } from '#app/components/icons.tsx'
 import { AppStarter, AppStopper, PortStopper } from '#app/routes/start.tsx'
 import { useTheme } from '#app/routes/theme/index.tsx'
 import { getBaseUrl } from '#app/utils/misc.tsx'
-import { useRequestInfo } from '#app/utils/request-info.ts'
+import { useRequestInfo } from '#app/utils/root-loader.ts'
 import { LinkButton } from './button.tsx'
 import {
 	Tooltip,

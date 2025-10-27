@@ -18,25 +18,25 @@ import { data, type HeadersFunction, Link } from 'react-router'
 import { EpicVideoInfoProvider } from '#app/components/epic-video.tsx'
 import { GeneralErrorBoundary } from '#app/components/error-boundary.tsx'
 import { useRevalidationWS } from '#app/components/revalidation-ws.js'
-import { type RootLoaderData } from '#app/root.tsx'
 import { EditFileOnGitHub } from '#app/routes/launch-editor.tsx'
 import { ProgressToggle } from '#app/routes/progress.tsx'
 import { Mdx } from '#app/utils/mdx.tsx'
+import { getRootMatchLoaderData } from '#app/utils/root-loader.ts'
 import { getSeoMetaTags } from '#app/utils/seo.js'
 import { type Route } from './+types/$exerciseNumber.tsx'
 import { getExercise404Data } from './__shared/error-boundary.server.ts'
 import { Exercise404ErrorBoundary } from './__shared/error-boundary.tsx'
 
-export const meta: Route.MetaFunction = ({ data, matches }) => {
-	const number = data?.exercise.exerciseNumber.toString().padStart(2, '0')
+export const meta: Route.MetaFunction = ({ loaderData, matches }) => {
+	const number = loaderData?.exercise.exerciseNumber.toString().padStart(2, '0')
 
-	const rootData = matches.find((m) => m?.id === 'root')?.data as RootLoaderData
-	if (!data || !rootData) return [{ title: '🦉 | Error' }]
+	const rootData = getRootMatchLoaderData(matches)
+	if (!loaderData || !rootData) return [{ title: '🦉 | Error' }]
 
 	return getSeoMetaTags({
-		title: `📝 | ${number}. ${data.exercise.title} | ${rootData?.workshopTitle}`,
-		description: `Introduction for ${number}. ${data.exercise.title}`,
-		ogTitle: data.exercise.title,
+		title: `📝 | ${number}. ${loaderData.exercise.title} | ${rootData?.workshopTitle}`,
+		description: `Introduction for ${number}. ${loaderData.exercise.title}`,
+		ogTitle: loaderData.exercise.title,
 		ogDescription: `Introduction for exercise ${Number(number)}`,
 		instructor: rootData.instructor,
 		requestInfo: rootData.requestInfo,

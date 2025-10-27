@@ -14,7 +14,7 @@ import {
 import { clientHint as timeZoneHint } from '@epic-web/client-hints/time-zone'
 import * as React from 'react'
 import { useRevalidator } from 'react-router'
-import { useRequestInfo } from './request-info.ts'
+import { useRequestInfo } from './root-loader.ts'
 
 const themeCookieName = 'EpicShop_CH-prefers-color-scheme'
 const motionCookieName = 'EpicShop_CH-reduced-motion'

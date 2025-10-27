@@ -8,12 +8,12 @@ import { type SEOHandle } from '@nasa-gcn/remix-seo'
 import { data, Form, Link, useNavigation } from 'react-router'
 import { Icon } from '#app/components/icons.tsx'
 import { SimpleTooltip } from '#app/components/ui/tooltip.tsx'
-import { type RootLoaderData } from '#app/root.tsx'
 import {
 	useEpicProgress,
 	type SerializedProgress,
 } from '#app/routes/progress.tsx'
 import { ensureUndeployed } from '#app/utils/misc.tsx'
+import { getRootMatchLoaderData } from '#app/utils/root-loader.ts'
 import { type Route } from './+types/index.tsx'
 import {
 	clearCaches,
@@ -31,7 +31,7 @@ export const handle: SEOHandle = {
 }
 
 export const meta: Route.MetaFunction = ({ matches }) => {
-	const rootData = matches.find((m) => m?.id === 'root')?.data as RootLoaderData
+	const rootData = getRootMatchLoaderData(matches)
 	return [{ title: `👷 | ${rootData?.workshopTitle}` }]
 }
 

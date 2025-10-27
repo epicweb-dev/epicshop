@@ -14,7 +14,7 @@ import { SimpleTooltip } from '#app/components/ui/tooltip.tsx'
 import { LaunchEditor } from '#app/routes/launch-editor.tsx'
 import { Mdx } from '#app/utils/mdx.tsx'
 import { cn, getBaseUrl } from '#app/utils/misc.tsx'
-import { useRequestInfo } from '#app/utils/request-info.ts'
+import { useRequestInfo } from '#app/utils/root-loader.ts'
 import { type loader } from '../_layout.tsx'
 
 type StepContextType = {

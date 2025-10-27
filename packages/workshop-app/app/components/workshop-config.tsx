@@ -1,10 +1,8 @@
-import { useRouteLoaderData } from 'react-router'
-import { type RootLoaderData } from '#app/root.tsx'
+import { invariant } from '@epic-web/invariant'
+import { useRootLoaderData } from '#app/utils/root-loader.ts'
 
 export function useWorkshopConfig() {
-	const data = useRouteLoaderData('root') as RootLoaderData
-	if (!data?.workshopConfig) {
-		throw new Error('useWorkshopConfig requires a workshopConfig.')
-	}
+	const data = useRootLoaderData()
+	invariant(data.workshopConfig, 'useWorkshopConfig requires a workshopConfig.')
 	return data.workshopConfig
 }

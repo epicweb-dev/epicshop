@@ -14,11 +14,10 @@ import {
 	useRef,
 	useState,
 } from 'react'
-import { useParams, useRouteLoaderData } from 'react-router'
+import { useParams } from 'react-router'
 import { z } from 'zod'
-import { type RootLoaderData } from '#app/root.tsx'
 import { useIsOnline } from './online.ts'
-import { useRequestInfo } from './request-info.ts'
+import { useRequestInfo, useRootLoaderData } from './root-loader.ts'
 
 export * from '@epic-web/workshop-presence/presence'
 
@@ -27,12 +26,12 @@ const PresenceContext = createContext<ReturnType<
 > | null>(null)
 
 export function usePresencePreferences() {
-	const data = useRouteLoaderData('root') as RootLoaderData
+	const data = useRootLoaderData()
 	return data?.preferences?.presence ?? null
 }
 
 export function useOptionalWorkshopTitle() {
-	const data = useRouteLoaderData('root') as RootLoaderData
+	const data = useRootLoaderData()
 	return data?.workshopTitle ?? null
 }
 
@@ -118,11 +117,7 @@ function useUsersLocation() {
 
 function usePresenceSocket(user?: User | null) {
 	const prefs = usePresencePreferences()
-	const {
-		userHasAccess = false,
-		userId,
-		presence,
-	} = (useRouteLoaderData('root') as RootLoaderData) ?? {}
+	const { userHasAccess = false, userId, presence } = useRootLoaderData() ?? {}
 	const [users, setUsers] = useState(presence?.users ?? [])
 	const usersLocation = useUsersLocation()
 
@@ -243,7 +238,7 @@ function PresenceOffline({
 	children: React.ReactNode
 }) {
 	const usersLocation = useUsersLocation()
-	const { presence } = (useRouteLoaderData('root') as RootLoaderData) ?? {}
+	const { presence } = useRootLoaderData() ?? {}
 	return (
 		<PresenceContext.Provider
 			value={{

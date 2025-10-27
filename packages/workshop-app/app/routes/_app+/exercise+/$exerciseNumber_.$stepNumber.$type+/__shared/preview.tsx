@@ -8,7 +8,7 @@ import {
 import { Loading } from '#app/components/loading.js'
 import { useTheme } from '#app/routes/theme/index.js'
 import { cn, getBaseUrl } from '#app/utils/misc'
-import { useRequestInfo } from '#app/utils/request-info'
+import { useRequestInfo } from '#app/utils/root-loader.ts'
 
 export function Preview({
 	id,

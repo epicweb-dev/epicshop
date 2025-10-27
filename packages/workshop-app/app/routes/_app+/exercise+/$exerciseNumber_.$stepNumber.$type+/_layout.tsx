@@ -35,11 +35,11 @@ import { GeneralErrorBoundary } from '#app/components/error-boundary.tsx'
 import { type InBrowserBrowserRef } from '#app/components/in-browser-browser.tsx'
 import { NavChevrons } from '#app/components/nav-chevrons.tsx'
 import { useRevalidationWS } from '#app/components/revalidation-ws.js'
-import { type RootLoaderData } from '#app/root.tsx'
 import { EditFileOnGitHub } from '#app/routes/launch-editor.tsx'
 import { ProgressToggle } from '#app/routes/progress.tsx'
 import { SetAppToPlayground } from '#app/routes/set-playground.tsx'
 import { getExercisePath } from '#app/utils/misc.tsx'
+import { getRootMatchLoaderData } from '#app/utils/root-loader.ts'
 import { getSeoMetaTags } from '#app/utils/seo.js'
 import { getStep404Data } from '../__shared/error-boundary.server.ts'
 import { Exercise404ErrorBoundary } from '../__shared/error-boundary.tsx'
@@ -84,11 +84,11 @@ function pageTitle(
 	}
 }
 
-export const meta: Route.MetaFunction = ({ data, matches, params }) => {
-	const rootData = matches.find((m) => m?.id === 'root')?.data as RootLoaderData
-	if (!data || !rootData) return [{ title: '🦉 | Error' }]
+export const meta: Route.MetaFunction = ({ loaderData, matches, params }) => {
+	const rootData = getRootMatchLoaderData(matches)
+	if (!loaderData || !rootData) return [{ title: '🦉 | Error' }]
 	const { emoji, stepNumber, title, exerciseNumber, exerciseTitle } =
-		pageTitle(data)
+		pageTitle(loaderData)
 
 	return getSeoMetaTags({
 		title: `${emoji} | ${stepNumber}. ${title} | ${exerciseNumber}. ${exerciseTitle} | ${rootData.workshopTitle}`,

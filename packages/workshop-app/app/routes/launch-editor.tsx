@@ -5,11 +5,10 @@ import fsExtra from 'fs-extra'
 import { useEffect } from 'react'
 import { Link, useFetcher, type ActionFunctionArgs } from 'react-router'
 import { z, type ZodTypeAny } from 'zod'
-import { useApps } from '#app/components/apps'
 import { showProgressBarField } from '#app/components/progress-bar.tsx'
 import { cn, ensureUndeployed } from '#app/utils/misc.tsx'
 import { dataWithPE, usePERedirectInput } from '#app/utils/pe.js'
-import { useRequestInfo } from '#app/utils/request-info'
+import { useApps, useRequestInfo } from '#app/utils/root-loader.ts'
 import { createToastHeaders } from '#app/utils/toast.server.ts'
 
 function getFileDescriptorSchema<AppFile extends ZodTypeAny>(appFile: AppFile) {

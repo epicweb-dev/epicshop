@@ -1,9 +1,8 @@
-import { useRouteLoaderData } from 'react-router'
-import { type RootLoaderData } from '#app/root.tsx'
+import { useRootLoaderData } from '#app/utils/root-loader.ts'
 
 export function useOptionalUser() {
-	const data = useRouteLoaderData('root') as RootLoaderData
-	return data?.user
+	const data = useRootLoaderData()
+	return data.user
 }
 
 export function useUser() {
@@ -17,8 +16,8 @@ export function useUser() {
 }
 
 export function useOptionalDiscordMember() {
-	const data = useRouteLoaderData('root') as RootLoaderData
-	return data?.user?.discordProfile?.user
+	const data = useRootLoaderData()
+	return data.user?.discordProfile?.user
 		? {
 				id: data.user.discordProfile.user.id,
 				displayName:
@@ -42,6 +41,6 @@ export function useDiscordMember() {
 }
 
 export function useUserHasAccess() {
-	const data = useRouteLoaderData('root') as RootLoaderData
-	return data?.userHasAccess ?? false
+	const data = useRootLoaderData()
+	return data.userHasAccess
 }

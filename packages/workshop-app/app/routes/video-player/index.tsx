@@ -12,13 +12,12 @@ import {
 	data,
 	type ActionFunctionArgs,
 	useFetcher,
-	useRouteLoaderData,
 	useFetchers,
 } from 'react-router'
 import { z } from 'zod'
-import { type RootLoaderData } from '#app/root.tsx'
 import { useDebounce } from '#app/utils/misc.tsx'
 import './mux-player.css'
+import { useRootLoaderData } from '#app/utils/root-loader.ts'
 
 const PlaybackTimeSchema = z
 	.object({
@@ -30,7 +29,7 @@ const PlaybackTimeSchema = z
 	})
 
 export function usePlayerPreferences() {
-	const data = useRouteLoaderData('root') as RootLoaderData
+	const rootData = useRootLoaderData()
 	const fetchers = useFetchers()
 	const pendingPreferencesFetcher = fetchers.find(
 		(f) => f.formAction === '/video-player',
@@ -39,13 +38,13 @@ export function usePlayerPreferences() {
 		const submittingData = pendingPreferencesFetcher.json
 		if (submittingData) {
 			const optimisticPlayerPrefs = {
-				...data?.preferences?.player,
+				...rootData.preferences?.player,
 				...(submittingData as z.input<typeof PlayerPreferencesSchema>),
 			} as z.input<typeof PlayerPreferencesSchema>
 			return optimisticPlayerPrefs
 		}
 	}
-	return data?.preferences?.player ?? null
+	return rootData.preferences?.player ?? null
 }
 
 type MuxPlayerProps = React.ComponentProps<typeof RealMuxPlayer>

@@ -1,5 +1,5 @@
 import { useSyncExternalStore } from 'react'
-import { useRequestInfo } from './request-info.ts'
+import { useRequestInfo } from './root-loader.ts'
 
 function getSnapshot() {
 	return window.navigator.onLine

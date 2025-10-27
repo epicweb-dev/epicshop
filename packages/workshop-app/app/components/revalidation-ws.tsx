@@ -1,7 +1,7 @@
 import { useEffect, useRef } from 'react'
 import { useRevalidator } from 'react-router'
 import { z } from 'zod'
-import { useRequestInfo } from '#app/utils/request-info.js'
+import { useRequestInfo } from '#app/utils/root-loader.ts'
 
 const eventSchema = z.object({
 	type: z.literal('epicshop:file-change'),

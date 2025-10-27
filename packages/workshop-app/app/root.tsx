@@ -79,18 +79,16 @@ export const links: LinksFunction = () => {
 	]
 }
 
-export const meta: Route.MetaFunction = ({ data }) => {
-	if (!data) return []
+export const meta: Route.MetaFunction = ({ loaderData }) => {
+	if (!loaderData) return []
 
 	return getSeoMetaTags({
-		instructor: data.instructor,
-		title: data.workshopTitle,
-		description: data.workshopSubtitle,
-		requestInfo: data.requestInfo,
+		instructor: loaderData.instructor,
+		title: loaderData.workshopTitle,
+		description: loaderData.workshopSubtitle,
+		requestInfo: loaderData.requestInfo,
 	})
 }
-
-export type RootLoaderData = Route.ComponentProps['loaderData']
 
 export async function loader({ request }: Route.LoaderArgs) {
 	const timings = makeTimings('rootLoader')
