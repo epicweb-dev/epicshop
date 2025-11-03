@@ -25,6 +25,7 @@ import {
 } from '#app/components/epic-video.tsx'
 import { SimpleTooltip } from '#app/components/ui/tooltip.tsx'
 import { cn } from '#app/utils/misc.tsx'
+import { useWorkshopConfig } from '#app/components/workshop-config.tsx'
 
 export const handle: SEOHandle = {
 	getSitemapEntries: () => null,
@@ -84,6 +85,7 @@ export async function action({ request }: ActionFunctionArgs) {
 
 export default function Onboarding() {
 	const data = useLoaderData<typeof loader>()
+	const workshopConfig = useWorkshopConfig()
 	const { onboardingVideos, watchedVideos, allWatched, isAuthenticated } = data
 	const videosCount = onboardingVideos.length
 
@@ -91,7 +93,9 @@ export default function Onboarding() {
 		<main className="flex w-full flex-col items-center justify-between gap-4 overflow-y-scroll scrollbar-thin scrollbar-thumb-scrollbar">
 			<div className="container flex h-full w-full max-w-5xl flex-1 flex-col items-center gap-4 py-12">
 				<h1 className="text-5xl">Onboarding</h1>
-				<p className="text-xl">Welcome to EpicWeb.dev!</p>
+				<p className="text-xl">
+					Welcome to {workshopConfig.product.displayName}!
+				</p>
 				<p className="text-lg">
 					Before you get started,{' '}
 					<strong>
