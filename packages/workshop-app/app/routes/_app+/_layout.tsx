@@ -1337,6 +1337,7 @@ function NavToggle({
 
 	return (
 		<div
+			data-tip="Open Navigation menu"
 			className={cn(
 				'relative inline-flex h-14 flex-shrink-0 items-center justify-between overflow-hidden border-r sm:w-full sm:border-b sm:border-r-0',
 				{
