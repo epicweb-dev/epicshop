@@ -34,6 +34,53 @@ npm run dev
 Make sure that if the path includes spaces, you wrap the path in quotes as shown
 above (note the use of single quotes wrapping the double quotes!).
 
+## Using Bun (experimental)
+
+You can use Bun for installs, builds, and tests while continuing to run the app under Node.js.
+
+- Install Bun:
+
+```bash
+curl -fsSL https://bun.sh/install | bash
+```
+
+- Install dependencies at the repo root (runs example postinstall via npm under the hood):
+
+```bash
+bun install
+```
+
+- Build packages in dependency order:
+
+```bash
+(cd packages/workshop-utils    && bun run build)
+(cd packages/workshop-presence && bun run build)
+(cd packages/workshop-app      && bun run build)
+(cd packages/workshop-cli      && bun run build)
+```
+
+- Run tests with Vitest via Bun:
+
+```bash
+# prefer Vitest runner executed with bunx for compatibility
+(cd packages/workshop-utils    && bunx vitest run)
+(cd packages/workshop-cli      && bunx vitest run)
+(cd packages/workshop-presence && bunx vitest run)
+(cd packages/workshop-mcp      && bunx vitest run)
+```
+
+- Run the CLI with Bun (built output):
+
+```bash
+bun packages/workshop-cli/dist/esm/cli.js start
+# or warm caches
+bun packages/workshop-cli/dist/esm/cli.js warm
+```
+
+Notes:
+- The dev and production server scripts in `@epic-web/workshop-app` still execute with Node.js (they use `node ./server/dev-server.js` and `node ./start.js`). This is intentional and compatible with using Bun for installs/builds/tests.
+- If `bun test` fails on certain APIs (e.g., `vi.mocked`), use `bunx vitest run` as shown above.
+
 ## CI Workflows
 
 This repository has two main CI workflows that run on pushes to `main`:
