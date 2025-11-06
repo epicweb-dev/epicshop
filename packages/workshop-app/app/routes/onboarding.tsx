@@ -24,8 +24,8 @@ import {
 	EpicVideoInfoProvider,
 } from '#app/components/epic-video.tsx'
 import { SimpleTooltip } from '#app/components/ui/tooltip.tsx'
-import { cn } from '#app/utils/misc.tsx'
 import { useWorkshopConfig } from '#app/components/workshop-config.tsx'
+import { cn } from '#app/utils/misc.tsx'
 
 export const handle: SEOHandle = {
 	getSitemapEntries: () => null,
