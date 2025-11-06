@@ -5,12 +5,17 @@ import net from 'node:net'
 import { remember } from '@epic-web/remember'
 import chalk from 'chalk'
 import closeWithGrace from 'close-with-grace'
-import findProcess from 'find-process'
+import findProcessDefault from 'find-process'
 import fkill from 'fkill'
 import { type App } from './apps.server.js'
 import { getWorkshopUrl } from './config.server.js'
 import { getEnv } from './env.server.js'
 import { getErrorMessage } from './utils.js'
+
+// https://github.com/yibn2008/find-process/issues/85
+const findProcess = ('default' in findProcessDefault
+	? findProcessDefault.default
+	: findProcessDefault) as unknown as typeof findProcessDefault
 
 const isDeployed =
 	process.env.EPICSHOP_DEPLOYED === 'true' ||
@@ -311,7 +316,8 @@ export async function isAppRunning(app: { name: string }) {
 		// https://github.com/yibn2008/find-process/issues/85
 		const found = await findProcess('pid', devProcess.process.pid)
 		return found.length > 0
-	} catch {
+	} catch (error: unknown) {
+		console.error('Error checking if app is running:', getErrorMessage(error))
 		return false
 	}
 }
