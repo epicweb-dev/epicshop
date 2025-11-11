@@ -62,10 +62,10 @@
   },
   "devDependencies": {
     "@epic-web/config": "^1.21.3",
-    "@types/node": "^24.9.1",
+    "@types/node": "^24.10.0",
     "@types/yargs": "^17.0.34",
     "tshy": "^3.0.3",
-    "vitest": "^4.0.3"
+    "vitest": "^4.0.8"
   },
   "repository": {
     "type": "git",

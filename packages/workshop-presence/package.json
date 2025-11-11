@@ -21,7 +21,7 @@
     "partykit": "0.0.115",
     "typescript": "^5.9.3",
     "tshy": "^3.0.3",
-    "vitest": "^4.0.3"
+    "vitest": "^4.0.8"
   },
   "files": [
     "dist"
