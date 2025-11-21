@@ -7,14 +7,9 @@ import { getEnv } from './init-env.js'
 const APP_NAME = 'epicshop'
 const FILE_NAME = 'data.json'
 
-const DEFAULT_EPICSHOP_HOME_DIR = path.join(os.homedir(), '.epicshop')
-
 function getConfiguredHomeDir() {
 	const envHomeDir = getEnv().EPICSHOP_HOME_DIR
-	if (!envHomeDir || envHomeDir === DEFAULT_EPICSHOP_HOME_DIR) {
-		return null
-	}
-	return envHomeDir
+	return envHomeDir ? envHomeDir : null
 }
 
 export function resolvePrimaryDir() {

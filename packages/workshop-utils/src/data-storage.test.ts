@@ -1,6 +1,13 @@
 import { promises as fs } from 'node:fs'
 import * as os from 'node:os'
 import { test, expect, vi, beforeEach, afterEach } from 'vitest'
+
+const envRef = { homeDir: '/mock/home/.epicshop' }
+
+vi.mock('./init-env.js', () => ({
+	getEnv: () => ({ EPICSHOP_HOME_DIR: envRef.homeDir }),
+}))
+
 import {
 	resolvePrimaryDir,
 	resolveCacheDir,
@@ -29,6 +36,7 @@ const mockOs = vi.mocked(os)
 beforeEach(() => {
 	vi.clearAllMocks()
 	mockOs.homedir.mockReturnValue('/mock/home')
+	envRef.homeDir = '/mock/home/.epicshop'
 })
 
 afterEach(() => {
@@ -75,6 +83,7 @@ function withPlatform(
 }
 
 test('resolvePrimaryDir returns correct path for darwin', () => {
+	envRef.homeDir = ''
 	using _ = withPlatform('darwin')
 
 	const result = resolvePrimaryDir()
@@ -82,6 +91,7 @@ test('resolvePrimaryDir returns correct path for darwin', () => {
 })
 
 test('resolvePrimaryDir returns correct path for win32', () => {
+	envRef.homeDir = ''
 	using _ = withPlatform('win32', {
 		LOCALAPPDATA: undefined,
 		APPDATA: undefined,
@@ -92,6 +102,7 @@ test('resolvePrimaryDir returns correct path for win32', () => {
 })
 
 test('resolvePrimaryDir returns correct path for linux', () => {
+	envRef.homeDir = ''
 	using _ = withPlatform('linux', {
 		XDG_STATE_HOME: undefined,
 	})
@@ -101,6 +112,7 @@ test('resolvePrimaryDir returns correct path for linux', () => {
 })
 
 test('resolvePrimaryDir uses EPICSHOP_HOME_DIR override when provided', () => {
+	envRef.homeDir = '/custom/epicshop'
 	using _ = withPlatform('linux', {
 		EPICSHOP_HOME_DIR: '/custom/epicshop',
 	})
@@ -110,6 +122,7 @@ test('resolvePrimaryDir uses EPICSHOP_HOME_DIR override when provided', () => {
 })
 
 test('resolveCacheDir returns correct path for darwin', () => {
+	envRef.homeDir = ''
 	using _ = withPlatform('darwin')
 
 	const result = resolveCacheDir()
@@ -117,6 +130,7 @@ test('resolveCacheDir returns correct path for darwin', () => {
 })
 
 test('resolveCacheDir returns correct path for win32', () => {
+	envRef.homeDir = ''
 	using _ = withPlatform('win32', {
 		LOCALAPPDATA: undefined,
 		APPDATA: undefined,
@@ -127,6 +141,7 @@ test('resolveCacheDir returns correct path for win32', () => {
 })
 
 test('resolveCacheDir returns correct path for linux', () => {
+	envRef.homeDir = ''
 	using _ = withPlatform('linux', {
 		XDG_CACHE_HOME: undefined,
 	})
@@ -136,6 +151,7 @@ test('resolveCacheDir returns correct path for linux', () => {
 })
 
 test('resolveCacheDir uses EPICSHOP_HOME_DIR override when provided', () => {
+	envRef.homeDir = '/custom/epicshop'
 	using _ = withPlatform('linux', {
 		EPICSHOP_HOME_DIR: '/custom/epicshop',
 	})
