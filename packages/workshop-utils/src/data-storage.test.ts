@@ -100,6 +100,15 @@ test('resolvePrimaryDir returns correct path for linux', () => {
 	expect(result).toBe('/mock/home/.local/state/epicshop')
 })
 
+test('resolvePrimaryDir uses EPICSHOP_HOME_DIR override when provided', () => {
+	using _ = withPlatform('linux', {
+		EPICSHOP_HOME_DIR: '/custom/epicshop',
+	})
+
+	const result = resolvePrimaryDir()
+	expect(result).toBe('/custom/epicshop')
+})
+
 test('resolveCacheDir returns correct path for darwin', () => {
 	using _ = withPlatform('darwin')
 
@@ -124,6 +133,15 @@ test('resolveCacheDir returns correct path for linux', () => {
 
 	const result = resolveCacheDir()
 	expect(result).toBe('/mock/home/.cache/epicshop')
+})
+
+test('resolveCacheDir uses EPICSHOP_HOME_DIR override when provided', () => {
+	using _ = withPlatform('linux', {
+		EPICSHOP_HOME_DIR: '/custom/epicshop',
+	})
+
+	const result = resolveCacheDir()
+	expect(result).toBe('/custom/epicshop/cache')
 })
 
 test('migrateLegacyData successfully migrates both data and cache on darwin', async () => {

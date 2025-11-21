@@ -6,7 +6,20 @@ import * as path from 'node:path'
 const APP_NAME = 'epicshop'
 const FILE_NAME = 'data.json'
 
+const DEFAULT_EPICSHOP_HOME_DIR = path.join(os.homedir(), '.epicshop')
+
+function getConfiguredHomeDir() {
+	const envHomeDir = process.env.EPICSHOP_HOME_DIR
+	if (!envHomeDir || envHomeDir === DEFAULT_EPICSHOP_HOME_DIR) {
+		return null
+	}
+	return envHomeDir
+}
+
 export function resolvePrimaryDir() {
+	const configuredHomeDir = getConfiguredHomeDir()
+	if (configuredHomeDir) return configuredHomeDir
+
 	const p = process.platform
 	if (p === 'darwin') {
 		return path.join(os.homedir(), 'Library', 'Application Support', APP_NAME)
@@ -24,6 +37,9 @@ export function resolvePrimaryDir() {
 }
 
 export function resolveCacheDir() {
+	const configuredHomeDir = getConfiguredHomeDir()
+	if (configuredHomeDir) return path.join(configuredHomeDir, 'cache')
+
 	const p = process.platform
 	if (p === 'darwin') {
 		return path.join(os.homedir(), 'Library', 'Caches', APP_NAME)
