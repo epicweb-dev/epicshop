@@ -2,6 +2,7 @@ import { randomUUID } from 'node:crypto'
 import { promises as fs } from 'node:fs'
 import * as os from 'node:os'
 import * as path from 'node:path'
+import { getEnv } from './init-env.js'
 
 const APP_NAME = 'epicshop'
 const FILE_NAME = 'data.json'
@@ -9,7 +10,7 @@ const FILE_NAME = 'data.json'
 const DEFAULT_EPICSHOP_HOME_DIR = path.join(os.homedir(), '.epicshop')
 
 function getConfiguredHomeDir() {
-	const envHomeDir = process.env.EPICSHOP_HOME_DIR
+	const envHomeDir = getEnv().EPICSHOP_HOME_DIR
 	if (!envHomeDir || envHomeDir === DEFAULT_EPICSHOP_HOME_DIR) {
 		return null
 	}
