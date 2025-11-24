@@ -15,14 +15,13 @@ import {
 	type ProblemApp,
 	type SolutionApp,
 } from './apps.server.js'
-import { resolveCacheDir } from './data-storage.server.js'
 import { logger } from './logger.js'
 import { type Notification } from './notifications.server.js'
 import { cachifiedTimingReporter, type Timings } from './timing.server.js'
 import { checkConnection } from './utils.server.js'
 
 const MAX_CACHE_FILE_SIZE = 3 * 1024 * 1024 // 3MB in bytes
-const cacheDir = resolveCacheDir()
+const cacheDir = process.env.EPICSHOP_CACHE_DIR
 const log = logger('epic:cache')
 
 // Throttle repeated Sentry reports for corrupted cache files to reduce noise

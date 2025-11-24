@@ -22,6 +22,8 @@ const schema = z
 		EPICSHOP_PARENT_TOKEN: z.string().optional(),
 		EPICSHOP_APP_LOCATION: z.string().optional(),
 		EPICSHOP_HOME_DIR: z.string().default(path.join(os.homedir(), '.epicshop')),
+		EPICSHOP_DATA_DIR: z.string().default(''),
+		EPICSHOP_CACHE_DIR: z.string().default(''),
 		EPICSHOP_IS_PUBLISHED: z
 			.string()
 			.default(__dirname.includes('node_modules') ? 'true' : 'false'),
@@ -86,8 +88,47 @@ const schema = z
 				env.EPICSHOP_APP_VERSION = packageJson.version
 			}
 		}
+		if (!env.EPICSHOP_DATA_DIR) {
+			env.EPICSHOP_DATA_DIR = resolvePrimaryDir()
+		}
+		if (!env.EPICSHOP_CACHE_DIR) {
+			env.EPICSHOP_CACHE_DIR = resolveCacheDir()
+		}
 		return env
 	})
+
+function resolvePrimaryDir() {
+	const APP_NAME = 'epicshop'
+	if (process.platform === 'darwin') {
+		return path.join(os.homedir(), 'Library', 'Application Support', APP_NAME)
+	}
+	if (process.platform === 'win32') {
+		const base =
+			process.env.LOCALAPPDATA ||
+			process.env.APPDATA ||
+			path.join(os.homedir(), 'AppData', 'Local')
+		return path.join(base, APP_NAME)
+	}
+	const base =
+		process.env.XDG_STATE_HOME || path.join(os.homedir(), '.local', 'state')
+	return path.join(base, APP_NAME)
+}
+
+function resolveCacheDir() {
+	const APP_NAME = 'epicshop'
+	if (process.platform === 'darwin') {
+		return path.join(os.homedir(), 'Library', 'Caches', APP_NAME)
+	}
+	if (process.platform === 'win32') {
+		const base =
+			process.env.LOCALAPPDATA ||
+			process.env.APPDATA ||
+			path.join(os.homedir(), 'AppData', 'Local')
+		return path.join(base, APP_NAME, 'Cache')
+	}
+	const base = process.env.XDG_CACHE_HOME || path.join(os.homedir(), '.cache')
+	return path.join(base, APP_NAME)
+}
 
 async function getEpicshopContextCwd() {
 	if (process.env.EPICSHOP_CONTEXT_CWD) {

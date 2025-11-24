@@ -6,41 +6,8 @@ import * as path from 'node:path'
 const APP_NAME = 'epicshop'
 const FILE_NAME = 'data.json'
 
-export function resolvePrimaryDir() {
-	const p = process.platform
-	if (p === 'darwin') {
-		return path.join(os.homedir(), 'Library', 'Application Support', APP_NAME)
-	}
-	if (p === 'win32') {
-		const base =
-			process.env.LOCALAPPDATA ||
-			process.env.APPDATA ||
-			path.join(os.homedir(), 'AppData', 'Local')
-		return path.join(base, APP_NAME)
-	}
-	const base =
-		process.env.XDG_STATE_HOME || path.join(os.homedir(), '.local', 'state')
-	return path.join(base, APP_NAME)
-}
-
-export function resolveCacheDir() {
-	const p = process.platform
-	if (p === 'darwin') {
-		return path.join(os.homedir(), 'Library', 'Caches', APP_NAME)
-	}
-	if (p === 'win32') {
-		const base =
-			process.env.LOCALAPPDATA ||
-			process.env.APPDATA ||
-			path.join(os.homedir(), 'AppData', 'Local')
-		return path.join(base, APP_NAME, 'Cache')
-	}
-	const base = process.env.XDG_CACHE_HOME || path.join(os.homedir(), '.cache')
-	return path.join(base, APP_NAME)
-}
-
 export function resolvePrimaryPath(fileName = FILE_NAME) {
-	return path.join(resolvePrimaryDir(), fileName)
+	return path.join(process.env.EPICSHOP_DATA_DIR, fileName)
 }
 
 export function resolveFallbackPath(fileName = FILE_NAME) {
@@ -106,7 +73,7 @@ export async function migrateLegacyData() {
 	const legacyDataPath = path.join(legacyDir, FILE_NAME)
 	const legacyCachePath = path.join(legacyDir, 'cache')
 	const primaryDataPath = resolvePrimaryPath(FILE_NAME)
-	const primaryCachePath = resolveCacheDir()
+	const primaryCachePath = process.env.EPICSHOP_CACHE_DIR
 
 	try {
 		// Check if legacy directory exists

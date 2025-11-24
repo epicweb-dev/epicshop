@@ -7,6 +7,65 @@ epicshop sets up file watchers for everything in local development (not when
 deployed). If you're just using utilities, you probably don't want that watcher.
 However, if you do you can set `EPICSHOP_ENABLE_WATCHER` to "true" to enable it.
 
+## Data Storage Configuration
+
+EpicShop stores user data (like progress, preferences, etc.) and caches compiled
+content in platform-specific directories. By default, these directories are
+automatically determined based on your operating system:
+
+- **macOS**: Data in `~/Library/Application Support/epicshop`, Cache in
+  `~/Library/Caches/epicshop`
+- **Windows**: Data in `%LOCALAPPDATA%\epicshop`, Cache in
+  `%LOCALAPPDATA%\epicshop\Cache`
+- **Linux**: Data in `~/.local/state/epicshop`, Cache in `~/.cache/epicshop`
+
+You can override these defaults by setting the following environment variables:
+
+- `EPICSHOP_DATA_DIR`: The directory where user data files are stored (defaults
+  to platform-specific location)
+- `EPICSHOP_CACHE_DIR`: The directory where cache files are stored (defaults to
+  platform-specific location)
+
+### When to Use Custom Directories
+
+You typically don't need to set these variables unless:
+
+1. **Testing**: You want to use a temporary directory for testing purposes
+2. **Custom Storage Location**: You need data stored in a specific location
+   (e.g., network drive, custom partition)
+3. **CI/CD Environments**: You need predictable paths in automated environments
+
+### Examples
+
+**Unix/macOS/Linux:**
+
+```sh
+EPICSHOP_DATA_DIR=/tmp/epicshop-test EPICSHOP_CACHE_DIR=/tmp/epicshop-cache epicshop start
+```
+
+**Windows PowerShell:**
+
+```sh
+$env:EPICSHOP_DATA_DIR="C:\Custom\EpicShop\Data"
+$env:EPICSHOP_CACHE_DIR="C:\Custom\EpicShop\Cache"
+epicshop start
+```
+
+**Windows cmd:**
+
+```sh
+set EPICSHOP_DATA_DIR=C:\Custom\EpicShop\Data
+set EPICSHOP_CACHE_DIR=C:\Custom\EpicShop\Cache
+epicshop start
+```
+
+### Legacy Data Migration
+
+If you have data stored in the legacy location (`~/.epicshop`), EpicShop will
+automatically migrate it to the new platform-specific location on first run. If
+you've set custom directories via environment variables, the migration will move
+data to your specified `EPICSHOP_DATA_DIR` and `EPICSHOP_CACHE_DIR`.
+
 ## Set to playground
 
 Sometimes when the user sets the playground, you may have things you want to

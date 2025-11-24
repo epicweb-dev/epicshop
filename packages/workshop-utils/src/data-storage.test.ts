@@ -1,11 +1,8 @@
 import { promises as fs } from 'node:fs'
 import * as os from 'node:os'
+import * as path from 'node:path'
 import { test, expect, vi, beforeEach, afterEach } from 'vitest'
-import {
-	resolvePrimaryDir,
-	resolveCacheDir,
-	migrateLegacyData,
-} from './data-storage.server.js'
+import { migrateLegacyData } from './data-storage.server.js'
 
 // Mock fs and os modules
 vi.mock('node:fs', () => ({
@@ -74,66 +71,17 @@ function withPlatform(
 	}
 }
 
-test('resolvePrimaryDir returns correct path for darwin', () => {
-	using _ = withPlatform('darwin')
-
-	const result = resolvePrimaryDir()
-	expect(result).toBe('/mock/home/Library/Application Support/epicshop')
-})
-
-test('resolvePrimaryDir returns correct path for win32', () => {
-	using _ = withPlatform('win32', {
-		LOCALAPPDATA: undefined,
-		APPDATA: undefined,
-	})
-
-	const result = resolvePrimaryDir()
-	expect(result).toBe('/mock/home/AppData/Local/epicshop')
-})
-
-test('resolvePrimaryDir returns correct path for linux', () => {
-	using _ = withPlatform('linux', {
-		XDG_STATE_HOME: undefined,
-	})
-
-	const result = resolvePrimaryDir()
-	expect(result).toBe('/mock/home/.local/state/epicshop')
-})
-
-test('resolveCacheDir returns correct path for darwin', () => {
-	using _ = withPlatform('darwin')
-
-	const result = resolveCacheDir()
-	expect(result).toBe('/mock/home/Library/Caches/epicshop')
-})
-
-test('resolveCacheDir returns correct path for win32', () => {
-	using _ = withPlatform('win32', {
-		LOCALAPPDATA: undefined,
-		APPDATA: undefined,
-	})
-
-	const result = resolveCacheDir()
-	expect(result).toBe('/mock/home/AppData/Local/epicshop/Cache')
-})
-
-test('resolveCacheDir returns correct path for linux', () => {
-	using _ = withPlatform('linux', {
-		XDG_CACHE_HOME: undefined,
-	})
-
-	const result = resolveCacheDir()
-	expect(result).toBe('/mock/home/.cache/epicshop')
-})
-
 test('migrateLegacyData successfully migrates both data and cache on darwin', async () => {
-	using _ = withPlatform('darwin')
-
-	const legacyDataPath = '/mock/home/.epicshop/data.json'
-	const legacyCachePath = '/mock/home/.epicshop/cache'
 	const primaryDataPath =
 		'/mock/home/Library/Application Support/epicshop/data.json'
 	const primaryCachePath = '/mock/home/Library/Caches/epicshop'
+	using _ = withPlatform('darwin', {
+		EPICSHOP_DATA_DIR: path.dirname(primaryDataPath),
+		EPICSHOP_CACHE_DIR: primaryCachePath,
+	})
+
+	const legacyDataPath = '/mock/home/.epicshop/data.json'
+	const legacyCachePath = '/mock/home/.epicshop/cache'
 
 	// Mock directory exists
 	mockFs.stat
@@ -155,15 +103,17 @@ test('migrateLegacyData successfully migrates both data and cache on darwin', as
 })
 
 test('migrateLegacyData successfully migrates both data and cache on win32', async () => {
+	const primaryDataPath = '/mock/home/AppData/Local/epicshop/data.json'
+	const primaryCachePath = '/mock/home/AppData/Local/epicshop/Cache'
 	using _ = withPlatform('win32', {
 		LOCALAPPDATA: undefined,
 		APPDATA: undefined,
+		EPICSHOP_DATA_DIR: path.dirname(primaryDataPath),
+		EPICSHOP_CACHE_DIR: primaryCachePath,
 	})
 
 	const legacyDataPath = '/mock/home/.epicshop/data.json'
 	const legacyCachePath = '/mock/home/.epicshop/cache'
-	const primaryDataPath = '/mock/home/AppData/Local/epicshop/data.json'
-	const primaryCachePath = '/mock/home/AppData/Local/epicshop/Cache'
 
 	// Mock directory exists
 	mockFs.stat
@@ -185,15 +135,17 @@ test('migrateLegacyData successfully migrates both data and cache on win32', asy
 })
 
 test('migrateLegacyData successfully migrates both data and cache on linux', async () => {
+	const primaryDataPath = '/mock/home/.local/state/epicshop/data.json'
+	const primaryCachePath = '/mock/home/.cache/epicshop'
 	using _ = withPlatform('linux', {
 		XDG_STATE_HOME: undefined,
 		XDG_CACHE_HOME: undefined,
+		EPICSHOP_DATA_DIR: path.dirname(primaryDataPath),
+		EPICSHOP_CACHE_DIR: primaryCachePath,
 	})
 
 	const legacyDataPath = '/mock/home/.epicshop/data.json'
 	const legacyCachePath = '/mock/home/.epicshop/cache'
-	const primaryDataPath = '/mock/home/.local/state/epicshop/data.json'
-	const primaryCachePath = '/mock/home/.cache/epicshop'
 
 	// Mock directory exists
 	mockFs.stat
@@ -215,6 +167,10 @@ test('migrateLegacyData successfully migrates both data and cache on linux', asy
 })
 
 test('migrateLegacyData handles missing legacy directory', async () => {
+	using _ = withPlatform('darwin', {
+		EPICSHOP_DATA_DIR: '/mock/home/Library/Application Support/epicshop',
+		EPICSHOP_CACHE_DIR: '/mock/home/Library/Caches/epicshop',
+	})
 	mockFs.stat.mockRejectedValue({ code: 'ENOENT' })
 
 	await migrateLegacyData()
@@ -224,6 +180,10 @@ test('migrateLegacyData handles missing legacy directory', async () => {
 })
 
 test('migrateLegacyData handles permission errors gracefully', async () => {
+	using _ = withPlatform('darwin', {
+		EPICSHOP_DATA_DIR: '/mock/home/Library/Application Support/epicshop',
+		EPICSHOP_CACHE_DIR: '/mock/home/Library/Caches/epicshop',
+	})
 	const consoleSpy = vi.spyOn(console, 'warn').mockImplementation(() => {})
 	mockFs.stat.mockRejectedValue({ code: 'EACCES' })
 
@@ -236,6 +196,10 @@ test('migrateLegacyData handles permission errors gracefully', async () => {
 })
 
 test('migrateLegacyData removes legacy directory when empty', async () => {
+	using _ = withPlatform('darwin', {
+		EPICSHOP_DATA_DIR: '/mock/home/Library/Application Support/epicshop',
+		EPICSHOP_CACHE_DIR: '/mock/home/Library/Caches/epicshop',
+	})
 	mockFs.stat
 		.mockResolvedValueOnce({ isDirectory: () => true } as any) // legacyDir
 		.mockResolvedValueOnce({ isFile: () => false } as any) // no data file
