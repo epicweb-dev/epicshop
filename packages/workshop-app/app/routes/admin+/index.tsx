@@ -249,7 +249,7 @@ export default function AdminLayout({
 								<Form method="POST">
 									<AdminButton name="intent" value="stop-inspect">
 										<Icon name="Stop" className="h-4 w-4" />
-										{isStartingInspector
+										{isStoppingInspector
 											? 'Stopping inspector...'
 											: 'Stop inspector'}
 									</AdminButton>
@@ -257,7 +257,7 @@ export default function AdminLayout({
 							) : (
 								<Form method="POST">
 									<AdminButton name="intent" value="inspect">
-										{isStoppingInspector
+										{isStartingInspector
 											? 'Starting inspector...'
 											: 'Start inspector'}
 									</AdminButton>
@@ -364,7 +364,7 @@ export default function AdminLayout({
 											process.exitCode === undefined ? (
 												<Pinger status="running" />
 											) : process.exitCode === 0 ? (
-												<Pinger status="running" />
+												<Pinger status="stopped" />
 											) : (
 												<Pinger status="taken" />
 											)}
