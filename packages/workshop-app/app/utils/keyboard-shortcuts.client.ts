@@ -152,6 +152,11 @@ function handleGNavigation(e: KeyboardEvent): boolean {
 				return true
 			}
 		}
+
+		// Invalid key during active sequence - clear it and prevent default
+		e.preventDefault()
+		clearGKeySequence()
+		return true
 	}
 
 	return false
