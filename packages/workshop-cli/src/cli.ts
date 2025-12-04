@@ -5,8 +5,20 @@ import chalk from 'chalk'
 import yargs, { type ArgumentsCamelCase, type Argv } from 'yargs'
 import { hideBin } from 'yargs/helpers'
 
+// Check for --help on start command before yargs parses
+// (yargs exits before command handler when help is requested)
+const args = hideBin(process.argv)
+if (
+	(args.includes('--help') || args.includes('-h')) &&
+	(args.length === 0 || args[0] === 'start')
+) {
+	const { displayHelp } = await import('./commands/start.js')
+	displayHelp()
+	process.exit(0)
+}
+
 // Set up yargs CLI
-const cli = yargs(hideBin(process.argv))
+const cli = yargs(args)
 	.scriptName('epicshop')
 	.usage('$0 <command> [options]')
 	.help('help')

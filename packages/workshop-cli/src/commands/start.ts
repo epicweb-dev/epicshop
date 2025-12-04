@@ -26,6 +26,87 @@ export type StartResult = {
 }
 
 /**
+ * Display help information about environment variables and debug logging
+ */
+export function displayHelp() {
+	console.log('\n' + chalk.bold.cyan('📚 Epic Workshop Help\n'))
+	console.log(chalk.bold('Environment Variables:'))
+	const envVar = (name: string, description: string) => {
+		const value = process.env[name]
+		const valueDisplay = value
+			? chalk.gray(` (current: ${value})`)
+			: chalk.gray(' (not set)')
+		return '  ' + chalk.cyan(name) + ' - ' + description + valueDisplay
+	}
+	console.log(
+		envVar(
+			'EPICSHOP_APP_LOCATION',
+			'Path to the `@epic-web/workshop-app` directory',
+		),
+	)
+	console.log(
+		envVar(
+			'EPICSHOP_DEPLOYED',
+			'Set to "true" or "1" for deployed environments',
+		),
+	)
+	console.log(
+		envVar(
+			'EPICSHOP_IS_PUBLISHED',
+			'Set to "true" or "1" for published builds',
+		),
+	)
+	console.log(envVar('EPICSHOP_GITHUB_REPO', 'GitHub repository URL'))
+	console.log(envVar('EPICSHOP_CONTEXT_CWD', 'Working directory context'))
+	console.log(envVar('NODE_ENV', 'Set to "production" for production mode'))
+	console.log(
+		envVar('NODE_DEBUG', 'Enable debug logging (see Debug Logging below)') +
+			'\n',
+	)
+
+	console.log(chalk.bold('Debug Logging:'))
+	console.log(
+		'  Enable detailed logging using the ' +
+			chalk.cyan('NODE_DEBUG') +
+			' environment variable:',
+	)
+	console.log(
+		'  ' +
+			chalk.gray('NODE_DEBUG=epic:api') +
+			' - API operations (video info, progress, workshop data)',
+	)
+	console.log(
+		'  ' + chalk.gray('NODE_DEBUG=epic:cache:*') + ' - All cache operations',
+	)
+	console.log('  ' + chalk.gray('NODE_DEBUG=epic:req') + ' - Request logging')
+	console.log(
+		'  ' + chalk.gray('NODE_DEBUG=epic:auth') + ' - Authentication operations',
+	)
+	console.log('  ' + chalk.gray('NODE_DEBUG=epic:*') + ' - All epic logging\n')
+
+	console.log(chalk.bold('Examples:'))
+	console.log(
+		'  ' +
+			chalk.gray('NODE_DEBUG=epic:api npm run dev') +
+			' - Enable API debugging',
+	)
+	console.log(
+		'  ' +
+			chalk.gray('NODE_DEBUG=epic:cache:*,epic:api npm run dev') +
+			' - Enable multiple namespaces\n',
+	)
+
+	console.log(chalk.bold('For more information:'))
+	console.log(
+		'  ' +
+			chalk.blue.underline(
+				'https://github.com/epicweb-dev/epicshop/tree/main/docs',
+			) +
+			'\n',
+	)
+}
+
+/**
  * Start the workshop application
  */
 export async function start(options: StartOptions = {}): Promise<StartResult> {
@@ -333,6 +414,7 @@ export async function start(options: StartOptions = {}): Promise<StartResult> {
 			`${chalk.green('u')} - update workshop`,
 			`${chalk.magenta('r')} - restart workshop app`,
 			`${chalk.cyan('k')} - Kody kudos 🐨`,
+			`${chalk.yellow('h')} - help`,
 			`${chalk.gray('q')} - exit (or ${chalk.gray('Ctrl+C')})`,
 		]
 
@@ -426,6 +508,8 @@ export async function start(options: StartOptions = {}): Promise<StartResult> {
 							chalk.red('\n❌ Failed to dismiss update notification.\n'),
 						)
 					}
+				} else if (key === 'h') {
+					displayHelp()
 				} else if (key === '\u0003') {
 					// Ctrl+C
 					await cleanupBeforeExit()
