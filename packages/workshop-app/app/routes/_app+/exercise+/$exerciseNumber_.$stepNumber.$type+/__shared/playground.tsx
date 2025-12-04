@@ -1,4 +1,5 @@
 import { toast as showToast } from 'sonner'
+import { Icon } from '#app/components/icons.tsx'
 import { type InBrowserBrowserRef } from '#app/components/in-browser-browser'
 import { SimpleTooltip } from '#app/components/ui/tooltip'
 import { SetAppToPlayground } from '#app/routes/set-playground'
@@ -37,7 +38,7 @@ export function Playground({
 							Navigate to{' '}
 							<SimpleTooltip content={playgroundAppInfo.fullPath}>
 								<span
-									className="underline"
+									className="inline-flex cursor-pointer items-center gap-1.5 underline"
 									onClick={() => {
 										void navigator.clipboard.writeText(
 											playgroundAppInfo.fullPath,
@@ -46,6 +47,7 @@ export function Playground({
 									}}
 								>
 									the playground directory
+									<Icon name="Copy" size="sm" />
 								</span>
 							</SimpleTooltip>{' '}
 							in your editor and follow the exercise instructions to complete
