@@ -73,8 +73,10 @@ export const headers: HeadersFunction = ({ loaderHeaders, parentHeaders }) => {
 }
 
 function ExerciseListItem({
+	index,
 	exercise,
 }: {
+	index: number
 	exercise: Awaited<Route.ComponentProps['loaderData']>['exercises'][number]
 }) {
 	const progressClassName = useExerciseProgressClassName(
@@ -88,6 +90,7 @@ function ExerciseListItem({
 					progressClassName,
 				)}
 				to={`${exercise.exerciseNumber.toString().padStart(2, '0')}`}
+				data-keyboard-action={index === 0 ? 'g+n' : undefined}
 			>
 				<span className="text-xs font-normal tabular-nums opacity-50">
 					{exercise.exerciseNumber}
@@ -106,8 +109,12 @@ export default function Index({ loaderData: data }: Route.ComponentProps) {
 			<strong className="px-10 pb-3 font-mono text-xs uppercase">
 				Exercises
 			</strong>
-			{data.exercises.map((exercise) => (
-				<ExerciseListItem key={exercise.exerciseNumber} exercise={exercise} />
+			{data.exercises.map((exercise, index) => (
+				<ExerciseListItem
+					key={exercise.exerciseNumber}
+					index={index}
+					exercise={exercise}
+				/>
 			))}
 		</ul>
 	)

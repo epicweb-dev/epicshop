@@ -19,6 +19,31 @@ interface ShortcutCategory {
 
 const shortcutCategories: ShortcutCategory[] = [
 	{
+		title: 'Navigation',
+		shortcuts: [
+			{ keys: ['g', 'h'], description: 'Go to home' },
+			{
+				keys: ['g', '1-9'],
+				description: 'Go to exercise (e.g., g+1 → /exercise/01)',
+			},
+			{
+				keys: ['g', '1-9', '.', '1-9'],
+				description:
+					'Go to exercise step (e.g., g+1+.+2 → /exercise/01/02/problem)',
+			},
+			{
+				keys: ['g', '1-9', '.', 'f'],
+				description:
+					'Go to exercise finished page (e.g., g+1+.+f → /exercise/01/finished)',
+			},
+			{ keys: ['g', 'p'], description: 'Go to previous step/page' },
+			{ keys: ['g', 'n'], description: 'Go to next step/page' },
+			{ keys: ['g', 'a'], description: 'Go to account page' },
+			{ keys: ['g', 'd'], description: 'Go to admin page' },
+			{ keys: ['g', 'l'], description: 'Go to last exercise solution' },
+		],
+	},
+	{
 		title: 'Playback Controls',
 		shortcuts: [
 			{ keys: ['Space', 'k'], description: 'Play/pause video' },
@@ -85,7 +110,8 @@ function KeyboardShortcutsDialog({
 				<DialogHeader>
 					<DialogTitle>Keyboard Shortcuts</DialogTitle>
 					<DialogDescription>
-						Use these keyboard shortcuts to control the video player
+						Use these keyboard shortcuts to navigate and control the video
+						player
 					</DialogDescription>
 				</DialogHeader>
 				<div className="space-y-6">

@@ -1,5 +1,162 @@
 import { type MuxPlayerRefAttributes } from '@mux/mux-player-react'
 
+let gKeySequence: {
+	exerciseNumber: string | null
+	waitingForDot: boolean
+	navigationTimeout: ReturnType<typeof setTimeout> | null
+	clearTimeout: ReturnType<typeof setTimeout> | null
+} = {
+	exerciseNumber: null,
+	waitingForDot: false,
+	navigationTimeout: null,
+	clearTimeout: null,
+}
+
+const G_KEY_TIMEOUT = 1000
+const NAVIGATION_DELAY = 300
+
+function clearGKeySequence() {
+	if (gKeySequence.navigationTimeout) {
+		clearTimeout(gKeySequence.navigationTimeout)
+	}
+	if (gKeySequence.clearTimeout) {
+		clearTimeout(gKeySequence.clearTimeout)
+	}
+	gKeySequence = {
+		exerciseNumber: null,
+		waitingForDot: false,
+		navigationTimeout: null,
+		clearTimeout: null,
+	}
+}
+
+function navigateTo(path: string) {
+	window.location.href = path
+}
+
+function clickElementByDataAttribute(attribute: string): boolean {
+	const element = document.querySelector(
+		`[data-keyboard-action="${attribute}"]`,
+	)
+	if (element instanceof HTMLElement) {
+		element.click()
+		return true
+	}
+	return false
+}
+
+function handleGNavigation(e: KeyboardEvent): boolean {
+	if (e.key === 'g' && !e.metaKey && !e.ctrlKey) {
+		clearGKeySequence()
+		gKeySequence.clearTimeout = setTimeout(clearGKeySequence, G_KEY_TIMEOUT)
+		return false
+	}
+
+	if (gKeySequence.clearTimeout || gKeySequence.exerciseNumber) {
+		if (e.key === 'h') {
+			e.preventDefault()
+			clearGKeySequence()
+			navigateTo('/')
+			return true
+		}
+
+		if (e.key === 'a') {
+			e.preventDefault()
+			clearGKeySequence()
+			navigateTo('/account')
+			return true
+		}
+
+		if (e.key === 'n') {
+			e.preventDefault()
+			if (clickElementByDataAttribute('g+n')) {
+				clearGKeySequence()
+				return true
+			}
+			clearGKeySequence()
+			return false
+		}
+
+		if (e.key === 'p') {
+			e.preventDefault()
+			if (clickElementByDataAttribute('g+p')) {
+				clearGKeySequence()
+				return true
+			}
+			clearGKeySequence()
+			return false
+		}
+
+		if (e.key === 'd') {
+			e.preventDefault()
+			clearGKeySequence()
+			navigateTo('/admin')
+			return true
+		}
+
+		if (e.key === 'l') {
+			e.preventDefault()
+			clearGKeySequence()
+			navigateTo('/l')
+			return true
+		}
+
+		if (/^[1-9]$/.test(e.key) && !gKeySequence.exerciseNumber) {
+			e.preventDefault()
+			gKeySequence.exerciseNumber = e.key
+			gKeySequence.waitingForDot = false
+			if (gKeySequence.clearTimeout) {
+				clearTimeout(gKeySequence.clearTimeout)
+				gKeySequence.clearTimeout = null
+			}
+			gKeySequence.navigationTimeout = setTimeout(() => {
+				if (gKeySequence.exerciseNumber && !gKeySequence.waitingForDot) {
+					const exerciseNumber = gKeySequence.exerciseNumber.padStart(2, '0')
+					clearGKeySequence()
+					navigateTo(`/exercise/${exerciseNumber}`)
+				}
+			}, NAVIGATION_DELAY)
+			gKeySequence.clearTimeout = setTimeout(clearGKeySequence, G_KEY_TIMEOUT)
+			return true
+		}
+
+		if (gKeySequence.exerciseNumber) {
+			if (e.key === '.' && !gKeySequence.waitingForDot) {
+				e.preventDefault()
+				if (gKeySequence.navigationTimeout) {
+					clearTimeout(gKeySequence.navigationTimeout)
+					gKeySequence.navigationTimeout = null
+				}
+				gKeySequence.waitingForDot = true
+				if (gKeySequence.clearTimeout) {
+					clearTimeout(gKeySequence.clearTimeout)
+				}
+				gKeySequence.clearTimeout = setTimeout(clearGKeySequence, G_KEY_TIMEOUT)
+				return true
+			}
+
+			if (e.key === 'f' && gKeySequence.waitingForDot) {
+				e.preventDefault()
+				const exerciseNumber = gKeySequence.exerciseNumber.padStart(2, '0')
+				clearGKeySequence()
+				navigateTo(`/exercise/${exerciseNumber}/finished`)
+				return true
+			}
+
+			if (/^[0-9]$/.test(e.key) && gKeySequence.waitingForDot) {
+				e.preventDefault()
+				const exerciseNumber = gKeySequence.exerciseNumber.padStart(2, '0')
+				const stepNumber = e.key.padStart(2, '0')
+				clearGKeySequence()
+				navigateTo(`/exercise/${exerciseNumber}/${stepNumber}/problem`)
+				return true
+			}
+		}
+	}
+
+	return false
+}
+
 function getParentMuxPlayer(el: unknown) {
 	return el instanceof HTMLElement ? el.closest('mux-player') : null
 }
@@ -31,6 +188,11 @@ function handleKeyDown(e: KeyboardEvent) {
 	if (e.key === '?') {
 		e.preventDefault()
 		window.dispatchEvent(new CustomEvent('toggle-keyboard-shortcuts'))
+		return
+	}
+
+	// Handle 'g' navigation shortcuts
+	if (handleGNavigation(e)) {
 		return
 	}
 

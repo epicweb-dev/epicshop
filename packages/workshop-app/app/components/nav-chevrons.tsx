@@ -14,6 +14,7 @@ export function NavChevrons({
 				<Link
 					prefetch="intent"
 					{...prev}
+					data-keyboard-action="g+p"
 					className="group flex h-full items-center justify-center border-l px-7"
 					children={
 						<>
@@ -33,6 +34,7 @@ export function NavChevrons({
 				<Link
 					prefetch="intent"
 					{...next}
+					data-keyboard-action="g+n"
 					className="group flex h-full items-center justify-center border-l px-7"
 					children={
 						<>

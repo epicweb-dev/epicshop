@@ -455,6 +455,7 @@ export default function ExercisePartRoute({
 								<Link
 									to={data.prevStepLink.to}
 									aria-label="Previous Step"
+									data-keyboard-action="g+p"
 									prefetch="intent"
 								>
 									<span aria-hidden>←</span>
@@ -467,6 +468,7 @@ export default function ExercisePartRoute({
 								<Link
 									to={data.nextStepLink.to}
 									aria-label="Next Step"
+									data-keyboard-action="g+n"
 									prefetch="intent"
 								>
 									<span className="hidden xl:inline">Next </span>
