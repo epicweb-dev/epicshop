@@ -5,6 +5,14 @@ import { deleteCache } from '@epic-web/workshop-utils/cache.server'
 import { deleteDb } from '@epic-web/workshop-utils/db.server'
 import fsExtra from 'fs-extra'
 
+export function isInspectorRunning(): boolean {
+	try {
+		return inspector.url() !== undefined
+	} catch {
+		return false
+	}
+}
+
 export async function clearData() {
 	if (ENV.EPICSHOP_DEPLOYED) return
 	await clearCaches()
@@ -19,8 +27,7 @@ export async function clearCaches() {
 
 export async function startInspector() {
 	if (ENV.EPICSHOP_DEPLOYED) return
-	if (!global.__inspector_open__) {
-		global.__inspector_open__ = true
+	if (!isInspectorRunning()) {
 		inspector.open()
 	} else {
 		console.info(`Inspector already running.`)
@@ -29,8 +36,7 @@ export async function startInspector() {
 
 export async function stopInspector() {
 	if (ENV.EPICSHOP_DEPLOYED) return
-	if (global.__inspector_open__) {
-		global.__inspector_open__ = false
+	if (isInspectorRunning()) {
 		inspector.close()
 	} else {
 		console.info(`Inspector already stopped.`)
