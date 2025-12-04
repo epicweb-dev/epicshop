@@ -168,6 +168,7 @@ export default function ExerciseNumberRoute({
 					to={`${firstStepNumber}/${data.firstType}`}
 					prefetch="intent"
 					className="flex h-full items-center justify-center bg-foreground px-7 text-background"
+					data-keyboard-action="g+n"
 				>
 					Start Learning
 				</Link>
