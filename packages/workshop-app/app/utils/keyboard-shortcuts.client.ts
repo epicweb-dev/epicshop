@@ -143,7 +143,7 @@ function handleGNavigation(e: KeyboardEvent): boolean {
 				return true
 			}
 
-			if (/^[0-9]$/.test(e.key) && gKeySequence.waitingForDot) {
+			if (/^[1-9]$/.test(e.key) && gKeySequence.waitingForDot) {
 				e.preventDefault()
 				const exerciseNumber = gKeySequence.exerciseNumber.padStart(2, '0')
 				const stepNumber = e.key.padStart(2, '0')
