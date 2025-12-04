@@ -41,6 +41,7 @@ const shortcutCategories: ShortcutCategory[] = [
 			{ keys: ['g', 'a'], description: 'Go to account page' },
 			{ keys: ['g', 'd'], description: 'Go to admin page' },
 			{ keys: ['g', 'l'], description: 'Go to last exercise solution' },
+			{ keys: ['Escape'], description: 'Close sidebar navigation (when open)' },
 		],
 	},
 	{
