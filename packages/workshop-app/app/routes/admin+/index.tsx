@@ -236,8 +236,12 @@ export default function AdminLayout({
 								</AdminButton>
 							</Form>
 							<Form method="POST">
-								<AdminButton name="intent" value="clear-data">
-									<Icon name="Clear" className="h-4 w-4" />
+								<AdminButton
+									name="intent"
+									value="clear-data"
+									className="border-destructive bg-destructive/80 text-destructive-foreground hover:bg-destructive hover:text-destructive-foreground"
+								>
+									<Icon name="TriangleAlert" className="h-4 w-4" />
 									Clear all local data (including auth data)
 								</AdminButton>
 							</Form>
