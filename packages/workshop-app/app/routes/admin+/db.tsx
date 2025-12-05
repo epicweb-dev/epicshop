@@ -20,11 +20,9 @@ export default function DbRoute({ loaderData }: Route.ComponentProps) {
 		<main>
 			<h1 className="text-2xl font-bold">Database</h1>
 			<div className="prose mt-4">
-				{/* @ts-expect-error 🤷‍♂️ no idea */}
 				<callout-danger>
 					<strong>Warning:</strong> Editing the database directly can corrupt
 					your data. Be very careful!
-					{/* @ts-expect-error 🤷‍♂️ no idea */}
 				</callout-danger>
 			</div>
 			<LaunchEditor
