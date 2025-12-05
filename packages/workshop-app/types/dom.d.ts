@@ -57,6 +57,14 @@ declare global {
 		dispatchEvent<K extends keyof CustomEventMap | unknown>(evt: CustomEventMap[K]): void
 	}
 
+	interface Window {
+		__epicshop?: {
+			handleFileChange?: () => void
+		}
+	}
+}
+
+declare module 'react' {
 	namespace JSX {
 		interface IntrinsicElements {
 			'callout-danger': React.DetailedHTMLProps<
@@ -67,12 +75,6 @@ declare global {
 				React.HTMLAttributes<HTMLElement>,
 				HTMLElement
 			>
-		}
-	}
-
-	interface Window {
-		__epicshop?: {
-			handleFileChange?: () => void
 		}
 	}
 }

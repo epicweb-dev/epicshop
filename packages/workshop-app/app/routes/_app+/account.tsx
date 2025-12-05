@@ -9,9 +9,13 @@ import { redirect, type LoaderFunctionArgs, Form, Link } from 'react-router'
 import { Button } from '#app/components/button.tsx'
 import { Icon } from '#app/components/icons.tsx'
 import { SimpleTooltip } from '#app/components/ui/tooltip.js'
-import { useOptionalDiscordMember, useUser } from '#app/components/user.tsx'
+import {
+	useOptionalDiscordMember,
+	useUser,
+	useUserHasAccess,
+} from '#app/components/user.tsx'
 import { useWorkshopConfig } from '#app/components/workshop-config.tsx'
-import { ensureUndeployed } from '#app/utils/misc.tsx'
+import { cn, ensureUndeployed } from '#app/utils/misc.tsx'
 import { redirectWithToast } from '#app/utils/toast.server.ts'
 
 export const handle: SEOHandle = {
@@ -61,6 +65,7 @@ export default function Account() {
 	const config = useWorkshopConfig()
 	const discordMember = useOptionalDiscordMember()
 	const connectDiscordURL = useConnectDiscordURL()
+	const userHasAccess = useUserHasAccess()
 
 	return (
 		<main className="container flex h-full w-full max-w-3xl flex-grow flex-col items-center justify-center gap-4">
@@ -73,7 +78,46 @@ export default function Account() {
 			) : (
 				<Icon name="User" className="flex-shrink-0" size="lg" />
 			)}
-			<h1 className="mb-1 text-2xl">Your Account</h1>
+
+			<div className="flex items-center gap-2">
+				<h1 className="mb-1 text-2xl">Your Account</h1>
+				{config.product.slug ? (
+					<SimpleTooltip
+						content={
+							userHasAccess
+								? 'You have access to this workshop'
+								: 'You do not have full access to this workshop'
+						}
+					>
+						<Icon
+							name={userHasAccess ? 'Success' : 'Error'}
+							size="lg"
+							className={cn(
+								userHasAccess
+									? 'bg-success text-success-foreground'
+									: 'bg-warning text-warning-foreground',
+								'rounded-full p-1',
+							)}
+							tabIndex={0}
+						/>
+					</SimpleTooltip>
+				) : null}
+			</div>
+
+			{!userHasAccess && config.product.slug ? (
+				<div className="prose">
+					<callout-warning className="notification">
+						Please{' '}
+						<a
+							href={`https://${config.product.host}/workshops/${config.product.slug}`}
+							className="underline"
+						>
+							upgrade
+						</a>{' '}
+						your account to get full access to this workshop.
+					</callout-warning>
+				</div>
+			) : null}
 			<p className="text-center text-gray-700 dark:text-gray-300">
 				{user.name
 					? `Hi ${
