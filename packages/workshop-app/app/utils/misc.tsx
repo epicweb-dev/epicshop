@@ -388,7 +388,7 @@ export function useDoubleCheck() {
 
 		const onClick: React.ButtonHTMLAttributes<HTMLButtonElement>['onClick'] =
 			doubleCheck
-				? undefined
+				? () => setDoubleCheck(false)
 				: (e) => {
 						e.preventDefault()
 						setDoubleCheck(true)

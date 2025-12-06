@@ -13,7 +13,7 @@ import {
 	useEpicProgress,
 	type SerializedProgress,
 } from '#app/routes/progress.tsx'
-import { cn, ensureUndeployed } from '#app/utils/misc.tsx'
+import { cn, ensureUndeployed, useDoubleCheck } from '#app/utils/misc.tsx'
 import { getRootMatchLoaderData } from '#app/utils/root-loader.ts'
 import { type Route } from './+types/index.tsx'
 import {
@@ -230,20 +230,21 @@ export default function AdminLayout({
 					<CardContent>
 						<div className="flex flex-col gap-3">
 							<Form method="POST">
-								<AdminButton name="intent" value="clear-caches">
+								<DoubleCheckAdminButton name="intent" value="clear-caches">
 									<Icon name="Clear" className="h-4 w-4" />
 									Clear local caches
-								</AdminButton>
+								</DoubleCheckAdminButton>
 							</Form>
 							<Form method="POST">
-								<AdminButton
+								<DoubleCheckAdminButton
 									name="intent"
 									value="clear-data"
 									className="border-destructive bg-destructive/80 text-destructive-foreground hover:bg-destructive hover:text-destructive-foreground"
+									doubleCheckClassName="border-destructive bg-destructive text-destructive-foreground"
 								>
 									<Icon name="TriangleAlert" className="h-4 w-4" />
 									Clear all local data (including auth data)
-								</AdminButton>
+								</DoubleCheckAdminButton>
 							</Form>
 							{data.inspectorRunning ? (
 								<Form method="POST">
@@ -447,6 +448,38 @@ function AdminButton({
 		>
 			{children}
 		</button>
+	)
+}
+
+function DoubleCheckAdminButton({
+	children,
+	doubleCheckClassName,
+	...props
+}: React.ComponentPropsWithoutRef<'button'> & {
+	doubleCheckClassName?: string
+}) {
+	const { doubleCheck, getButtonProps } = useDoubleCheck()
+
+	return (
+		<AdminButton
+			{...getButtonProps(props)}
+			className={cn(
+				props.className,
+				doubleCheck
+					? (doubleCheckClassName ??
+							'border-destructive bg-destructive text-destructive-foreground')
+					: null,
+			)}
+		>
+			{doubleCheck ? (
+				<>
+					<Icon name="TriangleAlert" className="h-4 w-4" />
+					Are you sure?
+				</>
+			) : (
+				children
+			)}
+		</AdminButton>
 	)
 }
 
