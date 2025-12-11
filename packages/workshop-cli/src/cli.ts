@@ -333,10 +333,7 @@ const cli = yargs(args)
 								description: 'Run without output logs',
 								default: false,
 							})
-							.example(
-								'$0 workshops remove',
-								'Select a workshop to remove',
-							)
+							.example('$0 workshops remove', 'Select a workshop to remove')
 							.example(
 								'$0 workshops remove full-stack-foundations',
 								'Remove a specific workshop',

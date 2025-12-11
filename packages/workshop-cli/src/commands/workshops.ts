@@ -552,15 +552,15 @@ async function ensureTutorialAndStart(): Promise<WorkshopsResult> {
 		chalk.white(`We'll clone the tutorial repository and set it up for you.\n`),
 	)
 
-	// Show the command we'll run
-	const cloneCommand = `git clone ${repoUrl} ${workshopPath}`
+	// Show the command we're effectively running
+	const addCommand = `npx epicshop workshops add ${TUTORIAL_REPO}`
 	console.log(chalk.gray('Running:'))
-	console.log(chalk.white.bold(`  ${cloneCommand}\n`))
+	console.log(chalk.white.bold(`  ${addCommand}\n`))
 
-	// Wait 2 seconds or 'g' to skip
-	await waitWithSkip(2000, 'Press "g" to skip waiting...')
+	// Wait for user to press 'g' to proceed
+	await waitForGo()
 
-	console.log(chalk.cyan(`📦 Cloning ${TUTORIAL_REPO}...`))
+	console.log(chalk.cyan(`\n📦 Cloning ${TUTORIAL_REPO}...`))
 
 	// Clone the repository
 	const cloneResult = await runCommand(
@@ -619,14 +619,14 @@ async function ensureTutorialAndStart(): Promise<WorkshopsResult> {
 	)
 
 	// Show the command to start
-	const startCommand = `epicshop workshops start ${TUTORIAL_REPO}`
-	console.log(chalk.gray('To start the tutorial, you can run:'))
+	const startCommand = `npx epicshop workshops start ${TUTORIAL_REPO}`
+	console.log(chalk.gray('Running:'))
 	console.log(chalk.white.bold(`  ${startCommand}\n`))
 
-	// Wait 2 seconds or 'g' to skip
-	await waitWithSkip(2000, 'Press "g" to skip waiting...')
+	// Wait for user to press 'g' to proceed
+	await waitForGo()
 
-	console.log(chalk.cyan(`🚀 Starting ${chalk.bold(workshopTitle)}...\n`))
+	console.log(chalk.cyan(`\n🚀 Starting ${chalk.bold(workshopTitle)}...\n`))
 
 	// Start the workshop
 	const startResult = await runCommandInteractive('npm', ['start'], {
@@ -645,20 +645,11 @@ async function ensureTutorialAndStart(): Promise<WorkshopsResult> {
 }
 
 /**
- * Wait for a specified time, allowing user to press 'g' to skip
+ * Wait for user to press 'g' to proceed
  */
-async function waitWithSkip(ms: number, message: string): Promise<void> {
+async function waitForGo(): Promise<void> {
 	return new Promise((resolve) => {
-		console.log(chalk.gray(message))
-
-		let resolved = false
-		const timeout = setTimeout(() => {
-			if (!resolved) {
-				resolved = true
-				cleanup()
-				resolve()
-			}
-		}, ms)
+		console.log(chalk.cyan('Press "g" when you\'re ready to go.'))
 
 		const cleanup = () => {
 			if (process.stdin.isTTY) {
@@ -670,11 +661,8 @@ async function waitWithSkip(ms: number, message: string): Promise<void> {
 
 		const onData = (key: Buffer) => {
 			const char = key.toString()
-			if (char.toLowerCase() === 'g' && !resolved) {
-				resolved = true
-				clearTimeout(timeout)
+			if (char.toLowerCase() === 'g') {
 				cleanup()
-				console.log(chalk.gray('Skipping wait...'))
 				resolve()
 			}
 		}
@@ -682,7 +670,10 @@ async function waitWithSkip(ms: number, message: string): Promise<void> {
 		if (process.stdin.isTTY) {
 			process.stdin.setRawMode(true)
 			process.stdin.resume()
-			process.stdin.once('data', onData)
+			process.stdin.on('data', onData)
+		} else {
+			// Non-TTY mode, just resolve immediately
+			resolve()
 		}
 	})
 }
