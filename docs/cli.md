@@ -127,6 +127,143 @@ epicshop warm --silent
 - Pre-caches diff files for faster loading
 - Reports the number of apps loaded and diffs generated
 
+### `workshops`
+
+Manage local workshops on your machine. This command allows you to add, list,
+remove, and start workshops from the epicweb-dev GitHub organization.
+
+```bash
+epicshop workshops <subcommand> [options]
+```
+
+#### Subcommands
+
+##### `workshops add <repo-name>`
+
+Add a workshop by cloning it from the epicweb-dev GitHub organization and
+running the setup script.
+
+```bash
+epicshop workshops add <repo-name> [options]
+```
+
+**Options:**
+
+- `--directory, -d <path>` - Directory to clone into (defaults to configured
+  repos directory)
+- `--silent, -s` - Run without output logs (default: false)
+
+**Examples:**
+
+```bash
+# Clone and set up the full-stack-foundations workshop
+epicshop workshops add full-stack-foundations
+
+# Clone to a custom directory
+epicshop workshops add web-forms --directory ~/my-workshops
+```
+
+**What it does:**
+
+1. Clones the repository from `https://github.com/epicweb-dev/<repo-name>`
+2. Runs `npm run setup` in the cloned directory
+3. Adds the workshop to your local workshop registry
+
+##### `workshops list`
+
+List all workshops that have been added to your local machine.
+
+```bash
+epicshop workshops list [options]
+```
+
+**Options:**
+
+- `--silent, -s` - Run without output logs (default: false)
+
+**Example:**
+
+```bash
+epicshop workshops list
+```
+
+##### `workshops remove <workshop>`
+
+Remove a workshop from the registry. This does NOT delete the files on disk.
+
+```bash
+epicshop workshops remove <workshop> [options]
+```
+
+**Arguments:**
+
+- `workshop` - Workshop name, repo name, or ID to remove
+
+**Options:**
+
+- `--silent, -s` - Run without output logs (default: false)
+
+**Example:**
+
+```bash
+epicshop workshops remove full-stack-foundations
+```
+
+##### `workshops start [workshop]`
+
+Start a workshop. If no workshop is specified, an interactive selection menu
+will be shown.
+
+```bash
+epicshop workshops start [workshop] [options]
+```
+
+**Arguments:**
+
+- `workshop` (optional) - Workshop name, repo name, or ID to start
+
+**Options:**
+
+- `--silent, -s` - Run without output logs (default: false)
+
+**Examples:**
+
+```bash
+# Interactive selection
+epicshop workshops start
+
+# Start a specific workshop
+epicshop workshops start full-stack-foundations
+```
+
+##### `workshops config`
+
+View or update workshop configuration settings.
+
+```bash
+epicshop workshops config [options]
+```
+
+**Options:**
+
+- `--repos-dir <path>` - Set the default directory where workshops are cloned
+- `--silent, -s` - Run without output logs (default: false)
+
+**Examples:**
+
+```bash
+# View current configuration
+epicshop workshops config
+
+# Set the repos directory
+epicshop workshops config --repos-dir ~/epicweb-workshops
+```
+
+**Configuration:**
+
+- **Repos directory**: The default location where workshops are cloned. Defaults
+  to `~/epicweb-workshops` on most systems.
+
 ## Programmatic Usage
 
 All CLI commands can be used programmatically via ESM imports. This is useful
@@ -200,6 +337,46 @@ if (result.success) {
 }
 ```
 
+### Using the Workshops Command
+
+```javascript
+import {
+	add,
+	list,
+	remove,
+	startWorkshop,
+	config,
+} from '@epic-web/workshop-cli/workshops'
+
+// Add a workshop
+const addResult = await add({
+	repoName: 'full-stack-foundations',
+	directory: '/path/to/workshops', // optional
+	silent: false,
+})
+
+// List all workshops
+const listResult = await list({ silent: false })
+
+// Remove a workshop from the list
+const removeResult = await remove({
+	workshop: 'full-stack-foundations',
+	silent: false,
+})
+
+// Start a workshop (interactive if no workshop specified)
+const startResult = await startWorkshop({
+	workshop: 'full-stack-foundations', // optional
+	silent: false,
+})
+
+// View or update configuration
+const configResult = await config({
+	reposDir: '/path/to/repos', // optional, omit to view config
+	silent: false,
+})
+```
+
 ### TypeScript Support
 
 All commands are fully typed with TypeScript:
@@ -212,6 +389,16 @@ import {
 } from '@epic-web/workshop-cli/start'
 import { update, type UpdateResult } from '@epic-web/workshop-cli/update'
 import { warm, type WarmResult } from '@epic-web/workshop-cli/warm'
+import {
+	add,
+	list,
+	startWorkshop,
+	config,
+	type WorkshopsResult,
+	type AddOptions,
+	type StartOptions as WorkshopStartOptions,
+	type ConfigOptions,
+} from '@epic-web/workshop-cli/workshops'
 
 const options: StartOptions = {
 	appLocation: '/path/to/workshop',

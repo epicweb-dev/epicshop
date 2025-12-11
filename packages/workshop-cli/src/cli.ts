@@ -225,6 +225,198 @@ const cli = yargs(args)
 			}
 		},
 	)
+	.command(
+		'workshops <subcommand>',
+		'Manage local workshops',
+		(yargs: Argv) => {
+			return yargs
+				.command(
+					'add <repo-name>',
+					'Add a workshop by cloning from epicweb-dev GitHub org',
+					(yargs: Argv) => {
+						return yargs
+							.positional('repo-name', {
+								describe: 'Repository name from epicweb-dev org',
+								type: 'string',
+								demandOption: true,
+							})
+							.option('directory', {
+								alias: 'd',
+								type: 'string',
+								description:
+									'Directory to clone into (defaults to configured repos directory)',
+							})
+							.option('silent', {
+								alias: 's',
+								type: 'boolean',
+								description: 'Run without output logs',
+								default: false,
+							})
+							.example(
+								'$0 workshops add full-stack-foundations',
+								'Clone and set up the full-stack-foundations workshop',
+							)
+							.example(
+								'$0 workshops add web-forms --directory ~/my-workshops',
+								'Clone workshop to a custom directory',
+							)
+					},
+					async (
+						argv: ArgumentsCamelCase<{
+							repoName: string
+							directory?: string
+							silent?: boolean
+						}>,
+					) => {
+						const { add } = await import('./commands/workshops.js')
+						const result = await add({
+							repoName: argv.repoName,
+							directory: argv.directory,
+							silent: argv.silent,
+						})
+						if (!result.success) {
+							process.exit(1)
+						}
+					},
+				)
+				.command(
+					'list',
+					'List all added workshops',
+					(yargs: Argv) => {
+						return yargs
+							.option('silent', {
+								alias: 's',
+								type: 'boolean',
+								description: 'Run without output logs',
+								default: false,
+							})
+							.example('$0 workshops list', 'List all added workshops')
+					},
+					async (argv: ArgumentsCamelCase<{ silent?: boolean }>) => {
+						const { list } = await import('./commands/workshops.js')
+						const result = await list({ silent: argv.silent })
+						if (!result.success) {
+							process.exit(1)
+						}
+					},
+				)
+				.command(
+					'remove <workshop>',
+					'Remove a workshop from the list (does not delete files)',
+					(yargs: Argv) => {
+						return yargs
+							.positional('workshop', {
+								describe: 'Workshop name, repo name, or ID to remove',
+								type: 'string',
+								demandOption: true,
+							})
+							.option('silent', {
+								alias: 's',
+								type: 'boolean',
+								description: 'Run without output logs',
+								default: false,
+							})
+							.example(
+								'$0 workshops remove full-stack-foundations',
+								'Remove workshop from list',
+							)
+					},
+					async (
+						argv: ArgumentsCamelCase<{
+							workshop: string
+							silent?: boolean
+						}>,
+					) => {
+						const { remove } = await import('./commands/workshops.js')
+						const result = await remove({
+							workshop: argv.workshop,
+							silent: argv.silent,
+						})
+						if (!result.success) {
+							process.exit(1)
+						}
+					},
+				)
+				.command(
+					'start [workshop]',
+					'Start a workshop (interactive selection if not specified)',
+					(yargs: Argv) => {
+						return yargs
+							.positional('workshop', {
+								describe: 'Workshop name, repo name, or ID to start',
+								type: 'string',
+							})
+							.option('silent', {
+								alias: 's',
+								type: 'boolean',
+								description: 'Run without output logs',
+								default: false,
+							})
+							.example('$0 workshops start', 'Select and start a workshop')
+							.example(
+								'$0 workshops start full-stack-foundations',
+								'Start a specific workshop',
+							)
+					},
+					async (
+						argv: ArgumentsCamelCase<{
+							workshop?: string
+							silent?: boolean
+						}>,
+					) => {
+						const { startWorkshop } = await import('./commands/workshops.js')
+						const result = await startWorkshop({
+							workshop: argv.workshop,
+							silent: argv.silent,
+						})
+						if (!result.success) {
+							process.exit(1)
+						}
+					},
+				)
+				.command(
+					'config',
+					'View or update workshop configuration',
+					(yargs: Argv) => {
+						return yargs
+							.option('repos-dir', {
+								type: 'string',
+								description: 'Set the default directory for workshop repos',
+							})
+							.option('silent', {
+								alias: 's',
+								type: 'boolean',
+								description: 'Run without output logs',
+								default: false,
+							})
+							.example('$0 workshops config', 'View current configuration')
+							.example(
+								'$0 workshops config --repos-dir ~/epicweb',
+								'Set the repos directory',
+							)
+					},
+					async (
+						argv: ArgumentsCamelCase<{
+							reposDir?: string
+							silent?: boolean
+						}>,
+					) => {
+						const { config } = await import('./commands/workshops.js')
+						const result = await config({
+							reposDir: argv.reposDir,
+							silent: argv.silent,
+						})
+						if (!result.success) {
+							process.exit(1)
+						}
+					},
+				)
+				.demandCommand(1, 'Please specify a subcommand')
+		},
+		() => {
+			// This is handled by the subcommands
+		},
+	)
 	.epilogue(
 		`For more information, visit: https://github.com/epicweb-dev/epicshop`,
 	)
