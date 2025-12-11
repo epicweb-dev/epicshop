@@ -232,7 +232,7 @@ const cli = yargs(args)
 			return yargs
 				.command(
 					['init', '$0'],
-					'Initialize EpicShop and start the tutorial (first-time setup)',
+					'Initialize epicshop and start the tutorial (first-time setup)',
 					(yargs: Argv) => {
 						return yargs.example(
 							'$0 workshops init',

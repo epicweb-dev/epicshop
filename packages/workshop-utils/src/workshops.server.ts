@@ -38,7 +38,7 @@ export type Workshop = {
 export type WorkshopsConfig = z.infer<typeof ConfigSchema>
 
 function getDefaultReposDirectory(): string {
-	return path.join(os.homedir(), 'epicweb-workshops')
+	return path.join(os.homedir(), 'epic-workshops')
 }
 
 function resolveConfigPath(): string {

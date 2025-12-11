@@ -37,6 +37,11 @@ export async function add(options: AddOptions): Promise<WorkshopsResult> {
 	const { repoName, silent = false } = options
 
 	try {
+		// Ensure config is set up first
+		if (!(await ensureConfigured())) {
+			return { success: false, message: 'Setup cancelled' }
+		}
+
 		const { getReposDirectory, workshopExists } = await import(
 			'@epic-web/workshop-utils/workshops.server'
 		)
@@ -123,6 +128,9 @@ export async function add(options: AddOptions): Promise<WorkshopsResult> {
 
 		return { success: true, message }
 	} catch (error) {
+		if ((error as Error).message === 'USER_QUIT') {
+			return { success: false, message: 'User quit' }
+		}
 		const message = error instanceof Error ? error.message : String(error)
 		if (!silent) {
 			console.error(chalk.red(`❌ ${message}`))
@@ -142,6 +150,11 @@ export async function list({
 	silent = false,
 }: { silent?: boolean } = {}): Promise<WorkshopsResult> {
 	try {
+		// Ensure config is set up first
+		if (!(await ensureConfigured())) {
+			return { success: false, message: 'Setup cancelled' }
+		}
+
 		const { listWorkshops, getReposDirectory } = await import(
 			'@epic-web/workshop-utils/workshops.server'
 		)
@@ -177,6 +190,9 @@ export async function list({
 			message: `Found ${workshops.length} workshop(s)`,
 		}
 	} catch (error) {
+		if ((error as Error).message === 'USER_QUIT') {
+			return { success: false, message: 'User quit' }
+		}
 		const message = error instanceof Error ? error.message : String(error)
 		if (!silent) {
 			console.error(chalk.red(`❌ ${message}`))
@@ -200,6 +216,11 @@ export async function remove({
 	silent?: boolean
 }): Promise<WorkshopsResult> {
 	try {
+		// Ensure config is set up first
+		if (!(await ensureConfigured())) {
+			return { success: false, message: 'Setup cancelled' }
+		}
+
 		const { getWorkshop, listWorkshops, getUnpushedChanges, deleteWorkshop } =
 			await import('@epic-web/workshop-utils/workshops.server')
 
@@ -284,6 +305,9 @@ export async function remove({
 		if (!silent) console.log(chalk.green(`✅ ${message}`))
 		return { success: true, message }
 	} catch (error) {
+		if ((error as Error).message === 'USER_QUIT') {
+			return { success: false, message: 'User quit' }
+		}
 		const message = error instanceof Error ? error.message : String(error)
 		if (!silent) {
 			console.error(chalk.red(`❌ ${message}`))
@@ -305,6 +329,11 @@ export async function startWorkshop(
 	const { silent = false } = options
 
 	try {
+		// Ensure config is set up first
+		if (!(await ensureConfigured())) {
+			return { success: false, message: 'Setup cancelled' }
+		}
+
 		const { listWorkshops, getWorkshop } = await import(
 			'@epic-web/workshop-utils/workshops.server'
 		)
@@ -379,6 +408,9 @@ export async function startWorkshop(
 
 		return { success: true, message: 'Workshop started' }
 	} catch (error) {
+		if ((error as Error).message === 'USER_QUIT') {
+			return { success: false, message: 'User quit' }
+		}
 		const message = error instanceof Error ? error.message : String(error)
 		if (!silent) {
 			console.error(chalk.red(`❌ ${message}`))
@@ -442,6 +474,24 @@ export async function config(
 }
 
 /**
+ * Check if the workshops directory is configured, and run onboarding if not
+ * Call this at the start of any command that requires the config to be set
+ */
+export async function ensureConfigured(): Promise<boolean> {
+	const { isReposDirectoryConfigured } = await import(
+		'@epic-web/workshop-utils/workshops.server'
+	)
+
+	if (await isReposDirectoryConfigured()) {
+		return true
+	}
+
+	// Not configured, run onboarding
+	const result = await onboarding()
+	return result.success
+}
+
+/**
  * Run the onboarding flow for new users
  */
 export async function onboarding(): Promise<WorkshopsResult> {
@@ -458,19 +508,21 @@ export async function onboarding(): Promise<WorkshopsResult> {
 			return await ensureTutorialAndStart()
 		}
 
-		// Welcome message
+		// Welcome message from Kody
 		console.log()
 		console.log(
-			chalk.bold.cyan("🎉 Welcome to EpicShop! Let's get you set up.\n"),
-		)
-		console.log(
-			chalk.white(
-				'EpicShop helps you manage and run EpicWeb workshops locally on your machine.',
+			chalk.cyan(
+				"🐨 Hey there! Welcome to the epicshop CLI. I'm Kody the Koala, and I'm here to help you learn.",
 			),
 		)
+		console.log(chalk.cyan("   Let's get you set up.\n"))
+
+		console.log(
+			chalk.white('   First, we need to choose where to store your workshops.'),
+		)
 		console.log(
 			chalk.white(
-				'Workshops are cloned from GitHub and stored in a directory of your choice.\n',
+				'   Workshops are cloned from GitHub and stored in a directory of your choice.\n',
 			),
 		)
 
@@ -478,7 +530,7 @@ export async function onboarding(): Promise<WorkshopsResult> {
 		const { input, confirm } = await import('@inquirer/prompts')
 		const defaultDir = getDefaultReposDir()
 
-		console.log(chalk.gray(`We recommend: ${chalk.white(defaultDir)}\n`))
+		console.log(chalk.gray(`   Recommended: ${chalk.white(defaultDir)}\n`))
 
 		const useDefault = await confirm({
 			message: 'Use the recommended directory?',
@@ -517,6 +569,9 @@ export async function onboarding(): Promise<WorkshopsResult> {
 		// Now check for tutorial and start it
 		return await ensureTutorialAndStart()
 	} catch (error) {
+		if ((error as Error).message === 'USER_QUIT') {
+			return { success: false, message: 'User quit' }
+		}
 		const message = error instanceof Error ? error.message : String(error)
 		console.error(chalk.red(`❌ ${message}`))
 		return {
@@ -545,17 +600,20 @@ async function ensureTutorialAndStart(): Promise<WorkshopsResult> {
 	const workshopPath = path.join(reposDir, TUTORIAL_REPO)
 	const repoUrl = `https://github.com/${GITHUB_ORG}/${TUTORIAL_REPO}.git`
 
+	console.log()
 	console.log(
-		chalk.cyan(`\n📚 Let's get you started with the EpicShop Tutorial!\n`),
+		chalk.cyan("🐨 Now let's get you started with the epicshop tutorial."),
 	)
 	console.log(
-		chalk.white(`We'll clone the tutorial repository and set it up for you.\n`),
+		chalk.cyan(
+			"   I'll clone the tutorial repository and set it up for you.\n",
+		),
 	)
 
 	// Show the command we're effectively running
 	const addCommand = `npx epicshop workshops add ${TUTORIAL_REPO}`
-	console.log(chalk.gray('Running:'))
-	console.log(chalk.white.bold(`  ${addCommand}\n`))
+	console.log(chalk.gray('   Running:'))
+	console.log(chalk.white.bold(`   ${addCommand}\n`))
 
 	// Wait for user to press 'g' to proceed
 	await waitForGo()
@@ -618,10 +676,20 @@ async function ensureTutorialAndStart(): Promise<WorkshopsResult> {
 		),
 	)
 
+	// Kody's message before starting
+	console.log(chalk.cyan("🐨 Alright, let's get the tutorial started for you."))
+	console.log(
+		chalk.cyan(
+			'   Once it\'s running, open it using the "o" key or by going to',
+		),
+	)
+	console.log(chalk.cyan.bold('   http://localhost:5639'))
+	console.log(chalk.cyan('   in your browser. See you over there!\n'))
+
 	// Show the command to start
 	const startCommand = `npx epicshop workshops start ${TUTORIAL_REPO}`
-	console.log(chalk.gray('Running:'))
-	console.log(chalk.white.bold(`  ${startCommand}\n`))
+	console.log(chalk.gray('   Running:'))
+	console.log(chalk.white.bold(`   ${startCommand}\n`))
 
 	// Wait for user to press 'g' to proceed
 	await waitForGo()
@@ -645,11 +713,22 @@ async function ensureTutorialAndStart(): Promise<WorkshopsResult> {
 }
 
 /**
- * Wait for user to press 'g' to proceed
+ * Check if the workshops directory is configured
+ */
+export async function isConfigured(): Promise<boolean> {
+	const { isReposDirectoryConfigured } = await import(
+		'@epic-web/workshop-utils/workshops.server'
+	)
+	return isReposDirectoryConfigured()
+}
+
+/**
+ * Wait for user to press 'g' to proceed or 'q' to quit
  */
 async function waitForGo(): Promise<void> {
-	return new Promise((resolve) => {
-		console.log(chalk.cyan('Press "g" when you\'re ready to go.'))
+	return new Promise((resolve, reject) => {
+		console.log(chalk.cyan('🐨 Press "g" when you\'re ready to go.'))
+		console.log(chalk.gray('   (press "q" to quit)\n'))
 
 		const cleanup = () => {
 			if (process.stdin.isTTY) {
@@ -661,9 +740,16 @@ async function waitForGo(): Promise<void> {
 
 		const onData = (key: Buffer) => {
 			const char = key.toString()
+			// Handle 'g' to go
 			if (char.toLowerCase() === 'g') {
 				cleanup()
 				resolve()
+			}
+			// Handle 'q' or Ctrl+C to quit
+			if (char.toLowerCase() === 'q' || char === '\u0003') {
+				cleanup()
+				console.log(chalk.gray('\n👋 Goodbye!'))
+				reject(new Error('USER_QUIT'))
 			}
 		}
 

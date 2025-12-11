@@ -1,6 +1,6 @@
-# EpicShop CLI Documentation
+# epicshop CLI Documentation
 
-The EpicShop CLI provides commands to manage and run Epic workshops. It's
+The epicshop CLI provides commands to manage and run Epic workshops. It's
 designed to help you start workshops, update them to the latest version, and
 warm up caches for better performance.
 
@@ -9,7 +9,7 @@ imports.
 
 ## Installation
 
-The CLI is typically installed as part of the EpicShop workshop setup. If you
+The CLI is typically installed as part of the epicshop workshop setup. If you
 need to install it separately:
 
 ```bash
@@ -140,10 +140,10 @@ epicshop workshops [subcommand] [options]
 
 ##### `workshops init` (default)
 
-Initialize EpicShop for first-time users. This command runs an interactive setup
+Initialize epicshop for first-time users. This command runs an interactive setup
 wizard that:
 
-1. Welcomes the user and explains what EpicShop does
+1. Welcomes the user and explains what epicshop does
 2. Prompts for a workshop storage directory (with a recommended default)
 3. Clones and sets up the `epicshop-tutorial` repository
 4. Starts the tutorial workshop
