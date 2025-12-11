@@ -17,7 +17,8 @@
       "./package.json": "./package.json",
       "./warm": "./src/commands/warm.js",
       "./start": "./src/commands/start.js",
-      "./update": "./src/commands/update.js"
+      "./update": "./src/commands/update.js",
+      "./workshops": "./src/commands/workshops.js"
     }
   },
   "exports": {
@@ -39,6 +40,12 @@
         "types": "./dist/esm/commands/update.d.ts",
         "default": "./dist/esm/commands/update.js"
       }
+    },
+    "./workshops": {
+      "import": {
+        "types": "./dist/esm/commands/workshops.d.ts",
+        "default": "./dist/esm/commands/workshops.js"
+      }
     }
   },
   "files": [
@@ -54,6 +61,7 @@
   },
   "dependencies": {
     "@epic-web/workshop-utils": "file:../workshop-utils",
+    "@inquirer/prompts": "^7.5.1",
     "chalk": "^5.6.2",
     "close-with-grace": "^2.3.0",
     "get-port": "^7.1.0",

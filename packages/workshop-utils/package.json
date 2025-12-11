@@ -35,7 +35,8 @@
       "./test": "./src/test.ts",
       "./request-context.server": "./src/request-context.server.ts",
       "./utils.server": "./src/utils.server.ts",
-      "./utils": "./src/utils.ts"
+      "./utils": "./src/utils.ts",
+      "./workshops.server": "./src/workshops.server.ts"
     }
   },
   "exports": {
@@ -182,6 +183,12 @@
       "import": {
         "types": "./dist/esm/utils.d.ts",
         "default": "./dist/esm/utils.js"
+      }
+    },
+    "./workshops.server": {
+      "import": {
+        "types": "./dist/esm/workshops.server.d.ts",
+        "default": "./dist/esm/workshops.server.js"
       }
     }
   },
