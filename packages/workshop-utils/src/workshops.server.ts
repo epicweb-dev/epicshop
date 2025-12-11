@@ -69,6 +69,15 @@ export async function getReposDirectory(): Promise<string> {
 	return data.reposDirectory || getDefaultReposDirectory()
 }
 
+export async function isReposDirectoryConfigured(): Promise<boolean> {
+	const data = await loadWorkshopsData()
+	return Boolean(data.reposDirectory)
+}
+
+export function getDefaultReposDir(): string {
+	return getDefaultReposDirectory()
+}
+
 export async function setReposDirectory(directory: string): Promise<void> {
 	const data = await loadWorkshopsData()
 	data.reposDirectory = path.resolve(directory)

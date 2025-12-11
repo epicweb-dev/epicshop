@@ -133,10 +133,29 @@ Manage local workshops on your machine. This command allows you to add, list,
 remove, and start workshops from the epicweb-dev GitHub organization.
 
 ```bash
-epicshop workshops <subcommand> [options]
+epicshop workshops [subcommand] [options]
 ```
 
 #### Subcommands
+
+##### `workshops init` (default)
+
+Initialize EpicShop for first-time users. This command runs an interactive
+setup wizard that:
+
+1. Welcomes the user and explains what EpicShop does
+2. Prompts for a workshop storage directory (with a recommended default)
+3. Clones and sets up the `epicshop-tutorial` repository
+4. Starts the tutorial workshop
+
+```bash
+epicshop workshops init
+# or simply
+epicshop workshops
+```
+
+This is the default subcommand, so running `epicshop workshops` without any
+arguments will start the onboarding flow.
 
 ##### `workshops add <repo-name>`
 

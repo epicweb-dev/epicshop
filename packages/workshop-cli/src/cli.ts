@@ -226,10 +226,27 @@ const cli = yargs(args)
 		},
 	)
 	.command(
-		'workshops <subcommand>',
+		'workshops [subcommand]',
 		'Manage local workshops',
 		(yargs: Argv) => {
 			return yargs
+				.command(
+					['init', '$0'],
+					'Initialize EpicShop and start the tutorial (first-time setup)',
+					(yargs: Argv) => {
+						return yargs.example(
+							'$0 workshops init',
+							'Run the first-time setup wizard',
+						)
+					},
+					async () => {
+						const { onboarding } = await import('./commands/workshops.js')
+						const result = await onboarding()
+						if (!result.success) {
+							process.exit(1)
+						}
+					},
+				)
 				.command(
 					'add <repo-name>',
 					'Add a workshop by cloning from epicweb-dev GitHub org',
@@ -411,7 +428,7 @@ const cli = yargs(args)
 						}
 					},
 				)
-				.demandCommand(1, 'Please specify a subcommand')
+				.demandCommand(0, 1)
 		},
 		() => {
 			// This is handled by the subcommands
