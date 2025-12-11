@@ -99,6 +99,15 @@ export async function add(options: AddOptions): Promise<WorkshopsResult> {
 		})
 
 		if (!setupResult.success) {
+			// Clean up the cloned directory on setup failure
+			if (!silent) {
+				console.log(chalk.yellow(`🧹 Cleaning up cloned directory...`))
+			}
+			try {
+				await fs.promises.rm(workshopPath, { recursive: true, force: true })
+			} catch {
+				// Ignore cleanup errors
+			}
 			return {
 				success: false,
 				message: `Failed to run setup: ${setupResult.message}`,
@@ -258,12 +267,18 @@ export async function startWorkshop(
 			'@epic-web/workshop-utils/workshops.server'
 		)
 
-		let workshopToStart = options.workshop
-			? await getWorkshop(options.workshop)
-			: undefined
+		let workshopToStart
 
-		// If no workshop specified, show selection
-		if (!workshopToStart) {
+		// If workshop specified, look it up and fail if not found
+		if (options.workshop) {
+			workshopToStart = await getWorkshop(options.workshop)
+			if (!workshopToStart) {
+				const message = `Workshop "${options.workshop}" not found`
+				if (!silent) console.log(chalk.yellow(`⚠️  ${message}`))
+				return { success: false, message }
+			}
+		} else {
+			// No workshop specified, show selection
 			const workshops = await listWorkshops()
 
 			if (workshops.length === 0) {
@@ -292,9 +307,7 @@ export async function startWorkshop(
 		}
 
 		if (!workshopToStart) {
-			const message = options.workshop
-				? `Workshop "${options.workshop}" not found`
-				: 'No workshop selected'
+			const message = 'No workshop selected'
 			if (!silent) console.log(chalk.yellow(`⚠️  ${message}`))
 			return { success: false, message }
 		}
@@ -416,7 +429,6 @@ function runCommand(
 		const child = spawn(command, args, {
 			cwd: options.cwd,
 			stdio: options.silent ? 'pipe' : 'inherit',
-			shell: true,
 		})
 
 		child.on('error', (error) => {
@@ -445,7 +457,6 @@ function runCommandInteractive(
 		const child = spawn(command, args, {
 			cwd: options.cwd,
 			stdio: 'inherit',
-			shell: true,
 		})
 
 		child.on('error', (error) => {
