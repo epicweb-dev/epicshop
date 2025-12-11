@@ -140,8 +140,8 @@ epicshop workshops [subcommand] [options]
 
 ##### `workshops init` (default)
 
-Initialize EpicShop for first-time users. This command runs an interactive
-setup wizard that:
+Initialize EpicShop for first-time users. This command runs an interactive setup
+wizard that:
 
 1. Welcomes the user and explains what EpicShop does
 2. Prompts for a workshop storage directory (with a recommended default)
@@ -206,25 +206,31 @@ epicshop workshops list [options]
 epicshop workshops list
 ```
 
-##### `workshops remove <workshop>`
+##### `workshops remove [workshop]`
 
-Remove a workshop from the registry. This does NOT delete the files on disk.
+Remove a workshop from the registry. This does NOT delete the files on disk. If
+no workshop is specified, an interactive selection menu will be shown.
 
 ```bash
-epicshop workshops remove <workshop> [options]
+epicshop workshops remove [workshop] [options]
 ```
 
 **Arguments:**
 
-- `workshop` - Workshop name, repo name, or ID to remove
+- `workshop` (optional) - Workshop name, repo name, or ID to remove. If not
+  provided, you'll be prompted to select from your added workshops.
 
 **Options:**
 
 - `--silent, -s` - Run without output logs (default: false)
 
-**Example:**
+**Examples:**
 
 ```bash
+# Interactive selection
+epicshop workshops remove
+
+# Remove a specific workshop
 epicshop workshops remove full-stack-foundations
 ```
 

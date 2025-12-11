@@ -217,29 +217,55 @@ export async function remove({
 	workshop,
 	silent = false,
 }: {
-	workshop: string
+	workshop?: string
 	silent?: boolean
 }): Promise<WorkshopsResult> {
 	try {
-		const { removeWorkshop, getWorkshop } = await import(
+		const { removeWorkshop, getWorkshop, listWorkshops } = await import(
 			'@epic-web/workshop-utils/workshops.server'
 		)
 
-		const workshopData = await getWorkshop(workshop)
+		let workshopToRemove = workshop
+
+		// If no workshop specified, prompt for selection
+		if (!workshopToRemove) {
+			const workshops = await listWorkshops()
+
+			if (workshops.length === 0) {
+				const message = `No workshops to remove. Use 'epicshop workshops add <repo-name>' to add one first.`
+				if (!silent) console.log(chalk.yellow(message))
+				return { success: false, message }
+			}
+
+			const { select } = await import('@inquirer/prompts')
+
+			const choices = workshops.map((w) => ({
+				name: `${w.name} (${w.repoName})`,
+				value: w.repoName,
+				description: w.path,
+			}))
+
+			workshopToRemove = await select({
+				message: 'Select a workshop to remove:',
+				choices,
+			})
+		}
+
+		const workshopData = await getWorkshop(workshopToRemove)
 		if (!workshopData) {
-			const message = `Workshop "${workshop}" not found`
+			const message = `Workshop "${workshopToRemove}" not found`
 			if (!silent) console.log(chalk.yellow(`⚠️  ${message}`))
 			return { success: false, message }
 		}
 
-		const removed = await removeWorkshop(workshop)
+		const removed = await removeWorkshop(workshopToRemove)
 		if (removed) {
 			const message = `Workshop "${workshopData.name}" removed from list (files at ${workshopData.path} were not deleted)`
 			if (!silent) console.log(chalk.green(`✅ ${message}`))
 			return { success: true, message }
 		}
 
-		const message = `Failed to remove workshop "${workshop}"`
+		const message = `Failed to remove workshop "${workshopToRemove}"`
 		if (!silent) console.log(chalk.red(`❌ ${message}`))
 		return { success: false, message }
 	} catch (error) {
