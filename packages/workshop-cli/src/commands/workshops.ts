@@ -728,7 +728,8 @@ export async function isConfigured(): Promise<boolean> {
 async function waitForGo(): Promise<void> {
 	return new Promise((resolve, reject) => {
 		console.log(chalk.cyan('🐨 Press "g" when you\'re ready to go.'))
-		console.log(chalk.gray('   (press "q" to quit)\n'))
+		console.log(chalk.gray('   (press "q" to quit)'))
+		console.log()
 
 		const cleanup = () => {
 			if (process.stdin.isTTY) {
