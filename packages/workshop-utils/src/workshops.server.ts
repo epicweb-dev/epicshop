@@ -5,30 +5,44 @@ import * as path from 'node:path'
 import { z } from 'zod'
 import { resolvePrimaryDir } from './data-storage.server.js'
 
-const WORKSHOPS_FILE = 'workshops.json'
+const CONFIG_FILE = 'workshops-config.json'
 
-const WorkshopSchema = z.object({
-	id: z.string(),
-	name: z.string(),
-	repoName: z.string(),
-	path: z.string(),
-	addedAt: z.string(),
+// Schema for the epicshop property in package.json
+const EpicshopConfigSchema = z.object({
+	title: z.string(),
+	subtitle: z.string().optional(),
+	product: z
+		.object({
+			host: z.string().optional(),
+			slug: z.string().optional(),
+			logo: z.string().optional(),
+			displayName: z.string().optional(),
+			displayNameShort: z.string().optional(),
+		})
+		.optional(),
 })
 
-const WorkshopsDataSchema = z.object({
+// Schema for workshop configuration (stored settings only)
+const ConfigSchema = z.object({
 	reposDirectory: z.string().optional(),
-	workshops: z.array(WorkshopSchema).default([]),
 })
 
-export type Workshop = z.infer<typeof WorkshopSchema>
-export type WorkshopsData = z.infer<typeof WorkshopsDataSchema>
+export type Workshop = {
+	name: string
+	title: string
+	subtitle?: string
+	repoName: string
+	path: string
+}
+
+export type WorkshopsConfig = z.infer<typeof ConfigSchema>
 
 function getDefaultReposDirectory(): string {
 	return path.join(os.homedir(), 'epicweb-workshops')
 }
 
-function resolveWorkshopsPath(): string {
-	return path.join(resolvePrimaryDir(), WORKSHOPS_FILE)
+function resolveConfigPath(): string {
+	return path.join(resolvePrimaryDir(), CONFIG_FILE)
 }
 
 async function ensureDir(dir: string) {
@@ -48,30 +62,30 @@ async function atomicWriteJSON(filePath: string, data: unknown) {
 	await fs.rename(tmp, filePath)
 }
 
-export async function loadWorkshopsData(): Promise<WorkshopsData> {
-	const workshopsPath = resolveWorkshopsPath()
+export async function loadConfig(): Promise<WorkshopsConfig> {
+	const configPath = resolveConfigPath()
 	try {
-		const txt = await fs.readFile(workshopsPath, 'utf8')
+		const txt = await fs.readFile(configPath, 'utf8')
 		const data = JSON.parse(txt)
-		return WorkshopsDataSchema.parse(data)
+		return ConfigSchema.parse(data)
 	} catch {
-		return { workshops: [] }
+		return {}
 	}
 }
 
-export async function saveWorkshopsData(data: WorkshopsData): Promise<void> {
-	const workshopsPath = resolveWorkshopsPath()
-	await atomicWriteJSON(workshopsPath, data)
+export async function saveConfig(config: WorkshopsConfig): Promise<void> {
+	const configPath = resolveConfigPath()
+	await atomicWriteJSON(configPath, config)
 }
 
 export async function getReposDirectory(): Promise<string> {
-	const data = await loadWorkshopsData()
-	return data.reposDirectory || getDefaultReposDirectory()
+	const config = await loadConfig()
+	return config.reposDirectory || getDefaultReposDirectory()
 }
 
 export async function isReposDirectoryConfigured(): Promise<boolean> {
-	const data = await loadWorkshopsData()
-	return Boolean(data.reposDirectory)
+	const config = await loadConfig()
+	return Boolean(config.reposDirectory)
 }
 
 export function getDefaultReposDir(): string {
@@ -79,14 +93,58 @@ export function getDefaultReposDir(): string {
 }
 
 export async function setReposDirectory(directory: string): Promise<void> {
-	const data = await loadWorkshopsData()
-	data.reposDirectory = path.resolve(directory)
-	await saveWorkshopsData(data)
+	const config = await loadConfig()
+	config.reposDirectory = path.resolve(directory)
+	await saveConfig(config)
 }
 
+/**
+ * Scan a directory for workshops (directories with package.json containing "epicshop" property)
+ */
 export async function listWorkshops(): Promise<Workshop[]> {
-	const data = await loadWorkshopsData()
-	return data.workshops
+	const reposDir = await getReposDirectory()
+
+	// Check if directory exists
+	try {
+		await fs.access(reposDir)
+	} catch {
+		return []
+	}
+
+	const entries = await fs.readdir(reposDir, { withFileTypes: true })
+	const workshops: Workshop[] = []
+
+	for (const entry of entries) {
+		if (!entry.isDirectory()) continue
+
+		const workshopPath = path.join(reposDir, entry.name)
+		const pkgPath = path.join(workshopPath, 'package.json')
+
+		try {
+			const pkgContent = await fs.readFile(pkgPath, 'utf8')
+			const pkg = JSON.parse(pkgContent) as {
+				name?: string
+				epicshop?: unknown
+			}
+
+			if (pkg.epicshop) {
+				const epicshopConfig = EpicshopConfigSchema.safeParse(pkg.epicshop)
+				if (epicshopConfig.success) {
+					workshops.push({
+						name: pkg.name || entry.name,
+						title: epicshopConfig.data.title,
+						subtitle: epicshopConfig.data.subtitle,
+						repoName: entry.name,
+						path: workshopPath,
+					})
+				}
+			}
+		} catch {
+			// Not a valid workshop directory, skip
+		}
+	}
+
+	return workshops
 }
 
 export async function getWorkshop(
@@ -95,56 +153,10 @@ export async function getWorkshop(
 	const workshops = await listWorkshops()
 	return workshops.find(
 		(w) =>
-			w.id === idOrName ||
 			w.name.toLowerCase() === idOrName.toLowerCase() ||
-			w.repoName.toLowerCase() === idOrName.toLowerCase(),
+			w.repoName.toLowerCase() === idOrName.toLowerCase() ||
+			w.title.toLowerCase() === idOrName.toLowerCase(),
 	)
-}
-
-export async function addWorkshop(
-	workshop: Omit<Workshop, 'id' | 'addedAt'>,
-): Promise<Workshop> {
-	const data = await loadWorkshopsData()
-
-	// Check if workshop already exists
-	const existing = data.workshops.find(
-		(w) =>
-			w.repoName.toLowerCase() === workshop.repoName.toLowerCase() ||
-			w.path === workshop.path,
-	)
-	if (existing) {
-		throw new Error(
-			`Workshop "${workshop.repoName}" already exists at ${existing.path}`,
-		)
-	}
-
-	const newWorkshop: Workshop = {
-		...workshop,
-		id: randomUUID(),
-		addedAt: new Date().toISOString(),
-	}
-
-	data.workshops.push(newWorkshop)
-	await saveWorkshopsData(data)
-	return newWorkshop
-}
-
-export async function removeWorkshop(idOrName: string): Promise<boolean> {
-	const data = await loadWorkshopsData()
-	const initialLength = data.workshops.length
-
-	data.workshops = data.workshops.filter(
-		(w) =>
-			w.id !== idOrName &&
-			w.name.toLowerCase() !== idOrName.toLowerCase() &&
-			w.repoName.toLowerCase() !== idOrName.toLowerCase(),
-	)
-
-	if (data.workshops.length < initialLength) {
-		await saveWorkshopsData(data)
-		return true
-	}
-	return false
 }
 
 export async function workshopExists(repoName: string): Promise<boolean> {
@@ -160,4 +172,147 @@ export async function getWorkshopByPath(
 	const workshops = await listWorkshops()
 	const resolvedPath = path.resolve(workshopPath)
 	return workshops.find((w) => path.resolve(w.path) === resolvedPath)
+}
+
+/**
+ * Check for unpushed changes in a git repository
+ * Returns info about unpushed commits across all branches
+ */
+export async function getUnpushedChanges(repoPath: string): Promise<{
+	hasUnpushed: boolean
+	branches: Array<{ name: string; unpushedCount: number }>
+	uncommittedChanges: boolean
+	summary: string[]
+}> {
+	const { execSync } = await import('node:child_process')
+
+	const result = {
+		hasUnpushed: false,
+		branches: [] as Array<{ name: string; unpushedCount: number }>,
+		uncommittedChanges: false,
+		summary: [] as string[],
+	}
+
+	try {
+		// Check if it's a git repository
+		execSync('git rev-parse --git-dir', {
+			cwd: repoPath,
+			stdio: 'pipe',
+		})
+	} catch {
+		// Not a git repository
+		return result
+	}
+
+	try {
+		// Check for uncommitted changes
+		const status = execSync('git status --porcelain', {
+			cwd: repoPath,
+			encoding: 'utf8',
+		}).trim()
+
+		if (status) {
+			result.uncommittedChanges = true
+			result.hasUnpushed = true
+			const lines = status.split('\n')
+			const modified = lines.filter(
+				(l) => l.startsWith(' M') || l.startsWith('M '),
+			).length
+			const added = lines.filter(
+				(l) => l.startsWith('A ') || l.startsWith('??'),
+			).length
+			const deleted = lines.filter(
+				(l) => l.startsWith(' D') || l.startsWith('D '),
+			).length
+
+			const parts = []
+			if (modified > 0) parts.push(`${modified} modified`)
+			if (added > 0) parts.push(`${added} untracked/added`)
+			if (deleted > 0) parts.push(`${deleted} deleted`)
+			if (parts.length > 0) {
+				result.summary.push(`Uncommitted changes: ${parts.join(', ')}`)
+			}
+		}
+
+		// Get all local branches
+		const branchOutput = execSync('git branch', {
+			cwd: repoPath,
+			encoding: 'utf8',
+		}).trim()
+
+		const branches = branchOutput
+			.split('\n')
+			.map((b) => b.replace(/^\*?\s*/, '').trim())
+			.filter(Boolean)
+
+		for (const branch of branches) {
+			try {
+				// Check if branch has an upstream
+				const upstream = execSync(
+					`git rev-parse --abbrev-ref ${branch}@{upstream}`,
+					{
+						cwd: repoPath,
+						encoding: 'utf8',
+						stdio: ['pipe', 'pipe', 'pipe'],
+					},
+				).trim()
+
+				// Count unpushed commits
+				const unpushedOutput = execSync(
+					`git rev-list --count ${upstream}..${branch}`,
+					{
+						cwd: repoPath,
+						encoding: 'utf8',
+					},
+				).trim()
+
+				const unpushedCount = parseInt(unpushedOutput, 10)
+				if (unpushedCount > 0) {
+					result.hasUnpushed = true
+					result.branches.push({ name: branch, unpushedCount })
+					result.summary.push(
+						`Branch "${branch}": ${unpushedCount} unpushed commit${unpushedCount > 1 ? 's' : ''}`,
+					)
+				}
+			} catch {
+				// Branch has no upstream, check if it has any commits not in any remote
+				try {
+					const allRemotes = execSync('git remote', {
+						cwd: repoPath,
+						encoding: 'utf8',
+					}).trim()
+
+					if (allRemotes) {
+						// Branch exists but has no upstream tracking
+						const commitCount = execSync(`git rev-list --count ${branch}`, {
+							cwd: repoPath,
+							encoding: 'utf8',
+						}).trim()
+
+						const count = parseInt(commitCount, 10)
+						if (count > 0) {
+							result.hasUnpushed = true
+							result.branches.push({ name: branch, unpushedCount: count })
+							result.summary.push(
+								`Branch "${branch}": ${count} local commit${count > 1 ? 's' : ''} (no upstream)`,
+							)
+						}
+					}
+				} catch {
+					// Ignore errors for individual branches
+				}
+			}
+		}
+	} catch {
+		// Error checking git status, assume no unpushed changes
+	}
+
+	return result
+}
+
+/**
+ * Delete a workshop directory
+ */
+export async function deleteWorkshop(workshopPath: string): Promise<void> {
+	await fs.rm(workshopPath, { recursive: true, force: true })
 }

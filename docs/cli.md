@@ -208,8 +208,8 @@ epicshop workshops list
 
 ##### `workshops remove [workshop]`
 
-Remove a workshop from the registry. This does NOT delete the files on disk. If
-no workshop is specified, an interactive selection menu will be shown.
+Remove a workshop by deleting its directory. If no workshop is specified, an
+interactive selection menu will be shown.
 
 ```bash
 epicshop workshops remove [workshop] [options]
@@ -217,8 +217,8 @@ epicshop workshops remove [workshop] [options]
 
 **Arguments:**
 
-- `workshop` (optional) - Workshop name, repo name, or ID to remove. If not
-  provided, you'll be prompted to select from your added workshops.
+- `workshop` (optional) - Workshop name, repo name, or title to remove. If not
+  provided, you'll be prompted to select from your workshops.
 
 **Options:**
 
@@ -233,6 +233,13 @@ epicshop workshops remove
 # Remove a specific workshop
 epicshop workshops remove full-stack-foundations
 ```
+
+**Safety Features:**
+
+- If the workshop has unpushed git changes (uncommitted files or commits not
+  pushed to remote), you'll see a colorized summary and be asked to confirm
+  deletion
+- Always asks for confirmation before deleting
 
 ##### `workshops start [workshop]`
 

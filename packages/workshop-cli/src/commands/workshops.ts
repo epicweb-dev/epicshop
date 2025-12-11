@@ -37,13 +37,13 @@ export async function add(options: AddOptions): Promise<WorkshopsResult> {
 	const { repoName, silent = false } = options
 
 	try {
-		const { getReposDirectory, addWorkshop, workshopExists } = await import(
+		const { getReposDirectory, workshopExists } = await import(
 			'@epic-web/workshop-utils/workshops.server'
 		)
 
 		// Check if workshop already exists
 		if (await workshopExists(repoName)) {
-			const message = `Workshop "${repoName}" is already added`
+			const message = `Workshop "${repoName}" already exists`
 			if (!silent) console.log(chalk.yellow(`⚠️  ${message}`))
 			return { success: false, message }
 		}
@@ -116,26 +116,6 @@ export async function add(options: AddOptions): Promise<WorkshopsResult> {
 			}
 		}
 
-		// Try to get the workshop name from package.json
-		let workshopName = repoName
-		try {
-			const pkgPath = path.join(workshopPath, 'package.json')
-			const pkgContent = await fs.promises.readFile(pkgPath, 'utf8')
-			const pkg = JSON.parse(pkgContent) as { name?: string }
-			if (pkg.name) {
-				workshopName = pkg.name
-			}
-		} catch {
-			// Use repo name if package.json can't be read
-		}
-
-		// Add to our workshops database
-		await addWorkshop({
-			name: workshopName,
-			repoName,
-			path: workshopPath,
-		})
-
 		const message = `Workshop "${repoName}" added successfully at ${workshopPath}`
 		if (!silent) {
 			console.log(chalk.green(`✅ ${message}`))
@@ -156,7 +136,7 @@ export async function add(options: AddOptions): Promise<WorkshopsResult> {
 }
 
 /**
- * List all added workshops
+ * List all workshops found in the repos directory
  */
 export async function list({
 	silent = false,
@@ -170,10 +150,10 @@ export async function list({
 		const reposDir = await getReposDirectory()
 
 		if (workshops.length === 0) {
-			const message = `No workshops added yet. Use 'epicshop workshops add <repo-name>' to add one.`
+			const message = `No workshops found. Use 'epicshop workshops add <repo-name>' to add one.`
 			if (!silent) {
 				console.log(chalk.yellow(message))
-				console.log(chalk.gray(`\nDefault repos directory: ${reposDir}`))
+				console.log(chalk.gray(`\nWorkshops directory: ${reposDir}`))
 			}
 			return { success: true, message }
 		}
@@ -181,16 +161,15 @@ export async function list({
 		if (!silent) {
 			console.log(chalk.bold.cyan('\n📚 Your Workshops:\n'))
 			for (const workshop of workshops) {
-				const exists = await directoryExists(workshop.path)
-				const status = exists
-					? chalk.green('✓')
-					: chalk.red('✗ (directory missing)')
-				console.log(`  ${status} ${chalk.bold(workshop.name)}`)
+				console.log(`  ${chalk.green('✓')} ${chalk.bold(workshop.title)}`)
+				if (workshop.subtitle) {
+					console.log(chalk.gray(`      ${workshop.subtitle}`))
+				}
 				console.log(chalk.gray(`      Repo: ${workshop.repoName}`))
 				console.log(chalk.gray(`      Path: ${workshop.path}`))
 				console.log()
 			}
-			console.log(chalk.gray(`Repos directory: ${reposDir}\n`))
+			console.log(chalk.gray(`Workshops directory: ${reposDir}\n`))
 		}
 
 		return {
@@ -211,7 +190,7 @@ export async function list({
 }
 
 /**
- * Remove a workshop from the list (does not delete files)
+ * Remove a workshop (deletes the directory)
  */
 export async function remove({
 	workshop,
@@ -221,9 +200,8 @@ export async function remove({
 	silent?: boolean
 }): Promise<WorkshopsResult> {
 	try {
-		const { removeWorkshop, getWorkshop, listWorkshops } = await import(
-			'@epic-web/workshop-utils/workshops.server'
-		)
+		const { getWorkshop, listWorkshops, getUnpushedChanges, deleteWorkshop } =
+			await import('@epic-web/workshop-utils/workshops.server')
 
 		let workshopToRemove = workshop
 
@@ -240,7 +218,7 @@ export async function remove({
 			const { select } = await import('@inquirer/prompts')
 
 			const choices = workshops.map((w) => ({
-				name: `${w.name} (${w.repoName})`,
+				name: `${w.title} (${w.repoName})`,
 				value: w.repoName,
 				description: w.path,
 			}))
@@ -258,16 +236,53 @@ export async function remove({
 			return { success: false, message }
 		}
 
-		const removed = await removeWorkshop(workshopToRemove)
-		if (removed) {
-			const message = `Workshop "${workshopData.name}" removed from list (files at ${workshopData.path} were not deleted)`
-			if (!silent) console.log(chalk.green(`✅ ${message}`))
-			return { success: true, message }
+		// Check for unpushed changes
+		const unpushed = await getUnpushedChanges(workshopData.path)
+
+		if (unpushed.hasUnpushed) {
+			console.log()
+			console.log(
+				chalk.yellow.bold(
+					`⚠️  Warning: "${workshopData.title}" has unpushed changes:\n`,
+				),
+			)
+			for (const line of unpushed.summary) {
+				console.log(chalk.yellow(`   • ${line}`))
+			}
+			console.log()
+
+			const { confirm } = await import('@inquirer/prompts')
+			const shouldDelete = await confirm({
+				message: `Delete "${workshopData.title}" anyway? This cannot be undone.`,
+				default: false,
+			})
+
+			if (!shouldDelete) {
+				const message = 'Removal cancelled'
+				if (!silent) console.log(chalk.gray(message))
+				return { success: false, message }
+			}
+		} else {
+			// No unpushed changes, but still confirm deletion
+			const { confirm } = await import('@inquirer/prompts')
+			const shouldDelete = await confirm({
+				message: `Delete "${workshopData.title}" at ${workshopData.path}?`,
+				default: false,
+			})
+
+			if (!shouldDelete) {
+				const message = 'Removal cancelled'
+				if (!silent) console.log(chalk.gray(message))
+				return { success: false, message }
+			}
 		}
 
-		const message = `Failed to remove workshop "${workshopToRemove}"`
-		if (!silent) console.log(chalk.red(`❌ ${message}`))
-		return { success: false, message }
+		// Delete the workshop directory
+		await deleteWorkshop(workshopData.path)
+
+		const message = `Workshop "${workshopData.title}" deleted successfully`
+		if (!silent) console.log(chalk.green(`✅ ${message}`))
+		return { success: true, message }
 	} catch (error) {
 		const message = error instanceof Error ? error.message : String(error)
 		if (!silent) {
@@ -309,7 +324,7 @@ export async function startWorkshop(
 			const workshops = await listWorkshops()
 
 			if (workshops.length === 0) {
-				const message = `No workshops added yet. Use 'epicshop workshops add <repo-name>' to add one.`
+				const message = `No workshops found. Use 'epicshop workshops add <repo-name>' to add one.`
 				if (!silent) console.log(chalk.yellow(message))
 				return { success: false, message }
 			}
@@ -318,7 +333,7 @@ export async function startWorkshop(
 			const { select } = await import('@inquirer/prompts')
 
 			const choices = workshops.map((w) => ({
-				name: `${w.name} (${w.repoName})`,
+				name: `${w.title} (${w.repoName})`,
 				value: w,
 				description: w.path,
 			}))
@@ -344,7 +359,7 @@ export async function startWorkshop(
 
 		if (!silent) {
 			console.log(
-				chalk.cyan(`🚀 Starting ${chalk.bold(workshopToStart.name)}...`),
+				chalk.cyan(`🚀 Starting ${chalk.bold(workshopToStart.title)}...`),
 			)
 			console.log(chalk.gray(`   Path: ${workshopToStart.path}\n`))
 		}
@@ -516,7 +531,7 @@ export async function onboarding(): Promise<WorkshopsResult> {
  * Ensure the tutorial workshop exists and start it
  */
 async function ensureTutorialAndStart(): Promise<WorkshopsResult> {
-	const { workshopExists, getReposDirectory, addWorkshop } = await import(
+	const { workshopExists, getReposDirectory, getWorkshop } = await import(
 		'@epic-web/workshop-utils/workshops.server'
 	)
 
@@ -592,30 +607,14 @@ async function ensureTutorialAndStart(): Promise<WorkshopsResult> {
 		}
 	}
 
-	// Try to get the workshop name from package.json
-	let workshopName = TUTORIAL_REPO
-	try {
-		const pkgPath = path.join(workshopPath, 'package.json')
-		const pkgContent = await fs.promises.readFile(pkgPath, 'utf8')
-		const pkg = JSON.parse(pkgContent) as { name?: string }
-		if (pkg.name) {
-			workshopName = pkg.name
-		}
-	} catch {
-		// Use repo name if package.json can't be read
-	}
-
-	// Add to our workshops database
-	await addWorkshop({
-		name: workshopName,
-		repoName: TUTORIAL_REPO,
-		path: workshopPath,
-	})
+	// Get the workshop info (now discoverable since it has package.json with epicshop)
+	const workshop = await getWorkshop(TUTORIAL_REPO)
+	const workshopTitle = workshop?.title || TUTORIAL_REPO
 
 	console.log()
 	console.log(
 		chalk.green(
-			`✅ ${chalk.bold(TUTORIAL_REPO)} has been set up successfully!\n`,
+			`✅ ${chalk.bold(workshopTitle)} has been set up successfully!\n`,
 		),
 	)
 
@@ -627,7 +626,7 @@ async function ensureTutorialAndStart(): Promise<WorkshopsResult> {
 	// Wait 2 seconds or 'g' to skip
 	await waitWithSkip(2000, 'Press "g" to skip waiting...')
 
-	console.log(chalk.cyan(`🚀 Starting ${chalk.bold(workshopName)}...\n`))
+	console.log(chalk.cyan(`🚀 Starting ${chalk.bold(workshopTitle)}...\n`))
 
 	// Start the workshop
 	const startResult = await runCommandInteractive('npm', ['start'], {

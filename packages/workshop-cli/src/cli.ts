@@ -319,12 +319,12 @@ const cli = yargs(args)
 				)
 				.command(
 					'remove [workshop]',
-					'Remove a workshop from the list (does not delete files)',
+					'Remove a workshop (deletes the directory)',
 					(yargs: Argv) => {
 						return yargs
 							.positional('workshop', {
 								describe:
-									'Workshop name, repo name, or ID to remove (prompts if not provided)',
+									'Workshop name, repo name, or title to remove (prompts if not provided)',
 								type: 'string',
 							})
 							.option('silent', {
@@ -335,11 +335,11 @@ const cli = yargs(args)
 							})
 							.example(
 								'$0 workshops remove',
-								'Select a workshop to remove from a list',
+								'Select a workshop to remove',
 							)
 							.example(
 								'$0 workshops remove full-stack-foundations',
-								'Remove a specific workshop from list',
+								'Remove a specific workshop',
 							)
 					},
 					async (
