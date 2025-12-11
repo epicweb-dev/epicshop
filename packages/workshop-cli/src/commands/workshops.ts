@@ -287,23 +287,19 @@ export async function startWorkshop(
 				return { success: false, message }
 			}
 
-			if (workshops.length === 1) {
-				workshopToStart = workshops[0]
-			} else {
-				// Interactive selection
-				const { select } = await import('@inquirer/prompts')
+			// Interactive selection
+			const { select } = await import('@inquirer/prompts')
 
-				const choices = workshops.map((w) => ({
-					name: `${w.name} (${w.repoName})`,
-					value: w,
-					description: w.path,
-				}))
+			const choices = workshops.map((w) => ({
+				name: `${w.name} (${w.repoName})`,
+				value: w,
+				description: w.path,
+			}))
 
-				workshopToStart = await select({
-					message: 'Select a workshop to start:',
-					choices,
-				})
-			}
+			workshopToStart = await select({
+				message: 'Select a workshop to start:',
+				choices,
+			})
 		}
 
 		if (!workshopToStart) {
