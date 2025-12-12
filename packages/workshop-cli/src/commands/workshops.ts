@@ -936,7 +936,16 @@ export async function onboarding(): Promise<WorkshopsResult> {
 				"🐨 Hey there! Welcome to the epicshop CLI. I'm Kody the Koala, and I'm here to help you learn.",
 			),
 		)
-		console.log(chalk.cyan("   Let's get you set up.\n"))
+		console.log(
+			chalk.cyan(
+				"   It looks like this is the first time you're using epicshop, so I'm going to help you get set up and get you started with the tutorial.",
+			),
+		)
+		console.log(
+			chalk.gray(
+				`   Once you're finished going through the tutorial, feel free to run ${chalk.underline(`npx epicshop ${process.argv.slice(2).join(' ')}`)} again.\n`,
+			),
+		)
 
 		console.log(
 			chalk.white('   First, we need to choose where to store your workshops.'),
