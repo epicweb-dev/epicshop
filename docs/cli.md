@@ -360,6 +360,61 @@ epicshop migrate
 epicshop migrate --silent
 ```
 
+### `auth`
+
+Manage authentication for Epic domains (epicweb.dev, epicreact.dev, epicai.pro).
+This command allows you to view your login status, log in to domains, and log
+out.
+
+```bash
+epicshop auth [subcommand] [options]
+```
+
+#### Subcommands
+
+- `status` - Show login status for all Epic domains
+- `login` - Log in to an Epic domain using device authorization flow
+- `logout` - Log out from an Epic domain
+
+#### Options
+
+- `--silent, -s` - Run without output logs (default: false)
+
+#### Examples
+
+```bash
+# Show interactive auth menu
+epicshop auth
+
+# Show login status for all domains
+epicshop auth status
+
+# Log in to a domain (interactive domain selection)
+epicshop auth login
+
+# Log in to a specific domain
+epicshop auth login epicweb.dev
+epicshop auth login epicreact
+epicshop auth login epicai.pro
+
+# Log out from a domain (interactive selection from logged-in domains)
+epicshop auth logout
+
+# Log out from a specific domain
+epicshop auth logout epicweb.dev
+epicshop auth logout epicreact
+```
+
+#### Notes
+
+- The login flow uses OAuth device authorization - you'll be given a URL to open
+  in your browser and a code to verify
+- Authentication is stored locally and persists across sessions
+- Each domain (epicweb.dev, epicreact.dev, epicai.pro) has separate
+  authentication
+- Being logged in enables features like progress tracking and video access in
+  workshops
+
 ## Interactive Command Chooser
 
 When you run `epicshop` without any arguments, an interactive command chooser is
@@ -494,6 +549,33 @@ const configResult = await config({
 	reposDir: '/path/to/repos', // optional, omit to view config
 	silent: false,
 })
+```
+
+### Using the Auth Command
+
+```javascript
+import { status, login, logout } from '@epic-web/workshop-cli/auth'
+
+// Show auth status for all domains
+const statusResult = await status({ silent: false })
+
+// Login to a specific domain
+const loginResult = await login({
+	domain: 'epicweb.dev', // optional, prompts interactively if omitted
+	silent: false,
+})
+
+// Logout from a domain
+const logoutResult = await logout({
+	domain: 'epicweb.dev', // optional, prompts interactively if omitted
+	silent: false,
+})
+
+if (loginResult.success) {
+	console.log('Login successful:', loginResult.message)
+} else {
+	console.error('Login failed:', loginResult.message)
+}
 ```
 
 ### TypeScript Support
@@ -692,16 +774,17 @@ epicshop start
 
 ## Command Reference Summary
 
-| Command             | Description                                 | Context-Aware |
-| ------------------- | ------------------------------------------- | ------------- |
-| `epicshop`          | Interactive command chooser                 | ✓             |
-| `epicshop start`    | Start a workshop                            | ✓             |
-| `epicshop init`     | First-time setup wizard                     | ✗             |
-| `epicshop add`      | Clone a workshop from epicweb-dev           | ✗             |
-| `epicshop list`     | List all workshops                          | ✗             |
-| `epicshop remove`   | Remove a workshop                           | ✓             |
-| `epicshop open`     | Open workshop in editor                     | ✓             |
-| `epicshop config`   | View/update configuration                   | ✗             |
-| `epicshop update`   | Update workshop to latest version           | ✓             |
-| `epicshop warm`     | Warm up caches                              | ✓             |
-| `epicshop migrate`  | Run data migrations                         | ✗             |
+| Command            | Description                            | Context-Aware |
+| ------------------ | -------------------------------------- | ------------- |
+| `epicshop`         | Interactive command chooser            | ✓             |
+| `epicshop start`   | Start a workshop                       | ✓             |
+| `epicshop init`    | First-time setup wizard                | ✗             |
+| `epicshop add`     | Clone a workshop from epicweb-dev      | ✗             |
+| `epicshop list`    | List all workshops                     | ✗             |
+| `epicshop remove`  | Remove a workshop                      | ✓             |
+| `epicshop open`    | Open workshop in editor                | ✓             |
+| `epicshop config`  | View/update configuration              | ✗             |
+| `epicshop update`  | Update workshop to latest version      | ✓             |
+| `epicshop warm`    | Warm up caches                         | ✓             |
+| `epicshop migrate` | Run data migrations                    | ✗             |
+| `epicshop auth`    | Manage authentication for Epic domains | ✗             |

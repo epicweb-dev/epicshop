@@ -685,6 +685,114 @@ const cli = yargs(args)
 			}
 		},
 	)
+	.command(
+		'auth [subcommand] [domain]',
+		'Manage authentication for Epic domains (epicweb.dev, epicreact.dev, epicai.pro)',
+		(yargs: Argv) => {
+			return yargs
+				.positional('subcommand', {
+					describe: 'Auth subcommand (status, login, logout)',
+					type: 'string',
+					choices: ['status', 'login', 'logout'],
+				})
+				.positional('domain', {
+					describe:
+						'Domain to authenticate with (e.g., epicweb.dev, epicreact, epicai)',
+					type: 'string',
+				})
+				.option('silent', {
+					alias: 's',
+					type: 'boolean',
+					description: 'Run without output logs',
+					default: false,
+				})
+				.example('$0 auth', 'Show auth subcommand menu')
+				.example('$0 auth status', 'Show login status for all domains')
+				.example('$0 auth login', 'Login to a domain (interactive)')
+				.example('$0 auth login epicweb.dev', 'Login to EpicWeb.dev')
+				.example('$0 auth logout epicreact', 'Logout from EpicReact.dev')
+		},
+		async (
+			argv: ArgumentsCamelCase<{
+				subcommand?: string
+				domain?: string
+				silent?: boolean
+			}>,
+		) => {
+			const { status, login, logout } = await import('./commands/auth.js')
+
+			let subcommand = argv.subcommand
+
+			if (!subcommand) {
+				if (argv.silent) {
+					console.error(
+						chalk.red(
+							'❌ Subcommand required in silent mode (status, login, logout)',
+						),
+					)
+					process.exit(1)
+				}
+
+				const { search } = await import('@inquirer/prompts')
+
+				const authChoices = [
+					{
+						name: `${chalk.green('status')} - Show login status`,
+						value: 'status' as const,
+						description: 'Show login status for all Epic domains',
+					},
+					{
+						name: `${chalk.green('login')} - Log in to a domain`,
+						value: 'login' as const,
+						description: 'Log in to EpicWeb.dev, EpicReact.dev, or EpicAI.pro',
+					},
+					{
+						name: `${chalk.green('logout')} - Log out from a domain`,
+						value: 'logout' as const,
+						description: 'Log out from an Epic domain',
+					},
+				]
+
+				try {
+					subcommand = await search({
+						message: 'What would you like to do?',
+						source: async (input) => {
+							if (!input) return authChoices
+							return matchSorter(authChoices, input, {
+								keys: ['name', 'value', 'description'],
+							})
+						},
+					})
+				} catch (error) {
+					if ((error as Error).message === 'USER_QUIT') {
+						process.exit(0)
+					}
+					throw error
+				}
+			}
+
+			let result: { success: boolean }
+
+			switch (subcommand) {
+				case 'status':
+					result = await status({ silent: argv.silent })
+					break
+				case 'login':
+					result = await login({ domain: argv.domain, silent: argv.silent })
+					break
+				case 'logout':
+					result = await logout({ domain: argv.domain, silent: argv.silent })
+					break
+				default:
+					console.error(chalk.red(`❌ Unknown auth subcommand: ${subcommand}`))
+					process.exit(1)
+			}
+
+			if (!result.success) {
+				process.exit(1)
+			}
+		},
+	)
 	.epilogue(
 		`For more information, visit: ${chalk.cyan('https://github.com/epicweb-dev/epicshop')}`,
 	)
@@ -777,6 +885,11 @@ try {
 				name: `${chalk.green('init')} - First-time setup`,
 				value: 'init' as const,
 				description: 'Initialize epicshop and start the tutorial',
+			},
+			{
+				name: `${chalk.green('auth')} - Manage authentication`,
+				value: 'auth' as const,
+				description: 'Login/logout from EpicWeb.dev, EpicReact.dev, EpicAI.pro',
 			},
 			{
 				name: `${chalk.green('help')} - Show help`,
@@ -992,6 +1105,55 @@ try {
 				const { onboarding } = await import('./commands/workshops.js')
 				const result = await onboarding()
 				if (!result.success) process.exit(1)
+				break
+			}
+			case 'auth': {
+				const { status, login, logout } = await import('./commands/auth.js')
+				const { search: authSearch } = await import('@inquirer/prompts')
+
+				const authChoices = [
+					{
+						name: `${chalk.green('status')} - Show login status`,
+						value: 'status' as const,
+						description: 'Show login status for all Epic domains',
+					},
+					{
+						name: `${chalk.green('login')} - Log in to a domain`,
+						value: 'login' as const,
+						description: 'Log in to EpicWeb.dev, EpicReact.dev, or EpicAI.pro',
+					},
+					{
+						name: `${chalk.green('logout')} - Log out from a domain`,
+						value: 'logout' as const,
+						description: 'Log out from an Epic domain',
+					},
+				]
+
+				const authSubcommand = await authSearch({
+					message: 'What would you like to do?',
+					source: async (input) => {
+						if (!input) return authChoices
+						return matchSorter(authChoices, input, {
+							keys: ['name', 'value', 'description'],
+						})
+					},
+				})
+
+				let authResult: { success: boolean }
+				switch (authSubcommand) {
+					case 'status':
+						authResult = await status({})
+						break
+					case 'login':
+						authResult = await login({})
+						break
+					case 'logout':
+						authResult = await logout({})
+						break
+					default:
+						process.exit(1)
+				}
+				if (!authResult.success) process.exit(1)
 				break
 			}
 			case 'help': {
