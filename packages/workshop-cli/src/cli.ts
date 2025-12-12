@@ -777,25 +777,15 @@ try {
 			},
 		]
 
-		const allChoices: Array<{ name: string; value: string; description?: string; disabled?: boolean }> = workshopTitle
-			? [
-					{
-						name: chalk.gray(`─── Current: ${workshopTitle} ───`),
-						value: '',
-						disabled: true,
-					},
-					...baseChoices,
-				]
-			: baseChoices
-
 		const subcommand = await search({
-			message: 'What would you like to do?',
+			message: workshopTitle
+				? `What would you like to do? ${chalk.gray(`(in ${workshopTitle})`)}`
+				: 'What would you like to do?',
 			source: async (input) => {
-				const choices = allChoices.filter((c) => !c.disabled)
 				if (!input) {
-					return choices
+					return baseChoices
 				}
-				return matchSorter(choices, input, {
+				return matchSorter(baseChoices, input, {
 					keys: ['name', 'value', 'description'],
 				})
 			},
