@@ -20,14 +20,27 @@ need to install it separately:
 npm install -g @epic-web/workshop-cli
 ```
 
+## Context-Aware Behavior
+
+Many commands in the epicshop CLI are **context-aware**. This means they
+automatically detect if you're inside a workshop directory and act accordingly:
+
+- **Inside a workshop directory**: Commands operate on that workshop
+- **Outside a workshop directory**: Commands show an interactive selection of
+  your managed workshops
+
+This makes the CLI intuitive to use - just `cd` into a workshop and run commands
+without needing to specify which workshop you mean.
+
 ## Commands
 
 ### `start` (default command)
 
-Start the workshop application with interactive features.
+Start a workshop. Context-aware: if inside a workshop, starts it; otherwise
+shows interactive selection.
 
 ```bash
-epicshop start [options]
+epicshop start [workshop] [options]
 # or simply
 epicshop [options]
 ```
@@ -41,17 +54,20 @@ epicshop [options]
 #### Examples
 
 ```bash
-# Start the workshop with default settings
+# Inside a workshop directory - start that workshop
 epicshop start
+
+# Outside a workshop - select from your workshops
+epicshop start
+
+# Start a specific workshop by name
+epicshop start full-stack-foundations
 
 # Start with verbose logging
 epicshop start --verbose
 
 # Start with a custom app location
 epicshop start --app-location /path/to/workshop-app
-
-# Start without output logs
-epicshop start --silent
 ```
 
 #### Features
@@ -65,16 +81,199 @@ epicshop start --silent
 
 #### App Location Resolution
 
-The CLI will look for the workshop app in the following order:
+When inside a workshop, the CLI will look for the workshop app in the following
+order:
 
 1. `--app-location` command line argument
 2. `EPICSHOP_APP_LOCATION` environment variable
 3. Global installation (`npm install -g @epic-web/workshop-app`)
 4. Local `node_modules/@epic-web/workshop-app`
 
+### `init`
+
+Initialize epicshop for first-time users. This command runs an interactive setup
+wizard that:
+
+1. Welcomes the user and explains what epicshop does
+2. Prompts for a workshop storage directory (with a recommended default)
+3. Clones and sets up the `epicshop-tutorial` repository
+4. Starts the tutorial workshop
+
+```bash
+epicshop init
+```
+
+#### Examples
+
+```bash
+# Run the first-time setup wizard
+epicshop init
+```
+
+### `add <repo-name>`
+
+Add a workshop by cloning it from the epicweb-dev GitHub organization and
+running the setup script.
+
+```bash
+epicshop add <repo-name> [options]
+```
+
+#### Options
+
+- `--directory, -d <path>` - Directory to clone into (defaults to configured
+  repos directory)
+- `--silent, -s` - Run without output logs (default: false)
+
+#### Examples
+
+```bash
+# Clone and set up the full-stack-foundations workshop
+epicshop add full-stack-foundations
+
+# Clone to a custom directory
+epicshop add web-forms --directory ~/my-workshops
+```
+
+#### What it does
+
+1. Clones the repository from `https://github.com/epicweb-dev/<repo-name>`
+2. Runs `npm run setup` in the cloned directory
+3. Adds the workshop to your local workshop registry
+
+### `list`
+
+List all workshops that have been added to your local machine. Provides an
+interactive interface to select and manage workshops.
+
+```bash
+epicshop list [options]
+```
+
+#### Options
+
+- `--silent, -s` - Run without output logs (default: false)
+
+#### Examples
+
+```bash
+epicshop list
+```
+
+### `remove [workshop]`
+
+Remove a workshop by deleting its directory. Context-aware: if inside a
+workshop, offers to remove that one; otherwise shows interactive selection.
+
+```bash
+epicshop remove [workshop] [options]
+```
+
+#### Arguments
+
+- `workshop` (optional) - Workshop name, repo name, or title to remove. If not
+  provided and not inside a workshop, you'll be prompted to select from your
+  workshops.
+
+#### Options
+
+- `--silent, -s` - Run without output logs (default: false)
+
+#### Examples
+
+```bash
+# Inside a workshop directory - offer to remove that workshop
+epicshop remove
+
+# Outside a workshop - interactive selection
+epicshop remove
+
+# Remove a specific workshop
+epicshop remove full-stack-foundations
+```
+
+#### Safety Features
+
+- If the workshop has unpushed git changes (uncommitted files or commits not
+  pushed to remote), you'll see a colorized summary and be asked to confirm
+  deletion
+- Always asks for confirmation before deleting
+
+### `open [workshop]`
+
+Open a workshop in your editor. Context-aware: if inside a workshop, opens that
+one; otherwise shows interactive selection.
+
+```bash
+epicshop open [workshop] [options]
+```
+
+#### Arguments
+
+- `workshop` (optional) - Workshop name, repo name, or ID to open
+
+#### Options
+
+- `--silent, -s` - Run without output logs (default: false)
+
+#### Examples
+
+```bash
+# Inside a workshop directory - open that workshop
+epicshop open
+
+# Outside a workshop - interactive selection
+epicshop open
+
+# Open a specific workshop
+epicshop open full-stack-foundations
+```
+
+#### Editor Detection
+
+The command will try to detect your editor in the following order:
+
+1. `EPICSHOP_EDITOR` environment variable
+2. Running editor processes (VS Code, Cursor, Sublime Text, etc.)
+3. `VISUAL` environment variable
+4. `EDITOR` environment variable
+
+Supported editors include VS Code, Cursor, Sublime Text, Atom, Vim, Emacs, and
+many JetBrains IDEs.
+
+### `config`
+
+View or update workshop configuration settings.
+
+```bash
+epicshop config [options]
+```
+
+#### Options
+
+- `--repos-dir <path>` - Set the default directory where workshops are cloned
+- `--silent, -s` - Run without output logs (default: false)
+
+#### Examples
+
+```bash
+# View current configuration
+epicshop config
+
+# Set the repos directory
+epicshop config --repos-dir ~/epicweb-workshops
+```
+
+#### Configuration
+
+- **Repos directory**: The default location where workshops are cloned. Defaults
+  to `~/epicweb-workshops` on most systems.
+
 ### `update` / `upgrade`
 
-Update the workshop to the latest version from the remote repository.
+Update a workshop to the latest version from the remote repository.
+Context-aware: if inside a workshop, updates that one; otherwise shows
+interactive selection.
 
 ```bash
 epicshop update [options]
@@ -89,7 +288,10 @@ epicshop upgrade [options]
 #### Examples
 
 ```bash
-# Update to latest version with output
+# Inside a workshop - update that workshop
+epicshop update
+
+# Outside a workshop - select which to update
 epicshop update
 
 # Update silently
@@ -105,6 +307,8 @@ epicshop update --silent
 ### `warm`
 
 Warm up the workshop application caches (apps, diffs) for better performance.
+Context-aware: if inside a workshop, warms that one; otherwise shows interactive
+selection.
 
 ```bash
 epicshop warm [options]
@@ -117,10 +321,13 @@ epicshop warm [options]
 #### Examples
 
 ```bash
-# Warm up caches with progress output
+# Inside a workshop - warm its caches
 epicshop warm
 
-# Warm up caches silently
+# Outside a workshop - select which to warm
+epicshop warm
+
+# Warm caches silently
 epicshop warm --silent
 ```
 
@@ -131,214 +338,91 @@ epicshop warm --silent
 - Pre-caches diff files for faster loading
 - Reports the number of apps loaded and diffs generated
 
-### `workshops`
+### `migrate`
 
-Manage local workshops on your machine. This command allows you to add, list,
-remove, and start workshops from the epicweb-dev GitHub organization.
+Run any necessary migrations for workshop data.
 
 ```bash
-epicshop workshops [subcommand] [options]
+epicshop migrate [options]
+```
+
+#### Options
+
+- `--silent, -s` - Run without output logs (default: false)
+
+#### Examples
+
+```bash
+# Run necessary migrations
+epicshop migrate
+
+# Run migrations silently
+epicshop migrate --silent
+```
+
+### `auth`
+
+Manage authentication for Epic domains (epicweb.dev, epicreact.dev, epicai.pro).
+This command allows you to view your login status, log in to domains, and log
+out.
+
+```bash
+epicshop auth [subcommand] [options]
 ```
 
 #### Subcommands
 
-##### `workshops init` (default)
+- `status` - Show login status for all Epic domains
+- `login` - Log in to an Epic domain using device authorization flow
+- `logout` - Log out from an Epic domain
 
-Initialize epicshop for first-time users. This command runs an interactive setup
-wizard that:
-
-1. Welcomes the user and explains what epicshop does
-2. Prompts for a workshop storage directory (with a recommended default)
-3. Clones and sets up the `epicshop-tutorial` repository
-4. Starts the tutorial workshop
-
-```bash
-epicshop workshops init
-# or simply
-epicshop workshops
-```
-
-This is the default subcommand, so running `epicshop workshops` without any
-arguments will start the onboarding flow.
-
-##### `workshops add <repo-name>`
-
-Add a workshop by cloning it from the epicweb-dev GitHub organization and
-running the setup script.
-
-```bash
-epicshop workshops add <repo-name> [options]
-```
-
-**Options:**
-
-- `--directory, -d <path>` - Directory to clone into (defaults to configured
-  repos directory)
-- `--silent, -s` - Run without output logs (default: false)
-
-**Examples:**
-
-```bash
-# Clone and set up the full-stack-foundations workshop
-epicshop workshops add full-stack-foundations
-
-# Clone to a custom directory
-epicshop workshops add web-forms --directory ~/my-workshops
-```
-
-**What it does:**
-
-1. Clones the repository from `https://github.com/epicweb-dev/<repo-name>`
-2. Runs `npm run setup` in the cloned directory
-3. Adds the workshop to your local workshop registry
-
-##### `workshops list`
-
-List all workshops that have been added to your local machine.
-
-```bash
-epicshop workshops list [options]
-```
-
-**Options:**
+#### Options
 
 - `--silent, -s` - Run without output logs (default: false)
 
-**Example:**
+#### Examples
 
 ```bash
-epicshop workshops list
+# Show interactive auth menu
+epicshop auth
+
+# Show login status for all domains
+epicshop auth status
+
+# Log in to a domain (interactive domain selection)
+epicshop auth login
+
+# Log in to a specific domain
+epicshop auth login epicweb.dev
+epicshop auth login epicreact
+epicshop auth login epicai.pro
+
+# Log out from a domain (interactive selection from logged-in domains)
+epicshop auth logout
+
+# Log out from a specific domain
+epicshop auth logout epicweb.dev
+epicshop auth logout epicreact
 ```
 
-##### `workshops remove [workshop]`
+#### Notes
 
-Remove a workshop by deleting its directory. If no workshop is specified, an
-interactive selection menu will be shown.
+- The login flow uses OAuth device authorization - you'll be given a URL to open
+  in your browser and a code to verify
+- Authentication is stored locally and persists across sessions
+- Each domain (epicweb.dev, epicreact.dev, epicai.pro) has separate
+  authentication
+- Being logged in enables features like progress tracking and video access in
+  workshops
 
-```bash
-epicshop workshops remove [workshop] [options]
-```
+## Interactive Command Chooser
 
-**Arguments:**
+When you run `epicshop` without any arguments, an interactive command chooser is
+displayed. This shows all available commands with descriptions and allows you to
+search and select what you want to do.
 
-- `workshop` (optional) - Workshop name, repo name, or title to remove. If not
-  provided, you'll be prompted to select from your workshops.
-
-**Options:**
-
-- `--silent, -s` - Run without output logs (default: false)
-
-**Examples:**
-
-```bash
-# Interactive selection
-epicshop workshops remove
-
-# Remove a specific workshop
-epicshop workshops remove full-stack-foundations
-```
-
-**Safety Features:**
-
-- If the workshop has unpushed git changes (uncommitted files or commits not
-  pushed to remote), you'll see a colorized summary and be asked to confirm
-  deletion
-- Always asks for confirmation before deleting
-
-##### `workshops start [workshop]`
-
-Start a workshop. If no workshop is specified, an interactive selection menu
-will be shown.
-
-```bash
-epicshop workshops start [workshop] [options]
-```
-
-**Arguments:**
-
-- `workshop` (optional) - Workshop name, repo name, or ID to start
-
-**Options:**
-
-- `--silent, -s` - Run without output logs (default: false)
-
-**Examples:**
-
-```bash
-# Interactive selection
-epicshop workshops start
-
-# Start a specific workshop
-epicshop workshops start full-stack-foundations
-```
-
-##### `workshops open [workshop]`
-
-Open a workshop in your editor. If no workshop is specified, an interactive
-selection menu will be shown. The command automatically detects your editor from
-running processes or environment variables.
-
-```bash
-epicshop workshops open [workshop] [options]
-```
-
-**Arguments:**
-
-- `workshop` (optional) - Workshop name, repo name, or ID to open
-
-**Options:**
-
-- `--silent, -s` - Run without output logs (default: false)
-
-**Examples:**
-
-```bash
-# Interactive selection
-epicshop workshops open
-
-# Open a specific workshop
-epicshop workshops open full-stack-foundations
-```
-
-**Editor Detection:**
-
-The command will try to detect your editor in the following order:
-
-1. `EPICSHOP_EDITOR` environment variable
-2. Running editor processes (VS Code, Cursor, Sublime Text, etc.)
-3. `VISUAL` environment variable
-4. `EDITOR` environment variable
-
-Supported editors include VS Code, Cursor, Sublime Text, Atom, Vim, Emacs, and
-many JetBrains IDEs.
-
-##### `workshops config`
-
-View or update workshop configuration settings.
-
-```bash
-epicshop workshops config [options]
-```
-
-**Options:**
-
-- `--repos-dir <path>` - Set the default directory where workshops are cloned
-- `--silent, -s` - Run without output logs (default: false)
-
-**Examples:**
-
-```bash
-# View current configuration
-epicshop workshops config
-
-# Set the repos directory
-epicshop workshops config --repos-dir ~/epicweb-workshops
-```
-
-**Configuration:**
-
-- **Repos directory**: The default location where workshops are cloned. Defaults
-  to `~/epicweb-workshops` on most systems.
+If you're inside a workshop directory, the chooser will indicate this and
+context-aware commands will operate on that workshop by default.
 
 ## Programmatic Usage
 
@@ -413,7 +497,7 @@ if (result.success) {
 }
 ```
 
-### Using the Workshops Command
+### Using Workshop Management Functions
 
 ```javascript
 import {
@@ -423,7 +507,14 @@ import {
 	startWorkshop,
 	openWorkshop,
 	config,
+	findWorkshopRoot,
 } from '@epic-web/workshop-cli/workshops'
+
+// Detect if currently inside a workshop
+const workshopRoot = await findWorkshopRoot()
+if (workshopRoot) {
+	console.log(`Inside workshop: ${workshopRoot}`)
+}
 
 // Add a workshop
 const addResult = await add({
@@ -435,7 +526,7 @@ const addResult = await add({
 // List all workshops
 const listResult = await list({ silent: false })
 
-// Remove a workshop from the list
+// Remove a workshop
 const removeResult = await remove({
 	workshop: 'full-stack-foundations',
 	silent: false,
@@ -460,6 +551,33 @@ const configResult = await config({
 })
 ```
 
+### Using the Auth Command
+
+```javascript
+import { status, login, logout } from '@epic-web/workshop-cli/auth'
+
+// Show auth status for all domains
+const statusResult = await status({ silent: false })
+
+// Login to a specific domain
+const loginResult = await login({
+	domain: 'epicweb.dev', // optional, prompts interactively if omitted
+	silent: false,
+})
+
+// Logout from a domain
+const logoutResult = await logout({
+	domain: 'epicweb.dev', // optional, prompts interactively if omitted
+	silent: false,
+})
+
+if (loginResult.success) {
+	console.log('Login successful:', loginResult.message)
+} else {
+	console.error('Login failed:', loginResult.message)
+}
+```
+
 ### TypeScript Support
 
 All commands are fully typed with TypeScript:
@@ -478,6 +596,7 @@ import {
 	startWorkshop,
 	openWorkshop,
 	config,
+	findWorkshopRoot,
 	type WorkshopsResult,
 	type AddOptions,
 	type StartOptions as WorkshopStartOptions,
@@ -531,6 +650,7 @@ setupWorkshop()
 
 - `EPICSHOP_APP_LOCATION` - Path to the workshop app directory
 - `EPICSHOP_DEPLOYED` - Set to `true` or `1` for deployed environments
+- `EPICSHOP_EDITOR` - Preferred editor for opening workshops
 - `NODE_ENV` - Set to `production` for production mode
 - `SENTRY_DSN` - Sentry DSN for error tracking in production
 
@@ -593,8 +713,11 @@ If updates fail:
 ### Basic Workshop Setup
 
 ```bash
-# Install the workshop app globally
-npm install -g @epic-web/workshop-app
+# First-time setup (initializes and starts tutorial)
+epicshop init
+
+# Or add a specific workshop
+epicshop add full-stack-foundations
 
 # Start the workshop
 epicshop start
@@ -603,20 +726,39 @@ epicshop start
 epicshop warm
 ```
 
+### Managing Multiple Workshops
+
+```bash
+# Add several workshops
+epicshop add full-stack-foundations
+epicshop add web-forms
+epicshop add react-fundamentals
+
+# List all workshops
+epicshop list
+
+# Start any workshop by name
+epicshop start web-forms
+
+# Or cd into the workshop and just run start
+cd ~/epicweb-workshops/web-forms
+epicshop start
+```
+
 ### Custom Configuration
 
 ```bash
-# Start with custom app location and verbose output
-epicshop start --app-location ./my-workshop --verbose
+# Set where workshops are stored
+epicshop config --repos-dir ~/my-workshops
+
+# Start with verbose output
+epicshop start --verbose
 
 # Start silently for programmatic usage
 epicshop start --silent
 
 # Update silently
 epicshop update --silent
-
-# Warm caches silently
-epicshop warm --silent
 ```
 
 ### Production Deployment
@@ -629,3 +771,20 @@ export EPICSHOP_DEPLOYED=true
 # Start in production mode
 epicshop start
 ```
+
+## Command Reference Summary
+
+| Command            | Description                            | Context-Aware |
+| ------------------ | -------------------------------------- | ------------- |
+| `epicshop`         | Interactive command chooser            | ✓             |
+| `epicshop start`   | Start a workshop                       | ✓             |
+| `epicshop init`    | First-time setup wizard                | ✗             |
+| `epicshop add`     | Clone a workshop from epicweb-dev      | ✗             |
+| `epicshop list`    | List all workshops                     | ✗             |
+| `epicshop remove`  | Remove a workshop                      | ✓             |
+| `epicshop open`    | Open workshop in editor                | ✓             |
+| `epicshop config`  | View/update configuration              | ✗             |
+| `epicshop update`  | Update workshop to latest version      | ✓             |
+| `epicshop warm`    | Warm up caches                         | ✓             |
+| `epicshop migrate` | Run data migrations                    | ✗             |
+| `epicshop auth`    | Manage authentication for Epic domains | ✗             |
