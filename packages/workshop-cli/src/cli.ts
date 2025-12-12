@@ -393,6 +393,43 @@ const cli = yargs(args)
 					},
 				)
 				.command(
+					'open [workshop]',
+					'Open a workshop in your editor',
+					(yargs: Argv) => {
+						return yargs
+							.positional('workshop', {
+								describe: 'Workshop name, repo name, or ID to open',
+								type: 'string',
+							})
+							.option('silent', {
+								alias: 's',
+								type: 'boolean',
+								description: 'Run without output logs',
+								default: false,
+							})
+							.example('$0 workshops open', 'Select and open a workshop')
+							.example(
+								'$0 workshops open full-stack-foundations',
+								'Open a specific workshop',
+							)
+					},
+					async (
+						argv: ArgumentsCamelCase<{
+							workshop?: string
+							silent?: boolean
+						}>,
+					) => {
+						const { openWorkshop } = await import('./commands/workshops.js')
+						const result = await openWorkshop({
+							workshop: argv.workshop,
+							silent: argv.silent,
+						})
+						if (!result.success) {
+							process.exit(1)
+						}
+					},
+				)
+				.command(
 					'config',
 					'View or update workshop configuration',
 					(yargs: Argv) => {

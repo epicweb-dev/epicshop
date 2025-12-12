@@ -7,6 +7,10 @@ warm up caches for better performance.
 The CLI can be used both as a command-line tool and programmatically via ESM
 imports.
 
+The package [`epicshop`](https://npm.im/epicshop) proxies all commands to the
+`@epic-web/workshop-cli` package, so you can run `npx epicshop ...` to keep
+things simple.
+
 ## Installation
 
 The CLI is typically installed as part of the epicshop workshop setup. If you
@@ -268,6 +272,46 @@ epicshop workshops start
 epicshop workshops start full-stack-foundations
 ```
 
+##### `workshops open [workshop]`
+
+Open a workshop in your editor. If no workshop is specified, an interactive
+selection menu will be shown. The command automatically detects your editor from
+running processes or environment variables.
+
+```bash
+epicshop workshops open [workshop] [options]
+```
+
+**Arguments:**
+
+- `workshop` (optional) - Workshop name, repo name, or ID to open
+
+**Options:**
+
+- `--silent, -s` - Run without output logs (default: false)
+
+**Examples:**
+
+```bash
+# Interactive selection
+epicshop workshops open
+
+# Open a specific workshop
+epicshop workshops open full-stack-foundations
+```
+
+**Editor Detection:**
+
+The command will try to detect your editor in the following order:
+
+1. `EPICSHOP_EDITOR` environment variable
+2. Running editor processes (VS Code, Cursor, Sublime Text, etc.)
+3. `VISUAL` environment variable
+4. `EDITOR` environment variable
+
+Supported editors include VS Code, Cursor, Sublime Text, Atom, Vim, Emacs, and
+many JetBrains IDEs.
+
 ##### `workshops config`
 
 View or update workshop configuration settings.
@@ -377,6 +421,7 @@ import {
 	list,
 	remove,
 	startWorkshop,
+	openWorkshop,
 	config,
 } from '@epic-web/workshop-cli/workshops'
 
@@ -398,6 +443,12 @@ const removeResult = await remove({
 
 // Start a workshop (interactive if no workshop specified)
 const startResult = await startWorkshop({
+	workshop: 'full-stack-foundations', // optional
+	silent: false,
+})
+
+// Open a workshop in your editor (interactive if no workshop specified)
+const openResult = await openWorkshop({
 	workshop: 'full-stack-foundations', // optional
 	silent: false,
 })
@@ -425,6 +476,7 @@ import {
 	add,
 	list,
 	startWorkshop,
+	openWorkshop,
 	config,
 	type WorkshopsResult,
 	type AddOptions,

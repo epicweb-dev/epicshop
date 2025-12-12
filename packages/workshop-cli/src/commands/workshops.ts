@@ -236,17 +236,28 @@ export async function remove({
 				return { success: false, message }
 			}
 
-			const { select } = await import('@inquirer/prompts')
+			const { search } = await import('@inquirer/prompts')
 
-			const choices = workshops.map((w) => ({
+			const allChoices = workshops.map((w) => ({
 				name: `${w.title} (${w.repoName})`,
 				value: w.repoName,
 				description: w.path,
 			}))
 
-			workshopToRemove = await select({
+			workshopToRemove = await search({
 				message: 'Select a workshop to remove:',
-				choices,
+				source: async (input) => {
+					if (!input) {
+						return allChoices
+					}
+					const searchLower = input.toLowerCase()
+					return allChoices.filter(
+						(choice) =>
+							choice.name.toLowerCase().includes(searchLower) ||
+							choice.value.toLowerCase().includes(searchLower) ||
+							choice.description?.toLowerCase().includes(searchLower),
+					)
+				},
 			})
 		}
 
@@ -359,17 +370,29 @@ export async function startWorkshop(
 			}
 
 			// Interactive selection
-			const { select } = await import('@inquirer/prompts')
+			const { search } = await import('@inquirer/prompts')
 
-			const choices = workshops.map((w) => ({
+			const allChoices = workshops.map((w) => ({
 				name: `${w.title} (${w.repoName})`,
 				value: w,
 				description: w.path,
 			}))
 
-			workshopToStart = await select({
+			workshopToStart = await search({
 				message: 'Select a workshop to start:',
-				choices,
+				source: async (input) => {
+					if (!input) {
+						return allChoices
+					}
+					const searchLower = input.toLowerCase()
+					return allChoices.filter(
+						(choice) =>
+							choice.name.toLowerCase().includes(searchLower) ||
+							choice.value.repoName.toLowerCase().includes(searchLower) ||
+							choice.value.title.toLowerCase().includes(searchLower) ||
+							choice.description?.toLowerCase().includes(searchLower),
+					)
+				},
 			})
 		}
 
@@ -407,6 +430,123 @@ export async function startWorkshop(
 		}
 
 		return { success: true, message: 'Workshop started' }
+	} catch (error) {
+		if ((error as Error).message === 'USER_QUIT') {
+			return { success: false, message: 'User quit' }
+		}
+		const message = error instanceof Error ? error.message : String(error)
+		if (!silent) {
+			console.error(chalk.red(`❌ ${message}`))
+		}
+		return {
+			success: false,
+			message,
+			error: error instanceof Error ? error : new Error(message),
+		}
+	}
+}
+
+/**
+ * Open a workshop in the user's editor
+ */
+export async function openWorkshop(
+	options: StartOptions = {},
+): Promise<WorkshopsResult> {
+	const { silent = false } = options
+
+	try {
+		// Ensure config is set up first
+		if (!(await ensureConfigured())) {
+			return { success: false, message: 'Setup cancelled' }
+		}
+
+		const { listWorkshops, getWorkshop } = await import(
+			'@epic-web/workshop-utils/workshops.server'
+		)
+		const { launchEditor } = await import(
+			'@epic-web/workshop-utils/launch-editor.server'
+		)
+
+		let workshopToOpen
+
+		// If workshop specified, look it up and fail if not found
+		if (options.workshop) {
+			workshopToOpen = await getWorkshop(options.workshop)
+			if (!workshopToOpen) {
+				const message = `Workshop "${options.workshop}" not found`
+				if (!silent) console.log(chalk.yellow(`⚠️  ${message}`))
+				return { success: false, message }
+			}
+		} else {
+			// No workshop specified, show selection
+			const workshops = await listWorkshops()
+
+			if (workshops.length === 0) {
+				const message = `No workshops found. Use 'epicshop workshops add <repo-name>' to add one.`
+				if (!silent) console.log(chalk.yellow(message))
+				return { success: false, message }
+			}
+
+			// Interactive selection
+			const { search } = await import('@inquirer/prompts')
+
+			const allChoices = workshops.map((w) => ({
+				name: `${w.title} (${w.repoName})`,
+				value: w,
+				description: w.path,
+			}))
+
+			workshopToOpen = await search({
+				message: 'Select a workshop to open:',
+				source: async (input) => {
+					if (!input) {
+						return allChoices
+					}
+					const searchLower = input.toLowerCase()
+					return allChoices.filter(
+						(choice) =>
+							choice.name.toLowerCase().includes(searchLower) ||
+							choice.value.repoName.toLowerCase().includes(searchLower) ||
+							choice.value.title.toLowerCase().includes(searchLower) ||
+							choice.description?.toLowerCase().includes(searchLower),
+					)
+				},
+			})
+		}
+
+		if (!workshopToOpen) {
+			const message = 'No workshop selected'
+			if (!silent) console.log(chalk.yellow(`⚠️  ${message}`))
+			return { success: false, message }
+		}
+
+		// Check if the workshop directory exists
+		if (!(await directoryExists(workshopToOpen.path))) {
+			const message = `Workshop directory not found: ${workshopToOpen.path}`
+			if (!silent) console.log(chalk.red(`❌ ${message}`))
+			return { success: false, message }
+		}
+
+		if (!silent) {
+			console.log(
+				chalk.cyan(
+					`📂 Opening ${chalk.bold(workshopToOpen.title)} in your editor...`,
+				),
+			)
+			console.log(chalk.gray(`   Path: ${workshopToOpen.path}\n`))
+		}
+
+		// Launch the editor with the workshop directory
+		const result = await launchEditor(workshopToOpen.path)
+
+		if (result.status === 'error') {
+			return {
+				success: false,
+				message: result.message,
+			}
+		}
+
+		return { success: true, message: 'Workshop opened in editor' }
 	} catch (error) {
 		if ((error as Error).message === 'USER_QUIT') {
 			return { success: false, message: 'User quit' }
