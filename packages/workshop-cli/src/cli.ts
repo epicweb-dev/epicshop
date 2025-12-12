@@ -65,10 +65,7 @@ const cli = yargs(args)
 					description: 'Path to the workshop app directory',
 				})
 				.example('$0 start', 'Start the current workshop or select one')
-				.example(
-					'$0 start full-stack-foundations',
-					'Start a specific workshop',
-				)
+				.example('$0 start full-stack-foundations', 'Start a specific workshop')
 				.example(
 					'$0 start --app-location /path/to/workshop-app',
 					'Start with custom app location',
@@ -308,10 +305,7 @@ const cli = yargs(args)
 					default: false,
 				})
 				.example('$0 open', 'Open current workshop or select one')
-				.example(
-					'$0 open full-stack-foundations',
-					'Open a specific workshop',
-				)
+				.example('$0 open full-stack-foundations', 'Open a specific workshop')
 		},
 		async (
 			argv: ArgumentsCamelCase<{
@@ -409,7 +403,9 @@ const cli = yargs(args)
 					if (!result.success) {
 						if (!argv.silent) {
 							console.error(
-								chalk.red(`❌ ${result.message || 'Failed to update workshop'}`),
+								chalk.red(
+									`❌ ${result.message || 'Failed to update workshop'}`,
+								),
 							)
 							if (result.error) {
 								console.error(chalk.red(result.error.message))
@@ -445,11 +441,13 @@ const cli = yargs(args)
 
 				const { search } = await import('@inquirer/prompts')
 
-				const allChoices = workshops.map((w: { title: string; repoName: string; path: string }) => ({
-					name: `${w.title} (${w.repoName})`,
-					value: w.repoName,
-					description: w.path,
-				}))
+				const allChoices = workshops.map(
+					(w: { title: string; repoName: string; path: string }) => ({
+						name: `${w.title} (${w.repoName})`,
+						value: w.repoName,
+						description: w.path,
+					}),
+				)
 
 				try {
 					const selectedWorkshop = await search({
@@ -536,7 +534,9 @@ const cli = yargs(args)
 					if (!result.success) {
 						if (!argv.silent) {
 							console.error(
-								chalk.red(`❌ ${result.message || 'Failed to warm up workshop'}`),
+								chalk.red(
+									`❌ ${result.message || 'Failed to warm up workshop'}`,
+								),
 							)
 							if (result.error) {
 								console.error(chalk.red(result.error.message))
@@ -572,11 +572,13 @@ const cli = yargs(args)
 
 				const { search } = await import('@inquirer/prompts')
 
-				const allChoices = workshops.map((w: { title: string; repoName: string; path: string }) => ({
-					name: `${w.title} (${w.repoName})`,
-					value: w.repoName,
-					description: w.path,
-				}))
+				const allChoices = workshops.map(
+					(w: { title: string; repoName: string; path: string }) => ({
+						name: `${w.title} (${w.repoName})`,
+						value: w.repoName,
+						description: w.path,
+					}),
+				)
 
 				try {
 					const selectedWorkshop = await search({
@@ -691,7 +693,10 @@ try {
 	const parsed = await cli.parse()
 
 	// If no command was provided (empty args or just options), show command chooser
-	if (args.length === 0 || (parsed._ && parsed._.length === 0 && !args[0]?.startsWith('-'))) {
+	if (
+		args.length === 0 ||
+		(parsed._ && parsed._.length === 0 && !args[0]?.startsWith('-'))
+	) {
 		// Check if we're inside a workshop first
 		const { findWorkshopRoot } = await import('./commands/workshops.js')
 		const workshopRoot = await findWorkshopRoot()
@@ -703,7 +708,9 @@ try {
 				const fs = await import('node:fs')
 				const path = await import('node:path')
 				const pkgPath = path.join(workshopRoot, 'package.json')
-				const pkg = JSON.parse(await fs.promises.readFile(pkgPath, 'utf-8')) as {
+				const pkg = JSON.parse(
+					await fs.promises.readFile(pkgPath, 'utf-8'),
+				) as {
 					epicshop?: { title?: string }
 				}
 				workshopTitle = pkg.epicshop?.title || path.basename(workshopRoot)
@@ -720,14 +727,14 @@ try {
 				value: 'start' as const,
 				description: workshopTitle
 					? `Start ${workshopTitle}`
-					: 'Interactive workshop selection',
+					: 'Select a workshop to start',
 			},
 			{
 				name: `${chalk.green('open')} - Open a workshop in editor`,
 				value: 'open' as const,
 				description: workshopTitle
 					? `Open ${workshopTitle}`
-					: 'Interactive workshop selection',
+					: 'Select a workshop to open',
 			},
 			{
 				name: `${chalk.green('list')} - List all workshops`,
@@ -744,21 +751,21 @@ try {
 				value: 'remove' as const,
 				description: workshopTitle
 					? `Remove ${workshopTitle}`
-					: 'Interactive workshop selection',
+					: 'Select a workshop to remove',
 			},
 			{
 				name: `${chalk.green('update')} - Update workshop`,
 				value: 'update' as const,
 				description: workshopTitle
 					? `Update ${workshopTitle}`
-					: 'Interactive workshop selection',
+					: 'Select a workshop to update',
 			},
 			{
 				name: `${chalk.green('warm')} - Warm caches`,
 				value: 'warm' as const,
 				description: workshopTitle
-					? `Warm ${workshopTitle}`
-					: 'Interactive workshop selection',
+					? `Warm the cache for ${workshopTitle}`
+					: 'Select a workshop to warm the cache for',
 			},
 			{
 				name: `${chalk.green('config')} - View/update configuration`,
@@ -891,11 +898,13 @@ try {
 						)
 						process.exit(1)
 					}
-					const workshopChoices = workshops.map((w: { title: string; repoName: string; path: string }) => ({
-						name: `${w.title} (${w.repoName})`,
-						value: w.repoName,
-						description: w.path,
-					}))
+					const workshopChoices = workshops.map(
+						(w: { title: string; repoName: string; path: string }) => ({
+							name: `${w.title} (${w.repoName})`,
+							value: w.repoName,
+							description: w.path,
+						}),
+					)
 					const selectedWorkshop = await search({
 						message: 'Select a workshop to update:',
 						source: async (input) => {
@@ -949,11 +958,13 @@ try {
 						)
 						process.exit(1)
 					}
-					const workshopChoices = workshops.map((w: { title: string; repoName: string; path: string }) => ({
-						name: `${w.title} (${w.repoName})`,
-						value: w.repoName,
-						description: w.path,
-					}))
+					const workshopChoices = workshops.map(
+						(w: { title: string; repoName: string; path: string }) => ({
+							name: `${w.title} (${w.repoName})`,
+							value: w.repoName,
+							description: w.path,
+						}),
+					)
 					const selectedWorkshop = await search({
 						message: 'Select a workshop to warm:',
 						source: async (input) => {

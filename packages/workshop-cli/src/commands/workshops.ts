@@ -2,6 +2,7 @@ import '@epic-web/workshop-utils/init-env'
 
 import { spawn } from 'node:child_process'
 import * as fs from 'node:fs'
+import * as os from 'node:os'
 import * as path from 'node:path'
 import chalk from 'chalk'
 import { matchSorter } from 'match-sorter'
@@ -727,12 +728,17 @@ export async function config(
 	const { silent = false } = options
 
 	try {
-		const { getReposDirectory, setReposDirectory } = await import(
-			'@epic-web/workshop-utils/workshops.server'
-		)
+		const {
+			getReposDirectory,
+			setReposDirectory,
+			isReposDirectoryConfigured,
+			loadConfig,
+			saveConfig,
+			getDefaultReposDir,
+		} = await import('@epic-web/workshop-utils/workshops.server')
 
 		if (options.reposDir) {
-			// Set the repos directory
+			// Set the repos directory directly via CLI flag
 			const resolvedPath = path.resolve(options.reposDir)
 			await setReposDirectory(resolvedPath)
 			const message = `Repos directory set to: ${resolvedPath}`
@@ -740,20 +746,142 @@ export async function config(
 			return { success: true, message }
 		}
 
-		// Show current config
-		const reposDir = await getReposDirectory()
-		if (!silent) {
-			console.log(chalk.bold.cyan('\n⚙️  Workshop Configuration:\n'))
-			console.log(`  ${chalk.bold('Repos directory:')} ${reposDir}`)
-			console.log()
-			console.log(
-				chalk.gray("  Use 'epicshop config --repos-dir <path>' to change"),
-			)
-			console.log()
+		if (silent) {
+			// In silent mode, just return current config
+			const reposDir = await getReposDirectory()
+			return { success: true, message: `Repos directory: ${reposDir}` }
 		}
 
-		return { success: true, message: `Repos directory: ${reposDir}` }
+		// Interactive config selection
+		const { search, confirm } = await import('@inquirer/prompts')
+
+		const reposDir = await getReposDirectory()
+		const isConfigured = await isReposDirectoryConfigured()
+		const defaultDir = getDefaultReposDir()
+
+		// Build config options
+		const configOptions = [
+			{
+				name: `Repos directory`,
+				value: 'repos-dir',
+				description: isConfigured ? reposDir : `${reposDir} (default)`,
+			},
+		]
+
+		console.log(chalk.bold.cyan('\n⚙️  Workshop Configuration\n'))
+
+		const selectedConfig = await search({
+			message: 'Select a setting to configure:',
+			source: async (input) => {
+				if (!input) return configOptions
+				return matchSorter(configOptions, input, {
+					keys: ['name', 'value', 'description'],
+				})
+			},
+		})
+
+		if (selectedConfig === 'repos-dir') {
+			// Show current value and actions
+			console.log()
+			console.log(chalk.bold('  Current value:'))
+			if (isConfigured) {
+				console.log(chalk.white(`  ${reposDir}`))
+			} else {
+				console.log(chalk.gray(`  ${reposDir} (default, not explicitly set)`))
+			}
+			console.log()
+
+			const actionChoices = [
+				{
+					name: 'Edit',
+					value: 'edit',
+					description: 'Change the repos directory',
+				},
+				...(isConfigured
+					? [
+							{
+								name: 'Remove',
+								value: 'remove',
+								description: `Reset to default (${defaultDir})`,
+							},
+						]
+					: []),
+				{
+					name: 'Cancel',
+					value: 'cancel',
+					description: 'Go back without changes',
+				},
+			]
+
+			const action = await search({
+				message: 'What would you like to do?',
+				source: async (input) => {
+					if (!input) return actionChoices
+					return matchSorter(actionChoices, input, {
+						keys: ['name', 'value', 'description'],
+					})
+				},
+			})
+
+			if (action === 'edit') {
+				console.log()
+				console.log(
+					chalk.cyan('🐨 Use the directory browser to select a new location.'),
+				)
+				console.log(
+					chalk.gray('   Type to search, use arrow keys to navigate.\n'),
+				)
+
+				const newDir = await browseDirectory(
+					isConfigured ? reposDir : path.dirname(defaultDir),
+				)
+				const resolvedPath = path.resolve(newDir)
+				await setReposDirectory(resolvedPath)
+
+				console.log()
+				console.log(
+					chalk.green(`✅ Repos directory set to: ${chalk.bold(resolvedPath)}`),
+				)
+				return {
+					success: true,
+					message: `Repos directory set to: ${resolvedPath}`,
+				}
+			} else if (action === 'remove') {
+				const shouldRemove = await confirm({
+					message: `Reset repos directory to default (${defaultDir})?`,
+					default: false,
+				})
+
+				if (shouldRemove) {
+					const currentConfig = await loadConfig()
+					delete currentConfig.reposDirectory
+					await saveConfig(currentConfig)
+
+					console.log()
+					console.log(
+						chalk.green(
+							`✅ Repos directory reset to default: ${chalk.bold(defaultDir)}`,
+						),
+					)
+					return {
+						success: true,
+						message: `Repos directory reset to default: ${defaultDir}`,
+					}
+				} else {
+					console.log(chalk.gray('\nNo changes made.'))
+					return { success: true, message: 'Cancelled' }
+				}
+			} else {
+				console.log(chalk.gray('\nNo changes made.'))
+				return { success: true, message: 'Cancelled' }
+			}
+		}
+
+		return { success: true, message: 'Config viewed' }
 	} catch (error) {
+		if ((error as Error).message === 'USER_QUIT') {
+			return { success: false, message: 'User quit' }
+		}
 		const message = error instanceof Error ? error.message : String(error)
 		if (!silent) {
 			console.error(chalk.red(`❌ ${message}`))
@@ -820,7 +948,7 @@ export async function onboarding(): Promise<WorkshopsResult> {
 		)
 
 		// Prompt for directory configuration
-		const { input, confirm } = await import('@inquirer/prompts')
+		const { confirm } = await import('@inquirer/prompts')
 		const defaultDir = getDefaultReposDir()
 
 		console.log(chalk.gray(`   Recommended: ${chalk.white(defaultDir)}\n`))
@@ -834,16 +962,16 @@ export async function onboarding(): Promise<WorkshopsResult> {
 		if (useDefault) {
 			reposDir = defaultDir
 		} else {
-			reposDir = await input({
-				message: 'Enter your preferred directory for workshops:',
-				default: defaultDir,
-				validate: (value) => {
-					if (!value.trim()) {
-						return 'Please enter a directory path'
-					}
-					return true
-				},
-			})
+			console.log()
+			console.log(
+				chalk.cyan(
+					'🐨 No problem! Use the directory browser to find your preferred location.',
+				),
+			)
+			console.log(
+				chalk.gray('   Type to search, use arrow keys to navigate.\n'),
+			)
+			reposDir = await browseDirectory(path.dirname(defaultDir))
 		}
 
 		// Resolve and save the directory
@@ -1059,6 +1187,118 @@ async function waitForGo(): Promise<void> {
 }
 
 // Helper functions
+
+const SELECT_CURRENT = Symbol('SELECT_CURRENT')
+const GO_UP = Symbol('GO_UP')
+const ENTER_CUSTOM = Symbol('ENTER_CUSTOM')
+
+type DirectoryChoice =
+	| { type: 'directory'; path: string; name: string }
+	| {
+			type: 'action'
+			action: typeof SELECT_CURRENT | typeof GO_UP | typeof ENTER_CUSTOM
+	  }
+
+/**
+ * Interactive directory browser that lets users navigate and select a directory
+ */
+async function browseDirectory(startPath?: string): Promise<string> {
+	const { search, input } = await import('@inquirer/prompts')
+
+	let currentPath = startPath || os.homedir()
+
+	// Resolve to absolute path
+	currentPath = path.resolve(currentPath)
+
+	while (true) {
+		// Build choices for current directory
+		const choices: Array<{
+			name: string
+			value: DirectoryChoice
+			description?: string
+		}> = []
+
+		// Add action choices at the top
+		choices.push({
+			name: `📁 Select this directory`,
+			value: { type: 'action', action: SELECT_CURRENT },
+			description: currentPath,
+		})
+
+		// Add "go up" option if not at root
+		const parentDir = path.dirname(currentPath)
+		if (parentDir !== currentPath) {
+			choices.push({
+				name: `⬆️  Go up to parent`,
+				value: { type: 'action', action: GO_UP },
+				description: parentDir,
+			})
+		}
+
+		// Add custom path option
+		choices.push({
+			name: `✏️  Enter a custom path`,
+			value: { type: 'action', action: ENTER_CUSTOM },
+			description: 'Type in any path manually',
+		})
+
+		// List subdirectories
+		try {
+			const entries = await fs.promises.readdir(currentPath, {
+				withFileTypes: true,
+			})
+			const directories = entries
+				.filter((entry) => entry.isDirectory() && !entry.name.startsWith('.'))
+				.sort((a, b) => a.name.localeCompare(b.name))
+
+			for (const dir of directories) {
+				const fullPath = path.join(currentPath, dir.name)
+				choices.push({
+					name: `📂 ${dir.name}/`,
+					value: { type: 'directory', path: fullPath, name: dir.name },
+					description: fullPath,
+				})
+			}
+		} catch {
+			// Can't read directory, just show action choices
+		}
+
+		const selected = await search<DirectoryChoice>({
+			message: `Browse directories (current: ${currentPath})`,
+			source: async (term) => {
+				if (!term) {
+					return choices
+				}
+				return matchSorter(choices, term, {
+					keys: ['name', 'value.name', 'description'],
+				})
+			},
+			pageSize: 15,
+		})
+
+		if (selected.type === 'action') {
+			if (selected.action === SELECT_CURRENT) {
+				return currentPath
+			} else if (selected.action === GO_UP) {
+				currentPath = parentDir
+			} else if (selected.action === ENTER_CUSTOM) {
+				const customPath = await input({
+					message: 'Enter the directory path:',
+					default: currentPath,
+					validate: (value) => {
+						if (!value.trim()) {
+							return 'Please enter a directory path'
+						}
+						return true
+					},
+				})
+				return path.resolve(customPath)
+			}
+		} else if (selected.type === 'directory') {
+			currentPath = selected.path
+		}
+	}
+}
 
 async function directoryExists(dirPath: string): Promise<boolean> {
 	try {
