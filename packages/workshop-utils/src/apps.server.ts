@@ -1190,8 +1190,8 @@ const ExerciseAppParamsSchema = z.object({
 export async function getExerciseApp(
 	params: {
 		type?: string
-		exerciseNumber?: string
-		stepNumber?: string
+		exerciseNumber?: string | number
+		stepNumber?: string | number
 	},
 	{ request, timings }: CachifiedOptions = {},
 ) {

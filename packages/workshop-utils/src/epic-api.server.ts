@@ -4,6 +4,7 @@ import * as cookie from 'cookie'
 import md5 from 'md5-hex'
 import { z } from 'zod'
 import {
+	getExerciseApp,
 	getExercises,
 	getWorkshopFinished,
 	getWorkshopInstructions,
@@ -619,6 +620,51 @@ export async function getWorkshopData(
 			return parsedData
 		},
 	})
+}
+
+export async function userHasAccessToExerciseStep({
+	exerciseNumber,
+	stepNumber,
+	timings,
+	request,
+	forceFresh,
+}: {
+	exerciseNumber: number
+	stepNumber: number
+	request?: Request
+	timings?: Timings
+	forceFresh?: boolean
+}) {
+	const hasAccessToWorkshop = await userHasAccessToWorkshop({
+		request,
+		timings,
+		forceFresh,
+	})
+	if (hasAccessToWorkshop) return true
+
+	if (getEnv().EPICSHOP_DEPLOYED) return false
+
+	// if they have access to the solution then they have access to the exercise step
+	const exerciseApp = await getExerciseApp(
+		{ exerciseNumber, stepNumber, type: 'solution' },
+		{ request, timings },
+	)
+	if (!exerciseApp) return false
+
+	const [firstVideoEmbed] = exerciseApp.epicVideoEmbeds ?? []
+	if (!firstVideoEmbed) return true
+
+	const authInfo = await getAuthInfo()
+	if (!authInfo) return false
+
+	const videoInfo = await getEpicVideoInfo({
+		accessToken: authInfo.tokenSet.access_token,
+		epicVideoEmbed: firstVideoEmbed,
+		request,
+		timings,
+	})
+
+	return videoInfo?.status === 'success'
 }
 
 export async function userHasAccessToWorkshop({

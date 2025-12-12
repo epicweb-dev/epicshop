@@ -2,6 +2,7 @@ import * as Accordion from '@radix-ui/react-accordion'
 import * as Select from '@radix-ui/react-select'
 import { clsx } from 'clsx'
 import React, { Suspense } from 'react'
+import { ErrorBoundary } from 'react-error-boundary'
 import {
 	Await,
 	Form,
@@ -19,7 +20,6 @@ import { DeferredEpicVideo } from './epic-video.tsx'
 import { Icon } from './icons.tsx'
 import { useRevalidationWS } from './revalidation-ws.tsx'
 import { SimpleTooltip } from './ui/tooltip.tsx'
-import { useUserHasAccess } from './user.tsx'
 
 type diffProp = {
 	app1?: string
@@ -52,14 +52,73 @@ function RevalidateApps({
 	return null
 }
 
-export function Diff({
+export function UserHasAccessDiff({
+	userHasAccessPromise,
+	diff,
+	allApps,
+}: {
+	userHasAccessPromise: Promise<boolean>
+	diff: Promise<diffProp> | diffProp
+	allApps: Array<{ name: string; displayName: string }>
+}) {
+	return (
+		<ErrorBoundary
+			fallbackRender={() => (
+				<div className="w-full p-12">
+					<div className="flex w-full flex-col gap-4 text-center">
+						<p className="text-2xl font-bold">Error</p>
+						<p className="text-lg">
+							There was an error loading the user access.
+						</p>
+					</div>
+				</div>
+			)}
+		>
+			<Suspense
+				fallback={
+					<div className="flex items-center justify-center p-8">
+						<SimpleTooltip content="Loading user access">
+							<Icon name="Refresh" className="animate-spin" />
+						</SimpleTooltip>
+					</div>
+				}
+			>
+				<Await resolve={userHasAccessPromise}>
+					{(userHasAccess) =>
+						userHasAccess ? (
+							<DiffImplementation diff={diff} allApps={allApps} />
+						) : (
+							<div className="w-full p-12">
+								<div className="flex w-full flex-col gap-4 text-center">
+									<p className="text-2xl font-bold">Access Denied</p>
+									<p className="text-lg">
+										You must login or register for the workshop to view the
+										diff.
+									</p>
+								</div>
+								<div className="h-16" />
+								<p className="pb-4">
+									Check out this video to see how the diff tab works.
+								</p>
+								<DeferredEpicVideo url="https://www.epicweb.dev/tips/epic-workshop-diff-tab-demo" />
+							</div>
+						)
+					}
+				</Await>
+			</Suspense>
+		</ErrorBoundary>
+	)
+}
+
+export { UserHasAccessDiff as Diff }
+
+export function DiffImplementation({
 	diff,
 	allApps,
 }: {
 	diff: Promise<diffProp> | diffProp
 	allApps: Array<{ name: string; displayName: string }>
 }) {
-	const userHasAccess = useUserHasAccess()
 	const submit = useSubmit()
 	const [params] = useSearchParams()
 	const paramsWithForcedRefresh = new URLSearchParams(params)
@@ -75,24 +134,6 @@ export function Diff({
 		if (key === 'app1' || key === 'app2') continue
 		hiddenInputs.push(
 			<input key={key} type="hidden" name={key} value={value} />,
-		)
-	}
-
-	if (!userHasAccess) {
-		return (
-			<div className="w-full p-12">
-				<div className="flex w-full flex-col gap-4 text-center">
-					<p className="text-2xl font-bold">Access Denied</p>
-					<p className="text-lg">
-						You must login or register for the workshop to view the diff.
-					</p>
-				</div>
-				<div className="h-16" />
-				<p className="pb-4">
-					Check out this video to see how the diff tab works.
-				</p>
-				<DeferredEpicVideo url="https://www.epicweb.dev/tips/epic-workshop-diff-tab-demo" />
-			</div>
 		)
 	}
 

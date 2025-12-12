@@ -9,9 +9,8 @@ import {
 	type App,
 	type ExerciseStepApp,
 } from '@epic-web/workshop-utils/apps.server'
-import { compileMarkdownString } from '@epic-web/workshop-utils/compile-mdx.server'
 import { getDiffCode } from '@epic-web/workshop-utils/diff.server'
-import { userHasAccessToWorkshop } from '@epic-web/workshop-utils/epic-api.server'
+import { userHasAccessToExerciseStep } from '@epic-web/workshop-utils/epic-api.server'
 import {
 	combineServerTimings,
 	getServerTimeHeader,
@@ -23,7 +22,6 @@ import * as React from 'react'
 import { useRef } from 'react'
 import {
 	Link,
-	useLoaderData,
 	useNavigate,
 	useSearchParams,
 	data,
@@ -37,6 +35,7 @@ import { type InBrowserBrowserRef } from '#app/components/in-browser-browser.tsx
 import { StatusIndicator } from '#app/components/status-indicator.tsx'
 import { useWorkshopConfig } from '#app/components/workshop-config.tsx'
 import { useAltDown } from '#app/utils/misc.tsx'
+import { type Route } from './+types/index.ts'
 import { fetchDiscordPosts } from './__shared/discord.server.ts'
 import { DiscordChat } from './__shared/discord.tsx'
 import { Playground } from './__shared/playground.tsx'
@@ -46,10 +45,6 @@ import { getAppRunningState, getTestState } from './__shared/utils.tsx'
 
 export async function loader({ request, params }: LoaderFunctionArgs) {
 	const timings = makeTimings('exerciseStepTypeIndexLoader')
-	const userHasAccess = await userHasAccessToWorkshop({
-		request,
-		timings,
-	})
 	const searchParams = new URL(request.url).searchParams
 	const cacheOptions = { request, timings }
 
@@ -127,15 +122,6 @@ export async function loader({ request, params }: LoaderFunctionArgs) {
 				diffCode: null,
 			}
 		}
-		if (!userHasAccess) {
-			return {
-				app1: app1?.name,
-				app2: app2?.name,
-				diffCode: await compileMarkdownString(
-					`<h1>Access Denied</h1><p>You must login or register for the workshop to view the diff</p>`,
-				),
-			}
-		}
 		const diffCode = await getDiffCode(app1, app2, {
 			...cacheOptions,
 			forceFresh: searchParams.get('forceFresh') === 'diff',
@@ -157,6 +143,12 @@ export async function loader({ request, params }: LoaderFunctionArgs) {
 			allApps,
 			// defer this promise so that we don't block the response from being sent
 			discordPostsPromise: fetchDiscordPosts({ request }),
+			userHasAccessPromise: userHasAccessToExerciseStep({
+				exerciseNumber: Number(params.exerciseNumber),
+				stepNumber: Number(params.stepNumber),
+				request,
+				timings,
+			}),
 			playground: playgroundApp
 				? ({
 						type: 'playground',
@@ -238,8 +230,9 @@ function withParam(
 	return newSearchParams
 }
 
-export default function ExercisePartRoute() {
-	const data = useLoaderData<typeof loader>()
+export default function ExercisePartRoute({
+	loaderData,
+}: Route.ComponentProps) {
 	const workshopConfig = useWorkshopConfig()
 	const [searchParams] = useSearchParams()
 
@@ -253,14 +246,17 @@ export default function ExercisePartRoute() {
 		if (tab === 'tests') {
 			return (
 				ENV.EPICSHOP_DEPLOYED ||
-				!data.playground ||
-				data.playground.test.type === 'none'
+				!loaderData.playground ||
+				loaderData.playground.test.type === 'none'
 			)
 		}
 		if (tab === 'problem' || tab === 'solution') {
-			if (data[tab]?.dev.type === 'none') return true
+			if (loaderData[tab]?.dev.type === 'none') return true
 			if (ENV.EPICSHOP_DEPLOYED) {
-				return data[tab]?.dev.type !== 'browser' && !data[tab]?.stackBlitzUrl
+				return (
+					loaderData[tab]?.dev.type !== 'browser' &&
+					!loaderData[tab]?.stackBlitzUrl
+				)
 			}
 		}
 		if (tab === 'playground' && ENV.EPICSHOP_DEPLOYED) return true
@@ -275,15 +271,16 @@ export default function ExercisePartRoute() {
 		tab: (typeof tabs)[number],
 	): 'running' | 'passed' | 'failed' | null {
 		if (tab === 'tests') {
-			if (!data.playground) return null
-			const { isTestRunning, testExitCode } = data.playground
+			if (!loaderData.playground) return null
+			const { isTestRunning, testExitCode } = loaderData.playground
 			if (isTestRunning) return 'running'
 			if (testExitCode === 0) return 'passed'
 			if (testExitCode !== null && testExitCode !== 0) return 'failed'
 			return null
 		}
 		if (tab === 'problem' || tab === 'solution' || tab === 'playground') {
-			const appData = tab === 'playground' ? data.playground : data[tab]
+			const appData =
+				tab === 'playground' ? loaderData.playground : loaderData[tab]
 			if (appData?.isRunning) return 'running'
 		}
 		return null
@@ -296,8 +293,8 @@ export default function ExercisePartRoute() {
 	// when alt is held down, the diff tab should open to the full-page diff view
 	// between the problem and solution (this is more for the instructor than the student)
 	const altDiffUrl = `/diff?${new URLSearchParams({
-		app1: data.problem?.name ?? '',
-		app2: data.solution?.name ?? '',
+		app1: loaderData.problem?.name ?? '',
+		app2: loaderData.solution?.name ?? '',
 	})}`
 
 	function handleDiffTabClick(event: React.MouseEvent<HTMLAnchorElement>) {
@@ -355,11 +352,11 @@ export default function ExercisePartRoute() {
 					forceMount
 				>
 					<Playground
-						appInfo={data.playground}
-						problemAppName={data.problem?.name}
+						appInfo={loaderData.playground}
+						problemAppName={loaderData.problem?.name}
 						inBrowserBrowserRef={inBrowserBrowserRef}
-						allApps={data.allApps}
-						isUpToDate={data.playground?.isUpToDate ?? false}
+						allApps={loaderData.allApps}
+						isUpToDate={loaderData.playground?.isUpToDate ?? false}
 					/>
 				</Tabs.Content>
 				<Tabs.Content
@@ -368,7 +365,7 @@ export default function ExercisePartRoute() {
 					forceMount
 				>
 					<Preview
-						appInfo={data.problem}
+						appInfo={loaderData.problem}
 						inBrowserBrowserRef={inBrowserBrowserRef}
 					/>
 				</Tabs.Content>
@@ -378,7 +375,7 @@ export default function ExercisePartRoute() {
 					forceMount
 				>
 					<Preview
-						appInfo={data.solution}
+						appInfo={loaderData.solution}
 						inBrowserBrowserRef={inBrowserBrowserRef}
 					/>
 				</Tabs.Content>
@@ -387,17 +384,22 @@ export default function ExercisePartRoute() {
 					className="flex w-full flex-grow items-start justify-center self-start overflow-hidden radix-state-inactive:hidden"
 				>
 					<Tests
-						appInfo={data.playground}
-						problemAppName={data.problem?.name}
-						allApps={data.allApps}
-						isUpToDate={data.playground?.isUpToDate ?? false}
+						appInfo={loaderData.playground}
+						problemAppName={loaderData.problem?.name}
+						allApps={loaderData.allApps}
+						isUpToDate={loaderData.playground?.isUpToDate ?? false}
+						userHasAccessPromise={loaderData.userHasAccessPromise}
 					/>
 				</Tabs.Content>
 				<Tabs.Content
 					value="diff"
 					className="flex h-full w-full flex-grow items-start justify-center self-start radix-state-inactive:hidden"
 				>
-					<Diff diff={data.diff} allApps={data.allApps} />
+					<Diff
+						diff={loaderData.diff}
+						allApps={loaderData.allApps}
+						userHasAccessPromise={loaderData.userHasAccessPromise}
+					/>
 				</Tabs.Content>
 				<Tabs.Content
 					value="chat"

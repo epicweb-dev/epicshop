@@ -96,6 +96,7 @@
     "partysocket": "^1.1.6",
     "react": "^19.2.0",
     "react-dom": "^19.2.0",
+    "react-error-boundary": "^6.0.0",
     "react-router": "^7.9.5",
     "remix-flat-routes": "^0.8.5",
     "remix-utils": "^9.0.0",
