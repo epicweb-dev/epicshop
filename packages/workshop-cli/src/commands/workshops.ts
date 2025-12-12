@@ -10,6 +10,25 @@ const GITHUB_ORG = 'epicweb-dev'
 const TUTORIAL_REPO = 'epicshop-tutorial'
 
 /**
+ * Check if the current working directory is a valid workshop
+ * (has epicshop config in package.json)
+ */
+export async function isInWorkshopDirectory(): Promise<boolean> {
+	try {
+		const cwd = process.cwd()
+		const packageJsonPath = path.join(cwd, 'package.json')
+
+		const content = await fs.promises.readFile(packageJsonPath, 'utf-8')
+		const packageJson = JSON.parse(content)
+
+		// Check if epicshop config exists and has required fields
+		return Boolean(packageJson.epicshop && packageJson.epicshop.title)
+	} catch {
+		return false
+	}
+}
+
+/**
  * Detect if the current working directory is inside a managed workshop
  * Returns the workshop if found, null otherwise
  */
