@@ -579,11 +579,7 @@ if (loginResult.success) {
 All commands are fully typed with TypeScript:
 
 ```typescript
-import {
-	start,
-	type StartOptions,
-	type StartResult,
-} from 'epicshop/start'
+import { start, type StartOptions, type StartResult } from 'epicshop/start'
 import { update, type UpdateResult } from 'epicshop/update'
 import { warm, type WarmResult } from 'epicshop/warm'
 import {
