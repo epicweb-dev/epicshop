@@ -168,14 +168,14 @@ const cli = yargs(args)
 		},
 	)
 	.command(
-		'add <repo-name>',
+		'add [repo-name]',
 		'Add a workshop by cloning from epicweb-dev GitHub org',
 		(yargs: Argv) => {
 			return yargs
 				.positional('repo-name', {
-					describe: 'Repository name from epicweb-dev org',
+					describe:
+						'Repository name from epicweb-dev org (optional, shows list if omitted)',
 					type: 'string',
-					demandOption: true,
 				})
 				.option('directory', {
 					alias: 'd',
@@ -189,6 +189,7 @@ const cli = yargs(args)
 					description: 'Run without output logs',
 					default: false,
 				})
+				.example('$0 add', 'Show available workshops to add')
 				.example(
 					'$0 add full-stack-foundations',
 					'Clone and set up the full-stack-foundations workshop',
@@ -200,7 +201,7 @@ const cli = yargs(args)
 		},
 		async (
 			argv: ArgumentsCamelCase<{
-				repoName: string
+				repoName?: string
 				directory?: string
 				silent?: boolean
 			}>,
@@ -845,18 +846,8 @@ try {
 				break
 			}
 			case 'add': {
-				const { input } = await import('@inquirer/prompts')
-				const repoName = await input({
-					message: 'Enter the repository name from epicweb-dev org:',
-					validate: (value) => {
-						if (!value.trim()) {
-							return 'Please enter a repository name'
-						}
-						return true
-					},
-				})
 				const { add } = await import('./commands/workshops.js')
-				const result = await add({ repoName })
+				const result = await add({})
 				if (!result.success) process.exit(1)
 				break
 			}

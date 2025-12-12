@@ -104,9 +104,49 @@ export type WorkshopsResult = {
 }
 
 export type AddOptions = {
-	repoName: string
+	repoName?: string
 	directory?: string
 	silent?: boolean
+}
+
+type GitHubRepo = {
+	name: string
+	description: string | null
+	html_url: string
+	stargazers_count: number
+	topics: string[]
+}
+
+type GitHubSearchResponse = {
+	total_count: number
+	incomplete_results: boolean
+	items: GitHubRepo[]
+}
+
+/**
+ * Fetch available workshops from GitHub (epicweb-dev org with 'workshop' topic)
+ */
+async function fetchAvailableWorkshops(): Promise<GitHubRepo[]> {
+	const url = `https://api.github.com/search/repositories?q=topic:workshop+org:${GITHUB_ORG}&sort=stars&order=desc`
+
+	const response = await fetch(url, {
+		headers: {
+			Accept: 'application/vnd.github.v3+json',
+			'User-Agent': 'epicshop-cli',
+		},
+	})
+
+	if (!response.ok) {
+		if (response.status === 403) {
+			throw new Error(
+				'GitHub API rate limit exceeded. Please try again in a minute.',
+			)
+		}
+		throw new Error(`Failed to fetch workshops from GitHub: ${response.status}`)
+	}
+
+	const data = (await response.json()) as GitHubSearchResponse
+	return data.items
 }
 
 export type StartOptions = {
@@ -123,9 +163,65 @@ export type ConfigOptions = {
  * Add a workshop by cloning from epicweb-dev GitHub org and running setup
  */
 export async function add(options: AddOptions): Promise<WorkshopsResult> {
-	const { repoName, silent = false } = options
+	const { silent = false } = options
+	let { repoName } = options
 
 	try {
+		// If no repo name provided, fetch available workshops and let user select
+		if (!repoName) {
+			if (silent) {
+				return {
+					success: false,
+					message: 'Repository name is required in silent mode',
+				}
+			}
+
+			console.log(chalk.cyan('\n🔍 Fetching available workshops...\n'))
+
+			let workshops: GitHubRepo[]
+			try {
+				workshops = await fetchAvailableWorkshops()
+			} catch (error) {
+				const message = error instanceof Error ? error.message : String(error)
+				console.error(chalk.red(`❌ ${message}`))
+				return {
+					success: false,
+					message,
+					error: error instanceof Error ? error : new Error(message),
+				}
+			}
+
+			if (workshops.length === 0) {
+				const message = 'No workshops found on GitHub'
+				console.log(chalk.yellow(message))
+				return { success: false, message }
+			}
+
+			const { search } = await import('@inquirer/prompts')
+
+			const allChoices = workshops.map((w) => ({
+				name: w.name,
+				value: w.name,
+				description: w.description || undefined,
+			}))
+
+			console.log(
+				chalk.bold.cyan(`📚 Available Workshops (${workshops.length}):\n`),
+			)
+
+			repoName = await search({
+				message: 'Select a workshop to add:',
+				source: async (input) => {
+					if (!input) {
+						return allChoices
+					}
+					return matchSorter(allChoices, input, {
+						keys: ['name', 'value', 'description'],
+					})
+				},
+			})
+		}
+
 		// Ensure config is set up first
 		if (!(await ensureConfigured())) {
 			return { success: false, message: 'Setup cancelled' }
