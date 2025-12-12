@@ -3,7 +3,7 @@ import { useState } from 'react'
 import { DeferredEpicVideo } from '#app/components/epic-video.js'
 import { Icon } from '#app/components/icons'
 import { InBrowserTestRunner } from '#app/components/in-browser-test-runner'
-import { useUserHasAccess } from '#app/components/user.js'
+import { useUserHasAccessToLesson } from '#app/components/user.tsx'
 import { TestOutput } from '#app/routes/test'
 import { PlaygroundWindow } from './playground-window'
 
@@ -36,7 +36,7 @@ export function TestUI({
 	playgroundAppInfo: Pick<PlaygroundApp, 'name' | 'test'> | null
 }) {
 	const [inBrowserTestKey, setInBrowserTestKey] = useState(0)
-	const userHasAccess = useUserHasAccess()
+	const userHasAccess = useUserHasAccessToLesson()
 
 	if (!userHasAccess) {
 		return (
@@ -44,7 +44,7 @@ export function TestUI({
 				<div className="flex w-full flex-col gap-4 text-center">
 					<p className="text-2xl font-bold">Access Denied</p>
 					<p className="text-lg">
-						You must login or register for the workshop to view and run the
+						You must login and have access to this lesson to view and run the
 						tests.
 					</p>
 				</div>

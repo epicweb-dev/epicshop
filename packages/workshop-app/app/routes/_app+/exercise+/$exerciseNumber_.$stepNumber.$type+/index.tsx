@@ -35,7 +35,9 @@ import { Diff } from '#app/components/diff.tsx'
 import { GeneralErrorBoundary } from '#app/components/error-boundary.tsx'
 import { type InBrowserBrowserRef } from '#app/components/in-browser-browser.tsx'
 import { StatusIndicator } from '#app/components/status-indicator.tsx'
+import { useUserHasAccessToLesson } from '#app/components/user.tsx'
 import { useWorkshopConfig } from '#app/components/workshop-config.tsx'
+import { getUserHasAccessToLessonFirstEpicVideo } from '#app/utils/lesson-access.server.ts'
 import { useAltDown } from '#app/utils/misc.tsx'
 import { fetchDiscordPosts } from './__shared/discord.server.ts'
 import { DiscordChat } from './__shared/discord.tsx'
@@ -50,6 +52,16 @@ export async function loader({ request, params }: LoaderFunctionArgs) {
 		request,
 		timings,
 	})
+	const exerciseNumber = Number(params.exerciseNumber)
+	const userHasAccessToLesson =
+		userHasAccess ||
+		(Number.isFinite(exerciseNumber)
+			? await getUserHasAccessToLessonFirstEpicVideo({
+					request,
+					timings,
+					exerciseNumber,
+				})
+			: false)
 	const searchParams = new URL(request.url).searchParams
 	const cacheOptions = { request, timings }
 
@@ -127,12 +139,12 @@ export async function loader({ request, params }: LoaderFunctionArgs) {
 				diffCode: null,
 			}
 		}
-		if (!userHasAccess) {
+		if (!userHasAccessToLesson) {
 			return {
 				app1: app1?.name,
 				app2: app2?.name,
 				diffCode: await compileMarkdownString(
-					`<h1>Access Denied</h1><p>You must login or register for the workshop to view the diff</p>`,
+					`<h1>Access Denied</h1><p>You must login and have access to this lesson to view the diff.</p>`,
 				),
 			}
 		}
@@ -242,6 +254,9 @@ export default function ExercisePartRoute() {
 	const data = useLoaderData<typeof loader>()
 	const workshopConfig = useWorkshopConfig()
 	const [searchParams] = useSearchParams()
+	const userHasAccessToLesson = useUserHasAccessToLesson(
+		data.exerciseStepApp.exerciseNumber,
+	)
 
 	const preview = searchParams.get('preview')
 	const inBrowserBrowserRef = useRef<InBrowserBrowserRef>(null)
@@ -253,9 +268,13 @@ export default function ExercisePartRoute() {
 		if (tab === 'tests') {
 			return (
 				ENV.EPICSHOP_DEPLOYED ||
+				!userHasAccessToLesson ||
 				!data.playground ||
 				data.playground.test.type === 'none'
 			)
+		}
+		if (tab === 'diff') {
+			return !userHasAccessToLesson
 		}
 		if (tab === 'problem' || tab === 'solution') {
 			if (data[tab]?.dev.type === 'none') return true

@@ -56,6 +56,7 @@ import appStylesheetUrl from './styles/app.css?url'
 import tailwindStylesheetUrl from './styles/tailwind.css?url'
 import { ClientHintCheck, getHints } from './utils/client-hints'
 import { getConfetti } from './utils/confetti.server'
+import { getLessonFirstEpicVideoAccess } from './utils/lesson-access.server.ts'
 import { cn, combineHeaders, getDomainUrl, useAltDown } from './utils/misc'
 import { Presence } from './utils/presence'
 import { getSeoMetaTags } from './utils/seo'
@@ -123,6 +124,16 @@ export async function loader({ request }: Route.LoaderArgs) {
 		}),
 		user: getUserInfo(),
 		userHasAccess: userHasAccessToWorkshop({ request, timings }),
+		lessonFirstEpicVideoAccessInfo: getLessonFirstEpicVideoAccess({
+			request,
+			timings,
+		}).catch((e) => {
+			console.error('Failed to get lesson first epic video access', e)
+			return {
+				lessonFirstEpicVideoAccess: {} as Record<number, boolean>,
+				firstVideoUrlByExerciseNumber: {} as Record<number, string>,
+			} as const
+		}),
 		apps: getApps({ request, timings }),
 		repoUpdates: checkForUpdatesCached(),
 		unmutedNotifications: getUnmutedNotifications(),
@@ -178,6 +189,8 @@ export async function loader({ request }: Route.LoaderArgs) {
 			},
 			repoUpdates,
 			exerciseChanges: asyncStuff.exerciseChanges,
+			lessonFirstEpicVideoAccess:
+				asyncStuff.lessonFirstEpicVideoAccessInfo.lessonFirstEpicVideoAccess,
 		},
 		{
 			headers: combineHeaders(

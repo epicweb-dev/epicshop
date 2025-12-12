@@ -1,3 +1,4 @@
+import { useParams } from 'react-router'
 import { useRootLoaderData } from '#app/utils/root-loader.ts'
 
 export function useOptionalUser() {
@@ -43,4 +44,24 @@ export function useDiscordMember() {
 export function useUserHasAccess() {
 	const data = useRootLoaderData()
 	return data.userHasAccess
+}
+
+export function useUserHasAccessToLesson(exerciseNumber?: number) {
+	const data = useRootLoaderData()
+	const params = useParams()
+
+	// Full workshop access implies lesson access.
+	if (data.userHasAccess) return true
+
+	const inferredExerciseNumber =
+		exerciseNumber ??
+		(params.exerciseNumber ? Number(params.exerciseNumber) : undefined)
+
+	if (!inferredExerciseNumber || !Number.isFinite(inferredExerciseNumber)) {
+		return false
+	}
+
+	return Boolean(
+		data.lessonFirstEpicVideoAccess?.[inferredExerciseNumber] ?? false,
+	)
 }

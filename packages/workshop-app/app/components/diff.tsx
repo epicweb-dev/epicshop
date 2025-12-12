@@ -19,7 +19,7 @@ import { DeferredEpicVideo } from './epic-video.tsx'
 import { Icon } from './icons.tsx'
 import { useRevalidationWS } from './revalidation-ws.tsx'
 import { SimpleTooltip } from './ui/tooltip.tsx'
-import { useUserHasAccess } from './user.tsx'
+import { useUserHasAccessToLesson } from './user.tsx'
 
 type diffProp = {
 	app1?: string
@@ -59,7 +59,7 @@ export function Diff({
 	diff: Promise<diffProp> | diffProp
 	allApps: Array<{ name: string; displayName: string }>
 }) {
-	const userHasAccess = useUserHasAccess()
+	const userHasAccess = useUserHasAccessToLesson()
 	const submit = useSubmit()
 	const [params] = useSearchParams()
 	const paramsWithForcedRefresh = new URLSearchParams(params)
@@ -84,7 +84,7 @@ export function Diff({
 				<div className="flex w-full flex-col gap-4 text-center">
 					<p className="text-2xl font-bold">Access Denied</p>
 					<p className="text-lg">
-						You must login or register for the workshop to view the diff.
+						You must login and have access to this lesson to view the diff.
 					</p>
 				</div>
 				<div className="h-16" />
