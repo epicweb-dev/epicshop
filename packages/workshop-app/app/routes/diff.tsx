@@ -5,6 +5,7 @@ import {
 	isExerciseStepApp,
 } from '@epic-web/workshop-utils/apps.server'
 import { getDiffCode } from '@epic-web/workshop-utils/diff.server'
+import { userHasAccessToWorkshop } from '@epic-web/workshop-utils/epic-api.server'
 import { makeTimings } from '@epic-web/workshop-utils/timing.server'
 import {
 	type LoaderFunctionArgs,
@@ -94,6 +95,7 @@ export async function loader({ request }: LoaderFunctionArgs) {
 	nextSearchParams.set('app1', nextApp1 ?? '')
 	nextSearchParams.set('app2', nextApp2 ?? '')
 	return {
+		userHasAccessPromise: userHasAccessToWorkshop({ request, timings }),
 		allApps,
 		diff,
 		prevLink:
@@ -125,7 +127,11 @@ export default function DiffViewer() {
 			})}
 		>
 			<div className="overflow-y-auto">
-				<Diff diff={data.diff} allApps={data.allApps} />
+				<Diff
+					diff={data.diff}
+					allApps={data.allApps}
+					userHasAccessPromise={data.userHasAccessPromise}
+				/>
 			</div>
 			<div className="flex h-16 items-center justify-end border-t">
 				<NavChevrons prev={data.prevLink} next={data.nextLink} />

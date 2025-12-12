@@ -1,4 +1,5 @@
 import { requireExerciseApp } from '@epic-web/workshop-utils/apps.server'
+import { userHasAccessToExerciseStep } from '@epic-web/workshop-utils/epic-api.server'
 import {
 	combineServerTimings,
 	makeTimings,
@@ -21,6 +22,12 @@ export async function loader({ request, params }: LoaderFunctionArgs) {
 				name: exerciseStepApp?.name,
 				test: exerciseStepApp?.test,
 			},
+			userHasAccess: await userHasAccessToExerciseStep({
+				exerciseNumber: Number(params.exerciseNumber),
+				stepNumber: Number(params.stepNumber),
+				request,
+				timings,
+			}),
 		},
 		{
 			headers: {
@@ -39,7 +46,13 @@ export const headers: HeadersFunction = ({ loaderHeaders, parentHeaders }) => {
 }
 
 export default function TestsList() {
-	const { appInfo } = useLoaderData<typeof loader>()
+	const { appInfo, userHasAccess } = useLoaderData<typeof loader>()
 
-	return <TestUI key={appInfo.name} playgroundAppInfo={appInfo} />
+	return (
+		<TestUI
+			key={appInfo.name}
+			playgroundAppInfo={appInfo}
+			userHasAccess={userHasAccess}
+		/>
+	)
 }
