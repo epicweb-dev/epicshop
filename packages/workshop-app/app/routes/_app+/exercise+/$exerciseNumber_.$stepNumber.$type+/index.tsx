@@ -6,12 +6,13 @@ import {
 	isExerciseStepApp,
 	isPlaygroundApp,
 	requireExerciseApp,
+	requireExercise,
 	type App,
 	type ExerciseStepApp,
 } from '@epic-web/workshop-utils/apps.server'
 import { compileMarkdownString } from '@epic-web/workshop-utils/compile-mdx.server'
 import { getDiffCode } from '@epic-web/workshop-utils/diff.server'
-import { userHasAccessToWorkshop } from '@epic-web/workshop-utils/epic-api.server'
+import { userHasAccessToWorkshopOrVideos } from '@epic-web/workshop-utils/epic-api.server'
 import {
 	combineServerTimings,
 	getServerTimeHeader,
@@ -46,10 +47,6 @@ import { getAppRunningState, getTestState } from './__shared/utils.tsx'
 
 export async function loader({ request, params }: LoaderFunctionArgs) {
 	const timings = makeTimings('exerciseStepTypeIndexLoader')
-	const userHasAccess = await userHasAccessToWorkshop({
-		request,
-		timings,
-	})
 	const searchParams = new URL(request.url).searchParams
 	const cacheOptions = { request, timings }
 
@@ -60,6 +57,16 @@ export async function loader({ request, params }: LoaderFunctionArgs) {
 			getExerciseApp({ ...params, type: 'problem' }, cacheOptions),
 			getExerciseApp({ ...params, type: 'solution' }, cacheOptions),
 		])
+
+	const exercise = await requireExercise(exerciseStepApp.exerciseNumber, cacheOptions)
+	const canAccessDiffAndTests = await userHasAccessToWorkshopOrVideos({
+		request,
+		timings,
+		epicVideoEmbeds: [
+			exercise.instructionsEpicVideoEmbeds?.[0],
+			exerciseStepApp.epicVideoEmbeds?.[0],
+		],
+	})
 
 	const playgroundApp = allAppsFull.find(isPlaygroundApp)
 	const reqUrl = new URL(request.url)
@@ -127,7 +134,7 @@ export async function loader({ request, params }: LoaderFunctionArgs) {
 				diffCode: null,
 			}
 		}
-		if (!userHasAccess) {
+		if (!canAccessDiffAndTests) {
 			return {
 				app1: app1?.name,
 				app2: app2?.name,
@@ -197,6 +204,7 @@ export async function loader({ request, params }: LoaderFunctionArgs) {
 					} as const)
 				: null,
 			diff: getDiffProp(),
+			canAccessDiffAndTests,
 		} as const,
 		{
 			headers: {
@@ -387,6 +395,7 @@ export default function ExercisePartRoute() {
 					className="flex w-full flex-grow items-start justify-center self-start overflow-hidden radix-state-inactive:hidden"
 				>
 					<Tests
+						hasAccess={data.canAccessDiffAndTests}
 						appInfo={data.playground}
 						problemAppName={data.problem?.name}
 						allApps={data.allApps}
@@ -397,7 +406,7 @@ export default function ExercisePartRoute() {
 					value="diff"
 					className="flex h-full w-full flex-grow items-start justify-center self-start radix-state-inactive:hidden"
 				>
-					<Diff diff={data.diff} allApps={data.allApps} />
+					<Diff diff={data.diff} allApps={data.allApps} hasAccess={data.canAccessDiffAndTests} />
 				</Tabs.Content>
 				<Tabs.Content
 					value="chat"

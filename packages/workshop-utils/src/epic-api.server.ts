@@ -685,6 +685,57 @@ export async function userHasAccessToWorkshop({
 	})
 }
 
+function normalizeEpicVideoEmbedUrl(url: string) {
+	return url.endsWith('/') ? url.slice(0, -1) : url
+}
+
+export async function userHasAccessToAnyEpicVideo({
+	request,
+	timings,
+	epicVideoEmbeds,
+}: {
+	request?: Request
+	timings?: Timings
+	epicVideoEmbeds: Array<string | null | undefined>
+}) {
+	const embeds = Array.from(
+		new Set(
+			epicVideoEmbeds
+				.filter(Boolean)
+				.map((e) => normalizeEpicVideoEmbedUrl(e)),
+		),
+	)
+	if (embeds.length === 0) return false
+
+	// In deployed mode we don't fetch video info (no token), so we can't do
+	// per-video access checks here.
+	if (getEnv().EPICSHOP_DEPLOYED) return false
+
+	const epicVideoInfos = await getEpicVideoInfos(embeds, { request, timings })
+	return embeds.some((embed) => epicVideoInfos[embed]?.status === 'success')
+}
+
+export async function userHasAccessToWorkshopOrVideos({
+	request,
+	timings,
+	forceFresh,
+	epicVideoEmbeds,
+}: {
+	request?: Request
+	timings?: Timings
+	forceFresh?: boolean
+	epicVideoEmbeds: Array<string | null | undefined>
+}) {
+	const userHasWorkshopAccess = await userHasAccessToWorkshop({
+		request,
+		timings,
+		forceFresh,
+	})
+	if (userHasWorkshopAccess) return true
+
+	return userHasAccessToAnyEpicVideo({ request, timings, epicVideoEmbeds })
+}
+
 const UserInfoSchema = z
 	.object({
 		id: z.string(),

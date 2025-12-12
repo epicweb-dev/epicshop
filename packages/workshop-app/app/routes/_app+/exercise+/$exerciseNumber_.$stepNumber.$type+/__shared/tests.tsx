@@ -12,11 +12,13 @@ export function Tests({
 	problemAppName,
 	allApps,
 	isUpToDate,
+	hasAccess,
 }: {
 	appInfo: Pick<PlaygroundApp, 'appName' | 'name' | 'test'> | null
 	problemAppName?: string
 	allApps: Array<{ name: string; displayName: string }>
 	isUpToDate: boolean
+	hasAccess?: boolean
 }) {
 	return (
 		<PlaygroundWindow
@@ -25,20 +27,23 @@ export function Tests({
 			allApps={allApps}
 			isUpToDate={isUpToDate}
 		>
-			<TestUI playgroundAppInfo={playgroundAppInfo} />
+			<TestUI playgroundAppInfo={playgroundAppInfo} hasAccess={hasAccess} />
 		</PlaygroundWindow>
 	)
 }
 
 export function TestUI({
 	playgroundAppInfo,
+	hasAccess,
 }: {
 	playgroundAppInfo: Pick<PlaygroundApp, 'name' | 'test'> | null
+	hasAccess?: boolean
 }) {
 	const [inBrowserTestKey, setInBrowserTestKey] = useState(0)
 	const userHasAccess = useUserHasAccess()
+	const canAccess = hasAccess ?? userHasAccess
 
-	if (!userHasAccess) {
+	if (!canAccess) {
 		return (
 			<div className="w-full p-12">
 				<div className="flex w-full flex-col gap-4 text-center">

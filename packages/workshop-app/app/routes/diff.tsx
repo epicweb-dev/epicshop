@@ -5,6 +5,7 @@ import {
 	isExerciseStepApp,
 } from '@epic-web/workshop-utils/apps.server'
 import { getDiffCode } from '@epic-web/workshop-utils/diff.server'
+import { userHasAccessToWorkshopOrVideos } from '@epic-web/workshop-utils/epic-api.server'
 import { makeTimings } from '@epic-web/workshop-utils/timing.server'
 import {
 	type LoaderFunctionArgs,
@@ -37,6 +38,12 @@ export async function loader({ request }: LoaderFunctionArgs) {
 	const app2 = app2Name
 		? await getAppByName(app2Name)
 		: allAppsFull.filter(isExerciseStepApp).at(-1)
+
+	const canAccessDiff = await userHasAccessToWorkshopOrVideos({
+		request,
+		timings,
+		epicVideoEmbeds: [app1?.epicVideoEmbeds?.[0], app2?.epicVideoEmbeds?.[0]],
+	})
 
 	async function getDiffProp() {
 		if (!app1 || !app2) {
@@ -96,6 +103,7 @@ export async function loader({ request }: LoaderFunctionArgs) {
 	return {
 		allApps,
 		diff,
+		canAccessDiff,
 		prevLink:
 			prevApp1 && prevApp2
 				? { to: `/diff?${prevSearchParams}`, 'aria-label': 'Previous App' }
@@ -125,7 +133,7 @@ export default function DiffViewer() {
 			})}
 		>
 			<div className="overflow-y-auto">
-				<Diff diff={data.diff} allApps={data.allApps} />
+				<Diff diff={data.diff} allApps={data.allApps} hasAccess={data.canAccessDiff} />
 			</div>
 			<div className="flex h-16 items-center justify-end border-t">
 				<NavChevrons prev={data.prevLink} next={data.nextLink} />

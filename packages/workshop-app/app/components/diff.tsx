@@ -55,11 +55,14 @@ function RevalidateApps({
 export function Diff({
 	diff,
 	allApps,
+	hasAccess,
 }: {
 	diff: Promise<diffProp> | diffProp
 	allApps: Array<{ name: string; displayName: string }>
+	hasAccess?: boolean
 }) {
 	const userHasAccess = useUserHasAccess()
+	const canAccess = hasAccess ?? userHasAccess
 	const submit = useSubmit()
 	const [params] = useSearchParams()
 	const paramsWithForcedRefresh = new URLSearchParams(params)
@@ -78,7 +81,7 @@ export function Diff({
 		)
 	}
 
-	if (!userHasAccess) {
+	if (!canAccess) {
 		return (
 			<div className="w-full p-12">
 				<div className="flex w-full flex-col gap-4 text-center">
