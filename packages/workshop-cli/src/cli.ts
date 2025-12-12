@@ -824,7 +824,9 @@ try {
 				}
 				workshopTitle = pkg.epicshop?.title || path.basename(workshopRoot)
 			} catch {
-				workshopTitle = workshopRoot.split('/').pop() || 'current workshop'
+				// Use path.basename for cross-platform compatibility (Windows uses backslashes)
+				const path = await import('node:path')
+				workshopTitle = path.basename(workshopRoot) || 'current workshop'
 			}
 		}
 

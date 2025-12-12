@@ -234,16 +234,18 @@ export async function login(
 			console.log(chalk.gray('Waiting for authorization...'))
 		}
 
-		const timeout = setTimeout(() => {
-			throw new Error('Device authorization timed out')
-		}, deviceResponse.expires_in * 1000)
+		// Use Promise.race to properly handle timeout
+		const timeoutPromise = new Promise<never>((_, reject) => {
+			setTimeout(() => {
+				reject(new Error('Device authorization timed out'))
+			}, deviceResponse.expires_in * 1000)
+		})
 
 		try {
-			const tokenSet = await client.pollDeviceAuthorizationGrant(
-				config,
-				deviceResponse,
-			)
-			clearTimeout(timeout)
+			const tokenSet = await Promise.race([
+				client.pollDeviceAuthorizationGrant(config, deviceResponse),
+				timeoutPromise,
+			])
 
 			if (!tokenSet) {
 				const message = 'No token received from authorization'
@@ -300,7 +302,6 @@ export async function login(
 
 			return { success: true, message: `Logged in to ${domain.displayName}` }
 		} catch (error) {
-			clearTimeout(timeout)
 			throw error
 		}
 	} catch (error) {
