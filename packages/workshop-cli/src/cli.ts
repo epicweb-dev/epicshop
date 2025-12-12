@@ -942,12 +942,12 @@ try {
 				break
 			}
 			case 'open': {
-				const { detectCurrentWorkshop: detect, openWorkshop } = await import(
+				const { findWorkshopRoot, openWorkshop } = await import(
 					'./commands/workshops.js'
 				)
-				const workshop = await detect()
+				const workshopRoot = await findWorkshopRoot()
 				const result = await openWorkshop({
-					workshop: workshop?.repoName,
+					workshop: workshopRoot || undefined,
 				})
 				if (!result.success) process.exit(1)
 				break
@@ -965,12 +965,12 @@ try {
 				break
 			}
 			case 'remove': {
-				const { detectCurrentWorkshop: detect, remove } = await import(
+				const { findWorkshopRoot, remove } = await import(
 					'./commands/workshops.js'
 				)
-				const workshop = await detect()
+				const workshopRoot = await findWorkshopRoot()
 				const result = await remove({
-					workshop: workshop?.repoName,
+					workshop: workshopRoot || undefined,
 				})
 				if (!result.success) process.exit(1)
 				break

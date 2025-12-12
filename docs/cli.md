@@ -507,13 +507,13 @@ import {
 	startWorkshop,
 	openWorkshop,
 	config,
-	detectCurrentWorkshop,
+	findWorkshopRoot,
 } from '@epic-web/workshop-cli/workshops'
 
 // Detect if currently inside a workshop
-const currentWorkshop = await detectCurrentWorkshop()
-if (currentWorkshop) {
-	console.log(`Inside workshop: ${currentWorkshop.title}`)
+const workshopRoot = await findWorkshopRoot()
+if (workshopRoot) {
+	console.log(`Inside workshop: ${workshopRoot}`)
 }
 
 // Add a workshop
@@ -596,7 +596,7 @@ import {
 	startWorkshop,
 	openWorkshop,
 	config,
-	detectCurrentWorkshop,
+	findWorkshopRoot,
 	type WorkshopsResult,
 	type AddOptions,
 	type StartOptions as WorkshopStartOptions,

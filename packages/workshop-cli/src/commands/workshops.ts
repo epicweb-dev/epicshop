@@ -53,50 +53,6 @@ export async function isInWorkshopDirectory(): Promise<boolean> {
 	return (await findWorkshopRoot()) !== null
 }
 
-/**
- * Detect if the current working directory is inside a managed workshop
- * Returns the workshop if found, null otherwise
- */
-export async function detectCurrentWorkshop(): Promise<{
-	title: string
-	repoName: string
-	path: string
-	subtitle?: string
-} | null> {
-	try {
-		const { listWorkshops, isReposDirectoryConfigured } = await import(
-			'@epic-web/workshop-utils/workshops.server'
-		)
-
-		// If not configured yet, return null (can't be in a workshop)
-		if (!(await isReposDirectoryConfigured())) {
-			return null
-		}
-
-		const cwd = process.cwd()
-		const workshops = await listWorkshops()
-
-		// Check if cwd is inside any workshop directory
-		for (const workshop of workshops) {
-			// Normalize paths for comparison
-			const workshopPath = path.resolve(workshop.path)
-			const currentPath = path.resolve(cwd)
-
-			// Check if cwd starts with the workshop path (is inside or is the workshop dir)
-			if (
-				currentPath === workshopPath ||
-				currentPath.startsWith(workshopPath + path.sep)
-			) {
-				return workshop
-			}
-		}
-
-		return null
-	} catch {
-		return null
-	}
-}
-
 export type WorkshopsResult = {
 	success: boolean
 	message?: string
