@@ -374,18 +374,43 @@ export async function remove({
 	silent?: boolean
 }): Promise<WorkshopsResult> {
 	try {
-		// Ensure config is set up first
-		if (!(await ensureConfigured())) {
-			return { success: false, message: 'Setup cancelled' }
-		}
+		const {
+			getWorkshop,
+			getWorkshopByPath,
+			listWorkshops,
+			getUnpushedChanges,
+			deleteWorkshop,
+		} = await import('@epic-web/workshop-utils/workshops.server')
 
-		const { getWorkshop, listWorkshops, getUnpushedChanges, deleteWorkshop } =
-			await import('@epic-web/workshop-utils/workshops.server')
+		let workshopData
 
-		let workshopToRemove = workshop
+		// If workshop specified, try to find it
+		if (workshop) {
+			// First check if it's a path (absolute or looks like a directory)
+			if (workshop.startsWith('/') || workshop.includes(path.sep)) {
+				// Try to find by path
+				workshopData = await getWorkshopByPath(workshop)
+				if (!workshopData) {
+					const message = `Workshop at "${workshop}" is not in your repos directory and cannot be removed via epicshop. Delete it manually if needed.`
+					if (!silent) console.log(chalk.yellow(`⚠️  ${message}`))
+					return { success: false, message }
+				}
+			} else {
+				// It's a workshop name, look it up
+				workshopData = await getWorkshop(workshop)
+				if (!workshopData) {
+					const message = `Workshop "${workshop}" not found`
+					if (!silent) console.log(chalk.yellow(`⚠️  ${message}`))
+					return { success: false, message }
+				}
+			}
+		} else {
+			// Ensure config is set up first for interactive selection
+			if (!(await ensureConfigured())) {
+				return { success: false, message: 'Setup cancelled' }
+			}
 
-		// If no workshop specified, prompt for selection
-		if (!workshopToRemove) {
+			// No workshop specified, prompt for selection
 			const workshops = await listWorkshops()
 
 			if (workshops.length === 0) {
@@ -398,26 +423,25 @@ export async function remove({
 
 			const allChoices = workshops.map((w) => ({
 				name: `${w.title} (${w.repoName})`,
-				value: w.repoName,
+				value: w,
 				description: w.path,
 			}))
 
-			workshopToRemove = await search({
+			workshopData = await search({
 				message: 'Select a workshop to remove:',
 				source: async (input) => {
 					if (!input) {
 						return allChoices
 					}
 					return matchSorter(allChoices, input, {
-						keys: ['name', 'value', 'description'],
+						keys: ['name', 'value.repoName', 'value.title', 'description'],
 					})
 				},
 			})
 		}
 
-		const workshopData = await getWorkshop(workshopToRemove)
 		if (!workshopData) {
-			const message = `Workshop "${workshopToRemove}" not found`
+			const message = 'No workshop selected'
 			if (!silent) console.log(chalk.yellow(`⚠️  ${message}`))
 			return { success: false, message }
 		}
@@ -610,12 +634,7 @@ export async function openWorkshop(
 	const { silent = false } = options
 
 	try {
-		// Ensure config is set up first
-		if (!(await ensureConfigured())) {
-			return { success: false, message: 'Setup cancelled' }
-		}
-
-		const { listWorkshops, getWorkshop } = await import(
+		const { listWorkshops, getWorkshop, getWorkshopByPath } = await import(
 			'@epic-web/workshop-utils/workshops.server'
 		)
 		const { launchEditor } = await import(
@@ -624,15 +643,52 @@ export async function openWorkshop(
 
 		let workshopToOpen
 
-		// If workshop specified, look it up and fail if not found
+		// If workshop specified, try to find it
 		if (options.workshop) {
-			workshopToOpen = await getWorkshop(options.workshop)
+			// First check if it's a path (absolute or looks like a directory)
+			if (
+				options.workshop.startsWith('/') ||
+				options.workshop.includes(path.sep)
+			) {
+				// Try to find by path first
+				workshopToOpen = await getWorkshopByPath(options.workshop)
+				if (!workshopToOpen) {
+					// Not in managed workshops, but if it's a valid workshop dir, open it directly
+					const pkgPath = path.join(options.workshop, 'package.json')
+					try {
+						const pkgContent = await fs.promises.readFile(pkgPath, 'utf-8')
+						const pkg = JSON.parse(pkgContent) as {
+							name?: string
+							epicshop?: { title?: string }
+						}
+						if (pkg.epicshop) {
+							// It's a valid workshop directory, create a minimal workshop object
+							workshopToOpen = {
+								name: pkg.name || path.basename(options.workshop),
+								title: pkg.epicshop.title || path.basename(options.workshop),
+								repoName: path.basename(options.workshop),
+								path: options.workshop,
+							}
+						}
+					} catch {
+						// Not a valid workshop directory
+					}
+				}
+			} else {
+				// It's a workshop name, look it up
+				workshopToOpen = await getWorkshop(options.workshop)
+			}
+
 			if (!workshopToOpen) {
 				const message = `Workshop "${options.workshop}" not found`
 				if (!silent) console.log(chalk.yellow(`⚠️  ${message}`))
 				return { success: false, message }
 			}
 		} else {
+			// Ensure config is set up first for interactive selection
+			if (!(await ensureConfigured())) {
+				return { success: false, message: 'Setup cancelled' }
+			}
 			// No workshop specified, show selection
 			const workshops = await listWorkshops()
 

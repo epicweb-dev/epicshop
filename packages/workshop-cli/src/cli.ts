@@ -265,17 +265,18 @@ const cli = yargs(args)
 				silent?: boolean
 			}>,
 		) => {
-			const { detectCurrentWorkshop, remove } = await import(
+			const { findWorkshopRoot, remove } = await import(
 				'./commands/workshops.js'
 			)
 
 			let workshopToRemove = argv.workshop
 
-			// If no workshop specified, check if we're inside one
+			// If no workshop specified, check if we're inside a workshop directory
 			if (!workshopToRemove) {
-				const currentWorkshop = await detectCurrentWorkshop()
-				if (currentWorkshop) {
-					workshopToRemove = currentWorkshop.repoName
+				const workshopRoot = await findWorkshopRoot()
+				if (workshopRoot) {
+					// Pass the path directly - remove will handle it
+					workshopToRemove = workshopRoot
 				}
 			}
 
@@ -313,17 +314,18 @@ const cli = yargs(args)
 				silent?: boolean
 			}>,
 		) => {
-			const { detectCurrentWorkshop, openWorkshop } = await import(
+			const { findWorkshopRoot, openWorkshop } = await import(
 				'./commands/workshops.js'
 			)
 
 			let workshopToOpen = argv.workshop
 
-			// If no workshop specified, check if we're inside one
+			// If no workshop specified, check if we're inside a workshop directory
 			if (!workshopToOpen) {
-				const currentWorkshop = await detectCurrentWorkshop()
-				if (currentWorkshop) {
-					workshopToOpen = currentWorkshop.repoName
+				const workshopRoot = await findWorkshopRoot()
+				if (workshopRoot) {
+					// Pass the path directly - openWorkshop will handle it
+					workshopToOpen = workshopRoot
 				}
 			}
 
@@ -690,13 +692,11 @@ const cli = yargs(args)
 
 // Parse and execute - show command chooser if no command provided
 try {
-	const parsed = await cli.parse()
+	await cli.parse()
 
-	// If no command was provided (empty args or just options), show command chooser
-	if (
-		args.length === 0 ||
-		(parsed._ && parsed._.length === 0 && !args[0]?.startsWith('-'))
-	) {
+	// If no command was provided, show command chooser
+	// Only trigger when args is truly empty - any arg means a command was attempted
+	if (args.length === 0) {
 		// Check if we're inside a workshop first
 		const { findWorkshopRoot } = await import('./commands/workshops.js')
 		const workshopRoot = await findWorkshopRoot()
