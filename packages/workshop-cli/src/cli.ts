@@ -82,23 +82,29 @@ const cli = yargs(args)
 				appLocation?: string
 			}>,
 		) => {
-			const { detectCurrentWorkshop } = await import('./commands/workshops.js')
-			const currentWorkshop = await detectCurrentWorkshop()
+			// If a specific workshop is requested, start it from managed workshops
+			if (argv.workshop) {
+				const { startWorkshop } = await import('./commands/workshops.js')
+				const result = await startWorkshop({
+					workshop: argv.workshop,
+					silent: argv.silent,
+				})
+				if (!result.success) {
+					process.exit(1)
+				}
+				return
+			}
 
-			// If a specific workshop is requested OR we're inside a workshop, start it directly
-			if (argv.workshop || currentWorkshop) {
-				if (argv.workshop) {
-					// Start a specific workshop from the collection
-					const { startWorkshop } = await import('./commands/workshops.js')
-					const result = await startWorkshop({
-						workshop: argv.workshop,
-						silent: argv.silent,
-					})
-					if (!result.success) {
-						process.exit(1)
-					}
-				} else {
-					// We're inside a workshop, run the current behavior
+			// Check if we're inside any workshop directory (walk up to find package.json with epicshop)
+			const { findWorkshopRoot } = await import('./commands/workshops.js')
+			const workshopRoot = await findWorkshopRoot()
+
+			if (workshopRoot) {
+				// We're inside a workshop directory, start from that root
+				const originalCwd = process.cwd()
+				process.chdir(workshopRoot)
+
+				try {
 					// run migrations before starting
 					await import('./commands/migrate.js')
 						.then(({ migrate }) => migrate())
@@ -137,9 +143,11 @@ const cli = yargs(args)
 						}
 						process.exit(1)
 					}
+				} finally {
+					process.chdir(originalCwd)
 				}
 			} else {
-				// Not inside a workshop and no workshop specified, show selection
+				// Not inside a workshop, show selection from managed workshops
 				const { startWorkshop } = await import('./commands/workshops.js')
 				const result = await startWorkshop({ silent: argv.silent })
 				if (!result.success) {
@@ -386,11 +394,15 @@ const cli = yargs(args)
 				)
 		},
 		async (argv: ArgumentsCamelCase<{ silent?: boolean }>) => {
-			const { detectCurrentWorkshop } = await import('./commands/workshops.js')
-			const currentWorkshop = await detectCurrentWorkshop()
+			// Check if we're inside any workshop directory
+			const { findWorkshopRoot } = await import('./commands/workshops.js')
+			const workshopRoot = await findWorkshopRoot()
 
-			if (currentWorkshop) {
+			if (workshopRoot) {
 				// Inside a workshop, run update on it
+				const originalCwd = process.cwd()
+				process.chdir(workshopRoot)
+
 				try {
 					const { update } = await import('./commands/update.js')
 					const result = await update({ silent: argv.silent })
@@ -410,6 +422,8 @@ const cli = yargs(args)
 						console.error(chalk.red('❌ Update failed:'), error)
 					}
 					process.exit(1)
+				} finally {
+					process.chdir(originalCwd)
 				}
 			} else {
 				// Not inside a workshop, prompt user to select one
@@ -507,11 +521,15 @@ const cli = yargs(args)
 				.example('$0 warm --silent', 'Warm up workshop caches silently')
 		},
 		async (argv: ArgumentsCamelCase<{ silent?: boolean }>) => {
-			const { detectCurrentWorkshop } = await import('./commands/workshops.js')
-			const currentWorkshop = await detectCurrentWorkshop()
+			// Check if we're inside any workshop directory
+			const { findWorkshopRoot } = await import('./commands/workshops.js')
+			const workshopRoot = await findWorkshopRoot()
 
-			if (currentWorkshop) {
+			if (workshopRoot) {
 				// Inside a workshop, warm it
+				const originalCwd = process.cwd()
+				process.chdir(workshopRoot)
+
 				try {
 					const { warm } = await import('./commands/warm.js')
 					const result = await warm({ silent: argv.silent })
@@ -531,6 +549,8 @@ const cli = yargs(args)
 						console.error(chalk.red('❌ Warmup failed:'), error)
 					}
 					process.exit(1)
+				} finally {
+					process.chdir(originalCwd)
 				}
 			} else {
 				// Not inside a workshop, prompt user to select one
@@ -673,8 +693,24 @@ try {
 	// If no command was provided (empty args or just options), show command chooser
 	if (args.length === 0 || (parsed._ && parsed._.length === 0 && !args[0]?.startsWith('-'))) {
 		// Check if we're inside a workshop first
-		const { detectCurrentWorkshop } = await import('./commands/workshops.js')
-		const currentWorkshop = await detectCurrentWorkshop()
+		const { findWorkshopRoot } = await import('./commands/workshops.js')
+		const workshopRoot = await findWorkshopRoot()
+
+		// Get workshop title if we're inside one
+		let workshopTitle: string | null = null
+		if (workshopRoot) {
+			try {
+				const fs = await import('node:fs')
+				const path = await import('node:path')
+				const pkgPath = path.join(workshopRoot, 'package.json')
+				const pkg = JSON.parse(await fs.promises.readFile(pkgPath, 'utf-8')) as {
+					epicshop?: { title?: string }
+				}
+				workshopTitle = pkg.epicshop?.title || path.basename(workshopRoot)
+			} catch {
+				workshopTitle = workshopRoot.split('/').pop() || 'current workshop'
+			}
+		}
 
 		const { search } = await import('@inquirer/prompts')
 
@@ -682,15 +718,15 @@ try {
 			{
 				name: `${chalk.green('start')} - Start a workshop`,
 				value: 'start' as const,
-				description: currentWorkshop
-					? `Start ${currentWorkshop.title}`
+				description: workshopTitle
+					? `Start ${workshopTitle}`
 					: 'Interactive workshop selection',
 			},
 			{
 				name: `${chalk.green('open')} - Open a workshop in editor`,
 				value: 'open' as const,
-				description: currentWorkshop
-					? `Open ${currentWorkshop.title}`
+				description: workshopTitle
+					? `Open ${workshopTitle}`
 					: 'Interactive workshop selection',
 			},
 			{
@@ -706,22 +742,22 @@ try {
 			{
 				name: `${chalk.green('remove')} - Remove a workshop`,
 				value: 'remove' as const,
-				description: currentWorkshop
-					? `Remove ${currentWorkshop.title}`
+				description: workshopTitle
+					? `Remove ${workshopTitle}`
 					: 'Interactive workshop selection',
 			},
 			{
 				name: `${chalk.green('update')} - Update workshop`,
 				value: 'update' as const,
-				description: currentWorkshop
-					? `Update ${currentWorkshop.title}`
+				description: workshopTitle
+					? `Update ${workshopTitle}`
 					: 'Interactive workshop selection',
 			},
 			{
 				name: `${chalk.green('warm')} - Warm caches`,
 				value: 'warm' as const,
-				description: currentWorkshop
-					? `Warm ${currentWorkshop.title}`
+				description: workshopTitle
+					? `Warm ${workshopTitle}`
 					: 'Interactive workshop selection',
 			},
 			{
@@ -741,10 +777,10 @@ try {
 			},
 		]
 
-		const allChoices: Array<{ name: string; value: string; description?: string; disabled?: boolean }> = currentWorkshop
+		const allChoices: Array<{ name: string; value: string; description?: string; disabled?: boolean }> = workshopTitle
 			? [
 					{
-						name: chalk.gray(`─── Current: ${currentWorkshop.title} ───`),
+						name: chalk.gray(`─── Current: ${workshopTitle} ───`),
 						value: '',
 						disabled: true,
 					},
@@ -767,21 +803,27 @@ try {
 
 		switch (subcommand) {
 			case 'start': {
-				const { detectCurrentWorkshop: detect, startWorkshop } = await import(
+				const { findWorkshopRoot, startWorkshop } = await import(
 					'./commands/workshops.js'
 				)
-				const workshop = await detect()
-				if (workshop) {
+				const wsRoot = await findWorkshopRoot()
+				if (wsRoot) {
 					// Inside a workshop, start it directly
-					await import('./commands/migrate.js')
-						.then(({ migrate }) => migrate())
-						.catch(() => {})
-					import('./commands/warm.js')
-						.then(({ warm }) => warm({ silent: true }))
-						.catch(() => {})
-					const { start } = await import('./commands/start.js')
-					const result = await start({})
-					if (!result.success) process.exit(1)
+					const originalCwd = process.cwd()
+					process.chdir(wsRoot)
+					try {
+						await import('./commands/migrate.js')
+							.then(({ migrate }) => migrate())
+							.catch(() => {})
+						import('./commands/warm.js')
+							.then(({ warm }) => warm({ silent: true }))
+							.catch(() => {})
+						const { start } = await import('./commands/start.js')
+						const result = await start({})
+						if (!result.success) process.exit(1)
+					} finally {
+						process.chdir(originalCwd)
+					}
 				} else {
 					const result = await startWorkshop({})
 					if (!result.success) process.exit(1)
@@ -833,14 +875,18 @@ try {
 				break
 			}
 			case 'update': {
-				const { detectCurrentWorkshop: detect } = await import(
-					'./commands/workshops.js'
-				)
-				const workshop = await detect()
-				if (workshop) {
-					const { update } = await import('./commands/update.js')
-					const result = await update({})
-					if (!result.success) process.exit(1)
+				const { findWorkshopRoot } = await import('./commands/workshops.js')
+				const wsRoot = await findWorkshopRoot()
+				if (wsRoot) {
+					const originalCwd = process.cwd()
+					process.chdir(wsRoot)
+					try {
+						const { update } = await import('./commands/update.js')
+						const result = await update({})
+						if (!result.success) process.exit(1)
+					} finally {
+						process.chdir(originalCwd)
+					}
 				} else {
 					// Need to select a workshop
 					const { listWorkshops, getWorkshop } = await import(
@@ -887,14 +933,18 @@ try {
 				break
 			}
 			case 'warm': {
-				const { detectCurrentWorkshop: detect } = await import(
-					'./commands/workshops.js'
-				)
-				const workshop = await detect()
-				if (workshop) {
-					const { warm } = await import('./commands/warm.js')
-					const result = await warm({})
-					if (!result.success) process.exit(1)
+				const { findWorkshopRoot } = await import('./commands/workshops.js')
+				const wsRoot = await findWorkshopRoot()
+				if (wsRoot) {
+					const originalCwd = process.cwd()
+					process.chdir(wsRoot)
+					try {
+						const { warm } = await import('./commands/warm.js')
+						const result = await warm({})
+						if (!result.success) process.exit(1)
+					} finally {
+						process.chdir(originalCwd)
+					}
 				} else {
 					// Need to select a workshop
 					const { listWorkshops, getWorkshop } = await import(

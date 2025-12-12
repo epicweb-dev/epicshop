@@ -10,22 +10,46 @@ const GITHUB_ORG = 'epicweb-dev'
 const TUTORIAL_REPO = 'epicshop-tutorial'
 
 /**
- * Check if the current working directory is a valid workshop
- * (has epicshop config in package.json)
+ * Find the workshop root directory by walking up from the current directory
+ * looking for a package.json with an epicshop field.
+ * Returns the workshop root path if found, null otherwise.
+ */
+export async function findWorkshopRoot(): Promise<string | null> {
+	let currentDir = process.cwd()
+	const root = path.parse(currentDir).root
+
+	while (currentDir !== root) {
+		try {
+			const packageJsonPath = path.join(currentDir, 'package.json')
+			const content = await fs.promises.readFile(packageJsonPath, 'utf-8')
+			const packageJson = JSON.parse(content) as { epicshop?: unknown }
+
+			// Check if epicshop config exists
+			if (packageJson.epicshop) {
+				return currentDir
+			}
+		} catch {
+			// No package.json or can't read it, continue up
+		}
+
+		// Move up one directory
+		const parentDir = path.dirname(currentDir)
+		if (parentDir === currentDir) {
+			// We've reached the root
+			break
+		}
+		currentDir = parentDir
+	}
+
+	return null
+}
+
+/**
+ * Check if the current working directory is inside a workshop
+ * (has epicshop config in package.json in current dir or any parent)
  */
 export async function isInWorkshopDirectory(): Promise<boolean> {
-	try {
-		const cwd = process.cwd()
-		const packageJsonPath = path.join(cwd, 'package.json')
-
-		const content = await fs.promises.readFile(packageJsonPath, 'utf-8')
-		const packageJson = JSON.parse(content)
-
-		// Check if epicshop config exists and has required fields
-		return Boolean(packageJson.epicshop && packageJson.epicshop.title)
-	} catch {
-		return false
-	}
+	return (await findWorkshopRoot()) !== null
 }
 
 /**
