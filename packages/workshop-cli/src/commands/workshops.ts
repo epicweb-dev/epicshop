@@ -9,6 +9,50 @@ import { matchSorter } from 'match-sorter'
 const GITHUB_ORG = 'epicweb-dev'
 const TUTORIAL_REPO = 'epicshop-tutorial'
 
+/**
+ * Detect if the current working directory is inside a managed workshop
+ * Returns the workshop if found, null otherwise
+ */
+export async function detectCurrentWorkshop(): Promise<{
+	title: string
+	repoName: string
+	path: string
+	subtitle?: string
+} | null> {
+	try {
+		const { listWorkshops, isReposDirectoryConfigured } = await import(
+			'@epic-web/workshop-utils/workshops.server'
+		)
+
+		// If not configured yet, return null (can't be in a workshop)
+		if (!(await isReposDirectoryConfigured())) {
+			return null
+		}
+
+		const cwd = process.cwd()
+		const workshops = await listWorkshops()
+
+		// Check if cwd is inside any workshop directory
+		for (const workshop of workshops) {
+			// Normalize paths for comparison
+			const workshopPath = path.resolve(workshop.path)
+			const currentPath = path.resolve(cwd)
+
+			// Check if cwd starts with the workshop path (is inside or is the workshop dir)
+			if (
+				currentPath === workshopPath ||
+				currentPath.startsWith(workshopPath + path.sep)
+			) {
+				return workshop
+			}
+		}
+
+		return null
+	} catch {
+		return null
+	}
+}
+
 export type WorkshopsResult = {
 	success: boolean
 	message?: string
@@ -164,7 +208,7 @@ export async function list({
 		const reposDir = await getReposDirectory()
 
 		if (workshops.length === 0) {
-			const message = `No workshops found. Use 'epicshop workshops add <repo-name>' to add one.`
+			const message = `No workshops found. Use 'epicshop add <repo-name>' to add one.`
 			if (!silent) {
 				console.log(chalk.yellow(message))
 				console.log(chalk.gray(`\nWorkshops directory: ${reposDir}`))
@@ -301,7 +345,7 @@ export async function remove({
 			const workshops = await listWorkshops()
 
 			if (workshops.length === 0) {
-				const message = `No workshops to remove. Use 'epicshop workshops add <repo-name>' to add one first.`
+				const message = `No workshops to remove. Use 'epicshop add <repo-name>' to add one first.`
 				if (!silent) console.log(chalk.yellow(message))
 				return { success: false, message }
 			}
@@ -430,7 +474,7 @@ export async function startWorkshop(
 			const workshops = await listWorkshops()
 
 			if (workshops.length === 0) {
-				const message = `No workshops found. Use 'epicshop workshops add <repo-name>' to add one.`
+				const message = `No workshops found. Use 'epicshop add <repo-name>' to add one.`
 				if (!silent) console.log(chalk.yellow(message))
 				return { success: false, message }
 			}
@@ -549,7 +593,7 @@ export async function openWorkshop(
 			const workshops = await listWorkshops()
 
 			if (workshops.length === 0) {
-				const message = `No workshops found. Use 'epicshop workshops add <repo-name>' to add one.`
+				const message = `No workshops found. Use 'epicshop add <repo-name>' to add one.`
 				if (!silent) console.log(chalk.yellow(message))
 				return { success: false, message }
 			}
@@ -660,9 +704,7 @@ export async function config(
 			console.log(`  ${chalk.bold('Repos directory:')} ${reposDir}`)
 			console.log()
 			console.log(
-				chalk.gray(
-					"  Use 'epicshop workshops config --repos-dir <path>' to change",
-				),
+				chalk.gray("  Use 'epicshop config --repos-dir <path>' to change"),
 			)
 			console.log()
 		}
@@ -819,7 +861,7 @@ async function ensureTutorialAndStart(): Promise<WorkshopsResult> {
 	)
 
 	// Show the command we're effectively running
-	const addCommand = `npx epicshop workshops add ${TUTORIAL_REPO}`
+	const addCommand = `npx epicshop add ${TUTORIAL_REPO}`
 	console.log(chalk.gray('   Running:'))
 	console.log(chalk.white.bold(`   ${addCommand}\n`))
 
@@ -895,7 +937,7 @@ async function ensureTutorialAndStart(): Promise<WorkshopsResult> {
 	console.log(chalk.cyan('   in your browser. See you over there!\n'))
 
 	// Show the command to start
-	const startCommand = `npx epicshop workshops start ${TUTORIAL_REPO}`
+	const startCommand = `npx epicshop start ${TUTORIAL_REPO}`
 	console.log(chalk.gray('   Running:'))
 	console.log(chalk.white.bold(`   ${startCommand}\n`))
 
