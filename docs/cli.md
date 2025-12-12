@@ -7,17 +7,13 @@ warm up caches for better performance.
 The CLI can be used both as a command-line tool and programmatically via ESM
 imports.
 
-The package [`epicshop`](https://npm.im/epicshop) proxies all commands to the
-`@epic-web/workshop-cli` package, so you can run `npx epicshop ...` to keep
-things simple.
-
 ## Installation
 
 The CLI is typically installed as part of the epicshop workshop setup. If you
 need to install it separately:
 
 ```bash
-npm install -g @epic-web/workshop-cli
+npm install -g epicshop
 ```
 
 ## Context-Aware Behavior
@@ -433,15 +429,15 @@ for integrating workshop functionality into your own scripts or applications.
 
 ```javascript
 // Import individual commands
-import { start } from '@epic-web/workshop-cli/start'
-import { update } from '@epic-web/workshop-cli/update'
-import { warm } from '@epic-web/workshop-cli/warm'
+import { start } from 'epicshop/start'
+import { update } from 'epicshop/update'
+import { warm } from 'epicshop/warm'
 ```
 
 ### Using the Start Command
 
 ```javascript
-import { start } from '@epic-web/workshop-cli/start'
+import { start } from 'epicshop/start'
 
 // Start with default options
 const result = await start()
@@ -464,7 +460,7 @@ if (result.success) {
 ### Using the Update Command
 
 ```javascript
-import { update } from '@epic-web/workshop-cli/update'
+import { update } from 'epicshop/update'
 
 // Update with output
 const result = await update({ silent: false })
@@ -482,7 +478,7 @@ if (result.success) {
 ### Using the Warm Command
 
 ```javascript
-import { warm } from '@epic-web/workshop-cli/warm'
+import { warm } from 'epicshop/warm'
 
 // Warm caches with output
 const result = await warm({ silent: false })
@@ -508,7 +504,7 @@ import {
 	openWorkshop,
 	config,
 	findWorkshopRoot,
-} from '@epic-web/workshop-cli/workshops'
+} from 'epicshop/workshops'
 
 // Detect if currently inside a workshop
 const workshopRoot = await findWorkshopRoot()
@@ -554,7 +550,7 @@ const configResult = await config({
 ### Using the Auth Command
 
 ```javascript
-import { status, login, logout } from '@epic-web/workshop-cli/auth'
+import { status, login, logout } from 'epicshop/auth'
 
 // Show auth status for all domains
 const statusResult = await status({ silent: false })
@@ -587,9 +583,9 @@ import {
 	start,
 	type StartOptions,
 	type StartResult,
-} from '@epic-web/workshop-cli/start'
-import { update, type UpdateResult } from '@epic-web/workshop-cli/update'
-import { warm, type WarmResult } from '@epic-web/workshop-cli/warm'
+} from 'epicshop/start'
+import { update, type UpdateResult } from 'epicshop/update'
+import { warm, type WarmResult } from 'epicshop/warm'
 import {
 	add,
 	list,
@@ -601,7 +597,7 @@ import {
 	type AddOptions,
 	type StartOptions as WorkshopStartOptions,
 	type ConfigOptions,
-} from '@epic-web/workshop-cli/workshops'
+} from 'epicshop/workshops'
 
 const options: StartOptions = {
 	appLocation: '/path/to/workshop',
@@ -615,8 +611,8 @@ const result: StartResult = await start(options)
 ### Integration Example
 
 ```javascript
-import { start } from '@epic-web/workshop-cli/start'
-import { warm } from '@epic-web/workshop-cli/warm'
+import { start } from 'epicshop/start'
+import { warm } from 'epicshop/warm'
 
 async function setupWorkshop() {
 	try {
