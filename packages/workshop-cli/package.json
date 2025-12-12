@@ -1,5 +1,5 @@
 {
-  "name": "@epic-web/workshop-cli",
+  "name": "epicshop",
   "version": "0.0.0-semantically-released",
   "publishConfig": {
     "access": "public"
@@ -57,7 +57,7 @@
     "typecheck": "tsc --noEmit",
     "lint": "eslint --cache --cache-location ./node_modules/.cache/eslint .",
     "build": "tshy",
-    "build:watch": "nx watch --projects=@epic-web/workshop-cli -- nx run \\$NX_PROJECT_NAME:build"
+    "build:watch": "nx watch --projects=epicshop -- nx run \\$NX_PROJECT_NAME:build"
   },
   "dependencies": {
     "@epic-web/workshop-utils": "file:../workshop-utils",

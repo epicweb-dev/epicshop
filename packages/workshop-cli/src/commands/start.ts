@@ -643,7 +643,7 @@ async function findWorkshopAppDir(
 	// Fallback for development (when running from a monorepo)
 	try {
 		const cliPkgPath = import.meta.resolve(
-			'@epic-web/workshop-cli/package.json',
+			'epicshop/package.json',
 		)
 		const cliPkgDir = path.dirname(fileURLToPath(cliPkgPath))
 		const relativePath = path.resolve(cliPkgDir, '..', '..', 'workshop-app')
