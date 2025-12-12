@@ -231,7 +231,7 @@ const cli = yargs(args)
 		(yargs: Argv) => {
 			return yargs
 				.command(
-					['init', '$0'],
+					'init',
 					'Initialize epicshop and start the tutorial (first-time setup)',
 					(yargs: Argv) => {
 						return yargs.example(
@@ -468,8 +468,120 @@ const cli = yargs(args)
 				)
 				.demandCommand(0, 1)
 		},
-		() => {
-			// This is handled by the subcommands
+		async () => {
+			// Show subcommand chooser
+			const { select } = await import('@inquirer/prompts')
+
+			const subcommand = await select({
+				message: 'What would you like to do?',
+				choices: [
+					{
+						name: 'Start a workshop',
+						value: 'start',
+						description: 'Start a workshop (interactive selection)',
+					},
+					{
+						name: 'Open a workshop in editor',
+						value: 'open',
+						description: 'Open a workshop in your code editor',
+					},
+					{
+						name: 'List workshops',
+						value: 'list',
+						description: 'List all added workshops',
+					},
+					{
+						name: 'Add a workshop',
+						value: 'add',
+						description:
+							'Add a workshop by cloning from epicweb-dev GitHub org',
+					},
+					{
+						name: 'Remove a workshop',
+						value: 'remove',
+						description: 'Remove a workshop (deletes the directory)',
+					},
+					{
+						name: 'View/update configuration',
+						value: 'config',
+						description: 'View or update workshop configuration',
+					},
+					{
+						name: 'Initialize (first-time setup)',
+						value: 'init',
+						description: 'Initialize epicshop and start the tutorial',
+					},
+				],
+			})
+
+			switch (subcommand) {
+				case 'init': {
+					const { onboarding } = await import('./commands/workshops.js')
+					const result = await onboarding()
+					if (!result.success) {
+						process.exit(1)
+					}
+					break
+				}
+				case 'add': {
+					const { input } = await import('@inquirer/prompts')
+					const repoName = await input({
+						message: 'Enter the repository name from epicweb-dev org:',
+						validate: (value) => {
+							if (!value.trim()) {
+								return 'Please enter a repository name'
+							}
+							return true
+						},
+					})
+					const { add } = await import('./commands/workshops.js')
+					const result = await add({ repoName })
+					if (!result.success) {
+						process.exit(1)
+					}
+					break
+				}
+				case 'list': {
+					const { list } = await import('./commands/workshops.js')
+					const result = await list({})
+					if (!result.success) {
+						process.exit(1)
+					}
+					break
+				}
+				case 'remove': {
+					const { remove } = await import('./commands/workshops.js')
+					const result = await remove({})
+					if (!result.success) {
+						process.exit(1)
+					}
+					break
+				}
+				case 'start': {
+					const { startWorkshop } = await import('./commands/workshops.js')
+					const result = await startWorkshop({})
+					if (!result.success) {
+						process.exit(1)
+					}
+					break
+				}
+				case 'open': {
+					const { openWorkshop } = await import('./commands/workshops.js')
+					const result = await openWorkshop({})
+					if (!result.success) {
+						process.exit(1)
+					}
+					break
+				}
+				case 'config': {
+					const { config } = await import('./commands/workshops.js')
+					const result = await config({})
+					if (!result.success) {
+						process.exit(1)
+					}
+					break
+				}
+			}
 		},
 	)
 	.epilogue(

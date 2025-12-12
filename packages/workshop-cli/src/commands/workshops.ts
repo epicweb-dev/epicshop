@@ -863,11 +863,11 @@ export async function isConfigured(): Promise<boolean> {
 }
 
 /**
- * Wait for user to press 'g' to proceed or 'q' to quit
+ * Wait for user to press Enter to proceed or 'q' to quit
  */
 async function waitForGo(): Promise<void> {
 	return new Promise((resolve, reject) => {
-		console.log(chalk.cyan('🐨 Press "g" when you\'re ready to go.'))
+		console.log(chalk.cyan("🐨 Press Enter when you're ready to go."))
 		console.log(chalk.gray('   (press "q" to quit)'))
 		console.log()
 
@@ -881,8 +881,8 @@ async function waitForGo(): Promise<void> {
 
 		const onData = (key: Buffer) => {
 			const char = key.toString()
-			// Handle 'g' to go
-			if (char.toLowerCase() === 'g') {
+			// Handle Enter key to go (Enter sends '\r' in raw mode)
+			if (char === '\r' || char === '\n') {
 				cleanup()
 				resolve()
 			}
