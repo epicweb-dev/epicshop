@@ -1128,9 +1128,62 @@ async function ensureTutorialAndStart(): Promise<WorkshopsResult> {
 		'@epic-web/workshop-utils/workshops.server'
 	)
 
+	async function promptAndOpenTutorial(): Promise<WorkshopsResult> {
+		console.log()
+		console.log(
+			chalk.cyan(
+				"🐨 Before we start the tutorial, let's open it in your editor so you can follow along.",
+			),
+		)
+		console.log(
+			chalk.cyan(
+				'   This will run the "open" command for the tutorial repository.\n',
+			),
+		)
+		const openCommand = `npx epicshop open ${TUTORIAL_REPO}`
+		console.log(chalk.gray('   Running:'))
+		console.log(chalk.white.bold(`   ${openCommand}\n`))
+
+		await waitForGo()
+
+		return await openWorkshop({ workshop: TUTORIAL_REPO })
+	}
+
+	async function promptToStartTutorial(workshopTitle: string): Promise<void> {
+		console.log()
+		console.log(
+			chalk.cyan(
+				`🐨 Alright, let's get ${chalk.bold(workshopTitle)} started for you.`,
+			),
+		)
+		console.log(
+			chalk.cyan(
+				'   Once it\'s running, open it using the "o" key or by going to',
+			),
+		)
+		console.log(chalk.cyan.bold('   http://localhost:5639'))
+		console.log(chalk.cyan('   in your browser. See you over there!\n'))
+
+		const startCommand = `npx epicshop start ${TUTORIAL_REPO}`
+		console.log(chalk.gray('   Running:'))
+		console.log(chalk.white.bold(`   ${startCommand}\n`))
+
+		await waitForGo()
+	}
+
 	// Check if tutorial already exists
 	if (await workshopExists(TUTORIAL_REPO)) {
-		// Tutorial already added, just start it
+		// Tutorial already added, open it in the editor before starting
+		const openResult = await promptAndOpenTutorial()
+		if (!openResult.success) {
+			return openResult
+		}
+
+		// Now start the tutorial
+		const workshop = await getWorkshop(TUTORIAL_REPO)
+		const workshopTitle = workshop?.title || TUTORIAL_REPO
+
+		await promptToStartTutorial(workshopTitle)
 		return await startWorkshop({ workshop: TUTORIAL_REPO })
 	}
 
@@ -1153,7 +1206,7 @@ async function ensureTutorialAndStart(): Promise<WorkshopsResult> {
 	console.log(chalk.gray('   Running:'))
 	console.log(chalk.white.bold(`   ${addCommand}\n`))
 
-	// Wait for user to press 'g' to proceed
+	// Wait for user to press Enter to proceed
 	await waitForGo()
 
 	console.log(chalk.cyan(`\n📦 Cloning ${TUTORIAL_REPO}...`))
@@ -1214,23 +1267,12 @@ async function ensureTutorialAndStart(): Promise<WorkshopsResult> {
 		),
 	)
 
-	// Kody's message before starting
-	console.log(chalk.cyan("🐨 Alright, let's get the tutorial started for you."))
-	console.log(
-		chalk.cyan(
-			'   Once it\'s running, open it using the "o" key or by going to',
-		),
-	)
-	console.log(chalk.cyan.bold('   http://localhost:5639'))
-	console.log(chalk.cyan('   in your browser. See you over there!\n'))
+	const openResult = await promptAndOpenTutorial()
+	if (!openResult.success) {
+		return openResult
+	}
 
-	// Show the command to start
-	const startCommand = `npx epicshop start ${TUTORIAL_REPO}`
-	console.log(chalk.gray('   Running:'))
-	console.log(chalk.white.bold(`   ${startCommand}\n`))
-
-	// Wait for user to press 'g' to proceed
-	await waitForGo()
+	await promptToStartTutorial(workshopTitle)
 
 	console.log(chalk.cyan(`\n🚀 Starting ${chalk.bold(workshopTitle)}...\n`))
 
