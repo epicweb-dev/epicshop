@@ -4,6 +4,7 @@ import { spawn } from 'node:child_process'
 import * as fs from 'node:fs'
 import * as path from 'node:path'
 import chalk from 'chalk'
+import { matchSorter } from 'match-sorter'
 
 const GITHUB_ORG = 'epicweb-dev'
 const TUTORIAL_REPO = 'epicshop-tutorial'
@@ -171,18 +172,87 @@ export async function list({
 			return { success: true, message }
 		}
 
-		if (!silent) {
-			console.log(chalk.bold.cyan('\n📚 Your Workshops:\n'))
-			for (const workshop of workshops) {
-				console.log(`  ${chalk.green('✓')} ${chalk.bold(workshop.title)}`)
-				if (workshop.subtitle) {
-					console.log(chalk.gray(`      ${workshop.subtitle}`))
-				}
-				console.log(chalk.gray(`      Repo: ${workshop.repoName}`))
-				console.log(chalk.gray(`      Path: ${workshop.path}`))
-				console.log()
+		if (silent) {
+			return {
+				success: true,
+				message: `Found ${workshops.length} workshop(s)`,
 			}
-			console.log(chalk.gray(`Workshops directory: ${reposDir}\n`))
+		}
+
+		// Interactive selection
+		const { search } = await import('@inquirer/prompts')
+
+		const allChoices = workshops.map((w) => ({
+			name: `${w.title} (${w.repoName})`,
+			value: w,
+			description: w.path,
+		}))
+
+		console.log(chalk.bold.cyan('\n📚 Your Workshops:\n'))
+
+		const selectedWorkshop = await search({
+			message: 'Select a workshop:',
+			source: async (input) => {
+				if (!input) {
+					return allChoices
+				}
+				return matchSorter(allChoices, input, {
+					keys: [
+						'name',
+						'value.repoName',
+						'value.title',
+						'value.subtitle',
+						'description',
+					],
+				})
+			},
+		})
+
+		// Show actions for selected workshop
+		const actionChoices = [
+			{
+				name: 'Start workshop',
+				value: 'start',
+				description: 'Run npm start in the workshop directory',
+			},
+			{
+				name: 'Open in editor',
+				value: 'open',
+				description: 'Open the workshop in your code editor',
+			},
+			{
+				name: 'Remove workshop',
+				value: 'remove',
+				description: 'Delete the workshop directory',
+			},
+			{
+				name: 'Back to list',
+				value: 'back',
+				description: 'Go back to workshop selection',
+			},
+		]
+
+		const action = await search({
+			message: `What would you like to do with "${selectedWorkshop.title}"?`,
+			source: async (input) => {
+				if (!input) {
+					return actionChoices
+				}
+				return matchSorter(actionChoices, input, {
+					keys: ['name', 'value', 'description'],
+				})
+			},
+		})
+
+		switch (action) {
+			case 'start':
+				return await startWorkshop({ workshop: selectedWorkshop.repoName })
+			case 'open':
+				return await openWorkshop({ workshop: selectedWorkshop.repoName })
+			case 'remove':
+				return await remove({ workshop: selectedWorkshop.repoName })
+			case 'back':
+				return await list({ silent })
 		}
 
 		return {
@@ -250,13 +320,9 @@ export async function remove({
 					if (!input) {
 						return allChoices
 					}
-					const searchLower = input.toLowerCase()
-					return allChoices.filter(
-						(choice) =>
-							choice.name.toLowerCase().includes(searchLower) ||
-							choice.value.toLowerCase().includes(searchLower) ||
-							choice.description?.toLowerCase().includes(searchLower),
-					)
+					return matchSorter(allChoices, input, {
+						keys: ['name', 'value', 'description'],
+					})
 				},
 			})
 		}
@@ -384,14 +450,15 @@ export async function startWorkshop(
 					if (!input) {
 						return allChoices
 					}
-					const searchLower = input.toLowerCase()
-					return allChoices.filter(
-						(choice) =>
-							choice.name.toLowerCase().includes(searchLower) ||
-							choice.value.repoName.toLowerCase().includes(searchLower) ||
-							choice.value.title.toLowerCase().includes(searchLower) ||
-							choice.description?.toLowerCase().includes(searchLower),
-					)
+					return matchSorter(allChoices, input, {
+						keys: [
+							'name',
+							'value.repoName',
+							'value.title',
+							'value.subtitle',
+							'description',
+						],
+					})
 				},
 			})
 		}
@@ -502,14 +569,15 @@ export async function openWorkshop(
 					if (!input) {
 						return allChoices
 					}
-					const searchLower = input.toLowerCase()
-					return allChoices.filter(
-						(choice) =>
-							choice.name.toLowerCase().includes(searchLower) ||
-							choice.value.repoName.toLowerCase().includes(searchLower) ||
-							choice.value.title.toLowerCase().includes(searchLower) ||
-							choice.description?.toLowerCase().includes(searchLower),
-					)
+					return matchSorter(allChoices, input, {
+						keys: [
+							'name',
+							'value.repoName',
+							'value.title',
+							'value.subtitle',
+							'description',
+						],
+					})
 				},
 			})
 		}

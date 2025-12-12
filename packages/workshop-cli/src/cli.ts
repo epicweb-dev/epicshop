@@ -2,6 +2,7 @@
 
 import '@epic-web/workshop-utils/init-env'
 import chalk from 'chalk'
+import { matchSorter } from 'match-sorter'
 import yargs, { type ArgumentsCamelCase, type Argv } from 'yargs'
 import { hideBin } from 'yargs/helpers'
 
@@ -470,48 +471,56 @@ const cli = yargs(args)
 		},
 		async () => {
 			// Show subcommand chooser
-			const { select } = await import('@inquirer/prompts')
+			const { search } = await import('@inquirer/prompts')
 
-			const subcommand = await select({
+			const allChoices = [
+				{
+					name: 'Start a workshop',
+					value: 'start' as const,
+					description: 'Start a workshop (interactive selection)',
+				},
+				{
+					name: 'Open a workshop in editor',
+					value: 'open' as const,
+					description: 'Open a workshop in your code editor',
+				},
+				{
+					name: 'List workshops',
+					value: 'list' as const,
+					description: 'List all added workshops',
+				},
+				{
+					name: 'Add a workshop',
+					value: 'add' as const,
+					description: 'Add a workshop by cloning from epicweb-dev GitHub org',
+				},
+				{
+					name: 'Remove a workshop',
+					value: 'remove' as const,
+					description: 'Remove a workshop (deletes the directory)',
+				},
+				{
+					name: 'View/update configuration',
+					value: 'config' as const,
+					description: 'View or update workshop configuration',
+				},
+				{
+					name: 'Initialize (first-time setup)',
+					value: 'init' as const,
+					description: 'Initialize epicshop and start the tutorial',
+				},
+			]
+
+			const subcommand = await search({
 				message: 'What would you like to do?',
-				choices: [
-					{
-						name: 'Start a workshop',
-						value: 'start',
-						description: 'Start a workshop (interactive selection)',
-					},
-					{
-						name: 'Open a workshop in editor',
-						value: 'open',
-						description: 'Open a workshop in your code editor',
-					},
-					{
-						name: 'List workshops',
-						value: 'list',
-						description: 'List all added workshops',
-					},
-					{
-						name: 'Add a workshop',
-						value: 'add',
-						description:
-							'Add a workshop by cloning from epicweb-dev GitHub org',
-					},
-					{
-						name: 'Remove a workshop',
-						value: 'remove',
-						description: 'Remove a workshop (deletes the directory)',
-					},
-					{
-						name: 'View/update configuration',
-						value: 'config',
-						description: 'View or update workshop configuration',
-					},
-					{
-						name: 'Initialize (first-time setup)',
-						value: 'init',
-						description: 'Initialize epicshop and start the tutorial',
-					},
-				],
+				source: async (input) => {
+					if (!input) {
+						return allChoices
+					}
+					return matchSorter(allChoices, input, {
+						keys: ['name', 'value', 'description'],
+					})
+				},
 			})
 
 			switch (subcommand) {
