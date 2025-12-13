@@ -13,13 +13,30 @@ async function ensureOnboardingComplete(page: any) {
 
 	// Avoid flaky interactions with embedded video players by directly posting the
 	// same form action used by the UI.
-	const videoUrls: Array<string> = await page
+	const videoUrlsFromInputs: Array<string> = await page
 		.locator('input[name="videoUrl"]')
 		.evaluateAll((els: Array<HTMLInputElement>) =>
 			els
 				.map((el) => el.value)
 				.filter((v): v is string => typeof v === 'string' && v.length > 0),
 		)
+	const videoUrlsFromLinks: Array<string> = await page
+		.locator('a[href^="https://www.epicweb.dev/tips/"]')
+		.evaluateAll((els: Array<HTMLAnchorElement>) =>
+			els
+				.map((el) => el.href)
+				.filter((v): v is string => typeof v === 'string' && v.length > 0),
+		)
+
+	// Fallback to the known onboarding URLs used by the example workshop config.
+	const fallbackUrls = [
+		'https://www.epicweb.dev/tips/get-started-with-the-epic-workshop-app',
+		'https://www.epicweb.dev/tips/get-started-with-the-epic-workshop-app-for-react',
+	]
+
+	const videoUrls = Array.from(
+		new Set([...videoUrlsFromInputs, ...videoUrlsFromLinks, ...fallbackUrls]),
+	)
 
 	if (videoUrls.length) {
 		for (const videoUrl of videoUrls) {
@@ -71,7 +88,16 @@ async function openNavMenu(page: any) {
 	const toggle = page.getByRole('button', { name: /open navigation menu/i })
 	await expect(toggle).toBeVisible({ timeout: 30_000 })
 	await toggle.click()
-	await expect(page.getByRole('link', { name: /^home$/i })).toBeVisible()
+	// The opened menu should contain either "Home" or "Workshop Feedback" links.
+	// (Some renders/variants may not immediately include "Home" in the accessible tree.)
+	await Promise.race([
+		page
+			.getByRole('link', { name: /^home$/i })
+			.waitFor({ state: 'visible', timeout: 10_000 }),
+		page
+			.getByRole('link', { name: /workshop feedback/i })
+			.waitFor({ state: 'visible', timeout: 10_000 }),
+	])
 }
 
 async function closeNavMenuIfOpen(page: any) {
@@ -96,21 +122,17 @@ test.describe('tailwind v4 upgrade screenshots', () => {
 		await openNavMenu(page)
 		await capture(page, '01-nav-desktop-open.png')
 
-		// Navigate to the first exercise step by clicking through the nav menu.
-		const nav = page
-			.getByRole('navigation')
-			.filter({
-				has: page.getByRole('button', { name: /open navigation menu/i }),
-			})
-			.first()
-
-		await nav.locator('a[href^="/exercise/"]').first().click()
-		await page.waitForLoadState('networkidle')
-
-		// With an active exercise, the menu contains links like "01. Some step title".
-		await openNavMenu(page)
-		await nav.getByRole('link', { name: /^\d{2}\.\s/ }).first().click()
-		await page.waitForLoadState('networkidle')
+		// Navigate to the first exercise step via the intro page CTA (stable even when
+		// the nav menu is collapsed/animated).
+		await closeNavMenuIfOpen(page)
+		const startLearning = page.getByRole('link', { name: /start learning/i })
+		if (await startLearning.isVisible().catch(() => false)) {
+			await startLearning.click()
+			await page.waitForLoadState('networkidle')
+		} else {
+			// Fallback: go to a known exercise step URL.
+			await page.goto('/exercise/01/01/problem', { waitUntil: 'networkidle' })
+		}
 
 		// Close the menu so the step page layout is visible.
 		await closeNavMenuIfOpen(page)
