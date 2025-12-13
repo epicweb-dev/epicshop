@@ -163,6 +163,62 @@
 	--color-scrollbar: var(--scrollbar);
 }
 
+/* Custom type scale (ported from app/utils/extended-theme.ts fontSize) */
+@theme {
+	/* 1rem = 16px */
+	--text-mega: 5rem;
+	--text-mega--line-height: 5.25rem;
+	--text-mega--font-weight: 700;
+
+	--text-h1: 3.5rem;
+	--text-h1--line-height: 3.875rem;
+	--text-h1--font-weight: 700;
+	--text-h2: 2.5rem;
+	--text-h2--line-height: 3rem;
+	--text-h2--font-weight: 700;
+	--text-h3: 2rem;
+	--text-h3--line-height: 2.25rem;
+	--text-h3--font-weight: 700;
+	--text-h4: 1.75rem;
+	--text-h4--line-height: 2.25rem;
+	--text-h4--font-weight: 700;
+	--text-h5: 1.5rem;
+	--text-h5--line-height: 2rem;
+	--text-h5--font-weight: 700;
+	--text-h6: 1rem;
+	--text-h6--line-height: 1.25rem;
+	--text-h6--font-weight: 700;
+
+	--text-body-5xl: 3rem;
+	--text-body-5xl--line-height: 3.25rem;
+	--text-body-4xl: 2.5rem;
+	--text-body-4xl--line-height: 2.75rem;
+	--text-body-3xl: 2.25rem;
+	--text-body-3xl--line-height: 2.5rem;
+	--text-body-2xl: 2rem;
+	--text-body-2xl--line-height: 2.25rem;
+	--text-body-xl: 1.75rem;
+	--text-body-xl--line-height: 2.25rem;
+	--text-body-lg: 1.5rem;
+	--text-body-lg--line-height: 2rem;
+	--text-body-md: 1.25rem;
+	--text-body-md--line-height: 1.75rem;
+	--text-body-sm: 1rem;
+	--text-body-sm--line-height: 1.25rem;
+	--text-body-xs: 0.875rem;
+	--text-body-xs--line-height: 1.125rem;
+	--text-body-2xs: 0.75rem;
+	--text-body-2xs--line-height: 1rem;
+
+	--text-caption: 1.125rem;
+	--text-caption--line-height: 1.5rem;
+	--text-caption--font-weight: 600;
+
+	--text-button: 0.75rem;
+	--text-button--line-height: 1rem;
+	--text-button--font-weight: 700;
+}
+
 @utility container {
 	margin-inline: auto;
 	padding-inline: 2rem;
@@ -171,6 +227,36 @@
 		& {
 			max-width: 1400px;
 		}
+	}
+}
+
+/* Typography plugin customizations (ported from app/utils/extended-theme.ts) */
+@layer components {
+	/* proseColors */
+	.prose :where(*) {
+		color: hsl(var(--foreground));
+	}
+
+	/* removeProseMargin */
+	.prose > ul > li > *:first-child {
+		margin-top: unset;
+	}
+	.prose > ul > li > *:last-child {
+		margin-bottom: unset;
+	}
+	.prose > ol > li > *:first-child {
+		margin-top: unset;
+	}
+	.prose > ol > li > *:last-child {
+		margin-bottom: unset;
+	}
+
+	/* removeCodeBackticks */
+	.prose :where(code)::before {
+		content: none;
+	}
+	.prose :where(code)::after {
+		content: none;
 	}
 }
 
