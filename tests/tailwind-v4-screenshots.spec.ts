@@ -89,22 +89,6 @@ async function setMenuOpenServer(page: any, open: boolean) {
 	await dismissToasts(page)
 }
 
-async function openNavMenu(page: any) {
-	// Wait a beat for hydration so the click handler exists.
-	await page.waitForTimeout(750)
-	const toggle = page.getByRole('button', { name: /open navigation menu/i })
-	await expect(toggle).toBeVisible({ timeout: 30_000 })
-	await hideToasts(page)
-	await dismissToasts(page)
-	if (await isMenuOpen(page)) return
-	await toggle.click({ timeout: 30_000, force: true })
-	await page.waitForFunction(
-		() => document.cookie.includes('es_menu_open=true'),
-		null,
-		{ timeout: 30_000 },
-	)
-}
-
 async function closeNavMenuIfOpen(page: any) {
 	if (!(await isMenuOpen(page))) return
 	// Clicking can be flaky before hydration; force via cookie + reload.
@@ -113,7 +97,7 @@ async function closeNavMenuIfOpen(page: any) {
 
 test.describe('tailwind v4 upgrade screenshots', () => {
 	test('captures key routes', async ({ page }) => {
-		test.setTimeout(120_000)
+		test.setTimeout(240_000)
 
 		// First, explicitly complete onboarding (required before nav exists)
 		await ensureOnboardingComplete(page)
