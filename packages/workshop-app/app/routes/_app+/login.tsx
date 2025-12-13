@@ -75,7 +75,7 @@ export default function Login() {
 	}, [lastMessage, navigate, revalidator])
 
 	return (
-		<main className="flex h-full w-full flex-grow flex-col items-center justify-center p-10">
+		<main className="flex h-full w-full grow flex-col items-center justify-center p-10">
 			<div className="flex flex-col items-center">
 				<Logo className="h-16 w-16" />
 				<h1 className="pt-5 text-2xl font-semibold md:text-3xl">

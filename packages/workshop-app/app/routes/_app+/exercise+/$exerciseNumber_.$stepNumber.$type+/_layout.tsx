@@ -399,10 +399,10 @@ export default function ExercisePartRoute({
 	})
 
 	return (
-		<div className="flex max-w-full flex-grow flex-col">
+		<div className="flex max-w-full grow flex-col">
 			<main
 				ref={containerRef}
-				className="flex flex-grow flex-col sm:h-full sm:min-h-[800px] md:min-h-[unset] lg:flex-row"
+				className="flex grow flex-col sm:h-full sm:min-h-[800px] md:min-h-[unset] lg:flex-row"
 			>
 				<div
 					className="relative flex min-w-0 flex-none basis-full flex-col sm:col-span-1 sm:row-span-1 sm:h-full lg:basis-[var(--split-pct)]"

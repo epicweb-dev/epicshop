@@ -381,7 +381,7 @@ function SkippedFilesSection({
 								</span>
 							</div>
 						</div>
-						<div className="ml-2 flex flex-shrink-0">
+						<div className="ml-2 flex shrink-0">
 							<DoubleCheckButton
 								onConfirm={() => {
 									void fetcher.submit(
@@ -617,7 +617,7 @@ export default function CacheManagement({ loaderData }: Route.ComponentProps) {
 																	</div>
 																	<CacheMetadata metadata={entry.metadata} />
 																</div>
-																<div className="ml-4 flex flex-shrink-0 gap-1">
+																<div className="ml-4 flex shrink-0 gap-1">
 																	<a
 																		href={href('/admin/cache/*', {
 																			'*': `${workshopCache.workshopId}/${cache.name}/${filename}`,

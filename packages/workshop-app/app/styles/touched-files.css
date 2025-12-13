@@ -1,5 +1,7 @@
 /* Relevant Files */
 
+@reference "./tailwind.css";
+
 #files {
 	h2 {
 		@apply hidden;

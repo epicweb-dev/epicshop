@@ -77,7 +77,7 @@ export function Preview({
 		)
 	} else if (dev.type === 'browser') {
 		return (
-			<div className="relative h-full flex-grow overflow-y-auto scrollbar-thin scrollbar-thumb-scrollbar">
+			<div className="relative h-full grow overflow-y-auto scrollbar-thin scrollbar-thumb-scrollbar">
 				<a
 					href={dev.pathname}
 					target="_blank"
@@ -92,7 +92,7 @@ export function Preview({
 				<iframe
 					title={title}
 					src={dev.pathname}
-					className="yo yo h-full w-full flex-grow bg-white"
+					className="yo yo h-full w-full grow bg-white"
 					style={{ colorScheme: theme }}
 					allow="clipboard-write"
 				/>
@@ -122,7 +122,7 @@ export function StackBlitzEmbed({
 	const [iframeLoaded, setIframeLoaded] = useState(false)
 
 	return (
-		<div className="h-full w-full flex-grow">
+		<div className="h-full w-full grow">
 			{iframeLoaded ? null : (
 				<div className="absolute inset-0 z-10 flex items-center justify-center">
 					{loadingContent}
@@ -134,7 +134,7 @@ export function StackBlitzEmbed({
 				onError={() => setIframeLoaded(true)}
 				src={url}
 				className={cn(
-					'h-full w-full flex-grow transition-opacity duration-300',
+					'h-full w-full grow transition-opacity duration-300',
 					iframeLoaded ? 'opacity-100' : 'opacity-0',
 				)}
 				title={title}

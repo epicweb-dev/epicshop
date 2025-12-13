@@ -108,7 +108,7 @@ export function TestUI({
 		const { pathname } = playgroundAppInfo.test
 		return (
 			<div
-				className="flex h-full w-full flex-grow flex-col overflow-y-auto"
+				className="flex h-full w-full min-h-0 grow flex-col overflow-y-auto"
 				key={inBrowserTestKey}
 			>
 				{playgroundAppInfo.test.testFiles.map((testFile) => (

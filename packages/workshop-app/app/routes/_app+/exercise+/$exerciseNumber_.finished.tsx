@@ -145,8 +145,8 @@ export default function ExerciseFinished({
 	})
 
 	return (
-		<div className="flex max-w-full flex-grow flex-col">
-			<main className="flex flex-grow flex-col sm:grid sm:h-full sm:min-h-[800px] sm:grid-cols-1 sm:grid-rows-2 md:min-h-[unset] lg:grid-cols-2 lg:grid-rows-1">
+		<div className="flex max-w-full grow flex-col">
+			<main className="flex grow flex-col sm:grid sm:h-full sm:min-h-[800px] sm:grid-cols-1 sm:grid-rows-2 md:min-h-[unset] lg:grid-cols-2 lg:grid-rows-1">
 				<div className="relative flex flex-col sm:col-span-1 sm:row-span-1 sm:h-full lg:border-r">
 					<h1 className="h-14 border-b pl-10 pr-5 text-sm font-medium leading-tight">
 						<div className="flex h-14 flex-wrap items-center justify-between gap-x-2 py-2">
@@ -216,7 +216,7 @@ function Survey({
 	const isOnline = useIsOnline()
 	if (!isOnline) {
 		return (
-			<div className="relative flex-shrink-0">
+			<div className="relative shrink-0">
 				<div className="absolute inset-0 z-10 flex items-center justify-center text-body-md text-foreground-destructive">
 					<Icon name="WifiNoConnection" size="xl">
 						<span>
@@ -232,7 +232,7 @@ function Survey({
 		)
 	}
 	return (
-		<div className="relative min-h-full sm:min-h-[unset] sm:flex-shrink-0">
+		<div className="relative min-h-full sm:min-h-[unset] sm:shrink-0">
 			{!iframeLoaded ? (
 				<div className="absolute inset-0 z-10 flex items-center justify-center">
 					<Loading>

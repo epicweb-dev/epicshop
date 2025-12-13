@@ -114,8 +114,8 @@ export default function ExerciseFinished({
 }: Route.ComponentProps) {
 	useRevalidationWS({ watchPaths: ['./exercises/FINISHED.mdx'] })
 	return (
-		<div className="flex h-full flex-grow flex-col">
-			<main className="grid h-full flex-grow grid-cols-1 grid-rows-2 lg:grid-cols-2 lg:grid-rows-1">
+		<div className="flex h-full grow flex-col">
+			<main className="grid h-full grow grid-cols-1 grid-rows-2 lg:grid-cols-2 lg:grid-rows-1">
 				<div className="relative col-span-1 row-span-1 flex h-full flex-col lg:border-r">
 					<h1 className="h-14 border-b pl-10 pr-5 text-sm font-medium uppercase leading-none">
 						<div className="flex h-14 flex-wrap items-center justify-between gap-x-2 py-2">
@@ -182,7 +182,7 @@ function Survey({
 	const isOnline = useIsOnline()
 	if (!isOnline) {
 		return (
-			<div className="relative flex-shrink-0">
+			<div className="relative shrink-0">
 				<div className="absolute inset-0 z-10 flex items-center justify-center text-foreground-destructive">
 					<Icon name="WifiNoConnection" size="xl">
 						<span>
@@ -198,7 +198,7 @@ function Survey({
 		)
 	}
 	return (
-		<div className="relative flex-shrink-0">
+		<div className="relative shrink-0">
 			{!iframeLoaded ? (
 				<div className="absolute inset-0 z-10 flex items-center justify-center">
 					<Loading>

@@ -306,7 +306,7 @@ export default function ExercisePartRoute({
 
 	return (
 		<Tabs.Root
-			className="relative flex min-w-0 flex-1 flex-col overflow-y-auto sm:col-span-1 sm:row-span-1"
+			className="relative flex min-h-0 min-w-0 flex-1 flex-col overflow-hidden sm:col-span-1 sm:row-span-1"
 			value={activeTab}
 			// intentionally no onValueChange here because the Link will trigger the
 			// change.
@@ -345,10 +345,10 @@ export default function ExercisePartRoute({
 					)
 				})}
 			</Tabs.List>
-			<div className="relative z-10 flex min-h-96 flex-grow flex-col overflow-y-auto">
+			<div className="relative z-10 flex min-h-0 flex-1 flex-col overflow-hidden">
 				<Tabs.Content
 					value="playground"
-					className="flex w-full flex-grow items-center justify-center self-start radix-state-inactive:hidden"
+					className="flex min-h-0 w-full grow basis-0 items-stretch justify-center self-start radix-state-inactive:hidden"
 					forceMount
 				>
 					<Playground
@@ -361,7 +361,7 @@ export default function ExercisePartRoute({
 				</Tabs.Content>
 				<Tabs.Content
 					value="problem"
-					className="flex w-full flex-grow items-center justify-center self-start radix-state-inactive:hidden"
+					className="flex min-h-0 w-full grow basis-0 items-stretch justify-center self-start radix-state-inactive:hidden"
 					forceMount
 				>
 					<Preview
@@ -371,7 +371,7 @@ export default function ExercisePartRoute({
 				</Tabs.Content>
 				<Tabs.Content
 					value="solution"
-					className="flex w-full flex-grow items-center justify-center self-start radix-state-inactive:hidden"
+					className="flex min-h-0 w-full grow basis-0 items-stretch justify-center self-start radix-state-inactive:hidden"
 					forceMount
 				>
 					<Preview
@@ -381,7 +381,7 @@ export default function ExercisePartRoute({
 				</Tabs.Content>
 				<Tabs.Content
 					value="tests"
-					className="flex w-full flex-grow items-start justify-center self-start overflow-hidden radix-state-inactive:hidden"
+					className="flex min-h-0 w-full grow basis-0 items-stretch justify-center self-start overflow-hidden radix-state-inactive:hidden"
 				>
 					<Tests
 						appInfo={loaderData.playground}
@@ -393,7 +393,7 @@ export default function ExercisePartRoute({
 				</Tabs.Content>
 				<Tabs.Content
 					value="diff"
-					className="flex h-full w-full flex-grow items-start justify-center self-start radix-state-inactive:hidden"
+					className="flex h-full min-h-0 w-full grow basis-0 items-stretch justify-center self-start radix-state-inactive:hidden"
 				>
 					<Diff
 						diff={loaderData.diff}
@@ -403,7 +403,7 @@ export default function ExercisePartRoute({
 				</Tabs.Content>
 				<Tabs.Content
 					value="chat"
-					className="flex h-full w-full flex-grow items-start justify-center self-start radix-state-inactive:hidden"
+					className="flex h-full min-h-0 w-full grow basis-0 items-stretch justify-center self-start radix-state-inactive:hidden"
 				>
 					<DiscordChat />
 				</Tabs.Content>

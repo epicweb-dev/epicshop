@@ -123,7 +123,11 @@ function InBrowserBrowserImpl(
 			</div>
 		)
 	} else {
-		return <AppStarter name={name} />
+		return (
+			<div className="flex h-full flex-col items-center justify-center">
+				<AppStarter name={name} />
+			</div>
+		)
 	}
 }
 type RealBrowserProps = {
@@ -345,7 +349,7 @@ function InBrowserBrowserForRealzImpl(
 
 	return (
 		<TooltipProvider>
-			<div className="flex h-full flex-grow flex-col">
+			<div className="flex h-full grow flex-col">
 				<div className="flex items-center justify-between border-b pl-1.5">
 					<div className="mr-2 flex items-center justify-center gap-2 px-1">
 						<Tooltip>
@@ -437,13 +441,13 @@ function InBrowserBrowserForRealzImpl(
 						<TooltipContent>Open in new tab</TooltipContent>
 					</Tooltip>
 				</div>
-				<div className="flex h-full w-full flex-grow dark:bg-white">
+				<div className="flex h-full w-full grow dark:bg-white">
 					<iframe
 						title={name}
 						key={iframeKey}
 						ref={iframeRef}
 						src={iframeSrcUrl.toString()}
-						className="h-full w-full flex-grow bg-white"
+						className="h-full w-full grow bg-white"
 						style={{ colorScheme: theme }}
 						allow="clipboard-write"
 					/>

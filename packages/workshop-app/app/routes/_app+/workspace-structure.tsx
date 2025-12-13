@@ -37,7 +37,7 @@ export default function WorkspaceStructure() {
 
 	return (
 		<div className="h-full w-full overflow-y-auto">
-			<main className="container mt-12 flex w-full max-w-4xl flex-grow flex-col gap-6 pb-24">
+			<main className="container mt-12 flex w-full max-w-4xl grow flex-col gap-6 pb-24">
 				<h1 className="text-h1">Workshop Structure & Guidelines</h1>
 
 				<div className="rounded-lg border border-destructive bg-destructive/10 p-4">
