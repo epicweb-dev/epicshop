@@ -58,7 +58,7 @@ export default function AccountSettings() {
 
 	return (
 		<div className="h-full w-full overflow-y-auto">
-			<main className="container mt-12 flex w-full max-w-3xl flex-grow flex-col gap-4 pb-24">
+			<main className="container mt-12 flex w-full max-w-3xl grow flex-col gap-4 pb-24">
 				<h1 className="mb-4 text-h1">Preferences</h1>
 				<Form method="post" className="flex w-full max-w-sm flex-col gap-4">
 					<div>

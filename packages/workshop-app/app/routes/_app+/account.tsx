@@ -68,7 +68,7 @@ export default function Account() {
 	const userHasAccess = useUserHasAccess()
 
 	return (
-		<main className="container flex h-full w-full max-w-3xl flex-grow flex-col items-center justify-center gap-4">
+		<main className="container flex h-full w-full max-w-3xl grow flex-col items-center justify-center gap-4">
 			{user.imageUrlLarge ? (
 				<img
 					className="h-36 w-36 rounded-full"
@@ -76,7 +76,7 @@ export default function Account() {
 					src={user.imageUrlLarge}
 				/>
 			) : (
-				<Icon name="User" className="flex-shrink-0" size="lg" />
+				<Icon name="User" className="shrink-0" size="lg" />
 			)}
 
 			<div className="flex items-center gap-2">

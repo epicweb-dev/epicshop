@@ -307,7 +307,7 @@ export default function App() {
 			<div
 				// this nonsense is here because we want the panels to be scrollable rather
 				// than having the entire page be scrollable (at least on wider screens)
-				className={cn('flex flex-grow flex-col sm:flex-row', {
+				className={cn('flex grow flex-col sm:flex-row', {
 					'h-[calc(100vh-128px-env(safe-area-inset-top)-env(safe-area-inset-bottom))] sm:h-[calc(100vh-64px-env(safe-area-inset-top)-env(safe-area-inset-bottom))]':
 						!user,
 					'h-[calc(100vh-64px-env(safe-area-inset-top)-env(safe-area-inset-bottom))] sm:h-[calc(100vh-env(safe-area-inset-top)-env(safe-area-inset-bottom))]':
@@ -391,7 +391,7 @@ function NoUserBanner() {
 		</div>
 	)
 	return (
-		<div className="z-10 flex h-16 items-center justify-between border-b bg-gradient-to-tr from-blue-500 to-indigo-500 pl-4 text-white">
+		<div className="z-10 flex h-16 items-center justify-between border-b bg-linear-to-tr from-blue-500 to-indigo-500 pl-4 text-white">
 			{isWide ? (
 				<>
 					<div className="hidden flex-1 flex-wrap items-center gap-4 sm:flex">
@@ -574,7 +574,7 @@ function MobileNavigation({
 					/>
 					{isMenuOpened && (
 						<motion.div
-							className="flex w-full flex-grow flex-col justify-between overflow-x-auto p-6 scrollbar-thin scrollbar-thumb-scrollbar"
+							className="flex w-full grow flex-col justify-between overflow-x-auto p-6 scrollbar-thin scrollbar-thumb-scrollbar"
 							initial={{ opacity: 0 }}
 							animate={{ opacity: 1 }}
 						>
@@ -784,7 +784,7 @@ function MobileNavigation({
 							</div>
 						</motion.div>
 					)}
-					<div className="flex-grow" />
+					<div className="grow" />
 					{isOnline ? null : (
 						<SimpleTooltip content={isMenuOpened ? null : 'You are offline'}>
 							<div
@@ -815,7 +815,7 @@ function MobileNavigation({
 						<SimpleTooltip content={isMenuOpened ? null : 'Your account'}>
 							<Link
 								className={cn(
-									'flex h-14 flex-shrink-0 items-center justify-start space-x-3 px-4 py-4 text-center no-underline hover:underline',
+									'flex h-14 shrink-0 items-center justify-start space-x-3 px-4 py-4 text-center no-underline hover:underline',
 									{
 										'border-l': !isMenuOpened,
 										'w-full border-t': isMenuOpened,
@@ -830,7 +830,7 @@ function MobileNavigation({
 										className="h-full rounded-full"
 									/>
 								) : (
-									<Icon name="User" className="flex-shrink-0" size="lg" />
+									<Icon name="User" className="shrink-0" size="lg" />
 								)}
 								{isMenuOpened ? (
 									<motion.div
@@ -858,7 +858,7 @@ function MobileNavigation({
 								)}
 								state={{ from: 'continue next lesson button' }}
 							>
-								<Icon name="FastForward" className="flex-shrink-0" size="md" />
+								<Icon name="FastForward" className="shrink-0" size="md" />
 								{isMenuOpened ? (
 									<motion.div
 										className="flex items-center whitespace-nowrap"
@@ -959,7 +959,7 @@ function Navigation({
 					{isMenuOpened && (
 						<motion.div
 							style={{ width: OPENED_MENU_WIDTH }}
-							className="flex flex-grow flex-col justify-between overflow-y-auto p-6 scrollbar-thin scrollbar-thumb-scrollbar"
+							className="flex grow flex-col justify-between overflow-y-auto p-6 scrollbar-thin scrollbar-thumb-scrollbar"
 							initial={{ opacity: 0 }}
 							animate={{ opacity: 1 }}
 						>
@@ -1170,7 +1170,7 @@ function Navigation({
 						</motion.div>
 					)}
 					{!isMenuOpened && (
-						<div className="flex flex-grow flex-col justify-center">
+						<div className="flex grow flex-col justify-center">
 							<div className="orientation-sideways w-full font-mono text-sm font-medium uppercase leading-none">
 								{exercise?.title ? (
 									<Link to={getExercisePath(Number(params.exerciseNumber))}>
@@ -1222,7 +1222,7 @@ function Navigation({
 					{ENV.EPICSHOP_DEPLOYED ? null : user ? (
 						<SimpleTooltip content={isMenuOpened ? null : 'Your account'}>
 							<Link
-								className="flex h-14 w-full flex-shrink-0 items-center justify-start space-x-3 border-t px-4 py-4 text-center no-underline hover:underline"
+								className="flex h-14 w-full shrink-0 items-center justify-start space-x-3 border-t px-4 py-4 text-center no-underline hover:underline"
 								to="/account"
 							>
 								{user.imageUrlSmall ? (
@@ -1232,7 +1232,7 @@ function Navigation({
 										className="h-full rounded-full"
 									/>
 								) : (
-									<Icon name="User" className="flex-shrink-0" size="lg" />
+									<Icon name="User" className="shrink-0" size="lg" />
 								)}
 								{isMenuOpened ? (
 									<motion.div
@@ -1260,7 +1260,7 @@ function Navigation({
 								)}
 								state={{ from: 'continue next lesson button' }}
 							>
-								<Icon name="FastForward" className="flex-shrink-0" size="md" />
+								<Icon name="FastForward" className="shrink-0" size="md" />
 								{isMenuOpened ? (
 									<motion.div
 										className="flex items-center whitespace-nowrap"
@@ -1338,7 +1338,7 @@ function NavToggle({
 	return (
 		<div
 			className={cn(
-				'relative inline-flex h-14 flex-shrink-0 items-center justify-between overflow-hidden border-r sm:w-full sm:border-b sm:border-r-0',
+				'relative inline-flex h-14 shrink-0 items-center justify-between overflow-hidden border-r sm:w-full sm:border-b sm:border-r-0',
 				{
 					'w-full': isMenuOpened,
 				},

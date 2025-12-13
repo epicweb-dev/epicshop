@@ -192,7 +192,7 @@ export function DiffImplementation({
 								/>
 							</Form>
 						</div>
-						<div className="flex-grow overflow-y-scroll scrollbar-thin scrollbar-thumb-scrollbar">
+						<div className="grow overflow-y-scroll scrollbar-thin scrollbar-thumb-scrollbar">
 							{diff.diffCode ? (
 								<div>
 									<Accordion.Root className="w-full" type="multiple">

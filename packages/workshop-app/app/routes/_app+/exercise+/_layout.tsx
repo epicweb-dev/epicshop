@@ -22,7 +22,7 @@ export const handle: SEOHandle = {
 
 export default function ExercisesLayout() {
 	return (
-		<div className="flex h-full flex-grow">
+		<div className="flex h-full grow">
 			<Outlet />
 		</div>
 	)

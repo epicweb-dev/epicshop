@@ -122,19 +122,21 @@ export default function DiffViewer() {
 
 	return (
 		<div
-			className={cn('grid h-full grid-rows-[1fr,auto]', {
+			className={cn('relative h-screen-safe', {
 				'cursor-wait opacity-30': isNavigating,
 			})}
 		>
-			<div className="overflow-y-auto">
+			<div className="h-full pb-16">
 				<Diff
 					diff={data.diff}
 					allApps={data.allApps}
 					userHasAccessPromise={data.userHasAccessPromise}
 				/>
 			</div>
-			<div className="flex h-16 items-center justify-end border-t">
-				<NavChevrons prev={data.prevLink} next={data.nextLink} />
+			<div className="fixed inset-x-0 bottom-0 z-10 flex h-16 items-center justify-end border-t bg-background">
+				<div className="flex h-full items-center justify-end">
+					<NavChevrons prev={data.prevLink} next={data.nextLink} />
+				</div>
 			</div>
 		</div>
 	)

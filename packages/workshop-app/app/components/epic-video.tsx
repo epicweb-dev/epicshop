@@ -112,7 +112,7 @@ export function VideoEmbed({
 	const isOnline = useIsOnline()
 	if (!isOnline) {
 		return (
-			<div className="relative aspect-video w-full flex-shrink-0 shadow-lg">
+			<div className="relative aspect-video w-full shrink-0 shadow-lg">
 				<div className="not-prose absolute inset-0 z-10 flex items-center justify-center p-8 text-foreground-destructive">
 					<Icon name="WifiNoConnection" size="xl">
 						<span>
@@ -129,7 +129,7 @@ export function VideoEmbed({
 	}
 
 	return (
-		<div className="relative aspect-video w-full flex-shrink-0 shadow-lg">
+		<div className="relative aspect-video w-full shrink-0 shadow-lg">
 			{iframeLoaded ? null : (
 				<div className="absolute inset-0 z-10 flex items-center justify-center p-8">
 					{loadingContent}
@@ -161,7 +161,7 @@ function VideoLink({ url, title }: { url: string; title: string }) {
 			className="flex items-center gap-1 text-base no-underline opacity-70 transition hover:underline hover:opacity-100"
 			rel="noreferrer"
 		>
-			<Icon className="flex-shrink-0" name="Video" size="lg" />
+			<Icon className="shrink-0" name="Video" size="lg" />
 			{title} <span aria-hidden>↗︎</span>
 		</a>
 	)

@@ -130,7 +130,7 @@ function KeyboardShortcutsDialog({
 										<span className="flex-1 text-sm text-muted-foreground">
 											{shortcut.description}
 										</span>
-										<div className="flex flex-shrink-0 items-center gap-1">
+										<div className="flex shrink-0 items-center gap-1">
 											{shortcut.keys.map((key, keyIndex) => (
 												<React.Fragment key={keyIndex}>
 													<kbd className="rounded border border-border bg-muted px-2 py-1 font-mono text-xs">
