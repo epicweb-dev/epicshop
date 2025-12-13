@@ -4,12 +4,15 @@ workspace/
 **/.cache/
 **/build/
 **/public/build
-**/prisma/data.db
-scripts/db.json
 **/playwright-report
-**/playground
+data.db
+/playground
+**/tsconfig.tsbuildinfo
+**/dist
 
 # in a real app you'd want to not commit the .env
 # file as well, but since this is for a workshop
 # we're going to keep them around.
 # .env
+
+saved-playgrounds

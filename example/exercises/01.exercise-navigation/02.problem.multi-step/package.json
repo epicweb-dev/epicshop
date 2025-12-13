@@ -1,0 +1,7 @@
+{
+  "name": "exercises_01.exercise-navigation_02.problem.multi-step",
+  "scripts": {
+    "dev": "node index.js",
+    "test": "node --test"
+  }
+}

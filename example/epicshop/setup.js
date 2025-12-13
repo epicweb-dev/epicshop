@@ -26,7 +26,9 @@ if (major < 8 || (major === 8 && minor < 16)) {
 	console.error(
 		color(
 			'danger',
-			`🚨  npm version is ${output} which is out of date. Please install npm@8.16.0 or greater`,
+			'🚨  npm version is ' +
+				output +
+				' which is out of date. Please install npm@8.16.0 or greater',
 		),
 	)
 	throw new Error('npm version is out of date')
@@ -35,7 +37,7 @@ if (major < 8 || (major === 8 && minor < 16)) {
 const command =
 	'npx --yes "https://gist.github.com/kentcdodds/bb452ffe53a5caa3600197e1d8005733" -q'
 console.log(
-	color('subtitle', `      Running the following command: ${command}`),
+	color('subtitle', '      Running the following command: ' + command),
 )
 
 const result = spawnSync(command, { stdio: 'inherit', shell: true })
