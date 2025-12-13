@@ -21,13 +21,30 @@ async function ensureOnboardingComplete(page: any) {
 				.filter((v): v is string => typeof v === 'string' && v.length > 0),
 		)
 
-	for (const videoUrl of videoUrls) {
-		await page.request.post('/onboarding', {
-			form: { intent: 'mark-video', videoUrl },
-		})
+	if (videoUrls.length) {
+		for (const videoUrl of videoUrls) {
+			await page.request.post('/onboarding', {
+				form: { intent: 'mark-video', videoUrl },
+			})
+		}
 	}
 
 	await page.goto('/onboarding', { waitUntil: 'networkidle' })
+
+	// Fallback: if something prevented the POST approach, click the remaining
+	// "Mark as watched" buttons.
+	for (let i = 0; i < 10; i++) {
+		const markButtons = page.getByRole('button', { name: /^mark as watched$/i })
+		if ((await markButtons.count()) === 0) break
+		await markButtons.first().click()
+		await page.waitForURL(/\/onboarding/i)
+		await page.waitForLoadState('networkidle')
+	}
+
+	// Confirm we are fully unblocked.
+	await expect(page.getByRole('button', { name: /^mark as watched$/i })).toHaveCount(
+		0,
+	)
 
 	// Proceed into the app (may go to /login if not authenticated).
 	const continueLink = page.getByRole('link', { name: /i've watched.*let's go/i })
@@ -52,6 +69,7 @@ async function capture(page: any, fileName: string) {
 
 async function openNavMenu(page: any) {
 	const toggle = page.getByRole('button', { name: /open navigation menu/i })
+	await expect(toggle).toBeVisible({ timeout: 30_000 })
 	await toggle.click()
 	await expect(page.getByRole('link', { name: /^home$/i })).toBeVisible()
 }
@@ -73,6 +91,7 @@ test.describe('tailwind v4 upgrade screenshots', () => {
 		await ensureOnboardingComplete(page)
 		// Ensure we're on a stable app page after completing onboarding.
 		await page.goto('/', { waitUntil: 'networkidle' })
+		await expect(page).not.toHaveURL(/\/onboarding/i)
 
 		await openNavMenu(page)
 		await capture(page, '01-nav-desktop-open.png')
