@@ -409,8 +409,8 @@ export default function ExercisePartRoute({
 					style={{ ['--split-pct' as any]: `${splitPercent}%` }}
 					ref={leftPaneRef}
 				>
-					<h1 className="h-14 border-b pl-10 pr-5 text-sm font-medium leading-tight">
-						<div className="flex h-14 items-center justify-between gap-x-2 overflow-x-auto whitespace-nowrap py-2">
+					<h1 className="h-14 border-b pr-5 pl-10 text-sm leading-tight font-medium">
+						<div className="flex h-14 items-center justify-between gap-x-2 overflow-x-auto py-2 whitespace-nowrap">
 							<div className="flex items-center justify-start gap-x-2 uppercase">
 								<Link
 									to={getExercisePath(data.exerciseStepApp.exerciseNumber)}
@@ -441,7 +441,7 @@ export default function ExercisePartRoute({
 					<article
 						id={data.articleId}
 						key={data.articleId}
-						className="shadow-on-scrollbox flex h-full w-full max-w-none flex-1 scroll-pt-6 flex-col justify-between space-y-6 overflow-y-auto p-2 scrollbar-thin scrollbar-thumb-scrollbar sm:p-10 sm:pt-8"
+						className="shadow-on-scrollbox scrollbar-thin scrollbar-thumb-scrollbar flex h-full w-full max-w-none flex-1 scroll-pt-6 flex-col justify-between space-y-6 overflow-y-auto p-2 sm:p-10 sm:pt-8"
 					>
 						{data.exerciseStepApp.instructionsCode ? (
 							<StepMdx inBrowserBrowserRef={inBrowserBrowserRef} />
@@ -491,7 +491,7 @@ export default function ExercisePartRoute({
 							className="h-14 border-t px-6"
 						/>
 					) : null}
-					<div className="flex h-16 justify-between border-b-4 border-t lg:border-b-0">
+					<div className="flex h-16 justify-between border-t border-b-4 lg:border-b-0">
 						<div>
 							<div className="h-full">
 								<TouchedFiles
@@ -529,7 +529,7 @@ export default function ExercisePartRoute({
 					role="separator"
 					aria-orientation="vertical"
 					title="Drag to resize"
-					className="hidden w-1 cursor-col-resize bg-border hover:bg-accent lg:block"
+					className="bg-border hover:bg-accent hidden w-1 cursor-col-resize lg:block"
 					onMouseDown={(e) => startDrag(e.clientX)}
 					onDoubleClick={() => {
 						setSplitPercent(50)

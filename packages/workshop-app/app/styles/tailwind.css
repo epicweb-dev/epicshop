@@ -1,26 +1,28 @@
-@import "tailwindcss";
-@import "tailwindcss-safe-area";
-@import "tw-animate-css";
+@import 'tailwindcss';
+@import 'tailwindcss-safe-area';
+@import 'tw-animate-css';
 
 /* Tailwind v4 CSS-first configuration (Epic Stack-style) */
 @custom-variant dark (&:is(.dark *));
 
-@source "../**/*.{ts,tsx,jsx,js}";
-@source "../../../example/**/*.md";
-@source "../../../workshop-utils/src/**/*.ts";
+@source '../**/*.{ts,tsx,jsx,js}';
+@source '../../../example/**/*.md';
+@source '../../../workshop-utils/src/**/*.ts';
 
-@plugin "@tailwindcss/typography";
-@plugin "tailwindcss-radix";
-@plugin "tailwind-scrollbar";
+@plugin '@tailwindcss/typography';
+@plugin 'tailwindcss-radix';
+@plugin 'tailwind-scrollbar';
 
 /* light mode (or inverted) */
 :root,
 .dark .invert-theme,
 .dark .invert-theme .invert-theme .invert-theme {
-	--font-sans: Neogrotesk, ui-sans-serif, system-ui, sans-serif,
-		"Apple Color Emoji", "Segoe UI Emoji", "Segoe UI Symbol", "Noto Color Emoji";
-	--font-mono: "IBM Plex Mono", ui-monospace, SFMono-Regular, Menlo, Monaco,
-		Consolas, "Liberation Mono", "Courier New", monospace;
+	--font-sans:
+		Neogrotesk, ui-sans-serif, system-ui, sans-serif, 'Apple Color Emoji',
+		'Segoe UI Emoji', 'Segoe UI Symbol', 'Noto Color Emoji';
+	--font-mono:
+		'IBM Plex Mono', ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas,
+		'Liberation Mono', 'Courier New', monospace;
 
 	--background: 0 0% 100%;
 	--foreground: 0 0% 0%;

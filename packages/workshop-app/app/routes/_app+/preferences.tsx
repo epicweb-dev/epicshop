@@ -59,17 +59,17 @@ export default function AccountSettings() {
 	return (
 		<div className="h-full w-full overflow-y-auto">
 			<main className="container mt-12 flex w-full max-w-3xl grow flex-col gap-4 pb-24">
-				<h1 className="mb-4 text-h1">Preferences</h1>
+				<h1 className="text-h1 mb-4">Preferences</h1>
 				<Form method="post" className="flex w-full max-w-sm flex-col gap-4">
 					<div>
-						<h2 className="mb-2 text-body-xl">Video Player Preferences</h2>
+						<h2 className="text-body-xl mb-2">Video Player Preferences</h2>
 						<div className="flex items-center gap-2">
 							<label htmlFor="minResolution">Minimum Resolution:</label>
 							<select
 								id="minResolution"
 								name="minResolution"
 								defaultValue={playerPreferences?.minResolution}
-								className="rounded-md border border-border bg-background px-2 py-1 text-foreground"
+								className="border-border bg-background text-foreground rounded-md border px-2 py-1"
 							>
 								<option value="">Auto</option>
 								<option value="480">480p</option>
@@ -85,7 +85,7 @@ export default function AccountSettings() {
 								id="maxResolution"
 								name="maxResolution"
 								defaultValue={playerPreferences?.maxResolution}
-								className="rounded-md border border-border bg-background px-2 py-1 text-foreground"
+								className="border-border bg-background text-foreground rounded-md border px-2 py-1"
 							>
 								<option value="">Auto</option>
 								<option value="720">720p</option>
@@ -112,7 +112,7 @@ export default function AccountSettings() {
 								step="1"
 								min="12"
 								max="26"
-								className="rounded-md border border-border bg-background px-2 py-1 text-foreground"
+								className="border-border bg-background text-foreground rounded-md border px-2 py-1"
 							/>
 						</div>
 					</div>

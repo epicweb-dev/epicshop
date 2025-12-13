@@ -148,7 +148,7 @@ export default function ExerciseFinished({
 		<div className="flex max-w-full grow flex-col">
 			<main className="flex grow flex-col sm:grid sm:h-full sm:min-h-[800px] sm:grid-cols-1 sm:grid-rows-2 md:min-h-[unset] lg:grid-cols-2 lg:grid-rows-1">
 				<div className="relative flex flex-col sm:col-span-1 sm:row-span-1 sm:h-full lg:border-r">
-					<h1 className="h-14 border-b pl-10 pr-5 text-sm font-medium leading-tight">
+					<h1 className="h-14 border-b pr-5 pl-10 text-sm leading-tight font-medium">
 						<div className="flex h-14 flex-wrap items-center justify-between gap-x-2 py-2">
 							<div className="flex items-center justify-start gap-x-2">
 								<Link to={`/${exerciseNumber}`} className="hover:underline">
@@ -161,7 +161,7 @@ export default function ExerciseFinished({
 					</h1>
 
 					<article
-						className="shadow-on-scrollbox h-full w-full max-w-none flex-1 scroll-pt-6 space-y-6 overflow-y-auto p-2 scrollbar-thin scrollbar-thumb-scrollbar sm:p-10 sm:pt-8"
+						className="shadow-on-scrollbox scrollbar-thin scrollbar-thumb-scrollbar h-full w-full max-w-none flex-1 scroll-pt-6 space-y-6 overflow-y-auto p-2 sm:p-10 sm:pt-8"
 						id={data.articleId}
 					>
 						{data.exercise.finishedCode ? (
@@ -186,7 +186,7 @@ export default function ExerciseFinished({
 						exerciseNumber={data.exercise.exerciseNumber}
 						className="h-14 border-t px-6"
 					/>
-					<div className="flex h-16 justify-between border-b-4 border-t lg:border-b-0">
+					<div className="flex h-16 justify-between border-t border-b-4 lg:border-b-0">
 						<div />
 						<EditFileOnGitHub
 							file={data.exerciseFinished.file}
@@ -217,7 +217,7 @@ function Survey({
 	if (!isOnline) {
 		return (
 			<div className="relative shrink-0">
-				<div className="absolute inset-0 z-10 flex items-center justify-center text-body-md text-foreground-destructive">
+				<div className="text-body-md text-foreground-destructive absolute inset-0 z-10 flex items-center justify-center">
 					<Icon name="WifiNoConnection" size="xl">
 						<span>
 							{'Unable to load the '}

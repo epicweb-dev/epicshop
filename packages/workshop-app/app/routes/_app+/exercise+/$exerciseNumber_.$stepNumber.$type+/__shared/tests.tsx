@@ -108,7 +108,7 @@ export function TestUI({
 		const { pathname } = playgroundAppInfo.test
 		return (
 			<div
-				className="flex h-full w-full min-h-0 grow flex-col overflow-y-auto"
+				className="flex h-full min-h-0 w-full grow flex-col overflow-y-auto"
 				key={inBrowserTestKey}
 			>
 				{playgroundAppInfo.test.testFiles.map((testFile) => (
@@ -119,7 +119,7 @@ export function TestUI({
 				<div className="px-3 py-[21px]">
 					<button
 						onClick={() => setInBrowserTestKey((c) => c + 1)}
-						className="flex items-center gap-2 font-mono text-sm uppercase leading-none"
+						className="flex items-center gap-2 font-mono text-sm leading-none uppercase"
 					>
 						<Icon name="Refresh" aria-hidden /> Rerun All Tests
 					</button>

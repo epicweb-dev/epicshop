@@ -113,7 +113,7 @@ export function VideoEmbed({
 	if (!isOnline) {
 		return (
 			<div className="relative aspect-video w-full shrink-0 shadow-lg">
-				<div className="not-prose absolute inset-0 z-10 flex items-center justify-center p-8 text-foreground-destructive">
+				<div className="not-prose text-foreground-destructive absolute inset-0 z-10 flex items-center justify-center p-8">
 					<Icon name="WifiNoConnection" size="xl">
 						<span>
 							{'Unable to load the video '}
@@ -432,7 +432,7 @@ function EpicVideo({
 				)}
 				<details>
 					<summary>Transcript</summary>
-					<div className="whitespace-pre-line rounded-md bg-accent p-2 text-accent-foreground">
+					<div className="bg-accent text-accent-foreground rounded-md p-2 whitespace-pre-line">
 						{transcriptElements}
 					</div>
 				</details>

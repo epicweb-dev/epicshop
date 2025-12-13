@@ -149,8 +149,8 @@ export default function AdminLayout({
 	return (
 		<div className="flex flex-col gap-6 p-6">
 			<div className="mb-2">
-				<h1 className="text-2xl font-bold text-foreground">Admin Panel</h1>
-				<p className="mt-1 text-sm text-muted-foreground">
+				<h1 className="text-foreground text-2xl font-bold">Admin Panel</h1>
+				<p className="text-muted-foreground mt-1 text-sm">
 					Manage workshop settings and monitor processes
 				</p>
 			</div>
@@ -163,7 +163,7 @@ export default function AdminLayout({
 					</CardHeader>
 					<CardContent>
 						{epicProgress ? (
-							<ul className="flex max-h-72 flex-col gap-2 overflow-y-auto scrollbar-thin scrollbar-thumb-scrollbar">
+							<ul className="scrollbar-thin scrollbar-thumb-scrollbar flex max-h-72 flex-col gap-2 overflow-y-auto">
 								{epicProgress.sort(sortProgress).map((progress) => {
 									const status = progress.epicCompletedAt
 										? 'completed'
@@ -179,7 +179,7 @@ export default function AdminLayout({
 									return (
 										<li
 											key={progress.epicLessonSlug}
-											className="flex items-center gap-3 rounded-md p-2 hover:bg-muted/50"
+											className="hover:bg-muted/50 flex items-center gap-3 rounded-md p-2"
 										>
 											<span
 												className={clsx(
@@ -194,21 +194,21 @@ export default function AdminLayout({
 													<SimpleTooltip content="This video is in the workshop on EpicWeb.dev, but not in the local workshop.">
 														<Icon
 															name="Close"
-															className="h-4 w-4 shrink-0 text-destructive"
+															className="text-destructive h-4 w-4 shrink-0"
 														/>
 													</SimpleTooltip>
 												</span>
 											) : (
 												<Link
 													to={linkProgress(progress)}
-													className="flex-1 truncate text-sm text-foreground hover:underline"
+													className="text-foreground flex-1 truncate text-sm hover:underline"
 												>
 													{label}
 												</Link>
 											)}
 											<Link
 												to={progress.epicLessonUrl}
-												className="shrink-0 text-muted-foreground hover:text-foreground"
+												className="text-muted-foreground hover:text-foreground shrink-0"
 											>
 												<Icon name="ExternalLink" className="h-4 w-4" />
 											</Link>
@@ -217,7 +217,7 @@ export default function AdminLayout({
 								})}
 							</ul>
 						) : (
-							<p className="text-sm text-muted-foreground">No progress data</p>
+							<p className="text-muted-foreground text-sm">No progress data</p>
 						)}
 					</CardContent>
 				</Card>
@@ -274,12 +274,12 @@ export default function AdminLayout({
 						<CardDescription>Available workshop apps</CardDescription>
 					</CardHeader>
 					<CardContent>
-						<ul className="flex max-h-48 flex-col gap-2 overflow-y-auto scrollbar-thin scrollbar-thumb-scrollbar">
+						<ul className="scrollbar-thin scrollbar-thumb-scrollbar flex max-h-48 flex-col gap-2 overflow-y-auto">
 							{data.apps.length > 0 ? (
 								data.apps.map((app) => (
 									<li
 										key={app.name}
-										className="flex items-center gap-3 rounded-md p-2 hover:bg-muted/50"
+										className="hover:bg-muted/50 flex items-center gap-3 rounded-md p-2"
 									>
 										{data.processes[app.name] ? (
 											<Pinger status="running" />
@@ -290,7 +290,7 @@ export default function AdminLayout({
 									</li>
 								))
 							) : (
-								<p className="text-sm text-muted-foreground">
+								<p className="text-muted-foreground text-sm">
 									No apps available
 								</p>
 							)}
@@ -304,12 +304,12 @@ export default function AdminLayout({
 						<CardDescription>Running development processes</CardDescription>
 					</CardHeader>
 					<CardContent>
-						<ul className="flex max-h-48 flex-col gap-2 overflow-y-auto scrollbar-thin scrollbar-thumb-scrollbar">
+						<ul className="scrollbar-thin scrollbar-thumb-scrollbar flex max-h-48 flex-col gap-2 overflow-y-auto">
 							{Object.entries(data.processes).length > 0 ? (
 								Object.entries(data.processes).map(([key, process]) => (
 									<li
 										key={key}
-										className="rounded-md border border-border bg-muted/30 p-3"
+										className="border-border bg-muted/30 rounded-md border p-3"
 									>
 										<div className="flex items-center gap-2">
 											<Pinger status="running" />
@@ -317,7 +317,7 @@ export default function AdminLayout({
 												{key}
 											</span>
 										</div>
-										<div className="mt-2 flex flex-wrap gap-x-4 gap-y-1 text-xs text-muted-foreground">
+										<div className="text-muted-foreground mt-2 flex flex-wrap gap-x-4 gap-y-1 text-xs">
 											<span>
 												<span className="font-medium">Port:</span>{' '}
 												{process.port}
@@ -339,7 +339,7 @@ export default function AdminLayout({
 									</li>
 								))
 							) : (
-								<p className="text-sm text-muted-foreground">
+								<p className="text-muted-foreground text-sm">
 									No processes running
 								</p>
 							)}
@@ -354,11 +354,11 @@ export default function AdminLayout({
 							<CardDescription>Test execution processes</CardDescription>
 						</CardHeader>
 						<CardContent>
-							<ul className="flex flex-col gap-2 overflow-y-auto scrollbar-thin scrollbar-thumb-scrollbar">
+							<ul className="scrollbar-thin scrollbar-thumb-scrollbar flex flex-col gap-2 overflow-y-auto">
 								{Object.entries(data.testProcesses).map(([key, process]) => (
 									<li
 										key={key}
-										className="rounded-md border border-border bg-muted/30 p-3"
+										className="border-border bg-muted/30 rounded-md border p-3"
 									>
 										<div className="flex items-center gap-2">
 											{process.exitCode === null ||
@@ -373,7 +373,7 @@ export default function AdminLayout({
 												{key}
 											</span>
 										</div>
-										<div className="mt-2 flex flex-wrap gap-x-4 gap-y-1 text-xs text-muted-foreground">
+										<div className="text-muted-foreground mt-2 flex flex-wrap gap-x-4 gap-y-1 text-xs">
 											{process.pid && (
 												<span>
 													<span className="font-medium">PID:</span>{' '}
@@ -409,7 +409,7 @@ function Card({
 	return (
 		<div
 			className={cn(
-				'rounded-lg border border-border bg-card p-6 shadow-sm',
+				'border-border bg-card rounded-lg border p-6 shadow-sm',
 				className,
 			)}
 		>
@@ -423,11 +423,11 @@ function CardHeader({ children }: { children: React.ReactNode }) {
 }
 
 function CardTitle({ children }: { children: React.ReactNode }) {
-	return <h2 className="text-lg font-semibold text-foreground">{children}</h2>
+	return <h2 className="text-foreground text-lg font-semibold">{children}</h2>
 }
 
 function CardDescription({ children }: { children: React.ReactNode }) {
-	return <p className="mt-1 text-sm text-muted-foreground">{children}</p>
+	return <p className="text-muted-foreground mt-1 text-sm">{children}</p>
 }
 
 function CardContent({ children }: { children: React.ReactNode }) {
@@ -442,7 +442,7 @@ function AdminButton({
 		<button
 			{...props}
 			className={cn(
-				'inline-flex w-full items-center justify-center gap-2 rounded-md border border-border bg-background px-4 py-2 text-sm font-medium text-foreground transition-colors hover:bg-muted hover:text-foreground focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2 disabled:pointer-events-none disabled:opacity-50',
+				'border-border bg-background text-foreground hover:bg-muted hover:text-foreground focus:ring-ring inline-flex w-full items-center justify-center gap-2 rounded-md border px-4 py-2 text-sm font-medium transition-colors focus:ring-2 focus:ring-offset-2 focus:outline-none disabled:pointer-events-none disabled:opacity-50',
 				props.className,
 			)}
 		>

@@ -188,7 +188,7 @@ function WorkshopChooser({
 							className="rounded"
 						/>
 						<span
-							className={`text-sm ${workshop === currentWorkshopId ? 'font-bold text-primary' : ''}`}
+							className={`text-sm ${workshop === currentWorkshopId ? 'text-primary font-bold' : ''}`}
 						>
 							{workshop} {workshop === currentWorkshopId ? '(current)' : null}
 						</span>
@@ -238,7 +238,7 @@ function SearchFilter({ filterQuery }: { filterQuery: string }) {
 						setInputValue(e.target.value)
 						handleSearch(e.target.value)
 					}}
-					className="flex-1 rounded-md border border-border bg-background px-3 py-2 text-foreground focus:outline-none focus:ring-2 focus:ring-ring"
+					className="border-border bg-background text-foreground focus:ring-ring flex-1 rounded-md border px-3 py-2 focus:ring-2 focus:outline-none"
 				/>
 				{inputValue ? (
 					<IconButton onClick={handleClear} title="Clear search">
@@ -296,13 +296,13 @@ function InlineEntryEditor({
 
 	return (
 		<details className="mt-2">
-			<summary className="cursor-pointer text-sm text-muted-foreground hover:text-foreground">
+			<summary className="text-muted-foreground hover:text-foreground cursor-pointer text-sm">
 				Edit entry details
 			</summary>
-			<div className="mt-2 space-y-3 rounded border border-border bg-muted p-3">
+			<div className="border-border bg-muted mt-2 space-y-3 rounded border p-3">
 				<div>
 					<label className="mb-1 block text-sm font-medium">Key:</label>
-					<code className="rounded border bg-background px-2 py-1 text-sm">
+					<code className="bg-background rounded border px-2 py-1 text-sm">
 						{entryKey}
 					</code>
 				</div>
@@ -311,7 +311,7 @@ function InlineEntryEditor({
 					<textarea
 						value={editValue}
 						onChange={(e) => handleChange(e.target.value)}
-						className="resize-vertical h-32 w-full rounded border border-border bg-background p-2 font-mono text-sm text-foreground focus:outline-none focus:ring-2 focus:ring-ring"
+						className="resize-vertical border-border bg-background text-foreground focus:ring-ring h-32 w-full rounded border p-2 font-mono text-sm focus:ring-2 focus:outline-none"
 						placeholder="Enter JSON value..."
 					/>
 				</div>
@@ -351,30 +351,30 @@ function SkippedFilesSection({
 	if (skippedFiles.length === 0) return null
 
 	return (
-		<div className="mt-4 rounded border border-warning bg-warning p-3">
+		<div className="border-warning bg-warning mt-4 rounded border p-3">
 			<div className="mb-2 flex items-center gap-2">
 				<Icon
 					name="TriangleAlert"
-					className="h-4 w-4 text-warning-foreground"
+					className="text-warning-foreground h-4 w-4"
 				/>
-				<h5 className="font-medium text-warning-foreground">
+				<h5 className="text-warning-foreground font-medium">
 					Skipped Files ({skippedFiles.length})
 				</h5>
 			</div>
-			<p className="mb-3 text-sm text-warning-foreground/80">
+			<p className="text-warning-foreground/80 mb-3 text-sm">
 				These cache files were skipped because they exceed the 3MB size limit:
 			</p>
 			<div className="space-y-2">
 				{skippedFiles.map((skippedFile) => (
 					<div
 						key={skippedFile.filename}
-						className="flex items-center justify-between rounded border border-warning/20 bg-warning/5 p-2"
+						className="border-warning/20 bg-warning/5 flex items-center justify-between rounded border p-2"
 					>
 						<div className="min-w-0 flex-1">
-							<div className="truncate font-mono text-sm font-medium text-warning-foreground">
+							<div className="text-warning-foreground truncate font-mono text-sm font-medium">
 								{skippedFile.filename}
 							</div>
-							<div className="text-xs text-warning-foreground/70">
+							<div className="text-warning-foreground/70 text-xs">
 								{skippedFile.error} • Size:{' '}
 								<span title={`${skippedFile.size} bytes`}>
 									{formatFileSize(skippedFile.size)}
@@ -461,7 +461,7 @@ export default function CacheManagement({ loaderData }: Route.ComponentProps) {
 				<h2 className="mb-2 text-2xl font-bold">Cache Management</h2>
 				<p className="text-muted-foreground">
 					Current Workshop:{' '}
-					<span className="font-semibold text-foreground">
+					<span className="text-foreground font-semibold">
 						{currentWorkshopId}
 					</span>
 				</p>
@@ -476,19 +476,19 @@ export default function CacheManagement({ loaderData }: Route.ComponentProps) {
 			<SearchFilter filterQuery={filterQuery} />
 
 			{fetcher.data?.status === 'success' ? (
-				<div className="rounded border border-border bg-success p-4 text-success-foreground">
+				<div className="border-border bg-success text-success-foreground rounded border p-4">
 					{fetcher.data.message}
 				</div>
 			) : null}
 
 			{fetcher.data?.status === 'error' ? (
-				<div className="rounded border border-border bg-destructive p-4 text-destructive-foreground">
+				<div className="border-border bg-destructive text-destructive-foreground rounded border p-4">
 					{fetcher.data.error}
 				</div>
 			) : null}
 
 			{filteredCaches.length === 0 ? (
-				<div className="py-8 text-center text-muted-foreground">
+				<div className="text-muted-foreground py-8 text-center">
 					No caches found matching your criteria.
 				</div>
 			) : null}
@@ -499,13 +499,13 @@ export default function CacheManagement({ loaderData }: Route.ComponentProps) {
 						key={workshopCache.workshopId}
 						open={workshopCache.workshopId === currentWorkshopId}
 					>
-						<summary className="cursor-pointer rounded-lg border border-border bg-card p-4 hover:bg-accent">
+						<summary className="border-border bg-card hover:bg-accent cursor-pointer rounded-lg border p-4">
 							<div className="flex items-center justify-between">
-								<h3 className="flex items-center gap-2 text-lg font-semibold text-card-foreground">
+								<h3 className="text-card-foreground flex items-center gap-2 text-lg font-semibold">
 									<Icon name="Files" className="h-5 w-5" />
 									{workshopCache.workshopId}
 									{workshopCache.workshopId === currentWorkshopId ? (
-										<span className="rounded bg-primary px-2 py-1 text-xs text-primary-foreground">
+										<span className="bg-primary text-primary-foreground rounded px-2 py-1 text-xs">
 											Current
 										</span>
 									) : null}
@@ -534,10 +534,10 @@ export default function CacheManagement({ loaderData }: Route.ComponentProps) {
 								const grandTotal = totalSize + skippedSize
 
 								return (
-									<details key={cache.name} className="rounded-md bg-muted">
-										<summary className="cursor-pointer p-3 hover:bg-accent">
+									<details key={cache.name} className="bg-muted rounded-md">
+										<summary className="hover:bg-accent cursor-pointer p-3">
 											<div className="flex items-center justify-between">
-												<h4 className="flex items-center gap-2 font-medium text-muted-foreground">
+												<h4 className="text-muted-foreground flex items-center gap-2 font-medium">
 													<Icon name="Files" className="h-4 w-4" />
 													{cache.name}
 													<span className="text-sm">
@@ -545,7 +545,7 @@ export default function CacheManagement({ loaderData }: Route.ComponentProps) {
 														{cache.entries.length === 1 ? 'y' : 'ies'})
 													</span>
 													{grandTotal > 0 ? (
-														<span className="text-sm text-muted-foreground">
+														<span className="text-muted-foreground text-sm">
 															•{' '}
 															<span title={`${grandTotal} bytes`}>
 																{formatFileSize(grandTotal)}
@@ -577,7 +577,7 @@ export default function CacheManagement({ loaderData }: Route.ComponentProps) {
 
 										<div className="p-3 pt-0">
 											{cache.entries.length === 0 ? (
-												<p className="text-sm text-muted-foreground">
+												<p className="text-muted-foreground text-sm">
 													No entries match your search.
 												</p>
 											) : null}
@@ -595,7 +595,7 @@ export default function CacheManagement({ loaderData }: Route.ComponentProps) {
 													({ key, entry, filename, size, filepath }) => (
 														<div
 															key={key}
-															className="rounded border border-border bg-background p-3"
+															className="border-border bg-background rounded border p-3"
 														>
 															<div className="flex items-start justify-between">
 																<div className="min-w-0 flex-1">
@@ -608,7 +608,7 @@ export default function CacheManagement({ loaderData }: Route.ComponentProps) {
 																		</div>
 																		{size ? (
 																			<span
-																				className="inline-flex items-center whitespace-nowrap rounded bg-muted px-1.5 py-0.5 text-xs text-muted-foreground"
+																				className="bg-muted text-muted-foreground inline-flex items-center rounded px-1.5 py-0.5 text-xs whitespace-nowrap"
 																				title={`${size} bytes`}
 																			>
 																				{formatFileSize(size)}
@@ -624,7 +624,7 @@ export default function CacheManagement({ loaderData }: Route.ComponentProps) {
 																		})}
 																		target="_blank"
 																		rel="noopener noreferrer"
-																		className="inline-flex h-8 w-8 items-center justify-center rounded border border-border bg-background text-foreground hover:bg-muted focus:outline-none focus:ring-2 focus:ring-ring"
+																		className="border-border bg-background text-foreground hover:bg-muted focus:ring-ring inline-flex h-8 w-8 items-center justify-center rounded border focus:ring-2 focus:outline-none"
 																		title="View JSON"
 																	>
 																		<Icon
@@ -706,7 +706,7 @@ function CacheMetadata({
 		: { text: 'Never', isExpired: false, isExpiringSoon: false }
 
 	return (
-		<div className="flex flex-col gap-1 text-xs text-muted-foreground">
+		<div className="text-muted-foreground flex flex-col gap-1 text-xs">
 			<div>
 				Created: {createdDate.format('MMM D, YYYY HH:mm:ss')}{' '}
 				<ClientOnly>{() => `(${createdDate.fromNow()})`}</ClientOnly>

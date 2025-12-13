@@ -311,7 +311,7 @@ export default function ExercisePartRoute({
 			// intentionally no onValueChange here because the Link will trigger the
 			// change.
 		>
-			<Tabs.List className="h-14 min-h-14 overflow-x-auto whitespace-nowrap border-b scrollbar-thin scrollbar-thumb-scrollbar">
+			<Tabs.List className="scrollbar-thin scrollbar-thumb-scrollbar h-14 min-h-14 overflow-x-auto border-b whitespace-nowrap">
 				{tabs.map((tab) => {
 					const hidden = shouldHideTab(tab)
 					const status = getTabStatus(tab)
@@ -320,7 +320,7 @@ export default function ExercisePartRoute({
 							<Link
 								id={`${tab}-tab`}
 								className={clsx(
-									'clip-path-button relative h-full px-6 py-4 font-mono text-sm uppercase outline-none radix-state-active:z-10 radix-state-active:bg-foreground radix-state-active:text-background radix-state-active:hover:bg-foreground/80 radix-state-active:hover:text-background/80 radix-state-inactive:hover:bg-foreground/20 radix-state-inactive:hover:text-foreground/80 focus:bg-foreground/80 focus:text-background/80',
+									'clip-path-button radix-state-active:z-10 radix-state-active:bg-foreground radix-state-active:text-background radix-state-active:hover:bg-foreground/80 radix-state-active:hover:text-background/80 radix-state-inactive:hover:bg-foreground/20 radix-state-inactive:hover:text-foreground/80 focus:bg-foreground/80 focus:text-background/80 relative h-full px-6 py-4 font-mono text-sm uppercase outline-none',
 									hidden ? 'hidden' : 'inline-block',
 								)}
 								preventScrollReset
@@ -348,7 +348,7 @@ export default function ExercisePartRoute({
 			<div className="relative z-10 flex min-h-0 flex-1 flex-col overflow-hidden">
 				<Tabs.Content
 					value="playground"
-					className="flex min-h-0 w-full grow basis-0 items-stretch justify-center self-start radix-state-inactive:hidden"
+					className="radix-state-inactive:hidden flex min-h-0 w-full grow basis-0 items-stretch justify-center self-start"
 					forceMount
 				>
 					<Playground
@@ -361,7 +361,7 @@ export default function ExercisePartRoute({
 				</Tabs.Content>
 				<Tabs.Content
 					value="problem"
-					className="flex min-h-0 w-full grow basis-0 items-stretch justify-center self-start radix-state-inactive:hidden"
+					className="radix-state-inactive:hidden flex min-h-0 w-full grow basis-0 items-stretch justify-center self-start"
 					forceMount
 				>
 					<Preview
@@ -371,7 +371,7 @@ export default function ExercisePartRoute({
 				</Tabs.Content>
 				<Tabs.Content
 					value="solution"
-					className="flex min-h-0 w-full grow basis-0 items-stretch justify-center self-start radix-state-inactive:hidden"
+					className="radix-state-inactive:hidden flex min-h-0 w-full grow basis-0 items-stretch justify-center self-start"
 					forceMount
 				>
 					<Preview
@@ -381,7 +381,7 @@ export default function ExercisePartRoute({
 				</Tabs.Content>
 				<Tabs.Content
 					value="tests"
-					className="flex min-h-0 w-full grow basis-0 items-stretch justify-center self-start overflow-hidden radix-state-inactive:hidden"
+					className="radix-state-inactive:hidden flex min-h-0 w-full grow basis-0 items-stretch justify-center self-start overflow-hidden"
 				>
 					<Tests
 						appInfo={loaderData.playground}
@@ -393,7 +393,7 @@ export default function ExercisePartRoute({
 				</Tabs.Content>
 				<Tabs.Content
 					value="diff"
-					className="flex h-full min-h-0 w-full grow basis-0 items-stretch justify-center self-start radix-state-inactive:hidden"
+					className="radix-state-inactive:hidden flex h-full min-h-0 w-full grow basis-0 items-stretch justify-center self-start"
 				>
 					<Diff
 						diff={loaderData.diff}
@@ -403,7 +403,7 @@ export default function ExercisePartRoute({
 				</Tabs.Content>
 				<Tabs.Content
 					value="chat"
-					className="flex h-full min-h-0 w-full grow basis-0 items-stretch justify-center self-start radix-state-inactive:hidden"
+					className="radix-state-inactive:hidden flex h-full min-h-0 w-full grow basis-0 items-stretch justify-center self-start"
 				>
 					<DiscordChat />
 				</Tabs.Content>

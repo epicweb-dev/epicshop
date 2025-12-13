@@ -13,7 +13,7 @@ export function DiscordChat() {
 			<div className="text-center">
 				<DiscordCTA />
 			</div>
-			<div className="flex-1 overflow-y-scroll bg-accent pb-4 scrollbar-thin scrollbar-thumb-scrollbar">
+			<div className="bg-accent scrollbar-thin scrollbar-thumb-scrollbar flex-1 overflow-y-scroll pb-4">
 				<DiscordPosts />
 			</div>
 		</div>
@@ -28,7 +28,7 @@ function DiscordPosts() {
 	if (!isOnline) {
 		return (
 			<div className="flex h-full flex-col items-center justify-between">
-				<div className="flex h-full w-full flex-col items-center justify-center text-foreground-destructive">
+				<div className="text-foreground-destructive flex h-full w-full flex-col items-center justify-center">
 					<Icon name="WifiNoConnection" size="xl">
 						Unable to load discord messages when offline
 					</Icon>
@@ -58,7 +58,7 @@ function DiscordPosts() {
 							{posts.map((post) => (
 								<li
 									key={post.id}
-									className="rounded-xl border bg-background transition-all duration-200 focus-within:-translate-y-1 focus-within:shadow-lg hover:-translate-y-1 hover:shadow-lg"
+									className="bg-background rounded-xl border transition-all duration-200 focus-within:-translate-y-1 focus-within:shadow-lg hover:-translate-y-1 hover:shadow-lg"
 								>
 									<DiscordPost thread={post} />
 								</li>
@@ -116,7 +116,7 @@ function DiscordPost({
 								{thread.tags.map((t) => (
 									<div
 										key={t.name}
-										className="flex items-center justify-center gap-1 rounded-full bg-accent px-2 py-1 text-sm"
+										className="bg-accent flex items-center justify-center gap-1 rounded-full px-2 py-1 text-sm"
 									>
 										<span className="h-3 w-3 leading-3">
 											<Emoji name={t.emojiName} url={t.emojiUrl} />
@@ -150,7 +150,7 @@ function DiscordPost({
 									:{' '}
 								</span>
 							</div>
-							<span className="flex-1 overflow-ellipsis text-muted-foreground">
+							<span className="text-muted-foreground flex-1 overflow-ellipsis">
 								{thread.messagePreview}
 							</span>
 						</div>

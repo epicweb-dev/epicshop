@@ -352,7 +352,7 @@ export function ProgressToggle({
 				{startAnimation ? (
 					<motion.div
 						ref={animationRef}
-						className="absolute right-0 h-20 w-20 rounded-full bg-foreground/20"
+						className="bg-foreground/20 absolute right-0 h-20 w-20 rounded-full"
 						initial={{
 							scale: 0.5,
 							opacity: 0,
@@ -374,7 +374,7 @@ export function ProgressToggle({
 						{
 							'bg-foreground text-background duration-1000':
 								optimisticCompleted,
-							'duration-100 group-hover:bg-background': !optimisticCompleted,
+							'group-hover:bg-background duration-100': !optimisticCompleted,
 						},
 					)}
 				>

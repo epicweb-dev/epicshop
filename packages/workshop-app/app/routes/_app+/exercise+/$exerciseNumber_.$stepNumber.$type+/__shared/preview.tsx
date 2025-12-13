@@ -77,13 +77,13 @@ export function Preview({
 		)
 	} else if (dev.type === 'browser') {
 		return (
-			<div className="relative h-full grow overflow-y-auto scrollbar-thin scrollbar-thumb-scrollbar">
+			<div className="scrollbar-thin scrollbar-thumb-scrollbar relative h-full grow overflow-y-auto">
 				<a
 					href={dev.pathname}
 					target="_blank"
 					rel="noreferrer"
 					className={cn(
-						'absolute bottom-5 right-5 flex items-center justify-center rounded-full bg-gray-100 p-2.5 transition hover:bg-gray-200 dark:bg-gray-800 hover:dark:bg-gray-600',
+						'absolute right-5 bottom-5 flex items-center justify-center rounded-full bg-gray-100 p-2.5 transition hover:bg-gray-200 dark:bg-gray-800 hover:dark:bg-gray-600',
 					)}
 				>
 					<Icon name="ExternalLink" aria-hidden="true" />

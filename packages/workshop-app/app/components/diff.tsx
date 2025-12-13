@@ -150,7 +150,7 @@ export function DiffImplementation({
 			<Await
 				resolve={diff}
 				errorElement={
-					<p className="p-6 text-foreground-destructive">
+					<p className="text-foreground-destructive p-6">
 						There was an error calculating the diff. Sorry.
 					</p>
 				}
@@ -173,7 +173,7 @@ export function DiffImplementation({
 							</div>
 							<Form
 								onChange={(e) => submit(e.currentTarget)}
-								className="flex h-full flex-1 items-center overflow-x-auto scrollbar-thin scrollbar-thumb-scrollbar"
+								className="scrollbar-thin scrollbar-thumb-scrollbar flex h-full flex-1 items-center overflow-x-auto"
 								key={`${diff.app1}${diff.app2}`}
 							>
 								{hiddenInputs}
@@ -192,7 +192,7 @@ export function DiffImplementation({
 								/>
 							</Form>
 						</div>
-						<div className="grow overflow-y-scroll scrollbar-thin scrollbar-thumb-scrollbar">
+						<div className="scrollbar-thin scrollbar-thumb-scrollbar grow overflow-y-scroll">
 							{diff.diffCode ? (
 								<div>
 									<Accordion.Root className="w-full" type="multiple">
@@ -200,11 +200,11 @@ export function DiffImplementation({
 									</Accordion.Root>
 								</div>
 							) : diff.app1 && diff.app2 ? (
-								<p className="m-5 inline-flex items-center justify-center bg-foreground px-1 py-0.5 font-mono text-sm uppercase text-background">
+								<p className="bg-foreground text-background m-5 inline-flex items-center justify-center px-1 py-0.5 font-mono text-sm uppercase">
 									There was a problem generating the diff
 								</p>
 							) : (
-								<p className="m-5 inline-flex items-center justify-center bg-foreground px-1 py-0.5 font-mono text-sm uppercase text-background">
+								<p className="bg-foreground text-background m-5 inline-flex items-center justify-center px-1 py-0.5 font-mono text-sm uppercase">
 									Select two apps to compare
 								</p>
 							)}
@@ -234,7 +234,7 @@ function SelectFileToDiff({
 		<Select.Root name={name} defaultValue={defaultValue}>
 			<Select.Trigger
 				className={clsx(
-					'flex h-full w-full max-w-[50%] items-center justify-between px-3 text-left radix-placeholder:text-gray-500 focus-visible:outline-none',
+					'radix-placeholder:text-gray-500 flex h-full w-full max-w-[50%] items-center justify-between px-3 text-left focus-visible:outline-none',
 					className,
 				)}
 				aria-label={`Select ${label} for git Diff`}
@@ -291,7 +291,7 @@ const SelectItem: React.FC<any> = ({
 	return (
 		<Select.Item
 			className={clsx(
-				'relative flex cursor-pointer select-none items-center rounded px-10 py-2 leading-none opacity-80 radix-disabled:text-red-500 radix-highlighted:opacity-100 radix-highlighted:outline-none radix-state-checked:opacity-100',
+				'radix-disabled:text-red-500 radix-highlighted:opacity-100 radix-highlighted:outline-none radix-state-checked:opacity-100 relative flex cursor-pointer items-center rounded px-10 py-2 leading-none opacity-80 select-none',
 
 				className,
 			)}

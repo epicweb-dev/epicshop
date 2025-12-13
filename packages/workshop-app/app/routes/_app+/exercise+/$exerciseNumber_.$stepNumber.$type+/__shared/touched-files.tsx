@@ -40,7 +40,7 @@ function TouchedFiles({
 				<Popover.Portal>
 					<Popover.Content
 						ref={contentRef}
-						className="slideRightContent lg:slideUpContent invert-theme z-10 select-none rounded bg-background px-9 py-8 text-foreground"
+						className="slideRightContent lg:slideUpContent invert-theme bg-background text-foreground z-10 rounded px-9 py-8 select-none"
 						align="start"
 						sideOffset={5}
 					>
@@ -102,7 +102,7 @@ function TouchedFiles({
 											return (
 												<ul {...props}>
 													{diffFiles.length > 1 && !ENV.EPICSHOP_DEPLOYED ? (
-														<div className="mb-2 border-b border-b-gray-50 border-opacity-50 pb-2 font-sans">
+														<div className="border-opacity-50 mb-2 border-b border-b-gray-50 pb-2 font-sans">
 															<LaunchEditor
 																appFile={diffFiles.map(
 																	(file) => `${file.path},${file.line},1`,

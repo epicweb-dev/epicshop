@@ -3,7 +3,7 @@ import { Icon } from './icons.tsx'
 
 export function ExerciseWarningBanner() {
 	return (
-		<div className="fixed left-0 right-0 top-0 z-50 border-b border-destructive bg-destructive">
+		<div className="border-destructive bg-destructive fixed top-0 right-0 left-0 z-50 border-b">
 			<div className="relative w-full p-4">
 				{/* Full-banner clickable link, visually hidden but covers the banner */}
 				<Link
@@ -11,23 +11,23 @@ export function ExerciseWarningBanner() {
 					className="absolute inset-0 z-10 block h-full w-full"
 					aria-label="Learn more about workspace structure"
 				/>
-				<div className="container relative z-0 flex items-center justify-between">
+				<div className="relative z-0 container flex items-center justify-between">
 					<div className="flex items-center gap-3">
 						<Icon
 							name="Error"
-							className="h-5 w-5 text-destructive-foreground"
+							className="text-destructive-foreground h-5 w-5"
 						/>
 						<div>
-							<h3 className="text-sm font-semibold text-destructive-foreground">
+							<h3 className="text-destructive-foreground text-sm font-semibold">
 								Warning: Changes detected in exercises directory
 							</h3>
-							<p className="text-xs text-destructive-foreground/80">
+							<p className="text-destructive-foreground/80 text-xs">
 								You should typically work in the playground directory, not the
 								exercises directory.
 							</p>
 						</div>
 					</div>
-					<div className="flex items-center gap-2 text-xs text-destructive-foreground">
+					<div className="text-destructive-foreground flex items-center gap-2 text-xs">
 						<span>Learn more</span>
 						<Icon name="ArrowRight" className="h-3 w-3" />
 					</div>

@@ -90,7 +90,7 @@ export default function Onboarding() {
 	const videosCount = onboardingVideos.length
 
 	return (
-		<main className="flex w-full flex-col items-center justify-between gap-4 overflow-y-scroll scrollbar-thin scrollbar-thumb-scrollbar">
+		<main className="scrollbar-thin scrollbar-thumb-scrollbar flex w-full flex-col items-center justify-between gap-4 overflow-y-scroll">
 			<div className="container flex h-full w-full max-w-5xl flex-1 flex-col items-center gap-4 py-12">
 				<h1 className="text-5xl">Onboarding</h1>
 				<p className="text-xl">
@@ -134,7 +134,7 @@ export default function Onboarding() {
 														value={isWatched ? 'unmark-video' : 'mark-video'}
 														data-watched={isWatched ? 'true' : 'false'}
 														className={cn(
-															`inline-flex items-center gap-1 self-start rounded-full border px-3 py-1 text-xs font-medium transition-colors focus:outline-none focus:ring-2 focus:ring-ring`,
+															`focus:ring-ring inline-flex items-center gap-1 self-start rounded-full border px-3 py-1 text-xs font-medium transition-colors focus:ring-2 focus:outline-none`,
 															isWatched
 																? 'border-success bg-success text-success-foreground hover:border-success-foreground hover:shadow-sm'
 																: 'border-warning bg-warning text-warning-foreground hover:border-warning-foreground hover:shadow-sm',

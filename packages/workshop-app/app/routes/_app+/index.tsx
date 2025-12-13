@@ -105,7 +105,7 @@ const mdxComponents = { h1: () => null }
 
 export default function Index({ loaderData: data }: Route.ComponentProps) {
 	const exerciseLinks = (
-		<ul className="flex flex-col divide-y divide-border dark:divide-border/50">
+		<ul className="divide-border dark:divide-border/50 flex flex-col divide-y">
 			<strong className="px-10 pb-3 font-mono text-xs uppercase">
 				Exercises
 			</strong>
@@ -122,10 +122,10 @@ export default function Index({ loaderData: data }: Route.ComponentProps) {
 		<main className="relative flex h-full w-full max-w-5xl flex-col justify-between border-r md:w-3/4 xl:w-2/3">
 			<article
 				id={data.articleId}
-				className="shadow-on-scrollbox flex w-full flex-1 flex-col gap-12 overflow-y-scroll px-3 py-4 pt-6 scrollbar-thin scrollbar-thumb-scrollbar md:px-10 md:py-12 md:pt-16"
+				className="shadow-on-scrollbox scrollbar-thin scrollbar-thumb-scrollbar flex w-full flex-1 flex-col gap-12 overflow-y-scroll px-3 py-4 pt-6 md:px-10 md:py-12 md:pt-16"
 			>
 				<div>
-					<h1 className="px-10 text-[clamp(3rem,6vw,7.5rem)] font-extrabold leading-none">
+					<h1 className="px-10 text-[clamp(3rem,6vw,7.5rem)] leading-none font-extrabold">
 						{data.title}
 					</h1>
 				</div>
@@ -154,7 +154,7 @@ export default function Index({ loaderData: data }: Route.ComponentProps) {
 						'No instructions yet...'
 					)}
 				</div>
-				<div className="pb-5 pt-10">
+				<div className="pt-10 pb-5">
 					{data.workshopReadme.compiled.status === 'success' &&
 					data.workshopReadme.compiled.code &&
 					data.workshopReadme.compiled.code.length > 500

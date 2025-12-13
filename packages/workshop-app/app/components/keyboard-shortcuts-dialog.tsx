@@ -118,7 +118,7 @@ function KeyboardShortcutsDialog({
 				<div className="space-y-6">
 					{shortcutCategories.map((category) => (
 						<div key={category.title}>
-							<h3 className="mb-3 text-sm font-semibold text-foreground">
+							<h3 className="text-foreground mb-3 text-sm font-semibold">
 								{category.title}
 							</h3>
 							<div className="space-y-2">
@@ -127,13 +127,13 @@ function KeyboardShortcutsDialog({
 										key={index}
 										className="flex items-center justify-between gap-4"
 									>
-										<span className="flex-1 text-sm text-muted-foreground">
+										<span className="text-muted-foreground flex-1 text-sm">
 											{shortcut.description}
 										</span>
 										<div className="flex shrink-0 items-center gap-1">
 											{shortcut.keys.map((key, keyIndex) => (
 												<React.Fragment key={keyIndex}>
-													<kbd className="rounded border border-border bg-muted px-2 py-1 font-mono text-xs">
+													<kbd className="border-border bg-muted rounded border px-2 py-1 font-mono text-xs">
 														{key}
 													</kbd>
 													{keyIndex < shortcut.keys.length - 1 && (
@@ -148,11 +148,11 @@ function KeyboardShortcutsDialog({
 						</div>
 					))}
 				</div>
-				<div className="mt-4 border-t border-border pt-4">
-					<p className="text-xs text-muted-foreground">
+				<div className="border-border mt-4 border-t pt-4">
+					<p className="text-muted-foreground text-xs">
 						<strong>Note:</strong> Shortcuts are ignored when focus is on
 						interactive elements (inputs, buttons, etc.). Press{' '}
-						<kbd className="rounded border border-border bg-muted px-1.5 py-0.5 font-mono text-xs">
+						<kbd className="border-border bg-muted rounded border px-1.5 py-0.5 font-mono text-xs">
 							?
 						</kbd>{' '}
 						to toggle this dialog.

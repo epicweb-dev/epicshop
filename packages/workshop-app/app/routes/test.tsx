@@ -331,7 +331,7 @@ export function TestOutput({ name }: { name: string }) {
 			</div>
 			<div className="flex min-h-0 flex-1 flex-col gap-5 p-5">
 				<p className="font-mono text-sm font-medium uppercase">Test Output</p>
-				<pre className="shadow-on-scrollbox min-h-0 flex-1 overflow-y-auto scrollbar-thin scrollbar-thumb-scrollbar">
+				<pre className="shadow-on-scrollbox scrollbar-thin scrollbar-thumb-scrollbar min-h-0 flex-1 overflow-y-auto">
 					{lines.map((line) => (
 						<code
 							key={line.timestamp}

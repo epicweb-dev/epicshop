@@ -125,10 +125,10 @@ export default function ExerciseNumberRoute({
 			<article
 				id={data.articleId}
 				key={data.articleId}
-				className="shadow-on-scrollbox flex w-full flex-1 flex-col gap-12 overflow-y-scroll px-3 py-4 pt-6 scrollbar-thin scrollbar-thumb-scrollbar md:px-10 md:py-12 md:pt-16"
+				className="shadow-on-scrollbox scrollbar-thin scrollbar-thumb-scrollbar flex w-full flex-1 flex-col gap-12 overflow-y-scroll px-3 py-4 pt-6 md:px-10 md:py-12 md:pt-16"
 			>
 				<div>
-					<h1 className="text-[clamp(3rem,6vw,7.5rem)] font-extrabold leading-none">
+					<h1 className="text-[clamp(3rem,6vw,7.5rem)] leading-none font-extrabold">
 						{data.exercise.title}
 					</h1>
 				</div>
@@ -158,7 +158,7 @@ export default function ExerciseNumberRoute({
 				exerciseNumber={data.exerciseNumber}
 				className="h-14 border-t px-6"
 			/>
-			<div className="flex h-16 justify-between border-b-4 border-t lg:border-b-0">
+			<div className="flex h-16 justify-between border-t border-b-4 lg:border-b-0">
 				<div />
 				<EditFileOnGitHub
 					file={data.exerciseReadme.file}
@@ -167,7 +167,7 @@ export default function ExerciseNumberRoute({
 				<Link
 					to={`${firstStepNumber}/${data.firstType}`}
 					prefetch="intent"
-					className="flex h-full items-center justify-center bg-foreground px-7 text-background"
+					className="bg-foreground text-background flex h-full items-center justify-center px-7"
 					data-keyboard-action="g+n"
 				>
 					Start Learning

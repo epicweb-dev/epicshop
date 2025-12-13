@@ -256,7 +256,7 @@ function App() {
 					: {}
 			}
 			className={cn(
-				'antialiased h-screen-safe',
+				'h-screen-safe antialiased',
 				theme,
 				{ 'cursor-progress': showSpinner },
 				altDown ? 'alt-down' : null,

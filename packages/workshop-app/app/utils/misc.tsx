@@ -149,7 +149,7 @@ export const Heading = function Heading({
 					aria-hidden="true"
 					tabIndex={-1}
 					to={`#${slugId}`}
-					className="absolute left-0 top-1/2 -translate-x-full -translate-y-1/2 p-2 opacity-0 transition group-hover:opacity-100 motion-safe:transition"
+					className="absolute top-1/2 left-0 -translate-x-full -translate-y-1/2 p-2 opacity-0 transition group-hover:opacity-100 motion-safe:transition"
 				>
 					<Icon name="Linked" />
 				</Link>

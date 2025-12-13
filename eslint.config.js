@@ -18,6 +18,6 @@ export default [
 			'no-unused-vars': 'off',
 			'@typescript-eslint/no-unused-vars': 'off',
 			'vitest/no-import-node-test': 'off',
-		}
+		},
 	},
 ]

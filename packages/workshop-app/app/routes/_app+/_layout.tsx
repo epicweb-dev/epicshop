@@ -249,13 +249,13 @@ function FacePile({ isMenuOpened }: { isMenuOpened: boolean }) {
 								tabIndex={0}
 								aria-label={overLimitLabel}
 								className={cn(
-									'flex items-center justify-center rounded-full border bg-accent text-xs text-accent-foreground',
+									'bg-accent text-accent-foreground flex items-center justify-center rounded-full border text-xs',
 									isMenuOpened ? 'h-8 w-8' : 'h-6 w-6',
 								)}
 							>
 								<span
 									className={cn(
-										'pointer-events-none overflow-hidden text-ellipsis whitespace-nowrap text-center',
+										'pointer-events-none overflow-hidden text-center text-ellipsis whitespace-nowrap',
 										isMenuOpened ? 'w-8' : 'w-6',
 									)}
 								>
@@ -574,7 +574,7 @@ function MobileNavigation({
 					/>
 					{isMenuOpened && (
 						<motion.div
-							className="flex w-full grow flex-col justify-between overflow-x-auto p-6 scrollbar-thin scrollbar-thumb-scrollbar"
+							className="scrollbar-thin scrollbar-thumb-scrollbar flex w-full grow flex-col justify-between overflow-x-auto p-6"
 							initial={{ opacity: 0 }}
 							animate={{ opacity: 1 }}
 						>
@@ -590,8 +590,8 @@ function MobileNavigation({
 										to="/"
 										className={({ isActive }) =>
 											clsx(
-												'relative whitespace-nowrap px-2 py-0.5 pr-3 text-2xl font-bold outline-none hover:underline focus:underline',
-												'after:absolute after:-bottom-2.5 after:-right-2.5 after:h-5 after:w-5 after:rotate-45 after:scale-75 after:bg-background after:content-[""] hover:underline focus:underline',
+												'relative px-2 py-0.5 pr-3 text-2xl font-bold whitespace-nowrap outline-none hover:underline focus:underline',
+												'after:bg-background after:absolute after:-right-2.5 after:-bottom-2.5 after:h-5 after:w-5 after:scale-75 after:rotate-45 after:content-[""] hover:underline focus:underline',
 												{ 'bg-foreground text-background': isActive },
 											)
 										}
@@ -615,8 +615,8 @@ function MobileNavigation({
 													prefetch="intent"
 													to={getExercisePath(exerciseNumber)}
 													className={clsx(
-														'relative whitespace-nowrap px-2 py-0.5 pr-3 outline-none hover:underline focus:underline',
-														'after:absolute after:-bottom-2.5 after:-right-2.5 after:h-5 after:w-5 after:rotate-45 after:scale-75 after:bg-background after:content-[""] hover:underline focus:underline',
+														'relative px-2 py-0.5 pr-3 whitespace-nowrap outline-none hover:underline focus:underline',
+														'after:bg-background after:absolute after:-right-2.5 after:-bottom-2.5 after:h-5 after:w-5 after:scale-75 after:rotate-45 after:content-[""] hover:underline focus:underline',
 														{ 'bg-foreground text-background': isActive },
 													)}
 												>
@@ -640,7 +640,7 @@ function MobileNavigation({
 													variants={listVariants}
 													initial="hidden"
 													animate="visible"
-													className="ml-4 mt-2 flex flex-col"
+													className="mt-2 ml-4 flex flex-col"
 												>
 													<NavigationExerciseStepListItem
 														key={exerciseNumber}
@@ -651,7 +651,7 @@ function MobileNavigation({
 															to={getExercisePath(exerciseNumber)}
 															prefetch="intent"
 															className={clsx(
-																'relative whitespace-nowrap px-2 py-0.5 pr-3 text-xl font-medium outline-none after:absolute after:-bottom-2.5 after:-right-2.5 after:h-5 after:w-5 after:rotate-45 after:scale-75 after:bg-background after:content-[""] hover:underline focus:underline',
+																'after:bg-background relative px-2 py-0.5 pr-3 text-xl font-medium whitespace-nowrap outline-none after:absolute after:-right-2.5 after:-bottom-2.5 after:h-5 after:w-5 after:scale-75 after:rotate-45 after:content-[""] hover:underline focus:underline',
 																{
 																	'bg-foreground text-background':
 																		!params.stepNumber,
@@ -678,12 +678,12 @@ function MobileNavigation({
 																				stepNumber,
 																			)}
 																			prefetch="intent"
-																			className="font-semibold leading-tight"
+																			className="leading-tight font-semibold"
 																		>
 																			{stepNumber.toString().padStart(2, '0')}.{' '}
 																			{title}
 																		</Link>
-																		<div className="ml-3 mt-0.5 flex gap-1">
+																		<div className="mt-0.5 ml-3 flex gap-1">
 																			{problem && (
 																				<NavLink
 																					to={getExerciseStepPath(
@@ -694,8 +694,8 @@ function MobileNavigation({
 																					prefetch="intent"
 																					className={({ isActive }) =>
 																						clsx(
-																							'relative whitespace-nowrap px-2 py-0.5 pr-3 outline-none hover:underline focus:underline',
-																							'after:absolute after:-bottom-2.5 after:-right-2.5 after:h-5 after:w-5 after:rotate-45 after:scale-75 after:bg-background after:content-[""] hover:underline focus:underline',
+																							'relative px-2 py-0.5 pr-3 whitespace-nowrap outline-none hover:underline focus:underline',
+																							'after:bg-background after:absolute after:-right-2.5 after:-bottom-2.5 after:h-5 after:w-5 after:scale-75 after:rotate-45 after:content-[""] hover:underline focus:underline',
 																							{
 																								'bg-foreground text-background':
 																									isActive,
@@ -720,8 +720,8 @@ function MobileNavigation({
 																					prefetch="intent"
 																					className={({ isActive }) =>
 																						clsx(
-																							'relative whitespace-nowrap px-2 py-0.5 pr-3 outline-none hover:underline focus:underline',
-																							'after:absolute after:-bottom-2.5 after:-right-2.5 after:h-5 after:w-5 after:rotate-45 after:scale-75 after:bg-background after:content-[""] hover:underline focus:underline',
+																							'relative px-2 py-0.5 pr-3 whitespace-nowrap outline-none hover:underline focus:underline',
+																							'after:bg-background after:absolute after:-right-2.5 after:-bottom-2.5 after:h-5 after:w-5 after:scale-75 after:rotate-45 after:content-[""] hover:underline focus:underline',
 																							{
 																								'bg-foreground text-background':
 																									isActive,
@@ -750,7 +750,7 @@ function MobileNavigation({
 															prefetch="intent"
 															className={({ isActive }) =>
 																clsx(
-																	'relative whitespace-nowrap px-2 py-0.5 pr-3 text-base font-medium outline-none after:absolute after:-bottom-2.5 after:-right-2.5 after:h-5 after:w-5 after:rotate-45 after:scale-75 after:bg-background after:content-[""] hover:underline focus:underline',
+																	'after:bg-background relative px-2 py-0.5 pr-3 text-base font-medium whitespace-nowrap outline-none after:absolute after:-right-2.5 after:-bottom-2.5 after:h-5 after:w-5 after:scale-75 after:rotate-45 after:content-[""] hover:underline focus:underline',
 																	{
 																		'bg-foreground text-background': isActive,
 																	},
@@ -771,9 +771,9 @@ function MobileNavigation({
 									to="/finished"
 									className={({ isActive }) =>
 										clsx(
-											'relative whitespace-nowrap text-lg font-bold outline-none hover:underline focus:underline',
+											'relative text-lg font-bold whitespace-nowrap outline-none hover:underline focus:underline',
 											{
-												'bg-black text-white after:absolute after:-bottom-2.5 after:-right-2.5 after:h-5 after:w-5 after:rotate-45 after:scale-75 after:bg-background after:content-[""]':
+												'after:bg-background bg-black text-white after:absolute after:-right-2.5 after:-bottom-2.5 after:h-5 after:w-5 after:scale-75 after:rotate-45 after:content-[""]':
 													isActive,
 											},
 										)
@@ -959,7 +959,7 @@ function Navigation({
 					{isMenuOpened && (
 						<motion.div
 							style={{ width: OPENED_MENU_WIDTH }}
-							className="flex grow flex-col justify-between overflow-y-auto p-6 scrollbar-thin scrollbar-thumb-scrollbar"
+							className="scrollbar-thin scrollbar-thumb-scrollbar flex grow flex-col justify-between overflow-y-auto p-6"
 							initial={{ opacity: 0 }}
 							animate={{ opacity: 1 }}
 						>
@@ -975,8 +975,8 @@ function Navigation({
 										to="/"
 										className={({ isActive }) =>
 											clsx(
-												'relative whitespace-nowrap px-2 py-0.5 pr-3 text-2xl font-bold outline-none hover:underline focus:underline',
-												'after:absolute after:-bottom-2.5 after:-right-2.5 after:h-5 after:w-5 after:rotate-45 after:scale-75 after:bg-background after:content-[""] hover:underline focus:underline',
+												'relative px-2 py-0.5 pr-3 text-2xl font-bold whitespace-nowrap outline-none hover:underline focus:underline',
+												'after:bg-background after:absolute after:-right-2.5 after:-bottom-2.5 after:h-5 after:w-5 after:scale-75 after:rotate-45 after:content-[""] hover:underline focus:underline',
 												{ 'bg-foreground text-background': isActive },
 											)
 										}
@@ -1000,8 +1000,8 @@ function Navigation({
 													prefetch="intent"
 													to={getExercisePath(exerciseNumber)}
 													className={clsx(
-														'relative whitespace-nowrap px-2 py-0.5 pr-3 outline-none hover:underline focus:underline',
-														'after:absolute after:-bottom-2.5 after:-right-2.5 after:h-5 after:w-5 after:rotate-45 after:scale-75 after:bg-background after:content-[""] hover:underline focus:underline',
+														'relative px-2 py-0.5 pr-3 whitespace-nowrap outline-none hover:underline focus:underline',
+														'after:bg-background after:absolute after:-right-2.5 after:-bottom-2.5 after:h-5 after:w-5 after:scale-75 after:rotate-45 after:content-[""] hover:underline focus:underline',
 														{ 'bg-foreground text-background': isActive },
 													)}
 												>
@@ -1025,7 +1025,7 @@ function Navigation({
 													variants={listVariants}
 													initial="hidden"
 													animate="visible"
-													className="ml-4 mt-2 flex flex-col"
+													className="mt-2 ml-4 flex flex-col"
 												>
 													<NavigationExerciseStepListItem
 														key={exerciseNumber}
@@ -1036,7 +1036,7 @@ function Navigation({
 															to={getExercisePath(exerciseNumber)}
 															prefetch="intent"
 															className={clsx(
-																'relative whitespace-nowrap px-2 py-0.5 pr-3 text-xl font-medium outline-none after:absolute after:-bottom-2.5 after:-right-2.5 after:h-5 after:w-5 after:rotate-45 after:scale-75 after:bg-background after:content-[""] hover:underline focus:underline',
+																'after:bg-background relative px-2 py-0.5 pr-3 text-xl font-medium whitespace-nowrap outline-none after:absolute after:-right-2.5 after:-bottom-2.5 after:h-5 after:w-5 after:scale-75 after:rotate-45 after:content-[""] hover:underline focus:underline',
 																{
 																	'bg-foreground text-background':
 																		!params.stepNumber,
@@ -1063,12 +1063,12 @@ function Navigation({
 																				stepNumber,
 																			)}
 																			prefetch="intent"
-																			className="font-semibold leading-tight"
+																			className="leading-tight font-semibold"
 																		>
 																			{stepNumber.toString().padStart(2, '0')}.{' '}
 																			{title}
 																		</Link>
-																		<div className="ml-3 mt-0.5 flex gap-1">
+																		<div className="mt-0.5 ml-3 flex gap-1">
 																			{problem && (
 																				<NavLink
 																					to={getExerciseStepPath(
@@ -1079,8 +1079,8 @@ function Navigation({
 																					prefetch="intent"
 																					className={({ isActive }) =>
 																						clsx(
-																							'relative whitespace-nowrap px-2 py-0.5 pr-3 outline-none hover:underline focus:underline',
-																							'after:absolute after:-bottom-2.5 after:-right-2.5 after:h-5 after:w-5 after:rotate-45 after:scale-75 after:bg-background after:content-[""] hover:underline focus:underline',
+																							'relative px-2 py-0.5 pr-3 whitespace-nowrap outline-none hover:underline focus:underline',
+																							'after:bg-background after:absolute after:-right-2.5 after:-bottom-2.5 after:h-5 after:w-5 after:scale-75 after:rotate-45 after:content-[""] hover:underline focus:underline',
 																							{
 																								'bg-foreground text-background':
 																									isActive,
@@ -1105,8 +1105,8 @@ function Navigation({
 																					prefetch="intent"
 																					className={({ isActive }) =>
 																						clsx(
-																							'relative whitespace-nowrap px-2 py-0.5 pr-3 outline-none hover:underline focus:underline',
-																							'after:absolute after:-bottom-2.5 after:-right-2.5 after:h-5 after:w-5 after:rotate-45 after:scale-75 after:bg-background after:content-[""] hover:underline focus:underline',
+																							'relative px-2 py-0.5 pr-3 whitespace-nowrap outline-none hover:underline focus:underline',
+																							'after:bg-background after:absolute after:-right-2.5 after:-bottom-2.5 after:h-5 after:w-5 after:scale-75 after:rotate-45 after:content-[""] hover:underline focus:underline',
 																							{
 																								'bg-foreground text-background':
 																									isActive,
@@ -1135,7 +1135,7 @@ function Navigation({
 															prefetch="intent"
 															className={({ isActive }) =>
 																clsx(
-																	'relative whitespace-nowrap px-2 py-0.5 pr-3 text-base font-medium outline-none after:absolute after:-bottom-2.5 after:-right-2.5 after:h-5 after:w-5 after:rotate-45 after:scale-75 after:bg-background after:content-[""] hover:underline focus:underline',
+																	'after:bg-background relative px-2 py-0.5 pr-3 text-base font-medium whitespace-nowrap outline-none after:absolute after:-right-2.5 after:-bottom-2.5 after:h-5 after:w-5 after:scale-75 after:rotate-45 after:content-[""] hover:underline focus:underline',
 																	{
 																		'bg-foreground text-background': isActive,
 																	},
@@ -1156,9 +1156,9 @@ function Navigation({
 									to="/finished"
 									className={({ isActive }) =>
 										clsx(
-											'relative whitespace-nowrap text-lg font-bold outline-none hover:underline focus:underline',
+											'relative text-lg font-bold whitespace-nowrap outline-none hover:underline focus:underline',
 											{
-												'bg-black text-white after:absolute after:-bottom-2.5 after:-right-2.5 after:h-5 after:w-5 after:rotate-45 after:scale-75 after:bg-background after:content-[""]':
+												'after:bg-background bg-black text-white after:absolute after:-right-2.5 after:-bottom-2.5 after:h-5 after:w-5 after:scale-75 after:rotate-45 after:content-[""]':
 													isActive,
 											},
 										)
@@ -1171,7 +1171,7 @@ function Navigation({
 					)}
 					{!isMenuOpened && (
 						<div className="flex grow flex-col justify-center">
-							<div className="orientation-sideways w-full font-mono text-sm font-medium uppercase leading-none">
+							<div className="orientation-sideways w-full font-mono text-sm leading-none font-medium uppercase">
 								{exercise?.title ? (
 									<Link to={getExercisePath(Number(params.exerciseNumber))}>
 										{exercise.title}
@@ -1275,7 +1275,7 @@ function Navigation({
 							</Link>
 						</SimpleTooltip>
 					) : null}
-					<div className="mb-4 w-full self-start border-t pl-3 pt-[15px]">
+					<div className="mb-4 w-full self-start border-t pt-[15px] pl-3">
 						<ThemeSwitch />
 					</div>
 				</div>
@@ -1338,7 +1338,7 @@ function NavToggle({
 	return (
 		<div
 			className={cn(
-				'relative inline-flex h-14 shrink-0 items-center justify-between overflow-hidden border-r sm:w-full sm:border-b sm:border-r-0',
+				'relative inline-flex h-14 shrink-0 items-center justify-between overflow-hidden border-r sm:w-full sm:border-r-0 sm:border-b',
 				{
 					'w-full': isMenuOpened,
 				},
@@ -1372,7 +1372,7 @@ function NavToggle({
 					transition={{ delay: 0.2 }}
 					initial={{ opacity: 0, y: 5 }}
 					animate={{ opacity: 1, y: 0 }}
-					className="absolute right-5 whitespace-nowrap font-mono text-sm uppercase"
+					className="absolute right-5 font-mono text-sm whitespace-nowrap uppercase"
 				>
 					<Link to="/">{title}</Link>
 				</motion.p>

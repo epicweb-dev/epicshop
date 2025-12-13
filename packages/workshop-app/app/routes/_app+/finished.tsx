@@ -117,7 +117,7 @@ export default function ExerciseFinished({
 		<div className="flex h-full grow flex-col">
 			<main className="grid h-full grow grid-cols-1 grid-rows-2 lg:grid-cols-2 lg:grid-rows-1">
 				<div className="relative col-span-1 row-span-1 flex h-full flex-col lg:border-r">
-					<h1 className="h-14 border-b pl-10 pr-5 text-sm font-medium uppercase leading-none">
+					<h1 className="h-14 border-b pr-5 pl-10 text-sm leading-none font-medium uppercase">
 						<div className="flex h-14 flex-wrap items-center justify-between gap-x-2 py-2">
 							<div className="flex items-center justify-start gap-x-2">
 								<Link to="/" className="hover:underline">
@@ -129,7 +129,7 @@ export default function ExerciseFinished({
 						</div>
 					</h1>
 					<article
-						className="shadow-on-scrollbox h-full w-full max-w-none flex-1 scroll-pt-6 space-y-6 overflow-y-auto p-2 scrollbar-thin scrollbar-thumb-scrollbar sm:p-10 sm:pt-8"
+						className="shadow-on-scrollbox scrollbar-thin scrollbar-thumb-scrollbar h-full w-full max-w-none flex-1 scroll-pt-6 space-y-6 overflow-y-auto p-2 sm:p-10 sm:pt-8"
 						id={data.articleId}
 					>
 						{data.finishedCode ? (
@@ -150,7 +150,7 @@ export default function ExerciseFinished({
 						type="workshop-finished"
 						className="h-14 border-t px-6"
 					/>
-					<div className="flex h-16 justify-between border-b-4 border-t lg:border-b-0">
+					<div className="flex h-16 justify-between border-t border-b-4 lg:border-b-0">
 						<div />
 						{data.workshopFinished.status === 'success' ? (
 							<EditFileOnGitHub
@@ -183,7 +183,7 @@ function Survey({
 	if (!isOnline) {
 		return (
 			<div className="relative shrink-0">
-				<div className="absolute inset-0 z-10 flex items-center justify-center text-foreground-destructive">
+				<div className="text-foreground-destructive absolute inset-0 z-10 flex items-center justify-center">
 					<Icon name="WifiNoConnection" size="xl">
 						<span>
 							{'Unable to load the '}

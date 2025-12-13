@@ -28,11 +28,11 @@ export function Playground({
 		>
 			{playgroundAppInfo?.dev.type === 'none' ? (
 				<div>
-					<div className="flex h-full items-center justify-center text-2xl text-secondary-foreground">
+					<div className="text-secondary-foreground flex h-full items-center justify-center text-2xl">
 						Non-UI exercise
 					</div>
 					<div>
-						<div className="text-center text-secondary-foreground">
+						<div className="text-secondary-foreground text-center">
 							This exercise has no application or other UI associated with it.{' '}
 							<br />
 							Navigate to{' '}

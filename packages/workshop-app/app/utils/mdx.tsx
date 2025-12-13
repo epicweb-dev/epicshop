@@ -167,7 +167,7 @@ export function PreWithButtons({ children, ...props }: any) {
 
 	return (
 		<div className="group relative">
-			<div className="absolute right-0 top-0 z-50 m-2 flex items-baseline justify-end gap-4 opacity-0 transition duration-300 ease-in-out focus-within:opacity-100 group-hover:opacity-100">
+			<div className="absolute top-0 right-0 z-50 m-2 flex items-baseline justify-end gap-4 opacity-0 transition duration-300 ease-in-out group-hover:opacity-100 focus-within:opacity-100">
 				{buttons ? <OpenInEditor {...props} /> : null}
 				{showCopyButton ? <CopyButton /> : null}
 			</div>

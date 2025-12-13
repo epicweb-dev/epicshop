@@ -50,7 +50,7 @@ export function Button({
 		idle: null,
 	}[status]
 	return (
-		<div className="clip-path-button-outer w-fit border-2 border-foreground bg-foreground">
+		<div className="clip-path-button-outer border-foreground bg-foreground w-fit border-2">
 			<button
 				{...props}
 				className={clsx(
@@ -72,7 +72,7 @@ export function ButtonLink({
 }: React.ComponentPropsWithoutRef<typeof Link> &
 	Parameters<typeof getButtonClassName>[0]) {
 	return (
-		<div className="clip-path-button-outer w-fit border-2 border-foreground bg-foreground">
+		<div className="clip-path-button-outer border-foreground bg-foreground w-fit border-2">
 			<Link
 				{...props}
 				className={clsx(props.className, getButtonClassName({ varient }))}

@@ -122,7 +122,7 @@ export default function DiffViewer() {
 
 	return (
 		<div
-			className={cn('relative h-screen-safe', {
+			className={cn('h-screen-safe relative', {
 				'cursor-wait opacity-30': isNavigating,
 			})}
 		>
@@ -133,7 +133,7 @@ export default function DiffViewer() {
 					userHasAccessPromise={data.userHasAccessPromise}
 				/>
 			</div>
-			<div className="fixed inset-x-0 bottom-0 z-10 flex h-16 items-center justify-end border-t bg-background">
+			<div className="bg-background fixed inset-x-0 bottom-0 z-10 flex h-16 items-center justify-end border-t">
 				<div className="flex h-full items-center justify-end">
 					<NavChevrons prev={data.prevLink} next={data.nextLink} />
 				</div>

@@ -409,13 +409,13 @@ function InBrowserBrowserForRealzImpl(
 						onSubmit={() => handleExtrnalNavigation()}
 					>
 						{existingSearchParamHiddenInputs}
-						<div className="flex flex-1 items-center border-x bg-background p-3 leading-none text-foreground">
+						<div className="bg-background text-foreground flex flex-1 items-center border-x p-3 leading-none">
 							<a href={appUrl.toString()} target="_blank" rel="noreferrer">
 								{iframeSrcUrl.host}
 							</a>
 							<input
 								aria-label="pathname"
-								className="w-full flex-1 bg-background focus-visible:outline-none"
+								className="bg-background w-full flex-1 focus-visible:outline-none"
 								value={pathnameInputValue}
 								name="pathname"
 								onChange={(e) => setPathnameInputValue(e.currentTarget.value)}
