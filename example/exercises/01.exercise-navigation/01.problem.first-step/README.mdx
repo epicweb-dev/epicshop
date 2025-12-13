@@ -1,0 +1,226 @@
+# First Exercise Step
+
+<EpicVideo url="https://www.epicweb.dev/tips/your-first-exercise-step-problem-winqy" />
+
+👨‍💼 This is the exercise step page and this is where I (Peter the Product
+Manager) will help you understand the problem you need to solve. I'll frame it
+from the perspective of the user so you can gain a practical understanding of
+the topic this exercise is covering.
+
+There will often be a video, diagrams, and code examples, and other resources
+to aid you in understanding and solving the problem.
+
+## 🛝 The Playground Directory
+
+Each exercise has a set of files you'll be working in. These files are located
+in the `./playground` directory of your repository.
+
+<callout-success class="important">
+	You should only ever change files in the `./playground` directory.
+</callout-success>
+
+The workshop app will keep your `./playground` directory updated for each
+exercise step, however you do have to **manually set the playground** when you
+start each step (this is manual to avoid accidentally overwriting your work).
+
+🐨 Click the button at the top of the page that says "Set to Playground". When
+you do this, the workshop app copies the files from
+`./exercises/01.exercise-navigation/01.problem.first-step` into your
+`./playground` directory.
+
+🐨 Click the button at the bottom of the page that says "Files". This will open
+a popover that lists the files you'll be working with in this exercise.
+
+🐨 Click the `index.js` file in the Files popover. This will open it in your editor.
+
+<details>
+<summary>Click here if your preferred editor does not open when clicking a file</summary>
+
+### Explicitly set the editor to use
+
+If you are unable to open file links from the workshop app, create a `.env` file
+in the root of this project and add an environment variable called
+`EPICSHOP_EDITOR` with the value being set to the path to your editor's
+executable. For example, if you're using VS Code on Windows, you'd add this to
+your .env file:
+
+```sh
+EPICSHOP_EDITOR='"C:\Program Files\Microsoft VS Code\bin\code.cmd"'
+```
+
+Make certain that if the path includes spaces that you wrap the path in quotes
+as above (note the use of single quotes wrapping the double quotes!).
+
+The value of `EPICSHOP_EDITOR` should be the command that you would run in your
+terminal to open your editor from the command line. This means, the first thing
+should be the path to the executable for your editor (or the command if you have
+one in your `PATH`). So you may be able to get away with doing something as
+simple as this: `EPICSHOP_EDITOR=code`
+
+If you're working with VSCode or similar, you have another option. You can
+accomplish this by accessing the Command Palette
+(using the shortcut <kbd>⌘</kbd> + <kbd>⇧</kbd> + <kbd>P</kbd> on macOS or <kbd>Ctrl</kbd> + <kbd>Shift</kbd> + <kbd>P</kbd> on Windows)
+and entering "shell command". You may want to consider uninstalling it first and
+then proceed to "Install 'code' command in PATH".
+
+### How we determine the correct editor to open
+
+If you'r curious, here's the logic we use to determine the correct editor to open:
+
+The editor selection algorithm uses a priority cascade. It first checks the
+`EPICSHOP_EDITOR` environment variable; if set, it uses that. Otherwise, it
+detects running editors by scanning active processes: on macOS it runs `ps x`
+and matches against a map of common editor process paths; on Windows it uses
+`wmic` to list processes and checks executable names against a whitelist; on
+Linux it uses `ps x` with process name filtering. The first matching editor from
+the platform-specific list is selected.
+
+If no running editor is detected, the algorithm falls back to the `VISUAL`
+environment variable, then `EDITOR`. If none of these yield a valid editor, it
+returns `null`, which causes the launch function to return an error. This
+approach prioritizes explicit configuration, then auto-detection of running
+editors, and finally standard environment variables, ensuring compatibility
+across development environments while allowing manual override.
+
+</details>
+
+## Tabs
+
+On the right side of this page, you'll see several tabs:
+
+### 🛝 Playground
+
+This is the primary tab you'll be using to complete the exercise. At the top,
+it shows a dropdown which allows you to set the playground to any other app in
+the workshop (both the problem and solution apps).
+
+Next to that you'll see an icon which is either a pulsing broken link or a solid
+link. If it's pulsing, that means the playground you're looking at is different
+from the exercise step you're on. Clicking the icon will update your playground
+to the correct app for this exercise step.
+
+🐨 Click the "Start App" button in the playground tab.
+
+This runs the `dev` script defined in the `./playground/package.json` and
+displays the output in an iframe in the playground tab.
+
+There is some limited forward/backward navigation, URL navigation, and refresh
+functionality, but if you really need to use these features, I recommend you
+click the "Open in New Tab" button next to the "Stop App" button and you'll get
+a new tab with the playground app running.
+
+🐨 Click the "Stop App" button in the playground tab. Then click the "Start App"
+button again. This will restart the app and may be necessary sometimes when you
+make changes to the playground files.
+
+<callout-info class="aside">
+	You can hold down the <kbd>⌥</kbd> (or <kbd>Alt</kbd> key) key to change "Stop
+	App" to "Restart App" to restart the app without having to click the start
+	button again.
+</callout-info>
+
+### Problem/Solution Tabs
+
+These two tabs are similar to the playground tab, but they show the problem and
+solution apps for the exercise step you're on. This is useful if you want to
+review the before/after state of the workshop's version of the app to understand
+the changes you've made and how they compare to your own solution.
+
+### Tests Tab
+
+Some exercises will have tests that you can run to verify your solution.
+
+🐨 Click the run tests button (the "Play" icon) in the tests tab.
+
+This runs the `test` script defined in the `./playground/package.json` and
+displays the terminal output.
+
+<callout-warning class="aside">
+	Keep in mind the tests are imperfect. You may have a correct solution and
+	failing tests or vice versa.
+</callout-warning>
+
+🚨 I'm Alfred the Alert. I'll often be in the terminal output to give you
+specific pointers on why your tests are failing.
+
+If this tab does not show up, it's because the exercise step does not have any
+tests.
+
+### Diff Tab
+
+🐨 Click the "Diff" tab.
+
+If you get stuck, you can click the "Diff" tab to see the difference between
+your playground work in progress and the workshop's version of the solution.
+
+The diff tab should update automatically, but if it doesn't, you can click the
+"Refresh" icon to force a refresh.
+
+You can also select the apps you want to compare. This can be helpful if you
+want to compare the problem to your playground to see the changes you've made
+so far.
+
+### Chat Tab
+
+The Chat tab will show you a window into the relevant Discord channel for this
+workshop. You can see and open threads from other students and start your own.
+Clicking the discord icon on a thread will open that thread in the discord app
+on your machine. Clicking the "Open in Browser" icon will open that thread in
+your web browser (useful if you don't have the discord app installed).
+
+## Making code changes
+
+Ok, now you have a good understanding of the tools to help you complete the
+task, it's time to actually make code changes.
+
+🐨 You can either click the "Files" button below to open `index.js` or click
+this: <InlineFile file="./index.js" /> then follow the instructions in the file
+to complete the task.
+
+🐨 Then run the playground app to see your changes in action and verify they're
+working as expected with the tests. Then you can compare your changes using the
+diff tab.
+
+## Talk with the workshop using your AI agent
+
+If you have an agent that supports MCP, you can install the Epic Workshop MCP
+server and talk with the workshop using your agent. Here's what your AI agent
+can help you with:
+
+### Workshop Navigation & Progress
+
+- **Get what's next** - Determine the next step you should take (login, watch video, complete exercise, etc.)
+- **Set playground** - Move you to a specific exercise/step or advance to the next one
+- **Open exercise files** - Open the relevant files for the current exercise step in your editor
+- **Get workshop context** - Overview of all topics covered in the workshop
+- **Get exercise context** - Detailed instructions and transcripts for a specific exercise
+- **Get exercise step context** - Instructions and transcripts for a specific exercise step
+
+### Progress Tracking
+
+- **Update progress** - Mark lessons as complete or incomplete
+- **Get user progress** - See which exercises you've completed and what's remaining
+- **Get progress diff** - Show what work remains between your current code and the solution
+
+### User Management
+
+- **Login/Logout** - Authenticate with the workshop
+- **Get user info** - View your account details
+- **Get user access** - Check if you have paid features (transcripts, videos, Discord, etc.)
+
+### Learning Tools
+
+- **Get quiz instructions** - Generate quizzes on workshop topics to test your knowledge
+- **Get diff between apps** - Compare any two exercise steps to see the differences
+
+Your AI agent can start by asking what's next, which automatically handles
+figuring out if you need to login, watch a video, or work on an exercise. Then
+it can help you understand the instructions, show progress diffs, make code
+changes, and mark items complete.
+
+## Solution
+
+Great, now that you've finished the exercise step, you can click the "Next"
+button below (the arrow icons at the bottom of the page do the same thing).
+
+🐨 Click the "Next" button below (or the right arrow icon).

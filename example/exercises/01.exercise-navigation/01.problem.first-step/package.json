@@ -1,0 +1,7 @@
+{
+  "name": "exercises_01.exercise-navigation_01.problem.first-step",
+  "scripts": {
+    "dev": "node index.js",
+    "test": "node --test"
+  }
+}
