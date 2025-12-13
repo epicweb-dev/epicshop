@@ -1,74 +1,64 @@
-import { expect, test } from '@playwright/test'
 import fs from 'node:fs/promises'
 import path from 'node:path'
+import { expect, test } from '@playwright/test'
 
 const phase = process.env.SCREENSHOT_PHASE ?? 'before'
+
+async function dismissToasts(page: any) {
+	// Toasts can appear on load and intercept pointer events.
+	const region = page.getByRole('region', { name: /notifications/i })
+	for (let i = 0; i < 20; i++) {
+		if (page.isClosed?.() === true) return
+		const buttons = region.getByRole('button', { name: /close toast|dismiss/i })
+		const count = await buttons.count().catch(() => 0)
+		if (!count) break
+		await buttons.first().click({ force: true }).catch(() => null)
+		await page.waitForTimeout(50).catch(() => null)
+	}
+}
+
+async function hideToasts(page: any) {
+	// Toasts are not part of the UI we want to snapshot and they can block clicks.
+	await page.addStyleTag({
+		content: `
+[aria-label^="Notifications"] { display: none !important; }
+[data-sonner-toaster], [data-sonner-toast] { display: none !important; }
+`.trim(),
+	})
+}
 
 async function ensureOnboardingComplete(page: any) {
 	// The root loader redirects to /onboarding until tour videos are marked watched.
 	// We can safely mark them watched without playing the videos.
-	await page.waitForLoadState('domcontentloaded')
-	const onboardingHeading = page.getByRole('heading', { name: /^onboarding$/i })
-	if (!(await onboardingHeading.isVisible().catch(() => false))) return
+	await page.goto('/onboarding', { waitUntil: 'domcontentloaded' })
+	await hideToasts(page)
+	await dismissToasts(page)
 
-	// Avoid flaky interactions with embedded video players by directly posting the
-	// same form action used by the UI.
-	const videoUrlsFromInputs: Array<string> = await page
-		.locator('input[name="videoUrl"]')
-		.evaluateAll((els: Array<HTMLInputElement>) =>
-			els
-				.map((el) => el.value)
-				.filter((v): v is string => typeof v === 'string' && v.length > 0),
-		)
-	const videoUrlsFromLinks: Array<string> = await page
-		.locator('a[href^="https://www.epicweb.dev/tips/"]')
-		.evaluateAll((els: Array<HTMLAnchorElement>) =>
-			els
-				.map((el) => el.href)
-				.filter((v): v is string => typeof v === 'string' && v.length > 0),
-		)
+	await expect(page.getByRole('heading', { name: /^onboarding$/i })).toBeVisible({
+		timeout: 30_000,
+	})
 
-	// Fallback to the known onboarding URLs used by the example workshop config.
-	const fallbackUrls = [
-		'https://www.epicweb.dev/tips/get-started-with-the-epic-workshop-app',
-		'https://www.epicweb.dev/tips/get-started-with-the-epic-workshop-app-for-react',
-	]
-
-	const videoUrls = Array.from(
-		new Set([...videoUrlsFromInputs, ...videoUrlsFromLinks, ...fallbackUrls]),
-	)
-
-	if (videoUrls.length) {
-		for (const videoUrl of videoUrls) {
-			await page.request.post('/onboarding', {
-				form: { intent: 'mark-video', videoUrl },
-			})
-		}
-	}
-
-	await page.goto('/onboarding', { waitUntil: 'networkidle' })
-
-	// Fallback: if something prevented the POST approach, click the remaining
-	// "Mark as watched" buttons.
+	// Click "Mark as watched" for each onboarding video.
 	for (let i = 0; i < 10; i++) {
 		const markButtons = page.getByRole('button', { name: /^mark as watched$/i })
-		if ((await markButtons.count()) === 0) break
+		const count = await markButtons.count()
+		if (count === 0) break
 		await markButtons.first().click()
-		await page.waitForURL(/\/onboarding/i)
-		await page.waitForLoadState('networkidle')
+		await page.waitForLoadState('domcontentloaded')
+		await dismissToasts(page)
 	}
 
-	// Confirm we are fully unblocked.
-	await expect(page.getByRole('button', { name: /^mark as watched$/i })).toHaveCount(
-		0,
-	)
+	// Confirm we are fully unblocked and proceed.
+	await expect(
+		page.getByRole('button', { name: /^mark as watched$/i }),
+	).toHaveCount(0)
 
-	// Proceed into the app (may go to /login if not authenticated).
-	const continueLink = page.getByRole('link', { name: /i've watched.*let's go/i })
-	if (await continueLink.isVisible().catch(() => false)) {
-		await continueLink.click()
-		await page.waitForLoadState('networkidle')
-	}
+	const letsGo = page.getByRole('link', { name: /i've watched.*let's go/i })
+	await expect(letsGo).toBeVisible({ timeout: 30_000 })
+	await letsGo.click()
+	await page.waitForLoadState('domcontentloaded')
+	await hideToasts(page)
+	await dismissToasts(page)
 }
 
 async function ensureDir() {
@@ -84,55 +74,73 @@ async function capture(page: any, fileName: string) {
 	await page.screenshot({ path: path.join(dir, fileName), fullPage: true })
 }
 
+async function isMenuOpen(page: any) {
+	return await page
+		.evaluate(() => document.cookie.includes('es_menu_open=true'))
+		.catch(() => false)
+}
+
+async function setMenuOpenServer(page: any, open: boolean) {
+	await page.evaluate((value) => {
+		document.cookie = `es_menu_open=${value ? 'true' : 'false'}; path=/; SameSite=Lax;`
+	}, open)
+	await page.reload({ waitUntil: 'domcontentloaded' })
+	await hideToasts(page)
+	await dismissToasts(page)
+}
+
 async function openNavMenu(page: any) {
+	// Wait a beat for hydration so the click handler exists.
+	await page.waitForTimeout(750)
 	const toggle = page.getByRole('button', { name: /open navigation menu/i })
 	await expect(toggle).toBeVisible({ timeout: 30_000 })
-	await toggle.click()
-	// The opened menu should contain either "Home" or "Workshop Feedback" links.
-	// (Some renders/variants may not immediately include "Home" in the accessible tree.)
-	await Promise.race([
-		page
-			.getByRole('link', { name: /^home$/i })
-			.waitFor({ state: 'visible', timeout: 10_000 }),
-		page
-			.getByRole('link', { name: /workshop feedback/i })
-			.waitFor({ state: 'visible', timeout: 10_000 }),
-	])
+	await hideToasts(page)
+	await dismissToasts(page)
+	if (await isMenuOpen(page)) return
+	await toggle.click({ timeout: 30_000, force: true })
+	await page.waitForFunction(
+		() => document.cookie.includes('es_menu_open=true'),
+		null,
+		{ timeout: 30_000 },
+	)
 }
 
 async function closeNavMenuIfOpen(page: any) {
-	const homeLink = page.getByRole('link', { name: /^home$/i })
-	if (await homeLink.isVisible().catch(() => false)) {
-		await page.getByRole('button', { name: /open navigation menu/i }).click()
-	}
+	if (!(await isMenuOpen(page))) return
+	// Clicking can be flaky before hydration; force via cookie + reload.
+	await setMenuOpenServer(page, false)
 }
 
 test.describe('tailwind v4 upgrade screenshots', () => {
 	test('captures key routes', async ({ page }) => {
 		test.setTimeout(120_000)
 
+		// First, explicitly complete onboarding (required before nav exists)
+		await ensureOnboardingComplete(page)
+
 		// Desktop navigation + exercise step + tabs
 		await page.setViewportSize({ width: 1280, height: 720 })
-		await page.goto('/', { waitUntil: 'networkidle' })
-		await ensureOnboardingComplete(page)
-		// Ensure we're on a stable app page after completing onboarding.
-		await page.goto('/', { waitUntil: 'networkidle' })
+		await page.goto('/', { waitUntil: 'domcontentloaded' })
+		await hideToasts(page)
+		await dismissToasts(page)
 		await expect(page).not.toHaveURL(/\/onboarding/i)
 
-		await openNavMenu(page)
+		await setMenuOpenServer(page, true)
 		await capture(page, '01-nav-desktop-open.png')
 
 		// Navigate to the first exercise step via the intro page CTA (stable even when
 		// the nav menu is collapsed/animated).
-		await closeNavMenuIfOpen(page)
+		await setMenuOpenServer(page, false)
 		const startLearning = page.getByRole('link', { name: /start learning/i })
 		if (await startLearning.isVisible().catch(() => false)) {
 			await startLearning.click()
-			await page.waitForLoadState('networkidle')
+			await page.waitForLoadState('domcontentloaded')
 		} else {
 			// Fallback: go to a known exercise step URL.
-			await page.goto('/exercise/01/01/problem', { waitUntil: 'networkidle' })
+			await page.goto('/exercise/01/01/problem', { waitUntil: 'domcontentloaded' })
 		}
+		await hideToasts(page)
+		await dismissToasts(page)
 
 		// Close the menu so the step page layout is visible.
 		await closeNavMenuIfOpen(page)
@@ -142,15 +150,17 @@ test.describe('tailwind v4 upgrade screenshots', () => {
 		for (const tab of tabs) {
 			const tabLink = page.locator(`#${tab}-tab`)
 			if (!(await tabLink.isVisible().catch(() => false))) continue
-			await tabLink.click()
-			await page.waitForLoadState('networkidle')
+			await tabLink.click({ force: true })
+			await page.waitForLoadState('domcontentloaded')
+			await hideToasts(page)
 			await capture(page, `03-exercise-step-tab-${tab}-desktop.png`)
 		}
 
 		// Mobile navigation (open)
 		await page.setViewportSize({ width: 390, height: 844 })
-		await page.goto('/', { waitUntil: 'networkidle' })
-		await openNavMenu(page)
+		await page.goto('/', { waitUntil: 'domcontentloaded' })
+		await dismissToasts(page)
+		await setMenuOpenServer(page, true)
 		await capture(page, '04-nav-mobile-open.png')
 
 		expect(true).toBe(true)

@@ -6,6 +6,7 @@ import {
 	sentryReactRouter,
 	type SentryReactRouterBuildOptions,
 } from '@sentry/react-router'
+import tailwindcss from '@tailwindcss/vite'
 import { defineConfig } from 'vite'
 import { envOnlyMacros } from 'vite-env-only'
 import devtoolsJson from 'vite-plugin-devtools-json'
@@ -94,6 +95,7 @@ export default defineConfig((config) => ({
 	sentryConfig,
 	plugins: [
 		envOnlyMacros(),
+		tailwindcss(),
 		reactRouter(),
 		MODE === 'production' && process.env.SENTRY_AUTH_TOKEN
 			? sentryReactRouter(sentryConfig, config)

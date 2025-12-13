@@ -4,11 +4,10 @@ import { type Config } from 'tailwindcss'
 import defaultTheme from 'tailwindcss/defaultTheme.js'
 import animate from 'tailwindcss-animate'
 import cssRadix from 'tailwindcss-radix'
-import safeArea from 'tailwindcss-safe-area'
 import { extendedTheme } from './app/utils/extended-theme.ts'
 
 export default {
-	darkMode: ['class'],
+	darkMode: 'class',
 	content: [
 		'./app/**/*.{ts,tsx,jsx,js}',
 		'../example/**/*.md',
@@ -35,5 +34,5 @@ export default {
 			},
 		},
 	},
-	plugins: [typography, cssRadix, scrollbar, animate, safeArea],
+	plugins: [typography, cssRadix, scrollbar, animate],
 } satisfies Config

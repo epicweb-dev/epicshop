@@ -1,3 +1,5 @@
+@reference "../../styles/tailwind.css";
+
 mux-player {
 	aspect-ratio: 16 / 9;
 	width: 100%;
