@@ -123,7 +123,11 @@ function InBrowserBrowserImpl(
 			</div>
 		)
 	} else {
-		return <AppStarter name={name} />
+		return (
+			<div className="flex h-full flex-col items-center justify-center">
+				<AppStarter name={name} />
+			</div>
+		)
 	}
 }
 type RealBrowserProps = {
