@@ -1,22 +1,43 @@
-## 🎈 epic-web-presence
+# @epic-web/workshop-presence
 
-Welcome to the party, pal!
+Presence (who’s here) utilities for the Epic Workshop ecosystem.
 
-This is a [Partykit](https://partykit.io) project, which lets you create
-real-time collaborative applications with minimal coding effort.
+This package contains:
 
-[`server.ts`](./src/server.ts) is the server-side code, which is responsible for
-handling WebSocket events and HTTP requests.
-[`presence.tsx`](../workshop-app/app/utils/presence.tsx) is the client-side
-code, which connects to the server and listens for events.
+- A shared **schema/types** module (`presence`) used by clients and servers
+- A server helper (`presence.server`) that fetches and enriches presence data for rendering in the workshop app
+- A PartyKit server implementation (used by the hosted presence service)
 
-You can start developing by running `npm run dev` and opening
-[http://localhost:1999](http://localhost:1999) in your browser. When you're
-ready, you can deploy your application on to the PartyKit cloud with
-`npm run deploy`.
+## Install
 
-Refer to our docs for more information:
-https://github.com/partykit/partykit/blob/main/README.md. For more help, reach
-out to us on [Discord](https://discord.gg/g5uqHQJc3z),
-[GitHub](https://github.com/partykit/partykit), or
-[Twitter](https://twitter.com/partykit_io).
+```bash
+npm install @epic-web/workshop-presence
+```
+
+## Usage
+
+### Shared schema/types
+
+```ts
+import { UserSchema, type User } from '@epic-web/workshop-presence/presence'
+
+const user = UserSchema.parse({ id: '123' }) satisfies User
+```
+
+### Server-side: fetch present users
+
+```ts
+import { getPresentUsers } from '@epic-web/workshop-presence/presence.server'
+
+const users = await getPresentUsers({ request })
+```
+
+`getPresentUsers` is intended to be called from server code (it integrates with workshop auth/preferences when available).
+
+## Documentation
+
+- Repo docs: `https://github.com/epicweb-dev/epicshop/tree/main/docs`
+
+## License
+
+GPL-3.0-only.
