@@ -11,14 +11,23 @@ async function ensureOnboardingComplete(page: any) {
 	const onboardingHeading = page.getByRole('heading', { name: /^onboarding$/i })
 	if (!(await onboardingHeading.isVisible().catch(() => false))) return
 
-	// Keep marking unwatched videos until none remain.
-	for (let i = 0; i < 10; i++) {
-		const markButtons = page.getByRole('button', { name: /^mark as watched$/i })
-		if ((await markButtons.count()) === 0) break
-		await markButtons.first().click()
-		await page.waitForURL(/\/onboarding/i)
-		await page.waitForLoadState('networkidle')
+	// Avoid flaky interactions with embedded video players by directly posting the
+	// same form action used by the UI.
+	const videoUrls: Array<string> = await page
+		.locator('input[name="videoUrl"]')
+		.evaluateAll((els: Array<HTMLInputElement>) =>
+			els
+				.map((el) => el.value)
+				.filter((v): v is string => typeof v === 'string' && v.length > 0),
+		)
+
+	for (const videoUrl of videoUrls) {
+		await page.request.post('/onboarding', {
+			form: { intent: 'mark-video', videoUrl },
+		})
 	}
+
+	await page.goto('/onboarding', { waitUntil: 'networkidle' })
 
 	// Proceed into the app (may go to /login if not authenticated).
 	const continueLink = page.getByRole('link', { name: /i've watched.*let's go/i })
