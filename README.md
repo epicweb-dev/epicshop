@@ -1,8 +1,12 @@
 # Epic Workshop (epicshop)
 
-The **Epic Workshop** app (sometimes referred to as **epicshop**) is the local workshop environment used for EpicWeb.dev workshops. It’s a React Router v7 app that runs on your machine and provides a guided learning experience (exercises, steps, diffs, videos, progress, etc.).
+The **Epic Workshop** app (sometimes referred to as **epicshop**) is the local
+workshop environment used for EpicWeb.dev workshops. It’s a React Router v7 app
+that runs on your machine and provides a guided learning experience (exercises,
+steps, diffs, videos, progress, etc.).
 
-If you’re here because you want to *run a workshop*, you probably want the **`epicshop` CLI**.
+If you’re here because you want to _run a workshop_, you probably want the
+**`epicshop` CLI**.
 
 ## Quick start (learners)
 
@@ -26,11 +30,16 @@ epicshop start
 
 This repository is a monorepo that publishes several npm packages:
 
-- **`epicshop`** (`packages/workshop-cli`): CLI for installing/running/updating workshops.
-- **`@epic-web/workshop-app`** (`packages/workshop-app`): the React Router workshop web app used by the CLI.
-- **`@epic-web/workshop-utils`** (`packages/workshop-utils`): shared utilities used across the ecosystem.
-- **`@epic-web/workshop-presence`** (`packages/workshop-presence`): presence schema + server helpers.
-- **`@epic-web/workshop-mcp`** (`packages/workshop-mcp`): MCP server for AI assistants inside workshops.
+- **`epicshop`** (`packages/workshop-cli`): CLI for installing/running/updating
+  workshops.
+- **`@epic-web/workshop-app`** (`packages/workshop-app`): the React Router
+  workshop web app used by the CLI.
+- **`@epic-web/workshop-utils`** (`packages/workshop-utils`): shared utilities
+  used across the ecosystem.
+- **`@epic-web/workshop-presence`** (`packages/workshop-presence`): presence
+  schema + server helpers.
+- **`@epic-web/workshop-mcp`** (`packages/workshop-mcp`): MCP server for AI
+  assistants inside workshops.
 
 ## Documentation
 

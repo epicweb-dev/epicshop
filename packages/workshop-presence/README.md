@@ -5,7 +5,8 @@ Presence (who’s here) utilities for the Epic Workshop ecosystem.
 This package contains:
 
 - A shared **schema/types** module (`presence`) used by clients and servers
-- A server helper (`presence.server`) that fetches and enriches presence data for rendering in the workshop app
+- A server helper (`presence.server`) that fetches and enriches presence data
+  for rendering in the workshop app
 - A PartyKit server implementation (used by the hosted presence service)
 
 ## Install
@@ -32,7 +33,8 @@ import { getPresentUsers } from '@epic-web/workshop-presence/presence.server'
 const users = await getPresentUsers({ request })
 ```
 
-`getPresentUsers` is intended to be called from server code (it integrates with workshop auth/preferences when available).
+`getPresentUsers` is intended to be called from server code (it integrates with
+workshop auth/preferences when available).
 
 ## Documentation
 

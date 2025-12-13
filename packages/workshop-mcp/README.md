@@ -1,8 +1,10 @@
 # @epic-web/workshop-mcp
 
-An MCP (Model Context Protocol) server intended for use inside Epic Workshop repositories.
+An MCP (Model Context Protocol) server intended for use inside Epic Workshop
+repositories.
 
-It’s designed to help learners while working through workshop exercises. In most workshops, the learner’s work-in-progress lives in the `playground` directory.
+It’s designed to help learners while working through workshop exercises. In most
+workshops, the learner’s work-in-progress lives in the `playground` directory.
 
 ## Install / run
 
@@ -32,7 +34,8 @@ Add a server entry (shape varies slightly by client):
 ## Notes
 
 - The server communicates over **stdio**.
-- If you’re using this inside a workshop repo, run your editor/assistant with the workshop as the working directory so the server can find the right files.
+- If you’re using this inside a workshop repo, run your editor/assistant with
+  the workshop as the working directory so the server can find the right files.
 
 ## Documentation
 

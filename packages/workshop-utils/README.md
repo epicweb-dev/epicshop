@@ -2,7 +2,9 @@
 
 Shared utilities for the Epic Workshop ecosystem.
 
-This package is primarily consumed by the Epic Workshop App, the `epicshop` CLI, and related tooling. It exposes many **subpath exports** (for example `@epic-web/workshop-utils/config.server`).
+This package is primarily consumed by the Epic Workshop App, the `epicshop` CLI,
+and related tooling. It exposes many **subpath exports** (for example
+`@epic-web/workshop-utils/config.server`).
 
 ## Install
 
@@ -12,7 +14,8 @@ npm install @epic-web/workshop-utils
 
 ## Important: server-only modules
 
-Any module with `.server` in the import path is **server-only** and must not be imported into browser/client bundles.
+Any module with `.server` in the import path is **server-only** and must not be
+imported into browser/client bundles.
 
 Examples of server-only entrypoints:
 
@@ -44,9 +47,11 @@ try {
 
 ## What’s exported?
 
-This package uses explicit subpath exports. The canonical list is the `exports` map in `package.json`.
+This package uses explicit subpath exports. The canonical list is the `exports`
+map in `package.json`.
 
-Repository: `https://github.com/epicweb-dev/epicshop/tree/main/packages/workshop-utils/package.json`
+Repository:
+`https://github.com/epicweb-dev/epicshop/tree/main/packages/workshop-utils/package.json`
 
 ## Documentation
 

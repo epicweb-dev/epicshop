@@ -1,6 +1,7 @@
 # epicshop
 
-The `epicshop` CLI installs, runs, and updates Epic Workshop repositories on your machine.
+The `epicshop` CLI installs, runs, and updates Epic Workshop repositories on
+your machine.
 
 It’s the recommended entry point for learners.
 
@@ -65,7 +66,8 @@ import { warm } from 'epicshop/warm'
 ## Documentation
 
 - CLI docs: `https://github.com/epicweb-dev/epicshop/tree/main/docs/cli.md`
-- Debug logging: `https://github.com/epicweb-dev/epicshop/tree/main/docs/debug-logging.md`
+- Debug logging:
+  `https://github.com/epicweb-dev/epicshop/tree/main/docs/debug-logging.md`
 
 ## License
 
