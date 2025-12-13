@@ -163,7 +163,7 @@
 	--color-scrollbar: var(--scrollbar);
 }
 
-/* Custom type scale (ported from app/utils/extended-theme.ts fontSize) */
+/* Custom type scale */
 @theme {
 	/* 1rem = 16px */
 	--text-mega: 5rem;
@@ -230,7 +230,7 @@
 	}
 }
 
-/* Typography plugin customizations (ported from app/utils/extended-theme.ts) */
+/* Typography plugin customizations */
 @layer components {
 	/* proseColors */
 	.prose :where(*) {
