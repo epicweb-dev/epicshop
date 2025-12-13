@@ -1,6 +1,6 @@
 # Epic Workshop (epicshop)
 
-The **Epic Workshop** app (sometimes referred to as **EpicShop**) is the local workshop environment used for EpicWeb.dev workshops. It’s a React Router v7 app that runs on your machine and provides a guided learning experience (exercises, steps, diffs, videos, progress, etc.).
+The **Epic Workshop** app (sometimes referred to as **epicshop**) is the local workshop environment used for EpicWeb.dev workshops. It’s a React Router v7 app that runs on your machine and provides a guided learning experience (exercises, steps, diffs, videos, progress, etc.).
 
 If you’re here because you want to *run a workshop*, you probably want the **`epicshop` CLI**.
 
