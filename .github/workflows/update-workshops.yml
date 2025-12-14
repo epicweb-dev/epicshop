@@ -1,0 +1,38 @@
+name: Update Workshops
+on:
+  workflow_dispatch:
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  update-workshops:
+    name: 🔄 Update Workshop Repos
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    permissions:
+      contents: write
+      actions: read
+    steps:
+      - name: ⬇️ Checkout repo
+        uses: actions/checkout@v5
+
+      - name: ⎔ Setup node
+        uses: actions/setup-node@v6
+        with:
+          node-version: 24
+          cache: 'npm'
+
+      - name: 📥 Download deps
+        run: npm install --prefer-offline --no-audit --no-fund
+
+      - name: 🔧 Configure git
+        run: |
+          git config --global user.email "me+bot@kentcdodds.com"
+          git config --global user.name "Kody 🐨"
+
+      - name: 🔄 Update workshop repos
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: node other/update-workshops.mjs

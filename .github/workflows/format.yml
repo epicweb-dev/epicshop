@@ -40,8 +40,8 @@ jobs:
 
       - name: 🔧 Configure git
         run: |
-          git config --local user.email "action@github.com"
-          git config --local user.name "GitHub Action"
+          git config --global user.email "me+bot@kentcdodds.com"
+          git config --global user.name "Kody 🐨"
 
       - name: 🎨 Run Prettier
         run:

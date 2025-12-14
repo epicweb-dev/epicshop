@@ -32,3 +32,4 @@ vite.config.ts.timestamp-*
 
 .env
 nanobot/*.db
+/temp-workshops
