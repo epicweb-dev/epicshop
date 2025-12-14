@@ -114,7 +114,7 @@ async function isRepoUpToDate(repoName, targetVersion) {
 async function pullRebaseWithFallback(cwd) {
 	try {
 		await execa('git', ['pull', '--rebase'], { cwd })
-	} catch (error) {
+	} catch {
 		// Shallow clones sometimes can't rebase/pull without more history.
 		try {
 			await execa('git', ['fetch', '--unshallow'], { cwd })
@@ -340,4 +340,3 @@ async function main() {
 }
 
 await main()
-
