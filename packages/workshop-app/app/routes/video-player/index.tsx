@@ -126,7 +126,10 @@ export function MuxPlayer({
 		// listening to the events.
 		if (!metadataLoaded) return
 
-		const textTracks = muxPlayerRef.current?.textTracks
+		const player = muxPlayerRef.current
+		if (!player) return
+
+		const textTracks = player.textTracks
 		if (!textTracks) return
 
 		const subtitlePref = playerPreferencesRef.current?.subtitle
