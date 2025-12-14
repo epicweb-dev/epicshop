@@ -8,12 +8,34 @@ const __filename = fileURLToPath(import.meta.url)
 const __dirname = path.dirname(__filename)
 
 const GITHUB_ORG = 'epicweb-dev'
-const GITHUB_TOKEN = process.env.GITHUB_TOKEN
+// Prefer a dedicated PAT for cross-repo writes; fall back to GITHUB_TOKEN.
+// In GitHub Actions, the default GITHUB_TOKEN often only has write access to the
+// repository running the workflow (not other repos), unless explicitly allowed.
+const GITHUB_TOKEN =
+	process.env.WORKSHOP_UPDATE_TOKEN ?? process.env.GITHUB_TOKEN
 const CONCURRENCY = 5
 
 if (!GITHUB_TOKEN) {
-	console.error('❌ GITHUB_TOKEN environment variable is required')
+	console.error(
+		'❌ Missing GitHub token. Set WORKSHOP_UPDATE_TOKEN (preferred) or GITHUB_TOKEN.',
+	)
 	process.exit(1)
+}
+
+function getGitEnv() {
+	return {
+		// Never allow git to prompt for credentials in CI.
+		GIT_TERMINAL_PROMPT: '0',
+		// Some git versions still attempt to invoke an askpass helper; make it a no-op.
+		GIT_ASKPASS: 'echo',
+	}
+}
+
+function getAuthenticatedRepoUrl(repoName) {
+	// Important: token must be used as the *password* for HTTPS auth.
+	// If you do https://<token>@github.com/... git treats <token> as the username
+	// and prompts for a password (which fails in Actions).
+	return `https://x-access-token:${GITHUB_TOKEN}@github.com/${GITHUB_ORG}/${repoName}.git`
 }
 
 /**
@@ -25,7 +47,7 @@ async function fetchAvailableWorkshops() {
 	const response = await fetch(url, {
 		headers: {
 			Accept: 'application/vnd.github.v3+json',
-			Authorization: `token ${GITHUB_TOKEN}`,
+			Authorization: `Bearer ${GITHUB_TOKEN}`,
 			'User-Agent': 'epicshop-update-action',
 		},
 	})
@@ -70,7 +92,7 @@ async function isRepoUpToDate(repoName, targetVersion) {
 		const response = await fetch(url, {
 			headers: {
 				Accept: 'application/vnd.github.v3.raw',
-				Authorization: `token ${GITHUB_TOKEN}`,
+				Authorization: `Bearer ${GITHUB_TOKEN}`,
 				'User-Agent': 'epicshop-update-action',
 			},
 		})
@@ -113,15 +135,15 @@ async function isRepoUpToDate(repoName, targetVersion) {
 
 async function pullRebaseWithFallback(cwd) {
 	try {
-		await execa('git', ['pull', '--rebase'], { cwd })
+		await execa('git', ['pull', '--rebase'], { cwd, env: getGitEnv() })
 	} catch {
 		// Shallow clones sometimes can't rebase/pull without more history.
 		try {
-			await execa('git', ['fetch', '--unshallow'], { cwd })
+			await execa('git', ['fetch', '--unshallow'], { cwd, env: getGitEnv() })
 		} catch {
-			await execa('git', ['fetch', '--depth=50'], { cwd })
+			await execa('git', ['fetch', '--depth=50'], { cwd, env: getGitEnv() })
 		}
-		await execa('git', ['pull', '--rebase'], { cwd })
+		await execa('git', ['pull', '--rebase'], { cwd, env: getGitEnv() })
 	}
 }
 
@@ -157,7 +179,7 @@ async function updatePackageJsonFiles(workshopDir, version) {
  */
 async function updateWorkshopRepo(repo, version) {
 	const repoName = repo.name
-	const repoUrl = `https://${GITHUB_TOKEN}@github.com/${GITHUB_ORG}/${repoName}.git`
+	const repoUrl = getAuthenticatedRepoUrl(repoName)
 	const tempDir = path.join(__dirname, 'temp-workshops', repoName)
 
 	try {
@@ -181,9 +203,16 @@ async function updateWorkshopRepo(repo, version) {
 			'git',
 			['clone', '--depth=1', '--filter=blob:none', repoUrl, tempDir],
 			{
-				env: {},
+				env: getGitEnv(),
 			},
 		)
+
+		// Ensure future push operations use an authenticated remote URL.
+		// (Some git versions can normalize remotes in ways that drop credentials.)
+		await execa('git', ['remote', 'set-url', 'origin', repoUrl], {
+			cwd: tempDir,
+			env: getGitEnv(),
+		})
 
 		// Pull latest *before* making changes/committing (reduces push failures)
 		await pullRebaseWithFallback(tempDir)
@@ -202,7 +231,7 @@ async function updateWorkshopRepo(repo, version) {
 		console.log(`📦 ${repoName} - running npm install`)
 		await execa('npm', ['install'], {
 			cwd: tempDir,
-			env: {},
+			env: getGitEnv(),
 		})
 
 		// Find package-lock.json files
@@ -215,7 +244,7 @@ async function updateWorkshopRepo(repo, version) {
 		console.log(`📝 ${repoName} - staging changes`)
 		await execa('git', ['add', ...pkgLocks, ...pkgs], {
 			cwd: tempDir,
-			env: {},
+			env: getGitEnv(),
 		})
 
 		// Check if there are actually staged changes
@@ -234,7 +263,7 @@ async function updateWorkshopRepo(repo, version) {
 		console.log(`💾 ${repoName} - committing changes`)
 		await execa('git', ['commit', '-m', 'chore: update epicshop'], {
 			cwd: tempDir,
-			env: {},
+			env: getGitEnv(),
 		})
 
 		// Push changes (retry once with a pull/rebase if needed)
@@ -242,13 +271,13 @@ async function updateWorkshopRepo(repo, version) {
 		try {
 			await execa('git', ['push'], {
 				cwd: tempDir,
-				env: {},
+				env: getGitEnv(),
 			})
 		} catch {
 			await pullRebaseWithFallback(tempDir)
 			await execa('git', ['push'], {
 				cwd: tempDir,
-				env: {},
+				env: getGitEnv(),
 			})
 		}
 
@@ -259,7 +288,19 @@ async function updateWorkshopRepo(repo, version) {
 		if (error.all) {
 			console.error(error.all)
 		}
-		return { repo: repoName, status: 'failed', error: error.message }
+		const message = String(error?.message ?? error)
+		const authHint =
+			message.includes('Authentication failed') ||
+			message.includes('could not read Password') ||
+			message.includes('terminal prompts disabled') ||
+			message.includes('403')
+				? ' (auth issue: ensure WORKSHOP_UPDATE_TOKEN is a PAT with write access to these repos)'
+				: ''
+		return {
+			repo: repoName,
+			status: 'failed',
+			error: `${message}${authHint}`,
+		}
 	} finally {
 		// Clean up temp directory
 		await fs.rm(tempDir, { recursive: true, force: true }).catch(() => {})
