@@ -25,7 +25,8 @@ jobs:
           cache: 'npm'
 
       - name: 📥 Download deps
-        run: npm install --prefer-offline --no-audit --no-fund
+        run: npm ci --prefer-offline --no-audit --no-fund
+        working-directory: other/update-workshops
 
       - name: 🔧 Configure git
         run: |
@@ -35,4 +36,5 @@ jobs:
       - name: 🔄 Update workshop repos
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        run: node other/update-workshops.mjs
+        run: npm start
+        working-directory: other/update-workshops

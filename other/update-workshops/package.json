@@ -1,0 +1,13 @@
+{
+	"name": "update-workshops",
+	"private": true,
+	"type": "module",
+	"scripts": {
+		"start": "node index.js"
+	},
+	"dependencies": {
+		"execa": "^9.5.2",
+		"globby": "^14.1.0"
+	}
+}
+
