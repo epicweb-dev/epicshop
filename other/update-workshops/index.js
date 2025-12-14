@@ -13,6 +13,7 @@ const GITHUB_ORG = 'epicweb-dev'
 // repository running the workflow (not other repos), unless explicitly allowed.
 const GITHUB_TOKEN =
 	process.env.WORKSHOP_UPDATE_TOKEN ?? process.env.GITHUB_TOKEN
+const USING_WORKSHOP_UPDATE_TOKEN = Boolean(process.env.WORKSHOP_UPDATE_TOKEN)
 const CONCURRENCY = 5
 
 if (!GITHUB_TOKEN) {
@@ -312,6 +313,9 @@ async function updateWorkshopRepo(repo, version) {
  */
 async function main() {
 	try {
+		console.log(
+			`🔐 Auth: using ${USING_WORKSHOP_UPDATE_TOKEN ? 'WORKSHOP_UPDATE_TOKEN' : 'GITHUB_TOKEN'}`,
+		)
 		console.log('🔍 Fetching workshop repositories from GitHub...')
 		const workshops = await fetchAvailableWorkshops()
 
