@@ -5,7 +5,6 @@ import { getWorkshopConfig } from '@epic-web/workshop-utils/config.server'
 import {
 	getPreferences,
 	getMutedNotifications,
-	areAllOnboardingVideosWatched,
 } from '@epic-web/workshop-utils/db.server'
 import { getEnv } from '@epic-web/workshop-utils/env.server'
 import {
@@ -28,7 +27,6 @@ import { checkConnection } from '@epic-web/workshop-utils/utils.server'
 import * as React from 'react'
 import {
 	data,
-	redirect,
 	type LinksFunction,
 	Links,
 	Meta,
@@ -93,21 +91,9 @@ export const meta: Route.MetaFunction = ({ loaderData }) => {
 export async function loader({ request }: Route.LoaderArgs) {
 	const timings = makeTimings('rootLoader')
 	const workshopConfig = getWorkshopConfig()
-	const {
-		title: workshopTitle,
-		subtitle: workshopSubtitle,
-		instructor,
-		onboardingVideo: onboardingVideos,
-	} = workshopConfig
+	const { title: workshopTitle, subtitle: workshopSubtitle, instructor } =
+		workshopConfig
 
-	if (
-		!ENV.EPICSHOP_DEPLOYED &&
-		!(await areAllOnboardingVideosWatched(onboardingVideos))
-	) {
-		if (new URL(request.url).pathname !== '/onboarding') {
-			throw redirect('/onboarding')
-		}
-	}
 	const theme = getTheme(request)
 	const { confettiId, headers: confettiHeaders } = getConfetti(request)
 	const { toast, headers: toastHeaders } = await getToast(request)

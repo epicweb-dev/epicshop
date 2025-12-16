@@ -17,7 +17,6 @@ These options should be set in the root `package.json` of your workshop.
 | `instructor.𝕏` or `instructor.xHandle` | `string`               | Instructor's X (formerly Twitter) handle           | Optional                                                                |
 | `subdomain`                            | `string`               | Subdomain for the workshop                         | Optional (falls back to sanitized `name` property if not set)           |
 | `product`                              | `object`               | Product configuration                              | Optional                                                                |
-| `onboardingVideo`                      | `string` or `string[]` | URL to the onboarding video                        | `"https://www.epicweb.dev/tips/get-started-with-the-epic-workshop-app"` |
 | `githubRepo`                           | `string`               | URL to the GitHub repository                       | Required if `githubRoot` is not provided                                |
 | `githubRoot`                           | `string`               | Root URL for GitHub file links                     | Required if `githubRepo` is not provided                                |
 | `stackBlitzConfig`                     | `object`               | Configuration for StackBlitz                       | Optional                                                                |

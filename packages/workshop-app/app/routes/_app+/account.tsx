@@ -191,11 +191,6 @@ export default function Account() {
 					</Link>
 				</li>
 				<li>
-					<Link to="/onboarding" className="underline">
-						Review onboarding
-					</Link>
-				</li>
-				<li>
 					<Link to="/support" className="underline">
 						Get support
 					</Link>

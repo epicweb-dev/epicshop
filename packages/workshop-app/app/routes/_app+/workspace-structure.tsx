@@ -2,7 +2,7 @@ import {
 	getPreferences,
 	setPreferences,
 } from '@epic-web/workshop-utils/db.server'
-import { Form, Link, useLoaderData, useNavigation } from 'react-router'
+import { Form, useLoaderData, useNavigation } from 'react-router'
 import { Button } from '#app/components/button.tsx'
 import { ensureUndeployed } from '#app/utils/misc.tsx'
 import { redirectWithToast } from '#app/utils/toast.server.ts'
@@ -156,14 +156,8 @@ export default function WorkspaceStructure() {
 					<section>
 						<h2 className="text-h2 mb-3">Need a Refresher?</h2>
 						<p className="text-muted-foreground text-sm">
-							For a complete overview of the typical workflow, check out the{' '}
-							<Link
-								to="/onboarding"
-								className="text-primary underline hover:no-underline"
-							>
-								onboarding page
-							</Link>{' '}
-							to review the expected workflow.
+							For a complete overview of the typical workflow, review the
+							introductory material for this workshop.
 						</p>
 					</section>
 
