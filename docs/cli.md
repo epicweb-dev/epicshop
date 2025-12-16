@@ -93,7 +93,8 @@ wizard that:
 1. Welcomes the user and explains what epicshop does
 2. Prompts for a workshop storage directory (with a recommended default)
 3. Offers to authenticate with Epic React, Epic Web, and Epic AI (optional)
-4. Shows a list of workshops you can set up and lets you pick which to clone/setup (optional)
+4. Shows a list of workshops you can set up and lets you pick which to
+   clone/setup (optional)
 5. Clones and sets up the `epicshop-tutorial` repository
 6. Starts the tutorial workshop
 
@@ -433,8 +434,7 @@ epicshop auth logout epicreact
 - The login flow uses OAuth device authorization - you'll be given a URL to open
   in your browser and a code to verify
 - Login is stored locally and persists across sessions
-- Each domain (epicweb.dev, epicreact.dev, epicai.pro) has separate
-  login
+- Each domain (epicweb.dev, epicreact.dev, epicai.pro) has separate login
 - Being logged in enables features like progress tracking and video access in
   workshops
 
@@ -795,17 +795,17 @@ epicshop start
 
 ## Command Reference Summary
 
-| Command            | Description                            | Context-Aware |
-| ------------------ | -------------------------------------- | ------------- |
-| `epicshop`         | Interactive command chooser            | ✓             |
-| `epicshop start`   | Start a workshop                       | ✓             |
-| `epicshop init`    | First-time setup wizard                | ✗             |
-| `epicshop add`     | Clone a workshop from epicweb-dev      | ✗             |
-| `epicshop list`    | List all workshops                     | ✗             |
-| `epicshop remove`  | Remove a workshop                      | ✓             |
-| `epicshop open`    | Open workshop in editor                | ✓             |
-| `epicshop config`  | View/update configuration              | ✗             |
-| `epicshop update`  | Update workshop to latest version      | ✓             |
-| `epicshop warm`    | Warm up caches                         | ✓             |
-| `epicshop migrate` | Run data migrations                    | ✗             |
-| `epicshop auth`    | Manage login for Epic sites            | ✗             |
+| Command            | Description                       | Context-Aware |
+| ------------------ | --------------------------------- | ------------- |
+| `epicshop`         | Interactive command chooser       | ✓             |
+| `epicshop start`   | Start a workshop                  | ✓             |
+| `epicshop init`    | First-time setup wizard           | ✗             |
+| `epicshop add`     | Clone a workshop from epicweb-dev | ✗             |
+| `epicshop list`    | List all workshops                | ✗             |
+| `epicshop remove`  | Remove a workshop                 | ✓             |
+| `epicshop open`    | Open workshop in editor           | ✓             |
+| `epicshop config`  | View/update configuration         | ✗             |
+| `epicshop update`  | Update workshop to latest version | ✓             |
+| `epicshop warm`    | Warm up caches                    | ✓             |
+| `epicshop migrate` | Run data migrations               | ✗             |
+| `epicshop auth`    | Manage login for Epic sites       | ✗             |

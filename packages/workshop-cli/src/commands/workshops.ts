@@ -1689,7 +1689,9 @@ async function promptAndSetupAccessibleWorkshops(): Promise<void> {
 		const updated = await checkWorkshopDownloadStatus(candidates)
 		const remaining = updated.filter((w) => !w.isDownloaded)
 		const workshopChoices = remaining.map((w) => {
-			const productIcon = w.productHost ? PRODUCT_ICONS[w.productHost] || '' : ''
+			const productIcon = w.productHost
+				? PRODUCT_ICONS[w.productHost] || ''
+				: ''
 			const accessIcon = chalk.yellow('🔑')
 			const name = [productIcon, w.title || w.name, accessIcon]
 				.filter(Boolean)
@@ -1738,7 +1740,10 @@ async function promptAndSetupAccessibleWorkshops(): Promise<void> {
 					keys: [
 						{ key: 'name', threshold: rankings.CONTAINS },
 						{ key: 'value', threshold: rankings.CONTAINS },
-						{ key: 'workshop.productDisplayName', threshold: rankings.CONTAINS },
+						{
+							key: 'workshop.productDisplayName',
+							threshold: rankings.CONTAINS,
+						},
 						{ key: 'workshop.instructorName', threshold: rankings.CONTAINS },
 						{ key: 'description', threshold: rankings.WORD_STARTS_WITH },
 					],

@@ -372,8 +372,7 @@ const cli = yargs(args)
 		) => {
 			const { config } = await import('./commands/workshops.js')
 			const result = await config({
-				subcommand:
-					argv.subcommand === 'reset' ? 'reset' : undefined,
+				subcommand: argv.subcommand === 'reset' ? 'reset' : undefined,
 				reposDir: argv.reposDir,
 				silent: argv.silent,
 			})
