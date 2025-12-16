@@ -78,6 +78,15 @@ export async function saveConfig(config: WorkshopsConfig): Promise<void> {
 	await atomicWriteJSON(configPath, config)
 }
 
+export async function deleteConfig(): Promise<void> {
+	const configPath = resolveConfigPath()
+	try {
+		await fs.unlink(configPath)
+	} catch {
+		// File doesn't exist, which is fine
+	}
+}
+
 export async function getReposDirectory(): Promise<string> {
 	const config = await loadConfig()
 	return config.reposDirectory || getDefaultReposDirectory()

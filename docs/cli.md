@@ -92,8 +92,10 @@ wizard that:
 
 1. Welcomes the user and explains what epicshop does
 2. Prompts for a workshop storage directory (with a recommended default)
-3. Clones and sets up the `epicshop-tutorial` repository
-4. Starts the tutorial workshop
+3. Offers to authenticate with Epic React, Epic Web, and Epic AI (optional)
+4. Shows a list of workshops you can set up and lets you pick which to clone/setup (optional)
+5. Clones and sets up the `epicshop-tutorial` repository
+6. Starts the tutorial workshop
 
 ```bash
 epicshop init
@@ -384,9 +386,8 @@ epicshop migrate --silent
 
 ### `auth`
 
-Manage authentication for Epic domains (epicweb.dev, epicreact.dev, epicai.pro).
-This command allows you to view your login status, log in to domains, and log
-out.
+Manage login for Epic sites (epicweb.dev, epicreact.dev, epicai.pro). This
+command allows you to view login status, log in, and log out.
 
 ```bash
 epicshop auth [subcommand] [options]
@@ -431,9 +432,9 @@ epicshop auth logout epicreact
 
 - The login flow uses OAuth device authorization - you'll be given a URL to open
   in your browser and a code to verify
-- Authentication is stored locally and persists across sessions
+- Login is stored locally and persists across sessions
 - Each domain (epicweb.dev, epicreact.dev, epicai.pro) has separate
-  authentication
+  login
 - Being logged in enables features like progress tracking and video access in
   workshops
 
@@ -807,4 +808,4 @@ epicshop start
 | `epicshop update`  | Update workshop to latest version      | ✓             |
 | `epicshop warm`    | Warm up caches                         | ✓             |
 | `epicshop migrate` | Run data migrations                    | ✗             |
-| `epicshop auth`    | Manage authentication for Epic domains | ✗             |
+| `epicshop auth`    | Manage login for Epic sites            | ✗             |
