@@ -91,8 +91,11 @@ export const meta: Route.MetaFunction = ({ loaderData }) => {
 export async function loader({ request }: Route.LoaderArgs) {
 	const timings = makeTimings('rootLoader')
 	const workshopConfig = getWorkshopConfig()
-	const { title: workshopTitle, subtitle: workshopSubtitle, instructor } =
-		workshopConfig
+	const {
+		title: workshopTitle,
+		subtitle: workshopSubtitle,
+		instructor,
+	} = workshopConfig
 
 	const theme = getTheme(request)
 	const { confettiId, headers: confettiHeaders } = getConfetti(request)
