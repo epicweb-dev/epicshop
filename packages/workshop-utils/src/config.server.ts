@@ -32,14 +32,62 @@ const InstructorSchema = z.object({
 	xHandle: z.string().optional(),
 })
 
+const BaseProductSchema = z.object({
+	host: z.string().optional(),
+	displayName: z.string().optional(),
+	displayNameShort: z.string().optional(),
+	slug: z.string().optional(),
+})
+
+const BaseWorkshopConfigFields = {
+	title: z.string().optional(),
+	subtitle: z.string().optional(),
+	instructor: InstructorSchema.optional(),
+	product: BaseProductSchema.optional(),
+}
+
+function transformProductFields<
+	T extends {
+		product?: {
+			host?: string
+			displayName?: string
+			displayNameShort?: string
+			slug?: string
+		}
+	},
+>(
+	data: T,
+): T & {
+	product: {
+		host: string | undefined
+		displayName: string | undefined
+		displayNameShort: string | undefined
+		slug: string | undefined
+	}
+} {
+	const product = data.product ?? {}
+	return {
+		...data,
+		product: {
+			host: product.host,
+			displayName: product.displayName,
+			displayNameShort: product.displayNameShort ?? product.displayName,
+			slug: product.slug,
+		},
+	}
+}
+
+const PartialWorkshopConfigSchema = z
+	.object(BaseWorkshopConfigFields)
+	.transform(transformProductFields)
+
+export type PartialWorkshopConfig = z.infer<typeof PartialWorkshopConfigSchema>
+
 // most defaults are for backwards compatibility
 const WorkshopConfigSchema = z
 	.object({
+		...BaseWorkshopConfigFields,
 		title: z.string(),
-		subtitle: z.string().optional(),
-		instructor: InstructorSchema.optional(),
-		epicWorkshopHost: z.string().optional(),
-		epicWorkshopSlug: z.string().optional(),
 		subdomain: z.string().optional(),
 		product: z
 			.object({
@@ -106,14 +154,36 @@ const WorkshopConfigSchema = z
 				...data.product,
 				displayNameShort:
 					data.product.displayNameShort ?? data.product.displayName,
-				// for backwards compatibility
-				host: data.product.host ?? data.epicWorkshopHost,
-				slug: data.product.slug ?? data.epicWorkshopSlug,
 			},
 		}
 	})
 
 export type WorkshopConfig = z.infer<typeof WorkshopConfigSchema>
+
+/**
+ * Parse epicshop config from an arbitrary package.json object.
+ * Unlike getWorkshopConfig(), this doesn't require EPICSHOP_CONTEXT_CWD
+ * and returns partial/optional config suitable for external repos.
+ */
+export function parseEpicshopConfig(
+	packageJson: unknown,
+): PartialWorkshopConfig | null {
+	if (
+		typeof packageJson !== 'object' ||
+		packageJson === null ||
+		!('epicshop' in packageJson)
+	) {
+		return null
+	}
+
+	const epicshopConfig = (packageJson as { epicshop: unknown }).epicshop
+	const result = PartialWorkshopConfigSchema.safeParse(epicshopConfig)
+	if (!result.success) {
+		return null
+	}
+
+	return result.data
+}
 
 let configCache: WorkshopConfig | null = null
 

@@ -137,6 +137,32 @@ epicshop add web-forms --directory ~/my-workshops
 2. Runs `npm run setup` in the cloned directory
 3. Adds the workshop to your local workshop registry
 
+#### Interactive Workshop Selection
+
+When you run `epicshop add` without specifying a repository name, an interactive
+workshop picker is displayed with enriched information:
+
+- **Product indicator**: Shows which platform the workshop belongs to with an
+  icon (🌌 EpicWeb.dev, ⚡ EpicAI.pro, 🚀 EpicReact.dev)
+- **Instructor name**: Displays the workshop instructor
+- **Access status**: Shows if you have access to the workshop (✓ for access,
+  ✗ for no access)
+
+The search supports filtering by workshop name, instructor name, and product
+platform.
+
+#### GitHub API Rate Limits
+
+The CLI fetches workshop information from GitHub. To avoid rate limit issues
+(especially if you use the CLI frequently), you can set a `GITHUB_TOKEN`
+environment variable:
+
+```bash
+export GITHUB_TOKEN=your_github_personal_access_token
+```
+
+Workshop data is cached locally to minimize API requests.
+
 ### `list`
 
 List all workshops that have been added to your local machine. Provides an
@@ -643,6 +669,8 @@ setupWorkshop()
 - `EPICSHOP_APP_LOCATION` - Path to the workshop app directory
 - `EPICSHOP_DEPLOYED` - Set to `true` or `1` for deployed environments
 - `EPICSHOP_EDITOR` - Preferred editor for opening workshops
+- `GITHUB_TOKEN` - GitHub personal access token for API requests (helps avoid
+  rate limits when fetching workshop information)
 - `NODE_ENV` - Set to `production` for production mode
 - `SENTRY_DSN` - Sentry DSN for error tracking in production
 
