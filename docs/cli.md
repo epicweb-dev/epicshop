@@ -145,8 +145,8 @@ workshop picker is displayed with enriched information:
 - **Product indicator**: Shows which platform the workshop belongs to with an
   icon (🌌 EpicWeb.dev, ⚡ EpicAI.pro, 🚀 EpicReact.dev)
 - **Instructor name**: Displays the workshop instructor
-- **Access status**: Shows if you have access to the workshop (✓ for access,
-  ✗ for no access)
+- **Access status**: Shows if you have access to the workshop (✓ for access, ✗
+  for no access)
 
 The search supports filtering by workshop name, instructor name, and product
 platform.
