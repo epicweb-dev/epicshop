@@ -224,13 +224,12 @@ async function updateWorkshopRepo(repo, version) {
 
 		if (!changed) {
 			console.log(`🟢 ${repoName} - already up to date`)
-			await fs.rm(tempDir, { recursive: true, force: true })
 			return { repo: repoName, status: 'up-to-date' }
 		}
 
 		// Run npm install to update package-lock.json
 		console.log(`📦 ${repoName} - running npm install`)
-		await execa('npm', ['install', '--package-lock-only'], {
+		await execa('npm', ['install', '--package-lock-only', '--ignore-scripts'], {
 			cwd: tempDir,
 			env: getGitEnv(),
 		})
@@ -256,7 +255,6 @@ async function updateWorkshopRepo(repo, version) {
 		)
 		if (!diffOutput.trim()) {
 			console.log(`🟢 ${repoName} - no changes to commit`)
-			await fs.rm(tempDir, { recursive: true, force: true })
 			return { repo: repoName, status: 'no-changes' }
 		}
 
