@@ -2,6 +2,8 @@ import {
 	deleteCacheEntry,
 	deleteWorkshopCache,
 	getAllWorkshopCaches,
+	getGlobalCaches,
+	globalCacheDirectoryExists,
 	updateCacheEntry,
 } from '@epic-web/workshop-utils/cache.server'
 import { getEnv } from '@epic-web/workshop-utils/env.server'
@@ -34,16 +36,29 @@ export async function loader({ request }: Route.LoaderArgs) {
 	ensureUndeployed()
 	const currentWorkshopId = getEnv().EPICSHOP_WORKSHOP_INSTANCE_ID
 	const allWorkshopCaches = await getAllWorkshopCaches()
+	const globalCaches = await getGlobalCaches()
+	const allCaches = [...allWorkshopCaches, ...globalCaches]
 
 	const url = new URL(request.url)
 	const filterQuery = url.searchParams.get('q') || ''
+
+	// Ensure 'global' is always in available workshops if global cache directory exists
+	const availableWorkshopIds = new Set(allCaches.map((w) => w.workshopId))
+	const globalDirExists = await globalCacheDirectoryExists()
+	if (globalDirExists) {
+		availableWorkshopIds.add('global')
+	}
+
 	const selectedWorkshops = url.searchParams
 		.get('workshops')
 		?.split(',')
-		.filter(Boolean) || [currentWorkshopId]
+		.filter(Boolean) || [
+		currentWorkshopId,
+		...(globalDirExists ? ['global'] : []),
+	]
 
 	// Filter caches based on search query and selected workshops
-	const filteredCaches = allWorkshopCaches
+	const filteredCaches = allCaches
 		.filter(
 			(workshopCache) =>
 				selectedWorkshops.includes(workshopCache.workshopId) ||
@@ -69,11 +84,11 @@ export async function loader({ request }: Route.LoaderArgs) {
 
 	return {
 		currentWorkshopId,
-		allWorkshopCaches,
+		allWorkshopCaches: allCaches,
 		filteredCaches,
 		filterQuery,
 		selectedWorkshops,
-		availableWorkshops: allWorkshopCaches.map((w) => w.workshopId),
+		availableWorkshops: Array.from(availableWorkshopIds),
 	}
 }
 
@@ -503,7 +518,9 @@ export default function CacheManagement({ loaderData }: Route.ComponentProps) {
 							<div className="flex items-center justify-between">
 								<h3 className="text-card-foreground flex items-center gap-2 text-lg font-semibold">
 									<Icon name="Files" className="h-5 w-5" />
-									{workshopCache.workshopId}
+									{workshopCache.workshopId === 'global'
+										? 'Global Caches'
+										: workshopCache.workshopId}
 									{workshopCache.workshopId === currentWorkshopId ? (
 										<span className="bg-primary text-primary-foreground rounded px-2 py-1 text-xs">
 											Current

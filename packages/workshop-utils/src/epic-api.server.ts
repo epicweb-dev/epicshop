@@ -667,19 +667,31 @@ export async function userHasAccessToExerciseStep({
 	return videoInfo?.status === 'success'
 }
 
+function tryGetWorkshopProduct(): { host?: string; slug?: string } {
+	try {
+		const config = getWorkshopConfig()
+		return { host: config.product.host, slug: config.product.slug }
+	} catch {
+		return {}
+	}
+}
+
 export async function userHasAccessToWorkshop({
 	timings,
 	request,
 	forceFresh,
+	productHost,
+	workshopSlug,
 }: {
 	request?: Request
 	timings?: Timings
 	forceFresh?: boolean
+	productHost?: string
+	workshopSlug?: string
 } = {}) {
-	const config = getWorkshopConfig()
-	const {
-		product: { host, slug },
-	} = config
+	const configProduct = tryGetWorkshopProduct()
+	const host = productHost ?? configProduct.host
+	const slug = workshopSlug ?? configProduct.slug
 	if (!slug) return true
 
 	if (getEnv().EPICSHOP_DEPLOYED) {
@@ -689,7 +701,7 @@ export async function userHasAccessToWorkshop({
 		return cookies.skill?.split(',').includes(slug) ?? false
 	}
 
-	const authInfo = await getAuthInfo()
+	const authInfo = await getAuthInfo({ productHost: host })
 	if (!authInfo) return false
 
 	return cachified({
