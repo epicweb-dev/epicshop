@@ -306,6 +306,7 @@ export type StartOptions = {
 export type ConfigOptions = {
 	reposDir?: string
 	silent?: boolean
+	subcommand?: 'reset' | 'delete'
 }
 
 /**
@@ -1143,7 +1144,33 @@ export async function config(
 			loadConfig,
 			saveConfig,
 			getDefaultReposDir,
+			deleteConfig,
 		} = await import('@epic-web/workshop-utils/workshops.server')
+
+		// Handle reset subcommand
+		if (options.subcommand === 'reset' || options.subcommand === 'delete') {
+			if (silent) {
+				await deleteConfig()
+				return { success: true, message: 'Config file deleted' }
+			}
+
+			const { confirm } = await import('@inquirer/prompts')
+			const shouldDelete = await confirm({
+				message:
+					'Are you sure you want to delete the config file? This will reset all settings to defaults.',
+				default: false,
+			})
+
+			if (shouldDelete) {
+				await deleteConfig()
+				const message = 'Config file deleted. All settings reset to defaults.'
+				console.log(chalk.green(`✅ ${message}`))
+				return { success: true, message }
+			} else {
+				console.log(chalk.gray('No changes made.'))
+				return { success: true, message: 'Cancelled' }
+			}
+		}
 
 		if (options.reposDir) {
 			// Set the repos directory directly via CLI flag
@@ -1174,6 +1201,11 @@ export async function config(
 				value: 'repos-dir',
 				description: isConfigured ? reposDir : `${reposDir} (default)`,
 			},
+			{
+				name: `Reset config file`,
+				value: 'reset',
+				description: 'Delete config file and reset all settings to defaults',
+			},
 		]
 
 		console.log(chalk.bold.cyan('\n⚙️  Workshop Configuration\n'))
@@ -1187,6 +1219,31 @@ export async function config(
 				})
 			},
 		})
+
+		if (selectedConfig === 'reset') {
+			const shouldDelete = await confirm({
+				message:
+					'Are you sure you want to delete the config file? This will reset all settings to defaults.',
+				default: false,
+			})
+
+			if (shouldDelete) {
+				await deleteConfig()
+				console.log()
+				console.log(
+					chalk.green(
+						`✅ Config file deleted. All settings reset to defaults.`,
+					),
+				)
+				return {
+					success: true,
+					message: 'Config file deleted. All settings reset to defaults.',
+				}
+			} else {
+				console.log(chalk.gray('\nNo changes made.'))
+				return { success: true, message: 'Cancelled' }
+			}
+		}
 
 		if (selectedConfig === 'repos-dir') {
 			// Show current value and actions
@@ -1427,7 +1484,9 @@ export async function onboarding(): Promise<WorkshopsResult> {
 }
 
 async function getAuthInfosByHost(): Promise<Record<string, any>> {
-	const { loadJSON } = await import('@epic-web/workshop-utils/data-storage.server')
+	const { loadJSON } = await import(
+		'@epic-web/workshop-utils/data-storage.server'
+	)
 	const { data } = await loadJSON()
 	if (!data || typeof data !== 'object') return {}
 	const authInfos = (data as { authInfos?: unknown }).authInfos
@@ -1568,7 +1627,10 @@ async function promptAndSetupAccessibleWorkshops(): Promise<void> {
 		}
 		const result = await add({ repoName, silent: false })
 		if (!result.success) {
-			throw result.error ?? new Error(result.message ?? `Failed to set up ${repoName}`)
+			throw (
+				result.error ??
+				new Error(result.message ?? `Failed to set up ${repoName}`)
+			)
 		}
 	}
 	console.log()
