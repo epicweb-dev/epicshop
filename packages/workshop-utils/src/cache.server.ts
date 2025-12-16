@@ -275,6 +275,58 @@ export const directoryEmptyCache = makeSingletonCache<boolean>(
 export const discordCache = makeSingletonFsCache('DiscordCache')
 export const epicApiCache = makeSingletonFsCache('EpicApiCache')
 
+export function makeGlobalFsCache<CacheEntryType>(name: string) {
+	return remember(`global-${name}`, () => {
+		const cacheInstanceDir = path.join(cacheDir, 'global', name)
+
+		const fsCache: C.Cache<CacheEntryType> = {
+			name: `Filesystem cache (global-${name})`,
+			async get(key) {
+				const filePath = path.join(cacheInstanceDir, md5(key))
+
+				try {
+					const stats = await fsExtra.stat(filePath)
+					if (stats.size > MAX_CACHE_FILE_SIZE) {
+						const sizeInMB = (stats.size / (1024 * 1024)).toFixed(2)
+						log.warn(
+							`Skipping large cache file ${filePath} (${sizeInMB}MB > 3MB limit). ` +
+								`Consider clearing "${name}" cache for key: ${key}`,
+						)
+						return null
+					}
+				} catch (error: unknown) {
+					if (
+						error instanceof Error &&
+						'code' in error &&
+						error.code === 'ENOENT'
+					) {
+						return null
+					}
+				}
+
+				const data = await readJSONWithRetries(filePath)
+				if (data?.entry) return data.entry
+				return null
+			},
+			async set(key, entry) {
+				const filePath = path.join(cacheInstanceDir, md5(key))
+				const tempPath = `${filePath}.tmp`
+				await fsExtra.ensureDir(path.dirname(filePath))
+				await fsExtra.writeJSON(tempPath, { key, entry })
+				await fsExtra.move(tempPath, filePath, { overwrite: true })
+			},
+			async delete(key) {
+				const filePath = path.join(cacheInstanceDir, md5(key))
+				await fsExtra.remove(filePath)
+			},
+		}
+
+		return fsCache
+	})
+}
+
+export const githubCache = makeGlobalFsCache('GitHubCache')
+
 async function readJsonFilesInDirectory(
 	dir: string,
 ): Promise<Record<string, any>> {
@@ -490,12 +542,37 @@ export const WorkshopCacheSchema = z
 
 export async function getAllWorkshopCaches() {
 	const files = await readJsonFilesInDirectory(cacheDir)
-	const parseResult = WorkshopCacheSchema.safeParse(files)
+	// Exclude the global directory from workshop caches
+	const { global, ...workshopCaches } = files
+	const parseResult = WorkshopCacheSchema.safeParse(workshopCaches)
 	if (!parseResult.success) {
 		log.error('Failed to parse workshop caches:', parseResult.error)
 		return []
 	}
 	return parseResult.data
+}
+
+export async function globalCacheDirectoryExists(): Promise<boolean> {
+	const globalCacheDir = path.join(cacheDir, 'global')
+	return await fsExtra.exists(globalCacheDir)
+}
+
+export async function getGlobalCaches() {
+	const globalCacheDir = path.join(cacheDir, 'global')
+	if (!(await fsExtra.exists(globalCacheDir))) {
+		return []
+	}
+
+	const files = await readJsonFilesInDirectory(globalCacheDir)
+	const parseResult = WorkshopCacheSchema.safeParse({ global: files })
+	if (!parseResult.success) {
+		log.error('Failed to parse global caches:', parseResult.error)
+		return []
+	}
+	return parseResult.data.map((workshopCache) => ({
+		...workshopCache,
+		workshopId: 'global',
+	}))
 }
 
 export async function getWorkshopFileCaches() {

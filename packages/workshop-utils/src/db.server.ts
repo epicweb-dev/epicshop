@@ -102,9 +102,16 @@ export async function getClientId() {
 	return clientId
 }
 
-export async function logout() {
-	const config = getWorkshopConfig()
-	const host = config.product.host
+function tryGetWorkshopProductHost(): string | undefined {
+	try {
+		return getWorkshopConfig().product.host
+	} catch {
+		return undefined
+	}
+}
+
+export async function logout({ productHost }: { productHost?: string } = {}) {
+	const host = productHost ?? tryGetWorkshopProductHost()
 	if (host) {
 		const data = await readDb()
 		const newAuthInfos = { ...data?.authInfos }
@@ -192,24 +199,22 @@ export async function readDb() {
 	return null
 }
 
-export async function getAuthInfo() {
-	const config = getWorkshopConfig()
+export async function getAuthInfo({
+	productHost,
+}: { productHost?: string } = {}) {
+	const host = productHost ?? tryGetWorkshopProductHost()
 	const data = await readDb()
-	if (config.product.host && typeof data?.authInfos === 'object') {
-		if (config.product.host in data.authInfos) {
-			return data.authInfos[config.product.host]
+	if (host && typeof data?.authInfos === 'object') {
+		if (host in data.authInfos) {
+			return data.authInfos[host]
 		}
 	}
 
 	// special case for non-epicweb/epicreact workshops
-	if (
-		!config.product.host ||
-		config.product.host === 'epicweb.dev' ||
-		config.product.host === 'epicreact.dev'
-	) {
+	if (!host || host === 'epicweb.dev' || host === 'epicreact.dev') {
 		// upgrade from old authInfo to new authInfos
-		if (data?.authInfo && config.product.host) {
-			await setAuthInfo(data.authInfo)
+		if (data?.authInfo && host) {
+			await setAuthInfo({ ...data.authInfo, productHost: host })
 		}
 		return data?.authInfo ?? null
 	}
@@ -245,21 +250,23 @@ export async function setAuthInfo({
 	tokenSet,
 	email = 'unknown@example.com',
 	name,
+	productHost,
 }: {
 	id: string
 	tokenSet: Partial<z.infer<typeof TokenSetSchema>>
 	email?: string | null
 	name?: string | null
+	productHost?: string
 }) {
 	const data = await readDb()
 	const authInfo = AuthInfoSchema.parse({ id, tokenSet, email, name })
-	const config = getWorkshopConfig()
-	if (config.product.host) {
+	const host = productHost ?? tryGetWorkshopProductHost()
+	if (host) {
 		await saveJSON({
 			...data,
 			authInfos: {
 				...data?.authInfos,
-				[config.product.host]: authInfo,
+				[host]: authInfo,
 			},
 		})
 	} else {

@@ -4,11 +4,17 @@ import { spawn } from 'node:child_process'
 import * as fs from 'node:fs'
 import * as os from 'node:os'
 import * as path from 'node:path'
+import { cachified, githubCache } from '@epic-web/workshop-utils/cache.server'
+import { parseEpicshopConfig } from '@epic-web/workshop-utils/config.server'
+import { getAuthInfo } from '@epic-web/workshop-utils/db.server'
+import { userHasAccessToWorkshop } from '@epic-web/workshop-utils/epic-api.server'
 import chalk from 'chalk'
-import { matchSorter } from 'match-sorter'
+import { matchSorter, rankings } from 'match-sorter'
+import ora from 'ora'
 
 const GITHUB_ORG = 'epicweb-dev'
 const TUTORIAL_REPO = 'epicshop-tutorial'
+const GITHUB_TOKEN = process.env.GITHUB_TOKEN
 
 /**
  * Find the workshop root directory by walking up from the current directory
@@ -71,6 +77,7 @@ type GitHubRepo = {
 	html_url: string
 	stargazers_count: number
 	topics: string[]
+	archived: boolean
 }
 
 type GitHubSearchResponse = {
@@ -79,30 +86,192 @@ type GitHubSearchResponse = {
 	items: GitHubRepo[]
 }
 
+type EnrichedWorkshop = GitHubRepo & {
+	productHost?: string
+	productSlug?: string
+	productDisplayName?: string
+	instructorName?: string
+	title?: string
+	hasAccess?: boolean
+	isDownloaded?: boolean
+}
+
+const PRODUCT_ICONS: Record<string, string> = {
+	'www.epicweb.dev': '🌌',
+	'www.epicai.pro': '⚡',
+	'www.epicreact.dev': '🚀',
+}
+
+function getGitHubHeaders(): HeadersInit {
+	const headers: HeadersInit = {
+		Accept: 'application/vnd.github.v3+json',
+		'User-Agent': 'epicshop-cli',
+	}
+	if (GITHUB_TOKEN) {
+		headers.Authorization = `Bearer ${GITHUB_TOKEN}`
+	}
+	return headers
+}
+
 /**
  * Fetch available workshops from GitHub (epicweb-dev org with 'workshop' topic)
  */
 async function fetchAvailableWorkshops(): Promise<GitHubRepo[]> {
-	const url = `https://api.github.com/search/repositories?q=topic:workshop+org:${GITHUB_ORG}&sort=stars&order=desc`
+	return cachified({
+		key: `github-workshops-list`,
+		cache: githubCache,
+		ttl: 1000 * 60 * 15, // 15 minutes
+		swr: 1000 * 60 * 60 * 6, // 6 hours stale-while-revalidate
+		async getFreshValue() {
+			const url = `https://api.github.com/search/repositories?q=topic:workshop+org:${GITHUB_ORG}&sort=stars&order=desc`
 
-	const response = await fetch(url, {
-		headers: {
-			Accept: 'application/vnd.github.v3+json',
-			'User-Agent': 'epicshop-cli',
+			const response = await fetch(url, {
+				headers: getGitHubHeaders(),
+			})
+
+			if (!response.ok) {
+				if (response.status === 403) {
+					throw new Error(
+						'GitHub API rate limit exceeded. Please try again in a minute.',
+					)
+				}
+				throw new Error(
+					`Failed to fetch workshops from GitHub: ${response.status}`,
+				)
+			}
+
+			const data = (await response.json()) as GitHubSearchResponse
+			return data.items.filter((repo) => !repo.archived)
 		},
 	})
+}
 
-	if (!response.ok) {
-		if (response.status === 403) {
-			throw new Error(
-				'GitHub API rate limit exceeded. Please try again in a minute.',
-			)
+/**
+ * Fetch a workshop's package.json from GitHub raw content
+ */
+async function fetchWorkshopPackageJson(
+	repoName: string,
+): Promise<Record<string, unknown> | null> {
+	return cachified({
+		key: `github-package-json:${repoName}`,
+		cache: githubCache,
+		ttl: 1000 * 60 * 60 * 6, // 6 hours
+		swr: 1000 * 60 * 60 * 24 * 30, // 30 days stale-while-revalidate
+		async getFreshValue() {
+			const url = `https://raw.githubusercontent.com/${GITHUB_ORG}/${repoName}/main/package.json`
+
+			const response = await fetch(url, {
+				headers: {
+					'User-Agent': 'epicshop-cli',
+					...(GITHUB_TOKEN ? { Authorization: `Bearer ${GITHUB_TOKEN}` } : {}),
+				},
+			})
+
+			if (!response.ok) {
+				return null
+			}
+
+			try {
+				return (await response.json()) as Record<string, unknown>
+			} catch {
+				return null
+			}
+		},
+	})
+}
+
+/**
+ * Enrich workshops with metadata from their package.json files
+ */
+async function enrichWorkshopsWithMetadata(
+	workshops: GitHubRepo[],
+): Promise<EnrichedWorkshop[]> {
+	const packageJsons = await Promise.all(
+		workshops.map((w) => fetchWorkshopPackageJson(w.name)),
+	)
+
+	return workshops.map((workshop, index) => {
+		const packageJson = packageJsons[index]
+		const config = packageJson ? parseEpicshopConfig(packageJson) : null
+
+		return {
+			...workshop,
+			productHost: config?.product?.host,
+			productSlug: config?.product?.slug,
+			productDisplayName: config?.product?.displayName,
+			instructorName: config?.instructor?.name,
+			title: config?.title,
 		}
-		throw new Error(`Failed to fetch workshops from GitHub: ${response.status}`)
-	}
+	})
+}
 
-	const data = (await response.json()) as GitHubSearchResponse
-	return data.items
+/**
+ * Check which product hosts the user is logged in to
+ */
+async function checkAuthStatus(
+	workshops: EnrichedWorkshop[],
+): Promise<Map<string, boolean>> {
+	const uniqueHosts = new Set(
+		workshops
+			.map((w) => w.productHost)
+			.filter((host): host is string => Boolean(host)),
+	)
+
+	const authStatusMap = new Map<string, boolean>()
+	await Promise.all(
+		Array.from(uniqueHosts).map(async (host) => {
+			const authInfo = await getAuthInfo({ productHost: host })
+			authStatusMap.set(host, Boolean(authInfo))
+		}),
+	)
+
+	return authStatusMap
+}
+
+/**
+ * Check if workshops are already downloaded
+ */
+async function checkWorkshopDownloadStatus(
+	workshops: EnrichedWorkshop[],
+): Promise<EnrichedWorkshop[]> {
+	const { workshopExists } = await import(
+		'@epic-web/workshop-utils/workshops.server'
+	)
+
+	const downloadStatusResults = await Promise.all(
+		workshops.map(async (workshop) => {
+			return await workshopExists(workshop.name)
+		}),
+	)
+
+	return workshops.map((workshop, index) => ({
+		...workshop,
+		isDownloaded: downloadStatusResults[index],
+	}))
+}
+
+/**
+ * Check access for workshops in parallel
+ */
+async function checkWorkshopAccess(
+	workshops: EnrichedWorkshop[],
+): Promise<EnrichedWorkshop[]> {
+	const accessResults = await Promise.all(
+		workshops.map(async (workshop) => {
+			if (!workshop.productHost || !workshop.productSlug) {
+				return undefined
+			}
+			return userHasAccessToWorkshop({
+				productHost: workshop.productHost,
+				workshopSlug: workshop.productSlug,
+			})
+		}),
+	)
+
+	return workshops.map((workshop, index) => ({
+		...workshop,
+		hasAccess: accessResults[index],
+	}))
 }
 
 export type StartOptions = {
@@ -132,14 +301,85 @@ export async function add(options: AddOptions): Promise<WorkshopsResult> {
 				}
 			}
 
-			console.log(chalk.cyan('\n🔍 Fetching available workshops...\n'))
+			const spinner = ora('Fetching available workshops...').start()
 
-			let workshops: GitHubRepo[]
+			let enrichedWorkshops: EnrichedWorkshop[]
 			try {
-				workshops = await fetchAvailableWorkshops()
+				const workshops = await fetchAvailableWorkshops()
+
+				if (workshops.length === 0) {
+					spinner.fail('No workshops found on GitHub')
+					return { success: false, message: 'No workshops found on GitHub' }
+				}
+
+				spinner.text = 'Loading workshop details...'
+				enrichedWorkshops = await enrichWorkshopsWithMetadata(workshops)
+
+				spinner.text = 'Checking download status...'
+				enrichedWorkshops = await checkWorkshopDownloadStatus(enrichedWorkshops)
+
+				spinner.stop()
+				const authStatusMap = await checkAuthStatus(enrichedWorkshops)
+
+				const hostsNotLoggedIn = Array.from(authStatusMap.entries())
+					.filter(([, isLoggedIn]) => !isLoggedIn)
+					.map(([host]) => host)
+
+				if (hostsNotLoggedIn.length > 0) {
+					const hostDisplayNames = hostsNotLoggedIn.map((host) => {
+						const workshop = enrichedWorkshops.find(
+							(w) => w.productHost === host,
+						)
+						return workshop?.productDisplayName || host
+					})
+
+					console.log()
+					console.log(
+						chalk.yellow(
+							`💡 Tip: You are not logged in to ${hostDisplayNames.join(', ')}. ` +
+								'Logging in will allow us to check your workshop access.',
+						),
+					)
+					console.log(
+						chalk.gray(`   To login, run: ${chalk.cyan('npx epicshop auth')}`),
+					)
+					console.log()
+				}
+
+				spinner.start('Checking access...')
+				enrichedWorkshops = await checkWorkshopAccess(enrichedWorkshops)
+
+				enrichedWorkshops.sort((a, b) => {
+					const aHasAccess = a.hasAccess === true
+					const aIsDownloaded = a.isDownloaded === true
+					const bHasAccess = b.hasAccess === true
+					const bIsDownloaded = b.isDownloaded === true
+
+					// Priority 1: Access and not yet downloaded
+					const aPriority1 = aHasAccess && !aIsDownloaded
+					const bPriority1 = bHasAccess && !bIsDownloaded
+					if (aPriority1 && !bPriority1) return -1
+					if (!aPriority1 && bPriority1) return 1
+
+					// Priority 2: No access and not yet downloaded
+					const aPriority2 = !aHasAccess && !aIsDownloaded
+					const bPriority2 = !bHasAccess && !bIsDownloaded
+					if (aPriority2 && !bPriority2) return -1
+					if (!aPriority2 && bPriority2) return 1
+
+					// Priority 3: Access and downloaded
+					const aPriority3 = aHasAccess && aIsDownloaded
+					const bPriority3 = bHasAccess && bIsDownloaded
+					if (aPriority3 && !bPriority3) return -1
+					if (!aPriority3 && bPriority3) return 1
+
+					return 0
+				})
+
+				spinner.succeed(`Found ${enrichedWorkshops.length} available workshops`)
 			} catch (error) {
 				const message = error instanceof Error ? error.message : String(error)
-				console.error(chalk.red(`❌ ${message}`))
+				spinner.fail(message)
 				return {
 					success: false,
 					message,
@@ -147,23 +387,47 @@ export async function add(options: AddOptions): Promise<WorkshopsResult> {
 				}
 			}
 
-			if (workshops.length === 0) {
-				const message = 'No workshops found on GitHub'
-				console.log(chalk.yellow(message))
-				return { success: false, message }
-			}
-
 			const { search } = await import('@inquirer/prompts')
 
-			const allChoices = workshops.map((w) => ({
-				name: w.name,
-				value: w.name,
-				description: w.description || undefined,
-			}))
+			console.log()
+			console.log(chalk.bold.cyan('📚 Available Workshops\n'))
+			console.log(chalk.gray('Icon Key:'))
+			console.log(chalk.gray(`  🚀 EpicReact.dev`))
+			console.log(chalk.gray(`  🌌 EpicWeb.dev`))
+			console.log(chalk.gray(`  ⚡ EpicAI.pro`))
+			console.log(chalk.gray(`  🔑 You have access to this workshop`))
+			console.log(chalk.gray(`  ✔︎ Already downloaded on your machine`))
+			console.log()
 
-			console.log(
-				chalk.bold.cyan(`📚 Available Workshops (${workshops.length}):\n`),
-			)
+			const allChoices = enrichedWorkshops.map((w) => {
+				const productIcon = w.productHost
+					? PRODUCT_ICONS[w.productHost] || ''
+					: ''
+				const accessIcon = w.hasAccess === true ? chalk.yellow('🔑') : ''
+				const downloadedIcon = w.isDownloaded === true ? chalk.green('✔︎') : ''
+
+				const nameParts = [
+					productIcon,
+					w.title || w.name,
+					accessIcon,
+					downloadedIcon,
+				].filter(Boolean)
+				const name = nameParts.join(' ')
+
+				const descriptionParts = [
+					w.instructorName ? `by ${w.instructorName}` : null,
+					w.productDisplayName || w.productHost,
+					w.description,
+				].filter(Boolean)
+				const description = descriptionParts.join(' • ') || undefined
+
+				return {
+					name,
+					value: w.name,
+					description,
+					workshop: w,
+				}
+			})
 
 			repoName = await search({
 				message: 'Select a workshop to add:',
@@ -172,7 +436,19 @@ export async function add(options: AddOptions): Promise<WorkshopsResult> {
 						return allChoices
 					}
 					return matchSorter(allChoices, input, {
-						keys: ['name', 'value', 'description'],
+						keys: [
+							{ key: 'name', threshold: rankings.CONTAINS },
+							{ key: 'value', threshold: rankings.CONTAINS },
+							{
+								key: 'workshop.productDisplayName',
+								threshold: rankings.CONTAINS,
+							},
+							{
+								key: 'workshop.instructorName',
+								threshold: rankings.CONTAINS,
+							},
+							{ key: 'description', threshold: rankings.WORD_STARTS_WITH },
+						],
 					})
 				},
 			})
