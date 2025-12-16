@@ -92,8 +92,10 @@ wizard that:
 
 1. Welcomes the user and explains what epicshop does
 2. Prompts for a workshop storage directory (with a recommended default)
-3. Clones and sets up the `epicshop-tutorial` repository
-4. Starts the tutorial workshop
+3. Offers to authenticate with Epic React, Epic Web, and Epic AI (optional)
+4. Shows a list of workshops you can set up and lets you pick which to clone/setup (optional)
+5. Clones and sets up the `epicshop-tutorial` repository
+6. Starts the tutorial workshop
 
 ```bash
 epicshop init

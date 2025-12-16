@@ -10,6 +10,30 @@ import { matchSorter } from 'match-sorter'
 const GITHUB_ORG = 'epicweb-dev'
 const TUTORIAL_REPO = 'epicshop-tutorial'
 
+type EpicHost = {
+	host: string
+	name: string
+	description: string
+}
+
+const EPIC_HOSTS: Array<EpicHost> = [
+	{
+		host: 'www.epicreact.dev',
+		name: 'Epic React',
+		description: 'React development workshops',
+	},
+	{
+		host: 'www.epicweb.dev',
+		name: 'Epic Web',
+		description: 'Full-stack web development workshops',
+	},
+	{
+		host: 'www.epicai.pro',
+		name: 'Epic AI',
+		description: 'AI development workshops',
+	},
+]
+
 /**
  * Find the workshop root directory by walking up from the current directory
  * looking for a package.json with an epicshop field.
@@ -1104,6 +1128,12 @@ export async function onboarding(): Promise<WorkshopsResult> {
 		// Ensure directory exists
 		await fs.promises.mkdir(resolvedPath, { recursive: true })
 
+		// Offer authentication right after workshop directory setup
+		await runHostAuthenticationOnboarding()
+
+		// Offer to set up any workshops the user wants (optional)
+		await promptAndSetupAccessibleWorkshops()
+
 		// Now check for tutorial and start it
 		return await ensureTutorialAndStart()
 	} catch (error) {
@@ -1118,6 +1148,154 @@ export async function onboarding(): Promise<WorkshopsResult> {
 			error: error instanceof Error ? error : new Error(message),
 		}
 	}
+}
+
+async function getAuthInfosByHost(): Promise<Record<string, any>> {
+	const { loadJSON } = await import('@epic-web/workshop-utils/data-storage.server')
+	const { data } = await loadJSON()
+	if (!data || typeof data !== 'object') return {}
+	const authInfos = (data as { authInfos?: unknown }).authInfos
+	if (!authInfos || typeof authInfos !== 'object') return {}
+	return authInfos as Record<string, any>
+}
+
+async function runHostAuthenticationOnboarding(): Promise<void> {
+	const { search } = await import('@inquirer/prompts')
+	const { login } = await import('./auth.js')
+
+	while (true) {
+		const authInfos = await getAuthInfosByHost()
+		const authedHosts = new Set(
+			EPIC_HOSTS.filter((h) => Boolean(authInfos[h.host])).map((h) => h.host),
+		)
+
+		console.log(chalk.bold.cyan('\n🔐 Host Authentication\n'))
+		for (const host of EPIC_HOSTS) {
+			const authInfo = authInfos[host.host]
+			if (authInfo?.email) {
+				const name = authInfo.name ? ` (${authInfo.name})` : ''
+				console.log(
+					`  ${chalk.green('✓')} ${chalk.bold(host.name)}: ${chalk.green('Authenticated')} as ${chalk.cyan(authInfo.email)}${name}`,
+				)
+			} else {
+				console.log(
+					`  ${chalk.gray('○')} ${chalk.bold(host.name)}: ${chalk.gray('Not authenticated')}`,
+				)
+			}
+		}
+		console.log()
+
+		// If already authenticated everywhere, move on
+		if (authedHosts.size === EPIC_HOSTS.length) {
+			return
+		}
+
+		const remaining = EPIC_HOSTS.filter((h) => !authedHosts.has(h.host))
+		const choices = [
+			...remaining.map((h) => ({
+				name: `Authenticate with ${h.name}`,
+				value: h.host,
+				description: h.description,
+			})),
+			{
+				name: `Skip authentication`,
+				value: 'skip' as const,
+				description: 'Continue without authenticating',
+			},
+		]
+
+		const selection = await search({
+			message: 'Would you like to authenticate with any of the other hosts?',
+			source: async (input) => {
+				if (!input) return choices
+				return matchSorter(choices, input, {
+					keys: ['name', 'value', 'description'],
+				})
+			},
+		})
+
+		if (selection === 'skip') {
+			return
+		}
+
+		// Run the existing auth flow for the selected host
+		const result = await login({ domain: selection, silent: false })
+		if (!result.success) {
+			throw result.error ?? new Error(result.message ?? 'Authentication failed')
+		}
+	}
+}
+
+async function promptAndSetupAccessibleWorkshops(): Promise<void> {
+	const { checkbox } = await import('@inquirer/prompts')
+	const { workshopExists } = await import(
+		'@epic-web/workshop-utils/workshops.server'
+	)
+
+	console.log(chalk.bold.cyan('\n📚 Workshop Setup\n'))
+	console.log(
+		chalk.cyan(
+			'🐨 Next, you can select any workshops you’d like me to set up for you.',
+		),
+	)
+	console.log(
+		chalk.gray(
+			'   This will clone each workshop repo into your workshops directory and run `npm run setup`.\n',
+		),
+	)
+
+	let available: GitHubRepo[]
+	try {
+		available = await fetchAvailableWorkshops()
+	} catch (error) {
+		const message = error instanceof Error ? error.message : String(error)
+		console.log(
+			chalk.yellow(
+				`⚠️  Could not fetch workshops right now (${message}). Skipping workshop selection.\n`,
+			),
+		)
+		return
+	}
+
+	// Exclude the tutorial repo from this optional selection (it is handled next)
+	const filtered = available.filter((w) => w.name !== TUTORIAL_REPO)
+	if (filtered.length === 0) {
+		console.log(
+			chalk.yellow(
+				`⚠️  No workshops were found to set up right now. Continuing...\n`,
+			),
+		)
+		return
+	}
+
+	const selected = await checkbox({
+		message: `Select workshops to set up (optional):`,
+		choices: filtered.map((w) => ({
+			name: w.name,
+			value: w.name,
+			description: w.description || undefined,
+		})),
+		pageSize: 15,
+	})
+
+	if (!selected.length) {
+		console.log(chalk.gray('\nNo workshops selected. Continuing...\n'))
+		return
+	}
+
+	console.log()
+	for (const repoName of selected) {
+		// If already present, don’t treat that as an error
+		if (await workshopExists(repoName)) {
+			console.log(chalk.gray(`• ${repoName} (already set up)`))
+			continue
+		}
+		const result = await add({ repoName, silent: false })
+		if (!result.success) {
+			throw result.error ?? new Error(result.message ?? `Failed to set up ${repoName}`)
+		}
+	}
+	console.log()
 }
 
 /**
