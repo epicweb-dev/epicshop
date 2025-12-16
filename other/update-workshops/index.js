@@ -230,7 +230,7 @@ async function updateWorkshopRepo(repo, version) {
 
 		// Run npm install to update package-lock.json
 		console.log(`📦 ${repoName} - running npm install`)
-		await execa('npm', ['install'], {
+		await execa('npm', ['install', '--package-lock-only'], {
 			cwd: tempDir,
 			env: getGitEnv(),
 		})
