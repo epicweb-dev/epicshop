@@ -386,9 +386,8 @@ epicshop migrate --silent
 
 ### `auth`
 
-Manage authentication for Epic domains (epicweb.dev, epicreact.dev, epicai.pro).
-This command allows you to view your login status, log in to domains, and log
-out.
+Manage login for Epic sites (epicweb.dev, epicreact.dev, epicai.pro). This
+command allows you to view login status, log in, and log out.
 
 ```bash
 epicshop auth [subcommand] [options]
@@ -433,9 +432,9 @@ epicshop auth logout epicreact
 
 - The login flow uses OAuth device authorization - you'll be given a URL to open
   in your browser and a code to verify
-- Authentication is stored locally and persists across sessions
+- Login is stored locally and persists across sessions
 - Each domain (epicweb.dev, epicreact.dev, epicai.pro) has separate
-  authentication
+  login
 - Being logged in enables features like progress tracking and video access in
   workshops
 
@@ -809,4 +808,4 @@ epicshop start
 | `epicshop update`  | Update workshop to latest version      | ✓             |
 | `epicshop warm`    | Warm up caches                         | ✓             |
 | `epicshop migrate` | Run data migrations                    | ✗             |
-| `epicshop auth`    | Manage authentication for Epic domains | ✗             |
+| `epicshop auth`    | Manage login for Epic sites            | ✗             |
