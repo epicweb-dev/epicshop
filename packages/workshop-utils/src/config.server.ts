@@ -189,6 +189,12 @@ let configCache: WorkshopConfig | null = null
 
 // Utility to read and parse the root package.json
 function readRootPkgJson(): any {
+	const contextCwd = getEnv().EPICSHOP_CONTEXT_CWD
+	if (!contextCwd) {
+		const error = new Error('Not in a workshop directory')
+		error.name = 'NotInWorkshopDirectoryError'
+		throw error
+	}
 	const packageJsonPath = getRootPkgJsonPath()
 	try {
 		const packageJsonContent = fs.readFileSync(packageJsonPath, 'utf8')
