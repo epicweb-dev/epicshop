@@ -52,12 +52,6 @@ const WorkshopConfigSchema = z
 				discordTags: z.array(z.string()).optional(),
 			})
 			.default({}),
-		onboardingVideo: z
-			.union([z.string(), z.array(z.string())])
-			.default(
-				'https://www.epicweb.dev/tips/get-started-with-the-epic-workshop-app',
-			)
-			.transform((value) => (Array.isArray(value) ? value : [value])),
 		githubRepo: z
 			.string()
 			.transform((githubRepo) => githubRepo ?? getEnv().EPICSHOP_GITHUB_REPO),

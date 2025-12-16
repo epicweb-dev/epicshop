@@ -59,13 +59,6 @@ const AuthInfoSchema = z.object({
 const MutedNotificationSchema = z.array(z.string()).default([])
 
 const DataSchema = z.object({
-	onboarding: z
-		.object({
-			tourVideosWatched: z.array(z.string()).default([]),
-		})
-		.passthrough()
-		.optional()
-		.default({ tourVideosWatched: [] }),
 	preferences: z
 		.object({
 			player: PlayerPreferencesSchema,
@@ -331,47 +324,4 @@ export async function setFontSizePreference(fontSize: number | undefined) {
 export async function getFontSizePreference() {
 	const data = await readDb()
 	return data?.preferences?.fontSize ?? null
-}
-
-export async function readOnboardingData() {
-	const data = await readDb()
-	return data?.onboarding ?? null
-}
-
-export async function markOnboardingVideoWatched(videoUrl: string) {
-	const data = await readDb()
-	const updatedData = {
-		...data,
-		onboarding: {
-			...data?.onboarding,
-			tourVideosWatched: [
-				...(data?.onboarding.tourVideosWatched ?? []),
-				videoUrl,
-			].filter(Boolean),
-		},
-	}
-	await saveJSON(updatedData)
-	return updatedData.onboarding
-}
-
-export async function unmarkOnboardingVideoWatched(videoUrl: string) {
-	const data = await readDb()
-	const watchedVideos = data?.onboarding?.tourVideosWatched ?? []
-	const updatedData = {
-		...data,
-		onboarding: {
-			...data?.onboarding,
-			tourVideosWatched: watchedVideos.filter((url) => url !== videoUrl),
-		},
-	}
-	await saveJSON(updatedData)
-	return updatedData.onboarding
-}
-
-export async function areAllOnboardingVideosWatched(
-	onboardingVideos: string[],
-) {
-	const data = await readDb()
-	const watchedVideos = data?.onboarding?.tourVideosWatched ?? []
-	return onboardingVideos.every((video) => watchedVideos.includes(video))
 }
