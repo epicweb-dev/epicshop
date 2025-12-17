@@ -2133,7 +2133,10 @@ type CommandResult = {
 function resolveCliCommand(command: string): string {
 	// On Windows, package manager binaries are typically shimmed as *.cmd files.
 	// Spawning "npm" directly can fail with ENOENT even though "npm.cmd" exists.
-	if (process.platform === 'win32' && (command === 'npm' || command === 'npx')) {
+	if (
+		process.platform === 'win32' &&
+		(command === 'npm' || command === 'npx')
+	) {
 		return `${command}.cmd`
 	}
 	return command
