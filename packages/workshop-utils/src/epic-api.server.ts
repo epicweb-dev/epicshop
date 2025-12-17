@@ -25,11 +25,48 @@ const Transcript = z
 	.nullable()
 	.optional()
 	.transform((s) => s ?? 'Transcripts not available')
-const EpicVideoInfoSchema = z.object({
-	title: z.string().nullable().optional(),
-	transcript: Transcript,
-	muxPlaybackId: z.string(),
-})
+const EpicVideoInfoSchema = z
+	.object({
+		title: z.string().nullable().optional(),
+		transcript: Transcript,
+		muxPlaybackId: z.string(),
+		duration: z.number().nullable().optional(),
+		durationEstimate: z.number().nullable().optional(),
+	})
+	.transform((data) => {
+		if (!data.duration && data.transcript) {
+			// estimate duration from transcript. Grab the last transcript timestamp and use that
+			const timestampRegex = /(\d+:\d+)/g
+
+			const lastTimestampMatch = Array.from(
+				data.transcript.matchAll(timestampRegex),
+			).pop()
+			if (lastTimestampMatch) {
+				const lastTimestamp = lastTimestampMatch[1]
+				if (!lastTimestamp) return data
+
+				const durationInSeconds = hmsToSeconds(lastTimestamp)
+				return {
+					...data,
+					durationEstimate: durationInSeconds,
+				}
+			}
+		}
+
+		return data
+	})
+
+function hmsToSeconds(str: string) {
+	const p = str.split(':')
+	let s = 0
+	let m = 1
+
+	while (p.length > 0) {
+		s += m * parseInt(p.pop() ?? '0', 10)
+		m *= 60
+	}
+	return s
+}
 
 const EpicVideoRegionRestrictedErrorSchema = z.object({
 	requestCountry: z.string(),
@@ -42,6 +79,8 @@ const CachedEpicVideoInfoSchema = z
 		title: z.string().nullable().optional(),
 		transcript: Transcript,
 		muxPlaybackId: z.string(),
+		duration: z.number().nullable().optional(),
+		durationEstimate: z.number().nullable().optional(),
 		status: z.literal('success'),
 		statusCode: z.number(),
 		statusText: z.string(),

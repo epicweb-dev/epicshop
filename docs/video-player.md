@@ -21,8 +21,6 @@ files to embed Epic Web videos with enhanced features.
 - `url` (required): The URL of the Epic Web video
 - `title` (optional): Custom title for the video. If not provided, the title
   will be extracted from the URL (best effort)
-- `bottomRightUI` (optional): Additional UI elements to display in the bottom
-  right corner
 
 #### Examples
 
@@ -36,13 +34,6 @@ files to embed Epic Web videos with enhanced features.
 <EpicVideo
 	url="https://epicweb.dev/workshops/react-hooks/01.problem.basic"
 	title="Custom Video Title"
-/>
-
-<!-- Video with additional UI elements -->
-
-<EpicVideo
-	url="https://epicweb.dev/workshops/react-hooks/01.problem.basic"
-	bottomRightUI={<button>Custom Action</button>}
 />
 ```
 

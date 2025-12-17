@@ -153,27 +153,42 @@ export function VideoEmbed({
 	)
 }
 
-function VideoLink({ url, title }: { url: string; title: string }) {
+function VideoLink({
+	url,
+	title,
+	duration,
+	durationEstimate,
+}: {
+	url: string
+	title: string
+	duration?: number | null
+	durationEstimate?: number | null
+}) {
 	return (
-		<a
-			href={url}
-			target="_blank"
-			className="flex items-center gap-1 text-base no-underline opacity-70 transition hover:underline hover:opacity-100"
-			rel="noreferrer"
-		>
-			<Icon className="shrink-0" name="Video" size="lg" />
-			{title} <span aria-hidden>↗︎</span>
-		</a>
+		<span className="flex items-center gap-1 text-base">
+			{duration ? (
+				<span className="opacity-70">{formatDuration(duration)}</span>
+			) : durationEstimate ? (
+				<span className="opacity-70">~{formatDuration(durationEstimate)}</span>
+			) : null}
+			<a
+				href={url}
+				target="_blank"
+				className="flex items-center gap-1 no-underline opacity-70 transition hover:underline hover:opacity-100"
+				rel="noreferrer"
+			>
+				<Icon className="shrink-0" name="Video" size="lg" />
+				{title} <span aria-hidden>↗︎</span>
+			</a>
+		</span>
 	)
 }
 export function DeferredEpicVideo({
 	url,
 	title: providedTitle,
-	bottomRightUI = null,
 }: {
 	url: string
 	title?: string
-	bottomRightUI?: React.ReactNode
 }) {
 	// we need to distinguish between the provided title and the fallback because the priority is:
 	// 1. provided title
@@ -185,14 +200,7 @@ export function DeferredEpicVideo({
 	} = useWorkshopConfig()
 	const user = useOptionalUser()
 	const epicVideoInfosPromise = React.useContext(EpicVideoInfoContext)
-	const linkUI = bottomRightUI ? (
-		<div className="flex justify-between">
-			<VideoLink url={url} title={title} />
-			{bottomRightUI}
-		</div>
-	) : (
-		<VideoLink url={url} title={title} />
-	)
+	const linkUI = <VideoLink url={url} title={title} />
 	return (
 		<div>
 			<React.Suspense
@@ -250,7 +258,8 @@ export function DeferredEpicVideo({
 									title={providedTitle ?? info.title ?? title}
 									muxPlaybackId={info.muxPlaybackId}
 									transcript={info.transcript}
-									bottomRightUI={bottomRightUI}
+									duration={info.duration}
+									durationEstimate={info.durationEstimate}
 								/>
 							)
 						} else if (info.type === 'region-restricted') {
@@ -354,13 +363,15 @@ function EpicVideo({
 	title = extractEpicTitle(urlString),
 	muxPlaybackId,
 	transcript,
-	bottomRightUI = null,
+	duration,
+	durationEstimate,
 }: {
 	url: string
 	title?: string
 	muxPlaybackId: string
 	transcript: string
-	bottomRightUI?: React.ReactNode
+	duration?: number | null
+	durationEstimate?: number | null
 }) {
 	const muxPlayerRef = React.useRef<MuxPlayerRefAttributes>(null)
 	const timestampRegex = /(\d+:\d+)/g
@@ -422,14 +433,12 @@ function EpicVideo({
 				/>
 			</div>
 			<div className="mt-4 flex flex-col gap-2">
-				{bottomRightUI ? (
-					<div className="flex justify-between">
-						<VideoLink url={urlString} title={title} />
-						{bottomRightUI}
-					</div>
-				) : (
-					<VideoLink url={urlString} title={title} />
-				)}
+				<VideoLink
+					url={urlString}
+					title={title}
+					duration={duration}
+					durationEstimate={durationEstimate}
+				/>
 				<details>
 					<summary>Transcript</summary>
 					<div className="bg-accent text-accent-foreground rounded-md p-2 whitespace-pre-line">
@@ -451,6 +460,17 @@ function hmsToSeconds(str: string) {
 		m *= 60
 	}
 	return s
+}
+
+function formatDuration(seconds: number): string {
+	const hours = Math.floor(seconds / 3600)
+	const minutes = Math.floor((seconds % 3600) / 60)
+	const secs = Math.floor(seconds % 60)
+
+	if (hours > 0) {
+		return `${hours}:${minutes.toString().padStart(2, '0')}:${secs.toString().padStart(2, '0')}`
+	}
+	return `${minutes}:${secs.toString().padStart(2, '0')}`
 }
 
 function EpicVideoEmbed({
