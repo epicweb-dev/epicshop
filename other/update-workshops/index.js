@@ -43,7 +43,9 @@ function getAuthenticatedRepoUrl(repoName) {
  * Fetch available workshops from GitHub (epicweb-dev org with 'workshop' topic)
  */
 async function fetchAvailableWorkshops() {
-	const url = `https://api.github.com/search/repositories?q=topic:workshop+org:${GITHUB_ORG}&sort=stars&order=desc`
+	// Note: `archived:false` is supported by GitHub search, but we also filter
+	// defensively below in case the API behavior changes.
+	const url = `https://api.github.com/search/repositories?q=topic:workshop+org:${GITHUB_ORG}+archived:false&sort=stars&order=desc`
 
 	const response = await fetch(url, {
 		headers: {
@@ -63,7 +65,8 @@ async function fetchAvailableWorkshops() {
 	}
 
 	const data = await response.json()
-	return data.items
+	const items = Array.isArray(data?.items) ? data.items : []
+	return items.filter((repo) => !repo?.archived)
 }
 
 /**
