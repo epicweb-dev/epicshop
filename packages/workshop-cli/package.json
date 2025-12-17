@@ -66,6 +66,7 @@
     "close-with-grace": "^2.3.0",
     "get-port": "^7.1.0",
     "match-sorter": "^8.2.0",
+    "openid-client": "^6.8.1",
     "open": "^10.2.0",
     "ora": "^8.1.1",
     "yargs": "^18.0.0"
