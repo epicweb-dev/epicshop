@@ -1,5 +1,5 @@
 import { Icon } from '#app/components/icons'
-import { SimpleTooltip } from '#app/components/ui/tooltip.js'
+import { SimpleTooltip } from '#app/components/ui/tooltip.tsx'
 import { PlaygroundChooser, SetPlayground } from '#app/routes/set-playground'
 
 export function PlaygroundWindow({

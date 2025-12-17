@@ -1,6 +1,6 @@
 import type * as Party from 'partykit/server'
 import { z } from 'zod'
-import { UserSchema } from './presence.js'
+import { UserSchema } from './presence.ts'
 
 type User = z.infer<typeof UserSchema>
 const ConnectionStateSchema = z

@@ -1,4 +1,4 @@
-import './init-env.js'
+import './init-env.ts'
 
 import { AsyncLocalStorage } from 'node:async_hooks'
 import { remember } from '@epic-web/remember'

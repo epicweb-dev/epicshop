@@ -29,7 +29,7 @@ import {
 	useDayjs,
 	useDoubleCheck,
 	useInterval,
-} from '#app/utils/misc.js'
+} from '#app/utils/misc.tsx'
 import { type Route } from './+types/cache.ts'
 
 export async function loader({ request }: Route.LoaderArgs) {

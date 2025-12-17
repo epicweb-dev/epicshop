@@ -7,7 +7,7 @@ import os from 'os'
 import path from 'path'
 import fsExtra from 'fs-extra'
 import shellQuote from 'shell-quote'
-import { getRelativePath } from './apps.server.js'
+import { getRelativePath } from './apps.server.ts'
 
 function readablePath(filePath: string = '') {
 	const relative = getRelativePath(filePath)

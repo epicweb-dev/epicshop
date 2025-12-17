@@ -1,5 +1,5 @@
 import { test, expect, vi, beforeEach, afterEach } from 'vitest'
-import { getErrorMessage, handleGitHubRepoAndRoot } from './utils.js'
+import { getErrorMessage, handleGitHubRepoAndRoot } from './utils.ts'
 
 // Setup console.error mocking for all tests
 beforeEach(() => {

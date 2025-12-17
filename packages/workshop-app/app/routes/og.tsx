@@ -9,7 +9,7 @@ import { Resvg } from '@resvg/resvg-js'
 import { renderToStaticMarkup } from 'react-dom/server'
 import { type LoaderFunctionArgs } from 'react-router'
 import satori, { type SatoriOptions } from 'satori'
-import { getDomainUrl, getErrorMessage } from '#app/utils/misc.js'
+import { getDomainUrl, getErrorMessage } from '#app/utils/misc.tsx'
 
 const WIDTH = 1200
 const HEIGHT = 630

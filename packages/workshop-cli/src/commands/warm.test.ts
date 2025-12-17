@@ -1,5 +1,5 @@
 import { test, expect, vi, beforeEach, afterEach } from 'vitest'
-import { warm, type WarmResult } from './warm.js'
+import { warm, type WarmResult } from './warm.ts'
 
 // Mock console methods to clean up test output
 beforeEach(() => {

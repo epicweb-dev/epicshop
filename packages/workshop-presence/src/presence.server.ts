@@ -10,7 +10,7 @@ import {
 } from '@epic-web/workshop-utils/epic-api.server'
 import { type Timings } from '@epic-web/workshop-utils/timing.server'
 import { getUserId } from '@epic-web/workshop-utils/user.server'
-import { PresenceSchema, partykitBaseUrl, type User } from './presence.js'
+import { PresenceSchema, partykitBaseUrl, type User } from './presence.ts'
 
 export const presenceCache = makeSingletonCache<Array<User>>('PresenceCache')
 

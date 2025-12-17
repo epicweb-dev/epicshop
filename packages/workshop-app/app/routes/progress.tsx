@@ -17,7 +17,7 @@ import {
 } from 'react-router'
 import { createConfettiHeaders } from '#app/utils/confetti.server.ts'
 import { combineHeaders, ensureUndeployed } from '#app/utils/misc.tsx'
-import { dataWithPE, usePERedirectInput } from '#app/utils/pe.js'
+import { dataWithPE, usePERedirectInput } from '#app/utils/pe.tsx'
 import { useRootLoaderData } from '#app/utils/root-loader.ts'
 import { createToastHeaders } from '#app/utils/toast.server.ts'
 

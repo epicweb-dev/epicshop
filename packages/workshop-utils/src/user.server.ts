@@ -1,9 +1,9 @@
 // eslint-disable-next-line import/order -- this must be first
-import { getEnv } from './init-env.js'
+import { getEnv } from './init-env.ts'
 
 import { randomUUID as cuid } from 'crypto'
 import * as cookie from 'cookie'
-import { getAuthInfo, getClientId } from './db.server.js'
+import { getAuthInfo, getClientId } from './db.server.ts'
 
 export async function getUserId({ request }: { request: Request }) {
 	if (getEnv().EPICSHOP_DEPLOYED) {

@@ -7,7 +7,7 @@ import { Link, useFetcher, type ActionFunctionArgs } from 'react-router'
 import { z, type ZodTypeAny } from 'zod'
 import { showProgressBarField } from '#app/components/progress-bar.tsx'
 import { cn, ensureUndeployed } from '#app/utils/misc.tsx'
-import { dataWithPE, usePERedirectInput } from '#app/utils/pe.js'
+import { dataWithPE, usePERedirectInput } from '#app/utils/pe.tsx'
 import { useApps, useRequestInfo } from '#app/utils/root-loader.ts'
 import { createToastHeaders } from '#app/utils/toast.server.ts'
 

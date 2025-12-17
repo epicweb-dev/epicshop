@@ -5,7 +5,7 @@ import {
 	resolvePrimaryDir,
 	resolveCacheDir,
 	migrateLegacyData,
-} from './data-storage.server.js'
+} from './data-storage.server.ts'
 
 // Mock fs and os modules
 vi.mock('node:fs', () => ({

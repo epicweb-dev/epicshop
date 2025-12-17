@@ -1,5 +1,5 @@
 import { test, expect } from 'vitest'
-import { workshopDirectoryInputSchema } from './utils.js'
+import { workshopDirectoryInputSchema } from './utils.ts'
 
 test('workshopDirectoryInputSchema should validate valid string', () => {
 	const validInput = '/path/to/workshop'

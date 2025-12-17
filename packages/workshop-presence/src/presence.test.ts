@@ -5,7 +5,7 @@ import {
 	PresenceSchema,
 	type User,
 	type Message,
-} from './presence.js'
+} from './presence.ts'
 
 test('UserSchema should validate a valid user object', () => {
 	const validUser = {

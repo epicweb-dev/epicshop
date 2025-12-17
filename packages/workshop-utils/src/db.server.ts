@@ -1,11 +1,11 @@
-import './init-env.js'
+import './init-env.ts'
 
 import { randomUUID as cuid } from 'crypto'
 import fsExtra from 'fs-extra'
 import { redirect } from 'react-router'
 import { z } from 'zod'
-import { getWorkshopConfig } from './config.server.js'
-import { saveJSON, loadJSON, migrateLegacyData } from './data-storage.server.js'
+import { getWorkshopConfig } from './config.server.ts'
+import { saveJSON, loadJSON, migrateLegacyData } from './data-storage.server.ts'
 
 // Attempt migration from legacy ~/.epicshop
 await migrateLegacyData().catch(() => {})

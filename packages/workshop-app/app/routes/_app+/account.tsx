@@ -8,7 +8,7 @@ import { type SEOHandle } from '@nasa-gcn/remix-seo'
 import { redirect, type LoaderFunctionArgs, Form, Link } from 'react-router'
 import { Button } from '#app/components/button.tsx'
 import { Icon } from '#app/components/icons.tsx'
-import { SimpleTooltip } from '#app/components/ui/tooltip.js'
+import { SimpleTooltip } from '#app/components/ui/tooltip.tsx'
 import {
 	useOptionalDiscordMember,
 	useUser,

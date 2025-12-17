@@ -10,7 +10,7 @@ import {
 	type LoaderFunctionArgs,
 	useLoaderData,
 } from 'react-router'
-import { type InBrowserBrowserRef } from '#app/components/in-browser-browser.js'
+import { type InBrowserBrowserRef } from '#app/components/in-browser-browser.ts'
 import { Preview } from './__shared/preview.tsx'
 import { getAppRunningState } from './__shared/utils.tsx'
 

@@ -267,7 +267,7 @@ const cli = yargs(args)
 			}>,
 		) => {
 			const { findWorkshopRoot, remove } = await import(
-				'./commands/workshops.js'
+				'./commands/workshops.ts'
 			)
 
 			let workshopToRemove = argv.workshop
@@ -316,7 +316,7 @@ const cli = yargs(args)
 			}>,
 		) => {
 			const { findWorkshopRoot, openWorkshop } = await import(
-				'./commands/workshops.js'
+				'./commands/workshops.ts'
 			)
 
 			let workshopToOpen = argv.workshop
@@ -925,7 +925,7 @@ try {
 		switch (subcommand) {
 			case 'start': {
 				const { findWorkshopRoot, startWorkshop } = await import(
-					'./commands/workshops.js'
+					'./commands/workshops.ts'
 				)
 				const wsRoot = await findWorkshopRoot()
 				if (wsRoot) {
@@ -953,7 +953,7 @@ try {
 			}
 			case 'open': {
 				const { findWorkshopRoot, openWorkshop } = await import(
-					'./commands/workshops.js'
+					'./commands/workshops.ts'
 				)
 				const workshopRoot = await findWorkshopRoot()
 				const result = await openWorkshop({
@@ -976,7 +976,7 @@ try {
 			}
 			case 'remove': {
 				const { findWorkshopRoot, remove } = await import(
-					'./commands/workshops.js'
+					'./commands/workshops.ts'
 				)
 				const workshopRoot = await findWorkshopRoot()
 				const result = await remove({

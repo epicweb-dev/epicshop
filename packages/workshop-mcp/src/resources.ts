@@ -30,7 +30,7 @@ import {
 	readInWorkshop,
 	safeReadFile,
 	workshopDirectoryInputSchema,
-} from './utils.js'
+} from './utils.ts'
 
 export const getWorkshopContextInputSchema = {
 	workshopDirectory: workshopDirectoryInputSchema,

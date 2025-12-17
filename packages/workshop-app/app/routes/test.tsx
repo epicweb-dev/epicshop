@@ -19,10 +19,10 @@ import { eventStream } from 'remix-utils/sse/server'
 import { z } from 'zod'
 import { AnimatedBars, Icon } from '#app/components/icons.tsx'
 import { SimpleTooltip } from '#app/components/ui/tooltip.tsx'
-import { stripCursorMovements, useAnsiToHtml } from '#app/utils/ansi-text.js'
+import { stripCursorMovements, useAnsiToHtml } from '#app/utils/ansi-text.ts'
 import { ensureUndeployed } from '#app/utils/misc.tsx'
-import { dataWithPE, usePERedirectInput } from '#app/utils/pe.js'
-import { createToastHeaders } from '#app/utils/toast.server.js'
+import { dataWithPE, usePERedirectInput } from '#app/utils/pe.tsx'
+import { createToastHeaders } from '#app/utils/toast.server.ts'
 
 const testActionSchema = z.union([
 	z.object({

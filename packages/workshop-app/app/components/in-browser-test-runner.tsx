@@ -3,7 +3,7 @@ import { useEffect, useRef, useState } from 'react'
 import { z } from 'zod'
 import AccordionComponent from '#app/components/accordion.tsx'
 import { useTheme } from '#app/routes/theme/index.tsx'
-import { stripCursorMovements, useAnsiToHtml } from '#app/utils/ansi-text.js'
+import { stripCursorMovements, useAnsiToHtml } from '#app/utils/ansi-text.ts'
 import { AnimatedBars, Icon } from './icons.tsx'
 
 const testRunnerStatusDataSchema = z.intersection(

@@ -1,4 +1,4 @@
-import { useTheme } from '#app/routes/theme/index.js'
+import { useTheme } from '#app/routes/theme/index.tsx'
 import { cn } from '#app/utils/misc.tsx'
 import { useWorkshopConfig } from './workshop-config.tsx'
 

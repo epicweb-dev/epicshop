@@ -6,7 +6,7 @@ import {
 import { getWorkshopConfig } from '@epic-web/workshop-utils/config.server'
 import { dayjs } from '@epic-web/workshop-utils/utils.server'
 import { z } from 'zod'
-import { getHints } from '#app/utils/client-hints.js'
+import { getHints } from '#app/utils/client-hints.tsx'
 import { getErrorMessage } from '#app/utils/misc.tsx'
 
 const EmojiDataSchema = z.union([

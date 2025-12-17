@@ -1,15 +1,15 @@
-import './init-env.js'
+import './init-env.ts'
 
 import fs from 'node:fs/promises'
 import path from 'node:path'
 import { execa, execaCommand } from 'execa'
-import { getWorkshopRoot } from './apps.server.js'
-import { cachified, checkForUpdatesCache } from './cache.server.js'
-import { getWorkshopConfig } from './config.server.js'
-import { getEnv } from './env.server.js'
-import { logger } from './logger.js'
-import { getErrorMessage } from './utils.js'
-import { checkConnection } from './utils.server.js'
+import { getWorkshopRoot } from './apps.server.ts'
+import { cachified, checkForUpdatesCache } from './cache.server.ts'
+import { getWorkshopConfig } from './config.server.ts'
+import { getEnv } from './env.server.ts'
+import { logger } from './logger.ts'
+import { checkConnection } from './utils.server.ts'
+import { getErrorMessage } from './utils.ts'
 
 const gitLog = logger('epic:git')
 

@@ -1,20 +1,10 @@
-import './init-env.js'
+import './init-env.ts'
 
-import { remember } from '@epic-web/remember'
-import dayjsLib from 'dayjs'
-import relativeTimePlugin from 'dayjs/plugin/relativeTime.js'
-import timeZonePlugin from 'dayjs/plugin/timezone.js'
-import utcPlugin from 'dayjs/plugin/utc.js'
-import { cachified, connectionCache } from './cache.server.js'
-import { logger } from './logger.js'
-import { type Timings } from './timing.server.js'
+import { cachified, connectionCache } from './cache.server.ts'
+import { logger } from './logger.ts'
+import { type Timings } from './timing.server.ts'
 
-export const dayjs = remember('dayjs', () => {
-	dayjsLib.extend(utcPlugin)
-	dayjsLib.extend(timeZonePlugin)
-	dayjsLib.extend(relativeTimePlugin)
-	return dayjsLib
-})
+export { dayjs } from './utils.ts'
 
 const connectionLog = logger('epic:connection')
 

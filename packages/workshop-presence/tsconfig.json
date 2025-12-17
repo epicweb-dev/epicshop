@@ -6,12 +6,7 @@
 		"outDir": "./dist",
 		"resolveJsonModule": true,
 		"esModuleInterop": true,
-		"paths": {
-			"@epic-web/workshop-utils/*": [
-				"../workshop-utils/src/*.ts",
-				"../workshop-utils/src/*.tsx"
-			]
-		}
+		"rewriteRelativeImportExtensions": true
 	},
 	"exclude": ["dist"]
 }

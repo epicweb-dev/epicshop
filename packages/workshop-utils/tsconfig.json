@@ -5,7 +5,8 @@
 		"rootDir": "./src",
 		"outDir": "./dist",
 		"resolveJsonModule": true,
-		"esModuleInterop": true
+		"esModuleInterop": true,
+		"rewriteRelativeImportExtensions": true
 	},
 	"exclude": ["**/*.test.ts", "**/*.test.tsx", "dist"]
 }

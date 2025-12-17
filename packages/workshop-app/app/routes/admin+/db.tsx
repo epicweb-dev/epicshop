@@ -2,7 +2,7 @@ import { loadJSON } from '@epic-web/workshop-utils/data-storage.server'
 import { readDb } from '@epic-web/workshop-utils/db.server'
 import { Icon } from '#app/components/icons.tsx'
 import { SimpleTooltip } from '#app/components/ui/tooltip.tsx'
-import { ensureUndeployed } from '#app/utils/misc.js'
+import { ensureUndeployed } from '#app/utils/misc.tsx'
 import { LaunchEditor } from '../launch-editor.tsx'
 import { type Route } from './+types/db.ts'
 

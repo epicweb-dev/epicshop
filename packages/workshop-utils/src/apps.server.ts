@@ -1,5 +1,5 @@
 // eslint-disable-next-line import/order -- this must be first
-import { getEnv } from './init-env.js'
+import { getEnv } from './init-env.ts'
 
 import fs from 'node:fs'
 import path from 'node:path'
@@ -21,21 +21,21 @@ import {
 	problemAppCache,
 	solutionAppCache,
 	directoryEmptyCache,
-} from './cache.server.js'
-import { compileMdx } from './compile-mdx.server.js'
-import { getAppConfig, getStackBlitzUrl } from './config.server.js'
-import { getPreferences } from './db.server.js'
-import { getDirModifiedTime } from './modified-time.server.js'
+} from './cache.server.ts'
+import { compileMdx } from './compile-mdx.server.ts'
+import { getAppConfig, getStackBlitzUrl } from './config.server.ts'
+import { getPreferences } from './db.server.ts'
+import { getDirModifiedTime } from './modified-time.server.ts'
 import {
 	closeProcess,
 	isAppRunning,
 	runAppDev,
 	waitOnApp,
-} from './process-manager.server.js'
-import { requestStorageify } from './request-context.server.js'
-import { getServerTimeHeader, time, type Timings } from './timing.server.js'
-import { getErrorMessage } from './utils.js'
-import { dayjs } from './utils.server.js'
+} from './process-manager.server.ts'
+import { requestStorageify } from './request-context.server.ts'
+import { getServerTimeHeader, time, type Timings } from './timing.server.ts'
+import { dayjs } from './utils.server.ts'
+import { getErrorMessage } from './utils.ts'
 
 declare global {
 	var __epicshop_apps_initialized__: boolean | undefined

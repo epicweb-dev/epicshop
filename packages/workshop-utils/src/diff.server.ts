@@ -1,5 +1,5 @@
 // eslint-disable-next-line import/order -- this must be first
-import { getEnv } from './init-env.js'
+import { getEnv } from './init-env.ts'
 
 import os from 'os'
 import path from 'path'
@@ -15,16 +15,16 @@ import {
 	getWorkshopRoot,
 	modifiedTimes,
 	type App,
-} from './apps.server.js'
+} from './apps.server.ts'
 import {
 	cachified,
 	copyUnignoredFilesCache,
 	diffCodeCache,
 	diffFilesCache,
-} from './cache.server.js'
-import { compileMarkdownString } from './compile-mdx.server.js'
-import { modifiedMoreRecentlyThan } from './modified-time.server.js'
-import { type Timings } from './timing.server.js'
+} from './cache.server.ts'
+import { compileMarkdownString } from './compile-mdx.server.ts'
+import { modifiedMoreRecentlyThan } from './modified-time.server.ts'
+import { type Timings } from './timing.server.ts'
 
 const epicshopTempDir = path.join(os.tmpdir(), 'epicshop')
 

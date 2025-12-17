@@ -11,7 +11,7 @@ import { Button } from '#app/components/button.tsx'
 import { Loading } from '#app/components/loading.tsx'
 import { showProgressBarField } from '#app/components/progress-bar.tsx'
 import { ensureUndeployed, useAltDown } from '#app/utils/misc.tsx'
-import { dataWithPE, usePERedirectInput } from '#app/utils/pe.js'
+import { dataWithPE, usePERedirectInput } from '#app/utils/pe.tsx'
 import { createToastHeaders } from '#app/utils/toast.server'
 
 export async function action({ request }: ActionFunctionArgs) {

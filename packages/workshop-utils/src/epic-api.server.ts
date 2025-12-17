@@ -8,14 +8,14 @@ import {
 	getExercises,
 	getWorkshopFinished,
 	getWorkshopInstructions,
-} from './apps.server.js'
-import { cachified, epicApiCache } from './cache.server.js'
-import { getWorkshopConfig } from './config.server.js'
-import { getAuthInfo, setAuthInfo } from './db.server.js'
-import { getEnv } from './init-env.js'
-import { logger } from './logger.js'
-import { type Timings } from './timing.server.js'
-import { getErrorMessage } from './utils.js'
+} from './apps.server.ts'
+import { cachified, epicApiCache } from './cache.server.ts'
+import { getWorkshopConfig } from './config.server.ts'
+import { getAuthInfo, setAuthInfo } from './db.server.ts'
+import { getEnv } from './init-env.ts'
+import { logger } from './logger.ts'
+import { type Timings } from './timing.server.ts'
+import { getErrorMessage } from './utils.ts'
 
 // Module-level logger for epic-api operations
 const log = logger('epic:api')

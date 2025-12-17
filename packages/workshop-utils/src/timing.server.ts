@@ -1,4 +1,4 @@
-import './init-env.js'
+import './init-env.ts'
 
 import { type CreateReporter } from '@epic-web/cachified'
 

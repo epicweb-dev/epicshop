@@ -7,7 +7,7 @@ import {
 	DeferredEpicVideo,
 	EpicVideoInfoProvider,
 } from '#app/components/epic-video.tsx'
-import { type Route } from './+types/epic-video.ts'
+import { type Route } from './+types/epic-video.tsx'
 import { sendMcpMessage } from './__utils.ts'
 
 export async function loader({ request }: Route.LoaderArgs) {

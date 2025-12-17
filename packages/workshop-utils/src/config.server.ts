@@ -1,10 +1,10 @@
 // eslint-disable-next-line import/order -- this must be first
-import { getEnv } from './init-env.js'
+import { getEnv } from './init-env.ts'
 
 import fs from 'node:fs'
 import path from 'node:path'
 import { z } from 'zod'
-import { handleGitHubRepoAndRoot } from './utils.js'
+import { handleGitHubRepoAndRoot } from './utils.ts'
 
 const getRootPkgJsonPath = () =>
 	path.join(getEnv().EPICSHOP_CONTEXT_CWD, 'package.json')

@@ -35,7 +35,7 @@ import {
 } from '@modelcontextprotocol/sdk/types.js'
 import * as client from 'openid-client'
 import { z } from 'zod'
-import { quizMe, quizMeInputSchema } from './prompts.js'
+import { quizMe, quizMeInputSchema } from './prompts.ts'
 import {
 	diffBetweenAppsResource,
 	exerciseContextResource,
@@ -45,13 +45,13 @@ import {
 	userInfoResource,
 	userProgressResource,
 	workshopContextResource,
-} from './resources.js'
+} from './resources.ts'
 import {
 	handleWorkshopDirectory,
 	readInWorkshop,
 	safeReadFile,
 	workshopDirectoryInputSchema,
-} from './utils.js'
+} from './utils.ts'
 
 // not enough support for this yet
 const clientSupportsEmbeddedResources = false

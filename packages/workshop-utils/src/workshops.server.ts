@@ -3,7 +3,7 @@ import { promises as fs } from 'node:fs'
 import * as os from 'node:os'
 import * as path from 'node:path'
 import { z } from 'zod'
-import { resolvePrimaryDir } from './data-storage.server.js'
+import { resolvePrimaryDir } from './data-storage.server.ts'
 
 const CONFIG_FILE = 'workshops-config.json'
 

@@ -1,11 +1,11 @@
 // eslint-disable-next-line import/order -- this must be first
-import { getEnv } from './init-env.js'
+import { getEnv } from './init-env.ts'
 
 import json5 from 'json5'
 import { z } from 'zod'
-import { cachified, notificationsCache } from './cache.server.js'
-import { getWorkshopConfig } from './config.server.js'
-import { getMutedNotifications } from './db.server.js'
+import { cachified, notificationsCache } from './cache.server.ts'
+import { getWorkshopConfig } from './config.server.ts'
+import { getMutedNotifications } from './db.server.ts'
 
 const NotificationSchema = z.object({
 	id: z.string(),

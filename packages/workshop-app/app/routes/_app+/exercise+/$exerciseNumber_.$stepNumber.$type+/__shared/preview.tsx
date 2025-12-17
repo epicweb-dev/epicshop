@@ -5,10 +5,10 @@ import { Icon } from '#app/components/icons'
 import {
 	InBrowserBrowser,
 	type InBrowserBrowserRef,
-} from '#app/components/in-browser-browser'
-import { Loading } from '#app/components/loading.js'
-import { useTheme } from '#app/routes/theme/index.js'
-import { cn, getBaseUrl } from '#app/utils/misc'
+} from '#app/components/in-browser-browser.tsx'
+import { Loading } from '#app/components/loading.tsx'
+import { useTheme } from '#app/routes/theme/index.tsx'
+import { cn, getBaseUrl } from '#app/utils/misc.tsx'
 import { useRequestInfo } from '#app/utils/root-loader.ts'
 
 export function Preview({

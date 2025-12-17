@@ -1,7 +1,7 @@
 import { expect, testStep, dtl } from '@epic-web/workshop-utils/test'
 const { screen, fireEvent } = dtl
 
-import './index.js'
+import './index.ts'
 
 const button = await testStep('Button is rendered', () =>
 	screen.findByRole('button', { name: /click me/i }),

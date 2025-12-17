@@ -1,4 +1,4 @@
-import { init, getEnv } from './env.server.js'
+import { init, getEnv } from './env.server.ts'
 
 await init()
 const ENV = getEnv()

@@ -1,4 +1,4 @@
-import './init-env.js'
+import './init-env.ts'
 
 import fs from 'fs'
 import path from 'path'
@@ -20,9 +20,9 @@ import {
 	compiledInstructionMarkdownCache,
 	compiledMarkdownCache,
 	shouldForceFresh,
-} from './cache.server.js'
-import { type Timings } from './timing.server.js'
-import { checkConnection } from './utils.server.js'
+} from './cache.server.ts'
+import { type Timings } from './timing.server.ts'
+import { checkConnection } from './utils.server.ts'
 
 function remarkMermaidCodeToSvg() {
 	return async (tree: MdastRoot) => {

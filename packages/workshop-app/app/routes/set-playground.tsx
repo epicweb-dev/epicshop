@@ -15,7 +15,7 @@ import { Icon } from '#app/components/icons.tsx'
 import { showProgressBarField } from '#app/components/progress-bar.tsx'
 import { SimpleTooltip } from '#app/components/ui/tooltip.tsx'
 import { ensureUndeployed, getErrorMessage } from '#app/utils/misc.tsx'
-import { dataWithPE, usePERedirectInput } from '#app/utils/pe.js'
+import { dataWithPE, usePERedirectInput } from '#app/utils/pe.tsx'
 import { createToastHeaders } from '#app/utils/toast.server.ts'
 
 const SetPlaygroundSchema = z.object({

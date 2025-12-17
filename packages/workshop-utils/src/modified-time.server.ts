@@ -1,10 +1,10 @@
-import './init-env.js'
+import './init-env.ts'
 
 import fs from 'node:fs'
 import path from 'node:path'
 import { isGitIgnored } from 'globby'
 import PQueue from 'p-queue'
-import { cachified, dirModifiedTimeCache } from './cache.server.js'
+import { cachified, dirModifiedTimeCache } from './cache.server.ts'
 
 async function getDirModifiedTime(
 	dir: string,

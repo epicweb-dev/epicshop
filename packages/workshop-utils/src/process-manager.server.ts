@@ -1,4 +1,4 @@
-import './init-env.js'
+import './init-env.ts'
 
 import { spawn, type ChildProcess } from 'child_process'
 import net from 'node:net'
@@ -7,10 +7,10 @@ import chalk from 'chalk'
 import closeWithGrace from 'close-with-grace'
 import findProcessDefault from 'find-process'
 import fkill from 'fkill'
-import { type App } from './apps.server.js'
-import { getWorkshopUrl } from './config.server.js'
-import { getEnv } from './env.server.js'
-import { getErrorMessage } from './utils.js'
+import { type App } from './apps.server.ts'
+import { getWorkshopUrl } from './config.server.ts'
+import { getEnv } from './env.server.ts'
+import { getErrorMessage } from './utils.ts'
 
 // https://github.com/yibn2008/find-process/issues/85
 const findProcess = ('default' in findProcessDefault

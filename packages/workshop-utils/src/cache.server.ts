@@ -1,5 +1,5 @@
 // eslint-disable-next-line import/order -- this must be first
-import { getEnv } from './init-env.js'
+import { getEnv } from './init-env.ts'
 
 import path from 'path'
 import * as C from '@epic-web/cachified'
@@ -14,12 +14,12 @@ import {
 	type PlaygroundApp,
 	type ProblemApp,
 	type SolutionApp,
-} from './apps.server.js'
-import { resolveCacheDir } from './data-storage.server.js'
-import { logger } from './logger.js'
-import { type Notification } from './notifications.server.js'
-import { cachifiedTimingReporter, type Timings } from './timing.server.js'
-import { checkConnection } from './utils.server.js'
+} from './apps.server.ts'
+import { resolveCacheDir } from './data-storage.server.ts'
+import { logger } from './logger.ts'
+import { type Notification } from './notifications.server.ts'
+import { cachifiedTimingReporter, type Timings } from './timing.server.ts'
+import { checkConnection } from './utils.server.ts'
 
 const MAX_CACHE_FILE_SIZE = 3 * 1024 * 1024 // 3MB in bytes
 const cacheDir = resolveCacheDir()

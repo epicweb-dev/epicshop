@@ -2,7 +2,7 @@ import path from 'path'
 import { createProjectGraphAsync, workspaceRoot } from '@nx/devkit'
 import fs from 'fs-extra'
 import { releaseChangelog, releasePublish, releaseVersion } from 'nx/release'
-import { findMatchingProjects } from 'nx/src/utils/find-matching-projects.js'
+import { findMatchingProjects } from 'nx/src/utils/find-matching-projects.ts'
 import { default as yargs } from 'yargs'
 
 async function go() {

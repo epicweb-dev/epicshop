@@ -1,5 +1,5 @@
 import { test, expect } from 'vitest'
-import { parseEpicshopConfig } from './config.server.js'
+import { parseEpicshopConfig } from './config.server.ts'
 
 test('parses epicshop config with modern product structure', () => {
 	const packageJson = {

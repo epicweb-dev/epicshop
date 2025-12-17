@@ -1,7 +1,7 @@
 import { clsx } from 'clsx'
 import { LRUCache } from 'lru-cache'
 import { type MDXContentProps } from 'mdx-bundler/client'
-import * as mdxBundler from 'mdx-bundler/client/index.js'
+import * as mdxBundler from 'mdx-bundler/client'
 import { useEffect, useMemo, useState } from 'react'
 import { Link, useLoaderData } from 'react-router'
 import { toast } from 'sonner'

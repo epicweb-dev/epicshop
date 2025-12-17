@@ -1,4 +1,4 @@
-import './init-env.js'
+import './init-env.ts'
 
 import { remember } from '@epic-web/remember'
 import dayjsLib from 'dayjs'

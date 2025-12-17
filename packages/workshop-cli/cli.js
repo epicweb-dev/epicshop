@@ -1,9 +1,9 @@
 #!/usr/bin/env node
 
-import { existsSync } from 'node:fs'
 import { execSync } from 'node:child_process'
-import { fileURLToPath } from 'node:url'
+import { existsSync } from 'node:fs'
 import { dirname, join } from 'node:path'
+import { fileURLToPath } from 'node:url'
 
 const __filename = fileURLToPath(import.meta.url)
 const __dirname = dirname(__filename)
@@ -17,7 +17,9 @@ if (existsSync(cliSource)) {
 	const parentImports = process.argv
 		.filter((arg) => arg.startsWith('--import'))
 		.join(' ')
-	const args = process.argv.slice(2).filter((arg) => !arg.startsWith('--import'))
+	const args = process.argv
+		.slice(2)
+		.filter((arg) => !arg.startsWith('--import'))
 	const command = `tsx ${parentImports} "${cliSource}" ${args.join(' ')}`
 	execSync(command, { stdio: 'inherit', shell: true })
 } else {

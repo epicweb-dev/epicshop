@@ -26,14 +26,14 @@ import { useHydrated } from 'remix-utils/use-hydrated'
 import { Icon } from '#app/components/icons.tsx'
 import { makeMediaQueryStore } from '#app/components/media-query.ts'
 import { Logo } from '#app/components/product.tsx'
-import { useRevalidationWS } from '#app/components/revalidation-ws.js'
+import { useRevalidationWS } from '#app/components/revalidation-ws.tsx'
 import {
 	Dialog,
 	DialogContent,
 	DialogDescription,
 	DialogHeader,
 	DialogTrigger,
-} from '#app/components/ui/dialog.js'
+} from '#app/components/ui/dialog.tsx'
 import {
 	SimpleTooltip,
 	Tooltip,
@@ -42,7 +42,7 @@ import {
 	TooltipTrigger,
 } from '#app/components/ui/tooltip.tsx'
 import { useOptionalUser, useUserHasAccess } from '#app/components/user.tsx'
-import { useWorkshopConfig } from '#app/components/workshop-config.js'
+import { useWorkshopConfig } from '#app/components/workshop-config.tsx'
 import { cn, getExercisePath, getExerciseStepPath } from '#app/utils/misc.tsx'
 import { useIsOnline } from '#app/utils/online.ts'
 import { usePresence, type User } from '#app/utils/presence.tsx'

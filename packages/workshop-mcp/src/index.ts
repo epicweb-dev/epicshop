@@ -4,9 +4,9 @@ import { getEnv } from '@epic-web/workshop-utils/init-env'
 import { McpServer } from '@modelcontextprotocol/sdk/server/mcp.js'
 import { StdioServerTransport } from '@modelcontextprotocol/sdk/server/stdio.js'
 import * as Sentry from '@sentry/node'
-import { initPrompts } from './prompts.js'
-import { initResources } from './resources.js'
-import { initPromptTools, initResourceTools, initTools } from './tools.js'
+import { initPrompts } from './prompts.ts'
+import { initResources } from './resources.ts'
+import { initPromptTools, initResourceTools, initTools } from './tools.ts'
 
 // Get environment variables
 const env = getEnv()
