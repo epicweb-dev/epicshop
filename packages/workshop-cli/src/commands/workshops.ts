@@ -165,8 +165,8 @@ async function fetchAvailableWorkshops(): Promise<GitHubRepo[]> {
 				)
 			}
 
-			const data = (await response.json()) as GitHubSearchResponse
-			return data.items
+			const data = (await response.json()) as Partial<GitHubSearchResponse>
+			return Array.isArray(data.items) ? data.items : []
 		},
 	})
 }
