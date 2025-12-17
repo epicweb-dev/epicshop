@@ -25,7 +25,7 @@ const StepContext = React.createContext<StepContextType | null>(null)
 function useStepContext() {
 	const context = React.useContext(StepContext)
 	if (!context) {
-		throw new Error('useStepContext must be used within a StepContext.Provider')
+		throw new Error('useStepContext must be used within a StepContextProvider')
 	}
 	return context
 }
@@ -37,11 +37,7 @@ function StepContextProvider({
 	children: React.ReactNode
 	inBrowserBrowserRef: React.RefObject<InBrowserBrowserRef | null>
 }) {
-	return (
-		<StepContext.Provider value={{ inBrowserBrowserRef }}>
-			{children}
-		</StepContext.Provider>
-	)
+	return <StepContext value={{ inBrowserBrowserRef }}>{children}</StepContext>
 }
 
 const stepMdxComponents = {

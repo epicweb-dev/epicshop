@@ -1,5 +1,6 @@
 import { type BaseExerciseStepApp } from '@epic-web/workshop-utils/apps.server'
 import { useState } from 'react'
+import { useSearchParams } from 'react-router'
 import { Icon } from '#app/components/icons'
 import {
 	InBrowserBrowser,
@@ -31,6 +32,7 @@ export function Preview({
 	inBrowserBrowserRef: React.RefObject<InBrowserBrowserRef | null>
 }) {
 	const requestInfo = useRequestInfo()
+	const [searchParams] = useSearchParams()
 	const theme = useTheme()
 	if (!appInfo) return <p>No app here. Sorry.</p>
 	const { isRunning, dev, name, portIsAvailable, title } = appInfo
@@ -72,7 +74,7 @@ export function Preview({
 				portIsAvailable={portIsAvailable}
 				port={dev.portNumber}
 				baseUrl={baseUrl}
-				initialRoute={dev.initialRoute}
+				initialRoute={searchParams.get('pathname') ?? dev.initialRoute}
 			/>
 		)
 	} else if (dev.type === 'browser') {

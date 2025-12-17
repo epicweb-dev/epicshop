@@ -141,7 +141,7 @@ function InBrowserBrowserForRealz({
 					</div>
 					<div className="bg-background text-foreground flex flex-1 items-center border-x p-3 leading-none">
 						<a href={iframeSrcUrl.toString()} target="_blank" rel="noreferrer">
-							{iframeSrcUrl.host}
+							{iframeSrcUrl.toString()}
 						</a>
 					</div>
 					<AppStopper name={name} />

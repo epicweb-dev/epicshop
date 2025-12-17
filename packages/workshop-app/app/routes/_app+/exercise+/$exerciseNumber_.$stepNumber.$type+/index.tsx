@@ -19,7 +19,6 @@ import {
 import * as Tabs from '@radix-ui/react-tabs'
 import { clsx } from 'clsx'
 import * as React from 'react'
-import { useRef } from 'react'
 import {
 	Link,
 	useNavigate,
@@ -28,6 +27,7 @@ import {
 	redirect,
 	type HeadersFunction,
 	type LoaderFunctionArgs,
+	useOutletContext,
 } from 'react-router'
 import { Diff } from '#app/components/diff.tsx'
 import { GeneralErrorBoundary } from '#app/components/error-boundary.tsx'
@@ -233,11 +233,13 @@ function withParam(
 export default function ExercisePartRoute({
 	loaderData,
 }: Route.ComponentProps) {
+	const { inBrowserBrowserRef } = useOutletContext<{
+		inBrowserBrowserRef: React.RefObject<InBrowserBrowserRef | null>
+	}>()
 	const workshopConfig = useWorkshopConfig()
 	const [searchParams] = useSearchParams()
 
 	const preview = searchParams.get('preview')
-	const inBrowserBrowserRef = useRef<InBrowserBrowserRef>(null)
 
 	const altDown = useAltDown()
 	const navigate = useNavigate()
