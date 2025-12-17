@@ -5,11 +5,8 @@
     "access": "public"
   },
   "type": "module",
-  "tshy": {
-    "project": "./tsconfig.build.json",
-    "dialects": [
-      "esm"
-    ],
+  "zshy": {
+    "cjs": false,
     "exports": {
       "./package.json": "./package.json",
       "./apps.server": "./src/apps.server.ts",
@@ -26,7 +23,7 @@
       "./modified-time.server": "./src/modified-time.server.ts",
       "./compile-mdx.server": "./src/compile-mdx.server.ts",
       "./git.server": "./src/git.server.ts",
-      "./iframe-sync": "./src/iframe-sync.ts",
+      "./iframe-sync": "./src/iframe-sync.tsx",
       "./init-env": "./src/init-env.ts",
       "./logger": "./src/logger.ts",
       "./playwright.server": "./src/playwright.server.ts",
@@ -42,154 +39,104 @@
   "exports": {
     "./package.json": "./package.json",
     "./apps.server": {
-      "import": {
-        "types": "./dist/esm/apps.server.d.ts",
-        "default": "./dist/esm/apps.server.js"
-      }
+      "types": "./dist/apps.server.d.ts",
+      "import": "./dist/apps.server.js"
     },
     "./diff.server": {
-      "import": {
-        "types": "./dist/esm/diff.server.d.ts",
-        "default": "./dist/esm/diff.server.js"
-      }
+      "types": "./dist/diff.server.d.ts",
+      "import": "./dist/diff.server.js"
     },
     "./env.server": {
-      "import": {
-        "types": "./dist/esm/env.server.d.ts",
-        "default": "./dist/esm/env.server.js"
-      }
+      "types": "./dist/env.server.d.ts",
+      "import": "./dist/env.server.js"
     },
     "./epic-api.server": {
-      "import": {
-        "types": "./dist/esm/epic-api.server.d.ts",
-        "default": "./dist/esm/epic-api.server.js"
-      }
+      "types": "./dist/epic-api.server.d.ts",
+      "import": "./dist/epic-api.server.js"
     },
     "./user.server": {
-      "import": {
-        "types": "./dist/esm/user.server.d.ts",
-        "default": "./dist/esm/user.server.js"
-      }
+      "types": "./dist/user.server.d.ts",
+      "import": "./dist/user.server.js"
     },
     "./cache.server": {
-      "import": {
-        "types": "./dist/esm/cache.server.d.ts",
-        "default": "./dist/esm/cache.server.js"
-      }
+      "types": "./dist/cache.server.d.ts",
+      "import": "./dist/cache.server.js"
     },
     "./config.server": {
-      "import": {
-        "types": "./dist/esm/config.server.d.ts",
-        "default": "./dist/esm/config.server.js"
-      }
+      "types": "./dist/config.server.d.ts",
+      "import": "./dist/config.server.js"
     },
     "./db.server": {
-      "import": {
-        "types": "./dist/esm/db.server.d.ts",
-        "default": "./dist/esm/db.server.js"
-      }
+      "types": "./dist/db.server.d.ts",
+      "import": "./dist/db.server.js"
     },
     "./data-storage.server": {
-      "import": {
-        "types": "./dist/esm/data-storage.server.d.ts",
-        "default": "./dist/esm/data-storage.server.js"
-      }
+      "types": "./dist/data-storage.server.d.ts",
+      "import": "./dist/data-storage.server.js"
     },
     "./launch-editor.server": {
-      "import": {
-        "types": "./dist/esm/launch-editor.server.d.ts",
-        "default": "./dist/esm/launch-editor.server.js"
-      }
+      "types": "./dist/launch-editor.server.d.ts",
+      "import": "./dist/launch-editor.server.js"
     },
     "./timing.server": {
-      "import": {
-        "types": "./dist/esm/timing.server.d.ts",
-        "default": "./dist/esm/timing.server.js"
-      }
+      "types": "./dist/timing.server.d.ts",
+      "import": "./dist/timing.server.js"
     },
     "./modified-time.server": {
-      "import": {
-        "types": "./dist/esm/modified-time.server.d.ts",
-        "default": "./dist/esm/modified-time.server.js"
-      }
+      "types": "./dist/modified-time.server.d.ts",
+      "import": "./dist/modified-time.server.js"
     },
     "./compile-mdx.server": {
-      "import": {
-        "types": "./dist/esm/compile-mdx.server.d.ts",
-        "default": "./dist/esm/compile-mdx.server.js"
-      }
+      "types": "./dist/compile-mdx.server.d.ts",
+      "import": "./dist/compile-mdx.server.js"
     },
     "./git.server": {
-      "import": {
-        "types": "./dist/esm/git.server.d.ts",
-        "default": "./dist/esm/git.server.js"
-      }
+      "types": "./dist/git.server.d.ts",
+      "import": "./dist/git.server.js"
     },
     "./iframe-sync": {
-      "import": {
-        "types": "./dist/esm/iframe-sync.d.ts",
-        "default": "./dist/esm/iframe-sync.js"
-      }
+      "types": "./dist/iframe-sync.d.ts",
+      "import": "./dist/iframe-sync.js"
     },
     "./init-env": {
-      "import": {
-        "types": "./dist/esm/init-env.d.ts",
-        "default": "./dist/esm/init-env.js"
-      }
+      "types": "./dist/init-env.d.ts",
+      "import": "./dist/init-env.js"
     },
     "./logger": {
-      "import": {
-        "types": "./dist/esm/logger.d.ts",
-        "default": "./dist/esm/logger.js"
-      }
+      "types": "./dist/logger.d.ts",
+      "import": "./dist/logger.js"
     },
     "./playwright.server": {
-      "import": {
-        "types": "./dist/esm/playwright.server.d.ts",
-        "default": "./dist/esm/playwright.server.js"
-      }
+      "types": "./dist/playwright.server.d.ts",
+      "import": "./dist/playwright.server.js"
     },
     "./notifications.server": {
-      "import": {
-        "types": "./dist/esm/notifications.server.d.ts",
-        "default": "./dist/esm/notifications.server.js"
-      }
+      "types": "./dist/notifications.server.d.ts",
+      "import": "./dist/notifications.server.js"
     },
     "./process-manager.server": {
-      "import": {
-        "types": "./dist/esm/process-manager.server.d.ts",
-        "default": "./dist/esm/process-manager.server.js"
-      }
+      "types": "./dist/process-manager.server.d.ts",
+      "import": "./dist/process-manager.server.js"
     },
     "./test": {
-      "import": {
-        "types": "./dist/esm/test.d.ts",
-        "default": "./dist/esm/test.js"
-      }
+      "types": "./dist/test.d.ts",
+      "import": "./dist/test.js"
     },
     "./request-context.server": {
-      "import": {
-        "types": "./dist/esm/request-context.server.d.ts",
-        "default": "./dist/esm/request-context.server.js"
-      }
+      "types": "./dist/request-context.server.d.ts",
+      "import": "./dist/request-context.server.js"
     },
     "./utils.server": {
-      "import": {
-        "types": "./dist/esm/utils.server.d.ts",
-        "default": "./dist/esm/utils.server.js"
-      }
+      "types": "./dist/utils.server.d.ts",
+      "import": "./dist/utils.server.js"
     },
     "./utils": {
-      "import": {
-        "types": "./dist/esm/utils.d.ts",
-        "default": "./dist/esm/utils.js"
-      }
+      "types": "./dist/utils.d.ts",
+      "import": "./dist/utils.js"
     },
     "./workshops.server": {
-      "import": {
-        "types": "./dist/esm/workshops.server.d.ts",
-        "default": "./dist/esm/workshops.server.js"
-      }
+      "types": "./dist/workshops.server.d.ts",
+      "import": "./dist/workshops.server.js"
     }
   },
   "files": [
@@ -199,7 +146,7 @@
     "test": "vitest run",
     "test:watch": "vitest",
     "typecheck": "tsc --noEmit",
-    "build": "tshy",
+    "build": "zshy",
     "build:watch": "nx watch --projects=@epic-web/workshop-utils -- nx run \\$NX_PROJECT_NAME:build"
   },
   "dependencies": {
@@ -262,7 +209,7 @@
     "@types/react": "^19.2.3",
     "@types/react-dom": "^19.2.2",
     "@types/shell-quote": "^1.7.5",
-    "tshy": "^3.0.3",
+    "zshy": "^0.3.0",
     "vitest": "^4.0.8"
   },
   "repository": {

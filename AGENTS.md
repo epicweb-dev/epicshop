@@ -25,7 +25,7 @@ installed in individual repositories which resemble the structure of the
 - typescript
 - vitest
 - vite
-- tshy
+- zshy
 - playwright
 - nx
 - react router

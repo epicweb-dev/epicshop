@@ -5,58 +5,47 @@
     "access": "public"
   },
   "type": "module",
-  "bin": {
-    "epicshop": "./dist/esm/cli.js"
-  },
-  "tshy": {
-    "project": "./tsconfig.build.json",
-    "dialects": [
-      "esm"
-    ],
+  "bin": "./cli.js",
+  "zshy": {
+    "cjs": false,
     "exports": {
       "./package.json": "./package.json",
-      "./warm": "./src/commands/warm.js",
-      "./start": "./src/commands/start.js",
-      "./update": "./src/commands/update.js",
-      "./workshops": "./src/commands/workshops.js"
-    }
+      "./warm": "./src/commands/warm.ts",
+      "./start": "./src/commands/start.ts",
+      "./update": "./src/commands/update.ts",
+      "./workshops": "./src/commands/workshops.ts"
+    },
+    "bin": "./src/cli.ts"
   },
   "exports": {
     "./package.json": "./package.json",
     "./warm": {
-      "import": {
-        "types": "./dist/esm/commands/warm.d.ts",
-        "default": "./dist/esm/commands/warm.js"
-      }
+      "types": "./dist/commands/warm.d.ts",
+      "import": "./dist/commands/warm.js"
     },
     "./start": {
-      "import": {
-        "types": "./dist/esm/commands/start.d.ts",
-        "default": "./dist/esm/commands/start.js"
-      }
+      "types": "./dist/commands/start.d.ts",
+      "import": "./dist/commands/start.js"
     },
     "./update": {
-      "import": {
-        "types": "./dist/esm/commands/update.d.ts",
-        "default": "./dist/esm/commands/update.js"
-      }
+      "types": "./dist/commands/update.d.ts",
+      "import": "./dist/commands/update.js"
     },
     "./workshops": {
-      "import": {
-        "types": "./dist/esm/commands/workshops.d.ts",
-        "default": "./dist/esm/commands/workshops.js"
-      }
+      "types": "./dist/commands/workshops.d.ts",
+      "import": "./dist/commands/workshops.js"
     }
   },
   "files": [
-    "dist"
+    "dist",
+    "cli.js"
   ],
   "scripts": {
     "test": "vitest run",
     "test:watch": "vitest",
     "typecheck": "tsc --noEmit",
     "lint": "eslint --cache --cache-location ./node_modules/.cache/eslint .",
-    "build": "tshy",
+    "build": "zshy",
     "build:watch": "nx watch --projects=epicshop -- nx run \\$NX_PROJECT_NAME:build"
   },
   "dependencies": {
@@ -75,7 +64,7 @@
     "@epic-web/config": "^1.21.3",
     "@types/node": "^24.10.0",
     "@types/yargs": "^17.0.34",
-    "tshy": "^3.0.3",
+    "zshy": "^0.3.0",
     "vitest": "^4.0.8"
   },
   "repository": {

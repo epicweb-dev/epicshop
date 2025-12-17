@@ -1,4 +1,9 @@
 {
 	"include": ["./**/*.ts", "./**/*.tsx", "./reset.d.ts"],
-	"extends": ["./tsconfig.build.json"]
+	"extends": ["@epic-web/config/typescript"],
+	"compilerOptions": {
+		"resolveJsonModule": true,
+		"esModuleInterop": true
+	},
+	"exclude": ["**/*.test.ts", "**/*.test.tsx", "dist"]
 }

@@ -27,7 +27,6 @@ import {
 	updateProgress,
 } from '@epic-web/workshop-utils/epic-api.server'
 import { launchEditor } from '@epic-web/workshop-utils/launch-editor.server'
-// @ts-ignore 🤷‍♂️ tshy doesn't like this
 import { createUIResource } from '@mcp-ui/server'
 import { type McpServer } from '@modelcontextprotocol/sdk/server/mcp.js'
 import {

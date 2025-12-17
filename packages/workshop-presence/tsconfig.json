@@ -2,11 +2,14 @@
 	"include": ["./**/*.ts", "./**/*.tsx"],
 	"extends": ["@epic-web/config/typescript"],
 	"compilerOptions": {
+		"resolveJsonModule": true,
+		"esModuleInterop": true,
 		"paths": {
 			"@epic-web/workshop-utils/*": [
 				"../workshop-utils/src/*.ts",
 				"../workshop-utils/src/*.tsx"
 			]
 		}
-	}
+	},
+	"exclude": ["dist"]
 }

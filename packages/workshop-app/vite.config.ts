@@ -15,13 +15,13 @@ const __filename = fileURLToPath(import.meta.url)
 const __dirname = path.dirname(__filename)
 const here = (...p: Array<string>) => path.join(__dirname, ...p)
 
-async function makeTshyAliases(moduleName: string, folderName: string) {
+async function makeSourceAliases(moduleName: string, folderName: string) {
 	const filePath = here('..', folderName, 'package.json')
 	const pkg = JSON.parse(await readFile(filePath, 'utf-8')) as {
-		tshy: { exports: Record<string, string> }
+		zshy: { exports: Record<string, string> }
 	}
 
-	return Object.entries(pkg.tshy.exports).reduce<Record<string, string>>(
+	return Object.entries(pkg.zshy.exports).reduce<Record<string, string>>(
 		(acc, [key, value]) => {
 			if (typeof value !== 'string') return acc
 			const importString = path.join(moduleName, key).replace(/\\/g, '/')
@@ -33,8 +33,8 @@ async function makeTshyAliases(moduleName: string, folderName: string) {
 }
 
 const aliases = {
-	...(await makeTshyAliases('@epic-web/workshop-utils', 'workshop-utils')),
-	...(await makeTshyAliases(
+	...(await makeSourceAliases('@epic-web/workshop-utils', 'workshop-utils')),
+	...(await makeSourceAliases(
 		'@epic-web/workshop-presence',
 		'workshop-presence',
 	)),
