@@ -8,7 +8,7 @@ const Sentry = await import('@sentry/react-router').catch((error) => {
 	return null
 })
 
-import { useEffect } from 'react'
+import { useEffect, useState } from 'react'
 import {
 	isRouteErrorResponse,
 	useParams,
@@ -85,6 +85,7 @@ export function GeneralErrorBoundary({
 	statusHandlers?: Record<number, StatusHandler>
 	unexpectedErrorHandler?: (error: unknown) => React.ReactNode | null
 }) {
+	const [isServerDown, setIsServerDown] = useState(false)
 	const error = useRouteError()
 	const params = useParams()
 	const isResponse = isRouteErrorResponse(error)
@@ -100,12 +101,31 @@ export function GeneralErrorBoundary({
 		}
 	}, [error, isResponse])
 
+	useEffect(() => {
+		// if error is "Failed to fetch", trigger a fetch to '/resources/healthcheck' and if it fails, show a message to the user that the server is down
+		if (error instanceof Error && error.message.includes('Failed to fetch')) {
+			fetch('/resources/healthcheck').catch(() => {
+				setIsServerDown(true)
+			})
+		}
+	}, [error])
+
 	if (typeof document !== 'undefined') {
 		console.error(error)
 	}
 
 	return (
 		<div className={className}>
+			{isServerDown ? (
+				<div className="flex flex-col items-center justify-center gap-6">
+					<h1 className="text-h2 font-bold">Server is down</h1>
+					<p className="text-body-md">
+						{ENV.EPICSHOP_DEPLOYED
+							? "Sorry, we're having a temporary problem. Please try again later."
+							: 'Your server is not running. Please restart the workshop app.'}
+					</p>
+				</div>
+			) : null}
 			{isRouteErrorResponse(error)
 				? (statusHandlers?.[error.status] ?? defaultStatusHandler)({
 						error,
