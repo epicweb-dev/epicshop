@@ -147,8 +147,7 @@ async function fetchAvailableWorkshops(): Promise<GitHubRepo[]> {
 		ttl: 1000 * 60 * 15, // 15 minutes
 		swr: 1000 * 60 * 60 * 6, // 6 hours stale-while-revalidate
 		async getFreshValue() {
-			// Note: `archived:false` is supported by GitHub search, but we also filter
-			// defensively below in case the API behavior changes.
+			// Note: `archived:false` is supported by GitHub search.
 			const url = `https://api.github.com/search/repositories?q=topic:workshop+org:${GITHUB_ORG}+archived:false&sort=stars&order=desc`
 
 			const response = await fetch(url, {
@@ -167,7 +166,7 @@ async function fetchAvailableWorkshops(): Promise<GitHubRepo[]> {
 			}
 
 			const data = (await response.json()) as GitHubSearchResponse
-			return data.items.filter((repo) => !repo.archived)
+			return data.items
 		},
 	})
 }
