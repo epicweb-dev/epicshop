@@ -2,6 +2,8 @@
 	"include": ["./**/*.ts", "./**/*.tsx"],
 	"extends": ["@epic-web/config/typescript"],
 	"compilerOptions": {
+		"rootDir": "./src",
+		"outDir": "./dist",
 		"resolveJsonModule": true,
 		"esModuleInterop": true,
 		"paths": {
