@@ -2130,13 +2130,22 @@ type CommandResult = {
 	error?: Error
 }
 
+function resolveCliCommand(command: string): string {
+	// On Windows, package manager binaries are typically shimmed as *.cmd files.
+	// Spawning "npm" directly can fail with ENOENT even though "npm.cmd" exists.
+	if (process.platform === 'win32' && (command === 'npm' || command === 'npx')) {
+		return `${command}.cmd`
+	}
+	return command
+}
+
 function runCommand(
 	command: string,
 	args: string[],
 	options: { cwd: string; silent?: boolean },
 ): Promise<CommandResult> {
 	return new Promise((resolve) => {
-		const child = spawn(command, args, {
+		const child = spawn(resolveCliCommand(command), args, {
 			cwd: options.cwd,
 			stdio: options.silent ? 'pipe' : 'inherit',
 		})
@@ -2164,7 +2173,7 @@ function runCommandInteractive(
 	options: { cwd: string },
 ): Promise<CommandResult> {
 	return new Promise((resolve) => {
-		const child = spawn(command, args, {
+		const child = spawn(resolveCliCommand(command), args, {
 			cwd: options.cwd,
 			stdio: 'inherit',
 		})
