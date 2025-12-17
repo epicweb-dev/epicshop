@@ -1,5 +1,5 @@
 {
-	"include": ["./**/*.ts", "./**/*.tsx"],
+	"include": ["./src/**/*.ts", "./src/**/*.tsx"],
 	"extends": ["@epic-web/config/typescript"],
 	"compilerOptions": {
 		"rootDir": "./src",
