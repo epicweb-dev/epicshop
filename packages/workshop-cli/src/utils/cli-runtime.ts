@@ -23,7 +23,10 @@ type PromptGuardOptions = {
 	hints?: string[]
 }
 
-export function assertCanPrompt({ reason, hints = [] }: PromptGuardOptions): void {
+export function assertCanPrompt({
+	reason,
+	hints = [],
+}: PromptGuardOptions): void {
 	if (isCiEnvironment()) {
 		throw new Error(
 			[
@@ -53,4 +56,3 @@ function formatHints(hints: string[]): string[] {
 		...hints.map((h) => `- ${h}`),
 	]
 }
-

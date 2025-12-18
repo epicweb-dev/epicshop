@@ -1427,8 +1427,7 @@ export async function config(
  * Check if the workshops directory is configured, and run onboarding if not
  * Call this at the start of any command that requires the config to be set
  */
-export async function ensureConfigured(
-): Promise<boolean> {
+export async function ensureConfigured(): Promise<boolean> {
 	const { isReposDirectoryConfigured } = await import(
 		'@epic-web/workshop-utils/workshops.server'
 	)
