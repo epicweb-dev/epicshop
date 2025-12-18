@@ -7,7 +7,7 @@
 	},
 	"dependencies": {
 		"execa": "^9.5.2",
-		"globby": "^14.1.0"
+		"globby": "^14.1.0",
+		"minimatch": "^10.1.1"
 	}
 }
-

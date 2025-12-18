@@ -3,6 +3,7 @@ import path from 'path'
 import { fileURLToPath } from 'url'
 import { execa } from 'execa'
 import { globby } from 'globby'
+import { minimatch } from 'minimatch'
 
 const __filename = fileURLToPath(import.meta.url)
 const __dirname = path.dirname(__filename)
@@ -150,6 +151,88 @@ async function pullRebaseWithFallback(cwd) {
 }
 
 /**
+ * Get workspace patterns from a package.json file
+ */
+function getWorkspacePatterns(pkgJson) {
+	const workspaces = pkgJson.workspaces
+	if (!workspaces) return []
+	// Handle both array format and object format with packages property
+	if (Array.isArray(workspaces)) {
+		return workspaces
+	}
+	if (workspaces.packages && Array.isArray(workspaces.packages)) {
+		return workspaces.packages
+	}
+	return []
+}
+
+/**
+ * Check if a package directory matches a workspace pattern
+ */
+function matchesWorkspacePattern(pkgDir, pattern, baseDir) {
+	// Get relative path from baseDir to pkgDir
+	const relativePath = path.relative(baseDir, pkgDir).replace(/\\/g, '/')
+
+	// Use minimatch to check if the relative path matches the pattern
+	return minimatch(relativePath, pattern)
+}
+
+/**
+ * Filter out packages that are included in another package's workspace
+ */
+async function filterWorkspacePackages(changedPkgs, workshopDir) {
+	const workspaceMap = new Map()
+
+	// Read all changed package.json files and extract workspace configs
+	for (const pkg of changedPkgs) {
+		const pkgPath = path.join(workshopDir, pkg)
+		const pkgDir = path.dirname(pkgPath)
+		try {
+			const contents = await fs.readFile(pkgPath, 'utf8')
+			const pkgJson = JSON.parse(contents)
+			const patterns = getWorkspacePatterns(pkgJson)
+			if (patterns.length > 0) {
+				workspaceMap.set(pkg, { patterns, pkgDir })
+			}
+		} catch (error) {
+			// If we can't read/parse, skip workspace checking for this package
+			console.warn(
+				`⚠️  Could not read ${pkg} for workspace checking:`,
+				error.message,
+			)
+		}
+	}
+
+	// Filter out packages that match another package's workspace pattern
+	const topLevelPkgs = changedPkgs.filter((pkg) => {
+		const pkgPath = path.join(workshopDir, pkg)
+		const pkgDir = path.dirname(pkgPath)
+
+		// Check if this package matches any other package's workspace pattern
+		for (const [
+			workspacePkg,
+			{ patterns, pkgDir: workspaceDir },
+		] of workspaceMap) {
+			// Don't exclude the workspace package itself
+			if (workspacePkg === pkg) continue
+
+			// Check if this package's directory matches any of the workspace patterns
+			if (
+				patterns.some((pattern) =>
+					matchesWorkspacePattern(pkgDir, pattern, workspaceDir),
+				)
+			) {
+				return false // Exclude this package
+			}
+		}
+
+		return true // Include this package
+	})
+
+	return topLevelPkgs
+}
+
+/**
  * Update package.json files in a directory
  */
 async function updatePackageJsonFiles(workshopDir, version) {
@@ -159,6 +242,7 @@ async function updatePackageJsonFiles(workshopDir, version) {
 	})
 
 	let changed = false
+	const changedPkgs = []
 
 	for (const pkg of pkgs) {
 		const pkgPath = path.join(workshopDir, pkg)
@@ -170,10 +254,11 @@ async function updatePackageJsonFiles(workshopDir, version) {
 		if (contents !== newContents) {
 			await fs.writeFile(pkgPath, newContents, 'utf8')
 			changed = true
+			changedPkgs.push(pkg)
 		}
 	}
 
-	return { changed, pkgs }
+	return { changed, pkgs, changedPkgs }
 }
 
 /**
@@ -221,19 +306,31 @@ async function updateWorkshopRepo(repo, version) {
 
 		// Update package.json files
 		console.log(`📝 ${repoName} - updating package.json files`)
-		const { changed, pkgs } = await updatePackageJsonFiles(tempDir, version)
+		const { changed, pkgs, changedPkgs } = await updatePackageJsonFiles(
+			tempDir,
+			version,
+		)
 
 		if (!changed) {
 			console.log(`🟢 ${repoName} - already up to date`)
 			return { repo: repoName, status: 'up-to-date' }
 		}
 
-		// Run npm install to update package-lock.json
-		console.log(`📦 ${repoName} - running npm install`)
-		await execa('npm', ['install', '--package-lock-only', '--ignore-scripts'], {
-			cwd: tempDir,
-			env: getGitEnv(),
-		})
+		// Filter out packages that are included in another package's workspace
+		const topLevelPkgs = await filterWorkspacePackages(changedPkgs, tempDir)
+
+		// Run npm install in each directory where a package.json changed
+		for (const pkg of topLevelPkgs) {
+			const pkgDir = path.dirname(pkg)
+			const installDir = pkgDir === '.' ? tempDir : path.join(tempDir, pkgDir)
+			console.log(
+				`📦 ${repoName} - running npm install in ${pkgDir === '.' ? 'root' : pkgDir}`,
+			)
+			await execa('npm', ['install', '--ignore-scripts'], {
+				cwd: installDir,
+				env: getGitEnv(),
+			})
+		}
 
 		// Find package-lock.json files
 		const pkgLocks = await globby('**/package-lock.json', {
