@@ -5,7 +5,7 @@
     "access": "public"
   },
   "type": "module",
-  "bin": "./dist/cli.js",
+  "bin": "./cli.js",
   "zshy": {
     "cjs": false,
     "exports": {
