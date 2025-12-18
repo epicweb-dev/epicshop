@@ -5,7 +5,6 @@ import {
 	type Message,
 	type User,
 } from '@epic-web/workshop-presence/presence'
-import { usePartySocket } from 'partysocket/react'
 import {
 	createContext,
 	useCallback,
@@ -103,6 +102,149 @@ function useLoggedInProductHosts() {
 	return data?.loggedInProductHosts ?? []
 }
 
+type ReconnectableWebSocketOptions = {
+	url: string
+	onMessage: (event: MessageEvent) => void
+	getDataToSendOnOpen?: () => string | null
+	onOpen?: (event: Event) => void
+	onClose?: (event: CloseEvent) => void
+}
+
+function getBackoffDelayMs(attempt: number) {
+	// Exponential backoff with jitter. Fast initial retry, capped.
+	const baseDelayMs = 250
+	const maxDelayMs = 10_000
+	const expDelay = Math.min(maxDelayMs, baseDelayMs * 2 ** attempt)
+	const jitterMultiplier = 0.5 + Math.random() * 0.5 // 0.5x .. 1.0x
+	return Math.round(expDelay * jitterMultiplier)
+}
+
+function useReconnectableWebSocket({
+	url,
+	onMessage,
+	getDataToSendOnOpen,
+	onOpen,
+	onClose,
+}: ReconnectableWebSocketOptions) {
+	const wsRef = useRef<WebSocket | null>(null)
+	const reconnectTimeoutRef = useRef<number | null>(null)
+	const reconnectAttemptRef = useRef(0)
+	const mountedRef = useRef(false)
+
+	// Track latest handlers without forcing reconnections.
+	const onMessageRef = useRef(onMessage)
+	const getDataToSendOnOpenRef = useRef(getDataToSendOnOpen)
+	const onOpenRef = useRef(onOpen)
+	const onCloseRef = useRef(onClose)
+	useEffect(() => {
+		onMessageRef.current = onMessage
+		getDataToSendOnOpenRef.current = getDataToSendOnOpen
+		onOpenRef.current = onOpen
+		onCloseRef.current = onClose
+	}, [onMessage, getDataToSendOnOpen, onOpen, onClose])
+
+	const connect = useCallback(() => {
+		// Don’t connect during SSR and don’t reconnect after unmount.
+		if (typeof window === 'undefined') return
+		if (!mountedRef.current) return
+
+		if (reconnectTimeoutRef.current != null) {
+			window.clearTimeout(reconnectTimeoutRef.current)
+			reconnectTimeoutRef.current = null
+		}
+
+		// Close any existing socket before creating a new one.
+		try {
+			// Use a normal close code so we don't trigger our reconnect handler.
+			wsRef.current?.close(1000, 'reconnect')
+		} catch {
+			// ignore
+		}
+
+		let ws: WebSocket
+		try {
+			ws = new WebSocket(url)
+		} catch {
+			// If construction fails (bad URL, blocked, etc.), retry.
+			const delay = getBackoffDelayMs(reconnectAttemptRef.current++)
+			reconnectTimeoutRef.current = window.setTimeout(() => connect(), delay)
+			return
+		}
+
+		wsRef.current = ws
+
+		ws.onopen = (event) => {
+			reconnectAttemptRef.current = 0
+			const dataToSend = getDataToSendOnOpenRef.current?.()
+			if (dataToSend) {
+				try {
+					ws.send(dataToSend)
+				} catch {
+					// ignore
+				}
+			}
+			onOpenRef.current?.(event)
+		}
+		ws.onmessage = (event) => {
+			onMessageRef.current(event)
+		}
+		ws.onclose = (event) => {
+			onCloseRef.current?.(event)
+
+			// If we intentionally closed (1000), don’t reconnect.
+			// For redeploys (often 1006/1012) or transient issues, reconnect.
+			if (!mountedRef.current) return
+			if (event.code === 1000) return
+
+			const delay = getBackoffDelayMs(reconnectAttemptRef.current++)
+			reconnectTimeoutRef.current = window.setTimeout(() => connect(), delay)
+		}
+		ws.onerror = () => {
+			// Some browsers only fire onclose after onerror, but some don’t.
+			// If we’re not open, force a close to unify the reconnect path.
+			if (!mountedRef.current) return
+			if (ws.readyState === WebSocket.OPEN) return
+			try {
+				ws.close()
+			} catch {
+				// ignore
+			}
+		}
+	}, [url])
+
+	useEffect(() => {
+		mountedRef.current = true
+		connect()
+		return () => {
+			mountedRef.current = false
+			if (reconnectTimeoutRef.current != null) {
+				window.clearTimeout(reconnectTimeoutRef.current)
+				reconnectTimeoutRef.current = null
+			}
+			try {
+				wsRef.current?.close(1000, 'unmount')
+			} catch {
+				// ignore
+			}
+			wsRef.current = null
+		}
+	}, [connect])
+
+	const send = useCallback((data: string) => {
+		const ws = wsRef.current
+		if (!ws) return false
+		if (ws.readyState !== WebSocket.OPEN) return false
+		try {
+			ws.send(data)
+			return true
+		} catch {
+			return false
+		}
+	}, [])
+
+	return { send }
+}
+
 function useUsersLocation() {
 	const workshopTitle = useOptionalWorkshopTitle()
 	const requestInfo = useRequestInfo()
@@ -142,10 +284,25 @@ function usePresenceSocket(user?: User | null) {
 		}
 	}, 2000)
 
-	const socket = usePartySocket({
-		host: new URL(partykitBaseUrl).host,
-		room: partykitRoom,
+	const wsUrl = (() => {
+		const base = new URL(partykitBaseUrl)
+		// partykitBaseUrl is https://.../parties/main/<room>
+		// Convert it to the WS endpoint while preserving host + path.
+		base.protocol = base.protocol === 'https:' ? 'wss:' : 'ws:'
+		// Ensure the path ends at /parties/main/<room>
+		base.pathname = `/parties/main/${partykitRoom}`
+		base.search = ''
+		base.hash = ''
+		return base.toString()
+	})()
+
+	// We want to re-announce the latest presence message on every (re)connect,
+	// especially after presence server redeploys.
+	const latestMessageJsonRef = useRef<string | null>(null)
+	const { send } = useReconnectableWebSocket({
+		url: wsUrl,
 		onMessage: handleMessage,
+		getDataToSendOnOpen: () => latestMessageJsonRef.current,
 	})
 
 	let message: Message | null = null
@@ -183,8 +340,9 @@ function usePresenceSocket(user?: User | null) {
 
 	const messageJson = message ? JSON.stringify(message) : null
 	useEffect(() => {
-		if (messageJson) socket.send(messageJson)
-	}, [messageJson, socket])
+		latestMessageJsonRef.current = messageJson
+		if (messageJson) send(messageJson)
+	}, [messageJson, send])
 
 	const scoredUsers = scoreUsers(
 		{ id: userId?.id, location: usersLocation },
