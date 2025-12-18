@@ -157,11 +157,46 @@ const cli = yargs(args)
 		'init',
 		'Initialize epicshop and start the tutorial (first-time setup)',
 		(yargs: Argv) => {
-			return yargs.example('$0 init', 'Run the first-time setup wizard')
+			return yargs
+				.option('repo-dir', {
+					type: 'string',
+					description:
+						'Set the workshops directory (skips interactive prompts)',
+				})
+				.option('skip-tutorial', {
+					type: 'boolean',
+					description: 'Skip tutorial setup (for CI/automation)',
+					default: false,
+				})
+				.option('silent', {
+					alias: 's',
+					type: 'boolean',
+					description: 'Run without output logs',
+					default: false,
+				})
+				.example('$0 init', 'Run the first-time setup wizard')
+				.example(
+					'$0 init --repo-dir ./workshops',
+					'Initialize with custom directory (non-interactive)',
+				)
+				.example(
+					'$0 init --repo-dir ./workshops --skip-tutorial',
+					'Initialize for CI without tutorial',
+				)
 		},
-		async () => {
+		async (
+			argv: ArgumentsCamelCase<{
+				repoDir?: string
+				skipTutorial?: boolean
+				silent?: boolean
+			}>,
+		) => {
 			const { onboarding } = await import('./commands/workshops.js')
-			const result = await onboarding()
+			const result = await onboarding({
+				repoDir: argv.repoDir,
+				skipTutorial: argv.skipTutorial,
+				silent: argv.silent,
+			})
 			if (!result.success) {
 				process.exit(1)
 			}

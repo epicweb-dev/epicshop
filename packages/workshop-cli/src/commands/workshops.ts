@@ -481,8 +481,8 @@ export async function add(options: AddOptions): Promise<WorkshopsResult> {
 		}
 
 		// Ensure config is set up first
-		if (!(await ensureConfigured())) {
-			return { success: false, message: 'Setup cancelled' }
+		if (!(await ensureConfigured({ silent }))) {
+			return { success: false, message: 'Setup cancelled or not configured' }
 		}
 
 		const { getReposDirectory, workshopExists } = await import(
@@ -594,8 +594,8 @@ export async function list({
 }: { silent?: boolean } = {}): Promise<WorkshopsResult> {
 	try {
 		// Ensure config is set up first
-		if (!(await ensureConfigured())) {
-			return { success: false, message: 'Setup cancelled' }
+		if (!(await ensureConfigured({ silent }))) {
+			return { success: false, message: 'Setup cancelled or not configured' }
 		}
 
 		const { listWorkshops, getReposDirectory } = await import(
@@ -760,8 +760,8 @@ export async function remove({
 			}
 		} else {
 			// Ensure config is set up first for interactive selection
-			if (!(await ensureConfigured())) {
-				return { success: false, message: 'Setup cancelled' }
+			if (!(await ensureConfigured({ silent }))) {
+				return { success: false, message: 'Setup cancelled or not configured' }
 			}
 
 			// No workshop specified, prompt for selection
@@ -873,8 +873,8 @@ export async function startWorkshop(
 
 	try {
 		// Ensure config is set up first
-		if (!(await ensureConfigured())) {
-			return { success: false, message: 'Setup cancelled' }
+		if (!(await ensureConfigured({ silent }))) {
+			return { success: false, message: 'Setup cancelled or not configured' }
 		}
 
 		const { listWorkshops, getWorkshop } = await import(
@@ -1040,8 +1040,8 @@ export async function openWorkshop(
 			}
 		} else {
 			// Ensure config is set up first for interactive selection
-			if (!(await ensureConfigured())) {
-				return { success: false, message: 'Setup cancelled' }
+			if (!(await ensureConfigured({ silent }))) {
+				return { success: false, message: 'Setup cancelled or not configured' }
 			}
 			// No workshop specified, show selection
 			const workshops = await listWorkshops()
@@ -1363,8 +1363,13 @@ export async function config(
 /**
  * Check if the workshops directory is configured, and run onboarding if not
  * Call this at the start of any command that requires the config to be set
+ *
+ * In silent mode, fails if not configured (no interactive prompts)
  */
-export async function ensureConfigured(): Promise<boolean> {
+export async function ensureConfigured(
+	options: { silent?: boolean } = {},
+): Promise<boolean> {
+	const { silent = false } = options
 	const { isReposDirectoryConfigured } = await import(
 		'@epic-web/workshop-utils/workshops.server'
 	)
@@ -1373,15 +1378,36 @@ export async function ensureConfigured(): Promise<boolean> {
 		return true
 	}
 
+	// In silent mode, fail if not configured
+	if (silent) {
+		console.error(
+			chalk.red(
+				`❌ Workshops directory not configured. Run 'epicshop init --repo-dir <path>' first.`,
+			),
+		)
+		return false
+	}
+
 	// Not configured, run onboarding
 	const result = await onboarding()
 	return result.success
 }
 
+export type OnboardingOptions = {
+	repoDir?: string
+	skipTutorial?: boolean
+	silent?: boolean
+}
+
 /**
  * Run the onboarding flow for new users
+ * If repoDir is provided, runs in non-interactive mode (for CI/automation)
  */
-export async function onboarding(): Promise<WorkshopsResult> {
+export async function onboarding(
+	options: OnboardingOptions = {},
+): Promise<WorkshopsResult> {
+	const { repoDir, skipTutorial = false, silent = false } = options
+
 	try {
 		const {
 			isReposDirectoryConfigured,
@@ -1389,10 +1415,33 @@ export async function onboarding(): Promise<WorkshopsResult> {
 			setReposDirectory,
 		} = await import('@epic-web/workshop-utils/workshops.server')
 
-		// Check if already configured
+		// Non-interactive mode: just set the directory and optionally skip tutorial
+		if (repoDir) {
+			const resolvedPath = path.resolve(repoDir)
+			await setReposDirectory(resolvedPath)
+			await fs.promises.mkdir(resolvedPath, { recursive: true })
+
+			if (!silent) {
+				console.log(
+					chalk.green(
+						`✅ Workshops directory set to: ${chalk.bold(resolvedPath)}`,
+					),
+				)
+			}
+
+			if (skipTutorial) {
+				return { success: true, message: `Initialized at ${resolvedPath}` }
+			}
+
+			// In non-interactive mode without skipTutorial, still try to set up tutorial
+			// but don't prompt for anything
+			return await ensureTutorialAndStart({ silent })
+		}
+
+		// Check if already configured (interactive mode)
 		if (await isReposDirectoryConfigured()) {
 			// Already configured, check for tutorial
-			return await ensureTutorialAndStart()
+			return await ensureTutorialAndStart({ silent })
 		}
 
 		// Welcome message from Kody
@@ -1433,9 +1482,9 @@ export async function onboarding(): Promise<WorkshopsResult> {
 			default: true,
 		})
 
-		let reposDir: string
+		let reposDirPath: string
 		if (useDefault) {
-			reposDir = defaultDir
+			reposDirPath = defaultDir
 		} else {
 			console.log()
 			console.log(
@@ -1446,11 +1495,11 @@ export async function onboarding(): Promise<WorkshopsResult> {
 			console.log(
 				chalk.gray('   Type to search, use arrow keys to navigate.\n'),
 			)
-			reposDir = await browseDirectory(path.dirname(defaultDir))
+			reposDirPath = await browseDirectory(path.dirname(defaultDir))
 		}
 
 		// Resolve and save the directory
-		const resolvedPath = path.resolve(reposDir)
+		const resolvedPath = path.resolve(reposDirPath)
 		await setReposDirectory(resolvedPath)
 
 		console.log()
@@ -1469,13 +1518,15 @@ export async function onboarding(): Promise<WorkshopsResult> {
 		await promptAndSetupAccessibleWorkshops()
 
 		// Now check for tutorial and start it
-		return await ensureTutorialAndStart()
+		return await ensureTutorialAndStart({ silent })
 	} catch (error) {
 		if ((error as Error).message === 'USER_QUIT') {
 			return { success: false, message: 'User quit' }
 		}
 		const message = error instanceof Error ? error.message : String(error)
-		console.error(chalk.red(`❌ ${message}`))
+		if (!silent) {
+			console.error(chalk.red(`❌ ${message}`))
+		}
 		return {
 			success: false,
 			message,
@@ -1779,13 +1830,21 @@ async function promptAndSetupAccessibleWorkshops(): Promise<void> {
 
 /**
  * Ensure the tutorial workshop exists and start it
+ * In silent mode, skips prompts and just returns success after setup
  */
-async function ensureTutorialAndStart(): Promise<WorkshopsResult> {
+async function ensureTutorialAndStart(
+	options: { silent?: boolean } = {},
+): Promise<WorkshopsResult> {
+	const { silent = false } = options
 	const { workshopExists, getReposDirectory, getWorkshop } = await import(
 		'@epic-web/workshop-utils/workshops.server'
 	)
 
 	async function promptAndOpenTutorial(): Promise<WorkshopsResult> {
+		if (silent) {
+			// In silent mode, skip opening editor
+			return { success: true, message: 'Skipped opening editor (silent mode)' }
+		}
 		console.log()
 		console.log(
 			chalk.cyan(
@@ -1807,6 +1866,7 @@ async function ensureTutorialAndStart(): Promise<WorkshopsResult> {
 	}
 
 	async function promptToStartTutorial(workshopTitle: string): Promise<void> {
+		if (silent) return
 		console.log()
 		console.log(
 			chalk.cyan(
@@ -1830,6 +1890,11 @@ async function ensureTutorialAndStart(): Promise<WorkshopsResult> {
 
 	// Check if tutorial already exists
 	if (await workshopExists(TUTORIAL_REPO)) {
+		if (silent) {
+			// In silent mode, just return success - tutorial exists
+			return { success: true, message: 'Tutorial already exists' }
+		}
+
 		// Tutorial already added, open it in the editor before starting
 		const openResult = await promptAndOpenTutorial()
 		if (!openResult.success) {
@@ -1848,25 +1913,27 @@ async function ensureTutorialAndStart(): Promise<WorkshopsResult> {
 	const workshopPath = path.join(reposDir, TUTORIAL_REPO)
 	const repoUrl = `https://github.com/${GITHUB_ORG}/${TUTORIAL_REPO}.git`
 
-	console.log()
-	console.log(
-		chalk.cyan("🐨 Now let's get you started with the epicshop tutorial."),
-	)
-	console.log(
-		chalk.cyan(
-			"   I'll clone the tutorial repository and set it up for you.\n",
-		),
-	)
+	if (!silent) {
+		console.log()
+		console.log(
+			chalk.cyan("🐨 Now let's get you started with the epicshop tutorial."),
+		)
+		console.log(
+			chalk.cyan(
+				"   I'll clone the tutorial repository and set it up for you.\n",
+			),
+		)
 
-	// Show the command we're effectively running
-	const addCommand = `npx epicshop add ${TUTORIAL_REPO}`
-	console.log(chalk.gray('   Running:'))
-	console.log(chalk.white.bold(`   ${addCommand}\n`))
+		// Show the command we're effectively running
+		const addCommand = `npx epicshop add ${TUTORIAL_REPO}`
+		console.log(chalk.gray('   Running:'))
+		console.log(chalk.white.bold(`   ${addCommand}\n`))
 
-	// Wait for user to press Enter to proceed
-	await waitForGo()
+		// Wait for user to press Enter to proceed
+		await waitForGo()
 
-	console.log(chalk.cyan(`\n📦 Cloning ${TUTORIAL_REPO}...`))
+		console.log(chalk.cyan(`\n📦 Cloning ${TUTORIAL_REPO}...`))
+	}
 
 	// Clone the repository
 	const cloneResult = await runCommand(
@@ -1874,14 +1941,16 @@ async function ensureTutorialAndStart(): Promise<WorkshopsResult> {
 		['clone', repoUrl, workshopPath],
 		{
 			cwd: reposDir,
-			silent: false,
+			silent,
 		},
 	)
 
 	if (!cloneResult.success) {
-		console.error(
-			chalk.red(`❌ Failed to clone repository: ${cloneResult.message}`),
-		)
+		if (!silent) {
+			console.error(
+				chalk.red(`❌ Failed to clone repository: ${cloneResult.message}`),
+			)
+		}
 		return {
 			success: false,
 			message: `Failed to clone repository: ${cloneResult.message}`,
@@ -1889,23 +1958,29 @@ async function ensureTutorialAndStart(): Promise<WorkshopsResult> {
 		}
 	}
 
-	console.log(chalk.cyan(`\n🔧 Running npm run setup...\n`))
+	if (!silent) {
+		console.log(chalk.cyan(`\n🔧 Running npm run setup...\n`))
+	}
 
 	// Run npm run setup
 	const setupResult = await runCommand('npm', ['run', 'setup'], {
 		cwd: workshopPath,
-		silent: false,
+		silent,
 	})
 
 	if (!setupResult.success) {
 		// Clean up on failure
-		console.log(chalk.yellow(`🧹 Cleaning up cloned directory...`))
+		if (!silent) {
+			console.log(chalk.yellow(`🧹 Cleaning up cloned directory...`))
+		}
 		try {
 			await fs.promises.rm(workshopPath, { recursive: true, force: true })
 		} catch {
 			// Ignore cleanup errors
 		}
-		console.error(chalk.red(`❌ Failed to run setup: ${setupResult.message}`))
+		if (!silent) {
+			console.error(chalk.red(`❌ Failed to run setup: ${setupResult.message}`))
+		}
 		return {
 			success: false,
 			message: `Failed to run setup: ${setupResult.message}`,
@@ -1916,6 +1991,11 @@ async function ensureTutorialAndStart(): Promise<WorkshopsResult> {
 	// Get the workshop info (now discoverable since it has package.json with epicshop)
 	const workshop = await getWorkshop(TUTORIAL_REPO)
 	const workshopTitle = workshop?.title || TUTORIAL_REPO
+
+	if (silent) {
+		// In silent mode, return success after setup - don't start the workshop
+		return { success: true, message: `Tutorial set up at ${workshopPath}` }
+	}
 
 	console.log()
 	console.log(

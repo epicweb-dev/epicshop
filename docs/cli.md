@@ -99,14 +99,27 @@ wizard that:
 6. Starts the tutorial workshop
 
 ```bash
-epicshop init
+epicshop init [options]
 ```
+
+#### Options
+
+- `--repo-dir <path>` - Set the workshops directory (skips interactive prompts,
+  enables non-interactive mode)
+- `--skip-tutorial` - Skip tutorial setup (useful for CI/automation)
+- `--silent, -s` - Run without output logs (default: false)
 
 #### Examples
 
 ```bash
 # Run the first-time setup wizard
 epicshop init
+
+# Non-interactive: set directory and skip tutorial (for CI)
+epicshop init --repo-dir ./workshops --skip-tutorial
+
+# Set up with custom directory, still run tutorial setup
+epicshop init --repo-dir ~/my-workshops
 ```
 
 ### `add <repo-name>`
@@ -728,6 +741,118 @@ If updates fail:
 2. Check your internet connection
 3. Verify the remote repository is accessible
 4. Try running the update command manually
+
+## CI/Automation Usage
+
+The CLI is designed to work in CI/automation environments without interactive
+prompts. This is useful for setting up workshops in automated pipelines, Docker
+containers, or scripted environments.
+
+### Non-Interactive Setup
+
+Use the `--repo-dir` option with `init` to skip all interactive prompts:
+
+```bash
+# Initialize with a custom directory, skip tutorial
+epicshop init --repo-dir ./workshops --skip-tutorial
+
+# Add a specific workshop (works without prompts when repo name is provided)
+epicshop add react-fundamentals
+```
+
+### CI Pipeline Example
+
+```bash
+#!/bin/bash
+# Example CI script for setting up a workshop
+
+# Install epicshop globally
+npm install -g epicshop@latest
+
+# Initialize with workshops directory (non-interactive)
+epicshop init --repo-dir ./workshops --skip-tutorial
+
+# Add the workshop you want to test
+epicshop add react-fundamentals
+
+# Run workshop tests (from within the workshop directory)
+cd ./workshops/react-fundamentals
+npm test
+```
+
+### GitHub Actions Example
+
+```yaml
+name: Workshop Tests
+on: [push, pull_request]
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+
+      - name: Install epicshop
+        run: npm install -g epicshop@latest
+
+      - name: Initialize epicshop
+        run: epicshop init --repo-dir ./workshops --skip-tutorial
+
+      - name: Add workshop
+        run: epicshop add react-fundamentals
+
+      - name: Run tests
+        working-directory: ./workshops/react-fundamentals
+        run: npm test
+```
+
+### Docker Example
+
+```dockerfile
+FROM node:20
+
+# Install epicshop
+RUN npm install -g epicshop@latest
+
+# Initialize workshops directory
+RUN epicshop init --repo-dir /workshops --skip-tutorial
+
+# Add a workshop
+RUN epicshop add react-fundamentals
+
+WORKDIR /workshops/react-fundamentals
+CMD ["npm", "start"]
+```
+
+### Silent Mode
+
+Many commands support `--silent` (`-s`) mode for cleaner output in automation:
+
+```bash
+# Add workshop silently
+epicshop add react-fundamentals --silent
+
+# Warm caches silently
+epicshop warm --silent
+
+# Update silently
+epicshop update --silent
+```
+
+### Important Notes for CI
+
+1. **Order matters**: Always run `epicshop init --repo-dir <path>` before other
+   commands
+2. **Config required**: Commands like `add`, `list`, `start` require the
+   workshops directory to be configured
+3. **Error messages**: If a command fails due to missing config, it will
+   suggest running `epicshop init --repo-dir <path>` first
+4. **GitHub rate limits**: For frequent CI runs, set `GITHUB_TOKEN` environment
+   variable to avoid API rate limits
 
 ## Examples
 
