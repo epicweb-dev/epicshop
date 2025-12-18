@@ -87,8 +87,8 @@ order:
 
 ### `init`
 
-Initialize epicshop for first-time users. This command runs an interactive setup
-wizard that:
+Initialize epicshop for first-time users. In interactive environments, this
+command runs a setup wizard that:
 
 1. Welcomes the user and explains what epicshop does
 2. Prompts for a workshop storage directory (with a recommended default)
@@ -98,25 +98,40 @@ wizard that:
 5. Clones and sets up the `epicshop-tutorial` repository
 6. Starts the tutorial workshop
 
+In CI environments (automatically detected), the command uses sensible defaults
+and skips interactive prompts.
+
 ```bash
 epicshop init [options]
 ```
 
 #### Options
 
-- `--repo-dir <path>` - Set the workshops directory non-interactively (for
-  CI/automation). When provided, skips all interactive prompts including the
-  tutorial setup.
+- `--repo-dir <path>` - Set the workshops directory (overrides the default)
 - `--silent, -s` - Run without output logs (default: false)
+
+#### CI Detection
+
+The CLI automatically detects CI environments by checking for common environment
+variables (`CI`, `GITHUB_ACTIONS`, `GITLAB_CI`, etc.) and TTY status. In CI
+mode:
+
+- Uses the default workshops directory (`~/epic-workshops`) unless `--repo-dir`
+  is specified
+- Skips interactive prompts and tutorial setup
+- Uses sensible defaults for all configuration
 
 #### Examples
 
 ```bash
-# Run the first-time setup wizard
+# Run the first-time setup wizard (interactive)
 epicshop init
 
-# Non-interactive mode for CI (sets directory, skips prompts)
+# Set a custom directory
 epicshop init --repo-dir ./workshops
+
+# In CI: automatically uses defaults (no prompts)
+# CI=true epicshop init
 ```
 
 ### `add <repo-name>`
@@ -741,21 +756,24 @@ If updates fail:
 
 ## CI/Automation Usage
 
-The CLI is designed to work in CI/automation environments without interactive
-prompts. This is useful for setting up workshops in automated pipelines, Docker
-containers, or scripted environments.
+The CLI automatically detects CI environments and adapts its behavior
+accordingly. This makes it easy to use in automated pipelines, Docker
+containers, or scripted environments without special configuration.
 
-### Non-Interactive Setup
+### Automatic CI Detection
 
-Use the `--repo-dir` option with `init` to skip all interactive prompts:
+The CLI detects CI environments by checking for:
 
-```bash
-# Initialize with a custom directory (non-interactive, skips tutorial)
-epicshop init --repo-dir ./workshops
+- Common CI environment variables: `CI`, `GITHUB_ACTIONS`, `GITLAB_CI`,
+  `JENKINS_URL`, `TRAVIS`, `CIRCLECI`, `BUILDKITE`, `TF_BUILD`,
+  `CODEBUILD_BUILD_ID`, `TEAMCITY_VERSION`
+- Non-TTY stdin (indicating a non-interactive shell)
 
-# Add a specific workshop (works without prompts when repo name is provided)
-epicshop add react-fundamentals
-```
+In CI mode, the CLI:
+
+- Uses the default workshops directory (`~/epic-workshops`) automatically
+- Skips interactive prompts
+- Uses sensible defaults for all configuration
 
 ### CI Pipeline Example
 
@@ -766,14 +784,14 @@ epicshop add react-fundamentals
 # Install epicshop globally
 npm install -g epicshop@latest
 
-# Initialize with workshops directory (non-interactive)
-epicshop init --repo-dir ./workshops
+# Initialize epicshop (auto-detects CI, uses defaults)
+epicshop init
 
 # Add the workshop you want to test
 epicshop add react-fundamentals
 
 # Run workshop tests (from within the workshop directory)
-cd ./workshops/react-fundamentals
+cd ~/epic-workshops/react-fundamentals
 npm test
 ```
 
@@ -797,14 +815,25 @@ jobs:
         run: npm install -g epicshop@latest
 
       - name: Initialize epicshop
-        run: epicshop init --repo-dir ./workshops
+        run: epicshop init
 
       - name: Add workshop
         run: epicshop add react-fundamentals
 
       - name: Run tests
-        working-directory: ./workshops/react-fundamentals
+        working-directory: ~/epic-workshops/react-fundamentals
         run: npm test
+```
+
+### Custom Directory in CI
+
+If you need a custom directory instead of the default, use `--repo-dir`:
+
+```bash
+epicshop init --repo-dir ./workshops
+epicshop add react-fundamentals
+cd ./workshops/react-fundamentals
+npm test
 ```
 
 ### Docker Example
@@ -815,13 +844,13 @@ FROM node:20
 # Install epicshop
 RUN npm install -g epicshop@latest
 
-# Initialize workshops directory
-RUN epicshop init --repo-dir /workshops
+# Initialize (auto-detects non-TTY environment)
+RUN epicshop init
 
 # Add a workshop
 RUN epicshop add react-fundamentals
 
-WORKDIR /workshops/react-fundamentals
+WORKDIR /root/epic-workshops/react-fundamentals
 CMD ["npm", "start"]
 ```
 
@@ -843,11 +872,9 @@ epicshop update --silent
 
 ### Important Notes for CI
 
-1. **Order matters**: Always run `epicshop init --repo-dir <path>` before other
-   commands
-2. **Config required**: Commands like `add`, `list`, `start` require the
-   workshops directory to be configured
-3. **GitHub rate limits**: For frequent CI runs, set `GITHUB_TOKEN` environment
+1. **Auto-initialization**: In CI environments, `epicshop init` automatically
+   uses the default directory without prompts
+2. **GitHub rate limits**: For frequent CI runs, set `GITHUB_TOKEN` environment
    variable to avoid API rate limits
 
 ## Examples

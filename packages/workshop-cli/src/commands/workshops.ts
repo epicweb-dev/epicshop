@@ -16,6 +16,35 @@ const GITHUB_ORG = 'epicweb-dev'
 const TUTORIAL_REPO = 'epicshop-tutorial'
 const GITHUB_TOKEN = process.env.GITHUB_TOKEN
 
+/**
+ * Detect if we're running in a CI/non-interactive environment.
+ * Checks common CI environment variables and TTY status.
+ */
+export function isCI(): boolean {
+	// Check common CI environment variables
+	const ciEnvVars = [
+		'CI',
+		'GITHUB_ACTIONS',
+		'GITLAB_CI',
+		'JENKINS_URL',
+		'TRAVIS',
+		'CIRCLECI',
+		'BUILDKITE',
+		'TF_BUILD', // Azure Pipelines
+		'CODEBUILD_BUILD_ID', // AWS CodeBuild
+		'TEAMCITY_VERSION',
+	]
+
+	for (const envVar of ciEnvVars) {
+		if (process.env[envVar]) {
+			return true
+		}
+	}
+
+	// Also check if stdin is not a TTY (non-interactive shell)
+	return !process.stdin.isTTY
+}
+
 type EpicSite = {
 	host: string
 	name: string
@@ -1379,7 +1408,7 @@ export async function ensureConfigured(): Promise<boolean> {
 }
 
 export type OnboardingOptions = {
-	/** If provided, sets the repos directory non-interactively (skips all prompts including tutorial) */
+	/** If provided, sets the repos directory (overrides default and CI detection) */
 	repoDir?: string
 	/** Only affects logging, not behavior */
 	silent?: boolean
@@ -1387,12 +1416,15 @@ export type OnboardingOptions = {
 
 /**
  * Run the onboarding flow for new users
- * If repoDir is provided, runs in non-interactive mode (for CI/automation)
+ * - In CI environments: uses sensible defaults, skips interactive prompts
+ * - With --repo-dir: uses the specified directory
+ * - Otherwise: runs the interactive setup wizard
  */
 export async function onboarding(
 	options: OnboardingOptions = {},
 ): Promise<WorkshopsResult> {
 	const { repoDir, silent = false } = options
+	const inCI = isCI()
 
 	try {
 		const {
@@ -1401,22 +1433,40 @@ export async function onboarding(
 			setReposDirectory,
 		} = await import('@epic-web/workshop-utils/workshops.server')
 
-		// Non-interactive mode: just set the directory and return
-		// (tutorial is always skipped in non-interactive mode since it requires prompts)
-		if (repoDir) {
-			const resolvedPath = path.resolve(repoDir)
-			await setReposDirectory(resolvedPath)
-			await fs.promises.mkdir(resolvedPath, { recursive: true })
+		// Determine the directory to use
+		// Priority: explicit --repo-dir > CI default > interactive prompt
+		if (repoDir || inCI) {
+			const targetDir = repoDir
+				? path.resolve(repoDir)
+				: getDefaultReposDir()
+
+			// Check if already configured
+			if (await isReposDirectoryConfigured()) {
+				if (!silent) {
+					console.log(
+						chalk.green(`✅ Already configured. Workshops directory: ${targetDir}`),
+					)
+				}
+				return { success: true, message: `Already initialized` }
+			}
+
+			await setReposDirectory(targetDir)
+			await fs.promises.mkdir(targetDir, { recursive: true })
 
 			if (!silent) {
+				if (inCI && !repoDir) {
+					console.log(
+						chalk.cyan(`🤖 CI environment detected. Using default directory.`),
+					)
+				}
 				console.log(
 					chalk.green(
-						`✅ Workshops directory set to: ${chalk.bold(resolvedPath)}`,
+						`✅ Workshops directory set to: ${chalk.bold(targetDir)}`,
 					),
 				)
 			}
 
-			return { success: true, message: `Initialized at ${resolvedPath}` }
+			return { success: true, message: `Initialized at ${targetDir}` }
 		}
 
 		// Check if already configured (interactive mode)

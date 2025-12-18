@@ -160,8 +160,7 @@ const cli = yargs(args)
 			return yargs
 				.option('repo-dir', {
 					type: 'string',
-					description:
-						'Set the workshops directory non-interactively (for CI/automation)',
+					description: 'Set the workshops directory (optional)',
 				})
 				.option('silent', {
 					alias: 's',
@@ -172,7 +171,7 @@ const cli = yargs(args)
 				.example('$0 init', 'Run the first-time setup wizard')
 				.example(
 					'$0 init --repo-dir ./workshops',
-					'Initialize for CI (non-interactive)',
+					'Initialize with a custom directory',
 				)
 		},
 		async (
