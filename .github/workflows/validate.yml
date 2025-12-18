@@ -153,6 +153,9 @@ jobs:
       - name: 📥 Download deps
         run: npm install --prefer-offline --no-audit --no-fund
 
+      - name: 🔧 Make CLI executable
+        run: chmod +x packages/workshop-cli/dist/cli.js
+
       - name: 📦 Cache Playwright Browsers
         uses: actions/cache@v4
         id: playwright-cache
