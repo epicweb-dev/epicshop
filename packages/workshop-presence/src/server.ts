@@ -1,6 +1,10 @@
 import type * as Party from 'partykit/server'
 import { z } from 'zod'
-import { getProductHostEmoji, productHostEmojis, UserSchema } from './presence.ts'
+import {
+	getProductHostEmoji,
+	productHostEmojis,
+	UserSchema,
+} from './presence.ts'
 
 type User = z.infer<typeof UserSchema>
 const ConnectionStateSchema = z
@@ -73,28 +77,38 @@ export default (class Server implements Party.Server {
 				const existingUser = users.get(state.user.id)
 				if (existingUser) {
 					// Aggregate locations from multiple connections
-					const existingLocations = existingUser.locations ?? (existingUser.location ? [existingUser.location] : [])
+					const existingLocations =
+						existingUser.locations ??
+						(existingUser.location ? [existingUser.location] : [])
 					const newLocation = state.user.location
 					if (newLocation) {
 						// Check if this location is already in the list (by workshopTitle)
 						const isDuplicate = existingLocations.some(
-							loc => loc.workshopTitle === newLocation.workshopTitle &&
-								loc.exercise?.exerciseNumber === newLocation.exercise?.exerciseNumber &&
-								loc.exercise?.stepNumber === newLocation.exercise?.stepNumber
+							(loc) =>
+								loc.workshopTitle === newLocation.workshopTitle &&
+								loc.exercise?.exerciseNumber ===
+									newLocation.exercise?.exerciseNumber &&
+								loc.exercise?.stepNumber === newLocation.exercise?.stepNumber,
 						)
 						if (!isDuplicate) {
 							existingUser.locations = [...existingLocations, newLocation]
 						}
 					}
 					// Merge other user properties (take the most complete version)
-					if (!existingUser.name && state.user.name) existingUser.name = state.user.name
-					if (!existingUser.imageUrlSmall && state.user.imageUrlSmall) existingUser.imageUrlSmall = state.user.imageUrlSmall
-					if (!existingUser.imageUrlLarge && state.user.imageUrlLarge) existingUser.imageUrlLarge = state.user.imageUrlLarge
-					if (!existingUser.avatarUrl && state.user.avatarUrl) existingUser.avatarUrl = state.user.avatarUrl
+					if (!existingUser.name && state.user.name)
+						existingUser.name = state.user.name
+					if (!existingUser.imageUrlSmall && state.user.imageUrlSmall)
+						existingUser.imageUrlSmall = state.user.imageUrlSmall
+					if (!existingUser.imageUrlLarge && state.user.imageUrlLarge)
+						existingUser.imageUrlLarge = state.user.imageUrlLarge
+					if (!existingUser.avatarUrl && state.user.avatarUrl)
+						existingUser.avatarUrl = state.user.avatarUrl
 					if (state.user.hasAccess) existingUser.hasAccess = true
 					// Merge loggedInProductHosts
 					if (state.user.loggedInProductHosts?.length) {
-						const existingHosts = new Set(existingUser.loggedInProductHosts ?? [])
+						const existingHosts = new Set(
+							existingUser.loggedInProductHosts ?? [],
+						)
 						for (const host of state.user.loggedInProductHosts) {
 							existingHosts.add(host)
 						}
@@ -112,7 +126,7 @@ export default (class Server implements Party.Server {
 		}
 
 		// Ensure backward compatibility: set `location` to first location for old clients
-		const userList = Array.from(users.values()).map(user => {
+		const userList = Array.from(users.values()).map((user) => {
 			if (user.locations && user.locations.length > 0 && !user.location) {
 				return { ...user, location: user.locations[0] }
 			}
@@ -428,7 +442,9 @@ function getScore(user: User) {
 
 function getUserLocations(user: User): Array<NonNullable<User['location']>> {
 	if (user.locations && user.locations.length > 0) {
-		return user.locations.filter(Boolean) as Array<NonNullable<User['location']>>
+		return user.locations.filter(Boolean) as Array<
+			NonNullable<User['location']>
+		>
 	}
 	if (user.location) {
 		return [user.location]
@@ -437,7 +453,10 @@ function getUserLocations(user: User): Array<NonNullable<User['location']>> {
 }
 
 function organizeUsersByWorkshop(users: Array<User>) {
-	const workshopUsers: Record<string, Array<{ user: User; location: NonNullable<User['location']> | null }>> = {}
+	const workshopUsers: Record<
+		string,
+		Array<{ user: User; location: NonNullable<User['location']> | null }>
+	> = {}
 
 	for (const user of users) {
 		if (user.optOut) {
@@ -499,7 +518,12 @@ function getProductHostCounts(users: Array<User>) {
 	return counts
 }
 
-function getWorkshopEmoji(entries: Array<{ user: User; location: NonNullable<User['location']> | null }>): string {
+function getWorkshopEmoji(
+	entries: Array<{
+		user: User
+		location: NonNullable<User['location']> | null
+	}>,
+): string {
 	// Get the product host emoji for this workshop group
 	const firstEntry = entries[0]
 	if (!firstEntry) return ''
@@ -516,7 +540,9 @@ function getLoggedInProductEmojis(hosts: string[] | null | undefined): string {
 		.join(' ')
 }
 
-function formatLocationString(loc: NonNullable<User['location']> | null): string {
+function formatLocationString(
+	loc: NonNullable<User['location']> | null,
+): string {
 	if (!loc) return 'Unknown location'
 	if (loc.exercise) {
 		return [
@@ -530,7 +556,10 @@ function formatLocationString(loc: NonNullable<User['location']> | null): string
 	return loc.origin ?? 'Unknown location'
 }
 
-function generateUserListItem(entry: { user: User; location: NonNullable<User['location']> | null }) {
+function generateUserListItem(entry: {
+	user: User
+	location: NonNullable<User['location']> | null
+}) {
 	const { user, location } = entry
 	const imageUrl = user.imageUrlLarge ?? user.avatarUrl
 	const name = user.optOut ? 'Anonymous' : (user.name ?? 'Anonymous')

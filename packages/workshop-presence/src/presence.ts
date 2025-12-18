@@ -65,7 +65,9 @@ export const productHostEmojis: Record<string, string> = {
 	'www.epicweb.dev': '🌌',
 }
 
-export function getProductHostEmoji(host: string | null | undefined): string | null {
+export function getProductHostEmoji(
+	host: string | null | undefined,
+): string | null {
 	if (!host) return null
 	return productHostEmojis[host] ?? null
 }

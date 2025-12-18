@@ -199,7 +199,9 @@ function usePresenceSocket(user?: User | null) {
  */
 function getUserLocations(user: User): Array<NonNullable<User['location']>> {
 	if (user.locations && user.locations.length > 0) {
-		return user.locations.filter(Boolean) as Array<NonNullable<User['location']>>
+		return user.locations.filter(Boolean) as Array<
+			NonNullable<User['location']>
+		>
 	}
 	if (user.location) {
 		return [user.location]
@@ -334,7 +336,8 @@ function userHasSameStep(
 	return userLocations.some(
 		(loc) =>
 			loc.workshopTitle === currentLocation.workshopTitle &&
-			loc.exercise?.exerciseNumber === currentLocation.exercise?.exerciseNumber &&
+			loc.exercise?.exerciseNumber ===
+				currentLocation.exercise?.exerciseNumber &&
 			loc.exercise?.stepNumber === currentLocation.exercise?.stepNumber &&
 			loc.exercise?.type === currentLocation.exercise?.type,
 	)
