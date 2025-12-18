@@ -490,7 +490,7 @@ export async function add(options: AddOptions): Promise<WorkshopsResult> {
 		}
 
 		// Ensure config is set up first
-		if (!(await ensureConfigured({ silent }))) {
+		if (!(await ensureConfigured())) {
 			return { success: false, message: 'Setup cancelled' }
 		}
 
@@ -603,7 +603,7 @@ export async function list({
 }: { silent?: boolean } = {}): Promise<WorkshopsResult> {
 	try {
 		// Ensure config is set up first
-		if (!(await ensureConfigured({ silent }))) {
+		if (!(await ensureConfigured())) {
 			return { success: false, message: 'Setup cancelled' }
 		}
 
@@ -775,7 +775,7 @@ export async function remove({
 			}
 		} else {
 			// Ensure config is set up first for interactive selection
-			if (!(await ensureConfigured({ silent }))) {
+			if (!(await ensureConfigured())) {
 				return { success: false, message: 'Setup cancelled' }
 			}
 
@@ -908,7 +908,7 @@ export async function startWorkshop(
 
 	try {
 		// Ensure config is set up first
-		if (!(await ensureConfigured({ silent }))) {
+		if (!(await ensureConfigured())) {
 			return { success: false, message: 'Setup cancelled' }
 		}
 
@@ -1083,7 +1083,7 @@ export async function openWorkshop(
 			}
 		} else {
 			// Ensure config is set up first for interactive selection
-			if (!(await ensureConfigured({ silent }))) {
+			if (!(await ensureConfigured())) {
 				return { success: false, message: 'Setup cancelled' }
 			}
 			// No workshop specified, show selection
@@ -1428,7 +1428,6 @@ export async function config(
  * Call this at the start of any command that requires the config to be set
  */
 export async function ensureConfigured(
-	{ silent: _silent }: { silent?: boolean } = {},
 ): Promise<boolean> {
 	const { isReposDirectoryConfigured } = await import(
 		'@epic-web/workshop-utils/workshops.server'
