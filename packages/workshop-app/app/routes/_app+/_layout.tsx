@@ -45,7 +45,13 @@ import { useOptionalUser, useUserHasAccess } from '#app/components/user.tsx'
 import { useWorkshopConfig } from '#app/components/workshop-config.tsx'
 import { cn, getExercisePath, getExerciseStepPath } from '#app/utils/misc.tsx'
 import { useIsOnline } from '#app/utils/online.ts'
-import { usePresence, type User } from '#app/utils/presence.tsx'
+import {
+	getProductHostEmoji,
+	productHostEmojis,
+	usePresence,
+	type Location,
+	type User,
+} from '#app/utils/presence.tsx'
 import {
 	useExerciseProgressClassName,
 	useNextExerciseRoute,
@@ -179,10 +185,47 @@ function FacePile({ isMenuOpened }: { isMenuOpened: boolean }) {
 				{(shouldShowNumberOverLimit ? users.slice(0, limit) : users).map(
 					({ user, score }) => {
 						const scoreClassNames = getScoreClassNames(score)
-						const locationLabel = getLocationLabel(user.location)
+						const locations = getUserLocations(user)
 						const imageUrl = user.imageUrlSmall || user.avatarUrl
 						const hasAccess = user.hasAccess
-						const local = user.location?.origin?.includes('localhost')
+						const local = locations.some((loc) =>
+							loc.origin?.includes('localhost'),
+						)
+						const productHostEmojis = getUniqueProductHostEmojis(locations)
+						const loggedInEmojis = getLoggedInProductEmojis(
+							user.loggedInProductHosts,
+						)
+
+						// Handle opted-out users
+						if (user.optOut) {
+							return (
+								<Tooltip key={user.id}>
+									<TooltipTrigger asChild>
+										<div className="relative">
+											<div
+												tabIndex={0}
+												aria-label="Anonymous user (opted out)"
+												className={cn(
+													'bg-muted flex h-8 w-8 items-center justify-center rounded-full border opacity-50',
+												)}
+											>
+												<Icon name="User" />
+											</div>
+										</div>
+									</TooltipTrigger>
+									<TooltipContent>
+										<span className="flex flex-col items-center justify-center gap-1">
+											<span className="flex items-center gap-1.5">
+												{loggedInEmojis ? (
+													<span className="text-xs">{loggedInEmojis}</span>
+												) : null}
+												Anonymous (opted out of sharing)
+											</span>
+										</span>
+									</TooltipContent>
+								</Tooltip>
+							)
+						}
 
 						let doingLabel: string
 						if (hasAccess) {
@@ -194,34 +237,47 @@ function FacePile({ isMenuOpened }: { isMenuOpened: boolean }) {
 						return (
 							<Tooltip key={user.id}>
 								<TooltipTrigger asChild>
-									{imageUrl ? (
-										<img
-											tabIndex={0}
-											alt={user.name || displayNameShort}
-											className={cn(
-												'h-8 w-8 rounded-full border object-cover',
-												scoreClassNames,
-											)}
-											src={imageUrl}
-										/>
-									) : (
-										<div
-											tabIndex={0}
-											aria-label={user.name || `${displayNameShort} Dev`}
-											className={cn(
-												'flex h-8 w-8 items-center justify-center rounded-full border',
-												scoreClassNames,
-											)}
-										>
-											<Icon name="User" />
-										</div>
-									)}
+									<div className="relative">
+										{imageUrl ? (
+											<img
+												tabIndex={0}
+												alt={user.name || displayNameShort}
+												className={cn(
+													'h-8 w-8 rounded-full border object-cover',
+													scoreClassNames,
+												)}
+												src={imageUrl}
+											/>
+										) : (
+											<div
+												tabIndex={0}
+												aria-label={user.name || `${displayNameShort} Dev`}
+												className={cn(
+													'flex h-8 w-8 items-center justify-center rounded-full border',
+													scoreClassNames,
+												)}
+											>
+												<Icon name="User" />
+											</div>
+										)}
+										{productHostEmojis ? (
+											<span
+												className="absolute -top-1 -left-1 text-xs leading-none"
+												aria-label="Workshop products"
+											>
+												{productHostEmojis}
+											</span>
+										) : null}
+									</div>
 								</TooltipTrigger>
 								<TooltipContent>
 									<span className="flex flex-col items-center justify-center gap-1">
-										<span>
-											{user.name || `${displayNameShort} Dev`}{' '}
-											{locationLabel
+										<span className="flex items-center gap-1.5">
+											{loggedInEmojis ? (
+												<span className="text-xs">{loggedInEmojis}</span>
+											) : null}
+											{user.name || `${displayNameShort} Dev`}
+											{locations.length > 0
 												? ` is ${doingLabel} ${
 														score === 1 && loggedInUser?.id !== user.id
 															? 'with you'
@@ -229,12 +285,33 @@ function FacePile({ isMenuOpened }: { isMenuOpened: boolean }) {
 													} on`
 												: null}
 										</span>
-										{locationLabel?.line1 ? (
-											<span>{locationLabel.line1}</span>
-										) : null}
-										{locationLabel?.line2 ? (
-											<span>{locationLabel.line2}</span>
-										) : null}
+										{locations.map((loc, index) => {
+											const locationLabel = getLocationLabel(loc)
+											if (!locationLabel) return null
+											return (
+												<span
+													key={`${loc.workshopTitle}-${index}`}
+													className={cn(
+														'flex flex-col items-center',
+														locations.length > 1
+															? 'border-border mt-1 border-t pt-1 first:mt-0 first:border-t-0 first:pt-0'
+															: '',
+													)}
+												>
+													{locationLabel.line1 ? (
+														<span>
+															{getProductHostEmoji(loc.productHost)}{' '}
+															{locationLabel.line1}
+														</span>
+													) : null}
+													{locationLabel.line2 ? (
+														<span className="text-muted-foreground text-xs">
+															{locationLabel.line2}
+														</span>
+													) : null}
+												</span>
+											)
+										})}
 									</span>
 								</TooltipContent>
 							</Tooltip>
@@ -269,6 +346,40 @@ function FacePile({ isMenuOpened }: { isMenuOpened: boolean }) {
 			</TooltipProvider>
 		</div>
 	)
+}
+
+function getLoggedInProductEmojis(
+	hosts: string[] | null | undefined,
+): string | null {
+	if (!hosts || hosts.length === 0) return null
+	return hosts
+		.map((host) => productHostEmojis[host])
+		.filter(Boolean)
+		.join(' ')
+}
+
+function getUserLocations(user: User): Location[] {
+	if (user.locations && user.locations.length > 0) {
+		return user.locations.filter(Boolean) as Location[]
+	}
+	if (user.location) {
+		return [user.location]
+	}
+	return []
+}
+
+function getUniqueProductHostEmojis(locations: Location[]): string | null {
+	const uniqueHosts = new Set<string>()
+	for (const loc of locations) {
+		if (loc.productHost) {
+			uniqueHosts.add(loc.productHost)
+		}
+	}
+	if (uniqueHosts.size === 0) return null
+	return Array.from(uniqueHosts)
+		.map((host) => getProductHostEmoji(host))
+		.filter(Boolean)
+		.join('')
 }
 
 const useIsWide = makeMediaQueryStore('(min-width: 640px)', true)

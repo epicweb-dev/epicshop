@@ -93,9 +93,20 @@ function useFirstCallDelayedCallback<Args extends unknown[]>(
 	return delayedCb
 }
 
+function useProductHost() {
+	const data = useRootLoaderData()
+	return data?.workshopConfig?.product?.host ?? null
+}
+
+function useLoggedInProductHosts() {
+	const data = useRootLoaderData()
+	return data?.loggedInProductHosts ?? []
+}
+
 function useUsersLocation() {
 	const workshopTitle = useOptionalWorkshopTitle()
 	const requestInfo = useRequestInfo()
+	const productHost = useProductHost()
 	const rawParams = useParams()
 	const paramsResult = ExerciseAppParamsSchema.safeParse(rawParams)
 	const params = paramsResult.success ? paramsResult.data : null
@@ -103,6 +114,7 @@ function useUsersLocation() {
 	return {
 		workshopTitle,
 		origin: requestInfo.origin,
+		productHost,
 		...(params
 			? {
 					exercise: {
@@ -120,6 +132,7 @@ function usePresenceSocket(user?: User | null) {
 	const { userHasAccess = false, userId, presence } = useRootLoaderData() ?? {}
 	const [users, setUsers] = useState(presence?.users ?? [])
 	const usersLocation = useUsersLocation()
+	const loggedInProductHosts = useLoggedInProductHosts()
 
 	const handleMessage = useFirstCallDelayedCallback((evt: MessageEvent) => {
 		const messageResult = MessageSchema.safeParse(JSON.parse(String(evt.data)))
@@ -138,7 +151,15 @@ function usePresenceSocket(user?: User | null) {
 	let message: Message | null = null
 	if (user) {
 		if (prefs?.optOut) {
-			message = { type: 'remove-user', payload: { id: user.id } }
+			// Send opt-out user with minimal info instead of removing entirely
+			message = {
+				type: 'add-user',
+				payload: {
+					id: user.id,
+					optOut: true,
+					loggedInProductHosts,
+				},
+			}
 		} else {
 			message = {
 				type: 'add-user',
@@ -149,13 +170,14 @@ function usePresenceSocket(user?: User | null) {
 					imageUrlSmall: user.imageUrlSmall,
 					imageUrlLarge: user.imageUrlLarge,
 					location: usersLocation,
+					loggedInProductHosts,
 				},
 			}
 		}
 	} else if (userId?.id) {
 		message = {
 			type: 'add-user',
-			payload: { id: userId.id, location: usersLocation },
+			payload: { id: userId.id, location: usersLocation, loggedInProductHosts },
 		}
 	}
 
@@ -172,48 +194,185 @@ function usePresenceSocket(user?: User | null) {
 	return { users: scoredUsers }
 }
 
+/**
+ * Get all locations for a user (from locations array or falling back to location)
+ */
+function getUserLocations(user: User): Array<NonNullable<User['location']>> {
+	if (user.locations && user.locations.length > 0) {
+		return user.locations.filter(Boolean) as Array<NonNullable<User['location']>>
+	}
+	if (user.location) {
+		return [user.location]
+	}
+	return []
+}
+
+/**
+ * Sorts and scores users based on proximity to the current user.
+ *
+ * Sorting order:
+ * 1. Self first
+ * 2. Same exercise step (exerciseNumber + stepNumber + type)
+ * 3. Same exercise (exerciseNumber)
+ * 4. Same workshop (workshopTitle)
+ * 5. Same product host
+ * 6. Most products logged into
+ * 7. Opted-out users last
+ */
 function scoreUsers(
-	user: { id?: string | null; location: User['location'] },
+	currentUser: { id?: string | null; location: User['location'] },
 	users: Array<User>,
 ) {
-	const { location } = user
+	const { location } = currentUser
+
 	const scoredUsers = users.map((user) => {
+		// Calculate score for visual styling (0-1)
+		// Higher score = closer proximity = more prominent display
 		let score = 0
-		const available = 5
-		if (user.hasAccess) {
-			score += 1
+
+		// Opted-out users get no score for visual purposes
+		if (user.optOut) {
+			return { user, score: 0 }
 		}
-		if (location?.workshopTitle === user.location?.workshopTitle) {
-			score += 1
+
+		const userLocations = getUserLocations(user)
+
+		// Check if any of the user's locations match the current user's location
+		for (const userLoc of userLocations) {
+			// Same workshop title
 			if (
-				location?.exercise?.exerciseNumber &&
-				location.exercise.exerciseNumber ===
-					user.location?.exercise?.exerciseNumber
+				location?.workshopTitle &&
+				location.workshopTitle === userLoc.workshopTitle
 			) {
-				score += 1
+				score = Math.max(score, 0.4)
+
+				// Same exercise
 				if (
-					location.exercise.stepNumber &&
-					location.exercise.stepNumber === user.location.exercise.stepNumber
+					location.exercise?.exerciseNumber != null &&
+					location.exercise.exerciseNumber === userLoc.exercise?.exerciseNumber
 				) {
-					score += 1
+					score = Math.max(score, 0.6)
+
+					// Same step
 					if (
-						location.exercise.type &&
-						location.exercise.type === user.location.exercise.type
+						location.exercise.stepNumber != null &&
+						location.exercise.stepNumber === userLoc.exercise?.stepNumber
 					) {
-						score += 1
+						score = Math.max(score, 0.8)
+
+						// Same type (problem/solution)
+						if (
+							location.exercise.type &&
+							location.exercise.type === userLoc.exercise?.type
+						) {
+							score = 1
+						}
 					}
 				}
+			} else if (
+				location?.productHost &&
+				location.productHost === userLoc.productHost
+			) {
+				// Same product host but different workshop
+				score = Math.max(score, 0.2)
 			}
 		}
 
-		return { user, score: Math.floor((score / available) * 10) / 10 }
+		return { user, score }
 	})
+
 	return scoredUsers.sort((a, b) => {
-		if (a.user.id === user?.id) return -1
-		if (b.user.id === user?.id) return 1
-		if (a.score === b.score) return 0
-		return a.score > b.score ? -1 : 1
+		// Self always first
+		if (a.user.id === currentUser.id) return -1
+		if (b.user.id === currentUser.id) return 1
+
+		// Opted-out users always last
+		if (a.user.optOut && !b.user.optOut) return 1
+		if (!a.user.optOut && b.user.optOut) return -1
+
+		// Same step (exerciseNumber + stepNumber + type match)
+		const aOnSameStep = userHasSameStep(location, a.user)
+		const bOnSameStep = userHasSameStep(location, b.user)
+		if (aOnSameStep && !bOnSameStep) return -1
+		if (!aOnSameStep && bOnSameStep) return 1
+
+		// Same exercise (exerciseNumber match)
+		const aOnSameExercise = userHasSameExercise(location, a.user)
+		const bOnSameExercise = userHasSameExercise(location, b.user)
+		if (aOnSameExercise && !bOnSameExercise) return -1
+		if (!aOnSameExercise && bOnSameExercise) return 1
+
+		// Same workshop
+		const aOnSameWorkshop = userHasSameWorkshop(location, a.user)
+		const bOnSameWorkshop = userHasSameWorkshop(location, b.user)
+		if (aOnSameWorkshop && !bOnSameWorkshop) return -1
+		if (!aOnSameWorkshop && bOnSameWorkshop) return 1
+
+		// Same product host
+		const aOnSameProductHost = userHasSameProductHost(location, a.user)
+		const bOnSameProductHost = userHasSameProductHost(location, b.user)
+		if (aOnSameProductHost && !bOnSameProductHost) return -1
+		if (!aOnSameProductHost && bOnSameProductHost) return 1
+
+		// Most products logged into
+		const aProductCount = a.user.loggedInProductHosts?.length ?? 0
+		const bProductCount = b.user.loggedInProductHosts?.length ?? 0
+		if (aProductCount !== bProductCount) {
+			return bProductCount - aProductCount
+		}
+
+		return 0
 	})
+}
+
+function userHasSameStep(
+	currentLocation: User['location'],
+	user: User,
+): boolean {
+	if (!currentLocation?.exercise) return false
+	const userLocations = getUserLocations(user)
+	return userLocations.some(
+		(loc) =>
+			loc.workshopTitle === currentLocation.workshopTitle &&
+			loc.exercise?.exerciseNumber === currentLocation.exercise?.exerciseNumber &&
+			loc.exercise?.stepNumber === currentLocation.exercise?.stepNumber &&
+			loc.exercise?.type === currentLocation.exercise?.type,
+	)
+}
+
+function userHasSameExercise(
+	currentLocation: User['location'],
+	user: User,
+): boolean {
+	if (!currentLocation?.exercise?.exerciseNumber) return false
+	const userLocations = getUserLocations(user)
+	return userLocations.some(
+		(loc) =>
+			loc.workshopTitle === currentLocation.workshopTitle &&
+			loc.exercise?.exerciseNumber === currentLocation.exercise?.exerciseNumber,
+	)
+}
+
+function userHasSameWorkshop(
+	currentLocation: User['location'],
+	user: User,
+): boolean {
+	if (!currentLocation?.workshopTitle) return false
+	const userLocations = getUserLocations(user)
+	return userLocations.some(
+		(loc) => loc.workshopTitle === currentLocation.workshopTitle,
+	)
+}
+
+function userHasSameProductHost(
+	currentLocation: User['location'],
+	user: User,
+): boolean {
+	if (!currentLocation?.productHost) return false
+	const userLocations = getUserLocations(user)
+	return userLocations.some(
+		(loc) => loc.productHost === currentLocation.productHost,
+	)
 }
 
 function PresenceOnline({

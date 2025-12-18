@@ -32,6 +32,8 @@ installed in individual repositories which resemble the structure of the
 
 ## Dev environment tips
 
+- Run the build for all packages with `npm run build` (it's cached so it's
+  pretty fast)
 - Run lower-level tests with `npm run test`
 - Run higher-level tests with `npm run test:e2e` (uses playwright)
 - Run basic build, type checking, linting, and tests with `npm run validate`

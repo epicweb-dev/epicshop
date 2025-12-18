@@ -3,6 +3,7 @@ import { getPresentUsers } from '@epic-web/workshop-presence/presence.server'
 import { getApps } from '@epic-web/workshop-utils/apps.server'
 import { getWorkshopConfig } from '@epic-web/workshop-utils/config.server'
 import {
+	getLoggedInProductHosts,
 	getPreferences,
 	getMutedNotifications,
 } from '@epic-web/workshop-utils/db.server'
@@ -116,6 +117,7 @@ export async function loader({ request }: Route.LoaderArgs) {
 		repoUpdates: checkForUpdatesCached(),
 		unmutedNotifications: getUnmutedNotifications(),
 		exerciseChanges: checkForExerciseChanges(),
+		loggedInProductHosts: getLoggedInProductHosts(),
 	})
 
 	const presentUsers = await getPresentUsers({

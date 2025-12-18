@@ -215,6 +215,34 @@ export async function getAuthInfo({
 	return null
 }
 
+/**
+ * Get all product hosts the user is logged into locally.
+ * Returns an array of normalized product hosts (e.g., 'www.epicweb.dev').
+ */
+export async function getLoggedInProductHosts(): Promise<string[]> {
+	const data = await readDb()
+	const loggedInHosts: string[] = []
+
+	// Get hosts from the new authInfos record
+	if (data?.authInfos && typeof data.authInfos === 'object') {
+		for (const [host, authInfo] of Object.entries(data.authInfos)) {
+			if (authInfo) {
+				loggedInHosts.push(host)
+			}
+		}
+	}
+
+	// Back-compat: if legacy authInfo exists, include the current workshop's host
+	if (data?.authInfo && !loggedInHosts.length) {
+		const currentHost = tryGetWorkshopProductHost()
+		if (currentHost && !loggedInHosts.includes(currentHost)) {
+			loggedInHosts.push(currentHost)
+		}
+	}
+
+	return loggedInHosts
+}
+
 export async function requireAuthInfo({
 	request,
 	redirectTo,
