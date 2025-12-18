@@ -5,6 +5,7 @@ import chalk from 'chalk'
 import { matchSorter } from 'match-sorter'
 import yargs, { type ArgumentsCamelCase, type Argv } from 'yargs'
 import { hideBin } from 'yargs/helpers'
+import { assertCanPrompt } from './utils/cli-runtime.js'
 
 // Check for --help on start command before yargs parses
 // (yargs exits before command handler when help is requested)
@@ -450,6 +451,13 @@ const cli = yargs(args)
 					process.exit(1)
 				}
 
+				assertCanPrompt({
+					reason: 'select a workshop to update',
+					hints: [
+						'Run from inside a workshop directory: (cd <workshop> && npx epicshop update)',
+						'Or run in a TTY to select interactively.',
+					],
+				})
 				const { search } = await import('@inquirer/prompts')
 
 				const allChoices = workshops.map(
@@ -581,6 +589,13 @@ const cli = yargs(args)
 					process.exit(1)
 				}
 
+				assertCanPrompt({
+					reason: 'select a workshop to warm',
+					hints: [
+						'Run from inside a workshop directory: (cd <workshop> && npx epicshop warm)',
+						'Or run in a TTY to select interactively.',
+					],
+				})
 				const { search } = await import('@inquirer/prompts')
 
 				const allChoices = workshops.map(
@@ -741,6 +756,13 @@ const cli = yargs(args)
 					process.exit(1)
 				}
 
+				assertCanPrompt({
+					reason: 'choose an auth subcommand',
+					hints: [
+						'Provide the subcommand: npx epicshop auth status|login|logout',
+						'Examples: npx epicshop auth status, npx epicshop auth login epicweb.dev, npx epicshop auth logout epicreact',
+					],
+				})
 				const { search } = await import('@inquirer/prompts')
 
 				const authChoices = [
@@ -838,6 +860,14 @@ try {
 			}
 		}
 
+		assertCanPrompt({
+			reason: 'choose a command',
+			hints: [
+				'Run with an explicit command: npx epicshop <command> [options]',
+				'Example (CI friendly): CI=true npx --yes epicshop@latest add react-fundamentals',
+				'For help: npx epicshop --help',
+			],
+		})
 		const { search } = await import('@inquirer/prompts')
 
 		const baseChoices = [
@@ -1139,6 +1169,15 @@ try {
 					},
 				]
 
+				// We already prompted to choose a command above; this is just another prompt.
+				// Guard anyway so CI/non-TTY fails with a clear message.
+				assertCanPrompt({
+					reason: 'choose an auth subcommand',
+					hints: [
+						'Provide the subcommand: npx epicshop auth status|login|logout',
+						'Example: npx epicshop auth status',
+					],
+				})
 				const authSubcommand = await authSearch({
 					message: 'What would you like to do?',
 					source: async (input) => {

@@ -11,6 +11,7 @@ import { userHasAccessToWorkshop } from '@epic-web/workshop-utils/epic-api.serve
 import chalk from 'chalk'
 import { matchSorter, rankings } from 'match-sorter'
 import ora from 'ora'
+import { assertCanPrompt, isCiEnvironment } from '../utils/cli-runtime.js'
 
 const GITHUB_ORG = 'epicweb-dev'
 const TUTORIAL_REPO = 'epicshop-tutorial'
@@ -327,6 +328,14 @@ export async function add(options: AddOptions): Promise<WorkshopsResult> {
 				}
 			}
 
+			assertCanPrompt({
+				reason: 'select a workshop to add',
+				hints: [
+					'Provide the repo name: npx epicshop add <repo-name>',
+					'Example: npx epicshop add react-fundamentals',
+				],
+			})
+
 			const spinner = ora('Fetching available workshops...').start()
 
 			let enrichedWorkshops: EnrichedWorkshop[]
@@ -622,6 +631,12 @@ export async function list({
 		}
 
 		// Interactive selection
+		assertCanPrompt({
+			reason: 'select a workshop from the list',
+			hints: [
+				'Use `--silent` to avoid interactive selection (prints summary only)',
+			],
+		})
 		const { search } = await import('@inquirer/prompts')
 
 		const allChoices = workshops.map((w) => ({
@@ -773,6 +788,14 @@ export async function remove({
 				return { success: false, message }
 			}
 
+			assertCanPrompt({
+				reason: 'select which workshop to remove',
+				hints: [
+					'Provide the workshop name/path: npx epicshop remove <workshop>',
+					'Example: npx epicshop remove react-fundamentals',
+					'Or run from inside a workshop directory: (cd <workshop> && npx epicshop remove)',
+				],
+			})
 			const { search } = await import('@inquirer/prompts')
 
 			const allChoices = workshops.map((w) => ({
@@ -815,6 +838,12 @@ export async function remove({
 			}
 			console.log()
 
+			assertCanPrompt({
+				reason: 'confirm deletion',
+				hints: [
+					'No non-interactive delete mode is available. Run this command in a TTY.',
+				],
+			})
 			const { confirm } = await import('@inquirer/prompts')
 			const shouldDelete = await confirm({
 				message: `Delete "${workshopData.title}" anyway? This cannot be undone.`,
@@ -828,6 +857,12 @@ export async function remove({
 			}
 		} else {
 			// No unpushed changes, but still confirm deletion
+			assertCanPrompt({
+				reason: 'confirm deletion',
+				hints: [
+					'No non-interactive delete mode is available. Run this command in a TTY.',
+				],
+			})
 			const { confirm } = await import('@inquirer/prompts')
 			const shouldDelete = await confirm({
 				message: `Delete "${workshopData.title}" at ${workshopData.path}?`,
@@ -902,6 +937,14 @@ export async function startWorkshop(
 			}
 
 			// Interactive selection
+			assertCanPrompt({
+				reason: 'select a workshop to start',
+				hints: [
+					'Provide the workshop name: npx epicshop start <workshop>',
+					'Example: npx epicshop start react-fundamentals',
+					'Or run from inside a workshop directory: (cd <workshop> && npx epicshop start)',
+				],
+			})
 			const { search } = await import('@inquirer/prompts')
 
 			const allChoices = workshops.map((w) => ({
@@ -1053,6 +1096,13 @@ export async function openWorkshop(
 			}
 
 			// Interactive selection
+			assertCanPrompt({
+				reason: 'select a workshop to open',
+				hints: [
+					'Provide the workshop name/path: npx epicshop open <workshop>',
+					'Example: npx epicshop open react-fundamentals',
+				],
+			})
 			const { search } = await import('@inquirer/prompts')
 
 			const allChoices = workshops.map((w) => ({
@@ -1155,6 +1205,12 @@ export async function config(
 				return { success: true, message: 'Config file deleted' }
 			}
 
+			assertCanPrompt({
+				reason: 'confirm deleting the config file',
+				hints: [
+					'Use `--silent` to delete without prompting: npx epicshop config reset --silent',
+				],
+			})
 			const { confirm } = await import('@inquirer/prompts')
 			const shouldDelete = await confirm({
 				message:
@@ -1189,6 +1245,13 @@ export async function config(
 		}
 
 		// Interactive config selection
+		assertCanPrompt({
+			reason: 'select a configuration option',
+			hints: [
+				'Set repos dir directly: npx epicshop config --repos-dir <path>',
+				'Delete config non-interactively: npx epicshop config reset --silent',
+			],
+		})
 		const { search, confirm } = await import('@inquirer/prompts')
 
 		const reposDir = await getReposDirectory()
@@ -1364,7 +1427,8 @@ export async function config(
  * Check if the workshops directory is configured, and run onboarding if not
  * Call this at the start of any command that requires the config to be set
  */
-export async function ensureConfigured(): Promise<boolean> {
+export async function ensureConfigured(
+): Promise<boolean> {
 	const { isReposDirectoryConfigured } = await import(
 		'@epic-web/workshop-utils/workshops.server'
 	)
@@ -1373,7 +1437,30 @@ export async function ensureConfigured(): Promise<boolean> {
 		return true
 	}
 
-	// Not configured, run onboarding
+	// Not configured:
+	// - In CI: automatically choose and persist the default location (no onboarding/auth/tutorial).
+	// - Otherwise: run onboarding (interactive).
+	if (isCiEnvironment()) {
+		const { getDefaultReposDir, setReposDirectory } = await import(
+			'@epic-web/workshop-utils/workshops.server'
+		)
+		const defaultDir = getDefaultReposDir()
+		const resolvedPath = path.resolve(defaultDir)
+		await setReposDirectory(resolvedPath)
+		await fs.promises.mkdir(resolvedPath, { recursive: true })
+		return true
+	}
+
+	// Not CI: onboarding is interactive, so ensure we're allowed to prompt.
+	assertCanPrompt({
+		reason: 'set up your workshops directory',
+		hints: [
+			'Set repos dir directly: npx epicshop config --repos-dir <path>',
+			'Or run this command in a TTY to complete onboarding.',
+			'If you are running in CI, set CI=true to auto-use the default location.',
+		],
+	})
+
 	const result = await onboarding()
 	return result.success
 }
@@ -1388,6 +1475,20 @@ export async function onboarding(): Promise<WorkshopsResult> {
 			getDefaultReposDir,
 			setReposDirectory,
 		} = await import('@epic-web/workshop-utils/workshops.server')
+
+		// CI: never prompt, never do auth/tutorial. Just ensure a default repos directory.
+		if (isCiEnvironment()) {
+			const defaultDir = getDefaultReposDir()
+			const resolvedPath = path.resolve(defaultDir)
+			if (!(await isReposDirectoryConfigured())) {
+				await setReposDirectory(resolvedPath)
+			}
+			await fs.promises.mkdir(resolvedPath, { recursive: true })
+			return {
+				success: true,
+				message: `CI mode: workshops directory set to ${resolvedPath}`,
+			}
+		}
 
 		// Check if already configured
 		if (await isReposDirectoryConfigured()) {
@@ -1423,6 +1524,13 @@ export async function onboarding(): Promise<WorkshopsResult> {
 		)
 
 		// Prompt for directory configuration
+		assertCanPrompt({
+			reason: 'choose a workshops directory',
+			hints: [
+				'Set repos dir directly: npx epicshop config --repos-dir <path>',
+				'Or run this command in a TTY to complete onboarding.',
+			],
+		})
 		const { confirm } = await import('@inquirer/prompts')
 		const defaultDir = getDefaultReposDir()
 
@@ -1500,6 +1608,12 @@ function isValidLoginInfo(authInfo: unknown): authInfo is {
 }
 
 async function runSiteLoginOnboarding(): Promise<void> {
+	assertCanPrompt({
+		reason: 'choose whether to log in',
+		hints: [
+			'Skip onboarding and configure repos dir directly: npx epicshop config --repos-dir <path>',
+		],
+	})
 	const { search } = await import('@inquirer/prompts')
 	const { login } = await import('./auth.js')
 
@@ -1604,6 +1718,12 @@ async function promptAndSetupAccessibleWorkshops(): Promise<void> {
 		),
 	)
 
+	assertCanPrompt({
+		reason: 'select workshops to set up',
+		hints: [
+			'Skip this step by not running onboarding, and add workshops directly: npx epicshop add <repo-name>',
+		],
+	})
 	const { search } = await import('@inquirer/prompts')
 
 	const spinner = ora('Fetching available workshops...').start()
@@ -2019,6 +2139,10 @@ type DirectoryChoice =
  * Interactive directory browser that lets users navigate and select a directory
  */
 async function browseDirectory(startPath?: string): Promise<string> {
+	assertCanPrompt({
+		reason: 'browse directories',
+		hints: ['Provide a directory via: npx epicshop config --repos-dir <path>'],
+	})
 	const { search, input } = await import('@inquirer/prompts')
 
 	let currentPath = startPath || os.homedir()

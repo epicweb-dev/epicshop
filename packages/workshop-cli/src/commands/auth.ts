@@ -2,6 +2,7 @@ import chalk from 'chalk'
 import { matchSorter } from 'match-sorter'
 import * as client from 'openid-client'
 import { z } from 'zod'
+import { assertCanPrompt } from '../utils/cli-runtime.js'
 
 const EPIC_DOMAINS = [
 	{
@@ -113,6 +114,13 @@ async function selectDomain(
 		return null
 	}
 
+	assertCanPrompt({
+		reason: 'select a domain',
+		hints: [
+			'Provide the domain argument (no prompt): npx epicshop auth login <domain>',
+			'Examples: npx epicshop auth login epicweb.dev, npx epicshop auth login epicreact, npx epicshop auth login epicai',
+		],
+	})
 	const { search } = await import('@inquirer/prompts')
 
 	const choices = EPIC_DOMAINS.map((d) => ({
@@ -356,6 +364,13 @@ export async function logout(
 				return { success: false, message: 'Domain required in silent mode' }
 			}
 
+			assertCanPrompt({
+				reason: 'select a domain to log out from',
+				hints: [
+					'Provide the domain argument (no prompt): npx epicshop auth logout <domain>',
+					'Examples: npx epicshop auth logout epicweb.dev, npx epicshop auth logout epicreact, npx epicshop auth logout epicai',
+				],
+			})
 			const { search } = await import('@inquirer/prompts')
 
 			const choices = loggedInDomains.map((d) => {
