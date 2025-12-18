@@ -3,7 +3,7 @@
 import { execSync } from 'node:child_process'
 import { existsSync } from 'node:fs'
 import { dirname, join } from 'node:path'
-import { fileURLToPath } from 'node:url'
+import { fileURLToPath, pathToFileURL } from 'node:url'
 
 const __filename = fileURLToPath(import.meta.url)
 const __dirname = dirname(__filename)
@@ -24,5 +24,7 @@ if (existsSync(cliSource)) {
 	execSync(command, { stdio: 'inherit', shell: true })
 } else {
 	// Production: use the built file
-	await import(cliBuilt)
+	// On Windows, absolute paths like "C:\..." are treated as URL schemes ("c:")
+	// by the default ESM loader. Convert the path to a proper file:// URL first.
+	await import(pathToFileURL(cliBuilt).href)
 }
