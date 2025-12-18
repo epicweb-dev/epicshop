@@ -104,9 +104,9 @@ epicshop init [options]
 
 #### Options
 
-- `--repo-dir <path>` - Set the workshops directory (skips interactive prompts,
-  enables non-interactive mode)
-- `--skip-tutorial` - Skip tutorial setup (useful for CI/automation)
+- `--repo-dir <path>` - Set the workshops directory non-interactively (for
+  CI/automation). When provided, skips all interactive prompts including the
+  tutorial setup.
 - `--silent, -s` - Run without output logs (default: false)
 
 #### Examples
@@ -115,11 +115,8 @@ epicshop init [options]
 # Run the first-time setup wizard
 epicshop init
 
-# Non-interactive: set directory and skip tutorial (for CI)
-epicshop init --repo-dir ./workshops --skip-tutorial
-
-# Set up with custom directory, still run tutorial setup
-epicshop init --repo-dir ~/my-workshops
+# Non-interactive mode for CI (sets directory, skips prompts)
+epicshop init --repo-dir ./workshops
 ```
 
 ### `add <repo-name>`
@@ -753,8 +750,8 @@ containers, or scripted environments.
 Use the `--repo-dir` option with `init` to skip all interactive prompts:
 
 ```bash
-# Initialize with a custom directory, skip tutorial
-epicshop init --repo-dir ./workshops --skip-tutorial
+# Initialize with a custom directory (non-interactive, skips tutorial)
+epicshop init --repo-dir ./workshops
 
 # Add a specific workshop (works without prompts when repo name is provided)
 epicshop add react-fundamentals
@@ -770,7 +767,7 @@ epicshop add react-fundamentals
 npm install -g epicshop@latest
 
 # Initialize with workshops directory (non-interactive)
-epicshop init --repo-dir ./workshops --skip-tutorial
+epicshop init --repo-dir ./workshops
 
 # Add the workshop you want to test
 epicshop add react-fundamentals
@@ -800,7 +797,7 @@ jobs:
         run: npm install -g epicshop@latest
 
       - name: Initialize epicshop
-        run: epicshop init --repo-dir ./workshops --skip-tutorial
+        run: epicshop init --repo-dir ./workshops
 
       - name: Add workshop
         run: epicshop add react-fundamentals
@@ -819,7 +816,7 @@ FROM node:20
 RUN npm install -g epicshop@latest
 
 # Initialize workshops directory
-RUN epicshop init --repo-dir /workshops --skip-tutorial
+RUN epicshop init --repo-dir /workshops
 
 # Add a workshop
 RUN epicshop add react-fundamentals
@@ -830,7 +827,8 @@ CMD ["npm", "start"]
 
 ### Silent Mode
 
-Many commands support `--silent` (`-s`) mode for cleaner output in automation:
+Many commands support `--silent` (`-s`) mode for cleaner log output in
+automation. Note that `--silent` only affects logging, not behavior:
 
 ```bash
 # Add workshop silently
@@ -849,9 +847,7 @@ epicshop update --silent
    commands
 2. **Config required**: Commands like `add`, `list`, `start` require the
    workshops directory to be configured
-3. **Error messages**: If a command fails due to missing config, it will
-   suggest running `epicshop init --repo-dir <path>` first
-4. **GitHub rate limits**: For frequent CI runs, set `GITHUB_TOKEN` environment
+3. **GitHub rate limits**: For frequent CI runs, set `GITHUB_TOKEN` environment
    variable to avoid API rate limits
 
 ## Examples
