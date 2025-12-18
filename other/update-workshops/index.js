@@ -3,7 +3,6 @@ import path from 'path'
 import { fileURLToPath } from 'url'
 import { execa } from 'execa'
 import { globby } from 'globby'
-import { minimatch } from 'minimatch'
 
 const __filename = fileURLToPath(import.meta.url)
 const __dirname = path.dirname(__filename)
@@ -167,69 +166,114 @@ function getWorkspacePatterns(pkgJson) {
 }
 
 /**
- * Check if a package directory matches a workspace pattern
+ * Convert a workspace entry (directory glob) into a package.json glob
  */
-function matchesWorkspacePattern(pkgDir, pattern, baseDir) {
-	// Get relative path from baseDir to pkgDir
-	const relativePath = path.relative(baseDir, pkgDir).replace(/\\/g, '/')
-
-	// Use minimatch to check if the relative path matches the pattern
-	return minimatch(relativePath, pattern)
+function workspacePatternToPackageJsonGlob(pattern) {
+	if (!pattern || typeof pattern !== 'string') return null
+	const normalized = pattern.replace(/\\/g, '/')
+	if (normalized.endsWith('/package.json')) return normalized
+	if (normalized === 'package.json') return normalized
+	const withoutTrailingSlash = normalized.replace(/\/$/, '')
+	return `${withoutTrailingSlash}/package.json`
 }
 
 /**
- * Filter out packages that are included in another package's workspace
+ * Returns true if `candidateDir` is the same as, or inside, `parentDir`.
  */
-async function filterWorkspacePackages(changedPkgs, workshopDir) {
-	const workspaceMap = new Map()
+function isSameOrInsideDir(candidateDir, parentDir) {
+	const relative = path.relative(parentDir, candidateDir)
+	if (!relative) return true
+	return (
+		relative !== '..' &&
+		!relative.startsWith(`..${path.sep}`) &&
+		!path.isAbsolute(relative)
+	)
+}
 
-	// Read all changed package.json files and extract workspace configs
-	for (const pkg of changedPkgs) {
-		const pkgPath = path.join(workshopDir, pkg)
-		const pkgDir = path.dirname(pkgPath)
+/**
+ * Determine the minimal set of directories where we should run `npm install`.
+ *
+ * Rules:
+ * - If a changed package.json lives inside a workspace member directory, run
+ *   install at the *workspace root* (not the member, and not any nested dir).
+ * - If a changed package.json is not covered by any workspace root, run install
+ *   in that package.json's directory.
+ *
+ * This fixes cases where the workspace root package.json didn't change (so the
+ * previous implementation missed its workspaces config) and cases where nested
+ * package.json files exist inside workspace members.
+ */
+async function getInstallDirsForChangedPackages(changedPkgs, workshopDir) {
+	const allPkgJsonPaths = await globby('**/package.json', {
+		cwd: workshopDir,
+		gitignore: true,
+	})
+
+	/** @type {Array<{dirAbs: string, dirRel: string, patterns: string[], memberDirsAbs: string[]}>} */
+	const workspaceRoots = []
+
+	// Collect every workspace root and expand its workspace member directories.
+	for (const pkg of allPkgJsonPaths) {
+		const pkgPathAbs = path.join(workshopDir, pkg)
+		const dirAbs = path.dirname(pkgPathAbs)
+		const dirRel = path.relative(workshopDir, dirAbs).replace(/\\/g, '/') || '.'
 		try {
-			const contents = await fs.readFile(pkgPath, 'utf8')
+			const contents = await fs.readFile(pkgPathAbs, 'utf8')
 			const pkgJson = JSON.parse(contents)
 			const patterns = getWorkspacePatterns(pkgJson)
-			if (patterns.length > 0) {
-				workspaceMap.set(pkg, { patterns, pkgDir })
-			}
-		} catch (error) {
-			// If we can't read/parse, skip workspace checking for this package
-			console.warn(
-				`⚠️  Could not read ${pkg} for workspace checking:`,
-				error.message,
+			if (!patterns.length) continue
+
+			const memberPkgJsonGlobs = patterns
+				.map(workspacePatternToPackageJsonGlob)
+				.filter(Boolean)
+
+			// Expand to actual package.json files, then treat their directories as
+			// "covered" (including nested package.json files within them).
+			const memberPkgJsonPaths = await globby(memberPkgJsonGlobs, {
+				cwd: dirAbs,
+				gitignore: true,
+			})
+
+			const memberDirsAbs = Array.from(
+				new Set(
+					memberPkgJsonPaths.map((p) => path.join(dirAbs, path.dirname(p))),
+				),
 			)
+
+			workspaceRoots.push({ dirAbs, dirRel, patterns, memberDirsAbs })
+		} catch {
+			// Ignore invalid package.json files for workspace detection
 		}
 	}
 
-	// Filter out packages that match another package's workspace pattern
-	const topLevelPkgs = changedPkgs.filter((pkg) => {
-		const pkgPath = path.join(workshopDir, pkg)
-		const pkgDir = path.dirname(pkgPath)
+	// Prefer the deepest workspace root that covers the changed package.
+	workspaceRoots.sort((a, b) => b.dirAbs.length - a.dirAbs.length)
 
-		// Check if this package matches any other package's workspace pattern
-		for (const [
-			workspacePkg,
-			{ patterns, pkgDir: workspaceDir },
-		] of workspaceMap) {
-			// Don't exclude the workspace package itself
-			if (workspacePkg === pkg) continue
+	const installDirsAbs = new Set()
 
-			// Check if this package's directory matches any of the workspace patterns
-			if (
-				patterns.some((pattern) =>
-					matchesWorkspacePattern(pkgDir, pattern, workspaceDir),
-				)
-			) {
-				return false // Exclude this package
+	for (const changedPkg of changedPkgs) {
+		const changedPkgPathAbs = path.join(workshopDir, changedPkg)
+		const changedDirAbs = path.dirname(changedPkgPathAbs)
+
+		let chosenWorkspaceRoot = null
+		for (const root of workspaceRoots) {
+			for (const memberDirAbs of root.memberDirsAbs) {
+				if (isSameOrInsideDir(changedDirAbs, memberDirAbs)) {
+					chosenWorkspaceRoot = root
+					break
+				}
 			}
+			if (chosenWorkspaceRoot) break
 		}
 
-		return true // Include this package
-	})
+		if (chosenWorkspaceRoot) {
+			installDirsAbs.add(chosenWorkspaceRoot.dirAbs)
+		} else {
+			installDirsAbs.add(changedDirAbs)
+		}
+	}
 
-	return topLevelPkgs
+	return Array.from(installDirsAbs)
 }
 
 /**
@@ -316,15 +360,13 @@ async function updateWorkshopRepo(repo, version) {
 			return { repo: repoName, status: 'up-to-date' }
 		}
 
-		// Filter out packages that are included in another package's workspace
-		const topLevelPkgs = await filterWorkspacePackages(changedPkgs, tempDir)
+		// Determine minimal install targets, respecting npm/yarn/pnpm workspaces.
+		const installDirs = await getInstallDirsForChangedPackages(changedPkgs, tempDir)
 
-		// Run npm install in each directory where a package.json changed
-		for (const pkg of topLevelPkgs) {
-			const pkgDir = path.dirname(pkg)
-			const installDir = pkgDir === '.' ? tempDir : path.join(tempDir, pkgDir)
+		for (const installDir of installDirs) {
+			const rel = path.relative(tempDir, installDir).replace(/\\/g, '/')
 			console.log(
-				`📦 ${repoName} - running npm install in ${pkgDir === '.' ? 'root' : pkgDir}`,
+				`📦 ${repoName} - running npm install in ${rel ? rel : 'root'}`,
 			)
 			await execa('npm', ['install', '--ignore-scripts'], {
 				cwd: installDir,
