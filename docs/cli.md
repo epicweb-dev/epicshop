@@ -141,7 +141,8 @@ epicshop add web-forms --directory ~/my-workshops
 
 1. Clones the repository from `https://github.com/epicweb-dev/<repo-name>`
 2. Runs `npm run setup` in the cloned directory
-3. If cloned into your configured repos directory, it will show up in `epicshop list` and can be started/opened by name
+3. If cloned into your configured repos directory, it will show up in
+   `epicshop list` and can be started/opened by name
 
 #### Interactive Workshop Selection
 
