@@ -361,7 +361,10 @@ async function updateWorkshopRepo(repo, version) {
 		}
 
 		// Determine minimal install targets, respecting npm/yarn/pnpm workspaces.
-		const installDirs = await getInstallDirsForChangedPackages(changedPkgs, tempDir)
+		const installDirs = await getInstallDirsForChangedPackages(
+			changedPkgs,
+			tempDir,
+		)
 
 		for (const installDir of installDirs) {
 			const rel = path.relative(tempDir, installDir).replace(/\\/g, '/')
