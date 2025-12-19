@@ -223,24 +223,12 @@ async function updateWorkshopRepo(repo, version) {
 			},
 		)
 
-		// Configure sparse checkout to only include our target files
-		// Use --skip-checks to allow file paths instead of directory paths
-		await execa(
-			'git',
-			[
-				'sparse-checkout',
-				'set',
-				'--skip-checks',
-				'package.json',
-				'package-lock.json',
-				'epicshop/package.json',
-				'epicshop/package-lock.json',
-			],
-			{
-				cwd: tempDir,
-				env: getGitEnv(),
-			},
-		)
+		// Configure sparse checkout to only include root directory and epicshop directory
+		// Using directory patterns is much faster than individual files
+		await execa('git', ['sparse-checkout', 'set', '/*', 'epicshop'], {
+			cwd: tempDir,
+			env: getGitEnv(),
+		})
 
 		// Ensure future push operations use an authenticated remote URL.
 		// (Some git versions can normalize remotes in ways that drop credentials.)
