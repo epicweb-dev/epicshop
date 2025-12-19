@@ -224,11 +224,13 @@ async function updateWorkshopRepo(repo, version) {
 		)
 
 		// Configure sparse checkout to only include our target files
+		// Use --skip-checks to allow file paths instead of directory paths
 		await execa(
 			'git',
 			[
 				'sparse-checkout',
 				'set',
+				'--skip-checks',
 				'package.json',
 				'package-lock.json',
 				'epicshop/package.json',
