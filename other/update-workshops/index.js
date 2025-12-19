@@ -83,57 +83,6 @@ async function getLatestVersion() {
 	}
 }
 
-/**
- * Check if a repo already has the target version via GitHub API
- * Returns true if the repo is already up to date
- */
-async function isRepoUpToDate(repoName, targetVersion) {
-	try {
-		const url = `https://api.github.com/repos/${GITHUB_ORG}/${repoName}/contents/package.json`
-		const response = await fetch(url, {
-			headers: {
-				Accept: 'application/vnd.github.v3.raw',
-				Authorization: `Bearer ${GITHUB_TOKEN}`,
-				'User-Agent': 'epicshop-update-action',
-			},
-		})
-
-		if (!response.ok) return false
-
-		const raw = await response.text()
-		const pkg = JSON.parse(raw)
-
-		const wanted = `^${targetVersion}`
-		const depFields = [
-			'dependencies',
-			'devDependencies',
-			'peerDependencies',
-			'optionalDependencies',
-		]
-
-		let foundAny = false
-
-		for (const field of depFields) {
-			const deps = pkg?.[field]
-			if (!deps) continue
-			for (const [name, range] of Object.entries(deps)) {
-				if (typeof range !== 'string') continue
-				if (name === 'epicshop' || name.startsWith('@epic-web/workshop-')) {
-					foundAny = true
-					if (range !== wanted) return false
-				}
-			}
-		}
-
-		// If the root package.json doesn't reference these packages, we can't be sure.
-		// Don't skip cloning in that case.
-		return foundAny
-	} catch {
-		// If we can't check, assume it needs updating
-		return false
-	}
-}
-
 async function pullRebaseWithFallback(cwd) {
 	try {
 		await execa('git', ['pull', '--rebase'], { cwd, env: getGitEnv() })
@@ -192,13 +141,6 @@ async function updateWorkshopRepo(repo, version) {
 	const tempDir = path.join(__dirname, 'temp-workshops', repoName)
 
 	try {
-		// Check if repo is already up to date via API (avoids unnecessary clone)
-		const upToDate = await isRepoUpToDate(repoName, version)
-		if (upToDate) {
-			console.log(`🟢 ${repoName} - already up to date (skipped clone)`)
-			return { repo: repoName, status: 'skipped' }
-		}
-
 		// Clean up temp directory if it exists
 		await fs.rm(tempDir, { recursive: true, force: true }).catch(() => {})
 
@@ -236,9 +178,6 @@ async function updateWorkshopRepo(repo, version) {
 			cwd: tempDir,
 			env: getGitEnv(),
 		})
-
-		// Pull latest *before* making changes/committing (reduces push failures)
-		await pullRebaseWithFallback(tempDir)
 
 		// Update package.json files
 		console.log(`📝 ${repoName} - updating package.json files`)
