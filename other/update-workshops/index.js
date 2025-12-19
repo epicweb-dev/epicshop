@@ -2,7 +2,6 @@ import fs from 'fs/promises'
 import path from 'path'
 import { fileURLToPath } from 'url'
 import { execa } from 'execa'
-import { globby } from 'globby'
 
 const __filename = fileURLToPath(import.meta.url)
 const __dirname = path.dirname(__filename)
@@ -150,159 +149,38 @@ async function pullRebaseWithFallback(cwd) {
 }
 
 /**
- * Get workspace patterns from a package.json file
- */
-function getWorkspacePatterns(pkgJson) {
-	const workspaces = pkgJson.workspaces
-	if (!workspaces) return []
-	// Handle both array format and object format with packages property
-	if (Array.isArray(workspaces)) {
-		return workspaces
-	}
-	if (workspaces.packages && Array.isArray(workspaces.packages)) {
-		return workspaces.packages
-	}
-	return []
-}
-
-/**
- * Convert a workspace entry (directory glob) into a package.json glob
- */
-function workspacePatternToPackageJsonGlob(pattern) {
-	if (!pattern || typeof pattern !== 'string') return null
-	const normalized = pattern.replace(/\\/g, '/')
-	if (normalized.endsWith('/package.json')) return normalized
-	if (normalized === 'package.json') return normalized
-	const withoutTrailingSlash = normalized.replace(/\/$/, '')
-	return `${withoutTrailingSlash}/package.json`
-}
-
-/**
- * Returns true if `candidateDir` is the same as, or inside, `parentDir`.
- */
-function isSameOrInsideDir(candidateDir, parentDir) {
-	const relative = path.relative(parentDir, candidateDir)
-	if (!relative) return true
-	return (
-		relative !== '..' &&
-		!relative.startsWith(`..${path.sep}`) &&
-		!path.isAbsolute(relative)
-	)
-}
-
-/**
- * Determine the minimal set of directories where we should run `npm install`.
- *
- * Rules:
- * - If a changed package.json lives inside a workspace member directory, run
- *   install at the *workspace root* (not the member, and not any nested dir).
- * - If a changed package.json is not covered by any workspace root, run install
- *   in that package.json's directory.
- *
- * This fixes cases where the workspace root package.json didn't change (so the
- * previous implementation missed its workspaces config) and cases where nested
- * package.json files exist inside workspace members.
- */
-async function getInstallDirsForChangedPackages(changedPkgs, workshopDir) {
-	const allPkgJsonPaths = await globby('**/package.json', {
-		cwd: workshopDir,
-		gitignore: true,
-	})
-
-	/** @type {Array<{dirAbs: string, dirRel: string, patterns: string[], memberDirsAbs: string[]}>} */
-	const workspaceRoots = []
-
-	// Collect every workspace root and expand its workspace member directories.
-	for (const pkg of allPkgJsonPaths) {
-		const pkgPathAbs = path.join(workshopDir, pkg)
-		const dirAbs = path.dirname(pkgPathAbs)
-		const dirRel = path.relative(workshopDir, dirAbs).replace(/\\/g, '/') || '.'
-		try {
-			const contents = await fs.readFile(pkgPathAbs, 'utf8')
-			const pkgJson = JSON.parse(contents)
-			const patterns = getWorkspacePatterns(pkgJson)
-			if (!patterns.length) continue
-
-			const memberPkgJsonGlobs = patterns
-				.map(workspacePatternToPackageJsonGlob)
-				.filter(Boolean)
-
-			// Expand to actual package.json files, then treat their directories as
-			// "covered" (including nested package.json files within them).
-			const memberPkgJsonPaths = await globby(memberPkgJsonGlobs, {
-				cwd: dirAbs,
-				gitignore: true,
-			})
-
-			const memberDirsAbs = Array.from(
-				new Set(
-					memberPkgJsonPaths.map((p) => path.join(dirAbs, path.dirname(p))),
-				),
-			)
-
-			workspaceRoots.push({ dirAbs, dirRel, patterns, memberDirsAbs })
-		} catch {
-			// Ignore invalid package.json files for workspace detection
-		}
-	}
-
-	// Prefer the deepest workspace root that covers the changed package.
-	workspaceRoots.sort((a, b) => b.dirAbs.length - a.dirAbs.length)
-
-	const installDirsAbs = new Set()
-
-	for (const changedPkg of changedPkgs) {
-		const changedPkgPathAbs = path.join(workshopDir, changedPkg)
-		const changedDirAbs = path.dirname(changedPkgPathAbs)
-
-		let chosenWorkspaceRoot = null
-		for (const root of workspaceRoots) {
-			for (const memberDirAbs of root.memberDirsAbs) {
-				if (isSameOrInsideDir(changedDirAbs, memberDirAbs)) {
-					chosenWorkspaceRoot = root
-					break
-				}
-			}
-			if (chosenWorkspaceRoot) break
-		}
-
-		if (chosenWorkspaceRoot) {
-			installDirsAbs.add(chosenWorkspaceRoot.dirAbs)
-		} else {
-			installDirsAbs.add(changedDirAbs)
-		}
-	}
-
-	return Array.from(installDirsAbs)
-}
-
-/**
- * Update package.json files in a directory
+ * Update package.json files - only root and epicshop/package.json
  */
 async function updatePackageJsonFiles(workshopDir, version) {
-	const pkgs = await globby('**/package.json', {
-		cwd: workshopDir,
-		gitignore: true,
-	})
-
-	let changed = false
+	const pkgs = ['package.json', 'epicshop/package.json']
 	const changedPkgs = []
+	const existingPkgs = []
+	let changed = false
 
 	for (const pkg of pkgs) {
 		const pkgPath = path.join(workshopDir, pkg)
-		const contents = await fs.readFile(pkgPath, 'utf8')
-		const newContents = contents
-			.replace(/(@epic-web\/workshop-[^":]+":\s*")([^"]+)"/g, `$1^${version}"`)
-			.replace(/(epicshop":\s*")([^"]+)"/g, `$1^${version}"`)
+		try {
+			const contents = await fs.readFile(pkgPath, 'utf8')
+			existingPkgs.push(pkg)
+			const newContents = contents
+				.replace(
+					/(@epic-web\/workshop-[^":]+":\s*")([^"]+)"/g,
+					`$1^${version}"`,
+				)
+				.replace(/(epicshop":\s*")([^"]+)"/g, `$1^${version}"`)
 
-		if (contents !== newContents) {
-			await fs.writeFile(pkgPath, newContents, 'utf8')
-			changed = true
-			changedPkgs.push(pkg)
+			if (contents !== newContents) {
+				await fs.writeFile(pkgPath, newContents, 'utf8')
+				changed = true
+				changedPkgs.push(pkg)
+			}
+		} catch (error) {
+			// File doesn't exist, skip it
+			if (error?.code !== 'ENOENT') throw error
 		}
 	}
 
-	return { changed, pkgs, changedPkgs }
+	return { changed, pkgs: existingPkgs, changedPkgs }
 }
 
 /**
@@ -327,13 +205,37 @@ async function updateWorkshopRepo(repo, version) {
 		// Create temp directory
 		await fs.mkdir(path.dirname(tempDir), { recursive: true })
 
-		console.log(`🔍 ${repoName} - cloning repository`)
+		console.log(`🔍 ${repoName} - cloning repository with sparse checkout`)
 
-		// Shallow clone for faster checkout (we only need latest state)
+		// Clone with sparse checkout - only get the 4 files we need
 		await execa(
 			'git',
-			['clone', '--depth=1', '--filter=blob:none', repoUrl, tempDir],
+			[
+				'clone',
+				'--depth=1',
+				'--filter=blob:none',
+				'--sparse',
+				repoUrl,
+				tempDir,
+			],
 			{
+				env: getGitEnv(),
+			},
+		)
+
+		// Configure sparse checkout to only include our target files
+		await execa(
+			'git',
+			[
+				'sparse-checkout',
+				'set',
+				'package.json',
+				'package-lock.json',
+				'epicshop/package.json',
+				'epicshop/package-lock.json',
+			],
+			{
+				cwd: tempDir,
 				env: getGitEnv(),
 			},
 		)
@@ -360,35 +262,63 @@ async function updateWorkshopRepo(repo, version) {
 			return { repo: repoName, status: 'up-to-date' }
 		}
 
-		// Determine minimal install targets, respecting npm/yarn/pnpm workspaces.
-		const installDirs = await getInstallDirsForChangedPackages(
-			changedPkgs,
-			tempDir,
-		)
+		// Run npm install only in directories where package.json changed
+		// We only handle root and epicshop directories
+		const installDirs = []
+		for (const pkg of changedPkgs) {
+			const installDir =
+				pkg === 'package.json' ? tempDir : path.join(tempDir, path.dirname(pkg))
+			if (!installDirs.includes(installDir)) {
+				installDirs.push(installDir)
+			}
+		}
 
 		for (const installDir of installDirs) {
 			const rel = path.relative(tempDir, installDir).replace(/\\/g, '/')
-			console.log(
-				`📦 ${repoName} - running npm install in ${rel ? rel : 'root'}`,
-			)
-			await execa('npm', ['install', '--ignore-scripts'], {
-				cwd: installDir,
-				env: getGitEnv(),
-			})
+			console.log(`📦 ${repoName} - running npm install in ${rel || 'root'}`)
+			try {
+				await execa('npm', ['install', '--ignore-scripts'], {
+					cwd: installDir,
+					env: getGitEnv(),
+				})
+			} catch {
+				// If npm install fails (e.g., package.json doesn't exist), skip it
+				console.log(
+					`⚠️  ${repoName} - npm install failed in ${rel || 'root'}, skipping`,
+				)
+			}
 		}
 
-		// Find package-lock.json files
-		const pkgLocks = await globby('**/package-lock.json', {
-			cwd: tempDir,
-			gitignore: true,
-		})
+		// Only stage the 4 files we're tracking
+		const filesToStage = []
+		for (const pkg of pkgs) {
+			const pkgPath = path.join(tempDir, pkg)
+			try {
+				await fs.access(pkgPath)
+				filesToStage.push(pkg)
+			} catch {
+				// File doesn't exist, skip
+			}
+		}
+		for (const pkg of pkgs) {
+			const lockPath = pkg.replace('package.json', 'package-lock.json')
+			const lockPathFull = path.join(tempDir, lockPath)
+			try {
+				await fs.access(lockPathFull)
+				filesToStage.push(lockPath)
+			} catch {
+				// File doesn't exist, skip
+			}
+		}
 
 		// Stage changes
 		console.log(`📝 ${repoName} - staging changes`)
-		await execa('git', ['add', ...pkgLocks, ...pkgs], {
-			cwd: tempDir,
-			env: getGitEnv(),
-		})
+		if (filesToStage.length > 0) {
+			await execa('git', ['add', ...filesToStage], {
+				cwd: tempDir,
+				env: getGitEnv(),
+			})
+		}
 
 		// Check if there are actually staged changes
 		const { stdout: diffOutput } = await execa(
