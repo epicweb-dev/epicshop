@@ -109,13 +109,13 @@ epicshop init
 epicshop init
 ```
 
-### `add <repo-name>`
+### `add <repo-name> [destination]`
 
 Add a workshop by cloning it from the epicweb-dev GitHub organization and
 running the setup script.
 
 ```bash
-epicshop add <repo-name> [options]
+epicshop add <repo-name> [destination] [options]
 ```
 
 #### Options
@@ -130,6 +130,9 @@ epicshop add <repo-name> [options]
 # Clone and set up the full-stack-foundations workshop
 epicshop add full-stack-foundations
 
+# Clone to a specific destination directory (bypasses configured repos directory)
+epicshop add react-fundamentals ~/Desktop/react-fundamentals
+
 # Clone to a custom directory
 epicshop add web-forms --directory ~/my-workshops
 ```
@@ -138,7 +141,7 @@ epicshop add web-forms --directory ~/my-workshops
 
 1. Clones the repository from `https://github.com/epicweb-dev/<repo-name>`
 2. Runs `npm run setup` in the cloned directory
-3. Adds the workshop to your local workshop registry
+3. If cloned into your configured repos directory, it will show up in `epicshop list` and can be started/opened by name
 
 #### Interactive Workshop Selection
 

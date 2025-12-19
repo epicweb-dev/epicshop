@@ -169,13 +169,18 @@ const cli = yargs(args)
 		},
 	)
 	.command(
-		'add [repo-name]',
+		'add [repo-name] [destination]',
 		'Add a workshop by cloning from epicweb-dev GitHub org',
 		(yargs: Argv) => {
 			return yargs
 				.positional('repo-name', {
 					describe:
 						'Repository name from epicweb-dev org (optional, shows list if omitted)',
+					type: 'string',
+				})
+				.positional('destination', {
+					describe:
+						'Optional directory to clone into (full path). If provided, this bypasses the configured repos directory.',
 					type: 'string',
 				})
 				.option('directory', {
@@ -199,10 +204,15 @@ const cli = yargs(args)
 					'$0 add web-forms --directory ~/my-workshops',
 					'Clone workshop to a custom directory',
 				)
+				.example(
+					'$0 add react-fundamentals ~/Desktop/react-fundamentals',
+					'Clone workshop to a specific destination directory',
+				)
 		},
 		async (
 			argv: ArgumentsCamelCase<{
 				repoName?: string
+				destination?: string
 				directory?: string
 				silent?: boolean
 			}>,
@@ -210,6 +220,7 @@ const cli = yargs(args)
 			const { add } = await import('./commands/workshops.js')
 			const result = await add({
 				repoName: argv.repoName,
+				destination: argv.destination,
 				directory: argv.directory,
 				silent: argv.silent,
 			})
