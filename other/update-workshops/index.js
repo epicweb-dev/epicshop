@@ -167,7 +167,7 @@ async function updateWorkshopRepo(repo, version) {
 
 		// Configure sparse checkout to only include root directory and epicshop directory
 		// Using directory patterns is much faster than individual files
-		await execa('git', ['sparse-checkout', 'set', '/*', 'epicshop'], {
+		await execa('git', ['sparse-checkout', 'set', '.', 'epicshop'], {
 			cwd: tempDir,
 			env: getGitEnv(),
 		})
