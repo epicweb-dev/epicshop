@@ -2275,6 +2275,7 @@ function runCommand(
 		const child = spawn(resolveCliCommand(command), args, {
 			cwd: options.cwd,
 			stdio: options.silent ? 'pipe' : 'inherit',
+			shell: true,
 		})
 
 		child.on('error', (error) => {
@@ -2303,6 +2304,7 @@ function runCommandInteractive(
 		const child = spawn(resolveCliCommand(command), args, {
 			cwd: options.cwd,
 			stdio: 'inherit',
+			shell: true,
 		})
 
 		child.on('error', (error) => {
