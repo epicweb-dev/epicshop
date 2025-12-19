@@ -131,7 +131,6 @@ jobs:
 
   playwright:
     name: 🎭 Playwright
-    needs: [build]
     runs-on: ubuntu-latest
     timeout-minutes: 10
     steps:
@@ -144,12 +143,20 @@ jobs:
           node-version: 24
           cache: 'npm'
 
-      - name: 📥 Download All Build Artifacts
-        uses: actions/download-artifact@v4
-        with:
-          name: all-build-artifacts
-          path: packages
+      # can't use build artifacts because the .bin stuff isn't working 🤷‍♂️
+      - name: 📥 Download deps
+        run: npm install --prefer-offline --no-audit --no-fund
 
+      - name: 🏗 Build
+        run: npm run build
+        env:
+          SENTRY_AUTH_TOKEN: ${{ secrets.SENTRY_AUTH_TOKEN }}
+          SENTRY_ORG: ${{ secrets.SENTRY_ORG }}
+          SENTRY_PROJECT: ${{ secrets.SENTRY_PROJECT }}
+          SENTRY_DSN: ${{ secrets.SENTRY_DSN }}
+          NODE_ENV: production
+
+      # run install again so the local .bin files get where they should go.
       - name: 📥 Download deps
         run: npm install --prefer-offline --no-audit --no-fund
 
