@@ -93,6 +93,7 @@ export type WorkshopsResult = {
 export type AddOptions = {
 	repoName?: string
 	directory?: string
+	destination?: string
 	silent?: boolean
 }
 
@@ -125,6 +126,15 @@ const PRODUCT_ICONS: Record<string, string> = {
 	'www.epicweb.dev': '🌌',
 	'www.epicai.pro': '⚡',
 	'www.epicreact.dev': '🚀',
+}
+
+function resolvePathWithTilde(inputPath: string): string {
+	const trimmed = inputPath.trim()
+	if (trimmed === '~') return os.homedir()
+	if (trimmed.startsWith('~/') || trimmed.startsWith('~\\')) {
+		return path.join(os.homedir(), trimmed.slice(2))
+	}
+	return trimmed
 }
 
 function getGitHubHeaders(): HeadersInit {
@@ -489,25 +499,63 @@ export async function add(options: AddOptions): Promise<WorkshopsResult> {
 			})
 		}
 
-		// Ensure config is set up first
-		if (!(await ensureConfigured())) {
-			return { success: false, message: 'Setup cancelled' }
+		const hasExplicitCloneDestination = Boolean(
+			options.destination?.trim() || options.directory?.trim(),
+		)
+
+		// Ensure config is set up first (only when using the managed repos directory)
+		if (!hasExplicitCloneDestination) {
+			if (!(await ensureConfigured())) {
+				return { success: false, message: 'Setup cancelled' }
+			}
 		}
 
 		const { getReposDirectory, workshopExists } = await import(
 			'@epic-web/workshop-utils/workshops.server'
 		)
 
-		// Check if workshop already exists
-		if (await workshopExists(repoName)) {
-			const message = `Workshop "${repoName}" already exists`
-			if (!silent) console.log(chalk.yellow(`⚠️  ${message}`))
-			return { success: false, message }
+		// Check if workshop already exists (only meaningful for managed repos directory)
+		if (!hasExplicitCloneDestination) {
+			if (await workshopExists(repoName)) {
+				const message = `Workshop "${repoName}" already exists`
+				if (!silent) console.log(chalk.yellow(`⚠️  ${message}`))
+				return { success: false, message }
+			}
 		}
 
-		// Get target directory
-		const reposDir = options.directory || (await getReposDirectory())
-		const workshopPath = path.join(reposDir, repoName)
+		let reposDir: string
+		let workshopPath: string
+
+		if (options.destination?.trim()) {
+			// destination can be either:
+			// - a parent directory (existing) => clone into <destination>/<repoName>
+			// - a full target path (non-existing) => clone into <destination>
+			const resolvedDestination = path.resolve(
+				resolvePathWithTilde(options.destination),
+			)
+
+			try {
+				const stat = await fs.promises.stat(resolvedDestination)
+				if (stat.isDirectory()) {
+					reposDir = resolvedDestination
+					workshopPath = path.join(reposDir, repoName)
+				} else {
+					return {
+						success: false,
+						message: `Destination is not a directory: ${resolvedDestination}`,
+					}
+				}
+			} catch {
+				// Destination doesn't exist. Treat it as the exact clone target path.
+				workshopPath = resolvedDestination
+				reposDir = path.dirname(workshopPath)
+			}
+		} else {
+			reposDir = options.directory?.trim()
+				? path.resolve(resolvePathWithTilde(options.directory))
+				: await getReposDirectory()
+			workshopPath = path.join(reposDir, repoName)
+		}
 
 		// Ensure the repos directory exists
 		await fs.promises.mkdir(reposDir, { recursive: true })
@@ -573,7 +621,7 @@ export async function add(options: AddOptions): Promise<WorkshopsResult> {
 			}
 		}
 
-		const message = `Workshop "${repoName}" added successfully at ${workshopPath}`
+		const message = `Workshop "${repoName}" cloned successfully to ${workshopPath}`
 		if (!silent) {
 			console.log(chalk.green(`✅ ${message}`))
 		}
