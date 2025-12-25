@@ -518,7 +518,18 @@ export async function add(options: AddOptions): Promise<WorkshopsResult> {
 		if (!hasExplicitCloneDestination) {
 			if (await workshopExists(repoName)) {
 				const message = `Workshop "${repoName}" already exists`
-				if (!silent) console.log(chalk.yellow(`⚠️  ${message}`))
+				if (!silent) {
+					const reposDir = await getReposDirectory()
+					const workshopPath = path.join(reposDir, repoName)
+					const openCommand = `npx epicshop open ${repoName}`
+					const startCommand = `npx epicshop start ${repoName}`
+
+					console.log(chalk.yellow(`⚠️  ${message}`))
+					console.log(chalk.gray(`   Location on disk: ${workshopPath}`))
+					console.log(chalk.gray(`   You can run:`))
+					console.log(chalk.white.bold(`   ${openCommand}`))
+					console.log(chalk.white.bold(`   ${startCommand}`))
+				}
 				return { success: false, message }
 			}
 		}
