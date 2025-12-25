@@ -519,10 +519,15 @@ export async function add(options: AddOptions): Promise<WorkshopsResult> {
 			if (await workshopExists(repoName)) {
 				const message = `Workshop "${repoName}" already exists`
 				if (!silent) {
+					const { getWorkshop } = await import(
+						'@epic-web/workshop-utils/workshops.server'
+					)
 					const reposDir = await getReposDirectory()
-					const workshopPath = path.join(reposDir, repoName)
-					const openCommand = `npx epicshop open ${repoName}`
-					const startCommand = `npx epicshop start ${repoName}`
+					const workshop = await getWorkshop(repoName)
+					const workshopPath = workshop?.path ?? path.join(reposDir, repoName)
+					const workshopRepoName = workshop?.repoName ?? repoName
+					const openCommand = `npx epicshop open ${workshopRepoName}`
+					const startCommand = `npx epicshop start ${workshopRepoName}`
 
 					console.log(chalk.yellow(`⚠️  ${message}`))
 					console.log(chalk.gray(`   Location on disk: ${workshopPath}`))
