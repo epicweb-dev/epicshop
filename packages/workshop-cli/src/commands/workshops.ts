@@ -1,6 +1,5 @@
 import '@epic-web/workshop-utils/init-env'
 
-import { spawn } from 'node:child_process'
 import * as fs from 'node:fs'
 import * as os from 'node:os'
 import * as path from 'node:path'
@@ -8,7 +7,9 @@ import { cachified, githubCache } from '@epic-web/workshop-utils/cache.server'
 import { parseEpicshopConfig } from '@epic-web/workshop-utils/config.server'
 import { getAuthInfo } from '@epic-web/workshop-utils/db.server'
 import { userHasAccessToWorkshop } from '@epic-web/workshop-utils/epic-api.server'
+import { getErrorMessage } from '@epic-web/workshop-utils/utils'
 import chalk from 'chalk'
+import { execa } from 'execa'
 import { matchSorter, rankings } from 'match-sorter'
 import ora from 'ora'
 import { assertCanPrompt, isCiEnvironment } from '../utils/cli-runtime.js'
@@ -2335,28 +2336,17 @@ function runCommand(
 	args: string[],
 	options: { cwd: string; silent?: boolean },
 ): Promise<CommandResult> {
-	return new Promise((resolve) => {
-		const child = spawn(resolveCliCommand(command), args, {
-			cwd: options.cwd,
-			stdio: options.silent ? 'pipe' : 'inherit',
-			shell: true,
-		})
-
-		child.on('error', (error) => {
-			resolve({ success: false, message: error.message, error })
-		})
-
-		child.on('close', (code) => {
-			if (code === 0) {
-				resolve({ success: true })
-			} else {
-				resolve({
-					success: false,
-					message: `Command exited with code ${code}`,
-				})
-			}
-		})
-	})
+	return execa(resolveCliCommand(command), args, {
+		cwd: options.cwd,
+		stdio: options.silent ? 'pipe' : 'inherit',
+	}).then(
+		() => ({ success: true }),
+		(error: unknown) => {
+			const message = getErrorMessage(error, 'Command failed')
+			const err = error instanceof Error ? error : new Error(message)
+			return { success: false, message, error: err }
+		},
+	)
 }
 
 function runCommandInteractive(
@@ -2364,26 +2354,26 @@ function runCommandInteractive(
 	args: string[],
 	options: { cwd: string },
 ): Promise<CommandResult> {
-	return new Promise((resolve) => {
-		const child = spawn(resolveCliCommand(command), args, {
-			cwd: options.cwd,
-			stdio: 'inherit',
-			shell: true,
-		})
-
-		child.on('error', (error) => {
-			resolve({ success: false, message: error.message, error })
-		})
-
-		child.on('close', (code) => {
-			if (code === 0 || code === null) {
-				resolve({ success: true })
-			} else {
-				resolve({
-					success: false,
-					message: `Command exited with code ${code}`,
-				})
+	return execa(resolveCliCommand(command), args, {
+		cwd: options.cwd,
+		stdio: 'inherit',
+	}).then(
+		() => ({ success: true }),
+		(error: unknown) => {
+			// If the process was terminated by a signal (e.g. user presses Ctrl+C),
+			// treat it as success so we don't show a confusing error message.
+			if (
+				error &&
+				typeof error === 'object' &&
+				'signal' in error &&
+				typeof (error as { signal?: unknown }).signal === 'string'
+			) {
+				return { success: true }
 			}
-		})
-	})
+
+			const message = getErrorMessage(error, 'Command failed')
+			const err = error instanceof Error ? error : new Error(message)
+			return { success: false, message, error: err }
+		},
+	)
 }
