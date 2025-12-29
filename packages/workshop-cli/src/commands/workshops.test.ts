@@ -7,9 +7,19 @@ vi.mock('execa', () => ({
 	execa: vi.fn(),
 }))
 
+vi.mock('@epic-web/workshop-utils/workshops.server', () => ({
+	getDefaultReposDir: vi.fn(() => '/tmp/epicshop-workshops'),
+	getReposDirectory: vi.fn(() => '/tmp/epicshop-workshops'),
+	getWorkshop: vi.fn(),
+	isReposDirectoryConfigured: vi.fn(async () => true),
+	listWorkshops: vi.fn(async () => []),
+	setReposDirectory: vi.fn(async () => {}),
+	workshopExists: vi.fn(async () => false),
+}))
+
 const { execa } = await import('execa')
 
-const { add } = await import('./workshops.ts')
+const { add, startWorkshop } = await import('./workshops.ts')
 
 describe('workshops add', () => {
 	it('passes a clone destination containing spaces as a single argument', async () => {
@@ -35,6 +45,27 @@ describe('workshops add', () => {
 			)
 		} finally {
 			await fs.rm(baseDir, { recursive: true, force: true })
+		}
+	})
+})
+
+describe('workshops start', () => {
+	it('treats Ctrl+C (signal termination) as success', async () => {
+		const workshopDir = await fs.mkdtemp(path.join(os.tmpdir(), 'epicshop workshop '))
+		try {
+			const { getWorkshop } = await import('@epic-web/workshop-utils/workshops.server')
+			vi.mocked(getWorkshop).mockResolvedValue({
+				title: 'Test Workshop',
+				path: workshopDir,
+				repoName: 'test-workshop',
+			} as never)
+
+			vi.mocked(execa).mockRejectedValue({ signal: 'SIGINT' })
+
+			const result = await startWorkshop({ workshop: 'test-workshop', silent: true })
+			expect(result.success).toBe(true)
+		} finally {
+			await fs.rm(workshopDir, { recursive: true, force: true })
 		}
 	})
 })

@@ -7,6 +7,7 @@ import { cachified, githubCache } from '@epic-web/workshop-utils/cache.server'
 import { parseEpicshopConfig } from '@epic-web/workshop-utils/config.server'
 import { getAuthInfo } from '@epic-web/workshop-utils/db.server'
 import { userHasAccessToWorkshop } from '@epic-web/workshop-utils/epic-api.server'
+import { getErrorMessage } from '@epic-web/workshop-utils/utils'
 import chalk from 'chalk'
 import { execa } from 'execa'
 import { matchSorter, rankings } from 'match-sorter'
@@ -2341,8 +2342,9 @@ function runCommand(
 	}).then(
 		() => ({ success: true }),
 		(error: unknown) => {
-			const err = error instanceof Error ? error : new Error(String(error))
-			return { success: false, message: err.message, error: err }
+			const message = getErrorMessage(error, 'Command failed')
+			const err = error instanceof Error ? error : new Error(message)
+			return { success: false, message, error: err }
 		},
 	)
 }
@@ -2358,8 +2360,20 @@ function runCommandInteractive(
 	}).then(
 		() => ({ success: true }),
 		(error: unknown) => {
-			const err = error instanceof Error ? error : new Error(String(error))
-			return { success: false, message: err.message, error: err }
+			// If the process was terminated by a signal (e.g. user presses Ctrl+C),
+			// treat it as success so we don't show a confusing error message.
+			if (
+				error &&
+				typeof error === 'object' &&
+				'signal' in error &&
+				typeof (error as { signal?: unknown }).signal === 'string'
+			) {
+				return { success: true }
+			}
+
+			const message = getErrorMessage(error, 'Command failed')
+			const err = error instanceof Error ? error : new Error(message)
+			return { success: false, message, error: err }
 		},
 	)
 }
