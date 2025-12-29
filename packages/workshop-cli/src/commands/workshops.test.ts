@@ -51,9 +51,13 @@ describe('workshops add', () => {
 
 describe('workshops start', () => {
 	it('treats Ctrl+C (signal termination) as success', async () => {
-		const workshopDir = await fs.mkdtemp(path.join(os.tmpdir(), 'epicshop workshop '))
+		const workshopDir = await fs.mkdtemp(
+			path.join(os.tmpdir(), 'epicshop workshop '),
+		)
 		try {
-			const { getWorkshop } = await import('@epic-web/workshop-utils/workshops.server')
+			const { getWorkshop } = await import(
+				'@epic-web/workshop-utils/workshops.server'
+			)
 			vi.mocked(getWorkshop).mockResolvedValue({
 				title: 'Test Workshop',
 				path: workshopDir,
@@ -62,11 +66,13 @@ describe('workshops start', () => {
 
 			vi.mocked(execa).mockRejectedValue({ signal: 'SIGINT' })
 
-			const result = await startWorkshop({ workshop: 'test-workshop', silent: true })
+			const result = await startWorkshop({
+				workshop: 'test-workshop',
+				silent: true,
+			})
 			expect(result.success).toBe(true)
 		} finally {
 			await fs.rm(workshopDir, { recursive: true, force: true })
 		}
 	})
 })
-
