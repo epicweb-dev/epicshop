@@ -1,0 +1,37 @@
+name: Deploy Presence App
+on:
+  workflow_dispatch:
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  deploy:
+    name: 🚀 Deploy to PartyKit
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    if: ${{ github.repository == 'epicweb-dev/epicshop' }}
+    steps:
+      - name: ⬇️ Checkout repo
+        uses: actions/checkout@v5
+
+      - name: ⎔ Setup node
+        uses: actions/setup-node@v6
+        with:
+          node-version: 24
+          cache: 'npm'
+
+      - name: 📥 Download deps
+        run: npm install --prefer-offline --no-audit --no-fund
+
+      - name: 🏗 Build workshop-utils
+        run: npm run build --workspace=@epic-web/workshop-utils
+
+      - name: 🏗 Build workshop-presence
+        run: npm run build --workspace=@epic-web/workshop-presence
+
+      - name: 🚀 Deploy to PartyKit
+        run: npm run deploy --workspace=@epic-web/workshop-presence
+        env:
+          PARTYKIT_TOKEN: ${{ secrets.PARTYKIT_TOKEN }}
