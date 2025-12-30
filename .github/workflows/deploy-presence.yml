@@ -12,6 +12,8 @@ jobs:
     runs-on: ubuntu-latest
     timeout-minutes: 10
     if: ${{ github.repository == 'epicweb-dev/epicshop' }}
+    permissions:
+      contents: read
     steps:
       - name: ⬇️ Checkout repo
         uses: actions/checkout@v5
