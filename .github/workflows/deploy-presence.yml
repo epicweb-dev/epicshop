@@ -36,4 +36,5 @@ jobs:
       - name: 🚀 Deploy to PartyKit
         run: npm run deploy --workspace=@epic-web/workshop-presence
         env:
+          PARTYKIT_LOGIN: ${{ secrets.PARTYKIT_LOGIN }}
           PARTYKIT_TOKEN: ${{ secrets.PARTYKIT_TOKEN }}
