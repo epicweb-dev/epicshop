@@ -701,22 +701,32 @@ function getVersionStats(users: Array<User>, latestVersion: string | null) {
 	return { onLatest, outdated, withRepoUpdates, withCommitsAhead, unknown }
 }
 
+function escapeHtml(str: string): string {
+	return str
+		.replace(/&/g, '&amp;')
+		.replace(/</g, '&lt;')
+		.replace(/>/g, '&gt;')
+		.replace(/"/g, '&quot;')
+}
+
 function formatVersionBadge(
 	version: string | null | undefined,
 	latestVersion: string | null,
 ): string {
 	if (!version) return ''
 
+	const safeVersion = escapeHtml(version)
+
 	// If we don't know the latest version, show a neutral badge (no status indicator)
 	if (!latestVersion) {
-		return `<span class="badge">v${version}</span>`
+		return `<span class="badge">v${safeVersion}</span>`
 	}
 
 	const isLatest = version === latestVersion
 	const badgeClass = isLatest ? 'badge-latest' : 'badge-outdated'
 	const icon = isLatest ? '✓' : '↑'
 
-	return `<span class="badge ${badgeClass}">${icon} v${version}</span>`
+	return `<span class="badge ${badgeClass}">${icon} v${safeVersion}</span>`
 }
 
 function formatRepoStatusBadges(
