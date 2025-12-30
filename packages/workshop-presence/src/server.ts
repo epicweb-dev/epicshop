@@ -4,7 +4,40 @@ import {
 	getProductHostEmoji,
 	productHostEmojis,
 	UserSchema,
+	type RepoStatus,
 } from './presence.ts'
+
+// Cache for latest npm version
+let latestNpmVersionCache: { version: string | null; fetchedAt: number } = {
+	version: null,
+	fetchedAt: 0,
+}
+const NPM_VERSION_CACHE_TTL = 1000 * 60 * 5 // 5 minutes
+
+async function getLatestNpmVersion(): Promise<string | null> {
+	const now = Date.now()
+	if (
+		latestNpmVersionCache.version &&
+		now - latestNpmVersionCache.fetchedAt < NPM_VERSION_CACHE_TTL
+	) {
+		return latestNpmVersionCache.version
+	}
+
+	try {
+		const response = await fetch(
+			'https://registry.npmjs.org/@epic-web/workshop-app/latest',
+		)
+		if (!response.ok) return latestNpmVersionCache.version
+		const data = (await response.json()) as { version?: string }
+		if (data.version) {
+			latestNpmVersionCache = { version: data.version, fetchedAt: now }
+			return data.version
+		}
+	} catch {
+		// Return cached version on error
+	}
+	return latestNpmVersionCache.version
+}
 
 type User = z.infer<typeof UserSchema>
 const ConnectionStateSchema = z
@@ -151,7 +184,7 @@ export default (class Server implements Party.Server {
 		}
 	}
 
-	onRequest(req: Party.Request): Response | Promise<Response> {
+	async onRequest(req: Party.Request): Promise<Response> {
 		const url = new URL(req.url)
 		if (url.pathname.endsWith('/presence')) {
 			return Response.json(this.getPresenceMessage().payload)
@@ -160,6 +193,8 @@ export default (class Server implements Party.Server {
 			const users = this.getUsers()
 			const workshopUsers = organizeUsersByWorkshop(users)
 			const productHostCounts = getProductHostCounts(users)
+			const latestVersion = await getLatestNpmVersion()
+			const versionStats = getVersionStats(users, latestVersion)
 			return new Response(
 				`
 				<!DOCTYPE html>
@@ -295,10 +330,57 @@ export default (class Server implements Party.Server {
 						.badge-access { background: #dcfce7; color: #166534; }
 						.badge-preview { background: #fef3c7; color: #92400e; }
 						.badge-optout { background: #fee2e2; color: #991b1b; }
+						.badge-latest { background: #dcfce7; color: #166534; }
+						.badge-outdated { background: #fee2e2; color: #991b1b; }
+						.badge-updates { background: #fef3c7; color: #92400e; }
+						.badge-ahead { background: #dbeafe; color: #1e40af; }
 						@media (prefers-color-scheme: dark) {
 							.badge-access { background: #166534; color: #dcfce7; }
 							.badge-preview { background: #92400e; color: #fef3c7; }
 							.badge-optout { background: #991b1b; color: #fee2e2; }
+							.badge-latest { background: #166534; color: #dcfce7; }
+							.badge-outdated { background: #991b1b; color: #fee2e2; }
+							.badge-updates { background: #92400e; color: #fef3c7; }
+							.badge-ahead { background: #1e40af; color: #dbeafe; }
+						}
+						.version-banner {
+							background: linear-gradient(135deg, var(--accent), #a855f7);
+							color: white;
+							padding: 12px 20px;
+							border-radius: 8px;
+							margin-bottom: 20px;
+							display: flex;
+							align-items: center;
+							gap: 8px;
+							font-weight: 500;
+						}
+						.version-label { opacity: 0.9; }
+						.version-value { 
+							font-weight: 700; 
+							font-family: monospace;
+							background: rgba(255,255,255,0.2);
+							padding: 2px 8px;
+							border-radius: 4px;
+						}
+						.stat-success { color: #16a34a; }
+						.stat-warning { color: #ea580c; }
+						.stat-info { color: #2563eb; }
+						@media (prefers-color-scheme: dark) {
+							.stat-success { color: #4ade80; }
+							.stat-warning { color: #fb923c; }
+							.stat-info { color: #60a5fa; }
+						}
+						.user-version {
+							font-size: 0.75rem;
+							color: var(--text-muted);
+							font-family: monospace;
+							margin-top: 2px;
+						}
+						.repo-status {
+							display: flex;
+							gap: 6px;
+							margin-top: 4px;
+							flex-wrap: wrap;
 						}
 						.logged-in-products {
 							font-size: 0.75rem;
@@ -332,10 +414,42 @@ export default (class Server implements Party.Server {
 				</head>
 				<body>
 					<h1>🌐 Epic Web Presence</h1>
+					${
+						latestVersion
+							? `
+					<div class="version-banner">
+						<span class="version-label">Latest epicshop version:</span>
+						<span class="version-value">${latestVersion}</span>
+					</div>
+					`
+							: ''
+					}
 					<div class="stats">
 						<div class="stat">
 							<div class="stat-value">${users.length}</div>
 							<div class="stat-label">Total Users</div>
+						</div>
+						${
+							latestVersion
+								? `
+						<div class="stat">
+							<div class="stat-value stat-success">${versionStats.onLatest}</div>
+							<div class="stat-label">On Latest</div>
+						</div>
+						<div class="stat">
+							<div class="stat-value ${versionStats.outdated > 0 ? 'stat-warning' : ''}">${versionStats.outdated}</div>
+							<div class="stat-label">Outdated</div>
+						</div>
+						`
+								: ''
+						}
+						<div class="stat">
+							<div class="stat-value ${versionStats.withRepoUpdates > 0 ? 'stat-warning' : ''}">${versionStats.withRepoUpdates}</div>
+							<div class="stat-label">Need Repo Updates</div>
+						</div>
+						<div class="stat">
+							<div class="stat-value ${versionStats.withCommitsAhead > 0 ? 'stat-info' : ''}">${versionStats.withCommitsAhead}</div>
+							<div class="stat-label">Commits Ahead</div>
 						</div>
 						${Object.entries(productHostCounts)
 							.map(
@@ -368,7 +482,7 @@ export default (class Server implements Party.Server {
 							([workshop, workshopUsers]) => `
 							<h2>${getWorkshopEmoji(workshopUsers)} ${workshop} <span style="font-weight: normal; color: var(--text-muted);">(${workshopUsers.length})</span></h2>
 							<ul>
-								${workshopUsers.map(generateUserListItem).join('')}
+								${workshopUsers.map((entry) => generateUserListItem(entry, latestVersion)).join('')}
 							</ul>
 						`,
 						)
@@ -556,15 +670,99 @@ function formatLocationString(
 	return loc.origin ?? 'Unknown location'
 }
 
-function generateUserListItem(entry: {
-	user: User
-	location: NonNullable<User['location']> | null
-}) {
+function getVersionStats(users: Array<User>, latestVersion: string | null) {
+	let onLatest = 0
+	let outdated = 0
+	let withRepoUpdates = 0
+	let withCommitsAhead = 0
+	let unknown = 0
+
+	for (const user of users) {
+		const version = user.epicshopVersion
+		if (version && latestVersion) {
+			if (version === latestVersion) {
+				onLatest++
+			} else {
+				outdated++
+			}
+		} else if (!version) {
+			unknown++
+		}
+
+		const repoStatus = user.repoStatus
+		if (repoStatus?.updatesAvailable) {
+			withRepoUpdates++
+		}
+		if (repoStatus?.commitsAhead && repoStatus.commitsAhead > 0) {
+			withCommitsAhead++
+		}
+	}
+
+	return { onLatest, outdated, withRepoUpdates, withCommitsAhead, unknown }
+}
+
+function escapeHtml(str: string): string {
+	return str
+		.replace(/&/g, '&amp;')
+		.replace(/</g, '&lt;')
+		.replace(/>/g, '&gt;')
+		.replace(/"/g, '&quot;')
+}
+
+function formatVersionBadge(
+	version: string | null | undefined,
+	latestVersion: string | null,
+): string {
+	if (!version) return ''
+
+	const safeVersion = escapeHtml(version)
+
+	// If we don't know the latest version, show a neutral badge (no status indicator)
+	if (!latestVersion) {
+		return `<span class="badge">v${safeVersion}</span>`
+	}
+
+	const isLatest = version === latestVersion
+	const badgeClass = isLatest ? 'badge-latest' : 'badge-outdated'
+	const icon = isLatest ? '✓' : '↑'
+
+	return `<span class="badge ${badgeClass}">${icon} v${safeVersion}</span>`
+}
+
+function formatRepoStatusBadges(
+	repoStatus: RepoStatus | null | undefined,
+): string {
+	if (!repoStatus) return ''
+
+	const badges: string[] = []
+
+	if (repoStatus.updatesAvailable) {
+		badges.push('<span class="badge badge-updates">⬇ Updates Available</span>')
+	}
+
+	if (repoStatus.commitsAhead && repoStatus.commitsAhead > 0) {
+		badges.push(
+			`<span class="badge badge-ahead">⬆ ${repoStatus.commitsAhead} commit${repoStatus.commitsAhead > 1 ? 's' : ''} ahead</span>`,
+		)
+	}
+
+	return badges.join('')
+}
+
+function generateUserListItem(
+	entry: {
+		user: User
+		location: NonNullable<User['location']> | null
+	},
+	latestVersion: string | null,
+) {
 	const { user, location } = entry
 	const imageUrl = user.imageUrlLarge ?? user.avatarUrl
 	const name = user.optOut ? 'Anonymous' : (user.name ?? 'Anonymous')
 	const loggedInEmojis = getLoggedInProductEmojis(user.loggedInProductHosts)
 	const productEmoji = getProductHostEmoji(location?.productHost)
+	const versionBadge = formatVersionBadge(user.epicshopVersion, latestVersion)
+	const repoStatusBadges = formatRepoStatusBadges(user.repoStatus)
 
 	// Handle opted-out users
 	if (user.optOut) {
@@ -577,7 +775,9 @@ function generateUserListItem(entry: {
 				<div class="user-name">Anonymous</div>
 				<div class="badges">
 					<span class="badge badge-optout">Opted out</span>
+					${versionBadge}
 				</div>
+				${repoStatusBadges ? `<div class="repo-status">${repoStatusBadges}</div>` : ''}
 				${loggedInEmojis ? `<div class="logged-in-products">Logged into: ${loggedInEmojis}</div>` : ''}
 			</div>
 		</li>
@@ -606,7 +806,9 @@ function generateUserListItem(entry: {
 				<div class="user-location">${formatLocationString(location)}</div>
 				<div class="badges">
 					${accessBadge}
+					${versionBadge}
 				</div>
+				${repoStatusBadges ? `<div class="repo-status">${repoStatusBadges}</div>` : ''}
 				${loggedInEmojis ? `<div class="logged-in-products">Logged into: ${loggedInEmojis}</div>` : ''}
 			</div>
 		</li>
