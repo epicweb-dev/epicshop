@@ -4,6 +4,16 @@ export const partykitRoom = 'epic-web-presence'
 // export const partykitBaseUrl = `http://127.0.0.1:1999/parties/main/${partykitRoom}`
 export const partykitBaseUrl = `https://epic-web-presence.kentcdodds.partykit.dev/parties/main/${partykitRoom}`
 
+export const RepoStatusSchema = z.object({
+	updatesAvailable: z.boolean().nullable().optional(),
+	commitsAhead: z.number().nullable().optional(),
+	commitsBehind: z.number().nullable().optional(),
+	localCommit: z.string().nullable().optional(),
+	remoteCommit: z.string().nullable().optional(),
+})
+
+export type RepoStatus = z.infer<typeof RepoStatusSchema>
+
 export const LocationSchema = z.object({
 	workshopTitle: z.string().nullable().optional(),
 	origin: z.string().nullable().optional(),
@@ -19,19 +29,13 @@ export const LocationSchema = z.object({
 		})
 		.nullable()
 		.optional(),
+	// Version of the epicshop app for this location/workshop
+	epicshopVersion: z.string().nullable().optional(),
+	// Repository status (updates available, commits ahead/behind) for this location/workshop
+	repoStatus: RepoStatusSchema.nullable().optional(),
 })
 
 export type Location = z.infer<typeof LocationSchema>
-
-export const RepoStatusSchema = z.object({
-	updatesAvailable: z.boolean().nullable().optional(),
-	commitsAhead: z.number().nullable().optional(),
-	commitsBehind: z.number().nullable().optional(),
-	localCommit: z.string().nullable().optional(),
-	remoteCommit: z.string().nullable().optional(),
-})
-
-export type RepoStatus = z.infer<typeof RepoStatusSchema>
 
 export const UserSchema = z.object({
 	id: z.string(),
@@ -47,10 +51,6 @@ export const UserSchema = z.object({
 	location: LocationSchema.nullable().optional(),
 	// Multiple locations when user is connected from multiple workshops
 	locations: z.array(LocationSchema).nullable().optional(),
-	// Version of the epicshop app the user is running
-	epicshopVersion: z.string().nullable().optional(),
-	// Repository status (updates available, commits ahead/behind)
-	repoStatus: RepoStatusSchema.nullable().optional(),
 })
 
 export const MessageSchema = z

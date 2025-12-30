@@ -110,11 +110,19 @@ function useUsersLocation() {
 	const rawParams = useParams()
 	const paramsResult = ExerciseAppParamsSchema.safeParse(rawParams)
 	const params = paramsResult.success ? paramsResult.data : null
+	const { ENV, repoUpdates } = useRootLoaderData() ?? {}
+
+	// Extract epicshopVersion and repoStatus from root loader data
+	const epicshopVersion = ENV?.EPICSHOP_APP_VERSION ?? null
+	const repoStatus =
+		repoUpdates && 'updatesAvailable' in repoUpdates ? { ...repoUpdates } : null
 
 	return {
 		workshopTitle,
 		origin: requestInfo.origin,
 		productHost,
+		epicshopVersion,
+		repoStatus,
 		...(params
 			? {
 					exercise: {
@@ -129,7 +137,7 @@ function useUsersLocation() {
 
 function usePresenceSocket(user?: User | null) {
 	const prefs = usePresencePreferences()
-	const { userHasAccess = false, userId, presence } = useRootLoaderData() ?? {}
+	const { userId, presence, userHasAccess } = useRootLoaderData() ?? {}
 	const [users, setUsers] = useState(presence?.users ?? [])
 	const usersLocation = useUsersLocation()
 	const loggedInProductHosts = useLoggedInProductHosts()
@@ -148,36 +156,43 @@ function usePresenceSocket(user?: User | null) {
 		onMessage: handleMessage,
 	})
 
+	// Find the current user in presence.users (includes epicshopVersion, repoStatus, etc.)
+	const currentUserId = user?.id ?? userId?.id
+	const currentUserFromPresence = currentUserId
+		? presence?.users?.find((u) => u.id === currentUserId)
+		: null
+
+	// Use the user data from presence.users as the base (has epicshopVersion, repoStatus, etc.)
+	// Merge with user prop if provided, then override with dynamic fields
+	const baseUser = currentUserFromPresence ?? user ?? {}
+
 	let message: Message | null = null
-	if (user) {
+	if (currentUserId) {
 		if (prefs?.optOut) {
 			// Send opt-out user with minimal info instead of removing entirely
 			message = {
 				type: 'add-user',
 				payload: {
-					id: user.id,
+					...baseUser,
+					id: currentUserId,
+					hasAccess: userHasAccess,
 					optOut: true,
 					loggedInProductHosts,
+					location: usersLocation,
 				},
 			}
 		} else {
+			// Use the user data as-is, only update dynamic fields
 			message = {
 				type: 'add-user',
 				payload: {
-					id: user.id,
-					name: user.name,
+					...baseUser,
+					id: currentUserId,
 					hasAccess: userHasAccess,
-					imageUrlSmall: user.imageUrlSmall,
-					imageUrlLarge: user.imageUrlLarge,
 					location: usersLocation,
 					loggedInProductHosts,
 				},
 			}
-		}
-	} else if (userId?.id) {
-		message = {
-			type: 'add-user',
-			payload: { id: userId.id, location: usersLocation, loggedInProductHosts },
 		}
 	}
 

@@ -19,6 +19,7 @@ import { getUserId } from '@epic-web/workshop-utils/user.server'
 import {
 	PresenceSchema,
 	partykitBaseUrl,
+	type Location,
 	type RepoStatus,
 	type User,
 } from './presence.ts'
@@ -108,38 +109,23 @@ export async function getPresentUsers({
 		// Ignore errors from checking for updates
 	}
 
-	// If opted out, include user with minimal info (just id and optOut flag)
-	if (isOptOut) {
-		const optOutUser: User = {
-			id: userId,
-			optOut: true,
-			loggedInProductHosts,
-			epicshopVersion,
-			repoStatus,
-		}
-		return uniqueUsers([...users.filter((u) => u.id !== userId), optOutUser])
-	}
-
-	// Build full user info
-	const user: User = {
-		id: userId,
-		loggedInProductHosts,
-		epicshopVersion,
-		repoStatus,
-	}
 	const config = getWorkshopConfig()
 	const url = request ? new URL(request.url) : undefined
-	user.location = {
+
+	// Build location with version and repo status
+	const location: Location = {
 		workshopTitle: config.title,
 		origin: url ? url.origin : undefined,
 		productHost: config.product.host,
+		epicshopVersion,
+		repoStatus,
 	}
 	if (url) {
 		if (url.pathname.startsWith('/exercise/')) {
 			const [exerciseNumber, stepNumber, type] = url.pathname
 				.split('/')
 				.slice(2)
-			user.location.exercise = {
+			location.exercise = {
 				exerciseNumber: isNaN(Number(exerciseNumber))
 					? null
 					: Number(exerciseNumber),
@@ -152,6 +138,24 @@ export async function getPresentUsers({
 							: null,
 			}
 		}
+	}
+
+	// If opted out, include user with minimal info but still include location
+	if (isOptOut) {
+		const optOutUser: User = {
+			id: userId,
+			optOut: true,
+			loggedInProductHosts,
+			location,
+		}
+		return uniqueUsers([...users.filter((u) => u.id !== userId), optOutUser])
+	}
+
+	// Build full user info
+	const user: User = {
+		id: userId,
+		loggedInProductHosts,
+		location,
 	}
 
 	if (authInfo) {
