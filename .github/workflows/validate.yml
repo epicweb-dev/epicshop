@@ -213,7 +213,7 @@ jobs:
         run: npm install --prefer-offline --no-audit --no-fund
 
       - name: ▶️ Run setup script
-        run: node setup.mjs
+        run: node ./scripts/setup.mjs
         working-directory: ./example
         continue-on-error: true
 
