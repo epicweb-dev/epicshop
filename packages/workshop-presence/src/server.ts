@@ -678,7 +678,11 @@ function getVersionStats(users: Array<User>, latestVersion: string | null) {
 	let unknown = 0
 
 	for (const user of users) {
-		const version = user.epicshopVersion
+		// Get version/repo status from locations
+		const locations = getUserLocations(user)
+		const version = locations.find(
+			(loc) => loc.epicshopVersion,
+		)?.epicshopVersion
 		if (version && latestVersion) {
 			if (version === latestVersion) {
 				onLatest++
@@ -689,7 +693,7 @@ function getVersionStats(users: Array<User>, latestVersion: string | null) {
 			unknown++
 		}
 
-		const repoStatus = user.repoStatus
+		const repoStatus = locations.find((loc) => loc.repoStatus)?.repoStatus
 		if (repoStatus?.updatesAvailable) {
 			withRepoUpdates++
 		}
@@ -761,8 +765,11 @@ function generateUserListItem(
 	const name = user.optOut ? 'Anonymous' : (user.name ?? 'Anonymous')
 	const loggedInEmojis = getLoggedInProductEmojis(user.loggedInProductHosts)
 	const productEmoji = getProductHostEmoji(location?.productHost)
-	const versionBadge = formatVersionBadge(user.epicshopVersion, latestVersion)
-	const repoStatusBadges = formatRepoStatusBadges(user.repoStatus)
+	// Get version/repo status from location
+	const version = location?.epicshopVersion
+	const repoStatus = location?.repoStatus
+	const versionBadge = formatVersionBadge(version, latestVersion)
+	const repoStatusBadges = formatRepoStatusBadges(repoStatus)
 
 	// Handle opted-out users
 	if (user.optOut) {
