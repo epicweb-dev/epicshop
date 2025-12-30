@@ -200,10 +200,9 @@ function FacePile({ isMenuOpened }: { isMenuOpened: boolean }) {
 						if (user.optOut) {
 							return (
 								<Tooltip key={user.id}>
-									<TooltipTrigger asChild>
+									<TooltipTrigger asChild tabIndex={0}>
 										<div className="relative">
 											<div
-												tabIndex={0}
 												aria-label="Anonymous user (opted out)"
 												className={cn(
 													'bg-muted flex h-8 w-8 items-center justify-center rounded-full border opacity-50',
@@ -236,11 +235,10 @@ function FacePile({ isMenuOpened }: { isMenuOpened: boolean }) {
 
 						return (
 							<Tooltip key={user.id}>
-								<TooltipTrigger asChild>
+								<TooltipTrigger asChild tabIndex={0}>
 									<div className="relative">
 										{imageUrl ? (
 											<img
-												tabIndex={0}
 												alt={user.name || displayNameShort}
 												className={cn(
 													'h-8 w-8 rounded-full border object-cover',
@@ -250,7 +248,6 @@ function FacePile({ isMenuOpened }: { isMenuOpened: boolean }) {
 											/>
 										) : (
 											<div
-												tabIndex={0}
 												aria-label={user.name || `${displayNameShort} Dev`}
 												className={cn(
 													'flex h-8 w-8 items-center justify-center rounded-full border',
@@ -321,9 +318,8 @@ function FacePile({ isMenuOpened }: { isMenuOpened: boolean }) {
 				{tiffany}
 				{shouldShowNumberOverLimit ? (
 					<Tooltip>
-						<TooltipTrigger asChild>
+						<TooltipTrigger asChild tabIndex={0}>
 							<div
-								tabIndex={0}
 								aria-label={overLimitLabel}
 								className={cn(
 									'bg-accent text-accent-foreground flex items-center justify-center rounded-full border text-xs',
