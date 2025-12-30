@@ -129,11 +129,13 @@ export async function checkForUpdates() {
 			['rev-list', '--count', '--left-right', 'HEAD...@{upstream}'],
 			{ cwd },
 		)
-		const [, behind = 0] = stdout.trim().split(/\s+/).map(Number)
+		const [ahead = 0, behind = 0] = stdout.trim().split(/\s+/).map(Number)
 		const updatesAvailable = behind > 0
 
 		return {
 			updatesAvailable,
+			commitsAhead: ahead,
+			commitsBehind: behind,
 			localCommit,
 			remoteCommit,
 			diffLink: await getDiffUrl(localCommit, remoteCommit),
