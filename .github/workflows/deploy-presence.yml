@@ -6,6 +6,9 @@ concurrency:
   group: ${{ github.workflow }}-${{ github.ref }}
   cancel-in-progress: true
 
+env:
+  NX_CLOUD_ACCESS_TOKEN: ${{ secrets.NX_CLOUD_ACCESS_TOKEN }}
+
 jobs:
   deploy:
     name: 🚀 Deploy to PartyKit
@@ -27,11 +30,8 @@ jobs:
       - name: 📥 Download deps
         run: npm install --prefer-offline --no-audit --no-fund
 
-      - name: 🏗 Build workshop-utils
-        run: npm run build --workspace=@epic-web/workshop-utils
-
       - name: 🏗 Build workshop-presence
-        run: npm run build --workspace=@epic-web/workshop-presence
+        run: npx nx run @epic-web/workshop-presence:build
 
       - name: 🚀 Deploy to PartyKit
         run: npm run deploy --workspace=@epic-web/workshop-presence
