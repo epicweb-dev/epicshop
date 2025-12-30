@@ -115,27 +115,7 @@ function useUsersLocation() {
 	// Extract epicshopVersion and repoStatus from root loader data
 	const epicshopVersion = ENV?.EPICSHOP_APP_VERSION ?? null
 	const repoStatus =
-		repoUpdates && 'updatesAvailable' in repoUpdates
-			? {
-					updatesAvailable: repoUpdates.updatesAvailable ?? null,
-					commitsAhead:
-						'commitsAhead' in repoUpdates
-							? (repoUpdates.commitsAhead ?? null)
-							: null,
-					commitsBehind:
-						'commitsBehind' in repoUpdates
-							? (repoUpdates.commitsBehind ?? null)
-							: null,
-					localCommit:
-						'localCommit' in repoUpdates
-							? (repoUpdates.localCommit ?? null)
-							: null,
-					remoteCommit:
-						'remoteCommit' in repoUpdates
-							? (repoUpdates.remoteCommit ?? null)
-							: null,
-				}
-			: null
+		repoUpdates && 'updatesAvailable' in repoUpdates ? { ...repoUpdates } : null
 
 	return {
 		workshopTitle,
@@ -157,7 +137,7 @@ function useUsersLocation() {
 
 function usePresenceSocket(user?: User | null) {
 	const prefs = usePresencePreferences()
-	const { userId, presence } = useRootLoaderData() ?? {}
+	const { userId, presence, userHasAccess } = useRootLoaderData() ?? {}
 	const [users, setUsers] = useState(presence?.users ?? [])
 	const usersLocation = useUsersLocation()
 	const loggedInProductHosts = useLoggedInProductHosts()
@@ -195,6 +175,7 @@ function usePresenceSocket(user?: User | null) {
 				payload: {
 					...baseUser,
 					id: currentUserId,
+					hasAccess: userHasAccess,
 					optOut: true,
 					loggedInProductHosts,
 					location: usersLocation,
@@ -207,6 +188,7 @@ function usePresenceSocket(user?: User | null) {
 				payload: {
 					...baseUser,
 					id: currentUserId,
+					hasAccess: userHasAccess,
 					location: usersLocation,
 					loggedInProductHosts,
 				},

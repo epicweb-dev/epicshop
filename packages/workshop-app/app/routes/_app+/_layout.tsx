@@ -201,9 +201,11 @@ function FacePile({ isMenuOpened }: { isMenuOpened: boolean }) {
 							return (
 								<Tooltip key={user.id}>
 									<TooltipTrigger asChild tabIndex={0}>
-										<div className="relative">
+										<div
+											className="relative"
+											aria-label="Anonymous user (opted out)"
+										>
 											<div
-												aria-label="Anonymous user (opted out)"
 												className={cn(
 													'bg-muted flex h-8 w-8 items-center justify-center rounded-full border opacity-50',
 												)}
@@ -236,7 +238,10 @@ function FacePile({ isMenuOpened }: { isMenuOpened: boolean }) {
 						return (
 							<Tooltip key={user.id}>
 								<TooltipTrigger asChild tabIndex={0}>
-									<div className="relative">
+									<div
+										className="relative"
+										aria-label={user.name || `${displayNameShort} Dev`}
+									>
 										{imageUrl ? (
 											<img
 												alt={user.name || displayNameShort}
@@ -248,7 +253,6 @@ function FacePile({ isMenuOpened }: { isMenuOpened: boolean }) {
 											/>
 										) : (
 											<div
-												aria-label={user.name || `${displayNameShort} Dev`}
 												className={cn(
 													'flex h-8 w-8 items-center justify-center rounded-full border',
 													scoreClassNames,
