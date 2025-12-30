@@ -707,7 +707,12 @@ function formatVersionBadge(
 ): string {
 	if (!version) return ''
 
-	const isLatest = latestVersion && version === latestVersion
+	// If we don't know the latest version, show a neutral badge (no status indicator)
+	if (!latestVersion) {
+		return `<span class="badge">v${version}</span>`
+	}
+
+	const isLatest = version === latestVersion
 	const badgeClass = isLatest ? 'badge-latest' : 'badge-outdated'
 	const icon = isLatest ? '✓' : '↑'
 
