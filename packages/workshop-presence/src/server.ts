@@ -229,6 +229,22 @@ export default (class Server implements Party.Server {
 			const productHostCounts = getProductHostCounts(users)
 			const latestVersion = await getLatestNpmVersion()
 			const versionStats = getVersionStats(users, latestVersion)
+			const presenceRootHtml = renderPresenceRootHtml({
+				users,
+				workshopUsers,
+				productHostCounts,
+				latestVersion,
+				versionStats,
+			})
+
+			const fragment = url.searchParams.get('fragment')
+			if (fragment === 'presence-root' || fragment === '1') {
+				return new Response(presenceRootHtml, {
+					headers: {
+						'Content-Type': 'text/html',
+					},
+				})
+			}
 			return new Response(
 				`
 				<!DOCTYPE html>
@@ -447,80 +463,7 @@ export default (class Server implements Party.Server {
 				</head>
 				<body>
 					<div id="presence-root">
-						<h1>🌐 Epic Web Presence</h1>
-						${
-							latestVersion
-								? `
-						<div class="version-banner">
-							<span class="version-label">Latest epicshop version:</span>
-							<span class="version-value">${latestVersion}</span>
-						</div>
-						`
-								: ''
-						}
-						<div class="stats">
-							<div class="stat">
-								<div class="stat-value">${users.length}</div>
-								<div class="stat-label">Total Users</div>
-							</div>
-							${
-								latestVersion
-									? `
-							<div class="stat">
-								<div class="stat-value stat-success">${versionStats.onLatest}</div>
-								<div class="stat-label">On Latest</div>
-							</div>
-							<div class="stat">
-								<div class="stat-value ${versionStats.outdated > 0 ? 'stat-warning' : ''}">${versionStats.outdated}</div>
-								<div class="stat-label">Outdated</div>
-							</div>
-							`
-									: ''
-							}
-							<div class="stat">
-								<div class="stat-value ${versionStats.withRepoUpdates > 0 ? 'stat-warning' : ''}">${versionStats.withRepoUpdates}</div>
-								<div class="stat-label">Need Repo Updates</div>
-							</div>
-							<div class="stat">
-								<div class="stat-value ${versionStats.withCommitsAhead > 0 ? 'stat-info' : ''}">${versionStats.withCommitsAhead}</div>
-								<div class="stat-label">Commits Ahead</div>
-							</div>
-							${Object.entries(productHostCounts)
-								.map(
-									([host, count]) => `
-								<div class="stat">
-									<div class="stat-value">${getProductHostEmoji(host) ?? '❓'} ${count}</div>
-									<div class="stat-label">${host.replace('www.', '')}</div>
-								</div>
-							`,
-								)
-								.join('')}
-						</div>
-						<div class="legend">
-							<h3>Product Legend</h3>
-							<div class="legend-items">
-								${Object.entries(productHostEmojis)
-									.map(
-										([host, emoji]) => `
-									<div class="legend-item">
-										<span>${emoji}</span>
-										<span>${host.replace('www.', '')}</span>
-									</div>
-								`,
-									)
-									.join('')}
-							</div>
-						</div>
-						${Object.entries(workshopUsers)
-							.map(
-								([workshop, workshopUsers]) => `
-								<h2>${getWorkshopEmoji(workshopUsers)} ${workshop} <span style="font-weight: normal; color: var(--text-muted);">(${workshopUsers.length})</span></h2>
-								<ul>
-									${workshopUsers.map((entry) => generateUserListItem(entry, latestVersion)).join('')}
-								</ul>
-							`,
-							)
-							.join('')}
+						${presenceRootHtml}
 					</div>
 					<script>
 						(() => {
@@ -558,17 +501,15 @@ export default (class Server implements Party.Server {
 									if (!currentRoot) return
 
 									const url = new URL(location.href)
+									url.searchParams.set('fragment', 'presence-root')
 									url.searchParams.set('_', Date.now().toString())
 
 									const res = await fetch(url.toString(), { cache: 'no-store' })
 									if (!res.ok) throw new Error('Failed to refresh')
 									const html = await res.text()
-									const doc = new DOMParser().parseFromString(html, 'text/html')
-									const nextRoot = doc.getElementById('presence-root')
-									if (!nextRoot) return
 
 									const scrollY = window.scrollY
-									currentRoot.innerHTML = nextRoot.innerHTML
+									currentRoot.innerHTML = html
 									window.scrollTo({ top: scrollY })
 								} catch {
 									// If anything goes wrong, fall back to polling (best effort).
@@ -687,6 +628,97 @@ function getLiteUsers(users: Array<User>): Array<User> {
 			locations,
 		}
 	})
+}
+
+function renderPresenceRootHtml({
+	users,
+	workshopUsers,
+	productHostCounts,
+	latestVersion,
+	versionStats,
+}: {
+	users: Array<User>
+	workshopUsers: ReturnType<typeof organizeUsersByWorkshop>
+	productHostCounts: ReturnType<typeof getProductHostCounts>
+	latestVersion: string | null
+	versionStats: ReturnType<typeof getVersionStats>
+}) {
+	return `
+		<h1>🌐 Epic Web Presence</h1>
+		${
+			latestVersion
+				? `
+		<div class="version-banner">
+			<span class="version-label">Latest epicshop version:</span>
+			<span class="version-value">${latestVersion}</span>
+		</div>
+		`
+				: ''
+		}
+		<div class="stats">
+			<div class="stat">
+				<div class="stat-value">${users.length}</div>
+				<div class="stat-label">Total Users</div>
+			</div>
+			${
+				latestVersion
+					? `
+			<div class="stat">
+				<div class="stat-value stat-success">${versionStats.onLatest}</div>
+				<div class="stat-label">On Latest</div>
+			</div>
+			<div class="stat">
+				<div class="stat-value ${versionStats.outdated > 0 ? 'stat-warning' : ''}">${versionStats.outdated}</div>
+				<div class="stat-label">Outdated</div>
+			</div>
+			`
+					: ''
+			}
+			<div class="stat">
+				<div class="stat-value ${versionStats.withRepoUpdates > 0 ? 'stat-warning' : ''}">${versionStats.withRepoUpdates}</div>
+				<div class="stat-label">Need Repo Updates</div>
+			</div>
+			<div class="stat">
+				<div class="stat-value ${versionStats.withCommitsAhead > 0 ? 'stat-info' : ''}">${versionStats.withCommitsAhead}</div>
+				<div class="stat-label">Commits Ahead</div>
+			</div>
+			${Object.entries(productHostCounts)
+				.map(
+					([host, count]) => `
+				<div class="stat">
+					<div class="stat-value">${getProductHostEmoji(host) ?? '❓'} ${count}</div>
+					<div class="stat-label">${host.replace('www.', '')}</div>
+				</div>
+			`,
+				)
+				.join('')}
+		</div>
+		<div class="legend">
+			<h3>Product Legend</h3>
+			<div class="legend-items">
+				${Object.entries(productHostEmojis)
+					.map(
+						([host, emoji]) => `
+					<div class="legend-item">
+						<span>${emoji}</span>
+						<span>${host.replace('www.', '')}</span>
+					</div>
+				`,
+					)
+					.join('')}
+			</div>
+		</div>
+		${Object.entries(workshopUsers)
+			.map(
+				([workshop, workshopUsers]) => `
+				<h2>${getWorkshopEmoji(workshopUsers)} ${workshop} <span style="font-weight: normal; color: var(--text-muted);">(${workshopUsers.length})</span></h2>
+				<ul>
+					${workshopUsers.map((entry) => generateUserListItem(entry, latestVersion)).join('')}
+				</ul>
+			`,
+			)
+			.join('')}
+	`
 }
 
 function sortUsers(users: Array<User>) {
