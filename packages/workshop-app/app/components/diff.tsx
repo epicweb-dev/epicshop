@@ -241,7 +241,7 @@ function SelectFileToDiff({
 			>
 				<span className="overflow-hidden text-ellipsis whitespace-nowrap">
 					{label}:{' '}
-					<SelectValue
+					<Select.Value
 						placeholder={`Select ${label}`}
 						className="inline-block w-40 text-ellipsis"
 					/>
@@ -303,18 +303,5 @@ const SelectItem: React.FC<any> = ({
 				<Icon name="CheckSmall" />
 			</Select.ItemIndicator>
 		</Select.Item>
-	)
-}
-
-const SelectValue: React.FC<any> = ({
-	ref: forwardedRef,
-	children,
-	className,
-	...props
-}) => {
-	return (
-		<Select.Value {...props} ref={forwardedRef}>
-			{props.value}
-		</Select.Value>
 	)
 }
