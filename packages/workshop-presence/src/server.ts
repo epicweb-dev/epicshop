@@ -40,9 +40,16 @@ async function getLatestNpmVersion(): Promise<string | null> {
 }
 
 type User = z.infer<typeof UserSchema>
+type PresenceSubscription = 'lite' | 'full'
+
+const PresenceSubscriptionSchema = z.union([
+	z.literal('lite'),
+	z.literal('full'),
+])
 const ConnectionStateSchema = z
 	.object({
 		user: UserSchema.nullable().optional(),
+		subscription: PresenceSubscriptionSchema.optional(),
 	})
 	.nullable()
 
@@ -87,17 +94,39 @@ export default (class Server implements Party.Server {
 		this.updateUsers()
 	}
 
+	onConnect(connection: Party.Connection, ctx: Party.ConnectionContext) {
+		const url = new URL(ctx.request.url)
+		const wantsFull =
+			url.searchParams.get('full') === '1' || url.searchParams.get('full') === 'true'
+		shallowMergeConnectionState(connection, {
+			subscription: wantsFull ? 'full' : 'lite',
+		})
+	}
+
 	updateUsers() {
-		const presenceMessage = JSON.stringify(this.getPresenceMessage())
+		const fullUsers = this.getUsers()
+		const liteUsers = getLiteUsers(fullUsers)
+
+		const fullPresenceMessage = JSON.stringify(
+			this.getPresenceMessage(fullUsers),
+		)
+		const litePresenceMessage = JSON.stringify(
+			this.getPresenceMessage(liteUsers),
+		)
+
 		for (const connection of this.party.getConnections()) {
-			connection.send(presenceMessage)
+			const state = getConnectionState(connection)
+			const subscription: PresenceSubscription = state?.subscription ?? 'lite'
+			connection.send(
+				subscription === 'full' ? fullPresenceMessage : litePresenceMessage,
+			)
 		}
 	}
 
-	getPresenceMessage() {
+	getPresenceMessage(users: Array<User>) {
 		return {
 			type: 'presence',
-			payload: { users: this.getUsers() },
+			payload: { users },
 		} satisfies Message
 	}
 
@@ -187,7 +216,12 @@ export default (class Server implements Party.Server {
 	async onRequest(req: Party.Request): Promise<Response> {
 		const url = new URL(req.url)
 		if (url.pathname.endsWith('/presence')) {
-			return Response.json(this.getPresenceMessage().payload)
+			const wantsFull =
+				url.searchParams.get('full') === '1' ||
+				url.searchParams.get('full') === 'true'
+			const fullUsers = this.getUsers()
+			const users = wantsFull ? fullUsers : getLiteUsers(fullUsers)
+			return Response.json({ users })
 		}
 		if (url.pathname.endsWith('/show')) {
 			const users = this.getUsers()
@@ -195,6 +229,22 @@ export default (class Server implements Party.Server {
 			const productHostCounts = getProductHostCounts(users)
 			const latestVersion = await getLatestNpmVersion()
 			const versionStats = getVersionStats(users, latestVersion)
+			const presenceRootHtml = renderPresenceRootHtml({
+				users,
+				workshopUsers,
+				productHostCounts,
+				latestVersion,
+				versionStats,
+			})
+
+			const fragment = url.searchParams.get('fragment')
+			if (fragment === 'presence-root' || fragment === '1') {
+				return new Response(presenceRootHtml, {
+					headers: {
+						'Content-Type': 'text/html',
+					},
+				})
+			}
 			return new Response(
 				`
 				<!DOCTYPE html>
@@ -202,7 +252,6 @@ export default (class Server implements Party.Server {
 				<head>
 					<meta charset="UTF-8">
 					<meta name="viewport" content="width=device-width, initial-scale=1.0">
-					<meta http-equiv="refresh" content="5">
 					<title>Epic Web Presence</title>
 					<style>
 						:root {
@@ -413,80 +462,99 @@ export default (class Server implements Party.Server {
 					</style>
 				</head>
 				<body>
-					<h1>🌐 Epic Web Presence</h1>
-					${
-						latestVersion
-							? `
-					<div class="version-banner">
-						<span class="version-label">Latest epicshop version:</span>
-						<span class="version-value">${latestVersion}</span>
+					<div id="presence-root">
+						${presenceRootHtml}
 					</div>
-					`
-							: ''
-					}
-					<div class="stats">
-						<div class="stat">
-							<div class="stat-value">${users.length}</div>
-							<div class="stat-label">Total Users</div>
-						</div>
-						${
-							latestVersion
-								? `
-						<div class="stat">
-							<div class="stat-value stat-success">${versionStats.onLatest}</div>
-							<div class="stat-label">On Latest</div>
-						</div>
-						<div class="stat">
-							<div class="stat-value ${versionStats.outdated > 0 ? 'stat-warning' : ''}">${versionStats.outdated}</div>
-							<div class="stat-label">Outdated</div>
-						</div>
-						`
-								: ''
-						}
-						<div class="stat">
-							<div class="stat-value ${versionStats.withRepoUpdates > 0 ? 'stat-warning' : ''}">${versionStats.withRepoUpdates}</div>
-							<div class="stat-label">Need Repo Updates</div>
-						</div>
-						<div class="stat">
-							<div class="stat-value ${versionStats.withCommitsAhead > 0 ? 'stat-info' : ''}">${versionStats.withCommitsAhead}</div>
-							<div class="stat-label">Commits Ahead</div>
-						</div>
-						${Object.entries(productHostCounts)
-							.map(
-								([host, count]) => `
-							<div class="stat">
-								<div class="stat-value">${getProductHostEmoji(host) ?? '❓'} ${count}</div>
-								<div class="stat-label">${host.replace('www.', '')}</div>
-							</div>
-						`,
-							)
-							.join('')}
-					</div>
-					<div class="legend">
-						<h3>Product Legend</h3>
-						<div class="legend-items">
-							${Object.entries(productHostEmojis)
-								.map(
-									([host, emoji]) => `
-								<div class="legend-item">
-									<span>${emoji}</span>
-									<span>${host.replace('www.', '')}</span>
-								</div>
-							`,
-								)
-								.join('')}
-						</div>
-					</div>
-					${Object.entries(workshopUsers)
-						.map(
-							([workshop, workshopUsers]) => `
-							<h2>${getWorkshopEmoji(workshopUsers)} ${workshop} <span style="font-weight: normal; color: var(--text-muted);">(${workshopUsers.length})</span></h2>
-							<ul>
-								${workshopUsers.map((entry) => generateUserListItem(entry, latestVersion)).join('')}
-							</ul>
-						`,
-						)
-						.join('')}
+					<script>
+						(() => {
+							const POLL_INTERVAL_MS = 5000
+							const RELOAD_DEBOUNCE_MS = 150
+
+							let pollIntervalId = null
+							let refreshTimeoutId = null
+							let refreshInFlight = false
+							let refreshQueued = false
+
+							function scheduleRefresh() {
+								if (refreshTimeoutId) return
+								refreshTimeoutId = setTimeout(() => {
+									refreshTimeoutId = null
+									void refreshFromServer()
+								}, RELOAD_DEBOUNCE_MS)
+							}
+
+							function startPollingFallback() {
+								if (pollIntervalId) return
+								pollIntervalId = setInterval(() => {
+									void refreshFromServer()
+								}, POLL_INTERVAL_MS)
+							}
+
+							async function refreshFromServer() {
+								if (refreshInFlight) {
+									refreshQueued = true
+									return
+								}
+								refreshInFlight = true
+								try {
+									const currentRoot = document.getElementById('presence-root')
+									if (!currentRoot) return
+
+									const url = new URL(location.href)
+									url.searchParams.set('fragment', 'presence-root')
+									url.searchParams.set('_', Date.now().toString())
+
+									const res = await fetch(url.toString(), { cache: 'no-store' })
+									if (!res.ok) throw new Error('Failed to refresh')
+									const html = await res.text()
+
+									const scrollY = window.scrollY
+									currentRoot.innerHTML = html
+									window.scrollTo({ top: scrollY })
+								} catch {
+									// If anything goes wrong, fall back to polling (best effort).
+									startPollingFallback()
+								} finally {
+									refreshInFlight = false
+									if (refreshQueued) {
+										refreshQueued = false
+										void refreshFromServer()
+									}
+								}
+							}
+
+							function getRoomWebSocketUrl() {
+								const url = new URL(location.href)
+								url.protocol = url.protocol === 'https:' ? 'wss:' : 'ws:'
+								// '/show' is an HTTP endpoint; the room websocket is at the room root.
+								if (url.pathname.endsWith('/show')) {
+									url.pathname = url.pathname.replace(/\/show$/, '')
+								}
+								url.search = ''
+								url.hash = ''
+								return url.toString()
+							}
+
+							try {
+								const ws = new WebSocket(getRoomWebSocketUrl())
+								ws.addEventListener('message', (event) => {
+									try {
+										const data = JSON.parse(event.data)
+										if (data && data.type === 'presence') {
+											scheduleRefresh()
+										}
+									} catch {
+										// If the server ever changes the message format, fall back to reloading.
+										scheduleRefresh()
+									}
+								})
+								ws.addEventListener('close', () => startPollingFallback())
+								ws.addEventListener('error', () => startPollingFallback())
+							} catch {
+								startPollingFallback()
+							}
+						})()
+					</script>
 				</body>
 				</html>
 				`,
@@ -535,6 +603,122 @@ function getConnectionState(connection: Party.Connection) {
 		setConnectionState(connection, null)
 		return null
 	}
+}
+
+function getLiteUsers(users: Array<User>): Array<User> {
+	return users.map((user) => {
+		const locations = getUserLocations(user).map((loc) => ({
+			workshopTitle: loc.workshopTitle,
+			productHost: loc.productHost,
+			exercise: loc.exercise,
+		}))
+
+		const location = locations[0] ?? null
+
+		return {
+			id: user.id,
+			hasAccess: user.hasAccess,
+			avatarUrl: user.avatarUrl,
+			imageUrlSmall: user.imageUrlSmall,
+			imageUrlLarge: user.imageUrlLarge,
+			name: user.name,
+			optOut: user.optOut,
+			loggedInProductHosts: user.loggedInProductHosts,
+			location,
+			locations,
+		}
+	})
+}
+
+function renderPresenceRootHtml({
+	users,
+	workshopUsers,
+	productHostCounts,
+	latestVersion,
+	versionStats,
+}: {
+	users: Array<User>
+	workshopUsers: ReturnType<typeof organizeUsersByWorkshop>
+	productHostCounts: ReturnType<typeof getProductHostCounts>
+	latestVersion: string | null
+	versionStats: ReturnType<typeof getVersionStats>
+}) {
+	return `
+		<h1>🌐 Epic Web Presence</h1>
+		${
+			latestVersion
+				? `
+		<div class="version-banner">
+			<span class="version-label">Latest epicshop version:</span>
+			<span class="version-value">${latestVersion}</span>
+		</div>
+		`
+				: ''
+		}
+		<div class="stats">
+			<div class="stat">
+				<div class="stat-value">${users.length}</div>
+				<div class="stat-label">Total Users</div>
+			</div>
+			${
+				latestVersion
+					? `
+			<div class="stat">
+				<div class="stat-value stat-success">${versionStats.onLatest}</div>
+				<div class="stat-label">On Latest</div>
+			</div>
+			<div class="stat">
+				<div class="stat-value ${versionStats.outdated > 0 ? 'stat-warning' : ''}">${versionStats.outdated}</div>
+				<div class="stat-label">Outdated</div>
+			</div>
+			`
+					: ''
+			}
+			<div class="stat">
+				<div class="stat-value ${versionStats.withRepoUpdates > 0 ? 'stat-warning' : ''}">${versionStats.withRepoUpdates}</div>
+				<div class="stat-label">Need Repo Updates</div>
+			</div>
+			<div class="stat">
+				<div class="stat-value ${versionStats.withCommitsAhead > 0 ? 'stat-info' : ''}">${versionStats.withCommitsAhead}</div>
+				<div class="stat-label">Commits Ahead</div>
+			</div>
+			${Object.entries(productHostCounts)
+				.map(
+					([host, count]) => `
+				<div class="stat">
+					<div class="stat-value">${getProductHostEmoji(host) ?? '❓'} ${count}</div>
+					<div class="stat-label">${host.replace('www.', '')}</div>
+				</div>
+			`,
+				)
+				.join('')}
+		</div>
+		<div class="legend">
+			<h3>Product Legend</h3>
+			<div class="legend-items">
+				${Object.entries(productHostEmojis)
+					.map(
+						([host, emoji]) => `
+					<div class="legend-item">
+						<span>${emoji}</span>
+						<span>${host.replace('www.', '')}</span>
+					</div>
+				`,
+					)
+					.join('')}
+			</div>
+		</div>
+		${Object.entries(workshopUsers)
+			.map(
+				([workshop, workshopUsers]) => `
+				<h2>${getWorkshopEmoji(workshopUsers)} ${workshop} <span style="font-weight: normal; color: var(--text-muted);">(${workshopUsers.length})</span></h2>
+				<ul>
+					${workshopUsers.map((entry) => generateUserListItem(entry, latestVersion)).join('')}
+				</ul>
+			`,
+			)
+			.join('')}
+	`
 }
 
 function sortUsers(users: Array<User>) {
