@@ -202,7 +202,6 @@ export default (class Server implements Party.Server {
 				<head>
 					<meta charset="UTF-8">
 					<meta name="viewport" content="width=device-width, initial-scale=1.0">
-					<meta http-equiv="refresh" content="5">
 					<title>Epic Web Presence</title>
 					<style>
 						:root {
@@ -487,6 +486,60 @@ export default (class Server implements Party.Server {
 						`,
 						)
 						.join('')}
+					<script>
+						(() => {
+							const POLL_INTERVAL_MS = 5000
+							const RELOAD_DEBOUNCE_MS = 150
+
+							let pollIntervalId = null
+							let reloadTimeoutId = null
+
+							function scheduleReload() {
+								if (reloadTimeoutId) return
+								reloadTimeoutId = setTimeout(() => {
+									location.reload()
+								}, RELOAD_DEBOUNCE_MS)
+							}
+
+							function startPollingFallback() {
+								if (pollIntervalId) return
+								pollIntervalId = setInterval(() => {
+									location.reload()
+								}, POLL_INTERVAL_MS)
+							}
+
+							function getRoomWebSocketUrl() {
+								const url = new URL(location.href)
+								url.protocol = url.protocol === 'https:' ? 'wss:' : 'ws:'
+								// `/show` is an HTTP endpoint; the room websocket is at the room root.
+								if (url.pathname.endsWith('/show')) {
+									url.pathname = url.pathname.replace(/\/show$/, '')
+								}
+								url.search = ''
+								url.hash = ''
+								return url.toString()
+							}
+
+							try {
+								const ws = new WebSocket(getRoomWebSocketUrl())
+								ws.addEventListener('message', (event) => {
+									try {
+										const data = JSON.parse(event.data)
+										if (data && data.type === 'presence') {
+											scheduleReload()
+										}
+									} catch {
+										// If the server ever changes the message format, fall back to reloading.
+										scheduleReload()
+									}
+								})
+								ws.addEventListener('close', () => startPollingFallback())
+								ws.addEventListener('error', () => startPollingFallback())
+							} catch {
+								startPollingFallback()
+							}
+						})()
+					</script>
 				</body>
 				</html>
 				`,
