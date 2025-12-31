@@ -32,11 +32,24 @@ installed in individual repositories which resemble the structure of the
 
 ## Dev environment tips
 
-- Run the build for all packages with `npm run build` (it's cached so it's
-  pretty fast)
-- Run lower-level tests with `npm run test`
-- Run higher-level tests with `npm run test:e2e` (uses playwright)
-- Run basic build, type checking, linting, and tests with `npm run validate`
+- **Install dependencies first**: Make sure you've run `npm install` before
+  running any scripts.
+- All scripts use nx to automatically manage dependencies and build order:
+  - Run the build for all packages with `npm run build` (nx handles dependency
+    order automatically and it's cached so it's pretty fast)
+  - Run lower-level tests with `npm run test`
+  - Run higher-level tests with `npm run test:e2e` (uses playwright)
+  - Run basic build, type checking, linting, and tests with `npm run validate`
+- To run commands for specific packages (to avoid running the whole project),
+  use nx directly:
+  - Build a specific package: `nx run @epic-web/workshop-utils:build`
+  - Type check a specific package: `nx run @epic-web/workshop-app:typecheck`
+  - Lint a specific package: `nx run @epic-web/workshop-presence:lint`
+  - Run multiple packages:
+    `nx run-many --target build --projects @epic-web/workshop-utils,@epic-web/workshop-presence`
+  - Nx will still handle dependencies automatically (e.g., building
+    `@epic-web/workshop-app` will build `@epic-web/workshop-utils` first if
+    needed)
 - Find the CI plan in the .github/workflows folder.
 - Commit your changes, then run the following and commit any changes that are
   made separately:
@@ -80,11 +93,10 @@ installed). Only the most important bits are enforced by eslint.
 
 ### Build Dependencies and Workspace Management
 
-- **Build order matters**: In this monorepo, you must build workspace
-  dependencies before building the main app:
-  1. `npm run build --workspace=@epic-web/workshop-utils`
-  2. `npm run build --workspace=@epic-web/workshop-presence`
-  3. `npm run build --workspace=@epic-web/workshop-app`
+- **Nx handles build order automatically**: When you run build, typecheck, or
+  lint commands (either via npm scripts or nx directly), nx automatically builds
+  dependencies first based on the dependency graph. You don't need to manually
+  manage build order.
 - **Always build before testing**: After making code changes, always run the
   build process before starting the dev server to test changes, especially when
   working with client-side functionality.
