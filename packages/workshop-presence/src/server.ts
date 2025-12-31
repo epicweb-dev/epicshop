@@ -40,9 +40,16 @@ async function getLatestNpmVersion(): Promise<string | null> {
 }
 
 type User = z.infer<typeof UserSchema>
+type PresenceSubscription = 'lite' | 'full'
+
+const PresenceSubscriptionSchema = z.union([
+	z.literal('lite'),
+	z.literal('full'),
+])
 const ConnectionStateSchema = z
 	.object({
 		user: UserSchema.nullable().optional(),
+		subscription: PresenceSubscriptionSchema.optional(),
 	})
 	.nullable()
 
@@ -87,17 +94,39 @@ export default (class Server implements Party.Server {
 		this.updateUsers()
 	}
 
+	onConnect(connection: Party.Connection, ctx: Party.ConnectionContext) {
+		const url = new URL(ctx.request.url)
+		const wantsFull =
+			url.searchParams.get('full') === '1' || url.searchParams.get('full') === 'true'
+		shallowMergeConnectionState(connection, {
+			subscription: wantsFull ? 'full' : 'lite',
+		})
+	}
+
 	updateUsers() {
-		const presenceMessage = JSON.stringify(this.getPresenceMessage())
+		const fullUsers = this.getUsers()
+		const liteUsers = getLiteUsers(fullUsers)
+
+		const fullPresenceMessage = JSON.stringify(
+			this.getPresenceMessage(fullUsers),
+		)
+		const litePresenceMessage = JSON.stringify(
+			this.getPresenceMessage(liteUsers),
+		)
+
 		for (const connection of this.party.getConnections()) {
-			connection.send(presenceMessage)
+			const state = getConnectionState(connection)
+			const subscription: PresenceSubscription = state?.subscription ?? 'lite'
+			connection.send(
+				subscription === 'full' ? fullPresenceMessage : litePresenceMessage,
+			)
 		}
 	}
 
-	getPresenceMessage() {
+	getPresenceMessage(users: Array<User>) {
 		return {
 			type: 'presence',
-			payload: { users: this.getUsers() },
+			payload: { users },
 		} satisfies Message
 	}
 
@@ -187,7 +216,12 @@ export default (class Server implements Party.Server {
 	async onRequest(req: Party.Request): Promise<Response> {
 		const url = new URL(req.url)
 		if (url.pathname.endsWith('/presence')) {
-			return Response.json(this.getPresenceMessage().payload)
+			const wantsFull =
+				url.searchParams.get('full') === '1' ||
+				url.searchParams.get('full') === 'true'
+			const fullUsers = this.getUsers()
+			const users = wantsFull ? fullUsers : getLiteUsers(fullUsers)
+			return Response.json({ users })
 		}
 		if (url.pathname.endsWith('/show')) {
 			const users = this.getUsers()
@@ -511,7 +545,7 @@ export default (class Server implements Party.Server {
 							function getRoomWebSocketUrl() {
 								const url = new URL(location.href)
 								url.protocol = url.protocol === 'https:' ? 'wss:' : 'ws:'
-								// `/show` is an HTTP endpoint; the room websocket is at the room root.
+								// '/show' is an HTTP endpoint; the room websocket is at the room root.
 								if (url.pathname.endsWith('/show')) {
 									url.pathname = url.pathname.replace(/\/show$/, '')
 								}
@@ -588,6 +622,31 @@ function getConnectionState(connection: Party.Connection) {
 		setConnectionState(connection, null)
 		return null
 	}
+}
+
+function getLiteUsers(users: Array<User>): Array<User> {
+	return users.map((user) => {
+		const locations = getUserLocations(user).map((loc) => ({
+			workshopTitle: loc.workshopTitle,
+			productHost: loc.productHost,
+			exercise: loc.exercise,
+		}))
+
+		const location = locations[0] ?? null
+
+		return {
+			id: user.id,
+			hasAccess: user.hasAccess,
+			avatarUrl: user.avatarUrl,
+			imageUrlSmall: user.imageUrlSmall,
+			imageUrlLarge: user.imageUrlLarge,
+			name: user.name,
+			optOut: user.optOut,
+			loggedInProductHosts: user.loggedInProductHosts,
+			location,
+			locations,
+		}
+	})
 }
 
 function sortUsers(users: Array<User>) {
