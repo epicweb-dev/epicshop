@@ -107,6 +107,39 @@ export async function setReposDirectory(directory: string): Promise<void> {
 	await saveConfig(config)
 }
 
+export type ReposDirectoryStatus =
+	| { accessible: true }
+	| { accessible: false; error: string; path: string }
+
+/**
+ * Verify that the configured repos directory exists and is accessible.
+ * If the directory doesn't exist, attempts to create it.
+ * Returns status indicating whether the directory is accessible.
+ */
+export async function verifyReposDirectory(): Promise<ReposDirectoryStatus> {
+	const reposDir = await getReposDirectory()
+
+	try {
+		// Try to access the directory
+		await fs.access(reposDir)
+		return { accessible: true }
+	} catch {
+		// Directory doesn't exist, try to create it
+		try {
+			await fs.mkdir(reposDir, { recursive: true })
+			return { accessible: true }
+		} catch (mkdirError) {
+			const errorMessage =
+				mkdirError instanceof Error ? mkdirError.message : String(mkdirError)
+			return {
+				accessible: false,
+				error: errorMessage,
+				path: reposDir,
+			}
+		}
+	}
+}
+
 /**
  * Scan a directory for workshops (directories with package.json containing "epicshop" property)
  */
