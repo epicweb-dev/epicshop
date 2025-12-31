@@ -247,6 +247,7 @@ export default (class Server implements Party.Server {
 				})
 			}
 			return new Response(
+				/* html */
 				`
 				<!DOCTYPE html>
 				<html lang="en">
@@ -529,7 +530,7 @@ export default (class Server implements Party.Server {
 								url.protocol = url.protocol === 'https:' ? 'wss:' : 'ws:'
 								// '/show' is an HTTP endpoint; the room websocket is at the room root.
 								if (url.pathname.endsWith('/show')) {
-									url.pathname = url.pathname.replace(/\/show$/, '')
+									url.pathname = url.pathname.replace(/\\/show$/, '')
 								}
 								url.search = ''
 								url.hash = ''
