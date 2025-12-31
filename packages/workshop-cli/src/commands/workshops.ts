@@ -1558,10 +1558,24 @@ async function ensureReposDirectoryAccessible(): Promise<boolean> {
 	const newDir = await browseDirectory(path.dirname(currentDir))
 	const resolvedPath = path.resolve(newDir)
 
-	await setReposDirectory(resolvedPath)
+	// Create the directory first to ensure it's accessible before saving config
+	try {
+		await fs.promises.mkdir(resolvedPath, { recursive: true })
+	} catch (mkdirError) {
+		const errorMessage =
+			mkdirError instanceof Error ? mkdirError.message : String(mkdirError)
+		console.log()
+		console.log(chalk.red(`❌ Failed to create directory: ${errorMessage}`))
+		console.log(
+			chalk.gray(
+				`\n💡 Tip: Choose a different location or check permissions.`,
+			),
+		)
+		return false
+	}
 
-	// Create the directory if it doesn't exist
-	await fs.promises.mkdir(resolvedPath, { recursive: true })
+	// Only save the config after the directory is confirmed accessible
+	await setReposDirectory(resolvedPath)
 
 	console.log()
 	console.log(
