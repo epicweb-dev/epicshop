@@ -1,0 +1,22 @@
+{
+	"$schema": "../../node_modules/nx/schemas/project-schema.json",
+	"name": "@epic-web/workshop-utils",
+	"projectType": "library",
+	"sourceRoot": "packages/workshop-utils/src",
+	"targets": {
+		"build": {
+			"executor": "nx:run-commands",
+			"options": {
+				"cwd": "packages/workshop-utils",
+				"command": "npm run build"
+			}
+		},
+		"typecheck": {
+			"executor": "nx:run-commands",
+			"options": {
+				"cwd": "packages/workshop-utils",
+				"command": "npm run typecheck"
+			}
+		}
+	}
+}

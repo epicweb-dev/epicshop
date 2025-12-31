@@ -1,0 +1,23 @@
+{
+	"$schema": "../../node_modules/nx/schemas/project-schema.json",
+	"name": "epicshop",
+	"projectType": "library",
+	"sourceRoot": "packages/workshop-cli/src",
+	"implicitDependencies": ["@epic-web/workshop-utils"],
+	"targets": {
+		"build": {
+			"executor": "nx:run-commands",
+			"options": {
+				"cwd": "packages/workshop-cli",
+				"command": "npm run build"
+			}
+		},
+		"typecheck": {
+			"executor": "nx:run-commands",
+			"options": {
+				"cwd": "packages/workshop-cli",
+				"command": "npm run typecheck"
+			}
+		}
+	}
+}
