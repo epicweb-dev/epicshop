@@ -97,7 +97,8 @@ export default (class Server implements Party.Server {
 	onConnect(connection: Party.Connection, ctx: Party.ConnectionContext) {
 		const url = new URL(ctx.request.url)
 		const wantsFull =
-			url.searchParams.get('full') === '1' || url.searchParams.get('full') === 'true'
+			url.searchParams.get('full') === '1' ||
+			url.searchParams.get('full') === 'true'
 		shallowMergeConnectionState(connection, {
 			subscription: wantsFull ? 'full' : 'lite',
 		})
