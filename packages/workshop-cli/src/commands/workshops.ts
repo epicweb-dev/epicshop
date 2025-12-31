@@ -1489,6 +1489,90 @@ export async function config(
 }
 
 /**
+ * Ensure the configured repos directory is accessible.
+ * If it's not accessible, prompts the user to change the directory.
+ * Returns true if the directory is accessible (after potential change), false if user cancels.
+ */
+async function ensureReposDirectoryAccessible(): Promise<boolean> {
+	const { verifyReposDirectory, setReposDirectory, getReposDirectory } =
+		await import('@epic-web/workshop-utils/workshops.server')
+
+	const status = await verifyReposDirectory()
+
+	if (status.accessible) {
+		return true
+	}
+
+	// Directory is not accessible
+	console.log()
+	console.log(
+		chalk.red(`❌ Cannot access the configured workshops directory:`),
+	)
+	console.log(chalk.gray(`   Path: ${status.path}`))
+	console.log(chalk.gray(`   Error: ${status.error}`))
+	console.log()
+
+	// In CI mode, we can't prompt - just fail
+	if (isCiEnvironment()) {
+		console.log(
+			chalk.yellow(
+				`💡 Tip: Set a different directory with: npx epicshop config --repos-dir <path>`,
+			),
+		)
+		return false
+	}
+
+	// Check if we can prompt
+	assertCanPrompt({
+		reason: 'change the workshops directory',
+		hints: [
+			'Set a different directory: npx epicshop config --repos-dir <path>',
+			'Or run this command in a TTY to change the directory interactively.',
+		],
+	})
+
+	const { confirm } = await import('@inquirer/prompts')
+
+	const shouldChange = await confirm({
+		message: 'Would you like to change the configured directory?',
+		default: true,
+	})
+
+	if (!shouldChange) {
+		console.log(
+			chalk.gray(
+				`\n💡 Tip: You can change the directory later with: npx epicshop config --repos-dir <path>`,
+			),
+		)
+		return false
+	}
+
+	// Let user browse for a new directory
+	console.log()
+	console.log(
+		chalk.cyan('🐨 Use the directory browser to select a new location.'),
+	)
+	console.log(chalk.gray('   Type to search, use arrow keys to navigate.\n'))
+
+	const currentDir = await getReposDirectory()
+	const newDir = await browseDirectory(path.dirname(currentDir))
+	const resolvedPath = path.resolve(newDir)
+
+	await setReposDirectory(resolvedPath)
+
+	// Create the directory if it doesn't exist
+	await fs.promises.mkdir(resolvedPath, { recursive: true })
+
+	console.log()
+	console.log(
+		chalk.green(`✅ Workshops directory set to: ${chalk.bold(resolvedPath)}`),
+	)
+	console.log()
+
+	return true
+}
+
+/**
  * Check if the workshops directory is configured, and run onboarding if not
  * Call this at the start of any command that requires the config to be set
  */
@@ -1498,6 +1582,10 @@ export async function ensureConfigured(): Promise<boolean> {
 	)
 
 	if (await isReposDirectoryConfigured()) {
+		// Directory is configured, but verify it's still accessible
+		if (!(await ensureReposDirectoryAccessible())) {
+			return false
+		}
 		return true
 	}
 

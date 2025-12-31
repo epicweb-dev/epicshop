@@ -15,6 +15,7 @@ vi.mock('@epic-web/workshop-utils/workshops.server', () => ({
 	listWorkshops: vi.fn(async () => []),
 	setReposDirectory: vi.fn(async () => {}),
 	workshopExists: vi.fn(async () => false),
+	verifyReposDirectory: vi.fn(async () => ({ accessible: true })),
 }))
 
 const { execa } = await import('execa')
