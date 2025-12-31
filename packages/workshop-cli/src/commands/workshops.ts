@@ -1505,9 +1505,7 @@ async function ensureReposDirectoryAccessible(): Promise<boolean> {
 
 	// Directory is not accessible
 	console.log()
-	console.log(
-		chalk.red(`❌ Cannot access the configured workshops directory:`),
-	)
+	console.log(chalk.red(`❌ Cannot access the configured workshops directory:`))
 	console.log(chalk.gray(`   Path: ${status.path}`))
 	console.log(chalk.gray(`   Error: ${status.error}`))
 	console.log()
@@ -1567,9 +1565,7 @@ async function ensureReposDirectoryAccessible(): Promise<boolean> {
 		console.log()
 		console.log(chalk.red(`❌ Failed to create directory: ${errorMessage}`))
 		console.log(
-			chalk.gray(
-				`\n💡 Tip: Choose a different location or check permissions.`,
-			),
+			chalk.gray(`\n💡 Tip: Choose a different location or check permissions.`),
 		)
 		return false
 	}
