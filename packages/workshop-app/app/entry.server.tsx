@@ -1,7 +1,7 @@
 import { PassThrough } from 'stream'
 import { createReadableStreamFromReadable } from '@react-router/node'
 // Dynamic import of Sentry with error handling
-const Sentry = await import('@sentry/react-router').catch((error) => {
+const sentryPromise = import('@sentry/react-router').catch((error) => {
 	console.warn(
 		'Failed to import @sentry/react-router:',
 		error instanceof Error ? error.message : String(error),
@@ -22,14 +22,15 @@ import {
 export const streamTimeout = 60000
 const ABORT_DELAY = streamTimeout + 1000
 
-export function handleError(
+export async function handleError(
 	error: unknown,
 	{ request }: LoaderFunctionArgs | ActionFunctionArgs,
-): void {
+): Promise<void> {
 	if (request.signal.aborted) return
 	// Don't send errors to Sentry for bot requests
 	if (isbot(request.headers.get('user-agent'))) return
 	if (ENV.EPICSHOP_IS_PUBLISHED) {
+		const Sentry = await sentryPromise
 		Sentry?.captureException(error)
 	}
 }
