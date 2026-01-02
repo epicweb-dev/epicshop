@@ -82,6 +82,10 @@ export default (class Server implements Party.Server {
 
 	readonly party: Party.Room
 
+	// Track the last broadcast messages to avoid redundant updates
+	private lastFullPresenceMessage: string | null = null
+	private lastLitePresenceMessage: string | null = null
+
 	constructor(party: Party.Room) {
 		this.party = party
 	}
@@ -115,12 +119,29 @@ export default (class Server implements Party.Server {
 			this.getPresenceMessage(liteUsers),
 		)
 
+		// Check if either message has changed before broadcasting
+		const fullChanged = fullPresenceMessage !== this.lastFullPresenceMessage
+		const liteChanged = litePresenceMessage !== this.lastLitePresenceMessage
+
+		// If nothing changed, skip the broadcast entirely
+		if (!fullChanged && !liteChanged) {
+			return
+		}
+
+		// Update stored messages
+		this.lastFullPresenceMessage = fullPresenceMessage
+		this.lastLitePresenceMessage = litePresenceMessage
+
 		for (const connection of this.party.getConnections()) {
 			const state = getConnectionState(connection)
 			const subscription: PresenceSubscription = state?.subscription ?? 'lite'
-			connection.send(
-				subscription === 'full' ? fullPresenceMessage : litePresenceMessage,
-			)
+
+			// Only send to connections whose subscription type has changed data
+			if (subscription === 'full' && fullChanged) {
+				connection.send(fullPresenceMessage)
+			} else if (subscription === 'lite' && liteChanged) {
+				connection.send(litePresenceMessage)
+			}
 		}
 	}
 
