@@ -225,12 +225,14 @@ export default (class Server implements Party.Server {
 			return Response.json({ users })
 		}
 		if (url.pathname.endsWith('/show')) {
+			const generatedAtIso = new Date().toISOString()
 			const users = this.getUsers()
 			const workshopUsers = organizeUsersByWorkshop(users)
 			const productHostCounts = getProductHostCounts(users)
 			const latestVersion = await getLatestNpmVersion()
 			const versionStats = getVersionStats(users, latestVersion)
 			const presenceRootHtml = renderPresenceRootHtml({
+				generatedAtIso,
 				users,
 				workshopUsers,
 				productHostCounts,
@@ -461,6 +463,21 @@ export default (class Server implements Party.Server {
 							gap: 6px;
 							font-size: 0.875rem;
 						}
+						.generated-meta {
+							display: flex;
+							flex-wrap: wrap;
+							gap: 8px;
+							align-items: center;
+							margin: 6px 0 18px;
+							color: var(--text-muted);
+							font-size: 0.875rem;
+						}
+						.generated-meta-value {
+							font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, 'Liberation Mono', 'Courier New', monospace;
+						}
+						.generated-meta-sep {
+							opacity: 0.6;
+						}
 					</style>
 				</head>
 				<body>
@@ -476,6 +493,29 @@ export default (class Server implements Party.Server {
 							let refreshTimeoutId = null
 							let refreshInFlight = false
 							let refreshQueued = false
+
+							function formatElapsedSeconds(totalSeconds) {
+								const s = Math.max(0, Math.floor(totalSeconds))
+								if (s < 60) return s + 's'
+								const m = Math.floor(s / 60)
+								const remS = s % 60
+								if (m < 60) return m + 'm ' + remS + 's'
+								const h = Math.floor(m / 60)
+								const remM = m % 60
+								return h + 'h ' + remM + 'm'
+							}
+
+							function updateGeneratedAtUi() {
+								const generatedAtEl = document.getElementById('presence-generated-at')
+								const sinceEl = document.getElementById('presence-time-since')
+								if (!generatedAtEl || !sinceEl) return
+								const iso = generatedAtEl.getAttribute('datetime')
+								if (!iso) return
+								const timestamp = Date.parse(iso)
+								if (!Number.isFinite(timestamp)) return
+								const diffSeconds = (Date.now() - timestamp) / 1000
+								sinceEl.textContent = formatElapsedSeconds(diffSeconds) + ' ago'
+							}
 
 							function scheduleRefresh() {
 								if (refreshTimeoutId) return
@@ -513,6 +553,7 @@ export default (class Server implements Party.Server {
 									const scrollY = window.scrollY
 									currentRoot.innerHTML = html
 									window.scrollTo({ top: scrollY })
+									updateGeneratedAtUi()
 								} catch {
 									// If anything goes wrong, fall back to polling (best effort).
 									startPollingFallback()
@@ -555,6 +596,9 @@ export default (class Server implements Party.Server {
 							} catch {
 								startPollingFallback()
 							}
+
+							updateGeneratedAtUi()
+							setInterval(updateGeneratedAtUi, 1000)
 						})()
 					</script>
 				</body>
@@ -633,20 +677,30 @@ function getLiteUsers(users: Array<User>): Array<User> {
 }
 
 function renderPresenceRootHtml({
+	generatedAtIso,
 	users,
 	workshopUsers,
 	productHostCounts,
 	latestVersion,
 	versionStats,
 }: {
+	generatedAtIso: string
 	users: Array<User>
 	workshopUsers: ReturnType<typeof organizeUsersByWorkshop>
 	productHostCounts: ReturnType<typeof getProductHostCounts>
 	latestVersion: string | null
 	versionStats: ReturnType<typeof getVersionStats>
 }) {
+	const safeGeneratedAtIso = escapeHtml(generatedAtIso)
 	return `
 		<h1>🌐 Epic Web Presence</h1>
+		<div class="generated-meta">
+			<span class="generated-meta-label">Generated:</span>
+			<time id="presence-generated-at" class="generated-meta-value" datetime="${safeGeneratedAtIso}">${safeGeneratedAtIso}</time>
+			<span class="generated-meta-sep">·</span>
+			<span class="generated-meta-label">Last update:</span>
+			<span id="presence-time-since" class="generated-meta-value">0s ago</span>
+		</div>
 		${
 			latestVersion
 				? `
