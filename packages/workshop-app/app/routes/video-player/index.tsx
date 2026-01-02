@@ -129,16 +129,29 @@ export function MuxPlayer({
 		const textTracks = muxPlayerRef.current?.textTracks
 		if (!textTracks) return
 
-		const subtitlePref = playerPreferencesRef.current?.subtitle
-		if (subtitlePref?.id) {
-			const preferredTextTrack = textTracks.getTrackById(subtitlePref.id)
-			if (preferredTextTrack) {
-				preferredTextTrack.mode = subtitlePref.mode ?? 'hidden'
+		// Add a small delay to allow mux-player to finish initializing text tracks
+		// in the DOM before we attempt to restore subtitle preferences.
+		// This prevents a race condition where we try to manipulate tracks before
+		// mux-player has fully set up the DOM elements.
+		const timeoutId = setTimeout(() => {
+			const subtitlePref = playerPreferencesRef.current?.subtitle
+			if (subtitlePref?.id) {
+				try {
+					const preferredTextTrack = textTracks.getTrackById(subtitlePref.id)
+					if (preferredTextTrack) {
+						preferredTextTrack.mode = subtitlePref.mode ?? 'hidden'
+					}
+				} catch (error) {
+					// Silently ignore errors during subtitle preference restoration
+					// to prevent crashes if mux-player is still initializing
+					console.warn('Failed to restore subtitle preferences:', error)
+				}
 			}
-		}
+		}, 100)
 
 		textTracks.addEventListener('change', updatePreferences)
 		return () => {
+			clearTimeout(timeoutId)
 			textTracks.removeEventListener('change', updatePreferences)
 		}
 	}, [metadataLoaded, muxPlayerRef, playerPreferencesRef, updatePreferences])
