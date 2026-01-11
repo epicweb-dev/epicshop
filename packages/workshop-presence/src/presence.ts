@@ -33,6 +33,8 @@ export const LocationSchema = z.object({
 	epicshopVersion: z.string().nullable().optional(),
 	// Repository status (updates available, commits ahead/behind) for this location/workshop
 	repoStatus: RepoStatusSchema.nullable().optional(),
+	// ISO timestamp of when the user last sent an update for this location (server-set)
+	lastUpdatedAt: z.string().nullable().optional(),
 })
 
 export type Location = z.infer<typeof LocationSchema>
