@@ -14,6 +14,9 @@ let latestNpmVersionCache: { version: string | null; fetchedAt: number } = {
 }
 const NPM_VERSION_CACHE_TTL = 1000 * 60 * 5 // 5 minutes
 
+// Threshold for considering a user inactive (30 minutes)
+const INACTIVE_THRESHOLD_MS = 1000 * 60 * 30
+
 async function getLatestNpmVersion(): Promise<string | null> {
 	const now = Date.now()
 	if (
@@ -50,6 +53,8 @@ const ConnectionStateSchema = z
 	.object({
 		user: UserSchema.nullable().optional(),
 		subscription: PresenceSubscriptionSchema.optional(),
+		// ISO timestamp of when this connection last sent an update
+		lastUpdatedAt: z.string().nullable().optional(),
 	})
 	.nullable()
 
@@ -138,23 +143,42 @@ export default (class Server implements Party.Server {
 			const state = getConnectionState(connection)
 			if (state?.user) {
 				const existingUser = users.get(state.user.id)
+				// Attach lastUpdatedAt from connection state to the location
+				const locationWithTimestamp = state.user.location
+					? { ...state.user.location, lastUpdatedAt: state.lastUpdatedAt }
+					: null
 				if (existingUser) {
 					// Aggregate locations from multiple connections
 					const existingLocations =
 						existingUser.locations ??
 						(existingUser.location ? [existingUser.location] : [])
-					const newLocation = state.user.location
+					const newLocation = locationWithTimestamp
 					if (newLocation) {
 						// Check if this location is already in the list (by workshopTitle)
-						const isDuplicate = existingLocations.some(
+						const existingIndex = existingLocations.findIndex(
 							(loc) =>
 								loc.workshopTitle === newLocation.workshopTitle &&
 								loc.exercise?.exerciseNumber ===
 									newLocation.exercise?.exerciseNumber &&
 								loc.exercise?.stepNumber === newLocation.exercise?.stepNumber,
 						)
-						if (!isDuplicate) {
+						if (existingIndex === -1) {
 							existingUser.locations = [...existingLocations, newLocation]
+						} else {
+							// Update lastUpdatedAt if this connection is more recent
+							const existingLoc = existingLocations[existingIndex]
+							if (
+								existingLoc &&
+								newLocation.lastUpdatedAt &&
+								(!existingLoc.lastUpdatedAt ||
+									newLocation.lastUpdatedAt > existingLoc.lastUpdatedAt)
+							) {
+								existingLocations[existingIndex] = {
+									...existingLoc,
+									lastUpdatedAt: newLocation.lastUpdatedAt,
+								}
+								existingUser.locations = existingLocations
+							}
 						}
 					}
 					// Merge other user properties (take the most complete version)
@@ -180,8 +204,9 @@ export default (class Server implements Party.Server {
 				} else {
 					// First connection for this user - initialize locations array from location
 					const user = { ...state.user }
-					if (user.location) {
-						user.locations = [user.location]
+					if (locationWithTimestamp) {
+						user.location = locationWithTimestamp
+						user.locations = [locationWithTimestamp]
 					}
 					users.set(user.id, user)
 				}
@@ -204,13 +229,19 @@ export default (class Server implements Party.Server {
 		if (!result.success) return
 
 		if (result.data.type === 'add-user') {
-			shallowMergeConnectionState(sender, { user: result.data.payload })
+			shallowMergeConnectionState(sender, {
+				user: result.data.payload,
+				lastUpdatedAt: new Date().toISOString(),
+			})
 			this.updateUsers()
 		} else if (result.data.type === 'remove-user') {
 			setConnectionState(sender, null)
 			this.updateUsers()
 		} else if (result.data.type === 'add-anonymous-user') {
-			setConnectionState(sender, { user: result.data.payload })
+			setConnectionState(sender, {
+				user: result.data.payload,
+				lastUpdatedAt: new Date().toISOString(),
+			})
 		}
 	}
 
@@ -231,6 +262,7 @@ export default (class Server implements Party.Server {
 			const productHostCounts = getProductHostCounts(users)
 			const latestVersion = await getLatestNpmVersion()
 			const versionStats = getVersionStats(users, latestVersion)
+			const activityStats = getActivityStats(users)
 			const presenceRootHtml = renderPresenceRootHtml({
 				generatedAtIso,
 				users,
@@ -238,6 +270,7 @@ export default (class Server implements Party.Server {
 				productHostCounts,
 				latestVersion,
 				versionStats,
+				activityStats,
 			})
 
 			const fragment = url.searchParams.get('fragment')
@@ -387,6 +420,18 @@ export default (class Server implements Party.Server {
 						.badge-outdated { background: #fee2e2; color: #991b1b; }
 						.badge-updates { background: #fef3c7; color: #92400e; }
 						.badge-ahead { background: #dbeafe; color: #1e40af; }
+						.badge-inactive { background: #f3f4f6; color: #6b7280; }
+						.user-last-active {
+							font-size: 0.75rem;
+							color: var(--text-muted);
+							margin-top: 2px;
+						}
+						.user-last-active.inactive {
+							color: #9ca3af;
+						}
+						.user-entry.inactive {
+							opacity: 0.6;
+						}
 						@media (prefers-color-scheme: dark) {
 							.badge-access { background: #166534; color: #dcfce7; }
 							.badge-preview { background: #92400e; color: #fef3c7; }
@@ -395,6 +440,10 @@ export default (class Server implements Party.Server {
 							.badge-outdated { background: #991b1b; color: #fee2e2; }
 							.badge-updates { background: #92400e; color: #fef3c7; }
 							.badge-ahead { background: #1e40af; color: #dbeafe; }
+							.badge-inactive { background: #374151; color: #9ca3af; }
+							.user-last-active.inactive {
+								color: #6b7280;
+							}
 						}
 						.version-banner {
 							background: linear-gradient(135deg, var(--accent), #a855f7);
@@ -418,10 +467,12 @@ export default (class Server implements Party.Server {
 						.stat-success { color: #16a34a; }
 						.stat-warning { color: #ea580c; }
 						.stat-info { color: #2563eb; }
+						.stat-muted { color: #9ca3af; }
 						@media (prefers-color-scheme: dark) {
 							.stat-success { color: #4ade80; }
 							.stat-warning { color: #fb923c; }
 							.stat-info { color: #60a5fa; }
+							.stat-muted { color: #6b7280; }
 						}
 						.user-version {
 							font-size: 0.75rem;
@@ -683,6 +734,7 @@ function renderPresenceRootHtml({
 	productHostCounts,
 	latestVersion,
 	versionStats,
+	activityStats,
 }: {
 	generatedAtIso: string
 	users: Array<User>
@@ -690,6 +742,7 @@ function renderPresenceRootHtml({
 	productHostCounts: ReturnType<typeof getProductHostCounts>
 	latestVersion: string | null
 	versionStats: ReturnType<typeof getVersionStats>
+	activityStats: ReturnType<typeof getActivityStats>
 }) {
 	const safeGeneratedAtIso = escapeHtml(generatedAtIso)
 	return `
@@ -715,6 +768,14 @@ function renderPresenceRootHtml({
 			<div class="stat">
 				<div class="stat-value">${users.length}</div>
 				<div class="stat-label">Total Users</div>
+			</div>
+			<div class="stat">
+				<div class="stat-value stat-success">${activityStats.active}</div>
+				<div class="stat-label">Active</div>
+			</div>
+			<div class="stat">
+				<div class="stat-value ${activityStats.inactive > 0 ? 'stat-muted' : ''}">${activityStats.inactive}</div>
+				<div class="stat-label">Inactive (30m+)</div>
 			</div>
 			${
 				latestVersion
@@ -955,6 +1016,51 @@ function getVersionStats(users: Array<User>, latestVersion: string | null) {
 	return { onLatest, outdated, withRepoUpdates, withCommitsAhead, unknown }
 }
 
+function isLocationActive(
+	location: NonNullable<User['location']> | null,
+	now: number,
+): boolean {
+	if (!location?.lastUpdatedAt) return true // Assume active if no timestamp (backwards compat)
+	const lastUpdated = Date.parse(location.lastUpdatedAt)
+	if (!Number.isFinite(lastUpdated)) return true
+	return now - lastUpdated < INACTIVE_THRESHOLD_MS
+}
+
+function getActivityStats(users: Array<User>) {
+	const now = Date.now()
+	let active = 0
+	let inactive = 0
+
+	for (const user of users) {
+		const locations = getUserLocations(user)
+		// A user is considered active if any of their locations had a recent update
+		const isActive =
+			locations.length === 0 ||
+			locations.some((loc) => isLocationActive(loc, now))
+		if (isActive) {
+			active++
+		} else {
+			inactive++
+		}
+	}
+
+	return { active, inactive }
+}
+
+function formatTimeSince(isoTimestamp: string | null | undefined): string {
+	if (!isoTimestamp) return ''
+	const timestamp = Date.parse(isoTimestamp)
+	if (!Number.isFinite(timestamp)) return ''
+	const diffMs = Date.now() - timestamp
+	const diffSeconds = Math.floor(diffMs / 1000)
+	if (diffSeconds < 60) return `${diffSeconds}s ago`
+	const diffMinutes = Math.floor(diffSeconds / 60)
+	if (diffMinutes < 60) return `${diffMinutes}m ago`
+	const diffHours = Math.floor(diffMinutes / 60)
+	const remainingMinutes = diffMinutes % 60
+	return `${diffHours}h ${remainingMinutes}m ago`
+}
+
 function escapeHtml(str: string): string {
 	return str
 		.replace(/&/g, '&amp;')
@@ -1021,10 +1127,21 @@ function generateUserListItem(
 	const versionBadge = formatVersionBadge(version, latestVersion)
 	const repoStatusBadges = formatRepoStatusBadges(repoStatus)
 
+	// Activity status
+	const now = Date.now()
+	const isActive = isLocationActive(location, now)
+	const lastActiveText = location?.lastUpdatedAt
+		? formatTimeSince(location.lastUpdatedAt)
+		: ''
+	const inactiveClass = isActive ? '' : ' inactive'
+	const inactiveBadge = isActive
+		? ''
+		: '<span class="badge badge-inactive">Inactive</span>'
+
 	// Handle opted-out users
 	if (user.optOut) {
 		return `
-		<li>
+		<li class="user-entry${inactiveClass}">
 			<div class="user-avatar-wrapper">
 				<div class="user-avatar" style="background: var(--border); display: flex; align-items: center; justify-content: center; font-size: 24px;">👤</div>
 			</div>
@@ -1032,8 +1149,10 @@ function generateUserListItem(
 				<div class="user-name">Anonymous</div>
 				<div class="badges">
 					<span class="badge badge-optout">Opted out</span>
+					${inactiveBadge}
 					${versionBadge}
 				</div>
+				${lastActiveText ? `<div class="user-last-active${inactiveClass}">Last active: ${lastActiveText}</div>` : ''}
 				${repoStatusBadges ? `<div class="repo-status">${repoStatusBadges}</div>` : ''}
 				${loggedInEmojis ? `<div class="logged-in-products">Logged into: ${loggedInEmojis}</div>` : ''}
 			</div>
@@ -1053,7 +1172,7 @@ function generateUserListItem(
 		: `<div class="user-avatar" style="background: var(--border); display: flex; align-items: center; justify-content: center; font-size: 24px;">👤</div>`
 
 	return `
-		<li>
+		<li class="user-entry${inactiveClass}">
 			<div class="user-avatar-wrapper">
 				${avatarHtml}
 				${productEmoji ? `<span class="product-badge">${productEmoji}</span>` : ''}
@@ -1063,8 +1182,10 @@ function generateUserListItem(
 				<div class="user-location">${formatLocationString(location)}</div>
 				<div class="badges">
 					${accessBadge}
+					${inactiveBadge}
 					${versionBadge}
 				</div>
+				${lastActiveText ? `<div class="user-last-active${inactiveClass}">Last active: ${lastActiveText}</div>` : ''}
 				${repoStatusBadges ? `<div class="repo-status">${repoStatusBadges}</div>` : ''}
 				${loggedInEmojis ? `<div class="logged-in-products">Logged into: ${loggedInEmojis}</div>` : ''}
 			</div>
