@@ -568,6 +568,25 @@ export default (class Server implements Party.Server {
 								sinceEl.textContent = formatElapsedSeconds(diffSeconds) + ' ago'
 							}
 
+							function updateLastActiveUi() {
+								const els = document.querySelectorAll(
+									'time.user-last-active-time[datetime]',
+								)
+								for (const el of els) {
+									const iso = el.getAttribute('datetime')
+									if (!iso) continue
+									const timestamp = Date.parse(iso)
+									if (!Number.isFinite(timestamp)) continue
+									const diffSeconds = (Date.now() - timestamp) / 1000
+									el.textContent = formatElapsedSeconds(diffSeconds) + ' ago'
+								}
+							}
+
+							function updateRelativeTimeUi() {
+								updateGeneratedAtUi()
+								updateLastActiveUi()
+							}
+
 							function scheduleRefresh() {
 								if (refreshTimeoutId) return
 								refreshTimeoutId = setTimeout(() => {
@@ -604,7 +623,7 @@ export default (class Server implements Party.Server {
 									const scrollY = window.scrollY
 									currentRoot.innerHTML = html
 									window.scrollTo({ top: scrollY })
-									updateGeneratedAtUi()
+									updateRelativeTimeUi()
 								} catch {
 									// If anything goes wrong, fall back to polling (best effort).
 									startPollingFallback()
@@ -648,8 +667,8 @@ export default (class Server implements Party.Server {
 								startPollingFallback()
 							}
 
-							updateGeneratedAtUi()
-							setInterval(updateGeneratedAtUi, 1000)
+							updateRelativeTimeUi()
+							setInterval(updateRelativeTimeUi, 1000)
 						})()
 					</script>
 				</body>
@@ -1055,7 +1074,7 @@ function formatTimeSince(isoTimestamp: string | null | undefined): string {
 	const diffSeconds = Math.floor(diffMs / 1000)
 	if (diffSeconds < 60) return `${diffSeconds}s ago`
 	const diffMinutes = Math.floor(diffSeconds / 60)
-	if (diffMinutes < 60) return `${diffMinutes}m ago`
+	if (diffMinutes < 60) return `${diffMinutes}m ${diffSeconds % 60}s ago`
 	const diffHours = Math.floor(diffMinutes / 60)
 	const remainingMinutes = diffMinutes % 60
 	return `${diffHours}h ${remainingMinutes}m ago`
@@ -1133,6 +1152,9 @@ function generateUserListItem(
 	const lastActiveText = location?.lastUpdatedAt
 		? formatTimeSince(location.lastUpdatedAt)
 		: ''
+	const safeLastUpdatedAtIso = location?.lastUpdatedAt
+		? escapeHtml(location.lastUpdatedAt)
+		: ''
 	const inactiveClass = isActive ? '' : ' inactive'
 	const inactiveBadge = isActive
 		? ''
@@ -1152,7 +1174,11 @@ function generateUserListItem(
 					${inactiveBadge}
 					${versionBadge}
 				</div>
-				${lastActiveText ? `<div class="user-last-active${inactiveClass}">Last active: ${lastActiveText}</div>` : ''}
+				${
+					lastActiveText
+						? `<div class="user-last-active${inactiveClass}">Last active: <time class="user-last-active-time" datetime="${safeLastUpdatedAtIso}">${lastActiveText}</time></div>`
+						: ''
+				}
 				${repoStatusBadges ? `<div class="repo-status">${repoStatusBadges}</div>` : ''}
 				${loggedInEmojis ? `<div class="logged-in-products">Logged into: ${loggedInEmojis}</div>` : ''}
 			</div>
@@ -1185,7 +1211,11 @@ function generateUserListItem(
 					${inactiveBadge}
 					${versionBadge}
 				</div>
-				${lastActiveText ? `<div class="user-last-active${inactiveClass}">Last active: ${lastActiveText}</div>` : ''}
+				${
+					lastActiveText
+						? `<div class="user-last-active${inactiveClass}">Last active: <time class="user-last-active-time" datetime="${safeLastUpdatedAtIso}">${lastActiveText}</time></div>`
+						: ''
+				}
 				${repoStatusBadges ? `<div class="repo-status">${repoStatusBadges}</div>` : ''}
 				${loggedInEmojis ? `<div class="logged-in-products">Logged into: ${loggedInEmojis}</div>` : ''}
 			</div>
