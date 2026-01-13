@@ -69,7 +69,9 @@ async function fetchAvailableWorkshops() {
 					'GitHub API rate limit exceeded. Please try again in a minute.',
 				)
 			}
-			throw new Error(`Failed to fetch workshops from GitHub: ${response.status}`)
+			throw new Error(
+				`Failed to fetch workshops from GitHub: ${response.status}`,
+			)
 		}
 
 		const data = await response.json()
