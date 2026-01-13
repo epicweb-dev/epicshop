@@ -27,32 +27,27 @@ export function Playground({
 			isUpToDate={isUpToDate}
 		>
 			{playgroundAppInfo?.dev.type === 'none' ? (
-				<div>
-					<div className="text-secondary-foreground flex h-full items-center justify-center text-2xl">
+				<div className="flex h-full flex-col items-center justify-center gap-4">
+					<div className="text-secondary-foreground text-2xl">
 						Non-UI exercise
 					</div>
-					<div>
-						<div className="text-secondary-foreground text-center">
-							This exercise has no application or other UI associated with it.{' '}
-							<br />
-							Navigate to{' '}
-							<SimpleTooltip content={playgroundAppInfo.fullPath}>
-								<span
-									className="inline-flex cursor-pointer items-center gap-1.5 underline"
-									onClick={() => {
-										void navigator.clipboard.writeText(
-											playgroundAppInfo.fullPath,
-										)
-										showToast.success('Copied playground path to clipboard')
-									}}
-								>
-									the playground directory
-									<Icon name="Copy" size="sm" />
-								</span>
-							</SimpleTooltip>{' '}
-							in your editor and follow the exercise instructions to complete
-							it.
-						</div>
+					<div className="text-secondary-foreground max-w-md text-center text-balance">
+						This exercise has no application or other UI associated with it.{' '}
+						<br />
+						Navigate to{' '}
+						<SimpleTooltip content={playgroundAppInfo.fullPath}>
+							<span
+								className="inline-flex cursor-pointer items-center gap-1.5 underline"
+								onClick={() => {
+									void navigator.clipboard.writeText(playgroundAppInfo.fullPath)
+									showToast.success('Copied playground path to clipboard')
+								}}
+							>
+								the playground directory
+								<Icon name="Copy" size="sm" />
+							</span>
+						</SimpleTooltip>{' '}
+						in your editor and follow the exercise instructions to complete it.
 					</div>
 				</div>
 			) : playgroundAppInfo ? (
