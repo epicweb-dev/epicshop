@@ -160,25 +160,49 @@ async function fetchAvailableWorkshops(): Promise<GitHubRepo[]> {
 		swr: 1000 * 60 * 60 * 6, // 6 hours stale-while-revalidate
 		async getFreshValue() {
 			// Note: `archived:false` is supported by GitHub search.
-			const url = `https://api.github.com/search/repositories?q=topic:workshop+org:${GITHUB_ORG}+archived:false&sort=stars&order=desc`
+			const baseUrl = `https://api.github.com/search/repositories?q=topic:workshop+org:${GITHUB_ORG}+archived:false&sort=stars&order=desc`
+			const perPage = 100
+			// GitHub Search API is paginated and defaults to 30 per page.
+			// It also caps results to the first 1000 items (10 pages at 100/page).
+			const maxPages = 10
+			const allItems: GitHubRepo[] = []
+			let totalCount: number | null = null
 
-			const response = await fetch(url, {
-				headers: getGitHubHeaders(),
-			})
+			for (let page = 1; page <= maxPages; page++) {
+				const url = new URL(baseUrl)
+				url.searchParams.set('per_page', String(perPage))
+				url.searchParams.set('page', String(page))
 
-			if (!response.ok) {
-				if (response.status === 403) {
+				const response = await fetch(url, {
+					headers: getGitHubHeaders(),
+				})
+
+				if (!response.ok) {
+					if (response.status === 403) {
+						throw new Error(
+							'GitHub API rate limit exceeded. Please try again in a minute.',
+						)
+					}
 					throw new Error(
-						'GitHub API rate limit exceeded. Please try again in a minute.',
+						`Failed to fetch workshops from GitHub: ${response.status}`,
 					)
 				}
-				throw new Error(
-					`Failed to fetch workshops from GitHub: ${response.status}`,
-				)
+
+				const data = (await response.json()) as Partial<GitHubSearchResponse>
+				const items = Array.isArray(data.items) ? data.items : []
+				if (typeof data.total_count === 'number') {
+					totalCount = data.total_count
+				}
+
+				allItems.push(...items)
+
+				// Stop when there are no more results for the next page.
+				if (items.length < perPage) break
+				// Or when we've already collected everything GitHub says exists.
+				if (totalCount !== null && allItems.length >= totalCount) break
 			}
 
-			const data = (await response.json()) as Partial<GitHubSearchResponse>
-			return Array.isArray(data.items) ? data.items : []
+			return allItems
 		},
 	})
 }

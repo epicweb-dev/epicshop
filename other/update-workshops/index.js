@@ -43,27 +43,46 @@ function getAuthenticatedRepoUrl(repoName) {
  */
 async function fetchAvailableWorkshops() {
 	// Note: `archived:false` is supported by GitHub search.
-	const url = `https://api.github.com/search/repositories?q=topic:workshop+org:${GITHUB_ORG}+archived:false&sort=stars&order=desc`
+	const baseUrl = `https://api.github.com/search/repositories?q=topic:workshop+org:${GITHUB_ORG}+archived:false&sort=stars&order=desc`
+	const perPage = 100
+	// GitHub Search API defaults to 30 results per page and caps at 1000 results.
+	const maxPages = 10
+	const allItems = []
+	let totalCount = null
 
-	const response = await fetch(url, {
-		headers: {
-			Accept: 'application/vnd.github.v3+json',
-			Authorization: `Bearer ${GITHUB_TOKEN}`,
-			'User-Agent': 'epicshop-update-action',
-		},
-	})
+	for (let page = 1; page <= maxPages; page++) {
+		const url = new URL(baseUrl)
+		url.searchParams.set('per_page', String(perPage))
+		url.searchParams.set('page', String(page))
 
-	if (!response.ok) {
-		if (response.status === 403) {
-			throw new Error(
-				'GitHub API rate limit exceeded. Please try again in a minute.',
-			)
+		const response = await fetch(url, {
+			headers: {
+				Accept: 'application/vnd.github.v3+json',
+				Authorization: `Bearer ${GITHUB_TOKEN}`,
+				'User-Agent': 'epicshop-update-action',
+			},
+		})
+
+		if (!response.ok) {
+			if (response.status === 403) {
+				throw new Error(
+					'GitHub API rate limit exceeded. Please try again in a minute.',
+				)
+			}
+			throw new Error(`Failed to fetch workshops from GitHub: ${response.status}`)
 		}
-		throw new Error(`Failed to fetch workshops from GitHub: ${response.status}`)
+
+		const data = await response.json()
+		const items = Array.isArray(data?.items) ? data.items : []
+		if (typeof data?.total_count === 'number') totalCount = data.total_count
+
+		allItems.push(...items)
+
+		if (items.length < perPage) break
+		if (totalCount !== null && allItems.length >= totalCount) break
 	}
 
-	const data = await response.json()
-	return Array.isArray(data?.items) ? data.items : []
+	return allItems
 }
 
 /**
