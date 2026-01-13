@@ -820,10 +820,11 @@ async function getDevInfo({
 	if (hasDevScript) {
 		return { type: 'script', portNumber, initialRoute }
 	}
-	const indexFiles = (await fsExtra.readdir(fullPath)).filter((file: string) =>
-		file.startsWith('index.'),
-	)
-	if (indexFiles.length) {
+
+	const packageJsonPath = path.join(fullPath, 'package.json')
+	const hasPackageJson = await fsExtra.pathExists(packageJsonPath)
+
+	if (!hasPackageJson) {
 		return { type: 'browser', pathname: getPathname(fullPath) }
 	} else {
 		return { type: 'none' }

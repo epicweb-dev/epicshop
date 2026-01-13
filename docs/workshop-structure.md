@@ -123,16 +123,22 @@ into the playground directory.
 
 ## App Types
 
-There are two different types of apps:
+There are three different types of apps:
 
 - Simple
 - Project
+- Non-UI
 
-What distinguishes between a simple and a project app is whether or not the App
-has a package.json with a `dev` script. If it does, it's a project app.
-Otherwise it's a simple app. In the workshop app, when a learner is on an
-exercise step, they'll be presented with tabs for the playground, problem, and
-solution. The type of app determines what shows up in those tabs.
+The type of app is determined by the presence of a `package.json` file and its
+contents:
+
+- **No `package.json`** → Simple app (served by the workshop app)
+- **`package.json` with a `dev` script** → Project app (runs its own dev server)
+- **`package.json` without a `dev` script** → Non-UI exercise (no preview)
+
+In the workshop app, when a learner is on an exercise step, they'll be presented
+with tabs for the playground, problem, and solution. The type of app determines
+what shows up in those tabs.
 
 ### Projects
 
@@ -144,12 +150,12 @@ the `package.json` and it should start a server on the `PORT` env.
 
 ### Simple
 
-If the app is a simple one, then the tab will show an iframe pointing to a
-special route that will serve the simple files. If there is an `index.html` file
-it will serve that file. You can reference any other file in the `index.html`
-file and those will be served by the workshop app as well. TypeScript files can
-also be referenced and they will be compiled on demand and served as JavaScript
-to the browser.
+If the app is a simple one (no `package.json`), then the tab will show an iframe
+pointing to a special route that will serve the simple files. If there is an
+`index.html` file it will serve that file. You can reference any other file in
+the `index.html` file and those will be served by the workshop app as well.
+TypeScript files can also be referenced and they will be compiled on demand and
+served as JavaScript to the browser.
 
 However, if your `index.html` doesn't need anything special, you can omit that
 file altogether and instead create an `index.tsx` (or `.js` or `.ts`) file and
@@ -168,6 +174,14 @@ Keep in mind that these are all served from the workshop app, so you don't
 really get isolation from the workshop app which could potentially cause some
 surprises. If you need something more powerful, then upgrade to a project app
 instead of the simple app.
+
+### Non-UI
+
+If the app has a `package.json` but no `dev` script, it's considered a non-UI
+exercise. The preview tab will display a "Non-UI exercise" message instructing
+the learner to navigate to the playground directory in their editor and follow
+the exercise instructions manually (e.g., running `node` commands in the
+terminal).
 
 NOTE: As the path to your app is dynamic, you'll want to rely on the `<base>`
 that's added to the `index.html` file. For example:
