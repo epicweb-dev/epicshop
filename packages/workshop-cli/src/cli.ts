@@ -918,13 +918,22 @@ const cli = yargs(args)
 
 					if (argv.target) {
 						const parsed = parseAppIdentifier(argv.target)
+						// Validate that the target was parseable - at least exercise number should be found
+						if (parsed.exerciseNumber === undefined) {
+							console.error(
+								chalk.red(
+									`❌ Invalid target format: "${argv.target}". Expected format like "1.2.problem" or "01.02.solution"`,
+								),
+							)
+							process.exit(1)
+						}
 						exerciseNumber = parsed.exerciseNumber ?? exerciseNumber
 						stepNumber = parsed.stepNumber ?? stepNumber
 						type = parsed.type ?? type
 					}
 
 					// If no specific target, check if we should show interactive or auto
-					if (!exerciseNumber && !stepNumber && !type && !argv.target) {
+					if (!exerciseNumber && !stepNumber && !type) {
 						// Auto-detect next step or show interactive
 						const result = await set({ silent: argv.silent })
 						if (!result.success) {
@@ -1035,7 +1044,8 @@ const cli = yargs(args)
 					})
 					if (!result.success) process.exit(1)
 				} else if (subcommand === 'update') {
-					const complete = !argv.incomplete
+					// --incomplete takes precedence, otherwise use --complete value
+					const complete = argv.incomplete ? false : argv.complete
 					const result = await update({
 						lessonSlug: argv.lessonSlug,
 						complete,
