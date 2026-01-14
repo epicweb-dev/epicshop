@@ -1192,7 +1192,23 @@ const cli = yargs(args)
 
 				if (argv.exercise) {
 					const exerciseNumber = parseInt(argv.exercise, 10)
+					if (isNaN(exerciseNumber)) {
+						console.error(
+							chalk.red(
+								`❌ Invalid exercise number: "${argv.exercise}". Expected a number.`,
+							),
+						)
+						process.exit(1)
+					}
 					const stepNumber = argv.step ? parseInt(argv.step, 10) : undefined
+					if (stepNumber !== undefined && isNaN(stepNumber)) {
+						console.error(
+							chalk.red(
+								`❌ Invalid step number: "${argv.step}". Expected a number.`,
+							),
+						)
+						process.exit(1)
+					}
 					const result = await showExercise({
 						exerciseNumber,
 						stepNumber,

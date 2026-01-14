@@ -211,9 +211,15 @@ export async function showExercise(
 			}
 		}
 
-		if (targetExercise === undefined) {
+		if (targetExercise === undefined || isNaN(targetExercise)) {
 			throw new Error(
-				'Exercise number is required. Provide it as an argument or set a playground first.',
+				'A valid exercise number is required. Provide it as an argument or set a playground first.',
+			)
+		}
+
+		if (targetStep !== undefined && isNaN(targetStep)) {
+			throw new Error(
+				'A valid step number is required when specifying a step.',
 			)
 		}
 
