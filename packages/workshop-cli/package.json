@@ -13,7 +13,12 @@
       "./warm": "./src/commands/warm.ts",
       "./start": "./src/commands/start.ts",
       "./update": "./src/commands/update.ts",
-      "./workshops": "./src/commands/workshops.ts"
+      "./workshops": "./src/commands/workshops.ts",
+      "./playground": "./src/commands/playground.ts",
+      "./progress": "./src/commands/progress.ts",
+      "./diff": "./src/commands/diff.ts",
+      "./exercises": "./src/commands/exercises.ts",
+      "./auth": "./src/commands/auth.ts"
     },
     "bin": "./src/cli.ts"
   },
@@ -34,6 +39,26 @@
     "./workshops": {
       "types": "./dist/commands/workshops.d.ts",
       "import": "./dist/commands/workshops.js"
+    },
+    "./playground": {
+      "types": "./dist/commands/playground.d.ts",
+      "import": "./dist/commands/playground.js"
+    },
+    "./progress": {
+      "types": "./dist/commands/progress.d.ts",
+      "import": "./dist/commands/progress.js"
+    },
+    "./diff": {
+      "types": "./dist/commands/diff.d.ts",
+      "import": "./dist/commands/diff.js"
+    },
+    "./exercises": {
+      "types": "./dist/commands/exercises.d.ts",
+      "import": "./dist/commands/exercises.js"
+    },
+    "./auth": {
+      "types": "./dist/commands/auth.d.ts",
+      "import": "./dist/commands/auth.js"
     }
   },
   "files": [

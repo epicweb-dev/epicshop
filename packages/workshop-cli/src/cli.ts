@@ -834,6 +834,374 @@ const cli = yargs(args)
 			}
 		},
 	)
+	.command(
+		'playground [subcommand] [target]',
+		'Manage the playground environment (context-aware)',
+		(yargs: Argv) => {
+			return yargs
+				.positional('subcommand', {
+					describe: 'Playground subcommand (show, set)',
+					type: 'string',
+					choices: ['show', 'set'],
+				})
+				.positional('target', {
+					describe: 'Target exercise step (e.g., 1.2.problem, 2.3.solution)',
+					type: 'string',
+				})
+				.option('exercise', {
+					alias: 'e',
+					type: 'number',
+					description: 'Exercise number',
+				})
+				.option('step', {
+					type: 'number',
+					description: 'Step number',
+				})
+				.option('type', {
+					alias: 't',
+					type: 'string',
+					choices: ['problem', 'solution'],
+					description: 'App type (problem or solution)',
+				})
+				.option('silent', {
+					alias: 's',
+					type: 'boolean',
+					description: 'Run without output logs',
+					default: false,
+				})
+				.example('$0 playground', 'Show current playground status')
+				.example('$0 playground show', 'Show current playground status')
+				.example('$0 playground set', 'Set playground (auto-detect next)')
+				.example('$0 playground set 1.2.problem', 'Set to specific step')
+				.example('$0 playground set --exercise 1 --step 2', 'Set with options')
+		},
+		async (
+			argv: ArgumentsCamelCase<{
+				subcommand?: string
+				target?: string
+				exercise?: number
+				step?: number
+				type?: string
+				silent?: boolean
+			}>,
+		) => {
+			const { findWorkshopRoot } = await import('./commands/workshops.js')
+			const workshopRoot = await findWorkshopRoot()
+
+			if (!workshopRoot) {
+				console.error(
+					chalk.red(
+						'❌ Not inside a workshop directory. Please cd into a workshop first.',
+					),
+				)
+				process.exit(1)
+			}
+
+			const originalCwd = process.cwd()
+			process.chdir(workshopRoot)
+
+			try {
+				const { show, set, selectAndSet, parseAppIdentifier } = await import(
+					'./commands/playground.js'
+				)
+
+				const subcommand = argv.subcommand || 'show'
+
+				if (subcommand === 'show') {
+					const result = await show({ silent: argv.silent })
+					if (!result.success) process.exit(1)
+				} else if (subcommand === 'set') {
+					// Parse target if provided (e.g., "1.2.problem")
+					let exerciseNumber = argv.exercise
+					let stepNumber = argv.step
+					let type = argv.type as 'problem' | 'solution' | undefined
+
+					if (argv.target) {
+						const parsed = parseAppIdentifier(argv.target)
+						exerciseNumber = parsed.exerciseNumber ?? exerciseNumber
+						stepNumber = parsed.stepNumber ?? stepNumber
+						type = parsed.type ?? type
+					}
+
+					// If no specific target, check if we should show interactive or auto
+					if (!exerciseNumber && !stepNumber && !type && !argv.target) {
+						// Auto-detect next step or show interactive
+						const result = await set({ silent: argv.silent })
+						if (!result.success) {
+							// If auto-detect fails, try interactive
+							const interactiveResult = await selectAndSet({
+								silent: argv.silent,
+							})
+							if (!interactiveResult.success) process.exit(1)
+						}
+					} else {
+						const result = await set({
+							exerciseNumber,
+							stepNumber,
+							type,
+							silent: argv.silent,
+						})
+						if (!result.success) process.exit(1)
+					}
+				} else {
+					console.error(chalk.red(`❌ Unknown subcommand: ${subcommand}`))
+					process.exit(1)
+				}
+			} finally {
+				process.chdir(originalCwd)
+			}
+		},
+	)
+	.command(
+		'progress [subcommand] [lesson-slug]',
+		'View and manage your progress (context-aware)',
+		(yargs: Argv) => {
+			return yargs
+				.positional('subcommand', {
+					describe: 'Progress subcommand (show, update)',
+					type: 'string',
+					choices: ['show', 'update'],
+				})
+				.positional('lesson-slug', {
+					describe: 'Lesson slug to update (for update subcommand)',
+					type: 'string',
+				})
+				.option('complete', {
+					alias: 'c',
+					type: 'boolean',
+					description: 'Mark as complete (default: true)',
+					default: true,
+				})
+				.option('incomplete', {
+					alias: 'i',
+					type: 'boolean',
+					description: 'Mark as incomplete',
+					default: false,
+				})
+				.option('json', {
+					type: 'boolean',
+					description: 'Output as JSON',
+					default: false,
+				})
+				.option('silent', {
+					alias: 's',
+					type: 'boolean',
+					description: 'Run without output logs',
+					default: false,
+				})
+				.example('$0 progress', 'Show progress for current workshop')
+				.example('$0 progress show', 'Show progress for current workshop')
+				.example('$0 progress show --json', 'Output progress as JSON')
+				.example('$0 progress update 01-01-problem', 'Mark lesson as complete')
+				.example(
+					'$0 progress update 01-01-problem --incomplete',
+					'Mark lesson as incomplete',
+				)
+		},
+		async (
+			argv: ArgumentsCamelCase<{
+				subcommand?: string
+				lessonSlug?: string
+				complete?: boolean
+				incomplete?: boolean
+				json?: boolean
+				silent?: boolean
+			}>,
+		) => {
+			const { findWorkshopRoot } = await import('./commands/workshops.js')
+			const workshopRoot = await findWorkshopRoot()
+
+			if (!workshopRoot) {
+				console.error(
+					chalk.red(
+						'❌ Not inside a workshop directory. Please cd into a workshop first.',
+					),
+				)
+				process.exit(1)
+			}
+
+			const originalCwd = process.cwd()
+			process.chdir(workshopRoot)
+
+			try {
+				const { show, update } = await import('./commands/progress.js')
+
+				const subcommand = argv.subcommand || 'show'
+
+				if (subcommand === 'show') {
+					const result = await show({
+						silent: argv.silent,
+						json: argv.json,
+					})
+					if (!result.success) process.exit(1)
+				} else if (subcommand === 'update') {
+					const complete = !argv.incomplete
+					const result = await update({
+						lessonSlug: argv.lessonSlug,
+						complete,
+						silent: argv.silent,
+					})
+					if (!result.success) process.exit(1)
+				} else {
+					console.error(chalk.red(`❌ Unknown subcommand: ${subcommand}`))
+					process.exit(1)
+				}
+			} finally {
+				process.chdir(originalCwd)
+			}
+		},
+	)
+	.command(
+		'diff [app1] [app2]',
+		'Show differences between apps or playground vs solution (context-aware)',
+		(yargs: Argv) => {
+			return yargs
+				.positional('app1', {
+					describe:
+						'First app identifier (e.g., 01.02.problem). If omitted, shows playground vs solution.',
+					type: 'string',
+				})
+				.positional('app2', {
+					describe: 'Second app identifier (e.g., 01.02.solution)',
+					type: 'string',
+				})
+				.option('silent', {
+					alias: 's',
+					type: 'boolean',
+					description: 'Run without output logs',
+					default: false,
+				})
+				.example('$0 diff', 'Show diff between playground and solution')
+				.example(
+					'$0 diff 01.02.problem 01.02.solution',
+					'Show diff between two apps',
+				)
+		},
+		async (
+			argv: ArgumentsCamelCase<{
+				app1?: string
+				app2?: string
+				silent?: boolean
+			}>,
+		) => {
+			const { findWorkshopRoot } = await import('./commands/workshops.js')
+			const workshopRoot = await findWorkshopRoot()
+
+			if (!workshopRoot) {
+				console.error(
+					chalk.red(
+						'❌ Not inside a workshop directory. Please cd into a workshop first.',
+					),
+				)
+				process.exit(1)
+			}
+
+			const originalCwd = process.cwd()
+			process.chdir(workshopRoot)
+
+			try {
+				const { showProgressDiff, showDiffBetweenApps } = await import(
+					'./commands/diff.js'
+				)
+
+				if (argv.app1 && argv.app2) {
+					const result = await showDiffBetweenApps({
+						app1: argv.app1,
+						app2: argv.app2,
+						silent: argv.silent,
+					})
+					if (!result.success) process.exit(1)
+				} else if (argv.app1 && !argv.app2) {
+					console.error(
+						chalk.red('❌ When providing app1, app2 is also required'),
+					)
+					process.exit(1)
+				} else {
+					const result = await showProgressDiff({ silent: argv.silent })
+					if (!result.success) process.exit(1)
+				}
+			} finally {
+				process.chdir(originalCwd)
+			}
+		},
+	)
+	.command(
+		'exercises [exercise] [step]',
+		'List exercises or show exercise details (context-aware)',
+		(yargs: Argv) => {
+			return yargs
+				.positional('exercise', {
+					describe: 'Exercise number to show details for (e.g., 1 or 01)',
+					type: 'string',
+				})
+				.positional('step', {
+					describe: 'Step number to show details for (e.g., 2 or 02)',
+					type: 'string',
+				})
+				.option('json', {
+					type: 'boolean',
+					description: 'Output as JSON',
+					default: false,
+				})
+				.option('silent', {
+					alias: 's',
+					type: 'boolean',
+					description: 'Run without output logs',
+					default: false,
+				})
+				.example('$0 exercises', 'List all exercises with progress')
+				.example('$0 exercises 1', 'Show details for exercise 1')
+				.example('$0 exercises 1 2', 'Show details for exercise 1 step 2')
+				.example('$0 exercises --json', 'Output exercises as JSON')
+		},
+		async (
+			argv: ArgumentsCamelCase<{
+				exercise?: string
+				step?: string
+				json?: boolean
+				silent?: boolean
+			}>,
+		) => {
+			const { findWorkshopRoot } = await import('./commands/workshops.js')
+			const workshopRoot = await findWorkshopRoot()
+
+			if (!workshopRoot) {
+				console.error(
+					chalk.red(
+						'❌ Not inside a workshop directory. Please cd into a workshop first.',
+					),
+				)
+				process.exit(1)
+			}
+
+			const originalCwd = process.cwd()
+			process.chdir(workshopRoot)
+
+			try {
+				const { list, showExercise } = await import('./commands/exercises.js')
+
+				if (argv.exercise) {
+					const exerciseNumber = parseInt(argv.exercise, 10)
+					const stepNumber = argv.step ? parseInt(argv.step, 10) : undefined
+					const result = await showExercise({
+						exerciseNumber,
+						stepNumber,
+						json: argv.json,
+						silent: argv.silent,
+					})
+					if (!result.success) process.exit(1)
+				} else {
+					const result = await list({
+						json: argv.json,
+						silent: argv.silent,
+					})
+					if (!result.success) process.exit(1)
+				}
+			} finally {
+				process.chdir(originalCwd)
+			}
+		},
+	)
 	.epilogue(
 		`For more information, visit: ${chalk.cyan('https://github.com/epicweb-dev/epicshop')}`,
 	)
@@ -881,7 +1249,15 @@ try {
 		})
 		const { search } = await import('@inquirer/prompts')
 
-		const baseChoices = [
+		// Build choices - workshop-specific commands only show when inside a workshop
+		const baseChoices: Array<{
+			name: string
+			value: string
+			description: string
+		}> = []
+
+		// Always-available commands
+		baseChoices.push(
 			{
 				name: `${chalk.green('start')} - Start a workshop`,
 				value: 'start' as const,
@@ -896,6 +1272,36 @@ try {
 					? `Open ${workshopTitle}`
 					: 'Select a workshop to open',
 			},
+		)
+
+		// Workshop-specific commands (only when inside a workshop)
+		if (workshopTitle) {
+			baseChoices.push(
+				{
+					name: `${chalk.green('exercises')} - List exercises`,
+					value: 'exercises' as const,
+					description: `View exercises and progress in ${workshopTitle}`,
+				},
+				{
+					name: `${chalk.green('playground')} - Manage playground`,
+					value: 'playground' as const,
+					description: 'View or set the current playground',
+				},
+				{
+					name: `${chalk.green('progress')} - View/update progress`,
+					value: 'progress' as const,
+					description: 'View or update your learning progress',
+				},
+				{
+					name: `${chalk.green('diff')} - Show differences`,
+					value: 'diff' as const,
+					description: 'Show diff between playground and solution',
+				},
+			)
+		}
+
+		// More always-available commands
+		baseChoices.push(
 			{
 				name: `${chalk.green('list')} - List all workshops`,
 				value: 'list' as const,
@@ -947,7 +1353,7 @@ try {
 				value: 'help' as const,
 				description: 'Display CLI help information',
 			},
-		]
+		)
 
 		const subcommand = await search({
 			message: workshopTitle
@@ -1214,6 +1620,82 @@ try {
 						process.exit(1)
 				}
 				if (!authResult.success) process.exit(1)
+				break
+			}
+			case 'exercises': {
+				const { findWorkshopRoot } = await import('./commands/workshops.js')
+				const wsRoot = await findWorkshopRoot()
+				if (!wsRoot) {
+					console.error(chalk.red('❌ Not inside a workshop directory'))
+					process.exit(1)
+				}
+				const originalCwd = process.cwd()
+				process.chdir(wsRoot)
+				try {
+					const { list: listExercises } = await import(
+						'./commands/exercises.js'
+					)
+					const result = await listExercises({})
+					if (!result.success) process.exit(1)
+				} finally {
+					process.chdir(originalCwd)
+				}
+				break
+			}
+			case 'playground': {
+				const { findWorkshopRoot } = await import('./commands/workshops.js')
+				const wsRoot = await findWorkshopRoot()
+				if (!wsRoot) {
+					console.error(chalk.red('❌ Not inside a workshop directory'))
+					process.exit(1)
+				}
+				const originalCwd = process.cwd()
+				process.chdir(wsRoot)
+				try {
+					const { show: showPlayground } = await import(
+						'./commands/playground.js'
+					)
+					const result = await showPlayground({})
+					if (!result.success) process.exit(1)
+				} finally {
+					process.chdir(originalCwd)
+				}
+				break
+			}
+			case 'progress': {
+				const { findWorkshopRoot } = await import('./commands/workshops.js')
+				const wsRoot = await findWorkshopRoot()
+				if (!wsRoot) {
+					console.error(chalk.red('❌ Not inside a workshop directory'))
+					process.exit(1)
+				}
+				const originalCwd = process.cwd()
+				process.chdir(wsRoot)
+				try {
+					const { show: showProgress } = await import('./commands/progress.js')
+					const result = await showProgress({})
+					if (!result.success) process.exit(1)
+				} finally {
+					process.chdir(originalCwd)
+				}
+				break
+			}
+			case 'diff': {
+				const { findWorkshopRoot } = await import('./commands/workshops.js')
+				const wsRoot = await findWorkshopRoot()
+				if (!wsRoot) {
+					console.error(chalk.red('❌ Not inside a workshop directory'))
+					process.exit(1)
+				}
+				const originalCwd = process.cwd()
+				process.chdir(wsRoot)
+				try {
+					const { showProgressDiff } = await import('./commands/diff.js')
+					const result = await showProgressDiff({})
+					if (!result.success) process.exit(1)
+				} finally {
+					process.chdir(originalCwd)
+				}
 				break
 			}
 			case 'help': {
