@@ -1,0 +1,364 @@
+import chalk from 'chalk'
+import { matchSorter } from 'match-sorter'
+import { assertCanPrompt } from '../utils/cli-runtime.js'
+
+export type PlaygroundResult = {
+	success: boolean
+	message?: string
+	error?: Error
+}
+
+export type PlaygroundShowOptions = {
+	silent?: boolean
+}
+
+export type PlaygroundSetOptions = {
+	exerciseNumber?: number
+	stepNumber?: number
+	type?: 'problem' | 'solution'
+	silent?: boolean
+}
+
+/**
+ * Show current playground status
+ */
+export async function show(
+	options: PlaygroundShowOptions = {},
+): Promise<PlaygroundResult> {
+	const { silent = false } = options
+
+	try {
+		const { init, getPlaygroundApp, getApps, isExerciseStepApp } = await import(
+			'@epic-web/workshop-utils/apps.server'
+		)
+
+		await init()
+
+		const playgroundApp = await getPlaygroundApp()
+
+		if (!playgroundApp) {
+			if (!silent) {
+				console.log(chalk.yellow('⚠️  No playground is currently set'))
+			}
+			return { success: true, message: 'No playground set' }
+		}
+
+		if (!silent) {
+			console.log(chalk.bold.cyan('\n📂 Current Playground\n'))
+
+			const apps = await getApps()
+			const exerciseStepApps = apps.filter(isExerciseStepApp)
+			const currentApp = exerciseStepApps.find(
+				(a) => a.name === playgroundApp.appName,
+			)
+
+			if (currentApp) {
+				const ex = currentApp.exerciseNumber.toString().padStart(2, '0')
+				const st = currentApp.stepNumber.toString().padStart(2, '0')
+				console.log(
+					`  ${chalk.green('Exercise')}: ${ex} - ${currentApp.title || 'Untitled'}`,
+				)
+				console.log(`  ${chalk.green('Step')}: ${st}`)
+				console.log(`  ${chalk.green('Type')}: ${currentApp.type}`)
+				console.log(`  ${chalk.green('Path')}: ${playgroundApp.fullPath}`)
+			} else {
+				console.log(`  ${chalk.green('App')}: ${playgroundApp.appName}`)
+				console.log(`  ${chalk.green('Path')}: ${playgroundApp.fullPath}`)
+			}
+			console.log()
+		}
+
+		return { success: true }
+	} catch (error) {
+		const message = error instanceof Error ? error.message : String(error)
+		if (!silent) {
+			console.error(chalk.red(`❌ Failed to get playground status: ${message}`))
+		}
+		return {
+			success: false,
+			message,
+			error: error instanceof Error ? error : new Error(message),
+		}
+	}
+}
+
+/**
+ * Set the playground to a specific exercise step
+ */
+export async function set(
+	options: PlaygroundSetOptions = {},
+): Promise<PlaygroundResult> {
+	const { exerciseNumber, stepNumber, type, silent = false } = options
+
+	try {
+		const {
+			init,
+			getApps,
+			getExerciseApp,
+			getPlaygroundAppName,
+			isExerciseStepApp,
+			isProblemApp,
+			setPlayground,
+		} = await import('@epic-web/workshop-utils/apps.server')
+		const { getAuthInfo } = await import('@epic-web/workshop-utils/db.server')
+		const { getProgress } = await import(
+			'@epic-web/workshop-utils/epic-api.server'
+		)
+
+		await init()
+
+		const authInfo = await getAuthInfo()
+
+		// If no arguments provided, try to set based on progress or next step
+		if (!exerciseNumber && !stepNumber && !type) {
+			if (authInfo) {
+				// Try to find the next incomplete step based on progress
+				const progress = await getProgress()
+				const scoreProgress = (a: (typeof progress)[number]) => {
+					if (a.type === 'workshop-instructions') return 0
+					if (a.type === 'workshop-finished') return 10000
+					if (a.type === 'instructions') return a.exerciseNumber * 100
+					if (a.type === 'step') return a.exerciseNumber * 100 + a.stepNumber
+					if (a.type === 'finished') return a.exerciseNumber * 100 + 100
+					if (a.type === 'unknown') return 100000
+					return -1
+				}
+				const sortedProgress = progress.sort((a, b) => {
+					return scoreProgress(a) - scoreProgress(b)
+				})
+				const nextProgress = sortedProgress.find((p) => !p.epicCompletedAt)
+
+				if (nextProgress && nextProgress.type === 'step') {
+					const exerciseApp = await getExerciseApp({
+						exerciseNumber: nextProgress.exerciseNumber.toString(),
+						stepNumber: nextProgress.stepNumber.toString(),
+						type: 'problem',
+					})
+					if (!exerciseApp) {
+						throw new Error('No exercise app found')
+					}
+					await setPlayground(exerciseApp.fullPath)
+					if (!silent) {
+						console.log(
+							chalk.green(
+								`✅ Playground set to ${exerciseApp.exerciseNumber}.${exerciseApp.stepNumber}.${exerciseApp.type}`,
+							),
+						)
+					}
+					return {
+						success: true,
+						message: `Playground set to ${exerciseApp.exerciseNumber}.${exerciseApp.stepNumber}.${exerciseApp.type}`,
+					}
+				}
+			}
+
+			// Otherwise, find the next step from current
+			const apps = await getApps()
+			const exerciseStepApps = apps.filter(isExerciseStepApp)
+			const playgroundAppName = await getPlaygroundAppName()
+			const currentIndex = exerciseStepApps.findIndex(
+				(a) => a.name === playgroundAppName,
+			)
+
+			const desiredApp = exerciseStepApps
+				.slice(currentIndex + 1)
+				.find(isProblemApp)
+
+			if (!desiredApp) {
+				const message =
+					'No next problem app found. You may be at the end of the workshop!'
+				if (!silent) {
+					console.log(chalk.yellow(`⚠️  ${message}`))
+				}
+				return { success: false, message }
+			}
+
+			await setPlayground(desiredApp.fullPath)
+			if (!silent) {
+				console.log(chalk.green(`✅ Playground set to ${desiredApp.name}`))
+			}
+			return { success: true, message: `Playground set to ${desiredApp.name}` }
+		}
+
+		// Get current app to use as defaults
+		const apps = await getApps()
+		const exerciseStepApps = apps.filter(isExerciseStepApp)
+		const playgroundAppName = await getPlaygroundAppName()
+		const currentIndex = exerciseStepApps.findIndex(
+			(a) => a.name === playgroundAppName,
+		)
+		const currentApp = exerciseStepApps[currentIndex]
+
+		// Build the target from provided args and defaults
+		const targetExercise = exerciseNumber ?? currentApp?.exerciseNumber
+		const targetStep = stepNumber ?? currentApp?.stepNumber
+		const targetType = type ?? currentApp?.type ?? 'problem'
+
+		if (targetExercise === undefined) {
+			throw new Error('Exercise number is required when no playground is set')
+		}
+		if (targetStep === undefined) {
+			throw new Error('Step number is required when no playground is set')
+		}
+
+		const desiredApp = exerciseStepApps.find(
+			(a) =>
+				a.exerciseNumber === targetExercise &&
+				a.stepNumber === targetStep &&
+				a.type === targetType,
+		)
+
+		if (!desiredApp) {
+			throw new Error(
+				`No app found for ${targetExercise}.${targetStep}.${targetType}`,
+			)
+		}
+
+		await setPlayground(desiredApp.fullPath)
+		if (!silent) {
+			console.log(chalk.green(`✅ Playground set to ${desiredApp.name}`))
+		}
+		return { success: true, message: `Playground set to ${desiredApp.name}` }
+	} catch (error) {
+		const message = error instanceof Error ? error.message : String(error)
+		if (!silent) {
+			console.error(chalk.red(`❌ Failed to set playground: ${message}`))
+		}
+		return {
+			success: false,
+			message,
+			error: error instanceof Error ? error : new Error(message),
+		}
+	}
+}
+
+/**
+ * Interactive playground selection
+ */
+export async function selectAndSet(
+	options: { silent?: boolean } = {},
+): Promise<PlaygroundResult> {
+	const { silent = false } = options
+
+	try {
+		const { init, getApps, isExerciseStepApp, setPlayground } = await import(
+			'@epic-web/workshop-utils/apps.server'
+		)
+		const { getProgress } = await import(
+			'@epic-web/workshop-utils/epic-api.server'
+		)
+
+		await init()
+
+		assertCanPrompt({
+			reason: 'select an exercise step',
+			hints: [
+				'Provide the target directly: npx epicshop playground set <exercise>.<step>.<type>',
+				'Example: npx epicshop playground set 1.1.problem',
+			],
+		})
+
+		const { search } = await import('@inquirer/prompts')
+
+		const apps = await getApps()
+		const exerciseStepApps = apps.filter(isExerciseStepApp)
+		const progress = await getProgress()
+
+		const choices = exerciseStepApps.map((app) => {
+			const ex = app.exerciseNumber.toString().padStart(2, '0')
+			const st = app.stepNumber.toString().padStart(2, '0')
+			const progressItem = progress.find(
+				(p) =>
+					p.type === 'step' &&
+					p.exerciseNumber === app.exerciseNumber &&
+					p.stepNumber === app.stepNumber,
+			)
+			const isComplete = progressItem?.epicCompletedAt
+			const statusIcon = isComplete ? chalk.green('✓') : chalk.gray('○')
+
+			return {
+				name: `${statusIcon} ${ex}.${st} ${app.title || 'Untitled'} (${app.type})`,
+				value: app,
+				description: app.fullPath,
+			}
+		})
+
+		try {
+			const selectedApp = await search({
+				message: 'Select an exercise step to set as playground:',
+				source: async (input) => {
+					if (!input) return choices
+					return matchSorter(choices, input, {
+						keys: ['name', 'value.name'],
+					})
+				},
+			})
+
+			await setPlayground(selectedApp.fullPath)
+			if (!silent) {
+				console.log(chalk.green(`✅ Playground set to ${selectedApp.name}`))
+			}
+			return {
+				success: true,
+				message: `Playground set to ${selectedApp.name}`,
+			}
+		} catch (error) {
+			if ((error as Error).message === 'USER_QUIT') {
+				return { success: false, message: 'Cancelled' }
+			}
+			throw error
+		}
+	} catch (error) {
+		const message = error instanceof Error ? error.message : String(error)
+		if (!silent) {
+			console.error(chalk.red(`❌ Failed to set playground: ${message}`))
+		}
+		return {
+			success: false,
+			message,
+			error: error instanceof Error ? error : new Error(message),
+		}
+	}
+}
+
+/**
+ * Parse an app identifier string like "1.2.problem" or "01.02.solution"
+ */
+export function parseAppIdentifier(identifier: string): {
+	exerciseNumber?: number
+	stepNumber?: number
+	type?: 'problem' | 'solution'
+} {
+	const parts = identifier.split('.')
+
+	// Handle formats like "1", "1.2", "1.2.problem"
+	const result: {
+		exerciseNumber?: number
+		stepNumber?: number
+		type?: 'problem' | 'solution'
+	} = {}
+
+	if (parts.length >= 1 && parts[0]) {
+		const num = parseInt(parts[0], 10)
+		if (!isNaN(num)) {
+			result.exerciseNumber = num
+		}
+	}
+
+	if (parts.length >= 2 && parts[1]) {
+		const num = parseInt(parts[1], 10)
+		if (!isNaN(num)) {
+			result.stepNumber = num
+		} else if (parts[1] === 'problem' || parts[1] === 'solution') {
+			result.type = parts[1]
+		}
+	}
+
+	if (parts.length >= 3 && parts[2]) {
+		if (parts[2] === 'problem' || parts[2] === 'solution') {
+			result.type = parts[2]
+		}
+	}
+
+	return result
+}

@@ -442,6 +442,198 @@ epicshop auth logout epicreact
 - Being logged in enables features like progress tracking and video access in
   workshops
 
+### `playground`
+
+Manage the playground environment. The playground is where you work on exercises
+
+- it's a copy of the problem app that you can modify. Context-aware: must be run
+  from inside a workshop directory.
+
+```bash
+epicshop playground [subcommand] [target] [options]
+```
+
+#### Subcommands
+
+- `show` - Show current playground status (default)
+- `set` - Set the playground to a specific exercise step
+
+#### Arguments
+
+- `target` (optional) - Target exercise step (e.g., `1.2.problem`,
+  `02.03.solution`)
+
+#### Options
+
+- `--exercise, -e <number>` - Exercise number
+- `--step <number>` - Step number
+- `--type, -t <type>` - App type (`problem` or `solution`)
+- `--silent, -s` - Run without output logs (default: false)
+
+#### Examples
+
+```bash
+# Show current playground status
+epicshop playground
+epicshop playground show
+
+# Set to the next incomplete step (or next problem if not logged in)
+epicshop playground set
+
+# Set to a specific step using shorthand notation
+epicshop playground set 1.2.problem
+epicshop playground set 02.03.solution
+
+# Set using individual options
+epicshop playground set --exercise 1 --step 2 --type problem
+epicshop playground set -e 1 --step 2 -t solution
+```
+
+#### Behavior
+
+- When setting without arguments while logged in, automatically sets to the next
+  incomplete step based on your progress
+- When setting without arguments while not logged in, sets to the next problem
+  app after the current playground
+- Interactive selection is available when no target is specified
+
+### `progress`
+
+View and manage your learning progress for the current workshop. Context-aware:
+must be run from inside a workshop directory.
+
+```bash
+epicshop progress [subcommand] [lesson-slug] [options]
+```
+
+#### Subcommands
+
+- `show` - Show progress for the current workshop (default)
+- `update` - Mark a lesson as complete or incomplete
+
+#### Arguments
+
+- `lesson-slug` (optional) - The lesson slug to update (for `update` subcommand)
+
+#### Options
+
+- `--complete, -c` - Mark as complete (default: true)
+- `--incomplete, -i` - Mark as incomplete
+- `--json` - Output as JSON
+- `--silent, -s` - Run without output logs (default: false)
+
+#### Examples
+
+```bash
+# Show progress for current workshop
+epicshop progress
+epicshop progress show
+
+# Output progress as JSON (useful for scripts)
+epicshop progress show --json
+
+# Mark a lesson as complete (interactive selection if no slug provided)
+epicshop progress update
+epicshop progress update 01-01-problem
+
+# Mark a lesson as incomplete
+epicshop progress update 01-01-problem --incomplete
+```
+
+#### Notes
+
+- Requires being logged in to view and update progress
+- Progress is synced with your account on EpicWeb.dev, EpicReact.dev, or
+  EpicAI.pro
+
+### `diff`
+
+Show differences between your work and the solution, or between any two apps.
+Context-aware: must be run from inside a workshop directory.
+
+```bash
+epicshop diff [app1] [app2] [options]
+```
+
+#### Arguments
+
+- `app1` (optional) - First app identifier (e.g., `01.02.problem`)
+- `app2` (optional) - Second app identifier (e.g., `01.02.solution`)
+
+If no arguments are provided, shows the diff between the current playground and
+its solution.
+
+#### Options
+
+- `--silent, -s` - Run without output logs (default: false)
+
+#### Examples
+
+```bash
+# Show diff between current playground and its solution
+epicshop diff
+
+# Show diff between two specific apps
+epicshop diff 01.02.problem 01.02.solution
+
+# Compare different steps
+epicshop diff 01.01.solution 01.02.problem
+```
+
+#### Output
+
+The output is formatted as a git diff with colors:
+
+- Lines starting with `-` (red) show code that needs to be removed
+- Lines starting with `+` (green) show code that needs to be added
+- Context lines are shown without prefixes
+
+### `exercises`
+
+List exercises or show detailed exercise information. Context-aware: must be run
+from inside a workshop directory.
+
+```bash
+epicshop exercises [exercise] [step] [options]
+```
+
+#### Arguments
+
+- `exercise` (optional) - Exercise number to show details for (e.g., `1` or
+  `01`)
+- `step` (optional) - Step number to show details for (e.g., `2` or `02`)
+
+#### Options
+
+- `--json` - Output as JSON
+- `--silent, -s` - Run without output logs (default: false)
+
+#### Examples
+
+```bash
+# List all exercises with progress
+epicshop exercises
+
+# Output exercises as JSON
+epicshop exercises --json
+
+# Show details for a specific exercise
+epicshop exercises 1
+
+# Show details for a specific step
+epicshop exercises 1 2
+epicshop exercises 01 02
+```
+
+#### Output
+
+Lists all exercises with:
+
+- Completion status (✓ complete, ◐ partial, ○ not started)
+- Exercise title and step count
+- Individual step completion status
+- Current playground indicator
+
 ## Interactive Command Chooser
 
 When you run `epicshop` without any arguments, an interactive command chooser is
@@ -605,6 +797,106 @@ if (loginResult.success) {
 }
 ```
 
+### Using the Playground Command
+
+```javascript
+import {
+	show,
+	set,
+	selectAndSet,
+	parseAppIdentifier,
+} from 'epicshop/playground'
+
+// Show current playground status
+const showResult = await show({ silent: false })
+
+// Set playground to next incomplete step (auto-detect)
+const setResult = await set({ silent: false })
+
+// Set playground to a specific step
+const setSpecificResult = await set({
+	exerciseNumber: 1,
+	stepNumber: 2,
+	type: 'problem',
+	silent: false,
+})
+
+// Parse an app identifier string
+const parsed = parseAppIdentifier('1.2.solution')
+// { exerciseNumber: 1, stepNumber: 2, type: 'solution' }
+
+// Interactive selection
+const selectResult = await selectAndSet({ silent: false })
+```
+
+### Using the Progress Command
+
+```javascript
+import { show, update } from 'epicshop/progress'
+
+// Show progress for current workshop
+const progressResult = await show({ silent: false })
+
+// Output as JSON
+const jsonResult = await show({ json: true })
+
+// Mark a lesson as complete
+const updateResult = await update({
+	lessonSlug: '01-01-problem',
+	complete: true,
+	silent: false,
+})
+
+// Mark a lesson as incomplete
+const incompleteResult = await update({
+	lessonSlug: '01-01-problem',
+	complete: false,
+	silent: false,
+})
+```
+
+### Using the Diff Command
+
+```javascript
+import { showProgressDiff, showDiffBetweenApps } from 'epicshop/diff'
+
+// Show diff between playground and solution
+const progressDiffResult = await showProgressDiff({ silent: false })
+console.log(progressDiffResult.diff)
+
+// Show diff between two specific apps
+const appsDiffResult = await showDiffBetweenApps({
+	app1: '01.02.problem',
+	app2: '01.02.solution',
+	silent: false,
+})
+```
+
+### Using the Exercises Command
+
+```javascript
+import { list, showExercise } from 'epicshop/exercises'
+
+// List all exercises
+const listResult = await list({ silent: false })
+
+// Output as JSON
+const jsonListResult = await list({ json: true })
+
+// Show details for a specific exercise
+const exerciseResult = await showExercise({
+	exerciseNumber: 1,
+	silent: false,
+})
+
+// Show details for a specific step
+const stepResult = await showExercise({
+	exerciseNumber: 1,
+	stepNumber: 2,
+	json: true,
+})
+```
+
 ### TypeScript Support
 
 All commands are fully typed with TypeScript:
@@ -625,6 +917,44 @@ import {
 	type StartOptions as WorkshopStartOptions,
 	type ConfigOptions,
 } from 'epicshop/workshops'
+import {
+	show as showPlayground,
+	set as setPlayground,
+	selectAndSet,
+	parseAppIdentifier,
+	type PlaygroundResult,
+	type PlaygroundShowOptions,
+	type PlaygroundSetOptions,
+} from 'epicshop/playground'
+import {
+	show as showProgress,
+	update as updateProgress,
+	type ProgressResult,
+	type ProgressShowOptions,
+	type ProgressUpdateOptions,
+} from 'epicshop/progress'
+import {
+	showProgressDiff,
+	showDiffBetweenApps,
+	type DiffResult,
+	type DiffOptions,
+} from 'epicshop/diff'
+import {
+	list as listExercises,
+	showExercise,
+	type ExercisesResult,
+	type ExercisesListOptions,
+	type ExerciseContextOptions,
+} from 'epicshop/exercises'
+import {
+	status,
+	login,
+	logout,
+	type AuthResult,
+	type AuthStatusOptions,
+	type AuthLoginOptions,
+	type AuthLogoutOptions,
+} from 'epicshop/auth'
 
 const options: StartOptions = {
 	appLocation: '/path/to/workshop',
@@ -799,17 +1129,21 @@ epicshop start
 
 ## Command Reference Summary
 
-| Command            | Description                       | Context-Aware |
-| ------------------ | --------------------------------- | ------------- |
-| `epicshop`         | Interactive command chooser       | ✓             |
-| `epicshop start`   | Start a workshop                  | ✓             |
-| `epicshop init`    | First-time setup wizard           | ✗             |
-| `epicshop add`     | Clone a workshop from epicweb-dev | ✗             |
-| `epicshop list`    | List all workshops                | ✗             |
-| `epicshop remove`  | Remove a workshop                 | ✓             |
-| `epicshop open`    | Open workshop in editor           | ✓             |
-| `epicshop config`  | View/update configuration         | ✗             |
-| `epicshop update`  | Update workshop to latest version | ✓             |
-| `epicshop warm`    | Warm up caches                    | ✓             |
-| `epicshop migrate` | Run data migrations               | ✗             |
-| `epicshop auth`    | Manage login for Epic sites       | ✗             |
+| Command               | Description                       | Context-Aware |
+| --------------------- | --------------------------------- | ------------- |
+| `epicshop`            | Interactive command chooser       | ✓             |
+| `epicshop start`      | Start a workshop                  | ✓             |
+| `epicshop init`       | First-time setup wizard           | ✗             |
+| `epicshop add`        | Clone a workshop from epicweb-dev | ✗             |
+| `epicshop list`       | List all workshops                | ✗             |
+| `epicshop remove`     | Remove a workshop                 | ✓             |
+| `epicshop open`       | Open workshop in editor           | ✓             |
+| `epicshop config`     | View/update configuration         | ✗             |
+| `epicshop update`     | Update workshop to latest version | ✓             |
+| `epicshop warm`       | Warm up caches                    | ✓             |
+| `epicshop migrate`    | Run data migrations               | ✗             |
+| `epicshop auth`       | Manage login for Epic sites       | ✗             |
+| `epicshop playground` | Manage the playground environment | ✓             |
+| `epicshop progress`   | View and manage learning progress | ✓             |
+| `epicshop diff`       | Show differences between apps     | ✓             |
+| `epicshop exercises`  | List exercises or show details    | ✓             |
