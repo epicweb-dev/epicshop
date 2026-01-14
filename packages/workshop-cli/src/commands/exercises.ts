@@ -143,9 +143,7 @@ export async function list(
 					const isStepComplete = Boolean(stepProgress?.epicCompletedAt)
 					const isStepCurrent = isCurrent && currentStep === step.stepNumber
 
-					const stepIcon = isStepComplete
-						? chalk.green('✓')
-						: chalk.gray('○')
+					const stepIcon = isStepComplete ? chalk.green('✓') : chalk.gray('○')
 					const stepTitle =
 						step.problem?.title ?? step.solution?.title ?? 'Untitled'
 					const stepCurrentIndicator = isStepCurrent
@@ -218,9 +216,7 @@ export async function showExercise(
 		}
 
 		if (targetStep !== undefined && isNaN(targetStep)) {
-			throw new Error(
-				'A valid step number is required when specifying a step.',
-			)
+			throw new Error('A valid step number is required when specifying a step.')
 		}
 
 		const exercise = await getExercise(targetExercise)
@@ -283,7 +279,9 @@ export async function showExercise(
 
 		if (!silent) {
 			const exNum = exercise.exerciseNumber.toString().padStart(2, '0')
-			console.log(chalk.bold.cyan(`\n📖 Exercise ${exNum}: ${exercise.title}\n`))
+			console.log(
+				chalk.bold.cyan(`\n📖 Exercise ${exNum}: ${exercise.title}\n`),
+			)
 
 			// If a specific step is requested, show detailed step info
 			if (targetStep !== undefined) {

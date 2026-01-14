@@ -53,7 +53,10 @@ export async function showProgressDiff(
 			throw new Error('No solution app found for the current playground')
 		}
 
-		const diffCode = await getDiffOutputWithRelativePaths(playgroundApp, headApp)
+		const diffCode = await getDiffOutputWithRelativePaths(
+			playgroundApp,
+			headApp,
+		)
 
 		if (!diffCode) {
 			if (!silent) {
@@ -94,8 +97,12 @@ export async function showDiffBetweenApps(
 	const { app1, app2, silent = false } = options
 
 	try {
-		const { init, getApps, isExerciseStepApp, extractNumbersAndTypeFromAppNameOrPath } =
-			await import('@epic-web/workshop-utils/apps.server')
+		const {
+			init,
+			getApps,
+			isExerciseStepApp,
+			extractNumbersAndTypeFromAppNameOrPath,
+		} = await import('@epic-web/workshop-utils/apps.server')
 		const { getDiffOutputWithRelativePaths } = await import(
 			'@epic-web/workshop-utils/diff.server'
 		)
