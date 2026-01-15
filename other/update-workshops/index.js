@@ -235,22 +235,58 @@ async function updateWorkshopRepo(repo, version) {
 					const workspacePatterns = Array.isArray(pkgJson.workspaces)
 						? pkgJson.workspaces
 						: pkgJson.workspaces.packages || []
+					console.log(
+						`📦 ${repoName} - workspaces detected: ${JSON.stringify(workspacePatterns)}`,
+					)
 					const sparsePatterns = workspacePatterns.map(
 						(pattern) => `${pattern}/package.json`,
 					)
 					if (sparsePatterns.length > 0) {
 						console.log(
-							`📦 ${repoName} - workspaces detected, adding workspace package.json files to sparse checkout`,
+							`📦 ${repoName} - adding sparse checkout patterns: ${JSON.stringify(sparsePatterns)}`,
 						)
 						await execa('git', ['sparse-checkout', 'add', ...sparsePatterns], {
 							cwd: tempDir,
 							env: getGitEnv(),
 						})
+
+						// Log the current sparse-checkout configuration
+						const { stdout: sparseList } = await execa(
+							'git',
+							['sparse-checkout', 'list'],
+							{ cwd: tempDir, env: getGitEnv() },
+						)
+						console.log(
+							`📦 ${repoName} - sparse-checkout patterns now:\n${sparseList
+								.split('\n')
+								.map((l) => `      ${l}`)
+								.join('\n')}`,
+						)
+
+						// List workspace package.json files that were checked out
+						const { stdout: checkedOutFiles } = await execa(
+							'git',
+							['ls-files', '--', ...sparsePatterns],
+							{ cwd: tempDir, env: getGitEnv() },
+						)
+						const fileCount = checkedOutFiles
+							? checkedOutFiles.split('\n').filter(Boolean).length
+							: 0
+						console.log(
+							`📦 ${repoName} - checked out ${fileCount} workspace package.json files`,
+						)
+						if (fileCount > 0 && fileCount <= 20) {
+							console.log(
+								`      Files: ${checkedOutFiles.split('\n').filter(Boolean).join(', ')}`,
+							)
+						}
 					}
 					break
 				}
-			} catch {
-				// Ignore errors reading package.json
+			} catch (error) {
+				console.log(
+					`⚠️  ${repoName} - error checking workspaces: ${error.message}`,
+				)
 			}
 		}
 
@@ -258,15 +294,21 @@ async function updateWorkshopRepo(repo, version) {
 			const rel = path.relative(tempDir, installDir).replace(/\\/g, '/')
 			console.log(`📦 ${repoName} - running npm install in ${rel || 'root'}`)
 			try {
-				await execa('npm', ['install', '--ignore-scripts'], {
+				const { stderr } = await execa('npm', ['install', '--ignore-scripts'], {
 					cwd: installDir,
 					env: getGitEnv(),
 				})
-			} catch {
-				// If npm install fails (e.g., package.json doesn't exist), skip it
+				if (stderr) {
+					console.log(`📦 ${repoName} - npm install stderr:\n${stderr}`)
+				}
+			} catch (error) {
+				// If npm install fails, log the error details
 				console.log(
-					`⚠️  ${repoName} - npm install failed in ${rel || 'root'}, skipping`,
+					`⚠️  ${repoName} - npm install failed in ${rel || 'root'}: ${error.message}`,
 				)
+				if (error.stderr) {
+					console.log(`      stderr: ${error.stderr}`)
+				}
 			}
 		}
 
@@ -287,13 +329,37 @@ async function updateWorkshopRepo(repo, version) {
 			try {
 				await fs.access(lockPathFull)
 				filesToStage.push(lockPath)
+
+				// Log workspace packages in the lock file
+				try {
+					const lockContents = await fs.readFile(lockPathFull, 'utf8')
+					const lockJson = JSON.parse(lockContents)
+					const workspacePackages = Object.keys(lockJson.packages || {}).filter(
+						(key) =>
+							key.startsWith('exercises/') || key.startsWith('examples/'),
+					)
+					console.log(
+						`📦 ${repoName} - package-lock.json contains ${workspacePackages.length} workspace package entries`,
+					)
+					if (workspacePackages.length > 0 && workspacePackages.length <= 10) {
+						console.log(`      Entries: ${workspacePackages.join(', ')}`)
+					} else if (workspacePackages.length > 10) {
+						console.log(
+							`      First 10: ${workspacePackages.slice(0, 10).join(', ')}...`,
+						)
+					}
+				} catch (lockError) {
+					console.log(
+						`⚠️  ${repoName} - could not parse lock file: ${lockError.message}`,
+					)
+				}
 			} catch {
 				// File doesn't exist, skip
 			}
 		}
 
 		// Stage changes
-		console.log(`📝 ${repoName} - staging changes`)
+		console.log(`📝 ${repoName} - staging changes: ${filesToStage.join(', ')}`)
 		if (filesToStage.length > 0) {
 			await execa('git', ['add', ...filesToStage], {
 				cwd: tempDir,
