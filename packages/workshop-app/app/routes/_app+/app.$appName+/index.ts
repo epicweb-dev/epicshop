@@ -411,6 +411,11 @@ function generateExportAppHtml({
 			['log', 'warn', 'error', 'info', 'debug'].forEach(method => {
 				console[method] = function(...args) {
 					originalConsole[method](...args);
+					// Filter out logs from epic_ws.js (workshop infrastructure)
+					const stack = new Error().stack || '';
+					if (stack.includes('epic_ws.js')) {
+						return;
+					}
 					createConsoleEntry(method, args);
 				};
 			});
