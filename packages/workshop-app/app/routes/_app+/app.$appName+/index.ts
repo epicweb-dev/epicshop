@@ -289,6 +289,28 @@ function generateExportAppHtml({
 
 			// Parse error stack to extract code frame information
 			function parseErrorForCodeFrame(error) {
+				// Handle null/undefined/primitive values
+				if (error === null || error === undefined) {
+					return {
+						message: String(error),
+						stack: '',
+						location: null,
+						isSyntaxError: false,
+						isNonError: true
+					};
+				}
+
+				// Handle primitive values (strings, numbers, etc.)
+				if (typeof error !== 'object') {
+					return {
+						message: String(error),
+						stack: '',
+						location: null,
+						isSyntaxError: false,
+						isNonError: true
+					};
+				}
+
 				const stack = error.stack || '';
 				const message = error.message || String(error);
 
@@ -310,16 +332,23 @@ function generateExportAppHtml({
 					message.includes('Unexpected identifier') ||
 					message.includes('Cannot use import');
 
-				return { message, stack, location, isSyntaxError };
+				return { message, stack, location, isSyntaxError, isNonError: false };
 			}
 
 			function formatError(error) {
-				const { message, stack, location, isSyntaxError } = parseErrorForCodeFrame(error);
+				const { message, stack, location, isSyntaxError, isNonError } = parseErrorForCodeFrame(error);
 
 				let html = '<div class="error-container">';
 
-				// Error type badge
-				const errorType = isSyntaxError ? 'Syntax Error' : (error.name || 'Error');
+				// Error type badge - handle non-Error rejection values
+				let errorType;
+				if (isNonError) {
+					errorType = 'Rejected';
+				} else if (isSyntaxError) {
+					errorType = 'Syntax Error';
+				} else {
+					errorType = (error && error.name) || 'Error';
+				}
 				html += '<div class="error-type">' + escapeHtml(errorType) + '</div>';
 
 				// Error message
