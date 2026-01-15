@@ -146,6 +146,9 @@ const WorkshopConfigSchema = z
 			.optional()
 			.default([]),
 		sidecarProcesses: z.record(z.string(), z.string()).optional().default({}),
+		// List of glob patterns for apps that should be treated as export apps.
+		// Export apps display console output and exported values from the index file.
+		exportApps: z.array(z.string()).optional().default([]),
 	})
 	.transform((data) => {
 		return {
@@ -388,6 +391,12 @@ export async function getAppConfig(fullPath: string) {
 			})
 			.default({}),
 		initialRoute: z.string().optional().default(workshopConfig.initialRoute),
+		/**
+		 * The type of app. Defaults to automatic detection based on files and scripts.
+		 * - 'standard': Normal app behavior (complex with dev script, simple without)
+		 * - 'export': Export app that displays console output and exported values
+		 */
+		appType: z.enum(['standard', 'export']).optional().default('standard'),
 	})
 
 	const appConfig = {
@@ -400,10 +409,19 @@ export async function getAppConfig(fullPath: string) {
 			dev: scripts.dev,
 		},
 		initialRoute: epicshopConfig.initialRoute,
+		appType: epicshopConfig.appType,
 	}
 
 	try {
-		return AppConfigSchema.parse(appConfig)
+		const parsedConfig = AppConfigSchema.parse(appConfig)
+
+		// Check if this app should be treated as an export app
+		const isExportApp = await checkIsExportApp(fullPath, parsedConfig.appType)
+
+		return {
+			...parsedConfig,
+			isExportApp,
+		}
 	} catch (error) {
 		if (error instanceof z.ZodError) {
 			const flattenedErrors = error.flatten()
@@ -416,4 +434,45 @@ export async function getAppConfig(fullPath: string) {
 		}
 		throw error
 	}
+}
+
+/**
+ * Check if an app should be treated as an export app based on:
+ * 1. Per-app config: `epicshop.appType: 'export'` in package.json
+ * 2. Workshop config: matching a pattern in `epicshop.exportApps` array
+ */
+async function checkIsExportApp(
+	fullPath: string,
+	appType: 'standard' | 'export',
+): Promise<boolean> {
+	// Per-app config takes precedence
+	if (appType === 'export') {
+		return true
+	}
+
+	// Check workshop-level exportApps patterns
+	const workshopConfig = getWorkshopConfig()
+	const exportAppsPatterns = workshopConfig.exportApps
+
+	if (exportAppsPatterns.length === 0) {
+		return false
+	}
+
+	// Get relative path from workshop root
+	const workshopRoot = getEnv().EPICSHOP_CONTEXT_CWD
+	const relativePath = fullPath
+		.replace(workshopRoot, '')
+		.replace(/^[/\\]/, '') // Remove leading slash
+		.replace(/\\/g, '/') // Normalize to forward slashes
+
+	// Use minimatch to check patterns
+	const { minimatch } = await import('minimatch')
+
+	for (const pattern of exportAppsPatterns) {
+		if (minimatch(relativePath, pattern, { matchBase: true })) {
+			return true
+		}
+	}
+
+	return false
 }

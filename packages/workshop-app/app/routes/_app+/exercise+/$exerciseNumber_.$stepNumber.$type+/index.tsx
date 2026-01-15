@@ -255,8 +255,10 @@ export default function ExercisePartRoute({
 		if (tab === 'problem' || tab === 'solution') {
 			if (loaderData[tab]?.dev.type === 'none') return true
 			if (ENV.EPICSHOP_DEPLOYED) {
+				const devType = loaderData[tab]?.dev.type
 				return (
-					loaderData[tab]?.dev.type !== 'browser' &&
+					devType !== 'browser' &&
+					devType !== 'export' &&
 					!loaderData[tab]?.stackBlitzUrl
 				)
 			}

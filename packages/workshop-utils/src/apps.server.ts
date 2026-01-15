@@ -93,6 +93,10 @@ const BaseAppSchema = z.object({
 			portNumber: z.number(),
 			initialRoute: z.string(),
 		}),
+		z.object({
+			type: z.literal('export'),
+			pathname: z.string(),
+		}),
 		z.object({ type: z.literal('none') }),
 	]),
 	stackBlitzUrl: z.string().nullable(),
@@ -814,6 +818,7 @@ async function getDevInfo({
 	const {
 		scripts: { dev: devScript },
 		initialRoute,
+		isExportApp,
 	} = await getAppConfig(fullPath)
 	const hasDevScript = Boolean(devScript)
 
@@ -825,6 +830,10 @@ async function getDevInfo({
 	const hasPackageJson = await fsExtra.pathExists(packageJsonPath)
 
 	if (!hasPackageJson) {
+		// Check if this should be an export app
+		if (isExportApp) {
+			return { type: 'export', pathname: getPathname(fullPath) }
+		}
 		return { type: 'browser', pathname: getPathname(fullPath) }
 	} else {
 		return { type: 'none' }

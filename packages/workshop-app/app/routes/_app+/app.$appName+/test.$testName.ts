@@ -30,7 +30,10 @@ export async function loader({ request, params }: LoaderFunctionArgs) {
 	if (!fileApp || !app) {
 		throw new Response(`Apps not found`, { status: 404 })
 	}
-	if (app.test.type !== 'browser' || app.dev.type !== 'browser') {
+	if (
+		app.test.type !== 'browser' ||
+		(app.dev.type !== 'browser' && app.dev.type !== 'export')
+	) {
 		return redirectWithToast(
 			'/',
 			{

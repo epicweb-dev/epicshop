@@ -123,9 +123,10 @@ into the playground directory.
 
 ## App Types
 
-There are three different types of apps:
+There are four different types of apps:
 
 - Simple
+- Export
 - Project
 - Non-UI
 
@@ -133,6 +134,8 @@ The type of app is determined by the presence of a `package.json` file and its
 contents:
 
 - **No `package.json`** → Simple app (served by the workshop app)
+- **No `package.json` + configured as export** → Export app (displays console
+  output and exports)
 - **`package.json` with a `dev` script** → Project app (runs its own dev server)
 - **`package.json` without a `dev` script** → Non-UI exercise (no preview)
 
@@ -174,6 +177,31 @@ Keep in mind that these are all served from the workshop app, so you don't
 really get isolation from the workshop app which could potentially cause some
 surprises. If you need something more powerful, then upgrade to a project app
 instead of the simple app.
+
+### Export
+
+Export apps are a variant of simple apps designed for exercises where the output
+is values rather than UI. They're configured via either glob patterns in the
+root `package.json` or per-app configuration.
+
+When an app is configured as an export app, the preview panel shows two
+sections:
+
+1. **Console Output**: Captures all `console.log`, `console.warn`,
+   `console.error`, `console.info`, and `console.debug` calls with color-coded
+   type labels
+2. **Exports**: Pretty-prints all named exports from the index file with syntax
+   highlighting for different value types
+
+To configure apps as export apps, see the
+[Export Apps configuration documentation](./configuration.md#export-apps).
+
+Export apps are ideal for:
+
+- Data transformation exercises
+- Algorithm implementation
+- Array and object manipulation
+- Any exercise where the result is a value rather than UI
 
 ### Non-UI
 

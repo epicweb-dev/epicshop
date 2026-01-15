@@ -261,7 +261,8 @@ function LinkToApp({
 					domain: requestInfo.domain,
 					port: app.dev.portNumber,
 				})
-			: data.playground?.dev.type === 'browser'
+			: data.playground?.dev.type === 'browser' ||
+				  data.playground?.dev.type === 'export'
 				? data.playground.dev.pathname
 				: null
 	const { inBrowserBrowserRef } = useStepContext()
