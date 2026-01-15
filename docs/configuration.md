@@ -27,6 +27,7 @@ These options should be set in the root `package.json` of your workshop.
 | `initialRoute`                         | `string`  | Initial route for the app                          | `"/"`                                                         |
 | `notifications`                        | `array`   | Custom notifications for this workshop             | `[]`                                                          |
 | `sidecarProcesses`                     | `object`  | Additional processes to run alongside the workshop | `{}`                                                          |
+| `appType`                              | `string`  | Default app type for simple apps (`"export"`)      | Optional                                                      |
 
 ## Product Configuration
 
@@ -249,10 +250,10 @@ override the global settings.
 
 ## Export Apps
 
-Export apps are a special type of simple app that displays console output and
-exported values from your index file. This is useful for exercises where you
-want students to see the results of their code without needing to manipulate the
-DOM directly.
+Export apps are a special type of app that displays console output and exported
+values from your index file. This is useful for exercises where you want
+students to see the results of their code without needing to manipulate the DOM
+directly.
 
 ### How Export Apps Work
 
@@ -268,28 +269,22 @@ When an app is configured as an export app:
 
 There are two ways to configure export apps:
 
-#### 1. Workshop-Level Configuration (Glob Patterns)
+#### 1. Workshop-Level Configuration
 
-Add glob patterns to the `exportApps` array in your root `package.json`:
+Set `appType` to `"export"` in your root `package.json` to make ALL simple apps
+into export apps:
 
 ```json
 {
 	"epicshop": {
 		"title": "My Workshop",
-		"exportApps": [
-			"exercises/01.data-transformations/**",
-			"exercises/02.algorithms/**",
-			"examples/export-*"
-		]
+		"appType": "export"
 	}
 }
 ```
 
-The patterns support standard glob syntax:
-
-- `*` matches any characters except path separators
-- `**` matches any characters including path separators
-- `?` matches a single character
+This is useful when your entire workshop focuses on code that produces values
+rather than UI (e.g., algorithm workshops, data transformation workshops).
 
 #### 2. Per-App Configuration
 
@@ -304,7 +299,9 @@ Set `appType` to `"export"` in the app's `package.json`:
 }
 ```
 
-Note: Per-app configuration takes precedence over glob patterns.
+Note: Per-app configuration takes precedence over workshop-level configuration.
+You can also use `"appType": "standard"` to opt out of export behavior when the
+workshop-level config is set to `"export"`.
 
 ### Example Export App
 

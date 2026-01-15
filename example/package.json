@@ -30,10 +30,7 @@
     },
     "sidecarProcesses": {
       "EpicMeApp": "npm run dev --prefix ./epicshop/epic-me"
-    },
-    "exportApps": [
-      "exercises/03.export-app/**"
-    ]
+    }
   },
   "type": "module",
   "scripts": {

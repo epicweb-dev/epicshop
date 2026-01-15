@@ -146,9 +146,10 @@ const WorkshopConfigSchema = z
 			.optional()
 			.default([]),
 		sidecarProcesses: z.record(z.string(), z.string()).optional().default({}),
-		// List of glob patterns for apps that should be treated as export apps.
-		// Export apps display console output and exported values from the index file.
-		exportApps: z.array(z.string()).optional().default([]),
+		// Default app type for simple apps (no package.json).
+		// - 'standard': Normal simple app behavior
+		// - 'export': Export app that displays console output and exported values
+		appType: z.enum(['standard', 'export']).optional(),
 	})
 	.transform((data) => {
 		return {
@@ -392,11 +393,11 @@ export async function getAppConfig(fullPath: string) {
 			.default({}),
 		initialRoute: z.string().optional().default(workshopConfig.initialRoute),
 		/**
-		 * The type of app. Defaults to automatic detection based on files and scripts.
+		 * The type of app. If not specified, falls back to workshop-level appType.
 		 * - 'standard': Normal app behavior (complex with dev script, simple without)
 		 * - 'export': Export app that displays console output and exported values
 		 */
-		appType: z.enum(['standard', 'export']).optional().default('standard'),
+		appType: z.enum(['standard', 'export']).optional(),
 	})
 
 	const appConfig = {
@@ -416,7 +417,7 @@ export async function getAppConfig(fullPath: string) {
 		const parsedConfig = AppConfigSchema.parse(appConfig)
 
 		// Check if this app should be treated as an export app
-		const isExportApp = await checkIsExportApp(fullPath, parsedConfig.appType)
+		const isExportApp = checkIsExportApp(parsedConfig.appType)
 
 		return {
 			...parsedConfig,
@@ -439,40 +440,18 @@ export async function getAppConfig(fullPath: string) {
 /**
  * Check if an app should be treated as an export app based on:
  * 1. Per-app config: `epicshop.appType: 'export'` in package.json
- * 2. Workshop config: matching a pattern in `epicshop.exportApps` array
+ * 2. Workshop config: `epicshop.appType: 'export'` applies to all simple apps
  */
-async function checkIsExportApp(
-	fullPath: string,
-	appType: 'standard' | 'export',
-): Promise<boolean> {
+function checkIsExportApp(appType: 'standard' | 'export' | undefined): boolean {
 	// Per-app config takes precedence
 	if (appType === 'export') {
 		return true
 	}
-
-	// Check workshop-level exportApps patterns
-	const workshopConfig = getWorkshopConfig()
-	const exportAppsPatterns = workshopConfig.exportApps
-
-	if (exportAppsPatterns.length === 0) {
+	if (appType === 'standard') {
 		return false
 	}
 
-	// Get relative path from workshop root
-	const workshopRoot = getEnv().EPICSHOP_CONTEXT_CWD
-	const relativePath = fullPath
-		.replace(workshopRoot, '')
-		.replace(/^[/\\]/, '') // Remove leading slash
-		.replace(/\\/g, '/') // Normalize to forward slashes
-
-	// Use minimatch to check patterns
-	const { minimatch } = await import('minimatch')
-
-	for (const pattern of exportAppsPatterns) {
-		if (minimatch(relativePath, pattern, { matchBase: true })) {
-			return true
-		}
-	}
-
-	return false
+	// Fall back to workshop-level appType
+	const workshopConfig = getWorkshopConfig()
+	return workshopConfig.appType === 'export'
 }

@@ -826,14 +826,15 @@ async function getDevInfo({
 		return { type: 'script', portNumber, initialRoute }
 	}
 
+	// Check if this should be an export app (can have package.json for config)
+	if (isExportApp) {
+		return { type: 'export', pathname: getPathname(fullPath) }
+	}
+
 	const packageJsonPath = path.join(fullPath, 'package.json')
 	const hasPackageJson = await fsExtra.pathExists(packageJsonPath)
 
 	if (!hasPackageJson) {
-		// Check if this should be an export app
-		if (isExportApp) {
-			return { type: 'export', pathname: getPathname(fullPath) }
-		}
 		return { type: 'browser', pathname: getPathname(fullPath) }
 	} else {
 		return { type: 'none' }
