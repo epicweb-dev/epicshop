@@ -223,6 +223,38 @@ async function updateWorkshopRepo(repo, version) {
 			}
 		}
 
+		// Check if any install directory has workspaces - if so, we need to add
+		// workspace package.json files to sparse checkout so npm can resolve them
+		for (const installDir of installDirs) {
+			const pkgJsonPath = path.join(installDir, 'package.json')
+			try {
+				const pkgJson = JSON.parse(await fs.readFile(pkgJsonPath, 'utf8'))
+				if (pkgJson.workspaces) {
+					// Convert workspace patterns to sparse checkout patterns for package.json files
+					// e.g., "exercises/*/*" -> "exercises/*/*/package.json"
+					const workspacePatterns = Array.isArray(pkgJson.workspaces)
+						? pkgJson.workspaces
+						: pkgJson.workspaces.packages || []
+					const sparsePatterns = workspacePatterns.map(
+						(pattern) => `${pattern}/package.json`,
+					)
+					if (sparsePatterns.length > 0) {
+						console.log(
+							`📦 ${repoName} - workspaces detected, adding workspace package.json files to sparse checkout`,
+						)
+						await execa(
+							'git',
+							['sparse-checkout', 'add', ...sparsePatterns],
+							{ cwd: tempDir, env: getGitEnv() },
+						)
+					}
+					break
+				}
+			} catch {
+				// Ignore errors reading package.json
+			}
+		}
+
 		for (const installDir of installDirs) {
 			const rel = path.relative(tempDir, installDir).replace(/\\/g, '/')
 			console.log(`📦 ${repoName} - running npm install in ${rel || 'root'}`)
