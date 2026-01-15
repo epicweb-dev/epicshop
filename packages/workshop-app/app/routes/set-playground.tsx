@@ -7,6 +7,7 @@ import {
 	setPlayground,
 } from '@epic-web/workshop-utils/apps.server'
 import { getDiffCode } from '@epic-web/workshop-utils/diff.server'
+import { clearTestProcessEntry } from '@epic-web/workshop-utils/process-manager.server'
 import * as Select from '@radix-ui/react-select'
 import { clsx } from 'clsx'
 import { type ActionFunctionArgs, useFetcher } from 'react-router'
@@ -81,8 +82,11 @@ export async function action({ request }: ActionFunctionArgs) {
 	}
 	const apps = await getApps({ forceFresh: true })
 	const playground = apps.find(isPlaygroundApp)
-	if (playground && converseApp) {
-		void getDiffCode(playground, converseApp, { forceFresh: true })
+	if (playground) {
+		clearTestProcessEntry(playground)
+		if (converseApp) {
+			void getDiffCode(playground, converseApp, { forceFresh: true })
+		}
 	}
 	return dataWithPE(request, formData, { status: 'success' } as const)
 }
