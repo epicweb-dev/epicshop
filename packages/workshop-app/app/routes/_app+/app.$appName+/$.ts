@@ -91,7 +91,8 @@ function generateErrorJavaScript(
 	const appNameJson = JSON.stringify(appName)
 	const relativeFilePathJson = JSON.stringify(relativeFilePath)
 	const lineNumberJson = lineNumber !== undefined ? lineNumber : 'undefined'
-	const columnNumberJson = columnNumber !== undefined ? columnNumber : 'undefined'
+	const columnNumberJson =
+		columnNumber !== undefined ? columnNumber : 'undefined'
 
 	return /* js */ `// Compilation Error
 // File: ${filePathJson}
