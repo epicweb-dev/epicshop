@@ -393,11 +393,14 @@ export async function getAppConfig(fullPath: string) {
 			.default({}),
 		initialRoute: z.string().optional().default(workshopConfig.initialRoute),
 		/**
-		 * The type of app. If not specified, falls back to workshop-level appType.
-		 * - 'standard': Normal app behavior (complex with dev script, simple without)
+		 * The type of app for simple apps (no dev script).
+		 * - 'standard': Normal simple app behavior (browser type)
 		 * - 'export': Export app that displays console output and exported values
 		 */
-		appType: z.enum(['standard', 'export']).optional(),
+		appType: z
+			.enum(['standard', 'export'])
+			.optional()
+			.default(workshopConfig.appType ?? 'standard'),
 	})
 
 	const appConfig = {
@@ -416,12 +419,9 @@ export async function getAppConfig(fullPath: string) {
 	try {
 		const parsedConfig = AppConfigSchema.parse(appConfig)
 
-		// Check if this app should be treated as an export app
-		const isExportApp = checkIsExportApp(parsedConfig.appType)
-
 		return {
 			...parsedConfig,
-			isExportApp,
+			isExportApp: parsedConfig.appType === 'export',
 		}
 	} catch (error) {
 		if (error instanceof z.ZodError) {
@@ -435,23 +435,4 @@ export async function getAppConfig(fullPath: string) {
 		}
 		throw error
 	}
-}
-
-/**
- * Check if an app should be treated as an export app based on:
- * 1. Per-app config: `epicshop.appType: 'export'` in package.json
- * 2. Workshop config: `epicshop.appType: 'export'` applies to all simple apps
- */
-function checkIsExportApp(appType: 'standard' | 'export' | undefined): boolean {
-	// Per-app config takes precedence
-	if (appType === 'export') {
-		return true
-	}
-	if (appType === 'standard') {
-		return false
-	}
-
-	// Fall back to workshop-level appType
-	const workshopConfig = getWorkshopConfig()
-	return workshopConfig.appType === 'export'
 }
