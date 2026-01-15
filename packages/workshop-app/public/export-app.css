@@ -1,0 +1,558 @@
+/* Export App Styles */
+
+#epicshop-export-app-root {
+	display: flex;
+	flex-direction: column;
+	gap: 1.5rem;
+	padding: 1rem;
+	font-family:
+		ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, 'Liberation Mono',
+		'Courier New', monospace;
+	font-size: 0.875rem;
+	line-height: 1.5;
+	min-height: 100vh;
+	box-sizing: border-box;
+}
+
+#epicshop-console-output,
+#epicshop-exports {
+	border: 1px solid #e5e7eb;
+	border-radius: 0.5rem;
+	overflow: hidden;
+	background: #ffffff;
+}
+
+@media (prefers-color-scheme: dark) {
+	#epicshop-console-output,
+	#epicshop-exports {
+		border-color: #374151;
+		background: #1f2937;
+	}
+}
+
+#epicshop-console-output h2,
+#epicshop-exports h2 {
+	margin: 0;
+	padding: 0.75rem 1rem;
+	font-size: 0.875rem;
+	font-weight: 600;
+	background: #f3f4f6;
+	border-bottom: 1px solid #e5e7eb;
+	color: #374151;
+}
+
+@media (prefers-color-scheme: dark) {
+	#epicshop-console-output h2,
+	#epicshop-exports h2 {
+		background: #374151;
+		border-bottom-color: #4b5563;
+		color: #e5e7eb;
+	}
+}
+
+#epicshop-console-entries {
+	max-height: 300px;
+	overflow-y: auto;
+	padding: 0.5rem;
+}
+
+#epicshop-exports-entries {
+	padding: 0.75rem 1rem;
+}
+
+/* Console Entry Styles */
+.console-entry {
+	display: flex;
+	align-items: flex-start;
+	gap: 0.5rem;
+	padding: 0.375rem 0.5rem;
+	border-radius: 0.25rem;
+	margin-bottom: 0.25rem;
+}
+
+.console-entry:last-child {
+	margin-bottom: 0;
+}
+
+.console-log {
+	background: transparent;
+}
+
+.console-info {
+	background: #eff6ff;
+}
+
+.console-warn {
+	background: #fffbeb;
+}
+
+.console-error {
+	background: #fef2f2;
+}
+
+.console-debug {
+	background: #f5f3ff;
+}
+
+@media (prefers-color-scheme: dark) {
+	.console-info {
+		background: rgba(59, 130, 246, 0.1);
+	}
+
+	.console-warn {
+		background: rgba(245, 158, 11, 0.1);
+	}
+
+	.console-error {
+		background: rgba(239, 68, 68, 0.1);
+	}
+
+	.console-debug {
+		background: rgba(139, 92, 246, 0.1);
+	}
+}
+
+.console-type {
+	font-size: 0.625rem;
+	font-weight: 700;
+	padding: 0.125rem 0.375rem;
+	border-radius: 0.25rem;
+	flex-shrink: 0;
+	text-transform: uppercase;
+	letter-spacing: 0.05em;
+}
+
+.console-log .console-type {
+	background: #e5e7eb;
+	color: #374151;
+}
+
+.console-info .console-type {
+	background: #dbeafe;
+	color: #1d4ed8;
+}
+
+.console-warn .console-type {
+	background: #fef3c7;
+	color: #b45309;
+}
+
+.console-error .console-type {
+	background: #fee2e2;
+	color: #dc2626;
+}
+
+.console-debug .console-type {
+	background: #ede9fe;
+	color: #7c3aed;
+}
+
+@media (prefers-color-scheme: dark) {
+	.console-log .console-type {
+		background: #4b5563;
+		color: #e5e7eb;
+	}
+
+	.console-info .console-type {
+		background: rgba(59, 130, 246, 0.3);
+		color: #93c5fd;
+	}
+
+	.console-warn .console-type {
+		background: rgba(245, 158, 11, 0.3);
+		color: #fcd34d;
+	}
+
+	.console-error .console-type {
+		background: rgba(239, 68, 68, 0.3);
+		color: #fca5a5;
+	}
+
+	.console-debug .console-type {
+		background: rgba(139, 92, 246, 0.3);
+		color: #c4b5fd;
+	}
+}
+
+.console-content {
+	flex: 1;
+	word-break: break-word;
+	color: #1f2937;
+}
+
+@media (prefers-color-scheme: dark) {
+	.console-content {
+		color: #e5e7eb;
+	}
+}
+
+/* Export Entry Styles */
+.export-entry {
+	display: flex;
+	align-items: flex-start;
+	gap: 0.25rem;
+	padding: 0.5rem 0;
+	border-bottom: 1px solid #f3f4f6;
+}
+
+.export-entry:last-child {
+	border-bottom: none;
+}
+
+@media (prefers-color-scheme: dark) {
+	.export-entry {
+		border-bottom-color: #374151;
+	}
+}
+
+.export-name {
+	font-weight: 600;
+	color: #7c3aed;
+	flex-shrink: 0;
+}
+
+@media (prefers-color-scheme: dark) {
+	.export-name {
+		color: #a78bfa;
+	}
+}
+
+.export-colon {
+	color: #6b7280;
+}
+
+.export-value {
+	flex: 1;
+	word-break: break-word;
+}
+
+.export-empty {
+	color: #9ca3af;
+	font-style: italic;
+	padding: 0.5rem 0;
+}
+
+/* Value Type Styles */
+.value-string {
+	color: #059669;
+}
+
+.value-number {
+	color: #2563eb;
+}
+
+.value-boolean {
+	color: #dc2626;
+}
+
+.value-null,
+.value-undefined {
+	color: #6b7280;
+	font-style: italic;
+}
+
+.value-function {
+	color: #7c3aed;
+}
+
+.value-object,
+.value-array {
+	color: #1f2937;
+}
+
+.value-key {
+	color: #0891b2;
+}
+
+.value-error {
+	color: #dc2626;
+	white-space: pre-wrap;
+}
+
+.value-date {
+	color: #ea580c;
+}
+
+.value-regexp {
+	color: #be185d;
+}
+
+.value-symbol {
+	color: #4f46e5;
+}
+
+.value-bigint {
+	color: #0d9488;
+}
+
+.value-circular {
+	color: #9ca3af;
+	font-style: italic;
+}
+
+@media (prefers-color-scheme: dark) {
+	.value-string {
+		color: #34d399;
+	}
+
+	.value-number {
+		color: #60a5fa;
+	}
+
+	.value-boolean {
+		color: #f87171;
+	}
+
+	.value-null,
+	.value-undefined {
+		color: #9ca3af;
+	}
+
+	.value-function {
+		color: #a78bfa;
+	}
+
+	.value-object,
+	.value-array {
+		color: #e5e7eb;
+	}
+
+	.value-key {
+		color: #22d3ee;
+	}
+
+	.value-error {
+		color: #f87171;
+	}
+
+	.value-date {
+		color: #fb923c;
+	}
+
+	.value-regexp {
+		color: #f472b6;
+	}
+
+	.value-symbol {
+		color: #818cf8;
+	}
+
+	.value-bigint {
+		color: #2dd4bf;
+	}
+}
+
+/* Promise Styles */
+.value-promise {
+	display: inline-flex;
+	align-items: baseline;
+	gap: 0.5rem;
+	flex-wrap: wrap;
+}
+
+.promise-badge {
+	font-size: 0.625rem;
+	font-weight: 700;
+	padding: 0.125rem 0.375rem;
+	border-radius: 0.25rem;
+	background: #ddd6fe;
+	color: #5b21b6;
+	text-transform: uppercase;
+	letter-spacing: 0.05em;
+}
+
+@media (prefers-color-scheme: dark) {
+	.promise-badge {
+		background: rgba(139, 92, 246, 0.3);
+		color: #c4b5fd;
+	}
+}
+
+.promise-status {
+	font-weight: 500;
+}
+
+.promise-status.pending {
+	color: #d97706;
+}
+
+.promise-status.resolved {
+	color: #059669;
+}
+
+.promise-status.rejected {
+	color: #dc2626;
+}
+
+@media (prefers-color-scheme: dark) {
+	.promise-status.pending {
+		color: #fbbf24;
+	}
+
+	.promise-status.resolved {
+		color: #34d399;
+	}
+
+	.promise-status.rejected {
+		color: #f87171;
+	}
+}
+
+.export-promise {
+	background: #fef3c7;
+}
+
+.export-promise-resolved {
+	background: #d1fae5;
+}
+
+.export-promise-rejected {
+	background: #fee2e2;
+}
+
+@media (prefers-color-scheme: dark) {
+	.export-promise {
+		background: rgba(245, 158, 11, 0.1);
+	}
+
+	.export-promise-resolved {
+		background: rgba(16, 185, 129, 0.1);
+	}
+
+	.export-promise-rejected {
+		background: rgba(239, 68, 68, 0.1);
+	}
+}
+
+/* Map and Set Styles */
+.value-map,
+.value-set {
+	color: #0891b2;
+}
+
+@media (prefers-color-scheme: dark) {
+	.value-map,
+	.value-set {
+		color: #22d3ee;
+	}
+}
+
+/* Error Container Styles */
+.error-container {
+	display: flex;
+	flex-direction: column;
+	gap: 0.5rem;
+	padding: 0.75rem;
+	background: #fef2f2;
+	border: 1px solid #fecaca;
+	border-radius: 0.375rem;
+	margin: 0.25rem 0;
+}
+
+@media (prefers-color-scheme: dark) {
+	.error-container {
+		background: rgba(239, 68, 68, 0.1);
+		border-color: rgba(239, 68, 68, 0.3);
+	}
+}
+
+.error-type {
+	font-size: 0.625rem;
+	font-weight: 700;
+	padding: 0.125rem 0.375rem;
+	border-radius: 0.25rem;
+	background: #fee2e2;
+	color: #dc2626;
+	text-transform: uppercase;
+	letter-spacing: 0.05em;
+	width: fit-content;
+}
+
+@media (prefers-color-scheme: dark) {
+	.error-type {
+		background: rgba(239, 68, 68, 0.3);
+		color: #fca5a5;
+	}
+}
+
+.error-message {
+	color: #dc2626;
+	font-weight: 500;
+	white-space: pre-wrap;
+	word-break: break-word;
+}
+
+@media (prefers-color-scheme: dark) {
+	.error-message {
+		color: #f87171;
+	}
+}
+
+.error-location {
+	font-size: 0.75rem;
+	color: #9ca3af;
+}
+
+.error-stack-details {
+	margin-top: 0.25rem;
+}
+
+.error-stack-details summary {
+	font-size: 0.75rem;
+	color: #6b7280;
+	cursor: pointer;
+	user-select: none;
+}
+
+.error-stack-details summary:hover {
+	color: #374151;
+}
+
+@media (prefers-color-scheme: dark) {
+	.error-stack-details summary {
+		color: #9ca3af;
+	}
+
+	.error-stack-details summary:hover {
+		color: #d1d5db;
+	}
+}
+
+.error-stack {
+	margin: 0.5rem 0 0 0;
+	padding: 0.5rem;
+	font-size: 0.75rem;
+	background: #fef2f2;
+	border: 1px solid #fecaca;
+	border-radius: 0.25rem;
+	overflow-x: auto;
+	white-space: pre-wrap;
+	word-break: break-word;
+	color: #991b1b;
+}
+
+@media (prefers-color-scheme: dark) {
+	.error-stack {
+		background: rgba(239, 68, 68, 0.05);
+		border-color: rgba(239, 68, 68, 0.2);
+		color: #fca5a5;
+	}
+}
+
+/* Module Error Styles */
+.module-error {
+	padding: 1rem;
+}
+
+.module-error h3 {
+	margin: 0 0 0.75rem 0;
+	font-size: 1rem;
+	font-weight: 600;
+	color: #dc2626;
+}
+
+@media (prefers-color-scheme: dark) {
+	.module-error h3 {
+		color: #f87171;
+	}
+}

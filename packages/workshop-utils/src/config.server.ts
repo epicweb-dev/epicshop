@@ -146,6 +146,10 @@ const WorkshopConfigSchema = z
 			.optional()
 			.default([]),
 		sidecarProcesses: z.record(z.string(), z.string()).optional().default({}),
+		// Default app type for simple apps (no package.json).
+		// - 'standard': Normal simple app behavior
+		// - 'export': Export app that displays console output and exported values
+		appType: z.enum(['standard', 'export']).optional(),
 	})
 	.transform((data) => {
 		return {
@@ -388,6 +392,15 @@ export async function getAppConfig(fullPath: string) {
 			})
 			.default({}),
 		initialRoute: z.string().optional().default(workshopConfig.initialRoute),
+		/**
+		 * The type of app for simple apps (no dev script).
+		 * - 'standard': Normal simple app behavior (browser type)
+		 * - 'export': Export app that displays console output and exported values
+		 */
+		appType: z
+			.enum(['standard', 'export'])
+			.optional()
+			.default(workshopConfig.appType ?? 'standard'),
 	})
 
 	const appConfig = {
@@ -400,10 +413,16 @@ export async function getAppConfig(fullPath: string) {
 			dev: scripts.dev,
 		},
 		initialRoute: epicshopConfig.initialRoute,
+		appType: epicshopConfig.appType,
 	}
 
 	try {
-		return AppConfigSchema.parse(appConfig)
+		const parsedConfig = AppConfigSchema.parse(appConfig)
+
+		return {
+			...parsedConfig,
+			isExportApp: parsedConfig.appType === 'export',
+		}
 	} catch (error) {
 		if (error instanceof z.ZodError) {
 			const flattenedErrors = error.flatten()

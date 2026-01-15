@@ -77,7 +77,7 @@ export function Preview({
 				initialRoute={searchParams.get('pathname') ?? dev.initialRoute}
 			/>
 		)
-	} else if (dev.type === 'browser') {
+	} else if (dev.type === 'browser' || dev.type === 'export') {
 		return (
 			<div className="scrollbar-thin scrollbar-thumb-scrollbar relative h-full grow overflow-y-auto">
 				<a

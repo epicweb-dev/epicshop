@@ -27,6 +27,7 @@ These options should be set in the root `package.json` of your workshop.
 | `initialRoute`                         | `string`  | Initial route for the app                          | `"/"`                                                         |
 | `notifications`                        | `array`   | Custom notifications for this workshop             | `[]`                                                          |
 | `sidecarProcesses`                     | `object`  | Additional processes to run alongside the workshop | `{}`                                                          |
+| `appType`                              | `string`  | Default app type for simple apps (`"export"`)      | Optional                                                      |
 
 ## Product Configuration
 
@@ -240,11 +241,111 @@ The `stackBlitzConfig` object can have the following properties:
 These options can be set in the `package.json` of individual exercises to
 override the global settings.
 
-| Option             | Type               | Description                                 |
-| ------------------ | ------------------ | ------------------------------------------- |
-| `stackBlitzConfig` | `object` \| `null` | Override or disable StackBlitz for this app |
-| `testTab.enabled`  | `boolean`          | Enable or disable the test tab for this app |
-| `initialRoute`     | `string`           | Set a custom initial route for this app     |
+| Option             | Type                       | Description                                 |
+| ------------------ | -------------------------- | ------------------------------------------- |
+| `stackBlitzConfig` | `object` \| `null`         | Override or disable StackBlitz for this app |
+| `testTab.enabled`  | `boolean`                  | Enable or disable the test tab for this app |
+| `initialRoute`     | `string`                   | Set a custom initial route for this app     |
+| `appType`          | `"standard"` \| `"export"` | Override the app type detection             |
+
+## Export Apps
+
+Export apps are a special type of app that displays console output and exported
+values from your index file. This is useful for exercises where you want
+students to see the results of their code without needing to manipulate the DOM
+directly.
+
+### How Export Apps Work
+
+When an app is configured as an export app:
+
+1. **Console Capture** - All `console.log`, `console.warn`, `console.error`,
+   `console.info`, and `console.debug` calls are captured and displayed in the
+   "Console Output" section of the preview
+2. **Export Display** - All named exports from the `index.js` or `index.ts` file
+   are pretty-printed in the "Exports" section with syntax highlighting
+
+### Configuring Export Apps
+
+There are two ways to configure export apps:
+
+#### 1. Workshop-Level Configuration
+
+Set `appType` to `"export"` in your root `package.json` to make ALL simple apps
+into export apps:
+
+```json
+{
+	"epicshop": {
+		"title": "My Workshop",
+		"appType": "export"
+	}
+}
+```
+
+This is useful when your entire workshop focuses on code that produces values
+rather than UI (e.g., algorithm workshops, data transformation workshops).
+
+#### 2. Per-App Configuration
+
+Set `appType` to `"export"` in the app's `package.json`:
+
+```json
+{
+	"name": "my-export-exercise",
+	"epicshop": {
+		"appType": "export"
+	}
+}
+```
+
+Note: Per-app configuration takes precedence over workshop-level configuration.
+You can also use `"appType": "standard"` to opt out of export behavior when the
+workshop-level config is set to `"export"`.
+
+### Example Export App
+
+Here's an example of what an export app's `index.ts` might look like:
+
+```typescript
+// A function that doubles each number in an array
+export function doubleNumbers(numbers: number[]): number[] {
+	return numbers.map((n) => n * 2)
+}
+
+// Test the function
+const input = [1, 2, 3, 4, 5]
+console.log('Input:', input)
+
+// Export the result
+export const result = doubleNumbers(input)
+console.log('Result:', result)
+
+// Export additional values to demonstrate the display
+export const config = {
+	name: 'Export App Demo',
+	version: 1,
+}
+```
+
+The preview will show:
+
+- **Console Output**: The logged messages with type labels (LOG, WARN, etc.)
+- **Exports**: Pretty-printed values of `doubleNumbers`, `result`, and `config`
+
+### When to Use Export Apps
+
+Export apps are ideal for:
+
+- Data transformation exercises
+- Algorithm implementation
+- Array and object manipulation
+- Any exercise where the result is a value rather than UI
+
+They're not recommended for:
+
+- DOM manipulation exercises (use simple apps instead)
+- Interactive UI exercises (use complex apps with a dev server)
 
 ## Example Configuration
 
