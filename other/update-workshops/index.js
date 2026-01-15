@@ -242,11 +242,10 @@ async function updateWorkshopRepo(repo, version) {
 						console.log(
 							`📦 ${repoName} - workspaces detected, adding workspace package.json files to sparse checkout`,
 						)
-						await execa(
-							'git',
-							['sparse-checkout', 'add', ...sparsePatterns],
-							{ cwd: tempDir, env: getGitEnv() },
-						)
+						await execa('git', ['sparse-checkout', 'add', ...sparsePatterns], {
+							cwd: tempDir,
+							env: getGitEnv(),
+						})
 					}
 					break
 				}
