@@ -22,3 +22,23 @@ export const config = {
 	version: 1,
 	enabled: true,
 }
+
+// Demonstrate Promise handling - resolved
+export const resolvedPromise = new Promise((resolve) => {
+	setTimeout(() => {
+		resolve({ message: 'This promise resolved!', data: [1, 2, 3] })
+	}, 1000)
+})
+
+// Demonstrate Promise handling - rejected
+export const rejectedPromise = new Promise((_, reject) => {
+	setTimeout(() => {
+		reject(new Error('This promise was rejected for demonstration purposes'))
+	}, 1500)
+})
+
+// Demonstrate async function result
+export const asyncResult = (async () => {
+	await new Promise((r) => setTimeout(r, 500))
+	return 'Async value loaded!'
+})()

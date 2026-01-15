@@ -196,6 +196,10 @@ function generateExportAppHtml({
 				debug: console.debug.bind(console),
 			};
 
+			function isPromise(value) {
+				return value && typeof value === 'object' && typeof value.then === 'function';
+			}
+
 			function formatValue(value, seen = new WeakSet()) {
 				if (value === null) return '<span class="value-null">null</span>';
 				if (value === undefined) return '<span class="value-undefined">undefined</span>';
@@ -206,6 +210,8 @@ function generateExportAppHtml({
 					return '<span class="value-string">"' + escapeHtml(value) + '"</span>';
 				}
 				if (type === 'number') {
+					if (Number.isNaN(value)) return '<span class="value-number">NaN</span>';
+					if (!Number.isFinite(value)) return '<span class="value-number">' + (value > 0 ? 'Infinity' : '-Infinity') + '</span>';
 					return '<span class="value-number">' + value + '</span>';
 				}
 				if (type === 'boolean') {
@@ -246,6 +252,20 @@ function generateExportAppHtml({
 						return '<span class="value-regexp">' + value.toString() + '</span>';
 					}
 
+					if (value instanceof Map) {
+						if (value.size === 0) return '<span class="value-map">Map(0) {}</span>';
+						const entries = Array.from(value.entries()).map(([k, v]) => {
+							return formatValue(k, seen) + ' => ' + formatValue(v, seen);
+						}).join(', ');
+						return '<span class="value-map">Map(' + value.size + ') { ' + entries + ' }</span>';
+					}
+
+					if (value instanceof Set) {
+						if (value.size === 0) return '<span class="value-set">Set(0) {}</span>';
+						const items = Array.from(value).map(v => formatValue(v, seen)).join(', ');
+						return '<span class="value-set">Set(' + value.size + ') { ' + items + ' }</span>';
+					}
+
 					// Plain object
 					const keys = Object.keys(value);
 					if (keys.length === 0) return '<span class="value-object">{}</span>';
@@ -259,12 +279,67 @@ function generateExportAppHtml({
 			}
 
 			function escapeHtml(str) {
-				return str
+				return String(str)
 					.replace(/&/g, '&amp;')
 					.replace(/</g, '&lt;')
 					.replace(/>/g, '&gt;')
 					.replace(/"/g, '&quot;')
 					.replace(/'/g, '&#039;');
+			}
+
+			// Parse error stack to extract code frame information
+			function parseErrorForCodeFrame(error) {
+				const stack = error.stack || '';
+				const message = error.message || String(error);
+
+				// Try to extract file location from stack
+				const locationMatch = stack.match(/at\\s+(?:.*\\s+)?\\(?([^)]+):(\\d+):(\\d+)\\)?/);
+				let location = null;
+				if (locationMatch) {
+					location = {
+						file: locationMatch[1],
+						line: parseInt(locationMatch[2], 10),
+						column: parseInt(locationMatch[3], 10)
+					};
+				}
+
+				// Check for syntax error patterns
+				const isSyntaxError = error instanceof SyntaxError ||
+					message.includes('SyntaxError') ||
+					message.includes('Unexpected token') ||
+					message.includes('Unexpected identifier') ||
+					message.includes('Cannot use import');
+
+				return { message, stack, location, isSyntaxError };
+			}
+
+			function formatError(error) {
+				const { message, stack, location, isSyntaxError } = parseErrorForCodeFrame(error);
+
+				let html = '<div class="error-container">';
+
+				// Error type badge
+				const errorType = isSyntaxError ? 'Syntax Error' : (error.name || 'Error');
+				html += '<div class="error-type">' + escapeHtml(errorType) + '</div>';
+
+				// Error message
+				html += '<div class="error-message">' + escapeHtml(message) + '</div>';
+
+				// Location info
+				if (location) {
+					html += '<div class="error-location">at ' + escapeHtml(location.file) + ':' + location.line + ':' + location.column + '</div>';
+				}
+
+				// Stack trace (collapsible)
+				if (stack && stack !== message) {
+					html += '<details class="error-stack-details">';
+					html += '<summary>Stack trace</summary>';
+					html += '<pre class="error-stack">' + escapeHtml(stack) + '</pre>';
+					html += '</details>';
+				}
+
+				html += '</div>';
+				return html;
 			}
 
 			function createConsoleEntry(type, args) {
@@ -278,9 +353,25 @@ function generateExportAppHtml({
 
 				const content = document.createElement('span');
 				content.className = 'console-content';
-				content.innerHTML = args.map(arg => formatValue(arg)).join(' ');
-				entry.appendChild(content);
 
+				// Special handling for errors
+				if (type === 'error' && args.length > 0 && args[args.length - 1] instanceof Error) {
+					const nonErrorArgs = args.slice(0, -1);
+					const errorArg = args[args.length - 1];
+					if (nonErrorArgs.length > 0) {
+						content.innerHTML = nonErrorArgs.map(arg => formatValue(arg)).join(' ') + ' ';
+					}
+					content.innerHTML += formatError(errorArg);
+				} else {
+					content.innerHTML = args.map(arg => {
+						if (arg instanceof Error) {
+							return formatError(arg);
+						}
+						return formatValue(arg);
+					}).join(' ');
+				}
+
+				entry.appendChild(content);
 				consoleEntriesEl.appendChild(entry);
 
 				// Scroll to bottom
@@ -295,8 +386,31 @@ function generateExportAppHtml({
 				};
 			});
 
-			// Function to display exports
-			function displayExports(exports) {
+			// Function to create an export entry element
+			function createExportEntry(key, initialContent, className = '') {
+				const entry = document.createElement('div');
+				entry.className = 'export-entry' + (className ? ' ' + className : '');
+
+				const nameEl = document.createElement('span');
+				nameEl.className = 'export-name';
+				nameEl.textContent = key;
+				entry.appendChild(nameEl);
+
+				const colonEl = document.createElement('span');
+				colonEl.className = 'export-colon';
+				colonEl.textContent = ': ';
+				entry.appendChild(colonEl);
+
+				const valueEl = document.createElement('span');
+				valueEl.className = 'export-value';
+				valueEl.innerHTML = initialContent;
+				entry.appendChild(valueEl);
+
+				return { entry, valueEl };
+			}
+
+			// Function to display exports with Promise support
+			async function displayExports(exports) {
 				exportsEntriesEl.innerHTML = '';
 
 				const keys = Object.keys(exports);
@@ -308,35 +422,53 @@ function generateExportAppHtml({
 					return;
 				}
 
-				keys.forEach(key => {
-					const entry = document.createElement('div');
-					entry.className = 'export-entry';
+				for (const key of keys) {
+					const value = exports[key];
 
-					const nameEl = document.createElement('span');
-					nameEl.className = 'export-name';
-					nameEl.textContent = key;
-					entry.appendChild(nameEl);
+					if (isPromise(value)) {
+						// Show pending state for promises
+						const { entry, valueEl } = createExportEntry(
+							key,
+							'<span class="value-promise"><span class="promise-badge">Promise</span> <span class="promise-status pending">⏳ pending...</span></span>',
+							'export-promise'
+						);
+						exportsEntriesEl.appendChild(entry);
 
-					const colonEl = document.createElement('span');
-					colonEl.className = 'export-colon';
-					colonEl.textContent = ': ';
-					entry.appendChild(colonEl);
+						// Await the promise and update
+						try {
+							const resolvedValue = await value;
+							valueEl.innerHTML = '<span class="value-promise"><span class="promise-badge">Promise</span> <span class="promise-status resolved">✓ resolved:</span> ' + formatValue(resolvedValue) + '</span>';
+							entry.classList.remove('export-promise');
+							entry.classList.add('export-promise-resolved');
+						} catch (rejectedError) {
+							valueEl.innerHTML = '<span class="value-promise"><span class="promise-badge">Promise</span> <span class="promise-status rejected">✗ rejected:</span> ' + formatError(rejectedError) + '</span>';
+							entry.classList.remove('export-promise');
+							entry.classList.add('export-promise-rejected');
+						}
+					} else {
+						const { entry } = createExportEntry(key, formatValue(value));
+						exportsEntriesEl.appendChild(entry);
+					}
+				}
+			}
 
-					const valueEl = document.createElement('span');
-					valueEl.className = 'export-value';
-					valueEl.innerHTML = formatValue(exports[key]);
-					entry.appendChild(valueEl);
+			// Display module load error
+			function displayModuleError(error) {
+				exportsEntriesEl.innerHTML = '';
 
-					exportsEntriesEl.appendChild(entry);
-				});
+				const errorDiv = document.createElement('div');
+				errorDiv.className = 'module-error';
+				errorDiv.innerHTML = '<h3>Failed to load module</h3>' + formatError(error);
+				exportsEntriesEl.appendChild(errorDiv);
 			}
 
 			// Dynamically import the index file and display exports
 			try {
 				const module = await import('./${scriptFile}');
-				displayExports(module);
+				await displayExports(module);
 			} catch (error) {
-				console.error('Failed to import module:', error);
+				originalConsole.error('Failed to import module:', error);
+				displayModuleError(error);
 			}
 		</script>
 		<script type="module" src="epic_ws.js"></script>
