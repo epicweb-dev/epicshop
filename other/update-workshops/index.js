@@ -43,7 +43,7 @@ function getAuthenticatedRepoUrl(repoName) {
  */
 async function fetchAvailableWorkshops() {
 	// Note: `archived:false` is supported by GitHub search.
-	const baseUrl = `https://api.github.com/search/repositories?q=topic:workshop+org:${GITHUB_ORG}+archived:false&sort=stars&order=desc`
+	const baseUrl = `https://api.github.com/search/repositories?q=topic:workshop+org:${GITHUB_ORG}+archived:false&sort=updated&order=desc`
 	const perPage = 100
 	// GitHub Search API defaults to 30 results per page and caps at 1000 results.
 	const maxPages = 10
