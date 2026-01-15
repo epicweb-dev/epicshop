@@ -71,7 +71,7 @@ const defaultStatusHandlers: Record<number, StatusHandler> = {
 }
 
 export function GeneralErrorBoundary({
-	className = 'container flex items-center justify-center p-20 text-h2',
+	className = 'container flex items-center justify-center p-20 text-h2 flex-col gap-6',
 	defaultStatusHandler = ({ error }) => (
 		<p>
 			{error.status} {error.data}
