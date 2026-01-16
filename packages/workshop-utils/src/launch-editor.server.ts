@@ -444,10 +444,32 @@ export async function launchEditor(
 			_childProcess = child_process.spawn('cmd.exe', ['/C', command], {
 				stdio: ['inherit', 'inherit', 'pipe'],
 			})
-		} else if (hasSpacesInArgs) {
+		} else if (hasSpacesInArgs && process.platform === 'darwin') {
 			// Some editor CLIs (like Cursor) have bugs where they don't properly
-			// handle arguments containing spaces. Work around this by using shell
-			// mode with proper quoting via shellQuote.
+			// handle arguments containing spaces. On macOS, use the native 'open'
+			// command which handles spaces correctly.
+			// We lose the ability to go to a specific line, but at least the file opens.
+			const fileName = fileList[0]
+			if (fileName) {
+				log('macOS open command (spaces in path):', { fileName, editor })
+				// Use 'open -a' to open with the specific editor application
+				// Map CLI names to app names
+				const appName =
+					editor === 'cursor'
+						? 'Cursor'
+						: editor === 'code'
+							? 'Visual Studio Code'
+							: editor === 'code-insiders'
+								? 'Visual Studio Code - Insiders'
+								: editor
+				_childProcess = child_process.spawn('open', ['-a', appName, fileName], {
+					stdio: ['inherit', 'inherit', 'pipe'],
+				})
+			} else {
+				return res({ status: 'error', message: 'No file to open' })
+			}
+		} else if (hasSpacesInArgs) {
+			// On other Unix systems, use shell mode with proper quoting
 			const command = shellQuote.quote([editor, ...args])
 			log('Unix spawn with shell (spaces in args):', { command })
 			_childProcess = child_process.spawn(command, [], {
