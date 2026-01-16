@@ -1991,7 +1991,7 @@ async function promptAndSetupAccessibleWorkshops(): Promise<void> {
 	console.log(chalk.gray(`  🔑 You have access to this workshop`))
 	console.log()
 
-	// Group workshops by product for "select all by product" options
+	// Group workshops by product for quick-select options
 	const workshopsByProduct = new Map<string, string[]>()
 	for (const w of candidates) {
 		const host = w.productHost || 'other'
@@ -2000,20 +2000,20 @@ async function promptAndSetupAccessibleWorkshops(): Promise<void> {
 		workshopsByProduct.set(host, existing)
 	}
 
-	// Build quick-select options for products that have multiple workshops
-	type QuickSelectChoice = {
+	// Build selection method choices
+	type SelectionChoice = {
 		name: string
 		value: string
 		description?: string
 	}
-	const quickSelectChoices: QuickSelectChoice[] = []
+	const selectionMethodChoices: SelectionChoice[] = []
 
 	// Add "All workshops" option if there are multiple workshops
 	if (candidates.length > 1) {
-		quickSelectChoices.push({
-			name: chalk.bold('⭐ All workshops'),
+		selectionMethodChoices.push({
+			name: `⭐ All workshops`,
 			value: '__ALL__',
-			description: `Select all ${candidates.length} workshops`,
+			description: `Set up all ${candidates.length} workshops at once`,
 		})
 	}
 
@@ -2026,79 +2026,97 @@ async function promptAndSetupAccessibleWorkshops(): Promise<void> {
 
 	for (const [host, workshops] of workshopsByProduct) {
 		if (workshops.length > 1 && productDisplayNames[host]) {
-			quickSelectChoices.push({
-				name: chalk.bold(productDisplayNames[host]),
+			selectionMethodChoices.push({
+				name: productDisplayNames[host],
 				value: `__PRODUCT__${host}`,
-				description: `Select all ${workshops.length} ${host.replace('www.', '').replace('.dev', '').replace('.pro', '')} workshops`,
+				description: `Set up all ${workshops.length} workshops from this product`,
 			})
 		}
 	}
 
-	// Build the individual workshop choices
-	const individualChoices = candidates.map((w) => {
-		const productIcon = w.productHost ? PRODUCT_ICONS[w.productHost] || '' : ''
-		const accessIcon = chalk.yellow('🔑')
-		const name = [productIcon, w.title || w.name, accessIcon]
-			.filter(Boolean)
-			.join(' ')
-
-		const descriptionParts = [
-			w.instructorName ? `by ${w.instructorName}` : null,
-			w.productDisplayName || w.productHost,
-			w.description,
-		].filter(Boolean)
-		const description = descriptionParts.join(' • ') || undefined
-
-		return {
-			name,
-			value: w.name,
-			description,
-		}
+	// Always add the "Choose individually" option
+	selectionMethodChoices.push({
+		name: '📋 Choose individually',
+		value: '__INDIVIDUAL__',
+		description: 'Select specific workshops from a list',
 	})
 
-	// Combine quick-select options with individual workshops
-	const { Separator } = await import('@inquirer/checkbox')
-	const allChoices: Array<
-		QuickSelectChoice | InstanceType<typeof Separator>
-	> = []
-
-	if (quickSelectChoices.length > 0) {
-		allChoices.push(...quickSelectChoices)
-		allChoices.push(new Separator('─── Individual workshops ───'))
-	}
-	allChoices.push(...individualChoices)
-
-	console.log(
-		chalk.gray('   Use space to select, enter to confirm your selection.\n'),
-	)
-
-	const rawSelection = await checkbox({
-		message: 'Select workshops to set up:',
-		choices: allChoices,
+	// Add skip option
+	selectionMethodChoices.push({
+		name: '⏭️  Skip for now',
+		value: '__SKIP__',
+		description: 'Continue without setting up additional workshops',
 	})
 
-	// Process special selection values
-	const selectedWorkshops = new Set<string>()
-	for (const selection of rawSelection) {
-		if (selection === '__ALL__') {
-			// Add all workshops
-			for (const w of candidates) {
-				selectedWorkshops.add(w.name)
-			}
-		} else if (selection.startsWith('__PRODUCT__')) {
-			// Add all workshops for this product
-			const host = selection.replace('__PRODUCT__', '')
-			const productWorkshops = workshopsByProduct.get(host) || []
-			for (const name of productWorkshops) {
-				selectedWorkshops.add(name)
-			}
-		} else {
-			// Individual workshop selection
-			selectedWorkshops.add(selection)
-		}
+	const { select } = await import('@inquirer/prompts')
+
+	const selectionMethod = await select({
+		message: 'How would you like to select workshops?',
+		choices: selectionMethodChoices,
+	})
+
+	if (selectionMethod === '__SKIP__') {
+		console.log(chalk.gray('\nSkipping workshop setup. Continuing...\n'))
+		return
 	}
 
-	if (selectedWorkshops.size === 0) {
+	let selectedWorkshops: string[]
+
+	if (selectionMethod === '__ALL__') {
+		// Select all workshops
+		selectedWorkshops = candidates.map((w) => w.name)
+		console.log(
+			chalk.cyan(`\n✓ Selected all ${selectedWorkshops.length} workshops\n`),
+		)
+	} else if (selectionMethod.startsWith('__PRODUCT__')) {
+		// Select all workshops for this product
+		const host = selectionMethod.replace('__PRODUCT__', '')
+		selectedWorkshops = workshopsByProduct.get(host) || []
+		const productName =
+			productDisplayNames[host]?.replace(/^[^\s]+\s/, '') || host
+		console.log(
+			chalk.cyan(
+				`\n✓ Selected ${selectedWorkshops.length} ${productName.replace('All ', '')}\n`,
+			),
+		)
+	} else {
+		// Show checkbox for individual selection
+		const individualChoices = candidates.map((w) => {
+			const productIcon = w.productHost
+				? PRODUCT_ICONS[w.productHost] || ''
+				: ''
+			const accessIcon = chalk.yellow('🔑')
+			const name = [productIcon, w.title || w.name, accessIcon]
+				.filter(Boolean)
+				.join(' ')
+
+			const descriptionParts = [
+				w.instructorName ? `by ${w.instructorName}` : null,
+				w.productDisplayName || w.productHost,
+				w.description,
+			].filter(Boolean)
+			const description = descriptionParts.join(' • ') || undefined
+
+			return {
+				name,
+				value: w.name,
+				description,
+			}
+		})
+
+		console.log(
+			chalk.gray(
+				'\n   Use space to select, enter to confirm your selection.\n',
+			),
+		)
+
+		selectedWorkshops = await checkbox({
+			message: 'Select workshops to set up:',
+			choices: individualChoices,
+		})
+	}
+
+	if (selectedWorkshops.length === 0) {
 		console.log(chalk.gray('\nNo workshops selected. Continuing...\n'))
 		return
 	}
