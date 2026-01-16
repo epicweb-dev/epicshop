@@ -1,6 +1,6 @@
 import * as Popover from '@radix-ui/react-popover'
 import * as React from 'react'
-import { Await, useLoaderData } from 'react-router'
+import { Await, Link, useLoaderData } from 'react-router'
 import { Icon } from '#app/components/icons.tsx'
 import {
 	OnboardingBadge,
@@ -65,10 +65,19 @@ function TouchedFiles({
 							<strong className="inline-block px-2 pb-2 font-semibold uppercase">
 								Relevant Files
 							</strong>
-							<p className="text-muted-foreground mb-4 px-2 text-sm max-w-3xs">
+							<p className="text-muted-foreground max-w-3xs px-2 text-sm">
 								These are the files you'll need to modify for this exercise.
 								Click any file to open it directly in your editor at the right
 								location.
+							</p>
+							<p className="mb-4 px-2 text-sm">
+								<Link
+									to="/guide"
+									className="text-highlight underline"
+									onClick={() => setOpen(false)}
+								>
+									Learn more →
+								</Link>
 							</p>
 							{data.problem &&
 							data.playground?.appName !== data.problem.name ? (

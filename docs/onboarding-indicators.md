@@ -181,6 +181,24 @@ fetcher.submit(
 )
 ```
 
+## Workshop Guide Page
+
+The app includes a `/guide` page (`routes/_app+/guide.tsx`) that provides
+comprehensive documentation for users about how to use the workshop app. This
+page is a good destination for "Learn more" links in onboarding-related UI.
+
+The guide includes:
+
+- Tutorial callout encouraging users to run `npx epicshop add epicshop-tutorial`
+- Workshop structure explanation (exercises/, playground/)
+- Lesson page tabs overview (Playground, Problem, Solution, Diff, Tests)
+- Files list documentation
+- Troubleshooting for file links (EPICSHOP_EDITOR)
+- Emoji key reference
+
+When adding new onboarding indicators, consider linking to the guide page for
+users who want more detailed information.
+
 ## Design Guidelines
 
 1. **Be non-intrusive** - Indicators should draw attention without blocking the
@@ -196,6 +214,9 @@ fetcher.submit(
    (e.g., `'persist-playground'`, `'diff-tab'`)
 
 5. **Keep messages short** - Callout messages should be concise and actionable
+
+6. **Link to the guide** - For complex features, include a "Learn more" link to
+   `/guide` for users who want detailed information
 
 ## Testing
 
