@@ -1,9 +1,10 @@
 import * as Popover from '@radix-ui/react-popover'
 import * as React from 'react'
-import { Await, Link, useLoaderData } from 'react-router'
+import { Await, useLoaderData } from 'react-router'
 import { Icon } from '#app/components/icons.tsx'
 import {
 	OnboardingBadge,
+	OnboardingCallout,
 	useOnboardingIndicator,
 } from '#app/components/onboarding-indicator.tsx'
 import { SimpleTooltip } from '#app/components/ui/tooltip.tsx'
@@ -13,21 +14,22 @@ import { type Route as LayoutRoute } from '../+types/_layout.tsx'
 
 function TouchedFiles({
 	diffFilesPromise,
+	compact = false,
 }: {
 	diffFilesPromise: LayoutRoute.ComponentProps['loaderData']['diffFiles']
+	compact?: boolean
 }) {
 	const data = useLoaderData<LayoutRoute.ComponentProps['loaderData']>()
-	const { showIndicator, markComplete } =
-		useOnboardingIndicator('files-popover')
+	const { showIndicator, markAsSeen } = useOnboardingIndicator('files-tooltip')
 
 	const [open, setOpen] = React.useState(false)
 	const contentRef = React.useRef<HTMLDivElement>(null)
 
 	function handleOpenChange(isOpen: boolean) {
 		setOpen(isOpen)
-		// Mark as complete when opening the popover for the first time
+		// Mark as seen when opening the popover for the first time
 		if (isOpen) {
-			markComplete()
+			markAsSeen()
 		}
 	}
 
@@ -46,12 +48,15 @@ function TouchedFiles({
 						aria-label="Relevant Files"
 					>
 						<Icon name="Files" />
-						<span className="hidden @min-[640px]:inline">Files</span>
-						{showIndicator ? (
-							<OnboardingBadge tooltip="Click to see which files to edit!" />
-						) : null}
+						{compact ? null : <span className="hidden xl:inline">Files</span>}
+						{showIndicator ? <OnboardingBadge /> : null}
 					</button>
 				</Popover.Trigger>
+				{showIndicator ? (
+					<OnboardingCallout>
+						👋 Click here to see which files to edit!
+					</OnboardingCallout>
+				) : null}
 				<Popover.Portal>
 					<Popover.Content
 						ref={contentRef}
@@ -63,19 +68,10 @@ function TouchedFiles({
 							<strong className="inline-block px-2 pb-2 font-semibold uppercase">
 								Relevant Files
 							</strong>
-							<p className="text-muted-foreground max-w-3xs px-2 text-sm">
+							<p className="text-muted-foreground mb-4 px-2 text-sm">
 								These are the files you'll need to modify for this exercise.
 								Click any file to open it directly in your editor at the right
 								location.
-							</p>
-							<p className="mb-4 px-2 text-sm">
-								<Link
-									to="/guide#file-links"
-									className="text-highlight underline"
-									onClick={() => setOpen(false)}
-								>
-									Learn more →
-								</Link>
 							</p>
 							{data.problem &&
 							data.playground?.appName !== data.problem.name ? (

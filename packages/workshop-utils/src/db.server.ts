@@ -75,12 +75,9 @@ const DataSchema = z.object({
 				})
 				.optional()
 				.default({ dismissed: false }),
-			onboarding: z
-				.object({
-					hasSeenFilesTooltip: z.boolean().default(false),
-				})
-				.optional()
-				.default({ hasSeenFilesTooltip: false }),
+			// Generic record for tracking which features/tips users have seen
+			// Keys are feature identifiers (e.g., 'files-tooltip', 'persist-playground')
+			onboardingSeen: z.record(z.string(), z.boolean()).optional().default({}),
 		})
 		.optional()
 		.default({}),
@@ -328,14 +325,45 @@ export async function setPreferences(
 				...data?.preferences?.exerciseWarning,
 				...preferences?.exerciseWarning,
 			},
-			onboarding: {
-				...data?.preferences?.onboarding,
-				...preferences?.onboarding,
+			onboardingSeen: {
+				...data?.preferences?.onboardingSeen,
+				...preferences?.onboardingSeen,
 			},
 		},
 	}
 	await saveJSON(updatedData)
 	return updatedData.preferences
+}
+
+/**
+ * Mark an onboarding feature as seen by the user.
+ * This is used to track which tips/indicators have been dismissed.
+ * @param featureId - Unique identifier for the feature (e.g., 'files-tooltip')
+ */
+export async function markOnboardingAsSeen(featureId: string) {
+	const data = await readDb()
+	const updatedData = {
+		...data,
+		preferences: {
+			...data?.preferences,
+			onboardingSeen: {
+				...data?.preferences?.onboardingSeen,
+				[featureId]: true,
+			},
+		},
+	}
+	await saveJSON(updatedData)
+	return updatedData.preferences
+}
+
+/**
+ * Check if a user has seen an onboarding feature.
+ * @param featureId - Unique identifier for the feature
+ * @returns true if the user has seen this feature, false otherwise
+ */
+export async function hasSeenOnboarding(featureId: string) {
+	const data = await readDb()
+	return data?.preferences?.onboardingSeen?.[featureId] ?? false
 }
 
 export async function getMutedNotifications() {

@@ -6,156 +6,207 @@ indicator is permanently dismissed and stored in their preferences database.
 
 ## Overview
 
-The onboarding system consists of three parts:
+The onboarding system provides:
 
-1. **Database schema** - Tracks which features the user has seen
-2. **API endpoint** - Marks a feature as seen
-3. **UI component** - Shows the indicator and triggers the API when dismissed
+1. **`useOnboardingIndicator` hook** - Manages state and persistence
+2. **`OnboardingBadge` component** - A pulsing badge indicator
+3. **`OnboardingCallout` component** - A floating message callout
+4. **Generic API endpoint** - Persists seen state to database
 
-## Adding a New Onboarding Indicator
+## Quick Start
 
-### Step 1: Add the preference to the database schema
+Adding an onboarding indicator to a feature is simple:
 
-In `packages/workshop-utils/src/db.server.ts`, add a new field to the
-`onboarding` object in the `DataSchema`:
+```tsx
+import {
+	OnboardingBadge,
+	OnboardingCallout,
+	useOnboardingIndicator,
+} from '#app/components/onboarding-indicator.tsx'
 
-```typescript
-onboarding: z
-  .object({
-    hasSeenFilesTooltip: z.boolean().default(false),
-    // Add your new field here:
-    hasSeenYourFeature: z.boolean().default(false),
-  })
-  .optional()
-  .default({ hasSeenFilesTooltip: false }),
-```
+function MyFeatureButton() {
+	const { showIndicator, markAsSeen } = useOnboardingIndicator('my-feature')
 
-### Step 2: Create an API endpoint to mark as seen
-
-Create a new route file (e.g., `packages/workshop-app/app/routes/mark-your-feature-seen.tsx`):
-
-```typescript
-import { setPreferences } from '@epic-web/workshop-utils/db.server'
-import { type ActionFunctionArgs } from 'react-router'
-
-export async function action({ request }: ActionFunctionArgs) {
-  if (request.method !== 'POST') {
-    return Response.json({ error: 'Method not allowed' }, { status: 405 })
-  }
-
-  await setPreferences({
-    onboarding: { hasSeenYourFeature: true },
-  })
-
-  return Response.json({ success: true })
+	return (
+		<div className="relative">
+			<button
+				onClick={() => {
+					markAsSeen()
+					// ... do feature stuff
+				}}
+			>
+				My Feature
+				{showIndicator ? <OnboardingBadge /> : null}
+			</button>
+			{showIndicator ? (
+				<OnboardingCallout>
+					👋 Click here to discover this feature!
+				</OnboardingCallout>
+			) : null}
+		</div>
+	)
 }
 ```
 
-### Step 3: Add the indicator to your component
+That's it! The hook handles:
 
-In your component, use this pattern:
+- Checking if the user has already seen this feature
+- Providing immediate UI feedback when dismissed
+- Persisting the state to the database
 
-```typescript
-import { useFetcher } from 'react-router'
-import { useRootLoaderData } from '#app/utils/root-loader.ts'
+## API Reference
 
-function YourComponent() {
-  const rootData = useRootLoaderData()
-  const fetcher = useFetcher()
+### `useOnboardingIndicator(featureId: string)`
 
-  // Local state for immediate UI feedback
-  const [hasMarkedAsSeen, setHasMarkedAsSeen] = React.useState(false)
+A hook that manages onboarding indicator state.
 
-  // Check if user has seen this feature (from database)
-  const hasSeenFeature =
-    rootData.preferences?.onboarding?.hasSeenYourFeature ?? false
+**Parameters:**
 
-  // Show indicator only if not seen and not just marked
-  const showIndicator = !hasSeenFeature && !hasMarkedAsSeen
+- `featureId` - A unique string identifier for the feature (e.g.,
+  `'files-tooltip'`, `'persist-playground'`)
 
-  function handleInteraction() {
-    if (showIndicator) {
-      // Update local state for immediate UI feedback
-      setHasMarkedAsSeen(true)
+**Returns:**
 
-      // Persist to database
-      void fetcher.submit(null, {
-        method: 'POST',
-        action: '/mark-your-feature-seen',
-      })
-    }
-  }
+- `showIndicator: boolean` - Whether to show the indicator
+- `markAsSeen: () => void` - Function to mark the feature as seen
 
-  return (
-    <div>
-      <button onClick={handleInteraction}>
-        Your Feature
-        {showIndicator ? (
-          <span className="bg-accent text-accent-foreground absolute -top-1 -right-1 flex h-5 w-5 animate-pulse items-center justify-center rounded-full text-xs font-bold shadow-md">
-            !
-          </span>
-        ) : null}
-      </button>
+**Example:**
 
-      {showIndicator ? (
-        <div className="bg-accent text-accent-foreground absolute top-full left-0 z-20 mt-1 max-w-64 rounded-md px-3 py-2 text-sm shadow-lg">
-          <p className="font-medium">👋 Click here to discover this feature!</p>
-        </div>
-      ) : null}
-    </div>
-  )
+```tsx
+const { showIndicator, markAsSeen } = useOnboardingIndicator('my-feature')
+
+// Call markAsSeen() when the user interacts with the feature
+function handleClick() {
+	markAsSeen()
+	// ... handle click
 }
 ```
 
-## Existing Onboarding Indicators
+### `<OnboardingBadge />`
 
-| Feature | Preference Key | API Endpoint | Component |
-|---------|---------------|--------------|-----------|
-| FILES button | `hasSeenFilesTooltip` | `/mark-files-seen` | `touched-files.tsx` |
+A pulsing badge that draws attention to a feature. Position it absolutely within
+a relatively-positioned parent.
+
+**Props:**
+
+- `children?: ReactNode` - Content inside the badge (default: `'!'`)
+- `className?: string` - Additional CSS classes
+
+**Example:**
+
+```tsx
+<button className="relative">
+  Click me
+  {showIndicator ? <OnboardingBadge /> : null}
+</button>
+
+// Custom content
+<OnboardingBadge>✨</OnboardingBadge>
+
+// Custom positioning
+<OnboardingBadge className="-bottom-1 -left-1 top-auto right-auto">
+  New
+</OnboardingBadge>
+```
+
+### `<OnboardingCallout />`
+
+A floating message box that explains a feature. Position it near the element
+it's describing.
+
+**Props:**
+
+- `children: ReactNode` - The message content
+- `className?: string` - Additional CSS classes
+
+**Example:**
+
+```tsx
+<div className="relative">
+  <button>Click me</button>
+  {showIndicator ? (
+    <OnboardingCallout>👋 Try clicking this button!</OnboardingCallout>
+  ) : null}
+</div>
+
+// Custom positioning
+<OnboardingCallout className="left-auto right-0">
+  Check this out!
+</OnboardingCallout>
+```
+
+## Existing Indicators
+
+| Feature      | Feature ID      | Location            |
+| ------------ | --------------- | ------------------- |
+| FILES button | `files-tooltip` | `touched-files.tsx` |
+
+## Architecture
+
+### Database Storage
+
+Feature seen states are stored in the user preferences as a simple key-value
+record:
+
+```typescript
+// In packages/workshop-utils/src/db.server.ts
+preferences: {
+  onboardingSeen: {
+    'files-tooltip': true,
+    'my-feature': true,
+    // ... other features
+  }
+}
+```
+
+### Server Functions
+
+The `db.server.ts` module exports helper functions:
+
+```typescript
+// Mark a feature as seen
+await markOnboardingAsSeen('my-feature')
+
+// Check if a feature has been seen
+const seen = await hasSeenOnboarding('my-feature')
+```
+
+### API Endpoint
+
+The `/mark-onboarding-seen` endpoint accepts POST requests with a `featureId`
+form field:
+
+```typescript
+// This is handled automatically by the hook, but for reference:
+fetcher.submit(
+	{ featureId: 'my-feature' },
+	{ method: 'POST', action: '/mark-onboarding-seen' },
+)
+```
 
 ## Design Guidelines
 
-When creating onboarding indicators:
+1. **Be non-intrusive** - Indicators should draw attention without blocking the
+   user's workflow
 
-1. **Be non-intrusive** - The indicator should draw attention without blocking
-   the user's workflow
-2. **Dismiss on interaction** - The indicator should disappear as soon as the
-   user interacts with the feature
-3. **Persist permanently** - Once dismissed, the indicator should never show
-   again (stored in database)
-4. **Immediate feedback** - Use local state to hide the indicator immediately,
-   don't wait for the API response
-5. **Use semantic colors** - Use `bg-accent` and `text-accent-foreground` for
-   consistent theming
+2. **Dismiss on interaction** - Mark as seen when the user interacts with the
+   feature, not just when they hover
 
-## Visual Patterns
+3. **Use consistent styling** - Use the provided components to maintain visual
+   consistency
 
-### Pulsing Badge
+4. **Choose unique feature IDs** - Use descriptive, kebab-case identifiers
+   (e.g., `'persist-playground-tip'`, `'diff-tab-intro'`)
 
-A small pulsing circle with an icon, positioned at the corner of the element:
-
-```tsx
-<span className="bg-accent text-accent-foreground absolute -top-1 -right-1 flex h-5 w-5 animate-pulse items-center justify-center rounded-full text-xs font-bold shadow-md">
-  !
-</span>
-```
-
-### Callout Message
-
-A floating message box that appears near the element:
-
-```tsx
-<div className="bg-accent text-accent-foreground absolute top-full left-0 z-20 mt-1 max-w-64 rounded-md px-3 py-2 text-sm shadow-lg">
-  <p className="font-medium">👋 Your helpful message here!</p>
-</div>
-```
+5. **Keep messages short** - Callout messages should be concise and actionable
 
 ## Testing
 
 To test onboarding indicators during development:
 
 1. Open the database file (accessible via Admin > Database)
-2. Set the relevant `hasSeenX` field to `false`
-3. Refresh the page to see the indicator
+2. Find the `onboardingSeen` object in preferences
+3. Delete the key for your feature or set it to `false`
+4. Refresh the page to see the indicator
 
-Alternatively, you can delete your local database to reset all preferences.
+Alternatively, delete your local database to reset all preferences.
