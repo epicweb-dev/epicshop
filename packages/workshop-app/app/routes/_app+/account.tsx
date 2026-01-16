@@ -69,15 +69,47 @@ export default function Account() {
 
 	return (
 		<main className="container flex h-full w-full max-w-3xl grow flex-col items-center justify-center gap-4">
-			{user.imageUrlLarge ? (
-				<img
-					className="h-36 w-36 rounded-full"
-					alt={discordMember?.displayName ?? user.name ?? user.email}
-					src={user.imageUrlLarge}
-				/>
-			) : (
-				<Icon name="User" className="shrink-0" size="lg" />
-			)}
+			<div className="flex flex-col items-center">
+				{user.imageUrlLarge ? (
+					<img
+						className="h-36 w-36 rounded-full"
+						alt={discordMember?.displayName ?? user.name ?? user.email}
+						src={user.imageUrlLarge}
+					/>
+				) : (
+					<div className="bg-muted flex h-36 w-36 items-center justify-center rounded-full">
+						<Icon name="User" size="xl" />
+					</div>
+				)}
+				<p className="text-muted-foreground mt-2 text-center text-xs">
+					{discordMember ? (
+						<>
+							Photo from{' '}
+							<a
+								href="https://discord.com/channels/@me"
+								target="_blank"
+								rel="noopener noreferrer"
+								className="underline"
+							>
+								Discord
+							</a>
+						</>
+					) : (
+						<>
+							Photo from{' '}
+							<a
+								href="https://gravatar.com"
+								target="_blank"
+								rel="noopener noreferrer"
+								className="underline"
+							>
+								Gravatar
+							</a>{' '}
+							or connect Discord below
+						</>
+					)}
+				</p>
+			</div>
 
 			<div className="flex items-center gap-2">
 				<h1 className="mb-1 text-2xl">Your Account</h1>
