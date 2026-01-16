@@ -2281,8 +2281,8 @@ async function promptAndSetupAccessibleWorkshops(): Promise<void> {
 	console.log(chalk.gray(`  🔑 You have access to this workshop`))
 	console.log()
 
-	// Filter workshops that have a product configured (for "All My Workshops" option)
-	const workshopsWithProduct = candidates.filter((w) => w.productHost)
+	// Filter workshops that are part of a product (for "All My Workshops" option)
+	const workshopsWithProduct = candidates.filter((w) => w.productSlug)
 
 	// Group workshops by product for quick-select options
 	const workshopsByProduct = new Map<string, string[]>()
