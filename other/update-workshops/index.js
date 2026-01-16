@@ -186,12 +186,13 @@ async function updateWorkshopRepo(repo, version) {
 			},
 		)
 
-		// Configure sparse checkout to only include root directory and epicshop directory
-		// Using directory patterns is much faster than individual files
-		await execa('git', ['sparse-checkout', 'set', '.', 'epicshop'], {
-			cwd: tempDir,
-			env: getGitEnv(),
-		})
+		// Configure sparse checkout in non-cone mode to allow file-level patterns
+		// This lets us checkout only specific files (like package.json) from workspace dirs
+		await execa(
+			'git',
+			['sparse-checkout', 'set', '--no-cone', '/*', 'epicshop/'],
+			{ cwd: tempDir, env: getGitEnv() },
+		)
 
 		// Ensure future push operations use an authenticated remote URL.
 		// (Some git versions can normalize remotes in ways that drop credentials.)
@@ -230,56 +231,56 @@ async function updateWorkshopRepo(repo, version) {
 			try {
 				const pkgJson = JSON.parse(await fs.readFile(pkgJsonPath, 'utf8'))
 				if (pkgJson.workspaces) {
-					// Convert workspace patterns to sparse checkout patterns for package.json files
-					// e.g., "exercises/*/*" -> "exercises/*/*/package.json"
 					const workspacePatterns = Array.isArray(pkgJson.workspaces)
 						? pkgJson.workspaces
 						: pkgJson.workspaces.packages || []
 					console.log(
 						`📦 ${repoName} - workspaces detected: ${JSON.stringify(workspacePatterns)}`,
 					)
+
+					// In non-cone mode, sparse-checkout uses gitignore-style patterns.
+					// We add patterns for package.json files in each workspace directory.
 					const sparsePatterns = workspacePatterns.map(
 						(pattern) => `${pattern}/package.json`,
 					)
-					if (sparsePatterns.length > 0) {
-						console.log(
-							`📦 ${repoName} - adding sparse checkout patterns: ${JSON.stringify(sparsePatterns)}`,
-						)
-						await execa('git', ['sparse-checkout', 'add', ...sparsePatterns], {
-							cwd: tempDir,
-							env: getGitEnv(),
-						})
+					console.log(
+						`📦 ${repoName} - adding sparse patterns: ${JSON.stringify(sparsePatterns)}`,
+					)
 
-						// Log the current sparse-checkout configuration
-						const { stdout: sparseList } = await execa(
-							'git',
-							['sparse-checkout', 'list'],
-							{ cwd: tempDir, env: getGitEnv() },
-						)
-						console.log(
-							`📦 ${repoName} - sparse-checkout patterns now:\n${sparseList
-								.split('\n')
-								.map((l) => `      ${l}`)
-								.join('\n')}`,
-						)
+					// Read current sparse-checkout patterns and append new ones
+					const sparseCheckoutFile = path.join(
+						tempDir,
+						'.git',
+						'info',
+						'sparse-checkout',
+					)
+					const currentPatterns = await fs.readFile(sparseCheckoutFile, 'utf8')
+					const newPatterns =
+						currentPatterns.trim() + '\n' + sparsePatterns.join('\n') + '\n'
+					await fs.writeFile(sparseCheckoutFile, newPatterns, 'utf8')
 
-						// List workspace package.json files that were checked out
-						const { stdout: checkedOutFiles } = await execa(
-							'git',
-							['ls-files', '--', ...sparsePatterns],
-							{ cwd: tempDir, env: getGitEnv() },
-						)
-						const fileCount = checkedOutFiles
-							? checkedOutFiles.split('\n').filter(Boolean).length
-							: 0
+					// Re-apply sparse checkout to fetch the new files
+					await execa('git', ['read-tree', '-mu', 'HEAD'], {
+						cwd: tempDir,
+						env: getGitEnv(),
+					})
+
+					// Verify checkout - count how many workspace package.json files exist
+					const { stdout: checkedOutFiles } = await execa(
+						'git',
+						['ls-files', '--', ...sparsePatterns],
+						{ cwd: tempDir, env: getGitEnv() },
+					)
+					const fileCount = checkedOutFiles
+						? checkedOutFiles.split('\n').filter(Boolean).length
+						: 0
+					console.log(
+						`📦 ${repoName} - checked out ${fileCount} workspace package.json files`,
+					)
+					if (fileCount > 0 && fileCount <= 20) {
 						console.log(
-							`📦 ${repoName} - checked out ${fileCount} workspace package.json files`,
+							`      Files: ${checkedOutFiles.split('\n').filter(Boolean).join(', ')}`,
 						)
-						if (fileCount > 0 && fileCount <= 20) {
-							console.log(
-								`      Files: ${checkedOutFiles.split('\n').filter(Boolean).join(', ')}`,
-							)
-						}
 					}
 					break
 				}
