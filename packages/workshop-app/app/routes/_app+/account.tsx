@@ -239,7 +239,7 @@ export default function Account() {
 						<OnboardingBadge
 							tooltip="Customize your workshop experience!"
 							size="sm"
-							className="top-0 -right-5"
+							className="top-0 -left-5"
 						/>
 					) : null}
 				</li>
@@ -251,7 +251,7 @@ export default function Account() {
 						<OnboardingBadge
 							tooltip="Learn how to use the workshop app!"
 							size="sm"
-							className="top-0 -right-5"
+							className="top-0 -left-5"
 						/>
 					) : null}
 				</li>

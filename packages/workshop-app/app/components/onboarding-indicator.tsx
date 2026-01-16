@@ -146,14 +146,14 @@ export function OnboardingBadge({
 	size?: 'sm' | 'md'
 }) {
 	const sizeClasses = size === 'sm' ? 'h-4 w-4 text-xs' : 'h-6 w-6 text-sm'
-	const badgeClasses = `flex ${sizeClasses} animate-pulse items-center justify-center rounded-full bg-yellow-400 font-bold text-yellow-950 shadow-lg dark:bg-yellow-500`
+	const badgeClasses = `flex ${sizeClasses} animate-badge-bounce items-center justify-center rounded-full bg-yellow-400 font-bold text-yellow-950 shadow-lg dark:bg-yellow-500`
 
 	if (tooltip) {
 		return (
 			<Tooltip>
 				<TooltipTrigger asChild>
 					<span
-						className={`absolute -top-1 -right-1 z-10 cursor-pointer ${badgeClasses} ${className}`}
+						className={`absolute -top-1 -left-1 z-10 cursor-pointer ${badgeClasses} ${className}`}
 						tabIndex={0}
 					>
 						{children}
@@ -172,7 +172,7 @@ export function OnboardingBadge({
 	}
 
 	return (
-		<span className={`absolute -top-1 -right-1 z-10 ${badgeClasses} ${className}`}>
+		<span className={`absolute -top-1 -left-1 z-10 ${badgeClasses} ${className}`}>
 			{children}
 		</span>
 	)
