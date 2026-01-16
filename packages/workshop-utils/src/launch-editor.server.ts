@@ -120,7 +120,9 @@ const COMMON_EDITORS_WIN = [
 
 // Transpiled version of: /^([A-Za-z]:[/\\])?[\p{L}0-9/.\-_\\ ]+$/u
 // Non-transpiled version requires support for Unicode property regex. Allows
-
+// alphanumeric characters, spaces, periods, dashes, slashes, and underscores.
+export const WINDOWS_FILE_NAME_WHITELIST =
+	/^([A-Za-z]:[/\\])?[\p{L}0-9/.\-_\\ ]+$/u
 function addWorkspaceToArgumentsIfExists(
 	args: Array<string>,
 	workspace: string | null,
