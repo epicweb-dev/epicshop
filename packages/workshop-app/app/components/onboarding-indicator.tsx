@@ -39,7 +39,6 @@ export function useOnboardingIndicator(featureId: string) {
 	const rootData = useRootLoaderData()
 	const fetchers = useFetchers()
 	const fetcher = useFetcher()
-	const location = useLocation()
 
 	// Check for optimistic update from any in-flight fetcher
 	const optimisticComplete = fetchers.some((f) => {
@@ -56,17 +55,17 @@ export function useOnboardingIndicator(featureId: string) {
 	const markComplete = React.useCallback(() => {
 		if (!showIndicator) return
 
+		// Note: We don't include PE_REDIRECT_INPUT_NAME here because this hook
+		// can only be used when JavaScript is enabled. The OnboardingForm component
+		// uses ServerOnly to include that field for progressive enhancement.
 		void fetcher.submit(
-			{
-				featureId,
-				[PE_REDIRECT_INPUT_NAME]: location.pathname,
-			},
+			{ featureId },
 			{
 				method: 'POST',
 				action: ONBOARDING_ROUTE,
 			},
 		)
-	}, [showIndicator, featureId, fetcher, location.pathname])
+	}, [showIndicator, featureId, fetcher])
 
 	return [showIndicator, markComplete] as const
 }
