@@ -104,8 +104,8 @@ export default function Account() {
 								className="underline"
 							>
 								Gravatar
-							</a>
-							{' '}or connect Discord below
+							</a>{' '}
+							or connect Discord below
 						</>
 					)}
 				</p>

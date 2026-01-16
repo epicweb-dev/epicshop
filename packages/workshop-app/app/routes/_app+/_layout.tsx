@@ -922,41 +922,41 @@ function MobileNavigation({
 					>
 						<FacePile isMenuOpened={isMenuOpened} />
 					</div>
-				{ENV.EPICSHOP_DEPLOYED ? null : user ? (
-					<SimpleTooltip content={isMenuOpened ? null : 'Your account'}>
-						<Link
-							className={cn(
-								'flex h-14 shrink-0 items-center justify-start space-x-3 px-4 py-4 text-center no-underline hover:underline',
-								{
-									'border-l': !isMenuOpened,
-									'w-full border-t': isMenuOpened,
-								},
-							)}
-							to="/account"
-						>
-							{user.imageUrlSmall ? (
-								<img
-									alt={user.name ?? user.email}
-									src={user.imageUrlSmall}
-									className="h-full rounded-full"
-								/>
-							) : (
-								<Icon name="User" className="shrink-0" size="lg" />
-							)}
-							{isMenuOpened ? (
-								<motion.div
-									className="flex items-center whitespace-nowrap"
-									initial={{ opacity: 0 }}
-									animate={{ opacity: 1 }}
-								>
-									Your Account
-								</motion.div>
-							) : (
-								<span className="sr-only">Your account</span>
-							)}
-						</Link>
-					</SimpleTooltip>
-				) : null}
+					{ENV.EPICSHOP_DEPLOYED ? null : user ? (
+						<SimpleTooltip content={isMenuOpened ? null : 'Your account'}>
+							<Link
+								className={cn(
+									'flex h-14 shrink-0 items-center justify-start space-x-3 px-4 py-4 text-center no-underline hover:underline',
+									{
+										'border-l': !isMenuOpened,
+										'w-full border-t': isMenuOpened,
+									},
+								)}
+								to="/account"
+							>
+								{user.imageUrlSmall ? (
+									<img
+										alt={user.name ?? user.email}
+										src={user.imageUrlSmall}
+										className="h-full rounded-full"
+									/>
+								) : (
+									<Icon name="User" className="shrink-0" size="lg" />
+								)}
+								{isMenuOpened ? (
+									<motion.div
+										className="flex items-center whitespace-nowrap"
+										initial={{ opacity: 0 }}
+										animate={{ opacity: 1 }}
+									>
+										Your Account
+									</motion.div>
+								) : (
+									<span className="sr-only">Your account</span>
+								)}
+							</Link>
+						</SimpleTooltip>
+					) : null}
 					{ENV.EPICSHOP_DEPLOYED ? null : user && nextExerciseRoute ? (
 						<SimpleTooltip
 							content={isMenuOpened ? null : 'Continue to next lesson'}
@@ -1330,35 +1330,35 @@ function Navigation({
 					>
 						<FacePile isMenuOpened={isMenuOpened} />
 					</div>
-				{ENV.EPICSHOP_DEPLOYED ? null : user ? (
-					<SimpleTooltip content={isMenuOpened ? null : 'Your account'}>
-						<Link
-							className="flex h-14 w-full shrink-0 items-center justify-start space-x-3 border-t px-4 py-4 text-center no-underline hover:underline"
-							to="/account"
-						>
-							{user.imageUrlSmall ? (
-								<img
-									alt={user.name ?? user.email}
-									src={user.imageUrlSmall}
-									className="h-full rounded-full"
-								/>
-							) : (
-								<Icon name="User" className="shrink-0" size="lg" />
-							)}
-							{isMenuOpened ? (
-								<motion.div
-									className="flex items-center whitespace-nowrap"
-									initial={{ opacity: 0 }}
-									animate={{ opacity: 1 }}
-								>
-									Your Account
-								</motion.div>
-							) : (
-								<span className="sr-only">Your account</span>
-							)}
-						</Link>
-					</SimpleTooltip>
-				) : null}
+					{ENV.EPICSHOP_DEPLOYED ? null : user ? (
+						<SimpleTooltip content={isMenuOpened ? null : 'Your account'}>
+							<Link
+								className="flex h-14 w-full shrink-0 items-center justify-start space-x-3 border-t px-4 py-4 text-center no-underline hover:underline"
+								to="/account"
+							>
+								{user.imageUrlSmall ? (
+									<img
+										alt={user.name ?? user.email}
+										src={user.imageUrlSmall}
+										className="h-full rounded-full"
+									/>
+								) : (
+									<Icon name="User" className="shrink-0" size="lg" />
+								)}
+								{isMenuOpened ? (
+									<motion.div
+										className="flex items-center whitespace-nowrap"
+										initial={{ opacity: 0 }}
+										animate={{ opacity: 1 }}
+									>
+										Your Account
+									</motion.div>
+								) : (
+									<span className="sr-only">Your account</span>
+								)}
+							</Link>
+						</SimpleTooltip>
+					) : null}
 					{ENV.EPICSHOP_DEPLOYED ? null : user && nextExerciseRoute ? (
 						<SimpleTooltip
 							content={isMenuOpened ? null : 'Continue to next lesson'}
