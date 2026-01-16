@@ -75,6 +75,12 @@ const DataSchema = z.object({
 				})
 				.optional()
 				.default({ dismissed: false }),
+			onboarding: z
+				.object({
+					hasSeenFilesTooltip: z.boolean().default(false),
+				})
+				.optional()
+				.default({ hasSeenFilesTooltip: false }),
 		})
 		.optional()
 		.default({}),
@@ -321,6 +327,10 @@ export async function setPreferences(
 			exerciseWarning: {
 				...data?.preferences?.exerciseWarning,
 				...preferences?.exerciseWarning,
+			},
+			onboarding: {
+				...data?.preferences?.onboarding,
+				...preferences?.onboarding,
 			},
 		},
 	}
