@@ -373,7 +373,9 @@ export function EditFileOnGitHub({
 			<span className="hidden @min-[720px]:block @min-[900px]:hidden">
 				Edit on GitHub
 			</span>
-			<span className="hidden @min-[900px]:block">Edit this page on GitHub</span>
+			<span className="hidden @min-[900px]:block">
+				Edit this page on GitHub
+			</span>
 		</Link>
 	)
 }
