@@ -50,6 +50,7 @@ export function useOnboardingIndicator(featureId: string) {
 /**
  * A pulsing badge indicator that draws attention to a feature.
  * Typically positioned at the corner of a button or element.
+ * Uses a bright yellow/amber color for high visibility in both light and dark modes.
  *
  * @example
  * ```tsx
@@ -68,7 +69,7 @@ export function OnboardingBadge({
 }) {
 	return (
 		<span
-			className={`bg-accent text-accent-foreground absolute -top-1 -right-1 flex h-5 w-5 animate-pulse items-center justify-center rounded-full text-xs font-bold shadow-md ${className}`}
+			className={`absolute -top-2 -right-2 flex h-6 w-6 animate-pulse items-center justify-center rounded-full bg-yellow-400 text-sm font-bold text-yellow-950 shadow-lg dark:bg-yellow-500 ${className}`}
 		>
 			{children}
 		</span>
@@ -78,6 +79,7 @@ export function OnboardingBadge({
 /**
  * A callout message that appears near an element to explain a feature.
  * Typically positioned below the element it's describing.
+ * Uses a bright yellow/amber color for high visibility in both light and dark modes.
  *
  * @example
  * ```tsx
@@ -100,7 +102,7 @@ export function OnboardingCallout({
 }) {
 	return (
 		<div
-			className={`bg-accent text-accent-foreground absolute top-full left-0 z-20 mt-1 max-w-64 rounded-md px-3 py-2 text-sm shadow-lg ${className}`}
+			className={`absolute top-full left-0 z-20 mt-1 max-w-64 rounded-md bg-yellow-400 px-3 py-2 text-sm text-yellow-950 shadow-lg dark:bg-yellow-500 ${className}`}
 		>
 			<p className="font-medium">{children}</p>
 		</div>
