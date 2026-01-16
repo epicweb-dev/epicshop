@@ -75,6 +75,7 @@ export type IconName =
 	| 'House'
 	| 'WifiNoConnection'
 	| 'Copy'
+	| 'Pencil'
 
 const sizeClassName = {
 	font: 'w-[1em] h-[1em]',
