@@ -26,6 +26,7 @@ export async function action({ request }: { request: Request }) {
 	const optOutPresence = formData.get('optOutPresence') === 'on'
 	const persistPlayground = formData.get('persistPlayground') === 'on'
 	const dismissExerciseWarning = formData.get('dismissExerciseWarning') === 'on'
+	const dismissOnboardingHint = formData.get('dismissOnboardingHint') === 'on'
 
 	await setPreferences({
 		player: {
@@ -36,6 +37,7 @@ export async function action({ request }: { request: Request }) {
 		presence: { optOut: optOutPresence },
 		playground: { persist: persistPlayground },
 		exerciseWarning: { dismissed: dismissExerciseWarning },
+		onboardingHint: { dismissed: dismissOnboardingHint },
 	})
 
 	return redirectWithToast('/preferences', {
@@ -52,6 +54,7 @@ export default function AccountSettings() {
 	const presencePreferences = rootData.preferences?.presence
 	const playgroundPreferences = rootData.preferences?.playground
 	const exerciseWarningPreferences = rootData.preferences?.exerciseWarning
+	const onboardingHintPreferences = rootData.preferences?.onboardingHint
 	const navigation = useNavigation()
 
 	const isSubmitting = navigation.state === 'submitting'
@@ -180,6 +183,29 @@ export default function AccountSettings() {
 							/>
 							<label htmlFor="dismissExerciseWarning">
 								Dismiss exercise directory warnings
+							</label>
+						</div>
+					</div>
+
+					<div>
+						<div className="mb-2 flex items-center gap-2">
+							<h2 className="text-body-xl">Onboarding Hint</h2>
+
+							<SimpleTooltip
+								content={`The onboarding hint appears at the top of the home page to help new users find the intro instructions.`}
+							>
+								<Icon name="Question" tabIndex={0} />
+							</SimpleTooltip>
+						</div>
+						<div className="flex items-center gap-2">
+							<input
+								type="checkbox"
+								id="dismissOnboardingHint"
+								name="dismissOnboardingHint"
+								defaultChecked={onboardingHintPreferences?.dismissed}
+							/>
+							<label htmlFor="dismissOnboardingHint">
+								Dismiss onboarding hint
 							</label>
 						</div>
 					</div>

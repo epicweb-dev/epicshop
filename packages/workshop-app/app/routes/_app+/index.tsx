@@ -15,9 +15,11 @@ import slugify from '@sindresorhus/slugify'
 import { data, type HeadersFunction, Link } from 'react-router'
 import { EpicVideoInfoProvider } from '#app/components/epic-video.tsx'
 import { GeneralErrorBoundary } from '#app/components/error-boundary.tsx'
+import { OnboardingHint } from '#app/components/onboarding-hint.tsx'
 import { EditFileOnGitHub } from '#app/routes/launch-editor.tsx'
 import { Mdx } from '#app/utils/mdx.tsx'
 import { cn } from '#app/utils/misc.tsx'
+import { useRootLoaderData } from '#app/utils/root-loader.ts'
 import { ProgressToggle, useExerciseProgressClassName } from '../progress.tsx'
 import { type Route } from './+types/index.tsx'
 
@@ -104,6 +106,10 @@ function ExerciseListItem({
 const mdxComponents = { h1: () => null }
 
 export default function Index({ loaderData: data }: Route.ComponentProps) {
+	const rootData = useRootLoaderData()
+	const showOnboardingHint =
+		!rootData.preferences?.onboardingHint?.dismissed && !ENV.EPICSHOP_DEPLOYED
+
 	const exerciseLinks = (
 		<ul className="divide-border dark:divide-border/50 flex flex-col divide-y">
 			<strong className="px-10 pb-3 font-mono text-xs uppercase">
@@ -120,6 +126,7 @@ export default function Index({ loaderData: data }: Route.ComponentProps) {
 	)
 	return (
 		<main className="relative flex h-full w-full max-w-5xl flex-col justify-between border-r md:w-3/4 xl:w-2/3">
+			{showOnboardingHint ? <OnboardingHint /> : null}
 			<article
 				id={data.articleId}
 				className="shadow-on-scrollbox scrollbar-thin scrollbar-thumb-scrollbar flex w-full flex-1 flex-col gap-12 overflow-y-scroll px-3 py-4 pt-6 md:px-10 md:py-12 md:pt-16"

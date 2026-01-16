@@ -75,6 +75,12 @@ const DataSchema = z.object({
 				})
 				.optional()
 				.default({ dismissed: false }),
+			onboardingHint: z
+				.object({
+					dismissed: z.boolean().default(false),
+				})
+				.optional()
+				.default({ dismissed: false }),
 		})
 		.optional()
 		.default({}),
@@ -321,6 +327,10 @@ export async function setPreferences(
 			exerciseWarning: {
 				...data?.preferences?.exerciseWarning,
 				...preferences?.exerciseWarning,
+			},
+			onboardingHint: {
+				...data?.preferences?.onboardingHint,
+				...preferences?.onboardingHint,
 			},
 		},
 	}
