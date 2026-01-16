@@ -418,6 +418,10 @@ export async function launchEditor(
 
 	log('Launching editor with:', { editor, args, fileList, platform: process.platform })
 
+	// Check if any arguments contain spaces - if so, we need to use shell mode
+	// to work around bugs in editor CLI wrappers that don't properly handle spaces
+	const hasSpacesInArgs = args.some((arg) => arg.includes(' '))
+
 	return new Promise((res) => {
 		if (process.platform === 'win32') {
 			// On Windows, launch the editor in a shell because spawn can only
@@ -439,6 +443,16 @@ export async function launchEditor(
 			log('Windows spawn command:', { command })
 			_childProcess = child_process.spawn('cmd.exe', ['/C', command], {
 				stdio: ['inherit', 'inherit', 'pipe'],
+			})
+		} else if (hasSpacesInArgs) {
+			// Some editor CLIs (like Cursor) have bugs where they don't properly
+			// handle arguments containing spaces. Work around this by using shell
+			// mode with proper quoting via shellQuote.
+			const command = shellQuote.quote([editor, ...args])
+			log('Unix spawn with shell (spaces in args):', { command })
+			_childProcess = child_process.spawn(command, [], {
+				stdio: ['inherit', 'inherit', 'pipe'],
+				shell: true,
 			})
 		} else {
 			log('Unix spawn:', { editor, args })
