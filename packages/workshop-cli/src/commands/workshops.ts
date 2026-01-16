@@ -1910,7 +1910,7 @@ async function promptAndSetupAccessibleWorkshops(): Promise<void> {
 			'Skip this step by not running onboarding, and add workshops directly: npx epicshop add <repo-name>',
 		],
 	})
-	const { search } = await import('@inquirer/prompts')
+	const { checkbox } = await import('@inquirer/prompts')
 
 	const spinner = ora('Fetching available workshops...').start()
 	let enrichedWorkshops: EnrichedWorkshop[]
@@ -1991,94 +1991,61 @@ async function promptAndSetupAccessibleWorkshops(): Promise<void> {
 	console.log(chalk.gray(`  🔑 You have access to this workshop`))
 	console.log()
 
-	const buildChoices = async () => {
-		// Recompute downloaded status each loop (in case user just added one)
-		const updated = await checkWorkshopDownloadStatus(candidates)
-		const remaining = updated.filter((w) => !w.isDownloaded)
-		const workshopChoices = remaining.map((w) => {
-			const productIcon = w.productHost
-				? PRODUCT_ICONS[w.productHost] || ''
-				: ''
-			const accessIcon = chalk.yellow('🔑')
-			const name = [productIcon, w.title || w.name, accessIcon]
-				.filter(Boolean)
-				.join(' ')
+	// Build the choices for checkbox selection
+	const workshopChoices = candidates.map((w) => {
+		const productIcon = w.productHost ? PRODUCT_ICONS[w.productHost] || '' : ''
+		const accessIcon = chalk.yellow('🔑')
+		const name = [productIcon, w.title || w.name, accessIcon]
+			.filter(Boolean)
+			.join(' ')
 
-			const descriptionParts = [
-				w.instructorName ? `by ${w.instructorName}` : null,
-				w.productDisplayName || w.productHost,
-				w.description,
-			].filter(Boolean)
-			const description = descriptionParts.join(' • ') || undefined
+		const descriptionParts = [
+			w.instructorName ? `by ${w.instructorName}` : null,
+			w.productDisplayName || w.productHost,
+			w.description,
+		].filter(Boolean)
+		const description = descriptionParts.join(' • ') || undefined
 
-			return {
-				name,
-				value: w.name,
-				description,
-				workshop: w,
-			}
-		})
+		return {
+			name,
+			value: w.name,
+			description,
+		}
+	})
 
-		return [
-			...workshopChoices,
-			{
-				name: 'Done',
-				value: 'done' as const,
-				description: 'Continue to the tutorial setup',
-			},
-			{
-				name: 'Skip workshop setup',
-				value: 'skip' as const,
-				description: 'Continue without setting up more workshops',
-			},
-		]
+	console.log(
+		chalk.gray('   Use space to select, enter to confirm your selection.\n'),
+	)
+
+	const selectedWorkshops = await checkbox({
+		message: 'Select workshops to set up:',
+		choices: workshopChoices,
+	})
+
+	if (selectedWorkshops.length === 0) {
+		console.log(chalk.gray('\nNo workshops selected. Continuing...\n'))
+		return
 	}
 
-	while (true) {
-		const choices = await buildChoices()
-		// If there are no remaining workshops, stop
-		if (choices.length <= 2) return
+	console.log()
 
-		const selection = await search({
-			message: 'Select a workshop to set up (you can pick multiple):',
-			source: async (input) => {
-				if (!input) return choices
-				return matchSorter(choices, input, {
-					keys: [
-						{ key: 'name', threshold: rankings.CONTAINS },
-						{ key: 'value', threshold: rankings.CONTAINS },
-						{
-							key: 'workshop.productDisplayName',
-							threshold: rankings.CONTAINS,
-						},
-						{ key: 'workshop.instructorName', threshold: rankings.CONTAINS },
-						{ key: 'description', threshold: rankings.WORD_STARTS_WITH },
-					],
-				})
-			},
-		})
-
-		if (selection === 'done' || selection === 'skip') {
-			console.log()
-			return
-		}
-
-		// If already present, don’t treat that as an error
-		if (await workshopExists(selection)) {
-			console.log(chalk.gray(`• ${selection} (already set up)`))
+	// Set up each selected workshop
+	for (const repoName of selectedWorkshops) {
+		// If already present, don't treat that as an error
+		if (await workshopExists(repoName)) {
+			console.log(chalk.gray(`• ${repoName} (already set up)`))
 			continue
 		}
 
-		const result = await add({ repoName: selection, silent: false })
+		const result = await add({ repoName, silent: false })
 		if (!result.success) {
 			console.log(
 				chalk.yellow(
-					`⚠️  Failed to set up ${selection}. You can retry later with \`npx epicshop add ${selection}\`.`,
+					`⚠️  Failed to set up ${repoName}. You can retry later with \`npx epicshop add ${repoName}\`.`,
 				),
 			)
 			if (result.message) console.log(chalk.gray(`   ${result.message}`))
 			console.log()
-			continue
 		}
 	}
 }
