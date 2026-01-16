@@ -167,7 +167,7 @@ export default function Index({ loaderData: data }: Route.ComponentProps) {
 				type="workshop-instructions"
 				className="h-14 border-t px-6"
 			/>
-			<div className="flex h-16 justify-center border-t">
+			<div className="@container flex h-16 justify-center border-t">
 				<EditFileOnGitHub
 					file={data.workshopReadme.file}
 					relativePath={data.workshopReadme.relativePath}
