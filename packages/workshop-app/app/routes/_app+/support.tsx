@@ -25,6 +25,14 @@ export default function Support() {
 			</p>
 			<ul className="flex list-disc flex-col gap-4">
 				<li>
+					<strong>Workshop App Guide:</strong>{' '}
+					<Link to="/guide" className="underline">
+						/guide
+					</Link>{' '}
+					– Learn how to use the workshop app effectively, including file links,
+					keyboard shortcuts, and troubleshooting tips.
+				</li>
+				<li>
 					<strong>Technical issues:</strong>{' '}
 					<a href="mailto:team@epicweb.dev" className="underline">
 						team@epicweb.dev

@@ -10,12 +10,11 @@ The onboarding system provides:
 
 1. **`useOnboardingIndicator` hook** - Manages state and persistence with
    optimistic updates
-2. **`useOnboardingComplete` hook** - Read-only check for completion state
-3. **`OnboardingForm` component** - Form-based submission with progressive
+2. **`OnboardingForm` component** - Form-based submission with progressive
    enhancement
-4. **`OnboardingBadge` component** - A pulsing badge indicator
-5. **`OnboardingCallout` component** - A floating message callout
-6. **Generic API endpoint** - Persists completion state to database
+3. **`OnboardingBadge` component** - A pulsing badge indicator
+4. **`OnboardingCallout` component** - A floating message callout
+5. **Generic API endpoint** - Persists completion state to database
 
 ## Quick Start
 
@@ -40,8 +39,8 @@ function MyFeatureButton() {
 				}}
 			>
 				My Feature
-				{showIndicator ? <OnboardingBadge /> : null}
 			</button>
+			{showIndicator ? <OnboardingBadge tooltip="Try this!" /> : null}
 			{showIndicator ? (
 				<OnboardingCallout>
 					👋 Click here to discover this feature!
@@ -78,18 +77,18 @@ enhancement:
 import {
 	OnboardingBadge,
 	OnboardingForm,
-	useOnboardingComplete,
+	useOnboardingIndicator,
 } from '#app/components/onboarding-indicator.tsx'
 
 function MyFeature() {
-	const showIndicator = useOnboardingComplete('my-feature')
+	const { showIndicator } = useOnboardingIndicator('my-feature')
 
 	return (
 		<OnboardingForm featureId="my-feature" onSubmit={() => doSomething()}>
-			<button type="submit" className="relative">
-				Click me
+			<div className="relative">
+				<button type="submit">Click me</button>
 				{showIndicator ? <OnboardingBadge /> : null}
-			</button>
+			</div>
 		</OnboardingForm>
 	)
 }
@@ -108,7 +107,7 @@ A hook that manages onboarding indicator state with optimistic updates.
 
 **Returns:**
 
-- `showIndicator: boolean` - Whether to show the indicator
+- `showIndicator: boolean` - Whether to show the indicator (optimistic)
 - `markComplete: () => void` - Function to mark the onboarding as complete
 
 **Example:**
@@ -121,25 +120,6 @@ function handleClick() {
 	markComplete()
 	// ... handle click
 }
-```
-
-### `useOnboardingComplete(featureId: string)`
-
-A read-only hook that checks if a user has completed an onboarding feature.
-Supports optimistic updates from any in-flight fetcher.
-
-**Parameters:**
-
-- `featureId` - A unique string identifier for the feature
-
-**Returns:**
-
-- `boolean` - Whether to show the indicator (`true` if not complete)
-
-**Example:**
-
-```tsx
-const showIndicator = useOnboardingComplete('my-feature')
 ```
 
 ### `<OnboardingForm />`
@@ -173,15 +153,26 @@ a relatively-positioned parent. Optionally shows a tooltip on hover.
 - `tooltip?: string` - Tooltip message shown on hover
 - `className?: string` - Additional CSS classes
 
+**Important:** When using with tooltips, place the badge as a sibling to the
+button (not inside it) within a relative container for proper tooltip
+positioning.
+
 **Example:**
 
 ```tsx
+// With tooltip - badge is sibling to button for proper positioning
+<div className="relative">
+  <button>Click me</button>
+  {showIndicator ? <OnboardingBadge tooltip="Try this feature!" /> : null}
+</div>
+
+// Without tooltip - can be inside button
 <button className="relative">
   Click me
-  {showIndicator ? <OnboardingBadge tooltip="Click to discover!" /> : null}
+  {showIndicator ? <OnboardingBadge /> : null}
 </button>
 
-// Without tooltip
+// Custom content
 <OnboardingBadge>✨</OnboardingBadge>
 
 // Custom positioning
@@ -310,5 +301,3 @@ To test onboarding indicators during development:
 2. Find the `onboardingComplete` array in preferences
 3. Remove your feature ID from the array
 4. Refresh the page to see the indicator
-
-Alternatively, delete your local database to reset all preferences.

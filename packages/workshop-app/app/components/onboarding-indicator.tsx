@@ -12,31 +12,33 @@ const ONBOARDING_ROUTE = '/mark-onboarding-complete'
 const PE_REDIRECT_INPUT_NAME = '__PE_redirectTo'
 
 /**
- * Hook to check if user has completed an onboarding feature.
- * Uses optimistic updates similar to theme switching for instant UI feedback.
+ * Hook to check if user has completed an onboarding feature and provide a function to mark it complete.
+ * Uses optimistic updates for instant UI feedback with progressive enhancement support.
  *
  * @param featureId - Unique identifier for the feature (e.g., 'files-popover')
- * @returns boolean indicating whether to show the indicator
+ * @returns Object with `showIndicator` boolean (optimistic) and `markComplete` function
  *
  * @example
  * ```tsx
  * function MyComponent() {
- *   const showIndicator = useOnboardingComplete('my-feature')
+ *   const { showIndicator, markComplete } = useOnboardingIndicator('my-feature')
  *
  *   return (
- *     <OnboardingForm featureId="my-feature" onSubmit={doSomething}>
- *       <button type="submit">
+ *     <div className="relative">
+ *       <button onClick={() => { markComplete(); doSomething(); }}>
  *         Click me
- *         {showIndicator && <OnboardingBadge />}
  *       </button>
- *     </OnboardingForm>
+ *       {showIndicator && <OnboardingBadge tooltip="Try this!" />}
+ *     </div>
  *   )
  * }
  * ```
  */
-export function useOnboardingComplete(featureId: string) {
+export function useOnboardingIndicator(featureId: string) {
 	const rootData = useRootLoaderData()
 	const fetchers = useFetchers()
+	const fetcher = useFetcher()
+	const location = useLocation()
 
 	// Check for optimistic update from any in-flight fetcher
 	const optimisticComplete = fetchers.some((f) => {
@@ -48,34 +50,7 @@ export function useOnboardingComplete(featureId: string) {
 		rootData.preferences?.onboardingComplete?.includes(featureId) ?? false
 
 	// Show indicator if not complete (from DB) and no optimistic update in progress
-	return !isComplete && !optimisticComplete
-}
-
-/**
- * Hook to check if user has completed an onboarding feature and provide a function to mark it complete.
- * Uses optimistic updates for instant UI feedback with progressive enhancement support.
- *
- * @param featureId - Unique identifier for the feature (e.g., 'files-popover')
- * @returns Object with `showIndicator` boolean and `markComplete` function
- *
- * @example
- * ```tsx
- * function MyComponent() {
- *   const { showIndicator, markComplete } = useOnboardingIndicator('my-feature')
- *
- *   return (
- *     <button onClick={() => { markComplete(); doSomething(); }}>
- *       Click me
- *       {showIndicator && <OnboardingBadge />}
- *     </button>
- *   )
- * }
- * ```
- */
-export function useOnboardingIndicator(featureId: string) {
-	const showIndicator = useOnboardingComplete(featureId)
-	const fetcher = useFetcher()
-	const location = useLocation()
+	const showIndicator = !isComplete && !optimisticComplete
 
 	const markComplete = React.useCallback(() => {
 		if (!showIndicator) return
@@ -148,15 +123,22 @@ export function OnboardingForm({
  * Uses a bright yellow/amber color for high visibility in both light and dark modes.
  * Optionally shows a tooltip on hover.
  *
- * Note: For the tooltip to work properly, the badge should be placed OUTSIDE
- * interactive elements like buttons. The parent should have `position: relative`.
+ * Note: When using with tooltips, place the badge as a sibling to the button
+ * (not inside it) within a relative container for proper tooltip positioning.
  *
  * @example
  * ```tsx
- * <span className="relative">
+ * // With tooltip - badge is sibling to button
+ * <div className="relative">
  *   <button>Click me</button>
- *   {showIndicator && <OnboardingBadge tooltip="Click to see more!" />}
- * </span>
+ *   {showIndicator && <OnboardingBadge tooltip="Try this feature!" />}
+ * </div>
+ *
+ * // Without tooltip - can be inside button
+ * <button className="relative">
+ *   Click me
+ *   {showIndicator && <OnboardingBadge />}
+ * </button>
  * ```
  */
 export function OnboardingBadge({
