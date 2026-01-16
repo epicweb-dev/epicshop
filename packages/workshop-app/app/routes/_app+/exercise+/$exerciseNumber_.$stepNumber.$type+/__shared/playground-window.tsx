@@ -1,6 +1,8 @@
 import { Icon } from '#app/components/icons'
+import { PersistPlaygroundTip } from '#app/components/persist-playground-tip'
 import { SimpleTooltip } from '#app/components/ui/tooltip.tsx'
 import { PlaygroundChooser, SetPlayground } from '#app/routes/set-playground'
+import { useRootLoaderData } from '#app/utils/root-loader'
 
 export function PlaygroundWindow({
 	playgroundAppName,
@@ -15,6 +17,15 @@ export function PlaygroundWindow({
 	allApps: Array<{ name: string; displayName: string }>
 	children: React.ReactNode
 }) {
+	const rootData = useRootLoaderData()
+	const playgroundPreferences = rootData.preferences?.playground
+	const playgroundTipPreferences = rootData.preferences?.playgroundTip
+
+	// Show the tip if:
+	// 1. Persist playground is not enabled
+	// 2. The tip hasn't been dismissed
+	const showPersistPlaygroundTip =
+		!playgroundPreferences?.persist && !playgroundTipPreferences?.dismissed
 	const isCorrectApp = playgroundAppName === problemAppName
 	const playgroundLinkedUI =
 		isCorrectApp && isUpToDate ? (
@@ -74,6 +85,11 @@ export function PlaygroundWindow({
 					playgroundAppName={playgroundAppName}
 				/>
 			</div>
+			{showPersistPlaygroundTip ? (
+				<div className="shrink-0 border-b p-3">
+					<PersistPlaygroundTip />
+				</div>
+			) : null}
 			<div className="flex min-h-0 flex-1 grow items-stretch justify-center overflow-hidden">
 				{children}
 			</div>
