@@ -244,7 +244,7 @@ export function SetAppToPlayground({
 		>
 			<span className="text-foreground-destructive flex items-center justify-center gap-1 hover:underline">
 				<Icon name="Unlinked" className="animate-ping" />{' '}
-				<span className="uppercase">
+				<span className="hidden @min-[300px]:inline uppercase">
 					{isOutdated ? 'Playground Outdated' : 'Set to Playground'}
 				</span>
 			</span>
