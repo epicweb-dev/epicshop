@@ -231,12 +231,16 @@ export async function login(
 		const deviceResponse = await client.initiateDeviceAuthorization(config, {})
 
 		if (!silent) {
-			console.log(chalk.bold('To complete login:'))
+			console.log(
+				chalk.bold(
+					`To authenticate with ${domain.displayName}, complete login:`,
+				),
+			)
 			console.log(
 				`  1. Open: ${chalk.cyan.underline(deviceResponse.verification_uri_complete)}`,
 			)
 			console.log(
-				`  2. Verify the code: ${chalk.yellow.bold(deviceResponse.user_code)}`,
+				`  2. Complete login by verifying this code: ${chalk.yellow.bold(deviceResponse.user_code)}`,
 			)
 			console.log()
 			console.log(chalk.gray('Waiting for authorization...'))
