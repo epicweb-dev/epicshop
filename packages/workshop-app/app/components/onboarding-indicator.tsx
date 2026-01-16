@@ -14,6 +14,7 @@ const PE_REDIRECT_INPUT_NAME = '__PE_redirectTo'
 /**
  * Hook to check if user has completed an onboarding feature and provide a function to mark it complete.
  * Uses optimistic updates for instant UI feedback with progressive enhancement support.
+ * Returns false for showIndicator in deployed environments.
  *
  * @param featureId - Unique identifier for the feature (e.g., 'files-popover')
  * @returns Tuple of [showIndicator, markComplete] - boolean and function to mark complete
@@ -39,6 +40,11 @@ export function useOnboardingIndicator(featureId: string) {
 	const rootData = useRootLoaderData()
 	const fetchers = useFetchers()
 	const fetcher = useFetcher()
+
+	// Don't show onboarding indicators in deployed environments
+	if (ENV.EPICSHOP_DEPLOYED) {
+		return [false, () => {}] as const
+	}
 
 	// Check for optimistic update from any in-flight fetcher
 	const optimisticComplete = fetchers.some((f) => {
@@ -135,25 +141,33 @@ export function OnboardingBadge({
 	children = '!',
 	tooltip,
 	className = '',
+	size = 'md',
 }: {
 	children?: React.ReactNode
 	tooltip?: string
 	className?: string
+	size?: 'sm' | 'md'
 }) {
-	const badgeClasses = `flex h-6 w-6 animate-pulse items-center justify-center rounded-full bg-yellow-400 text-sm font-bold text-yellow-950 shadow-lg dark:bg-yellow-500`
+	const sizeClasses = size === 'sm' ? 'h-4 w-4 text-xs' : 'h-6 w-6 text-sm'
+	const badgeClasses = `flex ${sizeClasses} animate-pulse items-center justify-center rounded-full bg-yellow-400 font-bold text-yellow-950 shadow-lg dark:bg-yellow-500`
 
 	if (tooltip) {
 		return (
 			<Tooltip>
 				<TooltipTrigger asChild>
 					<span
-						className={`absolute -top-2 -right-2 cursor-pointer ${badgeClasses} ${className}`}
+						className={`absolute -top-1 -right-1 z-10 cursor-pointer ${badgeClasses} ${className}`}
 						tabIndex={0}
 					>
 						{children}
 					</span>
 				</TooltipTrigger>
-				<TooltipContent side="top" sideOffset={8} collisionPadding={16}>
+				<TooltipContent
+					side="bottom"
+					sideOffset={8}
+					collisionPadding={16}
+					avoidCollisions
+				>
 					{tooltip}
 				</TooltipContent>
 			</Tooltip>
@@ -161,7 +175,7 @@ export function OnboardingBadge({
 	}
 
 	return (
-		<span className={`absolute -top-2 -right-2 ${badgeClasses} ${className}`}>
+		<span className={`absolute -top-1 -right-1 z-10 ${badgeClasses} ${className}`}>
 			{children}
 		</span>
 	)

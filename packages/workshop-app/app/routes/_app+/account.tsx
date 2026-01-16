@@ -8,6 +8,10 @@ import { type SEOHandle } from '@nasa-gcn/remix-seo'
 import { redirect, type LoaderFunctionArgs, Form, Link } from 'react-router'
 import { Button } from '#app/components/button.tsx'
 import { Icon } from '#app/components/icons.tsx'
+import {
+	OnboardingBadge,
+	useOnboardingIndicator,
+} from '#app/components/onboarding-indicator.tsx'
 import { SimpleTooltip } from '#app/components/ui/tooltip.tsx'
 import {
 	useOptionalDiscordMember,
@@ -66,6 +70,12 @@ export default function Account() {
 	const discordMember = useOptionalDiscordMember()
 	const connectDiscordURL = useConnectDiscordURL()
 	const userHasAccess = useUserHasAccess()
+
+	// Onboarding indicators
+	const [showGuideBadge, dismissGuideBadge] =
+		useOnboardingIndicator('account-guide')
+	const [showPreferencesBadge, dismissPreferencesBadge] =
+		useOnboardingIndicator('account-preferences')
 
 	return (
 		<main className="container flex h-full w-full max-w-3xl grow flex-col items-center justify-center gap-4">
@@ -217,15 +227,33 @@ export default function Account() {
 						<Icon name="ExternalLink" />
 					</Link>
 				</li>
-				<li>
-					<Link to="/preferences" className="underline">
+				<li className="relative">
+					<Link
+						to="/preferences"
+						className="underline"
+						onClick={dismissPreferencesBadge}
+					>
 						Manage your preferences
 					</Link>
+					{showPreferencesBadge ? (
+						<OnboardingBadge
+							tooltip="Customize your workshop experience!"
+							size="sm"
+							className="top-0 -right-5"
+						/>
+					) : null}
 				</li>
-				<li>
-					<Link to="/guide" className="underline">
+				<li className="relative">
+					<Link to="/guide" className="underline" onClick={dismissGuideBadge}>
 						Workshop app guide
 					</Link>
+					{showGuideBadge ? (
+						<OnboardingBadge
+							tooltip="Learn how to use the workshop app!"
+							size="sm"
+							className="top-0 -right-5"
+						/>
+					) : null}
 				</li>
 				<li>
 					<Link to="/support" className="underline">

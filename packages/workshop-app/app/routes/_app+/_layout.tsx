@@ -25,6 +25,10 @@ import {
 import { useHydrated } from 'remix-utils/use-hydrated'
 import { Icon } from '#app/components/icons.tsx'
 import { makeMediaQueryStore } from '#app/components/media-query.ts'
+import {
+	OnboardingBadge,
+	useOnboardingIndicator,
+} from '#app/components/onboarding-indicator.tsx'
 import { Logo } from '#app/components/product.tsx'
 import { useRevalidationWS } from '#app/components/revalidation-ws.tsx'
 import {
@@ -470,6 +474,8 @@ function NoUserBanner() {
 		product: { host, displayName },
 	} = useWorkshopConfig()
 	const userHasAccess = useUserHasAccess()
+	const [showLoginBadge, dismissLoginBadge] =
+		useOnboardingIndicator('login-button')
 	const details = (
 		<div>
 			{ENV.EPICSHOP_DEPLOYED ? (
@@ -534,10 +540,17 @@ function NoUserBanner() {
 							</Link>
 							<Link
 								to={ENV.EPICSHOP_DEPLOYED ? `https://${host}/login` : '/login'}
-								className="flex h-full items-center justify-center space-x-1.5 bg-white/20 px-5 text-sm font-semibold shadow-md transition hover:bg-white/30"
+								className="relative flex h-full items-center justify-center space-x-1.5 bg-white/20 px-5 text-sm font-semibold shadow-md transition hover:bg-white/30"
+								onClick={dismissLoginBadge}
 							>
 								<Icon name="User" size="lg" />
 								<span className="drop-shadow-sm">Login</span>
+								{showLoginBadge ? (
+									<OnboardingBadge
+										tooltip="Login for the full experience!"
+										size="sm"
+									/>
+								) : null}
 							</Link>
 						</div>
 					)}
@@ -580,10 +593,17 @@ function NoUserBanner() {
 							</Link>
 							<Link
 								to={ENV.EPICSHOP_DEPLOYED ? `https://${host}/login` : '/login'}
-								className="flex h-full items-center justify-center space-x-1.5 bg-white/20 px-5 text-sm font-semibold shadow-md transition hover:bg-white/30"
+								className="relative flex h-full items-center justify-center space-x-1.5 bg-white/20 px-5 text-sm font-semibold shadow-md transition hover:bg-white/30"
+								onClick={dismissLoginBadge}
 							>
 								<Icon name="User" size="lg" />
 								<span className="drop-shadow-sm">Login</span>
+								{showLoginBadge ? (
+									<OnboardingBadge
+										tooltip="Login for the full experience!"
+										size="sm"
+									/>
+								) : null}
 							</Link>
 						</div>
 					)}
@@ -653,6 +673,12 @@ function MobileNavigation({
 	const params = useParams()
 	const isOnline = useIsOnline()
 	const { users } = usePresence()
+
+	// Onboarding indicators
+	const [showAccountBadge, dismissAccountBadge] =
+		useOnboardingIndicator('account-link')
+	const [showLoginBadge, dismissLoginBadge] =
+		useOnboardingIndicator('login-button')
 
 	// items
 	const listVariants = {
@@ -926,13 +952,14 @@ function MobileNavigation({
 						<SimpleTooltip content={isMenuOpened ? null : 'Your account'}>
 							<Link
 								className={cn(
-									'flex h-14 shrink-0 items-center justify-start space-x-3 px-4 py-4 text-center no-underline hover:underline',
+									'relative flex h-14 shrink-0 items-center justify-start space-x-3 px-4 py-4 text-center no-underline hover:underline',
 									{
 										'border-l': !isMenuOpened,
 										'w-full border-t': isMenuOpened,
 									},
 								)}
 								to="/account"
+								onClick={dismissAccountBadge}
 							>
 								{user.imageUrlSmall ? (
 									<img
@@ -954,6 +981,12 @@ function MobileNavigation({
 								) : (
 									<span className="sr-only">Your account</span>
 								)}
+								{showAccountBadge ? (
+									<OnboardingBadge
+										tooltip="View your account and preferences"
+										size="sm"
+									/>
+								) : null}
 							</Link>
 						</SimpleTooltip>
 					) : null}
@@ -1016,6 +1049,10 @@ function Navigation({
 	const params = useParams()
 	const isOnline = useIsOnline()
 	const { users } = usePresence()
+
+	// Onboarding indicators
+	const [showAccountBadge, dismissAccountBadge] =
+		useOnboardingIndicator('account-link')
 
 	const exercise = data.exercises.find(
 		(e) => e.exerciseNumber === Number(params.exerciseNumber),
@@ -1333,8 +1370,9 @@ function Navigation({
 					{ENV.EPICSHOP_DEPLOYED ? null : user ? (
 						<SimpleTooltip content={isMenuOpened ? null : 'Your account'}>
 							<Link
-								className="flex h-14 w-full shrink-0 items-center justify-start space-x-3 border-t px-4 py-4 text-center no-underline hover:underline"
+								className="relative flex h-14 w-full shrink-0 items-center justify-start space-x-3 border-t px-4 py-4 text-center no-underline hover:underline"
 								to="/account"
+								onClick={dismissAccountBadge}
 							>
 								{user.imageUrlSmall ? (
 									<img
@@ -1356,6 +1394,12 @@ function Navigation({
 								) : (
 									<span className="sr-only">Your account</span>
 								)}
+								{showAccountBadge ? (
+									<OnboardingBadge
+										tooltip="View your account and preferences"
+										size="sm"
+									/>
+								) : null}
 							</Link>
 						</SimpleTooltip>
 					) : null}

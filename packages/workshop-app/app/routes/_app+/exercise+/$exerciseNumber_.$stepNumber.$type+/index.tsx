@@ -252,7 +252,6 @@ export default function ExercisePartRoute({
 	const [showDiffBadge, dismissDiffBadge] = useOnboardingIndicator('diff-tab')
 	const [showTestsBadge, dismissTestsBadge] =
 		useOnboardingIndicator('tests-tab')
-	const [showChatBadge, dismissChatBadge] = useOnboardingIndicator('chat-tab')
 
 	function shouldHideTab(tab: (typeof tabs)[number]) {
 		if (tab === 'tests') {
@@ -323,33 +322,18 @@ export default function ExercisePartRoute({
 		dismissTestsBadge()
 	}
 
-	function handleChatTabClick() {
-		dismissChatBadge()
-	}
-
 	function getOnboardingBadge(tab: (typeof tabs)[number]) {
 		if (tab === 'diff' && showDiffBadge) {
 			return (
 				<OnboardingBadge
 					tooltip="Compare your work with the solution!"
-					className="-top-1 -right-1"
+					size="sm"
 				/>
 			)
 		}
 		if (tab === 'tests' && showTestsBadge) {
 			return (
-				<OnboardingBadge
-					tooltip="Run tests to verify your work!"
-					className="-top-1 -right-1"
-				/>
-			)
-		}
-		if (tab === 'chat' && showChatBadge) {
-			return (
-				<OnboardingBadge
-					tooltip="Get help from the community!"
-					className="-top-1 -right-1"
-				/>
+				<OnboardingBadge tooltip="Run tests to verify your work!" size="sm" />
 			)
 		}
 		return null
@@ -382,9 +366,7 @@ export default function ExercisePartRoute({
 										? handleDiffTabClick
 										: tab === 'tests'
 											? handleTestsTabClick
-											: tab === 'chat'
-												? handleChatTabClick
-												: undefined
+											: undefined
 								}
 								to={
 									tab === 'diff' && altDown
