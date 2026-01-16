@@ -37,6 +37,11 @@ const LaunchSchema = z.intersection(
 export async function action({ request }: ActionFunctionArgs) {
 	ensureUndeployed()
 	const formData = await request.formData()
+	// Debug: log the raw file value from form data
+	const rawFile = formData.get('file')
+	if (rawFile && typeof rawFile === 'string' && rawFile.includes(' ')) {
+		console.log('[launch-editor] File path with space received:', rawFile)
+	}
 	const syncTo = {
 		type: formData.get('syncTo.type') ?? undefined,
 		file: formData.get('syncTo.file') ?? undefined,

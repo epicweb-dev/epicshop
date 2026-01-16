@@ -8,6 +8,9 @@ import path from 'path'
 import fsExtra from 'fs-extra'
 import shellQuote from 'shell-quote'
 import { getRelativePath } from './apps.server.ts'
+import { logger } from './logger.ts'
+
+const log = logger('epic:launch-editor')
 
 function readablePath(filePath: string = '') {
 	const relative = getRelativePath(filePath)
@@ -210,7 +213,11 @@ function getArgumentsForLineNumber(
 function guessEditor(): Array<string | null> {
 	// Explicit config always wins
 	if (process.env.EPICSHOP_EDITOR) {
-		return shellQuote.parse(process.env.EPICSHOP_EDITOR).map((a) => String(a))
+		const parsed = shellQuote.parse(process.env.EPICSHOP_EDITOR).map((a) =>
+			String(a),
+		)
+		log('Using EPICSHOP_EDITOR:', { raw: process.env.EPICSHOP_EDITOR, parsed })
+		return parsed
 	}
 
 	// We can find out which editor is currently running by:
@@ -411,6 +418,8 @@ export async function launchEditor(
 		_childProcess.kill('SIGKILL')
 	}
 
+	log('Launching editor with:', { editor, args, fileList, platform: process.platform })
+
 	return new Promise((res) => {
 		if (process.platform === 'win32') {
 			// On Windows, launch the editor in a shell because spawn can only
@@ -429,10 +438,12 @@ export async function launchEditor(
 			const quotedArgs = args.map(quoteForCmd)
 			// Join into a single command string for cmd.exe /C
 			const command = [quotedEditor, ...quotedArgs].join(' ')
+			log('Windows spawn command:', { command })
 			_childProcess = child_process.spawn('cmd.exe', ['/C', command], {
 				stdio: ['inherit', 'inherit', 'pipe'],
 			})
 		} else {
+			log('Unix spawn:', { editor, args })
 			_childProcess = child_process.spawn(editor, args, {
 				stdio: ['inherit', 'inherit', 'pipe'],
 			})
