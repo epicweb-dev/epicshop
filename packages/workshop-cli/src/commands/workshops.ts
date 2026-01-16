@@ -347,6 +347,158 @@ export type ConfigOptions = {
 }
 
 /**
+ * Helper function to add a single workshop by repo name
+ * This handles the actual cloning and setup logic
+ */
+async function addSingleWorkshop(
+	repoName: string,
+	options: AddOptions,
+): Promise<WorkshopsResult> {
+	const { silent = false } = options
+
+	const hasExplicitCloneDestination = Boolean(
+		options.destination?.trim() || options.directory?.trim(),
+	)
+
+	// Ensure config is set up first (only when using the managed repos directory)
+	if (!hasExplicitCloneDestination) {
+		if (!(await ensureConfigured())) {
+			return { success: false, message: 'Setup cancelled' }
+		}
+	}
+
+	const { getReposDirectory, workshopExists } = await import(
+		'@epic-web/workshop-utils/workshops.server'
+	)
+
+	// Check if workshop already exists (only meaningful for managed repos directory)
+	if (!hasExplicitCloneDestination) {
+		if (await workshopExists(repoName)) {
+			const message = `Workshop "${repoName}" already exists`
+			if (!silent) {
+				const { getWorkshop } = await import(
+					'@epic-web/workshop-utils/workshops.server'
+				)
+				const reposDir = await getReposDirectory()
+				const workshop = await getWorkshop(repoName)
+				const workshopPath = workshop?.path ?? path.join(reposDir, repoName)
+				const workshopRepoName = workshop?.repoName ?? repoName
+				const openCommand = `npx epicshop open ${workshopRepoName}`
+				const startCommand = `npx epicshop start ${workshopRepoName}`
+
+				console.log(chalk.yellow(`⚠️  ${message}`))
+				console.log(chalk.gray(`   Location on disk: ${workshopPath}`))
+				console.log(chalk.gray(`   You can run:`))
+				console.log(chalk.white.bold(`   ${openCommand}`))
+				console.log(chalk.white.bold(`   ${startCommand}`))
+			}
+			return { success: false, message }
+		}
+	}
+
+	let reposDir: string
+	let workshopPath: string
+
+	if (options.destination?.trim()) {
+		// destination can be either:
+		// - a parent directory (existing) => clone into <destination>/<repoName>
+		// - a full target path (non-existing) => clone into <destination>
+		const resolvedDestination = path.resolve(
+			resolvePathWithTilde(options.destination),
+		)
+
+		try {
+			const stat = await fs.promises.stat(resolvedDestination)
+			if (stat.isDirectory()) {
+				reposDir = resolvedDestination
+				workshopPath = path.join(reposDir, repoName)
+			} else {
+				return {
+					success: false,
+					message: `Destination is not a directory: ${resolvedDestination}`,
+				}
+			}
+		} catch {
+			// Destination doesn't exist. Treat it as the exact clone target path.
+			workshopPath = resolvedDestination
+			reposDir = path.dirname(workshopPath)
+		}
+	} else {
+		reposDir = options.directory?.trim()
+			? path.resolve(resolvePathWithTilde(options.directory))
+			: await getReposDirectory()
+		workshopPath = path.join(reposDir, repoName)
+	}
+
+	// Ensure the repos directory exists
+	await fs.promises.mkdir(reposDir, { recursive: true })
+
+	// Check if directory already exists
+	try {
+		await fs.promises.access(workshopPath)
+		const message = `Directory already exists: ${workshopPath}`
+		if (!silent) console.log(chalk.yellow(`⚠️  ${message}`))
+		return { success: false, message }
+	} catch {
+		// Directory doesn't exist, which is what we want
+	}
+
+	const repoUrl = `https://github.com/${GITHUB_ORG}/${repoName}.git`
+
+	if (!silent) {
+		console.log(chalk.cyan(`📦 Cloning ${repoUrl}...`))
+	}
+
+	// Clone the repository
+	const cloneResult = await runCommand('git', ['clone', repoUrl, workshopPath], {
+		cwd: reposDir,
+		silent,
+	})
+
+	if (!cloneResult.success) {
+		return {
+			success: false,
+			message: `Failed to clone repository: ${cloneResult.message}`,
+			error: cloneResult.error,
+		}
+	}
+
+	if (!silent) {
+		console.log(chalk.cyan(`🔧 Running npm run setup...`))
+	}
+
+	// Run npm run setup
+	const setupResult = await runCommand('npm', ['run', 'setup'], {
+		cwd: workshopPath,
+		silent,
+	})
+
+	if (!setupResult.success) {
+		// Clean up the cloned directory on setup failure
+		if (!silent) {
+			console.log(chalk.yellow(`🧹 Cleaning up cloned directory...`))
+		}
+		try {
+			await fs.promises.rm(workshopPath, { recursive: true, force: true })
+		} catch {
+			// Ignore cleanup errors
+		}
+		return {
+			success: false,
+			message: `Failed to run setup: ${setupResult.message}`,
+			error: setupResult.error,
+		}
+	}
+
+	const message = `Workshop "${repoName}" cloned successfully to ${workshopPath}`
+	if (!silent) {
+		console.log(chalk.green(`✅ ${message}`))
+	}
+
+	return { success: true, message }
+}
+
+/**
  * Add a workshop by cloning from epicweb-dev GitHub org and running setup
  */
 export async function add(options: AddOptions): Promise<WorkshopsResult> {
@@ -457,7 +609,7 @@ export async function add(options: AddOptions): Promise<WorkshopsResult> {
 				}
 			}
 
-			const { search } = await import('@inquirer/prompts')
+			const { search, select, checkbox } = await import('@inquirer/prompts')
 
 			console.log()
 			console.log(chalk.bold.cyan('📚 Available Workshops\n'))
@@ -469,205 +621,242 @@ export async function add(options: AddOptions): Promise<WorkshopsResult> {
 			console.log(chalk.gray(`  ✔︎ Already downloaded on your machine`))
 			console.log()
 
-			const allChoices = enrichedWorkshops.map((w) => {
-				const productIcon = w.productHost
-					? PRODUCT_ICONS[w.productHost] || ''
-					: ''
-				const accessIcon = w.hasAccess === true ? chalk.yellow('🔑') : ''
-				const downloadedIcon = w.isDownloaded === true ? chalk.green('✔︎') : ''
-
-				const nameParts = [
-					productIcon,
-					w.title || w.name,
-					accessIcon,
-					downloadedIcon,
-				].filter(Boolean)
-				const name = nameParts.join(' ')
-
-				const descriptionParts = [
-					w.instructorName ? `by ${w.instructorName}` : null,
-					w.productDisplayName || w.productHost,
-					w.description,
-				].filter(Boolean)
-				const description = descriptionParts.join(' • ') || undefined
-
-				return {
-					name,
-					value: w.name,
-					description,
-					workshop: w,
-				}
-			})
-
-			repoName = await search({
-				message: 'Select a workshop to add:',
-				source: async (input) => {
-					if (!input) {
-						return allChoices
-					}
-					return matchSorter(allChoices, input, {
-						keys: [
-							{ key: 'name', threshold: rankings.CONTAINS },
-							{ key: 'value', threshold: rankings.CONTAINS },
-							{
-								key: 'workshop.productDisplayName',
-								threshold: rankings.CONTAINS,
-							},
-							{
-								key: 'workshop.instructorName',
-								threshold: rankings.CONTAINS,
-							},
-							{ key: 'description', threshold: rankings.WORD_STARTS_WITH },
-						],
-					})
-				},
-			})
-		}
-
-		const hasExplicitCloneDestination = Boolean(
-			options.destination?.trim() || options.directory?.trim(),
-		)
-
-		// Ensure config is set up first (only when using the managed repos directory)
-		if (!hasExplicitCloneDestination) {
-			if (!(await ensureConfigured())) {
-				return { success: false, message: 'Setup cancelled' }
-			}
-		}
-
-		const { getReposDirectory, workshopExists } = await import(
-			'@epic-web/workshop-utils/workshops.server'
-		)
-
-		// Check if workshop already exists (only meaningful for managed repos directory)
-		if (!hasExplicitCloneDestination) {
-			if (await workshopExists(repoName)) {
-				const message = `Workshop "${repoName}" already exists`
-				if (!silent) {
-					const { getWorkshop } = await import(
-						'@epic-web/workshop-utils/workshops.server'
-					)
-					const reposDir = await getReposDirectory()
-					const workshop = await getWorkshop(repoName)
-					const workshopPath = workshop?.path ?? path.join(reposDir, repoName)
-					const workshopRepoName = workshop?.repoName ?? repoName
-					const openCommand = `npx epicshop open ${workshopRepoName}`
-					const startCommand = `npx epicshop start ${workshopRepoName}`
-
-					console.log(chalk.yellow(`⚠️  ${message}`))
-					console.log(chalk.gray(`   Location on disk: ${workshopPath}`))
-					console.log(chalk.gray(`   You can run:`))
-					console.log(chalk.white.bold(`   ${openCommand}`))
-					console.log(chalk.white.bold(`   ${startCommand}`))
-				}
-				return { success: false, message }
-			}
-		}
-
-		let reposDir: string
-		let workshopPath: string
-
-		if (options.destination?.trim()) {
-			// destination can be either:
-			// - a parent directory (existing) => clone into <destination>/<repoName>
-			// - a full target path (non-existing) => clone into <destination>
-			const resolvedDestination = path.resolve(
-				resolvePathWithTilde(options.destination),
+			// Filter workshops for quick-select options (has access, not downloaded, has product)
+			const quickSelectCandidates = enrichedWorkshops.filter(
+				(w) =>
+					w.hasAccess === true &&
+					w.isDownloaded !== true &&
+					w.productHost &&
+					w.name !== TUTORIAL_REPO,
 			)
 
-			try {
-				const stat = await fs.promises.stat(resolvedDestination)
-				if (stat.isDirectory()) {
-					reposDir = resolvedDestination
-					workshopPath = path.join(reposDir, repoName)
+			// Check if we have enough candidates for quick-select options
+			const hasQuickSelectOptions = quickSelectCandidates.length > 1
+
+			let selectedRepoNames: string[] = []
+
+			if (hasQuickSelectOptions) {
+				// Group workshops by product for quick-select options
+				const workshopsByProduct = new Map<string, string[]>()
+				for (const w of quickSelectCandidates) {
+					const host = w.productHost!
+					const existing = workshopsByProduct.get(host) || []
+					existing.push(w.name)
+					workshopsByProduct.set(host, existing)
+				}
+
+				// Build selection method choices
+				type SelectionChoice = {
+					name: string
+					value: string
+					description?: string
+				}
+				const selectionMethodChoices: SelectionChoice[] = []
+
+				// Add "All My Workshops" option
+				selectionMethodChoices.push({
+					name: `⭐ All My Workshops`,
+					value: '__ALL_MY__',
+					description: `Set up all ${quickSelectCandidates.length} workshops you have access to`,
+				})
+
+				// Add per-product options for products with multiple workshops
+				const productDisplayNames: Record<string, string> = {
+					'www.epicreact.dev': '🚀 All Epic React workshops',
+					'www.epicweb.dev': '🌌 All Epic Web workshops',
+					'www.epicai.pro': '⚡ All Epic AI workshops',
+				}
+
+				for (const [host, workshops] of workshopsByProduct) {
+					if (workshops.length > 1 && productDisplayNames[host]) {
+						selectionMethodChoices.push({
+							name: productDisplayNames[host],
+							value: `__PRODUCT__${host}`,
+							description: `Set up all ${workshops.length} workshops from this product`,
+						})
+					}
+				}
+
+				// Add "Choose individually" option
+				selectionMethodChoices.push({
+					name: '📋 Choose individually',
+					value: '__INDIVIDUAL__',
+					description: 'Select specific workshops from a list',
+				})
+
+				// Add "Browse all" option to see all workshops including ones without access
+				selectionMethodChoices.push({
+					name: '🔍 Browse all workshops',
+					value: '__BROWSE_ALL__',
+					description: 'Search through all available workshops',
+				})
+
+				const selectionMethod = await select({
+					message: 'How would you like to select workshops?',
+					choices: selectionMethodChoices,
+				})
+
+				if (selectionMethod === '__ALL_MY__') {
+					selectedRepoNames = quickSelectCandidates.map((w) => w.name)
+					console.log(
+						chalk.cyan(
+							`\n✓ Selected all ${selectedRepoNames.length} workshops you have access to\n`,
+						),
+					)
+				} else if (selectionMethod.startsWith('__PRODUCT__')) {
+					const host = selectionMethod.replace('__PRODUCT__', '')
+					selectedRepoNames = workshopsByProduct.get(host) || []
+					const productName =
+						productDisplayNames[host]?.replace(/^[^\s]+\s/, '') || host
+					console.log(
+						chalk.cyan(
+							`\n✓ Selected ${selectedRepoNames.length} ${productName.replace('All ', '')}\n`,
+						),
+					)
+				} else if (selectionMethod === '__INDIVIDUAL__') {
+					// Show checkbox for individual selection from accessible workshops
+					const individualChoices = quickSelectCandidates.map((w) => {
+						const productIcon = w.productHost
+							? PRODUCT_ICONS[w.productHost] || ''
+							: ''
+						const accessIcon = chalk.yellow('🔑')
+						const name = [productIcon, w.title || w.name, accessIcon]
+							.filter(Boolean)
+							.join(' ')
+
+						const descriptionParts = [
+							w.instructorName ? `by ${w.instructorName}` : null,
+							w.productDisplayName || w.productHost,
+							w.description,
+						].filter(Boolean)
+						const description = descriptionParts.join(' • ') || undefined
+
+						return {
+							name,
+							value: w.name,
+							description,
+						}
+					})
+
+					console.log(
+						chalk.gray(
+							'\n   Use space to select, enter to confirm your selection.\n',
+						),
+					)
+
+					selectedRepoNames = await checkbox({
+						message: 'Select workshops to set up:',
+						choices: individualChoices,
+					})
+				}
+				// For __BROWSE_ALL__, selectedRepoNames stays empty and falls through to search
+			}
+
+			// If no quick-select was made, show the full search interface
+			if (selectedRepoNames.length === 0) {
+				const allChoices = enrichedWorkshops.map((w) => {
+					const productIcon = w.productHost
+						? PRODUCT_ICONS[w.productHost] || ''
+						: ''
+					const accessIcon = w.hasAccess === true ? chalk.yellow('🔑') : ''
+					const downloadedIcon =
+						w.isDownloaded === true ? chalk.green('✔︎') : ''
+
+					const nameParts = [
+						productIcon,
+						w.title || w.name,
+						accessIcon,
+						downloadedIcon,
+					].filter(Boolean)
+					const name = nameParts.join(' ')
+
+					const descriptionParts = [
+						w.instructorName ? `by ${w.instructorName}` : null,
+						w.productDisplayName || w.productHost,
+						w.description,
+					].filter(Boolean)
+					const description = descriptionParts.join(' • ') || undefined
+
+					return {
+						name,
+						value: w.name,
+						description,
+						workshop: w,
+					}
+				})
+
+				repoName = await search({
+					message: 'Select a workshop to add:',
+					source: async (input) => {
+						if (!input) {
+							return allChoices
+						}
+						return matchSorter(allChoices, input, {
+							keys: [
+								{ key: 'name', threshold: rankings.CONTAINS },
+								{ key: 'value', threshold: rankings.CONTAINS },
+								{
+									key: 'workshop.productDisplayName',
+									threshold: rankings.CONTAINS,
+								},
+								{
+									key: 'workshop.instructorName',
+									threshold: rankings.CONTAINS,
+								},
+								{ key: 'description', threshold: rankings.WORD_STARTS_WITH },
+							],
+						})
+					},
+				})
+				selectedRepoNames = [repoName]
+			}
+
+			// Set up selected workshops
+			if (selectedRepoNames.length > 1) {
+				// Multiple workshops selected - set them up in sequence
+				let successCount = 0
+				let failCount = 0
+
+				for (const selectedRepo of selectedRepoNames) {
+					const result = await addSingleWorkshop(selectedRepo, options)
+					if (result.success) {
+						successCount++
+					} else {
+						failCount++
+						console.log(
+							chalk.yellow(
+								`⚠️  Failed to set up ${selectedRepo}. You can retry later with \`npx epicshop add ${selectedRepo}\`.`,
+							),
+						)
+						if (result.message) console.log(chalk.gray(`   ${result.message}`))
+						console.log()
+					}
+				}
+
+				if (successCount > 0) {
+					return {
+						success: true,
+						message: `Successfully set up ${successCount} workshop(s)${failCount > 0 ? `, ${failCount} failed` : ''}`,
+					}
 				} else {
 					return {
 						success: false,
-						message: `Destination is not a directory: ${resolvedDestination}`,
+						message: `Failed to set up any workshops`,
 					}
 				}
-			} catch {
-				// Destination doesn't exist. Treat it as the exact clone target path.
-				workshopPath = resolvedDestination
-				reposDir = path.dirname(workshopPath)
 			}
-		} else {
-			reposDir = options.directory?.trim()
-				? path.resolve(resolvePathWithTilde(options.directory))
-				: await getReposDirectory()
-			workshopPath = path.join(reposDir, repoName)
+
+			// Single workshop selected
+			repoName = selectedRepoNames[0]
 		}
 
-		// Ensure the repos directory exists
-		await fs.promises.mkdir(reposDir, { recursive: true })
-
-		// Check if directory already exists
-		try {
-			await fs.promises.access(workshopPath)
-			const message = `Directory already exists: ${workshopPath}`
-			if (!silent) console.log(chalk.yellow(`⚠️  ${message}`))
-			return { success: false, message }
-		} catch {
-			// Directory doesn't exist, which is what we want
+		// Ensure we have a repo name at this point
+		if (!repoName) {
+			return { success: false, message: 'No workshop selected' }
 		}
 
-		const repoUrl = `https://github.com/${GITHUB_ORG}/${repoName}.git`
-
-		if (!silent) {
-			console.log(chalk.cyan(`📦 Cloning ${repoUrl}...`))
-		}
-
-		// Clone the repository
-		const cloneResult = await runCommand(
-			'git',
-			['clone', repoUrl, workshopPath],
-			{
-				cwd: reposDir,
-				silent,
-			},
-		)
-
-		if (!cloneResult.success) {
-			return {
-				success: false,
-				message: `Failed to clone repository: ${cloneResult.message}`,
-				error: cloneResult.error,
-			}
-		}
-
-		if (!silent) {
-			console.log(chalk.cyan(`🔧 Running npm run setup...`))
-		}
-
-		// Run npm run setup
-		const setupResult = await runCommand('npm', ['run', 'setup'], {
-			cwd: workshopPath,
-			silent,
-		})
-
-		if (!setupResult.success) {
-			// Clean up the cloned directory on setup failure
-			if (!silent) {
-				console.log(chalk.yellow(`🧹 Cleaning up cloned directory...`))
-			}
-			try {
-				await fs.promises.rm(workshopPath, { recursive: true, force: true })
-			} catch {
-				// Ignore cleanup errors
-			}
-			return {
-				success: false,
-				message: `Failed to run setup: ${setupResult.message}`,
-				error: setupResult.error,
-			}
-		}
-
-		const message = `Workshop "${repoName}" cloned successfully to ${workshopPath}`
-		if (!silent) {
-			console.log(chalk.green(`✅ ${message}`))
-		}
-
-		return { success: true, message }
+		// Use the helper to set up the single workshop
+		return await addSingleWorkshop(repoName, options)
 	} catch (error) {
 		if ((error as Error).message === 'USER_QUIT') {
 			return { success: false, message: 'User quit' }
