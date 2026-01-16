@@ -75,9 +75,8 @@ const DataSchema = z.object({
 				})
 				.optional()
 				.default({ dismissed: false }),
-			// Generic record for tracking which features/tips users have seen
-			// Keys are feature identifiers (e.g., 'files-tooltip', 'persist-playground')
-			onboardingSeen: z.record(z.string(), z.boolean()).optional().default({}),
+			// Array of completed onboarding feature IDs (e.g., ['files-popover', 'persist-playground'])
+			onboardingComplete: z.array(z.string()).optional().default([]),
 		})
 		.optional()
 		.default({}),
@@ -325,10 +324,6 @@ export async function setPreferences(
 				...data?.preferences?.exerciseWarning,
 				...preferences?.exerciseWarning,
 			},
-			onboardingSeen: {
-				...data?.preferences?.onboardingSeen,
-				...preferences?.onboardingSeen,
-			},
 		},
 	}
 	await saveJSON(updatedData)
@@ -336,20 +331,22 @@ export async function setPreferences(
 }
 
 /**
- * Mark an onboarding feature as seen by the user.
+ * Mark an onboarding feature as complete.
  * This is used to track which tips/indicators have been dismissed.
- * @param featureId - Unique identifier for the feature (e.g., 'files-tooltip')
+ * @param featureId - Unique identifier for the feature (e.g., 'files-popover')
  */
-export async function markOnboardingAsSeen(featureId: string) {
+export async function markOnboardingComplete(featureId: string) {
 	const data = await readDb()
+	const currentComplete = data?.preferences?.onboardingComplete ?? []
+	// Avoid duplicates
+	if (currentComplete.includes(featureId)) {
+		return data?.preferences
+	}
 	const updatedData = {
 		...data,
 		preferences: {
 			...data?.preferences,
-			onboardingSeen: {
-				...data?.preferences?.onboardingSeen,
-				[featureId]: true,
-			},
+			onboardingComplete: [...currentComplete, featureId],
 		},
 	}
 	await saveJSON(updatedData)
@@ -357,13 +354,13 @@ export async function markOnboardingAsSeen(featureId: string) {
 }
 
 /**
- * Check if a user has seen an onboarding feature.
+ * Check if a user has completed an onboarding feature.
  * @param featureId - Unique identifier for the feature
- * @returns true if the user has seen this feature, false otherwise
+ * @returns true if the user has completed this onboarding, false otherwise
  */
-export async function hasSeenOnboarding(featureId: string) {
+export async function isOnboardingComplete(featureId: string) {
 	const data = await readDb()
-	return data?.preferences?.onboardingSeen?.[featureId] ?? false
+	return data?.preferences?.onboardingComplete?.includes(featureId) ?? false
 }
 
 export async function getMutedNotifications() {

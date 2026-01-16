@@ -1,4 +1,4 @@
-import { markOnboardingAsSeen } from '@epic-web/workshop-utils/db.server'
+import { markOnboardingComplete } from '@epic-web/workshop-utils/db.server'
 import { type ActionFunctionArgs } from 'react-router'
 
 export async function action({ request }: ActionFunctionArgs) {
@@ -13,7 +13,7 @@ export async function action({ request }: ActionFunctionArgs) {
 		return Response.json({ error: 'featureId is required' }, { status: 400 })
 	}
 
-	await markOnboardingAsSeen(featureId)
+	await markOnboardingComplete(featureId)
 
 	return Response.json({ success: true })
 }

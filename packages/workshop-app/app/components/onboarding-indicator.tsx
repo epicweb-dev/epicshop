@@ -3,18 +3,18 @@ import { useFetcher } from 'react-router'
 import { useRootLoaderData } from '#app/utils/root-loader.ts'
 
 /**
- * Hook to check if user has seen an onboarding feature and provide a function to mark it as seen.
+ * Hook to check if user has completed an onboarding feature and provide a function to mark it complete.
  *
- * @param featureId - Unique identifier for the feature (e.g., 'files-tooltip')
- * @returns Object with `showIndicator` boolean and `markAsSeen` function
+ * @param featureId - Unique identifier for the feature (e.g., 'files-popover')
+ * @returns Object with `showIndicator` boolean and `markComplete` function
  *
  * @example
  * ```tsx
  * function MyComponent() {
- *   const { showIndicator, markAsSeen } = useOnboardingIndicator('my-feature')
+ *   const { showIndicator, markComplete } = useOnboardingIndicator('my-feature')
  *
  *   return (
- *     <button onClick={() => { markAsSeen(); doSomething(); }}>
+ *     <button onClick={() => { markComplete(); doSomething(); }}>
  *       Click me
  *       {showIndicator && <OnboardingBadge />}
  *     </button>
@@ -25,26 +25,26 @@ import { useRootLoaderData } from '#app/utils/root-loader.ts'
 export function useOnboardingIndicator(featureId: string) {
 	const rootData = useRootLoaderData()
 	const fetcher = useFetcher()
-	const [hasMarkedAsSeen, setHasMarkedAsSeen] = React.useState(false)
+	const [hasMarkedComplete, setHasMarkedComplete] = React.useState(false)
 
-	const hasSeenFeature =
-		rootData.preferences?.onboardingSeen?.[featureId] ?? false
-	const showIndicator = !hasSeenFeature && !hasMarkedAsSeen
+	const isComplete =
+		rootData.preferences?.onboardingComplete?.includes(featureId) ?? false
+	const showIndicator = !isComplete && !hasMarkedComplete
 
-	const markAsSeen = React.useCallback(() => {
+	const markComplete = React.useCallback(() => {
 		if (!showIndicator) return
 
-		setHasMarkedAsSeen(true)
+		setHasMarkedComplete(true)
 		void fetcher.submit(
 			{ featureId },
 			{
 				method: 'POST',
-				action: '/mark-onboarding-seen',
+				action: '/mark-onboarding-complete',
 			},
 		)
 	}, [showIndicator, featureId, fetcher])
 
-	return { showIndicator, markAsSeen }
+	return { showIndicator, markComplete }
 }
 
 /**

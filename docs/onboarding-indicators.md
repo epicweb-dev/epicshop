@@ -11,7 +11,7 @@ The onboarding system provides:
 1. **`useOnboardingIndicator` hook** - Manages state and persistence
 2. **`OnboardingBadge` component** - A pulsing badge indicator
 3. **`OnboardingCallout` component** - A floating message callout
-4. **Generic API endpoint** - Persists seen state to database
+4. **Generic API endpoint** - Persists completion state to database
 
 ## Quick Start
 
@@ -25,13 +25,13 @@ import {
 } from '#app/components/onboarding-indicator.tsx'
 
 function MyFeatureButton() {
-	const { showIndicator, markAsSeen } = useOnboardingIndicator('my-feature')
+	const { showIndicator, markComplete } = useOnboardingIndicator('my-feature')
 
 	return (
 		<div className="relative">
 			<button
 				onClick={() => {
-					markAsSeen()
+					markComplete()
 					// ... do feature stuff
 				}}
 			>
@@ -50,7 +50,7 @@ function MyFeatureButton() {
 
 That's it! The hook handles:
 
-- Checking if the user has already seen this feature
+- Checking if the user has already completed this onboarding
 - Providing immediate UI feedback when dismissed
 - Persisting the state to the database
 
@@ -63,21 +63,21 @@ A hook that manages onboarding indicator state.
 **Parameters:**
 
 - `featureId` - A unique string identifier for the feature (e.g.,
-  `'files-tooltip'`, `'persist-playground'`)
+  `'files-popover'`, `'persist-playground'`)
 
 **Returns:**
 
 - `showIndicator: boolean` - Whether to show the indicator
-- `markAsSeen: () => void` - Function to mark the feature as seen
+- `markComplete: () => void` - Function to mark the onboarding as complete
 
 **Example:**
 
 ```tsx
-const { showIndicator, markAsSeen } = useOnboardingIndicator('my-feature')
+const { showIndicator, markComplete } = useOnboardingIndicator('my-feature')
 
-// Call markAsSeen() when the user interacts with the feature
+// Call markComplete() when the user interacts with the feature
 function handleClick() {
-	markAsSeen()
+	markComplete()
 	// ... handle click
 }
 ```
@@ -139,23 +139,19 @@ it's describing.
 
 | Feature      | Feature ID      | Location            |
 | ------------ | --------------- | ------------------- |
-| FILES button | `files-tooltip` | `touched-files.tsx` |
+| FILES button | `files-popover` | `touched-files.tsx` |
 
 ## Architecture
 
 ### Database Storage
 
-Feature seen states are stored in the user preferences as a simple key-value
-record:
+Completed onboarding features are stored as an array of feature IDs in user
+preferences:
 
 ```typescript
 // In packages/workshop-utils/src/db.server.ts
 preferences: {
-  onboardingSeen: {
-    'files-tooltip': true,
-    'my-feature': true,
-    // ... other features
-  }
+	onboardingComplete: ['files-popover', 'persist-playground']
 }
 ```
 
@@ -164,23 +160,23 @@ preferences: {
 The `db.server.ts` module exports helper functions:
 
 ```typescript
-// Mark a feature as seen
-await markOnboardingAsSeen('my-feature')
+// Mark a feature's onboarding as complete
+await markOnboardingComplete('my-feature')
 
-// Check if a feature has been seen
-const seen = await hasSeenOnboarding('my-feature')
+// Check if onboarding is complete for a feature
+const complete = await isOnboardingComplete('my-feature')
 ```
 
 ### API Endpoint
 
-The `/mark-onboarding-seen` endpoint accepts POST requests with a `featureId`
-form field:
+The `/mark-onboarding-complete` endpoint accepts POST requests with a
+`featureId` form field:
 
 ```typescript
 // This is handled automatically by the hook, but for reference:
 fetcher.submit(
 	{ featureId: 'my-feature' },
-	{ method: 'POST', action: '/mark-onboarding-seen' },
+	{ method: 'POST', action: '/mark-onboarding-complete' },
 )
 ```
 
@@ -189,14 +185,14 @@ fetcher.submit(
 1. **Be non-intrusive** - Indicators should draw attention without blocking the
    user's workflow
 
-2. **Dismiss on interaction** - Mark as seen when the user interacts with the
-   feature, not just when they hover
+2. **Dismiss on interaction** - Mark as complete when the user interacts with
+   the feature, not just when they hover
 
 3. **Use consistent styling** - Use the provided components to maintain visual
    consistency
 
 4. **Choose unique feature IDs** - Use descriptive, kebab-case identifiers
-   (e.g., `'persist-playground-tip'`, `'diff-tab-intro'`)
+   (e.g., `'persist-playground'`, `'diff-tab'`)
 
 5. **Keep messages short** - Callout messages should be concise and actionable
 
@@ -205,8 +201,8 @@ fetcher.submit(
 To test onboarding indicators during development:
 
 1. Open the database file (accessible via Admin > Database)
-2. Find the `onboardingSeen` object in preferences
-3. Delete the key for your feature or set it to `false`
+2. Find the `onboardingComplete` array in preferences
+3. Remove your feature ID from the array
 4. Refresh the page to see the indicator
 
 Alternatively, delete your local database to reset all preferences.

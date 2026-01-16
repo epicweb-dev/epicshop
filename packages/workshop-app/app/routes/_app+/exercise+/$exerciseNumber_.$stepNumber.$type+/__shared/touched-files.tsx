@@ -20,16 +20,17 @@ function TouchedFiles({
 	compact?: boolean
 }) {
 	const data = useLoaderData<LayoutRoute.ComponentProps['loaderData']>()
-	const { showIndicator, markAsSeen } = useOnboardingIndicator('files-tooltip')
+	const { showIndicator, markComplete } =
+		useOnboardingIndicator('files-popover')
 
 	const [open, setOpen] = React.useState(false)
 	const contentRef = React.useRef<HTMLDivElement>(null)
 
 	function handleOpenChange(isOpen: boolean) {
 		setOpen(isOpen)
-		// Mark as seen when opening the popover for the first time
+		// Mark as complete when opening the popover for the first time
 		if (isOpen) {
-			markAsSeen()
+			markComplete()
 		}
 	}
 
