@@ -811,21 +811,50 @@ export async function add(options: AddOptions): Promise<WorkshopsResult> {
 				selectedRepoNames = [repoName]
 			}
 
+			// Create a map from repo name to workshop title for nice display
+			const repoToTitle = new Map<string, string>()
+			for (const w of enrichedWorkshops) {
+				repoToTitle.set(w.name, w.title || w.name)
+			}
+
+			// Helper to get display name for a repo
+			const getDisplayName = (repo: string) => repoToTitle.get(repo) || repo
+
 			// Set up selected workshops
 			if (selectedRepoNames.length > 1) {
-				// Multiple workshops selected - set them up in sequence
+				// Multiple workshops selected - confirm before proceeding
+				const { confirm } = await import('@inquirer/prompts')
+				console.log()
+				const shouldProceed = await confirm({
+					message: `You've selected to set up ${selectedRepoNames.length} workshops. This may take some time. Continue?`,
+					default: true,
+				})
+
+				if (!shouldProceed) {
+					console.log(chalk.gray('\nSetup cancelled.\n'))
+					return { success: false, message: 'Setup cancelled by user' }
+				}
+
+				console.log()
+
 				let successCount = 0
 				let failCount = 0
 
 				for (const selectedRepo of selectedRepoNames) {
+					const displayName = getDisplayName(selectedRepo)
+					console.log(chalk.cyan(`🏎️  Setting up ${chalk.bold(displayName)}...\n`))
+
 					const result = await addSingleWorkshop(selectedRepo, options)
 					if (result.success) {
 						successCount++
+						console.log(
+							chalk.green(`🏁 Finished setting up ${chalk.bold(displayName)}\n`),
+						)
 					} else {
 						failCount++
 						console.log(
 							chalk.yellow(
-								`⚠️  Failed to set up ${selectedRepo}. You can retry later with \`npx epicshop add ${selectedRepo}\`.`,
+								`⚠️  Failed to set up ${displayName}. You can retry later with \`npx epicshop add ${selectedRepo}\`.`,
 							),
 						)
 						if (result.message) console.log(chalk.gray(`   ${result.message}`))
@@ -833,7 +862,22 @@ export async function add(options: AddOptions): Promise<WorkshopsResult> {
 					}
 				}
 
+				// Final summary
 				if (successCount > 0) {
+					console.log(
+						chalk.green.bold(
+							`🏁 🏁 Finished setting up all ${successCount} workshop${successCount > 1 ? 's' : ''}${failCount > 0 ? ` (${failCount} failed)` : ''}.\n`,
+						),
+					)
+					console.log(chalk.white('Run:'))
+					console.log(
+						chalk.white(`  ${chalk.cyan('npx epicshop open')}  - open a workshop in your editor`),
+					)
+					console.log(
+						chalk.white(`  ${chalk.cyan('npx epicshop start')} - start a workshop`),
+					)
+					console.log()
+
 					return {
 						success: true,
 						message: `Successfully set up ${successCount} workshop(s)${failCount > 0 ? `, ${failCount} failed` : ''}`,
@@ -848,6 +892,27 @@ export async function add(options: AddOptions): Promise<WorkshopsResult> {
 
 			// Single workshop selected
 			repoName = selectedRepoNames[0]
+			if (!repoName) {
+				return { success: false, message: 'No workshop selected' }
+			}
+			const displayName = getDisplayName(repoName)
+			console.log(chalk.cyan(`🏎️  Setting up ${chalk.bold(displayName)}...\n`))
+
+			const result = await addSingleWorkshop(repoName, options)
+			if (result.success) {
+				console.log(
+					chalk.green(`🏁 Finished setting up ${chalk.bold(displayName)}\n`),
+				)
+				console.log(chalk.white('Run:'))
+				console.log(
+					chalk.white(`  ${chalk.cyan('npx epicshop open')}  - open a workshop in your editor`),
+				)
+				console.log(
+					chalk.white(`  ${chalk.cyan('npx epicshop start')} - start a workshop`),
+				)
+				console.log()
+			}
+			return result
 		}
 
 		// Ensure we have a repo name at this point
@@ -855,8 +920,21 @@ export async function add(options: AddOptions): Promise<WorkshopsResult> {
 			return { success: false, message: 'No workshop selected' }
 		}
 
-		// Use the helper to set up the single workshop
-		return await addSingleWorkshop(repoName, options)
+		// Use the helper to set up the single workshop (when repo was provided via CLI args)
+		console.log(chalk.cyan(`🏎️  Setting up ${chalk.bold(repoName)}...\n`))
+		const result = await addSingleWorkshop(repoName, options)
+		if (result.success) {
+			console.log(chalk.green(`🏁 Finished setting up ${chalk.bold(repoName)}\n`))
+			console.log(chalk.white('Run:'))
+			console.log(
+				chalk.white(`  ${chalk.cyan('npx epicshop open')}  - open a workshop in your editor`),
+			)
+			console.log(
+				chalk.white(`  ${chalk.cyan('npx epicshop start')} - start a workshop`),
+			)
+			console.log()
+		}
+		return result
 	} catch (error) {
 		if ((error as Error).message === 'USER_QUIT') {
 			return { success: false, message: 'User quit' }
@@ -2315,26 +2393,78 @@ async function promptAndSetupAccessibleWorkshops(): Promise<void> {
 		return
 	}
 
+	// Create a map from repo name to workshop title for nice display
+	const repoToTitle = new Map<string, string>()
+	for (const w of candidates) {
+		repoToTitle.set(w.name, w.title || w.name)
+	}
+	const getDisplayName = (repo: string) => repoToTitle.get(repo) || repo
+
+	// Confirm before setting up multiple workshops
+	if (selectedWorkshops.length > 1) {
+		const { confirm } = await import('@inquirer/prompts')
+		console.log()
+		const shouldProceed = await confirm({
+			message: `You've selected to set up ${selectedWorkshops.length} workshops. This may take some time. Continue?`,
+			default: true,
+		})
+
+		if (!shouldProceed) {
+			console.log(chalk.gray('\nSetup cancelled. Continuing...\n'))
+			return
+		}
+	}
+
 	console.log()
+
+	let successCount = 0
+	let failCount = 0
 
 	// Set up each selected workshop
 	for (const repoName of selectedWorkshops) {
+		const displayName = getDisplayName(repoName)
+
 		// If already present, don't treat that as an error
 		if (await workshopExists(repoName)) {
-			console.log(chalk.gray(`• ${repoName} (already set up)`))
+			console.log(chalk.gray(`• ${displayName} (already set up)`))
 			continue
 		}
 
-		const result = await add({ repoName, silent: false })
-		if (!result.success) {
+		console.log(chalk.cyan(`🏎️  Setting up ${chalk.bold(displayName)}...\n`))
+
+		const result = await add({ repoName, silent: true })
+		if (result.success) {
+			successCount++
+			console.log(
+				chalk.green(`🏁 Finished setting up ${chalk.bold(displayName)}\n`),
+			)
+		} else {
+			failCount++
 			console.log(
 				chalk.yellow(
-					`⚠️  Failed to set up ${repoName}. You can retry later with \`npx epicshop add ${repoName}\`.`,
+					`⚠️  Failed to set up ${displayName}. You can retry later with \`npx epicshop add ${repoName}\`.`,
 				),
 			)
 			if (result.message) console.log(chalk.gray(`   ${result.message}`))
 			console.log()
 		}
+	}
+
+	// Final summary for multiple workshops
+	if (selectedWorkshops.length > 1 && successCount > 0) {
+		console.log(
+			chalk.green.bold(
+				`🏁 🏁 Finished setting up all ${successCount} workshop${successCount > 1 ? 's' : ''}${failCount > 0 ? ` (${failCount} failed)` : ''}.\n`,
+			),
+		)
+		console.log(chalk.white('Run:'))
+		console.log(
+			chalk.white(`  ${chalk.cyan('npx epicshop open')}  - open a workshop in your editor`),
+		)
+		console.log(
+			chalk.white(`  ${chalk.cyan('npx epicshop start')} - start a workshop`),
+		)
+		console.log()
 	}
 }
 
