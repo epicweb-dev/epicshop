@@ -415,11 +415,23 @@ export async function launchEditor(
 		if (process.platform === 'win32') {
 			// On Windows, launch the editor in a shell because spawn can only
 			// launch .exe files.
-			_childProcess = child_process.spawn(
-				'cmd.exe',
-				['/C', editor].concat(args).filter(Boolean),
-				{ stdio: ['inherit', 'inherit', 'pipe'] },
-			)
+			// We need to properly quote arguments that contain spaces for cmd.exe
+			// since cmd.exe /C interprets everything after /C as a command line string
+			const quoteForCmd = (arg: string) => {
+				// If the argument contains spaces, wrap it in double quotes
+				// Escape any existing double quotes by doubling them (cmd.exe style)
+				if (/[\s"]/.test(arg)) {
+					return `"${arg.replace(/"/g, '""')}"`
+				}
+				return arg
+			}
+			const quotedEditor = quoteForCmd(editor)
+			const quotedArgs = args.map(quoteForCmd)
+			// Join into a single command string for cmd.exe /C
+			const command = [quotedEditor, ...quotedArgs].join(' ')
+			_childProcess = child_process.spawn('cmd.exe', ['/C', command], {
+				stdio: ['inherit', 'inherit', 'pipe'],
+			})
 		} else {
 			_childProcess = child_process.spawn(editor, args, {
 				stdio: ['inherit', 'inherit', 'pipe'],
