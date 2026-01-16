@@ -293,16 +293,26 @@ export async function launchEditor(
 	lineNumber: number = 1,
 	colNumber: number = 1,
 ): Promise<Result> {
+	// Handle undefined/null being passed explicitly (which bypasses default values)
+	// This ensures we always have a valid line number for editors that use -g flag,
+	// which helps avoid issues with file paths containing spaces
+	if (lineNumber == null) {
+		lineNumber = 1
+	}
+	if (colNumber == null) {
+		colNumber = 1
+	}
+
 	// Sanitize lineNumber to prevent malicious use on win32
 	// via: https://github.com/nodejs/node/blob/c3bb4b1aa5e907d489619fb43d233c3336bfc03d/lib/child_process.js#L333
 	// and it should be a positive integer
-	if (lineNumber && !(Number.isInteger(lineNumber) && lineNumber > 0)) {
+	if (!(Number.isInteger(lineNumber) && lineNumber > 0)) {
 		return { status: 'error', message: 'lineNumber must be a positive integer' }
 	}
 
 	// colNumber is optional, but should be a positive integer too
 	// default is 1
-	if (colNumber && !(Number.isInteger(colNumber) && colNumber > 0)) {
+	if (!(Number.isInteger(colNumber) && colNumber > 0)) {
 		colNumber = 1
 	}
 
