@@ -65,7 +65,7 @@ function TouchedFiles({
 							<strong className="inline-block px-2 pb-2 font-semibold uppercase">
 								Relevant Files
 							</strong>
-							<p className="text-muted-foreground mb-4 px-2 text-sm">
+							<p className="text-muted-foreground mb-4 px-2 text-sm max-w-3xs">
 								These are the files you'll need to modify for this exercise.
 								Click any file to open it directly in your editor at the right
 								location.
