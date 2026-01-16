@@ -45,7 +45,7 @@ export default function Guide() {
 						</li>
 						<li>
 							<strong>playground/</strong> – This is where your work takes
-							place. We recommend opening this directory as its own VS Code
+							place. We recommend opening this directory as its own editor
 							instance for efficient file searching.
 						</li>
 					</ul>
@@ -158,7 +158,7 @@ export default function Guide() {
 						Windows example.
 					</p>
 					<p className="mt-4">
-						For VS Code users, you can also install the 'code' command in your
+						For Cursor/VS Code users, you can also install the 'code' command in your
 						PATH by opening the Command Palette (⌘⇧P on Mac, Ctrl+Shift+P on
 						Windows) and searching for "Install 'code' command in PATH".
 					</p>
