@@ -1,5 +1,6 @@
 import * as React from 'react'
 import { useFetcher } from 'react-router'
+import { SimpleTooltip } from '#app/components/ui/tooltip.tsx'
 import { useRootLoaderData } from '#app/utils/root-loader.ts'
 
 /**
@@ -51,29 +52,38 @@ export function useOnboardingIndicator(featureId: string) {
  * A pulsing badge indicator that draws attention to a feature.
  * Typically positioned at the corner of a button or element.
  * Uses a bright yellow/amber color for high visibility in both light and dark modes.
+ * Optionally shows a tooltip on hover.
  *
  * @example
  * ```tsx
  * <button className="relative">
  *   Click me
- *   {showIndicator && <OnboardingBadge />}
+ *   {showIndicator && <OnboardingBadge tooltip="Click to see more!" />}
  * </button>
  * ```
  */
 export function OnboardingBadge({
 	children = '!',
+	tooltip,
 	className = '',
 }: {
 	children?: React.ReactNode
+	tooltip?: string
 	className?: string
 }) {
-	return (
+	const badge = (
 		<span
 			className={`absolute -top-2 -right-2 flex h-6 w-6 animate-pulse items-center justify-center rounded-full bg-yellow-400 text-sm font-bold text-yellow-950 shadow-lg dark:bg-yellow-500 ${className}`}
 		>
 			{children}
 		</span>
 	)
+
+	if (tooltip) {
+		return <SimpleTooltip content={tooltip}>{badge}</SimpleTooltip>
+	}
+
+	return badge
 }
 
 /**

@@ -85,11 +85,12 @@ function handleClick() {
 ### `<OnboardingBadge />`
 
 A pulsing badge that draws attention to a feature. Position it absolutely within
-a relatively-positioned parent.
+a relatively-positioned parent. Optionally shows a tooltip on hover.
 
 **Props:**
 
 - `children?: ReactNode` - Content inside the badge (default: `'!'`)
+- `tooltip?: string` - Tooltip message shown on hover
 - `className?: string` - Additional CSS classes
 
 **Example:**
@@ -97,10 +98,10 @@ a relatively-positioned parent.
 ```tsx
 <button className="relative">
   Click me
-  {showIndicator ? <OnboardingBadge /> : null}
+  {showIndicator ? <OnboardingBadge tooltip="Click to discover!" /> : null}
 </button>
 
-// Custom content
+// Without tooltip
 <OnboardingBadge>✨</OnboardingBadge>
 
 // Custom positioning

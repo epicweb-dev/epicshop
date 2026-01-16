@@ -4,7 +4,6 @@ import { Await, useLoaderData } from 'react-router'
 import { Icon } from '#app/components/icons.tsx'
 import {
 	OnboardingBadge,
-	OnboardingCallout,
 	useOnboardingIndicator,
 } from '#app/components/onboarding-indicator.tsx'
 import { SimpleTooltip } from '#app/components/ui/tooltip.tsx'
@@ -50,14 +49,11 @@ function TouchedFiles({
 					>
 						<Icon name="Files" />
 						{compact ? null : <span className="hidden xl:inline">Files</span>}
-						{showIndicator ? <OnboardingBadge /> : null}
+						{showIndicator ? (
+							<OnboardingBadge tooltip="Click to see which files to edit!" />
+						) : null}
 					</button>
 				</Popover.Trigger>
-				{showIndicator ? (
-					<OnboardingCallout>
-						👋 Click here to see which files to edit!
-					</OnboardingCallout>
-				) : null}
 				<Popover.Portal>
 					<Popover.Content
 						ref={contentRef}
