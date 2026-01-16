@@ -1,7 +1,11 @@
 import * as Popover from '@radix-ui/react-popover'
 import * as React from 'react'
-import { Await, useLoaderData } from 'react-router'
+import { Await, Link, useLoaderData } from 'react-router'
 import { Icon } from '#app/components/icons.tsx'
+import {
+	OnboardingBadge,
+	useOnboardingIndicator,
+} from '#app/components/onboarding-indicator.tsx'
 import { SimpleTooltip } from '#app/components/ui/tooltip.tsx'
 import { LaunchEditor } from '#app/routes/launch-editor.tsx'
 import { SetAppToPlayground } from '#app/routes/set-playground.tsx'
@@ -13,9 +17,19 @@ function TouchedFiles({
 	diffFilesPromise: LayoutRoute.ComponentProps['loaderData']['diffFiles']
 }) {
 	const data = useLoaderData<LayoutRoute.ComponentProps['loaderData']>()
+	const { showIndicator, markComplete } =
+		useOnboardingIndicator('files-popover')
 
 	const [open, setOpen] = React.useState(false)
 	const contentRef = React.useRef<HTMLDivElement>(null)
+
+	function handleOpenChange(isOpen: boolean) {
+		setOpen(isOpen)
+		// Mark as complete when opening the popover for the first time
+		if (isOpen) {
+			markComplete()
+		}
+	}
 
 	function handleLaunchUpdate() {
 		setOpen(false)
@@ -25,14 +39,17 @@ function TouchedFiles({
 
 	return (
 		<>
-			<Popover.Root open={open} onOpenChange={setOpen}>
+			<Popover.Root open={open} onOpenChange={handleOpenChange}>
 				<Popover.Trigger asChild>
 					<button
-						className="flex h-full items-center gap-1 border-r px-6 py-3 font-mono text-sm uppercase"
+						className="relative flex h-full items-center gap-1 border-r px-6 py-3 font-mono text-sm uppercase"
 						aria-label="Relevant Files"
 					>
 						<Icon name="Files" />
 						<span className="hidden @min-[640px]:inline">Files</span>
+						{showIndicator ? (
+							<OnboardingBadge tooltip="Click to see which files to edit!" />
+						) : null}
 					</button>
 				</Popover.Trigger>
 				<Popover.Portal>
@@ -46,10 +63,19 @@ function TouchedFiles({
 							<strong className="inline-block px-2 pb-2 font-semibold uppercase">
 								Relevant Files
 							</strong>
-							<p className="text-muted-foreground mb-4 px-2 text-sm">
+							<p className="text-muted-foreground max-w-3xs px-2 text-sm">
 								These are the files you'll need to modify for this exercise.
 								Click any file to open it directly in your editor at the right
 								location.
+							</p>
+							<p className="mb-4 px-2 text-sm">
+								<Link
+									to="/guide#file-links"
+									className="text-highlight underline"
+									onClick={() => setOpen(false)}
+								>
+									Learn more →
+								</Link>
 							</p>
 							{data.problem &&
 							data.playground?.appName !== data.problem.name ? (
