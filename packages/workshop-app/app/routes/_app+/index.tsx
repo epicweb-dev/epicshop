@@ -15,6 +15,11 @@ import slugify from '@sindresorhus/slugify'
 import { data, type HeadersFunction, Link } from 'react-router'
 import { EpicVideoInfoProvider } from '#app/components/epic-video.tsx'
 import { GeneralErrorBoundary } from '#app/components/error-boundary.tsx'
+import { Icon } from '#app/components/icons.tsx'
+import {
+	OnboardingBadge,
+	useOnboardingIndicator,
+} from '#app/components/onboarding-indicator.tsx'
 import { EditFileOnGitHub } from '#app/routes/launch-editor.tsx'
 import { Mdx } from '#app/utils/mdx.tsx'
 import { cn } from '#app/utils/misc.tsx'
@@ -104,6 +109,9 @@ function ExerciseListItem({
 const mdxComponents = { h1: () => null }
 
 export default function Index({ loaderData: data }: Route.ComponentProps) {
+	const [showGuideBadge, dismissGuideBadge] =
+		useOnboardingIndicator('workshop-guide')
+
 	const exerciseLinks = (
 		<ul className="divide-border dark:divide-border/50 flex flex-col divide-y">
 			<strong className="px-10 pb-3 font-mono text-xs uppercase">
@@ -167,7 +175,18 @@ export default function Index({ loaderData: data }: Route.ComponentProps) {
 				type="workshop-instructions"
 				className="h-14 border-t px-6"
 			/>
-			<div className="@container flex h-16 justify-center border-t">
+			<div className="@container flex h-16 items-stretch justify-between border-t">
+				<Link
+					to="/guide"
+					onClick={dismissGuideBadge}
+					className="relative flex items-center gap-2 border-r px-6 py-3 font-mono text-sm uppercase transition hover:bg-gray-50 dark:hover:bg-white/5"
+				>
+					<Icon name="Question" />
+					<span className="hidden @min-[480px]:inline">Guide</span>
+					{showGuideBadge ? (
+						<OnboardingBadge tooltip="Learn how to use the workshop app!" />
+					) : null}
+				</Link>
 				<EditFileOnGitHub
 					file={data.workshopReadme.file}
 					relativePath={data.workshopReadme.relativePath}

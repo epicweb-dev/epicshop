@@ -32,6 +32,10 @@ import {
 import { Diff } from '#app/components/diff.tsx'
 import { GeneralErrorBoundary } from '#app/components/error-boundary.tsx'
 import { type InBrowserBrowserRef } from '#app/components/in-browser-browser.tsx'
+import {
+	OnboardingBadge,
+	useOnboardingIndicator,
+} from '#app/components/onboarding-indicator.tsx'
 import { StatusIndicator } from '#app/components/status-indicator.tsx'
 import { useWorkshopConfig } from '#app/components/workshop-config.tsx'
 import { useAltDown } from '#app/utils/misc.tsx'
@@ -244,6 +248,12 @@ export default function ExercisePartRoute({
 	const altDown = useAltDown()
 	const navigate = useNavigate()
 
+	// Onboarding indicators for tabs
+	const [showDiffBadge, dismissDiffBadge] = useOnboardingIndicator('diff-tab')
+	const [showTestsBadge, dismissTestsBadge] =
+		useOnboardingIndicator('tests-tab')
+	const [showChatBadge, dismissChatBadge] = useOnboardingIndicator('chat-tab')
+
 	function shouldHideTab(tab: (typeof tabs)[number]) {
 		if (tab === 'tests') {
 			return (
@@ -302,10 +312,47 @@ export default function ExercisePartRoute({
 	})}`
 
 	function handleDiffTabClick(event: React.MouseEvent<HTMLAnchorElement>) {
+		dismissDiffBadge()
 		if (event.altKey && !event.ctrlKey && !event.shiftKey && !event.metaKey) {
 			event.preventDefault()
 			void navigate(altDiffUrl)
 		}
+	}
+
+	function handleTestsTabClick() {
+		dismissTestsBadge()
+	}
+
+	function handleChatTabClick() {
+		dismissChatBadge()
+	}
+
+	function getOnboardingBadge(tab: (typeof tabs)[number]) {
+		if (tab === 'diff' && showDiffBadge) {
+			return (
+				<OnboardingBadge
+					tooltip="Compare your work with the solution!"
+					className="-top-1 -right-1"
+				/>
+			)
+		}
+		if (tab === 'tests' && showTestsBadge) {
+			return (
+				<OnboardingBadge
+					tooltip="Run tests to verify your work!"
+					className="-top-1 -right-1"
+				/>
+			)
+		}
+		if (tab === 'chat' && showChatBadge) {
+			return (
+				<OnboardingBadge
+					tooltip="Get help from the community!"
+					className="-top-1 -right-1"
+				/>
+			)
+		}
+		return null
 	}
 
 	return (
@@ -319,6 +366,7 @@ export default function ExercisePartRoute({
 				{tabs.map((tab) => {
 					const hidden = shouldHideTab(tab)
 					const status = getTabStatus(tab)
+					const onboardingBadge = getOnboardingBadge(tab)
 					return (
 						<Tabs.Trigger key={tab} value={tab} hidden={hidden} asChild>
 							<Link
@@ -329,7 +377,15 @@ export default function ExercisePartRoute({
 								)}
 								preventScrollReset
 								prefetch="intent"
-								onClick={handleDiffTabClick}
+								onClick={
+									tab === 'diff'
+										? handleDiffTabClick
+										: tab === 'tests'
+											? handleTestsTabClick
+											: tab === 'chat'
+												? handleChatTabClick
+												: undefined
+								}
 								to={
 									tab === 'diff' && altDown
 										? altDiffUrl
@@ -344,6 +400,7 @@ export default function ExercisePartRoute({
 									{status && <StatusIndicator status={status} />}
 									<span>{tab}</span>
 								</span>
+								{onboardingBadge}
 							</Link>
 						</Tabs.Trigger>
 					)

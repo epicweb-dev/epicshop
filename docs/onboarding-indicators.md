@@ -198,9 +198,13 @@ it's describing.
 
 ## Existing Indicators
 
-| Feature      | Feature ID      | Location            |
-| ------------ | --------------- | ------------------- |
-| FILES button | `files-popover` | `touched-files.tsx` |
+| Feature        | Feature ID       | Location                                    |
+| -------------- | ---------------- | ------------------------------------------- |
+| FILES button   | `files-popover`  | `touched-files.tsx`                         |
+| Diff tab       | `diff-tab`       | `exercise+/$exerciseNumber_.$stepNumber.$type+/index.tsx` |
+| Tests tab      | `tests-tab`      | `exercise+/$exerciseNumber_.$stepNumber.$type+/index.tsx` |
+| Chat tab       | `chat-tab`       | `exercise+/$exerciseNumber_.$stepNumber.$type+/index.tsx` |
+| Workshop Guide | `workshop-guide` | `_app+/index.tsx`                           |
 
 ## Architecture
 
