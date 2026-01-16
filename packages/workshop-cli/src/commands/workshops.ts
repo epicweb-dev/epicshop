@@ -451,10 +451,14 @@ async function addSingleWorkshop(
 	}
 
 	// Clone the repository
-	const cloneResult = await runCommand('git', ['clone', repoUrl, workshopPath], {
-		cwd: reposDir,
-		silent,
-	})
+	const cloneResult = await runCommand(
+		'git',
+		['clone', repoUrl, workshopPath],
+		{
+			cwd: reposDir,
+			silent,
+		},
+	)
 
 	if (!cloneResult.success) {
 		return {
@@ -843,13 +847,17 @@ export async function add(options: AddOptions): Promise<WorkshopsResult> {
 
 				for (const selectedRepo of selectedRepoNames) {
 					const displayName = getDisplayName(selectedRepo)
-					console.log(chalk.cyan(`🏎️  Setting up ${chalk.bold(displayName)}...\n`))
+					console.log(
+						chalk.cyan(`🏎️  Setting up ${chalk.bold(displayName)}...\n`),
+					)
 
 					const result = await addSingleWorkshop(selectedRepo, options)
 					if (result.success) {
 						successCount++
 						console.log(
-							chalk.green(`🏁 Finished setting up ${chalk.bold(displayName)}\n`),
+							chalk.green(
+								`🏁 Finished setting up ${chalk.bold(displayName)}\n`,
+							),
 						)
 					} else {
 						failCount++
@@ -872,10 +880,14 @@ export async function add(options: AddOptions): Promise<WorkshopsResult> {
 					)
 					console.log(chalk.white('Run:'))
 					console.log(
-						chalk.white(`  ${chalk.cyan('npx epicshop open')}  - open a workshop in your editor`),
+						chalk.white(
+							`  ${chalk.cyan('npx epicshop open')}  - open a workshop in your editor`,
+						),
 					)
 					console.log(
-						chalk.white(`  ${chalk.cyan('npx epicshop start')} - start a workshop`),
+						chalk.white(
+							`  ${chalk.cyan('npx epicshop start')} - start a workshop`,
+						),
 					)
 					console.log()
 
@@ -906,10 +918,14 @@ export async function add(options: AddOptions): Promise<WorkshopsResult> {
 				)
 				console.log(chalk.white('Run:'))
 				console.log(
-					chalk.white(`  ${chalk.cyan('npx epicshop open')}  - open a workshop in your editor`),
+					chalk.white(
+						`  ${chalk.cyan('npx epicshop open')}  - open a workshop in your editor`,
+					),
 				)
 				console.log(
-					chalk.white(`  ${chalk.cyan('npx epicshop start')} - start a workshop`),
+					chalk.white(
+						`  ${chalk.cyan('npx epicshop start')} - start a workshop`,
+					),
 				)
 				console.log()
 			}
@@ -927,10 +943,14 @@ export async function add(options: AddOptions): Promise<WorkshopsResult> {
 		}
 		const result = await addSingleWorkshop(repoName, options)
 		if (result.success && !silent) {
-			console.log(chalk.green(`🏁 Finished setting up ${chalk.bold(repoName)}\n`))
+			console.log(
+				chalk.green(`🏁 Finished setting up ${chalk.bold(repoName)}\n`),
+			)
 			console.log(chalk.white('Run:'))
 			console.log(
-				chalk.white(`  ${chalk.cyan('npx epicshop open')}  - open a workshop in your editor`),
+				chalk.white(
+					`  ${chalk.cyan('npx epicshop open')}  - open a workshop in your editor`,
+				),
 			)
 			console.log(
 				chalk.white(`  ${chalk.cyan('npx epicshop start')} - start a workshop`),
@@ -2462,7 +2482,9 @@ async function promptAndSetupAccessibleWorkshops(): Promise<void> {
 		)
 		console.log(chalk.white('Run:'))
 		console.log(
-			chalk.white(`  ${chalk.cyan('npx epicshop open')}  - open a workshop in your editor`),
+			chalk.white(
+				`  ${chalk.cyan('npx epicshop open')}  - open a workshop in your editor`,
+			),
 		)
 		console.log(
 			chalk.white(`  ${chalk.cyan('npx epicshop start')} - start a workshop`),
