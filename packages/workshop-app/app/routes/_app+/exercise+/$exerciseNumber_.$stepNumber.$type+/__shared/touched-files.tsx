@@ -43,9 +43,14 @@ function TouchedFiles({
 						sideOffset={5}
 					>
 						<div className="launch-editor-wrapper">
-							<strong className="inline-block px-2 pb-4 font-semibold uppercase">
+							<strong className="inline-block px-2 pb-2 font-semibold uppercase">
 								Relevant Files
 							</strong>
+							<p className="text-muted-foreground mb-4 px-2 text-sm">
+								These are the files you'll need to modify for this exercise.
+								Click any file to open it directly in your editor at the right
+								location.
+							</p>
 							{data.problem &&
 							data.playground?.appName !== data.problem.name ? (
 								<div className="mb-2 rounded p-1 font-mono font-medium">
