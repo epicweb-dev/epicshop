@@ -53,29 +53,54 @@ export async function compileTs(
 			(await getForceFresh(fullPath, compiledCodeCache.get(key))),
 		cache: compiledCodeCache,
 		getFreshValue: async () => {
-			const result = await esbuild.build({
-				stdin: {
-					contents: await fs.promises.readFile(filePath, 'utf-8'),
-					// NOTE: if the fileAppName is specified, then we're resolving to a different
-					// app than the one we're serving the file from. We do this so the tests
-					// can live in the solution directory, but be run against the problem
-					resolveDir: fullPath,
-					sourcefile: path.basename(filePath),
-					loader: 'tsx',
-				},
-				define: {
-					'process.env': JSON.stringify({ NODE_ENV: 'development' }),
-				},
-				bundle: true,
-				write: false,
-				format: 'esm',
-				platform: 'browser',
-				jsx: 'automatic',
-				minify: false,
-				sourcemap: 'inline',
-				...esbuildOptions,
-			})
-			return result
+			try {
+				const result = await esbuild.build({
+					stdin: {
+						contents: await fs.promises.readFile(filePath, 'utf-8'),
+						// NOTE: if the fileAppName is specified, then we're resolving to a different
+						// app than the one we're serving the file from. We do this so the tests
+						// can live in the solution directory, but be run against the problem
+						resolveDir: fullPath,
+						sourcefile: path.basename(filePath),
+						loader: 'tsx',
+					},
+					define: {
+						'process.env': JSON.stringify({ NODE_ENV: 'development' }),
+					},
+					bundle: true,
+					write: false,
+					format: 'esm',
+					platform: 'browser',
+					jsx: 'automatic',
+					minify: false,
+					sourcemap: 'inline',
+					...esbuildOptions,
+				})
+				return result
+			} catch (error) {
+				// esbuild throws errors when build fails, but the error object contains
+				// the errors array. We need to catch it and return it in a consistent format
+				// so it doesn't fall back to cached values.
+				if (
+					error &&
+					typeof error === 'object' &&
+					'errors' in error &&
+					Array.isArray((error as { errors: unknown[] }).errors)
+				) {
+					// Return the error in the same format as esbuild.build result
+					return {
+						outputFiles: [],
+						errors: (error as { errors: unknown[] }).errors,
+						warnings: [],
+					} as unknown as esbuild.BuildResult
+				}
+				// If it's not an esbuild error, wrap it
+				return {
+					outputFiles: [],
+					errors: [error],
+					warnings: [],
+				} as unknown as esbuild.BuildResult
+			}
 		},
 	})
 }
