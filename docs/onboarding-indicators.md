@@ -28,25 +28,20 @@ import {
 } from '#app/components/onboarding-indicator.tsx'
 
 function MyFeatureButton() {
-	const { showIndicator, markComplete } = useOnboardingIndicator('my-feature')
+	// Returns a tuple so you can name them whatever makes sense
+	const [showBadge, dismissBadge] = useOnboardingIndicator('my-feature')
 
 	return (
-		<div className="relative">
-			<button
-				onClick={() => {
-					markComplete()
-					// ... do feature stuff
-				}}
-			>
-				My Feature
-			</button>
-			{showIndicator ? <OnboardingBadge tooltip="Try this!" /> : null}
-			{showIndicator ? (
-				<OnboardingCallout>
-					👋 Click here to discover this feature!
-				</OnboardingCallout>
-			) : null}
-		</div>
+		<button
+			className="relative"
+			onClick={() => {
+				dismissBadge()
+				// ... do feature stuff
+			}}
+		>
+			My Feature
+			{showBadge ? <OnboardingBadge tooltip="Try this!" /> : null}
+		</button>
 	)
 }
 ```
@@ -81,14 +76,14 @@ import {
 } from '#app/components/onboarding-indicator.tsx'
 
 function MyFeature() {
-	const { showIndicator } = useOnboardingIndicator('my-feature')
+	const [showBadge] = useOnboardingIndicator('my-feature')
 
 	return (
 		<OnboardingForm featureId="my-feature" onSubmit={() => doSomething()}>
-			<div className="relative">
-				<button type="submit">Click me</button>
-				{showIndicator ? <OnboardingBadge /> : null}
-			</div>
+			<button type="submit" className="relative">
+				Click me
+				{showBadge ? <OnboardingBadge /> : null}
+			</button>
 		</OnboardingForm>
 	)
 }
@@ -105,19 +100,23 @@ A hook that manages onboarding indicator state with optimistic updates.
 - `featureId` - A unique string identifier for the feature (e.g.,
   `'files-popover'`, `'persist-playground'`)
 
-**Returns:**
+**Returns:** A tuple `[showIndicator, markComplete]`:
 
 - `showIndicator: boolean` - Whether to show the indicator (optimistic)
 - `markComplete: () => void` - Function to mark the onboarding as complete
 
+The tuple return allows you to name the values whatever makes sense for your
+context:
+
 **Example:**
 
 ```tsx
-const { showIndicator, markComplete } = useOnboardingIndicator('my-feature')
+// Name them whatever makes sense for your context
+const [showBadge, dismissBadge] = useOnboardingIndicator('my-feature')
+const [isNew, markSeen] = useOnboardingIndicator('another-feature')
 
-// Call markComplete() when the user interacts with the feature
 function handleClick() {
-	markComplete()
+	dismissBadge()
 	// ... handle click
 }
 ```
@@ -153,23 +152,13 @@ a relatively-positioned parent. Optionally shows a tooltip on hover.
 - `tooltip?: string` - Tooltip message shown on hover
 - `className?: string` - Additional CSS classes
 
-**Important:** When using with tooltips, place the badge as a sibling to the
-button (not inside it) within a relative container for proper tooltip
-positioning.
-
 **Example:**
 
 ```tsx
-// With tooltip - badge is sibling to button for proper positioning
-<div className="relative">
-  <button>Click me</button>
-  {showIndicator ? <OnboardingBadge tooltip="Try this feature!" /> : null}
-</div>
-
-// Without tooltip - can be inside button
+// Inside a button (most common pattern)
 <button className="relative">
   Click me
-  {showIndicator ? <OnboardingBadge /> : null}
+  {showBadge ? <OnboardingBadge tooltip="Try this feature!" /> : null}
 </button>
 
 // Custom content
@@ -196,7 +185,7 @@ it's describing.
 ```tsx
 <div className="relative">
   <button>Click me</button>
-  {showIndicator ? (
+  {showBadge ? (
     <OnboardingCallout>👋 Try clicking this button!</OnboardingCallout>
   ) : null}
 </div>

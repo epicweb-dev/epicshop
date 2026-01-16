@@ -17,7 +17,7 @@ function TouchedFiles({
 	diffFilesPromise: LayoutRoute.ComponentProps['loaderData']['diffFiles']
 }) {
 	const data = useLoaderData<LayoutRoute.ComponentProps['loaderData']>()
-	const { showIndicator, markComplete } =
+	const [showFilesBadge, dismissFilesBadge] =
 		useOnboardingIndicator('files-popover')
 
 	const [open, setOpen] = React.useState(false)
@@ -27,7 +27,7 @@ function TouchedFiles({
 		setOpen(isOpen)
 		// Mark as complete when opening the popover for the first time
 		if (isOpen) {
-			markComplete()
+			dismissFilesBadge()
 		}
 	}
 
@@ -47,7 +47,7 @@ function TouchedFiles({
 					>
 						<Icon name="Files" />
 						<span className="hidden @min-[640px]:inline">Files</span>
-						{showIndicator ? (
+						{showFilesBadge ? (
 							<OnboardingBadge tooltip="Click to see which files to edit!" />
 						) : null}
 					</button>

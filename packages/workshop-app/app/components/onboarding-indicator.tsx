@@ -16,20 +16,21 @@ const PE_REDIRECT_INPUT_NAME = '__PE_redirectTo'
  * Uses optimistic updates for instant UI feedback with progressive enhancement support.
  *
  * @param featureId - Unique identifier for the feature (e.g., 'files-popover')
- * @returns Object with `showIndicator` boolean (optimistic) and `markComplete` function
+ * @returns Tuple of [showIndicator, markComplete] - boolean and function to mark complete
  *
  * @example
  * ```tsx
  * function MyComponent() {
- *   const { showIndicator, markComplete } = useOnboardingIndicator('my-feature')
+ *   const [showBadge, dismissBadge] = useOnboardingIndicator('my-feature')
  *
  *   return (
- *     <div className="relative">
- *       <button onClick={() => { markComplete(); doSomething(); }}>
- *         Click me
- *       </button>
- *       {showIndicator && <OnboardingBadge tooltip="Try this!" />}
- *     </div>
+ *     <button
+ *       className="relative"
+ *       onClick={() => { dismissBadge(); doSomething(); }}
+ *     >
+ *       Click me
+ *       {showBadge ? <OnboardingBadge tooltip="Try this!" /> : null}
+ *     </button>
  *   )
  * }
  * ```
@@ -67,7 +68,7 @@ export function useOnboardingIndicator(featureId: string) {
 		)
 	}, [showIndicator, featureId, fetcher, location.pathname])
 
-	return { showIndicator, markComplete }
+	return [showIndicator, markComplete] as const
 }
 
 /**
@@ -123,21 +124,11 @@ export function OnboardingForm({
  * Uses a bright yellow/amber color for high visibility in both light and dark modes.
  * Optionally shows a tooltip on hover.
  *
- * Note: When using with tooltips, place the badge as a sibling to the button
- * (not inside it) within a relative container for proper tooltip positioning.
- *
  * @example
  * ```tsx
- * // With tooltip - badge is sibling to button
- * <div className="relative">
- *   <button>Click me</button>
- *   {showIndicator && <OnboardingBadge tooltip="Try this feature!" />}
- * </div>
- *
- * // Without tooltip - can be inside button
  * <button className="relative">
  *   Click me
- *   {showIndicator && <OnboardingBadge />}
+ *   {showBadge ? <OnboardingBadge tooltip="Try this feature!" /> : null}
  * </button>
  * ```
  */
@@ -186,11 +177,11 @@ export function OnboardingBadge({
  * ```tsx
  * <div className="relative">
  *   <button>Click me</button>
- *   {showIndicator && (
+ *   {showBadge ? (
  *     <OnboardingCallout>
  *       👋 Click here to discover this feature!
  *     </OnboardingCallout>
- *   )}
+ *   ) : null}
  * </div>
  * ```
  */
