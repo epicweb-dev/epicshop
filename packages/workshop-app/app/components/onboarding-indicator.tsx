@@ -161,19 +161,31 @@ export function OnboardingBadge({
 	tooltip?: string
 	className?: string
 }) {
-	const badge = (
+	const badgeContent = (
+		<span
+			className={`flex h-6 w-6 animate-pulse items-center justify-center rounded-full bg-yellow-400 text-sm font-bold text-yellow-950 shadow-lg dark:bg-yellow-500`}
+		>
+			{children}
+		</span>
+	)
+
+	// Wrapper handles absolute positioning, badge content is inside
+	// This structure allows the tooltip to work properly
+	if (tooltip) {
+		return (
+			<span className={`absolute -top-2 -right-2 ${className}`}>
+				<SimpleTooltip content={tooltip}>{badgeContent}</SimpleTooltip>
+			</span>
+		)
+	}
+
+	return (
 		<span
 			className={`absolute -top-2 -right-2 flex h-6 w-6 animate-pulse items-center justify-center rounded-full bg-yellow-400 text-sm font-bold text-yellow-950 shadow-lg dark:bg-yellow-500 ${className}`}
 		>
 			{children}
 		</span>
 	)
-
-	if (tooltip) {
-		return <SimpleTooltip content={tooltip}>{badge}</SimpleTooltip>
-	}
-
-	return badge
 }
 
 /**
