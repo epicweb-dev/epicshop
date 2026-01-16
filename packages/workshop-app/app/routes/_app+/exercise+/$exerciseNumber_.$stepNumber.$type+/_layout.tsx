@@ -403,7 +403,7 @@ export default function ExercisePartRoute({
 								className="hover:underline"
 							>
 								<span>{titleBits.exerciseNumber}.</span>
-								<span className="hidden @min-[400px]:inline">
+								<span className="hidden @min-[500px]:inline">
 									{' '}
 									{titleBits.exerciseTitle}
 								</span>
@@ -411,12 +411,12 @@ export default function ExercisePartRoute({
 							<span>/</span>
 							<Link to="." className="hover:underline">
 								<span>{titleBits.stepNumber}.</span>
-								<span className="hidden @min-[600px]:inline">
+								<span className="hidden @min-[300px]:inline">
 									{' '}
 									{titleBits.title}
 								</span>
 								<span> ({titleBits.emoji}</span>
-								<span className="hidden @min-[500px]:inline">
+								<span className="hidden @min-[400px]:inline">
 									{' '}
 									{titleBits.type}
 								</span>
@@ -429,6 +429,7 @@ export default function ExercisePartRoute({
 							<SetAppToPlayground
 								appName={data.problem.name}
 								isOutdated={data.playground?.isUpToDate === false}
+								hideTextOnNarrow
 							/>
 						) : null}
 					</div>

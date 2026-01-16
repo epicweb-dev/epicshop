@@ -228,9 +228,12 @@ function SelectItem({
 export function SetAppToPlayground({
 	appName,
 	isOutdated,
+	hideTextOnNarrow,
 }: {
 	appName: string
 	isOutdated?: boolean
+	/** When true, hides text at narrow container widths (for use in @container contexts) */
+	hideTextOnNarrow?: boolean
 }) {
 	if (ENV.EPICSHOP_DEPLOYED) return null
 	return (
@@ -244,7 +247,13 @@ export function SetAppToPlayground({
 		>
 			<span className="text-foreground-destructive flex items-center justify-center gap-1 hover:underline">
 				<Icon name="Unlinked" className="animate-ping" />{' '}
-				<span className="hidden @min-[300px]:inline uppercase">
+				<span
+					className={
+						hideTextOnNarrow
+							? 'hidden @min-[600px]:inline uppercase'
+							: 'uppercase'
+					}
+				>
 					{isOutdated ? 'Playground Outdated' : 'Set to Playground'}
 				</span>
 			</span>
