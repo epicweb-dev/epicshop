@@ -40,22 +40,18 @@ function TouchedFiles({
 	return (
 		<>
 			<Popover.Root open={open} onOpenChange={handleOpenChange}>
-				{/* Wrapper needed so badge can be outside button but still positioned relative to it */}
-				<span className="relative">
-					<Popover.Trigger asChild>
-						<button
-							className="flex h-full items-center gap-1 border-r px-6 py-3 font-mono text-sm uppercase"
-							aria-label="Relevant Files"
-						>
-							<Icon name="Files" />
-							<span className="hidden @min-[640px]:inline">Files</span>
-						</button>
-					</Popover.Trigger>
-					{/* Badge must be outside button for tooltip to work (Radix tooltips don't work inside buttons) */}
-					{showIndicator ? (
-						<OnboardingBadge tooltip="Click to see which files to edit!" />
-					) : null}
-				</span>
+				<Popover.Trigger asChild>
+					<button
+						className="relative flex h-full items-center gap-1 border-r px-6 py-3 font-mono text-sm uppercase"
+						aria-label="Relevant Files"
+					>
+						<Icon name="Files" />
+						<span className="hidden @min-[640px]:inline">Files</span>
+						{showIndicator ? (
+							<OnboardingBadge tooltip="Click to see which files to edit!" />
+						) : null}
+					</button>
+				</Popover.Trigger>
 				<Popover.Portal>
 					<Popover.Content
 						ref={contentRef}
