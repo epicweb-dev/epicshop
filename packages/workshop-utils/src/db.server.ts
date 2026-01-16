@@ -75,6 +75,8 @@ const DataSchema = z.object({
 				})
 				.optional()
 				.default({ dismissed: false }),
+			// Array of completed onboarding feature IDs (e.g., ['files-popover', 'persist-playground'])
+			onboardingComplete: z.array(z.string()).optional().default([]),
 		})
 		.optional()
 		.default({}),
@@ -326,6 +328,39 @@ export async function setPreferences(
 	}
 	await saveJSON(updatedData)
 	return updatedData.preferences
+}
+
+/**
+ * Mark an onboarding feature as complete.
+ * This is used to track which tips/indicators have been dismissed.
+ * @param featureId - Unique identifier for the feature (e.g., 'files-popover')
+ */
+export async function markOnboardingComplete(featureId: string) {
+	const data = await readDb()
+	const currentComplete = data?.preferences?.onboardingComplete ?? []
+	// Avoid duplicates
+	if (currentComplete.includes(featureId)) {
+		return data?.preferences
+	}
+	const updatedData = {
+		...data,
+		preferences: {
+			...data?.preferences,
+			onboardingComplete: [...currentComplete, featureId],
+		},
+	}
+	await saveJSON(updatedData)
+	return updatedData.preferences
+}
+
+/**
+ * Check if a user has completed an onboarding feature.
+ * @param featureId - Unique identifier for the feature
+ * @returns true if the user has completed this onboarding, false otherwise
+ */
+export async function isOnboardingComplete(featureId: string) {
+	const data = await readDb()
+	return data?.preferences?.onboardingComplete?.includes(featureId) ?? false
 }
 
 export async function getMutedNotifications() {
