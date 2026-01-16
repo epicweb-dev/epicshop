@@ -1991,8 +1991,51 @@ async function promptAndSetupAccessibleWorkshops(): Promise<void> {
 	console.log(chalk.gray(`  🔑 You have access to this workshop`))
 	console.log()
 
-	// Build the choices for checkbox selection
-	const workshopChoices = candidates.map((w) => {
+	// Group workshops by product for "select all by product" options
+	const workshopsByProduct = new Map<string, string[]>()
+	for (const w of candidates) {
+		const host = w.productHost || 'other'
+		const existing = workshopsByProduct.get(host) || []
+		existing.push(w.name)
+		workshopsByProduct.set(host, existing)
+	}
+
+	// Build quick-select options for products that have multiple workshops
+	type QuickSelectChoice = {
+		name: string
+		value: string
+		description?: string
+	}
+	const quickSelectChoices: QuickSelectChoice[] = []
+
+	// Add "All workshops" option if there are multiple workshops
+	if (candidates.length > 1) {
+		quickSelectChoices.push({
+			name: chalk.bold('⭐ All workshops'),
+			value: '__ALL__',
+			description: `Select all ${candidates.length} workshops`,
+		})
+	}
+
+	// Add per-product options for products with multiple workshops
+	const productDisplayNames: Record<string, string> = {
+		'www.epicreact.dev': '🚀 All Epic React workshops',
+		'www.epicweb.dev': '🌌 All Epic Web workshops',
+		'www.epicai.pro': '⚡ All Epic AI workshops',
+	}
+
+	for (const [host, workshops] of workshopsByProduct) {
+		if (workshops.length > 1 && productDisplayNames[host]) {
+			quickSelectChoices.push({
+				name: chalk.bold(productDisplayNames[host]),
+				value: `__PRODUCT__${host}`,
+				description: `Select all ${workshops.length} ${host.replace('www.', '').replace('.dev', '').replace('.pro', '')} workshops`,
+			})
+		}
+	}
+
+	// Build the individual workshop choices
+	const individualChoices = candidates.map((w) => {
 		const productIcon = w.productHost ? PRODUCT_ICONS[w.productHost] || '' : ''
 		const accessIcon = chalk.yellow('🔑')
 		const name = [productIcon, w.title || w.name, accessIcon]
@@ -2013,16 +2056,49 @@ async function promptAndSetupAccessibleWorkshops(): Promise<void> {
 		}
 	})
 
+	// Combine quick-select options with individual workshops
+	const { Separator } = await import('@inquirer/checkbox')
+	const allChoices: Array<
+		QuickSelectChoice | InstanceType<typeof Separator>
+	> = []
+
+	if (quickSelectChoices.length > 0) {
+		allChoices.push(...quickSelectChoices)
+		allChoices.push(new Separator('─── Individual workshops ───'))
+	}
+	allChoices.push(...individualChoices)
+
 	console.log(
 		chalk.gray('   Use space to select, enter to confirm your selection.\n'),
 	)
 
-	const selectedWorkshops = await checkbox({
+	const rawSelection = await checkbox({
 		message: 'Select workshops to set up:',
-		choices: workshopChoices,
+		choices: allChoices,
 	})
 
-	if (selectedWorkshops.length === 0) {
+	// Process special selection values
+	const selectedWorkshops = new Set<string>()
+	for (const selection of rawSelection) {
+		if (selection === '__ALL__') {
+			// Add all workshops
+			for (const w of candidates) {
+				selectedWorkshops.add(w.name)
+			}
+		} else if (selection.startsWith('__PRODUCT__')) {
+			// Add all workshops for this product
+			const host = selection.replace('__PRODUCT__', '')
+			const productWorkshops = workshopsByProduct.get(host) || []
+			for (const name of productWorkshops) {
+				selectedWorkshops.add(name)
+			}
+		} else {
+			// Individual workshop selection
+			selectedWorkshops.add(selection)
+		}
+	}
+
+	if (selectedWorkshops.size === 0) {
 		console.log(chalk.gray('\nNo workshops selected. Continuing...\n'))
 		return
 	}
