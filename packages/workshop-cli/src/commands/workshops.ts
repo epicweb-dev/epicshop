@@ -400,9 +400,10 @@ async function addSingleWorkshop(
 	let workshopPath: string
 
 	if (options.destination?.trim()) {
-		// destination can be either:
-		// - a parent directory (existing) => clone into <destination>/<repoName>
-		// - a full target path (non-existing) => clone into <destination>
+		// destination is always treated as a parent directory
+		// - if it exists and is a directory: clone into <destination>/<repoName>
+		// - if it doesn't exist: create it and clone into <destination>/<repoName>
+		// This ensures consistent behavior for both single and multiple workshop setups
 		const resolvedDestination = path.resolve(
 			resolvePathWithTilde(options.destination),
 		)
@@ -419,9 +420,9 @@ async function addSingleWorkshop(
 				}
 			}
 		} catch {
-			// Destination doesn't exist. Treat it as the exact clone target path.
-			workshopPath = resolvedDestination
-			reposDir = path.dirname(workshopPath)
+			// Destination doesn't exist. Create it as a parent directory and clone inside.
+			reposDir = resolvedDestination
+			workshopPath = path.join(reposDir, repoName)
 		}
 	} else {
 		reposDir = options.directory?.trim()
@@ -921,9 +922,11 @@ export async function add(options: AddOptions): Promise<WorkshopsResult> {
 		}
 
 		// Use the helper to set up the single workshop (when repo was provided via CLI args)
-		console.log(chalk.cyan(`🏎️  Setting up ${chalk.bold(repoName)}...\n`))
+		if (!silent) {
+			console.log(chalk.cyan(`🏎️  Setting up ${chalk.bold(repoName)}...\n`))
+		}
 		const result = await addSingleWorkshop(repoName, options)
-		if (result.success) {
+		if (result.success && !silent) {
 			console.log(chalk.green(`🏁 Finished setting up ${chalk.bold(repoName)}\n`))
 			console.log(chalk.white('Run:'))
 			console.log(
