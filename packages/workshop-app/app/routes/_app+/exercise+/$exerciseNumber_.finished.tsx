@@ -186,7 +186,7 @@ export default function ExerciseFinished({
 						exerciseNumber={data.exercise.exerciseNumber}
 						className="h-14 border-t px-6"
 					/>
-					<div className="flex h-16 justify-between border-t border-b-4 lg:border-b-0">
+					<div className="@container flex h-16 justify-between border-t border-b-4 lg:border-b-0">
 						<div />
 						<EditFileOnGitHub
 							file={data.exerciseFinished.file}

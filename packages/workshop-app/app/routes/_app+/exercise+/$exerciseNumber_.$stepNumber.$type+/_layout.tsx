@@ -23,7 +23,7 @@ import {
 } from '@epic-web/workshop-utils/timing.server'
 import slugify from '@sindresorhus/slugify'
 import * as cookie from 'cookie'
-import { useEffect, useRef, useState } from 'react'
+import { useRef, useState } from 'react'
 import {
 	Link,
 	Outlet,
@@ -307,20 +307,6 @@ export default function ExercisePartRoute({
 	const containerRef = useRef<HTMLDivElement>(null)
 	const leftPaneRef = useRef<HTMLDivElement>(null)
 	const [splitPercent, setSplitPercent] = useState<number>(data.splitPercent)
-	const [leftWidthPx, setLeftWidthPx] = useState<number>(0)
-
-	useEffect(() => {
-		const left = leftPaneRef.current
-		if (!left) return
-		const ro = new ResizeObserver((entries) => {
-			for (const entry of entries) {
-				setLeftWidthPx(entry.contentRect.width)
-			}
-		})
-		ro.observe(left)
-		setLeftWidthPx(left.getBoundingClientRect().width)
-		return () => ro.disconnect()
-	}, [])
 
 	function setCookie(percent: number) {
 		const clamped = computeSplitPercent(percent)
@@ -491,19 +477,15 @@ export default function ExercisePartRoute({
 							className="h-14 border-t px-6"
 						/>
 					) : null}
-					<div className="flex h-16 justify-between border-t border-b-4 lg:border-b-0">
+					<div className="@container flex h-16 justify-between border-t border-b-4 lg:border-b-0">
 						<div>
 							<div className="h-full">
-								<TouchedFiles
-									diffFilesPromise={data.diffFiles}
-									compact={leftWidthPx < 640}
-								/>
+								<TouchedFiles diffFilesPromise={data.diffFiles} />
 							</div>
 						</div>
 						<EditFileOnGitHub
 							appName={data.exerciseStepApp.name}
 							relativePath={`${data.exerciseStepApp.relativePath}/README.mdx`}
-							compact={leftWidthPx < 720}
 						/>
 						<NavChevrons
 							prev={
