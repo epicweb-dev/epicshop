@@ -1,7 +1,11 @@
 import { markOnboardingComplete } from '@epic-web/workshop-utils/db.server'
 import { type ActionFunctionArgs } from 'react-router'
+import { ensureUndeployed } from '#app/utils/misc.tsx'
+import { ensureProgressiveEnhancement } from '#app/utils/pe.tsx'
 
 export async function action({ request }: ActionFunctionArgs) {
+	ensureUndeployed()
+
 	if (request.method !== 'POST') {
 		return Response.json({ error: 'Method not allowed' }, { status: 405 })
 	}
@@ -14,6 +18,8 @@ export async function action({ request }: ActionFunctionArgs) {
 	}
 
 	await markOnboardingComplete(featureId)
+
+	ensureProgressiveEnhancement(request, formData)
 
 	return Response.json({ success: true })
 }

@@ -8,10 +8,14 @@ indicator is permanently dismissed and stored in their preferences database.
 
 The onboarding system provides:
 
-1. **`useOnboardingIndicator` hook** - Manages state and persistence
-2. **`OnboardingBadge` component** - A pulsing badge indicator
-3. **`OnboardingCallout` component** - A floating message callout
-4. **Generic API endpoint** - Persists completion state to database
+1. **`useOnboardingIndicator` hook** - Manages state and persistence with
+   optimistic updates
+2. **`useOnboardingComplete` hook** - Read-only check for completion state
+3. **`OnboardingForm` component** - Form-based submission with progressive
+   enhancement
+4. **`OnboardingBadge` component** - A pulsing badge indicator
+5. **`OnboardingCallout` component** - A floating message callout
+6. **Generic API endpoint** - Persists completion state to database
 
 ## Quick Start
 
@@ -51,14 +55,51 @@ function MyFeatureButton() {
 That's it! The hook handles:
 
 - Checking if the user has already completed this onboarding
-- Providing immediate UI feedback when dismissed
+- Providing immediate UI feedback when dismissed (optimistic updates)
 - Persisting the state to the database
+- Progressive enhancement (works without JavaScript via form submission)
+
+## Progressive Enhancement
+
+The onboarding system supports progressive enhancement, similar to theme
+switching. This means:
+
+1. **With JavaScript**: Uses `useFetcher` for optimistic updates - the indicator
+   disappears immediately when `markComplete()` is called
+2. **Without JavaScript**: Falls back to form submission with a redirect back to
+   the current page
+
+### Using `OnboardingForm` for Full PE Support
+
+For features where you want a form-based approach with full progressive
+enhancement:
+
+```tsx
+import {
+	OnboardingBadge,
+	OnboardingForm,
+	useOnboardingComplete,
+} from '#app/components/onboarding-indicator.tsx'
+
+function MyFeature() {
+	const showIndicator = useOnboardingComplete('my-feature')
+
+	return (
+		<OnboardingForm featureId="my-feature" onSubmit={() => doSomething()}>
+			<button type="submit" className="relative">
+				Click me
+				{showIndicator ? <OnboardingBadge /> : null}
+			</button>
+		</OnboardingForm>
+	)
+}
+```
 
 ## API Reference
 
 ### `useOnboardingIndicator(featureId: string)`
 
-A hook that manages onboarding indicator state.
+A hook that manages onboarding indicator state with optimistic updates.
 
 **Parameters:**
 
@@ -80,6 +121,45 @@ function handleClick() {
 	markComplete()
 	// ... handle click
 }
+```
+
+### `useOnboardingComplete(featureId: string)`
+
+A read-only hook that checks if a user has completed an onboarding feature.
+Supports optimistic updates from any in-flight fetcher.
+
+**Parameters:**
+
+- `featureId` - A unique string identifier for the feature
+
+**Returns:**
+
+- `boolean` - Whether to show the indicator (`true` if not complete)
+
+**Example:**
+
+```tsx
+const showIndicator = useOnboardingComplete('my-feature')
+```
+
+### `<OnboardingForm />`
+
+A form component that handles marking onboarding as complete with progressive
+enhancement support.
+
+**Props:**
+
+- `featureId: string` - The feature ID to mark as complete
+- `children: ReactNode` - Form contents (typically a button)
+- `onSubmit?: () => void` - Optional callback when form submits
+- `className?: string` - Additional CSS classes
+
+**Example:**
+
+```tsx
+<OnboardingForm featureId="my-feature" onSubmit={() => console.log('clicked')}>
+  <button type="submit">Try this feature</button>
+</OnboardingForm>
 ```
 
 ### `<OnboardingBadge />`
@@ -171,7 +251,11 @@ const complete = await isOnboardingComplete('my-feature')
 ### API Endpoint
 
 The `/mark-onboarding-complete` endpoint accepts POST requests with a
-`featureId` form field:
+`featureId` form field. It includes:
+
+- `ensureUndeployed()` check - Only works in local development
+- Progressive enhancement support - Redirects back to the originating page when
+  JavaScript is disabled
 
 ```typescript
 // This is handled automatically by the hook, but for reference:

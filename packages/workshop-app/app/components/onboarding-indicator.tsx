@@ -1,10 +1,55 @@
 import * as React from 'react'
-import { useFetcher } from 'react-router'
+import { useFetcher, useFetchers, useLocation } from 'react-router'
+import { ServerOnly } from 'remix-utils/server-only'
 import { SimpleTooltip } from '#app/components/ui/tooltip.tsx'
 import { useRootLoaderData } from '#app/utils/root-loader.ts'
 
+const ONBOARDING_ROUTE = '/mark-onboarding-complete'
+const PE_REDIRECT_INPUT_NAME = '__PE_redirectTo'
+
+/**
+ * Hook to check if user has completed an onboarding feature.
+ * Uses optimistic updates similar to theme switching for instant UI feedback.
+ *
+ * @param featureId - Unique identifier for the feature (e.g., 'files-popover')
+ * @returns boolean indicating whether to show the indicator
+ *
+ * @example
+ * ```tsx
+ * function MyComponent() {
+ *   const showIndicator = useOnboardingComplete('my-feature')
+ *
+ *   return (
+ *     <OnboardingForm featureId="my-feature" onSubmit={doSomething}>
+ *       <button type="submit">
+ *         Click me
+ *         {showIndicator && <OnboardingBadge />}
+ *       </button>
+ *     </OnboardingForm>
+ *   )
+ * }
+ * ```
+ */
+export function useOnboardingComplete(featureId: string) {
+	const rootData = useRootLoaderData()
+	const fetchers = useFetchers()
+
+	// Check for optimistic update from any in-flight fetcher
+	const optimisticComplete = fetchers.some((f) => {
+		const formFeatureId = f.formData?.get('featureId')
+		return f.formAction === ONBOARDING_ROUTE && formFeatureId === featureId
+	})
+
+	const isComplete =
+		rootData.preferences?.onboardingComplete?.includes(featureId) ?? false
+
+	// Show indicator if not complete (from DB) and no optimistic update in progress
+	return !isComplete && !optimisticComplete
+}
+
 /**
  * Hook to check if user has completed an onboarding feature and provide a function to mark it complete.
+ * Uses optimistic updates for instant UI feedback with progressive enhancement support.
  *
  * @param featureId - Unique identifier for the feature (e.g., 'files-popover')
  * @returns Object with `showIndicator` boolean and `markComplete` function
@@ -24,28 +69,73 @@ import { useRootLoaderData } from '#app/utils/root-loader.ts'
  * ```
  */
 export function useOnboardingIndicator(featureId: string) {
-	const rootData = useRootLoaderData()
+	const showIndicator = useOnboardingComplete(featureId)
 	const fetcher = useFetcher()
-	const [hasMarkedComplete, setHasMarkedComplete] = React.useState(false)
-
-	const isComplete =
-		rootData.preferences?.onboardingComplete?.includes(featureId) ?? false
-	const showIndicator = !isComplete && !hasMarkedComplete
+	const location = useLocation()
 
 	const markComplete = React.useCallback(() => {
 		if (!showIndicator) return
 
-		setHasMarkedComplete(true)
 		void fetcher.submit(
-			{ featureId },
+			{
+				featureId,
+				[PE_REDIRECT_INPUT_NAME]: location.pathname,
+			},
 			{
 				method: 'POST',
-				action: '/mark-onboarding-complete',
+				action: ONBOARDING_ROUTE,
 			},
 		)
-	}, [showIndicator, featureId, fetcher])
+	}, [showIndicator, featureId, fetcher, location.pathname])
 
 	return { showIndicator, markComplete }
+}
+
+/**
+ * Form component for marking onboarding features as complete with progressive enhancement.
+ * Works without JavaScript by submitting a form and redirecting back.
+ *
+ * @example
+ * ```tsx
+ * <OnboardingForm featureId="my-feature">
+ *   <button type="submit">Mark as seen</button>
+ * </OnboardingForm>
+ * ```
+ */
+export function OnboardingForm({
+	featureId,
+	children,
+	onSubmit,
+	className,
+}: {
+	featureId: string
+	children: React.ReactNode
+	onSubmit?: () => void
+	className?: string
+}) {
+	const fetcher = useFetcher()
+	const location = useLocation()
+
+	return (
+		<fetcher.Form
+			method="POST"
+			action={ONBOARDING_ROUTE}
+			className={className}
+			onSubmit={onSubmit}
+		>
+			<input type="hidden" name="featureId" value={featureId} />
+			<ServerOnly>
+				{() => (
+					<input
+						type="hidden"
+						name={PE_REDIRECT_INPUT_NAME}
+						value={location.pathname}
+					/>
+				)}
+			</ServerOnly>
+			{children}
+		</fetcher.Form>
+	)
 }
 
 /**
