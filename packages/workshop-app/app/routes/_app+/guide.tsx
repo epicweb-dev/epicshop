@@ -17,7 +17,7 @@ export default function Guide() {
 					you'll find useful information here.
 				</p>
 
-				<div className="bg-accent rounded-lg p-6">
+				<div id="tutorial" className="bg-accent rounded-lg p-6">
 					<h2 className="text-h4 mb-2">🎓 New to the Workshop App?</h2>
 					<p className="mb-4">
 						We highly recommend going through the official tutorial to learn all
@@ -32,7 +32,7 @@ export default function Guide() {
 					</p>
 				</div>
 
-				<section>
+				<section id="workshop-structure">
 					<h2 className="text-h3 mb-4">Workshop Structure</h2>
 					<p className="mb-4">
 						Each workshop is a standalone project with a consistent structure:
@@ -51,7 +51,7 @@ export default function Guide() {
 					</ul>
 				</section>
 
-				<section>
+				<section id="lesson-page">
 					<h2 className="text-h3 mb-4">The Lesson Page</h2>
 					<p className="mb-4">
 						When you click into a lesson, the app displays the video along with
@@ -82,8 +82,8 @@ export default function Guide() {
 					</ul>
 				</section>
 
-				<section>
-					<h2 className="text-h3 mb-4">The Files List</h2>
+				<section id="file-links">
+					<h2 className="text-h3 mb-4">File Links</h2>
 					<p className="mb-4">
 						At the bottom of a lesson page, the <strong>"Files"</strong> button
 						opens a list of relevant files for the current exercise. Clicking a
@@ -104,25 +104,10 @@ export default function Guide() {
 							playground for the current exercise.
 						</li>
 					</ul>
-				</section>
 
-				<section>
-					<h2 className="text-h3 mb-4">Setting the Playground</h2>
-					<p className="mb-4">
-						If you navigate to a different exercise than what's currently
-						loaded, a red <strong>"Set to Playground"</strong> link will appear.
-						Clicking this syncs the playground for the appropriate exercise.
-					</p>
-					<p className="bg-warning text-warning-foreground rounded-lg p-4">
-						<strong>Important:</strong> Always have your Playground set to the
-						lesson you're working on! This is not automated because you might
-						want to refer back to previous exercises without losing your current
-						work.
-					</p>
-				</section>
-
-				<section>
-					<h2 className="text-h3 mb-4">Troubleshooting File Links</h2>
+					<h3 id="file-links-troubleshooting" className="text-h4 mb-4 mt-8">
+						Troubleshooting
+					</h3>
 					<p className="mb-4">
 						If you're unable to open file links from the workshop app, create a{' '}
 						<code className="bg-muted rounded px-1">.env</code> file in the root
@@ -158,13 +143,28 @@ export default function Guide() {
 						Windows example.
 					</p>
 					<p className="mt-4">
-						For Cursor/VS Code users, you can also install the 'code' command in your
-						PATH by opening the Command Palette (⌘⇧P on Mac, Ctrl+Shift+P on
-						Windows) and searching for "Install 'code' command in PATH".
+						For Cursor/VS Code users, you can also install the 'code' command in
+						your PATH by opening the Command Palette (⌘⇧P on Mac, Ctrl+Shift+P
+						on Windows) and searching for "Install 'code' command in PATH".
 					</p>
 				</section>
 
-				<section>
+				<section id="setting-playground">
+					<h2 className="text-h3 mb-4">Setting the Playground</h2>
+					<p className="mb-4">
+						If you navigate to a different exercise than what's currently
+						loaded, a red <strong>"Set to Playground"</strong> link will appear.
+						Clicking this syncs the playground for the appropriate exercise.
+					</p>
+					<p className="bg-warning text-warning-foreground rounded-lg p-4">
+						<strong>Important:</strong> Always have your Playground set to the
+						lesson you're working on! This is not automated because you might
+						want to refer back to previous exercises without losing your current
+						work.
+					</p>
+				</section>
+
+				<section id="emoji-key">
 					<h2 className="text-h3 mb-4">Emoji Key</h2>
 					<p className="mb-4">
 						Each exercise has comments with helpful emoji characters:
@@ -220,7 +220,7 @@ export default function Guide() {
 					</ul>
 				</section>
 
-				<section>
+				<section id="need-help">
 					<h2 className="text-h3 mb-4">Need More Help?</h2>
 					<p>
 						Visit our{' '}

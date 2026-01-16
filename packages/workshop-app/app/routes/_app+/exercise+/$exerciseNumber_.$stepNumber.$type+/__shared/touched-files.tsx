@@ -72,7 +72,7 @@ function TouchedFiles({
 							</p>
 							<p className="mb-4 px-2 text-sm">
 								<Link
-									to="/guide"
+									to="/guide#file-links"
 									className="text-highlight underline"
 									onClick={() => setOpen(false)}
 								>

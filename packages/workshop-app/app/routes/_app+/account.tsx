@@ -223,6 +223,11 @@ export default function Account() {
 					</Link>
 				</li>
 				<li>
+					<Link to="/guide" className="underline">
+						Workshop app guide
+					</Link>
+				</li>
+				<li>
 					<Link to="/support" className="underline">
 						Get support
 					</Link>
