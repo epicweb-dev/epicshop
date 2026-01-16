@@ -148,12 +148,15 @@ export function OnboardingForm({
  * Uses a bright yellow/amber color for high visibility in both light and dark modes.
  * Optionally shows a tooltip on hover.
  *
+ * Note: For the tooltip to work properly, the badge should be placed OUTSIDE
+ * interactive elements like buttons. The parent should have `position: relative`.
+ *
  * @example
  * ```tsx
- * <button className="relative">
- *   Click me
+ * <span className="relative">
+ *   <button>Click me</button>
  *   {showIndicator && <OnboardingBadge tooltip="Click to see more!" />}
- * </button>
+ * </span>
  * ```
  */
 export function OnboardingBadge({
@@ -172,12 +175,13 @@ export function OnboardingBadge({
 			<Tooltip>
 				<TooltipTrigger asChild>
 					<span
-						className={`absolute -top-2 -right-2 ${badgeClasses} ${className}`}
+						className={`absolute -top-2 -right-2 cursor-pointer ${badgeClasses} ${className}`}
+						tabIndex={0}
 					>
 						{children}
 					</span>
 				</TooltipTrigger>
-				<TooltipContent side="bottom" sideOffset={8} collisionPadding={16}>
+				<TooltipContent side="top" sideOffset={8} collisionPadding={16}>
 					{tooltip}
 				</TooltipContent>
 			</Tooltip>
@@ -185,9 +189,7 @@ export function OnboardingBadge({
 	}
 
 	return (
-		<span
-			className={`absolute -top-2 -right-2 ${badgeClasses} ${className}`}
-		>
+		<span className={`absolute -top-2 -right-2 ${badgeClasses} ${className}`}>
 			{children}
 		</span>
 	)

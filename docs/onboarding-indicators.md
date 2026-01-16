@@ -158,7 +158,7 @@ enhancement support.
 
 ```tsx
 <OnboardingForm featureId="my-feature" onSubmit={() => console.log('clicked')}>
-  <button type="submit">Try this feature</button>
+	<button type="submit">Try this feature</button>
 </OnboardingForm>
 ```
 

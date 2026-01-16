@@ -21,14 +21,10 @@ const sections = [
 	{ id: 'need-help', label: 'Need More Help?' },
 ] as const
 
-function TableOfContents({
-	activeSection,
-}: {
-	activeSection: string | null
-}) {
+function TableOfContents({ activeSection }: { activeSection: string | null }) {
 	return (
 		<nav className="sticky top-4 hidden lg:block">
-			<h2 className="text-muted-foreground mb-3 text-sm font-semibold uppercase tracking-wide">
+			<h2 className="text-muted-foreground mb-3 text-sm font-semibold tracking-wide uppercase">
 				On this page
 			</h2>
 			<ul className="space-y-2 text-sm">
@@ -182,7 +178,7 @@ export default function Guide() {
 
 						<h3
 							id="file-links-troubleshooting"
-							className="text-h4 mb-4 mt-8 scroll-mt-8"
+							className="text-h4 mt-8 mb-4 scroll-mt-8"
 						>
 							Troubleshooting
 						</h3>
@@ -253,16 +249,14 @@ export default function Guide() {
 						</p>
 						<ul className="list-disc space-y-2 pl-6">
 							<li>
-								<span className="text-green-500 font-mono">+</span> lines (green)
-								show code that needs to be added
+								<span className="font-mono text-green-500">+</span> lines
+								(green) show code that needs to be added
 							</li>
 							<li>
-								<span className="text-red-500 font-mono">-</span> lines (red)
+								<span className="font-mono text-red-500">-</span> lines (red)
 								show code that needs to be removed
 							</li>
-							<li>
-								Unchanged lines provide context around the changes
-							</li>
+							<li>Unchanged lines provide context around the changes</li>
 						</ul>
 						<p className="text-muted-foreground mt-4 text-sm">
 							Tip: Try to avoid using the diff tab until you've made a solid
@@ -368,9 +362,8 @@ export default function Guide() {
 							</div>
 						</div>
 						<p className="mt-4">
-							Run{' '}
-							<code className="bg-muted rounded px-1">epicshop --help</code> to
-							see all available commands.
+							Run <code className="bg-muted rounded px-1">epicshop --help</code>{' '}
+							to see all available commands.
 						</p>
 					</section>
 
@@ -390,7 +383,7 @@ export default function Guide() {
 							learning experience.
 						</p>
 
-						<h3 className="text-h5 mb-3 mt-6">What it provides</h3>
+						<h3 className="text-h5 mt-6 mb-3">What it provides</h3>
 						<ul className="list-disc space-y-2 pl-6">
 							<li>
 								<strong>Exercise context:</strong> Your AI can understand what
@@ -414,7 +407,7 @@ export default function Guide() {
 							</li>
 						</ul>
 
-						<h3 className="text-h5 mb-3 mt-6">Installation</h3>
+						<h3 className="text-h5 mt-6 mb-3">Installation</h3>
 						<p className="mb-4">
 							Add the following to your AI assistant's MCP configuration (e.g.,
 							Claude Desktop):
