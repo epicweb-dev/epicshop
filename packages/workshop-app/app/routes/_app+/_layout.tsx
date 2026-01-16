@@ -677,8 +677,6 @@ function MobileNavigation({
 	// Onboarding indicators
 	const [showAccountBadge, dismissAccountBadge] =
 		useOnboardingIndicator('account-link')
-	const [showLoginBadge, dismissLoginBadge] =
-		useOnboardingIndicator('login-button')
 
 	// items
 	const listVariants = {

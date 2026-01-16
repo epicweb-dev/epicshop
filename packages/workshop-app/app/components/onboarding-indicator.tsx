@@ -41,11 +41,6 @@ export function useOnboardingIndicator(featureId: string) {
 	const fetchers = useFetchers()
 	const fetcher = useFetcher()
 
-	// Don't show onboarding indicators in deployed environments
-	if (ENV.EPICSHOP_DEPLOYED) {
-		return [false, () => {}] as const
-	}
-
 	// Check for optimistic update from any in-flight fetcher
 	const optimisticComplete = fetchers.some((f) => {
 		const formFeatureId = f.formData?.get('featureId')
@@ -55,8 +50,10 @@ export function useOnboardingIndicator(featureId: string) {
 	const isComplete =
 		rootData.preferences?.onboardingComplete?.includes(featureId) ?? false
 
-	// Show indicator if not complete (from DB) and no optimistic update in progress
-	const showIndicator = !isComplete && !optimisticComplete
+	// Show indicator if not complete (from DB), no optimistic update in progress,
+	// and not in deployed environment
+	const showIndicator =
+		!ENV.EPICSHOP_DEPLOYED && !isComplete && !optimisticComplete
 
 	const markComplete = React.useCallback(() => {
 		if (!showIndicator) return
