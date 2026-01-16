@@ -69,11 +69,7 @@ export default function Account() {
 
 	return (
 		<main className="container flex h-full w-full max-w-3xl grow flex-col items-center justify-center gap-4">
-			<Link
-				to={`https://${config.product.host}/profile`}
-				className="group relative"
-				title="Click to edit your profile picture"
-			>
+			<div className="flex flex-col items-center">
 				{user.imageUrlLarge ? (
 					<img
 						className="h-36 w-36 rounded-full"
@@ -85,13 +81,35 @@ export default function Account() {
 						<Icon name="User" size="xl" />
 					</div>
 				)}
-				<div className="bg-foreground/70 absolute inset-0 flex items-center justify-center rounded-full opacity-0 transition-opacity group-hover:opacity-100">
-					<Icon name="Pencil" className="text-background" size="lg" />
-				</div>
-				<div className="text-muted-foreground mt-1 text-center text-xs opacity-0 transition-opacity group-hover:opacity-100">
-					Edit on {config.product.host}
-				</div>
-			</Link>
+				<p className="text-muted-foreground mt-2 text-center text-xs">
+					{discordMember ? (
+						<>
+							Photo from{' '}
+							<a
+								href="https://discord.com/channels/@me"
+								target="_blank"
+								rel="noopener noreferrer"
+								className="underline"
+							>
+								Discord
+							</a>
+						</>
+					) : (
+						<>
+							Photo from{' '}
+							<a
+								href="https://gravatar.com"
+								target="_blank"
+								rel="noopener noreferrer"
+								className="underline"
+							>
+								Gravatar
+							</a>
+							{' '}or connect Discord below
+						</>
+					)}
+				</p>
+			</div>
 
 			<div className="flex items-center gap-2">
 				<h1 className="mb-1 text-2xl">Your Account</h1>
@@ -189,16 +207,16 @@ export default function Account() {
 				</SimpleTooltip>
 			</div>
 			<hr className="w-full" />
-		<ul className="flex list-inside list-disc flex-col gap-2 self-start">
-			<li>
-				<Link
-					to={`https://${config.product.host}/profile`}
-					className="inline-flex gap-1 underline"
-				>
-					<span>Manage your account (edit name & profile picture)</span>
-					<Icon name="ExternalLink" />
-				</Link>
-			</li>
+			<ul className="flex list-inside list-disc flex-col gap-2 self-start">
+				<li>
+					<Link
+						to={`https://${config.product.host}/profile`}
+						className="inline-flex gap-1 underline"
+					>
+						<span>Manage your account</span>
+						<Icon name="ExternalLink" />
+					</Link>
+				</li>
 				<li>
 					<Link to="/preferences" className="underline">
 						Manage your preferences

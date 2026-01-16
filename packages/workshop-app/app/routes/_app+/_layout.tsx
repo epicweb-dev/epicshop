@@ -923,14 +923,10 @@ function MobileNavigation({
 						<FacePile isMenuOpened={isMenuOpened} />
 					</div>
 				{ENV.EPICSHOP_DEPLOYED ? null : user ? (
-					<SimpleTooltip
-						content={
-							isMenuOpened ? null : 'Your account - click to edit profile'
-						}
-					>
+					<SimpleTooltip content={isMenuOpened ? null : 'Your account'}>
 						<Link
 							className={cn(
-								'group flex h-14 shrink-0 items-center justify-start space-x-3 px-4 py-4 text-center no-underline hover:underline',
+								'flex h-14 shrink-0 items-center justify-start space-x-3 px-4 py-4 text-center no-underline hover:underline',
 								{
 									'border-l': !isMenuOpened,
 									'w-full border-t': isMenuOpened,
@@ -938,24 +934,15 @@ function MobileNavigation({
 							)}
 							to="/account"
 						>
-							<div className="relative h-full">
-								{user.imageUrlSmall ? (
-									<img
-										alt={user.name ?? user.email}
-										src={user.imageUrlSmall}
-										className="h-full rounded-full"
-									/>
-								) : (
-									<Icon name="User" className="shrink-0" size="lg" />
-								)}
-								<div className="bg-foreground/70 absolute inset-0 flex items-center justify-center rounded-full opacity-0 transition-opacity group-hover:opacity-100">
-									<Icon
-										name="Pencil"
-										className="text-background"
-										size="xs"
-									/>
-								</div>
-							</div>
+							{user.imageUrlSmall ? (
+								<img
+									alt={user.name ?? user.email}
+									src={user.imageUrlSmall}
+									className="h-full rounded-full"
+								/>
+							) : (
+								<Icon name="User" className="shrink-0" size="lg" />
+							)}
 							{isMenuOpened ? (
 								<motion.div
 									className="flex items-center whitespace-nowrap"
@@ -1344,33 +1331,20 @@ function Navigation({
 						<FacePile isMenuOpened={isMenuOpened} />
 					</div>
 				{ENV.EPICSHOP_DEPLOYED ? null : user ? (
-					<SimpleTooltip
-						content={
-							isMenuOpened ? null : 'Your account - click to edit profile'
-						}
-					>
+					<SimpleTooltip content={isMenuOpened ? null : 'Your account'}>
 						<Link
-							className="group flex h-14 w-full shrink-0 items-center justify-start space-x-3 border-t px-4 py-4 text-center no-underline hover:underline"
+							className="flex h-14 w-full shrink-0 items-center justify-start space-x-3 border-t px-4 py-4 text-center no-underline hover:underline"
 							to="/account"
 						>
-							<div className="relative h-full">
-								{user.imageUrlSmall ? (
-									<img
-										alt={user.name ?? user.email}
-										src={user.imageUrlSmall}
-										className="h-full rounded-full"
-									/>
-								) : (
-									<Icon name="User" className="shrink-0" size="lg" />
-								)}
-								<div className="bg-foreground/70 absolute inset-0 flex items-center justify-center rounded-full opacity-0 transition-opacity group-hover:opacity-100">
-									<Icon
-										name="Pencil"
-										className="text-background"
-										size="xs"
-									/>
-								</div>
-							</div>
+							{user.imageUrlSmall ? (
+								<img
+									alt={user.name ?? user.email}
+									src={user.imageUrlSmall}
+									className="h-full rounded-full"
+								/>
+							) : (
+								<Icon name="User" className="shrink-0" size="lg" />
+							)}
 							{isMenuOpened ? (
 								<motion.div
 									className="flex items-center whitespace-nowrap"
