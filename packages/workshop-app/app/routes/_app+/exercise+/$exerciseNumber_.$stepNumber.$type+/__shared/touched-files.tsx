@@ -13,10 +13,8 @@ import { type Route as LayoutRoute } from '../+types/_layout.tsx'
 
 function TouchedFiles({
 	diffFilesPromise,
-	compact = false,
 }: {
 	diffFilesPromise: LayoutRoute.ComponentProps['loaderData']['diffFiles']
-	compact?: boolean
 }) {
 	const data = useLoaderData<LayoutRoute.ComponentProps['loaderData']>()
 	const { showIndicator, markComplete } =
@@ -48,7 +46,7 @@ function TouchedFiles({
 						aria-label="Relevant Files"
 					>
 						<Icon name="Files" />
-						{compact ? null : <span className="hidden xl:inline">Files</span>}
+						<span className="hidden @min-[640px]:inline">Files</span>
 						{showIndicator ? (
 							<OnboardingBadge tooltip="Click to see which files to edit!" />
 						) : null}
