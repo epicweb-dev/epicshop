@@ -1991,10 +1991,13 @@ async function promptAndSetupAccessibleWorkshops(): Promise<void> {
 	console.log(chalk.gray(`  🔑 You have access to this workshop`))
 	console.log()
 
+	// Filter workshops that have a product configured (for "All My Workshops" option)
+	const workshopsWithProduct = candidates.filter((w) => w.productHost)
+
 	// Group workshops by product for quick-select options
 	const workshopsByProduct = new Map<string, string[]>()
-	for (const w of candidates) {
-		const host = w.productHost || 'other'
+	for (const w of workshopsWithProduct) {
+		const host = w.productHost!
 		const existing = workshopsByProduct.get(host) || []
 		existing.push(w.name)
 		workshopsByProduct.set(host, existing)
@@ -2008,12 +2011,12 @@ async function promptAndSetupAccessibleWorkshops(): Promise<void> {
 	}
 	const selectionMethodChoices: SelectionChoice[] = []
 
-	// Add "All workshops" option if there are multiple workshops
-	if (candidates.length > 1) {
+	// Add "All My Workshops" option if there are multiple workshops with products
+	if (workshopsWithProduct.length > 1) {
 		selectionMethodChoices.push({
-			name: `⭐ All workshops`,
-			value: '__ALL__',
-			description: `Set up all ${candidates.length} workshops at once`,
+			name: `⭐ All My Workshops`,
+			value: '__ALL_MY__',
+			description: `Set up all ${workshopsWithProduct.length} workshops you have access to`,
 		})
 	}
 
@@ -2062,11 +2065,13 @@ async function promptAndSetupAccessibleWorkshops(): Promise<void> {
 
 	let selectedWorkshops: string[]
 
-	if (selectionMethod === '__ALL__') {
-		// Select all workshops
-		selectedWorkshops = candidates.map((w) => w.name)
+	if (selectionMethod === '__ALL_MY__') {
+		// Select all workshops with products (that the user has access to)
+		selectedWorkshops = workshopsWithProduct.map((w) => w.name)
 		console.log(
-			chalk.cyan(`\n✓ Selected all ${selectedWorkshops.length} workshops\n`),
+			chalk.cyan(
+				`\n✓ Selected all ${selectedWorkshops.length} workshops you have access to\n`,
+			),
 		)
 	} else if (selectionMethod.startsWith('__PRODUCT__')) {
 		// Select all workshops for this product
