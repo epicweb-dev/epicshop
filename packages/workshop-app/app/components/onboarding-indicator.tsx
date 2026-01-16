@@ -1,7 +1,11 @@
 import * as React from 'react'
 import { useFetcher, useFetchers, useLocation } from 'react-router'
 import { ServerOnly } from 'remix-utils/server-only'
-import { SimpleTooltip } from '#app/components/ui/tooltip.tsx'
+import {
+	Tooltip,
+	TooltipContent,
+	TooltipTrigger,
+} from '#app/components/ui/tooltip.tsx'
 import { useRootLoaderData } from '#app/utils/root-loader.ts'
 
 const ONBOARDING_ROUTE = '/mark-onboarding-complete'
@@ -161,27 +165,28 @@ export function OnboardingBadge({
 	tooltip?: string
 	className?: string
 }) {
-	const badgeContent = (
-		<span
-			className={`flex h-6 w-6 animate-pulse items-center justify-center rounded-full bg-yellow-400 text-sm font-bold text-yellow-950 shadow-lg dark:bg-yellow-500`}
-		>
-			{children}
-		</span>
-	)
+	const badgeClasses = `flex h-6 w-6 animate-pulse items-center justify-center rounded-full bg-yellow-400 text-sm font-bold text-yellow-950 shadow-lg dark:bg-yellow-500`
 
-	// Wrapper handles absolute positioning, badge content is inside
-	// This structure allows the tooltip to work properly
 	if (tooltip) {
 		return (
-			<span className={`absolute -top-2 -right-2 ${className}`}>
-				<SimpleTooltip content={tooltip}>{badgeContent}</SimpleTooltip>
-			</span>
+			<Tooltip>
+				<TooltipTrigger asChild>
+					<span
+						className={`absolute -top-2 -right-2 ${badgeClasses} ${className}`}
+					>
+						{children}
+					</span>
+				</TooltipTrigger>
+				<TooltipContent side="bottom" sideOffset={8} collisionPadding={16}>
+					{tooltip}
+				</TooltipContent>
+			</Tooltip>
 		)
 	}
 
 	return (
 		<span
-			className={`absolute -top-2 -right-2 flex h-6 w-6 animate-pulse items-center justify-center rounded-full bg-yellow-400 text-sm font-bold text-yellow-950 shadow-lg dark:bg-yellow-500 ${className}`}
+			className={`absolute -top-2 -right-2 ${badgeClasses} ${className}`}
 		>
 			{children}
 		</span>
