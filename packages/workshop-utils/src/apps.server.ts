@@ -540,21 +540,30 @@ async function _getApps({
 					}
 
 					// at this point, we know that a and b are different types...
-					if (isProblemApp(a)) {
+					// Both should be problem or solution apps at this point
+					const aIsProblem = isProblemApp(a)
+					const aIsSolution = isSolutionApp(a)
+					const bIsProblem = isProblemApp(b)
+					const bIsSolution = isSolutionApp(b)
+
+					if (aIsProblem && bIsSolution) {
 						if (a.exerciseNumber === b.exerciseNumber) {
 							return a.stepNumber <= b.stepNumber ? 1 : -1
 						} else {
 							return a.exerciseNumber <= b.exerciseNumber ? 1 : -1
 						}
 					}
-					if (isSolutionApp(a)) {
+					if (aIsSolution && bIsProblem) {
 						if (a.exerciseNumber === b.exerciseNumber) {
 							return a.stepNumber < b.stepNumber ? -1 : 1
 						} else {
 							return a.exerciseNumber < b.exerciseNumber ? -1 : 1
 						}
 					}
-					console.error('unhandled sorting case', a, b)
+					console.error('unhandled sorting case', {
+						a: { type: a.type, name: a.name, isProblem: aIsProblem, isSolution: aIsSolution },
+						b: { type: b.type, name: b.name, isProblem: bIsProblem, isSolution: bIsSolution },
+					})
 					return 0
 				})
 			return sortedApps
