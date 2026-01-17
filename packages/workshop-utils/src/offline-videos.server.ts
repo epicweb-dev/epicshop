@@ -9,9 +9,9 @@ import {
 	getWorkshopFinished,
 	getWorkshopInstructions,
 } from './apps.server.ts'
+import { resolvePrimaryDir } from './data-storage.server.ts'
 import { getAuthInfo, getClientId } from './db.server.ts'
 import { getEpicVideoInfos } from './epic-api.server.ts'
-import { resolvePrimaryDir } from './data-storage.server.ts'
 import { getEnv } from './init-env.ts'
 import { logger } from './logger.ts'
 import {

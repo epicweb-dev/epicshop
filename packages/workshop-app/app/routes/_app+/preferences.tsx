@@ -1,11 +1,11 @@
 import {
-	getOfflineVideoSummary,
-	startOfflineVideoDownload,
-} from '@epic-web/workshop-utils/offline-videos.server'
-import {
 	getPreferences,
 	setPreferences,
 } from '@epic-web/workshop-utils/db.server'
+import {
+	getOfflineVideoSummary,
+	startOfflineVideoDownload,
+} from '@epic-web/workshop-utils/offline-videos.server'
 import { Form, useFetcher, useLoaderData, useNavigation } from 'react-router'
 import { Button } from '#app/components/button.tsx'
 import { Icon } from '#app/components/icons.tsx'
@@ -96,7 +96,7 @@ export default function AccountSettings() {
 	useInterval(
 		() => {
 			if (offlineVideosFetcher.state === 'idle') {
-				offlineVideosFetcher.load('/resources/offline-videos')
+				void offlineVideosFetcher.load('/resources/offline-videos')
 			}
 		},
 		isDownloading ? 2000 : null,
