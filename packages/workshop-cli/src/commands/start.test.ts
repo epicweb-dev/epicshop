@@ -105,7 +105,11 @@ async function createRunnerFixture() {
 		[
 			`import { start } from ${JSON.stringify(startModuleUrl)}`,
 			'',
-			'await start({ appLocation: process.env.EPICSHOP_APP_LOCATION })',
+			'start({ appLocation: process.env.EPICSHOP_APP_LOCATION })',
+			'  .catch((error) => {',
+			'    console.error(error)',
+			'    process.exit(1)',
+			'  })',
 			'',
 		].join('\n'),
 	)
