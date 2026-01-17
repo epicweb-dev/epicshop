@@ -250,7 +250,7 @@ export function SetAppToPlayground({
 				<span
 					className={
 						hideTextOnNarrow
-							? 'hidden @min-[600px]:inline uppercase'
+							? 'hidden uppercase @min-[600px]:inline'
 							: 'uppercase'
 					}
 				>
