@@ -9,7 +9,6 @@ import { expect, test } from 'vitest'
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url))
 const repoRoot = path.resolve(__dirname, '..', '..', '..', '..')
-const tsxPath = path.join(repoRoot, 'node_modules', '.bin', 'tsx')
 
 const testIf = process.platform === 'win32' ? test.skip : test
 
@@ -19,7 +18,7 @@ testIf(
 		const { appDir, runnerPath, cleanup } = await createRunnerFixture()
 		let child: ChildProcessWithoutNullStreams | null = null
 		try {
-			child = spawn(tsxPath, [runnerPath], {
+			child = spawn(process.execPath, ['--loader', 'tsx', runnerPath], {
 				cwd: repoRoot,
 				env: {
 					...process.env,
