@@ -2,6 +2,19 @@ import { playwright } from '@vitest/browser-playwright'
 import { defineConfig } from 'vitest/config'
 
 export default defineConfig({
+	optimizeDeps: {
+		exclude: [
+			'@epic-web/workshop-utils',
+			'@epic-web/workshop-presence',
+			'crypto',
+			'stream',
+			'execa',
+			'npm-run-path',
+			'unicorn-magic',
+			'globby',
+			'@resvg/resvg-js',
+		],
+	},
 	test: {
 		name: 'app',
 		browser: {
