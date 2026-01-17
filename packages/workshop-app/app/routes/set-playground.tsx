@@ -115,7 +115,10 @@ function usePlaygroundOnboardingGate() {
 		rootData.preferences?.onboardingComplete?.includes(
 			PLAYGROUND_ONBOARDING_FEATURE_ID,
 		) ?? false
-	return { persistEnabled, shouldConfirm: !persistEnabled && !onboardingComplete }
+	return {
+		persistEnabled,
+		shouldConfirm: !persistEnabled && !onboardingComplete,
+	}
 }
 
 function PlaygroundSetDialog({
@@ -283,7 +286,9 @@ export function PlaygroundChooser({
 	const fetcher = useFetcher<typeof action>()
 	const { shouldConfirm } = usePlaygroundOnboardingGate()
 	const [dialogOpen, setDialogOpen] = React.useState(false)
-	const [pendingAppName, setPendingAppName] = React.useState<string | null>(null)
+	const [pendingAppName, setPendingAppName] = React.useState<string | null>(
+		null,
+	)
 	const isSubmitting = fetcher.state !== 'idle'
 	return (
 		<>
