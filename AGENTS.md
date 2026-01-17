@@ -89,6 +89,31 @@ Source: https://www.epicweb.dev/vitest-browser-mode-vs-playwright
 - Use Playwright for end-to-end flows across routes, storage, and network where
   full browser automation is required.
 
+#### Browser mode test pattern (workshop-app)
+
+- Place browser tests under `packages/workshop-app/tests` using
+  `*.browser.test.tsx`.
+- Use real components from the codebase (no test-only components).
+- Use `render` from `vitest-browser-react` and `page` from `vitest/browser`.
+- Avoid `@testing-library/react` in browser mode.
+
+```ts
+import { page } from 'vitest/browser'
+import { render } from 'vitest-browser-react'
+import { expect, test } from 'vitest'
+import { Button } from '#app/components/button.tsx'
+
+test('renders a pending button in browser mode', async () => {
+	render(
+		<Button status="pending" varient="primary">
+			Save
+		</Button>,
+	)
+
+	await expect.element(page.getByRole('button', { name: 'Save' })).toBeVisible()
+})
+```
+
 ```ts
 import { test, expect } from 'vitest'
 import { page } from 'vitest/browser'
