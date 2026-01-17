@@ -128,13 +128,14 @@ function PlaygroundSetDialog({
 	onOpenChange,
 	onConfirm,
 	isSubmitting,
+	persistFetcher,
 }: {
 	open: boolean
 	onOpenChange: (open: boolean) => void
 	onConfirm: () => void
 	isSubmitting: boolean
+	persistFetcher: ReturnType<typeof useFetcher<PersistPlaygroundResult>>
 }) {
-	const persistFetcher = useFetcher<PersistPlaygroundResult>()
 	const peRedirectInput = usePERedirectInput()
 	const { persistEnabled } = usePlaygroundOnboardingGate()
 	const isPersisting = persistFetcher.state !== 'idle'
@@ -248,6 +249,7 @@ export function SetPlayground({
 	reset?: boolean
 } & React.ComponentProps<'button'>) {
 	const fetcher = useFetcher<typeof action>()
+	const persistFetcher = useFetcher<PersistPlaygroundResult>()
 	const peRedirectInput = usePERedirectInput()
 	const { shouldConfirm } = usePlaygroundOnboardingGate()
 	const [dialogOpen, setDialogOpen] = React.useState(false)
@@ -296,6 +298,7 @@ export function SetPlayground({
 				open={dialogOpen}
 				onOpenChange={setDialogOpen}
 				isSubmitting={isSubmitting}
+				persistFetcher={persistFetcher}
 				onConfirm={() => {
 					bypassConfirmationRef.current = true
 					setDialogOpen(false)
@@ -314,6 +317,7 @@ export function PlaygroundChooser({
 	allApps: Array<{ name: string; displayName: string }>
 }) {
 	const fetcher = useFetcher<typeof action>()
+	const persistFetcher = useFetcher<PersistPlaygroundResult>()
 	const { shouldConfirm } = usePlaygroundOnboardingGate()
 	const [dialogOpen, setDialogOpen] = React.useState(false)
 	const [pendingAppName, setPendingAppName] = React.useState<string | null>(
@@ -395,6 +399,7 @@ export function PlaygroundChooser({
 					}
 				}}
 				isSubmitting={isSubmitting}
+				persistFetcher={persistFetcher}
 				onConfirm={() => {
 					if (!pendingAppName) return
 					setDialogOpen(false)
