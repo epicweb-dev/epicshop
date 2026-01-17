@@ -1,19 +1,95 @@
 import { type EpicVideoInfos } from '@epic-web/workshop-utils/epic-api.server'
 import { type MuxPlayerRefAttributes } from '@mux/mux-player-react'
+import {
+	MediaControlBar,
+	MediaController,
+	MediaFullscreenButton,
+	MediaMuteButton,
+	MediaPipButton,
+	MediaPlayButton,
+	MediaPlaybackRateButton,
+	MediaSeekBackwardButton,
+	MediaSeekForwardButton,
+	MediaTimeDisplay,
+	MediaTimeRange,
+	MediaVolumeRange,
+} from 'media-chrome/react'
 import * as React from 'react'
-import { Await, Link } from 'react-router'
+import { Await, Link, useFetcher } from 'react-router'
 import { useTheme } from '#app/routes/theme/index.tsx'
-import { MuxPlayer } from '#app/routes/video-player/index.tsx'
+import {
+	MuxPlayer,
+	usePlayerPreferences,
+} from '#app/routes/video-player/index.tsx'
 import { cn } from '#app/utils/misc.tsx'
 import { useIsOnline } from '#app/utils/online.ts'
 import { Icon } from './icons.tsx'
 import { Loading } from './loading.tsx'
+import { OfflineVideoActionButtons } from './offline-video-actions.tsx'
 import { useOptionalUser } from './user.tsx'
 import { useWorkshopConfig } from './workshop-config.tsx'
 
 const EpicVideoInfoContext = React.createContext<
 	Promise<EpicVideoInfos> | null | undefined
 >(null)
+
+type OfflineVideoActionData = {
+	status: string
+	action?: string
+}
+
+function useOfflineVideoAvailability(playbackId: string, refreshKey: number) {
+	const [available, setAvailable] = React.useState(false)
+	const [checked, setChecked] = React.useState(false)
+	const offlineUrl = `/resources/offline-videos/${encodeURIComponent(playbackId)}`
+
+	React.useEffect(() => {
+		if (typeof window === 'undefined') return
+		setAvailable(false)
+		setChecked(false)
+		const controller = new AbortController()
+		let isActive = true
+
+		fetch(offlineUrl, { method: 'HEAD', signal: controller.signal })
+			.then((response) => {
+				if (!isActive) return
+				setAvailable(response.ok)
+			})
+			.catch(() => {
+				if (!isActive) return
+				setAvailable(false)
+			})
+			.finally(() => {
+				if (!isActive) return
+				setChecked(true)
+			})
+
+		return () => {
+			isActive = false
+			controller.abort()
+		}
+	}, [offlineUrl, refreshKey])
+
+	return { available, checked, offlineUrl }
+}
+
+function OfflineVideoUnavailable() {
+	return (
+		<div className="relative aspect-video w-full shrink-0 shadow-lg">
+			<div className="not-prose text-foreground-destructive absolute inset-0 z-10 flex items-center justify-center p-8">
+				<Icon name="WifiNoConnection" size="xl">
+					<span>
+						Offline video not available. Download offline videos in{' '}
+						<Link to="/preferences" className="underline">
+							Preferences
+						</Link>
+						.
+					</span>
+				</Icon>
+			</div>
+		</div>
+	)
+}
 
 export function EpicVideoInfoProvider({
 	children,
@@ -158,14 +234,19 @@ function VideoLink({
 	title,
 	duration,
 	durationEstimate,
+	actions,
 }: {
 	url: string
 	title: string
 	duration?: number | null
 	durationEstimate?: number | null
+	actions?: React.ReactNode
 }) {
 	return (
-		<span className="flex items-center gap-1 text-base">
+		<div className="flex flex-wrap items-center gap-2 text-base">
+			{actions ? (
+				<span className="flex items-center gap-1">{actions}</span>
+			) : null}
 			{duration ? (
 				<span className="opacity-70">{formatDuration(duration)}</span>
 			) : durationEstimate ? (
@@ -180,7 +261,7 @@ function VideoLink({
 				<Icon className="shrink-0" name="Video" size="lg" />
 				{title} <span aria-hidden>↗︎</span>
 			</a>
-		</span>
+		</div>
 	)
 }
 export function DeferredEpicVideo({
@@ -374,6 +455,21 @@ function EpicVideo({
 	durationEstimate?: number | null
 }) {
 	const muxPlayerRef = React.useRef<MuxPlayerRefAttributes>(null)
+	const nativeVideoRef = React.useRef<HTMLVideoElement>(null)
+	const isOnline = useIsOnline()
+	const playerPreferences = usePlayerPreferences()
+	const [availabilityKey, setAvailabilityKey] = React.useState(0)
+	const offlineVideo = useOfflineVideoAvailability(
+		muxPlaybackId,
+		availabilityKey,
+	)
+	const shouldUseOfflineVideo = offlineVideo.available
+	const offlineVideoFetcher = useFetcher<OfflineVideoActionData>()
+	const isOfflineActionBusy = offlineVideoFetcher.state !== 'idle'
+	const currentTimeSessionKey = `${muxPlaybackId}:currentTime`
+	const [offlineStartTime, setOfflineStartTime] = React.useState<number | null>(
+		null,
+	)
 	const timestampRegex = /(\d+:\d+)/g
 	// turn the transcript into an array of React elements
 	const transcriptElements: Array<React.ReactNode> = []
@@ -397,14 +493,15 @@ function EpicVideo({
 				key={`button-${timestampIndexStart}`}
 				className="underline"
 				onClick={(event) => {
-					if (muxPlayerRef.current) {
-						muxPlayerRef.current.currentTime = hmsToSeconds(timestamp)
+					const videoElement = nativeVideoRef.current ?? muxPlayerRef.current
+					if (videoElement) {
+						videoElement.currentTime = hmsToSeconds(timestamp)
 						try {
-							void muxPlayerRef.current.play().catch(() => {})
+							void videoElement.play().catch(() => {})
 						} catch {
 							// ignore
 						}
-						muxPlayerRef.current.scrollIntoView({
+						videoElement.scrollIntoView({
 							behavior: 'smooth',
 							inline: 'center',
 							block: 'start',
@@ -423,14 +520,218 @@ function EpicVideo({
 			{transcript.slice(prevIndex + 1, transcript.length)}
 		</span>,
 	)
+
+	React.useEffect(() => {
+		if (!nativeVideoRef.current) return
+		if (typeof playerPreferences?.playbackRate === 'number') {
+			nativeVideoRef.current.playbackRate = playerPreferences.playbackRate
+		}
+		if (typeof playerPreferences?.volumeRate === 'number') {
+			nativeVideoRef.current.volume = playerPreferences.volumeRate
+		}
+	}, [
+		playerPreferences?.playbackRate,
+		playerPreferences?.volumeRate,
+		shouldUseOfflineVideo,
+	])
+
+	React.useEffect(() => {
+		if (!shouldUseOfflineVideo) return
+		if (typeof document === 'undefined') return
+		const stored = sessionStorage.getItem(currentTimeSessionKey)
+		if (!stored) {
+			setOfflineStartTime(null)
+			return
+		}
+		try {
+			const parsed = JSON.parse(stored) as {
+				time?: number
+				expiresAt?: string
+			}
+			const expiresAt = parsed.expiresAt
+				? new Date(parsed.expiresAt).getTime()
+				: 0
+			if (
+				typeof parsed.time !== 'number' ||
+				Number.isNaN(parsed.time) ||
+				!expiresAt ||
+				expiresAt < Date.now()
+			) {
+				throw new Error('Time expired')
+			}
+			setOfflineStartTime(parsed.time)
+		} catch {
+			sessionStorage.removeItem(currentTimeSessionKey)
+			setOfflineStartTime(null)
+		}
+	}, [currentTimeSessionKey, shouldUseOfflineVideo])
+
+	React.useEffect(() => {
+		if (!shouldUseOfflineVideo) return
+		const video = nativeVideoRef.current
+		if (!video || offlineStartTime == null) return
+
+		const restoreTime = () => {
+			const duration = Number.isFinite(video.duration) ? video.duration : 0
+			const safeTime = duration
+				? Math.min(offlineStartTime, Math.max(duration - 1, 0))
+				: offlineStartTime
+			if (safeTime > 0) {
+				video.currentTime = safeTime
+			}
+		}
+
+		if (video.readyState >= 1) {
+			restoreTime()
+			return
+		}
+		video.addEventListener('loadedmetadata', restoreTime)
+		return () => {
+			video.removeEventListener('loadedmetadata', restoreTime)
+		}
+	}, [offlineStartTime, shouldUseOfflineVideo])
+
+	const handleOfflineTimeUpdate = React.useCallback(() => {
+		if (typeof document === 'undefined') return
+		const video = nativeVideoRef.current
+		if (!video) return
+		const duration = Number.isFinite(video.duration) ? video.duration : 0
+		if (duration && duration - video.currentTime <= 1) {
+			sessionStorage.removeItem(currentTimeSessionKey)
+			return
+		}
+		sessionStorage.setItem(
+			currentTimeSessionKey,
+			JSON.stringify({
+				time: video.currentTime,
+				expiresAt: new Date(Date.now() + 1000 * 60 * 30).toISOString(),
+			}),
+		)
+	}, [currentTimeSessionKey])
+
+	React.useEffect(() => {
+		if (offlineVideoFetcher.state !== 'idle') return
+		if (offlineVideoFetcher.data?.status) {
+			setAvailabilityKey((key) => key + 1)
+		}
+	}, [offlineVideoFetcher.state, offlineVideoFetcher.data])
+
+	const handleDownload = React.useCallback(() => {
+		void offlineVideoFetcher.submit(
+			{
+				intent: 'download-video',
+				playbackId: muxPlaybackId,
+				title,
+				url: urlString,
+			},
+			{ method: 'post', action: '/resources/offline-videos' },
+		)
+	}, [muxPlaybackId, offlineVideoFetcher, title, urlString])
+
+	const handleDelete = React.useCallback(() => {
+		void offlineVideoFetcher.submit(
+			{ intent: 'delete-video', playbackId: muxPlaybackId },
+			{ method: 'post', action: '/resources/offline-videos' },
+		)
+	}, [muxPlaybackId, offlineVideoFetcher])
+	const setSeekOffset = React.useCallback((element: HTMLElement | null) => {
+		if (!element) return
+		element.setAttribute('seekoffset', '10')
+	}, [])
+	const offlineActions = (
+		<OfflineVideoActionButtons
+			isAvailable={offlineVideo.available}
+			isBusy={isOfflineActionBusy}
+			onDownload={handleDownload}
+			onDelete={handleDelete}
+		/>
+	)
 	return (
 		<div>
 			<div className="shadow-lg">
-				<MuxPlayer
-					playbackId={muxPlaybackId}
-					muxPlayerRef={muxPlayerRef}
-					title={title}
-				/>
+				{shouldUseOfflineVideo ? (
+					<div className="not-prose flex aspect-video w-full items-center justify-center bg-black">
+						<MediaController
+							tabIndex={0}
+							aria-label={`${title} video player`}
+							onPointerDown={(event) => {
+								event.currentTarget.focus()
+							}}
+							className="focus-visible:ring-ring flex h-full w-full flex-col justify-end outline-none focus-visible:ring-2 focus-visible:ring-offset-2"
+							style={
+								{
+									'--media-primary-color': 'hsl(var(--background))',
+									'--media-text-color': 'hsl(var(--background))',
+									'--media-secondary-color': 'transparent',
+									'--media-control-background': 'transparent',
+									'--media-control-hover-background':
+										'hsl(var(--background) / 0.18)',
+									'--media-control-height': '18px',
+									'--media-range-padding': '2px',
+									'--media-time-range-hover-height': '18px',
+									'--media-time-range-hover-bottom': '-4px',
+									'--media-range-track-height': '3px',
+									'--media-range-thumb-height': '8px',
+									'--media-range-thumb-width': '8px',
+									'--media-range-track-background':
+										'hsl(var(--background) / 0.35)',
+									'--media-range-track-pointer-background':
+										'hsl(var(--background) / 0.85)',
+								} as React.CSSProperties
+							}
+						>
+							<video
+								ref={nativeVideoRef}
+								slot="media"
+								aria-label={title}
+								className="h-full w-full"
+								playsInline
+								preload="metadata"
+								src={offlineVideo.offlineUrl}
+								onTimeUpdate={handleOfflineTimeUpdate}
+							/>
+							<div className="bg-foreground/40 text-background select-none w-full space-y-1 px-3 pt-1 pb-1.5 text-sm leading-none backdrop-blur">
+								<MediaTimeRange className="w-full" />
+								<MediaControlBar className="w-full items-center gap-3">
+									<div className="flex items-center gap-3">
+										<MediaPlayButton />
+										<MediaSeekBackwardButton
+											ref={setSeekOffset}
+											seekOffset={10}
+										/>
+										<MediaSeekForwardButton
+											ref={setSeekOffset}
+											seekOffset={10}
+										/>
+										<MediaTimeDisplay showDuration className="tabular-nums text-background text-xs" />
+										<MediaMuteButton />
+										<MediaVolumeRange className="w-24" />
+									</div>
+									<div className="ml-auto flex items-center gap-3">
+										<MediaPlaybackRateButton
+											className="text-background text-xs"
+											rates={[0.5, 0.75, 0.8, 0.9, 1, 1.25, 1.5, 1.75, 2, 2.5, 3, 3.5, 4]}
+										/>
+										<MediaPipButton />
+										<MediaFullscreenButton />
+									</div>
+								</MediaControlBar>
+							</div>
+						</MediaController>
+					</div>
+				) : !isOnline && offlineVideo.checked ? (
+					<OfflineVideoUnavailable />
+				) : !isOnline ? (
+					<div className="flex aspect-video w-full items-center justify-center">
+						<Loading>Checking offline videos...</Loading>
+					</div>
+				) : (
+					<MuxPlayer
+						playbackId={muxPlaybackId}
+						muxPlayerRef={muxPlayerRef}
+						title={title}
+					/>
+				)}
 			</div>
 			<div className="mt-4 flex flex-col gap-2">
 				<VideoLink
@@ -438,6 +739,7 @@ function EpicVideo({
 					title={title}
 					duration={duration}
 					durationEstimate={durationEstimate}
+					actions={offlineActions}
 				/>
 				<details>
 					<summary>Transcript</summary>

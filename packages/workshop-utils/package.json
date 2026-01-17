@@ -28,6 +28,7 @@
       "./logger": "./src/logger.ts",
       "./playwright.server": "./src/playwright.server.ts",
       "./notifications.server": "./src/notifications.server.ts",
+      "./offline-videos.server": "./src/offline-videos.server.ts",
       "./process-manager.server": "./src/process-manager.server.ts",
       "./test": "./src/test.ts",
       "./request-context.server": "./src/request-context.server.ts",
@@ -113,6 +114,10 @@
     "./notifications.server": {
       "types": "./dist/notifications.server.d.ts",
       "import": "./dist/notifications.server.js"
+    },
+    "./offline-videos.server": {
+      "types": "./dist/offline-videos.server.d.ts",
+      "import": "./dist/offline-videos.server.js"
     },
     "./process-manager.server": {
       "types": "./dist/process-manager.server.d.ts",
