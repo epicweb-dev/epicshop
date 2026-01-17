@@ -1,10 +1,10 @@
+import { expect, test } from 'vitest'
 import { page } from 'vitest/browser'
 import { render } from 'vitest-browser-react'
-import { expect, test } from 'vitest'
 import { Button } from '#app/components/button.tsx'
 
 test('renders a pending button in browser mode', async () => {
-	render(
+	await render(
 		<Button status="pending" varient="primary">
 			Save
 		</Button>,
