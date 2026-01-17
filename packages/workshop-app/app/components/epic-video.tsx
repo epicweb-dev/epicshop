@@ -258,7 +258,9 @@ function VideoLink({
 				<Icon className="shrink-0" name="Video" size="lg" />
 				{title} <span aria-hidden>↗︎</span>
 			</a>
-			{actions ? <span className="flex items-center gap-1">{actions}</span> : null}
+			{actions ? (
+				<span className="flex items-center gap-1">{actions}</span>
+			) : null}
 		</div>
 	)
 }

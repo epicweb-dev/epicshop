@@ -184,7 +184,10 @@ function hasWorkshop(entry: OfflineVideoEntry, workshopId: string) {
 	return workshops.some((workshop) => workshop.id === workshopId)
 }
 
-function ensureWorkshopOnEntry(entry: OfflineVideoEntry, workshop: WorkshopIdentity) {
+function ensureWorkshopOnEntry(
+	entry: OfflineVideoEntry,
+	workshop: WorkshopIdentity,
+) {
 	const workshops = getEntryWorkshops(entry)
 	if (workshops.some((item) => item.id === workshop.id)) return entry
 	return { ...entry, workshops: [...workshops, workshop] }

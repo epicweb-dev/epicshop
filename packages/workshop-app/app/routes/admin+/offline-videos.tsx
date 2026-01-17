@@ -23,7 +23,10 @@ export async function action({ request }: Route.ActionArgs) {
 	if (intent === 'delete-video') {
 		const playbackId = formData.get('playbackId')
 		if (typeof playbackId !== 'string' || playbackId.length === 0) {
-			return data({ status: 'error', message: 'Missing playbackId' }, { status: 400 })
+			return data(
+				{ status: 'error', message: 'Missing playbackId' },
+				{ status: 400 },
+			)
 		}
 		await deleteOfflineVideo(playbackId)
 		return redirect('/admin/offline-videos')
@@ -32,7 +35,10 @@ export async function action({ request }: Route.ActionArgs) {
 	if (intent === 'delete-workshop') {
 		const workshopId = formData.get('workshopId')
 		if (typeof workshopId !== 'string' || workshopId.length === 0) {
-			return data({ status: 'error', message: 'Missing workshopId' }, { status: 400 })
+			return data(
+				{ status: 'error', message: 'Missing workshopId' },
+				{ status: 400 },
+			)
 		}
 		await deleteOfflineVideosForWorkshopId(workshopId)
 		return redirect('/admin/offline-videos')
