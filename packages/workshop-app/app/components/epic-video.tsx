@@ -15,6 +15,59 @@ const EpicVideoInfoContext = React.createContext<
 	Promise<EpicVideoInfos> | null | undefined
 >(null)
 
+function useOfflineVideoAvailability(playbackId: string) {
+	const [available, setAvailable] = React.useState(false)
+	const [checked, setChecked] = React.useState(false)
+	const offlineUrl = `/resources/offline-videos/${encodeURIComponent(playbackId)}`
+
+	React.useEffect(() => {
+		if (typeof window === 'undefined') return
+		setAvailable(false)
+		setChecked(false)
+		const controller = new AbortController()
+		let isActive = true
+
+		fetch(offlineUrl, { method: 'HEAD', signal: controller.signal })
+			.then((response) => {
+				if (!isActive) return
+				setAvailable(response.ok)
+			})
+			.catch(() => {
+				if (!isActive) return
+				setAvailable(false)
+			})
+			.finally(() => {
+				if (!isActive) return
+				setChecked(true)
+			})
+
+		return () => {
+			isActive = false
+			controller.abort()
+		}
+	}, [offlineUrl])
+
+	return { available, checked, offlineUrl }
+}
+
+function OfflineVideoUnavailable() {
+	return (
+		<div className="relative aspect-video w-full shrink-0 shadow-lg">
+			<div className="not-prose text-foreground-destructive absolute inset-0 z-10 flex items-center justify-center p-8">
+				<Icon name="WifiNoConnection" size="xl">
+					<span>
+						Offline video not available. Download offline videos in{' '}
+						<Link to="/preferences" className="underline">
+							Preferences
+						</Link>
+						.
+					</span>
+				</Icon>
+			</div>
+		</div>
+	)
+}
+
 export function EpicVideoInfoProvider({
 	children,
 	epicVideoInfosPromise,
@@ -374,6 +427,9 @@ function EpicVideo({
 	durationEstimate?: number | null
 }) {
 	const muxPlayerRef = React.useRef<MuxPlayerRefAttributes>(null)
+	const isOnline = useIsOnline()
+	const offlineVideo = useOfflineVideoAvailability(muxPlaybackId)
+	const shouldUseOfflineVideo = !isOnline && offlineVideo.available
 	const timestampRegex = /(\d+:\d+)/g
 	// turn the transcript into an array of React elements
 	const transcriptElements: Array<React.ReactNode> = []
@@ -426,11 +482,31 @@ function EpicVideo({
 	return (
 		<div>
 			<div className="shadow-lg">
-				<MuxPlayer
-					playbackId={muxPlaybackId}
-					muxPlayerRef={muxPlayerRef}
-					title={title}
-				/>
+				{shouldUseOfflineVideo ? (
+					<div className="flex aspect-video w-full items-center justify-center bg-black">
+						<video
+							aria-label={title}
+							className="h-full w-full"
+							controls
+							controlsList="nodownload"
+							playsInline
+							preload="metadata"
+							src={offlineVideo.offlineUrl}
+						/>
+					</div>
+				) : !isOnline && offlineVideo.checked ? (
+					<OfflineVideoUnavailable />
+				) : !isOnline ? (
+					<div className="flex aspect-video w-full items-center justify-center">
+						<Loading>Checking offline videos...</Loading>
+					</div>
+				) : (
+					<MuxPlayer
+						playbackId={muxPlaybackId}
+						muxPlayerRef={muxPlayerRef}
+						title={title}
+					/>
+				)}
 			</div>
 			<div className="mt-4 flex flex-col gap-2">
 				<VideoLink
@@ -439,6 +515,11 @@ function EpicVideo({
 					duration={duration}
 					durationEstimate={durationEstimate}
 				/>
+				{offlineVideo.available ? (
+					<span className="text-muted-foreground text-sm">
+						Offline copy ready
+					</span>
+				) : null}
 				<details>
 					<summary>Transcript</summary>
 					<div className="bg-accent text-accent-foreground rounded-md p-2 whitespace-pre-line">
