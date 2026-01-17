@@ -221,18 +221,14 @@ describe('workshop MCP server', () => {
 	test(
 		'initializes with instructions and server info',
 		async () => {
-			const resources = await createDisposableClient()
-			try {
-				expect(resources.initResult).toEqual(
-					expect.objectContaining({
-						protocolVersion: expect.any(String),
-						serverInfo: expect.any(Object),
-						instructions: expect.any(String),
-					}),
-				)
-			} finally {
-				await resources[Symbol.asyncDispose]()
-			}
+			await using resources = await createDisposableClient()
+			expect(resources.initResult).toEqual(
+				expect.objectContaining({
+					protocolVersion: expect.any(String),
+					serverInfo: expect.any(Object),
+					instructions: expect.any(String),
+				}),
+			)
 		},
 		testTimeoutMs,
 	)
@@ -240,19 +236,15 @@ describe('workshop MCP server', () => {
 	test(
 		'lists tools with expected shape',
 		async () => {
-			const resources = await createDisposableClient()
-			try {
-				const resultPromise = resources.client.listTools()
-				await expect(resultPromise).resolves.toEqual(
-					expect.objectContaining({
-						tools: expect.arrayContaining([
-							expect.objectContaining({ name: 'get_what_is_next' }),
-						]),
-					}),
-				)
-			} finally {
-				await resources[Symbol.asyncDispose]()
-			}
+			await using resources = await createDisposableClient()
+			const resultPromise = resources.client.listTools()
+			await expect(resultPromise).resolves.toEqual(
+				expect.objectContaining({
+					tools: expect.arrayContaining([
+						expect.objectContaining({ name: 'get_what_is_next' }),
+					]),
+				}),
+			)
 		},
 		testTimeoutMs,
 	)
@@ -260,27 +252,23 @@ describe('workshop MCP server', () => {
 	test(
 		'get_what_is_next returns text content and structured payload',
 		async () => {
-			const resources = await createDisposableClient()
-			try {
-				const workshopDirectory = path.join(resolveWorkspaceRoot(), 'example')
-				const resultPromise = resources.client.callTool('get_what_is_next', {
-					workshopDirectory,
-				})
+			await using resources = await createDisposableClient()
+			const workshopDirectory = path.join(resolveWorkspaceRoot(), 'example')
+			const resultPromise = resources.client.callTool('get_what_is_next', {
+				workshopDirectory,
+			})
 
-				await expect(resultPromise).resolves.toEqual(
-					expect.objectContaining({
-						content: expect.arrayContaining([
-							expect.objectContaining({
-								type: 'text',
-								text: expect.any(String),
-							}),
-						]),
-						structuredContent: expect.any(Object),
-					}),
-				)
-			} finally {
-				await resources[Symbol.asyncDispose]()
-			}
+			await expect(resultPromise).resolves.toEqual(
+				expect.objectContaining({
+					content: expect.arrayContaining([
+						expect.objectContaining({
+							type: 'text',
+							text: expect.any(String),
+						}),
+					]),
+					structuredContent: expect.any(Object),
+				}),
+			)
 		},
 		testTimeoutMs,
 	)
@@ -288,26 +276,22 @@ describe('workshop MCP server', () => {
 	test(
 		'returns tool error response for invalid workshop directory',
 		async () => {
-			const resources = await createDisposableClient()
-			try {
-				const resultPromise = resources.client.callTool(
-					'get_workshop_context',
-					{
-						workshopDirectory: '/not/a/workshop',
-					},
-				)
+			await using resources = await createDisposableClient()
+			const resultPromise = resources.client.callTool(
+				'get_workshop_context',
+				{
+					workshopDirectory: '/not/a/workshop',
+				},
+			)
 
-				await expect(resultPromise).resolves.toEqual(
-					expect.objectContaining({
-						isError: true,
-						content: expect.arrayContaining([
-							expect.objectContaining({ type: 'text' }),
-						]),
-					}),
-				)
-			} finally {
-				await resources[Symbol.asyncDispose]()
-			}
+			await expect(resultPromise).resolves.toEqual(
+				expect.objectContaining({
+					isError: true,
+					content: expect.arrayContaining([
+						expect.objectContaining({ type: 'text' }),
+					]),
+				}),
+			)
 		},
 		testTimeoutMs,
 	)
