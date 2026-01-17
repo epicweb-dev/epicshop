@@ -1,3 +1,5 @@
+import { type EpicVideoInfos } from '@epic-web/workshop-utils/epic-api.server'
+import { type MuxPlayerRefAttributes } from '@mux/mux-player-react'
 import {
 	MediaControlBar,
 	MediaController,
@@ -9,8 +11,6 @@ import {
 	MediaTimeRange,
 	MediaVolumeRange,
 } from 'media-chrome/react'
-import { type EpicVideoInfos } from '@epic-web/workshop-utils/epic-api.server'
-import { type MuxPlayerRefAttributes } from '@mux/mux-player-react'
 import * as React from 'react'
 import { Await, Link, useFetcher } from 'react-router'
 import { useTheme } from '#app/routes/theme/index.tsx'
