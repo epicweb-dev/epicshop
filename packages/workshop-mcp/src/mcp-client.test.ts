@@ -24,6 +24,8 @@ type ToolCallResult = {
 
 class McpTestClient {
 	private child: ReturnType<typeof spawn>
+	private stdin: NodeJS.WritableStream
+	private stdout: NodeJS.ReadableStream
 	private buffer = ''
 	private pending = new Map<
 		number,
@@ -37,8 +39,13 @@ class McpTestClient {
 
 	private constructor(child: ReturnType<typeof spawn>) {
 		this.child = child
-		this.child.stdout.setEncoding('utf8')
-		this.child.stdout.on('data', (chunk: string) => this.onStdout(chunk))
+		if (!this.child.stdout || !this.child.stdin) {
+			throw new Error('Failed to start MCP server stdio streams.')
+		}
+		this.stdout = this.child.stdout
+		this.stdin = this.child.stdin
+		this.stdout.setEncoding('utf8')
+		this.stdout.on('data', (chunk: string) => this.onStdout(chunk))
 		this.child.on('exit', (code) => this.failPendingRequests(code))
 		this.child.on('error', (error) => this.failPendingRequests(error))
 	}
@@ -126,7 +133,7 @@ class McpTestClient {
 	}
 
 	private write(payload: Record<string, unknown>) {
-		this.child.stdin.write(`${JSON.stringify(payload)}\n`)
+		this.stdin.write(`${JSON.stringify(payload)}\n`)
 	}
 
 	private onStdout(chunk: string) {
