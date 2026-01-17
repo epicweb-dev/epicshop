@@ -2,7 +2,7 @@ import { spawn } from 'node:child_process'
 import { existsSync } from 'node:fs'
 import path from 'node:path'
 import { fileURLToPath } from 'node:url'
-import { afterAll, beforeAll, describe, expect, test } from 'vitest'
+import { describe, expect, test } from 'vitest'
 
 const testTimeoutMs = 15000
 
