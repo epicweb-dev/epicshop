@@ -209,9 +209,9 @@ describe('workshop MCP server', () => {
 			const result = await client.listTools()
 			expect(Array.isArray(result.tools)).toBe(true)
 			expect(result.tools.length).toBeGreaterThan(0)
-			expect(result.tools.some((tool) => tool.name === 'get_what_is_next')).toBe(
-				true,
-			)
+			expect(
+				result.tools.some((tool) => tool.name === 'get_what_is_next'),
+			).toBe(true)
 		},
 		testTimeoutMs,
 	)
