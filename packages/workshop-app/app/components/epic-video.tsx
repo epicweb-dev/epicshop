@@ -556,6 +556,10 @@ function EpicVideo({
 			{ method: 'post', action: '/resources/offline-videos' },
 		)
 	}, [muxPlaybackId, offlineVideoFetcher])
+	const setSeekOffset = React.useCallback((element: HTMLElement | null) => {
+		if (!element) return
+		element.setAttribute('seekoffset', '10')
+	}, [])
 	const offlineActions = (
 		<OfflineVideoActionButtons
 			isAvailable={offlineVideo.available}
@@ -611,8 +615,14 @@ function EpicVideo({
 								<MediaControlBar className="bg-foreground/80 text-background w-full items-center gap-3 rounded-md px-3 py-2 backdrop-blur">
 									<div className="flex items-center gap-3">
 										<MediaPlayButton />
-										<MediaSeekBackwardButton seekoffset={10} />
-										<MediaSeekForwardButton seekoffset={10} />
+										<MediaSeekBackwardButton
+											ref={setSeekOffset}
+											seekOffset={10}
+										/>
+										<MediaSeekForwardButton
+											ref={setSeekOffset}
+											seekOffset={10}
+										/>
 										<MediaTimeDisplay showDuration />
 										<MediaMuteButton />
 										<MediaVolumeRange className="w-24" />
