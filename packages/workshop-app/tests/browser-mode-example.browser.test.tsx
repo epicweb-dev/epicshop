@@ -1,14 +1,23 @@
-import { cleanup, render } from '@testing-library/react'
+import { createRoot, type Root } from 'react-dom/client'
 import { page } from 'vitest/browser'
 import { afterEach, expect, test } from 'vitest'
 import { Button } from '#app/components/button.tsx'
 
+let root: Root | null = null
+let container: HTMLDivElement | null = null
+
 afterEach(() => {
-	cleanup()
+	root?.unmount()
+	container?.remove()
+	root = null
+	container = null
 })
 
 test('renders a pending button in browser mode', async () => {
-	render(
+	container = document.createElement('div')
+	document.body.insertAdjacentElement('beforeend', container)
+	root = createRoot(container)
+	root.render(
 		<Button status="pending" varient="primary">
 			Save
 		</Button>,
