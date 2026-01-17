@@ -56,6 +56,11 @@
     "includedScripts": []
   },
   "devDependencies": {
-    "vitest": "^4.0.8"
+    "chromium-bidi": "^12.1.0",
+    "unicorn-magic": "^0.4.0",
+    "vitest": "^4.0.17"
+  },
+  "overrides": {
+    "unicorn-magic": "^0.4.0"
   }
 }

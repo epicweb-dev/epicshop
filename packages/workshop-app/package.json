@@ -113,8 +113,8 @@
   "devDependencies": {
     "@playwright/test": "^1.56.1",
     "@react-router/dev": "^7.9.5",
-    "@tailwindcss/vite": "^4.1.18",
     "@tailwindcss/typography": "^0.5.19",
+    "@tailwindcss/vite": "^4.1.18",
     "@testing-library/dom": "^10.4.1",
     "@total-typescript/ts-reset": "^0.6.1",
     "@types/compression": "^1.8.1",
@@ -133,6 +133,7 @@
     "@types/source-map-support": "^0.5.10",
     "@types/wait-on": "^5.3.4",
     "@types/ws": "^8.18.1",
+    "@vitest/browser-playwright": "^4.0.17",
     "autoprefixer": "^10.4.22",
     "eslint": "^9.39.1",
     "mdast-util-mdx-jsx": "^3.2.0",
@@ -143,11 +144,12 @@
     "tailwindcss": "^4.1.18",
     "tailwindcss-radix": "^4.0.2",
     "tailwindcss-safe-area": "^1.2.0",
-    "tw-animate-css": "^1.2.9",
     "tsx": "^4.20.6",
+    "tw-animate-css": "^1.2.9",
     "typescript": "^5.9.3",
     "vite": "^7.2.2",
-    "vite-plugin-devtools-json": "^1.0.0"
+    "vite-plugin-devtools-json": "^1.0.0",
+    "vitest-browser-react": "^2.0.2"
   },
   "engines": {
     "node": "20 || 22 || 24"

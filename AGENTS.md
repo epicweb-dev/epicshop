@@ -64,6 +64,151 @@ installed in individual repositories which resemble the structure of the
 - Debug logging is available via `NODE_DEBUG` environment variable (see
   `docs/debug-logging.md`)
 
+## Testing principles (summaries + snippets)
+
+### Prefer `resolves` chaining for async expectations
+
+Source: https://www.epicweb.dev/prefer-the-resolves-chaining
+
+- Use `await expect(promise).resolves...` so failures attach to the matcher and
+  can be swapped to `rejects` when you are asserting errors.
+- Avoid `expect(await promise)` because a rejection throws before the matcher
+  runs, which produces less precise failures.
+
+```ts
+await expect(loadUser()).resolves.toEqual({ id: 'user-123' })
+await expect(loadUser({ id: 'missing' })).rejects.toThrow(/not found/i)
+```
+
+### Vitest browser mode vs Playwright
+
+Source: https://www.epicweb.dev/vitest-browser-mode-vs-playwright
+
+- Use Vitest browser mode for component/integration tests that run in a real
+  browser and let you query the page via `vitest/browser`.
+- Use Playwright for end-to-end flows across routes, storage, and network where
+  full browser automation is required.
+
+#### Browser mode test pattern (workshop-app)
+
+- Place browser tests under `packages/workshop-app/tests` using
+  `*.browser.test.tsx`.
+- Use real components from the codebase (no test-only components).
+- Use `render` from `vitest-browser-react` and `page` from `vitest/browser`.
+- Avoid `@testing-library/react` in browser mode.
+
+```ts
+import { page } from 'vitest/browser'
+import { render } from 'vitest-browser-react'
+import { expect, test } from 'vitest'
+import { Button } from '#app/components/button.tsx'
+
+test('renders a pending button in browser mode', async () => {
+	render(
+		<Button status="pending" varient="primary">
+			Save
+		</Button>,
+	)
+
+	await expect.element(page.getByRole('button', { name: 'Save' })).toBeVisible()
+})
+```
+
+### Better test setup with disposable objects
+
+Source: https://www.epicweb.dev/better-test-setup-with-disposable-objects
+
+- Bundle setup artifacts and cleanup together so each test controls its own
+  lifecycle and avoids leaking state across tests.
+
+```ts
+export function createTestServer() {
+	const testServer = new Server()
+
+	return {
+		instance: testServer,
+		async [Symbol.asyncDispose]() {
+			// Close the server, abort pending requests, etc.
+			await testServer.close()
+		},
+	}
+}
+```
+
+```ts
+import { expect, test } from 'vitest'
+
+function createTempUser() {
+	let active = true
+
+	return {
+		isActive() {
+			return active
+		},
+		[Symbol.dispose]() {
+			active = false
+		},
+	}
+}
+
+test('disposes sync resources', () => {
+	const user = createTempUser()
+	try {
+		expect(user.isActive()).toBe(true)
+	} finally {
+		user[Symbol.dispose]()
+	}
+	expect(user.isActive()).toBe(false)
+})
+```
+
+### Aha testing
+
+Source: https://kentcdodds.com/blog/aha-testing
+
+- Capture the "aha" behavior you learned from a bug or requirement in a test
+  name and assertion so the lesson stays encoded in the suite.
+
+```ts
+import { expect, test } from 'vitest'
+
+function normalizeEmail(value: string) {
+	return value.trim().toLowerCase()
+}
+
+test('lowercases and trims user input (aha)', () => {
+	expect(normalizeEmail('  Person@Example.com ')).toBe('person@example.com')
+})
+```
+
+### Avoid nesting when you are testing
+
+Source: https://kentcdodds.com/blog/avoid-nesting-when-youre-testing
+
+- Prefer flat tests with explicit setup to keep intent clear and avoid cascading
+  `beforeEach`/`describe` complexity.
+
+```ts
+import { expect, test } from 'vitest'
+
+function filterVisible(items: Array<{ label: string; hidden: boolean }>) {
+	return items.filter((item) => !item.hidden)
+}
+
+test('renders no items', () => {
+	expect(filterVisible([])).toHaveLength(0)
+})
+
+test('renders provided items', () => {
+	expect(
+		filterVisible([
+			{ label: 'a', hidden: false },
+			{ label: 'b', hidden: false },
+		]),
+	).toHaveLength(2)
+})
+```
+
 ## Code style
 
 The code style guide can be found in
