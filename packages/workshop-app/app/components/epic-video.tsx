@@ -1,13 +1,25 @@
 import { type EpicVideoInfos } from '@epic-web/workshop-utils/epic-api.server'
 import { type MuxPlayerRefAttributes } from '@mux/mux-player-react'
 import * as React from 'react'
-import { Await, Link } from 'react-router'
+import {
+	MediaControlBar,
+	MediaController,
+	MediaFullscreenButton,
+	MediaMuteButton,
+	MediaPlayButton,
+	MediaPlaybackRateButton,
+	MediaTimeDisplay,
+	MediaTimeRange,
+	MediaVolumeRange,
+} from 'media-chrome/react'
+import { Await, Link, useFetcher } from 'react-router'
 import { useTheme } from '#app/routes/theme/index.tsx'
-import { MuxPlayer } from '#app/routes/video-player/index.tsx'
+import { MuxPlayer, usePlayerPreferences } from '#app/routes/video-player/index.tsx'
 import { cn } from '#app/utils/misc.tsx'
 import { useIsOnline } from '#app/utils/online.ts'
 import { Icon } from './icons.tsx'
 import { Loading } from './loading.tsx'
+import { OfflineVideoActionButtons } from './offline-video-actions.tsx'
 import { useOptionalUser } from './user.tsx'
 import { useWorkshopConfig } from './workshop-config.tsx'
 
@@ -15,7 +27,7 @@ const EpicVideoInfoContext = React.createContext<
 	Promise<EpicVideoInfos> | null | undefined
 >(null)
 
-function useOfflineVideoAvailability(playbackId: string) {
+function useOfflineVideoAvailability(playbackId: string, refreshKey: number) {
 	const [available, setAvailable] = React.useState(false)
 	const [checked, setChecked] = React.useState(false)
 	const offlineUrl = `/resources/offline-videos/${encodeURIComponent(playbackId)}`
@@ -45,7 +57,7 @@ function useOfflineVideoAvailability(playbackId: string) {
 			isActive = false
 			controller.abort()
 		}
-	}, [offlineUrl])
+	}, [offlineUrl, refreshKey])
 
 	return { available, checked, offlineUrl }
 }
@@ -429,8 +441,13 @@ function EpicVideo({
 	const muxPlayerRef = React.useRef<MuxPlayerRefAttributes>(null)
 	const nativeVideoRef = React.useRef<HTMLVideoElement>(null)
 	const isOnline = useIsOnline()
-	const offlineVideo = useOfflineVideoAvailability(muxPlaybackId)
-	const shouldUseOfflineVideo = !isOnline && offlineVideo.available
+	const playerPreferences = usePlayerPreferences()
+	const [availabilityKey, setAvailabilityKey] = React.useState(0)
+	const offlineVideo = useOfflineVideoAvailability(muxPlaybackId, availabilityKey)
+	const shouldUseOfflineVideo = offlineVideo.available
+	const offlineVideoFetcher =
+		useFetcher<typeof import('#app/routes/resources+/offline-videos.ts').action>()
+	const isOfflineActionBusy = offlineVideoFetcher.state !== 'idle'
 	const timestampRegex = /(\d+:\d+)/g
 	// turn the transcript into an array of React elements
 	const transcriptElements: Array<React.ReactNode> = []
@@ -481,21 +498,67 @@ function EpicVideo({
 			{transcript.slice(prevIndex + 1, transcript.length)}
 		</span>,
 	)
+
+	React.useEffect(() => {
+		if (!nativeVideoRef.current) return
+		if (typeof playerPreferences?.playbackRate === 'number') {
+			nativeVideoRef.current.playbackRate = playerPreferences.playbackRate
+		}
+		if (typeof playerPreferences?.volumeRate === 'number') {
+			nativeVideoRef.current.volume = playerPreferences.volumeRate
+		}
+	}, [playerPreferences?.playbackRate, playerPreferences?.volumeRate, shouldUseOfflineVideo])
+
+	React.useEffect(() => {
+		if (offlineVideoFetcher.state !== 'idle') return
+		if (offlineVideoFetcher.data?.status) {
+			setAvailabilityKey((key) => key + 1)
+		}
+	}, [offlineVideoFetcher.state, offlineVideoFetcher.data])
+
+	const handleDownload = React.useCallback(() => {
+		offlineVideoFetcher.submit(
+			{
+				intent: 'download-video',
+				playbackId: muxPlaybackId,
+				title,
+				url: urlString,
+			},
+			{ method: 'post', action: '/resources/offline-videos' },
+		)
+	}, [muxPlaybackId, offlineVideoFetcher, title, urlString])
+
+	const handleDelete = React.useCallback(() => {
+		offlineVideoFetcher.submit(
+			{ intent: 'delete-video', playbackId: muxPlaybackId },
+			{ method: 'post', action: '/resources/offline-videos' },
+		)
+	}, [muxPlaybackId, offlineVideoFetcher])
 	return (
 		<div>
 			<div className="shadow-lg">
 				{shouldUseOfflineVideo ? (
 					<div className="flex aspect-video w-full items-center justify-center bg-black">
-						<video
-							ref={nativeVideoRef}
-							aria-label={title}
-							className="h-full w-full"
-							controls
-							controlsList="nodownload"
-							playsInline
-							preload="metadata"
-							src={offlineVideo.offlineUrl}
-						/>
+						<MediaController className="h-full w-full">
+							<video
+								ref={nativeVideoRef}
+								slot="media"
+								aria-label={title}
+								className="h-full w-full"
+								playsInline
+								preload="metadata"
+								src={offlineVideo.offlineUrl}
+							/>
+							<MediaControlBar>
+								<MediaPlayButton />
+								<MediaTimeRange />
+								<MediaTimeDisplay showDuration />
+								<MediaMuteButton />
+								<MediaVolumeRange />
+								<MediaPlaybackRateButton />
+								<MediaFullscreenButton />
+							</MediaControlBar>
+						</MediaController>
 					</div>
 				) : !isOnline && offlineVideo.checked ? (
 					<OfflineVideoUnavailable />
@@ -518,11 +581,19 @@ function EpicVideo({
 					duration={duration}
 					durationEstimate={durationEstimate}
 				/>
-				{offlineVideo.available ? (
-					<span className="text-muted-foreground text-sm">
-						Offline copy ready
-					</span>
-				) : null}
+				<div className="flex flex-wrap items-center gap-3">
+					<OfflineVideoActionButtons
+						isAvailable={offlineVideo.available}
+						isBusy={isOfflineActionBusy}
+						onDownload={handleDownload}
+						onDelete={handleDelete}
+					/>
+					{offlineVideo.available ? (
+						<span className="text-muted-foreground text-sm">
+							Offline copy ready
+						</span>
+					) : null}
+				</div>
 				<details>
 					<summary>Transcript</summary>
 					<div className="bg-accent text-accent-foreground rounded-md p-2 whitespace-pre-line">

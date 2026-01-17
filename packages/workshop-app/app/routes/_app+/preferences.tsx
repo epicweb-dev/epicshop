@@ -5,6 +5,7 @@ import {
 import {
 	getOfflineVideoSummary,
 	startOfflineVideoDownload,
+	deleteOfflineVideosForWorkshop,
 } from '@epic-web/workshop-utils/offline-videos.server'
 import { Form, useFetcher, useLoaderData, useNavigation } from 'react-router'
 import { Button } from '#app/components/button.tsx'
@@ -48,6 +49,21 @@ export async function action({ request }: Route.ActionArgs) {
 		return redirectWithToast('/preferences', {
 			title: 'Offline downloads started',
 			description: `Queued ${result.queued} video${result.queued === 1 ? '' : 's'} for download.`,
+			type: 'success',
+		})
+	}
+
+	if (intent === 'delete-offline-videos') {
+		const result = await deleteOfflineVideosForWorkshop()
+		const description =
+			result.deletedFiles === 0
+				? 'No offline videos were removed.'
+				: `Removed ${result.deletedFiles} offline video${
+						result.deletedFiles === 1 ? '' : 's'
+					}.`
+		return redirectWithToast('/preferences', {
+			title: 'Offline videos cleared',
+			description,
 			type: 'success',
 		})
 	}
@@ -251,9 +267,7 @@ export default function AccountSettings() {
 						</SimpleTooltip>
 					</div>
 					<p className="text-muted-foreground text-sm">
-						Download all workshop videos for offline playback. Videos are saved
-						in the app data folder, encrypted at rest, and only served by the
-						local workshop server.
+						Download all workshop videos so you can watch them when offline.
 					</p>
 					<div className="flex flex-wrap items-center gap-3">
 						<Form method="post">
@@ -268,6 +282,17 @@ export default function AccountSettings() {
 							>
 								{isDownloading ? 'Downloading...' : 'Download all videos'}
 							</Button>
+						</Form>
+						<Form method="post">
+							<button
+								type="submit"
+								name="intent"
+								value="delete-offline-videos"
+								disabled={isSubmitting || offlineVideos.downloadedVideos === 0}
+								className="border-border text-foreground hover:bg-muted inline-flex items-center gap-2 rounded border px-3 py-2 text-sm disabled:cursor-not-allowed disabled:opacity-50"
+							>
+								Delete offline videos
+							</button>
 						</Form>
 						<span className="text-muted-foreground text-sm">
 							{offlineVideos.downloadedVideos} of {offlineVideos.totalVideos}{' '}

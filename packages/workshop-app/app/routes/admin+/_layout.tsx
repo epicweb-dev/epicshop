@@ -45,6 +45,11 @@ export default function AdminLayout() {
 							</Link>
 						</li>
 						<li>
+							<Link className="underline" to="offline-videos">
+								Offline Videos
+							</Link>
+						</li>
+						<li>
 							<Link className="underline" to="version">
 								Version
 							</Link>

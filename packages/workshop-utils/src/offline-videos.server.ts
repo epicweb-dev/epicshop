@@ -9,6 +9,7 @@ import {
 	getWorkshopFinished,
 	getWorkshopInstructions,
 } from './apps.server.ts'
+import { getWorkshopConfig } from './config.server.ts'
 import { resolvePrimaryDir } from './data-storage.server.ts'
 import { getAuthInfo, getClientId } from './db.server.ts'
 import { getEpicVideoInfos } from './epic-api.server.ts'
@@ -52,6 +53,7 @@ type OfflineVideoEntry = {
 	iv?: string
 	keyId?: string
 	cryptoVersion?: number
+	workshops?: Array<WorkshopIdentity>
 }
 
 type OfflineVideoIndex = Record<string, OfflineVideoEntry>
@@ -60,6 +62,11 @@ type WorkshopVideoInfo = {
 	playbackId: string
 	title: string
 	url: string
+}
+
+type WorkshopIdentity = {
+	id: string
+	title: string
 }
 
 type WorkshopVideoCollection = {
@@ -82,6 +89,23 @@ export type OfflineVideoStartResult = {
 	queued: number
 	unavailable: number
 	alreadyDownloaded: number
+}
+
+export type OfflineVideoAdminEntry = {
+	playbackId: string
+	title: string
+	status: OfflineVideoEntryStatus
+	size: number | null
+	updatedAt: string
+}
+
+export type OfflineVideoAdminWorkshop = WorkshopIdentity & {
+	totalBytes: number
+	videos: Array<OfflineVideoAdminEntry>
+}
+
+export type OfflineVideoAdminSummary = {
+	workshops: Array<OfflineVideoAdminWorkshop>
 }
 
 type OfflineVideoConfig = {
@@ -128,6 +152,71 @@ function getOfflineVideoIndexPath() {
 
 function getOfflineVideoConfigPath() {
 	return path.join(getOfflineVideoDir(), offlineVideoConfigFileName)
+}
+
+function getWorkshopIdentity(): WorkshopIdentity {
+	const env = getEnv()
+	let title = 'Unknown workshop'
+	try {
+		title = getWorkshopConfig().title
+	} catch {
+		// ignore missing workshop config
+	}
+	return {
+		id: env.EPICSHOP_WORKSHOP_INSTANCE_ID || 'unknown',
+		title,
+	}
+}
+
+const legacyWorkshopIdentity: WorkshopIdentity = {
+	id: 'legacy',
+	title: 'Legacy downloads',
+}
+
+function getEntryWorkshops(
+	entry: OfflineVideoEntry,
+	fallback?: WorkshopIdentity,
+) {
+	const workshops = Array.isArray(entry.workshops)
+		? entry.workshops.filter(
+				(workshop) =>
+					typeof workshop?.id === 'string' &&
+					typeof workshop?.title === 'string',
+			)
+		: []
+	if (workshops.length > 0) return workshops
+	if (fallback) return [fallback]
+	return []
+}
+
+function hasWorkshop(
+	entry: OfflineVideoEntry,
+	workshopId: string,
+	fallback?: WorkshopIdentity,
+) {
+	const workshops = getEntryWorkshops(entry, fallback)
+	return workshops.some((workshop) => workshop.id === workshopId)
+}
+
+function ensureWorkshopOnEntry(
+	entry: OfflineVideoEntry,
+	workshop: WorkshopIdentity,
+	fallback?: WorkshopIdentity,
+) {
+	const workshops = getEntryWorkshops(entry, fallback)
+	if (workshops.some((item) => item.id === workshop.id)) return entry
+	return { ...entry, workshops: [...workshops, workshop] }
+}
+
+function removeWorkshopFromEntry(
+	entry: OfflineVideoEntry,
+	workshopId: string,
+	fallback?: WorkshopIdentity,
+) {
+	const workshops = getEntryWorkshops(entry, fallback).filter(
+		(workshop) => workshop.id !== workshopId,
+	)
+	return { ...entry, workshops }
 }
 
 async function ensureOfflineVideoDir() {
@@ -398,10 +487,12 @@ async function isOfflineVideoReady(
 	playbackId: string,
 	keyId: string,
 	cryptoVersion: number,
+	workshop: WorkshopIdentity,
 ) {
 	const entry = index[playbackId]
 	if (!entry || entry.status !== 'ready') return false
 	if (entry.keyId !== keyId || entry.cryptoVersion !== cryptoVersion) return false
+	if (!hasWorkshop(entry, workshop.id, workshop)) return false
 	const filePath = entry.fileName
 		? path.join(getOfflineVideoDir(), entry.fileName)
 		: getOfflineVideoFilePath(playbackId)
@@ -458,10 +549,12 @@ async function runOfflineVideoDownloads({
 	videos,
 	index,
 	keyInfo,
+	workshop,
 }: {
 	videos: Array<WorkshopVideoInfo>
 	index: OfflineVideoIndex
 	keyInfo: OfflineVideoKeyInfo
+	workshop: WorkshopIdentity
 }) {
 	for (const video of videos) {
 		const updatedAt = new Date().toISOString()
@@ -482,6 +575,7 @@ async function runOfflineVideoDownloads({
 			iv: encodeOfflineVideoIv(iv),
 			keyId: keyInfo.keyId,
 			cryptoVersion: keyInfo.config.version,
+			workshops: [workshop],
 		}
 		index[video.playbackId] = entry
 		await writeOfflineVideoIndex(index)
@@ -535,6 +629,7 @@ export function getOfflineVideoDownloadState() {
 export async function getOfflineVideoSummary({
 	request,
 }: { request?: Request } = {}): Promise<OfflineVideoSummary> {
+	const workshop = getWorkshopIdentity()
 	const { videos, unavailable } = await getWorkshopVideoCollection({ request })
 	const index = await readOfflineVideoIndex()
 	const keyInfo = await getOfflineVideoKeyInfo({
@@ -550,7 +645,8 @@ export async function getOfflineVideoSummary({
 			entry?.status === 'ready' &&
 			keyInfo &&
 			entry.keyId === keyInfo.keyId &&
-			entry.cryptoVersion === keyInfo.config.version
+			entry.cryptoVersion === keyInfo.config.version &&
+			hasWorkshop(entry, workshop.id, workshop)
 		) {
 			downloadedVideos += 1
 			totalBytes += entry.size ?? 0
@@ -602,6 +698,7 @@ export async function startOfflineVideoDownload({
 		errors: [],
 	}
 
+	const workshop = getWorkshopIdentity()
 	const { videos, unavailable } = await getWorkshopVideoCollection({ request })
 	const index = await readOfflineVideoIndex()
 	const authInfo = await getAuthInfo()
@@ -622,12 +719,30 @@ export async function startOfflineVideoDownload({
 	let alreadyDownloaded = 0
 
 	for (const video of videos) {
+		const entry = index[video.playbackId]
+		if (
+			entry?.status === 'ready' &&
+			entry.keyId === keyInfo.keyId &&
+			entry.cryptoVersion === keyInfo.config.version
+		) {
+			if (!hasWorkshop(entry, workshop.id, workshop)) {
+				index[video.playbackId] = ensureWorkshopOnEntry(
+					entry,
+					workshop,
+					workshop,
+				)
+				await writeOfflineVideoIndex(index)
+			}
+			alreadyDownloaded += 1
+			continue
+		}
 		if (
 			await isOfflineVideoReady(
 				index,
 				video.playbackId,
 				keyInfo.keyId,
 				keyInfo.config.version,
+				workshop,
 			)
 		) {
 			alreadyDownloaded += 1
@@ -649,7 +764,12 @@ export async function startOfflineVideoDownload({
 	}
 
 	if (downloads.length > 0) {
-		void runOfflineVideoDownloads({ videos: downloads, index, keyInfo }).catch(
+		void runOfflineVideoDownloads({
+			videos: downloads,
+			index,
+			keyInfo,
+			workshop,
+		}).catch(
 			(error) => {
 			log.error('Offline video downloads failed', error)
 			downloadState.status = 'error'
@@ -667,9 +787,166 @@ export async function startOfflineVideoDownload({
 	}
 }
 
+export async function downloadOfflineVideo({
+	playbackId,
+	title,
+	url,
+}: {
+	playbackId: string
+	title: string
+	url: string
+}) {
+	const workshop = getWorkshopIdentity()
+	const index = await readOfflineVideoIndex()
+	const authInfo = await getAuthInfo()
+	const keyInfo = await getOfflineVideoKeyInfo({
+		userId: authInfo?.id ?? null,
+		allowUserIdUpdate: true,
+	})
+	if (!keyInfo) return { status: 'error' } as const
+
+	const existing = index[playbackId]
+	if (
+		existing?.status === 'ready' &&
+		existing.keyId === keyInfo.keyId &&
+		existing.cryptoVersion === keyInfo.config.version
+	) {
+		const updated = ensureWorkshopOnEntry(existing, workshop, workshop)
+		if (updated !== existing) {
+			index[playbackId] = updated
+			await writeOfflineVideoIndex(index)
+		}
+		return { status: 'ready' } as const
+	}
+
+	const updatedAt = new Date().toISOString()
+	const iv = createOfflineVideoIv()
+	const entry: OfflineVideoEntry = {
+		playbackId,
+		title,
+		url,
+		fileName: getOfflineVideoFileName(playbackId),
+		status: 'downloading',
+		updatedAt,
+		iv: encodeOfflineVideoIv(iv),
+		keyId: keyInfo.keyId,
+		cryptoVersion: keyInfo.config.version,
+		workshops: [workshop],
+	}
+	index[playbackId] = entry
+	await writeOfflineVideoIndex(index)
+
+	try {
+		const { size } = await downloadMuxVideo({
+			playbackId,
+			filePath: path.join(getOfflineVideoDir(), entry.fileName),
+			key: keyInfo.key,
+			iv,
+		})
+		index[playbackId] = {
+			...entry,
+			status: 'ready',
+			size,
+			updatedAt: new Date().toISOString(),
+		}
+		await writeOfflineVideoIndex(index)
+		return { status: 'downloaded' } as const
+	} catch (error) {
+		const message = error instanceof Error ? error.message : 'Download failed'
+		index[playbackId] = {
+			...entry,
+			status: 'error',
+			error: message,
+			updatedAt: new Date().toISOString(),
+		}
+		await writeOfflineVideoIndex(index)
+		return { status: 'error' } as const
+	}
+}
+
+export async function deleteOfflineVideo(playbackId: string) {
+	const workshop = getWorkshopIdentity()
+	const index = await readOfflineVideoIndex()
+	const entry = index[playbackId]
+	if (!entry) return { status: 'missing' } as const
+
+	const nextEntry = removeWorkshopFromEntry(entry, workshop.id, workshop)
+	if (nextEntry.workshops && nextEntry.workshops.length > 0) {
+		index[playbackId] = nextEntry
+		await writeOfflineVideoIndex(index)
+		return { status: 'removed' } as const
+	}
+
+	const filePath = entry.fileName
+		? path.join(getOfflineVideoDir(), entry.fileName)
+		: getOfflineVideoFilePath(playbackId)
+	delete index[playbackId]
+	await writeOfflineVideoIndex(index)
+	await fs.rm(filePath, { force: true })
+	return { status: 'deleted' } as const
+}
+
+export async function deleteOfflineVideosForWorkshop() {
+	const workshop = getWorkshopIdentity()
+	const index = await readOfflineVideoIndex()
+	let deletedFiles = 0
+	let removedEntries = 0
+
+	for (const [playbackId, entry] of Object.entries(index)) {
+		if (!hasWorkshop(entry, workshop.id, workshop)) continue
+		const nextEntry = removeWorkshopFromEntry(entry, workshop.id, workshop)
+		if (nextEntry.workshops && nextEntry.workshops.length > 0) {
+			index[playbackId] = nextEntry
+			continue
+		}
+		const filePath = entry.fileName
+			? path.join(getOfflineVideoDir(), entry.fileName)
+			: getOfflineVideoFilePath(playbackId)
+		delete index[playbackId]
+		removedEntries += 1
+		await fs.rm(filePath, { force: true })
+		deletedFiles += 1
+	}
+
+	await writeOfflineVideoIndex(index)
+	return { deletedFiles, removedEntries } as const
+}
+
+export async function getOfflineVideoAdminSummary(): Promise<OfflineVideoAdminSummary> {
+	const index = await readOfflineVideoIndex()
+	const workshops = new Map<string, OfflineVideoAdminWorkshop>()
+
+	for (const [playbackId, entry] of Object.entries(index)) {
+		const entryWorkshops = getEntryWorkshops(entry, legacyWorkshopIdentity)
+		for (const workshop of entryWorkshops) {
+			const existing = workshops.get(workshop.id) ?? {
+				...workshop,
+				totalBytes: 0,
+				videos: [],
+			}
+			existing.videos.push({
+				playbackId,
+				title: entry.title,
+				status: entry.status,
+				size: entry.size ?? null,
+				updatedAt: entry.updatedAt,
+			})
+			existing.totalBytes += entry.size ?? 0
+			workshops.set(workshop.id, existing)
+		}
+	}
+
+	return {
+		workshops: Array.from(workshops.values()).sort((a, b) =>
+			a.title.localeCompare(b.title),
+		),
+	}
+}
+
 export async function getOfflineVideoAsset(
 	playbackId: string,
 ): Promise<OfflineVideoAsset | null> {
+	const workshop = getWorkshopIdentity()
 	const keyInfo = await getOfflineVideoKeyInfo({
 		userId: null,
 		allowUserIdUpdate: false,
@@ -683,7 +960,8 @@ export async function getOfflineVideoAsset(
 		entry.status !== 'ready' ||
 		entry.keyId !== keyInfo.keyId ||
 		entry.cryptoVersion !== keyInfo.config.version ||
-		!entry.iv
+		!entry.iv ||
+		!hasWorkshop(entry, workshop.id, workshop)
 	) {
 		return null
 	}
