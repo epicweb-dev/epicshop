@@ -13,5 +13,12 @@ export default defineConfig({
 				},
 			],
 		},
+		deps: {
+			optimizer: {
+				client: {
+					exclude: ['execa', 'npm-run-path', 'globby', 'unicorn-magic'],
+				},
+			},
+		},
 	},
 })
