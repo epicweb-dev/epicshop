@@ -114,11 +114,7 @@ export default function OfflineVideosAdmin({
 			<div className="flex flex-wrap items-center justify-between gap-3">
 				<h2 className="text-lg font-semibold">Downloads</h2>
 				<Form method="post">
-					<DoubleCheckButton
-						type="submit"
-						name="intent"
-						value="delete-all"
-					>
+					<DoubleCheckButton type="submit" name="intent" value="delete-all">
 						Delete all downloads
 					</DoubleCheckButton>
 				</Form>

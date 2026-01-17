@@ -574,11 +574,9 @@ function EpicVideo({
 							style={
 								{
 									'--media-primary-color': 'hsl(var(--background))',
-									'--media-secondary-color':
-										'hsl(var(--foreground) / 0.8)',
+									'--media-secondary-color': 'hsl(var(--foreground) / 0.8)',
 									'--media-text-color': 'hsl(var(--background))',
-									'--media-control-background':
-										'hsl(var(--foreground) / 0.8)',
+									'--media-control-background': 'hsl(var(--foreground) / 0.8)',
 									'--media-control-hover-background':
 										'hsl(var(--foreground) / 0.9)',
 									'--media-range-track-height': '4px',
