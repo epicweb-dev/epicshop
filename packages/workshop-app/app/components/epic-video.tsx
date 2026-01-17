@@ -466,6 +466,10 @@ function EpicVideo({
 	const shouldUseOfflineVideo = offlineVideo.available
 	const offlineVideoFetcher = useFetcher<OfflineVideoActionData>()
 	const isOfflineActionBusy = offlineVideoFetcher.state !== 'idle'
+	const currentTimeSessionKey = `${muxPlaybackId}:currentTime`
+	const [offlineStartTime, setOfflineStartTime] = React.useState<number | null>(
+		null,
+	)
 	const timestampRegex = /(\d+:\d+)/g
 	// turn the transcript into an array of React elements
 	const transcriptElements: Array<React.ReactNode> = []
@@ -532,6 +536,80 @@ function EpicVideo({
 	])
 
 	React.useEffect(() => {
+		if (!shouldUseOfflineVideo) return
+		if (typeof document === 'undefined') return
+		const stored = sessionStorage.getItem(currentTimeSessionKey)
+		if (!stored) {
+			setOfflineStartTime(null)
+			return
+		}
+		try {
+			const parsed = JSON.parse(stored) as {
+				time?: number
+				expiresAt?: string
+			}
+			const expiresAt = parsed.expiresAt
+				? new Date(parsed.expiresAt).getTime()
+				: 0
+			if (
+				typeof parsed.time !== 'number' ||
+				Number.isNaN(parsed.time) ||
+				!expiresAt ||
+				expiresAt < Date.now()
+			) {
+				throw new Error('Time expired')
+			}
+			setOfflineStartTime(parsed.time)
+		} catch {
+			sessionStorage.removeItem(currentTimeSessionKey)
+			setOfflineStartTime(null)
+		}
+	}, [currentTimeSessionKey, shouldUseOfflineVideo])
+
+	React.useEffect(() => {
+		if (!shouldUseOfflineVideo) return
+		const video = nativeVideoRef.current
+		if (!video || offlineStartTime == null) return
+
+		const restoreTime = () => {
+			const duration = Number.isFinite(video.duration) ? video.duration : 0
+			const safeTime = duration
+				? Math.min(offlineStartTime, Math.max(duration - 1, 0))
+				: offlineStartTime
+			if (safeTime > 0) {
+				video.currentTime = safeTime
+			}
+		}
+
+		if (video.readyState >= 1) {
+			restoreTime()
+			return
+		}
+		video.addEventListener('loadedmetadata', restoreTime)
+		return () => {
+			video.removeEventListener('loadedmetadata', restoreTime)
+		}
+	}, [offlineStartTime, shouldUseOfflineVideo])
+
+	const handleOfflineTimeUpdate = React.useCallback(() => {
+		if (typeof document === 'undefined') return
+		const video = nativeVideoRef.current
+		if (!video) return
+		const duration = Number.isFinite(video.duration) ? video.duration : 0
+		if (duration && duration - video.currentTime <= 1) {
+			sessionStorage.removeItem(currentTimeSessionKey)
+			return
+		}
+		sessionStorage.setItem(
+			currentTimeSessionKey,
+			JSON.stringify({
+				time: video.currentTime,
+				expiresAt: new Date(Date.now() + 1000 * 60 * 30).toISOString(),
+			}),
+		)
+	}, [currentTimeSessionKey])
+
+	React.useEffect(() => {
 		if (offlineVideoFetcher.state !== 'idle') return
 		if (offlineVideoFetcher.data?.status) {
 			setAvailabilityKey((key) => key + 1)
@@ -588,9 +666,13 @@ function EpicVideo({
 									'--media-control-background': 'transparent',
 									'--media-control-hover-background':
 										'hsl(var(--background) / 0.18)',
-									'--media-range-track-height': '4px',
-									'--media-range-thumb-height': '10px',
-									'--media-range-thumb-width': '10px',
+									'--media-control-height': '18px',
+									'--media-range-padding': '2px',
+									'--media-time-range-hover-height': '18px',
+									'--media-time-range-hover-bottom': '-4px',
+									'--media-range-track-height': '3px',
+									'--media-range-thumb-height': '8px',
+									'--media-range-thumb-width': '8px',
 									'--media-range-track-background':
 										'hsl(var(--background) / 0.35)',
 									'--media-range-track-pointer-background':
@@ -606,11 +688,12 @@ function EpicVideo({
 								playsInline
 								preload="metadata"
 								src={offlineVideo.offlineUrl}
+								onTimeUpdate={handleOfflineTimeUpdate}
 							/>
-							<div className="bg-foreground/80 text-background w-full space-y-3 rounded-md px-4 pt-2 pb-3 backdrop-blur">
+							<div className="bg-foreground/40 text-background select-none w-full space-y-1 px-3 pt-1 pb-1.5 text-sm leading-none backdrop-blur">
 								<MediaTimeRange className="w-full" />
-								<MediaControlBar className="w-full items-center gap-4">
-									<div className="flex items-center gap-4">
+								<MediaControlBar className="w-full items-center gap-3">
+									<div className="flex items-center gap-3">
 										<MediaPlayButton />
 										<MediaSeekBackwardButton
 											ref={setSeekOffset}
@@ -620,12 +703,15 @@ function EpicVideo({
 											ref={setSeekOffset}
 											seekOffset={10}
 										/>
-										<MediaTimeDisplay showDuration className="tabular-nums" />
+										<MediaTimeDisplay showDuration className="tabular-nums text-background text-xs" />
 										<MediaMuteButton />
-										<MediaVolumeRange className="w-28" />
+										<MediaVolumeRange className="w-24" />
 									</div>
-									<div className="ml-auto flex items-center gap-4">
-										<MediaPlaybackRateButton />
+									<div className="ml-auto flex items-center gap-3">
+										<MediaPlaybackRateButton
+											className="text-background text-xs"
+											rates={[0.5, 0.75, 0.8, 0.9, 1, 1.25, 1.5, 1.75, 2, 2.5, 3, 3.5, 4]}
+										/>
 										<MediaPipButton />
 										<MediaFullscreenButton />
 									</div>
@@ -655,11 +741,6 @@ function EpicVideo({
 					durationEstimate={durationEstimate}
 					actions={offlineActions}
 				/>
-				{offlineVideo.available ? (
-					<span className="text-muted-foreground text-sm">
-						Offline copy ready
-					</span>
-				) : null}
 				<details>
 					<summary>Transcript</summary>
 					<div className="bg-accent text-accent-foreground rounded-md p-2 whitespace-pre-line">

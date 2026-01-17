@@ -166,6 +166,25 @@ function getParentMuxPlayer(el: unknown) {
 	return el instanceof HTMLElement ? el.closest('mux-player') : null
 }
 
+function getParentMediaController(el: unknown) {
+	return el instanceof HTMLElement ? el.closest('media-controller') : null
+}
+
+type MediaControllerElement = HTMLElement & {
+	media?: HTMLMediaElement | null
+}
+
+function getMediaElementFromController(
+	controller: MediaControllerElement | null,
+) {
+	if (!controller) return null
+	if (controller.media instanceof HTMLMediaElement) {
+		return controller.media
+	}
+	const mediaElement = controller.querySelector('video, audio')
+	return mediaElement instanceof HTMLMediaElement ? mediaElement : null
+}
+
 function shouldIgnoreHotkey(el: unknown) {
 	if (!(el instanceof HTMLElement)) return false
 
@@ -180,6 +199,8 @@ function shouldIgnoreHotkey(el: unknown) {
 function isMuxPlayer(el: unknown): el is MuxPlayerRefAttributes {
 	return typeof el === 'object' && el !== null && 'mux' in el
 }
+
+const defaultPlaybackRates = [0.5, 0.75, 1, 1.25, 1.5, 2, 3, 4]
 
 function handleKeyDown(e: KeyboardEvent) {
 	// don't apply hotkeys below when meta or ctrl is pressed
@@ -204,57 +225,206 @@ function handleKeyDown(e: KeyboardEvent) {
 	// if there are multiple players then we control the one that has focus
 	// and if neither has focus, we control the first one
 	const parentMuxPlayer = getParentMuxPlayer(activeElement)
-	const focusIsInMuxPlayer = Boolean(parentMuxPlayer)
-	const firstMuxPlayer = document.querySelectorAll('mux-player')[0] ?? null
-	const muxPlayer = parentMuxPlayer ?? firstMuxPlayer
-	if (!isMuxPlayer(muxPlayer)) return
+	const parentMediaController = getParentMediaController(activeElement)
+	const focusIsInPlayer = Boolean(parentMuxPlayer ?? parentMediaController)
+	const firstPlayer =
+		document.querySelector('mux-player, media-controller') ?? null
+	const playerElement = parentMuxPlayer ?? parentMediaController ?? firstPlayer
+	if (!playerElement) return
 
-	if (!focusIsInMuxPlayer) {
+	if (isMuxPlayer(playerElement)) {
+		const muxPlayer = playerElement
+
+		if (!focusIsInPlayer) {
+			// these are hotkeys the video player handles for us when focus is on the video player
+			// but we want them to apply globally
+			if (e.key === ' ') {
+				e.preventDefault()
+				if (muxPlayer.paused) {
+					// Only attempt to play if metadata is loaded to avoid AbortError
+					if (muxPlayer.metadata) {
+						void muxPlayer.play().catch(() => {})
+					}
+				} else {
+					muxPlayer.pause()
+				}
+			}
+			if (e.key === 'ArrowRight') {
+				e.preventDefault()
+				muxPlayer.currentTime =
+					muxPlayer.currentTime + (muxPlayer.forwardSeekOffset || 10)
+			}
+			if (e.key === 'ArrowLeft') {
+				e.preventDefault()
+				muxPlayer.currentTime =
+					muxPlayer.currentTime - (muxPlayer.forwardSeekOffset || 10)
+			}
+			if (e.key === 'f') {
+				e.preventDefault()
+				void (document.fullscreenElement
+					? document.exitFullscreen()
+					: muxPlayer.requestFullscreen())
+			}
+			// k to play/pause
+			if (e.key === 'k') {
+				e.preventDefault()
+				if (muxPlayer.paused) {
+					// Only attempt to play if metadata is loaded to avoid AbortError
+					if (muxPlayer.metadata) {
+						void muxPlayer.play().catch(() => {})
+					}
+				} else {
+					muxPlayer.pause()
+				}
+			}
+			// c to toggle captions
+			if (e.key === 'c') {
+				e.preventDefault()
+				const textTracks = Array.from(muxPlayer.textTracks ?? [])
+				const subtitleTrack = textTracks.find(
+					(track) => track.kind === 'subtitles',
+				)
+				if (subtitleTrack) {
+					subtitleTrack.mode =
+						subtitleTrack.mode === 'showing' ? 'disabled' : 'showing'
+				}
+			}
+		}
+
+		// these are hot keys the video player does not handle for us
+
+		// j to go backward
+		if (e.key === 'j') {
+			e.preventDefault()
+			muxPlayer.currentTime = Math.max(
+				0,
+				muxPlayer.currentTime - (muxPlayer.forwardSeekOffset || 10),
+			)
+		}
+		// l to go forward
+		if (e.key === 'l') {
+			e.preventDefault()
+			muxPlayer.currentTime = Math.min(
+				muxPlayer.duration || Infinity,
+				muxPlayer.currentTime + (muxPlayer.forwardSeekOffset || 10),
+			)
+		}
+		// , (when paused) to go to the previous frame
+		if (e.key === ',' && muxPlayer.paused) {
+			e.preventDefault()
+			// Step backward by approximately 1/30 second (one frame at 30fps)
+			muxPlayer.currentTime = Math.max(0, muxPlayer.currentTime - 1 / 30)
+		}
+		// . (when paused) to go to the next frame
+		if (e.key === '.' && muxPlayer.paused && !e.shiftKey) {
+			e.preventDefault()
+			// Step forward by approximately 1/30 second (one frame at 30fps)
+			muxPlayer.currentTime = Math.min(
+				muxPlayer.duration || Infinity,
+				muxPlayer.currentTime + 1 / 30,
+			)
+		}
+		// Seek to specific point in the video (7 advances to 70% of duration) 0..9
+		if (/^[0-9]$/.test(e.key)) {
+			e.preventDefault()
+			const percentage = parseInt(e.key) / 10
+			const duration = muxPlayer.duration
+			if (duration) {
+				muxPlayer.currentTime = duration * percentage
+			}
+		}
+		// i toggle picture in picture
+		if (e.key === 'i') {
+			e.preventDefault()
+			if (document.pictureInPictureElement) {
+				void document.exitPictureInPicture().catch(() => {})
+			} else {
+				void muxPlayer?.media?.requestPictureInPicture()
+			}
+		}
+		// arrow up/down to adjust volume
+		if (e.key === 'ArrowUp') {
+			e.preventDefault()
+			muxPlayer.volume = Math.min(1, muxPlayer.volume + 0.1)
+		}
+		if (e.key === 'ArrowDown') {
+			e.preventDefault()
+			muxPlayer.volume = Math.max(0, muxPlayer.volume - 0.1)
+		}
+
+		// Speed control shortcuts: Shift+> (increase) and Shift+< (decrease)
+		if (e.shiftKey && e.key === '>') {
+			e.preventDefault()
+			const currentRate = muxPlayer.playbackRate
+			const rates = muxPlayer.playbackRates ?? []
+			const nextRate = rates
+				.filter((rate) => rate > currentRate)
+				.sort((a, b) => a - b)[0]
+			if (nextRate && nextRate !== currentRate) {
+				muxPlayer.playbackRate = nextRate
+			}
+		}
+		if (e.shiftKey && e.key === '<') {
+			e.preventDefault()
+			const currentRate = muxPlayer.playbackRate
+			const rates = muxPlayer.playbackRates ?? []
+			const previousRate = rates
+				.filter((rate) => rate < currentRate)
+				.sort((a, b) => b - a)[0]
+			if (previousRate && previousRate !== currentRate) {
+				muxPlayer.playbackRate = previousRate
+			}
+		}
+
+		return
+	}
+
+	const mediaController = playerElement as MediaControllerElement
+	const mediaElement = getMediaElementFromController(mediaController)
+	if (!mediaElement) return
+
+	if (!focusIsInPlayer) {
 		// these are hotkeys the video player handles for us when focus is on the video player
 		// but we want them to apply globally
 		if (e.key === ' ') {
 			e.preventDefault()
-			if (muxPlayer.paused) {
-				// Only attempt to play if metadata is loaded to avoid AbortError
-				if (muxPlayer.metadata) {
-					void muxPlayer.play().catch(() => {})
+			if (mediaElement.paused) {
+				if (mediaElement.readyState >= 1) {
+					void mediaElement.play().catch(() => {})
 				}
 			} else {
-				muxPlayer.pause()
+				mediaElement.pause()
 			}
 		}
 		if (e.key === 'ArrowRight') {
 			e.preventDefault()
-			muxPlayer.currentTime =
-				muxPlayer.currentTime + (muxPlayer.forwardSeekOffset || 10)
+			mediaElement.currentTime = mediaElement.currentTime + 10
 		}
 		if (e.key === 'ArrowLeft') {
 			e.preventDefault()
-			muxPlayer.currentTime =
-				muxPlayer.currentTime - (muxPlayer.forwardSeekOffset || 10)
+			mediaElement.currentTime = mediaElement.currentTime - 10
 		}
 		if (e.key === 'f') {
 			e.preventDefault()
 			void (document.fullscreenElement
 				? document.exitFullscreen()
-				: muxPlayer.requestFullscreen())
+				: mediaController.requestFullscreen())
 		}
 		// k to play/pause
 		if (e.key === 'k') {
 			e.preventDefault()
-			if (muxPlayer.paused) {
-				// Only attempt to play if metadata is loaded to avoid AbortError
-				if (muxPlayer.metadata) {
-					void muxPlayer.play().catch(() => {})
+			if (mediaElement.paused) {
+				if (mediaElement.readyState >= 1) {
+					void mediaElement.play().catch(() => {})
 				}
 			} else {
-				muxPlayer.pause()
+				mediaElement.pause()
 			}
 		}
 		// c to toggle captions
 		if (e.key === 'c') {
 			e.preventDefault()
-			const textTracks = Array.from(muxPlayer.textTracks ?? [])
+			const textTracks = Array.from(mediaElement.textTracks ?? [])
 			const subtitleTrack = textTracks.find(
 				(track) => track.kind === 'subtitles',
 			)
@@ -270,41 +440,41 @@ function handleKeyDown(e: KeyboardEvent) {
 	// j to go backward
 	if (e.key === 'j') {
 		e.preventDefault()
-		muxPlayer.currentTime = Math.max(
+		mediaElement.currentTime = Math.max(
 			0,
-			muxPlayer.currentTime - (muxPlayer.forwardSeekOffset || 10),
+			mediaElement.currentTime - 10,
 		)
 	}
 	// l to go forward
 	if (e.key === 'l') {
 		e.preventDefault()
-		muxPlayer.currentTime = Math.min(
-			muxPlayer.duration || Infinity,
-			muxPlayer.currentTime + (muxPlayer.forwardSeekOffset || 10),
+		mediaElement.currentTime = Math.min(
+			mediaElement.duration || Infinity,
+			mediaElement.currentTime + 10,
 		)
 	}
 	// , (when paused) to go to the previous frame
-	if (e.key === ',' && muxPlayer.paused) {
+	if (e.key === ',' && mediaElement.paused) {
 		e.preventDefault()
 		// Step backward by approximately 1/30 second (one frame at 30fps)
-		muxPlayer.currentTime = Math.max(0, muxPlayer.currentTime - 1 / 30)
+		mediaElement.currentTime = Math.max(0, mediaElement.currentTime - 1 / 30)
 	}
 	// . (when paused) to go to the next frame
-	if (e.key === '.' && muxPlayer.paused && !e.shiftKey) {
+	if (e.key === '.' && mediaElement.paused && !e.shiftKey) {
 		e.preventDefault()
 		// Step forward by approximately 1/30 second (one frame at 30fps)
-		muxPlayer.currentTime = Math.min(
-			muxPlayer.duration || Infinity,
-			muxPlayer.currentTime + 1 / 30,
+		mediaElement.currentTime = Math.min(
+			mediaElement.duration || Infinity,
+			mediaElement.currentTime + 1 / 30,
 		)
 	}
 	// Seek to specific point in the video (7 advances to 70% of duration) 0..9
 	if (/^[0-9]$/.test(e.key)) {
 		e.preventDefault()
 		const percentage = parseInt(e.key) / 10
-		const duration = muxPlayer.duration
+		const duration = mediaElement.duration
 		if (duration) {
-			muxPlayer.currentTime = duration * percentage
+			mediaElement.currentTime = duration * percentage
 		}
 	}
 	// i toggle picture in picture
@@ -312,41 +482,41 @@ function handleKeyDown(e: KeyboardEvent) {
 		e.preventDefault()
 		if (document.pictureInPictureElement) {
 			void document.exitPictureInPicture().catch(() => {})
-		} else {
-			void muxPlayer?.media?.requestPictureInPicture()
+		} else if ('requestPictureInPicture' in mediaElement) {
+			void (mediaElement as HTMLVideoElement).requestPictureInPicture()
 		}
 	}
 	// arrow up/down to adjust volume
 	if (e.key === 'ArrowUp') {
 		e.preventDefault()
-		muxPlayer.volume = Math.min(1, muxPlayer.volume + 0.1)
+		mediaElement.volume = Math.min(1, mediaElement.volume + 0.1)
 	}
 	if (e.key === 'ArrowDown') {
 		e.preventDefault()
-		muxPlayer.volume = Math.max(0, muxPlayer.volume - 0.1)
+		mediaElement.volume = Math.max(0, mediaElement.volume - 0.1)
 	}
 
 	// Speed control shortcuts: Shift+> (increase) and Shift+< (decrease)
 	if (e.shiftKey && e.key === '>') {
 		e.preventDefault()
-		const currentRate = muxPlayer.playbackRate
-		const rates = muxPlayer.playbackRates ?? []
+		const currentRate = mediaElement.playbackRate
+		const rates = defaultPlaybackRates
 		const nextRate = rates
 			.filter((rate) => rate > currentRate)
 			.sort((a, b) => a - b)[0]
 		if (nextRate && nextRate !== currentRate) {
-			muxPlayer.playbackRate = nextRate
+			mediaElement.playbackRate = nextRate
 		}
 	}
 	if (e.shiftKey && e.key === '<') {
 		e.preventDefault()
-		const currentRate = muxPlayer.playbackRate
-		const rates = muxPlayer.playbackRates ?? []
+		const currentRate = mediaElement.playbackRate
+		const rates = defaultPlaybackRates
 		const previousRate = rates
 			.filter((rate) => rate < currentRate)
 			.sort((a, b) => b - a)[0]
 		if (previousRate && previousRate !== currentRate) {
-			muxPlayer.playbackRate = previousRate
+			mediaElement.playbackRate = previousRate
 		}
 	}
 }
