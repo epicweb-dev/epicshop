@@ -148,7 +148,8 @@
     "tw-animate-css": "^1.2.9",
     "typescript": "^5.9.3",
     "vite": "^7.2.2",
-    "vite-plugin-devtools-json": "^1.0.0"
+    "vite-plugin-devtools-json": "^1.0.0",
+    "vitest-browser-react": "^2.0.2"
   },
   "engines": {
     "node": "20 || 22 || 24"
