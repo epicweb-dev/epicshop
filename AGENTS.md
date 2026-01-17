@@ -215,6 +215,9 @@ The code style guide can be found in
 `node_modules/@epic-web/config/docs/style-guide.md` (once dependencies have been
 installed). Only the most important bits are enforced by eslint.
 
+- Prefer ECMAScript private fields (e.g., `#child`) over the `private` keyword
+  for class fields.
+
 ### UI Components and Styling
 
 - **Use semantic colors**: Always use semantic color classes from the theme
