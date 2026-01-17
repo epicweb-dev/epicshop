@@ -1,4 +1,4 @@
-import { spawn, type ChildProcessWithoutNullStreams } from 'node:child_process'
+import { spawn, type ChildProcess } from 'node:child_process'
 import { once } from 'node:events'
 import { mkdtemp, mkdir, rm, writeFile } from 'node:fs/promises'
 import net from 'node:net'
@@ -16,7 +16,7 @@ testIf(
 	'start releases the child server port on shutdown',
 	async () => {
 		const { appDir, runnerPath, cleanup } = await createRunnerFixture()
-		let child: ChildProcessWithoutNullStreams | null = null
+		let child: ChildProcess | null = null
 		try {
 			child = spawn(
 				process.execPath,
@@ -32,6 +32,14 @@ testIf(
 				stdio: ['ignore', 'pipe', 'pipe'],
 				},
 			)
+
+			if (!child) {
+				throw new Error('Failed to start runner process.')
+			}
+
+			if (!child.stdout || !child.stderr) {
+				throw new Error('Expected child process stdio to be piped.')
+			}
 
 			const stderr = captureStderr(child)
 			const port = await waitForPort(child, 15000, stderr)
@@ -126,21 +134,25 @@ async function createRunnerFixture() {
 	}
 }
 
-function captureStderr(child: ChildProcessWithoutNullStreams) {
+function captureStderr(child: ChildProcess) {
 	let buffer = ''
-	child.stderr.on('data', (data: Buffer) => {
+	child.stderr?.on('data', (data: Buffer) => {
 		buffer += data.toString('utf8')
 	})
 	return () => buffer
 }
 
 async function waitForPort(
-	child: ChildProcessWithoutNullStreams,
+	child: ChildProcess,
 	timeoutMs: number,
 	getStderr: () => string,
 ) {
 	let buffer = ''
 	return new Promise<number>((resolve, reject) => {
+		if (!child.stdout) {
+			reject(new Error('Child stdout is not available for port detection.'))
+			return
+		}
 		let resolved = false
 		const timeoutId = setTimeout(() => {
 			if (resolved) return
@@ -192,7 +204,7 @@ async function waitForServer(port: number) {
 }
 
 async function waitForExit(
-	child: ChildProcessWithoutNullStreams,
+	child: ChildProcess,
 	timeoutMs: number,
 ) {
 	const timeout = new Promise((_, reject) => {
