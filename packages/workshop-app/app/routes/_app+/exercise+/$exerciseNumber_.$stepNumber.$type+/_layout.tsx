@@ -384,6 +384,10 @@ export default function ExercisePartRoute({
 		watchPaths: [`${data.exerciseStepApp.relativePath}/README.mdx`],
 	})
 
+	const showPlaygroundIndicator = data.problem
+		? data.playground?.appName !== data.problem.name
+		: false
+
 	return (
 		<div className="flex max-w-full grow flex-col">
 			<main
@@ -430,6 +434,7 @@ export default function ExercisePartRoute({
 									appName={data.problem.name}
 									isOutdated={data.playground?.isUpToDate === false}
 									hideTextOnNarrow
+									showOnboardingIndicator={showPlaygroundIndicator}
 								/>
 							) : null}
 						</div>
