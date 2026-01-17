@@ -2,14 +2,17 @@ import { expect, test } from 'vitest'
 import { page } from 'vitest/browser'
 import { render } from 'vitest-browser-react'
 import { OfflineVideoActionButtons } from '#app/components/offline-video-actions.tsx'
+import { TooltipProvider } from '#app/components/ui/tooltip.tsx'
 
 test('shows download action when offline copy is missing (aha)', async () => {
 	await render(
-		<OfflineVideoActionButtons
-			isAvailable={false}
-			onDownload={() => {}}
-			onDelete={() => {}}
-		/>,
+		<TooltipProvider>
+			<OfflineVideoActionButtons
+				isAvailable={false}
+				onDownload={() => {}}
+				onDelete={() => {}}
+			/>
+		</TooltipProvider>,
 	)
 
 	await expect
@@ -19,11 +22,13 @@ test('shows download action when offline copy is missing (aha)', async () => {
 
 test('shows delete action when offline copy is ready', async () => {
 	await render(
-		<OfflineVideoActionButtons
-			isAvailable={true}
-			onDownload={() => {}}
-			onDelete={() => {}}
-		/>,
+		<TooltipProvider>
+			<OfflineVideoActionButtons
+				isAvailable={true}
+				onDownload={() => {}}
+				onDelete={() => {}}
+			/>
+		</TooltipProvider>,
 	)
 
 	await expect
@@ -33,12 +38,14 @@ test('shows delete action when offline copy is ready', async () => {
 
 test('disables actions while busy', async () => {
 	await render(
-		<OfflineVideoActionButtons
-			isAvailable={false}
-			isBusy={true}
-			onDownload={() => {}}
-			onDelete={() => {}}
-		/>,
+		<TooltipProvider>
+			<OfflineVideoActionButtons
+				isAvailable={false}
+				isBusy={true}
+				onDownload={() => {}}
+				onDelete={() => {}}
+			/>
+		</TooltipProvider>,
 	)
 
 	await expect
