@@ -61,10 +61,10 @@ installed in individual repositories which resemble the structure of the
 
 - Prefer the AHA pattern (arrange, act, assert) so setup, action, and assertions
   are clearly separated.
-- For async expectations, prefer `await expect(promise).resolves/rejects` to keep
-  the assertion tied to the promise under test.
-- Use disposable objects for setup that needs cleanup (return `{ value, dispose
-  }` and always dispose in `afterEach`/`afterAll`).
+- For async expectations, prefer `await expect(promise).resolves/rejects` to
+  keep the assertion tied to the promise under test.
+- Use disposable objects for setup that needs cleanup (return
+  `{ value, dispose }` and always dispose in `afterEach`/`afterAll`).
 - Avoid nested `describe` blocks; keep tests flat and focused.
 - Use Vitest defaults unless a specific need requires overriding them.
 - Choose Vitest browser mode for component-level DOM tests; use Playwright for
