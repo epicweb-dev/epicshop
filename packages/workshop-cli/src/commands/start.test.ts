@@ -156,7 +156,8 @@ async function waitForPort(
 ) {
 	let buffer = ''
 	return new Promise<number>((resolve, reject) => {
-		if (!child.stdout) {
+		const stdout = child.stdout
+		if (!stdout) {
 			reject(new Error('Child stdout is not available for port detection.'))
 			return
 		}
@@ -177,7 +178,7 @@ async function waitForPort(
 			if (match) {
 				resolved = true
 				clearTimeout(timeoutId)
-				child.stdout.off('data', onData)
+				stdout.off('data', onData)
 				child.off('exit', onExit)
 				resolve(Number(match[1]))
 			}
@@ -193,7 +194,7 @@ async function waitForPort(
 			)
 		}
 
-		child.stdout.on('data', onData)
+		stdout.on('data', onData)
 		child.once('exit', onExit)
 	})
 }
