@@ -66,7 +66,7 @@ Common patterns & examples
 - "Diff between 02.03 problem and solution" -> \`get_diff_between_apps\` { app1: "02.03.problem", app2: "02.03.solution" }.
 `.trim()
 
-export const toolDocs: Record<string, ToolDoc> = {
+export const toolDocs = {
 	login: {
 		title: 'Login',
 		summary:
@@ -167,7 +167,8 @@ export const toolDocs: Record<string, ToolDoc> = {
 				examples: ['problem', 'solution'],
 			},
 		],
-		returns: '{ playground: { exerciseNumber, stepNumber, type, appName, fullPath } }',
+		returns:
+			'{ playground: { exerciseNumber, stepNumber, type, appName, fullPath } }',
 		examples: [
 			{
 				description: 'Continue to the next incomplete step',
@@ -233,9 +234,7 @@ export const toolDocs: Record<string, ToolDoc> = {
 			'Call `get_what_is_next` to get the next action.',
 			'Use `get_user_progress` to verify updates.',
 		],
-		errorNextSteps: [
-			'Confirm the slug matches one from the context tools.',
-		],
+		errorNextSteps: ['Confirm the slug matches one from the context tools.'],
 		annotations: {
 			readOnlyHint: false,
 			destructiveHint: false,
@@ -330,16 +329,14 @@ export const toolDocs: Record<string, ToolDoc> = {
 				name: 'app1',
 				type: 'string',
 				required: true,
-				description:
-					'First app ID, e.g. "02.03.problem" or "02.03.solution".',
+				description: 'First app ID, e.g. "02.03.problem" or "02.03.solution".',
 				examples: ['02.03.problem'],
 			},
 			{
 				name: 'app2',
 				type: 'string',
 				required: true,
-				description:
-					'Second app ID, e.g. "02.03.solution" or "02.03.problem".',
+				description: 'Second app ID, e.g. "02.03.solution" or "02.03.problem".',
 				examples: ['02.03.solution'],
 			},
 		],
@@ -460,9 +457,7 @@ export const toolDocs: Record<string, ToolDoc> = {
 				params: '{ "videoUrl": "https://epicweb.dev/workshops/react/intro" }',
 			},
 		],
-		nextSteps: [
-			'Use `update_progress` when the user finishes the video.',
-		],
+		nextSteps: ['Use `update_progress` when the user finishes the video.'],
 		annotations: {
 			readOnlyHint: true,
 			destructiveHint: false,
@@ -521,9 +516,7 @@ export const toolDocs: Record<string, ToolDoc> = {
 				params: '{ "workshopDirectory": "/Users/alice/workshops/react" }',
 			},
 		],
-		nextSteps: [
-			'Call `login` if the user is not authenticated.',
-		],
+		nextSteps: ['Call `login` if the user is not authenticated.'],
 		annotations: {
 			readOnlyHint: true,
 			destructiveHint: false,
@@ -550,9 +543,7 @@ export const toolDocs: Record<string, ToolDoc> = {
 				params: '{ "workshopDirectory": "/Users/alice/workshops/react" }',
 			},
 		],
-		nextSteps: [
-			'Encourage upgrade if access is required.',
-		],
+		nextSteps: ['Encourage upgrade if access is required.'],
 		annotations: {
 			readOnlyHint: true,
 			destructiveHint: false,
@@ -607,8 +598,7 @@ export const toolDocs: Record<string, ToolDoc> = {
 				name: 'exerciseNumber',
 				type: 'string',
 				required: false,
-				description:
-					'Exercise number to quiz. Omit for a random exercise.',
+				description: 'Exercise number to quiz. Omit for a random exercise.',
 				examples: ['4'],
 			},
 		],
@@ -630,8 +620,7 @@ export const toolDocs: Record<string, ToolDoc> = {
 	},
 	get_what_is_next: {
 		title: 'Get What Is Next',
-		summary:
-			'Determine the next action a user should take in the workshop.',
+		summary: 'Determine the next action a user should take in the workshop.',
 		inputs: [
 			{
 				name: 'workshopDirectory',
@@ -659,24 +648,21 @@ export const toolDocs: Record<string, ToolDoc> = {
 			openWorldHint: true,
 		},
 	},
-}
+} satisfies Record<string, ToolDoc>
 
-export const promptDocs: Record<string, PromptDoc> = {
+export const promptDocs = {
 	quiz_me: {
 		title: 'Quiz Me',
 		description:
 			'Guide the assistant to quiz the user on a workshop exercise using context.',
-		examples: [
-			'Quiz me on exercise 4',
-			'Quiz me on a random exercise',
-		],
+		examples: ['Quiz me on exercise 4', 'Quiz me on a random exercise'],
 		nextSteps: [
 			'Ask one question at a time and give hints if the user struggles.',
 		],
 	},
-}
+} satisfies Record<string, PromptDoc>
 
-export const resourceDocs: Record<string, ResourceDoc> = {
+export const resourceDocs = {
 	workshop_context: {
 		name: 'workshop_context',
 		description:
@@ -712,7 +698,7 @@ export const resourceDocs: Record<string, ResourceDoc> = {
 		name: 'user_progress',
 		description: 'Progress list for the current user.',
 	},
-}
+} satisfies Record<string, ResourceDoc>
 
 export function formatToolDescription(doc: ToolDoc) {
 	const lines: Array<string> = [doc.summary]

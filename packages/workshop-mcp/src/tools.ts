@@ -47,12 +47,16 @@ import {
 	workshopContextResource,
 } from './resources.ts'
 import {
+	formatToolDescription,
+	toolDocs,
+	type ToolDoc,
+} from './server-metadata.ts'
+import {
 	handleWorkshopDirectory,
 	readInWorkshop,
 	safeReadFile,
 	workshopDirectoryInputSchema,
 } from './utils.ts'
-import { formatToolDescription, toolDocs, type ToolDoc } from './server-metadata.ts'
 
 // not enough support for this yet
 const clientSupportsEmbeddedResources = false
@@ -216,8 +220,7 @@ export function initTools(server: McpServer) {
 			const userCode = deviceResponse.user_code
 			return createToolResponse({
 				toolName: 'login',
-				summary:
-					'Login started. Ask the user to complete device verification.',
+				summary: 'Login started. Ask the user to complete device verification.',
 				details: [
 					`Verification URL: ${verificationUrl}`,
 					`User code: ${userCode}`,
@@ -580,7 +583,9 @@ export function initResourceTools(server: McpServer) {
 			return createToolResponse({
 				toolName: 'get_diff_between_apps',
 				summary: `Diff generated for ${app1} vs ${app2}.`,
-				details: diffText ? [`Diff length: ${diffText.length} chars`] : undefined,
+				details: diffText
+					? [`Diff length: ${diffText.length} chars`]
+					: undefined,
 				content: [getEmbeddedResourceContent(resource)],
 				structuredContent: {
 					app1,
@@ -606,7 +611,9 @@ export function initResourceTools(server: McpServer) {
 			return createToolResponse({
 				toolName: 'get_exercise_step_progress_diff',
 				summary: 'Progress diff generated for the current step.',
-				details: diffText ? [`Diff length: ${diffText.length} chars`] : undefined,
+				details: diffText
+					? [`Diff length: ${diffText.length} chars`]
+					: undefined,
 				content: [
 					createText(getDiffInstructionText()),
 					getEmbeddedResourceContent(resource),
@@ -656,9 +663,7 @@ export function initResourceTools(server: McpServer) {
 		{
 			videoUrl: z
 				.string()
-				.describe(
-					'Video URL from exercise context or `get_what_is_next`.',
-				),
+				.describe('Video URL from exercise context or `get_what_is_next`.'),
 		},
 		async ({ videoUrl }) => {
 			const url: URL = new URL('mcp-ui/epic-video', 'http://localhost:5639')
@@ -772,9 +777,9 @@ export function initResourceTools(server: McpServer) {
 			const resource = await userAccessResource.getResource({
 				workshopDirectory,
 			})
-			const access = parseResourceText(resource) as
-				| { userHasAccess?: boolean }
-				| null
+			const access = parseResourceText(resource) as {
+				userHasAccess?: boolean
+			} | null
 			const userHasAccess =
 				typeof access?.userHasAccess === 'boolean'
 					? access.userHasAccess
@@ -810,8 +815,9 @@ export function initResourceTools(server: McpServer) {
 			)
 				? (progress as Array<{ epicCompletedAt?: unknown }>)
 				: []
-			const incompleteCount = items.filter((item) => !item.epicCompletedAt)
-				.length
+			const incompleteCount = items.filter(
+				(item) => !item.epicCompletedAt,
+			).length
 			return createToolResponse({
 				toolName: 'get_user_progress',
 				summary: `Progress retrieved. Incomplete items: ${incompleteCount}.`,
@@ -900,9 +906,7 @@ export function initPromptTools(server: McpServer) {
 				return createToolResponse({
 					toolName: 'get_what_is_next',
 					summary: 'Workshop complete.',
-					details: [
-						'Invite the user to request a quiz on the material.',
-					],
+					details: ['Invite the user to request a quiz on the material.'],
 					includeMetaNextSteps: false,
 					content: [createText(await createWorkshopSummary())],
 					structuredContent: {

@@ -24,6 +24,7 @@ import {
 } from '@modelcontextprotocol/sdk/server/mcp.js'
 import { type ReadResourceResult } from '@modelcontextprotocol/sdk/types.js'
 import { z } from 'zod'
+import { resourceDocs } from './server-metadata.ts'
 import {
 	handleWorkshopDirectory,
 	type InputSchemaType,
@@ -31,7 +32,6 @@ import {
 	safeReadFile,
 	workshopDirectoryInputSchema,
 } from './utils.ts'
-import { resourceDocs } from './server-metadata.ts'
 
 export const getWorkshopContextInputSchema = {
 	workshopDirectory: workshopDirectoryInputSchema,
