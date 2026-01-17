@@ -168,15 +168,7 @@ function getWorkshopIdentity(): WorkshopIdentity {
 	}
 }
 
-const legacyWorkshopIdentity: WorkshopIdentity = {
-	id: 'legacy',
-	title: 'Legacy downloads',
-}
-
-function getEntryWorkshops(
-	entry: OfflineVideoEntry,
-	fallback?: WorkshopIdentity,
-) {
+function getEntryWorkshops(entry: OfflineVideoEntry) {
 	const workshops = Array.isArray(entry.workshops)
 		? entry.workshops.filter(
 				(workshop) =>
@@ -184,36 +176,22 @@ function getEntryWorkshops(
 					typeof workshop?.title === 'string',
 			)
 		: []
-	if (workshops.length > 0) return workshops
-	if (fallback) return [fallback]
-	return []
+	return workshops
 }
 
-function hasWorkshop(
-	entry: OfflineVideoEntry,
-	workshopId: string,
-	fallback?: WorkshopIdentity,
-) {
-	const workshops = getEntryWorkshops(entry, fallback)
+function hasWorkshop(entry: OfflineVideoEntry, workshopId: string) {
+	const workshops = getEntryWorkshops(entry)
 	return workshops.some((workshop) => workshop.id === workshopId)
 }
 
-function ensureWorkshopOnEntry(
-	entry: OfflineVideoEntry,
-	workshop: WorkshopIdentity,
-	fallback?: WorkshopIdentity,
-) {
-	const workshops = getEntryWorkshops(entry, fallback)
+function ensureWorkshopOnEntry(entry: OfflineVideoEntry, workshop: WorkshopIdentity) {
+	const workshops = getEntryWorkshops(entry)
 	if (workshops.some((item) => item.id === workshop.id)) return entry
 	return { ...entry, workshops: [...workshops, workshop] }
 }
 
-function removeWorkshopFromEntry(
-	entry: OfflineVideoEntry,
-	workshopId: string,
-	fallback?: WorkshopIdentity,
-) {
-	const workshops = getEntryWorkshops(entry, fallback).filter(
+function removeWorkshopFromEntry(entry: OfflineVideoEntry, workshopId: string) {
+	const workshops = getEntryWorkshops(entry).filter(
 		(workshop) => workshop.id !== workshopId,
 	)
 	return { ...entry, workshops }
@@ -493,7 +471,7 @@ async function isOfflineVideoReady(
 	if (!entry || entry.status !== 'ready') return false
 	if (entry.keyId !== keyId || entry.cryptoVersion !== cryptoVersion)
 		return false
-	if (!hasWorkshop(entry, workshop.id, workshop)) return false
+	if (!hasWorkshop(entry, workshop.id)) return false
 	const filePath = entry.fileName
 		? path.join(getOfflineVideoDir(), entry.fileName)
 		: getOfflineVideoFilePath(playbackId)
@@ -644,7 +622,7 @@ export async function getOfflineVideoSummary({
 			keyInfo &&
 			entry.keyId === keyInfo.keyId &&
 			entry.cryptoVersion === keyInfo.config.version &&
-			hasWorkshop(entry, workshop.id, workshop)
+			hasWorkshop(entry, workshop.id)
 		) {
 			downloadedVideos += 1
 			totalBytes += entry.size ?? 0
@@ -723,12 +701,8 @@ export async function startOfflineVideoDownload({
 			entry.keyId === keyInfo.keyId &&
 			entry.cryptoVersion === keyInfo.config.version
 		) {
-			if (!hasWorkshop(entry, workshop.id, workshop)) {
-				index[video.playbackId] = ensureWorkshopOnEntry(
-					entry,
-					workshop,
-					workshop,
-				)
+			if (!hasWorkshop(entry, workshop.id)) {
+				index[video.playbackId] = ensureWorkshopOnEntry(entry, workshop)
 				await writeOfflineVideoIndex(index)
 			}
 			alreadyDownloaded += 1
@@ -807,7 +781,7 @@ export async function downloadOfflineVideo({
 		existing.keyId === keyInfo.keyId &&
 		existing.cryptoVersion === keyInfo.config.version
 	) {
-		const updated = ensureWorkshopOnEntry(existing, workshop, workshop)
+		const updated = ensureWorkshopOnEntry(existing, workshop)
 		if (updated !== existing) {
 			index[playbackId] = updated
 			await writeOfflineVideoIndex(index)
@@ -866,7 +840,7 @@ export async function deleteOfflineVideo(playbackId: string) {
 	const entry = index[playbackId]
 	if (!entry) return { status: 'missing' } as const
 
-	const nextEntry = removeWorkshopFromEntry(entry, workshop.id, workshop)
+	const nextEntry = removeWorkshopFromEntry(entry, workshop.id)
 	if (nextEntry.workshops && nextEntry.workshops.length > 0) {
 		index[playbackId] = nextEntry
 		await writeOfflineVideoIndex(index)
@@ -889,8 +863,8 @@ export async function deleteOfflineVideosForWorkshop() {
 	let removedEntries = 0
 
 	for (const [playbackId, entry] of Object.entries(index)) {
-		if (!hasWorkshop(entry, workshop.id, workshop)) continue
-		const nextEntry = removeWorkshopFromEntry(entry, workshop.id, workshop)
+		if (!hasWorkshop(entry, workshop.id)) continue
+		const nextEntry = removeWorkshopFromEntry(entry, workshop.id)
 		if (nextEntry.workshops && nextEntry.workshops.length > 0) {
 			index[playbackId] = nextEntry
 			continue
@@ -908,12 +882,53 @@ export async function deleteOfflineVideosForWorkshop() {
 	return { deletedFiles, removedEntries } as const
 }
 
+export async function deleteOfflineVideosForWorkshopId(workshopId: string) {
+	const index = await readOfflineVideoIndex()
+	let deletedFiles = 0
+	let removedEntries = 0
+
+	for (const [playbackId, entry] of Object.entries(index)) {
+		if (!hasWorkshop(entry, workshopId)) continue
+		const nextEntry = removeWorkshopFromEntry(entry, workshopId)
+		if (nextEntry.workshops && nextEntry.workshops.length > 0) {
+			index[playbackId] = nextEntry
+			continue
+		}
+		const filePath = entry.fileName
+			? path.join(getOfflineVideoDir(), entry.fileName)
+			: getOfflineVideoFilePath(playbackId)
+		delete index[playbackId]
+		removedEntries += 1
+		await fs.rm(filePath, { force: true })
+		deletedFiles += 1
+	}
+
+	await writeOfflineVideoIndex(index)
+	return { deletedFiles, removedEntries } as const
+}
+
+export async function deleteAllOfflineVideos() {
+	const index = await readOfflineVideoIndex()
+	let deletedFiles = 0
+
+	for (const entry of Object.values(index)) {
+		const filePath = entry.fileName
+			? path.join(getOfflineVideoDir(), entry.fileName)
+			: getOfflineVideoFilePath(entry.playbackId)
+		await fs.rm(filePath, { force: true })
+		deletedFiles += 1
+	}
+
+	await writeOfflineVideoIndex({})
+	return { deletedFiles } as const
+}
+
 export async function getOfflineVideoAdminSummary(): Promise<OfflineVideoAdminSummary> {
 	const index = await readOfflineVideoIndex()
 	const workshops = new Map<string, OfflineVideoAdminWorkshop>()
 
 	for (const [playbackId, entry] of Object.entries(index)) {
-		const entryWorkshops = getEntryWorkshops(entry, legacyWorkshopIdentity)
+		const entryWorkshops = getEntryWorkshops(entry)
 		for (const workshop of entryWorkshops) {
 			const existing = workshops.get(workshop.id) ?? {
 				...workshop,
@@ -957,7 +972,7 @@ export async function getOfflineVideoAsset(
 		entry.keyId !== keyInfo.keyId ||
 		entry.cryptoVersion !== keyInfo.config.version ||
 		!entry.iv ||
-		!hasWorkshop(entry, workshop.id, workshop)
+		!hasWorkshop(entry, workshop.id)
 	) {
 		return null
 	}

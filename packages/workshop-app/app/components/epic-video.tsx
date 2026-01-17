@@ -5,8 +5,11 @@ import {
 	MediaController,
 	MediaFullscreenButton,
 	MediaMuteButton,
+	MediaPipButton,
 	MediaPlayButton,
 	MediaPlaybackRateButton,
+	MediaSeekBackwardButton,
+	MediaSeekForwardButton,
 	MediaTimeDisplay,
 	MediaTimeRange,
 	MediaVolumeRange,
@@ -231,14 +234,16 @@ function VideoLink({
 	title,
 	duration,
 	durationEstimate,
+	actions,
 }: {
 	url: string
 	title: string
 	duration?: number | null
 	durationEstimate?: number | null
+	actions?: React.ReactNode
 }) {
 	return (
-		<span className="flex items-center gap-1 text-base">
+		<div className="flex flex-wrap items-center gap-2 text-base">
 			{duration ? (
 				<span className="opacity-70">{formatDuration(duration)}</span>
 			) : durationEstimate ? (
@@ -253,7 +258,8 @@ function VideoLink({
 				<Icon className="shrink-0" name="Video" size="lg" />
 				{title} <span aria-hidden>↗︎</span>
 			</a>
-		</span>
+			{actions ? <span className="flex items-center gap-1">{actions}</span> : null}
+		</div>
 	)
 }
 export function DeferredEpicVideo({
@@ -548,6 +554,14 @@ function EpicVideo({
 			{ method: 'post', action: '/resources/offline-videos' },
 		)
 	}, [muxPlaybackId, offlineVideoFetcher])
+	const offlineActions = (
+		<OfflineVideoActionButtons
+			isAvailable={offlineVideo.available}
+			isBusy={isOfflineActionBusy}
+			onDownload={handleDownload}
+			onDelete={handleDelete}
+		/>
+	)
 	return (
 		<div>
 			<div className="shadow-lg">
@@ -565,11 +579,15 @@ function EpicVideo({
 							/>
 							<MediaControlBar>
 								<MediaPlayButton />
-								<MediaTimeRange />
+								<MediaSeekBackwardButton seekOffset={10} />
+								<MediaSeekForwardButton seekOffset={10} />
 								<MediaTimeDisplay showDuration />
+								<MediaTimeDisplay remaining className="text-muted-foreground" />
+								<MediaTimeRange />
 								<MediaMuteButton />
 								<MediaVolumeRange />
 								<MediaPlaybackRateButton />
+								<MediaPipButton />
 								<MediaFullscreenButton />
 							</MediaControlBar>
 						</MediaController>
@@ -594,20 +612,13 @@ function EpicVideo({
 					title={title}
 					duration={duration}
 					durationEstimate={durationEstimate}
+					actions={offlineActions}
 				/>
-				<div className="flex flex-wrap items-center gap-3">
-					<OfflineVideoActionButtons
-						isAvailable={offlineVideo.available}
-						isBusy={isOfflineActionBusy}
-						onDownload={handleDownload}
-						onDelete={handleDelete}
-					/>
-					{offlineVideo.available ? (
-						<span className="text-muted-foreground text-sm">
-							Offline copy ready
-						</span>
-					) : null}
-				</div>
+				{offlineVideo.available ? (
+					<span className="text-muted-foreground text-sm">
+						Offline copy ready
+					</span>
+				) : null}
 				<details>
 					<summary>Transcript</summary>
 					<div className="bg-accent text-accent-foreground rounded-md p-2 whitespace-pre-line">
