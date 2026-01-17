@@ -64,6 +64,150 @@ installed in individual repositories which resemble the structure of the
 - Debug logging is available via `NODE_DEBUG` environment variable (see
   `docs/debug-logging.md`)
 
+## Testing principles (summaries + snippets)
+
+### Prefer `resolves` chaining for async expectations
+
+Source: https://www.epicweb.dev/prefer-the-resolves-chaining
+
+- Use `await expect(promise).resolves...` so failures attach to the matcher and
+  can be swapped to `rejects` when you are asserting errors.
+- Avoid `expect(await promise)` because a rejection throws before the matcher
+  runs, which produces less precise failures.
+
+```ts
+await expect(loadUser()).resolves.toEqual({ id: 'user-123' })
+await expect(loadUser({ id: 'missing' })).rejects.toThrow(/not found/i)
+```
+
+### Vitest browser mode vs Playwright
+
+Source: https://www.epicweb.dev/vitest-browser-mode-vs-playwright
+
+- Use Vitest browser mode for fast, DOM-focused component tests that run in a
+  real browser but stay close to unit/integration scope.
+- Use Playwright for end-to-end flows across routes, storage, and network where
+  full browser automation is required.
+
+```ts
+import { render, screen } from '@testing-library/react'
+import { userEvent } from '@testing-library/user-event'
+
+test('expands details', async () => {
+	render(<Details />)
+	const user = userEvent.setup()
+	await user.click(screen.getByRole('button', { name: /more/i }))
+	expect(screen.getByText(/details/i)).toBeVisible()
+})
+```
+
+```ts
+import { test, expect } from '@playwright/test'
+
+test('checkout flow', async ({ page }) => {
+	await page.goto('/')
+	await page.getByRole('link', { name: /cart/i }).click()
+	await expect(page).toHaveURL(/cart/)
+})
+```
+
+### Better test setup with disposable objects
+
+Source: https://www.epicweb.dev/better-test-setup-with-disposable-objects
+
+- Bundle setup artifacts and cleanup together so each test controls its own
+  lifecycle and avoids leaking state across tests.
+
+```ts
+import { cleanup, render, screen } from '@testing-library/react'
+import { userEvent } from '@testing-library/user-event'
+
+function setup() {
+	const user = userEvent.setup()
+	render(<Form />)
+	const dispose = () => cleanup()
+	return { user, dispose }
+}
+
+test('submits the form', async () => {
+	const { user, dispose } = setup()
+	await user.click(screen.getByRole('button', { name: /save/i }))
+	dispose()
+})
+```
+
+### Aha testing
+
+Source: https://kentcdodds.com/blog/aha-testing
+
+- Capture the "aha" behavior you learned from a bug or requirement in a test
+  name and assertion so the lesson stays encoded in the suite.
+
+```ts
+import { render, screen } from '@testing-library/react'
+import { userEvent } from '@testing-library/user-event'
+
+test('shows a required error when email is missing', async () => {
+	render(<SignupForm />)
+	const user = userEvent.setup()
+	await user.click(screen.getByRole('button', { name: /submit/i }))
+	expect(screen.getByText(/email is required/i)).toBeVisible()
+})
+```
+
+### Avoid nesting when you are testing
+
+Source: https://kentcdodds.com/blog/avoid-nesting-when-youre-testing
+
+- Prefer flat tests with explicit setup to keep intent clear and avoid cascading
+  `beforeEach`/`describe` complexity.
+
+```ts
+function setup(items: string[]) {
+	render(<List items={items} />)
+	return screen.queryAllByRole('listitem')
+}
+
+test('renders no items', () => {
+	expect(setup([])).toHaveLength(0)
+})
+
+test('renders provided items', () => {
+	expect(setup(['a', 'b'])).toHaveLength(2)
+})
+```
+
+### Incredible Vitest defaults
+
+Source: https://www.epicweb.dev/incredible-vitest-defaults
+
+- Start with Vitest defaults before adding config, since it already wires up
+  TypeScript, Vite integration, watch mode, and fast parallel execution.
+
+```ts
+import { expect, test } from 'vitest'
+
+test('formats currency', () => {
+	expect(formatCurrency(1234)).toBe('$1,234.00')
+})
+```
+
+### `toBeVisible` vs `toBeInTheDocument`
+
+Source: https://www.epicweb.dev/tobevisible-or-tobeinthedocument
+
+- Use `toBeVisible` when the user should see the element; use
+  `toBeInTheDocument` when it should exist even if hidden.
+
+```ts
+import { render, screen } from '@testing-library/react'
+
+render(<Settings />)
+expect(screen.getByRole('dialog')).toBeVisible()
+expect(screen.getByText(/advanced options/i)).toBeInTheDocument()
+expect(screen.getByText(/advanced options/i)).not.toBeVisible()
+```
+
 ## Code style
 
 The code style guide can be found in
