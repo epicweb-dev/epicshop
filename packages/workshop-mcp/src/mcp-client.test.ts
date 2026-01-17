@@ -23,11 +23,11 @@ type ToolCallResult = {
 }
 
 class McpTestClient {
-	private child: ReturnType<typeof spawn>
-	private stdin: NodeJS.WritableStream
-	private stdout: NodeJS.ReadableStream
-	private buffer = ''
-	private pending = new Map<
+	#child: ReturnType<typeof spawn>
+	#stdin: NodeJS.WritableStream
+	#stdout: NodeJS.ReadableStream
+	#buffer = ''
+	#pending = new Map<
 		number,
 		{
 			resolve: (value: Record<string, unknown>) => void
@@ -35,19 +35,19 @@ class McpTestClient {
 			timeoutId: NodeJS.Timeout
 		}
 	>()
-	private nextId = 1
+	#nextId = 1
 
 	private constructor(child: ReturnType<typeof spawn>) {
-		this.child = child
-		if (!this.child.stdout || !this.child.stdin) {
+		this.#child = child
+		if (!this.#child.stdout || !this.#child.stdin) {
 			throw new Error('Failed to start MCP server stdio streams.')
 		}
-		this.stdout = this.child.stdout
-		this.stdin = this.child.stdin
-		this.stdout.setEncoding('utf8')
-		this.stdout.on('data', (chunk: string) => this.onStdout(chunk))
-		this.child.on('exit', (code) => this.failPendingRequests(code))
-		this.child.on('error', (error) => this.failPendingRequests(error))
+		this.#stdout = this.#child.stdout
+		this.#stdin = this.#child.stdin
+		this.#stdout.setEncoding('utf8')
+		this.#stdout.on('data', (chunk: string) => this.onStdout(chunk))
+		this.#child.on('exit', (code) => this.failPendingRequests(code))
+		this.#child.on('error', (error) => this.failPendingRequests(error))
 	}
 
 	static async start() {
@@ -107,10 +107,10 @@ class McpTestClient {
 	}
 
 	async close() {
-		if (this.child.killed) return
-		this.child.kill()
+		if (this.#child.killed) return
+		this.#child.kill()
 		await new Promise<void>((resolve) => {
-			this.child.once('exit', () => resolve())
+			this.#child.once('exit', () => resolve())
 		})
 	}
 
@@ -119,35 +119,35 @@ class McpTestClient {
 	}
 
 	private request(method: string, params?: Record<string, unknown>) {
-		const id = this.nextId++
+		const id = this.#nextId++
 		const payload = { jsonrpc: '2.0', id, method, params }
 
 		return new Promise<Record<string, unknown>>((resolve, reject) => {
 			const timeoutId = setTimeout(() => {
-				this.pending.delete(id)
+				this.#pending.delete(id)
 				reject(new Error(`Request timed out: ${method}`))
 			}, testTimeoutMs)
-			this.pending.set(id, { resolve, reject, timeoutId })
+			this.#pending.set(id, { resolve, reject, timeoutId })
 			this.write(payload)
 		})
 	}
 
 	private write(payload: Record<string, unknown>) {
-		this.stdin.write(`${JSON.stringify(payload)}\n`)
+		this.#stdin.write(`${JSON.stringify(payload)}\n`)
 	}
 
 	private onStdout(chunk: string) {
-		this.buffer += chunk
-		let newlineIndex = this.buffer.indexOf('\n')
+		this.#buffer += chunk
+		let newlineIndex = this.#buffer.indexOf('\n')
 		while (newlineIndex !== -1) {
-			const line = this.buffer.slice(0, newlineIndex).trim()
-			this.buffer = this.buffer.slice(newlineIndex + 1)
+			const line = this.#buffer.slice(0, newlineIndex).trim()
+			this.#buffer = this.#buffer.slice(newlineIndex + 1)
 			if (line.length === 0) {
-				newlineIndex = this.buffer.indexOf('\n')
+				newlineIndex = this.#buffer.indexOf('\n')
 				continue
 			}
 			this.handleLine(line)
-			newlineIndex = this.buffer.indexOf('\n')
+			newlineIndex = this.#buffer.indexOf('\n')
 		}
 	}
 
@@ -160,10 +160,10 @@ class McpTestClient {
 		}
 		if (typeof message?.id !== 'number') return
 
-		const pending = this.pending.get(message.id)
+		const pending = this.#pending.get(message.id)
 		if (!pending) return
 		clearTimeout(pending.timeoutId)
-		this.pending.delete(message.id)
+		this.#pending.delete(message.id)
 
 		if (message.error) {
 			pending.reject(
@@ -179,18 +179,18 @@ class McpTestClient {
 		const error = new Error(
 			reason instanceof Error ? reason.message : `Process exited: ${reason}`,
 		)
-		for (const pending of this.pending.values()) {
+		for (const pending of this.#pending.values()) {
 			clearTimeout(pending.timeoutId)
 			pending.reject(error)
 		}
-		this.pending.clear()
+		this.#pending.clear()
 	}
 }
 
 type DisposableClient = {
 	client: McpTestClient
 	initResult: Record<string, unknown>
-	dispose: () => Promise<void>
+	[Symbol.asyncDispose]: () => Promise<void>
 }
 
 async function createDisposableClient(): Promise<DisposableClient> {
@@ -199,20 +199,9 @@ async function createDisposableClient(): Promise<DisposableClient> {
 	return {
 		client,
 		initResult,
-		dispose: async () => {
+		async [Symbol.asyncDispose]() {
 			await client.close()
 		},
-	}
-}
-
-async function withDisposableClient<T>(
-	callback: (resources: DisposableClient) => Promise<T>,
-) {
-	const resources = await createDisposableClient()
-	try {
-		return await callback(resources)
-	} finally {
-		await resources.dispose()
 	}
 }
 
@@ -227,15 +216,18 @@ describe('workshop MCP server', () => {
 	test(
 		'initializes with instructions and server info',
 		async () => {
-			await withDisposableClient(async ({ initResult }) => {
-				expect(initResult).toEqual(
+			const resources = await createDisposableClient()
+			try {
+				expect(resources.initResult).toEqual(
 					expect.objectContaining({
 						protocolVersion: expect.any(String),
 						serverInfo: expect.any(Object),
 						instructions: expect.any(String),
 					}),
 				)
-			})
+			} finally {
+				await resources[Symbol.asyncDispose]()
+			}
 		},
 		testTimeoutMs,
 	)
@@ -243,8 +235,9 @@ describe('workshop MCP server', () => {
 	test(
 		'lists tools with expected shape',
 		async () => {
-			await withDisposableClient(async ({ client }) => {
-				const resultPromise = client.listTools()
+			const resources = await createDisposableClient()
+			try {
+				const resultPromise = resources.client.listTools()
 				await expect(resultPromise).resolves.toEqual(
 					expect.objectContaining({
 						tools: expect.arrayContaining([
@@ -252,7 +245,9 @@ describe('workshop MCP server', () => {
 						]),
 					}),
 				)
-			})
+			} finally {
+				await resources[Symbol.asyncDispose]()
+			}
 		},
 		testTimeoutMs,
 	)
@@ -260,9 +255,10 @@ describe('workshop MCP server', () => {
 	test(
 		'get_what_is_next returns text content and structured payload',
 		async () => {
-			await withDisposableClient(async ({ client }) => {
+			const resources = await createDisposableClient()
+			try {
 				const workshopDirectory = path.join(resolveWorkspaceRoot(), 'example')
-				const resultPromise = client.callTool('get_what_is_next', {
+				const resultPromise = resources.client.callTool('get_what_is_next', {
 					workshopDirectory,
 				})
 
@@ -277,7 +273,9 @@ describe('workshop MCP server', () => {
 						structuredContent: expect.any(Object),
 					}),
 				)
-			})
+			} finally {
+				await resources[Symbol.asyncDispose]()
+			}
 		},
 		testTimeoutMs,
 	)
@@ -285,8 +283,9 @@ describe('workshop MCP server', () => {
 	test(
 		'returns tool error response for invalid workshop directory',
 		async () => {
-			await withDisposableClient(async ({ client }) => {
-				const resultPromise = client.callTool('get_workshop_context', {
+			const resources = await createDisposableClient()
+			try {
+				const resultPromise = resources.client.callTool('get_workshop_context', {
 					workshopDirectory: '/not/a/workshop',
 				})
 
@@ -298,7 +297,9 @@ describe('workshop MCP server', () => {
 						]),
 					}),
 				)
-			})
+			} finally {
+				await resources[Symbol.asyncDispose]()
+			}
 		},
 		testTimeoutMs,
 	)
