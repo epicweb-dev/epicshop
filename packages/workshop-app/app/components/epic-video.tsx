@@ -244,6 +244,9 @@ function VideoLink({
 }) {
 	return (
 		<div className="flex flex-wrap items-center gap-2 text-base">
+			{actions ? (
+				<span className="flex items-center gap-1">{actions}</span>
+			) : null}
 			{duration ? (
 				<span className="opacity-70">{formatDuration(duration)}</span>
 			) : durationEstimate ? (
@@ -258,9 +261,6 @@ function VideoLink({
 				<Icon className="shrink-0" name="Video" size="lg" />
 				{title} <span aria-hidden>↗︎</span>
 			</a>
-			{actions ? (
-				<span className="flex items-center gap-1">{actions}</span>
-			) : null}
 		</div>
 	)
 }
@@ -569,7 +569,28 @@ function EpicVideo({
 			<div className="shadow-lg">
 				{shouldUseOfflineVideo ? (
 					<div className="flex aspect-video w-full items-center justify-center bg-black">
-						<MediaController className="h-full w-full">
+						<MediaController
+							className="flex h-full w-full flex-col justify-end"
+							style={
+								{
+									'--media-primary-color': 'hsl(var(--background))',
+									'--media-secondary-color':
+										'hsl(var(--foreground) / 0.8)',
+									'--media-text-color': 'hsl(var(--background))',
+									'--media-control-background':
+										'hsl(var(--foreground) / 0.8)',
+									'--media-control-hover-background':
+										'hsl(var(--foreground) / 0.9)',
+									'--media-range-track-height': '4px',
+									'--media-range-thumb-height': '10px',
+									'--media-range-thumb-width': '10px',
+									'--media-range-track-background':
+										'hsl(var(--background) / 0.3)',
+									'--media-range-track-pointer-background':
+										'hsl(var(--background) / 0.85)',
+								} as React.CSSProperties
+							}
+						>
 							<video
 								ref={nativeVideoRef}
 								slot="media"
@@ -579,19 +600,32 @@ function EpicVideo({
 								preload="metadata"
 								src={offlineVideo.offlineUrl}
 							/>
-							<MediaControlBar>
-								<MediaPlayButton />
-								<MediaSeekBackwardButton seekOffset={10} />
-								<MediaSeekForwardButton seekOffset={10} />
-								<MediaTimeDisplay showDuration />
-								<MediaTimeDisplay remaining className="text-muted-foreground" />
-								<MediaTimeRange />
-								<MediaMuteButton />
-								<MediaVolumeRange />
-								<MediaPlaybackRateButton />
-								<MediaPipButton />
-								<MediaFullscreenButton />
-							</MediaControlBar>
+							<div className="w-full space-y-2 px-3 pb-3">
+								<MediaTimeRange
+									className="w-full"
+									style={
+										{
+											'--media-control-background': 'transparent',
+											'--media-control-hover-background': 'transparent',
+										} as React.CSSProperties
+									}
+								/>
+								<MediaControlBar className="bg-foreground/80 text-background w-full items-center gap-3 rounded-md px-3 py-2 backdrop-blur">
+									<div className="flex items-center gap-3">
+										<MediaPlayButton />
+										<MediaSeekBackwardButton seekoffset={10} />
+										<MediaSeekForwardButton seekoffset={10} />
+										<MediaTimeDisplay showDuration />
+										<MediaMuteButton />
+										<MediaVolumeRange className="w-24" />
+									</div>
+									<div className="ml-auto flex items-center gap-3">
+										<MediaPlaybackRateButton />
+										<MediaPipButton />
+										<MediaFullscreenButton />
+									</div>
+								</MediaControlBar>
+							</div>
 						</MediaController>
 					</div>
 				) : !isOnline && offlineVideo.checked ? (

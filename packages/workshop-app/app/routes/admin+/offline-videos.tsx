@@ -5,7 +5,6 @@ import {
 	getOfflineVideoAdminSummary,
 } from '@epic-web/workshop-utils/offline-videos.server'
 import { Form, data, redirect } from 'react-router'
-import { Icon } from '#app/components/icons.tsx'
 import { cn, ensureUndeployed, useDoubleCheck } from '#app/utils/misc.tsx'
 import { type Route } from './+types/offline-videos.tsx'
 
@@ -63,7 +62,7 @@ function formatBytes(bytes: number) {
 
 function DoubleCheckButton({
 	children,
-	confirmLabel = 'Are you sure?',
+	confirmLabel = 'Confirm',
 	className,
 	...props
 }: React.ComponentPropsWithoutRef<'button'> & {
@@ -75,21 +74,24 @@ function DoubleCheckButton({
 		<button
 			{...getButtonProps(props)}
 			className={cn(
-				'border-border bg-background text-foreground hover:bg-muted hover:text-foreground focus:ring-ring inline-flex items-center gap-2 rounded-md border px-3 py-1 text-sm font-medium transition-colors focus:ring-2 focus:ring-offset-2 focus:outline-none disabled:pointer-events-none disabled:opacity-50',
+				'border-border bg-background text-foreground hover:bg-muted hover:text-foreground focus:ring-ring inline-flex min-w-[120px] items-center justify-center gap-2 rounded-md border px-3 py-1 text-sm font-medium transition-colors focus:ring-2 focus:ring-offset-2 focus:outline-none disabled:pointer-events-none disabled:opacity-50',
 				doubleCheck
-					? 'border-foreground-destructive bg-foreground-destructive text-foreground-destructive-foreground'
+					? 'border-destructive bg-destructive text-destructive-foreground hover:bg-destructive/90'
 					: null,
 				className,
 			)}
 		>
-			{doubleCheck ? (
-				<>
-					<Icon name="TriangleAlert" className="h-4 w-4" />
+			<span className="grid items-center justify-center">
+				<span aria-hidden className="col-start-1 row-start-1 opacity-0">
+					{children}
+				</span>
+				<span aria-hidden className="col-start-1 row-start-1 opacity-0">
 					{confirmLabel}
-				</>
-			) : (
-				children
-			)}
+				</span>
+				<span className="col-start-1 row-start-1">
+					{doubleCheck ? confirmLabel : children}
+				</span>
+			</span>
 		</button>
 	)
 }
@@ -116,7 +118,6 @@ export default function OfflineVideosAdmin({
 						type="submit"
 						name="intent"
 						value="delete-all"
-						confirmLabel="Delete all downloads?"
 					>
 						Delete all downloads
 					</DoubleCheckButton>
@@ -138,7 +139,6 @@ export default function OfflineVideosAdmin({
 									type="submit"
 									name="intent"
 									value="delete-workshop"
-									confirmLabel="Delete workshop downloads?"
 								>
 									Delete workshop downloads
 								</DoubleCheckButton>
@@ -161,7 +161,7 @@ export default function OfflineVideosAdmin({
 									<th className="border-border border px-3 py-2 text-left">
 										Updated
 									</th>
-									<th className="border-border border px-3 py-2 text-left">
+									<th className="border-border w-[140px] border px-3 py-2 text-left">
 										Actions
 									</th>
 								</tr>
@@ -170,7 +170,14 @@ export default function OfflineVideosAdmin({
 								{workshop.videos.map((video) => (
 									<tr key={`${workshop.id}-${video.playbackId}`}>
 										<td className="border-border max-w-[360px] border px-3 py-2">
-											<span className="truncate">{video.title}</span>
+											<a
+												href={video.url}
+												target="_blank"
+												rel="noreferrer"
+												className="block truncate underline-offset-4 hover:underline"
+											>
+												{video.title}
+											</a>
 										</td>
 										<td className="border-border border px-3 py-2">
 											{video.status}
@@ -181,7 +188,7 @@ export default function OfflineVideosAdmin({
 										<td className="border-border border px-3 py-2">
 											{new Date(video.updatedAt).toLocaleString()}
 										</td>
-										<td className="border-border border px-3 py-2">
+										<td className="border-border w-[140px] border px-3 py-2">
 											<Form method="post">
 												<input
 													type="hidden"
@@ -192,7 +199,7 @@ export default function OfflineVideosAdmin({
 													type="submit"
 													name="intent"
 													value="delete-video"
-													confirmLabel="Delete download?"
+													className="w-full"
 												>
 													Delete
 												</DoubleCheckButton>

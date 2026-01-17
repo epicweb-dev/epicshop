@@ -94,6 +94,7 @@ export type OfflineVideoStartResult = {
 export type OfflineVideoAdminEntry = {
 	playbackId: string
 	title: string
+	url: string
 	status: OfflineVideoEntryStatus
 	size: number | null
 	updatedAt: string
@@ -941,6 +942,7 @@ export async function getOfflineVideoAdminSummary(): Promise<OfflineVideoAdminSu
 			existing.videos.push({
 				playbackId,
 				title: entry.title,
+				url: entry.url,
 				status: entry.status,
 				size: entry.size ?? null,
 				updatedAt: entry.updatedAt,

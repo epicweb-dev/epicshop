@@ -14,10 +14,27 @@ function DownloadIcon(props: React.ComponentPropsWithoutRef<'svg'>) {
 
 function DeleteIcon(props: React.ComponentPropsWithoutRef<'svg'>) {
 	return (
-		<svg viewBox="0 0 20 20" aria-hidden="true" {...props}>
+		<svg viewBox="0 0 24 24" fill="none" aria-hidden="true" {...props}>
 			<path
-				fill="currentColor"
-				d="M7 2a1 1 0 0 1 1-1h4a1 1 0 0 1 1 1v1h4a1 1 0 1 1 0 2h-1.1l-1.2 11A2 2 0 0 1 12.7 20H7.3a2 2 0 0 1-1.99-1.99L4.1 5H3a1 1 0 0 1 0-2h4V2Zm1 1v0h4V3H8Zm0 5a1 1 0 0 0-2 0v7a1 1 0 0 0 2 0V8Zm5-1a1 1 0 0 0-1 1v7a1 1 0 1 0 2 0V8a1 1 0 0 0-1-1Z"
+				stroke="currentColor"
+				strokeLinecap="round"
+				strokeLinejoin="round"
+				strokeWidth="1.5"
+				d="M6.75 7.75L7.59115 17.4233C7.68102 18.4568 8.54622 19.25 9.58363 19.25H14.4164C15.4538 19.25 16.319 18.4568 16.4088 17.4233L17.25 7.75"
+			/>
+			<path
+				stroke="currentColor"
+				strokeLinecap="round"
+				strokeLinejoin="round"
+				strokeWidth="1.5"
+				d="M9.75 7.5V6.75C9.75 5.64543 10.6454 4.75 11.75 4.75H12.25C13.3546 4.75 14.25 5.64543 14.25 6.75V7.5"
+			/>
+			<path
+				stroke="currentColor"
+				strokeLinecap="round"
+				strokeLinejoin="round"
+				strokeWidth="1.5"
+				d="M5 7.75H19"
 			/>
 		</svg>
 	)
