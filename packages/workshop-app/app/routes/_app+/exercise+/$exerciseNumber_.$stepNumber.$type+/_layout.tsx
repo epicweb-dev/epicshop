@@ -395,35 +395,45 @@ export default function ExercisePartRoute({
 					style={{ ['--split-pct' as any]: `${splitPercent}%` }}
 					ref={leftPaneRef}
 				>
-					<h1 className="h-14 border-b pr-5 pl-10 text-sm leading-tight font-medium">
-						<div className="flex h-14 items-center justify-between gap-x-2 overflow-x-auto py-2 whitespace-nowrap">
-							<div className="flex items-center justify-start gap-x-2 uppercase">
-								<Link
-									to={getExercisePath(data.exerciseStepApp.exerciseNumber)}
-									className="hover:underline"
-								>
-									{titleBits.exerciseNumber}. {titleBits.exerciseTitle}
-								</Link>
-								{'/'}
-								<Link to="." className="hover:underline">
-									{titleBits.stepNumber}. {titleBits.title}
-									{' ('}
-									{titleBits.emoji} {titleBits.type}
-									{')'}
-								</Link>
-							</div>
-							{data.problem &&
-							(data.playground?.appName !== data.problem.name ||
-								!data.playground?.isUpToDate) ? (
-								<div className="hidden md:block">
-									<SetAppToPlayground
-										appName={data.problem.name}
-										isOutdated={data.playground?.isUpToDate === false}
-									/>
-								</div>
-							) : null}
+				<h1 className="@container h-14 border-b pr-5 pl-10 text-sm leading-tight font-medium">
+					<div className="flex h-14 items-center justify-between gap-x-2 py-2 whitespace-nowrap">
+						<div className="flex items-center justify-start gap-x-2 uppercase">
+							<Link
+								to={getExercisePath(data.exerciseStepApp.exerciseNumber)}
+								className="hover:underline"
+							>
+								<span>{titleBits.exerciseNumber}.</span>
+								<span className="hidden @min-[500px]:inline">
+									{' '}
+									{titleBits.exerciseTitle}
+								</span>
+							</Link>
+							<span>/</span>
+							<Link to="." className="hover:underline">
+								<span>{titleBits.stepNumber}.</span>
+								<span className="hidden @min-[300px]:inline">
+									{' '}
+									{titleBits.title}
+								</span>
+								<span> ({titleBits.emoji}</span>
+								<span className="hidden @min-[400px]:inline">
+									{' '}
+									{titleBits.type}
+								</span>
+								<span>)</span>
+							</Link>
 						</div>
-					</h1>
+						{data.problem &&
+						(data.playground?.appName !== data.problem.name ||
+							!data.playground?.isUpToDate) ? (
+							<SetAppToPlayground
+								appName={data.problem.name}
+								isOutdated={data.playground?.isUpToDate === false}
+								hideTextOnNarrow
+							/>
+						) : null}
+					</div>
+				</h1>
 					<article
 						id={data.articleId}
 						key={data.articleId}
