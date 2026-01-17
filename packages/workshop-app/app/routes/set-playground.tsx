@@ -448,10 +448,10 @@ export function SetAppToPlayground({
 	hideTextOnNarrow?: boolean
 	showOnboardingIndicator?: boolean
 } & React.ComponentProps<'button'>) {
-	if (ENV.EPICSHOP_DEPLOYED) return null
 	const [showBadge, dismissBadge] = useOnboardingIndicator(
 		PLAYGROUND_ONBOARDING_FEATURE_ID,
 	)
+	if (ENV.EPICSHOP_DEPLOYED) return null
 	const shouldShowBadge = showOnboardingIndicator && showBadge
 	const buttonClassName = clsx(
 		className,
