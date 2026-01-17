@@ -212,13 +212,16 @@ async function waitForServer(port: number) {
 }
 
 async function waitForExit(child: ChildProcess, timeoutMs: number) {
+	let timeoutId: NodeJS.Timeout | undefined
 	const timeout = new Promise((_, reject) => {
-		const id = setTimeout(() => {
-			clearTimeout(id)
+		timeoutId = setTimeout(() => {
 			reject(new Error('Timed out waiting for process exit'))
 		}, timeoutMs)
 	})
 	await Promise.race([once(child, 'exit'), timeout])
+	if (timeoutId !== undefined) {
+		clearTimeout(timeoutId)
+	}
 }
 
 async function assertPortAvailable(port: number) {
