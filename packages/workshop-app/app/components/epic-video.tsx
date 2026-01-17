@@ -38,12 +38,21 @@ type OfflineVideoActionData = {
 	action?: string
 }
 
-function useOfflineVideoAvailability(playbackId: string, refreshKey: number) {
+function useOfflineVideoAvailability(
+	playbackId: string,
+	refreshKey: number,
+	enabled: boolean,
+) {
 	const [available, setAvailable] = React.useState(false)
 	const [checked, setChecked] = React.useState(false)
 	const offlineUrl = `/resources/offline-videos/${encodeURIComponent(playbackId)}`
 
 	React.useEffect(() => {
+		if (!enabled) {
+			setAvailable(false)
+			setChecked(true)
+			return
+		}
 		if (typeof window === 'undefined') return
 		setAvailable(false)
 		setChecked(false)
@@ -68,22 +77,28 @@ function useOfflineVideoAvailability(playbackId: string, refreshKey: number) {
 			isActive = false
 			controller.abort()
 		}
-	}, [offlineUrl, refreshKey])
+	}, [enabled, offlineUrl, refreshKey])
 
 	return { available, checked, offlineUrl }
 }
 
-function OfflineVideoUnavailable() {
+function OfflineVideoUnavailable({ canDownload }: { canDownload: boolean }) {
 	return (
 		<div className="relative aspect-video w-full shrink-0 shadow-lg">
 			<div className="not-prose text-foreground-destructive absolute inset-0 z-10 flex items-center justify-center p-8">
 				<Icon name="WifiNoConnection" size="xl">
 					<span>
-						Offline video not available. Download offline videos in{' '}
-						<Link to="/preferences" className="underline">
-							Preferences
-						</Link>
-						.
+						{canDownload ? (
+							<>
+								Offline video not available. Download offline videos in{' '}
+								<Link to="/preferences" className="underline">
+									Preferences
+								</Link>
+								.
+							</>
+						) : (
+							<>Offline playback is not available in the deployed app.</>
+						)}
 					</span>
 				</Icon>
 			</div>
@@ -459,11 +474,13 @@ function EpicVideo({
 	const isOnline = useIsOnline()
 	const playerPreferences = usePlayerPreferences()
 	const [availabilityKey, setAvailabilityKey] = React.useState(0)
+	const offlineDownloadsEnabled = !ENV.EPICSHOP_DEPLOYED
 	const offlineVideo = useOfflineVideoAvailability(
 		muxPlaybackId,
 		availabilityKey,
+		offlineDownloadsEnabled,
 	)
-	const shouldUseOfflineVideo = offlineVideo.available
+	const shouldUseOfflineVideo = offlineDownloadsEnabled && offlineVideo.available
 	const offlineVideoFetcher = useFetcher<OfflineVideoActionData>()
 	const isOfflineActionBusy = offlineVideoFetcher.state !== 'idle'
 	const currentTimeSessionKey = `${muxPlaybackId}:currentTime`
@@ -639,13 +656,17 @@ function EpicVideo({
 		element.setAttribute('seekoffset', '10')
 	}, [])
 	const offlineActions = (
-		<OfflineVideoActionButtons
-			isAvailable={offlineVideo.available}
-			isBusy={isOfflineActionBusy}
-			onDownload={handleDownload}
-			onDelete={handleDelete}
-		/>
+		offlineDownloadsEnabled ? (
+			<OfflineVideoActionButtons
+				isAvailable={offlineVideo.available}
+				isBusy={isOfflineActionBusy}
+				onDownload={handleDownload}
+				onDelete={handleDelete}
+			/>
+		) : null
 	)
+	const showOfflineUnavailable =
+		!isOnline && (offlineVideo.checked || !offlineDownloadsEnabled)
 	return (
 		<div>
 			<div className="shadow-lg">
@@ -725,8 +746,8 @@ function EpicVideo({
 							</div>
 						</MediaController>
 					</div>
-				) : !isOnline && offlineVideo.checked ? (
-					<OfflineVideoUnavailable />
+				) : showOfflineUnavailable ? (
+					<OfflineVideoUnavailable canDownload={offlineDownloadsEnabled} />
 				) : !isOnline ? (
 					<div className="flex aspect-video w-full items-center justify-center">
 						<Loading>Checking offline videos...</Loading>

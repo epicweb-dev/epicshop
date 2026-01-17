@@ -44,11 +44,13 @@ export default function AdminLayout() {
 								Cache Management
 							</Link>
 						</li>
+					{ENV.EPICSHOP_DEPLOYED ? null : (
 						<li>
 							<Link className="underline" to="offline-videos">
 								Offline Videos
 							</Link>
 						</li>
+					)}
 						<li>
 							<Link className="underline" to="version">
 								Version
