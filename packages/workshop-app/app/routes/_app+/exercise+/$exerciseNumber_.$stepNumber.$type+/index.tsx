@@ -329,7 +329,7 @@ export default function ExercisePartRoute({
 								)}
 								preventScrollReset
 								prefetch="intent"
-								onClick={handleDiffTabClick}
+								onClick={tab === 'diff' ? handleDiffTabClick : undefined}
 								to={
 									tab === 'diff' && altDown
 										? altDiffUrl

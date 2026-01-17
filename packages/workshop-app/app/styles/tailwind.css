@@ -319,3 +319,17 @@
 		transform: translateY(0);
 	}
 }
+
+@keyframes badgeBounce {
+	0%,
+	100% {
+		transform: translateY(0);
+	}
+	50% {
+		transform: translateY(-3px);
+	}
+}
+
+.animate-badge-bounce {
+	animation: badgeBounce 1s ease-in-out infinite;
+}
