@@ -106,7 +106,9 @@ export async function action({ request }: ActionFunctionArgs) {
 	return dataWithPE(request, formData, { status: 'success' } as const)
 }
 
-type PersistPlaygroundResult = { status: 'success' } | { status: 'error' }
+type PersistPlaygroundResult =
+	| { status: 'success'; persist: boolean }
+	| { status: 'error' }
 
 function usePlaygroundOnboardingGate() {
 	const rootData = useRootLoaderData()
@@ -136,53 +138,81 @@ function PlaygroundSetDialog({
 	const peRedirectInput = usePERedirectInput()
 	const { persistEnabled } = usePlaygroundOnboardingGate()
 	const isPersisting = persistFetcher.state !== 'idle'
-	const hasPersistEnabled =
-		persistEnabled || persistFetcher.data?.status === 'success'
+	const currentPersist =
+		persistFetcher.data?.status === 'success'
+			? persistFetcher.data.persist
+			: persistEnabled
+	const nextPersist = !currentPersist
 	return (
 		<Dialog open={open} onOpenChange={onOpenChange}>
 			<DialogContent className="max-w-xl">
 				<DialogHeader>
-					<DialogTitle>Set the playground?</DialogTitle>
+					<DialogTitle>Playground ready for your first step</DialogTitle>
 					<DialogDescription>
-						Setting the playground replaces your current playground with the
-						next step&apos;s instructions. That is the normal workflow and
-						nothing is wrong.
+						Nice work getting here! Setting the playground is how you bring the
+						next step&apos;s instructions into your workspace.
 					</DialogDescription>
 				</DialogHeader>
 				<div className="space-y-4 text-sm">
 					<p className="text-muted-foreground">
-						If you want to keep a copy of your current playground before it is
-						replaced, you can enable playground persistence.
+						This will replace whatever is currently in your playground with the
+						next step&apos;s files. That is expected and the default workflow.
 					</p>
 					<div className="border-border bg-muted/40 space-y-3 rounded-md border p-4">
 						<div>
 							<p className="text-foreground font-semibold">
-								Optional: Save playground copies
+								Optional: Save a copy each time
 							</p>
 							<p className="text-muted-foreground mt-1 text-sm">
 								When enabled, every set saves a copy in
 								<span className="font-mono"> saved-playgrounds</span>. You can
 								change this later in Preferences.
 							</p>
-						</div>
-						{hasPersistEnabled ? (
-							<p className="text-foreground text-sm font-medium">
-								Playground persistence is enabled.
+							<p className="text-muted-foreground mt-2 text-xs">
+								You can always manage this in Preferences.
 							</p>
-						) : (
-							<persistFetcher.Form method="POST" action="/persist-playground">
-								{peRedirectInput}
+						</div>
+						<persistFetcher.Form method="POST" action="/persist-playground">
+							{peRedirectInput}
+							<input
+								type="hidden"
+								name="persist"
+								value={nextPersist ? 'true' : 'false'}
+							/>
+							<div className="flex items-center justify-between gap-3">
+								<div>
+									<p className="text-foreground text-sm font-medium">
+										Persistence
+									</p>
+									<p className="text-muted-foreground text-xs">
+										{currentPersist ? 'Enabled' : 'Disabled'}
+									</p>
+								</div>
 								<button
 									type="submit"
-									className="border-border text-foreground hover:bg-muted focus-visible:ring-ring inline-flex items-center justify-center rounded-md border px-3 py-2 text-sm font-semibold"
+									role="switch"
+									aria-checked={currentPersist}
+									aria-label={`Toggle playground persistence ${
+										currentPersist ? 'off' : 'on'
+									}`}
+									className={clsx(
+										'focus-visible:ring-ring relative inline-flex h-6 w-11 items-center rounded-full border transition',
+										currentPersist
+											? 'border-foreground bg-foreground'
+											: 'border-border bg-muted',
+										isPersisting ? 'cursor-progress opacity-70' : null,
+									)}
 									disabled={isPersisting}
 								>
-									{isPersisting
-										? 'Enabling persistence...'
-										: 'Enable persistence'}
+									<span
+										className={clsx(
+											'bg-background inline-block h-5 w-5 rounded-full shadow transition',
+											currentPersist ? 'translate-x-5' : 'translate-x-0',
+										)}
+									/>
 								</button>
-							</persistFetcher.Form>
-						)}
+							</div>
+						</persistFetcher.Form>
 					</div>
 				</div>
 				<DialogFooter>

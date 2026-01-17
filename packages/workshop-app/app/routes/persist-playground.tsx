@@ -1,4 +1,7 @@
-import { setPreferences } from '@epic-web/workshop-utils/db.server'
+import {
+	getPreferences,
+	setPreferences,
+} from '@epic-web/workshop-utils/db.server'
 import { type ActionFunctionArgs } from 'react-router'
 import { ensureUndeployed } from '#app/utils/misc.tsx'
 import { dataWithPE } from '#app/utils/pe.tsx'
@@ -11,14 +14,30 @@ export async function action({ request }: ActionFunctionArgs) {
 	}
 
 	const formData = await request.formData()
-	await setPreferences({ playground: { persist: true } })
+	const persistValue = formData.get('persist')
+	const currentPersist = (await getPreferences())?.playground?.persist ?? false
+	const nextPersist =
+		persistValue === 'true'
+			? true
+			: persistValue === 'false'
+				? false
+				: !currentPersist
+	await setPreferences({ playground: { persist: nextPersist } })
 
-	return dataWithPE(request, formData, { status: 'success' } as const, {
-		headers: await createToastHeaders({
-			type: 'success',
-			title: 'Playground persistence enabled',
-			description:
-				'Future playground sets will save a copy in saved-playgrounds.',
-		}),
-	})
+	return dataWithPE(
+		request,
+		formData,
+		{ status: 'success', persist: nextPersist } as const,
+		{
+			headers: await createToastHeaders({
+				type: 'success',
+				title: nextPersist
+					? 'Playground persistence enabled'
+					: 'Playground persistence disabled',
+				description: nextPersist
+					? 'Future playground sets will save a copy in saved-playgrounds.'
+					: 'Playground sets will no longer save copies.',
+			}),
+		},
+	)
 }
