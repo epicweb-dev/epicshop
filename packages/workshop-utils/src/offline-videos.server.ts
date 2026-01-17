@@ -1,7 +1,7 @@
 import { createHash, randomUUID } from 'node:crypto'
-import { createWriteStream, promises as fs } from 'node:fs'
+import { createReadStream, createWriteStream, promises as fs } from 'node:fs'
 import path from 'node:path'
-import { Readable } from 'node:stream'
+import { Readable, Transform } from 'node:stream'
 import { pipeline } from 'node:stream/promises'
 import {
 	getApps,
@@ -9,10 +9,23 @@ import {
 	getWorkshopFinished,
 	getWorkshopInstructions,
 } from './apps.server.ts'
+import { getAuthInfo, getClientId } from './db.server.ts'
 import { getEpicVideoInfos } from './epic-api.server.ts'
 import { resolvePrimaryDir } from './data-storage.server.ts'
 import { getEnv } from './init-env.ts'
 import { logger } from './logger.ts'
+import {
+	OFFLINE_VIDEO_CRYPTO_VERSION,
+	createOfflineVideoCipher,
+	createOfflineVideoDecipher,
+	createOfflineVideoIv,
+	createOfflineVideoSalt,
+	decodeOfflineVideoIv,
+	deriveOfflineVideoKey,
+	encodeOfflineVideoIv,
+	getCryptoRange,
+	incrementIv,
+} from './offline-video-crypto.server.ts'
 
 type OfflineVideoEntryStatus = 'ready' | 'downloading' | 'error'
 
@@ -36,6 +49,9 @@ type OfflineVideoEntry = {
 	updatedAt: string
 	size?: number
 	error?: string
+	iv?: string
+	keyId?: string
+	cryptoVersion?: number
 }
 
 type OfflineVideoIndex = Record<string, OfflineVideoEntry>
@@ -68,9 +84,28 @@ export type OfflineVideoStartResult = {
 	alreadyDownloaded: number
 }
 
+type OfflineVideoConfig = {
+	version: number
+	salt: string
+	userId: string | null
+}
+
+type OfflineVideoKeyInfo = {
+	key: Buffer
+	keyId: string
+	config: OfflineVideoConfig
+}
+
+export type OfflineVideoAsset = {
+	size: number
+	contentType: string
+	createStream: (range?: { start: number; end: number }) => Readable
+}
+
 const log = logger('epic:offline-videos')
 const offlineVideoDirectoryName = 'offline-videos'
 const offlineVideoIndexFileName = 'index.json'
+const offlineVideoConfigFileName = 'offline-video-config.json'
 
 let downloadState: OfflineVideoDownloadState = {
 	status: 'idle',
@@ -89,6 +124,10 @@ function getOfflineVideoDir() {
 
 function getOfflineVideoIndexPath() {
 	return path.join(getOfflineVideoDir(), offlineVideoIndexFileName)
+}
+
+function getOfflineVideoConfigPath() {
+	return path.join(getOfflineVideoDir(), offlineVideoConfigFileName)
 }
 
 async function ensureOfflineVideoDir() {
@@ -127,6 +166,25 @@ async function readOfflineVideoIndex(): Promise<OfflineVideoIndex> {
 	}
 }
 
+async function readOfflineVideoConfig(): Promise<OfflineVideoConfig | null> {
+	const configPath = getOfflineVideoConfigPath()
+	try {
+		const json = await fs.readFile(configPath, 'utf8')
+		const parsed = JSON.parse(json)
+		if (!parsed || typeof parsed !== 'object') return null
+		const version =
+			typeof parsed.version === 'number'
+				? parsed.version
+				: OFFLINE_VIDEO_CRYPTO_VERSION
+		if (version !== OFFLINE_VIDEO_CRYPTO_VERSION) return null
+		if (typeof parsed.salt !== 'string') return null
+		const userId = typeof parsed.userId === 'string' ? parsed.userId : null
+		return { version, salt: parsed.salt, userId }
+	} catch {
+		return null
+	}
+}
+
 async function writeOfflineVideoIndex(index: OfflineVideoIndex) {
 	await ensureOfflineVideoDir()
 	const tmpPath = path.join(getOfflineVideoDir(), `.tmp-${randomUUID()}`)
@@ -134,6 +192,137 @@ async function writeOfflineVideoIndex(index: OfflineVideoIndex) {
 	await fs.rename(tmpPath, getOfflineVideoIndexPath())
 }
 
+async function writeOfflineVideoConfig(config: OfflineVideoConfig) {
+	await ensureOfflineVideoDir()
+	const tmpPath = path.join(getOfflineVideoDir(), `.tmp-${randomUUID()}`)
+	await fs.writeFile(tmpPath, JSON.stringify(config, null, 2), { mode: 0o600 })
+	await fs.rename(tmpPath, getOfflineVideoConfigPath())
+}
+
+async function ensureOfflineVideoConfig({
+	userId,
+}: {
+	userId: string | null
+}): Promise<OfflineVideoConfig> {
+	const existing = await readOfflineVideoConfig()
+	let config = existing
+	let shouldWrite = false
+
+	if (!config) {
+		config = {
+			version: OFFLINE_VIDEO_CRYPTO_VERSION,
+			salt: createOfflineVideoSalt(),
+			userId: userId ?? null,
+		}
+		shouldWrite = true
+	} else if (config.version !== OFFLINE_VIDEO_CRYPTO_VERSION) {
+		config = {
+			version: OFFLINE_VIDEO_CRYPTO_VERSION,
+			salt: createOfflineVideoSalt(),
+			userId: config.userId ?? null,
+		}
+		shouldWrite = true
+	}
+
+	if (userId && userId !== config.userId) {
+		config = {
+			version: OFFLINE_VIDEO_CRYPTO_VERSION,
+			salt: createOfflineVideoSalt(),
+			userId,
+		}
+		shouldWrite = true
+	}
+
+	if (shouldWrite) {
+		await writeOfflineVideoConfig(config)
+	}
+
+	return config
+}
+
+async function getOfflineVideoKeyInfo({
+	userId,
+	allowUserIdUpdate,
+}: {
+	userId: string | null
+	allowUserIdUpdate: boolean
+}): Promise<OfflineVideoKeyInfo | null> {
+	const config = allowUserIdUpdate
+		? await ensureOfflineVideoConfig({ userId })
+		: await readOfflineVideoConfig()
+	if (!config || config.version !== OFFLINE_VIDEO_CRYPTO_VERSION) return null
+	const clientId = await getClientId()
+	const keyInfo = deriveOfflineVideoKey({
+		salt: config.salt,
+		clientId,
+		userId: config.userId,
+		version: config.version,
+	})
+	return { ...keyInfo, config }
+}
+
+function createSliceTransform({
+	skipBytes,
+	takeBytes,
+}: {
+	skipBytes: number
+	takeBytes: number
+}) {
+	let skipped = 0
+	let taken = 0
+	return new Transform({
+		transform(chunk, _encoding, callback) {
+			let buffer = chunk as Buffer
+			if (skipped < skipBytes) {
+				const toSkip = Math.min(skipBytes - skipped, buffer.length)
+				buffer = buffer.slice(toSkip)
+				skipped += toSkip
+			}
+			if (buffer.length === 0 || taken >= takeBytes) {
+				return callback()
+			}
+			const remaining = takeBytes - taken
+			const output = buffer.slice(0, remaining)
+			taken += output.length
+			return callback(null, output)
+		},
+	})
+}
+
+function createOfflineVideoReadStream({
+	filePath,
+	size,
+	key,
+	iv,
+	range,
+}: {
+	filePath: string
+	size: number
+	key: Buffer
+	iv: Buffer
+	range?: { start: number; end: number }
+}) {
+	if (!range) {
+		const decipher = createOfflineVideoDecipher({ key, iv })
+		return createReadStream(filePath).pipe(decipher)
+	}
+
+	const cryptoRange = getCryptoRange({ start: range.start, end: range.end })
+	const alignedEnd = Math.min(cryptoRange.alignedEnd, size - 1)
+	const rangeIv = incrementIv(iv, cryptoRange.blockIndex)
+	const decipher = createOfflineVideoDecipher({ key, iv: rangeIv })
+	const slice = createSliceTransform({
+		skipBytes: cryptoRange.skipBytes,
+		takeBytes: cryptoRange.takeBytes,
+	})
+
+	return createReadStream(filePath, {
+		start: cryptoRange.alignedStart,
+		end: alignedEnd,
+	})
+		.pipe(decipher)
+		.pipe(slice)
+}
 async function getWorkshopVideoCollection({
 	request,
 }: { request?: Request } = {}): Promise<WorkshopVideoCollection> {
@@ -207,9 +396,12 @@ function getMuxMp4Urls(playbackId: string) {
 async function isOfflineVideoReady(
 	index: OfflineVideoIndex,
 	playbackId: string,
+	keyId: string,
+	cryptoVersion: number,
 ) {
 	const entry = index[playbackId]
 	if (!entry || entry.status !== 'ready') return false
+	if (entry.keyId !== keyId || entry.cryptoVersion !== cryptoVersion) return false
 	const filePath = entry.fileName
 		? path.join(getOfflineVideoDir(), entry.fileName)
 		: getOfflineVideoFilePath(playbackId)
@@ -221,7 +413,17 @@ async function isOfflineVideoReady(
 	}
 }
 
-async function downloadMuxVideo(playbackId: string, filePath: string) {
+async function downloadMuxVideo({
+	playbackId,
+	filePath,
+	key,
+	iv,
+}: {
+	playbackId: string
+	filePath: string
+	key: Buffer
+	iv: Buffer
+}) {
 	const urls = getMuxMp4Urls(playbackId)
 	let lastError: Error | null = null
 
@@ -241,7 +443,9 @@ async function downloadMuxVideo(playbackId: string, filePath: string) {
 		await ensureOfflineVideoDir()
 		const tmpPath = `${filePath}.tmp-${randomUUID()}`
 		const stream = createWriteStream(tmpPath, { mode: 0o600 })
-		await pipeline(Readable.fromWeb(response.body as any), stream)
+		const cipher = createOfflineVideoCipher({ key, iv })
+		const webStream = response.body as unknown as AsyncIterable<Uint8Array>
+		await pipeline(Readable.from(webStream), cipher, stream)
 		await fs.rename(tmpPath, filePath)
 		const stat = await fs.stat(filePath)
 		return { size: stat.size }
@@ -250,10 +454,15 @@ async function downloadMuxVideo(playbackId: string, filePath: string) {
 	throw lastError ?? new Error(`Unable to download video ${playbackId}`)
 }
 
-async function runOfflineVideoDownloads(
-	videos: Array<WorkshopVideoInfo>,
-	index: OfflineVideoIndex,
-) {
+async function runOfflineVideoDownloads({
+	videos,
+	index,
+	keyInfo,
+}: {
+	videos: Array<WorkshopVideoInfo>
+	index: OfflineVideoIndex
+	keyInfo: OfflineVideoKeyInfo
+}) {
 	for (const video of videos) {
 		const updatedAt = new Date().toISOString()
 		downloadState.current = {
@@ -262,6 +471,7 @@ async function runOfflineVideoDownloads(
 		}
 		downloadState.updatedAt = updatedAt
 
+		const iv = createOfflineVideoIv()
 		const entry: OfflineVideoEntry = {
 			playbackId: video.playbackId,
 			title: video.title,
@@ -269,14 +479,21 @@ async function runOfflineVideoDownloads(
 			fileName: getOfflineVideoFileName(video.playbackId),
 			status: 'downloading',
 			updatedAt,
+			iv: encodeOfflineVideoIv(iv),
+			keyId: keyInfo.keyId,
+			cryptoVersion: keyInfo.config.version,
 		}
 		index[video.playbackId] = entry
 		await writeOfflineVideoIndex(index)
 
 		try {
 			const { size } = await downloadMuxVideo(
-				video.playbackId,
-				path.join(getOfflineVideoDir(), entry.fileName),
+				{
+					playbackId: video.playbackId,
+					filePath: path.join(getOfflineVideoDir(), entry.fileName),
+					key: keyInfo.key,
+					iv,
+				},
 			)
 			index[video.playbackId] = {
 				...entry,
@@ -320,12 +537,21 @@ export async function getOfflineVideoSummary({
 }: { request?: Request } = {}): Promise<OfflineVideoSummary> {
 	const { videos, unavailable } = await getWorkshopVideoCollection({ request })
 	const index = await readOfflineVideoIndex()
+	const keyInfo = await getOfflineVideoKeyInfo({
+		userId: null,
+		allowUserIdUpdate: false,
+	})
 	let downloadedVideos = 0
 	let totalBytes = 0
 
 	for (const video of videos) {
 		const entry = index[video.playbackId]
-		if (entry?.status === 'ready') {
+		if (
+			entry?.status === 'ready' &&
+			keyInfo &&
+			entry.keyId === keyInfo.keyId &&
+			entry.cryptoVersion === keyInfo.config.version
+		) {
 			downloadedVideos += 1
 			totalBytes += entry.size ?? 0
 		}
@@ -365,11 +591,32 @@ export async function startOfflineVideoDownload({
 
 	const { videos, unavailable } = await getWorkshopVideoCollection({ request })
 	const index = await readOfflineVideoIndex()
+	const authInfo = await getAuthInfo()
+	const keyInfo = await getOfflineVideoKeyInfo({
+		userId: authInfo?.id ?? null,
+		allowUserIdUpdate: true,
+	})
+	if (!keyInfo) {
+		return {
+			state: downloadState,
+			available: videos.length,
+			queued: 0,
+			unavailable,
+			alreadyDownloaded: 0,
+		}
+	}
 	const downloads: Array<WorkshopVideoInfo> = []
 	let alreadyDownloaded = 0
 
 	for (const video of videos) {
-		if (await isOfflineVideoReady(index, video.playbackId)) {
+		if (
+			await isOfflineVideoReady(
+				index,
+				video.playbackId,
+				keyInfo.keyId,
+				keyInfo.config.version,
+			)
+		) {
 			alreadyDownloaded += 1
 			continue
 		}
@@ -389,11 +636,13 @@ export async function startOfflineVideoDownload({
 	}
 
 	if (downloads.length > 0) {
-		void runOfflineVideoDownloads(downloads, index).catch((error) => {
+		void runOfflineVideoDownloads({ videos: downloads, index, keyInfo }).catch(
+			(error) => {
 			log.error('Offline video downloads failed', error)
 			downloadState.status = 'error'
 			downloadState.updatedAt = new Date().toISOString()
-		})
+		},
+		)
 	}
 
 	return {
@@ -405,20 +654,44 @@ export async function startOfflineVideoDownload({
 	}
 }
 
-export async function getOfflineVideoAsset(playbackId: string) {
+export async function getOfflineVideoAsset(
+	playbackId: string,
+): Promise<OfflineVideoAsset | null> {
+	const keyInfo = await getOfflineVideoKeyInfo({
+		userId: null,
+		allowUserIdUpdate: false,
+	})
+	if (!keyInfo) return null
+
 	const index = await readOfflineVideoIndex()
 	const entry = index[playbackId]
-	if (entry?.status !== 'ready') return null
+	if (
+		!entry ||
+		entry.status !== 'ready' ||
+		entry.keyId !== keyInfo.keyId ||
+		entry.cryptoVersion !== keyInfo.config.version ||
+		!entry.iv
+	) {
+		return null
+	}
 	const filePath = entry.fileName
 		? path.join(getOfflineVideoDir(), entry.fileName)
 		: getOfflineVideoFilePath(playbackId)
 	try {
 		const stat = await fs.stat(filePath)
 		if (stat.size === 0) return null
+		const iv = decodeOfflineVideoIv(entry.iv)
 		return {
-			filePath,
 			size: stat.size,
 			contentType: 'video/mp4',
+			createStream: (range) =>
+				createOfflineVideoReadStream({
+					filePath,
+					size: stat.size,
+					key: keyInfo.key,
+					iv,
+					range,
+				}),
 		}
 	} catch {
 		return null

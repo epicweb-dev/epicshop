@@ -46,7 +46,7 @@ files to embed Epic Web videos with enhanced features.
 - **Mux Integration**: Uses Mux for high-quality video playback
 - **Theme Support**: Automatically adapts to light/dark themes
 - **Offline Handling**: Graceful fallback when offline
-- **Offline Downloads (Local)**: Optional bulk downloads from Preferences for offline playback (not DRM-protected)
+- **Offline Downloads (Local)**: Optional bulk downloads from Preferences for offline playback, encrypted at rest (not DRM-protected)
 - **Region Restrictions**: Handles region-restricted content with upgrade
   prompts
 

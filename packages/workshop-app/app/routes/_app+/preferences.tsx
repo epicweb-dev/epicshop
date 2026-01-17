@@ -246,14 +246,14 @@ export default function AccountSettings() {
 				<section className="border-border mt-6 flex w-full max-w-xl flex-col gap-3 border-t pt-6">
 					<div className="flex items-center gap-2">
 						<h2 className="text-body-xl">Offline videos</h2>
-						<SimpleTooltip content="Downloads MP4 copies of all workshop videos into local app storage. These files are not DRM-protected.">
+						<SimpleTooltip content="Downloads MP4 copies into local app storage and encrypts them at rest (not DRM).">
 							<Icon name="Question" tabIndex={0} />
 						</SimpleTooltip>
 					</div>
 					<p className="text-muted-foreground text-sm">
 						Download all workshop videos for offline playback. Videos are saved
-						in the app data folder and are only served by the local workshop
-						server.
+						in the app data folder, encrypted at rest, and only served by the
+						local workshop server.
 					</p>
 					<div className="flex flex-wrap items-center gap-3">
 						<Form method="post">

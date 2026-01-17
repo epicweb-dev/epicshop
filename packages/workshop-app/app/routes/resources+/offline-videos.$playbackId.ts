@@ -1,4 +1,3 @@
-import { createReadStream } from 'node:fs'
 import { createReadableStreamFromReadable } from '@react-router/node'
 import { invariantResponse } from '@epic-web/invariant'
 import { getOfflineVideoAsset } from '@epic-web/workshop-utils/offline-videos.server'
@@ -24,9 +23,6 @@ export async function loader({ request, params }: LoaderFunctionArgs) {
 	if (!asset) {
 		throw new Response('Offline video not found', { status: 404 })
 	}
-	if (asset.size === 0) {
-		throw new Response('Offline video empty', { status: 404 })
-	}
 
 	const rangeHeader = request.headers.get('Range')
 	const headers = new Headers({
@@ -39,7 +35,7 @@ export async function loader({ request, params }: LoaderFunctionArgs) {
 		if (request.method === 'HEAD') {
 			return new Response(null, { status: 200, headers })
 		}
-		const stream = createReadStream(asset.filePath)
+		const stream = asset.createStream()
 		return new Response(createReadableStreamFromReadable(stream), {
 			status: 200,
 			headers,
@@ -62,7 +58,7 @@ export async function loader({ request, params }: LoaderFunctionArgs) {
 		return new Response(null, { status: 206, headers })
 	}
 
-	const stream = createReadStream(asset.filePath, range)
+	const stream = asset.createStream(range)
 	return new Response(createReadableStreamFromReadable(stream), {
 		status: 206,
 		headers,
