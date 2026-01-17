@@ -119,21 +119,17 @@ Source: https://www.epicweb.dev/better-test-setup-with-disposable-objects
   lifecycle and avoids leaking state across tests.
 
 ```ts
-import { cleanup, render, screen } from '@testing-library/react'
-import { userEvent } from '@testing-library/user-event'
+export function createTestServer() {
+	const testServer = new Server()
 
-function setup() {
-	const user = userEvent.setup()
-	render(<Form />)
-	const dispose = () => cleanup()
-	return { user, dispose }
+	return {
+		instance: testServer,
+		async [Symbol.asyncDispose]() {
+			// Close the server, abort pending requests, etc.
+			await testServer.close()
+		},
+	}
 }
-
-test('submits the form', async () => {
-	const { user, dispose } = setup()
-	await user.click(screen.getByRole('button', { name: /save/i }))
-	dispose()
-})
 ```
 
 ### Aha testing
