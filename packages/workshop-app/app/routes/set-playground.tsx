@@ -16,6 +16,10 @@ import { type ActionFunctionArgs, useFetcher } from 'react-router'
 import { z } from 'zod'
 import { Button } from '#app/components/button.tsx'
 import { Icon } from '#app/components/icons.tsx'
+import {
+	OnboardingBadge,
+	useOnboardingIndicator,
+} from '#app/components/onboarding-indicator.tsx'
 import { showProgressBarField } from '#app/components/progress-bar.tsx'
 import {
 	Dialog,
@@ -438,13 +442,26 @@ export function SetAppToPlayground({
 	appName,
 	isOutdated,
 	hideTextOnNarrow,
+	showOnboardingIndicator = false,
+	onClick,
+	className,
+	...buttonProps
 }: {
 	appName: string
 	isOutdated?: boolean
 	/** When true, hides text at narrow container widths (for use in @container contexts) */
 	hideTextOnNarrow?: boolean
-}) {
+	showOnboardingIndicator?: boolean
+} & React.ComponentProps<'button'>) {
+	const [showBadge, dismissBadge] = useOnboardingIndicator(
+		PLAYGROUND_ONBOARDING_FEATURE_ID,
+	)
 	if (ENV.EPICSHOP_DEPLOYED) return null
+	const shouldShowBadge = showOnboardingIndicator && showBadge
+	const buttonClassName = clsx(
+		className,
+		shouldShowBadge ? 'relative' : null,
+	)
 	return (
 		<SetPlayground
 			appName={appName}
@@ -453,6 +470,14 @@ export function SetAppToPlayground({
 					? 'The app the playground was set to has been updated. Click to update to the latest version.'
 					: 'Playground is not set to the right app. Click to set Playground.'
 			}
+			{...buttonProps}
+			className={buttonClassName}
+			onClick={(event) => {
+				onClick?.(event)
+				if (showOnboardingIndicator) {
+					dismissBadge()
+				}
+			}}
 		>
 			<span className="text-foreground-destructive flex items-center justify-center gap-1 hover:underline">
 				<Icon name="Unlinked" className="animate-ping" />{' '}
@@ -465,6 +490,12 @@ export function SetAppToPlayground({
 				>
 					{isOutdated ? 'Playground Outdated' : 'Set to Playground'}
 				</span>
+				{shouldShowBadge ? (
+					<OnboardingBadge
+						tooltip="Set the playground for this step."
+						size="sm"
+					/>
+				) : null}
 			</span>
 		</SetPlayground>
 	)
