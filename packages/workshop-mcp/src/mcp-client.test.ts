@@ -285,9 +285,12 @@ describe('workshop MCP server', () => {
 		async () => {
 			const resources = await createDisposableClient()
 			try {
-				const resultPromise = resources.client.callTool('get_workshop_context', {
-					workshopDirectory: '/not/a/workshop',
-				})
+				const resultPromise = resources.client.callTool(
+					'get_workshop_context',
+					{
+						workshopDirectory: '/not/a/workshop',
+					},
+				)
 
 				await expect(resultPromise).resolves.toEqual(
 					expect.objectContaining({
