@@ -1,0 +1,198 @@
+import { spawn, type ChildProcessWithoutNullStreams } from 'node:child_process'
+import { once } from 'node:events'
+import { mkdtemp, mkdir, rm, writeFile } from 'node:fs/promises'
+import net from 'node:net'
+import os from 'node:os'
+import path from 'node:path'
+import { fileURLToPath, pathToFileURL } from 'node:url'
+import { expect, test } from 'vitest'
+
+const __dirname = path.dirname(fileURLToPath(import.meta.url))
+const repoRoot = path.resolve(__dirname, '..', '..', '..', '..')
+const tsxPath = path.join(repoRoot, 'node_modules', '.bin', 'tsx')
+
+const testIf = process.platform === 'win32' ? test.skip : test
+
+testIf(
+	'start releases the child server port on shutdown',
+	async () => {
+		const { appDir, runnerPath, cleanup } = await createRunnerFixture()
+		let child: ChildProcessWithoutNullStreams | null = null
+		try {
+			child = spawn(tsxPath, [runnerPath], {
+				cwd: repoRoot,
+				env: {
+					...process.env,
+					EPICSHOP_APP_LOCATION: appDir,
+					EPICSHOP_CONTEXT_CWD: appDir,
+					NODE_ENV: 'development',
+				},
+				stdio: ['ignore', 'pipe', 'pipe'],
+			})
+
+			const port = await waitForPort(child, 15000)
+			await waitForServer(port)
+
+			child.kill('SIGINT')
+			await waitForExit(child, 15000)
+
+			await assertPortAvailable(port)
+		} finally {
+			if (child && !child.killed) {
+				child.kill('SIGKILL')
+			}
+			await cleanup()
+		}
+	},
+	20000,
+)
+
+async function createRunnerFixture() {
+	const rootDir = await mkdtemp(path.join(os.tmpdir(), 'epicshop-start-'))
+	const appDir = path.join(rootDir, 'fake-workshop')
+	await mkdir(path.join(appDir, 'server'), { recursive: true })
+	await mkdir(path.join(appDir, 'app'), { recursive: true })
+
+	await writeFile(
+		path.join(appDir, 'package.json'),
+		JSON.stringify(
+			{
+				name: 'fake-workshop',
+				version: '0.0.0',
+				type: 'module',
+				epicshop: {},
+			},
+			null,
+			2,
+		),
+	)
+
+	await writeFile(
+		path.join(appDir, 'server', 'dev-server.js'),
+		[
+			"import http from 'node:http'",
+			'',
+			'const server = http.createServer((_, res) => {',
+			"  res.statusCode = 200",
+			"  res.end('ok')",
+			'})',
+			'',
+			"server.listen(0, '127.0.0.1', () => {",
+			'  const address = server.address()',
+			"  const port = typeof address === 'object' && address ? address.port : 0",
+			'  console.log(`Local: http://localhost:${port}`)',
+			'})',
+			'',
+			'const shutdown = () => {',
+			'  server.close(() => process.exit(0))',
+			'}',
+			"process.on('SIGTERM', shutdown)",
+			"process.on('SIGINT', shutdown)",
+			'',
+		].join('\n'),
+	)
+
+	const runnerPath = path.join(rootDir, 'start-runner.ts')
+	const startModuleUrl = pathToFileURL(
+		path.join(repoRoot, 'packages', 'workshop-cli', 'src', 'commands', 'start.ts'),
+	).href
+
+	await writeFile(
+		runnerPath,
+		[
+			`import { start } from ${JSON.stringify(startModuleUrl)}`,
+			'',
+			'await start({ appLocation: process.env.EPICSHOP_APP_LOCATION })',
+			'',
+		].join('\n'),
+	)
+
+	return {
+		appDir,
+		runnerPath,
+		cleanup: async () => {
+			await rm(rootDir, { recursive: true, force: true })
+		},
+	}
+}
+
+async function waitForPort(
+	child: ChildProcessWithoutNullStreams,
+	timeoutMs: number,
+) {
+	let buffer = ''
+	return new Promise<number>((resolve, reject) => {
+		let resolved = false
+		const timeoutId = setTimeout(() => {
+			if (resolved) return
+			reject(
+				new Error(
+					`Timed out waiting for port output. Last output:\n${buffer}`,
+				),
+			)
+		}, timeoutMs)
+
+		const onData = (data: Buffer) => {
+			const text = data.toString('utf8')
+			buffer += text
+			const match = buffer.match(/localhost:(\d+)/)
+			if (match) {
+				resolved = true
+				clearTimeout(timeoutId)
+				child.stdout.off('data', onData)
+				child.off('exit', onExit)
+				resolve(Number(match[1]))
+			}
+		}
+
+		const onExit = () => {
+			if (resolved) return
+			clearTimeout(timeoutId)
+			reject(
+				new Error(
+					`Process exited before port output. Last output:\n${buffer}`,
+				),
+			)
+		}
+
+		child.stdout.on('data', onData)
+		child.once('exit', onExit)
+	})
+}
+
+async function waitForServer(port: number) {
+	const url = `http://localhost:${port}`
+	for (let attempt = 0; attempt < 20; attempt++) {
+		try {
+			const res = await fetch(url, { method: 'GET' })
+			if (res.ok) return
+		} catch {}
+		await new Promise((resolve) => setTimeout(resolve, 200))
+	}
+	throw new Error(`Server did not respond at ${url}`)
+}
+
+async function waitForExit(
+	child: ChildProcessWithoutNullStreams,
+	timeoutMs: number,
+) {
+	const timeout = new Promise((_, reject) => {
+		const id = setTimeout(() => {
+			clearTimeout(id)
+			reject(new Error('Timed out waiting for process exit'))
+		}, timeoutMs)
+	})
+	await Promise.race([once(child, 'exit'), timeout])
+}
+
+async function assertPortAvailable(port: number) {
+	await new Promise<void>((resolve, reject) => {
+		const server = net.createServer()
+		server.once('error', (error) => {
+			reject(error)
+		})
+		server.listen(port, '127.0.0.1', () => {
+			server.close(() => resolve())
+		})
+	})
+}
