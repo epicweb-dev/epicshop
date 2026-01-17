@@ -37,7 +37,7 @@ class McpTestClient {
 	>()
 	#nextId = 1
 
-	private constructor(child: ReturnType<typeof spawn>) {
+	constructor(child: ReturnType<typeof spawn>) {
 		this.#child = child
 		if (!this.#child.stdout || !this.#child.stdin) {
 			throw new Error('Failed to start MCP server stdio streams.')
@@ -114,11 +114,11 @@ class McpTestClient {
 		})
 	}
 
-	private notify(method: string, params?: Record<string, unknown>) {
+	notify(method: string, params?: Record<string, unknown>) {
 		this.write({ jsonrpc: '2.0', method, params })
 	}
 
-	private request(method: string, params?: Record<string, unknown>) {
+	request(method: string, params?: Record<string, unknown>) {
 		const id = this.#nextId++
 		const payload = { jsonrpc: '2.0', id, method, params }
 
@@ -132,11 +132,11 @@ class McpTestClient {
 		})
 	}
 
-	private write(payload: Record<string, unknown>) {
+	write(payload: Record<string, unknown>) {
 		this.#stdin.write(`${JSON.stringify(payload)}\n`)
 	}
 
-	private onStdout(chunk: string) {
+	onStdout(chunk: string) {
 		this.#buffer += chunk
 		let newlineIndex = this.#buffer.indexOf('\n')
 		while (newlineIndex !== -1) {
@@ -151,7 +151,7 @@ class McpTestClient {
 		}
 	}
 
-	private handleLine(line: string) {
+	handleLine(line: string) {
 		let message: JsonRpcResponse | null = null
 		try {
 			message = JSON.parse(line) as JsonRpcResponse
@@ -175,7 +175,7 @@ class McpTestClient {
 		pending.resolve(message.result ?? {})
 	}
 
-	private failPendingRequests(reason: unknown) {
+	failPendingRequests(reason: unknown) {
 		const error = new Error(
 			reason instanceof Error ? reason.message : `Process exited: ${reason}`,
 		)
