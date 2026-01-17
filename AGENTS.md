@@ -115,18 +115,6 @@ test('renders a pending button in browser mode', async () => {
 ```
 
 ```ts
-import { test, expect } from 'vitest'
-import { page } from 'vitest/browser'
-import { render } from 'react-dom'
-import { Greeting } from './greeting'
-
-test('displays the greeting message', async () => {
-	render(<Greeting />)
-	await expect.element(page.getByText('Hi, Kody!')).toBeVisible()
-})
-```
-
-```ts
 import { test, expect } from '@playwright/test'
 
 test('checkout flow', async ({ page }) => {
@@ -165,14 +153,14 @@ Source: https://kentcdodds.com/blog/aha-testing
   name and assertion so the lesson stays encoded in the suite.
 
 ```ts
-import { render, screen } from '@testing-library/react'
-import { userEvent } from '@testing-library/user-event'
+import { expect, test } from 'vitest'
 
-test('shows a required error when email is missing', async () => {
-	render(<SignupForm />)
-	const user = userEvent.setup()
-	await user.click(screen.getByRole('button', { name: /submit/i }))
-	expect(screen.getByText(/email is required/i)).toBeVisible()
+function normalizeEmail(value: string) {
+	return value.trim().toLowerCase()
+}
+
+test('lowercases and trims user input (aha)', () => {
+	expect(normalizeEmail('  Person@Example.com ')).toBe('person@example.com')
 })
 ```
 
@@ -184,49 +172,24 @@ Source: https://kentcdodds.com/blog/avoid-nesting-when-youre-testing
   `beforeEach`/`describe` complexity.
 
 ```ts
-function setup(items: string[]) {
-	render(<List items={items} />)
-	return screen.queryAllByRole('listitem')
+import { expect, test } from 'vitest'
+
+function filterVisible(items: Array<{ label: string; hidden: boolean }>) {
+	return items.filter((item) => !item.hidden)
 }
 
 test('renders no items', () => {
-	expect(setup([])).toHaveLength(0)
+	expect(filterVisible([])).toHaveLength(0)
 })
 
 test('renders provided items', () => {
-	expect(setup(['a', 'b'])).toHaveLength(2)
+	expect(
+		filterVisible([
+			{ label: 'a', hidden: false },
+			{ label: 'b', hidden: false },
+		]),
+	).toHaveLength(2)
 })
-```
-
-### Incredible Vitest defaults
-
-Source: https://www.epicweb.dev/incredible-vitest-defaults
-
-- Start with Vitest defaults before adding config, since it already wires up
-  TypeScript, Vite integration, watch mode, and fast parallel execution.
-
-```ts
-import { expect, test } from 'vitest'
-
-test('formats currency', () => {
-	expect(formatCurrency(1234)).toBe('$1,234.00')
-})
-```
-
-### `toBeVisible` vs `toBeInTheDocument`
-
-Source: https://www.epicweb.dev/tobevisible-or-tobeinthedocument
-
-- Use `toBeVisible` when the user should see the element; use
-  `toBeInTheDocument` when it should exist even if hidden.
-
-```ts
-import { render, screen } from '@testing-library/react'
-
-render(<Settings />)
-expect(screen.getByRole('dialog')).toBeVisible()
-expect(screen.getByText(/advanced options/i)).toBeInTheDocument()
-expect(screen.getByText(/advanced options/i)).not.toBeVisible()
 ```
 
 ## Code style
