@@ -114,16 +114,6 @@ test('renders a pending button in browser mode', async () => {
 })
 ```
 
-```ts
-import { test, expect } from '@playwright/test'
-
-test('checkout flow', async ({ page }) => {
-	await page.goto('/')
-	await page.getByRole('link', { name: /cart/i }).click()
-	await expect(page).toHaveURL(/cart/)
-})
-```
-
 ### Better test setup with disposable objects
 
 Source: https://www.epicweb.dev/better-test-setup-with-disposable-objects
