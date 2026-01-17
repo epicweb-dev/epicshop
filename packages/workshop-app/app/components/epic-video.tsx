@@ -14,7 +14,10 @@ import {
 import * as React from 'react'
 import { Await, Link, useFetcher } from 'react-router'
 import { useTheme } from '#app/routes/theme/index.tsx'
-import { MuxPlayer, usePlayerPreferences } from '#app/routes/video-player/index.tsx'
+import {
+	MuxPlayer,
+	usePlayerPreferences,
+} from '#app/routes/video-player/index.tsx'
 import { cn } from '#app/utils/misc.tsx'
 import { useIsOnline } from '#app/utils/online.ts'
 import { Icon } from './icons.tsx'
@@ -448,7 +451,10 @@ function EpicVideo({
 	const isOnline = useIsOnline()
 	const playerPreferences = usePlayerPreferences()
 	const [availabilityKey, setAvailabilityKey] = React.useState(0)
-	const offlineVideo = useOfflineVideoAvailability(muxPlaybackId, availabilityKey)
+	const offlineVideo = useOfflineVideoAvailability(
+		muxPlaybackId,
+		availabilityKey,
+	)
 	const shouldUseOfflineVideo = offlineVideo.available
 	const offlineVideoFetcher = useFetcher<OfflineVideoActionData>()
 	const isOfflineActionBusy = offlineVideoFetcher.state !== 'idle'
@@ -511,7 +517,11 @@ function EpicVideo({
 		if (typeof playerPreferences?.volumeRate === 'number') {
 			nativeVideoRef.current.volume = playerPreferences.volumeRate
 		}
-	}, [playerPreferences?.playbackRate, playerPreferences?.volumeRate, shouldUseOfflineVideo])
+	}, [
+		playerPreferences?.playbackRate,
+		playerPreferences?.volumeRate,
+		shouldUseOfflineVideo,
+	])
 
 	React.useEffect(() => {
 		if (offlineVideoFetcher.state !== 'idle') return

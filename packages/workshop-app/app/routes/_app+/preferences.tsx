@@ -277,7 +277,9 @@ export default function AccountSettings() {
 								name="intent"
 								value="download-offline-videos"
 								disabled={
-									isDownloading || isSubmitting || offlineVideos.totalVideos === 0
+									isDownloading ||
+									isSubmitting ||
+									offlineVideos.totalVideos === 0
 								}
 							>
 								{isDownloading ? 'Downloading...' : 'Download all videos'}

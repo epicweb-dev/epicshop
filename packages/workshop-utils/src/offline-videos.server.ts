@@ -491,7 +491,8 @@ async function isOfflineVideoReady(
 ) {
 	const entry = index[playbackId]
 	if (!entry || entry.status !== 'ready') return false
-	if (entry.keyId !== keyId || entry.cryptoVersion !== cryptoVersion) return false
+	if (entry.keyId !== keyId || entry.cryptoVersion !== cryptoVersion)
+		return false
 	if (!hasWorkshop(entry, workshop.id, workshop)) return false
 	const filePath = entry.fileName
 		? path.join(getOfflineVideoDir(), entry.fileName)
@@ -581,14 +582,12 @@ async function runOfflineVideoDownloads({
 		await writeOfflineVideoIndex(index)
 
 		try {
-			const { size } = await downloadMuxVideo(
-				{
-					playbackId: video.playbackId,
-					filePath: path.join(getOfflineVideoDir(), entry.fileName),
-					key: keyInfo.key,
-					iv,
-				},
-			)
+			const { size } = await downloadMuxVideo({
+				playbackId: video.playbackId,
+				filePath: path.join(getOfflineVideoDir(), entry.fileName),
+				key: keyInfo.key,
+				iv,
+			})
 			index[video.playbackId] = {
 				...entry,
 				status: 'ready',
@@ -617,8 +616,7 @@ async function runOfflineVideoDownloads({
 		}
 	}
 
-	downloadState.status =
-		downloadState.errors.length > 0 ? 'error' : 'completed'
+	downloadState.status = downloadState.errors.length > 0 ? 'error' : 'completed'
 	downloadState.updatedAt = new Date().toISOString()
 }
 
@@ -769,13 +767,11 @@ export async function startOfflineVideoDownload({
 			index,
 			keyInfo,
 			workshop,
-		}).catch(
-			(error) => {
+		}).catch((error) => {
 			log.error('Offline video downloads failed', error)
 			downloadState.status = 'error'
 			downloadState.updatedAt = new Date().toISOString()
-		},
-		)
+		})
 	}
 
 	return {

@@ -1,4 +1,9 @@
-import { createCipheriv, createDecipheriv, createHash, randomBytes } from 'node:crypto'
+import {
+	createCipheriv,
+	createDecipheriv,
+	createHash,
+	randomBytes,
+} from 'node:crypto'
 
 export const OFFLINE_VIDEO_BLOCK_SIZE = 16
 export const OFFLINE_VIDEO_CRYPTO_VERSION = 1
