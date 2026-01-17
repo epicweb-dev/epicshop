@@ -18,6 +18,7 @@ export default defineConfig({
 	test: {
 		name: 'app',
 		include: ['packages/workshop-app/**/*.browser.{test,spec}.?(c|m)[jt]s?(x)'],
+		passWithNoTests: true,
 		browser: {
 			enabled: true,
 			provider: playwright(),
