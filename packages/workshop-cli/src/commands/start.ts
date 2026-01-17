@@ -364,10 +364,7 @@ export async function start(options: StartOptions = {}): Promise<StartResult> {
 			childPort = null
 			childPortPromise = createChildPortPromise()
 
-			const childArgs = [
-				...(sentryImport ? [sentryImport] : []),
-				childScript,
-			]
+			const childArgs = [...(sentryImport ? [sentryImport] : []), childScript]
 			child = spawn(process.execPath, childArgs, {
 				cwd: appDir,
 				// Capture stdout for port detection

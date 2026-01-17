@@ -22,14 +22,14 @@ testIf(
 				process.execPath,
 				['--experimental-transform-types', runnerPath],
 				{
-				cwd: repoRoot,
-				env: {
-					...process.env,
-					EPICSHOP_APP_LOCATION: appDir,
-					EPICSHOP_CONTEXT_CWD: appDir,
-					NODE_ENV: 'development',
-				},
-				stdio: ['ignore', 'pipe', 'pipe'],
+					cwd: repoRoot,
+					env: {
+						...process.env,
+						EPICSHOP_APP_LOCATION: appDir,
+						EPICSHOP_CONTEXT_CWD: appDir,
+						NODE_ENV: 'development',
+					},
+					stdio: ['ignore', 'pipe', 'pipe'],
 				},
 			)
 
@@ -87,7 +87,7 @@ async function createRunnerFixture() {
 			"import http from 'node:http'",
 			'',
 			'const server = http.createServer((_, res) => {',
-			"  res.statusCode = 200",
+			'  res.statusCode = 200',
 			"  res.end('ok')",
 			'})',
 			'',
@@ -108,7 +108,14 @@ async function createRunnerFixture() {
 
 	const runnerPath = path.join(rootDir, 'start-runner.ts')
 	const startModuleUrl = pathToFileURL(
-		path.join(repoRoot, 'packages', 'workshop-cli', 'src', 'commands', 'start.ts'),
+		path.join(
+			repoRoot,
+			'packages',
+			'workshop-cli',
+			'src',
+			'commands',
+			'start.ts',
+		),
 	).href
 
 	await writeFile(
@@ -203,10 +210,7 @@ async function waitForServer(port: number) {
 	throw new Error(`Server did not respond at ${url}`)
 }
 
-async function waitForExit(
-	child: ChildProcess,
-	timeoutMs: number,
-) {
+async function waitForExit(child: ChildProcess, timeoutMs: number) {
 	const timeout = new Promise((_, reject) => {
 		const id = setTimeout(() => {
 			clearTimeout(id)
