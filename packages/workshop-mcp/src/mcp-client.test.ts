@@ -107,7 +107,7 @@ class McpTestClient {
 	}
 
 	async close() {
-		if (this.#child.killed) return
+		if (this.#child.killed || this.#child.exitCode !== null) return
 		this.#child.kill()
 		await new Promise<void>((resolve) => {
 			this.#child.once('exit', () => resolve())
@@ -195,13 +195,18 @@ type DisposableClient = {
 
 async function createDisposableClient(): Promise<DisposableClient> {
 	const client = await McpTestClient.start()
-	const initResult = await client.initialize()
-	return {
-		client,
-		initResult,
-		async [Symbol.asyncDispose]() {
-			await client.close()
-		},
+	try {
+		const initResult = await client.initialize()
+		return {
+			client,
+			initResult,
+			async [Symbol.asyncDispose]() {
+				await client.close()
+			},
+		}
+	} catch (error) {
+		await client.close()
+		throw error
 	}
 }
 
