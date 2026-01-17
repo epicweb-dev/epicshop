@@ -187,25 +187,52 @@ class McpTestClient {
 	}
 }
 
+type DisposableClient = {
+	client: McpTestClient
+	initResult: Record<string, unknown>
+	dispose: () => Promise<void>
+}
+
+async function createDisposableClient(): Promise<DisposableClient> {
+	const client = await McpTestClient.start()
+	const initResult = await client.initialize()
+	return {
+		client,
+		initResult,
+		dispose: async () => {
+			await client.close()
+		},
+	}
+}
+
+function resolveWorkspaceRoot() {
+	const testFilePath = fileURLToPath(import.meta.url)
+	const testDir = path.dirname(testFilePath)
+	const packageRoot = path.resolve(testDir, '..')
+	return path.resolve(packageRoot, '..', '..')
+}
+
 describe('workshop MCP server', () => {
-	let client: McpTestClient
-	let initResult: Record<string, unknown>
+	let disposableClient: DisposableClient
 
 	beforeAll(async () => {
-		client = await McpTestClient.start()
-		initResult = await client.initialize()
+		disposableClient = await createDisposableClient()
 	}, testTimeoutMs)
 
 	afterAll(async () => {
-		await client.close()
+		await disposableClient?.dispose()
 	})
 
 	test(
 		'initializes with instructions and server info',
 		() => {
-			expect(typeof initResult.protocolVersion).toBe('string')
-			expect(typeof initResult.serverInfo).toBe('object')
-			expect(typeof initResult.instructions).toBe('string')
+			expect(disposableClient.initResult).toEqual(
+				expect.objectContaining({
+					protocolVersion: expect.any(String),
+					serverInfo: expect.any(Object),
+					instructions: expect.any(String),
+				}),
+			)
 		},
 		testTimeoutMs,
 	)
@@ -213,12 +240,13 @@ describe('workshop MCP server', () => {
 	test(
 		'lists tools with expected shape',
 		async () => {
-			const result = await client.listTools()
-			expect(Array.isArray(result.tools)).toBe(true)
-			expect(result.tools.length).toBeGreaterThan(0)
-			expect(
-				result.tools.some((tool) => tool.name === 'get_what_is_next'),
-			).toBe(true)
+			await expect(disposableClient.client.listTools()).resolves.toEqual(
+				expect.objectContaining({
+					tools: expect.arrayContaining([
+						expect.objectContaining({ name: 'get_what_is_next' }),
+					]),
+				}),
+			)
 		},
 		testTimeoutMs,
 	)
@@ -226,21 +254,25 @@ describe('workshop MCP server', () => {
 	test(
 		'get_what_is_next returns text content and structured payload',
 		async () => {
-			const testFilePath = fileURLToPath(import.meta.url)
-			const testDir = path.dirname(testFilePath)
-			const packageRoot = path.resolve(testDir, '..')
-			const workspaceRoot = path.resolve(packageRoot, '..', '..')
-			const workshopDirectory = path.join(workspaceRoot, 'example')
+			const workshopDirectory = path.join(resolveWorkspaceRoot(), 'example')
+			const resultPromise = disposableClient.client.callTool(
+				'get_what_is_next',
+				{
+					workshopDirectory,
+				},
+			)
 
-			const result = await client.callTool('get_what_is_next', {
-				workshopDirectory,
-			})
-
-			expect(Array.isArray(result.content)).toBe(true)
-			expect(result.content.length).toBeGreaterThan(0)
-			expect(result.content[0]?.type).toBe('text')
-			expect(typeof result.content[0]?.text).toBe('string')
-			expect(typeof result.structuredContent).toBe('object')
+			await expect(resultPromise).resolves.toEqual(
+				expect.objectContaining({
+					content: expect.arrayContaining([
+						expect.objectContaining({
+							type: 'text',
+							text: expect.any(String),
+						}),
+					]),
+					structuredContent: expect.any(Object),
+				}),
+			)
 		},
 		testTimeoutMs,
 	)
@@ -248,13 +280,21 @@ describe('workshop MCP server', () => {
 	test(
 		'returns tool error response for invalid workshop directory',
 		async () => {
-			const result = await client.callTool('get_workshop_context', {
-				workshopDirectory: '/not/a/workshop',
-			})
+			const resultPromise = disposableClient.client.callTool(
+				'get_workshop_context',
+				{
+					workshopDirectory: '/not/a/workshop',
+				},
+			)
 
-			expect(result.isError).toBe(true)
-			expect(Array.isArray(result.content)).toBe(true)
-			expect(result.content[0]?.type).toBe('text')
+			await expect(resultPromise).resolves.toEqual(
+				expect.objectContaining({
+					isError: true,
+					content: expect.arrayContaining([
+						expect.objectContaining({ type: 'text' }),
+					]),
+				}),
+			)
 		},
 		testTimeoutMs,
 	)
