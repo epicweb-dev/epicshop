@@ -227,33 +227,37 @@ export default function Account() {
 						<Icon name="ExternalLink" />
 					</Link>
 				</li>
-				<li className="relative">
+				<li>
 					<Link
 						to="/preferences"
-						className="underline"
+						className="relative underline"
 						onClick={dismissPreferencesBadge}
 					>
+						{showPreferencesBadge ? (
+							<OnboardingBadge
+								tooltip="Customize your workshop experience!"
+								size="sm"
+								className="-top-1 -left-4"
+							/>
+						) : null}
 						Manage your preferences
 					</Link>
-					{showPreferencesBadge ? (
-						<OnboardingBadge
-							tooltip="Customize your workshop experience!"
-							size="sm"
-							className="top-0 -left-5"
-						/>
-					) : null}
 				</li>
-				<li className="relative">
-					<Link to="/guide" className="underline" onClick={dismissGuideBadge}>
+				<li>
+					<Link
+						to="/guide"
+						className="relative underline"
+						onClick={dismissGuideBadge}
+					>
+						{showGuideBadge ? (
+							<OnboardingBadge
+								tooltip="Learn how to use the workshop app!"
+								size="sm"
+								className="-top-1 -left-4"
+							/>
+						) : null}
 						Workshop app guide
 					</Link>
-					{showGuideBadge ? (
-						<OnboardingBadge
-							tooltip="Learn how to use the workshop app!"
-							size="sm"
-							className="top-0 -left-5"
-						/>
-					) : null}
 				</li>
 				<li>
 					<Link to="/support" className="underline">

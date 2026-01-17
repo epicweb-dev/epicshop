@@ -32,10 +32,6 @@ import {
 import { Diff } from '#app/components/diff.tsx'
 import { GeneralErrorBoundary } from '#app/components/error-boundary.tsx'
 import { type InBrowserBrowserRef } from '#app/components/in-browser-browser.tsx'
-import {
-	OnboardingBadge,
-	useOnboardingIndicator,
-} from '#app/components/onboarding-indicator.tsx'
 import { StatusIndicator } from '#app/components/status-indicator.tsx'
 import { useWorkshopConfig } from '#app/components/workshop-config.tsx'
 import { useAltDown } from '#app/utils/misc.tsx'
@@ -248,11 +244,6 @@ export default function ExercisePartRoute({
 	const altDown = useAltDown()
 	const navigate = useNavigate()
 
-	// Onboarding indicators for tabs
-	const [showDiffBadge, dismissDiffBadge] = useOnboardingIndicator('diff-tab')
-	const [showTestsBadge, dismissTestsBadge] =
-		useOnboardingIndicator('tests-tab')
-
 	function shouldHideTab(tab: (typeof tabs)[number]) {
 		if (tab === 'tests') {
 			return (
@@ -311,32 +302,10 @@ export default function ExercisePartRoute({
 	})}`
 
 	function handleDiffTabClick(event: React.MouseEvent<HTMLAnchorElement>) {
-		dismissDiffBadge()
 		if (event.altKey && !event.ctrlKey && !event.shiftKey && !event.metaKey) {
 			event.preventDefault()
 			void navigate(altDiffUrl)
 		}
-	}
-
-	function handleTestsTabClick() {
-		dismissTestsBadge()
-	}
-
-	function getOnboardingBadge(tab: (typeof tabs)[number]) {
-		if (tab === 'diff' && showDiffBadge) {
-			return (
-				<OnboardingBadge
-					tooltip="Compare your work with the solution!"
-					size="sm"
-				/>
-			)
-		}
-		if (tab === 'tests' && showTestsBadge) {
-			return (
-				<OnboardingBadge tooltip="Run tests to verify your work!" size="sm" />
-			)
-		}
-		return null
 	}
 
 	return (
@@ -346,11 +315,10 @@ export default function ExercisePartRoute({
 			// intentionally no onValueChange here because the Link will trigger the
 			// change.
 		>
-			<Tabs.List className="scrollbar-thin scrollbar-thumb-scrollbar h-14 min-h-14 overflow-x-auto overflow-y-visible border-b pt-2 whitespace-nowrap">
+			<Tabs.List className="scrollbar-thin scrollbar-thumb-scrollbar h-14 min-h-14 overflow-x-auto border-b whitespace-nowrap">
 				{tabs.map((tab) => {
 					const hidden = shouldHideTab(tab)
 					const status = getTabStatus(tab)
-					const onboardingBadge = getOnboardingBadge(tab)
 					return (
 						<Tabs.Trigger key={tab} value={tab} hidden={hidden} asChild>
 							<Link
@@ -361,13 +329,7 @@ export default function ExercisePartRoute({
 								)}
 								preventScrollReset
 								prefetch="intent"
-								onClick={
-									tab === 'diff'
-										? handleDiffTabClick
-										: tab === 'tests'
-											? handleTestsTabClick
-											: undefined
-								}
+								onClick={tab === 'diff' ? handleDiffTabClick : undefined}
 								to={
 									tab === 'diff' && altDown
 										? altDiffUrl
@@ -382,7 +344,6 @@ export default function ExercisePartRoute({
 									{status && <StatusIndicator status={status} />}
 									<span>{tab}</span>
 								</span>
-								{onboardingBadge}
 							</Link>
 						</Tabs.Trigger>
 					)
