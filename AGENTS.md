@@ -84,20 +84,20 @@ await expect(loadUser({ id: 'missing' })).rejects.toThrow(/not found/i)
 
 Source: https://www.epicweb.dev/vitest-browser-mode-vs-playwright
 
-- Use Vitest browser mode for fast, DOM-focused component tests that run in a
-  real browser but stay close to unit/integration scope.
+- Use Vitest browser mode for component/integration tests that run in a real
+  browser and let you query the page via `vitest/browser`.
 - Use Playwright for end-to-end flows across routes, storage, and network where
   full browser automation is required.
 
 ```ts
-import { render, screen } from '@testing-library/react'
-import { userEvent } from '@testing-library/user-event'
+import { test, expect } from 'vitest'
+import { page } from 'vitest/browser'
+import { render } from 'react-dom'
+import { Greeting } from './greeting'
 
-test('expands details', async () => {
-	render(<Details />)
-	const user = userEvent.setup()
-	await user.click(screen.getByRole('button', { name: /more/i }))
-	expect(screen.getByText(/details/i)).toBeVisible()
+test('displays the greeting message', async () => {
+	render(<Greeting />)
+	await expect.element(page.getByText('Hi, Kody!')).toBeVisible()
 })
 ```
 

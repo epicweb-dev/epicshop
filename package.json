@@ -56,6 +56,6 @@
     "includedScripts": []
   },
   "devDependencies": {
-    "vitest": "^4.0.8"
+    "vitest": "^4.0.17"
   }
 }
