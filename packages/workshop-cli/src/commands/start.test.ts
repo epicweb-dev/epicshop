@@ -18,7 +18,10 @@ testIf(
 		const { appDir, runnerPath, cleanup } = await createRunnerFixture()
 		let child: ChildProcessWithoutNullStreams | null = null
 		try {
-			child = spawn(process.execPath, ['--import', 'tsx', runnerPath], {
+			child = spawn(
+				process.execPath,
+				['--experimental-transform-types', runnerPath],
+				{
 				cwd: repoRoot,
 				env: {
 					...process.env,
@@ -27,7 +30,8 @@ testIf(
 					NODE_ENV: 'development',
 				},
 				stdio: ['ignore', 'pipe', 'pipe'],
-			})
+				},
+			)
 
 			const stderr = captureStderr(child)
 			const port = await waitForPort(child, 15000, stderr)
