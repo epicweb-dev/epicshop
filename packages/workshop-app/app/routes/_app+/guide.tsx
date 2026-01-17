@@ -8,6 +8,7 @@ export const handle: SEOHandle = {
 
 const sections = [
 	{ id: 'tutorial', label: 'Tutorial' },
+	{ id: 'logging-in', label: 'Logging In' },
 	{ id: 'workshop-structure', label: 'Workshop Structure' },
 	{ id: 'lesson-page', label: 'The Lesson Page' },
 	{ id: 'file-links', label: 'File Links' },
@@ -101,6 +102,46 @@ export default function Guide() {
 							at your own pace.
 						</p>
 					</div>
+
+					<section id="logging-in" className="scroll-mt-8">
+						<h2 className="text-h3 mb-4">Logging In</h2>
+						<p className="mb-4">
+							Logging in unlocks important features that enhance your learning
+							experience:
+						</p>
+						<ul className="list-disc space-y-2 pl-6">
+							<li>
+								<strong>Progress tracking</strong> – Your progress syncs across
+								devices and persists between sessions
+							</li>
+							<li>
+								<strong>Video access</strong> – Watch premium workshop videos
+								(requires a valid license)
+							</li>
+							<li>
+								<strong>Discord integration</strong> – Connect with the community
+								and instructors
+							</li>
+						</ul>
+
+						<h3 className="text-h5 mt-6 mb-3">How to Log In</h3>
+						<p className="mb-4">
+							Click the <strong>Account</strong> link in the navigation (top
+							right) and follow the login prompts. You can also log in via the
+							CLI:
+						</p>
+						<code className="bg-muted mb-4 block rounded p-3 font-mono text-sm">
+							epicshop auth login
+						</code>
+						<p className="mb-4">
+							This opens a browser window where you can authenticate with your
+							EpicWeb.dev, EpicReact.dev, or EpicAI.pro account.
+						</p>
+						<p className="text-muted-foreground text-sm">
+							Tip: Log in early to start tracking your progress from the
+							beginning!
+						</p>
+					</section>
 
 					<section id="workshop-structure" className="scroll-mt-8">
 						<h2 className="text-h3 mb-4">Workshop Structure</h2>

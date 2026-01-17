@@ -48,10 +48,15 @@ The deeper docs live in `/docs`:
 - CLI: `docs/cli.md`
 - Workshop structure: `docs/workshop-structure.md`
 - Configuration: `docs/configuration.md`
-- Development: `docs/development.md`
+- MDX components: `docs/mdx.md`
+- Diff system: `docs/diff.md`
+- Video player: `docs/video-player.md`
 - Testing: `docs/testing.md`
+- Launch checklist: `docs/launch.md`
 - Deployment: `docs/deployment.md`
+- Development: `docs/development.md`
 - Debug logging: `docs/debug-logging.md`
+- Other features: `docs/other.md`
 
 ## Contributing
 
