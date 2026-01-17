@@ -246,7 +246,7 @@ export default function AccountSettings() {
 				<section className="border-border mt-6 flex w-full max-w-xl flex-col gap-3 border-t pt-6">
 					<div className="flex items-center gap-2">
 						<h2 className="text-body-xl">Offline videos</h2>
-						<SimpleTooltip content="Downloads MP4 copies into local app storage and encrypts them at rest (not DRM).">
+						<SimpleTooltip content="Downloads MP4 copies into local app storage and encrypts them at rest.">
 							<Icon name="Question" tabIndex={0} />
 						</SimpleTooltip>
 					</div>

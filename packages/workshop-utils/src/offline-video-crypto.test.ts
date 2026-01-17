@@ -2,7 +2,9 @@ import { createCipheriv, createDecipheriv, randomBytes } from 'node:crypto'
 import { expect, test } from 'vitest'
 import {
 	OFFLINE_VIDEO_BLOCK_SIZE,
+	decodeOfflineVideoIv,
 	deriveOfflineVideoKey,
+	encodeOfflineVideoIv,
 	getCryptoRange,
 	incrementIv,
 } from './offline-video-crypto.server.ts'
@@ -35,6 +37,14 @@ test('getCryptoRange aligns to block boundaries', () => {
 	expect(range.takeBytes).toBe(16)
 })
 
+test('getCryptoRange keeps aligned ranges intact', () => {
+	const range = getCryptoRange({ start: 16, end: 31 })
+	expect(range.alignedStart).toBe(16)
+	expect(range.alignedEnd).toBe(31)
+	expect(range.skipBytes).toBe(0)
+	expect(range.takeBytes).toBe(16)
+})
+
 test('range decrypt matches plaintext slice', () => {
 	const key = randomBytes(32)
 	const iv = randomBytes(OFFLINE_VIDEO_BLOCK_SIZE)
@@ -61,4 +71,11 @@ test('range decrypt matches plaintext slice', () => {
 	)
 
 	expect(result).toEqual(plaintext.slice(start, end + 1))
+})
+
+test('encode/decode IV roundtrip', () => {
+	const iv = randomBytes(OFFLINE_VIDEO_BLOCK_SIZE)
+	const encoded = encodeOfflineVideoIv(iv)
+	const decoded = decodeOfflineVideoIv(encoded)
+	expect(decoded.toString('hex')).toBe(iv.toString('hex'))
 })
