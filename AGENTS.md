@@ -135,6 +135,33 @@ export function createTestServer() {
 }
 ```
 
+```ts
+import { expect, test } from 'vitest'
+
+function createTempUser() {
+	let active = true
+
+	return {
+		isActive() {
+			return active
+		},
+		[Symbol.dispose]() {
+			active = false
+		},
+	}
+}
+
+test('disposes sync resources', () => {
+	const user = createTempUser()
+	try {
+		expect(user.isActive()).toBe(true)
+	} finally {
+		user[Symbol.dispose]()
+	}
+	expect(user.isActive()).toBe(false)
+})
+```
+
 ### Aha testing
 
 Source: https://kentcdodds.com/blog/aha-testing
