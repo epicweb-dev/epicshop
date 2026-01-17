@@ -153,12 +153,9 @@ export async function start(options: StartOptions = {}): Promise<StartResult> {
 		const instrumentModule = pathToFileURL(path.join(appDir, 'instrument.js'))
 		const sentryImport =
 			isPublished && process.env.SENTRY_DSN
-				? `--import=${JSON.stringify(instrumentModule.href)}`
-				: ''
-
-		const childCommand = isProd
-			? `node ${sentryImport} ./start.js`
-			: `node ${sentryImport} ./server/dev-server.js`
+				? `--import=${instrumentModule.href}`
+				: null
+		const childScript = isProd ? './start.js' : './server/dev-server.js'
 
 		const childEnv: NodeJS.ProcessEnv = {
 			TERM: 'xterm-256color',
@@ -367,8 +364,8 @@ export async function start(options: StartOptions = {}): Promise<StartResult> {
 			childPort = null
 			childPortPromise = createChildPortPromise()
 
-			child = spawn(childCommand, [], {
-				shell: true,
+			const childArgs = [...(sentryImport ? [sentryImport] : []), childScript]
+			child = spawn(process.execPath, childArgs, {
 				cwd: appDir,
 				// Capture stdout for port detection
 				stdio: ['pipe', 'pipe', 'inherit'],
