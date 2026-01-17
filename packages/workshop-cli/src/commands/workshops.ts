@@ -400,30 +400,12 @@ async function addSingleWorkshop(
 	let workshopPath: string
 
 	if (options.destination?.trim()) {
-		// destination is always treated as a parent directory
-		// - if it exists and is a directory: clone into <destination>/<repoName>
-		// - if it doesn't exist: create it and clone into <destination>/<repoName>
-		// This ensures consistent behavior for both single and multiple workshop setups
+		// destination is treated as the final clone path
 		const resolvedDestination = path.resolve(
 			resolvePathWithTilde(options.destination),
 		)
-
-		try {
-			const stat = await fs.promises.stat(resolvedDestination)
-			if (stat.isDirectory()) {
-				reposDir = resolvedDestination
-				workshopPath = path.join(reposDir, repoName)
-			} else {
-				return {
-					success: false,
-					message: `Destination is not a directory: ${resolvedDestination}`,
-				}
-			}
-		} catch {
-			// Destination doesn't exist. Create it as a parent directory and clone inside.
-			reposDir = resolvedDestination
-			workshopPath = path.join(reposDir, repoName)
-		}
+		workshopPath = resolvedDestination
+		reposDir = path.dirname(resolvedDestination)
 	} else {
 		reposDir = options.directory?.trim()
 			? path.resolve(resolvePathWithTilde(options.directory))

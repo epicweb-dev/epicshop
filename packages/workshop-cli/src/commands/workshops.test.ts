@@ -48,6 +48,33 @@ describe('workshops add', () => {
 			await fs.rm(baseDir, { recursive: true, force: true })
 		}
 	})
+
+	it('uses destination as the clone path', async () => {
+		vi.mocked(execa).mockResolvedValue({} as never)
+
+		const baseDir = await fs.mkdtemp(
+			path.join(os.tmpdir(), 'epicshop destination '),
+		)
+		const destination = path.join(baseDir, 'workshop-target')
+
+		try {
+			const repoName = 'data-modeling'
+			const result = await add({ repoName, destination, silent: true })
+
+			expect(result.success).toBe(true)
+
+			const repoUrl = `https://github.com/epicweb-dev/${repoName}.git`
+			const expectedCwd = path.dirname(destination)
+
+			expect(execa).toHaveBeenCalledWith(
+				'git',
+				['clone', repoUrl, destination],
+				expect.objectContaining({ cwd: expectedCwd }),
+			)
+		} finally {
+			await fs.rm(baseDir, { recursive: true, force: true })
+		}
+	})
 })
 
 describe('workshops start', () => {
