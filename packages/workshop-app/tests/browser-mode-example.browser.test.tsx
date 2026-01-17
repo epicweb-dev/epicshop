@@ -8,7 +8,7 @@ let container: HTMLDivElement | null = null
 
 function render(ui: ReactElement) {
 	container = document.createElement('div')
-	document.body.appendChild(container)
+	document.body.append(container)
 	root = createRoot(container)
 	root.render(ui)
 }
