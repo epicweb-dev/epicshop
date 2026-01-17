@@ -18,7 +18,7 @@ testIf(
 		const { appDir, runnerPath, cleanup } = await createRunnerFixture()
 		let child: ChildProcessWithoutNullStreams | null = null
 		try {
-			child = spawn(process.execPath, ['--loader', 'tsx', runnerPath], {
+			child = spawn(process.execPath, ['--import', 'tsx', runnerPath], {
 				cwd: repoRoot,
 				env: {
 					...process.env,
