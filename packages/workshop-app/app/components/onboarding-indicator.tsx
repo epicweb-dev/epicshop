@@ -172,7 +172,9 @@ export function OnboardingBadge({
 	}
 
 	return (
-		<span className={`absolute -top-1 -right-1 z-10 ${badgeClasses} ${className}`}>
+		<span
+			className={`absolute -top-1 -right-1 z-10 ${badgeClasses} ${className}`}
+		>
 			{children}
 		</span>
 	)

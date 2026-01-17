@@ -201,8 +201,6 @@ it's describing.
 | Feature                 | Feature ID             | Location                                                  |
 | ----------------------- | ---------------------- | --------------------------------------------------------- |
 | FILES button            | `files-popover`        | `touched-files.tsx`                                       |
-| Diff tab                | `diff-tab`             | `exercise+/$exerciseNumber_.$stepNumber.$type+/index.tsx` |
-| Tests tab               | `tests-tab`            | `exercise+/$exerciseNumber_.$stepNumber.$type+/index.tsx` |
 | Account link            | `account-link`         | `_app+/_layout.tsx` (Navigation components)               |
 | Login button            | `login-button`         | `_app+/_layout.tsx` (NoUserBanner)                        |
 | Guide (account)         | `account-guide`        | `_app+/account.tsx`                                       |
@@ -212,9 +210,9 @@ it's describing.
 ## Deployed Environment
 
 Onboarding indicators are automatically hidden in deployed environments
-(`ENV.EPICSHOP_DEPLOYED`). The `useOnboardingIndicator` hook returns `[false, () => {}]`
-when running in a deployed environment, so no additional checks are needed in
-consuming components.
+(`ENV.EPICSHOP_DEPLOYED`). The `useOnboardingIndicator` hook returns
+`[false, () => {}]` when running in a deployed environment, so no additional
+checks are needed in consuming components.
 
 ## Architecture
 

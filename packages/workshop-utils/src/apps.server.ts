@@ -561,8 +561,18 @@ async function _getApps({
 						}
 					}
 					console.error('unhandled sorting case', {
-						a: { type: a.type, name: a.name, isProblem: aIsProblem, isSolution: aIsSolution },
-						b: { type: b.type, name: b.name, isProblem: bIsProblem, isSolution: bIsSolution },
+						a: {
+							type: a.type,
+							name: a.name,
+							isProblem: aIsProblem,
+							isSolution: aIsSolution,
+						},
+						b: {
+							type: b.type,
+							name: b.name,
+							isProblem: bIsProblem,
+							isSolution: bIsSolution,
+						},
 					})
 					return 0
 				})
