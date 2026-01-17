@@ -30,7 +30,8 @@ testIf(
 				stdio: ['ignore', 'pipe', 'pipe'],
 			})
 
-			const port = await waitForPort(child, 15000)
+			const stderr = captureStderr(child)
+			const port = await waitForPort(child, 15000, stderr)
 			await waitForServer(port)
 
 			child.kill('SIGINT')
@@ -60,7 +61,9 @@ async function createRunnerFixture() {
 				name: 'fake-workshop',
 				version: '0.0.0',
 				type: 'module',
-				epicshop: {},
+				epicshop: {
+					githubRepo: 'https://github.com/example/fake-workshop',
+				},
 			},
 			null,
 			2,
@@ -116,9 +119,18 @@ async function createRunnerFixture() {
 	}
 }
 
+function captureStderr(child: ChildProcessWithoutNullStreams) {
+	let buffer = ''
+	child.stderr.on('data', (data: Buffer) => {
+		buffer += data.toString('utf8')
+	})
+	return () => buffer
+}
+
 async function waitForPort(
 	child: ChildProcessWithoutNullStreams,
 	timeoutMs: number,
+	getStderr: () => string,
 ) {
 	let buffer = ''
 	return new Promise<number>((resolve, reject) => {
@@ -127,7 +139,7 @@ async function waitForPort(
 			if (resolved) return
 			reject(
 				new Error(
-					`Timed out waiting for port output. Last output:\n${buffer}`,
+					`Timed out waiting for port output.\nstdout:\n${buffer}\nstderr:\n${getStderr()}`,
 				),
 			)
 		}, timeoutMs)
@@ -150,7 +162,7 @@ async function waitForPort(
 			clearTimeout(timeoutId)
 			reject(
 				new Error(
-					`Process exited before port output. Last output:\n${buffer}`,
+					`Process exited before port output.\nstdout:\n${buffer}\nstderr:\n${getStderr()}`,
 				),
 			)
 		}
