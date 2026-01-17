@@ -119,8 +119,8 @@ export default function Guide() {
 								(requires a valid license)
 							</li>
 							<li>
-								<strong>Discord integration</strong> – Connect with the community
-								and instructors
+								<strong>Discord integration</strong> – Connect with the
+								community and instructors
 							</li>
 						</ul>
 

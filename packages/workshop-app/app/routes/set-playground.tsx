@@ -458,10 +458,7 @@ export function SetAppToPlayground({
 	)
 	if (ENV.EPICSHOP_DEPLOYED) return null
 	const shouldShowBadge = showOnboardingIndicator && showBadge
-	const buttonClassName = clsx(
-		className,
-		shouldShowBadge ? 'relative' : null,
-	)
+	const buttonClassName = clsx(className, shouldShowBadge ? 'relative' : null)
 	return (
 		<SetPlayground
 			appName={appName}
