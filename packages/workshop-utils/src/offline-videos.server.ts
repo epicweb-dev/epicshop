@@ -838,8 +838,13 @@ export async function downloadOfflineVideo({
 	}
 }
 
-export async function deleteOfflineVideo(playbackId: string) {
-	const workshop = getWorkshopIdentity()
+export async function deleteOfflineVideo(
+	playbackId: string,
+	options?: { workshopId?: string },
+) {
+	const workshop = options?.workshopId
+		? { id: options.workshopId, title: '' }
+		: getWorkshopIdentity()
 	const index = await readOfflineVideoIndex()
 	const entry = index[playbackId]
 	if (!entry) return { status: 'missing' } as const

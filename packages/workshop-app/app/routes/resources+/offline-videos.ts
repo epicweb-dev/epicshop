@@ -43,7 +43,13 @@ export async function action({ request }: ActionFunctionArgs) {
 	}
 
 	if (intent === 'delete-video') {
-		const result = await deleteOfflineVideo(playbackId)
+		const workshopId = formData.get('workshopId')
+		const result = await deleteOfflineVideo(
+			playbackId,
+			typeof workshopId === 'string' && workshopId.length > 0
+				? { workshopId }
+				: undefined,
+		)
 		return data({ status: result.status, action: 'delete' } as const)
 	}
 
