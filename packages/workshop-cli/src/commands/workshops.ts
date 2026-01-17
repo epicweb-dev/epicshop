@@ -398,12 +398,10 @@ async function addSingleWorkshop(
 
 	let reposDir: string
 	let workshopPath: string
+	let cloneIntoExistingDir = false
 
 	if (options.destination?.trim()) {
-		// destination is always treated as a parent directory
-		// - if it exists and is a directory: clone into <destination>/<repoName>
-		// - if it doesn't exist: create it and clone into <destination>/<repoName>
-		// This ensures consistent behavior for both single and multiple workshop setups
+		// destination is treated as the full clone path
 		const resolvedDestination = path.resolve(
 			resolvePathWithTilde(options.destination),
 		)
@@ -411,8 +409,16 @@ async function addSingleWorkshop(
 		try {
 			const stat = await fs.promises.stat(resolvedDestination)
 			if (stat.isDirectory()) {
-				reposDir = resolvedDestination
-				workshopPath = path.join(reposDir, repoName)
+				const entries = await fs.promises.readdir(resolvedDestination)
+				if (entries.length > 0) {
+					return {
+						success: false,
+						message: `Destination directory is not empty: ${resolvedDestination}`,
+					}
+				}
+				workshopPath = resolvedDestination
+				reposDir = path.dirname(workshopPath)
+				cloneIntoExistingDir = true
 			} else {
 				return {
 					success: false,
@@ -420,9 +426,9 @@ async function addSingleWorkshop(
 				}
 			}
 		} catch {
-			// Destination doesn't exist. Create it as a parent directory and clone inside.
-			reposDir = resolvedDestination
-			workshopPath = path.join(reposDir, repoName)
+			// Destination doesn't exist. Clone directly into the provided path.
+			workshopPath = resolvedDestination
+			reposDir = path.dirname(workshopPath)
 		}
 	} else {
 		reposDir = options.directory?.trim()
@@ -435,13 +441,15 @@ async function addSingleWorkshop(
 	await fs.promises.mkdir(reposDir, { recursive: true })
 
 	// Check if directory already exists
-	try {
-		await fs.promises.access(workshopPath)
-		const message = `Directory already exists: ${workshopPath}`
-		if (!silent) console.log(chalk.yellow(`⚠️  ${message}`))
-		return { success: false, message }
-	} catch {
-		// Directory doesn't exist, which is what we want
+	if (!cloneIntoExistingDir) {
+		try {
+			await fs.promises.access(workshopPath)
+			const message = `Directory already exists: ${workshopPath}`
+			if (!silent) console.log(chalk.yellow(`⚠️  ${message}`))
+			return { success: false, message }
+		} catch {
+			// Directory doesn't exist, which is what we want
+		}
 	}
 
 	const repoUrl = `https://github.com/${GITHUB_ORG}/${repoName}.git`
@@ -451,14 +459,14 @@ async function addSingleWorkshop(
 	}
 
 	// Clone the repository
-	const cloneResult = await runCommand(
-		'git',
-		['clone', repoUrl, workshopPath],
-		{
-			cwd: reposDir,
-			silent,
-		},
-	)
+	const cloneArgs = cloneIntoExistingDir
+		? ['clone', repoUrl, '.']
+		: ['clone', repoUrl, workshopPath]
+	const cloneCwd = cloneIntoExistingDir ? workshopPath : reposDir
+	const cloneResult = await runCommand('git', cloneArgs, {
+		cwd: cloneCwd,
+		silent,
+	})
 
 	if (!cloneResult.success) {
 		return {
@@ -824,6 +832,13 @@ export async function add(options: AddOptions): Promise<WorkshopsResult> {
 
 			// Helper to get display name for a repo
 			const getDisplayName = (repo: string) => repoToTitle.get(repo) || repo
+
+			if (options.destination?.trim() && selectedRepoNames.length > 1) {
+				const message =
+					'Destination can only be used with a single workshop. Use --directory to set a parent folder for multiple workshops.'
+				if (!silent) console.log(chalk.yellow(`⚠️  ${message}`))
+				return { success: false, message }
+			}
 
 			// Set up selected workshops
 			if (selectedRepoNames.length > 1) {
