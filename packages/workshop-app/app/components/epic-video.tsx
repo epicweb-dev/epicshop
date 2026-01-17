@@ -480,7 +480,8 @@ function EpicVideo({
 		availabilityKey,
 		offlineDownloadsEnabled,
 	)
-	const shouldUseOfflineVideo = offlineDownloadsEnabled && offlineVideo.available
+	const shouldUseOfflineVideo =
+		offlineDownloadsEnabled && offlineVideo.available
 	const offlineVideoFetcher = useFetcher<OfflineVideoActionData>()
 	const isOfflineActionBusy = offlineVideoFetcher.state !== 'idle'
 	const currentTimeSessionKey = `${muxPlaybackId}:currentTime`
@@ -655,16 +656,14 @@ function EpicVideo({
 		if (!element) return
 		element.setAttribute('seekoffset', '10')
 	}, [])
-	const offlineActions = (
-		offlineDownloadsEnabled ? (
-			<OfflineVideoActionButtons
-				isAvailable={offlineVideo.available}
-				isBusy={isOfflineActionBusy}
-				onDownload={handleDownload}
-				onDelete={handleDelete}
-			/>
-		) : null
-	)
+	const offlineActions = offlineDownloadsEnabled ? (
+		<OfflineVideoActionButtons
+			isAvailable={offlineVideo.available}
+			isBusy={isOfflineActionBusy}
+			onDownload={handleDownload}
+			onDelete={handleDelete}
+		/>
+	) : null
 	const showOfflineUnavailable =
 		!isOnline && (offlineVideo.checked || !offlineDownloadsEnabled)
 	return (
