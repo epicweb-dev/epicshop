@@ -690,7 +690,7 @@ function EpicVideo({
 								src={offlineVideo.offlineUrl}
 								onTimeUpdate={handleOfflineTimeUpdate}
 							/>
-							<div className="bg-foreground/40 text-background select-none w-full space-y-1 px-3 pt-1 pb-1.5 text-sm leading-none backdrop-blur">
+							<div className="bg-foreground/40 text-background w-full space-y-1 px-3 pt-1 pb-1.5 text-sm leading-none backdrop-blur select-none">
 								<MediaTimeRange className="w-full" />
 								<MediaControlBar className="w-full items-center gap-3">
 									<div className="flex items-center gap-3">
@@ -703,14 +703,20 @@ function EpicVideo({
 											ref={setSeekOffset}
 											seekOffset={10}
 										/>
-										<MediaTimeDisplay showDuration className="tabular-nums text-background text-xs" />
+										<MediaTimeDisplay
+											showDuration
+											className="text-background text-xs tabular-nums"
+										/>
 										<MediaMuteButton />
 										<MediaVolumeRange className="w-24" />
 									</div>
 									<div className="ml-auto flex items-center gap-3">
 										<MediaPlaybackRateButton
 											className="text-background text-xs"
-											rates={[0.5, 0.75, 0.8, 0.9, 1, 1.25, 1.5, 1.75, 2, 2.5, 3, 3.5, 4]}
+											rates={[
+												0.5, 0.75, 0.8, 0.9, 1, 1.25, 1.5, 1.75, 2, 2.5, 3, 3.5,
+												4,
+											]}
 										/>
 										<MediaPipButton />
 										<MediaFullscreenButton />

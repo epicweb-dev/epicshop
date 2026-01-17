@@ -440,10 +440,7 @@ function handleKeyDown(e: KeyboardEvent) {
 	// j to go backward
 	if (e.key === 'j') {
 		e.preventDefault()
-		mediaElement.currentTime = Math.max(
-			0,
-			mediaElement.currentTime - 10,
-		)
+		mediaElement.currentTime = Math.max(0, mediaElement.currentTime - 10)
 	}
 	// l to go forward
 	if (e.key === 'l') {
