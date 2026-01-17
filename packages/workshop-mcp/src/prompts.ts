@@ -4,6 +4,7 @@ import { type McpServer } from '@modelcontextprotocol/sdk/server/mcp.js'
 import { type GetPromptResult } from '@modelcontextprotocol/sdk/types.js'
 import { z } from 'zod'
 import { exerciseContextResource } from './resources.ts'
+import { formatPromptDescription, promptDocs } from './server-metadata.ts'
 import {
 	handleWorkshopDirectory,
 	workshopDirectoryInputSchema,
@@ -15,7 +16,7 @@ export const quizMeInputSchema = {
 		.string()
 		.optional()
 		.describe(
-			`The exercise number to get quizzed on (e.g., \`4\`). Leave blank for a random exercise.`,
+			'Exercise number to quiz on (e.g., "4"). Omit for a random exercise.',
 		),
 }
 
@@ -68,9 +69,8 @@ export function initPrompts(server: McpServer) {
 	server.registerPrompt(
 		'quiz_me',
 		{
-			title: 'Quiz Me',
-			description:
-				'Have the LLM quiz you on topics from the workshop exercises',
+			title: promptDocs.quiz_me.title,
+			description: formatPromptDescription(promptDocs.quiz_me),
 			argsSchema: quizMeInputSchema,
 		},
 		quizMe,

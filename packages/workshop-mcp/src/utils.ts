@@ -9,7 +9,7 @@ import { z } from 'zod'
 export const workshopDirectoryInputSchema = z
 	.string()
 	.describe(
-		'The workshop directory (the root directory of the workshop repo). This should be an absolute path.',
+		'Absolute path to the workshop root directory. Passing a /playground path is allowed and will be normalized to the workshop root.',
 	)
 
 async function isWorkshopDirectory(workshopDirectory: string) {

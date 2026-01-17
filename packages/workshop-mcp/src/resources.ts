@@ -31,6 +31,7 @@ import {
 	safeReadFile,
 	workshopDirectoryInputSchema,
 } from './utils.ts'
+import { resourceDocs } from './server-metadata.ts'
 
 export const getWorkshopContextInputSchema = {
 	workshopDirectory: workshopDirectoryInputSchema,
@@ -137,8 +138,8 @@ export async function getWorkshopContextResource({
 }
 
 export const workshopContextResource = {
-	name: 'workshop_context',
-	description: 'The context of the workshop',
+	name: resourceDocs.workshop_context.name,
+	description: resourceDocs.workshop_context.description,
 	uriTemplate: workshopContextUriTemplate,
 	getResource: getWorkshopContextResource,
 	inputSchema: getWorkshopContextInputSchema,
@@ -150,7 +151,7 @@ const getExerciseContextInputSchema = {
 		.number()
 		.optional()
 		.describe(
-			`The exercise number to get the context for (defaults to the exercise number the playground is currently set to)`,
+			`Exercise number to fetch (defaults to the current playground exercise if omitted).`,
 		),
 }
 
@@ -308,8 +309,8 @@ async function getExerciseContextResource({
 }
 
 export const exerciseContextResource = {
-	name: 'exercise_context',
-	description: 'The context of the exercise',
+	name: resourceDocs.exercise_context.name,
+	description: resourceDocs.exercise_context.description,
 	uriTemplate: exerciseContextUriTemplate,
 	getResource: getExerciseContextResource,
 	inputSchema: getExerciseContextInputSchema,
@@ -398,10 +399,10 @@ const getExerciseStepContextInputSchema = {
 	workshopDirectory: workshopDirectoryInputSchema,
 	exerciseNumber: z.coerce
 		.number()
-		.describe('The exercise number to get the context for'),
+		.describe('Exercise number to fetch (1-based).'),
 	stepNumber: z.coerce
 		.number()
-		.describe('The step number to get the context for'),
+		.describe('Step number to fetch within the exercise (1-based).'),
 }
 
 async function getExerciseStepContext({
@@ -524,8 +525,8 @@ async function getExerciseStepContextResource({
 }
 
 export const exerciseStepContextResource = {
-	name: 'exercise_step_context',
-	description: 'The context of a specific exercise step',
+	name: resourceDocs.exercise_step_context.name,
+	description: resourceDocs.exercise_step_context.description,
 	uriTemplate: exerciseStepContextUriTemplate,
 	getResource: getExerciseStepContextResource,
 	inputSchema: getExerciseStepContextInputSchema,
@@ -533,8 +534,12 @@ export const exerciseStepContextResource = {
 
 const diffBetweenAppsInputSchema = {
 	workshopDirectory: workshopDirectoryInputSchema,
-	app1: z.string().describe('The ID of the first app'),
-	app2: z.string().describe('The ID of the second app'),
+	app1: z
+		.string()
+		.describe('First app ID (format: "02.03.problem" or "02.03.solution").'),
+	app2: z
+		.string()
+		.describe('Second app ID (format: "02.03.problem" or "02.03.solution").'),
 }
 
 async function getDiffBetweenApps({
@@ -605,8 +610,8 @@ const diffBetweenAppsUriTemplate = new ResourceTemplate(
 )
 
 export const diffBetweenAppsResource = {
-	name: 'diff_between_apps',
-	description: 'The diff between two apps',
+	name: resourceDocs.diff_between_apps.name,
+	description: resourceDocs.diff_between_apps.description,
 	uriTemplate: diffBetweenAppsUriTemplate,
 	getResource: getDiffBetweenAppsResource,
 	inputSchema: diffBetweenAppsInputSchema,
@@ -667,8 +672,8 @@ async function getExerciseStepProgressDiffResource({
 }
 
 export const exerciseStepProgressDiffResource = {
-	name: 'exercise_step_progress_diff',
-	description: 'The diff between the current exercise step and the solution',
+	name: resourceDocs.exercise_step_progress_diff.name,
+	description: resourceDocs.exercise_step_progress_diff.description,
 	uriTemplate: exerciseStepProgressDiffUriTemplate,
 	getResource: getExerciseStepProgressDiffResource,
 	inputSchema: getExerciseStepProgressDiffInputSchema,
@@ -697,8 +702,8 @@ async function getUserInfoResource({
 }
 
 export const userInfoResource = {
-	name: 'user_info',
-	description: 'Information about the current user',
+	name: resourceDocs.user_info.name,
+	description: resourceDocs.user_info.description,
 	uriTemplate: userInfoUri,
 	getResource: getUserInfoResource,
 	inputSchema: getUserInfoInputSchema,
@@ -727,8 +732,8 @@ async function getUserAccessResource({
 }
 
 export const userAccessResource = {
-	name: 'user_access',
-	description: 'Whether the current user has access to the workshop',
+	name: resourceDocs.user_access.name,
+	description: resourceDocs.user_access.description,
 	uriTemplate: userAccessUriTemplate,
 	getResource: getUserAccessResource,
 	inputSchema: getUserAccessInputSchema,
@@ -757,8 +762,8 @@ async function getUserProgressResource({
 }
 
 export const userProgressResource = {
-	name: 'user_progress',
-	description: 'The progress of the current user',
+	name: resourceDocs.user_progress.name,
+	description: resourceDocs.user_progress.description,
 	uriTemplate: userProgressUriTemplate,
 	getResource: getUserProgressResource,
 	inputSchema: userProgressInputSchema,

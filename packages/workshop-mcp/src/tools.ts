@@ -52,19 +52,151 @@ import {
 	safeReadFile,
 	workshopDirectoryInputSchema,
 } from './utils.ts'
+import { formatToolDescription, toolDocs, type ToolDoc } from './server-metadata.ts'
 
 // not enough support for this yet
 const clientSupportsEmbeddedResources = false
 
+type ToolName = keyof typeof toolDocs
+
+type ToolResponseOptions = {
+	toolName: ToolName
+	summary: string
+	statusEmoji?: string | null
+	details?: Array<string>
+	nextSteps?: Array<string>
+	includeMetaNextSteps?: boolean
+	content?: CallToolResult['content']
+	structuredContent?: Record<string, unknown>
+}
+
+function formatToolResponseText({
+	title,
+	summary,
+	details,
+	nextSteps,
+}: {
+	title: string
+	summary: string
+	details?: Array<string>
+	nextSteps?: Array<string>
+}) {
+	const lines = [`## ${title}`, '', summary]
+
+	if (details?.length) {
+		lines.push('', ...details)
+	}
+
+	if (nextSteps?.length) {
+		lines.push('', 'Next steps:')
+		for (const step of nextSteps) {
+			lines.push(`- ${step}`)
+		}
+	}
+
+	return lines.join('\n').trim()
+}
+
+function createToolResponse({
+	toolName,
+	summary,
+	details,
+	nextSteps,
+	includeMetaNextSteps = true,
+	content = [],
+	structuredContent,
+	statusEmoji = '✅',
+}: ToolResponseOptions): CallToolResult {
+	const meta = toolDocs[toolName] as ToolDoc
+	const steps = nextSteps ?? (includeMetaNextSteps ? meta.nextSteps : [])
+	const summaryLine =
+		statusEmoji === null ? summary : `${statusEmoji} ${summary}`
+	const text = formatToolResponseText({
+		title: meta.title,
+		summary: summaryLine,
+		details,
+		nextSteps: steps,
+	})
+	return {
+		content: [{ type: 'text', text }, ...content],
+		structuredContent,
+	}
+}
+
+function createToolErrorResult(
+	toolName: ToolName,
+	error: unknown,
+): CallToolResult {
+	const meta = toolDocs[toolName] as any
+	const message = error instanceof Error ? error.message : String(error)
+	const nextSteps = meta.errorNextSteps ?? meta.nextSteps
+	const response = createToolResponse({
+		toolName,
+		summary: `Error: ${message}`,
+		statusEmoji: '⚠️',
+		nextSteps,
+		includeMetaNextSteps: false,
+		structuredContent: {
+			tool: toolName,
+			error: message,
+			nextSteps,
+		},
+	})
+	return { ...response, isError: true }
+}
+
+function parseResourceText(resource: ReadResourceResult['contents'][number]) {
+	if (typeof resource.text === 'string') {
+		try {
+			return JSON.parse(resource.text)
+		} catch {
+			return resource.text
+		}
+	}
+	return null
+}
+
+function createResourceStructuredContent(
+	resource: ReadResourceResult['contents'][number],
+) {
+	return {
+		uri: resource.uri,
+		mimeType: resource.mimeType,
+		data: parseResourceText(resource),
+	}
+}
+
+function registerTool(
+	server: McpServer,
+	toolName: ToolName,
+	inputSchema: Record<string, z.ZodTypeAny>,
+	handler: (args: any) => Promise<CallToolResult>,
+) {
+	const meta = toolDocs[toolName] as ToolDoc
+	return (server as any).registerTool(
+		toolName,
+		{
+			title: meta.title,
+			description: formatToolDescription(meta),
+			inputSchema,
+			annotations: meta.annotations,
+		},
+		async (args: unknown) => {
+			try {
+				return await handler(args as Record<string, unknown>)
+			} catch (error) {
+				return createToolErrorResult(toolName, error)
+			}
+		},
+	)
+}
+
 export function initTools(server: McpServer) {
-	server.registerTool(
+	registerTool(
+		server,
 		'login',
 		{
-			description:
-				`Allow the user to login (or sign up) to the epic workshop.`.trim(),
-			inputSchema: {
-				workshopDirectory: workshopDirectoryInputSchema,
-			},
+			workshopDirectory: workshopDirectoryInputSchema,
 		},
 		async ({ workshopDirectory }) => {
 			await handleWorkshopDirectory(workshopDirectory)
@@ -80,14 +212,23 @@ export function initTools(server: McpServer) {
 
 			void handleAuthFlow().catch(() => {})
 
-			return {
-				content: [
-					{
-						type: 'text',
-						text: `Please go to ${deviceResponse.verification_uri_complete}. Verify the code on the page is "${deviceResponse.user_code}" to login.`,
-					},
+			const verificationUrl = deviceResponse.verification_uri_complete
+			const userCode = deviceResponse.user_code
+			return createToolResponse({
+				toolName: 'login',
+				summary:
+					'Login started. Ask the user to complete device verification.',
+				details: [
+					`Verification URL: ${verificationUrl}`,
+					`User code: ${userCode}`,
+					`Expires in: ${deviceResponse.expires_in} seconds`,
 				],
-			}
+				structuredContent: {
+					verificationUrl,
+					userCode,
+					expiresInSeconds: deviceResponse.expires_in,
+				},
+			})
 
 			async function handleAuthFlow() {
 				const UserInfoSchema = z.object({
@@ -166,72 +307,47 @@ export function initTools(server: McpServer) {
 		},
 	)
 
-	server.registerTool(
+	registerTool(
+		server,
 		'logout',
 		{
-			description: `Allow the user to logout of the workshop (based on the workshop's host) and delete cache data.`,
-			inputSchema: {
-				workshopDirectory: workshopDirectoryInputSchema,
-			},
+			workshopDirectory: workshopDirectoryInputSchema,
 		},
 		async ({ workshopDirectory }) => {
 			await handleWorkshopDirectory(workshopDirectory)
 			await logout()
 			await deleteCache()
-			return {
-				content: [{ type: 'text', text: 'Logged out' }],
-			}
+			return createToolResponse({
+				toolName: 'logout',
+				summary: 'Logged out and cleared cached credentials.',
+				structuredContent: { loggedOut: true },
+			})
 		},
 	)
 
-	server.registerTool(
+	registerTool(
+		server,
 		'set_playground',
 		{
-			description: `
-Sets the playground environment so the user can continue to that exercise or see
-what that step looks like in their playground environment.
-
-NOTE: this will override their current exercise step work in the playground!
-
-Generally, it is better to not provide an exerciseNumber, stepNumber, and type
-and let the user continue to the next exercise. Only provide these arguments if
-the user explicitely asks to go to a specific exercise or step. If the user asks
-to start an exercise, specify stepNumber 1 and type 'problem' unless otherwise
-directed.
-
-Argument examples:
-A. If logged in and there is an incomplete exercise step, set to next incomplete exercise step based on the user's progress - Most common
-	- [No arguments]
-B. If not logged in or all exercises are complete, set to next exercise step from current (or first if there is none)
-	- [No arguments]
-C. Set to a specific exercise step
-	- exerciseNumber: 1
-	- stepNumber: 1
-	- type: 'solution'
-D. Set to the solution of the current exercise step
-	- type: 'solution'
-E. Set to the second step problem of the current exercise
-	- stepNumber: 2
-F. Set to the first step problem of the fifth exercise
-	- exerciseNumber: 5
-
-An error will be returned if no app is found for the given arguments.
-	`.trim(),
-			inputSchema: {
-				workshopDirectory: workshopDirectoryInputSchema,
-				exerciseNumber: z.coerce
-					.number()
-					.optional()
-					.describe('The exercise number to set the playground to'),
-				stepNumber: z.coerce
-					.number()
-					.optional()
-					.describe('The step number to set the playground to'),
-				type: z
-					.enum(['problem', 'solution'])
-					.optional()
-					.describe('The type of app to set the playground to'),
-			},
+			workshopDirectory: workshopDirectoryInputSchema,
+			exerciseNumber: z.coerce
+				.number()
+				.optional()
+				.describe(
+					'Exercise number to open (1-based). Omit to use the next incomplete step.',
+				),
+			stepNumber: z.coerce
+				.number()
+				.optional()
+				.describe(
+					'Step number to open within the exercise (1-based). Omit to keep the current step or advance.',
+				),
+			type: z
+				.enum(['problem', 'solution'])
+				.optional()
+				.describe(
+					'Step type to open ("problem" or "solution"). Omit to keep the current type or default to problem.',
+				),
 		},
 		async ({ workshopDirectory, exerciseNumber, stepNumber, type }) => {
 			await handleWorkshopDirectory(workshopDirectory)
@@ -263,14 +379,19 @@ An error will be returned if no app is found for the given arguments.
 							})
 							invariant(exerciseApp, 'No exercise app found')
 							await setPlayground(exerciseApp.fullPath)
-							return {
-								content: [
-									{
-										type: 'text',
-										text: `Playground set to ${exerciseApp.exerciseNumber}.${exerciseApp.stepNumber}.${exerciseApp.type}`,
+							return createToolResponse({
+								toolName: 'set_playground',
+								summary: `Playground set to ${exerciseApp.exerciseNumber}.${exerciseApp.stepNumber}.${exerciseApp.type}.`,
+								structuredContent: {
+									playground: {
+										exerciseNumber: exerciseApp.exerciseNumber,
+										stepNumber: exerciseApp.stepNumber,
+										type: exerciseApp.type,
+										appName: exerciseApp.name,
+										fullPath: exerciseApp.fullPath,
 									},
-								],
-							}
+								},
+							})
 						}
 
 						if (
@@ -335,52 +456,46 @@ An error will be returned if no app is found for the given arguments.
 				`No app found for values derived by the arguments: ${exerciseNumber}.${stepNumber}.${type}`,
 			)
 			await setPlayground(desiredApp.fullPath)
-			return {
-				content: [
-					{
-						type: 'text',
-						text: `Playground set to ${desiredApp.name}.`,
+			return createToolResponse({
+				toolName: 'set_playground',
+				summary: `Playground set to ${desiredApp.name}.`,
+				structuredContent: {
+					playground: {
+						exerciseNumber: desiredApp.exerciseNumber,
+						stepNumber: desiredApp.stepNumber,
+						type: desiredApp.type,
+						appName: desiredApp.name,
+						fullPath: desiredApp.fullPath,
 					},
-				],
-			}
+				},
+			})
 		},
 	)
 
-	server.registerTool(
+	registerTool(
+		server,
 		'update_progress',
 		{
-			description: `
-Intended to help you mark an Epic lesson as complete or incomplete.
-
-This will mark the Epic lesson as complete or incomplete and update the user's progress (get updated progress with the \`get_user_progress\` tool, the \`get_exercise_context\` tool, or the \`get_workshop_context\` tool).
-		`.trim(),
-			inputSchema: {
-				workshopDirectory: workshopDirectoryInputSchema,
-				epicLessonSlug: z
-					.string()
-					.describe(
-						'The slug of the Epic lesson to mark as complete (can be retrieved from the `get_exercise_context` tool or the `get_workshop_context` tool)',
-					),
-				complete: z
-					.boolean()
-					.optional()
-					.default(true)
-					.describe(
-						'Whether to mark the lesson as complete or incomplete (defaults to true)',
-					),
-			},
+			workshopDirectory: workshopDirectoryInputSchema,
+			epicLessonSlug: z
+				.string()
+				.describe(
+					'Lesson slug to update (from `get_exercise_context`, `get_workshop_context`, or `get_what_is_next`).',
+				),
+			complete: z
+				.boolean()
+				.optional()
+				.default(true)
+				.describe('Mark complete or incomplete (default: true).'),
 		},
 		async ({ workshopDirectory, epicLessonSlug, complete }) => {
 			await handleWorkshopDirectory(workshopDirectory)
 			await updateProgress({ lessonSlug: epicLessonSlug, complete })
-			return {
-				content: [
-					{
-						type: 'text',
-						text: `Lesson with slug ${epicLessonSlug} marked as ${complete ? 'complete' : 'incomplete'}`,
-					},
-				],
-			}
+			return createToolResponse({
+				toolName: 'update_progress',
+				summary: `Lesson "${epicLessonSlug}" marked as ${complete ? 'complete' : 'incomplete'}.`,
+				structuredContent: { epicLessonSlug, complete },
+			})
 		},
 	)
 
@@ -391,78 +506,67 @@ This will mark the Epic lesson as complete or incomplete and update the user's p
 // accessible via tools, but allowing the LLM to access them on demand is useful
 // for some situations.
 export function initResourceTools(server: McpServer) {
-	server.registerTool(
+	registerTool(
+		server,
 		'get_workshop_context',
-		{
-			description: `
-Indended to help you get wholistic context of the topics covered in this
-workshop. This doesn't go into as much detail per exercise as the
-\`get_exercise_context\` tool, but it is a good starting point to orient
-yourself on the workshop as a whole.
-		`.trim(),
-			inputSchema: workshopContextResource.inputSchema,
-		},
+		workshopContextResource.inputSchema,
 		async ({ workshopDirectory }) => {
 			workshopDirectory = await handleWorkshopDirectory(workshopDirectory)
 			const resource = await workshopContextResource.getResource({
 				workshopDirectory,
 			})
-			return {
+			const structured = createResourceStructuredContent(resource)
+			const data = structured.data as { exercises?: Array<unknown> } | null
+			const exerciseCount = Array.isArray(data?.exercises)
+				? data.exercises.length
+				: 0
+			return createToolResponse({
+				toolName: 'get_workshop_context',
+				summary: 'Workshop context retrieved.',
+				details: exerciseCount ? [`Exercises: ${exerciseCount}`] : undefined,
 				content: [getEmbeddedResourceContent(resource)],
-			}
+				structuredContent: {
+					workshopContext: structured,
+				},
+			})
 		},
 	)
 
-	server.registerTool(
+	registerTool(
+		server,
 		'get_exercise_context',
-		{
-			description: `
-Intended to help a student understand what they need to do for the current
-exercise step.
-
-This returns the instructions MDX content for the current exercise and each
-exercise step. If the user is has the paid version of the workshop, it will also
-include the transcript from each of the videos as well.
-
-The output for this will rarely change, so it's unnecessary to call this tool
-more than once.
-
-\`get_exercise_context\` is often best when used with the
-\`get_exercise_step_progress_diff\` tool to help a student understand what
-work they still need to do and answer any questions about the exercise.
-		`.trim(),
-			inputSchema: exerciseContextResource.inputSchema,
-		},
+		exerciseContextResource.inputSchema,
 		async ({ workshopDirectory, exerciseNumber }) => {
 			workshopDirectory = await handleWorkshopDirectory(workshopDirectory)
 			const resource = await exerciseContextResource.getResource({
 				workshopDirectory,
 				exerciseNumber,
 			})
-			return {
+			const structured = createResourceStructuredContent(resource)
+			const data = structured.data as {
+				steps?: Array<unknown>
+				exerciseInfo?: { number?: number }
+			} | null
+			const stepCount = Array.isArray(data?.steps) ? data.steps.length : 0
+			const number = data?.exerciseInfo?.number
+			return createToolResponse({
+				toolName: 'get_exercise_context',
+				summary: number
+					? `Exercise ${number} context retrieved.`
+					: 'Exercise context retrieved.',
+				details: stepCount ? [`Steps: ${stepCount}`] : undefined,
 				content: [getEmbeddedResourceContent(resource)],
-			}
+				structuredContent: {
+					exerciseContext: structured,
+				},
+			})
 		},
 	)
 
-	server.registerTool(
+	registerTool(
+		server,
 		'get_diff_between_apps',
-		{
-			description: `
-Intended to give context about the changes between two apps.
-
-The output is a git diff of the playground directory as BASE (their work in
-progress) against the solution directory as HEAD (the final state they're trying
-to achieve).
-
-The output is formatted as a git diff.
-
-App IDs are formatted as \`{exerciseNumber}.{stepNumber}.{type}\`.
-
-If the user asks for the diff for 2.3, then use 02.03.problem for app1 and 02.03.solution for app2.
-		`,
-			inputSchema: diffBetweenAppsResource.inputSchema,
-		},
+		diffBetweenAppsResource.inputSchema,
 		async ({ workshopDirectory, app1, app2 }) => {
 			workshopDirectory = await handleWorkshopDirectory(workshopDirectory)
 			const resource = await diffBetweenAppsResource.getResource({
@@ -470,54 +574,54 @@ If the user asks for the diff for 2.3, then use 02.03.problem for app1 and 02.03
 				app1,
 				app2,
 			})
-			return {
+			const diff = parseResourceText(resource)
+			const diffText =
+				typeof diff === 'string' ? diff : JSON.stringify(diff ?? '')
+			return createToolResponse({
+				toolName: 'get_diff_between_apps',
+				summary: `Diff generated for ${app1} vs ${app2}.`,
+				details: diffText ? [`Diff length: ${diffText.length} chars`] : undefined,
 				content: [getEmbeddedResourceContent(resource)],
-			}
+				structuredContent: {
+					app1,
+					app2,
+					diff,
+				},
+			})
 		},
 	)
 
-	server.registerTool(
+	registerTool(
+		server,
 		'get_exercise_step_progress_diff',
-		{
-			description: `
-Intended to help a student understand what work they still have to complete.
-		`.trim(),
-			inputSchema: exerciseStepProgressDiffResource.inputSchema,
-		},
+		exerciseStepProgressDiffResource.inputSchema,
 		async ({ workshopDirectory }) => {
 			workshopDirectory = await handleWorkshopDirectory(workshopDirectory)
 			const resource = await exerciseStepProgressDiffResource.getResource({
 				workshopDirectory,
 			})
-			return {
+			const diff = parseResourceText(resource)
+			const diffText =
+				typeof diff === 'string' ? diff : JSON.stringify(diff ?? '')
+			return createToolResponse({
+				toolName: 'get_exercise_step_progress_diff',
+				summary: 'Progress diff generated for the current step.',
+				details: diffText ? [`Diff length: ${diffText.length} chars`] : undefined,
 				content: [
 					createText(getDiffInstructionText()),
 					getEmbeddedResourceContent(resource),
 				],
-			}
+				structuredContent: {
+					diff,
+				},
+			})
 		},
 	)
 
-	server.registerTool(
+	registerTool(
+		server,
 		'get_exercise_step_context',
-		{
-			description: `
-Intended to help a student understand what they need to do for a specific
-exercise step.
-
-This returns the instructions MDX content for the specified exercise step's
-problem and solution. If the user has the paid version of the workshop, it will also
-include the transcript from each of the videos as well.
-
-The output for this will rarely change, so it's unnecessary to call this tool
-more than once for the same exercise step.
-
-\`get_exercise_step_context\` is often best when used with the
-\`get_exercise_step_progress_diff\` tool to help a student understand what
-work they still need to do and answer any questions about the exercise step.
-		`.trim(),
-			inputSchema: exerciseStepContextResource.inputSchema,
-		},
+		exerciseStepContextResource.inputSchema,
 		async ({ workshopDirectory, exerciseNumber, stepNumber }) => {
 			workshopDirectory = await handleWorkshopDirectory(workshopDirectory)
 			const resource = await exerciseStepContextResource.getResource({
@@ -525,32 +629,43 @@ work they still need to do and answer any questions about the exercise step.
 				exerciseNumber,
 				stepNumber,
 			})
-			return {
+			const structured = createResourceStructuredContent(resource)
+			const data = structured.data as {
+				stepInfo?: { number?: number }
+				exerciseInfo?: { number?: number }
+			} | null
+			const step = data?.stepInfo?.number
+			const exercise = data?.exerciseInfo?.number
+			return createToolResponse({
+				toolName: 'get_exercise_step_context',
+				summary:
+					exercise && step
+						? `Exercise ${exercise} step ${step} context retrieved.`
+						: 'Exercise step context retrieved.',
 				content: [getEmbeddedResourceContent(resource)],
-			}
+				structuredContent: {
+					exerciseStepContext: structured,
+				},
+			})
 		},
 	)
 
-	server.registerTool(
+	registerTool(
+		server,
 		'view_video',
 		{
-			description: `
-Intended to help a student view a video.
-
-If the user ever asks you to show them a video, use this tool to do so.
-		`.trim(),
-			inputSchema: {
-				videoUrl: z.string().describe(
-					`
-The URL of the video to view. If you don't know the URL to use already, you can get this from the \`get_exercise_step_context\` tool or the \`get_exercise_context\` tool depending on whether you're trying to show the exercise intro/outro video or a specific step's problem/solution video. If you use the \`get_what_is_next\` tool, this will be handled automatically.
-						`.trim(),
+			videoUrl: z
+				.string()
+				.describe(
+					'Video URL from exercise context or `get_what_is_next`.',
 				),
-			},
 		},
 		async ({ videoUrl }) => {
 			const url: URL = new URL('mcp-ui/epic-video', 'http://localhost:5639')
 			url.searchParams.set('url', videoUrl)
-			return {
+			return createToolResponse({
+				toolName: 'view_video',
+				summary: 'Video ready in the embedded player.',
 				content: [
 					createUIResource({
 						content: {
@@ -561,20 +676,19 @@ The URL of the video to view. If you don't know the URL to use already, you can 
 						encoding: 'text',
 					}),
 				],
-			}
+				structuredContent: {
+					videoUrl,
+					iframeUrl: url.toString(),
+				},
+			})
 		},
 	)
 
-	server.registerTool(
+	registerTool(
+		server,
 		'open_exercise_step_files',
 		{
-			title: 'Open Exercise Step Files',
-			description: `
-Call this to open the files for the exercise step the playground is currently set to.
-		`.trim(),
-			inputSchema: {
-				workshopDirectory: workshopDirectoryInputSchema,
-			},
+			workshopDirectory: workshopDirectoryInputSchema,
 		},
 		async ({ workshopDirectory }) => {
 			await handleWorkshopDirectory(workshopDirectory)
@@ -606,151 +720,165 @@ Call this to open the files for the exercise step the playground is currently se
 				const fullPath = path.join(playgroundApp.fullPath, file.path)
 				await launchEditor(fullPath, file.line)
 			}
-			return {
-				content: [
-					{
-						type: 'text',
-						text: `Opened ${diffFiles.length} file${diffFiles.length === 1 ? '' : 's'}:\n${diffFiles.map((file) => `${file.path}:${file.line}`).join('\n')}`,
-					},
-				],
-			}
+			const openedFiles = diffFiles.map((file) => ({
+				path: file.path,
+				line: file.line,
+			}))
+			return createToolResponse({
+				toolName: 'open_exercise_step_files',
+				summary: `Opened ${diffFiles.length} file${diffFiles.length === 1 ? '' : 's'}.`,
+				details: openedFiles.map((file) => `- ${file.path}:${file.line}`),
+				structuredContent: {
+					count: openedFiles.length,
+					files: openedFiles,
+				},
+			})
 		},
 	)
 
-	server.registerTool(
+	registerTool(
+		server,
 		'get_user_info',
-		{
-			description: `
-Intended to help you get information about the current user.
-
-This includes the user's name, email, etc. It's mostly useful to determine
-whether the user is logged in and know who they are.
-
-If the user is not logged in, tell them to log in by running the \`login\` tool.
-		`.trim(),
-			inputSchema: userInfoResource.inputSchema,
-		},
+		userInfoResource.inputSchema,
 		async ({ workshopDirectory }) => {
 			workshopDirectory = await handleWorkshopDirectory(workshopDirectory)
 			const resource = await userInfoResource.getResource({ workshopDirectory })
-			return {
+			const userInfoRaw = parseResourceText(resource)
+			const userInfo =
+				userInfoRaw && typeof userInfoRaw === 'object'
+					? (userInfoRaw as { email?: string; id?: string; name?: string })
+					: null
+			const summary = userInfo
+				? `User info retrieved for ${userInfo.email ?? 'unknown email'}.`
+				: 'No authenticated user found.'
+			return createToolResponse({
+				toolName: 'get_user_info',
+				summary,
+				statusEmoji: userInfo ? '✅' : '⚠️',
 				content: [getEmbeddedResourceContent(resource)],
-			}
+				structuredContent: {
+					userInfo,
+				},
+			})
 		},
 	)
 
-	server.registerTool(
+	registerTool(
+		server,
 		'get_user_access',
-		{
-			description: `
-Will tell you whether the user has access to the paid features of the workshop.
-
-Paid features include:
-- Transcripts
-- Progress tracking
-- Access to videos
-- Access to the discord chat
-- Test tab support
-- Diff tab support
-
-Encourage the user to upgrade if they need access to the paid features.
-		`.trim(),
-			inputSchema: userAccessResource.inputSchema,
-		},
+		userAccessResource.inputSchema,
 		async ({ workshopDirectory }) => {
 			workshopDirectory = await handleWorkshopDirectory(workshopDirectory)
 			const resource = await userAccessResource.getResource({
 				workshopDirectory,
 			})
-			return {
+			const access = parseResourceText(resource) as
+				| { userHasAccess?: boolean }
+				| null
+			const userHasAccess =
+				typeof access?.userHasAccess === 'boolean'
+					? access.userHasAccess
+					: undefined
+			const statusEmoji = userHasAccess === false ? '⚠️' : '✅'
+			return createToolResponse({
+				toolName: 'get_user_access',
+				summary:
+					typeof userHasAccess === 'boolean'
+						? `User access: ${userHasAccess ? 'paid' : 'free'}`
+						: 'User access retrieved.',
+				statusEmoji,
 				content: [getEmbeddedResourceContent(resource)],
-			}
+				structuredContent: {
+					userHasAccess,
+				},
+			})
 		},
 	)
 
-	server.registerTool(
+	registerTool(
+		server,
 		'get_user_progress',
-		{
-			description: `
-Intended to help you get the progress of the current user. Can often be helpful
-to know what the next step that needs to be completed is. Make sure to provide
-the user with the URL of relevant incomplete lessons so they can watch them and
-then mark them as complete.
-		`.trim(),
-			inputSchema: userProgressResource.inputSchema,
-		},
+		userProgressResource.inputSchema,
 		async ({ workshopDirectory }) => {
 			workshopDirectory = await handleWorkshopDirectory(workshopDirectory)
 			const resource = await userProgressResource.getResource({
 				workshopDirectory,
 			})
-			return {
+			const progress = parseResourceText(resource)
+			const items: Array<{ epicCompletedAt?: unknown }> = Array.isArray(
+				progress,
+			)
+				? (progress as Array<{ epicCompletedAt?: unknown }>)
+				: []
+			const incompleteCount = items.filter((item) => !item.epicCompletedAt)
+				.length
+			return createToolResponse({
+				toolName: 'get_user_progress',
+				summary: `Progress retrieved. Incomplete items: ${incompleteCount}.`,
 				content: [getEmbeddedResourceContent(resource)],
-			}
+				structuredContent: {
+					progress: items,
+					incompleteCount,
+				},
+			})
 		},
 	)
 }
 
 // Sometimes the user will ask the LLM to select a prompt to use so they don't have to.
 export function initPromptTools(server: McpServer) {
-	server.registerTool(
+	registerTool(
+		server,
 		'get_quiz_instructions',
-		{
-			description: `
-If the user asks you to quiz them on a topic from the workshop, use this tool to
-retrieve the instructions for how to do so.
-
-- If the user asks for a specific exercise, supply that exercise number.
-- If they ask for a specific exericse, supply that exercise number.
-- If they ask for a topic and you don't know which exercise that topic is in, use \`get_workshop_context\` to get the list of exercises and their topics and then supply the appropriate exercise number.
-		`.trim(),
-			inputSchema: quizMeInputSchema,
-		},
+		quizMeInputSchema,
 		async ({ workshopDirectory, exerciseNumber }) => {
 			workshopDirectory = await handleWorkshopDirectory(workshopDirectory)
 			const result = await quizMe({ workshopDirectory, exerciseNumber })
-			return {
-				// QUESTION: will a prompt ever return messages that have role: 'assistant'?
-				// if so, this may be a little confusing for the LLM, but I can't think of a
-				// good use case for that so 🤷‍♂️
-				content: result.messages.map((m) => {
-					if (m.content.type === 'resource') {
-						return getEmbeddedResourceContent(m.content.resource)
-					}
-					return m.content
-				}),
-			}
+			const promptContent = result.messages.map((m) => {
+				if (m.content.type === 'resource') {
+					return getEmbeddedResourceContent(m.content.resource)
+				}
+				return m.content
+			})
+			return createToolResponse({
+				toolName: 'get_quiz_instructions',
+				summary: 'Quiz instructions prepared.',
+				details: [
+					exerciseNumber
+						? `Exercise: ${exerciseNumber}`
+						: 'Exercise: random selection',
+				],
+				content: promptContent,
+				structuredContent: {
+					exerciseNumber: exerciseNumber ?? null,
+					messages: result.messages,
+				},
+			})
 		},
 	)
 
-	server.registerTool(
+	registerTool(
+		server,
 		'get_what_is_next',
 		{
-			title: 'Get What Is Next',
-			description: `
-Intended to help you get the next step that the user needs to complete.
-
-This is often useful to know what the user should do next to continue their learning.
-
-This could be that they need to login, watch a video, complete an exercise, etc.
-			`.trim(),
-			inputSchema: {
-				workshopDirectory: workshopDirectoryInputSchema,
-			},
+			workshopDirectory: workshopDirectoryInputSchema,
 		},
 		async ({ workshopDirectory }) => {
 			await handleWorkshopDirectory(workshopDirectory)
 
 			const authInfo = await getAuthInfo()
 			if (!authInfo) {
-				return {
-					content: [
-						{
-							type: 'text',
-							text: 'The user is not logged in. Use the `login` tool to login the user.',
-						},
-					],
-				}
+				return createToolResponse({
+					toolName: 'get_what_is_next',
+					summary: 'User is not logged in.',
+					statusEmoji: '⚠️',
+					details: ['Use `login` to authenticate the user.'],
+					nextSteps: ['Call `login` to start device authorization.'],
+					includeMetaNextSteps: false,
+					structuredContent: {
+						status: 'not_authenticated',
+					},
+				})
 			}
 			const progress = await getProgress()
 
@@ -769,15 +897,18 @@ This could be that they need to login, watch a video, complete an exercise, etc.
 			})
 			const nextProgress = sortedProgress.find((p) => !p.epicCompletedAt)
 			if (!nextProgress) {
-				return {
-					content: [
-						{
-							type: 'text',
-							text: `The user has completed the workshop. Congratulate them and invite them to ask you to quiz them on their understanding of the material. A summary of the material is below:`,
-						},
-						createText(await createWorkshopSummary()),
+				return createToolResponse({
+					toolName: 'get_what_is_next',
+					summary: 'Workshop complete.',
+					details: [
+						'Invite the user to request a quiz on the material.',
 					],
-				}
+					includeMetaNextSteps: false,
+					content: [createText(await createWorkshopSummary())],
+					structuredContent: {
+						status: 'complete',
+					},
+				})
 			}
 
 			invariant(
@@ -788,7 +919,10 @@ This could be that they need to login, watch a video, complete an exercise, etc.
 			if (nextProgress.type === 'workshop-instructions') {
 				const embedUrl = new URL('mcp-ui/epic-video', 'http://localhost:5639')
 				embedUrl.searchParams.set('url', nextProgress.epicLessonUrl)
-				return {
+				return createToolResponse({
+					toolName: 'get_what_is_next',
+					summary: 'User should complete workshop instructions.',
+					includeMetaNextSteps: false,
 					content: [
 						createText(
 							`The user has just begun! They need to watch the workshop instructions video and read the instructions to get started. When they say they're done or ready for what's next, mark it as complete using the \`update_progress\` tool with the slug "${nextProgress.epicLessonSlug}" and then call \`get_what_is_next\` again to get the next step. Relevant info is below:`,
@@ -806,13 +940,23 @@ This could be that they need to login, watch a video, complete an exercise, etc.
 							},
 						}),
 					],
-				}
+					structuredContent: {
+						nextStep: {
+							type: nextProgress.type,
+							epicLessonSlug: nextProgress.epicLessonSlug,
+							epicLessonUrl: nextProgress.epicLessonUrl,
+						},
+					},
+				})
 			}
 
 			if (nextProgress.type === 'workshop-finished') {
 				const embedUrl = new URL('mcp-ui/epic-video', 'http://localhost:5639')
 				embedUrl.searchParams.set('url', nextProgress.epicLessonUrl)
-				return {
+				return createToolResponse({
+					toolName: 'get_what_is_next',
+					summary: 'User should complete workshop finished instructions.',
+					includeMetaNextSteps: false,
 					content: [
 						createText(
 							`The user has almost completed the workshop. They just need to watch the workshop finished video and read the finished instructions to get started. When they say they're done or ready for what's next, mark it as complete using the \`update_progress\` tool with the slug "${nextProgress.epicLessonSlug}" and then call \`get_what_is_next\` again to get the next step. Relevant info is below:`,
@@ -829,7 +973,14 @@ This could be that they need to login, watch a video, complete an exercise, etc.
 							},
 						}),
 					],
-				}
+					structuredContent: {
+						nextStep: {
+							type: nextProgress.type,
+							epicLessonSlug: nextProgress.epicLessonSlug,
+							epicLessonUrl: nextProgress.epicLessonUrl,
+						},
+					},
+				})
 			}
 
 			const ex = nextProgress.exerciseNumber.toString().padStart(2, '0')
@@ -837,7 +988,10 @@ This could be that they need to login, watch a video, complete an exercise, etc.
 				const embedUrl = new URL('mcp-ui/epic-video', 'http://localhost:5639')
 				embedUrl.searchParams.set('url', nextProgress.epicLessonUrl)
 				const exercise = await getExercise(nextProgress.exerciseNumber)
-				return {
+				return createToolResponse({
+					toolName: 'get_what_is_next',
+					summary: `User should complete exercise ${ex} intro.`,
+					includeMetaNextSteps: false,
 					content: [
 						createText(
 							`The user needs to complete the intro for exercise ${ex}. When they say they're done or ready for what's next, mark it as complete using the \`update_progress\` tool with the slug "${nextProgress.epicLessonSlug}" and then call \`get_what_is_next\` again to get the next step. Relevant info is below:`,
@@ -854,13 +1008,24 @@ This could be that they need to login, watch a video, complete an exercise, etc.
 							},
 						}),
 					],
-				}
+					structuredContent: {
+						nextStep: {
+							type: nextProgress.type,
+							exerciseNumber: nextProgress.exerciseNumber,
+							epicLessonSlug: nextProgress.epicLessonSlug,
+							epicLessonUrl: nextProgress.epicLessonUrl,
+						},
+					},
+				})
 			}
 			if (nextProgress.type === 'finished') {
 				const embedUrl = new URL('mcp-ui/epic-video', 'http://localhost:5639')
 				embedUrl.searchParams.set('url', nextProgress.epicLessonUrl)
 				const exercise = await getExercise(nextProgress.exerciseNumber)
-				return {
+				return createToolResponse({
+					toolName: 'get_what_is_next',
+					summary: `User should complete exercise ${ex} outro.`,
+					includeMetaNextSteps: false,
 					content: [
 						createText(
 							`The user is almost finished with exercise ${ex}. They need to complete the outro for exercise ${ex}. Relevant info is below:`,
@@ -877,7 +1042,15 @@ This could be that they need to login, watch a video, complete an exercise, etc.
 							},
 						}),
 					],
-				}
+					structuredContent: {
+						nextStep: {
+							type: nextProgress.type,
+							exerciseNumber: nextProgress.exerciseNumber,
+							epicLessonSlug: nextProgress.epicLessonSlug,
+							epicLessonUrl: nextProgress.epicLessonUrl,
+						},
+					},
+				})
 			}
 
 			const st = nextProgress.stepNumber.toString().padStart(2, '0')
@@ -903,7 +1076,10 @@ This could be that they need to login, watch a video, complete an exercise, etc.
 					step,
 					`No step found for exercise ${nextProgress.exerciseNumber} step ${nextProgress.stepNumber}`,
 				)
-				return {
+				return createToolResponse({
+					toolName: 'get_what_is_next',
+					summary: `User is on step ${st} of exercise ${ex}.`,
+					includeMetaNextSteps: false,
 					content: [
 						createText(
 							`
@@ -943,7 +1119,19 @@ Then you can call \`get_what_is_next\` again to get the next step.
 							},
 						}),
 					],
-				}
+					structuredContent: {
+						nextStep: {
+							type: nextProgress.type,
+							exerciseNumber: nextProgress.exerciseNumber,
+							stepNumber: nextProgress.stepNumber,
+							epicLessonSlug: nextProgress.epicLessonSlug,
+							videoUrls: {
+								problem: nextProgress.epicLessonUrl,
+								solution: `${nextProgress.epicLessonUrl}/solution`,
+							},
+						},
+					},
+				})
 			}
 			throw new Error(
 				`This is unexpected, but I do not know what the next step for the user is. Sorry!`,
