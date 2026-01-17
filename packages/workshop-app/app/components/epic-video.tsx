@@ -427,6 +427,7 @@ function EpicVideo({
 	durationEstimate?: number | null
 }) {
 	const muxPlayerRef = React.useRef<MuxPlayerRefAttributes>(null)
+	const nativeVideoRef = React.useRef<HTMLVideoElement>(null)
 	const isOnline = useIsOnline()
 	const offlineVideo = useOfflineVideoAvailability(muxPlaybackId)
 	const shouldUseOfflineVideo = !isOnline && offlineVideo.available
@@ -453,14 +454,15 @@ function EpicVideo({
 				key={`button-${timestampIndexStart}`}
 				className="underline"
 				onClick={(event) => {
-					if (muxPlayerRef.current) {
-						muxPlayerRef.current.currentTime = hmsToSeconds(timestamp)
+					const videoElement = nativeVideoRef.current ?? muxPlayerRef.current
+					if (videoElement) {
+						videoElement.currentTime = hmsToSeconds(timestamp)
 						try {
-							void muxPlayerRef.current.play().catch(() => {})
+							void videoElement.play().catch(() => {})
 						} catch {
 							// ignore
 						}
-						muxPlayerRef.current.scrollIntoView({
+						videoElement.scrollIntoView({
 							behavior: 'smooth',
 							inline: 'center',
 							block: 'start',
@@ -485,6 +487,7 @@ function EpicVideo({
 				{shouldUseOfflineVideo ? (
 					<div className="flex aspect-video w-full items-center justify-center bg-black">
 						<video
+							ref={nativeVideoRef}
 							aria-label={title}
 							className="h-full w-full"
 							controls

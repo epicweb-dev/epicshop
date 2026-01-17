@@ -589,6 +589,19 @@ export async function startOfflineVideoDownload({
 		}
 	}
 
+	// Set status immediately to prevent race condition
+	const tempStartedAt = new Date().toISOString()
+	downloadState = {
+		status: 'running',
+		startedAt: tempStartedAt,
+		updatedAt: tempStartedAt,
+		total: 0,
+		completed: 0,
+		skipped: 0,
+		current: null,
+		errors: [],
+	}
+
 	const { videos, unavailable } = await getWorkshopVideoCollection({ request })
 	const index = await readOfflineVideoIndex()
 	const authInfo = await getAuthInfo()
