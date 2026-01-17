@@ -259,8 +259,8 @@ async function readOfflineVideoConfig(): Promise<OfflineVideoConfig | null> {
 	const configPath = getOfflineVideoConfigPath()
 	try {
 		const json = await fs.readFile(configPath, 'utf8')
-		const parsed = JSON.parse(json)
-		if (!parsed || typeof parsed !== 'object') return null
+		const parsed = JSON.parse(json) as Record<string, unknown>
+		if (!parsed) return null
 		const version =
 			typeof parsed.version === 'number'
 				? parsed.version
