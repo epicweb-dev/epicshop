@@ -4,7 +4,7 @@ import { render } from 'vitest-browser-react'
 import { OfflineVideoActionButtons } from '#app/components/offline-video-actions.tsx'
 
 test('shows download action when offline copy is missing (aha)', async () => {
-	render(
+	await render(
 		<OfflineVideoActionButtons
 			isAvailable={false}
 			onDownload={() => {}}
@@ -18,7 +18,7 @@ test('shows download action when offline copy is missing (aha)', async () => {
 })
 
 test('shows delete action when offline copy is ready', async () => {
-	render(
+	await render(
 		<OfflineVideoActionButtons
 			isAvailable={true}
 			onDownload={() => {}}
@@ -32,7 +32,7 @@ test('shows delete action when offline copy is ready', async () => {
 })
 
 test('disables actions while busy', async () => {
-	render(
+	await render(
 		<OfflineVideoActionButtons
 			isAvailable={false}
 			isBusy={true}

@@ -1,6 +1,3 @@
-import { type EpicVideoInfos } from '@epic-web/workshop-utils/epic-api.server'
-import { type MuxPlayerRefAttributes } from '@mux/mux-player-react'
-import * as React from 'react'
 import {
 	MediaControlBar,
 	MediaController,
@@ -12,6 +9,9 @@ import {
 	MediaTimeRange,
 	MediaVolumeRange,
 } from 'media-chrome/react'
+import { type EpicVideoInfos } from '@epic-web/workshop-utils/epic-api.server'
+import { type MuxPlayerRefAttributes } from '@mux/mux-player-react'
+import * as React from 'react'
 import { Await, Link, useFetcher } from 'react-router'
 import { useTheme } from '#app/routes/theme/index.tsx'
 import { MuxPlayer, usePlayerPreferences } from '#app/routes/video-player/index.tsx'
@@ -26,6 +26,11 @@ import { useWorkshopConfig } from './workshop-config.tsx'
 const EpicVideoInfoContext = React.createContext<
 	Promise<EpicVideoInfos> | null | undefined
 >(null)
+
+type OfflineVideoActionData = {
+	status: string
+	action?: string
+}
 
 function useOfflineVideoAvailability(playbackId: string, refreshKey: number) {
 	const [available, setAvailable] = React.useState(false)
@@ -445,8 +450,7 @@ function EpicVideo({
 	const [availabilityKey, setAvailabilityKey] = React.useState(0)
 	const offlineVideo = useOfflineVideoAvailability(muxPlaybackId, availabilityKey)
 	const shouldUseOfflineVideo = offlineVideo.available
-	const offlineVideoFetcher =
-		useFetcher<typeof import('#app/routes/resources+/offline-videos.ts').action>()
+	const offlineVideoFetcher = useFetcher<OfflineVideoActionData>()
 	const isOfflineActionBusy = offlineVideoFetcher.state !== 'idle'
 	const timestampRegex = /(\d+:\d+)/g
 	// turn the transcript into an array of React elements
@@ -517,7 +521,7 @@ function EpicVideo({
 	}, [offlineVideoFetcher.state, offlineVideoFetcher.data])
 
 	const handleDownload = React.useCallback(() => {
-		offlineVideoFetcher.submit(
+		void offlineVideoFetcher.submit(
 			{
 				intent: 'download-video',
 				playbackId: muxPlaybackId,
@@ -529,7 +533,7 @@ function EpicVideo({
 	}, [muxPlaybackId, offlineVideoFetcher, title, urlString])
 
 	const handleDelete = React.useCallback(() => {
-		offlineVideoFetcher.submit(
+		void offlineVideoFetcher.submit(
 			{ intent: 'delete-video', playbackId: muxPlaybackId },
 			{ method: 'post', action: '/resources/offline-videos' },
 		)

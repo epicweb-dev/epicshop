@@ -3,7 +3,7 @@ import { data } from 'react-router'
 import { ensureUndeployed } from '#app/utils/misc.tsx'
 import { type Route } from './+types/offline-videos.tsx'
 
-export async function loader({ request }: Route.LoaderArgs) {
+export async function loader({ request: _request }: Route.LoaderArgs) {
 	ensureUndeployed()
 	const summary = await getOfflineVideoAdminSummary()
 	return data({ summary })
