@@ -1,4 +1,4 @@
-import { page } from '@vitest/browser/context'
+import { page } from 'vitest/browser'
 import { render } from 'vitest-browser-react'
 import { expect, test } from 'vitest'
 import { Button } from '#app/components/button.tsx'
