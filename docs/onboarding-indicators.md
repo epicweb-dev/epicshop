@@ -198,14 +198,14 @@ it's describing.
 
 ## Existing Indicators
 
-| Feature                 | Feature ID             | Location                                                  |
-| ----------------------- | ---------------------- | --------------------------------------------------------- |
-| FILES button            | `files-popover`        | `touched-files.tsx`                                       |
-| Account link            | `account-link`         | `_app+/_layout.tsx` (Navigation components)               |
-| Login button            | `login-button`         | `_app+/_layout.tsx` (NoUserBanner)                        |
-| Guide (account)         | `account-guide`        | `_app+/account.tsx`                                       |
-| Preferences (account)   | `account-preferences`  | `_app+/account.tsx`                                       |
-| Set playground dialog   | `set-playground`       | `set-playground.tsx`                                      |
+| Feature               | Feature ID            | Location                                    |
+| --------------------- | --------------------- | ------------------------------------------- |
+| FILES button          | `files-popover`       | `touched-files.tsx`                         |
+| Account link          | `account-link`        | `_app+/_layout.tsx` (Navigation components) |
+| Login button          | `login-button`        | `_app+/_layout.tsx` (NoUserBanner)          |
+| Guide (account)       | `account-guide`       | `_app+/account.tsx`                         |
+| Preferences (account) | `account-preferences` | `_app+/account.tsx`                         |
+| Set playground dialog | `set-playground`      | `set-playground.tsx`                        |
 
 ## Deployed Environment
 
