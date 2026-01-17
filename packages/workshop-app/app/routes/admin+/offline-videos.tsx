@@ -74,10 +74,10 @@ function DoubleCheckButton({
 		<button
 			{...getButtonProps(props)}
 			className={cn(
-				'border-border bg-background text-foreground hover:bg-muted hover:text-foreground focus:ring-ring inline-flex min-w-[120px] items-center justify-center gap-2 rounded-md border px-3 py-1 text-sm font-medium transition-colors focus:ring-2 focus:ring-offset-2 focus:outline-none disabled:pointer-events-none disabled:opacity-50',
+				'border-border bg-background text-foreground focus:ring-ring inline-flex min-w-[120px] items-center justify-center gap-2 rounded-md border px-3 py-1 text-sm font-medium transition-colors focus:ring-2 focus:ring-offset-2 focus:outline-none disabled:pointer-events-none disabled:opacity-50',
 				doubleCheck
-					? 'border-destructive bg-destructive text-destructive-foreground hover:bg-destructive/90'
-					: null,
+					? 'border-destructive bg-destructive text-destructive-foreground hover:bg-destructive/90 hover:text-destructive-foreground'
+					: 'hover:bg-muted hover:text-foreground',
 				className,
 			)}
 		>

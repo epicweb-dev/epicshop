@@ -572,22 +572,27 @@ function EpicVideo({
 		<div>
 			<div className="shadow-lg">
 				{shouldUseOfflineVideo ? (
-					<div className="flex aspect-video w-full items-center justify-center bg-black">
+					<div className="not-prose flex aspect-video w-full items-center justify-center bg-black">
 						<MediaController
-							className="flex h-full w-full flex-col justify-end"
+							tabIndex={0}
+							aria-label={`${title} video player`}
+							onPointerDown={(event) => {
+								event.currentTarget.focus()
+							}}
+							className="focus-visible:ring-ring flex h-full w-full flex-col justify-end outline-none focus-visible:ring-2 focus-visible:ring-offset-2"
 							style={
 								{
 									'--media-primary-color': 'hsl(var(--background))',
-									'--media-secondary-color': 'hsl(var(--foreground) / 0.8)',
 									'--media-text-color': 'hsl(var(--background))',
-									'--media-control-background': 'hsl(var(--foreground) / 0.8)',
+									'--media-secondary-color': 'transparent',
+									'--media-control-background': 'transparent',
 									'--media-control-hover-background':
-										'hsl(var(--foreground) / 0.9)',
+										'hsl(var(--background) / 0.18)',
 									'--media-range-track-height': '4px',
 									'--media-range-thumb-height': '10px',
 									'--media-range-thumb-width': '10px',
 									'--media-range-track-background':
-										'hsl(var(--background) / 0.3)',
+										'hsl(var(--background) / 0.35)',
 									'--media-range-track-pointer-background':
 										'hsl(var(--background) / 0.85)',
 								} as React.CSSProperties
@@ -602,18 +607,10 @@ function EpicVideo({
 								preload="metadata"
 								src={offlineVideo.offlineUrl}
 							/>
-							<div className="w-full space-y-2 px-3 pb-3">
-								<MediaTimeRange
-									className="w-full"
-									style={
-										{
-											'--media-control-background': 'transparent',
-											'--media-control-hover-background': 'transparent',
-										} as React.CSSProperties
-									}
-								/>
-								<MediaControlBar className="bg-foreground/80 text-background w-full items-center gap-3 rounded-md px-3 py-2 backdrop-blur">
-									<div className="flex items-center gap-3">
+							<div className="bg-foreground/80 text-background w-full space-y-3 rounded-md px-4 pt-2 pb-3 backdrop-blur">
+								<MediaTimeRange className="w-full" />
+								<MediaControlBar className="w-full items-center gap-4">
+									<div className="flex items-center gap-4">
 										<MediaPlayButton />
 										<MediaSeekBackwardButton
 											ref={setSeekOffset}
@@ -623,11 +620,11 @@ function EpicVideo({
 											ref={setSeekOffset}
 											seekOffset={10}
 										/>
-										<MediaTimeDisplay showDuration />
+										<MediaTimeDisplay showDuration className="tabular-nums" />
 										<MediaMuteButton />
-										<MediaVolumeRange className="w-24" />
+										<MediaVolumeRange className="w-28" />
 									</div>
-									<div className="ml-auto flex items-center gap-3">
+									<div className="ml-auto flex items-center gap-4">
 										<MediaPlaybackRateButton />
 										<MediaPipButton />
 										<MediaFullscreenButton />
