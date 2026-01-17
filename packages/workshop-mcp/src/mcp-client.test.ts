@@ -205,6 +205,17 @@ async function createDisposableClient(): Promise<DisposableClient> {
 	}
 }
 
+async function withDisposableClient<T>(
+	callback: (resources: DisposableClient) => Promise<T>,
+) {
+	const resources = await createDisposableClient()
+	try {
+		return await callback(resources)
+	} finally {
+		await resources.dispose()
+	}
+}
+
 function resolveWorkspaceRoot() {
 	const testFilePath = fileURLToPath(import.meta.url)
 	const testDir = path.dirname(testFilePath)
@@ -213,26 +224,18 @@ function resolveWorkspaceRoot() {
 }
 
 describe('workshop MCP server', () => {
-	let disposableClient: DisposableClient
-
-	beforeAll(async () => {
-		disposableClient = await createDisposableClient()
-	}, testTimeoutMs)
-
-	afterAll(async () => {
-		await disposableClient?.dispose()
-	})
-
 	test(
 		'initializes with instructions and server info',
-		() => {
-			expect(disposableClient.initResult).toEqual(
-				expect.objectContaining({
-					protocolVersion: expect.any(String),
-					serverInfo: expect.any(Object),
-					instructions: expect.any(String),
-				}),
-			)
+		async () => {
+			await withDisposableClient(async ({ initResult }) => {
+				expect(initResult).toEqual(
+					expect.objectContaining({
+						protocolVersion: expect.any(String),
+						serverInfo: expect.any(Object),
+						instructions: expect.any(String),
+					}),
+				)
+			})
 		},
 		testTimeoutMs,
 	)
@@ -240,13 +243,16 @@ describe('workshop MCP server', () => {
 	test(
 		'lists tools with expected shape',
 		async () => {
-			await expect(disposableClient.client.listTools()).resolves.toEqual(
-				expect.objectContaining({
-					tools: expect.arrayContaining([
-						expect.objectContaining({ name: 'get_what_is_next' }),
-					]),
-				}),
-			)
+			await withDisposableClient(async ({ client }) => {
+				const resultPromise = client.listTools()
+				await expect(resultPromise).resolves.toEqual(
+					expect.objectContaining({
+						tools: expect.arrayContaining([
+							expect.objectContaining({ name: 'get_what_is_next' }),
+						]),
+					}),
+				)
+			})
 		},
 		testTimeoutMs,
 	)
@@ -254,25 +260,24 @@ describe('workshop MCP server', () => {
 	test(
 		'get_what_is_next returns text content and structured payload',
 		async () => {
-			const workshopDirectory = path.join(resolveWorkspaceRoot(), 'example')
-			const resultPromise = disposableClient.client.callTool(
-				'get_what_is_next',
-				{
+			await withDisposableClient(async ({ client }) => {
+				const workshopDirectory = path.join(resolveWorkspaceRoot(), 'example')
+				const resultPromise = client.callTool('get_what_is_next', {
 					workshopDirectory,
-				},
-			)
+				})
 
-			await expect(resultPromise).resolves.toEqual(
-				expect.objectContaining({
-					content: expect.arrayContaining([
-						expect.objectContaining({
-							type: 'text',
-							text: expect.any(String),
-						}),
-					]),
-					structuredContent: expect.any(Object),
-				}),
-			)
+				await expect(resultPromise).resolves.toEqual(
+					expect.objectContaining({
+						content: expect.arrayContaining([
+							expect.objectContaining({
+								type: 'text',
+								text: expect.any(String),
+							}),
+						]),
+						structuredContent: expect.any(Object),
+					}),
+				)
+			})
 		},
 		testTimeoutMs,
 	)
@@ -280,21 +285,20 @@ describe('workshop MCP server', () => {
 	test(
 		'returns tool error response for invalid workshop directory',
 		async () => {
-			const resultPromise = disposableClient.client.callTool(
-				'get_workshop_context',
-				{
+			await withDisposableClient(async ({ client }) => {
+				const resultPromise = client.callTool('get_workshop_context', {
 					workshopDirectory: '/not/a/workshop',
-				},
-			)
+				})
 
-			await expect(resultPromise).resolves.toEqual(
-				expect.objectContaining({
-					isError: true,
-					content: expect.arrayContaining([
-						expect.objectContaining({ type: 'text' }),
-					]),
-				}),
-			)
+				await expect(resultPromise).resolves.toEqual(
+					expect.objectContaining({
+						isError: true,
+						content: expect.arrayContaining([
+							expect.objectContaining({ type: 'text' }),
+						]),
+					}),
+				)
+			})
 		},
 		testTimeoutMs,
 	)
