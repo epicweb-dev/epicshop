@@ -1396,8 +1396,7 @@ export async function getSavedPlaygrounds(): Promise<Array<SavedPlayground>> {
 				const parsed = parseSavedPlaygroundDirName(entry.name)
 				const stat = await fsExtra.stat(fullPath).catch(() => null)
 				const createdAt =
-					parsed?.createdAt ??
-					(stat ? new Date(stat.mtimeMs) : new Date(0))
+					parsed?.createdAt ?? (stat ? new Date(stat.mtimeMs) : new Date(0))
 				return {
 					id: entry.name,
 					appName: parsed?.appName ?? entry.name,

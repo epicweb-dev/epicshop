@@ -123,10 +123,10 @@ page in the workshop app. Each example directory should also include its own
 
 Finally there's the `playground` directory. When a learner clicks "Set to
 Playground" in the UI, it copies the contents of the App they want to play with
-into the playground directory.
-When playground persistence is enabled in Preferences, each set also saves a
-timestamped copy in `saved-playgrounds`. Learners can restore one of these
-copies from the playground chooser by selecting "Saved playgrounds".
+into the playground directory. When playground persistence is enabled in
+Preferences, each set also saves a timestamped copy in `saved-playgrounds`.
+Learners can restore one of these copies from the playground chooser by
+selecting "Saved playgrounds".
 
 ## App Types
 

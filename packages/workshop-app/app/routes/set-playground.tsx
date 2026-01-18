@@ -338,7 +338,10 @@ function SavedPlaygroundsDialog({
 				</DialogHeader>
 				<div className="space-y-4">
 					<div className="space-y-2">
-						<label htmlFor="savedPlaygroundSearch" className="text-sm font-medium">
+						<label
+							htmlFor="savedPlaygroundSearch"
+							className="text-sm font-medium"
+						>
 							Search saved playgrounds
 						</label>
 						<input
@@ -351,7 +354,7 @@ function SavedPlaygroundsDialog({
 						/>
 					</div>
 					<div className="border-border bg-muted/40 rounded-md border">
-						<div className="border-border flex items-center justify-between border-b px-3 py-2 text-xs text-muted-foreground">
+						<div className="border-border text-muted-foreground flex items-center justify-between border-b px-3 py-2 text-xs">
 							<span>
 								{savedPlaygrounds.length === 1
 									? '1 saved playground'
@@ -602,7 +605,7 @@ export function PlaygroundChooser({
 								<>
 									<Select.Separator className="bg-border my-2 h-px" />
 									<Select.Group>
-										<Select.Label className="text-muted-foreground px-5 pb-2 text-xs font-mono uppercase">
+										<Select.Label className="text-muted-foreground px-5 pb-2 font-mono text-xs uppercase">
 											Saved playgrounds
 										</Select.Label>
 										<SelectItem value={savedPlaygroundsValue}>
