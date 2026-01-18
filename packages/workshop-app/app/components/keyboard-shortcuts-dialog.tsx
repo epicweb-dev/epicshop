@@ -112,7 +112,11 @@ function KeyboardShortcutsDialog({
 					<DialogTitle>Keyboard Shortcuts</DialogTitle>
 					<DialogDescription>
 						Use these keyboard shortcuts to navigate and control the video
-						player
+						player. Press{' '}
+						<kbd className="border-border bg-muted rounded border px-1.5 py-0.5 font-mono text-xs">
+							?
+						</kbd>{' '}
+						or select the keyboard icon in the navigation to open this list.
 					</DialogDescription>
 				</DialogHeader>
 				<div className="space-y-6">
