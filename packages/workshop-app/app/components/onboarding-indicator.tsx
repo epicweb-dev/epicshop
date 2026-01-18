@@ -206,7 +206,7 @@ export function OnboardingCallout({
 }) {
 	return (
 		<div
-			className={`absolute top-full left-0 z-20 mt-1 max-w-64 rounded-md bg-warning px-3 py-2 text-sm text-warning-foreground shadow-lg ${className}`}
+			className={`bg-warning text-warning-foreground absolute top-full left-0 z-20 mt-1 max-w-64 rounded-md px-3 py-2 text-sm shadow-lg ${className}`}
 		>
 			<p className="font-medium">{children}</p>
 		</div>

@@ -86,7 +86,7 @@ function ExerciseListItem({
 		<li key={exercise.exerciseNumber}>
 			<Link
 				className={cn(
-					"relative flex items-center gap-4 px-4 py-3 text-lg font-semibold transition after:absolute after:right-10 after:-translate-x-2 after:opacity-0 after:transition after:content-['→'] hover:bg-muted/60 hover:after:translate-x-0 hover:after:opacity-100",
+					"hover:bg-muted/60 relative flex items-center gap-4 px-4 py-3 text-lg font-semibold transition after:absolute after:right-10 after:-translate-x-2 after:opacity-0 after:transition after:content-['→'] hover:after:translate-x-0 hover:after:opacity-100",
 					progressClassName,
 				)}
 				to={`${exercise.exerciseNumber.toString().padStart(2, '0')}`}

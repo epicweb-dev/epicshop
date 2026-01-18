@@ -348,15 +348,15 @@ export function PlaygroundChooser({
 				<Select.Trigger
 					aria-label="Select app for playground"
 					className={clsx(
-					'radix-placeholder:text-muted-foreground flex h-full w-full items-center justify-between text-left focus-visible:outline-none',
+						'radix-placeholder:text-muted-foreground flex h-full w-full items-center justify-between text-left focus-visible:outline-none',
 						fetcher.state !== 'idle' ? 'cursor-progress' : null,
 						fetcher.data?.status === 'error' ? 'cursor-not-allowed' : null,
 					)}
 				>
-				<span className="scrollbar-thin scrollbar-thumb-scrollbar w-80 flex-1 truncate">
+					<span className="scrollbar-thin scrollbar-thumb-scrollbar w-80 flex-1 truncate">
 						<Select.Value
 							placeholder="Select current app"
-						className="inline-block w-40 truncate"
+							className="inline-block w-40 truncate"
 						/>
 					</span>
 					<Select.Icon>
@@ -367,7 +367,7 @@ export function PlaygroundChooser({
 					<Select.Content
 						position="popper"
 						align="start"
-					className="bg-popover text-popover-foreground z-20 max-h-[50vh] lg:max-h-[70vh]"
+						className="bg-popover text-popover-foreground z-20 max-h-[50vh] lg:max-h-[70vh]"
 					>
 						<Select.ScrollUpButton className="flex h-5 cursor-default items-center justify-center">
 							<Icon name="ChevronUp" />

@@ -508,7 +508,7 @@ function NoUserBanner() {
 		</div>
 	)
 	return (
-		<div className="z-10 flex h-16 items-center justify-between border-b bg-linear-to-tr from-highlight to-info pl-4 text-info-foreground">
+		<div className="from-highlight to-info text-info-foreground z-10 flex h-16 items-center justify-between border-b bg-linear-to-tr pl-4">
 			{isWide ? (
 				<>
 					<div className="hidden flex-1 flex-wrap items-center gap-4 sm:flex">
@@ -540,7 +540,7 @@ function NoUserBanner() {
 							</Link>
 							<Link
 								to={ENV.EPICSHOP_DEPLOYED ? `https://${host}/login` : '/login'}
-								className="relative flex h-full items-center justify-center space-x-1.5 bg-info-foreground/20 px-5 text-sm font-semibold shadow-md transition hover:bg-info-foreground/30"
+								className="bg-info-foreground/20 hover:bg-info-foreground/30 relative flex h-full items-center justify-center space-x-1.5 px-5 text-sm font-semibold shadow-md transition"
 								onClick={dismissLoginBadge}
 							>
 								<Icon name="User" size="lg" />
@@ -593,7 +593,7 @@ function NoUserBanner() {
 							</Link>
 							<Link
 								to={ENV.EPICSHOP_DEPLOYED ? `https://${host}/login` : '/login'}
-								className="relative flex h-full items-center justify-center space-x-1.5 bg-info-foreground/20 px-5 text-sm font-semibold shadow-md transition hover:bg-info-foreground/30"
+								className="bg-info-foreground/20 hover:bg-info-foreground/30 relative flex h-full items-center justify-center space-x-1.5 px-5 text-sm font-semibold shadow-md transition"
 								onClick={dismissLoginBadge}
 							>
 								<Icon name="User" size="lg" />

@@ -234,16 +234,16 @@ function SelectFileToDiff({
 		<Select.Root name={name} defaultValue={defaultValue}>
 			<Select.Trigger
 				className={clsx(
-				'radix-placeholder:text-muted-foreground flex h-full w-full max-w-[50%] items-center justify-between px-3 text-left focus-visible:outline-none',
+					'radix-placeholder:text-muted-foreground flex h-full w-full max-w-[50%] items-center justify-between px-3 text-left focus-visible:outline-none',
 					className,
 				)}
 				aria-label={`Select ${label} for git Diff`}
 			>
-			<span className="truncate">
+				<span className="truncate">
 					{label}:{' '}
 					<Select.Value
 						placeholder={`Select ${label}`}
-					className="inline-block w-40 truncate"
+						className="inline-block w-40 truncate"
 					/>
 				</span>
 				<Select.Icon className="">
