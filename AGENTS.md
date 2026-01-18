@@ -63,6 +63,8 @@ installed in individual repositories which resemble the structure of the
   are added.
 - Debug logging is available via `NODE_DEBUG` environment variable (see
   `docs/debug-logging.md`)
+- Styling/theming (Tailwind v4 + theme tokens) is documented in
+  `docs/styling-and-theming.md`
 
 ## Testing principles (summaries + snippets)
 
