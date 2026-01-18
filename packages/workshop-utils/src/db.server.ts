@@ -42,6 +42,14 @@ export const PlayerPreferencesSchema = z
 	.optional()
 	.default({})
 
+const OfflineVideoResolutionSchema = z.enum(['best', 'high', 'medium', 'low'])
+const OfflineVideoPreferencesSchema = z
+	.object({
+		downloadResolution: OfflineVideoResolutionSchema.optional(),
+	})
+	.optional()
+	.default({})
+
 const PresencePreferencesSchema = z
 	.object({
 		optOut: z.boolean(),
@@ -62,6 +70,7 @@ const DataSchema = z.object({
 	preferences: z
 		.object({
 			player: PlayerPreferencesSchema,
+			offlineVideo: OfflineVideoPreferencesSchema,
 			presence: PresencePreferencesSchema,
 			playground: z
 				.object({
@@ -315,6 +324,10 @@ export async function setPreferences(
 			player: {
 				...data?.preferences?.player,
 				...preferences?.player,
+			},
+			offlineVideo: {
+				...data?.preferences?.offlineVideo,
+				...preferences?.offlineVideo,
 			},
 			presence: {
 				...data?.preferences?.presence,

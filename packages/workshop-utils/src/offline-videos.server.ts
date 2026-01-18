@@ -11,7 +11,7 @@ import {
 } from './apps.server.ts'
 import { getWorkshopConfig } from './config.server.ts'
 import { resolvePrimaryDir } from './data-storage.server.ts'
-import { getAuthInfo, getClientId } from './db.server.ts'
+import { getAuthInfo, getClientId, getPreferences } from './db.server.ts'
 import { getEpicVideoInfos } from './epic-api.server.ts'
 import { getEnv } from './init-env.ts'
 import { logger } from './logger.ts'
@@ -113,6 +113,27 @@ type OfflineVideoConfig = {
 	version: number
 	salt: string
 	userId: string | null
+}
+
+const offlineVideoDownloadResolutions = [
+	'best',
+	'high',
+	'medium',
+	'low',
+] as const
+type OfflineVideoDownloadResolution =
+	(typeof offlineVideoDownloadResolutions)[number]
+type OfflineVideoMuxVariant = 'high' | 'medium' | 'low' | 'source'
+
+function isOfflineVideoDownloadResolution(
+	value: unknown,
+): value is OfflineVideoDownloadResolution {
+	return (
+		typeof value === 'string' &&
+		offlineVideoDownloadResolutions.includes(
+			value as OfflineVideoDownloadResolution,
+		)
+	)
 }
 
 type OfflineVideoKeyInfo = {
@@ -455,13 +476,38 @@ async function getWorkshopVideoCollection({
 	return { videos, totalEmbeds: embedUrls.size, unavailable }
 }
 
-function getMuxMp4Urls(playbackId: string) {
-	return [
-		`https://stream.mux.com/${playbackId}/high.mp4`,
-		`https://stream.mux.com/${playbackId}/medium.mp4`,
-		`https://stream.mux.com/${playbackId}/low.mp4`,
-		`https://stream.mux.com/${playbackId}.mp4`,
-	]
+async function getOfflineVideoDownloadResolution(): Promise<OfflineVideoDownloadResolution> {
+	const preferences = await getPreferences()
+	const resolution = preferences?.offlineVideo?.downloadResolution
+	if (isOfflineVideoDownloadResolution(resolution)) {
+		return resolution
+	}
+	return 'best'
+}
+
+const muxMp4Variants: Record<OfflineVideoMuxVariant, (playbackId: string) => string> = {
+	high: (playbackId) => `https://stream.mux.com/${playbackId}/high.mp4`,
+	medium: (playbackId) => `https://stream.mux.com/${playbackId}/medium.mp4`,
+	low: (playbackId) => `https://stream.mux.com/${playbackId}/low.mp4`,
+	source: (playbackId) => `https://stream.mux.com/${playbackId}.mp4`,
+}
+
+const muxResolutionOrder: Record<
+	OfflineVideoDownloadResolution,
+	Array<OfflineVideoMuxVariant>
+> = {
+	best: ['source', 'high', 'medium', 'low'],
+	high: ['high', 'medium', 'low', 'source'],
+	medium: ['medium', 'low', 'high', 'source'],
+	low: ['low', 'medium', 'high', 'source'],
+}
+
+function getMuxMp4Urls(
+	playbackId: string,
+	resolution: OfflineVideoDownloadResolution,
+) {
+	const order = muxResolutionOrder[resolution] ?? muxResolutionOrder.best
+	return order.map((variant) => muxMp4Variants[variant](playbackId))
 }
 
 async function isOfflineVideoReady(
@@ -492,13 +538,15 @@ async function downloadMuxVideo({
 	filePath,
 	key,
 	iv,
+	resolution,
 }: {
 	playbackId: string
 	filePath: string
 	key: Buffer
 	iv: Buffer
+	resolution: OfflineVideoDownloadResolution
 }) {
-	const urls = getMuxMp4Urls(playbackId)
+	const urls = getMuxMp4Urls(playbackId, resolution)
 	let lastError: Error | null = null
 
 	for (const url of urls) {
@@ -533,11 +581,13 @@ async function runOfflineVideoDownloads({
 	index,
 	keyInfo,
 	workshop,
+	resolution,
 }: {
 	videos: Array<WorkshopVideoInfo>
 	index: OfflineVideoIndex
 	keyInfo: OfflineVideoKeyInfo
 	workshop: WorkshopIdentity
+	resolution: OfflineVideoDownloadResolution
 }) {
 	for (const video of videos) {
 		const updatedAt = new Date().toISOString()
@@ -569,6 +619,7 @@ async function runOfflineVideoDownloads({
 				filePath: path.join(getOfflineVideoDir(), entry.fileName),
 				key: keyInfo.key,
 				iv,
+				resolution,
 			})
 			index[video.playbackId] = {
 				...entry,
@@ -744,11 +795,13 @@ export async function startOfflineVideoDownload({
 	}
 
 	if (downloads.length > 0) {
+		const resolution = await getOfflineVideoDownloadResolution()
 		void runOfflineVideoDownloads({
 			videos: downloads,
 			index,
 			keyInfo,
 			workshop,
+			resolution,
 		}).catch((error) => {
 			log.error('Offline video downloads failed', error)
 			downloadState.status = 'error'
@@ -782,6 +835,7 @@ export async function downloadOfflineVideo({
 		allowUserIdUpdate: true,
 	})
 	if (!keyInfo) return { status: 'error' } as const
+	const resolution = await getOfflineVideoDownloadResolution()
 
 	const existing = index[playbackId]
 	if (
@@ -820,6 +874,7 @@ export async function downloadOfflineVideo({
 			filePath: path.join(getOfflineVideoDir(), entry.fileName),
 			key: keyInfo.key,
 			iv,
+			resolution,
 		})
 		index[playbackId] = {
 			...entry,
