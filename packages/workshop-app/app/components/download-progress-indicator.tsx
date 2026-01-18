@@ -36,7 +36,8 @@ export function DownloadProgressIndicator({
 	// Clamp progress between 0 and 100
 	const clampedProgress =
 		progress !== undefined ? Math.min(100, Math.max(0, progress)) : 0
-	const strokeDashoffset = circumference - (clampedProgress / 100) * circumference
+	const strokeDashoffset =
+		circumference - (clampedProgress / 100) * circumference
 
 	return (
 		<svg
@@ -53,7 +54,9 @@ export function DownloadProgressIndicator({
 			aria-valuemin={0}
 			aria-valuemax={100}
 			aria-label={
-				isIndeterminate ? 'Downloading...' : `Download progress: ${clampedProgress}%`
+				isIndeterminate
+					? 'Downloading...'
+					: `Download progress: ${clampedProgress}%`
 			}
 		>
 			{/* Background circle */}
@@ -76,9 +79,14 @@ export function DownloadProgressIndicator({
 				strokeWidth={strokeWidth}
 				strokeLinecap="round"
 				strokeDasharray={circumference}
-				strokeDashoffset={isIndeterminate ? circumference * 0.75 : strokeDashoffset}
+				strokeDashoffset={
+					isIndeterminate ? circumference * 0.75 : strokeDashoffset
+				}
 				transform={`rotate(-90 ${center} ${center})`}
-				className={cn(!isIndeterminate && 'transition-[stroke-dashoffset] duration-300 ease-out')}
+				className={cn(
+					!isIndeterminate &&
+						'transition-[stroke-dashoffset] duration-300 ease-out',
+				)}
 			/>
 		</svg>
 	)
