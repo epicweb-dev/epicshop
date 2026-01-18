@@ -15,6 +15,7 @@ import {
 } from '@epic-web/workshop-utils/config.server'
 import { getEnv, init as initEnv } from '@epic-web/workshop-utils/env.server'
 import { warmCache as warmEpicAPICache } from '@epic-web/workshop-utils/epic-api.server'
+import { warmOfflineVideoSummary } from '@epic-web/workshop-utils/offline-videos.server'
 import { requestContext } from '@epic-web/workshop-utils/request-context.server'
 import { checkConnection } from '@epic-web/workshop-utils/utils.server'
 import { createRequestHandler } from '@react-router/express'
@@ -68,6 +69,7 @@ void Promise.all([
 	getPresentUsers(),
 	warmEpicAPICache(),
 ]).catch(() => {}) // don't block startup
+void warmOfflineVideoSummary().catch(() => {}) // non-critical cache warming
 
 const serverBuildPromise = getBuild()
 
