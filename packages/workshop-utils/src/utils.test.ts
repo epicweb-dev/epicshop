@@ -1,14 +1,6 @@
-import { test, expect, vi } from 'vitest'
+import { test, expect } from 'vitest'
+import { consoleError } from '../../../../tests/vitest-setup.ts'
 import { getErrorMessage, handleGitHubRepoAndRoot } from './utils.ts'
-
-function mockConsoleError() {
-	const spy = vi.spyOn(console, 'error').mockImplementation(() => {})
-	return Object.assign(spy, {
-		[Symbol.dispose]() {
-			spy.mockRestore()
-		},
-	})
-}
 
 test('getErrorMessage should return string errors as-is', () => {
 	const error = 'Something went wrong'
@@ -27,10 +19,10 @@ test('getErrorMessage should extract message from objects with message property'
 
 test('getErrorMessage should handle objects with non-string message property', () => {
 	const error = { message: 123 }
-	using consoleSpy = mockConsoleError()
+	consoleError.mockImplementation(() => {})
 
 	expect(getErrorMessage(error)).toBe('Unknown Error')
-	expect(consoleSpy).toHaveBeenCalledWith(
+	expect(consoleError).toHaveBeenCalledWith(
 		'Unable to get error message for error',
 		error,
 	)
@@ -38,46 +30,46 @@ test('getErrorMessage should handle objects with non-string message property', (
 
 test('getErrorMessage should handle objects without message property', () => {
 	const error = { code: 500, status: 'error' }
-	using consoleSpy = mockConsoleError()
+	consoleError.mockImplementation(() => {})
 
 	expect(getErrorMessage(error)).toBe('Unknown Error')
-	expect(consoleSpy).toHaveBeenCalledWith(
+	expect(consoleError).toHaveBeenCalledWith(
 		'Unable to get error message for error',
 		error,
 	)
 })
 
 test('getErrorMessage should handle null errors', () => {
-	using consoleSpy = mockConsoleError()
+	consoleError.mockImplementation(() => {})
 
 	expect(getErrorMessage(null)).toBe('Unknown Error')
-	expect(consoleSpy).toHaveBeenCalledWith(
+	expect(consoleError).toHaveBeenCalledWith(
 		'Unable to get error message for error',
 		null,
 	)
 })
 
 test('getErrorMessage should handle undefined errors', () => {
-	using consoleSpy = mockConsoleError()
+	consoleError.mockImplementation(() => {})
 
 	expect(getErrorMessage(undefined)).toBe('Unknown Error')
-	expect(consoleSpy).toHaveBeenCalledWith(
+	expect(consoleError).toHaveBeenCalledWith(
 		'Unable to get error message for error',
 		undefined,
 	)
 })
 
 test('getErrorMessage should handle primitive non-string errors', () => {
-	using consoleSpy = mockConsoleError()
+	consoleError.mockImplementation(() => {})
 
 	expect(getErrorMessage(123)).toBe('Unknown Error')
-	expect(consoleSpy).toHaveBeenCalledWith(
+	expect(consoleError).toHaveBeenCalledWith(
 		'Unable to get error message for error',
 		123,
 	)
 
 	expect(getErrorMessage(true)).toBe('Unknown Error')
-	expect(consoleSpy).toHaveBeenCalledWith(
+	expect(consoleError).toHaveBeenCalledWith(
 		'Unable to get error message for error',
 		true,
 	)
@@ -85,10 +77,10 @@ test('getErrorMessage should handle primitive non-string errors', () => {
 
 test('getErrorMessage should handle empty objects', () => {
 	const error = {}
-	using consoleSpy = mockConsoleError()
+	consoleError.mockImplementation(() => {})
 
 	expect(getErrorMessage(error)).toBe('Unknown Error')
-	expect(consoleSpy).toHaveBeenCalledWith(
+	expect(consoleError).toHaveBeenCalledWith(
 		'Unable to get error message for error',
 		error,
 	)

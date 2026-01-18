@@ -1,23 +1,11 @@
 import { test, expect, vi } from 'vitest'
+import { consoleError } from '../../../../tests/vitest-setup.ts'
 import { update } from './update.ts'
 
 // Mock the dynamic import of updateLocalRepo
 vi.mock('@epic-web/workshop-utils/git.server', () => ({
 	updateLocalRepo: vi.fn(),
 }))
-
-function mockConsole() {
-	const logSpy = vi.spyOn(console, 'log').mockImplementation(() => {})
-	const errorSpy = vi.spyOn(console, 'error').mockImplementation(() => {})
-	return {
-		logSpy,
-		errorSpy,
-		[Symbol.dispose]() {
-			logSpy.mockRestore()
-			errorSpy.mockRestore()
-		},
-	}
-}
 
 function setEnv(key: string, value: string | undefined) {
 	const original = process.env[key]
@@ -48,7 +36,6 @@ async function getUpdateLocalRepoMock() {
 }
 
 test('update should return failure result when deployed environment', async () => {
-	using ignoredConsole = mockConsole()
 	using ignoredEnv = setEnv('EPICSHOP_DEPLOYED', 'true')
 
 	const resultPromise = update({ silent: true })
@@ -63,7 +50,6 @@ test('update should return failure result when deployed environment', async () =
 })
 
 test('update should return failure result when deployed environment with 1', async () => {
-	using ignoredConsole = mockConsole()
 	using ignoredEnv = setEnv('EPICSHOP_DEPLOYED', '1')
 
 	const resultPromise = update({ silent: true })
@@ -78,7 +64,6 @@ test('update should return failure result when deployed environment with 1', asy
 })
 
 test('update should return success result when no updates are available', async () => {
-	using ignoredConsole = mockConsole()
 	using ignoredEnv = setEnv('EPICSHOP_DEPLOYED', undefined)
 
 	const updateLocalRepoMock = await getUpdateLocalRepoMock()
@@ -99,7 +84,6 @@ test('update should return success result when no updates are available', async 
 })
 
 test('update should return success result when updates are applied successfully', async () => {
-	using ignoredConsole = mockConsole()
 	using ignoredEnv = setEnv('EPICSHOP_DEPLOYED', undefined)
 
 	const updateLocalRepoMock = await getUpdateLocalRepoMock()
@@ -120,7 +104,6 @@ test('update should return success result when updates are applied successfully'
 })
 
 test('update should return failure result when updateLocalRepo fails', async () => {
-	using ignoredConsole = mockConsole()
 	using ignoredEnv = setEnv('EPICSHOP_DEPLOYED', undefined)
 
 	const updateLocalRepoMock = await getUpdateLocalRepoMock()
@@ -141,7 +124,6 @@ test('update should return failure result when updateLocalRepo fails', async () 
 })
 
 test('update should return failure result when updateLocalRepo throws an error', async () => {
-	using ignoredConsole = mockConsole()
 	using ignoredEnv = setEnv('EPICSHOP_DEPLOYED', undefined)
 
 	const updateLocalRepoMock = await getUpdateLocalRepoMock()
@@ -160,28 +142,32 @@ test('update should return failure result when updateLocalRepo throws an error',
 })
 
 test('update should log success message when silent is false', async () => {
-	using consoleSpies = mockConsole()
 	using ignoredEnv = setEnv('EPICSHOP_DEPLOYED', undefined)
+	const logSpy = vi.spyOn(console, 'log').mockImplementation(() => {})
 
-	const updateLocalRepoMock = await getUpdateLocalRepoMock()
-	updateLocalRepoMock.mockResolvedValue({
-		status: 'success',
-		message: 'Updated successfully.',
-	})
+	try {
+		const updateLocalRepoMock = await getUpdateLocalRepoMock()
+		updateLocalRepoMock.mockResolvedValue({
+			status: 'success',
+			message: 'Updated successfully.',
+		})
 
-	const resultPromise = update({ silent: false })
+		const resultPromise = update({ silent: false })
 
-	await expect(resultPromise).resolves.toMatchObject({
-		success: true,
-		message: 'Updated successfully.',
-	})
+		await expect(resultPromise).resolves.toMatchObject({
+			success: true,
+			message: 'Updated successfully.',
+		})
 
-	expect(consoleSpies.logSpy).toHaveBeenCalledWith('✅ Updated successfully.')
+		expect(logSpy).toHaveBeenCalledWith('✅ Updated successfully.')
+	} finally {
+		logSpy.mockRestore()
+	}
 })
 
 test('update should log error message when silent is false and updateLocalRepo fails', async () => {
-	using consoleSpies = mockConsole()
 	using ignoredEnv = setEnv('EPICSHOP_DEPLOYED', undefined)
+	consoleError.mockImplementation(() => {})
 
 	const updateLocalRepoMock = await getUpdateLocalRepoMock()
 	updateLocalRepoMock.mockResolvedValue({
@@ -196,7 +182,7 @@ test('update should log error message when silent is false and updateLocalRepo f
 		message: 'Git pull failed: network error',
 	})
 
-	expect(consoleSpies.errorSpy).toHaveBeenCalledWith(
+	expect(consoleError).toHaveBeenCalledWith(
 		'❌ Git pull failed: network error',
 	)
 })

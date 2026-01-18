@@ -2,6 +2,7 @@ import { mkdtemp, mkdir, rm, writeFile } from 'node:fs/promises'
 import os from 'node:os'
 import path from 'node:path'
 import { test, expect, vi } from 'vitest'
+import { consoleError } from '../../../../tests/vitest-setup.ts'
 import {
 	handleWorkshopDirectory,
 	workshopDirectoryInputSchema,
@@ -11,15 +12,6 @@ vi.mock('@epic-web/workshop-utils/apps.server', () => ({
 	getWorkshopRoot: vi.fn(() => '/mock/workshop'),
 	init: vi.fn(async () => {}),
 }))
-
-function mockConsoleError() {
-	const spy = vi.spyOn(console, 'error').mockImplementation(() => {})
-	return Object.assign(spy, {
-		[Symbol.dispose]() {
-			spy.mockRestore()
-		},
-	})
-}
 
 async function createWorkshopFixture() {
 	const root = await mkdtemp(path.join(os.tmpdir(), 'epicshop-workshop-'))
@@ -143,7 +135,7 @@ test('handleWorkshopDirectory rejects relative paths', async () => {
 
 test('handleWorkshopDirectory normalizes playground to workshop root', async () => {
 	await using fixture = await createWorkshopFixture()
-	using ignoredConsole = mockConsoleError()
+	consoleError.mockImplementation(() => {})
 
 	const { init } = await import('@epic-web/workshop-utils/apps.server')
 	const initMock = vi.mocked(init)
@@ -156,7 +148,7 @@ test('handleWorkshopDirectory normalizes playground to workshop root', async () 
 
 test('handleWorkshopDirectory rejects when no workshop directory found (aha)', async () => {
 	await using fixture = await createTempDir()
-	using ignoredConsole = mockConsoleError()
+	consoleError.mockImplementation(() => {})
 
 	await expect(handleWorkshopDirectory(fixture.root)).rejects.toThrow(
 		/No workshop directory found/,

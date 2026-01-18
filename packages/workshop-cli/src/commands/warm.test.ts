@@ -1,21 +1,8 @@
 import { test, expect, vi } from 'vitest'
+import { consoleError } from '../../../../tests/vitest-setup.ts'
 import { warm, type WarmResult } from './warm.ts'
 
-function mockConsole() {
-	const logSpy = vi.spyOn(console, 'log').mockImplementation(() => {})
-	const errorSpy = vi.spyOn(console, 'error').mockImplementation(() => {})
-	return {
-		logSpy,
-		errorSpy,
-		[Symbol.dispose]() {
-			logSpy.mockRestore()
-			errorSpy.mockRestore()
-		},
-	}
-}
-
 test('warm should return a result with correct structure', async () => {
-	using ignoredConsole = mockConsole()
 	const resultPromise = warm({ silent: true })
 
 	await expect(resultPromise).resolves.toEqual(
@@ -27,28 +14,33 @@ test('warm should return a result with correct structure', async () => {
 })
 
 test('warm should accept silent parameter', async () => {
-	using ignoredConsole = mockConsole()
+	const logSpy = vi.spyOn(console, 'log').mockImplementation(() => {})
+	consoleError.mockImplementation(() => {})
 
-	await expect(warm({ silent: true })).resolves.toEqual(
-		expect.objectContaining({
-			success: expect.any(Boolean),
-			message: expect.any(String),
-		}),
-	)
+	try {
+		await expect(warm({ silent: true })).resolves.toEqual(
+			expect.objectContaining({
+				success: expect.any(Boolean),
+				message: expect.any(String),
+			}),
+		)
 
-	await expect(warm({ silent: false })).resolves.toEqual(
-		expect.objectContaining({
-			success: expect.any(Boolean),
-			message: expect.any(String),
-		}),
-	)
+		await expect(warm({ silent: false })).resolves.toEqual(
+			expect.objectContaining({
+				success: expect.any(Boolean),
+				message: expect.any(String),
+			}),
+		)
 
-	await expect(warm()).resolves.toEqual(
-		expect.objectContaining({
-			success: expect.any(Boolean),
-			message: expect.any(String),
-		}),
-	)
+		await expect(warm()).resolves.toEqual(
+			expect.objectContaining({
+				success: expect.any(Boolean),
+				message: expect.any(String),
+			}),
+		)
+	} finally {
+		logSpy.mockRestore()
+	}
 })
 
 test('WarmResult type should have correct structure', () => {
@@ -76,7 +68,6 @@ test('WarmResult type should handle error case', () => {
 })
 
 test('warm function should handle errors gracefully', async () => {
-	using ignoredConsole = mockConsole()
 	const resultPromise = warm({ silent: true })
 
 	await expect(resultPromise).resolves.toEqual(
