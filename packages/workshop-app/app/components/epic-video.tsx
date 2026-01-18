@@ -16,6 +16,7 @@ import {
 } from 'media-chrome/react'
 import * as React from 'react'
 import { Await, Link, useFetcher } from 'react-router'
+import { toast } from 'sonner'
 import { useTheme } from '#app/routes/theme/index.tsx'
 import {
 	MuxPlayer,
@@ -23,6 +24,7 @@ import {
 } from '#app/routes/video-player/index.tsx'
 import { cn } from '#app/utils/misc.tsx'
 import { useIsOnline } from '#app/utils/online.ts'
+import { useRootLoaderData } from '#app/utils/root-loader.ts'
 import { Icon } from './icons.tsx'
 import { Loading } from './loading.tsx'
 import { OfflineVideoActionButtons } from './offline-video-actions.tsx'
@@ -32,6 +34,25 @@ import { useWorkshopConfig } from './workshop-config.tsx'
 const EpicVideoInfoContext = React.createContext<
 	Promise<EpicVideoInfos> | null | undefined
 >(null)
+
+type OfflineVideoDownloadResolution = 'best' | 'high' | 'medium' | 'low'
+
+const offlineVideoResolutionLabels: Record<
+	OfflineVideoDownloadResolution,
+	string
+> = {
+	best: 'best available',
+	high: 'high',
+	medium: 'medium',
+	low: 'low',
+}
+
+function getOfflineVideoResolutionLabel(value: unknown) {
+	if (value === 'high' || value === 'medium' || value === 'low') {
+		return offlineVideoResolutionLabels[value]
+	}
+	return offlineVideoResolutionLabels.best
+}
 
 type OfflineVideoActionData = {
 	status: string
@@ -458,6 +479,10 @@ function EpicVideo({
 	const nativeVideoRef = React.useRef<HTMLVideoElement>(null)
 	const isOnline = useIsOnline()
 	const playerPreferences = usePlayerPreferences()
+	const rootData = useRootLoaderData()
+	const downloadResolutionLabel = getOfflineVideoResolutionLabel(
+		rootData.preferences?.offlineVideo?.downloadResolution,
+	)
 	const [availabilityKey, setAvailabilityKey] = React.useState(0)
 	const offlineVideo = useOfflineVideoAvailability(
 		muxPlaybackId,
@@ -617,6 +642,20 @@ function EpicVideo({
 	}, [offlineVideoFetcher.state, offlineVideoFetcher.data])
 
 	const handleDownload = React.useCallback(() => {
+		toast.success(
+			`Download of ${title} has started (${downloadResolutionLabel} quality).`,
+			{
+				description: (
+					<span>
+						Go to{' '}
+						<Link className="underline" to="/preferences">
+							Preferences
+						</Link>{' '}
+						to download all workshop videos at once.
+					</span>
+				),
+			},
+		)
 		void offlineVideoFetcher.submit(
 			{
 				intent: 'download-video',
@@ -626,7 +665,13 @@ function EpicVideo({
 			},
 			{ method: 'post', action: '/resources/offline-videos' },
 		)
-	}, [muxPlaybackId, offlineVideoFetcher, title, urlString])
+	}, [
+		muxPlaybackId,
+		offlineVideoFetcher,
+		title,
+		urlString,
+		downloadResolutionLabel,
+	])
 
 	const handleDelete = React.useCallback(() => {
 		void offlineVideoFetcher.submit(
