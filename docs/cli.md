@@ -370,7 +370,7 @@ epicshop warm --silent
 ### `cleanup`
 
 Clean up local epicshop data using a multi-select prompt. Choose what to delete
-from workshops, caches, preferences, and auth data.
+from workshops, caches, offline videos, preferences, and auth data.
 
 ```bash
 epicshop cleanup [options]
