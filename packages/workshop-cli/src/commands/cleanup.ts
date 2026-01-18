@@ -860,11 +860,12 @@ export async function cleanup({
 			(total, workshop) => total + workshop.cacheBytes,
 			0,
 		)
+		const emptyOfflineVideoIndex: OfflineVideoIndex = {}
 		const offlineVideoIndex =
 			selectedWorkshopTargets.includes('offline-videos') ||
 			selectedTargets.includes('offline-videos')
 				? await readOfflineVideoIndex(offlineVideosDir)
-				: {}
+				: emptyOfflineVideoIndex
 		const workshopOfflineBytes = selectedWorkshopTargets.includes(
 			'offline-videos',
 		)
