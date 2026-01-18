@@ -367,6 +367,49 @@ epicshop warm --silent
 - Pre-caches diff files for faster loading
 - Reports the number of apps loaded and diffs generated
 
+### `cleanup`
+
+Clean up local epicshop data using a multi-select prompt. Choose what to delete
+from workshops, caches, offline videos, preferences, and auth data.
+
+```bash
+epicshop cleanup [options]
+```
+
+#### Options
+
+- `--targets, -t <name>` - Cleanup targets (repeatable): `caches`,
+  `offline-videos`, `preferences`, `auth`
+- `--workshops <name>` - Workshops to clean (repeatable, by repo name or path)
+- `--workshop-actions <name>` - Workshop cleanup actions (repeatable): `files`,
+  `caches`, `offline-videos`
+- `--force, -f` - Skip the confirmation prompt (default: false)
+- `--silent, -s` - Run without output logs (default: false)
+
+#### Examples
+
+```bash
+# Pick cleanup targets interactively (multi-select)
+epicshop cleanup
+
+# Clean selected targets without prompting
+epicshop cleanup --targets caches --targets preferences --force
+
+# Clean offline videos for selected workshops without prompting
+epicshop cleanup \
+  --workshops full-stack-foundations \
+  --workshop-actions offline-videos \
+  --force
+```
+
+#### Notes
+
+- Warns about unpushed workshop changes before deletion
+- Removes cache and legacy cache directories when selected
+- Preferences/auth cleanup updates local data files in-place
+- Workshop cleanup prompts for specific workshops, then what to clean for them
+- Workshop actions are scoped to selected workshops, not all workshops
+
 ### `migrate`
 
 Run any necessary migrations for workshop data.

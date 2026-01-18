@@ -10,6 +10,7 @@
     "cjs": false,
     "exports": {
       "./package.json": "./package.json",
+      "./cleanup": "./src/commands/cleanup.ts",
       "./warm": "./src/commands/warm.ts",
       "./start": "./src/commands/start.ts",
       "./update": "./src/commands/update.ts",
@@ -24,6 +25,10 @@
   },
   "exports": {
     "./package.json": "./package.json",
+    "./cleanup": {
+      "types": "./dist/commands/cleanup.d.ts",
+      "import": "./dist/commands/cleanup.js"
+    },
     "./warm": {
       "types": "./dist/commands/warm.d.ts",
       "import": "./dist/commands/warm.js"

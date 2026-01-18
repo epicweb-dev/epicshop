@@ -673,6 +673,78 @@ const cli = yargs(args)
 		},
 	)
 	.command(
+		'cleanup',
+		'Clean up local epicshop data',
+		(yargs: Argv) => {
+			return yargs
+				.option('targets', {
+					alias: 't',
+					type: 'array',
+					choices: ['caches', 'offline-videos', 'preferences', 'auth'],
+					description:
+						'Cleanup targets (repeatable): caches, offline-videos, preferences, auth',
+				})
+				.option('workshops', {
+					type: 'array',
+					description: 'Workshops to clean (repeatable, by repo name or path)',
+				})
+				.option('workshop-actions', {
+					type: 'array',
+					choices: ['files', 'caches', 'offline-videos'],
+					description: 'Cleanup actions for selected workshops (repeatable)',
+				})
+				.option('silent', {
+					alias: 's',
+					type: 'boolean',
+					description: 'Run without output logs',
+					default: false,
+				})
+				.option('force', {
+					alias: 'f',
+					type: 'boolean',
+					description: 'Skip the confirmation prompt',
+					default: false,
+				})
+				.example(
+					'$0 cleanup',
+					'Pick cleanup targets interactively (multi-select)',
+				)
+				.example(
+					'$0 cleanup --targets caches --targets preferences --force',
+					'Clean selected targets without prompting',
+				)
+				.example(
+					'$0 cleanup --workshops full-stack-foundations --workshop-actions caches --force',
+					'Clean caches for a specific workshop',
+				)
+		},
+		async (
+			argv: ArgumentsCamelCase<{
+				silent?: boolean
+				force?: boolean
+				targets?: Array<string>
+				workshops?: Array<string>
+				workshopActions?: Array<string>
+			}>,
+		) => {
+			const { cleanup } = await import('./commands/cleanup.js')
+			const result = await cleanup({
+				silent: argv.silent,
+				force: argv.force,
+				targets: argv.targets as Array<
+					'caches' | 'offline-videos' | 'preferences' | 'auth'
+				>,
+				workshops: argv.workshops,
+				workshopTargets: argv.workshopActions as Array<
+					'files' | 'caches' | 'offline-videos'
+				>,
+			})
+			if (!result.success) {
+				process.exit(1)
+			}
+		},
+	)
+	.command(
 		'migrate',
 		'Run any necessary migrations for workshop data',
 		(yargs: Argv) => {
@@ -1360,6 +1432,11 @@ try {
 					: 'Select a workshop to warm the cache for',
 			},
 			{
+				name: `${chalk.green('cleanup')} - Cleanup data`,
+				value: 'cleanup' as const,
+				description: 'Select what to delete (workshops, caches, prefs, auth)',
+			},
+			{
 				name: `${chalk.green('config')} - View/update configuration`,
 				value: 'config' as const,
 				description: 'View or update workshop configuration',
@@ -1575,6 +1652,19 @@ try {
 					} finally {
 						process.chdir(originalCwd)
 					}
+				}
+				break
+			}
+			case 'cleanup': {
+				try {
+					const { cleanup } = await import('./commands/cleanup.js')
+					const result = await cleanup({})
+					if (!result.success) process.exit(1)
+				} catch (error) {
+					if ((error as Error).message === 'USER_QUIT') {
+						process.exit(0)
+					}
+					throw error
 				}
 				break
 			}
