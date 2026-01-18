@@ -35,13 +35,11 @@ type SavedPlaygroundEntry = {
 	displayName: string
 }
 
-async function getSavedPlaygroundEntries(): Promise<Array<SavedPlaygroundEntry>> {
-	const {
-		init,
-		getApps,
-		getAppDisplayName,
-		getSavedPlaygrounds,
-	} = await import('@epic-web/workshop-utils/apps.server')
+async function getSavedPlaygroundEntries(): Promise<
+	Array<SavedPlaygroundEntry>
+> {
+	const { init, getApps, getAppDisplayName, getSavedPlaygrounds } =
+		await import('@epic-web/workshop-utils/apps.server')
 	const { getPreferences } = await import('@epic-web/workshop-utils/db.server')
 
 	await init()
@@ -382,7 +380,9 @@ export async function selectAndSet(
  */
 export async function listSavedPlaygrounds(
 	options: PlaygroundSavedOptions = {},
-): Promise<PlaygroundResult & { savedPlaygrounds?: Array<SavedPlaygroundEntry> }> {
+): Promise<
+	PlaygroundResult & { savedPlaygrounds?: Array<SavedPlaygroundEntry> }
+> {
 	const { silent = false, json = false } = options
 
 	try {
@@ -417,7 +417,9 @@ export async function listSavedPlaygrounds(
 	} catch (error) {
 		const message = error instanceof Error ? error.message : String(error)
 		if (!silent) {
-			console.error(chalk.red(`❌ Failed to list saved playgrounds: ${message}`))
+			console.error(
+				chalk.red(`❌ Failed to list saved playgrounds: ${message}`),
+			)
 		}
 		return {
 			success: false,
@@ -473,9 +475,7 @@ export async function setSavedPlayground(
 	} catch (error) {
 		const message = error instanceof Error ? error.message : String(error)
 		if (!silent) {
-			console.error(
-				chalk.red(`❌ Failed to set saved playground: ${message}`),
-			)
+			console.error(chalk.red(`❌ Failed to set saved playground: ${message}`))
 		}
 		return {
 			success: false,
@@ -557,9 +557,7 @@ export async function selectAndSetSavedPlayground(
 	} catch (error) {
 		const message = error instanceof Error ? error.message : String(error)
 		if (!silent) {
-			console.error(
-				chalk.red(`❌ Failed to set saved playground: ${message}`),
-			)
+			console.error(chalk.red(`❌ Failed to set saved playground: ${message}`))
 		}
 		return {
 			success: false,

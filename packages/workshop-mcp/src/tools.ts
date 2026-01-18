@@ -495,7 +495,8 @@ export function initTools(server: McpServer) {
 		},
 		async ({ workshopDirectory }) => {
 			await handleWorkshopDirectory(workshopDirectory)
-			const persistEnabled = (await getPreferences())?.playground?.persist ?? false
+			const persistEnabled =
+				(await getPreferences())?.playground?.persist ?? false
 			invariant(
 				persistEnabled,
 				'Playground persistence is disabled. Enable it in Preferences to use saved playgrounds.',
@@ -547,7 +548,8 @@ export function initTools(server: McpServer) {
 		},
 		async ({ workshopDirectory, savedPlaygroundId, latest }) => {
 			await handleWorkshopDirectory(workshopDirectory)
-			const persistEnabled = (await getPreferences())?.playground?.persist ?? false
+			const persistEnabled =
+				(await getPreferences())?.playground?.persist ?? false
 			invariant(
 				persistEnabled,
 				'Playground persistence is disabled. Enable it in Preferences to use saved playgrounds.',

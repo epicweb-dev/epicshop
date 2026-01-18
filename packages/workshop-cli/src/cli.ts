@@ -943,7 +943,8 @@ const cli = yargs(args)
 				})
 				.option('latest', {
 					type: 'boolean',
-					description: 'Use the most recent saved playground (saved subcommand)',
+					description:
+						'Use the most recent saved playground (saved subcommand)',
 					default: false,
 				})
 				.option('json', {
