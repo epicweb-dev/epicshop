@@ -680,9 +680,26 @@ const cli = yargs(args)
 				.option('targets', {
 					alias: 't',
 					type: 'array',
-					choices: ['workshops', 'caches', 'preferences', 'auth'],
+					choices: [
+						'workshops',
+						'caches',
+						'offline-videos',
+						'preferences',
+						'auth',
+					],
 					description:
-						'Cleanup targets (repeatable): workshops, caches, preferences, auth',
+						'Cleanup targets (repeatable): workshops, caches, offline-videos, preferences, auth',
+				})
+				.option('workshops', {
+					type: 'array',
+					description:
+						'Workshops to clean (repeatable, by repo name or path)',
+				})
+				.option('workshop-targets', {
+					type: 'array',
+					choices: ['files', 'caches', 'offline-videos'],
+					description:
+						'Cleanup targets for selected workshops (repeatable)',
 				})
 				.option('silent', {
 					alias: 's',
@@ -704,31 +721,34 @@ const cli = yargs(args)
 					'$0 cleanup --targets caches --targets preferences --force',
 					'Clean selected targets without prompting',
 				)
+				.example(
+					'$0 cleanup --targets workshops --workshops full-stack-foundations --workshop-targets caches --force',
+					'Clean caches for a specific workshop',
+				)
 		},
 		async (
 			argv: ArgumentsCamelCase<{
 				silent?: boolean
 				force?: boolean
 				targets?: Array<string>
+				workshops?: Array<string>
+				workshopTargets?: Array<string>
 			}>,
 		) => {
-			try {
-				const { cleanup } = await import('./commands/cleanup.js')
-				const result = await cleanup({
-					silent: argv.silent,
-					force: argv.force,
-					targets: argv.targets as Array<
-						'workshops' | 'caches' | 'offline-videos' | 'preferences' | 'auth'
-					>,
-				})
-				if (!result.success) {
-					process.exit(1)
-				}
-			} catch (error) {
-				if ((error as Error).message === 'USER_QUIT') {
-					process.exit(0)
-				}
-				throw error
+			const { cleanup } = await import('./commands/cleanup.js')
+			const result = await cleanup({
+				silent: argv.silent,
+				force: argv.force,
+				targets: argv.targets as Array<
+					'workshops' | 'caches' | 'offline-videos' | 'preferences' | 'auth'
+				>,
+				workshops: argv.workshops,
+				workshopTargets: argv.workshopTargets as Array<
+					'files' | 'caches' | 'offline-videos'
+				>,
+			})
+			if (!result.success) {
+				process.exit(1)
 			}
 		},
 	)

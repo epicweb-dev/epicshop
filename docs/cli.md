@@ -379,7 +379,10 @@ epicshop cleanup [options]
 #### Options
 
 - `--targets, -t <name>` - Cleanup targets (repeatable): `workshops`, `caches`,
-  `preferences`, `auth`
+  `offline-videos`, `preferences`, `auth`
+- `--workshops <name>` - Workshops to clean (repeatable, by repo name or path)
+- `--workshop-targets <name>` - Workshop cleanup targets (repeatable):
+  `files`, `caches`, `offline-videos`
 - `--force, -f` - Skip the confirmation prompt (default: false)
 - `--silent, -s` - Run without output logs (default: false)
 
@@ -391,6 +394,13 @@ epicshop cleanup
 
 # Clean selected targets without prompting
 epicshop cleanup --targets caches --targets preferences --force
+
+# Clean offline videos for selected workshops without prompting
+epicshop cleanup \
+  --targets workshops \
+  --workshops full-stack-foundations \
+  --workshop-targets offline-videos \
+  --force
 ```
 
 #### Notes
@@ -398,6 +408,7 @@ epicshop cleanup --targets caches --targets preferences --force
 - Warns about unpushed workshop changes before deletion
 - Removes cache and legacy cache directories when selected
 - Preferences/auth cleanup updates local data files in-place
+- Workshop cleanup prompts for specific workshops, then what to clean for them
 
 ### `migrate`
 

@@ -1,19 +1,27 @@
 import { mkdtemp, mkdir, readdir, rm, stat, writeFile } from 'node:fs/promises'
 import os from 'node:os'
 import path from 'node:path'
-import { expect, test } from 'vitest'
-import { consoleError } from '../../../../tests/vitest-setup.ts'
+import { afterEach, beforeEach, expect, test, vi } from 'vitest'
 import { cleanup } from './cleanup.ts'
 
-test('removes cache directories and deletes data file when all fields cleaned', async () => {
-	consoleError.mockImplementation(() => {})
+beforeEach(() => {
+	vi.spyOn(console, 'log').mockImplementation(() => {})
+	vi.spyOn(console, 'error').mockImplementation(() => {})
+})
 
+afterEach(() => {
+	vi.restoreAllMocks()
+})
+
+test('cleanup removes caches and deletes data file when empty', async () => {
 	const root = await mkdtemp(path.join(os.tmpdir(), 'epicshop-cleanup-'))
 	const cacheDir = path.join(root, 'cache')
 	const legacyCacheDir = path.join(root, 'legacy-cache')
 	const dataPath = path.join(root, 'data.json')
+	const reposDir = path.join(root, 'repos')
 
 	try {
+		await mkdir(reposDir, { recursive: true })
 		await mkdir(cacheDir, { recursive: true })
 		await mkdir(legacyCacheDir, { recursive: true })
 		await writeFile(path.join(cacheDir, 'cache.json'), '{}')
@@ -31,20 +39,19 @@ test('removes cache directories and deletes data file when all fields cleaned', 
 			),
 		)
 
-		await expect(
-			cleanup({
-				silent: true,
-				force: true,
-				targets: ['caches', 'preferences', 'auth'],
-				paths: { cacheDir, legacyCacheDir, dataPaths: [dataPath] },
-			}),
-		).resolves.toEqual(
-			expect.objectContaining({
-				success: true,
-				removedPaths: expect.arrayContaining([cacheDir, legacyCacheDir, dataPath]),
-			}),
-		)
+		const result = await cleanup({
+			silent: true,
+			force: true,
+			targets: ['caches', 'preferences', 'auth'],
+			paths: {
+				cacheDir,
+				legacyCacheDir,
+				dataPaths: [dataPath],
+				reposDir,
+			},
+		})
 
+		expect(result.success).toBe(true)
 		await expect(stat(cacheDir)).rejects.toThrow()
 		await expect(stat(legacyCacheDir)).rejects.toThrow()
 		await expect(stat(dataPath)).rejects.toThrow()
@@ -53,9 +60,7 @@ test('removes cache directories and deletes data file when all fields cleaned', 
 	}
 })
 
-test('deletes workshops but preserves non-workshop directories', async () => {
-	consoleError.mockImplementation(() => {})
-
+test('cleanup removes workshops but keeps non-workshop entries', async () => {
 	const root = await mkdtemp(path.join(os.tmpdir(), 'epicshop-cleanup-'))
 	const reposDir = path.join(root, 'repos')
 	const workshopDir = path.join(reposDir, 'sample-workshop')
@@ -77,20 +82,16 @@ test('deletes workshops but preserves non-workshop directories', async () => {
 		await mkdir(keepDir, { recursive: true })
 		await writeFile(path.join(keepDir, 'notes.txt'), 'keep')
 
-		await expect(
-			cleanup({
-				silent: true,
-				force: true,
-				targets: ['workshops'],
-				paths: { reposDir },
-			}),
-		).resolves.toEqual(
-			expect.objectContaining({
-				success: true,
-				removedPaths: expect.arrayContaining([workshopDir]),
-			}),
-		)
+		const result = await cleanup({
+			silent: true,
+			force: true,
+			targets: ['workshops'],
+			workshops: ['sample-workshop'],
+			workshopTargets: ['files'],
+			paths: { reposDir },
+		})
 
+		expect(result.success).toBe(true)
 		await expect(stat(workshopDir)).rejects.toThrow()
 
 		const remaining = await readdir(reposDir)
@@ -100,34 +101,42 @@ test('deletes workshops but preserves non-workshop directories', async () => {
 	}
 })
 
-test('accepts offline-videos as a cleanup target', async () => {
-	consoleError.mockImplementation(() => {})
-
+test('cleanup removes offline videos directory', async () => {
 	const root = await mkdtemp(path.join(os.tmpdir(), 'epicshop-cleanup-'))
-	const cacheDir = path.join(root, 'cache')
-	const legacyCacheDir = path.join(root, 'legacy-cache')
+	const offlineVideosDir = path.join(root, 'offline-videos')
+	const indexPath = path.join(offlineVideosDir, 'index.json')
+	const videoPath = path.join(offlineVideosDir, 'video.mp4')
+	const reposDir = path.join(root, 'repos')
 
 	try {
-		await mkdir(cacheDir, { recursive: true })
-		await mkdir(legacyCacheDir, { recursive: true })
-
-		await expect(
-			cleanup({
-				silent: true,
-				force: true,
-				targets: ['offline-videos'],
-				paths: { cacheDir, legacyCacheDir, dataPaths: [] },
-			}),
-		).resolves.toEqual(
-			expect.objectContaining({
-				success: true,
-				selectedTargets: expect.arrayContaining(['offline-videos']),
-			}),
+		await mkdir(reposDir, { recursive: true })
+		await mkdir(offlineVideosDir, { recursive: true })
+		await writeFile(videoPath, 'video-data')
+		await writeFile(
+			indexPath,
+			JSON.stringify(
+				{
+					video123: {
+						playbackId: 'video123',
+						fileName: 'video.mp4',
+						size: 10,
+						workshops: [{ id: 'workshop-1', title: 'Workshop' }],
+					},
+				},
+				null,
+				2,
+			),
 		)
 
-		// Verify cache dirs were not deleted when only offline-videos selected
-		await expect(stat(cacheDir)).resolves.toBeDefined()
-		await expect(stat(legacyCacheDir)).resolves.toBeDefined()
+		const result = await cleanup({
+			silent: true,
+			force: true,
+			targets: ['offline-videos'],
+			paths: { offlineVideosDir, reposDir },
+		})
+
+		expect(result.success).toBe(true)
+		await expect(stat(offlineVideosDir)).rejects.toThrow()
 	} finally {
 		await rm(root, { recursive: true, force: true })
 	}
