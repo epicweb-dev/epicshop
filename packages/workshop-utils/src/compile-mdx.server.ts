@@ -2,12 +2,13 @@ import './init-env.ts'
 
 import fs from 'fs'
 import path from 'path'
+import * as cookie from 'cookie'
 import { rehypeCodeBlocksShiki } from '@kentcdodds/md-temp'
 import { type Element, type Root as HastRoot } from 'hast'
 import lz from 'lz-string'
 import md5 from 'md5-hex'
 import { type Root as MdastRoot, type PhrasingContent } from 'mdast'
-import { type MdxJsxFlowElement } from 'mdast-util-mdx-jsx'
+import { type MdxJsxAttribute, type MdxJsxFlowElement } from 'mdast-util-mdx-jsx'
 import { bundleMDX } from 'mdx-bundler'
 import PQueue from 'p-queue'
 import rehypeAutolinkHeadings from 'rehype-autolink-headings'
@@ -24,7 +25,55 @@ import {
 import { type Timings } from './timing.server.ts'
 import { checkConnection } from './utils.server.ts'
 
-function remarkMermaidCodeToSvg() {
+type MermaidTheme = 'dark' | 'default'
+
+const themeCookieName = 'EpicShop_theme'
+const themeHintCookieName = 'EpicShop_CH-prefers-color-scheme'
+
+function getMermaidTheme(request?: Request): MermaidTheme {
+	if (!request) return 'default'
+	const cookieHeader = request.headers.get('cookie')
+	if (!cookieHeader) return 'default'
+	const parsed = cookie.parse(cookieHeader)
+	const themeCookie = parsed[themeCookieName]
+	if (themeCookie === 'dark') return 'dark'
+	if (themeCookie === 'light') return 'default'
+	const hintTheme = parsed[themeHintCookieName]
+	return hintTheme === 'dark' ? 'dark' : 'default'
+}
+
+function mdxStringExpressionAttribute(
+	name: string,
+	value: string,
+): MdxJsxAttribute {
+	return {
+		type: 'mdxJsxAttribute',
+		name,
+		value: {
+			type: 'mdxJsxAttributeValueExpression',
+			value: JSON.stringify(value),
+			// This hack brought to you by this: https://github.com/syntax-tree/hast-util-to-estree/blob/e5ccb97e9f42bba90359ea6d0f83a11d74e0dad6/lib/handlers/mdx-expression.js#L35-L38
+			// no idea why we're required to have estree here, but I'm pretty sure someone is supposed to add it automatically for us and it just never happens...
+			data: {
+				estree: {
+					type: 'Program',
+					sourceType: 'script',
+					body: [
+						{
+							type: 'ExpressionStatement',
+							expression: {
+								type: 'Literal',
+								value,
+							},
+						},
+					],
+				},
+			},
+		},
+	}
+}
+
+function remarkMermaidCodeToSvg({ theme }: { theme: MermaidTheme }) {
 	return async (tree: MdastRoot) => {
 		const promises: Array<Promise<void>> = []
 		visit(tree, 'code', (node, index, parent) => {
@@ -33,66 +82,36 @@ function remarkMermaidCodeToSvg() {
 					const isConnected = await checkConnection()
 					if (isConnected) {
 						const compressed = lz.compressToEncodedURIComponent(node.value)
-						const url = `https://mermaid-to-svg.kentcdodds.workers.dev/svg?mermaid=${compressed}`
+						const url = new URL(
+							'https://mermaid-to-svg.kentcdodds.workers.dev/svg',
+						)
+						url.searchParams.set('mermaid', compressed)
+						url.searchParams.set('theme', theme)
 
 						const timeout = AbortSignal.timeout(5000)
-						const svgResponse = await fetch(url, { signal: timeout }).catch(
-							() => null,
-						)
+						const svgResponse = await fetch(url, {
+							signal: timeout,
+						}).catch(() => null)
 						if (svgResponse?.ok) {
 							const svgText = await svgResponse.text()
 							if (svgText) {
+								const attributes: Array<MdxJsxAttribute> = [
+									{
+										type: 'mdxJsxAttribute',
+										name: 'code',
+										value: node.value,
+									},
+									mdxStringExpressionAttribute('svg', svgText),
+									{
+										type: 'mdxJsxAttribute',
+										name: 'svgTheme',
+										value: theme,
+									},
+								]
 								parent.children[index] = {
 									type: 'mdxJsxFlowElement',
-									name: 'div',
-									attributes: [
-										{
-											type: 'mdxJsxAttribute',
-											name: 'className',
-											value: 'mermaid not-prose',
-										},
-										{
-											type: 'mdxJsxAttribute',
-											name: 'dangerouslySetInnerHTML',
-											value: {
-												type: 'mdxJsxAttributeValueExpression',
-												value: `{__html: ${JSON.stringify(svgText)}}`,
-												// This hack brought to you by this: https://github.com/syntax-tree/hast-util-to-estree/blob/e5ccb97e9f42bba90359ea6d0f83a11d74e0dad6/lib/handlers/mdx-expression.js#L35-L38
-												// no idea why we're required to have estree here, but I'm pretty sure someone is supposed to add it automatically for us and it just never happens...
-												data: {
-													estree: {
-														type: 'Program',
-														sourceType: 'script',
-														body: [
-															{
-																type: 'ExpressionStatement',
-																expression: {
-																	type: 'ObjectExpression',
-																	properties: [
-																		{
-																			type: 'Property',
-																			method: false,
-																			shorthand: false,
-																			computed: false,
-																			kind: 'init',
-																			key: {
-																				type: 'Identifier',
-																				name: '__html',
-																			},
-																			value: {
-																				type: 'Literal',
-																				value: svgText,
-																			},
-																		},
-																	],
-																},
-															},
-														],
-													},
-												},
-											},
-										},
-									],
+									name: 'Mermaid',
+									attributes,
 									children: [],
 								} satisfies MdxJsxFlowElement
 								return
@@ -100,16 +119,17 @@ function remarkMermaidCodeToSvg() {
 						}
 					}
 
+					const attributes: Array<MdxJsxAttribute> = [
+						{
+							type: 'mdxJsxAttribute',
+							name: 'code',
+							value: node.value,
+						},
+					]
 					parent.children[index] = {
 						type: 'mdxJsxFlowElement',
 						name: 'Mermaid',
-						attributes: [
-							{
-								type: 'mdxJsxAttribute',
-								name: 'code',
-								value: node.value,
-							},
-						],
+						attributes,
 						children: [],
 					} satisfies MdxJsxFlowElement
 				})()
@@ -185,6 +205,7 @@ export async function compileMdx(
 		forceFresh?: boolean
 	} = {},
 ) {
+	const mermaidTheme = getMermaidTheme(request)
 	const stat = await fs.promises
 		.stat(file)
 		.catch((error: unknown) => ({ error }))
@@ -192,7 +213,7 @@ export async function compileMdx(
 		throw new Error(`File stat cannot be read: ${stat.error}`)
 	}
 
-	const key = `file:${file}`
+	const key = `file:${file}:mermaid:${mermaidTheme}`
 	forceFresh = await shouldForceFresh({ forceFresh, request, key })
 
 	const existingCacheEntry = await compiledInstructionMarkdownCache.get(key)
@@ -206,11 +227,14 @@ export async function compileMdx(
 		request,
 		timings,
 		forceFresh,
-		getFreshValue: () => compileMdxImpl(file),
+		getFreshValue: () => compileMdxImpl(file, { mermaidTheme }),
 	})
 }
 
-async function compileMdxImpl(file: string): Promise<{
+async function compileMdxImpl(
+	file: string,
+	{ mermaidTheme }: { mermaidTheme: MermaidTheme },
+): Promise<{
 	code: string
 	title: string | null
 	epicVideoEmbeds: Array<string>
@@ -227,7 +251,7 @@ async function compileMdxImpl(file: string): Promise<{
 				options.remarkPlugins = [
 					...(options.remarkPlugins ?? []),
 					gfm,
-					remarkMermaidCodeToSvg,
+					[remarkMermaidCodeToSvg, { theme: mermaidTheme }],
 					() => (tree: MdastRoot) => {
 						visit(tree, 'heading', (node) => {
 							if (title) return

@@ -497,7 +497,7 @@ body {
 	display: flex;
 }
 
-/* until https://github.com/mermaid-js/mermaid/pull/6261 gets merged. Just make the background white */
+/* until https://github.com/mermaid-js/mermaid/pull/6261 gets merged. Keep background on theme. */
 .mermaid {
-	background-color: white;
+	background-color: hsl(var(--background));
 }
