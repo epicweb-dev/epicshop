@@ -50,7 +50,10 @@ export function Mermaid({
 	}, [code, mermaidTheme, renderId, svg, svgTheme])
 	return (
 		<div className="mermaid not-prose">
-			<div ref={ref} dangerouslySetInnerHTML={svg ? { __html: svg } : undefined} />
+			<div
+				ref={ref}
+				dangerouslySetInnerHTML={svg ? { __html: svg } : undefined}
+			/>
 		</div>
 	)
 }
