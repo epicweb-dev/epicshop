@@ -178,10 +178,7 @@ export default function ExamplesIndex() {
 					{data.examples.length ? (
 						<ul className="divide-border dark:divide-border/50 flex flex-col divide-y">
 							{data.examples.map((example) => (
-								<ExampleListItem
-									key={example.dirName}
-									example={example}
-								/>
+								<ExampleListItem key={example.dirName} example={example} />
 							))}
 						</ul>
 					) : (

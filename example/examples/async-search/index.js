@@ -70,16 +70,16 @@ document.head.append(style)
 document.body.append(root)
 
 const items = [
-  'cat',
-  'camera',
-  'candle',
-  'book',
-  'bottle',
-  'backpack',
-  'window',
-  'wallet',
-  'plant',
-  'pencil',
+	'cat',
+	'camera',
+	'candle',
+	'book',
+	'bottle',
+	'backpack',
+	'window',
+	'wallet',
+	'plant',
+	'pencil',
 ]
 
 const input = root.querySelector('input')
@@ -88,34 +88,34 @@ const results = root.querySelector('.results')
 let timeoutId = null
 
 function renderResults(list) {
-  results.innerHTML = ''
-  if (!list.length) {
-    const empty = document.createElement('li')
-    empty.textContent = 'No matches yet.'
-    results.append(empty)
-    return
-  }
-  list.forEach((item) => {
-    const li = document.createElement('li')
-    li.textContent = item
-    results.append(li)
-  })
+	results.innerHTML = ''
+	if (!list.length) {
+		const empty = document.createElement('li')
+		empty.textContent = 'No matches yet.'
+		results.append(empty)
+		return
+	}
+	list.forEach((item) => {
+		const li = document.createElement('li')
+		li.textContent = item
+		results.append(li)
+	})
 }
 
 function setStatus(message) {
-  status.textContent = message
+	status.textContent = message
 }
 
 renderResults([])
 
 input.addEventListener('input', (event) => {
-  const value = event.target.value.trim().toLowerCase()
-  setStatus('Searching...')
-  if (timeoutId) window.clearTimeout(timeoutId)
+	const value = event.target.value.trim().toLowerCase()
+	setStatus('Searching...')
+	if (timeoutId) window.clearTimeout(timeoutId)
 
-  timeoutId = window.setTimeout(() => {
-    const matches = items.filter((item) => item.includes(value))
-    renderResults(value ? matches : [])
-    setStatus(value ? `Found ${matches.length} result(s).` : 'Idle')
-  }, 400)
+	timeoutId = window.setTimeout(() => {
+		const matches = items.filter((item) => item.includes(value))
+		renderResults(value ? matches : [])
+		setStatus(value ? `Found ${matches.length} result(s).` : 'Idle')
+	}, 400)
 })

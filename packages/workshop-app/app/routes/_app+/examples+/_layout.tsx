@@ -6,14 +6,12 @@ import { serverOnly$ } from 'vite-env-only/macros'
 export const handle: SEOHandle = {
 	getSitemapEntries: serverOnly$(async (request) => {
 		const apps = await getApps({ request })
-		const examples = apps
-			.filter(isExampleApp)
-			.sort((a, b) =>
-				a.title.localeCompare(b.title, undefined, {
-					numeric: true,
-					sensitivity: 'base',
-				}),
-			)
+		const examples = apps.filter(isExampleApp).sort((a, b) =>
+			a.title.localeCompare(b.title, undefined, {
+				numeric: true,
+				sensitivity: 'base',
+			}),
+		)
 		return [
 			{ route: '/examples' },
 			...examples.map((example) => ({

@@ -52,7 +52,7 @@ const button = root.querySelector('button')
 let isDark = false
 
 button.addEventListener('click', () => {
-  isDark = !isDark
-  document.body.classList.toggle('dark', isDark)
-  button.textContent = isDark ? 'Enable light mode' : 'Enable dark mode'
+	isDark = !isDark
+	document.body.classList.toggle('dark', isDark)
+	button.textContent = isDark ? 'Enable light mode' : 'Enable dark mode'
 })
