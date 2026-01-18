@@ -76,7 +76,7 @@ export async function loader({ request }: LoaderFunctionArgs) {
 
 	const title =
 		examplesReadme.compiled.status === 'success'
-			? examplesReadme.compiled.title ?? 'Examples'
+			? (examplesReadme.compiled.title ?? 'Examples')
 			: 'Examples'
 
 	return data(
