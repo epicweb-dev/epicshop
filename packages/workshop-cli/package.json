@@ -10,9 +10,11 @@
     "cjs": false,
     "exports": {
       "./package.json": "./package.json",
+      "./clear-cache": "./src/commands/clear-cache.ts",
       "./warm": "./src/commands/warm.ts",
       "./start": "./src/commands/start.ts",
       "./update": "./src/commands/update.ts",
+      "./uninstall": "./src/commands/uninstall.ts",
       "./workshops": "./src/commands/workshops.ts",
       "./playground": "./src/commands/playground.ts",
       "./progress": "./src/commands/progress.ts",
@@ -24,6 +26,10 @@
   },
   "exports": {
     "./package.json": "./package.json",
+    "./clear-cache": {
+      "types": "./dist/commands/clear-cache.d.ts",
+      "import": "./dist/commands/clear-cache.js"
+    },
     "./warm": {
       "types": "./dist/commands/warm.d.ts",
       "import": "./dist/commands/warm.js"
@@ -35,6 +41,10 @@
     "./update": {
       "types": "./dist/commands/update.d.ts",
       "import": "./dist/commands/update.js"
+    },
+    "./uninstall": {
+      "types": "./dist/commands/uninstall.d.ts",
+      "import": "./dist/commands/uninstall.js"
     },
     "./workshops": {
       "types": "./dist/commands/workshops.d.ts",

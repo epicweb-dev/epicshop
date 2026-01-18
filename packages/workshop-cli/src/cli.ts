@@ -673,6 +673,62 @@ const cli = yargs(args)
 		},
 	)
 	.command(
+		'clear-cache',
+		'Clear local epicshop caches',
+		(yargs: Argv) => {
+			return yargs
+				.option('silent', {
+					alias: 's',
+					type: 'boolean',
+					description: 'Run without output logs',
+					default: false,
+				})
+				.example('$0 clear-cache', 'Clear local epicshop caches')
+				.example('$0 clear-cache --silent', 'Clear caches silently')
+		},
+		async (argv: ArgumentsCamelCase<{ silent?: boolean }>) => {
+			const { clearCache } = await import('./commands/clear-cache.js')
+			const result = await clearCache({ silent: argv.silent })
+			if (!result.success) {
+				process.exit(1)
+			}
+		},
+	)
+	.command(
+		'uninstall',
+		'Remove local epicshop workshops, data, and caches',
+		(yargs: Argv) => {
+			return yargs
+				.option('silent', {
+					alias: 's',
+					type: 'boolean',
+					description: 'Run without output logs',
+					default: false,
+				})
+				.option('force', {
+					alias: 'f',
+					type: 'boolean',
+					description: 'Skip the confirmation prompt',
+					default: false,
+				})
+				.example('$0 uninstall', 'Uninstall epicshop and delete local data')
+				.example(
+					'$0 uninstall --force',
+					'Uninstall without prompting for confirmation',
+				)
+		},
+		async (argv: ArgumentsCamelCase<{ silent?: boolean; force?: boolean }>) => {
+			const { uninstall } = await import('./commands/uninstall.js')
+			const result = await uninstall({
+				silent: argv.silent,
+				force: argv.force,
+			})
+			if (!result.success) {
+				process.exit(1)
+			}
+		},
+	)
+	.command(
 		'migrate',
 		'Run any necessary migrations for workshop data',
 		(yargs: Argv) => {
@@ -1360,6 +1416,16 @@ try {
 					: 'Select a workshop to warm the cache for',
 			},
 			{
+				name: `${chalk.green('clear-cache')} - Clear caches`,
+				value: 'clear-cache' as const,
+				description: 'Clear local epicshop caches',
+			},
+			{
+				name: `${chalk.green('uninstall')} - Uninstall epicshop`,
+				value: 'uninstall' as const,
+				description: 'Remove local workshops, data, and caches',
+			},
+			{
 				name: `${chalk.green('config')} - View/update configuration`,
 				value: 'config' as const,
 				description: 'View or update workshop configuration',
@@ -1576,6 +1642,18 @@ try {
 						process.chdir(originalCwd)
 					}
 				}
+				break
+			}
+			case 'clear-cache': {
+				const { clearCache } = await import('./commands/clear-cache.js')
+				const result = await clearCache({})
+				if (!result.success) process.exit(1)
+				break
+			}
+			case 'uninstall': {
+				const { uninstall } = await import('./commands/uninstall.js')
+				const result = await uninstall({})
+				if (!result.success) process.exit(1)
 				break
 			}
 			case 'config': {

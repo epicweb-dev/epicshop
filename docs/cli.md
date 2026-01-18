@@ -367,6 +367,59 @@ epicshop warm --silent
 - Pre-caches diff files for faster loading
 - Reports the number of apps loaded and diffs generated
 
+### `clear-cache`
+
+Clear local epicshop caches (apps, diffs, GitHub data). This does not remove
+workshops or settings.
+
+```bash
+epicshop clear-cache [options]
+```
+
+#### Options
+
+- `--silent, -s` - Run without output logs (default: false)
+
+#### Examples
+
+```bash
+# Clear local caches
+epicshop clear-cache
+
+# Clear caches silently
+epicshop clear-cache --silent
+```
+
+### `uninstall`
+
+Delete local epicshop workshops, configuration/state data, and caches. This
+command warns about unpushed changes before removing workshop directories.
+
+```bash
+epicshop uninstall [options]
+```
+
+#### Options
+
+- `--force, -f` - Skip the confirmation prompt (default: false)
+- `--silent, -s` - Run without output logs (default: false)
+
+#### Examples
+
+```bash
+# Uninstall with confirmation
+epicshop uninstall
+
+# Uninstall without prompting
+epicshop uninstall --force
+```
+
+#### Notes
+
+- Deletes all detected workshop directories in your configured repos folder
+- Removes local cache and state directories
+- The repos directory is removed only if it is empty after workshop deletion
+
 ### `migrate`
 
 Run any necessary migrations for workshop data.
