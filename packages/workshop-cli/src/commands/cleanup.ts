@@ -601,9 +601,7 @@ async function getWorkshopSummaries({
 async function selectWorkshops(workshops: WorkshopSummary[]) {
 	assertCanPrompt({
 		reason: 'select workshops to clean up',
-		hints: [
-			'Provide workshops via: npx epicshop cleanup --workshops <name>',
-		],
+		hints: ['Provide workshops via: npx epicshop cleanup --workshops <name>'],
 	})
 	const { checkbox } = await import('@inquirer/prompts')
 	console.log(
