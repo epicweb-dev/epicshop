@@ -378,8 +378,8 @@ epicshop cleanup [options]
 
 #### Options
 
-- `--targets, -t <name>` - Cleanup targets (repeatable):
-  `workshops`, `caches`, `preferences`, `auth`
+- `--targets, -t <name>` - Cleanup targets (repeatable): `workshops`, `caches`,
+  `preferences`, `auth`
 - `--force, -f` - Skip the confirmation prompt (default: false)
 - `--silent, -s` - Run without output logs (default: false)
 

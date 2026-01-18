@@ -3,7 +3,6 @@ import '@epic-web/workshop-utils/init-env'
 import fs from 'node:fs/promises'
 import os from 'node:os'
 import path from 'node:path'
-import chalk from 'chalk'
 import {
 	resolveCacheDir,
 	resolveFallbackPath,
@@ -14,6 +13,7 @@ import {
 	getReposDirectory,
 	getUnpushedChanges,
 } from '@epic-web/workshop-utils/workshops.server'
+import chalk from 'chalk'
 import { assertCanPrompt } from '../utils/cli-runtime.js'
 
 export type CleanupTarget = 'workshops' | 'caches' | 'preferences' | 'auth'
@@ -78,9 +78,7 @@ const CLEANUP_TARGETS: Array<{
 function resolveCleanupTargets(targets?: CleanupTarget[]): CleanupTarget[] {
 	if (!targets || targets.length === 0) return []
 	const allowed = new Set(CLEANUP_TARGETS.map((target) => target.value))
-	return Array.from(
-		new Set(targets.filter((target) => allowed.has(target))),
-	)
+	return Array.from(new Set(targets.filter((target) => allowed.has(target))))
 }
 
 async function resolveCleanupPaths(
@@ -90,8 +88,10 @@ async function resolveCleanupPaths(
 	const cacheDir = paths.cacheDir ?? resolveCacheDir()
 	const legacyCacheDir =
 		paths.legacyCacheDir ?? path.join(os.homedir(), '.epicshop', 'cache')
-	const dataPaths =
-		paths.dataPaths ?? [resolvePrimaryPath(), resolveFallbackPath()]
+	const dataPaths = paths.dataPaths ?? [
+		resolvePrimaryPath(),
+		resolveFallbackPath(),
+	]
 	return { reposDir, cacheDir, legacyCacheDir, dataPaths }
 }
 
@@ -313,10 +313,9 @@ export async function cleanup({
 
 		const { reposDir, cacheDir, legacyCacheDir, dataPaths } =
 			await resolveCleanupPaths(paths)
-		const workshops =
-			selectedTargets.includes('workshops')
-				? await listWorkshopsInDirectory(reposDir)
-				: []
+		const workshops = selectedTargets.includes('workshops')
+			? await listWorkshopsInDirectory(reposDir)
+			: []
 		const unpushedSummaries =
 			!silent && workshops.length > 0
 				? await Promise.all(
@@ -341,9 +340,7 @@ export async function cleanup({
 				console.log(chalk.yellow(`- Legacy cache: ${legacyCacheDir}`))
 			}
 			if (selectedTargets.includes('preferences')) {
-				console.log(
-					chalk.yellow(`- Preferences: ${dataPaths.join(', ')}`),
-				)
+				console.log(chalk.yellow(`- Preferences: ${dataPaths.join(', ')}`))
 			}
 			if (selectedTargets.includes('auth')) {
 				console.log(chalk.yellow(`- Auth data: ${dataPaths.join(', ')}`))
@@ -429,7 +426,10 @@ export async function cleanup({
 			await removePath(legacyCacheDir, removedPaths, skippedPaths, failures)
 		}
 
-		if (selectedTargets.includes('preferences') || selectedTargets.includes('auth')) {
+		if (
+			selectedTargets.includes('preferences') ||
+			selectedTargets.includes('auth')
+		) {
 			await cleanupDataFiles({
 				dataPaths,
 				removePreferences: selectedTargets.includes('preferences'),
