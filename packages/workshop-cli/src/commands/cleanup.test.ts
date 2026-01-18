@@ -1,17 +1,8 @@
 import { mkdtemp, mkdir, readdir, rm, stat, writeFile } from 'node:fs/promises'
 import os from 'node:os'
 import path from 'node:path'
-import { afterEach, beforeEach, expect, test, vi } from 'vitest'
+import { expect, test } from 'vitest'
 import { cleanup } from './cleanup.ts'
-
-beforeEach(() => {
-	vi.spyOn(console, 'log').mockImplementation(() => {})
-	vi.spyOn(console, 'error').mockImplementation(() => {})
-})
-
-afterEach(() => {
-	vi.restoreAllMocks()
-})
 
 test('cleanup removes caches and deletes data file when empty', async () => {
 	const root = await mkdtemp(path.join(os.tmpdir(), 'epicshop-cleanup-'))
