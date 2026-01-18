@@ -680,24 +680,18 @@ const cli = yargs(args)
 				.option('targets', {
 					alias: 't',
 					type: 'array',
-					choices: [
-						'workshops',
-						'caches',
-						'offline-videos',
-						'preferences',
-						'auth',
-					],
+					choices: ['caches', 'offline-videos', 'preferences', 'auth'],
 					description:
-						'Cleanup targets (repeatable): workshops, caches, offline-videos, preferences, auth',
+						'Cleanup targets (repeatable): caches, offline-videos, preferences, auth',
 				})
 				.option('workshops', {
 					type: 'array',
 					description: 'Workshops to clean (repeatable, by repo name or path)',
 				})
-				.option('workshop-targets', {
+				.option('workshop-actions', {
 					type: 'array',
 					choices: ['files', 'caches', 'offline-videos'],
-					description: 'Cleanup targets for selected workshops (repeatable)',
+					description: 'Cleanup actions for selected workshops (repeatable)',
 				})
 				.option('silent', {
 					alias: 's',
@@ -720,7 +714,7 @@ const cli = yargs(args)
 					'Clean selected targets without prompting',
 				)
 				.example(
-					'$0 cleanup --targets workshops --workshops full-stack-foundations --workshop-targets caches --force',
+					'$0 cleanup --workshops full-stack-foundations --workshop-actions caches --force',
 					'Clean caches for a specific workshop',
 				)
 		},
@@ -730,7 +724,7 @@ const cli = yargs(args)
 				force?: boolean
 				targets?: Array<string>
 				workshops?: Array<string>
-				workshopTargets?: Array<string>
+				workshopActions?: Array<string>
 			}>,
 		) => {
 			const { cleanup } = await import('./commands/cleanup.js')
@@ -738,10 +732,10 @@ const cli = yargs(args)
 				silent: argv.silent,
 				force: argv.force,
 				targets: argv.targets as Array<
-					'workshops' | 'caches' | 'offline-videos' | 'preferences' | 'auth'
+					'caches' | 'offline-videos' | 'preferences' | 'auth'
 				>,
 				workshops: argv.workshops,
-				workshopTargets: argv.workshopTargets as Array<
+				workshopTargets: argv.workshopActions as Array<
 					'files' | 'caches' | 'offline-videos'
 				>,
 			})

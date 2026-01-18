@@ -602,7 +602,7 @@ async function selectWorkshops(workshops: WorkshopSummary[]) {
 	assertCanPrompt({
 		reason: 'select workshops to clean up',
 		hints: [
-			'Provide workshops via: npx epicshop cleanup --targets workshops --workshops <name>',
+			'Provide workshops via: npx epicshop cleanup --workshops <name>',
 		],
 	})
 	const { checkbox } = await import('@inquirer/prompts')
@@ -679,7 +679,7 @@ async function selectWorkshopTargets(
 	assertCanPrompt({
 		reason: 'select what to clean for the selected workshops',
 		hints: [
-			'Provide selections via: npx epicshop cleanup --targets workshops --workshop-targets <name>',
+			'Provide selections via: npx epicshop cleanup --workshop-actions <name>',
 		],
 	})
 	const { checkbox } = await import('@inquirer/prompts')
@@ -703,7 +703,7 @@ async function selectCleanupTargets(
 		reason: 'select cleanup targets',
 		hints: [
 			'Provide targets via: npx epicshop cleanup --targets <name>',
-			'Example: npx epicshop cleanup --targets workshops --targets caches --force',
+			'Example: npx epicshop cleanup --targets caches --targets offline-videos --force',
 		],
 	})
 	const { checkbox } = await import('@inquirer/prompts')
