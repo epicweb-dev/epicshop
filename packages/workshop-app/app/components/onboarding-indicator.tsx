@@ -146,7 +146,7 @@ export function OnboardingBadge({
 	size?: 'sm' | 'md'
 }) {
 	const sizeClasses = size === 'sm' ? 'h-4 w-4 text-xs' : 'h-6 w-6 text-sm'
-	const badgeClasses = `flex ${sizeClasses} animate-badge-bounce items-center justify-center rounded-full bg-warning font-bold text-warning-foreground shadow-lg`
+	const badgeClasses = `flex ${sizeClasses} animate-badge-bounce items-center justify-center rounded-full bg-yellow-500 font-bold text-black shadow-lg`
 
 	if (tooltip) {
 		return (
@@ -206,7 +206,7 @@ export function OnboardingCallout({
 }) {
 	return (
 		<div
-			className={`bg-warning text-warning-foreground absolute top-full left-0 z-20 mt-1 max-w-64 rounded-md px-3 py-2 text-sm shadow-lg ${className}`}
+			className={`bg-yellow-500 text-black absolute top-full left-0 z-20 mt-1 max-w-64 rounded-md px-3 py-2 text-sm shadow-lg ${className}`}
 		>
 			<p className="font-medium">{children}</p>
 		</div>

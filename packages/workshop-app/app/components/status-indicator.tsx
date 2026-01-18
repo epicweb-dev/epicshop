@@ -5,8 +5,8 @@ export function StatusIndicator({
 }) {
 	const colors = {
 		running: {
-			pinger: 'bg-warning/60',
-			circle: 'bg-warning',
+			pinger: 'bg-yellow-500/60',
+			circle: 'bg-yellow-500',
 		},
 		passed: {
 			circle: 'bg-success',
