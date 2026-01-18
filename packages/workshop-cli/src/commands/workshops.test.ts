@@ -22,35 +22,32 @@ const { execa } = await import('execa')
 
 const { add, startWorkshop } = await import('./workshops.ts')
 
-test(
-	'workshops add passes a clone destination containing spaces as a single argument (aha)',
-	async () => {
-		vi.mocked(execa).mockClear()
-		vi.mocked(execa).mockResolvedValue({} as never)
+test('workshops add passes a clone destination containing spaces as a single argument (aha)', async () => {
+	vi.mocked(execa).mockClear()
+	vi.mocked(execa).mockResolvedValue({} as never)
 
-		const baseDir = await fs.mkdtemp(path.join(os.tmpdir(), 'epicshop user '))
-		const directory = path.join(baseDir, 'workshops dir')
+	const baseDir = await fs.mkdtemp(path.join(os.tmpdir(), 'epicshop user '))
+	const directory = path.join(baseDir, 'workshops dir')
 
-		try {
-			const repoName = 'mcp-fundamentals'
-			const result = await add({ repoName, directory, silent: true })
+	try {
+		const repoName = 'mcp-fundamentals'
+		const result = await add({ repoName, directory, silent: true })
 
-			expect(result.success).toBe(true)
+		expect(result.success).toBe(true)
 
-			const repoUrl = `https://github.com/epicweb-dev/${repoName}.git`
-			const reposDir = path.resolve(directory)
-			const workshopPath = path.join(reposDir, repoName)
+		const repoUrl = `https://github.com/epicweb-dev/${repoName}.git`
+		const reposDir = path.resolve(directory)
+		const workshopPath = path.join(reposDir, repoName)
 
-			expect(execa).toHaveBeenCalledWith(
-				'git',
-				['clone', repoUrl, workshopPath],
-				expect.objectContaining({ cwd: reposDir }),
-			)
-		} finally {
-			await fs.rm(baseDir, { recursive: true, force: true })
-		}
-	},
-)
+		expect(execa).toHaveBeenCalledWith(
+			'git',
+			['clone', repoUrl, workshopPath],
+			expect.objectContaining({ cwd: reposDir }),
+		)
+	} finally {
+		await fs.rm(baseDir, { recursive: true, force: true })
+	}
+})
 
 test('workshops add treats destination as the full clone path', async () => {
 	vi.mocked(execa).mockClear()

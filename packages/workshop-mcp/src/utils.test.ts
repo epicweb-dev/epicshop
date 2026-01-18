@@ -2,7 +2,10 @@ import { mkdtemp, mkdir, rm, writeFile } from 'node:fs/promises'
 import os from 'node:os'
 import path from 'node:path'
 import { test, expect, vi } from 'vitest'
-import { handleWorkshopDirectory, workshopDirectoryInputSchema } from './utils.ts'
+import {
+	handleWorkshopDirectory,
+	workshopDirectoryInputSchema,
+} from './utils.ts'
 
 vi.mock('@epic-web/workshop-utils/apps.server', () => ({
 	getWorkshopRoot: vi.fn(() => '/mock/workshop'),
