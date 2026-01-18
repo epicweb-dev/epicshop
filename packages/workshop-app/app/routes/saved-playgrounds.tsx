@@ -20,7 +20,7 @@ const SavedPlaygroundSchema = z.object({
 	savedPlaygroundId: z.string().min(1),
 })
 
-export async function loader({ request }: LoaderFunctionArgs) {
+export async function loader({ request: _request }: LoaderFunctionArgs) {
 	ensureUndeployed()
 	const persistEnabled = (await getPreferences())?.playground?.persist ?? false
 	if (!persistEnabled) {

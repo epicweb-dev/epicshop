@@ -130,6 +130,11 @@ type SavedPlaygroundsActionData =
 	| { status: 'error'; error: string }
 
 const savedPlaygroundsValue = '__saved-playgrounds__'
+const emptySavedPlaygrounds: Array<{
+	id: string
+	appName: string
+	createdAt: string
+}> = []
 
 function usePlaygroundOnboardingGate() {
 	const rootData = useRootLoaderData()
@@ -274,7 +279,7 @@ function SavedPlaygroundsDialog({
 	const savedPlaygrounds =
 		listFetcher.data?.status === 'success'
 			? listFetcher.data.savedPlaygrounds
-			: []
+			: emptySavedPlaygrounds
 	const isLoading = listFetcher.state !== 'idle' && !listFetcher.data
 	const isSubmitting = actionFetcher.state !== 'idle'
 	const activeSubmissionId = actionFetcher.formData?.get(
@@ -292,7 +297,7 @@ function SavedPlaygroundsDialog({
 	React.useEffect(() => {
 		if (!open) return
 		if (listFetcher.state !== 'idle') return
-		listFetcher.load('/saved-playgrounds')
+		void listFetcher.load('/saved-playgrounds')
 	}, [listFetcher, open])
 
 	React.useEffect(() => {
