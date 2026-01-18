@@ -50,7 +50,7 @@ epicshop start <workshop>
 - `epicshop cleanup`: select what to delete (workshops, caches, offline videos,
   prefs, auth)
 - `epicshop exercises`: list exercises with progress (context-aware)
-- `epicshop playground`: view or set the current playground (context-aware)
+- `epicshop playground`: view, set, or restore saved playgrounds (context-aware)
 - `epicshop progress`: view or update your progress (context-aware)
 - `epicshop diff`: show diff between playground and solution (context-aware)
 
@@ -69,7 +69,13 @@ import { start } from 'epicshop/start'
 import { update } from 'epicshop/update'
 import { warm } from 'epicshop/warm'
 import { cleanup } from 'epicshop/cleanup'
-import { show, set } from 'epicshop/playground'
+import {
+	show,
+	set,
+	listSavedPlaygrounds,
+	setSavedPlayground,
+	selectAndSetSavedPlayground,
+} from 'epicshop/playground'
 import {
 	show as showProgress,
 	update as updateProgress,
