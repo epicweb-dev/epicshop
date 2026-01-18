@@ -1088,6 +1088,11 @@ function Navigation({
 		},
 	}
 
+	const handleOpenShortcuts = React.useCallback(() => {
+		if (typeof window === 'undefined') return
+		window.dispatchEvent(new CustomEvent('toggle-keyboard-shortcuts'))
+	}, [])
+
 	return (
 		<nav className="hidden border-r sm:flex">
 			<motion.div
@@ -1429,7 +1434,21 @@ function Navigation({
 						</SimpleTooltip>
 					) : null}
 					<div className="mb-4 w-full self-start border-t pt-[15px] pl-3">
-						<ThemeSwitch />
+						<div className="flex items-center gap-2">
+							<ThemeSwitch />
+							{isMenuOpened ? (
+								<SimpleTooltip content="Keyboard shortcuts (press ?)">
+									<button
+										type="button"
+										aria-label="Keyboard shortcuts"
+										onClick={handleOpenShortcuts}
+										className="text-muted-foreground hover:text-foreground hover:bg-muted focus-visible:ring-ring flex h-8 w-8 items-center justify-center rounded-md transition-colors focus-visible:ring-2 focus-visible:ring-offset-2"
+									>
+										<Icon name="Question" size="md" />
+									</button>
+								</SimpleTooltip>
+							) : null}
+						</div>
 					</div>
 				</div>
 			</motion.div>
