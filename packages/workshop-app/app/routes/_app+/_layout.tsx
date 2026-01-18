@@ -693,11 +693,6 @@ function MobileNavigation({
 		},
 	}
 
-	const handleOpenShortcuts = React.useCallback(() => {
-		if (typeof window === 'undefined') return
-		window.dispatchEvent(new CustomEvent('toggle-keyboard-shortcuts'))
-	}, [])
-
 	return (
 		<nav className="flex w-full border-b sm:hidden">
 			<div className="w-full">
@@ -1092,6 +1087,11 @@ function Navigation({
 			opacity: 0,
 		},
 	}
+
+	const handleOpenShortcuts = React.useCallback(() => {
+		if (typeof window === 'undefined') return
+		window.dispatchEvent(new CustomEvent('toggle-keyboard-shortcuts'))
+	}, [])
 
 	return (
 		<nav className="hidden border-r sm:flex">
