@@ -56,6 +56,7 @@ import {
 	type Location,
 	type User,
 } from '#app/utils/presence.tsx'
+import { useApps } from '#app/utils/root-loader.ts'
 import {
 	useExerciseProgressClassName,
 	useNextExerciseRoute,
@@ -386,6 +387,10 @@ function getUniqueProductHostEmojis(locations: Location[]): string | null {
 		.join('')
 }
 
+function hasExamples(apps: Array<{ relativePath: string }>) {
+	return apps.some((app) => app.relativePath.split(/[\\/]/)[0] === 'examples')
+}
+
 const useIsWide = makeMediaQueryStore('(min-width: 640px)', true)
 
 export default function App() {
@@ -395,7 +400,7 @@ export default function App() {
 	const isHydrated = useHydrated()
 
 	const [isMenuOpened, setMenuOpenedState] = React.useState(data.isMenuOpened)
-	useRevalidationWS({ watchPaths: ['./exercises/README.mdx'] })
+	useRevalidationWS({ watchPaths: ['./exercises/README.mdx', './examples'] })
 
 	function setMenuOpened(value: boolean) {
 		setMenuOpenedState(value)
@@ -668,6 +673,7 @@ function MobileNavigation({
 	onMenuOpenChange: (change: boolean) => void
 }) {
 	const data = useLoaderData<typeof loader>()
+	const apps = useApps()
 	const user = useOptionalUser()
 	const nextExerciseRoute = useNextExerciseRoute()
 	const params = useParams()
@@ -677,6 +683,7 @@ function MobileNavigation({
 	// Onboarding indicators
 	const [showAccountBadge, dismissAccountBadge] =
 		useOnboardingIndicator('account-link')
+	const showExamplesLink = hasExamples(apps)
 
 	// items
 	const listVariants = {
@@ -917,6 +924,25 @@ function MobileNavigation({
 									📝 Workshop Feedback
 								</NavLink>
 							</div>
+							{showExamplesLink ? (
+								<div className="mt-2">
+									<NavLink
+										to="/examples"
+										prefetch="intent"
+										className={({ isActive }) =>
+											clsx(
+												'relative text-lg font-bold whitespace-nowrap outline-none hover:underline focus:underline',
+												{
+													'after:bg-background bg-foreground text-background after:absolute after:-right-2.5 after:-bottom-2.5 after:h-5 after:w-5 after:scale-75 after:rotate-45 after:content-[""]':
+														isActive,
+												},
+											)
+										}
+									>
+										📚 Examples
+									</NavLink>
+								</div>
+							) : null}
 						</motion.div>
 					)}
 					<div className="grow" />
@@ -1042,6 +1068,7 @@ function Navigation({
 	onMenuOpenChange: (change: boolean) => void
 }) {
 	const data = useLoaderData<typeof loader>()
+	const apps = useApps()
 	const user = useOptionalUser()
 	const nextExerciseRoute = useNextExerciseRoute()
 	const params = useParams()
@@ -1051,6 +1078,7 @@ function Navigation({
 	// Onboarding indicators
 	const [showAccountBadge, dismissAccountBadge] =
 		useOnboardingIndicator('account-link')
+	const showExamplesLink = hasExamples(apps)
 
 	const exercise = data.exercises.find(
 		(e) => e.exerciseNumber === Number(params.exerciseNumber),
@@ -1318,6 +1346,25 @@ function Navigation({
 									📝 Workshop Feedback
 								</NavLink>
 							</div>
+							{showExamplesLink ? (
+								<div className="mt-2">
+									<NavLink
+										to="/examples"
+										prefetch="intent"
+										className={({ isActive }) =>
+											clsx(
+												'relative text-lg font-bold whitespace-nowrap outline-none hover:underline focus:underline',
+												{
+													'after:bg-background bg-foreground text-background after:absolute after:-right-2.5 after:-bottom-2.5 after:h-5 after:w-5 after:scale-75 after:rotate-45 after:content-[""]':
+														isActive,
+												},
+											)
+										}
+									>
+										📚 Examples
+									</NavLink>
+								</div>
+							) : null}
 						</motion.div>
 					)}
 					{!isMenuOpened && (

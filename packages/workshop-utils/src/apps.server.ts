@@ -1558,6 +1558,28 @@ export async function getWorkshopInstructions({
 	return { compiled, file: readmeFilepath, relativePath: 'exercises' } as const
 }
 
+export async function getExamplesInstructions({
+	request,
+}: { request?: Request } = {}) {
+	const readmeFilepath = path.join(getWorkshopRoot(), 'examples', 'README.mdx')
+	const compiled = await compileMdx(readmeFilepath, { request }).then(
+		(r) => ({ ...r, status: 'success' }) as const,
+		(e) => {
+			console.error(
+				`There was an error compiling the examples README.mdx`,
+				readmeFilepath,
+				e,
+			)
+			return { status: 'error', error: getErrorMessage(e) } as const
+		},
+	)
+	return {
+		compiled,
+		file: readmeFilepath,
+		relativePath: 'examples/README.mdx',
+	} as const
+}
+
 export async function getWorkshopFinished({
 	request,
 }: { request?: Request } = {}) {
