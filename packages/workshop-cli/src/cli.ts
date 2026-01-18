@@ -718,13 +718,20 @@ const cli = yargs(args)
 				)
 		},
 		async (argv: ArgumentsCamelCase<{ silent?: boolean; force?: boolean }>) => {
-			const { uninstall } = await import('./commands/uninstall.js')
-			const result = await uninstall({
-				silent: argv.silent,
-				force: argv.force,
-			})
-			if (!result.success) {
-				process.exit(1)
+			try {
+				const { uninstall } = await import('./commands/uninstall.js')
+				const result = await uninstall({
+					silent: argv.silent,
+					force: argv.force,
+				})
+				if (!result.success) {
+					process.exit(1)
+				}
+			} catch (error) {
+				if ((error as Error).message === 'USER_QUIT') {
+					process.exit(0)
+				}
+				throw error
 			}
 		},
 	)

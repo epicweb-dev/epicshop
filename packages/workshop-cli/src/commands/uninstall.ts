@@ -275,7 +275,7 @@ export async function uninstall({
 		return { success: true, message, removedPaths, skippedPaths }
 	} catch (error) {
 		if ((error as Error).message === 'USER_QUIT') {
-			return { success: false, message: 'User quit' }
+			throw error
 		}
 		const message = error instanceof Error ? error.message : String(error)
 		if (!silent) {
