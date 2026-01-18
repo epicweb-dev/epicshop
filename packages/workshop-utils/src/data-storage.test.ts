@@ -1,7 +1,7 @@
 import { promises as fs } from 'node:fs'
 import * as os from 'node:os'
 import { test, expect, vi } from 'vitest'
-import { consoleWarn } from '../../../../tests/vitest-setup.ts'
+import { consoleWarn } from '../../../tests/vitest-setup.ts'
 import {
 	resolvePrimaryDir,
 	resolveCacheDir,
@@ -37,7 +37,6 @@ function setupPlatformMocks() {
 		},
 	}
 }
-
 
 function withPlatform(
 	platform: string,

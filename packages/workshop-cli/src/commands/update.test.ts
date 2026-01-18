@@ -182,7 +182,5 @@ test('update should log error message when silent is false and updateLocalRepo f
 		message: 'Git pull failed: network error',
 	})
 
-	expect(consoleError).toHaveBeenCalledWith(
-		'❌ Git pull failed: network error',
-	)
+	expect(consoleError).toHaveBeenCalledWith('❌ Git pull failed: network error')
 })

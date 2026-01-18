@@ -17,14 +17,12 @@ beforeEach(() => {
 
 	const originalConsoleWarn = console.warn
 	consoleWarn = vi.spyOn(console, 'warn')
-	consoleWarn.mockImplementation(
-		(...args: Parameters<typeof console.warn>) => {
-			originalConsoleWarn(...args)
-			throw new Error(
-				'Console warn was called. Call consoleWarn.mockImplementation(() => {}) if this is expected.',
-			)
-		},
-	)
+	consoleWarn.mockImplementation((...args: Parameters<typeof console.warn>) => {
+		originalConsoleWarn(...args)
+		throw new Error(
+			'Console warn was called. Call consoleWarn.mockImplementation(() => {}) if this is expected.',
+		)
+	})
 })
 
 afterEach(() => {

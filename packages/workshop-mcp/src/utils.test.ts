@@ -2,7 +2,7 @@ import { mkdtemp, mkdir, rm, writeFile } from 'node:fs/promises'
 import os from 'node:os'
 import path from 'node:path'
 import { test, expect, vi } from 'vitest'
-import { consoleError } from '../../../../tests/vitest-setup.ts'
+import { consoleError } from '../../../tests/vitest-setup.ts'
 import {
 	handleWorkshopDirectory,
 	workshopDirectoryInputSchema,

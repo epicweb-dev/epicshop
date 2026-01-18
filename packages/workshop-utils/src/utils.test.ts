@@ -1,5 +1,5 @@
 import { test, expect } from 'vitest'
-import { consoleError } from '../../../../tests/vitest-setup.ts'
+import { consoleError } from '../../../tests/vitest-setup.ts'
 import { getErrorMessage, handleGitHubRepoAndRoot } from './utils.ts'
 
 test('getErrorMessage should return string errors as-is', () => {
