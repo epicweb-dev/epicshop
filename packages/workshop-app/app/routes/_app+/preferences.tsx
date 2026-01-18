@@ -2,6 +2,7 @@ import {
 	getPreferences,
 	setPreferences,
 } from '@epic-web/workshop-utils/db.server'
+import { getEnv } from '@epic-web/workshop-utils/env.server'
 import {
 	getOfflineVideoSummary,
 	startOfflineVideoDownload,
@@ -17,20 +18,22 @@ import { redirectWithToast } from '#app/utils/toast.server.ts'
 import { type Route } from './+types/preferences.tsx'
 
 export async function loader({ request }: Route.LoaderArgs) {
-	ensureUndeployed()
+	const isDeployed = getEnv().EPICSHOP_DEPLOYED
 	const [preferences, offlineVideos] = await Promise.all([
 		getPreferences(),
-		getOfflineVideoSummary({ request }),
+		// Skip offline video data in deployed mode
+		isDeployed ? null : getOfflineVideoSummary({ request }),
 	])
-	return { preferences, offlineVideos }
+	return { preferences, offlineVideos, isDeployed }
 }
 
 export async function action({ request }: Route.ActionArgs) {
-	ensureUndeployed()
 	const formData = await request.formData()
 	const intent = formData.get('intent')
 
 	if (intent === 'download-offline-videos') {
+		// Block video downloads in deployed mode
+		ensureUndeployed()
 		const result = await startOfflineVideoDownload({ request })
 		if (result.queued === 0) {
 			const description =
@@ -54,6 +57,8 @@ export async function action({ request }: Route.ActionArgs) {
 	}
 
 	if (intent === 'delete-offline-videos') {
+		// Block video deletions in deployed mode
+		ensureUndeployed()
 		const result = await deleteOfflineVideosForWorkshop()
 		const description =
 			result.deletedFiles === 0
@@ -103,14 +108,17 @@ export default function AccountSettings() {
 	const exerciseWarningPreferences = rootData.preferences?.exerciseWarning
 	const navigation = useNavigation()
 	const offlineVideosFetcher = useFetcher<typeof loader>()
+	// In deployed mode, offlineVideos is null
 	const offlineVideos =
 		offlineVideosFetcher.data?.offlineVideos ?? loaderData.offlineVideos
-	const isDownloading = offlineVideos.downloadState.status === 'running'
+	const isDownloading = offlineVideos?.downloadState.status === 'running'
 
 	const isSubmitting = navigation.state === 'submitting'
 
 	useInterval(
 		() => {
+			// Skip polling in deployed mode
+			if (loaderData.isDeployed) return
 			if (offlineVideosFetcher.state === 'idle') {
 				void offlineVideosFetcher.load('/resources/offline-videos')
 			}
@@ -259,65 +267,68 @@ export default function AccountSettings() {
 					</Button>
 				</Form>
 
-				<section className="border-border mt-6 flex w-full max-w-xl flex-col gap-3 border-t pt-6">
-					<div className="flex items-center gap-2">
-						<h2 className="text-body-xl">Offline videos</h2>
-						<SimpleTooltip content="Keep videos ready to watch when you're offline.">
-							<Icon name="Question" tabIndex={0} />
-						</SimpleTooltip>
-					</div>
-					<p className="text-muted-foreground text-sm">
-						Download all workshop videos so you can watch them when offline.
-					</p>
-					<div className="flex flex-wrap items-center gap-3">
-						<Form method="post">
-							<Button
-								varient="primary"
-								type="submit"
-								name="intent"
-								value="download-offline-videos"
-								disabled={
-									isDownloading ||
-									isSubmitting ||
-									offlineVideos.totalVideos === 0
-								}
-							>
-								{isDownloading ? 'Downloading...' : 'Download all videos'}
-							</Button>
-						</Form>
-						<Form method="post">
-							<button
-								type="submit"
-								name="intent"
-								value="delete-offline-videos"
-								disabled={isSubmitting || offlineVideos.downloadedVideos === 0}
-								className="border-border text-foreground hover:bg-muted inline-flex items-center gap-2 rounded border px-3 py-2 text-sm disabled:cursor-not-allowed disabled:opacity-50"
-							>
-								Delete offline videos
-							</button>
-						</Form>
-						<span className="text-muted-foreground text-sm">
-							{offlineVideos.downloadedVideos} of {offlineVideos.totalVideos}{' '}
-							downloaded
-							{offlineVideos.unavailableVideos > 0
-								? ` (${offlineVideos.unavailableVideos} unavailable)`
-								: null}
-						</span>
-					</div>
-					{isDownloading ? (
-						<div className="text-muted-foreground text-sm">
-							<p>
-								Downloading {offlineVideos.downloadState.completed} of{' '}
-								{offlineVideos.downloadState.total} videos
-							</p>
-							{offlineVideos.downloadState.current ? (
-								<p className="truncate">
-									Current: {offlineVideos.downloadState.current.title}
-								</p>
-							) : null}
+				{/* Hide offline videos section in deployed mode */}
+				{!loaderData.isDeployed && offlineVideos ? (
+					<section className="border-border mt-6 flex w-full max-w-xl flex-col gap-3 border-t pt-6">
+						<div className="flex items-center gap-2">
+							<h2 className="text-body-xl">Offline videos</h2>
+							<SimpleTooltip content="Keep videos ready to watch when you're offline.">
+								<Icon name="Question" tabIndex={0} />
+							</SimpleTooltip>
 						</div>
-					) : null}
-				</section>
+						<p className="text-muted-foreground text-sm">
+							Download all workshop videos so you can watch them when offline.
+						</p>
+						<div className="flex flex-wrap items-center gap-3">
+							<Form method="post">
+								<Button
+									varient="primary"
+									type="submit"
+									name="intent"
+									value="download-offline-videos"
+									disabled={
+										isDownloading ||
+										isSubmitting ||
+										offlineVideos.totalVideos === 0
+									}
+								>
+									{isDownloading ? 'Downloading...' : 'Download all videos'}
+								</Button>
+							</Form>
+							<Form method="post">
+								<button
+									type="submit"
+									name="intent"
+									value="delete-offline-videos"
+									disabled={isSubmitting || offlineVideos.downloadedVideos === 0}
+									className="border-border text-foreground hover:bg-muted inline-flex items-center gap-2 rounded border px-3 py-2 text-sm disabled:cursor-not-allowed disabled:opacity-50"
+								>
+									Delete offline videos
+								</button>
+							</Form>
+							<span className="text-muted-foreground text-sm">
+								{offlineVideos.downloadedVideos} of {offlineVideos.totalVideos}{' '}
+								downloaded
+								{offlineVideos.unavailableVideos > 0
+									? ` (${offlineVideos.unavailableVideos} unavailable)`
+									: null}
+							</span>
+						</div>
+						{isDownloading ? (
+							<div className="text-muted-foreground text-sm">
+								<p>
+									Downloading {offlineVideos.downloadState.completed} of{' '}
+									{offlineVideos.downloadState.total} videos
+								</p>
+								{offlineVideos.downloadState.current ? (
+									<p className="truncate">
+										Current: {offlineVideos.downloadState.current.title}
+									</p>
+								) : null}
+							</div>
+						) : null}
+					</section>
+				) : null}
 			</main>
 		</div>
 	)
