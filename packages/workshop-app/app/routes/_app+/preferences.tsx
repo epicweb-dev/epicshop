@@ -7,7 +7,7 @@ import {
 	startOfflineVideoDownload,
 	deleteOfflineVideosForWorkshop,
 } from '@epic-web/workshop-utils/offline-videos.server'
-import { Form, useFetcher, useLoaderData, useNavigation } from 'react-router'
+import { Form, Link, useFetcher, useLoaderData, useNavigation } from 'react-router'
 import { Button } from '#app/components/button.tsx'
 import { Icon } from '#app/components/icons.tsx'
 import { SimpleTooltip } from '#app/components/ui/tooltip.tsx'
@@ -15,6 +15,23 @@ import { ensureUndeployed, useInterval } from '#app/utils/misc.tsx'
 import { useRootLoaderData } from '#app/utils/root-loader.ts'
 import { redirectWithToast } from '#app/utils/toast.server.ts'
 import { type Route } from './+types/preferences.tsx'
+
+const downloadResolutionOptions = [
+	{ value: 'best', label: 'Best available' },
+	{ value: 'high', label: 'High' },
+	{ value: 'medium', label: 'Medium' },
+	{ value: 'low', label: 'Low' },
+] as const
+type DownloadResolutionOption = (typeof downloadResolutionOptions)[number]['value']
+
+function isDownloadResolutionOption(
+	value: FormDataEntryValue | null,
+): value is DownloadResolutionOption {
+	return (
+		typeof value === 'string' &&
+		downloadResolutionOptions.some((option) => option.value === value)
+	)
+}
 
 export async function loader({ request }: Route.LoaderArgs) {
 	ensureUndeployed()
@@ -70,15 +87,22 @@ export async function action({ request }: Route.ActionArgs) {
 
 	const minResolution = formData.get('minResolution')
 	const maxResolution = formData.get('maxResolution')
+	const downloadResolution = formData.get('downloadResolution')
 	const fontSize = formData.get('fontSize')
 	const optOutPresence = formData.get('optOutPresence') === 'on'
 	const persistPlayground = formData.get('persistPlayground') === 'on'
 	const dismissExerciseWarning = formData.get('dismissExerciseWarning') === 'on'
+	const downloadResolutionValue = isDownloadResolutionOption(downloadResolution)
+		? downloadResolution
+		: undefined
 
 	await setPreferences({
 		player: {
 			minResolution: minResolution ? Number(minResolution) : undefined,
 			maxResolution: maxResolution ? Number(maxResolution) : undefined,
+		},
+		offlineVideo: {
+			downloadResolution: downloadResolutionValue,
 		},
 		fontSize: fontSize ? Number(fontSize) : undefined,
 		presence: { optOut: optOutPresence },
@@ -97,6 +121,7 @@ export default function AccountSettings() {
 	const loaderData = useLoaderData<typeof loader>()
 	const rootData = useRootLoaderData()
 	const playerPreferences = rootData.preferences?.player
+	const offlineVideoPreferences = rootData.preferences?.offlineVideo
 	const fontSizePreference = rootData.preferences?.fontSize
 	const presencePreferences = rootData.preferences?.presence
 	const playgroundPreferences = rootData.preferences?.playground
@@ -156,6 +181,27 @@ export default function AccountSettings() {
 								<option value="2160">2160p (4K)</option>
 							</select>
 						</div>
+					</div>
+					<div>
+						<h2 className="text-body-xl mb-2">Offline Video Downloads</h2>
+						<div className="flex items-center gap-2">
+							<label htmlFor="downloadResolution">Download Resolution:</label>
+							<select
+								id="downloadResolution"
+								name="downloadResolution"
+								defaultValue={offlineVideoPreferences?.downloadResolution ?? 'best'}
+								className="border-border bg-background text-foreground rounded-md border px-2 py-1"
+							>
+								{downloadResolutionOptions.map((option) => (
+									<option key={option.value} value={option.value}>
+										{option.label}
+									</option>
+								))}
+							</select>
+						</div>
+						<p className="text-muted-foreground text-sm">
+							Defaults to the best available resolution.
+						</p>
 					</div>
 					<div>
 						<div className="mb-2 flex items-center gap-2">
@@ -268,6 +314,13 @@ export default function AccountSettings() {
 					</div>
 					<p className="text-muted-foreground text-sm">
 						Download all workshop videos so you can watch them when offline.
+					</p>
+					<p className="text-muted-foreground text-sm">
+						Admins can manage all downloaded videos on the{' '}
+						<Link className="text-foreground underline" to="/admin/offline-videos">
+							Offline videos admin page
+						</Link>
+						.
 					</p>
 					<div className="flex flex-wrap items-center gap-3">
 						<Form method="post">
