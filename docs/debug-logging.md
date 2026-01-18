@@ -69,6 +69,21 @@ This will show logs for all `epic:api` operations including:
 - Error conditions with stack traces
 - Performance timing information
 
+### Offline Video Downloads
+
+Use the `epic:offline-videos` namespace to diagnose offline video downloads:
+
+```bash
+NODE_DEBUG=epic:offline-videos npm run dev
+```
+
+This will show logs for:
+
+- Offline video download requests
+- Mux URL attempts and failures
+- Successful download sizes
+- Error details when downloads fail
+
 ### Cache Debugging
 
 The workshop app includes integrated cache logging that shows detailed cache
