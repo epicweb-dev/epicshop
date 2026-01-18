@@ -1,5 +1,4 @@
 import { test, expect, vi } from 'vitest'
-import { consoleError } from '../../../../tests/vitest-setup.ts'
 import { warm, type WarmResult } from './warm.ts'
 
 test('warm should return a result with correct structure', async () => {
@@ -15,7 +14,7 @@ test('warm should return a result with correct structure', async () => {
 
 test('warm should accept silent parameter', async () => {
 	const logSpy = vi.spyOn(console, 'log').mockImplementation(() => {})
-	consoleError.mockImplementation(() => {})
+	vi.mocked(console.error).mockImplementation(() => {})
 
 	try {
 		await expect(warm({ silent: true })).resolves.toEqual(

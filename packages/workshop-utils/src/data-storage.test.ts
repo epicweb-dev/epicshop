@@ -1,7 +1,6 @@
 import { promises as fs } from 'node:fs'
 import * as os from 'node:os'
 import { test, expect, vi } from 'vitest'
-import { consoleWarn } from '../../../tests/vitest-setup.ts'
 import {
 	resolvePrimaryDir,
 	resolveCacheDir,
@@ -238,12 +237,12 @@ test('migrateLegacyData handles missing legacy directory', async () => {
 
 test('migrateLegacyData handles permission errors gracefully', async () => {
 	using _setup = setupPlatformMocks()
-	consoleWarn.mockImplementation(() => {})
+	vi.mocked(console.warn).mockImplementation(() => {})
 	mockFs.stat.mockRejectedValue({ code: 'EACCES' })
 
 	await expect(migrateLegacyData()).resolves.toBeUndefined()
 
-	expect(consoleWarn).toHaveBeenCalledWith(
+	expect(console.warn).toHaveBeenCalledWith(
 		expect.stringContaining('Legacy directory exists but is unreadable'),
 	)
 })

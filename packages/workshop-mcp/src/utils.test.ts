@@ -2,7 +2,6 @@ import { mkdtemp, mkdir, rm, writeFile } from 'node:fs/promises'
 import os from 'node:os'
 import path from 'node:path'
 import { test, expect, vi } from 'vitest'
-import { consoleError } from '../../../tests/vitest-setup.ts'
 import {
 	handleWorkshopDirectory,
 	workshopDirectoryInputSchema,
@@ -135,7 +134,7 @@ test('handleWorkshopDirectory rejects relative paths', async () => {
 
 test('handleWorkshopDirectory normalizes playground to workshop root', async () => {
 	await using fixture = await createWorkshopFixture()
-	consoleError.mockImplementation(() => {})
+	vi.mocked(console.error).mockImplementation(() => {})
 
 	const { init } = await import('@epic-web/workshop-utils/apps.server')
 	const initMock = vi.mocked(init)
@@ -148,7 +147,7 @@ test('handleWorkshopDirectory normalizes playground to workshop root', async () 
 
 test('handleWorkshopDirectory rejects when no workshop directory found (aha)', async () => {
 	await using fixture = await createTempDir()
-	consoleError.mockImplementation(() => {})
+	vi.mocked(console.error).mockImplementation(() => {})
 
 	await expect(handleWorkshopDirectory(fixture.root)).rejects.toThrow(
 		/No workshop directory found/,

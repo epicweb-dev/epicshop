@@ -1,5 +1,4 @@
 import { test, expect, vi } from 'vitest'
-import { consoleError } from '../../../../tests/vitest-setup.ts'
 import { update } from './update.ts'
 
 // Mock the dynamic import of updateLocalRepo
@@ -167,7 +166,7 @@ test('update should log success message when silent is false', async () => {
 
 test('update should log error message when silent is false and updateLocalRepo fails', async () => {
 	using ignoredEnv = setEnv('EPICSHOP_DEPLOYED', undefined)
-	consoleError.mockImplementation(() => {})
+	vi.mocked(console.error).mockImplementation(() => {})
 
 	const updateLocalRepoMock = await getUpdateLocalRepoMock()
 	updateLocalRepoMock.mockResolvedValue({
@@ -182,5 +181,7 @@ test('update should log error message when silent is false and updateLocalRepo f
 		message: 'Git pull failed: network error',
 	})
 
-	expect(consoleError).toHaveBeenCalledWith('❌ Git pull failed: network error')
+	expect(console.error).toHaveBeenCalledWith(
+		'❌ Git pull failed: network error',
+	)
 })
