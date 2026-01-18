@@ -116,7 +116,7 @@ function KeyboardShortcutsDialog({
 						<kbd className="border-border bg-muted rounded border px-1.5 py-0.5 font-mono text-xs">
 							?
 						</kbd>{' '}
-						or select the keyboard icon in the navigation to open this list.
+						or select the question mark icon in the navigation to open this list.
 					</DialogDescription>
 				</DialogHeader>
 				<div className="space-y-6">

@@ -68,8 +68,8 @@ Works with YouTube, etc.
 The video player supports comprehensive keyboard shortcuts for enhanced user
 experience:
 
-Tip: Press `?` or use the keyboard icon in the app navigation to open the full
-shortcuts list.
+Tip: Press `?` or use the question mark icon in the app navigation to open the
+full shortcuts list.
 
 ### Playback Controls
 

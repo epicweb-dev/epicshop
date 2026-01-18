@@ -660,62 +660,6 @@ function NavigationExerciseStepListItem({
 	)
 }
 
-function KeyboardShortcutsButton({
-	isMenuOpened,
-	layout,
-}: {
-	isMenuOpened: boolean
-	layout: 'mobile' | 'desktop'
-}) {
-	const [showKeyboardShortcutsBadge, dismissKeyboardShortcutsBadge] =
-		useOnboardingIndicator('keyboard-shortcuts')
-	const handleOpenShortcuts = React.useCallback(() => {
-		dismissKeyboardShortcutsBadge()
-		if (typeof window === 'undefined') return
-		window.dispatchEvent(new CustomEvent('toggle-keyboard-shortcuts'))
-	}, [dismissKeyboardShortcutsBadge])
-
-	const buttonClassName =
-		layout === 'mobile'
-			? cn(
-					'relative flex h-14 shrink-0 items-center justify-start space-x-3 px-4 py-4 text-left no-underline hover:underline',
-					{
-						'border-l': !isMenuOpened,
-						'w-full border-t': isMenuOpened,
-					},
-				)
-			: 'relative flex h-14 w-full items-center justify-start space-x-3 border-t px-4 py-4 text-left no-underline hover:underline'
-
-	return (
-		<SimpleTooltip
-			content={isMenuOpened ? null : 'Keyboard shortcuts (press ?)'}
-			side={layout === 'mobile' ? 'bottom' : 'right'}
-		>
-			<button
-				type="button"
-				className={buttonClassName}
-				aria-label="Keyboard shortcuts"
-				onClick={handleOpenShortcuts}
-			>
-				<Icon name="Keyboard" className="shrink-0" size="md" />
-				{isMenuOpened ? (
-					<span className="flex items-center gap-2 whitespace-nowrap">
-						<span>Keyboard shortcuts</span>
-						<kbd className="border-border bg-muted rounded border px-1.5 py-0.5 font-mono text-xs">
-							?
-						</kbd>
-					</span>
-				) : (
-					<span className="sr-only">Keyboard shortcuts</span>
-				)}
-				{showKeyboardShortcutsBadge ? (
-					<OnboardingBadge tooltip="Discover keyboard shortcuts" size="sm" />
-				) : null}
-			</button>
-		</SimpleTooltip>
-	)
-}
-
 function MobileNavigation({
 	isMenuOpened,
 	onMenuOpenChange: setMenuOpened,
@@ -748,6 +692,11 @@ function MobileNavigation({
 			opacity: 0,
 		},
 	}
+
+	const handleOpenShortcuts = React.useCallback(() => {
+		if (typeof window === 'undefined') return
+		window.dispatchEvent(new CustomEvent('toggle-keyboard-shortcuts'))
+	}, [])
 
 	return (
 		<nav className="flex w-full border-b sm:hidden">
@@ -1002,10 +951,6 @@ function MobileNavigation({
 					>
 						<FacePile isMenuOpened={isMenuOpened} />
 					</div>
-					<KeyboardShortcutsButton
-						isMenuOpened={isMenuOpened}
-						layout="mobile"
-					/>
 					{ENV.EPICSHOP_DEPLOYED ? null : user ? (
 						<SimpleTooltip content={isMenuOpened ? null : 'Your account'}>
 							<Link
@@ -1425,10 +1370,6 @@ function Navigation({
 					>
 						<FacePile isMenuOpened={isMenuOpened} />
 					</div>
-					<KeyboardShortcutsButton
-						isMenuOpened={isMenuOpened}
-						layout="desktop"
-					/>
 					{ENV.EPICSHOP_DEPLOYED ? null : user ? (
 						<SimpleTooltip content={isMenuOpened ? null : 'Your account'}>
 							<Link
@@ -1493,7 +1434,21 @@ function Navigation({
 						</SimpleTooltip>
 					) : null}
 					<div className="mb-4 w-full self-start border-t pt-[15px] pl-3">
-						<ThemeSwitch />
+						<div className="flex items-center gap-2">
+							<ThemeSwitch />
+							{isMenuOpened ? (
+								<SimpleTooltip content="Keyboard shortcuts (press ?)">
+									<button
+										type="button"
+										aria-label="Keyboard shortcuts"
+										onClick={handleOpenShortcuts}
+										className="text-muted-foreground hover:text-foreground hover:bg-muted focus-visible:ring-ring flex h-8 w-8 items-center justify-center rounded-md transition-colors focus-visible:ring-2 focus-visible:ring-offset-2"
+									>
+										<Icon name="Question" size="md" />
+									</button>
+								</SimpleTooltip>
+							) : null}
+						</div>
 					</div>
 				</div>
 			</motion.div>
