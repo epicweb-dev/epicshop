@@ -14,9 +14,10 @@ import {
 	makeTimings,
 	time,
 } from '@epic-web/workshop-utils/timing.server'
-import slugify from '@sindresorhus/slugify'
 import * as Tabs from '@radix-ui/react-tabs'
+import slugify from '@sindresorhus/slugify'
 import { clsx } from 'clsx'
+import * as cookie from 'cookie'
 import { useRef, useState } from 'react'
 import {
 	Link,
@@ -31,20 +32,19 @@ import { EpicVideoInfoProvider } from '#app/components/epic-video.tsx'
 import { GeneralErrorBoundary } from '#app/components/error-boundary.tsx'
 import { type InBrowserBrowserRef } from '#app/components/in-browser-browser.tsx'
 import { NavChevrons } from '#app/components/nav-chevrons.tsx'
-import { StatusIndicator } from '#app/components/status-indicator.tsx'
 import { useRevalidationWS } from '#app/components/revalidation-ws.tsx'
+import { StatusIndicator } from '#app/components/status-indicator.tsx'
 import { useUserHasAccess } from '#app/components/user.tsx'
-import { EditFileOnGitHub } from '#app/routes/launch-editor.tsx'
 import { Preview } from '#app/routes/_app+/exercise+/$exerciseNumber_.$stepNumber.$type+/__shared/preview.tsx'
 import { TestUI } from '#app/routes/_app+/exercise+/$exerciseNumber_.$stepNumber.$type+/__shared/tests.tsx'
 import {
 	getAppRunningState,
 	getTestState,
 } from '#app/routes/_app+/exercise+/$exerciseNumber_.$stepNumber.$type+/__shared/utils.tsx'
+import { EditFileOnGitHub } from '#app/routes/launch-editor.tsx'
 import { Mdx } from '#app/utils/mdx.tsx'
 import { getRootMatchLoaderData } from '#app/utils/root-loader.ts'
 import { getSeoMetaTags } from '#app/utils/seo.ts'
-import * as cookie from 'cookie'
 
 // shared split state helpers
 const splitCookieName = 'es_split_pct'
