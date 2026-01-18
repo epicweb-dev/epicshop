@@ -3,8 +3,8 @@ import '@epic-web/workshop-utils/init-env'
 import fs from 'node:fs/promises'
 import os from 'node:os'
 import path from 'node:path'
-import chalk from 'chalk'
 import { resolveCacheDir } from '@epic-web/workshop-utils/data-storage.server'
+import chalk from 'chalk'
 
 export type ClearCacheResult = {
 	success: boolean
@@ -82,9 +82,7 @@ export async function clearCache({
 		if (!silent) {
 			console.error(chalk.red(message))
 			for (const failure of failures) {
-				console.error(
-					chalk.red(`- ${failure.path}: ${failure.error.message}`),
-				)
+				console.error(chalk.red(`- ${failure.path}: ${failure.error.message}`))
 			}
 		}
 		return {

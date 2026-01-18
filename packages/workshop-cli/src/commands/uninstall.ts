@@ -3,7 +3,6 @@ import '@epic-web/workshop-utils/init-env'
 import fs from 'node:fs/promises'
 import os from 'node:os'
 import path from 'node:path'
-import chalk from 'chalk'
 import {
 	resolveCacheDir,
 	resolveFallbackPath,
@@ -14,6 +13,7 @@ import {
 	getReposDirectory,
 	getUnpushedChanges,
 } from '@epic-web/workshop-utils/workshops.server'
+import chalk from 'chalk'
 import { assertCanPrompt } from '../utils/cli-runtime.js'
 
 export type UninstallResult = {
@@ -51,8 +51,7 @@ async function resolveUninstallPaths(
 	const primaryDir = paths.primaryDir ?? resolvePrimaryDir()
 	const cacheDir = paths.cacheDir ?? resolveCacheDir()
 	const legacyDir = paths.legacyDir ?? path.join(os.homedir(), '.epicshop')
-	const fallbackDir =
-		paths.fallbackDir ?? path.dirname(resolveFallbackPath())
+	const fallbackDir = paths.fallbackDir ?? path.dirname(resolveFallbackPath())
 	return { reposDir, primaryDir, cacheDir, legacyDir, fallbackDir }
 }
 
@@ -95,10 +94,7 @@ async function listWorkshopsInDirectory(
 				}
 				if (packageJson.epicshop) {
 					workshops.push({
-						title:
-							packageJson.epicshop.title ||
-							packageJson.name ||
-							entry.name,
+						title: packageJson.epicshop.title || packageJson.name || entry.name,
 						repoName: entry.name,
 						path: workshopPath,
 					})
