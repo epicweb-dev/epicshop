@@ -712,16 +712,23 @@ const cli = yargs(args)
 				targets?: Array<string>
 			}>,
 		) => {
-			const { cleanup } = await import('./commands/cleanup.js')
-			const result = await cleanup({
-				silent: argv.silent,
-				force: argv.force,
-				targets: argv.targets as Array<
-					'workshops' | 'caches' | 'preferences' | 'auth'
-				>,
-			})
-			if (!result.success) {
-				process.exit(1)
+			try {
+				const { cleanup } = await import('./commands/cleanup.js')
+				const result = await cleanup({
+					silent: argv.silent,
+					force: argv.force,
+					targets: argv.targets as Array<
+						'workshops' | 'caches' | 'offline-videos' | 'preferences' | 'auth'
+					>,
+				})
+				if (!result.success) {
+					process.exit(1)
+				}
+			} catch (error) {
+				if ((error as Error).message === 'USER_QUIT') {
+					process.exit(0)
+				}
+				throw error
 			}
 		},
 	)
@@ -1637,9 +1644,16 @@ try {
 				break
 			}
 			case 'cleanup': {
-				const { cleanup } = await import('./commands/cleanup.js')
-				const result = await cleanup({})
-				if (!result.success) process.exit(1)
+				try {
+					const { cleanup } = await import('./commands/cleanup.js')
+					const result = await cleanup({})
+					if (!result.success) process.exit(1)
+				} catch (error) {
+					if ((error as Error).message === 'USER_QUIT') {
+						process.exit(0)
+					}
+					throw error
+				}
 				break
 			}
 			case 'config': {

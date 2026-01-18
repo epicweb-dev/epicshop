@@ -6,6 +6,7 @@ import path from 'node:path'
 import {
 	resolveCacheDir,
 	resolveFallbackPath,
+	resolvePrimaryDir,
 	resolvePrimaryPath,
 } from '@epic-web/workshop-utils/data-storage.server'
 import {
@@ -15,8 +16,18 @@ import {
 } from '@epic-web/workshop-utils/workshops.server'
 import chalk from 'chalk'
 import { assertCanPrompt } from '../utils/cli-runtime.js'
+import {
+	formatBytes,
+	getDirectorySize,
+	pathExists as filePathExists,
+} from '../utils/filesystem.js'
 
-export type CleanupTarget = 'workshops' | 'caches' | 'preferences' | 'auth'
+export type CleanupTarget =
+	| 'workshops'
+	| 'caches'
+	| 'offline-videos'
+	| 'preferences'
+	| 'auth'
 
 export type CleanupResult = {
 	success: boolean
@@ -46,6 +57,7 @@ type WorkshopEntry = {
 	title: string
 	repoName: string
 	path: string
+	size?: number
 }
 
 const CLEANUP_TARGETS: Array<{
@@ -62,6 +74,11 @@ const CLEANUP_TARGETS: Array<{
 		value: 'caches',
 		name: 'Caches',
 		description: 'Remove local cache directories (apps, diffs, GitHub)',
+	},
+	{
+		value: 'offline-videos',
+		name: 'Offline videos',
+		description: 'Delete downloaded offline workshop videos',
 	},
 	{
 		value: 'preferences',
@@ -95,15 +112,6 @@ async function resolveCleanupPaths(
 	return { reposDir, cacheDir, legacyCacheDir, dataPaths }
 }
 
-async function pathExists(targetPath: string): Promise<boolean> {
-	try {
-		await fs.access(targetPath)
-		return true
-	} catch {
-		return false
-	}
-}
-
 async function isDirectoryEmpty(targetPath: string): Promise<boolean> {
 	try {
 		const entries = await fs.readdir(targetPath)
@@ -111,6 +119,50 @@ async function isDirectoryEmpty(targetPath: string): Promise<boolean> {
 	} catch {
 		return false
 	}
+}
+
+function getOfflineVideosPath(): string {
+	return path.join(resolvePrimaryDir(), 'offline-videos')
+}
+
+async function calculateTargetSizes(
+	selectedTargets: CleanupTarget[],
+	paths: CleanupPaths,
+	workshops: WorkshopEntry[],
+): Promise<Map<CleanupTarget, number>> {
+	const sizes = new Map<CleanupTarget, number>()
+
+	for (const target of selectedTargets) {
+		let totalSize = 0
+
+		if (target === 'workshops') {
+			for (const workshop of workshops) {
+				if (await filePathExists(workshop.path)) {
+					const size = await getDirectorySize(workshop.path)
+					totalSize += size.bytes
+				}
+			}
+		} else if (target === 'caches') {
+			if (await filePathExists(paths.cacheDir)) {
+				const size = await getDirectorySize(paths.cacheDir)
+				totalSize += size.bytes
+			}
+			if (await filePathExists(paths.legacyCacheDir)) {
+				const size = await getDirectorySize(paths.legacyCacheDir)
+				totalSize += size.bytes
+			}
+		} else if (target === 'offline-videos') {
+			const offlineVideosPath = getOfflineVideosPath()
+			if (await filePathExists(offlineVideosPath)) {
+				const size = await getDirectorySize(offlineVideosPath)
+				totalSize += size.bytes
+			}
+		}
+
+		sizes.set(target, totalSize)
+	}
+
+	return sizes
 }
 
 async function listWorkshopsInDirectory(
@@ -156,7 +208,7 @@ async function removePath(
 	skippedPaths: string[],
 	failures: Array<{ path: string; error: Error }>,
 ) {
-	const exists = await pathExists(targetPath)
+	const exists = await filePathExists(targetPath)
 	if (!exists) {
 		skippedPaths.push(targetPath)
 		return
@@ -196,7 +248,7 @@ async function cleanupDataFiles({
 	failures: Array<{ path: string; error: Error }>
 }) {
 	for (const dataPath of dataPaths) {
-		const exists = await pathExists(dataPath)
+		const exists = await filePathExists(dataPath)
 		const backupPath = `${dataPath}.bkp`
 		if (!exists) {
 			skippedPaths.push(dataPath)
@@ -259,6 +311,7 @@ async function cleanupDataFiles({
 
 async function selectCleanupTargets(
 	availableTargets: Array<(typeof CLEANUP_TARGETS)[number]>,
+	targetSizes: Map<CleanupTarget, number>,
 ): Promise<CleanupTarget[]> {
 	assertCanPrompt({
 		reason: 'select cleanup targets',
@@ -275,11 +328,15 @@ async function selectCleanupTargets(
 
 	return checkbox({
 		message: 'Select what to clean up:',
-		choices: availableTargets.map((target) => ({
-			name: target.name,
-			value: target.value,
-			description: target.description,
-		})),
+		choices: availableTargets.map((target) => {
+			const size = targetSizes.get(target.value) ?? 0
+			const sizeStr = size > 0 ? ` (${formatBytes(size)})` : ''
+			return {
+				name: `${target.name}${sizeStr}`,
+				value: target.value,
+				description: target.description,
+			}
+		}),
 	})
 }
 
@@ -300,9 +357,34 @@ export async function cleanup({
 	paths,
 }: CleanupOptions = {}): Promise<CleanupResult> {
 	try {
+		const { reposDir, cacheDir, legacyCacheDir, dataPaths } =
+			await resolveCleanupPaths(paths)
+
+		// Get initial list of workshops for size calculation
+		const allWorkshops = await listWorkshopsInDirectory(reposDir)
+
+		// Calculate workshop sizes
+		if (!silent && allWorkshops.length > 0) {
+			console.log(chalk.blue('Calculating sizes...'))
+		}
+
+		const workshopsWithSizes = await Promise.all(
+			allWorkshops.map(async (workshop) => {
+				const size = await getDirectorySize(workshop.path)
+				return { ...workshop, size: size.bytes }
+			}),
+		)
+
+		// Determine selected targets
 		let selectedTargets = resolveCleanupTargets(targets)
 		if (selectedTargets.length === 0) {
-			selectedTargets = await selectCleanupTargets(CLEANUP_TARGETS)
+			// Calculate sizes for all possible targets
+			const allTargetSizes = await calculateTargetSizes(
+				CLEANUP_TARGETS.map((t) => t.value),
+				{ reposDir, cacheDir, legacyCacheDir, dataPaths },
+				workshopsWithSizes,
+			)
+			selectedTargets = await selectCleanupTargets(CLEANUP_TARGETS, allTargetSizes)
 		}
 
 		if (selectedTargets.length === 0) {
@@ -311,11 +393,43 @@ export async function cleanup({
 			return { success: true, message, selectedTargets }
 		}
 
-		const { reposDir, cacheDir, legacyCacheDir, dataPaths } =
-			await resolveCleanupPaths(paths)
+		// Allow selection of specific workshops
+		let selectedWorkshops = workshopsWithSizes
+		if (
+			selectedTargets.includes('workshops') &&
+			workshopsWithSizes.length > 0 &&
+			!force
+		) {
+			assertCanPrompt({
+				reason: 'select workshops to delete',
+				hints: ['Run with --force to delete all workshops without prompting'],
+			})
+			const { checkbox } = await import('@inquirer/prompts')
+
+			const workshopChoices = workshopsWithSizes.map((workshop) => ({
+				name: `${workshop.title} (${formatBytes(workshop.size || 0)})`,
+				value: workshop.path,
+				checked: true,
+			}))
+
+			console.log(
+				chalk.gray('\n   Use space to select, enter to confirm your selection.\n'),
+			)
+
+			const selectedPaths = await checkbox({
+				message: 'Select workshops to delete:',
+				choices: workshopChoices,
+			})
+
+			selectedWorkshops = workshopsWithSizes.filter((w) =>
+				selectedPaths.includes(w.path),
+			)
+		}
+
 		const workshops = selectedTargets.includes('workshops')
-			? await listWorkshopsInDirectory(reposDir)
+			? selectedWorkshops
 			: []
+
 		const unpushedSummaries =
 			!silent && workshops.length > 0
 				? await Promise.all(
@@ -326,24 +440,62 @@ export async function cleanup({
 					)
 				: []
 
+		// Calculate sizes for selected targets
+		const targetSizes = await calculateTargetSizes(
+			selectedTargets,
+			{ reposDir, cacheDir, legacyCacheDir, dataPaths },
+			workshops,
+		)
+
+		const totalSize = Array.from(targetSizes.values()).reduce(
+			(sum, size) => sum + size,
+			0,
+		)
+
 		if (!silent) {
-			console.log(chalk.yellow('This will clean up the following:'))
+			console.log(chalk.yellow('\nThis will clean up the following:'))
 			if (selectedTargets.includes('workshops')) {
 				console.log(
 					chalk.yellow(
-						`- Workshops: ${workshops.length} detected in ${reposDir}`,
+						`- Workshops: ${workshops.length} selected (${formatBytes(targetSizes.get('workshops') || 0)})`,
+					),
+				)
+				for (const workshop of workshops) {
+					console.log(
+						chalk.yellow(
+							`  - ${workshop.title}: ${formatBytes(workshop.size || 0)}`,
+						),
+					)
+				}
+			}
+			if (selectedTargets.includes('caches')) {
+				console.log(
+					chalk.yellow(
+						`- Caches: ${formatBytes(targetSizes.get('caches') || 0)}`,
 					),
 				)
 			}
-			if (selectedTargets.includes('caches')) {
-				console.log(chalk.yellow(`- Caches: ${cacheDir}`))
-				console.log(chalk.yellow(`- Legacy cache: ${legacyCacheDir}`))
+			if (selectedTargets.includes('offline-videos')) {
+				console.log(
+					chalk.yellow(
+						`- Offline videos: ${formatBytes(targetSizes.get('offline-videos') || 0)}`,
+					),
+				)
 			}
 			if (selectedTargets.includes('preferences')) {
 				console.log(chalk.yellow(`- Preferences: ${dataPaths.join(', ')}`))
 			}
 			if (selectedTargets.includes('auth')) {
 				console.log(chalk.yellow(`- Auth data: ${dataPaths.join(', ')}`))
+			}
+
+			if (totalSize > 0) {
+				console.log()
+				console.log(
+					chalk.yellow(
+						`Total data to be freed: ${chalk.bold(formatBytes(totalSize))}`,
+					),
+				)
 			}
 
 			const unpushed = unpushedSummaries.filter(
@@ -409,7 +561,7 @@ export async function cleanup({
 				}
 			}
 
-			if (await pathExists(reposDir)) {
+			if (await filePathExists(reposDir)) {
 				const isEmpty = await isDirectoryEmpty(reposDir)
 				if (isEmpty) {
 					await removePath(reposDir, removedPaths, skippedPaths, failures)
@@ -424,6 +576,11 @@ export async function cleanup({
 		if (selectedTargets.includes('caches')) {
 			await removePath(cacheDir, removedPaths, skippedPaths, failures)
 			await removePath(legacyCacheDir, removedPaths, skippedPaths, failures)
+		}
+
+		if (selectedTargets.includes('offline-videos')) {
+			const offlineVideosPath = getOfflineVideosPath()
+			await removePath(offlineVideosPath, removedPaths, skippedPaths, failures)
 		}
 
 		if (
@@ -493,7 +650,7 @@ export async function cleanup({
 		}
 	} catch (error) {
 		if ((error as Error).message === 'USER_QUIT') {
-			return { success: false, message: 'User quit' }
+			throw error
 		}
 		const message = error instanceof Error ? error.message : String(error)
 		if (!silent) {
