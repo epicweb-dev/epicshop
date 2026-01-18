@@ -120,6 +120,7 @@ export async function loader({ request, params }: LoaderFunctionArgs) {
 			)}-example`,
 			splitPercent,
 			example: {
+				type: 'example',
 				name: example.name,
 				title: example.title,
 				dirName: example.dirName,
