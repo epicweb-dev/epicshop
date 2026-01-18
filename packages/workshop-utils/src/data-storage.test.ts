@@ -1,6 +1,6 @@
 import { promises as fs } from 'node:fs'
 import * as os from 'node:os'
-import { test, expect, vi, beforeEach, afterEach } from 'vitest'
+import { test, expect, vi } from 'vitest'
 import {
 	resolvePrimaryDir,
 	resolveCacheDir,
@@ -26,14 +26,25 @@ vi.mock('node:os', () => ({
 const mockFs = vi.mocked(fs)
 const mockOs = vi.mocked(os)
 
-beforeEach(() => {
+function setupPlatformMocks() {
 	vi.clearAllMocks()
 	mockOs.homedir.mockReturnValue('/mock/home')
-})
 
-afterEach(() => {
-	vi.restoreAllMocks()
-})
+	return {
+		[Symbol.dispose]() {
+			vi.restoreAllMocks()
+		},
+	}
+}
+
+function mockConsoleWarn() {
+	const spy = vi.spyOn(console, 'warn').mockImplementation(() => {})
+	return Object.assign(spy, {
+		[Symbol.dispose]() {
+			spy.mockRestore()
+		},
+	})
+}
 
 function withPlatform(
 	platform: string,
@@ -75,14 +86,16 @@ function withPlatform(
 }
 
 test('resolvePrimaryDir returns correct path for darwin', () => {
-	using _ = withPlatform('darwin')
+	using _setup = setupPlatformMocks()
+	using _platform = withPlatform('darwin')
 
 	const result = resolvePrimaryDir()
 	expect(result).toBe('/mock/home/Library/Application Support/epicshop')
 })
 
 test('resolvePrimaryDir returns correct path for win32', () => {
-	using _ = withPlatform('win32', {
+	using _setup = setupPlatformMocks()
+	using _platform = withPlatform('win32', {
 		LOCALAPPDATA: undefined,
 		APPDATA: undefined,
 	})
@@ -92,7 +105,8 @@ test('resolvePrimaryDir returns correct path for win32', () => {
 })
 
 test('resolvePrimaryDir returns correct path for linux', () => {
-	using _ = withPlatform('linux', {
+	using _setup = setupPlatformMocks()
+	using _platform = withPlatform('linux', {
 		XDG_STATE_HOME: undefined,
 	})
 
@@ -101,14 +115,16 @@ test('resolvePrimaryDir returns correct path for linux', () => {
 })
 
 test('resolveCacheDir returns correct path for darwin', () => {
-	using _ = withPlatform('darwin')
+	using _setup = setupPlatformMocks()
+	using _platform = withPlatform('darwin')
 
 	const result = resolveCacheDir()
 	expect(result).toBe('/mock/home/Library/Caches/epicshop')
 })
 
 test('resolveCacheDir returns correct path for win32', () => {
-	using _ = withPlatform('win32', {
+	using _setup = setupPlatformMocks()
+	using _platform = withPlatform('win32', {
 		LOCALAPPDATA: undefined,
 		APPDATA: undefined,
 	})
@@ -118,7 +134,8 @@ test('resolveCacheDir returns correct path for win32', () => {
 })
 
 test('resolveCacheDir returns correct path for linux', () => {
-	using _ = withPlatform('linux', {
+	using _setup = setupPlatformMocks()
+	using _platform = withPlatform('linux', {
 		XDG_CACHE_HOME: undefined,
 	})
 
@@ -127,7 +144,8 @@ test('resolveCacheDir returns correct path for linux', () => {
 })
 
 test('migrateLegacyData successfully migrates both data and cache on darwin', async () => {
-	using _ = withPlatform('darwin')
+	using _setup = setupPlatformMocks()
+	using _platform = withPlatform('darwin')
 
 	const legacyDataPath = '/mock/home/.epicshop/data.json'
 	const legacyCachePath = '/mock/home/.epicshop/cache'
@@ -147,7 +165,7 @@ test('migrateLegacyData successfully migrates both data and cache on darwin', as
 	mockFs.readdir.mockResolvedValue([]) // empty directory
 	mockFs.rmdir.mockResolvedValue(undefined)
 
-	await migrateLegacyData()
+	await expect(migrateLegacyData()).resolves.toBeUndefined()
 
 	expect(mockFs.rename).toHaveBeenCalledWith(legacyDataPath, primaryDataPath)
 	expect(mockFs.rename).toHaveBeenCalledWith(legacyCachePath, primaryCachePath)
@@ -155,7 +173,8 @@ test('migrateLegacyData successfully migrates both data and cache on darwin', as
 })
 
 test('migrateLegacyData successfully migrates both data and cache on win32', async () => {
-	using _ = withPlatform('win32', {
+	using _setup = setupPlatformMocks()
+	using _platform = withPlatform('win32', {
 		LOCALAPPDATA: undefined,
 		APPDATA: undefined,
 	})
@@ -177,7 +196,7 @@ test('migrateLegacyData successfully migrates both data and cache on win32', asy
 	mockFs.readdir.mockResolvedValue([]) // empty directory
 	mockFs.rmdir.mockResolvedValue(undefined)
 
-	await migrateLegacyData()
+	await expect(migrateLegacyData()).resolves.toBeUndefined()
 
 	expect(mockFs.rename).toHaveBeenCalledWith(legacyDataPath, primaryDataPath)
 	expect(mockFs.rename).toHaveBeenCalledWith(legacyCachePath, primaryCachePath)
@@ -185,7 +204,8 @@ test('migrateLegacyData successfully migrates both data and cache on win32', asy
 })
 
 test('migrateLegacyData successfully migrates both data and cache on linux', async () => {
-	using _ = withPlatform('linux', {
+	using _setup = setupPlatformMocks()
+	using _platform = withPlatform('linux', {
 		XDG_STATE_HOME: undefined,
 		XDG_CACHE_HOME: undefined,
 	})
@@ -207,7 +227,7 @@ test('migrateLegacyData successfully migrates both data and cache on linux', asy
 	mockFs.readdir.mockResolvedValue([]) // empty directory
 	mockFs.rmdir.mockResolvedValue(undefined)
 
-	await migrateLegacyData()
+	await expect(migrateLegacyData()).resolves.toBeUndefined()
 
 	expect(mockFs.rename).toHaveBeenCalledWith(legacyDataPath, primaryDataPath)
 	expect(mockFs.rename).toHaveBeenCalledWith(legacyCachePath, primaryCachePath)
@@ -215,27 +235,29 @@ test('migrateLegacyData successfully migrates both data and cache on linux', asy
 })
 
 test('migrateLegacyData handles missing legacy directory', async () => {
+	using _setup = setupPlatformMocks()
 	mockFs.stat.mockRejectedValue({ code: 'ENOENT' })
 
-	await migrateLegacyData()
+	await expect(migrateLegacyData()).resolves.toBeUndefined()
 
 	expect(mockFs.rename).not.toHaveBeenCalled()
 	expect(mockFs.rmdir).not.toHaveBeenCalled()
 })
 
 test('migrateLegacyData handles permission errors gracefully', async () => {
-	const consoleSpy = vi.spyOn(console, 'warn').mockImplementation(() => {})
+	using _setup = setupPlatformMocks()
+	using consoleSpy = mockConsoleWarn()
 	mockFs.stat.mockRejectedValue({ code: 'EACCES' })
 
-	await migrateLegacyData()
+	await expect(migrateLegacyData()).resolves.toBeUndefined()
 
 	expect(consoleSpy).toHaveBeenCalledWith(
 		expect.stringContaining('Legacy directory exists but is unreadable'),
 	)
-	consoleSpy.mockRestore()
 })
 
 test('migrateLegacyData removes legacy directory when empty', async () => {
+	using _setup = setupPlatformMocks()
 	mockFs.stat
 		.mockResolvedValueOnce({ isDirectory: () => true } as any) // legacyDir
 		.mockResolvedValueOnce({ isFile: () => false } as any) // no data file
@@ -244,7 +266,7 @@ test('migrateLegacyData removes legacy directory when empty', async () => {
 	mockFs.readdir.mockResolvedValue([]) // empty directory
 	mockFs.rmdir.mockResolvedValue(undefined)
 
-	await migrateLegacyData()
+	await expect(migrateLegacyData()).resolves.toBeUndefined()
 
 	expect(mockFs.rmdir).toHaveBeenCalledWith('/mock/home/.epicshop')
 })

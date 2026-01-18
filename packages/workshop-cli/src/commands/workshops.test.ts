@@ -1,7 +1,7 @@
 import fs from 'node:fs/promises'
 import os from 'node:os'
 import path from 'node:path'
-import { describe, expect, it, vi } from 'vitest'
+import { expect, test, vi } from 'vitest'
 
 vi.mock('execa', () => ({
 	execa: vi.fn(),
@@ -22,8 +22,9 @@ const { execa } = await import('execa')
 
 const { add, startWorkshop } = await import('./workshops.ts')
 
-describe('workshops add', () => {
-	it('passes a clone destination containing spaces as a single argument', async () => {
+test(
+	'workshops add passes a clone destination containing spaces as a single argument (aha)',
+	async () => {
 		vi.mocked(execa).mockClear()
 		vi.mocked(execa).mockResolvedValue({} as never)
 
@@ -48,59 +49,57 @@ describe('workshops add', () => {
 		} finally {
 			await fs.rm(baseDir, { recursive: true, force: true })
 		}
-	})
+	},
+)
 
-	it('treats destination as the full clone path', async () => {
-		vi.mocked(execa).mockClear()
-		vi.mocked(execa).mockResolvedValue({} as never)
+test('workshops add treats destination as the full clone path', async () => {
+	vi.mocked(execa).mockClear()
+	vi.mocked(execa).mockResolvedValue({} as never)
 
-		const baseDir = await fs.mkdtemp(path.join(os.tmpdir(), 'epicshop user '))
-		const destination = path.join(baseDir, 'custom-destination')
+	const baseDir = await fs.mkdtemp(path.join(os.tmpdir(), 'epicshop user '))
+	const destination = path.join(baseDir, 'custom-destination')
 
-		try {
-			const repoName = 'data-modeling'
-			const result = await add({ repoName, destination, silent: true })
+	try {
+		const repoName = 'data-modeling'
+		const result = await add({ repoName, destination, silent: true })
 
-			expect(result.success).toBe(true)
+		expect(result.success).toBe(true)
 
-			const repoUrl = `https://github.com/epicweb-dev/${repoName}.git`
-			const reposDir = path.dirname(destination)
+		const repoUrl = `https://github.com/epicweb-dev/${repoName}.git`
+		const reposDir = path.dirname(destination)
 
-			expect(execa).toHaveBeenCalledWith(
-				'git',
-				['clone', repoUrl, destination],
-				expect.objectContaining({ cwd: reposDir }),
-			)
-		} finally {
-			await fs.rm(baseDir, { recursive: true, force: true })
-		}
-	})
+		expect(execa).toHaveBeenCalledWith(
+			'git',
+			['clone', repoUrl, destination],
+			expect.objectContaining({ cwd: reposDir }),
+		)
+	} finally {
+		await fs.rm(baseDir, { recursive: true, force: true })
+	}
 })
 
-describe('workshops start', () => {
-	it('treats Ctrl+C (signal termination) as success', async () => {
-		const workshopDir = await fs.mkdtemp(
-			path.join(os.tmpdir(), 'epicshop workshop '),
+test('workshops start treats Ctrl+C (signal termination) as success', async () => {
+	const workshopDir = await fs.mkdtemp(
+		path.join(os.tmpdir(), 'epicshop workshop '),
+	)
+	try {
+		const { getWorkshop } = await import(
+			'@epic-web/workshop-utils/workshops.server'
 		)
-		try {
-			const { getWorkshop } = await import(
-				'@epic-web/workshop-utils/workshops.server'
-			)
-			vi.mocked(getWorkshop).mockResolvedValue({
-				title: 'Test Workshop',
-				path: workshopDir,
-				repoName: 'test-workshop',
-			} as never)
+		vi.mocked(getWorkshop).mockResolvedValue({
+			title: 'Test Workshop',
+			path: workshopDir,
+			repoName: 'test-workshop',
+		} as never)
 
-			vi.mocked(execa).mockRejectedValue({ signal: 'SIGINT' })
+		vi.mocked(execa).mockRejectedValue({ signal: 'SIGINT' })
 
-			const result = await startWorkshop({
-				workshop: 'test-workshop',
-				silent: true,
-			})
-			expect(result.success).toBe(true)
-		} finally {
-			await fs.rm(workshopDir, { recursive: true, force: true })
-		}
-	})
+		const result = await startWorkshop({
+			workshop: 'test-workshop',
+			silent: true,
+		})
+		expect(result.success).toBe(true)
+	} finally {
+		await fs.rm(workshopDir, { recursive: true, force: true })
+	}
 })
