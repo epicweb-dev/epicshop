@@ -7,7 +7,13 @@ import {
 	startOfflineVideoDownload,
 	deleteOfflineVideosForWorkshop,
 } from '@epic-web/workshop-utils/offline-videos.server'
-import { Form, Link, useFetcher, useLoaderData, useNavigation } from 'react-router'
+import {
+	Form,
+	Link,
+	useFetcher,
+	useLoaderData,
+	useNavigation,
+} from 'react-router'
 import { Button } from '#app/components/button.tsx'
 import { Icon } from '#app/components/icons.tsx'
 import { SimpleTooltip } from '#app/components/ui/tooltip.tsx'
@@ -22,7 +28,8 @@ const downloadResolutionOptions = [
 	{ value: 'medium', label: 'Medium' },
 	{ value: 'low', label: 'Low' },
 ] as const
-type DownloadResolutionOption = (typeof downloadResolutionOptions)[number]['value']
+type DownloadResolutionOption =
+	(typeof downloadResolutionOptions)[number]['value']
 
 function isDownloadResolutionOption(
 	value: FormDataEntryValue | null,
@@ -189,7 +196,9 @@ export default function AccountSettings() {
 							<select
 								id="downloadResolution"
 								name="downloadResolution"
-								defaultValue={offlineVideoPreferences?.downloadResolution ?? 'best'}
+								defaultValue={
+									offlineVideoPreferences?.downloadResolution ?? 'best'
+								}
 								className="border-border bg-background text-foreground rounded-md border px-2 py-1"
 							>
 								{downloadResolutionOptions.map((option) => (
@@ -317,7 +326,10 @@ export default function AccountSettings() {
 					</p>
 					<p className="text-muted-foreground text-sm">
 						Admins can manage all downloaded videos on the{' '}
-						<Link className="text-foreground underline" to="/admin/offline-videos">
+						<Link
+							className="text-foreground underline"
+							to="/admin/offline-videos"
+						>
 							Offline videos admin page
 						</Link>
 						.

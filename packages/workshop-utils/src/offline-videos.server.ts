@@ -485,7 +485,10 @@ async function getOfflineVideoDownloadResolution(): Promise<OfflineVideoDownload
 	return 'best'
 }
 
-const muxMp4Variants: Record<OfflineVideoMuxVariant, (playbackId: string) => string> = {
+const muxMp4Variants: Record<
+	OfflineVideoMuxVariant,
+	(playbackId: string) => string
+> = {
 	high: (playbackId) => `https://stream.mux.com/${playbackId}/high.mp4`,
 	medium: (playbackId) => `https://stream.mux.com/${playbackId}/medium.mp4`,
 	low: (playbackId) => `https://stream.mux.com/${playbackId}/low.mp4`,
