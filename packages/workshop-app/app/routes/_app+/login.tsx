@@ -86,7 +86,7 @@ export default function Login() {
 						<div className="flex w-full max-w-md flex-col items-center gap-3">
 							<div className="my-2 flex w-full flex-col items-center gap-2">
 								<p className="text-lg">Your verification code is: </p>
-								<div className="mb-3 w-full bg-gray-100 px-5 py-3 text-center text-lg font-bold dark:bg-black/40">
+								<div className="bg-muted mb-3 w-full px-5 py-3 text-center text-lg font-bold">
 									<code>{userCodeInfo.code}</code>
 								</div>
 								<p className="text-base">
@@ -124,7 +124,7 @@ export default function Login() {
 						</div>
 					) : (
 						<div className="flex flex-col items-center gap-8">
-							<div className="flex max-w-lg flex-col gap-3 pt-3 text-base text-gray-700 dark:text-gray-300">
+							<div className="text-muted-foreground flex max-w-lg flex-col gap-3 pt-3 text-base">
 								<p>
 									If you have access to this workshop on {displayName}, you'll
 									be able to watch videos, track progress, run tests, view the
@@ -147,10 +147,10 @@ export default function Login() {
 					)}
 					{authError ? (
 						<>
-							<div className="mt-4 text-red-500">
+							<div className="text-foreground-destructive mt-4">
 								There was an error: <pre>{authError}</pre>
 							</div>
-							<div className="mt-4 text-red-500">
+							<div className="text-foreground-destructive mt-4">
 								Please try again or{' '}
 								<Link to="/support" className="underline">
 									contact support

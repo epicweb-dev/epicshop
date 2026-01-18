@@ -85,7 +85,7 @@ export function Preview({
 					target="_blank"
 					rel="noreferrer"
 					className={cn(
-						'absolute right-5 bottom-5 flex items-center justify-center rounded-full bg-gray-100 p-2.5 transition hover:bg-gray-200 dark:bg-gray-800 hover:dark:bg-gray-600',
+						'absolute right-5 bottom-5 flex items-center justify-center rounded-full bg-muted p-2.5 text-foreground transition hover:bg-muted/80',
 					)}
 				>
 					<Icon name="ExternalLink" aria-hidden="true" />
@@ -94,7 +94,7 @@ export function Preview({
 				<iframe
 					title={title}
 					src={dev.pathname}
-					className="yo yo h-full w-full grow bg-white"
+					className="yo yo h-full w-full grow bg-background"
 					style={{ colorScheme: theme }}
 					allow="clipboard-write"
 				/>

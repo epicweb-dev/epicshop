@@ -36,7 +36,7 @@ export default function DbRoute({ loaderData }: Route.ComponentProps) {
 					{filepath}
 				</span>
 			</LaunchEditor>
-			<pre className="mt-4 max-h-[400px] w-full overflow-auto rounded border bg-gray-900 p-4 text-sm text-white">
+			<pre className="bg-muted mt-4 max-h-[400px] w-full overflow-auto rounded border p-4 text-sm text-foreground">
 				{JSON.stringify(db, null, 2)}
 			</pre>
 		</main>

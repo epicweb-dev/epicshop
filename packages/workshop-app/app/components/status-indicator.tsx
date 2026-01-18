@@ -5,17 +5,17 @@ export function StatusIndicator({
 }) {
 	const colors = {
 		running: {
-			pinger: 'bg-yellow-400',
-			circle: 'bg-yellow-500',
+			pinger: 'bg-warning/60',
+			circle: 'bg-warning',
 		},
 		passed: {
-			circle: 'bg-green-500',
+			circle: 'bg-success',
 		},
 		failed: {
-			circle: 'bg-red-500',
+			circle: 'bg-destructive',
 		},
 		stopped: {
-			circle: 'bg-gray-500',
+			circle: 'bg-muted-foreground',
 		},
 	}[status]
 	return (

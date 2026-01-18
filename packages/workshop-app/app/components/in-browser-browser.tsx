@@ -161,13 +161,13 @@ function InBrowserBrowserForRealz({
 						<TooltipContent>Open in new tab</TooltipContent>
 					</Tooltip>
 				</div>
-				<div className="flex h-full w-full grow dark:bg-white">
+				<div className="flex h-full w-full grow bg-background">
 					<iframe
 						title={name}
 						key={iframeKey}
 						ref={iframeRef}
 						src={iframeSrcUrl.toString()}
-						className="h-full w-full grow bg-white"
+						className="h-full w-full grow bg-background"
 						style={{ colorScheme: theme }}
 						allow="clipboard-write"
 					/>

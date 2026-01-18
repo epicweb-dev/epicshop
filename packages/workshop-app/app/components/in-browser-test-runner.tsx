@@ -85,7 +85,7 @@ export function InBrowserTestRunner({
 			<Icon
 				name="CheckSmall"
 				aria-label="Passed"
-				className="text-emerald-700"
+				className="text-success"
 			/>
 		),
 		fail: (
@@ -123,7 +123,7 @@ export function InBrowserTestRunner({
 								{sortedTestSteps.map((testStep, index) => (
 									// sometimes the steps come in so fast that the timestamp is the same
 									<li key={testStep.timestamp + testStep.title}>
-										<div className="flex items-baseline gap-2 text-emerald-700">
+										<div className="flex items-baseline gap-2 text-success">
 											<span>{index + 1}.</span>
 											<span>{testStepStatusEmojis[testStep.status]}</span>
 											<pre className="scrollbar-thin scrollbar-thumb-scrollbar max-h-48 overflow-y-auto p-4">
@@ -149,7 +149,7 @@ export function InBrowserTestRunner({
 								ref={iframeRef}
 								title={testFile}
 								src={pathname + testFile}
-								className="mt-5 min-h-[420px] w-full border bg-white"
+								className="mt-5 min-h-[420px] w-full border bg-background"
 								style={{ colorScheme: theme }}
 								allow="clipboard-write"
 							/>

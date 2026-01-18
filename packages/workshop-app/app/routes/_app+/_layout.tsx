@@ -144,7 +144,7 @@ function getScoreClassNames(score: number) {
 	const opacityNumber = Math.round(score * opacities.length - 1)
 	const shadowNumber = Math.round(score * shadows.length - 1)
 	return cn(
-		'shadow-purple-700 hover:opacity-100 focus:opacity-100 dark:shadow-purple-200',
+		'shadow-highlight hover:opacity-100 focus:opacity-100',
 		opacities[opacityNumber] ?? 'opacity-60',
 		shadows[shadowNumber] ?? 'shadow-none',
 		score === 1 ? 'animate-pulse hover:animate-none focus:animate-none' : null,
@@ -336,7 +336,7 @@ function FacePile({ isMenuOpened }: { isMenuOpened: boolean }) {
 							>
 								<span
 									className={cn(
-										'pointer-events-none overflow-hidden text-center text-ellipsis whitespace-nowrap',
+										'pointer-events-none truncate text-center',
 										isMenuOpened ? 'w-8' : 'w-6',
 									)}
 								>
@@ -508,7 +508,7 @@ function NoUserBanner() {
 		</div>
 	)
 	return (
-		<div className="z-10 flex h-16 items-center justify-between border-b bg-linear-to-tr from-blue-500 to-indigo-500 pl-4 text-white">
+		<div className="z-10 flex h-16 items-center justify-between border-b bg-linear-to-tr from-highlight to-info pl-4 text-info-foreground">
 			{isWide ? (
 				<>
 					<div className="hidden flex-1 flex-wrap items-center gap-4 sm:flex">
@@ -540,7 +540,7 @@ function NoUserBanner() {
 							</Link>
 							<Link
 								to={ENV.EPICSHOP_DEPLOYED ? `https://${host}/login` : '/login'}
-								className="relative flex h-full items-center justify-center space-x-1.5 bg-white/20 px-5 text-sm font-semibold shadow-md transition hover:bg-white/30"
+								className="relative flex h-full items-center justify-center space-x-1.5 bg-info-foreground/20 px-5 text-sm font-semibold shadow-md transition hover:bg-info-foreground/30"
 								onClick={dismissLoginBadge}
 							>
 								<Icon name="User" size="lg" />
@@ -593,7 +593,7 @@ function NoUserBanner() {
 							</Link>
 							<Link
 								to={ENV.EPICSHOP_DEPLOYED ? `https://${host}/login` : '/login'}
-								className="relative flex h-full items-center justify-center space-x-1.5 bg-white/20 px-5 text-sm font-semibold shadow-md transition hover:bg-white/30"
+								className="relative flex h-full items-center justify-center space-x-1.5 bg-info-foreground/20 px-5 text-sm font-semibold shadow-md transition hover:bg-info-foreground/30"
 								onClick={dismissLoginBadge}
 							>
 								<Icon name="User" size="lg" />
@@ -908,7 +908,7 @@ function MobileNavigation({
 										clsx(
 											'relative text-lg font-bold whitespace-nowrap outline-none hover:underline focus:underline',
 											{
-												'after:bg-background bg-black text-white after:absolute after:-right-2.5 after:-bottom-2.5 after:h-5 after:w-5 after:scale-75 after:rotate-45 after:content-[""]':
+												'after:bg-background bg-foreground text-background after:absolute after:-right-2.5 after:-bottom-2.5 after:h-5 after:w-5 after:scale-75 after:rotate-45 after:content-[""]':
 													isActive,
 											},
 										)
@@ -1304,7 +1304,7 @@ function Navigation({
 										clsx(
 											'relative text-lg font-bold whitespace-nowrap outline-none hover:underline focus:underline',
 											{
-												'after:bg-background bg-black text-white after:absolute after:-right-2.5 after:-bottom-2.5 after:h-5 after:w-5 after:scale-75 after:rotate-45 after:content-[""]':
+												'after:bg-background bg-foreground text-background after:absolute after:-right-2.5 after:-bottom-2.5 after:h-5 after:w-5 after:scale-75 after:rotate-45 after:content-[""]':
 													isActive,
 											},
 										)
