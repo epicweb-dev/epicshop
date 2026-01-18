@@ -673,32 +673,17 @@ const cli = yargs(args)
 		},
 	)
 	.command(
-		'clear-cache',
-		'Clear local epicshop caches',
+		'cleanup',
+		'Clean up local epicshop data',
 		(yargs: Argv) => {
 			return yargs
-				.option('silent', {
-					alias: 's',
-					type: 'boolean',
-					description: 'Run without output logs',
-					default: false,
+				.option('targets', {
+					alias: 't',
+					type: 'array',
+					choices: ['workshops', 'caches', 'preferences', 'auth'],
+					description:
+						'Cleanup targets (repeatable): workshops, caches, preferences, auth',
 				})
-				.example('$0 clear-cache', 'Clear local epicshop caches')
-				.example('$0 clear-cache --silent', 'Clear caches silently')
-		},
-		async (argv: ArgumentsCamelCase<{ silent?: boolean }>) => {
-			const { clearCache } = await import('./commands/clear-cache.js')
-			const result = await clearCache({ silent: argv.silent })
-			if (!result.success) {
-				process.exit(1)
-			}
-		},
-	)
-	.command(
-		'uninstall',
-		'Remove local epicshop workshops, data, and caches',
-		(yargs: Argv) => {
-			return yargs
 				.option('silent', {
 					alias: 's',
 					type: 'boolean',
@@ -711,27 +696,32 @@ const cli = yargs(args)
 					description: 'Skip the confirmation prompt',
 					default: false,
 				})
-				.example('$0 uninstall', 'Uninstall epicshop and delete local data')
 				.example(
-					'$0 uninstall --force',
-					'Uninstall without prompting for confirmation',
+					'$0 cleanup',
+					'Pick cleanup targets interactively (multi-select)',
+				)
+				.example(
+					'$0 cleanup --targets caches --targets preferences --force',
+					'Clean selected targets without prompting',
 				)
 		},
-		async (argv: ArgumentsCamelCase<{ silent?: boolean; force?: boolean }>) => {
-			try {
-				const { uninstall } = await import('./commands/uninstall.js')
-				const result = await uninstall({
-					silent: argv.silent,
-					force: argv.force,
-				})
-				if (!result.success) {
-					process.exit(1)
-				}
-			} catch (error) {
-				if ((error as Error).message === 'USER_QUIT') {
-					process.exit(0)
-				}
-				throw error
+		async (
+			argv: ArgumentsCamelCase<{
+				silent?: boolean
+				force?: boolean
+				targets?: Array<string>
+			}>,
+		) => {
+			const { cleanup } = await import('./commands/cleanup.js')
+			const result = await cleanup({
+				silent: argv.silent,
+				force: argv.force,
+				targets: argv.targets as Array<
+					'workshops' | 'caches' | 'preferences' | 'auth'
+				>,
+			})
+			if (!result.success) {
+				process.exit(1)
 			}
 		},
 	)
@@ -1423,14 +1413,9 @@ try {
 					: 'Select a workshop to warm the cache for',
 			},
 			{
-				name: `${chalk.green('clear-cache')} - Clear caches`,
-				value: 'clear-cache' as const,
-				description: 'Clear local epicshop caches',
-			},
-			{
-				name: `${chalk.green('uninstall')} - Uninstall epicshop`,
-				value: 'uninstall' as const,
-				description: 'Remove local workshops, data, and caches',
+				name: `${chalk.green('cleanup')} - Cleanup data`,
+				value: 'cleanup' as const,
+				description: 'Select what to delete (workshops, caches, prefs, auth)',
 			},
 			{
 				name: `${chalk.green('config')} - View/update configuration`,
@@ -1651,15 +1636,9 @@ try {
 				}
 				break
 			}
-			case 'clear-cache': {
-				const { clearCache } = await import('./commands/clear-cache.js')
-				const result = await clearCache({})
-				if (!result.success) process.exit(1)
-				break
-			}
-			case 'uninstall': {
-				const { uninstall } = await import('./commands/uninstall.js')
-				const result = await uninstall({})
+			case 'cleanup': {
+				const { cleanup } = await import('./commands/cleanup.js')
+				const result = await cleanup({})
 				if (!result.success) process.exit(1)
 				break
 			}

@@ -47,8 +47,7 @@ epicshop start <workshop>
 - `epicshop open`: open a workshop in your editor
 - `epicshop update`: pull the latest workshop changes
 - `epicshop warm`: warm caches for faster workshop startup
-- `epicshop clear-cache`: clear local caches
-- `epicshop uninstall`: remove local workshops, data, and caches
+- `epicshop cleanup`: select what to delete (workshops, caches, prefs, auth)
 - `epicshop exercises`: list exercises with progress (context-aware)
 - `epicshop playground`: view or set the current playground (context-aware)
 - `epicshop progress`: view or update your progress (context-aware)
@@ -68,8 +67,7 @@ This package also exports ESM entrypoints:
 import { start } from 'epicshop/start'
 import { update } from 'epicshop/update'
 import { warm } from 'epicshop/warm'
-import { clearCache } from 'epicshop/clear-cache'
-import { uninstall } from 'epicshop/uninstall'
+import { cleanup } from 'epicshop/cleanup'
 import { show, set } from 'epicshop/playground'
 import {
 	show as showProgress,

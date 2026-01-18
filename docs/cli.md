@@ -367,58 +367,37 @@ epicshop warm --silent
 - Pre-caches diff files for faster loading
 - Reports the number of apps loaded and diffs generated
 
-### `clear-cache`
+### `cleanup`
 
-Clear local epicshop caches (apps, diffs, GitHub data). This does not remove
-workshops or settings.
+Clean up local epicshop data using a multi-select prompt. Choose what to delete
+from workshops, caches, preferences, and auth data.
 
 ```bash
-epicshop clear-cache [options]
+epicshop cleanup [options]
 ```
 
 #### Options
 
-- `--silent, -s` - Run without output logs (default: false)
-
-#### Examples
-
-```bash
-# Clear local caches
-epicshop clear-cache
-
-# Clear caches silently
-epicshop clear-cache --silent
-```
-
-### `uninstall`
-
-Delete local epicshop workshops, configuration/state data, and caches. This
-command warns about unpushed changes before removing workshop directories.
-
-```bash
-epicshop uninstall [options]
-```
-
-#### Options
-
+- `--targets, -t <name>` - Cleanup targets (repeatable):
+  `workshops`, `caches`, `preferences`, `auth`
 - `--force, -f` - Skip the confirmation prompt (default: false)
 - `--silent, -s` - Run without output logs (default: false)
 
 #### Examples
 
 ```bash
-# Uninstall with confirmation
-epicshop uninstall
+# Pick cleanup targets interactively (multi-select)
+epicshop cleanup
 
-# Uninstall without prompting
-epicshop uninstall --force
+# Clean selected targets without prompting
+epicshop cleanup --targets caches --targets preferences --force
 ```
 
 #### Notes
 
-- Deletes all detected workshop directories in your configured repos folder
-- Removes local cache and state directories
-- The repos directory is removed only if it is empty after workshop deletion
+- Warns about unpushed workshop changes before deletion
+- Removes cache and legacy cache directories when selected
+- Preferences/auth cleanup updates local data files in-place
 
 ### `migrate`
 
