@@ -39,7 +39,13 @@ export async function action({ request }: ActionFunctionArgs) {
 			)
 		}
 		const result = await downloadOfflineVideo({ playbackId, title, url })
-		return data({ status: result.status, action: 'download' } as const)
+		return data({
+			status: result.status,
+			action: 'download',
+			...(result.status === 'error' && 'message' in result
+				? { message: result.message }
+				: {}),
+		} as const)
 	}
 
 	if (intent === 'delete-video') {

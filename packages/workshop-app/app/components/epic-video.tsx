@@ -58,6 +58,7 @@ function getOfflineVideoResolutionLabel(value: unknown) {
 type OfflineVideoActionData = {
 	status: string
 	action?: string
+	message?: string
 }
 
 function useOfflineVideoAvailability(playbackId: string, refreshKey: number) {
@@ -687,6 +688,15 @@ function EpicVideo({
 		if (offlineVideoFetcher.data?.status) {
 			setAvailabilityKey((key) => key + 1)
 		}
+	}, [offlineVideoFetcher.state, offlineVideoFetcher.data])
+
+	React.useEffect(() => {
+		if (offlineVideoFetcher.state !== 'idle') return
+		const data = offlineVideoFetcher.data
+		if (!data || data.action !== 'download' || data.status !== 'error') return
+		const description =
+			data.message ?? 'Offline video download failed. Check the terminal logs.'
+		toast.error('Offline video download failed', { description })
 	}, [offlineVideoFetcher.state, offlineVideoFetcher.data])
 
 	const handleDownload = React.useCallback(() => {

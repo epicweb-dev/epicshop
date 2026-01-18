@@ -47,7 +47,7 @@ files to embed Epic Web videos with enhanced features.
 - **Theme Support**: Automatically adapts to light/dark themes
 - **Offline Handling**: Graceful fallback when offline
 - **Offline Downloads (Local)**: Optional bulk downloads from Preferences for
-  offline playback, encrypted at rest
+  offline playback, encrypted at rest, with toast errors on failures
 - **Region Restrictions**: Handles region-restricted content with upgrade
   prompts
 
@@ -122,6 +122,8 @@ The video player gracefully handles various error scenarios:
 - **Region Restrictions**: Shows upgrade prompts for restricted content
 - **Authentication Errors**: Provides login/upgrade links
 - **Network Issues**: Shows offline indicators
+- **Offline Download Failures**: Shows toast errors and logs via
+  `NODE_DEBUG=epic:offline-videos`
 - **Invalid URLs**: Displays error messages
 - **Missing Transcripts**: Falls back to basic video embed
 

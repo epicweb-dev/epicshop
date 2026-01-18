@@ -595,8 +595,14 @@ async function downloadMuxVideo({
 	})
 
 	for (const url of urls) {
+		log.info('Attempting mux download', { playbackId, url })
 		const response = await fetch(url).catch((error) => {
 			lastError = error as Error
+			log.warn('Mux download request failed', {
+				playbackId,
+				url,
+				message: lastError.message,
+			})
 			return null
 		})
 		if (!response) continue
@@ -604,6 +610,12 @@ async function downloadMuxVideo({
 			lastError = new Error(
 				`Failed to download ${playbackId} from ${url} (${response.status})`,
 			)
+			log.warn('Mux download response not ok', {
+				playbackId,
+				url,
+				status: response.status,
+				hasBody: Boolean(response.body),
+			})
 			continue
 		}
 
@@ -638,14 +650,17 @@ async function downloadMuxVideo({
 		await pipeline(Readable.from(webStream), progressTracker, cipher, stream)
 		await fs.rename(tmpPath, filePath)
 		const stat = await fs.stat(filePath)
-
 		emitDownloadProgress({
 			playbackId,
 			bytesDownloaded: stat.size,
 			totalBytes: stat.size,
 			status: 'complete',
 		})
-
+		log.info('Mux download complete', {
+			playbackId,
+			url,
+			size: stat.size,
+		})
 		return { size: stat.size }
 	}
 
@@ -679,6 +694,10 @@ async function runOfflineVideoDownloads({
 			title: video.title,
 		}
 		downloadState.updatedAt = updatedAt
+		log.info('Downloading offline video', {
+			playbackId: video.playbackId,
+			title: video.title,
+		})
 
 		const iv = createOfflineVideoIv()
 		const entry: OfflineVideoEntry = {
@@ -825,6 +844,10 @@ export async function startOfflineVideoDownload({
 		allowUserIdUpdate: true,
 	})
 	if (!keyInfo) {
+		log.warn('Offline video download unavailable: missing key info', {
+			available: videos.length,
+			unavailable,
+		})
 		return {
 			state: downloadState,
 			available: videos.length,
@@ -876,6 +899,11 @@ export async function startOfflineVideoDownload({
 		current: null,
 		errors: [],
 	}
+	log.info('Offline video downloads queued', {
+		queued: downloads.length,
+		skipped: alreadyDownloaded,
+		unavailable,
+	})
 
 	if (downloads.length > 0) {
 		const resolution = await getOfflineVideoDownloadResolution()
@@ -910,6 +938,7 @@ export async function downloadOfflineVideo({
 	title: string
 	url: string
 }) {
+	log.info('Offline video download requested', { playbackId, title, url })
 	const workshop = getWorkshopIdentity()
 	const index = await readOfflineVideoIndex()
 	const authInfo = await getAuthInfo()
@@ -917,7 +946,16 @@ export async function downloadOfflineVideo({
 		userId: authInfo?.id ?? null,
 		allowUserIdUpdate: true,
 	})
-	if (!keyInfo) return { status: 'error' } as const
+	if (!keyInfo) {
+		log.warn('Offline video download failed: missing key info', {
+			playbackId,
+		})
+		const message = `Unable to download "${title}". Try again later.`
+		return {
+			status: 'error',
+			message,
+		} as const
+	}
 	const resolution = await getOfflineVideoDownloadResolution()
 
 	const existing = index[playbackId]
@@ -966,17 +1004,21 @@ export async function downloadOfflineVideo({
 			updatedAt: new Date().toISOString(),
 		}
 		await writeOfflineVideoIndex(index)
+		log.info('Offline video download complete', { playbackId, size })
 		return { status: 'downloaded' } as const
 	} catch (error) {
-		const message = error instanceof Error ? error.message : 'Download failed'
+		const detailedMessage =
+			error instanceof Error ? error.message : 'Download failed'
+		const message = `Failed to download "${title}". Please try again.`
+		log.error(`Offline video download failed for ${playbackId}`, error)
 		index[playbackId] = {
 			...entry,
 			status: 'error',
-			error: message,
+			error: detailedMessage,
 			updatedAt: new Date().toISOString(),
 		}
 		await writeOfflineVideoIndex(index)
-		return { status: 'error' } as const
+		return { status: 'error', message } as const
 	}
 }
 
