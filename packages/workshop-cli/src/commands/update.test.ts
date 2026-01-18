@@ -48,8 +48,8 @@ async function getUpdateLocalRepoMock() {
 }
 
 test('update should return failure result when deployed environment', async () => {
-	using _console = mockConsole()
-	using _env = setEnv('EPICSHOP_DEPLOYED', 'true')
+	using ignoredConsole = mockConsole()
+	using ignoredEnv = setEnv('EPICSHOP_DEPLOYED', 'true')
 
 	const resultPromise = update({ silent: true })
 
@@ -63,8 +63,8 @@ test('update should return failure result when deployed environment', async () =
 })
 
 test('update should return failure result when deployed environment with 1', async () => {
-	using _console = mockConsole()
-	using _env = setEnv('EPICSHOP_DEPLOYED', '1')
+	using ignoredConsole = mockConsole()
+	using ignoredEnv = setEnv('EPICSHOP_DEPLOYED', '1')
 
 	const resultPromise = update({ silent: true })
 
@@ -78,8 +78,8 @@ test('update should return failure result when deployed environment with 1', asy
 })
 
 test('update should return success result when no updates are available', async () => {
-	using _console = mockConsole()
-	using _env = setEnv('EPICSHOP_DEPLOYED', undefined)
+	using ignoredConsole = mockConsole()
+	using ignoredEnv = setEnv('EPICSHOP_DEPLOYED', undefined)
 
 	const updateLocalRepoMock = await getUpdateLocalRepoMock()
 	updateLocalRepoMock.mockResolvedValue({
@@ -99,8 +99,8 @@ test('update should return success result when no updates are available', async 
 })
 
 test('update should return success result when updates are applied successfully', async () => {
-	using _console = mockConsole()
-	using _env = setEnv('EPICSHOP_DEPLOYED', undefined)
+	using ignoredConsole = mockConsole()
+	using ignoredEnv = setEnv('EPICSHOP_DEPLOYED', undefined)
 
 	const updateLocalRepoMock = await getUpdateLocalRepoMock()
 	updateLocalRepoMock.mockResolvedValue({
@@ -120,8 +120,8 @@ test('update should return success result when updates are applied successfully'
 })
 
 test('update should return failure result when updateLocalRepo fails', async () => {
-	using _console = mockConsole()
-	using _env = setEnv('EPICSHOP_DEPLOYED', undefined)
+	using ignoredConsole = mockConsole()
+	using ignoredEnv = setEnv('EPICSHOP_DEPLOYED', undefined)
 
 	const updateLocalRepoMock = await getUpdateLocalRepoMock()
 	updateLocalRepoMock.mockResolvedValue({
@@ -141,8 +141,8 @@ test('update should return failure result when updateLocalRepo fails', async () 
 })
 
 test('update should return failure result when updateLocalRepo throws an error', async () => {
-	using _console = mockConsole()
-	using _env = setEnv('EPICSHOP_DEPLOYED', undefined)
+	using ignoredConsole = mockConsole()
+	using ignoredEnv = setEnv('EPICSHOP_DEPLOYED', undefined)
 
 	const updateLocalRepoMock = await getUpdateLocalRepoMock()
 	updateLocalRepoMock.mockRejectedValue(new Error('Module not found'))
@@ -161,7 +161,7 @@ test('update should return failure result when updateLocalRepo throws an error',
 
 test('update should log success message when silent is false', async () => {
 	using consoleSpies = mockConsole()
-	using _env = setEnv('EPICSHOP_DEPLOYED', undefined)
+	using ignoredEnv = setEnv('EPICSHOP_DEPLOYED', undefined)
 
 	const updateLocalRepoMock = await getUpdateLocalRepoMock()
 	updateLocalRepoMock.mockResolvedValue({
@@ -181,7 +181,7 @@ test('update should log success message when silent is false', async () => {
 
 test('update should log error message when silent is false and updateLocalRepo fails', async () => {
 	using consoleSpies = mockConsole()
-	using _env = setEnv('EPICSHOP_DEPLOYED', undefined)
+	using ignoredEnv = setEnv('EPICSHOP_DEPLOYED', undefined)
 
 	const updateLocalRepoMock = await getUpdateLocalRepoMock()
 	updateLocalRepoMock.mockResolvedValue({

@@ -140,7 +140,7 @@ test('handleWorkshopDirectory rejects relative paths', async () => {
 
 test('handleWorkshopDirectory normalizes playground to workshop root', async () => {
 	await using fixture = await createWorkshopFixture()
-	using _console = mockConsoleError()
+	using ignoredConsole = mockConsoleError()
 
 	const { init } = await import('@epic-web/workshop-utils/apps.server')
 	const initMock = vi.mocked(init)
@@ -153,7 +153,7 @@ test('handleWorkshopDirectory normalizes playground to workshop root', async () 
 
 test('handleWorkshopDirectory rejects when no workshop directory found (aha)', async () => {
 	await using fixture = await createTempDir()
-	using _console = mockConsoleError()
+	using ignoredConsole = mockConsoleError()
 
 	await expect(handleWorkshopDirectory(fixture.root)).rejects.toThrow(
 		/No workshop directory found/,

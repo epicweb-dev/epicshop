@@ -15,7 +15,7 @@ function mockConsole() {
 }
 
 test('warm should return a result with correct structure', async () => {
-	using _console = mockConsole()
+	using ignoredConsole = mockConsole()
 	const resultPromise = warm({ silent: true })
 
 	await expect(resultPromise).resolves.toEqual(
@@ -27,7 +27,7 @@ test('warm should return a result with correct structure', async () => {
 })
 
 test('warm should accept silent parameter', async () => {
-	using _console = mockConsole()
+	using ignoredConsole = mockConsole()
 
 	await expect(warm({ silent: true })).resolves.toEqual(
 		expect.objectContaining({
@@ -76,7 +76,7 @@ test('WarmResult type should handle error case', () => {
 })
 
 test('warm function should handle errors gracefully', async () => {
-	using _console = mockConsole()
+	using ignoredConsole = mockConsole()
 	const resultPromise = warm({ silent: true })
 
 	await expect(resultPromise).resolves.toEqual(
