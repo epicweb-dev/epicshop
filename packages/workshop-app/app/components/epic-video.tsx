@@ -16,6 +16,7 @@ import {
 } from 'media-chrome/react'
 import * as React from 'react'
 import { Await, Link, useFetcher } from 'react-router'
+import { useEventSource } from 'remix-utils/sse/react'
 import { toast } from 'sonner'
 import { useTheme } from '#app/routes/theme/index.tsx'
 import {
@@ -491,6 +492,53 @@ function EpicVideo({
 	const shouldUseOfflineVideo = offlineVideo.available
 	const offlineVideoFetcher = useFetcher<OfflineVideoActionData>()
 	const isOfflineActionBusy = offlineVideoFetcher.state !== 'idle'
+	const [downloadProgress, setDownloadProgress] = React.useState<
+		number | undefined
+	>(undefined)
+
+	// Subscribe to download progress via SSE when downloading
+	const isDownloading = isOfflineActionBusy && !offlineVideo.available
+	const progressMessage = useEventSource(
+		`/resources/offline-video-progress/${encodeURIComponent(muxPlaybackId)}`,
+		{ enabled: isDownloading },
+	)
+
+	// Process SSE messages for download progress
+	React.useEffect(() => {
+		if (!progressMessage) return
+
+		try {
+			const progress = JSON.parse(progressMessage) as {
+				playbackId: string
+				bytesDownloaded: number
+				totalBytes: number | null
+				status: 'downloading' | 'complete' | 'error'
+			}
+
+			if (progress.status === 'complete' || progress.status === 'error') {
+				setDownloadProgress(undefined)
+				return
+			}
+
+			if (progress.totalBytes && progress.totalBytes > 0) {
+				const percent = (progress.bytesDownloaded / progress.totalBytes) * 100
+				setDownloadProgress(percent)
+			} else {
+				// Indeterminate - we don't know the total size
+				setDownloadProgress(undefined)
+			}
+		} catch {
+			// Ignore JSON parse errors
+		}
+	}, [progressMessage])
+
+	// Reset progress when download state changes
+	React.useEffect(() => {
+		if (!isDownloading) {
+			setDownloadProgress(undefined)
+		}
+	}, [isDownloading])
+
 	const currentTimeSessionKey = `${muxPlaybackId}:currentTime`
 	const [offlineStartTime, setOfflineStartTime] = React.useState<number | null>(
 		null,
@@ -687,6 +735,7 @@ function EpicVideo({
 		<OfflineVideoActionButtons
 			isAvailable={offlineVideo.available}
 			isBusy={isOfflineActionBusy}
+			downloadProgress={downloadProgress}
 			onDownload={handleDownload}
 			onDelete={handleDelete}
 		/>

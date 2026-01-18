@@ -1,4 +1,5 @@
 import { createHash, randomUUID } from 'node:crypto'
+import { EventEmitter } from 'node:events'
 import { createReadStream, createWriteStream, promises as fs } from 'node:fs'
 import path from 'node:path'
 import { Readable, Transform } from 'node:stream'
@@ -152,6 +153,25 @@ const log = logger('epic:offline-videos')
 const offlineVideoDirectoryName = 'offline-videos'
 const offlineVideoIndexFileName = 'index.json'
 const offlineVideoConfigFileName = 'offline-video-config.json'
+
+export type VideoDownloadProgress = {
+	playbackId: string
+	bytesDownloaded: number
+	totalBytes: number | null
+	status: 'downloading' | 'complete' | 'error'
+}
+
+export const DOWNLOAD_PROGRESS_EVENTS = {
+	PROGRESS: 'progress',
+} as const
+
+class DownloadProgressEmitter extends EventEmitter {}
+
+export const downloadProgressEmitter = new DownloadProgressEmitter()
+
+function emitDownloadProgress(progress: VideoDownloadProgress) {
+	downloadProgressEmitter.emit(DOWNLOAD_PROGRESS_EVENTS.PROGRESS, progress)
+}
 
 let downloadState: OfflineVideoDownloadState = {
 	status: 'idle',
@@ -381,6 +401,21 @@ function createSliceTransform({
 	})
 }
 
+function createProgressTrackingTransform({
+	onProgress,
+}: {
+	onProgress: (bytesDownloaded: number) => void
+}) {
+	let totalBytes = 0
+	return new Transform({
+		transform(chunk, _encoding, callback) {
+			totalBytes += (chunk as Buffer).length
+			onProgress(totalBytes)
+			callback(null, chunk)
+		},
+	})
+}
+
 function createOfflineVideoReadStream({
 	filePath,
 	size,
@@ -552,6 +587,13 @@ async function downloadMuxVideo({
 	const urls = getMuxMp4Urls(playbackId, resolution)
 	let lastError: Error | null = null
 
+	emitDownloadProgress({
+		playbackId,
+		bytesDownloaded: 0,
+		totalBytes: null,
+		status: 'downloading',
+	})
+
 	for (const url of urls) {
 		const response = await fetch(url).catch((error) => {
 			lastError = error as Error
@@ -565,16 +607,54 @@ async function downloadMuxVideo({
 			continue
 		}
 
+		// Get content-length if available for progress tracking
+		const contentLengthHeader = response.headers.get('content-length')
+		const totalBytes = contentLengthHeader
+			? parseInt(contentLengthHeader, 10)
+			: null
+
+		emitDownloadProgress({
+			playbackId,
+			bytesDownloaded: 0,
+			totalBytes,
+			status: 'downloading',
+		})
+
 		await ensureOfflineVideoDir()
 		const tmpPath = `${filePath}.tmp-${randomUUID()}`
 		const stream = createWriteStream(tmpPath, { mode: 0o600 })
 		const cipher = createOfflineVideoCipher({ key, iv })
+		const progressTracker = createProgressTrackingTransform({
+			onProgress: (bytesDownloaded) => {
+				emitDownloadProgress({
+					playbackId,
+					bytesDownloaded,
+					totalBytes,
+					status: 'downloading',
+				})
+			},
+		})
 		const webStream = response.body as unknown as AsyncIterable<Uint8Array>
-		await pipeline(Readable.from(webStream), cipher, stream)
+		await pipeline(Readable.from(webStream), progressTracker, cipher, stream)
 		await fs.rename(tmpPath, filePath)
 		const stat = await fs.stat(filePath)
+
+		emitDownloadProgress({
+			playbackId,
+			bytesDownloaded: stat.size,
+			totalBytes: stat.size,
+			status: 'complete',
+		})
+
 		return { size: stat.size }
 	}
+
+	emitDownloadProgress({
+		playbackId,
+		bytesDownloaded: 0,
+		totalBytes: null,
+		status: 'error',
+	})
 
 	throw lastError ?? new Error(`Unable to download video ${playbackId}`)
 }
