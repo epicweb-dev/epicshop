@@ -14,14 +14,11 @@ import {
 	makeTimings,
 	time,
 } from '@epic-web/workshop-utils/timing.server'
-import * as Tabs from '@radix-ui/react-tabs'
 import slugify from '@sindresorhus/slugify'
-import { clsx } from 'clsx'
 import * as cookie from 'cookie'
 import { useRef, useState } from 'react'
 import {
 	Link,
-	useSearchParams,
 	data,
 	type HeadersFunction,
 	type LoaderFunctionArgs,
@@ -33,14 +30,8 @@ import { GeneralErrorBoundary } from '#app/components/error-boundary.tsx'
 import { type InBrowserBrowserRef } from '#app/components/in-browser-browser.tsx'
 import { NavChevrons } from '#app/components/nav-chevrons.tsx'
 import { useRevalidationWS } from '#app/components/revalidation-ws.tsx'
-import { StatusIndicator } from '#app/components/status-indicator.tsx'
-import { useUserHasAccess } from '#app/components/user.tsx'
 import { Preview } from '#app/routes/_app+/exercise+/$exerciseNumber_.$stepNumber.$type+/__shared/preview.tsx'
-import { TestUI } from '#app/routes/_app+/exercise+/$exerciseNumber_.$stepNumber.$type+/__shared/tests.tsx'
-import {
-	getAppRunningState,
-	getTestState,
-} from '#app/routes/_app+/exercise+/$exerciseNumber_.$stepNumber.$type+/__shared/utils.tsx'
+import { getAppRunningState } from '#app/routes/_app+/exercise+/$exerciseNumber_.$stepNumber.$type+/__shared/utils.tsx'
 import { EditFileOnGitHub } from '#app/routes/launch-editor.tsx'
 import { Mdx } from '#app/utils/mdx.tsx'
 import { getRootMatchLoaderData } from '#app/utils/root-loader.ts'
@@ -111,7 +102,6 @@ export async function loader({ request, params }: LoaderFunctionArgs) {
 	const splitPercent = computeSplitPercent(rawSplit, 50)
 
 	const { isRunning, portIsAvailable } = await getAppRunningState(example)
-	const { isTestRunning, testExitCode } = getTestState(example)
 
 	return data(
 		{
@@ -131,8 +121,6 @@ export async function loader({ request, params }: LoaderFunctionArgs) {
 				stackBlitzUrl: example.stackBlitzUrl,
 				isRunning,
 				portIsAvailable,
-				isTestRunning,
-				testExitCode,
 				epicVideoEmbeds: example.epicVideoEmbeds,
 				instructionsCode: example.instructionsCode,
 			},
@@ -166,24 +154,6 @@ export const headers: HeadersFunction = ({ loaderHeaders, parentHeaders }) => {
 	return headers
 }
 
-const tabs = ['example', 'tests'] as const
-const isValidPreview = (s: string | null): s is (typeof tabs)[number] =>
-	Boolean(s && tabs.includes(s as (typeof tabs)[number]))
-
-function withParam(
-	searchParams: URLSearchParams,
-	key: string,
-	value: string | null,
-) {
-	const newSearchParams = new URLSearchParams(searchParams)
-	if (value === null) {
-		newSearchParams.delete(key)
-	} else {
-		newSearchParams.set(key, value)
-	}
-	return newSearchParams
-}
-
 // we'll render the title ourselves thank you
 const mdxComponents = { h1: () => null }
 
@@ -193,8 +163,6 @@ export default function ExampleRoute() {
 	const containerRef = useRef<HTMLDivElement>(null)
 	const leftPaneRef = useRef<HTMLDivElement>(null)
 	const [splitPercent, setSplitPercent] = useState<number>(data.splitPercent)
-	const [searchParams] = useSearchParams()
-	const userHasAccess = useUserHasAccess()
 
 	useRevalidationWS({
 		watchPaths: [`${data.example.relativePath}/README.mdx`],
@@ -269,44 +237,6 @@ export default function ExampleRoute() {
 		document.body.style.userSelect = 'none'
 		handleMove(initialClientX)
 	}
-
-	const preview = searchParams.get('preview')
-
-	function shouldHideTab(tab: (typeof tabs)[number]) {
-		if (tab === 'tests') {
-			return ENV.EPICSHOP_DEPLOYED || data.example.test.type === 'none'
-		}
-		return false
-	}
-
-	function getTabStatus(
-		tab: (typeof tabs)[number],
-	): 'running' | 'passed' | 'failed' | null {
-		if (tab === 'tests') {
-			if (data.example.isTestRunning) return 'running'
-			if (data.example.testExitCode === 0) return 'passed'
-			if (
-				data.example.testExitCode !== null &&
-				data.example.testExitCode !== 0
-			) {
-				return 'failed'
-			}
-			return null
-		}
-		if (tab === 'example') {
-			if (data.example.isRunning) return 'running'
-		}
-		return null
-	}
-
-	const activeTab = isValidPreview(preview)
-		? preview
-		: tabs.find((tab) => !shouldHideTab(tab))
-
-	const testAppInfo =
-		data.example.test.type === 'none'
-			? null
-			: { name: data.example.name, test: data.example.test }
 
 	return (
 		<div className="flex max-w-full grow flex-col">
@@ -426,63 +356,10 @@ export default function ExampleRoute() {
 					}}
 				/>
 				<div className="flex min-w-0 flex-1">
-					<Tabs.Root
-						className="relative flex min-h-0 min-w-0 flex-1 flex-col overflow-hidden sm:col-span-1 sm:row-span-1"
-						value={activeTab}
-					>
-						<Tabs.List className="scrollbar-thin scrollbar-thumb-scrollbar h-14 min-h-14 overflow-x-auto border-b whitespace-nowrap">
-							{tabs.map((tab) => {
-								const hidden = shouldHideTab(tab)
-								const status = getTabStatus(tab)
-								return (
-									<Tabs.Trigger key={tab} value={tab} hidden={hidden} asChild>
-										<Link
-											id={`${tab}-tab`}
-											className={clsx(
-												'clip-path-button radix-state-active:z-10 radix-state-active:bg-foreground radix-state-active:text-background radix-state-active:hover:bg-foreground/80 radix-state-active:hover:text-background/80 radix-state-inactive:hover:bg-foreground/20 radix-state-inactive:hover:text-foreground/80 focus:bg-foreground/80 focus:text-background/80 relative h-full px-6 py-4 font-mono text-sm uppercase outline-none',
-												hidden ? 'hidden' : 'inline-block',
-											)}
-											preventScrollReset
-											prefetch="intent"
-											to={`?${withParam(
-												searchParams,
-												'preview',
-												tab === 'example' ? null : tab,
-											)}`}
-										>
-											<span className="flex items-center gap-2">
-												{status && <StatusIndicator status={status} />}
-												<span>{tab}</span>
-											</span>
-										</Link>
-									</Tabs.Trigger>
-								)
-							})}
-						</Tabs.List>
-						<div className="relative z-10 flex min-h-0 flex-1 flex-col overflow-hidden">
-							<Tabs.Content
-								value="example"
-								className="radix-state-inactive:hidden flex min-h-0 w-full grow basis-0 items-stretch justify-center self-start"
-								forceMount
-							>
-								<Preview
-									appInfo={data.example}
-									inBrowserBrowserRef={inBrowserBrowserRef}
-								/>
-							</Tabs.Content>
-							<Tabs.Content
-								value="tests"
-								className="radix-state-inactive:hidden flex min-h-0 w-full grow basis-0 items-stretch justify-center self-start overflow-hidden"
-							>
-								<div className="flex h-full min-h-0 w-full grow flex-col overflow-y-auto">
-									<TestUI
-										playgroundAppInfo={testAppInfo}
-										userHasAccess={userHasAccess}
-									/>
-								</div>
-							</Tabs.Content>
-						</div>
-					</Tabs.Root>
+					<Preview
+						appInfo={data.example}
+						inBrowserBrowserRef={inBrowserBrowserRef}
+					/>
 				</div>
 			</main>
 		</div>

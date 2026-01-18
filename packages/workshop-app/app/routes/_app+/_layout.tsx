@@ -907,6 +907,23 @@ function MobileNavigation({
 										</NavigationExerciseListItem>
 									)
 								})}
+								{showExamplesLink ? (
+									<span>
+										<NavLink
+											to="/examples"
+											prefetch="intent"
+											className={({ isActive }) =>
+												clsx(
+													'relative px-2 py-0.5 pr-3 text-2xl font-bold whitespace-nowrap outline-none hover:underline focus:underline',
+													'after:bg-background after:absolute after:-right-2.5 after:-bottom-2.5 after:h-5 after:w-5 after:scale-75 after:rotate-45 after:content-[""] hover:underline focus:underline',
+													{ 'bg-foreground text-background': isActive },
+												)
+											}
+										>
+											📚 Examples
+										</NavLink>
+									</span>
+								) : null}
 							</motion.ul>
 							<div className="mt-6">
 								<NavLink
@@ -924,25 +941,6 @@ function MobileNavigation({
 									📝 Workshop Feedback
 								</NavLink>
 							</div>
-							{showExamplesLink ? (
-								<div className="mt-2">
-									<NavLink
-										to="/examples"
-										prefetch="intent"
-										className={({ isActive }) =>
-											clsx(
-												'relative text-lg font-bold whitespace-nowrap outline-none hover:underline focus:underline',
-												{
-													'after:bg-background bg-foreground text-background after:absolute after:-right-2.5 after:-bottom-2.5 after:h-5 after:w-5 after:scale-75 after:rotate-45 after:content-[""]':
-														isActive,
-												},
-											)
-										}
-									>
-										📚 Examples
-									</NavLink>
-								</div>
-							) : null}
 						</motion.div>
 					)}
 					<div className="grow" />
@@ -1329,6 +1327,23 @@ function Navigation({
 										</NavigationExerciseListItem>
 									)
 								})}
+								{showExamplesLink ? (
+									<span>
+										<NavLink
+											to="/examples"
+											prefetch="intent"
+											className={({ isActive }) =>
+												clsx(
+													'relative px-2 py-0.5 pr-3 text-2xl font-bold whitespace-nowrap outline-none hover:underline focus:underline',
+													'after:bg-background after:absolute after:-right-2.5 after:-bottom-2.5 after:h-5 after:w-5 after:scale-75 after:rotate-45 after:content-[""] hover:underline focus:underline',
+													{ 'bg-foreground text-background': isActive },
+												)
+											}
+										>
+											📚 Examples
+										</NavLink>
+									</span>
+								) : null}
 							</motion.ul>
 							<div className="mt-6">
 								<NavLink
@@ -1346,25 +1361,6 @@ function Navigation({
 									📝 Workshop Feedback
 								</NavLink>
 							</div>
-							{showExamplesLink ? (
-								<div className="mt-2">
-									<NavLink
-										to="/examples"
-										prefetch="intent"
-										className={({ isActive }) =>
-											clsx(
-												'relative text-lg font-bold whitespace-nowrap outline-none hover:underline focus:underline',
-												{
-													'after:bg-background bg-foreground text-background after:absolute after:-right-2.5 after:-bottom-2.5 after:h-5 after:w-5 after:scale-75 after:rotate-45 after:content-[""]':
-														isActive,
-												},
-											)
-										}
-									>
-										📚 Examples
-									</NavLink>
-								</div>
-							) : null}
 						</motion.div>
 					)}
 					{!isMenuOpened && (
