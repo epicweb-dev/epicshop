@@ -68,8 +68,8 @@ void Promise.all([
 	checkConnection(),
 	getPresentUsers(),
 	warmEpicAPICache(),
+	warmOfflineVideoSummary(),
 ]).catch(() => {}) // don't block startup
-void warmOfflineVideoSummary().catch(() => {}) // non-critical cache warming
 
 const serverBuildPromise = getBuild()
 
