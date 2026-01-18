@@ -153,6 +153,31 @@ const offlineVideoDirectoryName = 'offline-videos'
 const offlineVideoIndexFileName = 'index.json'
 const offlineVideoConfigFileName = 'offline-video-config.json'
 
+export type VideoDownloadProgress = {
+	playbackId: string
+	bytesDownloaded: number
+	totalBytes: number | null
+	status: 'downloading' | 'complete' | 'error'
+	startedAt: number
+	updatedAt: number
+}
+
+const videoDownloadProgress = new Map<string, VideoDownloadProgress>()
+
+export function getVideoDownloadProgress(
+	playbackId: string,
+): VideoDownloadProgress | null {
+	return videoDownloadProgress.get(playbackId) ?? null
+}
+
+function setVideoDownloadProgress(progress: VideoDownloadProgress) {
+	videoDownloadProgress.set(progress.playbackId, progress)
+}
+
+function clearVideoDownloadProgress(playbackId: string) {
+	videoDownloadProgress.delete(playbackId)
+}
+
 let downloadState: OfflineVideoDownloadState = {
 	status: 'idle',
 	startedAt: null,
@@ -381,6 +406,21 @@ function createSliceTransform({
 	})
 }
 
+function createProgressTrackingTransform({
+	onProgress,
+}: {
+	onProgress: (bytesDownloaded: number) => void
+}) {
+	let totalBytes = 0
+	return new Transform({
+		transform(chunk, _encoding, callback) {
+			totalBytes += (chunk as Buffer).length
+			onProgress(totalBytes)
+			callback(null, chunk)
+		},
+	})
+}
+
 function createOfflineVideoReadStream({
 	filePath,
 	size,
@@ -552,6 +592,16 @@ async function downloadMuxVideo({
 	const urls = getMuxMp4Urls(playbackId, resolution)
 	let lastError: Error | null = null
 
+	const now = Date.now()
+	setVideoDownloadProgress({
+		playbackId,
+		bytesDownloaded: 0,
+		totalBytes: null,
+		status: 'downloading',
+		startedAt: now,
+		updatedAt: now,
+	})
+
 	for (const url of urls) {
 		const response = await fetch(url).catch((error) => {
 			lastError = error as Error
@@ -565,16 +615,65 @@ async function downloadMuxVideo({
 			continue
 		}
 
+		// Get content-length if available for progress tracking
+		const contentLengthHeader = response.headers.get('content-length')
+		const totalBytes = contentLengthHeader
+			? parseInt(contentLengthHeader, 10)
+			: null
+
+		setVideoDownloadProgress({
+			playbackId,
+			bytesDownloaded: 0,
+			totalBytes,
+			status: 'downloading',
+			startedAt: now,
+			updatedAt: Date.now(),
+		})
+
 		await ensureOfflineVideoDir()
 		const tmpPath = `${filePath}.tmp-${randomUUID()}`
 		const stream = createWriteStream(tmpPath, { mode: 0o600 })
 		const cipher = createOfflineVideoCipher({ key, iv })
+		const progressTracker = createProgressTrackingTransform({
+			onProgress: (bytesDownloaded) => {
+				setVideoDownloadProgress({
+					playbackId,
+					bytesDownloaded,
+					totalBytes,
+					status: 'downloading',
+					startedAt: now,
+					updatedAt: Date.now(),
+				})
+			},
+		})
 		const webStream = response.body as unknown as AsyncIterable<Uint8Array>
-		await pipeline(Readable.from(webStream), cipher, stream)
+		await pipeline(Readable.from(webStream), progressTracker, cipher, stream)
 		await fs.rename(tmpPath, filePath)
 		const stat = await fs.stat(filePath)
+
+		setVideoDownloadProgress({
+			playbackId,
+			bytesDownloaded: stat.size,
+			totalBytes: stat.size,
+			status: 'complete',
+			startedAt: now,
+			updatedAt: Date.now(),
+		})
+
+		// Clear progress after a short delay so clients can see the completion
+		setTimeout(() => clearVideoDownloadProgress(playbackId), 5000)
+
 		return { size: stat.size }
 	}
+
+	setVideoDownloadProgress({
+		playbackId,
+		bytesDownloaded: 0,
+		totalBytes: null,
+		status: 'error',
+		startedAt: now,
+		updatedAt: Date.now(),
+	})
 
 	throw lastError ?? new Error(`Unable to download video ${playbackId}`)
 }

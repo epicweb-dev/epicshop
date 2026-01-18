@@ -1,4 +1,5 @@
 import * as React from 'react'
+import { DownloadProgressIndicator } from '#app/components/download-progress-indicator.tsx'
 import { SimpleTooltip } from '#app/components/ui/tooltip.tsx'
 
 function DownloadIcon(props: React.ComponentPropsWithoutRef<'svg'>) {
@@ -43,6 +44,11 @@ function DeleteIcon(props: React.ComponentPropsWithoutRef<'svg'>) {
 export type OfflineVideoActionButtonsProps = {
 	isAvailable: boolean
 	isBusy?: boolean
+	/**
+	 * Download progress percentage (0-100). When defined, shows a progress indicator.
+	 * When undefined and isBusy is true, shows an indeterminate progress indicator.
+	 */
+	downloadProgress?: number
 	onDownload: () => void
 	onDelete: () => void
 }
@@ -50,15 +56,23 @@ export type OfflineVideoActionButtonsProps = {
 export function OfflineVideoActionButtons({
 	isAvailable,
 	isBusy = false,
+	downloadProgress,
 	onDownload,
 	onDelete,
 }: OfflineVideoActionButtonsProps) {
-	const label = isAvailable ? 'Delete offline video' : 'Download offline video'
+	const isDownloading = isBusy && !isAvailable
+	const showProgressIndicator = isDownloading
+	const label = isAvailable
+		? 'Delete offline video'
+		: isDownloading
+			? downloadProgress !== undefined
+				? `Downloading: ${Math.round(downloadProgress)}%`
+				: 'Downloading...'
+			: 'Download offline video'
 	const onClick = isAvailable ? onDelete : onDownload
 	const className = isAvailable
 		? 'text-foreground-destructive hover:bg-foreground-destructive/10'
 		: 'text-foreground hover:bg-muted'
-	const IconComponent = isAvailable ? DeleteIcon : DownloadIcon
 
 	return (
 		<SimpleTooltip content={label}>
@@ -69,7 +83,18 @@ export function OfflineVideoActionButtons({
 				className={`${className} inline-flex h-7 w-7 items-center justify-center rounded disabled:cursor-not-allowed disabled:opacity-50`}
 				aria-label={label}
 			>
-				<IconComponent className="h-4 w-4" />
+				{showProgressIndicator ? (
+					<DownloadProgressIndicator
+						progress={downloadProgress}
+						size={16}
+						strokeWidth={2}
+						className="h-4 w-4"
+					/>
+				) : isAvailable ? (
+					<DeleteIcon className="h-4 w-4" />
+				) : (
+					<DownloadIcon className="h-4 w-4" />
+				)}
 			</button>
 		</SimpleTooltip>
 	)

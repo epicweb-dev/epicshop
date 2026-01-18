@@ -491,6 +491,9 @@ function EpicVideo({
 	const shouldUseOfflineVideo = offlineVideo.available
 	const offlineVideoFetcher = useFetcher<OfflineVideoActionData>()
 	const isOfflineActionBusy = offlineVideoFetcher.state !== 'idle'
+	const [downloadProgress, setDownloadProgress] = React.useState<
+		number | undefined
+	>(undefined)
 	const currentTimeSessionKey = `${muxPlaybackId}:currentTime`
 	const [offlineStartTime, setOfflineStartTime] = React.useState<number | null>(
 		null,
@@ -638,8 +641,59 @@ function EpicVideo({
 		if (offlineVideoFetcher.state !== 'idle') return
 		if (offlineVideoFetcher.data?.status) {
 			setAvailabilityKey((key) => key + 1)
+			setDownloadProgress(undefined)
 		}
 	}, [offlineVideoFetcher.state, offlineVideoFetcher.data])
+
+	// Poll for download progress when a download is in progress
+	React.useEffect(() => {
+		if (!isOfflineActionBusy || offlineVideo.available) {
+			setDownloadProgress(undefined)
+			return
+		}
+
+		let isActive = true
+		const pollProgress = async () => {
+			try {
+				const response = await fetch(
+					`/resources/offline-video-progress/${encodeURIComponent(muxPlaybackId)}`,
+				)
+				if (!response.ok || !isActive) return
+				const data = (await response.json()) as {
+					progress: {
+						bytesDownloaded: number
+						totalBytes: number | null
+						status: string
+					} | null
+				}
+				if (!isActive || !data.progress) return
+
+				if (
+					data.progress.totalBytes &&
+					data.progress.totalBytes > 0 &&
+					data.progress.status === 'downloading'
+				) {
+					const percent =
+						(data.progress.bytesDownloaded / data.progress.totalBytes) * 100
+					setDownloadProgress(percent)
+				} else if (data.progress.status === 'downloading') {
+					// Indeterminate - we don't know the total size
+					setDownloadProgress(undefined)
+				}
+			} catch {
+				// Ignore errors during polling
+			}
+		}
+
+		// Poll immediately, then every 500ms
+		void pollProgress()
+		const intervalId = setInterval(() => void pollProgress(), 500)
+
+		return () => {
+			isActive = false
+			clearInterval(intervalId)
+		}
+	}, [isOfflineActionBusy, muxPlaybackId, offlineVideo.available])
 
 	const handleDownload = React.useCallback(() => {
 		toast.success(
@@ -687,6 +741,7 @@ function EpicVideo({
 		<OfflineVideoActionButtons
 			isAvailable={offlineVideo.available}
 			isBusy={isOfflineActionBusy}
+			downloadProgress={downloadProgress}
 			onDownload={handleDownload}
 			onDelete={handleDelete}
 		/>
