@@ -2,6 +2,7 @@ import { invariant } from '@epic-web/invariant'
 import * as cookie from 'cookie'
 
 import md5 from 'md5-hex'
+import PQueue from 'p-queue'
 import { z } from 'zod'
 import {
 	getExerciseApp,
@@ -111,6 +112,7 @@ export type EpicVideoInfos = Record<
 >
 
 const videoInfoLog = log.logger('video-info')
+const EPIC_VIDEO_INFO_CONCURRENCY = 6
 
 export async function getEpicVideoInfos(
 	epicWebUrls?: Array<string> | null,
@@ -124,18 +126,26 @@ export async function getEpicVideoInfos(
 	const authInfo = await getAuthInfo()
 	if (getEnv().EPICSHOP_DEPLOYED) return {}
 
-	videoInfoLog(`fetching epic video infos for ${epicWebUrls.length} URLs`)
+	const uniqueUrls = Array.from(new Set(epicWebUrls))
+	videoInfoLog(`fetching epic video infos for ${uniqueUrls.length} URLs`)
 	const epicVideoInfos: EpicVideoInfos = {}
-	for (const epicVideoEmbed of epicWebUrls) {
-		const epicVideoInfo = await getEpicVideoInfo({
-			epicVideoEmbed,
-			accessToken: authInfo?.tokenSet.access_token,
-			request,
-			timings,
-		})
-		if (epicVideoInfo) {
-			epicVideoInfos[epicVideoEmbed] = epicVideoInfo
-		}
+	const queue = new PQueue({ concurrency: EPIC_VIDEO_INFO_CONCURRENCY })
+	const results = await Promise.all(
+		uniqueUrls.map((epicVideoEmbed) =>
+			queue.add(async () => ({
+				epicVideoEmbed,
+				info: await getEpicVideoInfo({
+					epicVideoEmbed,
+					accessToken: authInfo?.tokenSet.access_token,
+					request,
+					timings,
+				}),
+			})),
+		),
+	)
+	for (const result of results) {
+		if (!result.info) continue
+		epicVideoInfos[result.epicVideoEmbed] = result.info
 	}
 	videoInfoLog(
 		`successfully fetched ${Object.keys(epicVideoInfos).length} epic video infos`,

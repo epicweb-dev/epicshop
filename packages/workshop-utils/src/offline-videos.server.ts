@@ -642,6 +642,10 @@ export async function getOfflineVideoSummary({
 	}
 }
 
+export async function warmOfflineVideoSummary() {
+	await getWorkshopVideoCollection()
+}
+
 export async function startOfflineVideoDownload({
 	request,
 }: { request?: Request } = {}): Promise<OfflineVideoStartResult> {
