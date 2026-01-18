@@ -494,7 +494,7 @@ export function initTools(server: McpServer) {
 			workshopDirectory: workshopDirectoryInputSchema,
 		},
 		async ({ workshopDirectory }) => {
-			workshopDirectory = await handleWorkshopDirectory(workshopDirectory)
+			await handleWorkshopDirectory(workshopDirectory)
 			const persistEnabled = (await getPreferences())?.playground?.persist ?? false
 			invariant(
 				persistEnabled,
@@ -546,7 +546,7 @@ export function initTools(server: McpServer) {
 				.describe('Use the most recent saved playground when true.'),
 		},
 		async ({ workshopDirectory, savedPlaygroundId, latest }) => {
-			workshopDirectory = await handleWorkshopDirectory(workshopDirectory)
+			await handleWorkshopDirectory(workshopDirectory)
 			const persistEnabled = (await getPreferences())?.playground?.persist ?? false
 			invariant(
 				persistEnabled,
