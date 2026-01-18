@@ -304,7 +304,9 @@ async function readOfflineVideoIndex(
 			'utf8',
 		)
 		const parsed = JSON.parse(raw)
-		return (typeof parsed === 'object' && parsed ? parsed : {}) as OfflineVideoIndex
+		return (
+			typeof parsed === 'object' && parsed ? parsed : {}
+		) as OfflineVideoIndex
 	} catch {
 		return {} as OfflineVideoIndex
 	}
