@@ -1,4 +1,5 @@
 import { createHash, randomUUID } from 'node:crypto'
+import { EventEmitter } from 'node:events'
 import { createReadStream, createWriteStream, promises as fs } from 'node:fs'
 import path from 'node:path'
 import { Readable, Transform } from 'node:stream'
@@ -158,24 +159,18 @@ export type VideoDownloadProgress = {
 	bytesDownloaded: number
 	totalBytes: number | null
 	status: 'downloading' | 'complete' | 'error'
-	startedAt: number
-	updatedAt: number
 }
 
-const videoDownloadProgress = new Map<string, VideoDownloadProgress>()
+export const DOWNLOAD_PROGRESS_EVENTS = {
+	PROGRESS: 'progress',
+} as const
 
-export function getVideoDownloadProgress(
-	playbackId: string,
-): VideoDownloadProgress | null {
-	return videoDownloadProgress.get(playbackId) ?? null
-}
+class DownloadProgressEmitter extends EventEmitter {}
 
-function setVideoDownloadProgress(progress: VideoDownloadProgress) {
-	videoDownloadProgress.set(progress.playbackId, progress)
-}
+export const downloadProgressEmitter = new DownloadProgressEmitter()
 
-function clearVideoDownloadProgress(playbackId: string) {
-	videoDownloadProgress.delete(playbackId)
+function emitDownloadProgress(progress: VideoDownloadProgress) {
+	downloadProgressEmitter.emit(DOWNLOAD_PROGRESS_EVENTS.PROGRESS, progress)
 }
 
 let downloadState: OfflineVideoDownloadState = {
@@ -592,14 +587,11 @@ async function downloadMuxVideo({
 	const urls = getMuxMp4Urls(playbackId, resolution)
 	let lastError: Error | null = null
 
-	const now = Date.now()
-	setVideoDownloadProgress({
+	emitDownloadProgress({
 		playbackId,
 		bytesDownloaded: 0,
 		totalBytes: null,
 		status: 'downloading',
-		startedAt: now,
-		updatedAt: now,
 	})
 
 	for (const url of urls) {
@@ -621,13 +613,11 @@ async function downloadMuxVideo({
 			? parseInt(contentLengthHeader, 10)
 			: null
 
-		setVideoDownloadProgress({
+		emitDownloadProgress({
 			playbackId,
 			bytesDownloaded: 0,
 			totalBytes,
 			status: 'downloading',
-			startedAt: now,
-			updatedAt: Date.now(),
 		})
 
 		await ensureOfflineVideoDir()
@@ -636,13 +626,11 @@ async function downloadMuxVideo({
 		const cipher = createOfflineVideoCipher({ key, iv })
 		const progressTracker = createProgressTrackingTransform({
 			onProgress: (bytesDownloaded) => {
-				setVideoDownloadProgress({
+				emitDownloadProgress({
 					playbackId,
 					bytesDownloaded,
 					totalBytes,
 					status: 'downloading',
-					startedAt: now,
-					updatedAt: Date.now(),
 				})
 			},
 		})
@@ -651,28 +639,21 @@ async function downloadMuxVideo({
 		await fs.rename(tmpPath, filePath)
 		const stat = await fs.stat(filePath)
 
-		setVideoDownloadProgress({
+		emitDownloadProgress({
 			playbackId,
 			bytesDownloaded: stat.size,
 			totalBytes: stat.size,
 			status: 'complete',
-			startedAt: now,
-			updatedAt: Date.now(),
 		})
-
-		// Clear progress after a short delay so clients can see the completion
-		setTimeout(() => clearVideoDownloadProgress(playbackId), 5000)
 
 		return { size: stat.size }
 	}
 
-	setVideoDownloadProgress({
+	emitDownloadProgress({
 		playbackId,
 		bytesDownloaded: 0,
 		totalBytes: null,
 		status: 'error',
-		startedAt: now,
-		updatedAt: Date.now(),
 	})
 
 	throw lastError ?? new Error(`Unable to download video ${playbackId}`)
