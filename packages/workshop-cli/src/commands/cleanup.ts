@@ -299,7 +299,10 @@ async function readOfflineVideoIndex(
 	offlineVideosDir: string,
 ): Promise<OfflineVideoIndex> {
 	try {
-		const raw = await fs.readFile(getOfflineVideoIndexPath(offlineVideosDir), 'utf8')
+		const raw = await fs.readFile(
+			getOfflineVideoIndexPath(offlineVideosDir),
+			'utf8',
+		)
 		const parsed = JSON.parse(raw)
 		return typeof parsed === 'object' && parsed ? parsed : {}
 	} catch {
@@ -350,7 +353,9 @@ async function estimateOfflineVideoBytesForWorkshops(
 ): Promise<number> {
 	let total = 0
 	for (const entry of Object.values(index)) {
-		const entryWorkshops = getEntryWorkshops(entry).map((workshop) => workshop.id)
+		const entryWorkshops = getEntryWorkshops(entry).map(
+			(workshop) => workshop.id,
+		)
 		if (entryWorkshops.length === 0) continue
 		const hasSelected = entryWorkshops.some((id) => workshopIds.has(id))
 		if (!hasSelected) continue
@@ -532,9 +537,7 @@ async function getDataCleanupSizeSummary(dataPaths: string[]) {
 				if (Object.keys(prefs).length === 0) {
 					preferencesBytes += originalBytes
 				} else {
-					const nextBytes = Buffer.byteLength(
-						JSON.stringify(prefs, null, 2),
-					)
+					const nextBytes = Buffer.byteLength(JSON.stringify(prefs, null, 2))
 					preferencesBytes += Math.max(0, originalBytes - nextBytes)
 				}
 			}
@@ -554,9 +557,7 @@ async function getDataCleanupSizeSummary(dataPaths: string[]) {
 				if (Object.keys(authData).length === 0) {
 					authBytes += originalBytes
 				} else {
-					const nextBytes = Buffer.byteLength(
-						JSON.stringify(authData, null, 2),
-					)
+					const nextBytes = Buffer.byteLength(JSON.stringify(authData, null, 2))
 					authBytes += Math.max(0, originalBytes - nextBytes)
 				}
 			}
@@ -616,7 +617,10 @@ async function selectWorkshops(workshops: WorkshopSummary[]) {
 	})
 }
 
-function matchesWorkshopInput(workshop: WorkshopSummary, input: string): boolean {
+function matchesWorkshopInput(
+	workshop: WorkshopSummary,
+	input: string,
+): boolean {
 	const normalized = input.trim().toLowerCase()
 	if (!normalized) return false
 	const candidates = [
@@ -663,11 +667,13 @@ function resolveWorkshopSelection(
 	return { selected: Array.from(selected.values()), missing }
 }
 
-async function selectWorkshopTargets(choices: Array<{
-	value: WorkshopCleanupTarget
-	name: string
-	description: string
-}>) {
+async function selectWorkshopTargets(
+	choices: Array<{
+		value: WorkshopCleanupTarget
+		name: string
+		description: string
+	}>,
+) {
 	assertCanPrompt({
 		reason: 'select what to clean for the selected workshops',
 		hints: [
@@ -748,9 +754,8 @@ export async function cleanup({
 		const legacyCacheBytes = await getPathSize(legacyCacheDir)
 		const cacheBytes = (await getPathSize(cacheDir)) + legacyCacheBytes
 		const offlineVideosBytes = await getPathSize(offlineVideosDir)
-		const { preferencesBytes, authBytes } = await getDataCleanupSizeSummary(
-			dataPaths,
-		)
+		const { preferencesBytes, authBytes } =
+			await getDataCleanupSizeSummary(dataPaths)
 
 		const cleanupChoices = CLEANUP_TARGETS.map((target) => {
 			const sizeByTarget: Record<CleanupTarget, number> = {
@@ -801,7 +806,10 @@ export async function cleanup({
 				)
 			}
 
-			if (selectedWorkshops.length > 0 && selectedWorkshopTargets.length === 0) {
+			if (
+				selectedWorkshops.length > 0 &&
+				selectedWorkshopTargets.length === 0
+			) {
 				const selectedWorkshopIds = new Set(
 					selectedWorkshops.map((workshop) => workshop.id),
 				)
@@ -814,11 +822,12 @@ export async function cleanup({
 					0,
 				)
 				const offlineVideoIndex = await readOfflineVideoIndex(offlineVideosDir)
-				const workshopOfflineBytes = await estimateOfflineVideoBytesForWorkshops(
-					offlineVideosDir,
-					offlineVideoIndex,
-					selectedWorkshopIds,
-				)
+				const workshopOfflineBytes =
+					await estimateOfflineVideoBytesForWorkshops(
+						offlineVideosDir,
+						offlineVideoIndex,
+						selectedWorkshopIds,
+					)
 				const workshopChoices = WORKSHOP_CLEANUP_TARGETS.map((target) => {
 					const sizeByTarget: Record<WorkshopCleanupTarget, number> = {
 						files: workshopFileBytes,
@@ -856,7 +865,9 @@ export async function cleanup({
 			selectedTargets.includes('offline-videos')
 				? await readOfflineVideoIndex(offlineVideosDir)
 				: {}
-		const workshopOfflineBytes = selectedWorkshopTargets.includes('offline-videos')
+		const workshopOfflineBytes = selectedWorkshopTargets.includes(
+			'offline-videos',
+		)
 			? await estimateOfflineVideoBytesForWorkshops(
 					offlineVideosDir,
 					offlineVideoIndex,
@@ -899,9 +910,7 @@ export async function cleanup({
 			}
 			if (selectedWorkshopTargets.includes('caches')) {
 				console.log(
-					chalk.yellow(
-						`- Workshop caches: ${formatBytes(workshopCacheBytes)}`,
-					),
+					chalk.yellow(`- Workshop caches: ${formatBytes(workshopCacheBytes)}`),
 				)
 			}
 			if (selectedWorkshopTargets.includes('offline-videos')) {

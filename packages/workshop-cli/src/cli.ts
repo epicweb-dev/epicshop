@@ -692,14 +692,12 @@ const cli = yargs(args)
 				})
 				.option('workshops', {
 					type: 'array',
-					description:
-						'Workshops to clean (repeatable, by repo name or path)',
+					description: 'Workshops to clean (repeatable, by repo name or path)',
 				})
 				.option('workshop-targets', {
 					type: 'array',
 					choices: ['files', 'caches', 'offline-videos'],
-					description:
-						'Cleanup targets for selected workshops (repeatable)',
+					description: 'Cleanup targets for selected workshops (repeatable)',
 				})
 				.option('silent', {
 					alias: 's',

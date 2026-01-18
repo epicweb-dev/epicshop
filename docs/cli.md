@@ -381,8 +381,8 @@ epicshop cleanup [options]
 - `--targets, -t <name>` - Cleanup targets (repeatable): `workshops`, `caches`,
   `offline-videos`, `preferences`, `auth`
 - `--workshops <name>` - Workshops to clean (repeatable, by repo name or path)
-- `--workshop-targets <name>` - Workshop cleanup targets (repeatable):
-  `files`, `caches`, `offline-videos`
+- `--workshop-targets <name>` - Workshop cleanup targets (repeatable): `files`,
+  `caches`, `offline-videos`
 - `--force, -f` - Skip the confirmation prompt (default: false)
 - `--silent, -s` - Run without output logs (default: false)
 
