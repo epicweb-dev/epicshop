@@ -2,12 +2,14 @@ import { clsx } from 'clsx'
 import { LRUCache } from 'lru-cache'
 import { type MDXContentProps } from 'mdx-bundler/client'
 import * as mdxBundler from 'mdx-bundler/client'
-import { useEffect, useMemo, useState } from 'react'
+import { type PropsWithChildren, useEffect, useMemo, useState } from 'react'
 import { Link, useLoaderData } from 'react-router'
 import { toast } from 'sonner'
+import iconsSvg from '#app/assets/icons.svg'
 import { DeferredEpicVideo, VideoEmbed } from '#app/components/epic-video.tsx'
 import { Icon } from '#app/components/icons.tsx'
 import { Mermaid } from '#app/components/mermaid.tsx'
+import { SimpleTooltip } from '#app/components/ui/tooltip.tsx'
 import { type loader } from '#app/routes/_app+/exercise+/$exerciseNumber_.$stepNumber.$type+/_layout.tsx'
 import { LaunchEditor } from '#app/routes/launch-editor.tsx'
 import { AnchorOrLink, Heading, cn } from './misc.tsx'
@@ -264,4 +266,54 @@ export function Mdx({
 		[externalComponents],
 	)
 	return <Component components={components} />
+}
+
+/**
+ * App info used by MDX components like InlineFile
+ */
+export type MdxAppInfo = {
+	name: string
+	fullPath: string
+}
+
+/**
+ * Creates an InlineFile component that opens files in the editor
+ * @param getApp - Function to get the app info given the type
+ * @returns InlineFile component
+ */
+export function createInlineFileComponent(getApp: () => MdxAppInfo | null) {
+	return function InlineFile({
+		file,
+		children = <code>{file}</code>,
+		...props
+	}: Omit<PropsWithChildren<typeof LaunchEditor>, 'appName'> & {
+		file: string
+	}) {
+		const app = getApp()
+
+		const info = (
+			<div className="launch-editor-button-wrapper flex underline underline-offset-4">
+				{children}{' '}
+				<svg height={24} width={24}>
+					<use href={`${iconsSvg}#Keyboard`} />
+				</svg>
+			</div>
+		)
+
+		if (!app) {
+			return (
+				<SimpleTooltip content="App information not available">
+					<div className="inline-block grow cursor-not-allowed">{info}</div>
+				</SimpleTooltip>
+			)
+		}
+
+		return (
+			<div className="inline-block grow">
+				<LaunchEditor appFile={file} appName={app.name} {...props}>
+					{info}
+				</LaunchEditor>
+			</div>
+		)
+	}
 }

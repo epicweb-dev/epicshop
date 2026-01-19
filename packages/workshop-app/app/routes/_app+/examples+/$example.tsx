@@ -16,7 +16,7 @@ import {
 } from '@epic-web/workshop-utils/timing.server'
 import slugify from '@sindresorhus/slugify'
 import * as cookie from 'cookie'
-import { useRef, useState } from 'react'
+import { useMemo, useRef, useState } from 'react'
 import {
 	Link,
 	data,
@@ -33,7 +33,7 @@ import { useRevalidationWS } from '#app/components/revalidation-ws.tsx'
 import { Preview } from '#app/routes/_app+/exercise+/$exerciseNumber_.$stepNumber.$type+/__shared/preview.tsx'
 import { getAppRunningState } from '#app/routes/_app+/exercise+/$exerciseNumber_.$stepNumber.$type+/__shared/utils.tsx'
 import { EditFileOnGitHub } from '#app/routes/launch-editor.tsx'
-import { Mdx } from '#app/utils/mdx.tsx'
+import { createInlineFileComponent, Mdx } from '#app/utils/mdx.tsx'
 import { getRootMatchLoaderData } from '#app/utils/root-loader.ts'
 import { getSeoMetaTags } from '#app/utils/seo.ts'
 
@@ -154,15 +154,25 @@ export const headers: HeadersFunction = ({ loaderHeaders, parentHeaders }) => {
 	return headers
 }
 
-// we'll render the title ourselves thank you
-const mdxComponents = { h1: () => null }
-
 export default function ExampleRoute() {
 	const data = useLoaderData<typeof loader>()
 	const inBrowserBrowserRef = useRef<InBrowserBrowserRef>(null)
 	const containerRef = useRef<HTMLDivElement>(null)
 	const leftPaneRef = useRef<HTMLDivElement>(null)
 	const [splitPercent, setSplitPercent] = useState<number>(data.splitPercent)
+
+	// Create MDX components with example-specific InlineFile
+	const mdxComponents = useMemo(() => {
+		const InlineFile = createInlineFileComponent(() => ({
+			name: data.example.name,
+			fullPath: data.example.fullPath,
+		}))
+		return {
+			// we'll render the title ourselves thank you
+			h1: () => null,
+			InlineFile,
+		}
+	}, [data.example.name, data.example.fullPath])
 
 	useRevalidationWS({
 		watchPaths: [data.exampleReadme.file],
