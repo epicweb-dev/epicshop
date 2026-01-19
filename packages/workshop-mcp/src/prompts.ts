@@ -10,7 +10,9 @@ import {
 	workshopDirectoryInputSchema,
 } from './utils.ts'
 
-export const quizMeInputSchema = {
+type PromptInputSchema = Record<string, z.ZodTypeAny>
+
+export const quizMeInputSchema: PromptInputSchema = {
 	workshopDirectory: workshopDirectoryInputSchema,
 	exerciseNumber: z
 		.string()
@@ -66,7 +68,10 @@ Please use this context to provide quiz questions, one at a time, to me to help 
 }
 
 export function initPrompts(server: McpServer) {
-	;(server as any).registerPrompt(
+	const registerPrompt = (
+		server as unknown as { registerPrompt: (...args: any[]) => void }
+	).registerPrompt
+	registerPrompt(
 		'quiz_me',
 		{
 			title: promptDocs.quiz_me.title,
