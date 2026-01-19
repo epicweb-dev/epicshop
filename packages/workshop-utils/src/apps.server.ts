@@ -16,7 +16,7 @@ import { globby, isGitIgnored } from 'globby'
 import { z } from 'zod'
 import {
 	cachified,
-	exampleAppCache,
+	extraAppCache,
 	playgroundAppCache,
 	problemAppCache,
 	solutionAppCache,
@@ -39,6 +39,62 @@ import { dayjs } from './utils.server.ts'
 import { getErrorMessage } from './utils.ts'
 
 const log = logger('epic:apps')
+
+const EXTRA_DIRNAME = 'extra'
+const LEGACY_EXAMPLE_DIRNAME = 'example'
+const LEGACY_EXAMPLES_DIRNAME = 'examples'
+const EXTRA_DIR_CANDIDATES = [
+	EXTRA_DIRNAME,
+	LEGACY_EXAMPLE_DIRNAME,
+	LEGACY_EXAMPLES_DIRNAME,
+] as const
+type ExtraDirName = (typeof EXTRA_DIR_CANDIDATES)[number]
+type ExtraDirInfo = { dirName: ExtraDirName; fullPath: string }
+
+async function resolveExtraDir(): Promise<ExtraDirInfo | null> {
+	for (const dirName of EXTRA_DIR_CANDIDATES) {
+		const fullPath = path.join(getWorkshopRoot(), dirName)
+		if (await exists(fullPath)) {
+			return { dirName, fullPath }
+		}
+	}
+	return null
+}
+
+async function getExtraDirName(): Promise<ExtraDirName> {
+	const resolved = await resolveExtraDir()
+	return resolved?.dirName ?? EXTRA_DIRNAME
+}
+
+function getExtraDirInfoFromPath(fullPath: string): {
+	dirName: ExtraDirName
+	restOfPath: string
+} | null {
+	const normalizedFullPath = fullPath.replace(/\\/g, '/')
+	const normalizedRoot = getWorkshopRoot().replace(/\\/g, '/')
+	for (const dirName of EXTRA_DIR_CANDIDATES) {
+		const prefix = `${normalizedRoot}/${dirName}/`
+		if (normalizedFullPath.startsWith(prefix)) {
+			return {
+				dirName,
+				restOfPath: normalizedFullPath.slice(prefix.length),
+			}
+		}
+	}
+	return null
+}
+
+function parseExtraAppName(appName: string): string | null {
+	const prefixes = ['extra.', '.extra', 'example.', '.example']
+	for (const prefix of prefixes) {
+		if (appName.startsWith(prefix)) {
+			let relativePath = appName.slice(prefix.length)
+			if (relativePath.startsWith('.')) relativePath = relativePath.slice(1)
+			return relativePath.length ? relativePath : null
+		}
+	}
+	return null
+}
 
 declare global {
 	var __epicshop_apps_initialized__: boolean | undefined
@@ -120,8 +176,8 @@ const SolutionAppSchema = BaseExerciseStepAppSchema.extend({
 	problemName: z.string().nullable(),
 })
 
-const ExampleAppSchema = BaseAppSchema.extend({
-	type: z.literal('example'),
+const ExtraAppSchema = BaseAppSchema.extend({
+	type: z.literal('extra'),
 })
 
 const PlaygroundAppSchema = BaseAppSchema.extend({
@@ -174,7 +230,7 @@ const ExerciseStepAppSchema = z.union([ProblemAppSchema, SolutionAppSchema])
 const AppSchema = z.union([
 	ExerciseStepAppSchema,
 	PlaygroundAppSchema,
-	ExampleAppSchema,
+	ExtraAppSchema,
 ])
 
 type BaseApp = z.infer<typeof BaseAppSchema>
@@ -182,7 +238,7 @@ type BaseApp = z.infer<typeof BaseAppSchema>
 export type BaseExerciseStepApp = z.infer<typeof BaseExerciseStepAppSchema>
 export type ProblemApp = z.infer<typeof ProblemAppSchema>
 export type SolutionApp = z.infer<typeof SolutionAppSchema>
-export type ExampleApp = z.infer<typeof ExampleAppSchema>
+export type ExtraApp = z.infer<typeof ExtraAppSchema>
 export type PlaygroundApp = z.infer<typeof PlaygroundAppSchema>
 export type ExerciseStepApp = z.infer<typeof ExerciseStepAppSchema>
 export type App = z.infer<typeof AppSchema>
@@ -218,8 +274,8 @@ export function isPlaygroundApp(app: any): app is PlaygroundApp {
 	return isApp(app) && app.type === 'playground'
 }
 
-export function isExampleApp(app: any): app is ExampleApp {
-	return isApp(app) && app.type === 'example'
+export function isExtraApp(app: any): app is ExtraApp {
+	return isApp(app) && app.type === 'extra'
 }
 
 export function isExerciseStepApp(app: any): app is ExerciseStepApp {
@@ -280,10 +336,11 @@ export async function init(workshopRoot?: string) {
 		process.env.EPICSHOP_ENABLE_WATCHER === 'true'
 	) {
 		const isIgnored = await isGitIgnored({ cwd: getWorkshopRoot() })
+		const extraDirName = await getExtraDirName()
 
 		// watch the README, FINISHED, and package.json for changes that affect the apps
 		const filesToWatch = ['README.mdx', 'FINISHED.mdx', 'package.json']
-		const chok = chokidar.watch(['examples', 'playground', 'exercises'], {
+		const chok = chokidar.watch([extraDirName, 'playground', 'exercises'], {
 			cwd: getWorkshopRoot(),
 			// we want to load up the modified times immediately
 			ignoreInitial: false,
@@ -294,7 +351,13 @@ export async function init(workshopRoot?: string) {
 				if (stats?.isDirectory()) {
 					if (filePath.endsWith('playground')) return false
 					const pathParts = filePath.split(path.sep)
-					if (pathParts.at(-2) === 'examples') return false
+					const parentDir = pathParts.at(-2)
+					if (
+						parentDir &&
+						EXTRA_DIR_CANDIDATES.includes(parentDir as ExtraDirName)
+					) {
+						return false
+					}
 
 					// steps
 					if (pathParts.at(-3) === 'exercises') return false
@@ -495,7 +558,7 @@ async function _getApps({
 	await init()
 	const apps = await time(
 		async () => {
-			const [playgroundApp, problemApps, solutionApps, exampleApps] =
+		const [playgroundApp, problemApps, solutionApps, extraApps] =
 				await Promise.all([
 					time(() => getPlaygroundApp({ request, timings }), {
 						type: 'getPlaygroundApp',
@@ -509,8 +572,8 @@ async function _getApps({
 						type: 'getSolutionApps',
 						timings,
 					}),
-					time(() => getExampleApps({ request, timings }), {
-						type: 'getExampleApps',
+					time(() => getExtraApps({ request, timings }), {
+						type: 'getExtraApps',
 						timings,
 					}),
 				])
@@ -518,7 +581,7 @@ async function _getApps({
 				playgroundApp,
 				...problemApps,
 				...solutionApps,
-				...exampleApps,
+				...extraApps,
 			]
 				.filter(Boolean)
 				.sort((a, b) => {
@@ -528,11 +591,11 @@ async function _getApps({
 					}
 					if (isPlaygroundApp(b)) return 1
 
-					if (isExampleApp(a)) {
-						if (isExampleApp(b)) return a.name.localeCompare(b.name)
+					if (isExtraApp(a)) {
+						if (isExtraApp(b)) return a.name.localeCompare(b.name)
 						else return 1
 					}
-					if (isExampleApp(b)) return -1
+					if (isExtraApp(b)) return -1
 
 					if (a.type === b.type) {
 						if (a.exerciseNumber === b.exerciseNumber) {
@@ -693,12 +756,9 @@ function getPathname(fullPath: string) {
 
 function getAppName(fullPath: string) {
 	if (/playground\/?$/.test(fullPath)) return 'playground'
-	if (/examples\/.+\/?$/.test(fullPath)) {
-		const restOfPath = fullPath.replace(
-			`${getWorkshopRoot()}${path.sep}examples${path.sep}`,
-			'',
-		)
-		return `example.${restOfPath.split(path.sep).join('__sep__')}`
+	const extraDirInfo = getExtraDirInfoFromPath(fullPath)
+	if (extraDirInfo) {
+		return `extra.${extraDirInfo.restOfPath.split('/').join('__sep__')}`
 	}
 	const appIdInfo = extractNumbersAndTypeFromAppNameOrPath(fullPath)
 	if (appIdInfo) {
@@ -713,12 +773,11 @@ function getAppName(fullPath: string) {
 export async function getFullPathFromAppName(appName: string) {
 	if (appName === 'playground')
 		return path.join(getWorkshopRoot(), 'playground')
-	if (appName.startsWith('.example')) {
-		const relativePath = appName
-			.replace('.example', '')
-			.split('__sep__')
-			.join(path.sep)
-		return path.join(getWorkshopRoot(), 'examples', relativePath)
+	const extraRelativePath = parseExtraAppName(appName)
+	if (extraRelativePath) {
+		const relativePath = extraRelativePath.split('__sep__').join(path.sep)
+		const extraDirName = await getExtraDirName()
+		return path.join(getWorkshopRoot(), extraDirName, relativePath)
 	}
 	if (appName.includes('__sep__')) {
 		const relativePath = appName.replaceAll('__sep__', path.sep)
@@ -948,11 +1007,11 @@ export async function getPlaygroundApp({
 	})
 }
 
-async function getExampleAppFromPath(
+async function getExtraAppFromPath(
 	fullPath: string,
 	index: number,
 	request?: Request,
-): Promise<ExampleApp> {
+): Promise<ExtraApp> {
 	const dirName = path.basename(fullPath)
 	const compiledReadme = await compileMdxIfExists(
 		path.join(fullPath, 'README.mdx'),
@@ -960,7 +1019,7 @@ async function getExampleAppFromPath(
 	)
 	const name = getAppName(fullPath)
 	const portNumber = 8000 + index
-	const type = 'example'
+	const type = 'extra'
 	const title = compiledReadme?.title ?? name
 	return {
 		name,
@@ -978,46 +1037,48 @@ async function getExampleAppFromPath(
 			title,
 			type,
 		}),
-	} satisfies ExampleApp
+	} satisfies ExtraApp
 }
 
-async function getExampleApps({
+async function getExtraApps({
 	timings,
 	request,
-}: CachifiedOptions = {}): Promise<Array<ExampleApp>> {
-	const examplesDir = path.join(getWorkshopRoot(), 'examples')
+}: CachifiedOptions = {}): Promise<Array<ExtraApp>> {
+	const extraDirInfo = await resolveExtraDir()
+	if (!extraDirInfo) return []
+
 	// Filter to only include directories, not files like README.mdx
 	const entries = await fs.promises
-		.readdir(examplesDir, { withFileTypes: true })
+		.readdir(extraDirInfo.fullPath, { withFileTypes: true })
 		.catch(() => [])
-	const exampleDirs = entries
+	const extraDirs = entries
 		.filter((entry) => {
 			if (entry.isDirectory()) return true
-			log(`Skipping non-directory in examples: ${entry.name}`)
+			log(`Skipping non-directory in extras: ${entry.name}`)
 			return false
 		})
-		.map((entry) => path.join(examplesDir, entry.name))
+		.map((entry) => path.join(extraDirInfo.fullPath, entry.name))
 
-	const exampleApps: Array<ExampleApp> = []
+	const extraApps: Array<ExtraApp> = []
 
-	for (const exampleDir of exampleDirs) {
-		const index = exampleDirs.indexOf(exampleDir)
-		const key = `${exampleDir}-${index}`
-		const exampleApp = await cachified({
+	for (const extraDir of extraDirs) {
+		const index = extraDirs.indexOf(extraDir)
+		const key = `${extraDir}-${index}`
+		const extraApp = await cachified({
 			key,
-			cache: exampleAppCache,
+			cache: extraAppCache,
 			ttl: 1000 * 60 * 5,
 			swr: 1000 * 60 * 60 * 24 * 30,
 
 			timings,
-			timingKey: exampleDir.replace(`${examplesDir}${path.sep}`, ''),
+			timingKey: extraDir.replace(`${extraDirInfo.fullPath}${path.sep}`, ''),
 			request,
 			forceFresh: await getForceFreshForDir(
-				exampleAppCache.get(key),
-				exampleDir,
+				extraAppCache.get(key),
+				extraDir,
 			),
 			getFreshValue: async () => {
-				return getExampleAppFromPath(exampleDir, index, request).catch(
+				return getExtraAppFromPath(extraDir, index, request).catch(
 					(error) => {
 						console.error(error)
 						return null
@@ -1025,10 +1086,10 @@ async function getExampleApps({
 				)
 			},
 		})
-		if (exampleApp) exampleApps.push(exampleApp)
+		if (extraApp) extraApps.push(extraApp)
 	}
 
-	return exampleApps
+	return extraApps
 }
 
 async function getSolutionAppFromPath(
@@ -1254,7 +1315,7 @@ export async function getExerciseApp(
 
 	const apps = (await getApps({ request, timings })).filter(isExerciseStepApp)
 	const exerciseApp = apps.find((app) => {
-		if (isExampleApp(app)) return false
+		if (isExtraApp(app)) return false
 		return (
 			app.exerciseNumber === exerciseNumber &&
 			app.stepNumber === stepNumber &&
@@ -1613,8 +1674,8 @@ export function getAppDisplayName(a: App, allApps: Array<App>) {
 		} else {
 			displayName = `🛝 ${a.appName}`
 		}
-	} else if (isExampleApp(a)) {
-		displayName = `📚 ${a.title} (example)`
+	} else if (isExtraApp(a)) {
+		displayName = `📚 ${a.title} (extra)`
 	}
 	return displayName
 }
@@ -1637,15 +1698,17 @@ export async function getWorkshopInstructions({
 	return { compiled, file: readmeFilepath, relativePath: 'exercises' } as const
 }
 
-export async function getExamplesInstructions({
+export async function getExtrasInstructions({
 	request,
 }: { request?: Request } = {}) {
-	const readmeFilepath = path.join(getWorkshopRoot(), 'examples', 'README.mdx')
+	const extraDirInfo = await resolveExtraDir()
+	const dirName = extraDirInfo?.dirName ?? EXTRA_DIRNAME
+	const readmeFilepath = path.join(getWorkshopRoot(), dirName, 'README.mdx')
 	const compiled = await compileMdx(readmeFilepath, { request }).then(
 		(r) => ({ ...r, status: 'success' }) as const,
 		(e) => {
 			console.error(
-				`There was an error compiling the examples README.mdx`,
+				`There was an error compiling the extras README.mdx`,
 				readmeFilepath,
 				e,
 			)
@@ -1655,7 +1718,7 @@ export async function getExamplesInstructions({
 	return {
 		compiled,
 		file: readmeFilepath,
-		relativePath: 'examples/README.mdx',
+		relativePath: `${dirName}/README.mdx`,
 	} as const
 }
 
@@ -1704,18 +1767,31 @@ export function getAppPathFromFilePath(filePath: string): string | null {
 		return null
 	}
 
-	const [part1, part2, part3] = withinWorkshopRootHalf
-		.split(path.sep)
-		.filter(Boolean)
+	const pathParts = withinWorkshopRootHalf.split(path.sep).filter(Boolean)
+	const part1 = pathParts[0] ?? ''
+	const part2 = pathParts[1] ?? ''
+	const part3 = pathParts[2] ?? ''
 
 	// Check if the file is in the playground
 	if (part1 === 'playground') {
 		return path.join(getWorkshopRoot(), 'playground')
 	}
 
-	// Check if the file is in an example
-	if (part1 === 'examples' && part2) {
-		return path.join(getWorkshopRoot(), 'examples', part2)
+	// Check if the file is in an extra app (or legacy examples)
+	if (
+		part1 === EXTRA_DIRNAME ||
+		part1 === LEGACY_EXAMPLE_DIRNAME ||
+		part1 === LEGACY_EXAMPLES_DIRNAME
+	) {
+		if (!part2) return null
+		invariant(part2.length > 0, 'Expected extra app directory name')
+		const extraRoot =
+			part1 === EXTRA_DIRNAME
+				? EXTRA_DIRNAME
+				: part1 === LEGACY_EXAMPLE_DIRNAME
+					? LEGACY_EXAMPLE_DIRNAME
+					: LEGACY_EXAMPLES_DIRNAME
+		return path.join(getWorkshopRoot(), extraRoot, part2)
 	}
 
 	// Check if the file is in an exercise

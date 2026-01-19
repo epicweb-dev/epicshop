@@ -86,7 +86,7 @@ It's also got all the props a regular React Router `Link` has, so you can use
 
 ### `DiffLink`
 
-Link to diff route or diff preview, to show git diff between two examples app.
+Link to diff route or diff preview, to show git diff between two extra apps.
 
 #### Props:
 

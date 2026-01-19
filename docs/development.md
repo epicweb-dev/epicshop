@@ -2,7 +2,7 @@
 
 The [`workshop-app`](https://github.com/epicweb-dev/workshop-app) repository
 already contains simplified
-[example apps](https://github.com/epicweb-dev/workshop-app/tree/main/packages/example)
+[extra apps](https://github.com/epicweb-dev/workshop-app/tree/main/packages/extra)
 you can use while developing the workshop app itself.
 
 To test the epic workshop app with a real workshop, set the

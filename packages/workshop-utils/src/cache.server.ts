@@ -10,7 +10,7 @@ import { LRUCache } from 'lru-cache'
 import md5 from 'md5-hex'
 import z from 'zod'
 import {
-	type ExampleApp,
+	type ExtraApp,
 	type PlaygroundApp,
 	type ProblemApp,
 	type SolutionApp,
@@ -237,8 +237,7 @@ export const solutionAppCache =
 	makeSingletonFsCache<SolutionApp>('SolutionAppCache')
 export const problemAppCache =
 	makeSingletonFsCache<ProblemApp>('ProblemAppCache')
-export const exampleAppCache =
-	makeSingletonFsCache<ExampleApp>('ExampleAppCache')
+export const extraAppCache = makeSingletonFsCache<ExtraApp>('ExtraAppCache')
 export const playgroundAppCache =
 	makeSingletonFsCache<PlaygroundApp>('PlaygroundAppCache')
 export const diffCodeCache = makeSingletonFsCache<string>('DiffCodeCache')

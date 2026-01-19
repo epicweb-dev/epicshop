@@ -6,7 +6,7 @@ Let's look at an example workshop:
 .
 ├── LICENSE.md
 ├── README.md
-├── examples
+├── extra
 │   └── htmly-thing
 │       └── index.html
 ├── exercises
@@ -108,7 +108,7 @@ Let's define a few terms:
 - Workshop: the entire project
 - Exercise: each directory in the `exercises` directory
 - Exercise Step: each subdirectory in an exercise directory
-- Example: A runnable project in the `examples` directory
+- Extra: A runnable project in the `extra` directory
 - App: A runnable project in the workshop
 - Problem: The App which is the initial state of an exercise step
 - Solution: The App which is the final state of an exercise step
@@ -117,9 +117,11 @@ Let's define a few terms:
 Workshops have many exercises, exercises have many steps, steps have a single
 problem and a single solution.
 
-Examples can include a top-level `examples/README.mdx` which powers the Examples
-page in the workshop app. Each example directory should also include its own
-`README.mdx`, which renders on the example detail page.
+Extras can include a top-level `extra/README.mdx` which powers the Extras page
+in the workshop app. Each extra directory should also include its own
+`README.mdx`, which renders on the extra detail page. For backwards
+compatibility, the workshop app will fall back to legacy `example/` or
+`examples/` directories when `extra/` is missing.
 
 Finally there's the `playground` directory. When a learner clicks "Set to
 Playground" in the UI, it copies the contents of the App they want to play with
