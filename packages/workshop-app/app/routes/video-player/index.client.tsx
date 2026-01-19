@@ -10,7 +10,7 @@ import { useFetcher, useFetchers } from 'react-router'
 import { z } from 'zod'
 import { useDebounce } from '#app/utils/misc.client.tsx'
 import { useRootLoaderData } from '#app/utils/root-loader.ts'
-import { PlayerPreferencesSchema } from './player-preferences-schema.ts'
+import { type PlayerPreferencesSchema } from './player-preferences-schema.ts'
 import './mux-player.css'
 
 const PlaybackTimeSchema = z

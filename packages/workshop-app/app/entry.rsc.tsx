@@ -10,11 +10,11 @@ import {
 	RouterContextProvider,
 	unstable_matchRSCServerRequest as matchRSCServerRequest,
 } from 'react-router'
-import type * as EntrySsr from './entry.ssr.tsx'
 
 import basename from 'virtual:react-router/unstable_rsc/basename'
 import unstable_reactRouterServeConfig from 'virtual:react-router/unstable_rsc/react-router-serve-config'
 import routes from 'virtual:react-router/unstable_rsc/routes'
+import type * as EntrySsr from './entry.ssr.tsx'
 
 export { unstable_reactRouterServeConfig }
 

@@ -10,8 +10,8 @@ import {
 import { ensureUndeployed } from '#app/utils/misc.tsx'
 import { redirectWithToast } from '#app/utils/toast.server.ts'
 import { type Route } from './+types/preferences.tsx'
-import Preferences from './preferences.client.tsx'
 import { isDownloadResolutionOption } from './preferences-constants.ts'
+import Preferences from './preferences.client.tsx'
 
 export async function loader({ request }: Route.LoaderArgs) {
 	ensureUndeployed()

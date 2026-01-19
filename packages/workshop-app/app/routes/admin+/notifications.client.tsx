@@ -1,9 +1,9 @@
 'use client'
 
+import { type getUnmutedNotifications } from '@epic-web/workshop-utils/notifications.server'
 import { useEffect, useRef } from 'react'
 import { useFetcher } from 'react-router'
 import { toast } from 'sonner'
-import { type getUnmutedNotifications } from '@epic-web/workshop-utils/notifications.server'
 
 type NotificationsActionData = { success?: true; error?: string }
 

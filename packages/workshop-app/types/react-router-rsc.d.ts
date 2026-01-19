@@ -1,7 +1,7 @@
 declare module 'virtual:react-router/unstable_rsc/inject-hmr-runtime' {}
 
 declare module 'virtual:react-router/unstable_rsc/routes' {
-	import type { unstable_RSCRouteConfigEntry } from 'react-router'
+	import  { type unstable_RSCRouteConfigEntry } from 'react-router'
 	const routes: unstable_RSCRouteConfigEntry[]
 	export default routes
 }

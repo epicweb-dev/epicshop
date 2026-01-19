@@ -1,12 +1,12 @@
 'use client'
 
-import * as React from 'react'
 import {
 	subscribeToSchemeChange,
 } from '@epic-web/client-hints/color-scheme'
 import {
 	subscribeToMotionChange,
 } from '@epic-web/client-hints/reduced-motion'
+import * as React from 'react'
 import { useRevalidator } from 'react-router'
 import {
 	hintsUtils,

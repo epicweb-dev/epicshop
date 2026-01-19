@@ -11,12 +11,12 @@ import { EditFileOnGitHub } from '#app/routes/launch-editor.client.tsx'
 import { ProgressToggle } from '#app/routes/progress.client.tsx'
 import { SetAppToPlayground } from '#app/routes/set-playground.client.tsx'
 import { getExercisePath } from '#app/utils/misc.tsx'
-import { Exercise404ErrorBoundary } from '../../__shared/error-boundary.tsx'
 import { type Route } from '../+types/_layout.tsx'
-import { StepMdx } from './step-mdx.tsx'
-import TouchedFiles from './touched-files.tsx'
+import { Exercise404ErrorBoundary } from '../../__shared/error-boundary.tsx'
 import { splitCookieName, computeSplitPercent } from './split-utils.ts'
 import { getStepTitleBits } from './step-layout-utils.ts'
+import { StepMdx } from './step-mdx.tsx'
+import TouchedFiles from './touched-files.tsx'
 
 type ExerciseStepLayoutClientProps = {
 	loaderData: Route.ComponentProps['loaderData']
