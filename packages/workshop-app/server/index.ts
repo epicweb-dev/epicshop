@@ -195,8 +195,10 @@ app.use((req, res, next) => {
 
 async function getBuild() {
 	const build = viteDevServer
-		? viteDevServer.environments.rsc?.runner?.import(rscEntryPath) ??
-			viteDevServer.ssrLoadModule(rscEntryPath)
+		? ((viteDevServer.environments.rsc as unknown as {
+				runner?: { import: (id: string) => Promise<unknown> }
+			}).runner?.import(rscEntryPath) ??
+			viteDevServer.ssrLoadModule(rscEntryPath))
 		: // @ts-ignore this should exist before running the server
 			// but it may not exist just yet.
 			await import('#build/server/index.js')
