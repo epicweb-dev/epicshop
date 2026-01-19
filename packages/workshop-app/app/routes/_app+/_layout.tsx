@@ -731,7 +731,6 @@ function MobileNavigation({
 	const isExtrasActive =
 		location.pathname === '/extra' || location.pathname.startsWith('/extra/')
 	const showExtrasPlaygroundLink = Boolean(playgroundExtra) && !isExtrasActive
-	const showExtrasPlaygroundLink = Boolean(playgroundExtra) && !isExtrasActive
 
 	// items
 	const listVariants = {
