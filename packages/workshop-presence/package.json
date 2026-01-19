@@ -45,10 +45,12 @@
   "exports": {
     "./package.json": "./package.json",
     "./presence.server": {
+      "import": "./dist/presence.server.js",
       "types": "./dist/presence.server.d.ts",
       "default": "./dist/presence.server.js"
     },
     "./presence": {
+      "import": "./dist/presence.js",
       "types": "./dist/presence.d.ts",
       "default": "./dist/presence.js"
     }
