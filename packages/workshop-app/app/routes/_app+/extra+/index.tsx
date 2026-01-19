@@ -1,8 +1,8 @@
 import { ElementScrollRestoration } from '@epic-web/restore-scroll'
 import {
 	getApps,
-	getExamplesInstructions,
-	isExampleApp,
+	getExtrasInstructions,
+	isExtraApp,
 } from '@epic-web/workshop-utils/apps.server'
 import { getWorkshopConfig } from '@epic-web/workshop-utils/config.server'
 import { getEpicVideoInfos } from '@epic-web/workshop-utils/epic-api.server'
@@ -37,57 +37,57 @@ export const meta: MetaFunction<typeof loader> = (args) => {
 
 	return getSeoMetaTags({
 		title: `📚 | ${loaderData.title} | ${rootData.workshopTitle}`,
-		description: `Examples for ${rootData.workshopTitle}`,
+		description: `Extras for ${rootData.workshopTitle}`,
 		ogTitle: loaderData.title,
-		ogDescription: `Examples for ${rootData.workshopTitle}`,
+		ogDescription: `Extras for ${rootData.workshopTitle}`,
 		instructor: rootData.instructor,
 		requestInfo: rootData.requestInfo,
 	})
 }
 
 export async function loader({ request }: LoaderFunctionArgs) {
-	const timings = makeTimings('examplesIndexLoader')
+	const timings = makeTimings('extrasIndexLoader')
 	const { title: workshopTitle } = getWorkshopConfig()
-	const [examplesReadme, apps] = await Promise.all([
-		time(() => getExamplesInstructions({ request }), {
+	const [extrasReadme, apps] = await Promise.all([
+		time(() => getExtrasInstructions({ request }), {
 			timings,
 			type: 'compileMdx',
-			desc: 'compileMdx in examples index',
+			desc: 'compileMdx in extras index',
 		}),
 		time(() => getApps({ request, timings }), {
 			timings,
 			type: 'getApps',
-			desc: 'getApps in examples index',
+			desc: 'getApps in extras index',
 		}),
 	])
 
-	const examples = apps
-		.filter(isExampleApp)
+	const extras = apps
+		.filter(isExtraApp)
 		.sort((a, b) =>
 			a.title.localeCompare(b.title, undefined, {
 				numeric: true,
 				sensitivity: 'base',
 			}),
 		)
-		.map((example) => ({
-			dirName: example.dirName,
-			title: example.title,
+		.map((extra) => ({
+			dirName: extra.dirName,
+			title: extra.title,
 		}))
 
 	const title =
-		examplesReadme.compiled.status === 'success'
-			? (examplesReadme.compiled.title ?? 'Examples')
-			: 'Examples'
+		extrasReadme.compiled.status === 'success'
+			? (extrasReadme.compiled.title ?? 'Extras')
+			: 'Extras'
 
 	return data(
 		{
-			articleId: `workshop-${slugify(workshopTitle)}-examples`,
+			articleId: `workshop-${slugify(workshopTitle)}-extras`,
 			title,
-			examples,
-			examplesReadme,
+			extras,
+			extrasReadme,
 			epicVideoInfosPromise:
-				examplesReadme.compiled.status === 'success'
-					? getEpicVideoInfos(examplesReadme.compiled.epicVideoEmbeds, {
+				extrasReadme.compiled.status === 'success'
+					? getEpicVideoInfos(extrasReadme.compiled.epicVideoEmbeds, {
 							request,
 						})
 					: null,
@@ -108,10 +108,10 @@ export const headers: HeadersFunction = ({ loaderHeaders, parentHeaders }) => {
 	return headers
 }
 
-function ExampleListItem({
-	example,
+function ExtraListItem({
+	extra,
 }: {
-	example: { dirName: string; title: string }
+	extra: { dirName: string; title: string }
 }) {
 	return (
 		<li>
@@ -121,12 +121,12 @@ function ExampleListItem({
 					'hover:bg-muted/60 focus:bg-muted/60',
 				)}
 				prefetch="intent"
-				to={example.dirName}
+				to={extra.dirName}
 			>
 				<span className="text-muted-foreground text-xs font-normal tabular-nums">
 					•
 				</span>
-				<span className="truncate">{example.title}</span>
+				<span className="truncate">{extra.title}</span>
 			</Link>
 		</li>
 	)
@@ -134,9 +134,9 @@ function ExampleListItem({
 
 const mdxComponents = { h1: () => null }
 
-export default function ExamplesIndex() {
+export default function ExtrasIndex() {
 	const data = useLoaderData<typeof loader>()
-	useRevalidationWS({ watchPaths: ['./examples'] })
+	useRevalidationWS({ watchPaths: ['./extra', './example', './examples'] })
 
 	return (
 		<main className="relative flex h-full w-full max-w-5xl flex-col justify-between border-r md:w-3/4 xl:w-2/3">
@@ -150,40 +150,40 @@ export default function ExamplesIndex() {
 					</h1>
 				</div>
 				<div>
-					{data.examplesReadme.compiled.status === 'success' &&
-					data.examplesReadme.compiled.code ? (
+					{data.extrasReadme.compiled.status === 'success' &&
+					data.extrasReadme.compiled.code ? (
 						<EpicVideoInfoProvider
 							epicVideoInfosPromise={data.epicVideoInfosPromise}
 						>
 							<div className="prose dark:prose-invert sm:prose-lg">
 								<Mdx
-									code={data.examplesReadme.compiled.code}
+									code={data.extrasReadme.compiled.code}
 									components={mdxComponents}
 								/>
 							</div>
 						</EpicVideoInfoProvider>
-					) : data.examplesReadme.compiled.status === 'error' ? (
+					) : data.extrasReadme.compiled.status === 'error' ? (
 						<div className="text-foreground-destructive">
 							There was an error:
-							<pre>{data.examplesReadme.compiled.error}</pre>
+							<pre>{data.extrasReadme.compiled.error}</pre>
 						</div>
 					) : (
-						'No examples overview yet...'
+						'No extras overview yet...'
 					)}
 				</div>
 				<div className="pt-6">
 					<h2 className="pb-4 font-mono text-xs font-semibold uppercase">
-						Examples
+						Extras
 					</h2>
-					{data.examples.length ? (
+					{data.extras.length ? (
 						<ul className="divide-border dark:divide-border/50 flex flex-col divide-y">
-							{data.examples.map((example) => (
-								<ExampleListItem key={example.dirName} example={example} />
+							{data.extras.map((extra) => (
+								<ExtraListItem key={extra.dirName} extra={extra} />
 							))}
 						</ul>
 					) : (
 						<p className="text-muted-foreground">
-							No examples yet. Add one to get started.
+							No extras yet. Add one to get started.
 						</p>
 					)}
 				</div>
@@ -191,8 +191,8 @@ export default function ExamplesIndex() {
 			<ElementScrollRestoration elementQuery={`#${data.articleId}`} />
 			<div className="@container flex h-16 justify-center border-t">
 				<EditFileOnGitHub
-					file={data.examplesReadme.file}
-					relativePath={data.examplesReadme.relativePath}
+					file={data.extrasReadme.file}
+					relativePath={data.extrasReadme.relativePath}
 				/>
 			</div>
 		</main>

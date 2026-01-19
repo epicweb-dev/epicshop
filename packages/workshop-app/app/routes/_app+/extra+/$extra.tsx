@@ -3,8 +3,8 @@ import { invariantResponse } from '@epic-web/invariant'
 import { ElementScrollRestoration } from '@epic-web/restore-scroll'
 import {
 	getApps,
-	isExampleApp,
-	type ExampleApp,
+	isExtraApp,
+	type ExtraApp,
 } from '@epic-web/workshop-utils/apps.server'
 import { getWorkshopConfig } from '@epic-web/workshop-utils/config.server'
 import { getEpicVideoInfos } from '@epic-web/workshop-utils/epic-api.server'
@@ -48,8 +48,8 @@ function computeSplitPercent(input: unknown, defaultValue = 50): number {
 	return defaultValue
 }
 
-function sortExamples(examples: ExampleApp[]) {
-	return examples.sort((a, b) =>
+function sortExtras(extras: ExtraApp[]) {
+	return extras.sort((a, b) =>
 		a.title.localeCompare(b.title, undefined, {
 			numeric: true,
 			sensitivity: 'base',
@@ -63,37 +63,35 @@ export const meta: MetaFunction<typeof loader> = (args) => {
 	if (!loaderData || !rootData) return [{ title: '🦉 | Error' }]
 
 	return getSeoMetaTags({
-		title: `📚 | ${loaderData.example.title} | ${rootData.workshopTitle}`,
-		description: `Example: ${loaderData.example.title}`,
-		ogTitle: loaderData.example.title,
-		ogDescription: `Example: ${loaderData.example.title}`,
+		title: `📚 | ${loaderData.extra.title} | ${rootData.workshopTitle}`,
+		description: `Extra: ${loaderData.extra.title}`,
+		ogTitle: loaderData.extra.title,
+		ogDescription: `Extra: ${loaderData.extra.title}`,
 		instructor: rootData.instructor,
 		requestInfo: rootData.requestInfo,
 	})
 }
 
 export async function loader({ request, params }: LoaderFunctionArgs) {
-	const timings = makeTimings('exampleLoader')
-	invariantResponse(params.example, 'example is required')
+	const timings = makeTimings('extraLoader')
+	invariantResponse(params.extra, 'extra is required')
 
 	const { title: workshopTitle } = getWorkshopConfig()
 	const apps = await time(() => getApps({ request, timings }), {
 		timings,
 		type: 'getApps',
-		desc: 'getApps in example loader',
+		desc: 'getApps in extra loader',
 	})
-	const examples = sortExamples(apps.filter(isExampleApp))
-	const exampleIndex = examples.findIndex(
-		(example) => example.dirName === params.example,
-	)
-	const example = examples[exampleIndex]
-	if (!example) {
-		throw new Response('Example not found', { status: 404 })
+	const extras = sortExtras(apps.filter(isExtraApp))
+	const extraIndex = extras.findIndex((extra) => extra.dirName === params.extra)
+	const extra = extras[extraIndex]
+	if (!extra) {
+		throw new Response('Extra not found', { status: 404 })
 	}
 
-	const readmeFilepath = path.join(example.fullPath, 'README.mdx')
-	const previousExample = examples[exampleIndex - 1]
-	const nextExample = examples[exampleIndex + 1]
+	const readmeFilepath = path.join(extra.fullPath, 'README.mdx')
+	const previousExtra = extras[extraIndex - 1]
+	const nextExtra = extras[extraIndex + 1]
 
 	const cookieHeader = request.headers.get('cookie')
 	const rawSplit = cookieHeader
@@ -101,40 +99,40 @@ export async function loader({ request, params }: LoaderFunctionArgs) {
 		: null
 	const splitPercent = computeSplitPercent(rawSplit, 50)
 
-	const { isRunning, portIsAvailable } = await getAppRunningState(example)
+	const { isRunning, portIsAvailable } = await getAppRunningState(extra)
 
 	return data(
 		{
 			articleId: `workshop-${slugify(workshopTitle)}-${slugify(
-				example.title,
-			)}-example`,
+				extra.title,
+			)}-extra`,
 			splitPercent,
-			example: {
-				type: 'example',
-				name: example.name,
-				title: example.title,
-				dirName: example.dirName,
-				fullPath: example.fullPath,
-				relativePath: example.relativePath,
-				dev: example.dev,
-				test: example.test,
-				stackBlitzUrl: example.stackBlitzUrl,
+			extra: {
+				type: 'extra',
+				name: extra.name,
+				title: extra.title,
+				dirName: extra.dirName,
+				fullPath: extra.fullPath,
+				relativePath: extra.relativePath,
+				dev: extra.dev,
+				test: extra.test,
+				stackBlitzUrl: extra.stackBlitzUrl,
 				isRunning,
 				portIsAvailable,
-				epicVideoEmbeds: example.epicVideoEmbeds,
-				instructionsCode: example.instructionsCode,
+				epicVideoEmbeds: extra.epicVideoEmbeds,
+				instructionsCode: extra.instructionsCode,
 			},
-			exampleReadme: {
+			extraReadme: {
 				file: readmeFilepath,
-				relativePath: path.join(example.relativePath, 'README.mdx'),
+				relativePath: path.join(extra.relativePath, 'README.mdx'),
 			},
-			previousExample: previousExample
-				? { dirName: previousExample.dirName, title: previousExample.title }
+			previousExtra: previousExtra
+				? { dirName: previousExtra.dirName, title: previousExtra.title }
 				: null,
-			nextExample: nextExample
-				? { dirName: nextExample.dirName, title: nextExample.title }
+			nextExtra: nextExtra
+				? { dirName: nextExtra.dirName, title: nextExtra.title }
 				: null,
-			epicVideoInfosPromise: getEpicVideoInfos(example.epicVideoEmbeds, {
+			epicVideoInfosPromise: getEpicVideoInfos(extra.epicVideoEmbeds, {
 				request,
 			}),
 		},
@@ -154,28 +152,28 @@ export const headers: HeadersFunction = ({ loaderHeaders, parentHeaders }) => {
 	return headers
 }
 
-export default function ExampleRoute() {
+export default function ExtraRoute() {
 	const data = useLoaderData<typeof loader>()
 	const inBrowserBrowserRef = useRef<InBrowserBrowserRef>(null)
 	const containerRef = useRef<HTMLDivElement>(null)
 	const leftPaneRef = useRef<HTMLDivElement>(null)
 	const [splitPercent, setSplitPercent] = useState<number>(data.splitPercent)
 
-	// Create MDX components with example-specific InlineFile
+	// Create MDX components with extra-specific InlineFile
 	const mdxComponents = useMemo(() => {
 		const InlineFile = createInlineFileComponent(() => ({
-			name: data.example.name,
-			fullPath: data.example.fullPath,
+			name: data.extra.name,
+			fullPath: data.extra.fullPath,
 		}))
 		return {
 			// we'll render the title ourselves thank you
 			h1: () => null,
 			InlineFile,
 		}
-	}, [data.example.name, data.example.fullPath])
+	}, [data.extra.name, data.extra.fullPath])
 
 	useRevalidationWS({
-		watchPaths: [data.exampleReadme.file],
+		watchPaths: [data.extraReadme.file],
 	})
 
 	function setCookie(percent: number) {
@@ -262,12 +260,12 @@ export default function ExampleRoute() {
 					<h1 className="@container h-14 border-b pr-5 pl-10 text-sm leading-tight font-medium">
 						<div className="flex h-14 items-center justify-between gap-x-2 py-2 whitespace-nowrap">
 							<div className="flex items-center justify-start gap-x-2 uppercase">
-								<Link to="/examples" className="hover:underline">
-									<span>Examples</span>
+								<Link to="/extra" className="hover:underline">
+									<span>Extras</span>
 								</Link>
 								<span>/</span>
 								<Link to="." className="hover:underline">
-									<span>{data.example.title}</span>
+									<span>{data.extra.title}</span>
 								</Link>
 							</div>
 						</div>
@@ -277,13 +275,13 @@ export default function ExampleRoute() {
 						key={data.articleId}
 						className="shadow-on-scrollbox scrollbar-thin scrollbar-thumb-scrollbar flex h-full w-full max-w-none flex-1 scroll-pt-6 flex-col justify-between space-y-6 overflow-y-auto p-2 sm:p-10 sm:pt-8"
 					>
-						{data.example.instructionsCode ? (
+						{data.extra.instructionsCode ? (
 							<EpicVideoInfoProvider
 								epicVideoInfosPromise={data.epicVideoInfosPromise}
 							>
 								<div className="prose dark:prose-invert sm:prose-lg">
 									<Mdx
-										code={data.example.instructionsCode}
+										code={data.extra.instructionsCode}
 										components={mdxComponents}
 									/>
 								</div>
@@ -294,10 +292,10 @@ export default function ExampleRoute() {
 							</div>
 						)}
 						<div className="mt-auto flex justify-between">
-							{data.previousExample ? (
+							{data.previousExtra ? (
 								<Link
-									to={`/examples/${data.previousExample.dirName}`}
-									aria-label="Previous Example"
+									to={`/extra/${data.previousExtra.dirName}`}
+									aria-label="Previous Extra"
 									prefetch="intent"
 								>
 									<span aria-hidden>←</span>
@@ -306,10 +304,10 @@ export default function ExampleRoute() {
 							) : (
 								<span />
 							)}
-							{data.nextExample ? (
+							{data.nextExtra ? (
 								<Link
-									to={`/examples/${data.nextExample.dirName}`}
-									aria-label="Next Example"
+									to={`/extra/${data.nextExtra.dirName}`}
+									aria-label="Next Extra"
 									prefetch="intent"
 								>
 									<span className="hidden xl:inline">Next </span>
@@ -327,23 +325,23 @@ export default function ExampleRoute() {
 					<div className="@container flex h-16 justify-between border-t border-b-4 lg:border-b-0">
 						<div />
 						<EditFileOnGitHub
-							appName={data.example.name}
-							relativePath={data.exampleReadme.relativePath}
+							appName={data.extra.name}
+							relativePath={data.extraReadme.relativePath}
 						/>
 						<NavChevrons
 							prev={
-								data.previousExample
+								data.previousExtra
 									? {
-											to: `/examples/${data.previousExample.dirName}`,
-											'aria-label': 'Previous Example',
+											to: `/extra/${data.previousExtra.dirName}`,
+											'aria-label': 'Previous Extra',
 										}
 									: null
 							}
 							next={
-								data.nextExample
+								data.nextExtra
 									? {
-											to: `/examples/${data.nextExample.dirName}`,
-											'aria-label': 'Next Example',
+											to: `/extra/${data.nextExtra.dirName}`,
+											'aria-label': 'Next Extra',
 										}
 									: null
 							}
@@ -367,7 +365,7 @@ export default function ExampleRoute() {
 				/>
 				<div className="flex min-w-0 flex-1">
 					<Preview
-						appInfo={data.example}
+						appInfo={data.extra}
 						inBrowserBrowserRef={inBrowserBrowserRef}
 					/>
 				</div>

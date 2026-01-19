@@ -2,7 +2,7 @@ import path from 'path'
 import {
 	getAppByName,
 	getExercise,
-	isExampleApp,
+	isExtraApp,
 	isExerciseStepApp,
 	isPlaygroundApp,
 	isProblemApp,
@@ -83,7 +83,7 @@ export async function loader({ request, params }: LoaderFunctionArgs) {
 				]
 			: isPlaygroundApp(app)
 				? ['🛝', ...baseAppTitle]
-				: isExampleApp(app)
+				: isExtraApp(app)
 					? ['📚', ...baseAppTitle]
 					: [appTitle]
 	)

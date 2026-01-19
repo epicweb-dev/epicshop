@@ -337,7 +337,10 @@ async function updateWorkshopRepo(repo, version) {
 					const lockJson = JSON.parse(lockContents)
 					const workspacePackages = Object.keys(lockJson.packages || {}).filter(
 						(key) =>
-							key.startsWith('exercises/') || key.startsWith('examples/'),
+							key.startsWith('exercises/') ||
+							key.startsWith('extra/') ||
+							key.startsWith('example/') ||
+							key.startsWith('examples/'),
 					)
 					console.log(
 						`📦 ${repoName} - package-lock.json contains ${workspacePackages.length} workspace package entries`,

@@ -387,8 +387,13 @@ function getUniqueProductHostEmojis(locations: Location[]): string | null {
 		.join('')
 }
 
-function hasExamples(apps: Array<{ relativePath: string }>) {
-	return apps.some((app) => app.relativePath.split(/[\\/]/)[0] === 'examples')
+function hasExtras(apps: Array<{ relativePath: string }>) {
+	return apps.some((app) => {
+		const rootDir = app.relativePath.split(/[\\/]/)[0]
+		return (
+			rootDir === 'extra' || rootDir === 'example' || rootDir === 'examples'
+		)
+	})
 }
 
 const useIsWide = makeMediaQueryStore('(min-width: 640px)', true)
@@ -400,7 +405,14 @@ export default function App() {
 	const isHydrated = useHydrated()
 
 	const [isMenuOpened, setMenuOpenedState] = React.useState(data.isMenuOpened)
-	useRevalidationWS({ watchPaths: ['./exercises/README.mdx', './examples'] })
+	useRevalidationWS({
+		watchPaths: [
+			'./exercises/README.mdx',
+			'./extra',
+			'./example',
+			'./examples',
+		],
+	})
 
 	function setMenuOpened(value: boolean) {
 		setMenuOpenedState(value)
@@ -683,7 +695,7 @@ function MobileNavigation({
 	// Onboarding indicators
 	const [showAccountBadge, dismissAccountBadge] =
 		useOnboardingIndicator('account-link')
-	const showExamplesLink = hasExamples(apps)
+	const showExtrasLink = hasExtras(apps)
 
 	// items
 	const listVariants = {
@@ -907,10 +919,10 @@ function MobileNavigation({
 										</NavigationExerciseListItem>
 									)
 								})}
-								{showExamplesLink ? (
+								{showExtrasLink ? (
 									<span>
 										<NavLink
-											to="/examples"
+											to="/extra"
 											prefetch="intent"
 											className={({ isActive }) =>
 												clsx(
@@ -920,7 +932,7 @@ function MobileNavigation({
 												)
 											}
 										>
-											📚 Examples
+											📚 Extras
 										</NavLink>
 									</span>
 								) : null}
@@ -1076,7 +1088,7 @@ function Navigation({
 	// Onboarding indicators
 	const [showAccountBadge, dismissAccountBadge] =
 		useOnboardingIndicator('account-link')
-	const showExamplesLink = hasExamples(apps)
+	const showExtrasLink = hasExtras(apps)
 
 	const exercise = data.exercises.find(
 		(e) => e.exerciseNumber === Number(params.exerciseNumber),
@@ -1327,10 +1339,10 @@ function Navigation({
 										</NavigationExerciseListItem>
 									)
 								})}
-								{showExamplesLink ? (
+								{showExtrasLink ? (
 									<span>
 										<NavLink
-											to="/examples"
+											to="/extra"
 											prefetch="intent"
 											className={({ isActive }) =>
 												clsx(
@@ -1340,7 +1352,7 @@ function Navigation({
 												)
 											}
 										>
-											📚 Examples
+											📚 Extras
 										</NavLink>
 									</span>
 								) : null}
