@@ -36,7 +36,7 @@ export function PlaygroundWindow({
 			'Playground is not set to the right app. Click to set Playground.'
 	}
 	return (
-		<div className="flex h-full w-full min-h-0 min-w-0 flex-col justify-between">
+		<div className="flex h-full min-h-0 w-full min-w-0 flex-col justify-between">
 			<div className="flex h-14 shrink-0 items-center justify-start gap-2 border-b px-3">
 				<div className="display-alt-up">
 					{problemAppName ? (
