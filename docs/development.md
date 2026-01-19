@@ -15,8 +15,8 @@ The workshop app uses React Router's RSC framework mode for current experiments.
 Vite is configured with `unstable_reactRouterRSC` and `@vitejs/plugin-rsc`, and
 the entry points live in `packages/workshop-app/app/entry.rsc.tsx`,
 `packages/workshop-app/app/entry.ssr.tsx`, and
-`packages/workshop-app/app/entry.client.tsx`. Expect breaking changes as
-React Router's RSC support evolves.
+`packages/workshop-app/app/entry.client.tsx`. Expect breaking changes as React
+Router's RSC support evolves.
 
 ## Unix
 

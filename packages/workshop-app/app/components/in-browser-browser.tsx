@@ -2,7 +2,11 @@ import { clsx } from 'clsx'
 import * as React from 'react'
 import { useImperativeHandle, useRef, useState } from 'react'
 import { Icon } from '#app/components/icons.tsx'
-import { AppStarter, AppStopper, PortStopper } from '#app/routes/start.client.tsx'
+import {
+	AppStarter,
+	AppStopper,
+	PortStopper,
+} from '#app/routes/start.client.tsx'
 import { useTheme } from '#app/routes/theme/index.client.tsx'
 import { getBaseUrl } from '#app/utils/misc.tsx'
 import { useRequestInfo } from '#app/utils/root-loader.ts'

@@ -18,10 +18,7 @@ import { warmCache as warmEpicAPICache } from '@epic-web/workshop-utils/epic-api
 import { warmOfflineVideoSummary } from '@epic-web/workshop-utils/offline-videos.server'
 import { requestContext } from '@epic-web/workshop-utils/request-context.server'
 import { checkConnection } from '@epic-web/workshop-utils/utils.server'
-import {
-	createRequest,
-	sendResponse,
-} from '@remix-run/node-fetch-server'
+import { createRequest, sendResponse } from '@remix-run/node-fetch-server'
 import { ip as ipAddress } from 'address'
 import chalk from 'chalk'
 import chokidar, { type FSWatcher } from 'chokidar'
@@ -209,27 +206,23 @@ const portToUse = await getPort({
 	port: portNumbers(desiredPort, desiredPort + 100),
 })
 
-app.all(
-	'*splat',
-	async (req, res, next) => {
-		try {
-			const build = (await serverBuildPromise) as ServerBuild
-			const requestHandler = resolveRequestHandler(build)
-			const host =
-				req.get('X-Forwarded-Host') ?? req.get('host') ?? 'localhost'
-			const request = createRequest(req, res, {
-				host,
-				protocol: `${req.protocol}:`,
-			})
-			const requestContext = new RouterContextProvider()
-			requestContext.set(serverBuildContext, serverBuildPromise)
-			const response = await requestHandler(request, requestContext)
-			await sendResponse(res, response)
-		} catch (error) {
-			next(error)
-		}
-	},
-)
+app.all('*splat', async (req, res, next) => {
+	try {
+		const build = (await serverBuildPromise) as ServerBuild
+		const requestHandler = resolveRequestHandler(build)
+		const host = req.get('X-Forwarded-Host') ?? req.get('host') ?? 'localhost'
+		const request = createRequest(req, res, {
+			host,
+			protocol: `${req.protocol}:`,
+		})
+		const requestContext = new RouterContextProvider()
+		requestContext.set(serverBuildContext, serverBuildPromise)
+		const response = await requestHandler(request, requestContext)
+		await sendResponse(res, response)
+	} catch (error) {
+		next(error)
+	}
+})
 
 const SENTRY_ENABLED = Boolean(
 	ENV.EPICSHOP_IS_PUBLISHED && process.env.SENTRY_DSN,

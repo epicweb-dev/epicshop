@@ -28,4 +28,3 @@ export function useApps() {
 	const data = useRootLoaderData()
 	return data.apps
 }
-

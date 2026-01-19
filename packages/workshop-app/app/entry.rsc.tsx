@@ -47,8 +47,10 @@ export default {
 			requestContext = undefined
 		}
 
-		const ssr =
-			await import.meta.viteRsc.loadModule<typeof EntrySsr>('ssr', 'index')
+		const ssr = await import.meta.viteRsc.loadModule<typeof EntrySsr>(
+			'ssr',
+			'index',
+		)
 
 		return await ssr.generateHTML(
 			request,

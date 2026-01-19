@@ -12,9 +12,7 @@ import { Icon } from '#app/components/icons.tsx'
 import { useInterval } from '#app/utils/misc.client.tsx'
 import { useRootLoaderData } from '#app/utils/root-loader.ts'
 import { type Route } from './+types/preferences.tsx'
-import {
-	downloadResolutionOptions,
-} from './preferences-constants.ts'
+import { downloadResolutionOptions } from './preferences-constants.ts'
 
 export default function AccountSettings() {
 	const loaderData = useLoaderData<Route.LoaderData>()
@@ -170,7 +168,9 @@ export default function AccountSettings() {
 					<h2 className="text-body-xl">Offline Video Summary</h2>
 					<div className="flex flex-wrap gap-4">
 						<div className="border-border bg-card flex flex-col gap-1 rounded-md border px-4 py-3">
-							<span className="text-muted-foreground text-xs uppercase">Status</span>
+							<span className="text-muted-foreground text-xs uppercase">
+								Status
+							</span>
 							<span className="text-sm font-semibold">
 								{offlineVideos.downloadState.status === 'running'
 									? 'Downloading'
@@ -180,13 +180,17 @@ export default function AccountSettings() {
 							</span>
 						</div>
 						<div className="border-border bg-card flex flex-col gap-1 rounded-md border px-4 py-3">
-							<span className="text-muted-foreground text-xs uppercase">Downloaded</span>
+							<span className="text-muted-foreground text-xs uppercase">
+								Downloaded
+							</span>
 							<span className="text-sm font-semibold">
 								{offlineVideos.downloadState.downloaded ?? 0}
 							</span>
 						</div>
 						<div className="border-border bg-card flex flex-col gap-1 rounded-md border px-4 py-3">
-							<span className="text-muted-foreground text-xs uppercase">Queued</span>
+							<span className="text-muted-foreground text-xs uppercase">
+								Queued
+							</span>
 							<span className="text-sm font-semibold">
 								{offlineVideos.downloadState.queued ?? 0}
 							</span>
@@ -233,19 +237,25 @@ export default function AccountSettings() {
 					<h2 className="text-body-xl">Offline Video Settings</h2>
 					<div className="flex flex-wrap gap-4">
 						<div className="border-border bg-card flex flex-col gap-1 rounded-md border px-4 py-3">
-							<span className="text-muted-foreground text-xs uppercase">Min</span>
+							<span className="text-muted-foreground text-xs uppercase">
+								Min
+							</span>
 							<span className="text-sm font-semibold">
 								{offlineVideos.downloadState.minResolution ?? 'Auto'}
 							</span>
 						</div>
 						<div className="border-border bg-card flex flex-col gap-1 rounded-md border px-4 py-3">
-							<span className="text-muted-foreground text-xs uppercase">Max</span>
+							<span className="text-muted-foreground text-xs uppercase">
+								Max
+							</span>
 							<span className="text-sm font-semibold">
 								{offlineVideos.downloadState.maxResolution ?? 'Auto'}
 							</span>
 						</div>
 						<div className="border-border bg-card flex flex-col gap-1 rounded-md border px-4 py-3">
-							<span className="text-muted-foreground text-xs uppercase">Resolution</span>
+							<span className="text-muted-foreground text-xs uppercase">
+								Resolution
+							</span>
 							<span className="text-sm font-semibold">
 								{offlineVideos.downloadState.downloadResolution ?? 'Auto'}
 							</span>
