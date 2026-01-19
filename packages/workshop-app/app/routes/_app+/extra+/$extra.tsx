@@ -4,6 +4,7 @@ import { ElementScrollRestoration } from '@epic-web/restore-scroll'
 import {
 	getApps,
 	isExtraApp,
+	isPlaygroundApp,
 	type ExtraApp,
 } from '@epic-web/workshop-utils/apps.server'
 import { getWorkshopConfig } from '@epic-web/workshop-utils/config.server'
@@ -33,6 +34,7 @@ import { useRevalidationWS } from '#app/components/revalidation-ws.tsx'
 import { Preview } from '#app/routes/_app+/exercise+/$exerciseNumber_.$stepNumber.$type+/__shared/preview.tsx'
 import { getAppRunningState } from '#app/routes/_app+/exercise+/$exerciseNumber_.$stepNumber.$type+/__shared/utils.tsx'
 import { EditFileOnGitHub } from '#app/routes/launch-editor.tsx'
+import { SetAppToPlayground } from '#app/routes/set-playground.tsx'
 import { createInlineFileComponent, Mdx } from '#app/utils/mdx.tsx'
 import { getRootMatchLoaderData } from '#app/utils/root-loader.ts'
 import { getSeoMetaTags } from '#app/utils/seo.ts'
@@ -83,6 +85,7 @@ export async function loader({ request, params }: LoaderFunctionArgs) {
 		desc: 'getApps in extra loader',
 	})
 	const extras = sortExtras(apps.filter(isExtraApp))
+	const playgroundApp = apps.find(isPlaygroundApp)
 	const extraIndex = extras.findIndex((extra) => extra.dirName === params.extra)
 	const extra = extras[extraIndex]
 	if (!extra) {
@@ -126,6 +129,12 @@ export async function loader({ request, params }: LoaderFunctionArgs) {
 				file: readmeFilepath,
 				relativePath: path.join(extra.relativePath, 'README.mdx'),
 			},
+			playground: playgroundApp
+				? {
+						appName: playgroundApp.appName,
+						isUpToDate: playgroundApp.isUpToDate,
+					}
+				: null,
 			previousExtra: previousExtra
 				? { dirName: previousExtra.dirName, title: previousExtra.title }
 				: null,
@@ -158,6 +167,9 @@ export default function ExtraRoute() {
 	const containerRef = useRef<HTMLDivElement>(null)
 	const leftPaneRef = useRef<HTMLDivElement>(null)
 	const [splitPercent, setSplitPercent] = useState<number>(data.splitPercent)
+	const showPlaygroundIndicator = data.playground?.appName !== data.extra.name
+	const shouldShowSetPlayground =
+		showPlaygroundIndicator || data.playground?.isUpToDate === false
 
 	// Create MDX components with extra-specific InlineFile
 	const mdxComponents = useMemo(() => {
@@ -268,6 +280,14 @@ export default function ExtraRoute() {
 									<span>{data.extra.title}</span>
 								</Link>
 							</div>
+							{shouldShowSetPlayground ? (
+								<SetAppToPlayground
+									appName={data.extra.name}
+									isOutdated={data.playground?.isUpToDate === false}
+									hideTextOnNarrow
+									showOnboardingIndicator={showPlaygroundIndicator}
+								/>
+							) : null}
 						</div>
 					</h1>
 					<article

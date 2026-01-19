@@ -1,7 +1,9 @@
 import {
 	extractNumbersAndTypeFromAppNameOrPath,
+	getApps,
 	getExercises,
 	getPlaygroundAppName,
+	isExtraApp,
 } from '@epic-web/workshop-utils/apps.server'
 import { getWorkshopConfig } from '@epic-web/workshop-utils/config.server'
 import {
@@ -17,6 +19,7 @@ import {
 	NavLink,
 	Outlet,
 	useLoaderData,
+	useLocation,
 	useParams,
 	data,
 	type HeadersFunction,
@@ -68,9 +71,10 @@ import { ThemeSwitch } from '../theme/index.tsx'
 export async function loader({ request }: LoaderFunctionArgs) {
 	const timings = makeTimings('appLayoutLoader')
 	const { title: workshopTitle } = getWorkshopConfig()
-	const [exercises, playgroundAppName] = await Promise.all([
+	const [exercises, playgroundAppName, apps] = await Promise.all([
 		getExercises({ request, timings }),
 		getPlaygroundAppName(),
+		getApps({ request, timings }),
 	])
 
 	const playgroundNumbersAndType = extractNumbersAndTypeFromAppNameOrPath(
@@ -111,6 +115,19 @@ export async function loader({ request }: LoaderFunctionArgs) {
 						: null,
 				})),
 			})),
+			extras: apps
+				.filter(isExtraApp)
+				.sort((a, b) =>
+					a.title.localeCompare(b.title, undefined, {
+						numeric: true,
+						sensitivity: 'base',
+					}),
+				)
+				.map((extra) => ({
+					dirName: extra.dirName,
+					title: extra.title,
+					name: extra.name,
+				})),
 			playground,
 			isMenuOpened:
 				request.headers.get('cookie')?.includes('es_menu_open=true') ?? false,
@@ -677,6 +694,21 @@ function NavigationExerciseStepListItem({
 	)
 }
 
+function NavigationExtrasListItem({
+	children,
+}: {
+	children: React.ReactNode
+}) {
+	return (
+		<motion.li
+			variants={itemVariants}
+			className="py-[6px] first:pt-3 last:pb-3"
+		>
+			<span className="inline-block pl-2">{children}</span>
+		</motion.li>
+	)
+}
+
 function MobileNavigation({
 	isMenuOpened,
 	onMenuOpenChange: setMenuOpened,
@@ -689,6 +721,7 @@ function MobileNavigation({
 	const user = useOptionalUser()
 	const nextExerciseRoute = useNextExerciseRoute()
 	const params = useParams()
+	const location = useLocation()
 	const isOnline = useIsOnline()
 	const { users } = usePresence()
 
@@ -696,6 +729,11 @@ function MobileNavigation({
 	const [showAccountBadge, dismissAccountBadge] =
 		useOnboardingIndicator('account-link')
 	const showExtrasLink = hasExtras(apps)
+	const playgroundExtra = data.extras.find(
+		(extra) => extra.name === data.playground.appName,
+	)
+	const isExtrasActive =
+		location.pathname === '/extra' || location.pathname.startsWith('/extra/')
 
 	// items
 	const listVariants = {
@@ -921,19 +959,55 @@ function MobileNavigation({
 								})}
 								{showExtrasLink ? (
 									<span>
-										<NavLink
-											to="/extra"
-											prefetch="intent"
-											className={({ isActive }) =>
-												clsx(
-													'relative px-2 py-0.5 pr-3 text-2xl font-bold whitespace-nowrap outline-none hover:underline focus:underline',
-													'after:bg-background after:absolute after:-right-2.5 after:-bottom-2.5 after:h-5 after:w-5 after:scale-75 after:rotate-45 after:content-[""] hover:underline focus:underline',
-													{ 'bg-foreground text-background': isActive },
-												)
-											}
-										>
-											📚 Extras
-										</NavLink>
+										<span className="flex items-center gap-1 text-2xl font-bold">
+											<NavLink
+												to="/extra"
+												prefetch="intent"
+												className={({ isActive }) =>
+													clsx(
+														'relative px-2 py-0.5 pr-3 whitespace-nowrap outline-none hover:underline focus:underline',
+														'after:bg-background after:absolute after:-right-2.5 after:-bottom-2.5 after:h-5 after:w-5 after:scale-75 after:rotate-45 after:content-[""] hover:underline focus:underline',
+														{ 'bg-foreground text-background': isActive },
+													)
+												}
+											>
+												📚 Extras
+											</NavLink>
+											{playgroundExtra ? (
+												<Link
+													to={`/extra/${playgroundExtra.dirName}`}
+													prefetch="intent"
+												>
+													🛝
+												</Link>
+											) : null}
+										</span>
+										{isExtrasActive && data.extras.length ? (
+											<motion.ul
+												variants={listVariants}
+												initial="hidden"
+												animate="visible"
+												className="mt-2 ml-4 flex flex-col"
+											>
+												{data.extras.map((extra) => (
+													<NavigationExtrasListItem key={extra.dirName}>
+														<NavLink
+															to={`/extra/${extra.dirName}`}
+															prefetch="intent"
+															className={({ isActive }) =>
+																clsx(
+																	'leading-tight font-semibold',
+																	isActive ? 'underline' : null,
+																)
+															}
+														>
+															{extra.title}
+															{extra.name === data.playground.appName ? ' 🛝' : ''}
+														</NavLink>
+													</NavigationExtrasListItem>
+												))}
+											</motion.ul>
+										) : null}
 									</span>
 								) : null}
 							</motion.ul>
@@ -1082,6 +1156,7 @@ function Navigation({
 	const user = useOptionalUser()
 	const nextExerciseRoute = useNextExerciseRoute()
 	const params = useParams()
+	const location = useLocation()
 	const isOnline = useIsOnline()
 	const { users } = usePresence()
 
@@ -1089,6 +1164,11 @@ function Navigation({
 	const [showAccountBadge, dismissAccountBadge] =
 		useOnboardingIndicator('account-link')
 	const showExtrasLink = hasExtras(apps)
+	const playgroundExtra = data.extras.find(
+		(extra) => extra.name === data.playground.appName,
+	)
+	const isExtrasActive =
+		location.pathname === '/extra' || location.pathname.startsWith('/extra/')
 
 	const exercise = data.exercises.find(
 		(e) => e.exerciseNumber === Number(params.exerciseNumber),
@@ -1341,19 +1421,55 @@ function Navigation({
 								})}
 								{showExtrasLink ? (
 									<span>
-										<NavLink
-											to="/extra"
-											prefetch="intent"
-											className={({ isActive }) =>
-												clsx(
-													'relative px-2 py-0.5 pr-3 text-2xl font-bold whitespace-nowrap outline-none hover:underline focus:underline',
-													'after:bg-background after:absolute after:-right-2.5 after:-bottom-2.5 after:h-5 after:w-5 after:scale-75 after:rotate-45 after:content-[""] hover:underline focus:underline',
-													{ 'bg-foreground text-background': isActive },
-												)
-											}
-										>
-											📚 Extras
-										</NavLink>
+										<span className="flex items-center gap-1 text-2xl font-bold">
+											<NavLink
+												to="/extra"
+												prefetch="intent"
+												className={({ isActive }) =>
+													clsx(
+														'relative px-2 py-0.5 pr-3 whitespace-nowrap outline-none hover:underline focus:underline',
+														'after:bg-background after:absolute after:-right-2.5 after:-bottom-2.5 after:h-5 after:w-5 after:scale-75 after:rotate-45 after:content-[""] hover:underline focus:underline',
+														{ 'bg-foreground text-background': isActive },
+													)
+												}
+											>
+												📚 Extras
+											</NavLink>
+											{playgroundExtra ? (
+												<Link
+													to={`/extra/${playgroundExtra.dirName}`}
+													prefetch="intent"
+												>
+													🛝
+												</Link>
+											) : null}
+										</span>
+										{isExtrasActive && data.extras.length ? (
+											<motion.ul
+												variants={listVariants}
+												initial="hidden"
+												animate="visible"
+												className="mt-2 ml-4 flex flex-col"
+											>
+												{data.extras.map((extra) => (
+													<NavigationExtrasListItem key={extra.dirName}>
+														<NavLink
+															to={`/extra/${extra.dirName}`}
+															prefetch="intent"
+															className={({ isActive }) =>
+																clsx(
+																	'leading-tight font-semibold',
+																	isActive ? 'underline' : null,
+																)
+															}
+														>
+															{extra.title}
+															{extra.name === data.playground.appName ? ' 🛝' : ''}
+														</NavLink>
+													</NavigationExtrasListItem>
+												))}
+											</motion.ul>
+										) : null}
 									</span>
 								) : null}
 							</motion.ul>
