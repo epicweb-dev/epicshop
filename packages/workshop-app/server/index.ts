@@ -47,21 +47,22 @@ const isProd = MODE === 'production'
 void initApps().catch(() => {})
 sourceMapSupport.install()
 
-const viteDevServer = isProd
-	? null
-	: await import('vite').then((vite) =>
-			vite.createServer({
-				server: { middlewareMode: true },
-				appType: 'custom',
-			}),
-		)
-
 const __dirname = path.dirname(fileURLToPath(import.meta.url))
-
 const isRunningInBuildDir = path.dirname(__dirname).endsWith('dist')
 const epicshopAppRootDir = isRunningInBuildDir
 	? path.join(__dirname, '..', '..')
 	: path.join(__dirname, '..')
+
+const viteDevServer = isProd
+	? null
+	: await import('vite').then((vite) =>
+			vite.createServer({
+				root: epicshopAppRootDir,
+				configFile: path.join(epicshopAppRootDir, 'vite.config.ts'),
+				server: { middlewareMode: true },
+				appType: 'custom',
+			}),
+		)
 
 // warm up some caches
 void Promise.all([
@@ -194,9 +195,7 @@ app.use((req, res, next) => {
 
 async function getBuild() {
 	const build = viteDevServer
-		? viteDevServer.ssrLoadModule(
-				'virtual:react-router/unstable_rsc/server-build',
-			)
+		? viteDevServer.ssrLoadModule('virtual:react-router/server-build')
 		: // @ts-ignore this should exist before running the server
 			// but it may not exist just yet.
 			await import('#build/server/index.js')
