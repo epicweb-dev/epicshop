@@ -17,6 +17,7 @@ const ROUTE_PATH = '/theme'
 const ThemeFormSchema = z.object({
 	theme: z.enum(['system', 'light', 'dark']),
 })
+const ThemeFormSchemaForConform = ThemeFormSchema as z.ZodTypeAny
 
 export async function loader({ request }: Route.LoaderArgs) {
 	const referrer = request.headers.get('Referer')
@@ -28,7 +29,7 @@ export async function loader({ request }: Route.LoaderArgs) {
 export async function action({ request }: Route.ActionArgs) {
 	const formData = await request.formData()
 	const submission = parseWithZod(formData, {
-		schema: ThemeFormSchema,
+		schema: ThemeFormSchemaForConform,
 	})
 	if (submission.status !== 'success') {
 		return data(submission.reply(), {
@@ -52,7 +53,7 @@ export function ThemeSwitch() {
 	const [form] = useForm({
 		lastResult: fetcher.data,
 		onValidate({ formData }) {
-			return parseWithZod(formData, { schema: ThemeFormSchema })
+			return parseWithZod(formData, { schema: ThemeFormSchemaForConform })
 		},
 	})
 
