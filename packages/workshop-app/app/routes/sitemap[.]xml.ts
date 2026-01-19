@@ -17,9 +17,7 @@ function buildSitemapRoutes(
 		const hasDefault = Boolean(entry.Component || entry.lazy)
 		const module = {
 			...(entry.handle ? { handle: entry.handle } : {}),
-			...(hasDefault
-				? { default: entry.Component ?? (() => null) }
-				: {}),
+			...(hasDefault ? { default: entry.Component ?? (() => null) } : {}),
 		}
 		manifest[entry.id] = {
 			id: entry.id,

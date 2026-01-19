@@ -50,7 +50,9 @@ const rscEntryOverrides = {
 			environments: {
 				client: {
 					build: {
-						rollupOptions: { input: { index: here('app', 'entry.client.tsx') } },
+						rollupOptions: {
+							input: { index: here('app', 'entry.client.tsx') },
+						},
 					},
 				},
 				rsc: {

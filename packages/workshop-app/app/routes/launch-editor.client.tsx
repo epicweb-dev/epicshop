@@ -208,10 +208,7 @@ export function EditFileOnGitHub({
 		void fetcher.submit(formData, { method: 'POST', action: '/launch-editor' })
 	}
 
-	const githubPath = getGithubRoot().replace(
-		/\/tree\/|\/blob\//,
-		'/edit/',
-	)
+	const githubPath = getGithubRoot().replace(/\/tree\/|\/blob\//, '/edit/')
 
 	return (
 		<Link

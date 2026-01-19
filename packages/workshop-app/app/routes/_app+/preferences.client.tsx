@@ -216,9 +216,7 @@ export default function AccountSettings() {
 							<span className="text-muted-foreground text-xs uppercase">
 								Queued
 							</span>
-							<span className="text-sm font-semibold">
-								{queuedDownloads}
-							</span>
+							<span className="text-sm font-semibold">{queuedDownloads}</span>
 						</div>
 					</div>
 					<div className="flex flex-wrap gap-2">
