@@ -4,13 +4,11 @@ import { type RouteConfig } from '@react-router/dev/routes'
 import { remixRoutesOptionAdapter } from '@react-router/remix-routes-option-adapter'
 import { flatRoutes } from 'remix-flat-routes'
 
-const appRoutesDir = path.join(
-	path.dirname(fileURLToPath(import.meta.url)),
-	'routes',
-)
+const appDir = path.dirname(fileURLToPath(import.meta.url))
 
 export default remixRoutesOptionAdapter((defineRoutes) => {
-	return flatRoutes(appRoutesDir, defineRoutes, {
+	return flatRoutes('routes', defineRoutes, {
+		appDir,
 		ignoredRouteFiles: [
 			'**/.*',
 			'**/*.css',
