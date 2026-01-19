@@ -6,7 +6,7 @@ import {
 	makeTimings,
 } from '@epic-web/workshop-utils/timing.server'
 import { Resvg } from '@resvg/resvg-js'
-import { renderToStaticMarkup } from 'react-dom/server'
+import { renderToStaticMarkup } from 'react-dom/server.node'
 import { type LoaderFunctionArgs } from 'react-router'
 import satori, { type SatoriOptions } from 'satori'
 import { getDomainUrl, getErrorMessage } from '#app/utils/misc.tsx'
