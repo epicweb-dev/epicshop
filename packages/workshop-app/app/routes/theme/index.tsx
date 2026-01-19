@@ -30,7 +30,7 @@ export async function action({ request }: Route.ActionArgs) {
 	const formData = await request.formData()
 	const submission = parseWithZod(formData, {
 		schema: ThemeFormSchemaForConform,
-	})
+	} as any)
 	if (submission.status !== 'success') {
 		return data(submission.reply(), {
 			// You can also use the status to determine the HTTP status code
@@ -53,7 +53,9 @@ export function ThemeSwitch() {
 	const [form] = useForm({
 		lastResult: fetcher.data,
 		onValidate({ formData }) {
-			return parseWithZod(formData, { schema: ThemeFormSchemaForConform })
+			return parseWithZod(formData, {
+				schema: ThemeFormSchemaForConform,
+			} as any)
 		},
 	})
 
