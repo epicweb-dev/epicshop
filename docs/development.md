@@ -9,6 +9,15 @@ To test the epic workshop app with a real workshop, set the
 `EPICSHOP_CONTEXT_CWD` environment variable with the path of a workshop you have
 installed locally. You can find examples of usage below.
 
+## React Server Components (experimental)
+
+The workshop app uses React Router's RSC framework mode for current experiments.
+Vite is configured with `unstable_reactRouterRSC` and `@vitejs/plugin-rsc`, and
+the entry points live in `packages/workshop-app/app/entry.rsc.tsx`,
+`packages/workshop-app/app/entry.ssr.tsx`, and
+`packages/workshop-app/app/entry.client.tsx`. Expect breaking changes as
+React Router's RSC support evolves.
+
 ## Unix
 
 ```sh

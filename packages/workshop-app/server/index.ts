@@ -18,7 +18,10 @@ import { warmCache as warmEpicAPICache } from '@epic-web/workshop-utils/epic-api
 import { warmOfflineVideoSummary } from '@epic-web/workshop-utils/offline-videos.server'
 import { requestContext } from '@epic-web/workshop-utils/request-context.server'
 import { checkConnection } from '@epic-web/workshop-utils/utils.server'
-import { createRequestHandler } from '@react-router/express'
+import {
+	createRequest,
+	sendResponse,
+} from '@remix-run/node-fetch-server'
 import { ip as ipAddress } from 'address'
 import chalk from 'chalk'
 import chokidar, { type FSWatcher } from 'chokidar'
@@ -27,9 +30,10 @@ import compression from 'compression'
 import express from 'express'
 import getPort, { portNumbers } from 'get-port'
 import morgan from 'morgan'
-import { type ServerBuild } from 'react-router'
+import { RouterContextProvider, type ServerBuild } from 'react-router'
 import sourceMapSupport from 'source-map-support'
 import { type WebSocket, WebSocketServer } from 'ws'
+import { serverBuildContext } from '../app/utils/server-build-context.ts'
 
 // if we exit early with an error, log the error...
 closeWithGrace(({ err, manual }) => {
@@ -72,6 +76,36 @@ void Promise.all([
 ]).catch(() => {}) // don't block startup
 
 const serverBuildPromise = getBuild()
+type RequestHandler = (
+	request: Request,
+	context?: RouterContextProvider,
+) => Promise<Response>
+
+function resolveRequestHandler(build: unknown): RequestHandler {
+	if (typeof build === 'function') {
+		return build as RequestHandler
+	}
+	if (build && typeof build === 'object') {
+		if (typeof (build as { default?: unknown }).default === 'function') {
+			return (build as { default: RequestHandler }).default
+		}
+		if (
+			typeof (build as { default?: { fetch?: unknown } }).default?.fetch ===
+			'function'
+		) {
+			return (request, context) =>
+				(build as { default: { fetch: RequestHandler } }).default.fetch(
+					request,
+					context,
+				)
+		}
+		if (typeof (build as { fetch?: unknown }).fetch === 'function') {
+			return (request, context) =>
+				(build as { fetch: RequestHandler }).fetch(request, context)
+		}
+	}
+	throw new Error('Server build did not export a request handler.')
+}
 
 const app = express()
 
@@ -177,11 +211,24 @@ const portToUse = await getPort({
 
 app.all(
 	'*splat',
-	createRequestHandler({
-		getLoadContext: () => ({ serverBuild: serverBuildPromise }),
-		mode: MODE,
-		build: () => serverBuildPromise,
-	}),
+	async (req, res, next) => {
+		try {
+			const build = (await serverBuildPromise) as ServerBuild
+			const requestHandler = resolveRequestHandler(build)
+			const host =
+				req.get('X-Forwarded-Host') ?? req.get('host') ?? 'localhost'
+			const request = createRequest(req, res, {
+				host,
+				protocol: `${req.protocol}:`,
+			})
+			const requestContext = new RouterContextProvider()
+			requestContext.set(serverBuildContext, serverBuildPromise)
+			const response = await requestHandler(request, requestContext)
+			await sendResponse(res, response)
+		} catch (error) {
+			next(error)
+		}
+	},
 )
 
 const SENTRY_ENABLED = Boolean(

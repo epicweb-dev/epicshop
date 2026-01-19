@@ -1,14 +1,15 @@
 import { readFile } from 'node:fs/promises'
 import path from 'path'
 import { fileURLToPath } from 'url'
-import { reactRouter } from '@react-router/dev/vite'
+import { unstable_reactRouterRSC as reactRouterRSC } from '@react-router/dev/vite'
 import {
 	sentryReactRouter,
 	type SentryReactRouterBuildOptions,
 } from '@sentry/react-router'
 import tailwindcss from '@tailwindcss/vite'
+import rsc from '@vitejs/plugin-rsc'
 import { defineConfig } from 'vite'
-import { envOnlyMacros } from 'vite-env-only'
+import { denyImports, envOnlyMacros } from 'vite-env-only'
 import devtoolsJson from 'vite-plugin-devtools-json'
 
 const __filename = fileURLToPath(import.meta.url)
@@ -94,9 +95,13 @@ export default defineConfig((config) => ({
 	resolve: { alias: aliases },
 	sentryConfig,
 	plugins: [
+		denyImports({
+			client: { files: ['**/.server/*', '**/*.server.*'] },
+		}),
 		envOnlyMacros(),
 		tailwindcss(),
-		reactRouter(),
+		reactRouterRSC(),
+		rsc(),
 		MODE === 'production' && process.env.SENTRY_AUTH_TOKEN
 			? sentryReactRouter(sentryConfig, config)
 			: null,
