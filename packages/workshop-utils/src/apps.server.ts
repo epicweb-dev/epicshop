@@ -1052,17 +1052,49 @@ async function getExtraApps({
 	const extraDirInfo = await resolveExtraDir()
 	if (!extraDirInfo) return []
 
-	// Filter to only include directories, not files like README.mdx
-	const entries = await fs.promises
-		.readdir(extraDirInfo.fullPath, { withFileTypes: true })
-		.catch(() => [])
-	const extraDirs = entries
-		.filter((entry) => {
-			if (entry.isDirectory()) return true
-			log(`Skipping non-directory in extras: ${entry.name}`)
-			return false
+	// Read directory entries - only return empty array for non-existent directories
+	// to match the original readDir behavior. Other errors (EACCES, EMFILE, etc.) propagate.
+	let entries: fs.Dirent[] = []
+	try {
+		entries = await fs.promises.readdir(extraDirInfo.fullPath, {
+			withFileTypes: true,
 		})
-		.map((entry) => path.join(extraDirInfo.fullPath, entry.name))
+	} catch (error) {
+		if (
+			error instanceof Error &&
+			'code' in error &&
+			error.code === 'ENOENT'
+		) {
+			return []
+		}
+		throw error
+	}
+
+	// Filter to only include directories, not files like README.mdx
+	// Also follow symlinks to check if they point to directories
+	const extraDirs: string[] = []
+	for (const entry of entries) {
+		const fullPath = path.join(extraDirInfo.fullPath, entry.name)
+		if (entry.isDirectory()) {
+			extraDirs.push(fullPath)
+		} else if (entry.isSymbolicLink()) {
+			// Follow symlink to check if it points to a directory
+			try {
+				const stat = await fs.promises.stat(fullPath)
+				if (stat.isDirectory()) {
+					extraDirs.push(fullPath)
+				} else {
+					log(`Skipping non-directory symlink in extras: ${entry.name}`)
+				}
+			} catch (error) {
+				log(
+					`Skipping unresolvable symlink in extras: ${entry.name} (${getErrorMessage(error)})`,
+				)
+			}
+		} else {
+			log(`Skipping non-directory in extras: ${entry.name}`)
+		}
+	}
 
 	const extraApps: Array<ExtraApp> = []
 
