@@ -67,7 +67,7 @@ class McpTestClient {
 			throw new Error(`tsx binary not found at ${tsxBinary}`)
 		}
 
-		const child = spawn(tsxBinary, [serverEntry], {
+		const child = spawn(tsxBinary, ['--esm', serverEntry], {
 			stdio: ['pipe', 'pipe', 'pipe'],
 			env: {
 				...process.env,
