@@ -562,7 +562,7 @@ export function PlaygroundChooser({
 				<Select.Trigger
 					aria-label="Select app for playground"
 					className={clsx(
-						'radix-placeholder:text-muted-foreground flex h-full w-full items-center justify-between text-left focus-visible:outline-none',
+						'radix-placeholder:text-muted-foreground flex h-full w-full items-center justify-between rounded-md border border-border bg-muted/40 px-3 text-left focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-background hover:bg-muted/60',
 						fetcher.state !== 'idle' ? 'cursor-progress' : null,
 						fetcher.data?.status === 'error' ? 'cursor-not-allowed' : null,
 					)}
