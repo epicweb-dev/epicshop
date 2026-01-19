@@ -507,7 +507,7 @@ export default function ExtraRoute() {
 							<Playground
 								appInfo={data.playground}
 								problemAppName={data.extra.name}
-								allApps={data.allApps}
+								allApps={data.allApps ?? []}
 								isUpToDate={data.playground?.isUpToDate ?? false}
 								inBrowserBrowserRef={inBrowserBrowserRef}
 							/>

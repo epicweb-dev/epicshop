@@ -26,7 +26,7 @@ export function Playground({
 			allApps={allApps}
 			isUpToDate={isUpToDate}
 		>
-			{playgroundAppInfo?.dev.type === 'none' ? (
+			{playgroundAppInfo?.dev?.type === 'none' ? (
 				<div className="flex h-full flex-col items-center justify-center gap-4">
 					<div className="text-secondary-foreground text-2xl">
 						Non-UI exercise
