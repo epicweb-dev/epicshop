@@ -1060,11 +1060,7 @@ async function getExtraApps({
 			withFileTypes: true,
 		})
 	} catch (error) {
-		if (
-			error instanceof Error &&
-			'code' in error &&
-			error.code === 'ENOENT'
-		) {
+		if (error instanceof Error && 'code' in error && error.code === 'ENOENT') {
 			return []
 		}
 		throw error
