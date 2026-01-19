@@ -492,7 +492,10 @@ const isSkippedFile = (value: CacheFileType): value is SkippedFileType => {
 }
 
 export const WorkshopCacheSchema = z
-	.record(z.string(), z.record(z.string(), z.record(z.string(), CacheFileSchema)))
+	.record(
+		z.string(),
+		z.record(z.string(), z.record(z.string(), CacheFileSchema)),
+	)
 	.transform((workshopCaches) => {
 		type CacheEntryWithFilename = CacheEntryType & { filename: string }
 		type SkippedFileWithFilename = {

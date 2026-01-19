@@ -130,12 +130,8 @@ const WorkshopConfigSchema = z
 		stackBlitzConfig: StackBlitzConfigSchema.optional(),
 		forms: z
 			.object({
-				workshop: z
-					.string()
-					.default(defaultFormsConfig.workshop),
-				exercise: z
-					.string()
-					.default(defaultFormsConfig.exercise),
+				workshop: z.string().default(defaultFormsConfig.workshop),
+				exercise: z.string().default(defaultFormsConfig.exercise),
 			})
 			.default(defaultFormsConfig),
 		testTab: z
