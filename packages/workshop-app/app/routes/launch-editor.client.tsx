@@ -32,6 +32,15 @@ type LaunchEditorProps = {
 	onUpdate?: (state: string) => void
 } & FileDescriptorProps<string | string[]>
 
+function getGithubRoot() {
+	const env = typeof window === 'undefined' ? ENV : window.ENV
+	if (env?.EPICSHOP_GITHUB_ROOT) return env.EPICSHOP_GITHUB_ROOT
+	if (env?.EPICSHOP_GITHUB_REPO) {
+		return `${env.EPICSHOP_GITHUB_REPO.replace(/\/$/, '')}/tree/main`
+	}
+	return ''
+}
+
 function useLaunchFetcher(onUpdate?: ((state: string) => void) | undefined) {
 	const fetcher = useFetcher<LaunchEditorActionData>()
 
@@ -125,7 +134,7 @@ function LaunchGitHub({
 	if (file) {
 		const safePath = (s: string) => s.replace(/\\/g, '/')
 		// Convert tree to blob for individual files
-		const githubFileRoot = ENV.EPICSHOP_GITHUB_ROOT.replace('/tree/', '/blob/')
+		const githubFileRoot = getGithubRoot().replace('/tree/', '/blob/')
 		return (
 			<a
 				className="launch_button !no-underline"
@@ -144,7 +153,7 @@ function LaunchGitHub({
 	}
 	const app = apps.find((a) => a.name === appName)
 	// Convert tree to blob for individual files
-	const githubFileRoot = ENV.EPICSHOP_GITHUB_ROOT.replace('/tree/', '/blob/')
+	const githubFileRoot = getGithubRoot().replace('/tree/', '/blob/')
 
 	// Parse appFile to extract filename and line number (format: "filename,line,column")
 	const [filename, appFileLine] = appFile ? appFile.split(',') : ['', '']
@@ -199,7 +208,7 @@ export function EditFileOnGitHub({
 		void fetcher.submit(formData, { method: 'POST', action: '/launch-editor' })
 	}
 
-	const githubPath = ENV.EPICSHOP_GITHUB_ROOT.replace(
+	const githubPath = getGithubRoot().replace(
 		/\/tree\/|\/blob\//,
 		'/edit/',
 	)
