@@ -165,7 +165,7 @@ export default function ExampleRoute() {
 	const [splitPercent, setSplitPercent] = useState<number>(data.splitPercent)
 
 	useRevalidationWS({
-		watchPaths: [`${data.example.relativePath}/README.mdx`],
+		watchPaths: [data.exampleReadme.file],
 	})
 
 	function setCookie(percent: number) {
