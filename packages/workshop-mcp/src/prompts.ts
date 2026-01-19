@@ -66,7 +66,7 @@ Please use this context to provide quiz questions, one at a time, to me to help 
 }
 
 export function initPrompts(server: McpServer) {
-	server.registerPrompt(
+	;(server as any).registerPrompt(
 		'quiz_me',
 		{
 			title: promptDocs.quiz_me.title,
