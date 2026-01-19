@@ -254,11 +254,8 @@ export function initTools(server: McpServer) {
 
 				const timeout = setTimeout(() => {
 					void server.server
-						.notification({
-							method: 'notification',
-							params: {
-								message: 'Device authorization timed out',
-							},
+						.notification('notifications/message', {
+							message: 'Device authorization timed out',
 						})
 						.catch(() => {})
 				}, deviceResponse.expires_in * 1000)
@@ -271,11 +268,8 @@ export function initTools(server: McpServer) {
 					clearTimeout(timeout)
 
 					if (!tokenSet) {
-						await server.server.notification({
-							method: 'notification',
-							params: {
-								message: 'No token set',
-							},
+						await server.server.notification('notifications/message', {
+							message: 'No token set',
 						})
 						return
 					}
@@ -289,11 +283,8 @@ export function initTools(server: McpServer) {
 					const userinfoRaw = await protectedResourceResponse.json()
 					const userinfoResult = UserInfoSchema.safeParse(userinfoRaw)
 					if (!userinfoResult.success) {
-						await server.server.notification({
-							method: 'notification',
-							params: {
-								message: `Failed to parse user info: ${userinfoResult.error.message}`,
-							},
+						await server.server.notification('notifications/message', {
+							message: `Failed to parse user info: ${userinfoResult.error.message}`,
 						})
 						return
 					}
@@ -308,11 +299,8 @@ export function initTools(server: McpServer) {
 
 					await getUserInfo({ forceFresh: true })
 
-					await server.server.notification({
-						method: 'notification',
-						params: {
-							message: 'Authentication successful',
-						},
+					await server.server.notification('notifications/message', {
+						message: 'Authentication successful',
 					})
 				} catch (error) {
 					clearTimeout(timeout)
