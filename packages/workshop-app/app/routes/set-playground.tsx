@@ -31,7 +31,8 @@ import {
 } from '#app/components/ui/dialog.tsx'
 import { SimpleTooltip } from '#app/components/ui/tooltip.tsx'
 import { ensureUndeployed, getErrorMessage } from '#app/utils/misc.tsx'
-import { dataWithPE, usePERedirectInput } from '#app/utils/pe.tsx'
+import { usePERedirectInput } from '#app/utils/pe.client.tsx'
+import { dataWithPE } from '#app/utils/pe.tsx'
 import { useRootLoaderData } from '#app/utils/root-loader.ts'
 import { createToastHeaders } from '#app/utils/toast.server.ts'
 

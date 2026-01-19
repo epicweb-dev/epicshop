@@ -2,26 +2,9 @@
 // to the page they are on if the JavaScript hasn't had a chance to hydrate yet.
 // I think when Remix has middleware, this will be easier to do automatically.
 
-import { data, redirect, useLocation } from 'react-router'
+import { data, redirect } from 'react-router'
 import { safeRedirect } from 'remix-utils/safe-redirect'
-import { ServerOnly } from 'remix-utils/server-only'
-
-const PE_REDIRECT_INPUT_NAME = '__PE_redirectTo'
-
-export function usePERedirectInput() {
-	const location = useLocation()
-	return (
-		<ServerOnly>
-			{() => (
-				<input
-					type="hidden"
-					name={PE_REDIRECT_INPUT_NAME}
-					value={location.pathname}
-				/>
-			)}
-		</ServerOnly>
-	)
-}
+import { PE_REDIRECT_INPUT_NAME } from '#app/utils/pe-constants.ts'
 
 export function ensureProgressiveEnhancement(
 	request: Request,

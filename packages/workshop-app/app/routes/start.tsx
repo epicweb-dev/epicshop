@@ -12,7 +12,8 @@ import { Loading } from '#app/components/loading.tsx'
 import { showProgressBarField } from '#app/components/progress-bar.tsx'
 import { ensureUndeployed } from '#app/utils/misc.tsx'
 import { useAltDown } from '#app/utils/misc.client.tsx'
-import { dataWithPE, usePERedirectInput } from '#app/utils/pe.tsx'
+import { usePERedirectInput } from '#app/utils/pe.client.tsx'
+import { dataWithPE } from '#app/utils/pe.tsx'
 import { createToastHeaders } from '#app/utils/toast.server'
 
 export async function action({ request }: ActionFunctionArgs) {
