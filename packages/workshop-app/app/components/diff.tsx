@@ -234,16 +234,16 @@ function SelectFileToDiff({
 		<Select.Root name={name} defaultValue={defaultValue}>
 			<Select.Trigger
 				className={clsx(
-					'radix-placeholder:text-gray-500 flex h-full w-full max-w-[50%] items-center justify-between px-3 text-left focus-visible:outline-none',
+					'radix-placeholder:text-muted-foreground flex h-full w-full max-w-[50%] items-center justify-between px-3 text-left focus-visible:outline-none',
 					className,
 				)}
 				aria-label={`Select ${label} for git Diff`}
 			>
-				<span className="overflow-hidden text-ellipsis whitespace-nowrap">
+				<span className="truncate">
 					{label}:{' '}
 					<Select.Value
 						placeholder={`Select ${label}`}
-						className="inline-block w-40 text-ellipsis"
+						className="inline-block w-40 truncate"
 					/>
 				</span>
 				<Select.Icon className="">
@@ -254,7 +254,7 @@ function SelectFileToDiff({
 				<Select.Content
 					position="popper"
 					align="start"
-					className="z-20 max-h-[50vh] bg-black text-white lg:max-h-[70vh]"
+					className="bg-popover text-popover-foreground z-20 max-h-[50vh] lg:max-h-[70vh]"
 				>
 					<Select.ScrollUpButton className="flex h-5 cursor-default items-center justify-center">
 						<Icon name="ChevronUp" />
@@ -291,7 +291,7 @@ const SelectItem: React.FC<any> = ({
 	return (
 		<Select.Item
 			className={clsx(
-				'radix-disabled:text-red-500 radix-highlighted:opacity-100 radix-highlighted:outline-none radix-state-checked:opacity-100 relative flex cursor-pointer items-center rounded px-10 py-2 leading-none opacity-80 select-none',
+				'radix-disabled:text-muted-foreground radix-highlighted:opacity-100 radix-highlighted:outline-none radix-state-checked:opacity-100 relative flex cursor-pointer items-center rounded px-10 py-2 leading-none opacity-80 select-none',
 
 				className,
 			)}

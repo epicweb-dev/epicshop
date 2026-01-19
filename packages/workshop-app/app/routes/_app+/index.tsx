@@ -86,7 +86,7 @@ function ExerciseListItem({
 		<li key={exercise.exerciseNumber}>
 			<Link
 				className={cn(
-					"relative flex items-center gap-4 px-4 py-3 text-lg font-semibold transition after:absolute after:right-10 after:-translate-x-2 after:opacity-0 after:transition after:content-['→'] hover:bg-gray-50 hover:after:translate-x-0 hover:after:opacity-100 dark:hover:bg-white/5",
+					"hover:bg-muted/60 relative flex items-center gap-4 px-4 py-3 text-lg font-semibold transition after:absolute after:right-10 after:-translate-x-2 after:opacity-0 after:transition after:content-['→'] hover:after:translate-x-0 hover:after:opacity-100",
 					progressClassName,
 				)}
 				to={`${exercise.exerciseNumber.toString().padStart(2, '0')}`}
@@ -146,7 +146,7 @@ export default function Index({ loaderData: data }: Route.ComponentProps) {
 							</div>
 						</EpicVideoInfoProvider>
 					) : data.workshopReadme.compiled.status === 'error' ? (
-						<div className="text-red-500">
+						<div className="text-foreground-destructive">
 							There was an error:
 							<pre>{data.workshopReadme.compiled.error}</pre>
 						</div>

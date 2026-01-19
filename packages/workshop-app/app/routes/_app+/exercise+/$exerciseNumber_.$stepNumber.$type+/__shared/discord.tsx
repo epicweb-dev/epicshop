@@ -48,7 +48,7 @@ function DiscordPosts() {
 				<Await
 					resolve={data.discordPostsPromise}
 					errorElement={
-						<div className="text-red-500">
+						<div className="text-foreground-destructive">
 							There was a problem loading the discord posts
 						</div>
 					}
@@ -109,8 +109,8 @@ function DiscordPost({
 	return (
 		<div>
 			<div className="flex flex-col gap-2 p-4">
-				<div className="flex gap-4">
-					<div className="flex flex-col gap-1">
+				<div className="flex min-w-0 gap-4">
+					<div className="flex min-w-0 flex-col gap-1">
 						{thread.tags.length ? (
 							<div className="flex gap-2">
 								{thread.tags.map((t) => (
@@ -127,7 +127,7 @@ function DiscordPost({
 							</div>
 						) : null}
 						<strong className="text-xl font-bold">{thread.name}</strong>
-						<div className="flex items-start gap-1">
+						<div className="flex min-w-0 flex-col gap-1">
 							<div className="flex items-center gap-1">
 								{thread.authorAvatarUrl ? (
 									<img
@@ -150,7 +150,7 @@ function DiscordPost({
 									:{' '}
 								</span>
 							</div>
-							<span className="text-muted-foreground flex-1 overflow-ellipsis">
+							<span className="text-muted-foreground min-w-0 line-clamp-4">
 								{thread.messagePreview}
 							</span>
 						</div>
@@ -172,7 +172,7 @@ function DiscordPost({
 									{reactionsWithCounts.map((r, i) => (
 										<li
 											key={i}
-											className="flex items-center gap-1 rounded-md border border-blue-600 bg-blue-500/20 px-[5px] py-[0.5px] text-sm"
+											className="border-info/60 bg-info/10 text-info flex items-center gap-1 rounded-md border px-[5px] py-[0.5px] text-sm"
 										>
 											<span className="h-3 w-3 leading-3">
 												<Emoji name={r.emojiName} url={r.emojiUrl} />

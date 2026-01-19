@@ -290,12 +290,12 @@ export default function Guide() {
 						</p>
 						<ul className="list-disc space-y-2 pl-6">
 							<li>
-								<span className="font-mono text-green-500">+</span> lines
-								(green) show code that needs to be added
+								<span className="text-success font-mono">+</span> lines (green)
+								show code that needs to be added
 							</li>
 							<li>
-								<span className="font-mono text-red-500">-</span> lines (red)
-								show code that needs to be removed
+								<span className="text-foreground-destructive font-mono">-</span>{' '}
+								lines (red) show code that needs to be removed
 							</li>
 							<li>Unchanged lines provide context around the changes</li>
 						</ul>

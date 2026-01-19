@@ -142,8 +142,8 @@ export default function AdminLayout({
 		navigation.formData?.get('intent') === 'stop-inspect'
 
 	const progressStatus = {
-		completed: 'bg-green-500',
-		incomplete: 'bg-yellow-500',
+		completed: 'bg-success',
+		incomplete: 'bg-warning',
 	}
 
 	return (
@@ -490,19 +490,19 @@ function Pinger({
 }) {
 	const colors = {
 		running: {
-			pinger: 'bg-green-400',
-			circle: 'bg-green-500',
+			pinger: 'bg-success/60',
+			circle: 'bg-success',
 		},
 		starting: {
-			pinger: 'bg-sky-400',
-			circle: 'bg-sky-500',
+			pinger: 'bg-info/60',
+			circle: 'bg-info',
 		},
 		stopped: {
 			circle: 'bg-muted-foreground',
 		},
 		taken: {
-			pinger: 'bg-red-400',
-			circle: 'bg-red-500',
+			pinger: 'bg-destructive/60',
+			circle: 'bg-destructive',
 		},
 	}[status]
 	return (

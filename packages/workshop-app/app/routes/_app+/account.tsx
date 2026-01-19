@@ -160,7 +160,7 @@ export default function Account() {
 					</callout-warning>
 				</div>
 			) : null}
-			<p className="text-center text-gray-700 dark:text-gray-300">
+			<p className="text-muted-foreground text-center">
 				{user.name
 					? `Hi ${
 							discordMember?.displayName ?? user.name
@@ -169,7 +169,7 @@ export default function Account() {
 			</p>
 			{discordMember ? (
 				<>
-					<p className="text-center text-gray-700 dark:text-gray-300">
+					<p className="text-muted-foreground text-center">
 						And you are connected to discord as{' '}
 						<a
 							href={`https://discord.com/users/${discordMember.id}`}

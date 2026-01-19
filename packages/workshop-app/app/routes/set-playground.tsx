@@ -562,15 +562,15 @@ export function PlaygroundChooser({
 				<Select.Trigger
 					aria-label="Select app for playground"
 					className={clsx(
-						'radix-placeholder:text-gray-500 flex h-full w-full items-center justify-between text-left focus-visible:outline-none',
+						'radix-placeholder:text-muted-foreground flex h-full w-full items-center justify-between text-left focus-visible:outline-none',
 						fetcher.state !== 'idle' ? 'cursor-progress' : null,
 						fetcher.data?.status === 'error' ? 'cursor-not-allowed' : null,
 					)}
 				>
-					<span className="scrollbar-thin scrollbar-thumb-scrollbar w-80 flex-1 overflow-hidden text-ellipsis whitespace-nowrap">
+					<span className="scrollbar-thin scrollbar-thumb-scrollbar w-80 flex-1 truncate">
 						<Select.Value
 							placeholder="Select current app"
-							className="inline-block w-40 text-ellipsis"
+							className="inline-block w-40 truncate"
 						/>
 					</span>
 					<Select.Icon>
@@ -581,7 +581,7 @@ export function PlaygroundChooser({
 					<Select.Content
 						position="popper"
 						align="start"
-						className="z-20 max-h-[50vh] bg-black text-white lg:max-h-[70vh]"
+						className="bg-popover text-popover-foreground z-20 max-h-[50vh] lg:max-h-[70vh]"
 					>
 						<Select.ScrollUpButton className="flex h-5 cursor-default items-center justify-center">
 							<Icon name="ChevronUp" />
@@ -660,7 +660,7 @@ function SelectItem({
 	return (
 		<Select.Item
 			value={value}
-			className="radix-disabled:text-red-500 radix-highlighted:opacity-100 radix-highlighted:outline-none radix-state-checked:opacity-100 relative flex cursor-pointer items-center rounded px-10 py-2 leading-none opacity-80 select-none"
+			className="radix-disabled:text-muted-foreground radix-highlighted:opacity-100 radix-highlighted:outline-none radix-state-checked:opacity-100 relative flex cursor-pointer items-center rounded px-10 py-2 leading-none opacity-80 select-none"
 		>
 			<Select.ItemText>{children}</Select.ItemText>
 			<Select.ItemIndicator className="absolute left-0 inline-flex w-[25px] items-center justify-center">
