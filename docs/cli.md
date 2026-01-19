@@ -500,6 +500,7 @@ epicshop playground [subcommand] [target] [options]
 
 - `show` - Show current playground status (default)
 - `set` - Set the playground to a specific exercise step
+- `saved` - List or restore saved playground copies
 
 #### Arguments
 
@@ -511,6 +512,9 @@ epicshop playground [subcommand] [target] [options]
 - `--exercise, -e <number>` - Exercise number
 - `--step <number>` - Step number
 - `--type, -t <type>` - App type (`problem` or `solution`)
+- `--list` - List saved playgrounds (saved subcommand)
+- `--latest` - Restore the most recent saved playground (saved subcommand)
+- `--json` - Output saved playgrounds as JSON (saved list)
 - `--silent, -s` - Run without output logs (default: false)
 
 #### Examples
@@ -530,6 +534,18 @@ epicshop playground set 02.03.solution
 # Set using individual options
 epicshop playground set --exercise 1 --step 2 --type problem
 epicshop playground set -e 1 --step 2 -t solution
+
+# List saved playgrounds
+epicshop playground saved list
+
+# Restore the most recent saved playground
+epicshop playground saved --latest
+
+# Restore a specific saved playground id
+epicshop playground saved 2026.01.18_11.12.00_01.01.problem
+
+# Interactive saved playground selection
+epicshop playground saved
 ```
 
 #### Behavior
@@ -539,6 +555,7 @@ epicshop playground set -e 1 --step 2 -t solution
 - When setting without arguments while not logged in, sets to the next problem
   app after the current playground
 - Interactive selection is available when no target is specified
+- Saved playground selection requires persistence to be enabled in Preferences
 
 ### `progress`
 

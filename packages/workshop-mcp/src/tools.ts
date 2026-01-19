@@ -2,12 +2,14 @@ import path from 'node:path'
 import { invariant } from '@epic-web/invariant'
 import {
 	getAppByName,
+	getAppDisplayName,
 	getApps,
 	getExercise,
 	getExerciseApp,
 	getExercises,
 	getPlaygroundApp,
 	getPlaygroundAppName,
+	getSavedPlaygrounds,
 	isExerciseStepApp,
 	isProblemApp,
 	setPlayground,
@@ -17,6 +19,7 @@ import { deleteCache } from '@epic-web/workshop-utils/cache.server'
 import { getWorkshopConfig } from '@epic-web/workshop-utils/config.server'
 import {
 	getAuthInfo,
+	getPreferences,
 	logout,
 	setAuthInfo,
 } from '@epic-web/workshop-utils/db.server'
@@ -147,6 +150,15 @@ function createToolErrorResult(
 		},
 	})
 	return { ...response, isError: true }
+}
+
+function formatSavedPlaygroundTimestamp(createdAt: string) {
+	const createdAtDate = new Date(createdAt)
+	if (Number.isNaN(createdAtDate.getTime())) return createdAt
+	return new Intl.DateTimeFormat(undefined, {
+		dateStyle: 'medium',
+		timeStyle: 'short',
+	}).format(createdAtDate)
 }
 
 function parseResourceText(resource: ReadResourceResult['contents'][number]) {
@@ -469,6 +481,107 @@ export function initTools(server: McpServer) {
 						type: desiredApp.type,
 						appName: desiredApp.name,
 						fullPath: desiredApp.fullPath,
+					},
+				},
+			})
+		},
+	)
+
+	registerTool(
+		server,
+		'list_saved_playgrounds',
+		{
+			workshopDirectory: workshopDirectoryInputSchema,
+		},
+		async ({ workshopDirectory }) => {
+			await handleWorkshopDirectory(workshopDirectory)
+			const persistEnabled =
+				(await getPreferences())?.playground?.persist ?? false
+			invariant(
+				persistEnabled,
+				'Playground persistence is disabled. Enable it in Preferences to use saved playgrounds.',
+			)
+
+			const [savedPlaygrounds, apps] = await Promise.all([
+				getSavedPlaygrounds(),
+				getApps(),
+			])
+			const savedPlaygroundEntries = savedPlaygrounds.map((entry) => {
+				const matchingApp = apps.find((app) => app.name === entry.appName)
+				const displayName = matchingApp
+					? getAppDisplayName(matchingApp, apps)
+					: entry.appName
+				return { ...entry, displayName }
+			})
+			const details = savedPlaygroundEntries.slice(0, 5).map((entry) => {
+				const timestamp = formatSavedPlaygroundTimestamp(entry.createdAt)
+				return `${entry.displayName} (${entry.appName}) — ${timestamp} — ${entry.id}`
+			})
+			const summary = savedPlaygroundEntries.length
+				? `${savedPlaygroundEntries.length} saved playgrounds found.`
+				: 'No saved playgrounds found.'
+			return createToolResponse({
+				toolName: 'list_saved_playgrounds',
+				summary,
+				details: details.length ? details : undefined,
+				structuredContent: {
+					savedPlaygrounds: savedPlaygroundEntries,
+				},
+			})
+		},
+	)
+
+	registerTool(
+		server,
+		'set_saved_playground',
+		{
+			workshopDirectory: workshopDirectoryInputSchema,
+			savedPlaygroundId: z
+				.string()
+				.optional()
+				.describe('Saved playground id to restore (directory name).'),
+			latest: z
+				.boolean()
+				.optional()
+				.default(false)
+				.describe('Use the most recent saved playground when true.'),
+		},
+		async ({ workshopDirectory, savedPlaygroundId, latest }) => {
+			await handleWorkshopDirectory(workshopDirectory)
+			const persistEnabled =
+				(await getPreferences())?.playground?.persist ?? false
+			invariant(
+				persistEnabled,
+				'Playground persistence is disabled. Enable it in Preferences to use saved playgrounds.',
+			)
+
+			const [savedPlaygrounds, apps] = await Promise.all([
+				getSavedPlaygrounds(),
+				getApps(),
+			])
+			invariant(savedPlaygrounds.length, 'No saved playgrounds found.')
+
+			const useLatest = latest || !savedPlaygroundId
+			const selected = savedPlaygroundId
+				? savedPlaygrounds.find((entry) => entry.id === savedPlaygroundId)
+				: useLatest
+					? savedPlaygrounds[0]
+					: undefined
+			invariant(selected, `Saved playground not found: ${savedPlaygroundId}`)
+
+			await setPlayground(selected.fullPath)
+			const matchingApp = apps.find((app) => app.name === selected.appName)
+			const displayName = matchingApp
+				? getAppDisplayName(matchingApp, apps)
+				: selected.appName
+
+			return createToolResponse({
+				toolName: 'set_saved_playground',
+				summary: `Playground set from saved copy: ${displayName}.`,
+				structuredContent: {
+					savedPlayground: {
+						...selected,
+						displayName,
 					},
 				},
 			})

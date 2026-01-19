@@ -114,6 +114,28 @@ type PersistPlaygroundResult =
 	| { status: 'success'; persist: boolean }
 	| { status: 'error' }
 
+type SavedPlaygroundsLoaderData =
+	| {
+			status: 'success'
+			savedPlaygrounds: Array<{
+				id: string
+				appName: string
+				createdAt: string
+			}>
+	  }
+	| { status: 'disabled'; savedPlaygrounds: [] }
+
+type SavedPlaygroundsActionData =
+	| { status: 'success'; savedPlaygroundId: string }
+	| { status: 'error'; error: string }
+
+const savedPlaygroundsValue = '__saved-playgrounds__'
+const emptySavedPlaygrounds: Array<{
+	id: string
+	appName: string
+	createdAt: string
+}> = []
+
 function usePlaygroundOnboardingGate() {
 	const rootData = useRootLoaderData()
 	const persistEnabled = rootData.preferences?.playground?.persist ?? false
@@ -242,6 +264,193 @@ function PlaygroundSetDialog({
 	)
 }
 
+function SavedPlaygroundsDialog({
+	open,
+	onOpenChange,
+	allApps,
+}: {
+	open: boolean
+	onOpenChange: (open: boolean) => void
+	allApps: Array<{ name: string; displayName: string }>
+}) {
+	const listFetcher = useFetcher<SavedPlaygroundsLoaderData>()
+	const actionFetcher = useFetcher<SavedPlaygroundsActionData>()
+	const [query, setQuery] = React.useState('')
+	const savedPlaygrounds =
+		listFetcher.data?.status === 'success'
+			? listFetcher.data.savedPlaygrounds
+			: emptySavedPlaygrounds
+	const isLoading = listFetcher.state !== 'idle' && !listFetcher.data
+	const isSubmitting = actionFetcher.state !== 'idle'
+	const activeSubmissionId = actionFetcher.formData?.get(
+		'savedPlaygroundId',
+	) as string | null
+	const formatter = React.useMemo(
+		() =>
+			new Intl.DateTimeFormat(undefined, {
+				dateStyle: 'medium',
+				timeStyle: 'short',
+			}),
+		[],
+	)
+
+	React.useEffect(() => {
+		if (!open) return
+		if (listFetcher.state !== 'idle') return
+		void listFetcher.load('/saved-playgrounds')
+	}, [listFetcher, open])
+
+	React.useEffect(() => {
+		if (!open) {
+			setQuery('')
+		}
+	}, [open])
+
+	React.useEffect(() => {
+		if (actionFetcher.data?.status === 'success') {
+			onOpenChange(false)
+		}
+	}, [actionFetcher.data, onOpenChange])
+
+	const filteredPlaygrounds = React.useMemo(() => {
+		const normalized = query.trim().toLowerCase()
+		if (!normalized) return savedPlaygrounds
+		return savedPlaygrounds.filter((entry) => {
+			const displayName =
+				allApps.find((app) => app.name === entry.appName)?.displayName ??
+				entry.appName
+			return (
+				entry.appName.toLowerCase().includes(normalized) ||
+				entry.id.toLowerCase().includes(normalized) ||
+				displayName.toLowerCase().includes(normalized)
+			)
+		})
+	}, [allApps, query, savedPlaygrounds])
+
+	return (
+		<Dialog open={open} onOpenChange={onOpenChange}>
+			<DialogContent className="max-w-2xl">
+				<DialogHeader>
+					<DialogTitle>Saved playgrounds</DialogTitle>
+					<DialogDescription>
+						Restore a saved playground into your active playground directory.
+					</DialogDescription>
+				</DialogHeader>
+				<div className="space-y-4">
+					<div className="space-y-2">
+						<label
+							htmlFor="savedPlaygroundSearch"
+							className="text-sm font-medium"
+						>
+							Search saved playgrounds
+						</label>
+						<input
+							id="savedPlaygroundSearch"
+							type="search"
+							value={query}
+							onChange={(event) => setQuery(event.currentTarget.value)}
+							placeholder="Filter by exercise, app name, or timestamp"
+							className="border-border bg-background text-foreground w-full rounded-md border px-3 py-2 text-sm"
+						/>
+					</div>
+					<div className="border-border bg-muted/40 rounded-md border">
+						<div className="border-border text-muted-foreground flex items-center justify-between border-b px-3 py-2 text-xs">
+							<span>
+								{savedPlaygrounds.length === 1
+									? '1 saved playground'
+									: `${savedPlaygrounds.length} saved playgrounds`}
+							</span>
+							{query ? (
+								<span>
+									{filteredPlaygrounds.length === 1
+										? '1 match'
+										: `${filteredPlaygrounds.length} matches`}
+								</span>
+							) : null}
+						</div>
+						<div className="max-h-72 overflow-y-auto">
+							{isLoading ? (
+								<div className="text-muted-foreground px-3 py-4 text-sm">
+									Loading saved playgrounds...
+								</div>
+							) : listFetcher.data?.status === 'disabled' ? (
+								<div className="text-muted-foreground px-3 py-4 text-sm">
+									Enable playground persistence in Preferences to use saved
+									playgrounds.
+								</div>
+							) : filteredPlaygrounds.length === 0 ? (
+								<div className="text-muted-foreground px-3 py-4 text-sm">
+									{query
+										? 'No saved playgrounds match your search.'
+										: 'No saved playgrounds yet. Set the playground to create one.'}
+								</div>
+							) : (
+								filteredPlaygrounds.map((entry) => {
+									const displayName =
+										allApps.find((app) => app.name === entry.appName)
+											?.displayName ?? entry.appName
+									const createdAt = new Date(entry.createdAt)
+									const isActive = activeSubmissionId === entry.id
+									return (
+										<div
+											key={entry.id}
+											className="border-border flex items-center justify-between gap-4 border-b px-3 py-3 last:border-b-0"
+										>
+											<div className="min-w-0">
+												<p className="text-foreground text-sm font-semibold">
+													{displayName}
+												</p>
+												<p className="text-muted-foreground truncate font-mono text-xs">
+													{entry.appName}
+												</p>
+												<time
+													className="text-muted-foreground text-xs"
+													dateTime={entry.createdAt}
+												>
+													{Number.isNaN(createdAt.getTime())
+														? entry.createdAt
+														: formatter.format(createdAt)}
+												</time>
+											</div>
+											<Button
+												varient="primary"
+												type="button"
+												disabled={isSubmitting}
+												onClick={() =>
+													actionFetcher.submit(
+														{ savedPlaygroundId: entry.id },
+														{ method: 'POST', action: '/saved-playgrounds' },
+													)
+												}
+											>
+												{isActive ? 'Setting...' : 'Set playground'}
+											</Button>
+										</div>
+									)
+								})
+							)}
+						</div>
+					</div>
+					{actionFetcher.data?.status === 'error' ? (
+						<p className="text-foreground-destructive text-sm">
+							{actionFetcher.data.error}
+						</p>
+					) : null}
+				</div>
+				<DialogFooter>
+					<button
+						type="button"
+						className="border-border text-foreground hover:bg-muted focus-visible:ring-ring inline-flex items-center justify-center rounded-md border px-3 py-2 text-sm font-semibold"
+						onClick={() => onOpenChange(false)}
+					>
+						Close
+					</button>
+				</DialogFooter>
+			</DialogContent>
+		</Dialog>
+	)
+}
+
 export function SetPlayground({
 	appName,
 	reset = false,
@@ -322,8 +531,9 @@ export function PlaygroundChooser({
 }) {
 	const fetcher = useFetcher<typeof action>()
 	const persistFetcher = useFetcher<PersistPlaygroundResult>()
-	const { shouldConfirm } = usePlaygroundOnboardingGate()
+	const { shouldConfirm, persistEnabled } = usePlaygroundOnboardingGate()
 	const [dialogOpen, setDialogOpen] = React.useState(false)
+	const [savedDialogOpen, setSavedDialogOpen] = React.useState(false)
 	const [pendingAppName, setPendingAppName] = React.useState<string | null>(
 		null,
 	)
@@ -334,6 +544,10 @@ export function PlaygroundChooser({
 				name="appName"
 				value={playgroundAppName}
 				onValueChange={(appName) => {
+					if (appName === savedPlaygroundsValue) {
+						setSavedDialogOpen(true)
+						return
+					}
 					if (shouldConfirm) {
 						setPendingAppName(appName)
 						setDialogOpen(true)
@@ -387,6 +601,19 @@ export function PlaygroundChooser({
 										)
 									})}
 							</Select.Group>
+							{persistEnabled ? (
+								<>
+									<Select.Separator className="bg-border my-2 h-px" />
+									<Select.Group>
+										<Select.Label className="text-muted-foreground px-5 pb-2 font-mono text-xs uppercase">
+											Saved playgrounds
+										</Select.Label>
+										<SelectItem value={savedPlaygroundsValue}>
+											Choose a saved playground...
+										</SelectItem>
+									</Select.Group>
+								</>
+							) : null}
 						</Select.Viewport>
 						<Select.ScrollDownButton className="flex h-5 cursor-default items-center justify-center">
 							<Icon name="ChevronDown" />
@@ -413,6 +640,11 @@ export function PlaygroundChooser({
 					)
 					setPendingAppName(null)
 				}}
+			/>
+			<SavedPlaygroundsDialog
+				open={savedDialogOpen}
+				onOpenChange={setSavedDialogOpen}
+				allApps={allApps}
 			/>
 		</>
 	)

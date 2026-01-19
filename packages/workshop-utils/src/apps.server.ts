@@ -1351,6 +1351,64 @@ locally and uncheck "Enable saving playground."
 	)
 }
 
+const savedPlaygroundTimestampPattern =
+	/^(\d{4})\.(\d{2})\.(\d{2})_(\d{2})\.(\d{2})\.(\d{2})$/
+
+export type SavedPlayground = {
+	id: string
+	appName: string
+	createdAt: string
+	createdAtMs: number
+	fullPath: string
+}
+
+function parseSavedPlaygroundDirName(dirName: string) {
+	const parts = dirName.split('_')
+	if (parts.length < 3) return null
+	const timestampPart = `${parts[0]}_${parts[1]}`
+	const appName = parts.slice(2).join('_') || dirName
+	const match = savedPlaygroundTimestampPattern.exec(timestampPart)
+	if (!match) return null
+	const [, year, month, day, hour, minute, second] = match
+	const createdAt = new Date(
+		Number(year),
+		Number(month) - 1,
+		Number(day),
+		Number(hour),
+		Number(minute),
+		Number(second),
+	)
+	if (Number.isNaN(createdAt.getTime())) return null
+	return { appName, createdAt }
+}
+
+export async function getSavedPlaygrounds(): Promise<Array<SavedPlayground>> {
+	const savedPlaygroundsDir = path.join(getWorkshopRoot(), 'saved-playgrounds')
+	if (!(await exists(savedPlaygroundsDir))) return []
+	const dirEntries = await fsExtra.readdir(savedPlaygroundsDir, {
+		withFileTypes: true,
+	})
+	const savedPlaygrounds = await Promise.all(
+		dirEntries
+			.filter((entry) => entry.isDirectory())
+			.map(async (entry) => {
+				const fullPath = path.join(savedPlaygroundsDir, entry.name)
+				const parsed = parseSavedPlaygroundDirName(entry.name)
+				const stat = await fsExtra.stat(fullPath).catch(() => null)
+				const createdAt =
+					parsed?.createdAt ?? (stat ? new Date(stat.mtimeMs) : new Date(0))
+				return {
+					id: entry.name,
+					appName: parsed?.appName ?? entry.name,
+					createdAt: createdAt.toISOString(),
+					createdAtMs: createdAt.getTime(),
+					fullPath,
+				}
+			}),
+	)
+	return savedPlaygrounds.sort((a, b) => b.createdAtMs - a.createdAtMs)
+}
+
 export async function setPlayground(
 	srcDir: string,
 	{ reset }: { reset?: boolean } = {},

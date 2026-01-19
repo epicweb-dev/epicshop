@@ -19,6 +19,60 @@ export type PlaygroundSetOptions = {
 	silent?: boolean
 }
 
+export type PlaygroundSavedOptions = {
+	savedPlaygroundId?: string
+	latest?: boolean
+	json?: boolean
+	silent?: boolean
+}
+
+type SavedPlaygroundEntry = {
+	id: string
+	appName: string
+	createdAt: string
+	createdAtMs: number
+	fullPath: string
+	displayName: string
+}
+
+async function getSavedPlaygroundEntries(): Promise<
+	Array<SavedPlaygroundEntry>
+> {
+	const { init, getApps, getAppDisplayName, getSavedPlaygrounds } =
+		await import('@epic-web/workshop-utils/apps.server')
+	const { getPreferences } = await import('@epic-web/workshop-utils/db.server')
+
+	await init()
+	const persistEnabled = (await getPreferences())?.playground?.persist ?? false
+	if (!persistEnabled) {
+		throw new Error(
+			'Playground persistence is disabled. Enable it in Preferences to use saved playgrounds.',
+		)
+	}
+
+	const [savedPlaygrounds, apps] = await Promise.all([
+		getSavedPlaygrounds(),
+		getApps(),
+	])
+
+	return savedPlaygrounds.map((entry) => {
+		const matchingApp = apps.find((app) => app.name === entry.appName)
+		const displayName = matchingApp
+			? getAppDisplayName(matchingApp, apps)
+			: entry.appName
+		return { ...entry, displayName }
+	})
+}
+
+function getSavedPlaygroundTimestampLabel(entry: SavedPlaygroundEntry) {
+	const createdAt = new Date(entry.createdAt)
+	if (Number.isNaN(createdAt.getTime())) return entry.createdAt
+	return new Intl.DateTimeFormat(undefined, {
+		dateStyle: 'medium',
+		timeStyle: 'short',
+	}).format(createdAt)
+}
+
 /**
  * Show current playground status
  */
@@ -312,6 +366,198 @@ export async function selectAndSet(
 		const message = error instanceof Error ? error.message : String(error)
 		if (!silent) {
 			console.error(chalk.red(`❌ Failed to set playground: ${message}`))
+		}
+		return {
+			success: false,
+			message,
+			error: error instanceof Error ? error : new Error(message),
+		}
+	}
+}
+
+/**
+ * List saved playgrounds
+ */
+export async function listSavedPlaygrounds(
+	options: PlaygroundSavedOptions = {},
+): Promise<
+	PlaygroundResult & { savedPlaygrounds?: Array<SavedPlaygroundEntry> }
+> {
+	const { silent = false, json = false } = options
+
+	try {
+		const savedPlaygrounds = await getSavedPlaygroundEntries()
+		if (!savedPlaygrounds.length) {
+			if (!silent) {
+				console.log(chalk.yellow('⚠️  No saved playgrounds found'))
+			}
+			return {
+				success: true,
+				message: 'No saved playgrounds found',
+				savedPlaygrounds: [],
+			}
+		}
+
+		if (!silent) {
+			if (json) {
+				console.log(JSON.stringify(savedPlaygrounds, null, 2))
+			} else {
+				console.log(chalk.bold.cyan('\n📦 Saved Playgrounds\n'))
+				for (const entry of savedPlaygrounds) {
+					const timestamp = getSavedPlaygroundTimestampLabel(entry)
+					console.log(`  ${chalk.green(entry.displayName)} (${entry.appName})`)
+					console.log(`    ${chalk.gray(timestamp)}`)
+					console.log(`    ${chalk.gray(entry.id)}`)
+				}
+				console.log()
+			}
+		}
+
+		return { success: true, savedPlaygrounds }
+	} catch (error) {
+		const message = error instanceof Error ? error.message : String(error)
+		if (!silent) {
+			console.error(
+				chalk.red(`❌ Failed to list saved playgrounds: ${message}`),
+			)
+		}
+		return {
+			success: false,
+			message,
+			error: error instanceof Error ? error : new Error(message),
+		}
+	}
+}
+
+/**
+ * Set the playground to a saved playground by id
+ */
+export async function setSavedPlayground(
+	options: PlaygroundSavedOptions = {},
+): Promise<PlaygroundResult> {
+	const { savedPlaygroundId, latest = false, silent = false } = options
+
+	try {
+		const { setPlayground } = await import(
+			'@epic-web/workshop-utils/apps.server'
+		)
+		const savedPlaygrounds = await getSavedPlaygroundEntries()
+		if (!savedPlaygrounds.length) {
+			const message = 'No saved playgrounds found.'
+			if (!silent) {
+				console.log(chalk.yellow(`⚠️  ${message}`))
+			}
+			return { success: false, message }
+		}
+
+	const selected =
+		latest || !savedPlaygroundId
+			? savedPlaygrounds[0]
+			: savedPlaygrounds.find((entry) => entry.id === savedPlaygroundId)
+
+		if (!selected) {
+			throw new Error(`Saved playground not found: ${savedPlaygroundId}`)
+		}
+
+		await setPlayground(selected.fullPath)
+		if (!silent) {
+			console.log(
+				chalk.green(
+					`✅ Playground set to saved copy: ${selected.displayName} (${selected.appName})`,
+				),
+			)
+		}
+
+		return {
+			success: true,
+			message: `Playground set to saved copy: ${selected.displayName}`,
+		}
+	} catch (error) {
+		const message = error instanceof Error ? error.message : String(error)
+		if (!silent) {
+			console.error(chalk.red(`❌ Failed to set saved playground: ${message}`))
+		}
+		return {
+			success: false,
+			message,
+			error: error instanceof Error ? error : new Error(message),
+		}
+	}
+}
+
+/**
+ * Interactive saved playground selection
+ */
+export async function selectAndSetSavedPlayground(
+	options: PlaygroundSavedOptions = {},
+): Promise<PlaygroundResult> {
+	const { silent = false } = options
+
+	try {
+		const { setPlayground } = await import(
+			'@epic-web/workshop-utils/apps.server'
+		)
+		const savedPlaygrounds = await getSavedPlaygroundEntries()
+		if (!savedPlaygrounds.length) {
+			const message = 'No saved playgrounds found.'
+			if (!silent) {
+				console.log(chalk.yellow(`⚠️  ${message}`))
+			}
+			return { success: false, message }
+		}
+
+		assertCanPrompt({
+			reason: 'select a saved playground',
+			hints: [
+				'List saved playgrounds: npx epicshop playground saved list',
+				'Set directly: npx epicshop playground saved <saved-playground-id>',
+			],
+		})
+
+		const { search } = await import('@inquirer/prompts')
+		const choices = savedPlaygrounds.map((entry) => {
+			const timestamp = getSavedPlaygroundTimestampLabel(entry)
+			return {
+				name: `${entry.displayName} (${entry.appName}) — ${timestamp}`,
+				value: entry,
+				description: entry.id,
+			}
+		})
+
+		try {
+			const selectedEntry = await search({
+				message: 'Select a saved playground to restore:',
+				source: async (input) => {
+					if (!input) return choices
+					return matchSorter(choices, input, {
+						keys: ['name', 'description', 'value.appName', 'value.id'],
+					})
+				},
+			})
+
+			await setPlayground(selectedEntry.fullPath)
+			if (!silent) {
+				console.log(
+					chalk.green(
+						`✅ Playground set to saved copy: ${selectedEntry.displayName}`,
+					),
+				)
+			}
+
+			return {
+				success: true,
+				message: `Playground set to saved copy: ${selectedEntry.displayName}`,
+			}
+		} catch (error) {
+			if ((error as Error).message === 'USER_QUIT') {
+				return { success: false, message: 'Cancelled' }
+			}
+			throw error
+		}
+	} catch (error) {
+		const message = error instanceof Error ? error.message : String(error)
+		if (!silent) {
+			console.error(chalk.red(`❌ Failed to set saved playground: ${message}`))
 		}
 		return {
 			success: false,

@@ -48,6 +48,7 @@ Quick start
 - Use \`set_playground\` to move to a step, then \`open_exercise_step_files\` to open relevant files.
 
 Default behavior
+- Use \`list_saved_playgrounds\` and \`set_saved_playground\` to restore saved copies when persistence is enabled.
 - \`workshopDirectory\` is required and must be an absolute path to the workshop root.
 - Passing a \`/playground\` path is normalized to the workshop root.
 - The user's work-in-progress lives in the \`playground\` directory.
@@ -186,6 +187,93 @@ export const toolDocs = {
 		],
 		errorNextSteps: [
 			'Verify exercise and step numbers exist in `get_workshop_context`.',
+		],
+		annotations: {
+			readOnlyHint: false,
+			destructiveHint: false,
+			idempotentHint: false,
+			openWorldHint: false,
+		},
+	},
+	list_saved_playgrounds: {
+		title: 'List Saved Playgrounds',
+		summary:
+			'List saved playground copies when playground persistence is enabled.',
+		inputs: [
+			{
+				name: 'workshopDirectory',
+				type: 'string',
+				required: true,
+				description: 'Absolute path to the workshop root.',
+				examples: ['/Users/alice/workshops/react-fundamentals'],
+			},
+		],
+		returns:
+			'{ savedPlaygrounds: [{ id, appName, displayName, createdAt, createdAtMs, fullPath }] }',
+		examples: [
+			{
+				description: 'List saved playgrounds',
+				params: '{ "workshopDirectory": "/Users/alice/workshops/react" }',
+			},
+		],
+		nextSteps: [
+			'Call `set_saved_playground` with a savedPlaygroundId to restore a copy.',
+		],
+		errorNextSteps: [
+			'Enable playground persistence in Preferences and set the playground at least once.',
+		],
+		annotations: {
+			readOnlyHint: true,
+			destructiveHint: false,
+			idempotentHint: true,
+			openWorldHint: false,
+		},
+	},
+	set_saved_playground: {
+		title: 'Set Saved Playground',
+		summary: 'Restore the playground from a saved copy.',
+		inputs: [
+			{
+				name: 'workshopDirectory',
+				type: 'string',
+				required: true,
+				description: 'Absolute path to the workshop root.',
+				examples: ['/Users/alice/workshops/react-fundamentals'],
+			},
+			{
+				name: 'savedPlaygroundId',
+				type: 'string',
+				required: false,
+				description:
+					'Saved playground id (directory name). Omit to restore the most recent saved copy.',
+				examples: ['2026.01.18_11.12.00_01.01.problem'],
+			},
+			{
+				name: 'latest',
+				type: 'boolean',
+				required: false,
+				description: 'Use the most recent saved playground when true.',
+				examples: ['true'],
+			},
+		],
+		returns:
+			'{ savedPlayground: { id, appName, displayName, createdAt, fullPath } }',
+		examples: [
+			{
+				description: 'Restore the most recent saved playground',
+				params: '{ "workshopDirectory": "/Users/alice/workshops/react" }',
+			},
+			{
+				description: 'Restore a specific saved playground',
+				params:
+					'{ "workshopDirectory": "/Users/alice/workshops/react", "savedPlaygroundId": "2026.01.18_11.12.00_01.01.problem" }',
+			},
+		],
+		nextSteps: [
+			'Open relevant files with `open_exercise_step_files` or `open_file`.',
+		],
+		errorNextSteps: [
+			'Call `list_saved_playgrounds` to get valid savedPlaygroundId values.',
 		],
 		annotations: {
 			readOnlyHint: false,

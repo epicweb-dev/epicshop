@@ -912,12 +912,13 @@ const cli = yargs(args)
 		(yargs: Argv) => {
 			return yargs
 				.positional('subcommand', {
-					describe: 'Playground subcommand (show, set)',
+					describe: 'Playground subcommand (show, set, saved)',
 					type: 'string',
-					choices: ['show', 'set'],
+					choices: ['show', 'set', 'saved'],
 				})
 				.positional('target', {
-					describe: 'Target exercise step (e.g., 1.2.problem, 2.3.solution)',
+					describe:
+						'Target exercise step (e.g., 1.2.problem) or saved playground id',
 					type: 'string',
 				})
 				.option('exercise', {
@@ -935,6 +936,22 @@ const cli = yargs(args)
 					choices: ['problem', 'solution'],
 					description: 'App type (problem or solution)',
 				})
+				.option('list', {
+					type: 'boolean',
+					description: 'List saved playgrounds (saved subcommand)',
+					default: false,
+				})
+				.option('latest', {
+					type: 'boolean',
+					description:
+						'Use the most recent saved playground (saved subcommand)',
+					default: false,
+				})
+				.option('json', {
+					type: 'boolean',
+					description: 'Output saved playgrounds as JSON (saved list)',
+					default: false,
+				})
 				.option('silent', {
 					alias: 's',
 					type: 'boolean',
@@ -946,6 +963,15 @@ const cli = yargs(args)
 				.example('$0 playground set', 'Set playground (auto-detect next)')
 				.example('$0 playground set 1.2.problem', 'Set to specific step')
 				.example('$0 playground set --exercise 1 --step 2', 'Set with options')
+				.example(
+					'$0 playground saved',
+					'Interactively select a saved playground',
+				)
+				.example('$0 playground saved list', 'List saved playgrounds')
+				.example(
+					'$0 playground saved 2026.01.18_11.12.00_01.01.problem',
+					'Set playground from a saved copy',
+				)
 		},
 		async (
 			argv: ArgumentsCamelCase<{
@@ -954,6 +980,9 @@ const cli = yargs(args)
 				exercise?: number
 				step?: number
 				type?: string
+				list?: boolean
+				latest?: boolean
+				json?: boolean
 				silent?: boolean
 			}>,
 		) => {
@@ -973,9 +1002,15 @@ const cli = yargs(args)
 			process.chdir(workshopRoot)
 
 			try {
-				const { show, set, selectAndSet, parseAppIdentifier } = await import(
-					'./commands/playground.js'
-				)
+				const {
+					listSavedPlaygrounds,
+					parseAppIdentifier,
+					selectAndSet,
+					selectAndSetSavedPlayground,
+					set,
+					setSavedPlayground,
+					show,
+				} = await import('./commands/playground.js')
 
 				const subcommand = argv.subcommand || 'show'
 
@@ -1024,6 +1059,39 @@ const cli = yargs(args)
 						})
 						if (!result.success) process.exit(1)
 					}
+				} else if (subcommand === 'saved') {
+					const shouldList = argv.list || argv.target === 'list' || argv.json
+					if (shouldList) {
+						const result = await listSavedPlaygrounds({
+							silent: argv.silent,
+							json: argv.json,
+						})
+						if (!result.success) process.exit(1)
+						return
+					}
+
+					if (argv.latest) {
+						const result = await setSavedPlayground({
+							latest: true,
+							silent: argv.silent,
+						})
+						if (!result.success) process.exit(1)
+						return
+					}
+
+					if (argv.target) {
+						const result = await setSavedPlayground({
+							savedPlaygroundId: argv.target,
+							silent: argv.silent,
+						})
+						if (!result.success) process.exit(1)
+						return
+					}
+
+					const result = await selectAndSetSavedPlayground({
+						silent: argv.silent,
+					})
+					if (!result.success) process.exit(1)
 				} else {
 					console.error(chalk.red(`❌ Unknown subcommand: ${subcommand}`))
 					process.exit(1)
