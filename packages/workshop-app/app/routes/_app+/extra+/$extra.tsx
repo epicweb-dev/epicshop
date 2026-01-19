@@ -2,12 +2,15 @@ import path from 'path'
 import { invariantResponse } from '@epic-web/invariant'
 import { ElementScrollRestoration } from '@epic-web/restore-scroll'
 import {
+	getAppByName,
+	getAppDisplayName,
 	getApps,
 	isExtraApp,
 	isPlaygroundApp,
 	type ExtraApp,
 } from '@epic-web/workshop-utils/apps.server'
 import { getWorkshopConfig } from '@epic-web/workshop-utils/config.server'
+import { getDiffCode } from '@epic-web/workshop-utils/diff.server'
 import { getEpicVideoInfos } from '@epic-web/workshop-utils/epic-api.server'
 import {
 	combineServerTimings,
@@ -28,18 +31,26 @@ import {
 	useLoaderData,
 	useSearchParams,
 } from 'react-router'
+import { DiscordChat } from '#app/components/discord-chat.tsx'
+import { Diff } from '#app/components/diff.tsx'
 import { EpicVideoInfoProvider } from '#app/components/epic-video.tsx'
 import { GeneralErrorBoundary } from '#app/components/error-boundary.tsx'
 import { type InBrowserBrowserRef } from '#app/components/in-browser-browser.tsx'
 import { NavChevrons } from '#app/components/nav-chevrons.tsx'
+import {
+	getPreviewSearchParams,
+	PreviewTabsList,
+} from '#app/components/preview-tabs.tsx'
 import { useRevalidationWS } from '#app/components/revalidation-ws.tsx'
 import { Preview } from '#app/routes/_app+/exercise+/$exerciseNumber_.$stepNumber.$type+/__shared/preview.tsx'
+import { Playground } from '#app/routes/_app+/exercise+/$exerciseNumber_.$stepNumber.$type+/__shared/playground.tsx'
 import { getAppRunningState } from '#app/routes/_app+/exercise+/$exerciseNumber_.$stepNumber.$type+/__shared/utils.tsx'
 import { EditFileOnGitHub } from '#app/routes/launch-editor.tsx'
 import { SetAppToPlayground } from '#app/routes/set-playground.tsx'
 import { createInlineFileComponent, Mdx } from '#app/utils/mdx.tsx'
-import { cn } from '#app/utils/misc.tsx'
-import { getRootMatchLoaderData } from '#app/utils/root-loader.ts'
+import { fetchDiscordPosts } from '#app/utils/discord.server.ts'
+import { useWorkshopConfig } from '#app/components/workshop-config.tsx'
+import { getRootMatchLoaderData, useRootLoaderData } from '#app/utils/root-loader.ts'
 import { getSeoMetaTags } from '#app/utils/seo.ts'
 
 // shared split state helpers
@@ -82,7 +93,8 @@ export async function loader({ request, params }: LoaderFunctionArgs) {
 	invariantResponse(params.extra, 'extra is required')
 
 	const { title: workshopTitle } = getWorkshopConfig()
-	const apps = await time(() => getApps({ request, timings }), {
+	const cacheOptions = { request, timings }
+	const apps = await time(() => getApps(cacheOptions), {
 		timings,
 		type: 'getApps',
 		desc: 'getApps in extra loader',
@@ -98,6 +110,11 @@ export async function loader({ request, params }: LoaderFunctionArgs) {
 	const readmeFilepath = path.join(extra.fullPath, 'README.mdx')
 	const previousExtra = extras[extraIndex - 1]
 	const nextExtra = extras[extraIndex + 1]
+	const reqUrl = new URL(request.url)
+	const app1Name = reqUrl.searchParams.get('app1')
+	const app2Name = reqUrl.searchParams.get('app2')
+	const app1 = app1Name ? await getAppByName(app1Name) : playgroundApp ?? extra
+	const app2 = app2Name ? await getAppByName(app2Name) : extra
 
 	const cookieHeader = request.headers.get('cookie')
 	const rawSplit = cookieHeader
@@ -106,6 +123,37 @@ export async function loader({ request, params }: LoaderFunctionArgs) {
 	const splitPercent = computeSplitPercent(rawSplit, 50)
 
 	const { isRunning, portIsAvailable } = await getAppRunningState(extra)
+
+	async function getDiffProp() {
+		if (!app1 || !app2) {
+			return { app1: app1?.name, app2: app2?.name, diffCode: null }
+		}
+		const diffCode = await getDiffCode(app1, app2, {
+			...cacheOptions,
+			forceFresh: reqUrl.searchParams.get('forceFresh') === 'diff',
+		}).catch((error) => {
+			console.error(error)
+			return null
+		})
+		return {
+			app1: app1.name,
+			app2: app2.name,
+			diffCode,
+		}
+	}
+
+	const allApps = apps
+		.filter((app, index, list) => list.findIndex((item) => item.name === app.name) === index)
+		.map((app) => ({
+			name: app.name,
+			displayName: getAppDisplayName(app, apps),
+		}))
+		.sort((a, b) =>
+			a.displayName.localeCompare(b.displayName, undefined, {
+				numeric: true,
+				sensitivity: 'base',
+			}),
+		)
 
 	return data(
 		{
@@ -146,6 +194,9 @@ export async function loader({ request, params }: LoaderFunctionArgs) {
 						...(await getAppRunningState(playgroundApp)),
 					} as const)
 				: null,
+			allApps,
+			diff: getDiffProp(),
+			discordPostsPromise: fetchDiscordPosts({ request }),
 			previousExtra: previousExtra
 				? { dirName: previousExtra.dirName, title: previousExtra.title }
 				: null,
@@ -174,15 +225,21 @@ export const headers: HeadersFunction = ({ loaderHeaders, parentHeaders }) => {
 
 export default function ExtraRoute() {
 	const data = useLoaderData<typeof loader>()
+	const rootData = useRootLoaderData()
 	const inBrowserBrowserRef = useRef<InBrowserBrowserRef>(null)
 	const containerRef = useRef<HTMLDivElement>(null)
 	const leftPaneRef = useRef<HTMLDivElement>(null)
 	const [splitPercent, setSplitPercent] = useState<number>(data.splitPercent)
 	const [searchParams] = useSearchParams()
+	const workshopConfig = useWorkshopConfig()
+	const userHasAccessPromise = useMemo(
+		() => Promise.resolve(rootData.userHasAccess ?? false),
+		[rootData.userHasAccess],
+	)
 	const showPlaygroundIndicator = data.playground?.appName !== data.extra.name
 	const shouldShowSetPlayground =
 		showPlaygroundIndicator || data.playground?.isUpToDate === false
-	const tabs = ['extra', 'playground'] as const
+	const tabs = ['playground', 'extra', 'diff', 'chat'] as const
 	const preview = searchParams.get('preview')
 
 	function isValidPreview(
@@ -193,29 +250,28 @@ export default function ExtraRoute() {
 
 	function shouldHideTab(tab: (typeof tabs)[number]) {
 		if (tab === 'playground') {
-			return ENV.EPICSHOP_DEPLOYED || !data.playground
+			return ENV.EPICSHOP_DEPLOYED
+		}
+		if (tab === 'chat') {
+			return !workshopConfig.product.discordChannelId
 		}
 		return false
-	}
-
-	function withParam(
-		params: URLSearchParams,
-		key: string,
-		value: string | null,
-	) {
-		const next = new URLSearchParams(params)
-		if (value === null) {
-			next.delete(key)
-		} else {
-			next.set(key, value)
-		}
-		return next
 	}
 
 	const activeTab =
 		isValidPreview(preview) && !shouldHideTab(preview)
 			? preview
-			: (tabs.find((tab) => !shouldHideTab(tab)) ?? 'extra')
+			: (tabs.find((tab) => !shouldHideTab(tab)) ?? 'playground')
+
+	const previewTabs = tabs.map((tab) => {
+		const hidden = shouldHideTab(tab)
+		return {
+			id: tab,
+			label: tab,
+			hidden,
+			to: `?${getPreviewSearchParams(searchParams, tab, 'playground')}`,
+		}
+	})
 
 	// Create MDX components with extra-specific InlineFile
 	const mdxComponents = useMemo(() => {
@@ -433,34 +489,21 @@ export default function ExtraRoute() {
 					className="relative flex min-h-0 min-w-0 flex-1 flex-col overflow-hidden"
 					value={activeTab}
 				>
-					<Tabs.List className="scrollbar-thin scrollbar-thumb-scrollbar h-14 min-h-14 overflow-x-auto border-b whitespace-nowrap">
-						{tabs.map((tab) => {
-							const hidden = shouldHideTab(tab)
-							return (
-								<Tabs.Trigger key={tab} value={tab} hidden={hidden} asChild>
-									<Link
-										id={`${tab}-tab`}
-										className={cn(
-											'clip-path-button radix-state-active:z-10 radix-state-active:bg-foreground radix-state-active:text-background radix-state-active:hover:bg-foreground/80 radix-state-active:hover:text-background/80 radix-state-inactive:hover:bg-foreground/20 radix-state-inactive:hover:text-foreground/80 focus:bg-foreground/80 focus:text-background/80 relative h-full px-6 py-4 font-mono text-sm uppercase outline-none',
-											hidden ? 'hidden' : 'inline-block',
-										)}
-										preventScrollReset
-										prefetch="intent"
-										to={`?${withParam(
-											searchParams,
-											'preview',
-											tab === 'extra' ? null : tab,
-										)}`}
-									>
-										<span className="flex items-center gap-2">
-											<span>{tab}</span>
-										</span>
-									</Link>
-								</Tabs.Trigger>
-							)
-						})}
-					</Tabs.List>
+					<PreviewTabsList tabs={previewTabs} />
 					<div className="relative z-10 flex min-h-0 flex-1 flex-col overflow-hidden">
+						<Tabs.Content
+							value="playground"
+							className="radix-state-inactive:hidden flex min-h-0 w-full grow basis-0 items-stretch justify-center self-start"
+							forceMount
+						>
+							<Playground
+								appInfo={data.playground}
+								problemAppName={data.extra.name}
+								allApps={data.allApps}
+								isUpToDate={data.playground?.isUpToDate ?? false}
+								inBrowserBrowserRef={inBrowserBrowserRef}
+							/>
+						</Tabs.Content>
 						<Tabs.Content
 							value="extra"
 							className="radix-state-inactive:hidden flex min-h-0 w-full grow basis-0 items-stretch justify-center self-start"
@@ -472,13 +515,21 @@ export default function ExtraRoute() {
 							/>
 						</Tabs.Content>
 						<Tabs.Content
-							value="playground"
-							className="radix-state-inactive:hidden flex min-h-0 w-full grow basis-0 items-stretch justify-center self-start"
-							forceMount
+							value="diff"
+							className="radix-state-inactive:hidden flex h-full min-h-0 w-full grow basis-0 items-stretch justify-center self-start"
 						>
-							<Preview
-								appInfo={data.playground}
-								inBrowserBrowserRef={inBrowserBrowserRef}
+							<Diff
+								diff={data.diff}
+								allApps={data.allApps}
+								userHasAccessPromise={userHasAccessPromise}
+							/>
+						</Tabs.Content>
+						<Tabs.Content
+							value="chat"
+							className="radix-state-inactive:hidden flex h-full min-h-0 w-full grow basis-0 items-stretch justify-center self-start"
+						>
+							<DiscordChat
+								discordPostsPromise={data.discordPostsPromise}
 							/>
 						</Tabs.Content>
 					</div>

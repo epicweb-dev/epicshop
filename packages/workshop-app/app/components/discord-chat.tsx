@@ -1,27 +1,57 @@
 import * as React from 'react'
-import { Await, Link, useLoaderData } from 'react-router'
+import { Await, Link } from 'react-router'
 import { Icon } from '#app/components/icons.tsx'
 import { Loading } from '#app/components/loading.tsx'
 import { DiscordCTA, useDiscordCTALink } from '#app/routes/_app+/discord.tsx'
 import { useAltDown } from '#app/utils/misc.tsx'
 import { useIsOnline } from '#app/utils/online.ts'
-import { type Route } from '../+types/index.tsx'
 
-export function DiscordChat() {
+type EmojiData = {
+	emojiName?: string
+	emojiUrl?: string
+}
+
+type DiscordTag = { name: string } & EmojiData
+type DiscordReaction = { count: number } & EmojiData
+
+export type DiscordThread = {
+	id: string
+	tags: DiscordTag[]
+	name: string
+	link: string
+	authorDisplayName: string
+	authorHexAccentColor?: string | null
+	authorAvatarUrl: string | null
+	messagePreview: string
+	messageCount: number
+	lastUpdated: string
+	lastUpdatedDisplay: string
+	previewImageUrl: string | null
+	reactions: DiscordReaction[]
+}
+
+export function DiscordChat({
+	discordPostsPromise,
+}: {
+	discordPostsPromise: Promise<DiscordThread[]>
+}) {
 	return (
 		<div className="flex h-full w-full flex-col gap-4 pt-4">
 			<div className="text-center">
 				<DiscordCTA />
 			</div>
 			<div className="bg-accent scrollbar-thin scrollbar-thumb-scrollbar flex-1 overflow-y-scroll pb-4">
-				<DiscordPosts />
+				<DiscordPosts discordPostsPromise={discordPostsPromise} />
 			</div>
 		</div>
 	)
 }
 
-function DiscordPosts() {
-	const data = useLoaderData<Route.ComponentProps['loaderData']>()
+function DiscordPosts({
+	discordPostsPromise,
+}: {
+	discordPostsPromise: Promise<DiscordThread[]>
+}) {
 	const ctaLink = useDiscordCTALink()
 	const altDown = useAltDown()
 	const isOnline = useIsOnline()
@@ -46,7 +76,7 @@ function DiscordPosts() {
 				}
 			>
 				<Await
-					resolve={data.discordPostsPromise}
+					resolve={discordPostsPromise}
 					errorElement={
 						<div className="text-foreground-destructive">
 							There was a problem loading the discord posts
@@ -78,10 +108,10 @@ function DiscordPosts() {
 					rel="noreferrer noopener"
 					onClick={
 						altDown
-							? (e) => {
-									e.preventDefault()
+							? (event) => {
+									event.preventDefault()
 									window.open(
-										e.currentTarget.href,
+										event.currentTarget.href,
 										'_blank',
 										'noreferrer noopener',
 									)
@@ -97,14 +127,8 @@ function DiscordPosts() {
 	)
 }
 
-function DiscordPost({
-	thread,
-}: {
-	thread: Awaited<
-		Route.ComponentProps['loaderData']['discordPostsPromise']
-	>[number]
-}) {
-	const reactionsWithCounts = thread.reactions.filter((r) => r.count)
+function DiscordPost({ thread }: { thread: DiscordThread }) {
+	const reactionsWithCounts = thread.reactions.filter((reaction) => reaction.count)
 
 	return (
 		<div>
@@ -113,15 +137,15 @@ function DiscordPost({
 					<div className="flex min-w-0 flex-col gap-1">
 						{thread.tags.length ? (
 							<div className="flex gap-2">
-								{thread.tags.map((t) => (
+								{thread.tags.map((tag) => (
 									<div
-										key={t.name}
+										key={`${tag.name}-${tag.emojiName ?? tag.emojiUrl ?? 'tag'}`}
 										className="bg-accent flex items-center justify-center gap-1 rounded-full px-2 py-1 text-sm"
 									>
 										<span className="h-3 w-3 leading-3">
-											<Emoji name={t.emojiName} url={t.emojiUrl} />
+											<Emoji name={tag.emojiName} url={tag.emojiUrl} />
 										</span>
-										<span>{t.name}</span>
+										<span>{tag.name}</span>
 									</div>
 								))}
 							</div>
@@ -169,15 +193,18 @@ function DiscordPost({
 						<span>
 							{reactionsWithCounts.length ? (
 								<ul className="flex items-center gap-2">
-									{reactionsWithCounts.map((r, i) => (
+									{reactionsWithCounts.map((reaction, index) => (
 										<li
-											key={i}
+											key={`${reaction.emojiName ?? reaction.emojiUrl ?? 'reaction'}-${index}`}
 											className="border-info/60 bg-info/10 text-info flex items-center gap-1 rounded-md border px-[5px] py-[0.5px] text-sm"
 										>
 											<span className="h-3 w-3 leading-3">
-												<Emoji name={r.emojiName} url={r.emojiUrl} />
+												<Emoji
+													name={reaction.emojiName}
+													url={reaction.emojiUrl}
+												/>
 											</span>
-											<span>{r.count}</span>
+											<span>{reaction.count}</span>
 										</li>
 									))}
 								</ul>
