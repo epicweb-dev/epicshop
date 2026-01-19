@@ -10,10 +10,11 @@ import {
 	RouterContextProvider,
 	unstable_matchRSCServerRequest as matchRSCServerRequest,
 } from 'react-router'
+import type * as EntrySsr from './entry.ssr.tsx'
 
-import routes from 'virtual:react-router/unstable_rsc/routes'
 import basename from 'virtual:react-router/unstable_rsc/basename'
 import unstable_reactRouterServeConfig from 'virtual:react-router/unstable_rsc/react-router-serve-config'
+import routes from 'virtual:react-router/unstable_rsc/routes'
 
 export { unstable_reactRouterServeConfig }
 
@@ -46,9 +47,8 @@ export default {
 			requestContext = undefined
 		}
 
-		const ssr = await import.meta.viteRsc.loadModule<
-			typeof import('./entry.ssr.tsx')
-		>('ssr', 'index')
+		const ssr =
+			await import.meta.viteRsc.loadModule<typeof EntrySsr>('ssr', 'index')
 
 		return await ssr.generateHTML(
 			request,

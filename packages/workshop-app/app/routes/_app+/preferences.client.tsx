@@ -9,13 +9,12 @@ import {
 } from 'react-router'
 import { Button } from '#app/components/button.tsx'
 import { Icon } from '#app/components/icons.tsx'
-import { SimpleTooltip } from '#app/components/ui/tooltip.tsx'
 import { useInterval } from '#app/utils/misc.client.tsx'
 import { useRootLoaderData } from '#app/utils/root-loader.ts'
+import { type Route } from './+types/preferences.tsx'
 import {
 	downloadResolutionOptions,
 } from './preferences-constants.ts'
-import { type Route } from './+types/preferences.tsx'
 
 export default function AccountSettings() {
 	const loaderData = useLoaderData<Route.LoaderData>()

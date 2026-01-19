@@ -3,8 +3,8 @@ import { data, redirect } from 'react-router'
 import { safeRedirect } from 'remix-utils/safe-redirect'
 import { dataWithPE } from '#app/utils/pe.tsx'
 import { type Route } from './+types/index.tsx'
-import { ROUTE_PATH, ThemeFormSchema } from './theme-shared.ts'
 import { setTheme } from './theme-session.server.ts'
+import { ThemeFormSchema } from './theme-shared.ts'
 
 export async function loader({ request }: Route.LoaderArgs) {
 	const referrer = request.headers.get('Referer')
