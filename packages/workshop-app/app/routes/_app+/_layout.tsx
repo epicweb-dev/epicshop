@@ -1553,13 +1553,23 @@ function NavToggle({
 	React.useEffect(() => {
 		if (!isMenuOpened) return
 
-		function handleKeyUp(event: KeyboardEvent) {
-			if (event.key === 'Escape') {
+		function handleKeyDown(event: KeyboardEvent) {
+			if (event.key !== 'Escape' || event.defaultPrevented) {
+				return
+			}
+
+			const hasOpenDialog = Boolean(
+				document.querySelector(
+					'[role="dialog"][data-state="open"], [role="alertdialog"][data-state="open"]',
+				),
+			)
+
+			if (!hasOpenDialog) {
 				menuButtonRef.current?.click()
 			}
 		}
-		document.addEventListener('keyup', handleKeyUp)
-		return () => document.removeEventListener('keyup', handleKeyUp)
+		document.addEventListener('keydown', handleKeyDown)
+		return () => document.removeEventListener('keydown', handleKeyDown)
 	}, [isMenuOpened])
 
 	return (
