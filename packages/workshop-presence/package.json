@@ -28,6 +28,9 @@
   ],
   "zshy": {
     "cjs": false,
+    "conditions": {
+      "import": "esm"
+    },
     "exports": {
       "./package.json": "./package.json",
       "./presence.server": "./src/presence.server.ts",

@@ -8,6 +8,9 @@
   "type": "module",
   "zshy": {
     "cjs": false,
+    "conditions": {
+      "import": "esm"
+    },
     "exports": {
       "./package.json": "./package.json",
       ".": "./src/index.ts"
@@ -18,7 +21,7 @@
     "./package.json": "./package.json",
     ".": {
       "types": "./dist/index.d.ts",
-      "import": "./dist/index.js"
+      "default": "./dist/index.js"
     }
   },
   "files": [

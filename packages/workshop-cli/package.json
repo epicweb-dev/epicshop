@@ -8,6 +8,9 @@
   "bin": "./cli.js",
   "zshy": {
     "cjs": false,
+    "conditions": {
+      "import": "esm"
+    },
     "exports": {
       "./package.json": "./package.json",
       "./cleanup": "./src/commands/cleanup.ts",
@@ -27,43 +30,43 @@
     "./package.json": "./package.json",
     "./cleanup": {
       "types": "./dist/commands/cleanup.d.ts",
-      "import": "./dist/commands/cleanup.js"
+      "default": "./dist/commands/cleanup.js"
     },
     "./warm": {
       "types": "./dist/commands/warm.d.ts",
-      "import": "./dist/commands/warm.js"
+      "default": "./dist/commands/warm.js"
     },
     "./start": {
       "types": "./dist/commands/start.d.ts",
-      "import": "./dist/commands/start.js"
+      "default": "./dist/commands/start.js"
     },
     "./update": {
       "types": "./dist/commands/update.d.ts",
-      "import": "./dist/commands/update.js"
+      "default": "./dist/commands/update.js"
     },
     "./workshops": {
       "types": "./dist/commands/workshops.d.ts",
-      "import": "./dist/commands/workshops.js"
+      "default": "./dist/commands/workshops.js"
     },
     "./playground": {
       "types": "./dist/commands/playground.d.ts",
-      "import": "./dist/commands/playground.js"
+      "default": "./dist/commands/playground.js"
     },
     "./progress": {
       "types": "./dist/commands/progress.d.ts",
-      "import": "./dist/commands/progress.js"
+      "default": "./dist/commands/progress.js"
     },
     "./diff": {
       "types": "./dist/commands/diff.d.ts",
-      "import": "./dist/commands/diff.js"
+      "default": "./dist/commands/diff.js"
     },
     "./exercises": {
       "types": "./dist/commands/exercises.d.ts",
-      "import": "./dist/commands/exercises.js"
+      "default": "./dist/commands/exercises.js"
     },
     "./auth": {
       "types": "./dist/commands/auth.d.ts",
-      "import": "./dist/commands/auth.js"
+      "default": "./dist/commands/auth.js"
     }
   },
   "files": [

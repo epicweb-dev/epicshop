@@ -479,9 +479,20 @@ const SkippedFileSchema = z.object({
 const CacheFileSchema = z.union([CacheEntrySchema, SkippedFileSchema])
 
 type CacheEntryType = z.infer<typeof CacheEntrySchema>
+type CacheFileType = z.infer<typeof CacheFileSchema>
+type SkippedFileType = z.infer<typeof SkippedFileSchema>
+
+const isSkippedFile = (value: CacheFileType): value is SkippedFileType => {
+	return (
+		typeof value === 'object' &&
+		value !== null &&
+		'skipped' in value &&
+		(value as { skipped?: unknown }).skipped === true
+	)
+}
 
 export const WorkshopCacheSchema = z
-	.record(z.record(z.record(CacheFileSchema)))
+	.record(z.string(), z.record(z.string(), z.record(z.string(), CacheFileSchema)))
 	.transform((workshopCaches) => {
 		type CacheEntryWithFilename = CacheEntryType & { filename: string }
 		type SkippedFileWithFilename = {
@@ -508,17 +519,12 @@ export const WorkshopCacheSchema = z
 				const skippedFiles: Array<SkippedFileWithFilename> = []
 
 				for (const [key, value] of Object.entries(entriesObj)) {
-					if (
-						value &&
-						typeof value === 'object' &&
-						'skipped' in value &&
-						value.skipped
-					) {
+					if (isSkippedFile(value)) {
 						// This is a skipped file
 						skippedFiles.push({
 							filename: key,
-							error: value.error as string,
-							size: value.size as number,
+							error: value.error,
+							size: value.size,
 							skipped: true,
 						})
 					} else {

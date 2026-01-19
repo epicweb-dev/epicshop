@@ -7,6 +7,9 @@
   "type": "module",
   "zshy": {
     "cjs": false,
+    "conditions": {
+      "import": "esm"
+    },
     "exports": {
       "./package.json": "./package.json",
       "./apps.server": "./src/apps.server.ts",
