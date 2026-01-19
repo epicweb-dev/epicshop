@@ -117,6 +117,10 @@ Let's define a few terms:
 Workshops have many exercises, exercises have many steps, steps have a single
 problem and a single solution.
 
+Examples can include a top-level `examples/README.mdx` which powers the Examples
+page in the workshop app. Each example directory should also include its own
+`README.mdx`, which renders on the example detail page.
+
 Finally there's the `playground` directory. When a learner clicks "Set to
 Playground" in the UI, it copies the contents of the App they want to play with
 into the playground directory.
