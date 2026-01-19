@@ -52,9 +52,8 @@ export default {
 			'index',
 		)
 
-		return await ssr.generateHTML(
-			request,
-			await fetchServer(request, requestContext),
+		return await ssr.generateHTML(request, (r) =>
+			fetchServer(r, requestContext),
 		)
 	},
 }

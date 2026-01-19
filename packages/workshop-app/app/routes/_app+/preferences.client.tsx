@@ -15,7 +15,7 @@ import { type Route } from './+types/preferences.tsx'
 import { downloadResolutionOptions } from './preferences-constants.ts'
 
 export default function AccountSettings() {
-	const loaderData = useLoaderData<Route.LoaderData>()
+	const loaderData = useLoaderData<Route.ComponentProps['loaderData']>()
 	const rootData = useRootLoaderData()
 	const playerPreferences = rootData.preferences?.player
 	const offlineVideoPreferences = rootData.preferences?.offlineVideo
@@ -24,9 +24,32 @@ export default function AccountSettings() {
 	const playgroundPreferences = rootData.preferences?.playground
 	const exerciseWarningPreferences = rootData.preferences?.exerciseWarning
 	const navigation = useNavigation()
-	const offlineVideosFetcher = useFetcher<Route.LoaderData>()
+	const offlineVideosFetcher = useFetcher<Route.ComponentProps['loaderData']>()
 	const offlineVideos =
 		offlineVideosFetcher.data?.offlineVideos ?? loaderData.offlineVideos
+	const downloadState = offlineVideos.downloadState
+	const queuedDownloads =
+		downloadState.status === 'running'
+			? Math.max(downloadState.total - downloadState.completed, 0)
+			: 0
+	const downloadErrorMessage = downloadState.errors[0]?.error
+	const downloadResolutionLabel =
+		downloadResolutionOptions.find(
+			(option) => option.value === offlineVideoPreferences?.downloadResolution,
+		)?.label ?? 'Auto'
+	const minResolutionLabel = playerPreferences?.minResolution
+		? `${playerPreferences.minResolution}p`
+		: 'Auto'
+	const maxResolutionLabel = playerPreferences?.maxResolution
+		? `${playerPreferences.maxResolution}p`
+		: 'Auto'
+	const downloadProgressMessage = downloadState.current
+		? `Downloading ${downloadState.current.title} (${
+				downloadState.completed + 1
+			}/${downloadState.total})`
+		: downloadState.total > 0
+			? `Preparing downloads (${downloadState.completed}/${downloadState.total})`
+			: 'Preparing downloads'
 	const isDownloading = offlineVideos.downloadState.status === 'running'
 
 	const isSubmitting = navigation.state === 'submitting'
@@ -150,7 +173,7 @@ export default function AccountSettings() {
 						</label>
 					</div>
 					<div className="flex gap-2">
-						<Button type="submit" disabled={isSubmitting}>
+						<Button varient="primary" type="submit" disabled={isSubmitting}>
 							{isSubmitting ? 'Saving...' : 'Save Preferences'}
 						</Button>
 						<Button
@@ -172,11 +195,13 @@ export default function AccountSettings() {
 								Status
 							</span>
 							<span className="text-sm font-semibold">
-								{offlineVideos.downloadState.status === 'running'
+								{downloadState.status === 'running'
 									? 'Downloading'
-									: offlineVideos.downloadState.status === 'queued'
-										? 'Queued'
-										: 'Idle'}
+									: downloadState.status === 'error'
+										? 'Error'
+										: downloadState.status === 'completed'
+											? 'Completed'
+											: 'Idle'}
 							</span>
 						</div>
 						<div className="border-border bg-card flex flex-col gap-1 rounded-md border px-4 py-3">
@@ -184,7 +209,7 @@ export default function AccountSettings() {
 								Downloaded
 							</span>
 							<span className="text-sm font-semibold">
-								{offlineVideos.downloadState.downloaded ?? 0}
+								{offlineVideos.downloadedVideos ?? 0}
 							</span>
 						</div>
 						<div className="border-border bg-card flex flex-col gap-1 rounded-md border px-4 py-3">
@@ -192,12 +217,13 @@ export default function AccountSettings() {
 								Queued
 							</span>
 							<span className="text-sm font-semibold">
-								{offlineVideos.downloadState.queued ?? 0}
+								{queuedDownloads}
 							</span>
 						</div>
 					</div>
 					<div className="flex flex-wrap gap-2">
 						<Button
+							varient="primary"
 							type="submit"
 							name="intent"
 							value="download-offline-videos"
@@ -207,6 +233,7 @@ export default function AccountSettings() {
 							{isDownloading ? 'Downloading...' : 'Download Offline Videos'}
 						</Button>
 						<Button
+							varient="mono"
 							type="submit"
 							name="intent"
 							value="delete-offline-videos"
@@ -216,9 +243,9 @@ export default function AccountSettings() {
 						</Button>
 					</div>
 					<Form id="offlineVideoForm" method="post" className="hidden" />
-					{offlineVideos.downloadState.error ? (
+					{downloadErrorMessage ? (
 						<div className="text-foreground-destructive text-sm">
-							{offlineVideos.downloadState.error}
+							{downloadErrorMessage}
 						</div>
 					) : null}
 					{offlineVideos.downloadState.status === 'running' ? (
@@ -241,7 +268,7 @@ export default function AccountSettings() {
 								Min
 							</span>
 							<span className="text-sm font-semibold">
-								{offlineVideos.downloadState.minResolution ?? 'Auto'}
+								{minResolutionLabel}
 							</span>
 						</div>
 						<div className="border-border bg-card flex flex-col gap-1 rounded-md border px-4 py-3">
@@ -249,7 +276,7 @@ export default function AccountSettings() {
 								Max
 							</span>
 							<span className="text-sm font-semibold">
-								{offlineVideos.downloadState.maxResolution ?? 'Auto'}
+								{maxResolutionLabel}
 							</span>
 						</div>
 						<div className="border-border bg-card flex flex-col gap-1 rounded-md border px-4 py-3">
@@ -257,12 +284,12 @@ export default function AccountSettings() {
 								Resolution
 							</span>
 							<span className="text-sm font-semibold">
-								{offlineVideos.downloadState.downloadResolution ?? 'Auto'}
+								{downloadResolutionLabel}
 							</span>
 						</div>
 					</div>
 				</div>
-				{offlineVideos?.downloadState?.status === 'running' ? (
+				{downloadState.status === 'running' ? (
 					<div className="border-border mt-10 flex flex-col gap-4 border-t pt-6">
 						<h2 className="text-body-xl">Download Progress</h2>
 						<div className="border-border bg-card rounded-md border p-4">
@@ -271,21 +298,7 @@ export default function AccountSettings() {
 								<span className="text-sm font-semibold">Downloading...</span>
 							</div>
 							<div className="text-muted-foreground text-sm">
-								{offlineVideos.downloadState.progress ?? 'Preparing downloads'}
-							</div>
-						</div>
-					</div>
-				) : null}
-				{offlineVideos?.downloadState?.status === 'queued' ? (
-					<div className="border-border mt-10 flex flex-col gap-4 border-t pt-6">
-						<h2 className="text-body-xl">Queued Downloads</h2>
-						<div className="border-border bg-card rounded-md border p-4">
-							<div className="mb-2 flex items-center gap-2">
-								<Icon name="TriangleSmall" />
-								<span className="text-sm font-semibold">Queued...</span>
-							</div>
-							<div className="text-muted-foreground text-sm">
-								Downloads are queued and will start soon.
+								{downloadProgressMessage}
 							</div>
 						</div>
 					</div>

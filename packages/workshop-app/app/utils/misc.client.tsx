@@ -179,12 +179,24 @@ export function useDelayedIsPending({
 export function useDoubleCheck() {
 	const [doubleCheck, setDoubleCheck] = useState(false)
 
-	const getButtonProps = React.useCallback(() => {
-		return {
-			onBlur: () => setDoubleCheck(false),
-			onClick: () => setDoubleCheck(true),
-		}
-	}, [])
+	const getButtonProps = React.useCallback(
+		(props: React.ComponentPropsWithoutRef<'button'> = {}) => {
+			return {
+				...props,
+				onBlur: (event: React.FocusEvent<HTMLButtonElement>) => {
+					setDoubleCheck(false)
+					props.onBlur?.(event)
+				},
+				onClick: (event: React.MouseEvent<HTMLButtonElement>) => {
+					if (doubleCheck) {
+						props.onClick?.(event)
+					}
+					setDoubleCheck(true)
+				},
+			}
+		},
+		[doubleCheck],
+	)
 
 	return { doubleCheck, getButtonProps }
 }

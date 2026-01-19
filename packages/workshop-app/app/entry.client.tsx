@@ -7,7 +7,7 @@ import {
 	setServerCallback,
 } from '@vitejs/plugin-rsc/browser'
 import { startTransition, StrictMode } from 'react'
-import { hydrateRoot } from 'react-dom/client'
+import { hydrateRoot, type ReactFormState } from 'react-dom/client'
 import {
 	unstable_createCallServer as createCallServer,
 	unstable_getRSCStream as getRSCStream,
@@ -31,7 +31,9 @@ setServerCallback(
 void createFromReadableStream<RSCPayload>(getRSCStream()).then((payload) => {
 	startTransition(async () => {
 		const formState =
-			payload.type === 'render' ? await payload.formState : undefined
+			payload.type === 'render'
+				? ((await payload.formState) as ReactFormState | null)
+				: undefined
 
 		hydrateRoot(
 			document,
