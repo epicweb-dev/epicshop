@@ -94,7 +94,7 @@ export function Preview({
 				<iframe
 					title={title}
 					src={dev.pathname}
-					className="yo yo bg-background h-full w-full grow"
+					className="bg-background h-full w-full grow"
 					style={{ colorScheme: theme }}
 					allow="clipboard-write"
 				/>
