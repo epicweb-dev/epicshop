@@ -4,7 +4,7 @@ import {
 	getWorkshopRoot,
 	init as initApps,
 } from '@epic-web/workshop-utils/apps.server'
-import { z } from 'zod'
+import { z } from 'zod/v4'
 
 export const workshopDirectoryInputSchema = z
 	.string()
