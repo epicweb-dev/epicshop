@@ -392,10 +392,10 @@ export default function ExercisePartRoute({
 		<div className="flex max-w-full grow flex-col">
 			<main
 				ref={containerRef}
-				className="flex grow flex-col sm:h-full sm:min-h-[800px] md:min-h-[unset] lg:flex-row"
+				className="flex grow flex-col overflow-y-auto sm:h-full sm:min-h-[800px] md:min-h-[unset] lg:flex-row lg:overflow-y-hidden"
 			>
 				<div
-					className="relative flex min-w-0 flex-none basis-full flex-col sm:col-span-1 sm:row-span-1 sm:h-full lg:basis-(--split-pct)"
+					className="relative flex min-w-0 flex-none basis-auto flex-col sm:col-span-1 sm:row-span-1 lg:h-full lg:basis-(--split-pct)"
 					style={{ ['--split-pct' as any]: `${splitPercent}%` }}
 					ref={leftPaneRef}
 				>
@@ -442,7 +442,7 @@ export default function ExercisePartRoute({
 					<article
 						id={data.articleId}
 						key={data.articleId}
-						className="shadow-on-scrollbox scrollbar-thin scrollbar-thumb-scrollbar flex h-full w-full max-w-none flex-1 scroll-pt-6 flex-col justify-between space-y-6 overflow-y-auto p-2 sm:p-10 sm:pt-8"
+						className="shadow-on-scrollbox scrollbar-thin scrollbar-thumb-scrollbar flex w-full max-w-none scroll-pt-6 flex-col justify-between space-y-6 p-2 sm:p-10 sm:pt-8 lg:h-full lg:flex-1 lg:overflow-y-auto"
 					>
 						{data.exerciseStepApp.instructionsCode ? (
 							<StepMdx inBrowserBrowserRef={inBrowserBrowserRef} />
@@ -537,7 +537,7 @@ export default function ExercisePartRoute({
 						if (firstTouch) startDrag(firstTouch.clientX)
 					}}
 				/>
-				<div className="flex min-w-0 flex-1">
+				<div className="flex min-w-0 flex-none min-h-[50vh] lg:min-h-0 lg:flex-1">
 					<Outlet context={{ inBrowserBrowserRef }} />
 				</div>
 			</main>
