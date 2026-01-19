@@ -194,7 +194,9 @@ app.use((req, res, next) => {
 
 async function getBuild() {
 	const build = viteDevServer
-		? viteDevServer.ssrLoadModule('virtual:react-router/server-build')
+		? viteDevServer.ssrLoadModule(
+				'virtual:react-router/unstable_rsc/server-build',
+			)
 		: // @ts-ignore this should exist before running the server
 			// but it may not exist just yet.
 			await import('#build/server/index.js')
