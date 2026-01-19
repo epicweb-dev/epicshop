@@ -20,7 +20,6 @@ import {
 } from '@epic-web/workshop-utils/timing.server'
 import * as Tabs from '@radix-ui/react-tabs'
 import slugify from '@sindresorhus/slugify'
-import * as cookie from 'cookie'
 import { useMemo, useRef, useState } from 'react'
 import {
 	Link,
@@ -49,23 +48,17 @@ import { EditFileOnGitHub } from '#app/routes/launch-editor.tsx'
 import { SetAppToPlayground } from '#app/routes/set-playground.tsx'
 import { createInlineFileComponent, Mdx } from '#app/utils/mdx.tsx'
 import { fetchDiscordPosts } from '#app/utils/discord.server.ts'
+import {
+	getSplitPercentFromRequest,
+	setSplitPercentCookie,
+	startSplitDrag,
+} from '#app/utils/split-layout.ts'
 import { useWorkshopConfig } from '#app/components/workshop-config.tsx'
 import {
 	getRootMatchLoaderData,
 	useRootLoaderData,
 } from '#app/utils/root-loader.ts'
 import { getSeoMetaTags } from '#app/utils/seo.ts'
-
-// shared split state helpers
-const splitCookieName = 'es_split_pct'
-
-function computeSplitPercent(input: unknown, defaultValue = 50): number {
-	const value = typeof input === 'number' ? input : Number(input)
-	if (Number.isFinite(value)) {
-		return Math.min(80, Math.max(20, Math.round(value * 100) / 100))
-	}
-	return defaultValue
-}
 
 function sortExtras(extras: ExtraApp[]) {
 	return extras.sort((a, b) =>
@@ -120,12 +113,7 @@ export async function loader({ request, params }: LoaderFunctionArgs) {
 		? await getAppByName(app1Name)
 		: (playgroundApp ?? extra)
 	const app2 = app2Name ? await getAppByName(app2Name) : extra
-
-	const cookieHeader = request.headers.get('cookie')
-	const rawSplit = cookieHeader
-		? cookie.parse(cookieHeader)[splitCookieName]
-		: null
-	const splitPercent = computeSplitPercent(rawSplit, 50)
+	const splitPercent = getSplitPercentFromRequest(request, 50)
 
 	const { isRunning, portIsAvailable } = await getAppRunningState(extra)
 
@@ -298,76 +286,6 @@ export default function ExtraRoute() {
 		watchPaths: [data.extraReadme.file],
 	})
 
-	function setCookie(percent: number) {
-		const clamped = computeSplitPercent(percent)
-		document.cookie = `${splitCookieName}=${clamped}; path=/; SameSite=Lax;`
-	}
-
-	function startDrag(initialClientX: number) {
-		const container = containerRef.current
-		if (!container) return
-		const rect = container.getBoundingClientRect()
-		let dragging = true
-
-		// Disable pointer events on iframes so the drag keeps receiving events
-		const iframes = Array.from(
-			document.querySelectorAll('iframe'),
-		) as HTMLIFrameElement[]
-		const originalPointerEvents = iframes.map((el) => el.style.pointerEvents)
-		iframes.forEach((el) => (el.style.pointerEvents = 'none'))
-
-		function handleMove(clientX: number) {
-			// Safety check: ensure user is still dragging
-			if (!dragging) {
-				cleanup()
-				return
-			}
-
-			const relativeX = clientX - rect.left
-			const percent = (relativeX / rect.width) * 100
-			const clamped = computeSplitPercent(percent)
-			setSplitPercent(clamped)
-			setCookie(clamped)
-		}
-
-		function onMouseMove(e: MouseEvent) {
-			if (!dragging || e.buttons === 0) {
-				cleanup()
-				return
-			}
-			handleMove(e.clientX)
-		}
-		function onTouchMove(e: TouchEvent) {
-			const firstTouch = e.touches?.[0]
-			if (!dragging || !firstTouch) {
-				cleanup()
-				return
-			}
-			handleMove(firstTouch.clientX)
-		}
-		function cleanup() {
-			if (!dragging) return
-			dragging = false
-			iframes.forEach(
-				(el, i) => (el.style.pointerEvents = originalPointerEvents[i] ?? ''),
-			)
-			window.removeEventListener('mousemove', onMouseMove)
-			window.removeEventListener('mouseup', cleanup)
-			window.removeEventListener('touchmove', onTouchMove)
-			window.removeEventListener('touchend', cleanup)
-			document.body.style.cursor = ''
-			document.body.style.userSelect = ''
-		}
-
-		window.addEventListener('mousemove', onMouseMove)
-		window.addEventListener('mouseup', cleanup)
-		window.addEventListener('touchmove', onTouchMove)
-		window.addEventListener('touchend', cleanup)
-		document.body.style.cursor = 'col-resize'
-		document.body.style.userSelect = 'none'
-		handleMove(initialClientX)
-	}
-
 	return (
 		<div className="flex max-w-full grow flex-col">
 			<main
@@ -483,14 +401,24 @@ export default function ExtraRoute() {
 					aria-orientation="vertical"
 					title="Drag to resize"
 					className="bg-border hover:bg-muted hidden w-1 cursor-col-resize lg:block"
-					onMouseDown={(e) => startDrag(e.clientX)}
+					onMouseDown={(event) =>
+						startSplitDrag({
+							container: containerRef.current,
+							initialClientX: event.clientX,
+							setSplitPercent,
+						})
+					}
 					onDoubleClick={() => {
-						setSplitPercent(50)
-						setCookie(50)
+						setSplitPercent(setSplitPercentCookie(50))
 					}}
-					onTouchStart={(e) => {
-						const firstTouch = e.touches?.[0]
-						if (firstTouch) startDrag(firstTouch.clientX)
+					onTouchStart={(event) => {
+						const firstTouch = event.touches?.[0]
+						if (!firstTouch) return
+						startSplitDrag({
+							container: containerRef.current,
+							initialClientX: firstTouch.clientX,
+							setSplitPercent,
+						})
 					}}
 				/>
 				<Tabs.Root
