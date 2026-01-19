@@ -38,6 +38,7 @@ import { getAppRunningState } from '#app/routes/_app+/exercise+/$exerciseNumber_
 import { EditFileOnGitHub } from '#app/routes/launch-editor.tsx'
 import { SetAppToPlayground } from '#app/routes/set-playground.tsx'
 import { createInlineFileComponent, Mdx } from '#app/utils/mdx.tsx'
+import { cn } from '#app/utils/misc.tsx'
 import { getRootMatchLoaderData } from '#app/utils/root-loader.ts'
 import { getSeoMetaTags } from '#app/utils/seo.ts'
 

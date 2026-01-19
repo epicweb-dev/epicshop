@@ -970,7 +970,7 @@ function MobileNavigation({
 											>
 												📚 Extras
 											</NavLink>
-											{showExtrasPlaygroundLink ? (
+											{showExtrasPlaygroundLink && playgroundExtra ? (
 												<Link
 													to={`/extra/${playgroundExtra.dirName}`}
 													prefetch="intent"
@@ -1168,6 +1168,7 @@ function Navigation({
 	)
 	const isExtrasActive =
 		location.pathname === '/extra' || location.pathname.startsWith('/extra/')
+	const showExtrasPlaygroundLink = Boolean(playgroundExtra) && !isExtrasActive
 
 	const exercise = data.exercises.find(
 		(e) => e.exerciseNumber === Number(params.exerciseNumber),
@@ -1434,7 +1435,7 @@ function Navigation({
 											>
 												📚 Extras
 											</NavLink>
-											{showExtrasPlaygroundLink ? (
+											{showExtrasPlaygroundLink && playgroundExtra ? (
 												<Link
 													to={`/extra/${playgroundExtra.dirName}`}
 													prefetch="intent"
