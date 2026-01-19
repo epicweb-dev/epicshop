@@ -68,9 +68,7 @@ Please use this context to provide quiz questions, one at a time, to me to help 
 }
 
 export function initPrompts(server: McpServer) {
-	const registerPrompt = (
-		server as unknown as { registerPrompt: (...args: any[]) => void }
-	).registerPrompt
+	const registerPrompt = (server as any).registerPrompt.bind(server)
 	registerPrompt(
 		'quiz_me',
 		{
