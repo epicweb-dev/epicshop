@@ -252,13 +252,17 @@ export function initTools(server: McpServer) {
 					name: z.string().nullable().optional(),
 				})
 
-				const timeout = setTimeout(() => {
-					void server.server
-						.notification('notifications/message', {
-							message: 'Device authorization timed out',
-						})
-						.catch(() => {})
-				}, deviceResponse.expires_in * 1000)
+			const timeout = setTimeout(() => {
+				void server.server
+					.notification({
+						method: 'notifications/message',
+						params: {
+							level: 'warning',
+							data: 'Device authorization timed out',
+						},
+					})
+					.catch(() => {})
+			}, deviceResponse.expires_in * 1000)
 
 				try {
 					const tokenSet = await client.pollDeviceAuthorizationGrant(
@@ -267,12 +271,16 @@ export function initTools(server: McpServer) {
 					)
 					clearTimeout(timeout)
 
-					if (!tokenSet) {
-						await server.server.notification('notifications/message', {
-							message: 'No token set',
-						})
-						return
-					}
+				if (!tokenSet) {
+					await server.server.notification({
+						method: 'notifications/message',
+						params: {
+							level: 'error',
+							data: 'No token set',
+						},
+					})
+					return
+				}
 
 					const protectedResourceResponse = await client.fetchProtectedResource(
 						config,
@@ -281,13 +289,17 @@ export function initTools(server: McpServer) {
 						'GET',
 					)
 					const userinfoRaw = await protectedResourceResponse.json()
-					const userinfoResult = UserInfoSchema.safeParse(userinfoRaw)
-					if (!userinfoResult.success) {
-						await server.server.notification('notifications/message', {
-							message: `Failed to parse user info: ${userinfoResult.error.message}`,
-						})
-						return
-					}
+				const userinfoResult = UserInfoSchema.safeParse(userinfoRaw)
+				if (!userinfoResult.success) {
+					await server.server.notification({
+						method: 'notifications/message',
+						params: {
+							level: 'error',
+							data: `Failed to parse user info: ${userinfoResult.error.message}`,
+						},
+					})
+					return
+				}
 					const userinfo = userinfoResult.data
 
 					await setAuthInfo({
@@ -297,12 +309,16 @@ export function initTools(server: McpServer) {
 						name: userinfo.name,
 					})
 
-					await getUserInfo({ forceFresh: true })
+				await getUserInfo({ forceFresh: true })
 
-					await server.server.notification('notifications/message', {
-						message: 'Authentication successful',
-					})
-				} catch (error) {
+				await server.server.notification({
+					method: 'notifications/message',
+					params: {
+						level: 'info',
+						data: 'Authentication successful',
+					},
+				})
+			} catch (error) {
 					clearTimeout(timeout)
 					throw error
 				}
