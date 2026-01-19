@@ -45,8 +45,8 @@ const MODE = process.env.NODE_ENV
 
 const fixAsyncHooksCommonjsExternal = {
 	name: 'epicshop/fix-async-hooks-commonjs-external',
-	apply: 'build',
-	enforce: 'post',
+	apply: 'build' as const,
+	enforce: 'post' as const,
 	renderChunk(code: string) {
 		if (!code.includes('\0node:async_hooks?commonjs-external')) return null
 		return {
