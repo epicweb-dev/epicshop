@@ -27,7 +27,7 @@ import { useRevalidationWS } from '#app/components/revalidation-ws.tsx'
 import { EditFileOnGitHub } from '#app/routes/launch-editor.tsx'
 import { Mdx } from '#app/utils/mdx.tsx'
 import { cn } from '#app/utils/misc.tsx'
-import { getRootMatchLoaderData } from '#app/utils/root-loader.ts'
+import { getRootMatchLoaderData } from '#app/utils/root-loader-utils.ts'
 import { getSeoMetaTags } from '#app/utils/seo.ts'
 
 export const meta: MetaFunction<typeof loader> = (args) => {

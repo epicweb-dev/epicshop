@@ -1,6 +1,6 @@
 import { type SEOHandle } from '@nasa-gcn/remix-seo'
 import { Link, Outlet } from 'react-router'
-import { getRootMatchLoaderData } from '#app/utils/root-loader.ts'
+import { getRootMatchLoaderData } from '#app/utils/root-loader-utils.ts'
 import { type Route } from './+types/_layout.tsx'
 
 export const handle: SEOHandle = {

@@ -2,7 +2,7 @@
 // and very out-dated. I've replaced it with a simple Characters component that
 // does the same thing we were using baffle-react for
 import { useEffect, useRef, useState } from 'react'
-import { useHints } from '#app/utils/client-hints.tsx'
+import { useHints } from '#app/utils/client-hints.client.tsx'
 import { cn } from '#app/utils/misc.tsx'
 
 export function Loading({

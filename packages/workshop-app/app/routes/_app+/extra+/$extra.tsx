@@ -34,7 +34,7 @@ import { Preview } from '#app/routes/_app+/exercise+/$exerciseNumber_.$stepNumbe
 import { getAppRunningState } from '#app/routes/_app+/exercise+/$exerciseNumber_.$stepNumber.$type+/__shared/utils.tsx'
 import { EditFileOnGitHub } from '#app/routes/launch-editor.tsx'
 import { createInlineFileComponent, Mdx } from '#app/utils/mdx.tsx'
-import { getRootMatchLoaderData } from '#app/utils/root-loader.ts'
+import { getRootMatchLoaderData } from '#app/utils/root-loader-utils.ts'
 import { getSeoMetaTags } from '#app/utils/seo.ts'
 
 // shared split state helpers

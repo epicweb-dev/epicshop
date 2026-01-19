@@ -29,7 +29,7 @@ import { useTheme } from '#app/routes/theme/index.tsx'
 import { Mdx } from '#app/utils/mdx.tsx'
 import { cn } from '#app/utils/misc.tsx'
 import { useIsOnline } from '#app/utils/online.ts'
-import { getRootMatchLoaderData } from '#app/utils/root-loader.ts'
+import { getRootMatchLoaderData } from '#app/utils/root-loader-utils.ts'
 import { getSeoMetaTags } from '#app/utils/seo.ts'
 import { type Route } from './+types/$exerciseNumber_.finished.tsx'
 

@@ -16,6 +16,9 @@ declare module 'virtual:react-router/unstable_rsc/react-router-serve-config' {
 	export default config
 }
 
+declare module 'server-only' {}
+declare module 'client-only' {}
+
 interface ImportMeta {
 	viteRsc: {
 		loadModule<T>(id: string, entry: string): Promise<T>

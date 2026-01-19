@@ -26,10 +26,12 @@ import {
 	formatDuration,
 	formatFileSize,
 	formatTimeRemaining,
+} from '#app/utils/misc.tsx'
+import {
 	useDayjs,
 	useDoubleCheck,
 	useInterval,
-} from '#app/utils/misc.tsx'
+} from '#app/utils/misc.client.tsx'
 import { type Route } from './+types/cache.ts'
 
 export async function loader({ request }: Route.LoaderArgs) {

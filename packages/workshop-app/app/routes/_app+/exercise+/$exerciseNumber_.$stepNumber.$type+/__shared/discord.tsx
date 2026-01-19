@@ -3,7 +3,7 @@ import { Await, Link, useLoaderData } from 'react-router'
 import { Icon } from '#app/components/icons.tsx'
 import { Loading } from '#app/components/loading.tsx'
 import { DiscordCTA, useDiscordCTALink } from '#app/routes/_app+/discord.tsx'
-import { useAltDown } from '#app/utils/misc.tsx'
+import { useAltDown } from '#app/utils/misc.client.tsx'
 import { useIsOnline } from '#app/utils/online.ts'
 import { type Route } from '../+types/index.tsx'
 

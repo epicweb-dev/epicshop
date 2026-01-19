@@ -23,7 +23,7 @@ import {
 import slugify from '@sindresorhus/slugify'
 import * as cookie from 'cookie'
 import { data, redirect, type HeadersFunction } from 'react-router'
-import { getRootMatchLoaderData } from '#app/utils/root-loader.ts'
+import { getRootMatchLoaderData } from '#app/utils/root-loader-utils.ts'
 import { getSeoMetaTags } from '#app/utils/seo.ts'
 import { getStep404Data } from '../__shared/error-boundary.server.ts'
 import { type Route } from './+types/_layout.tsx'

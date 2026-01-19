@@ -15,7 +15,7 @@ import {
 	useFetchers,
 } from 'react-router'
 import { z } from 'zod'
-import { useDebounce } from '#app/utils/misc.tsx'
+import { useDebounce } from '#app/utils/misc.client.tsx'
 import './mux-player.css'
 import { useRootLoaderData } from '#app/utils/root-loader.ts'
 

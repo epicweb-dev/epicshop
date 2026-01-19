@@ -1,3 +1,5 @@
+'use client'
+
 import { useEffect, useRef, useState } from 'react'
 import { useFetchers, useNavigation } from 'react-router'
 import { useSpinDelay } from 'spin-delay'

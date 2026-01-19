@@ -1,6 +1,7 @@
+'use client'
+
 import { invariant } from '@epic-web/invariant'
 import { unstable_useRoute as useRoute } from 'react-router'
-import { type Route } from '../+types/root.tsx'
 
 /**
  * @returns the loader data from the root loader
@@ -28,10 +29,3 @@ export function useApps() {
 	return data.apps
 }
 
-export function getRootMatchLoaderData(
-	matches: Array<{ id: string; loaderData: unknown } | undefined>,
-) {
-	return matches.find((m) => m?.id === 'root')?.loaderData as
-		| Route.ComponentProps['loaderData']
-		| undefined
-}
