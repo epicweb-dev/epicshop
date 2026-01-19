@@ -1,15 +1,43 @@
 import { generateSitemap } from '@nasa-gcn/remix-seo'
-import { type LoaderFunctionArgs, type ServerBuild } from 'react-router'
+import {
+	type LoaderFunctionArgs,
+	type unstable_RSCRouteConfigEntry,
+} from 'react-router'
+import routes from 'virtual:react-router/unstable_rsc/routes'
 import { getDomainUrl } from '#app/utils/misc.tsx'
-import { getServerBuildFromContext } from '#app/utils/server-build-context.ts'
 
-export async function loader({ request, context }: LoaderFunctionArgs) {
-	const serverBuild = await getServerBuildFromContext(context)
-	if (!serverBuild) {
-		throw new Response('Server build not available', { status: 500 })
+type SitemapRoutes = Parameters<typeof generateSitemap>[1]
+
+function buildSitemapRoutes(
+	entries: Array<unstable_RSCRouteConfigEntry>,
+	parentId?: string,
+	manifest: SitemapRoutes = {},
+) {
+	for (const entry of entries) {
+		const hasDefault = Boolean(entry.Component || entry.lazy)
+		const module = {
+			...(entry.handle ? { handle: entry.handle } : {}),
+			...(hasDefault
+				? { default: entry.Component ?? (() => null) }
+				: {}),
+		}
+		manifest[entry.id] = {
+			id: entry.id,
+			parentId,
+			path: entry.path,
+			index: 'index' in entry ? entry.index : undefined,
+			module,
+		} as SitemapRoutes[string]
+		if ('children' in entry && entry.children) {
+			buildSitemapRoutes(entry.children, entry.id, manifest)
+		}
 	}
-	const resolvedBuild = (await serverBuild) as ServerBuild
-	return generateSitemap(request, resolvedBuild.routes, {
+	return manifest
+}
+
+export async function loader({ request }: LoaderFunctionArgs) {
+	const sitemapRoutes = buildSitemapRoutes(routes)
+	return generateSitemap(request, sitemapRoutes, {
 		siteUrl: getDomainUrl(request),
 		headers: {
 			'Cache-Control': `public, max-age=${60 * 5}`,

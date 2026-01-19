@@ -43,6 +43,31 @@ const aliases = {
 
 const MODE = process.env.NODE_ENV
 
+const rscEntryOverrides = {
+	name: 'epicshop/rsc-entry-overrides',
+	config() {
+		return {
+			environments: {
+				client: {
+					build: {
+						rollupOptions: { input: { index: here('app', 'entry.client.tsx') } },
+					},
+				},
+				rsc: {
+					build: {
+						rollupOptions: { input: { index: here('app', 'entry.rsc.tsx') } },
+					},
+				},
+				ssr: {
+					build: {
+						rollupOptions: { input: { index: here('app', 'entry.ssr.tsx') } },
+					},
+				},
+			},
+		}
+	},
+}
+
 const sentryConfig: SentryReactRouterBuildOptions = {
 	authToken: process.env.SENTRY_AUTH_TOKEN,
 	org: process.env.SENTRY_ORG,
@@ -102,6 +127,7 @@ export default defineConfig((config) => ({
 		tailwindcss(),
 		reactRouterRSC(),
 		rsc(),
+		rscEntryOverrides,
 		MODE === 'production' && process.env.SENTRY_AUTH_TOKEN
 			? sentryReactRouter(sentryConfig, config)
 			: null,

@@ -27,10 +27,9 @@ import compression from 'compression'
 import express from 'express'
 import getPort, { portNumbers } from 'get-port'
 import morgan from 'morgan'
-import { RouterContextProvider, type ServerBuild } from 'react-router'
+import { RouterContextProvider } from 'react-router'
 import sourceMapSupport from 'source-map-support'
 import { type WebSocket, WebSocketServer } from 'ws'
-import { serverBuildContext } from '../app/utils/server-build-context.ts'
 
 // if we exit early with an error, log the error...
 closeWithGrace(({ err, manual }) => {
@@ -52,6 +51,7 @@ const isRunningInBuildDir = path.dirname(__dirname).endsWith('dist')
 const epicshopAppRootDir = isRunningInBuildDir
 	? path.join(__dirname, '..', '..')
 	: path.join(__dirname, '..')
+const rscEntryPath = path.join(epicshopAppRootDir, 'app', 'entry.rsc.tsx')
 
 const viteDevServer = isProd
 	? null
@@ -195,11 +195,12 @@ app.use((req, res, next) => {
 
 async function getBuild() {
 	const build = viteDevServer
-		? viteDevServer.ssrLoadModule('virtual:react-router/server-build')
+		? viteDevServer.environments.rsc?.runner?.import(rscEntryPath) ??
+			viteDevServer.ssrLoadModule(rscEntryPath)
 		: // @ts-ignore this should exist before running the server
 			// but it may not exist just yet.
 			await import('#build/server/index.js')
-	return build as ServerBuild
+	return build
 }
 
 const desiredPort = Number(process.env.PORT || 5639)
@@ -209,7 +210,7 @@ const portToUse = await getPort({
 
 app.all('*splat', async (req, res, next) => {
 	try {
-		const build = (await serverBuildPromise) as ServerBuild
+		const build = await serverBuildPromise
 		const requestHandler = resolveRequestHandler(build)
 		const host = req.get('X-Forwarded-Host') ?? req.get('host') ?? 'localhost'
 		const request = createRequest(req, res, {
@@ -217,7 +218,6 @@ app.all('*splat', async (req, res, next) => {
 			protocol: `${req.protocol}:`,
 		})
 		const requestContext = new RouterContextProvider()
-		requestContext.set(serverBuildContext, serverBuildPromise)
 		const response = await requestHandler(request, requestContext)
 		await sendResponse(res, response)
 	} catch (error) {
