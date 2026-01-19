@@ -89,7 +89,12 @@ function parseExtraAppName(appName: string): string | null {
 	for (const prefix of prefixes) {
 		if (appName.startsWith(prefix)) {
 			let relativePath = appName.slice(prefix.length)
-			if (relativePath.startsWith('.')) relativePath = relativePath.slice(1)
+			// Only strip the leading dot if the prefix didn't end with a dot
+			// (i.e., for .extra and .example, not for extra. and example.)
+			// This preserves hidden directories like .my-hidden-app
+			if (!prefix.endsWith('.') && relativePath.startsWith('.')) {
+				relativePath = relativePath.slice(1)
+			}
 			return relativePath.length ? relativePath : null
 		}
 	}
@@ -1328,7 +1333,24 @@ export async function getAppByName(
 	{ request, timings }: CachifiedOptions = {},
 ) {
 	const apps = await getApps({ request, timings })
-	return apps.find((a) => a.name === name)
+	// First try exact match
+	const exactMatch = apps.find((a) => a.name === name)
+	if (exactMatch) return exactMatch
+
+	// For backward compatibility, check if this is a legacy app name
+	// (e.g., example.my-app) and find the corresponding extra app (extra.my-app)
+	const relativePath = parseExtraAppName(name)
+	if (relativePath) {
+		// Try to find an app with the same relative path but different prefix
+		const alternativePrefixes = ['extra.', 'example.']
+		for (const prefix of alternativePrefixes) {
+			const alternativeName = `${prefix}${relativePath.split('/').join('__sep__')}`
+			const match = apps.find((a) => a.name === alternativeName)
+			if (match) return match
+		}
+	}
+
+	return undefined
 }
 
 export async function getNextExerciseApp(
