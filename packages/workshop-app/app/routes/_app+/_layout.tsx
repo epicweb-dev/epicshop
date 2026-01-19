@@ -694,11 +694,7 @@ function NavigationExerciseStepListItem({
 	)
 }
 
-function NavigationExtrasListItem({
-	children,
-}: {
-	children: React.ReactNode
-}) {
+function NavigationExtrasListItem({ children }: { children: React.ReactNode }) {
 	return (
 		<motion.li
 			variants={itemVariants}
@@ -1002,7 +998,9 @@ function MobileNavigation({
 															}
 														>
 															{extra.title}
-															{extra.name === data.playground.appName ? ' 🛝' : ''}
+															{extra.name === data.playground.appName
+																? ' 🛝'
+																: ''}
 														</NavLink>
 													</NavigationExtrasListItem>
 												))}
@@ -1464,7 +1462,9 @@ function Navigation({
 															}
 														>
 															{extra.title}
-															{extra.name === data.playground.appName ? ' 🛝' : ''}
+															{extra.name === data.playground.appName
+																? ' 🛝'
+																: ''}
 														</NavLink>
 													</NavigationExtrasListItem>
 												))}
