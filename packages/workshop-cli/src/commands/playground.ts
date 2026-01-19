@@ -450,10 +450,10 @@ export async function setSavedPlayground(
 			return { success: false, message }
 		}
 
-		const selected =
-			latest && !savedPlaygroundId
-				? savedPlaygrounds[0]
-				: savedPlaygrounds.find((entry) => entry.id === savedPlaygroundId)
+	const selected =
+		latest || !savedPlaygroundId
+			? savedPlaygrounds[0]
+			: savedPlaygrounds.find((entry) => entry.id === savedPlaygroundId)
 
 		if (!selected) {
 			throw new Error(`Saved playground not found: ${savedPlaygroundId}`)
