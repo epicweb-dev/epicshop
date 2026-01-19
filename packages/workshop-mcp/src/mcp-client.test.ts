@@ -55,20 +55,16 @@ class McpTestClient {
 		const testDir = path.dirname(testFilePath)
 		const packageRoot = path.resolve(testDir, '..')
 		const workspaceRoot = path.resolve(packageRoot, '..', '..')
-		const tsxBinary = path.join(
-			workspaceRoot,
-			'node_modules',
-			'.bin',
-			process.platform === 'win32' ? 'tsx.cmd' : 'tsx',
-		)
+		const tsxPackage = path.join(workspaceRoot, 'node_modules', 'tsx')
 		const serverEntry = path.join(packageRoot, 'src', 'index.ts')
 
-		if (!existsSync(tsxBinary)) {
-			throw new Error(`tsx binary not found at ${tsxBinary}`)
+		if (!existsSync(tsxPackage)) {
+			throw new Error(`tsx package not found at ${tsxPackage}`)
 		}
 
-		const child = spawn(tsxBinary, ['--esm', serverEntry], {
+		const child = spawn(process.execPath, ['--import', 'tsx', serverEntry], {
 			stdio: ['pipe', 'pipe', 'pipe'],
+			cwd: workspaceRoot,
 			env: {
 				...process.env,
 				NODE_ENV: 'test',
