@@ -235,7 +235,7 @@
 /* Typography plugin customizations */
 @layer components {
 	/* proseColors */
-	.prose :where(*) {
+	.prose :where(*):not(:where([class~='not-prose'], [class~='not-prose'] *)) {
 		color: hsl(var(--foreground));
 	}
 
@@ -254,10 +254,12 @@
 	}
 
 	/* removeCodeBackticks */
-	.prose :where(code)::before {
+	.prose
+		:where(code):not(:where([class~='not-prose'], [class~='not-prose'] *))::before {
 		content: none;
 	}
-	.prose :where(code)::after {
+	.prose
+		:where(code):not(:where([class~='not-prose'], [class~='not-prose'] *))::after {
 		content: none;
 	}
 }
