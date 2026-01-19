@@ -397,7 +397,7 @@ export async function getAppConfig(fullPath: string) {
 					.optional()
 					.default(workshopConfig.testTab?.enabled ?? true),
 			})
-			.default({}),
+			.default({ enabled: workshopConfig.testTab?.enabled ?? true }),
 		scripts: z
 			.object({
 				test: z.string().optional(),
