@@ -192,12 +192,10 @@ export async function start(options: StartOptions = {}): Promise<StartResult> {
 			if (isDeployed) return
 
 			try {
-				const { checkForUpdatesCached } = await import(
-					'@epic-web/workshop-utils/git.server'
-				)
-				const { getMutedNotifications } = await import(
-					'@epic-web/workshop-utils/db.server'
-				)
+				const { checkForUpdatesCached } =
+					await import('@epic-web/workshop-utils/git.server')
+				const { getMutedNotifications } =
+					await import('@epic-web/workshop-utils/db.server')
 
 				const updates = await checkForUpdatesCached()
 				if (updates.updatesAvailable && updates.remoteCommit) {
@@ -237,9 +235,8 @@ export async function start(options: StartOptions = {}): Promise<StartResult> {
 
 		async function waitForChildReady(): Promise<boolean> {
 			const port = await childPortPromise
-			const { getWorkshopUrl } = await import(
-				'@epic-web/workshop-utils/config.server'
-			)
+			const { getWorkshopUrl } =
+				await import('@epic-web/workshop-utils/config.server')
 			const url = getWorkshopUrl(port)
 			const maxAttempts = 40 // 20s max (500ms interval)
 			for (let i = 0; i < maxAttempts; i++) {
@@ -260,9 +257,8 @@ export async function start(options: StartOptions = {}): Promise<StartResult> {
 
 			console.log('\n👀 Checking for updates...')
 			try {
-				const { updateLocalRepo } = await import(
-					'@epic-web/workshop-utils/git.server'
-				)
+				const { updateLocalRepo } =
+					await import('@epic-web/workshop-utils/git.server')
 				const result = await updateLocalRepo()
 				if (result.status === 'success') {
 					console.log(`✅ ${result.message}`)
@@ -291,9 +287,8 @@ export async function start(options: StartOptions = {}): Promise<StartResult> {
 				try {
 					if (req.url === '/__epicshop-restart') {
 						const port = await childPortPromise
-						const { getWorkshopUrl } = await import(
-							'@epic-web/workshop-utils/config.server'
-						)
+						const { getWorkshopUrl } =
+							await import('@epic-web/workshop-utils/config.server')
 						const workshopUrl = getWorkshopUrl(port)
 						res.setHeader('Access-Control-Allow-Origin', workshopUrl)
 						res.setHeader('Access-Control-Allow-Methods', 'POST, OPTIONS')
@@ -429,9 +424,8 @@ export async function start(options: StartOptions = {}): Promise<StartResult> {
 					await doUpdateAndRestart()
 				} else if (key === 'o') {
 					if (childPort) {
-						const { getWorkshopUrl } = await import(
-							'@epic-web/workshop-utils/config.server'
-						)
+						const { getWorkshopUrl } =
+							await import('@epic-web/workshop-utils/config.server')
 						const workshopUrl = getWorkshopUrl(childPort)
 						console.log(
 							chalk.blue(`\n🌐 Opening browser to ${workshopUrl} ...`),
@@ -480,12 +474,10 @@ export async function start(options: StartOptions = {}): Promise<StartResult> {
 				} else if (key === 'd') {
 					// Dismiss update notification
 					try {
-						const { checkForUpdatesCached } = await import(
-							'@epic-web/workshop-utils/git.server'
-						)
-						const { muteNotification } = await import(
-							'@epic-web/workshop-utils/db.server'
-						)
+						const { checkForUpdatesCached } =
+							await import('@epic-web/workshop-utils/git.server')
+						const { muteNotification } =
+							await import('@epic-web/workshop-utils/db.server')
 						const updates = await checkForUpdatesCached()
 						if (updates.updatesAvailable && updates.remoteCommit) {
 							const updateNotificationId = `update-repo-${updates.remoteCommit}`
@@ -618,9 +610,8 @@ async function findWorkshopAppDir(
 
 	// 3. Node's resolution process
 	try {
-		const workshopAppPath = import.meta.resolve(
-			'@epic-web/workshop-app/package.json',
-		)
+		const workshopAppPath = import.meta
+			.resolve('@epic-web/workshop-app/package.json')
 		const packagePath = fileURLToPath(workshopAppPath)
 		return path.dirname(packagePath)
 	} catch {

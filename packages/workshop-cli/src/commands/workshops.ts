@@ -295,9 +295,8 @@ async function checkAuthStatus(
 async function checkWorkshopDownloadStatus(
 	workshops: EnrichedWorkshop[],
 ): Promise<EnrichedWorkshop[]> {
-	const { workshopExists } = await import(
-		'@epic-web/workshop-utils/workshops.server'
-	)
+	const { workshopExists } =
+		await import('@epic-web/workshop-utils/workshops.server')
 
 	const downloadStatusResults = await Promise.all(
 		workshops.map(async (workshop) => {
@@ -367,18 +366,16 @@ async function addSingleWorkshop(
 		}
 	}
 
-	const { getReposDirectory, workshopExists } = await import(
-		'@epic-web/workshop-utils/workshops.server'
-	)
+	const { getReposDirectory, workshopExists } =
+		await import('@epic-web/workshop-utils/workshops.server')
 
 	// Check if workshop already exists (only meaningful for managed repos directory)
 	if (!hasExplicitCloneDestination) {
 		if (await workshopExists(repoName)) {
 			const message = `Workshop "${repoName}" already exists`
 			if (!silent) {
-				const { getWorkshop } = await import(
-					'@epic-web/workshop-utils/workshops.server'
-				)
+				const { getWorkshop } =
+					await import('@epic-web/workshop-utils/workshops.server')
 				const reposDir = await getReposDirectory()
 				const workshop = await getWorkshop(repoName)
 				const workshopPath = workshop?.path ?? path.join(reposDir, repoName)
@@ -772,8 +769,7 @@ export async function add(options: AddOptions): Promise<WorkshopsResult> {
 						? PRODUCT_ICONS[w.productHost] || ''
 						: ''
 					const accessIcon = w.hasAccess === true ? chalk.yellow('🔑') : ''
-					const downloadedIcon =
-						w.isDownloaded === true ? chalk.green('✔︎') : ''
+					const downloadedIcon = w.isDownloaded === true ? chalk.green('✔︎') : ''
 
 					const nameParts = [
 						productIcon,
@@ -1001,9 +997,8 @@ export async function list({
 			return { success: false, message: 'Setup cancelled' }
 		}
 
-		const { listWorkshops, getReposDirectory } = await import(
-			'@epic-web/workshop-utils/workshops.server'
-		)
+		const { listWorkshops, getReposDirectory } =
+			await import('@epic-web/workshop-utils/workshops.server')
 
 		const workshops = await listWorkshops()
 		const reposDir = await getReposDirectory()
@@ -1306,9 +1301,8 @@ export async function startWorkshop(
 			return { success: false, message: 'Setup cancelled' }
 		}
 
-		const { listWorkshops, getWorkshop } = await import(
-			'@epic-web/workshop-utils/workshops.server'
-		)
+		const { listWorkshops, getWorkshop } =
+			await import('@epic-web/workshop-utils/workshops.server')
 
 		let workshopToStart
 
@@ -1425,12 +1419,10 @@ export async function openWorkshop(
 	const { silent = false } = options
 
 	try {
-		const { listWorkshops, getWorkshop, getWorkshopByPath } = await import(
-			'@epic-web/workshop-utils/workshops.server'
-		)
-		const { launchEditor } = await import(
-			'@epic-web/workshop-utils/launch-editor.server'
-		)
+		const { listWorkshops, getWorkshop, getWorkshopByPath } =
+			await import('@epic-web/workshop-utils/workshops.server')
+		const { launchEditor } =
+			await import('@epic-web/workshop-utils/launch-editor.server')
 
 		let workshopToOpen
 
@@ -1916,9 +1908,8 @@ async function ensureReposDirectoryAccessible(): Promise<boolean> {
  * Call this at the start of any command that requires the config to be set
  */
 export async function ensureConfigured(): Promise<boolean> {
-	const { isReposDirectoryConfigured } = await import(
-		'@epic-web/workshop-utils/workshops.server'
-	)
+	const { isReposDirectoryConfigured } =
+		await import('@epic-web/workshop-utils/workshops.server')
 
 	if (await isReposDirectoryConfigured()) {
 		// Directory is configured, but verify it's still accessible
@@ -1932,9 +1923,8 @@ export async function ensureConfigured(): Promise<boolean> {
 	// - In CI: automatically choose and persist the default location (no onboarding/auth/tutorial).
 	// - Otherwise: run onboarding (interactive).
 	if (isCiEnvironment()) {
-		const { getDefaultReposDir, setReposDirectory } = await import(
-			'@epic-web/workshop-utils/workshops.server'
-		)
+		const { getDefaultReposDir, setReposDirectory } =
+			await import('@epic-web/workshop-utils/workshops.server')
 		const defaultDir = getDefaultReposDir()
 		const resolvedPath = path.resolve(defaultDir)
 		await setReposDirectory(resolvedPath)
@@ -2192,9 +2182,8 @@ async function runSiteLoginOnboarding(): Promise<void> {
 }
 
 async function promptAndSetupAccessibleWorkshops(): Promise<void> {
-	const { workshopExists } = await import(
-		'@epic-web/workshop-utils/workshops.server'
-	)
+	const { workshopExists } =
+		await import('@epic-web/workshop-utils/workshops.server')
 
 	console.log(chalk.bold.cyan('\n📚 Workshop Setup\n'))
 	console.log(
@@ -2512,9 +2501,8 @@ async function promptAndSetupAccessibleWorkshops(): Promise<void> {
  * Ensure the tutorial workshop exists and start it
  */
 async function ensureTutorialAndStart(): Promise<WorkshopsResult> {
-	const { workshopExists, getReposDirectory, getWorkshop } = await import(
-		'@epic-web/workshop-utils/workshops.server'
-	)
+	const { workshopExists, getReposDirectory, getWorkshop } =
+		await import('@epic-web/workshop-utils/workshops.server')
 
 	async function promptAndOpenTutorial(): Promise<WorkshopsResult> {
 		console.log()
@@ -2684,9 +2672,8 @@ async function ensureTutorialAndStart(): Promise<WorkshopsResult> {
  * Check if the workshops directory is configured
  */
 export async function isConfigured(): Promise<boolean> {
-	const { isReposDirectoryConfigured } = await import(
-		'@epic-web/workshop-utils/workshops.server'
-	)
+	const { isReposDirectoryConfigured } =
+		await import('@epic-web/workshop-utils/workshops.server')
 	return isReposDirectoryConfigured()
 }
 

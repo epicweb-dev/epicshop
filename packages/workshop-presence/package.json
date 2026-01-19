@@ -43,11 +43,11 @@
     "./package.json": "./package.json",
     "./presence.server": {
       "types": "./dist/presence.server.d.ts",
-      "import": "./dist/presence.server.js"
+      "default": "./dist/presence.server.js"
     },
     "./presence": {
       "types": "./dist/presence.d.ts",
-      "import": "./dist/presence.js"
+      "default": "./dist/presence.js"
     }
   }
 }

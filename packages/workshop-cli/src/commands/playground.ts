@@ -82,9 +82,8 @@ export async function show(
 	const { silent = false } = options
 
 	try {
-		const { init, getPlaygroundApp, getApps, isExerciseStepApp } = await import(
-			'@epic-web/workshop-utils/apps.server'
-		)
+		const { init, getPlaygroundApp, getApps, isExerciseStepApp } =
+			await import('@epic-web/workshop-utils/apps.server')
 
 		await init()
 
@@ -155,9 +154,8 @@ export async function set(
 			setPlayground,
 		} = await import('@epic-web/workshop-utils/apps.server')
 		const { getAuthInfo } = await import('@epic-web/workshop-utils/db.server')
-		const { getProgress } = await import(
-			'@epic-web/workshop-utils/epic-api.server'
-		)
+		const { getProgress } =
+			await import('@epic-web/workshop-utils/epic-api.server')
 
 		await init()
 
@@ -295,12 +293,10 @@ export async function selectAndSet(
 	const { silent = false } = options
 
 	try {
-		const { init, getApps, isExerciseStepApp, setPlayground } = await import(
-			'@epic-web/workshop-utils/apps.server'
-		)
-		const { getProgress } = await import(
-			'@epic-web/workshop-utils/epic-api.server'
-		)
+		const { init, getApps, isExerciseStepApp, setPlayground } =
+			await import('@epic-web/workshop-utils/apps.server')
+		const { getProgress } =
+			await import('@epic-web/workshop-utils/epic-api.server')
 
 		await init()
 
@@ -438,9 +434,8 @@ export async function setSavedPlayground(
 	const { savedPlaygroundId, latest = false, silent = false } = options
 
 	try {
-		const { setPlayground } = await import(
-			'@epic-web/workshop-utils/apps.server'
-		)
+		const { setPlayground } =
+			await import('@epic-web/workshop-utils/apps.server')
 		const savedPlaygrounds = await getSavedPlaygroundEntries()
 		if (!savedPlaygrounds.length) {
 			const message = 'No saved playgrounds found.'
@@ -494,9 +489,8 @@ export async function selectAndSetSavedPlayground(
 	const { silent = false } = options
 
 	try {
-		const { setPlayground } = await import(
-			'@epic-web/workshop-utils/apps.server'
-		)
+		const { setPlayground } =
+			await import('@epic-web/workshop-utils/apps.server')
 		const savedPlaygrounds = await getSavedPlaygroundEntries()
 		if (!savedPlaygrounds.length) {
 			const message = 'No saved playgrounds found.'

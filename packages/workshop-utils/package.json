@@ -41,107 +41,107 @@
     "./package.json": "./package.json",
     "./apps.server": {
       "types": "./dist/apps.server.d.ts",
-      "import": "./dist/apps.server.js"
+      "default": "./dist/apps.server.js"
     },
     "./diff.server": {
       "types": "./dist/diff.server.d.ts",
-      "import": "./dist/diff.server.js"
+      "default": "./dist/diff.server.js"
     },
     "./env.server": {
       "types": "./dist/env.server.d.ts",
-      "import": "./dist/env.server.js"
+      "default": "./dist/env.server.js"
     },
     "./epic-api.server": {
       "types": "./dist/epic-api.server.d.ts",
-      "import": "./dist/epic-api.server.js"
+      "default": "./dist/epic-api.server.js"
     },
     "./user.server": {
       "types": "./dist/user.server.d.ts",
-      "import": "./dist/user.server.js"
+      "default": "./dist/user.server.js"
     },
     "./cache.server": {
       "types": "./dist/cache.server.d.ts",
-      "import": "./dist/cache.server.js"
+      "default": "./dist/cache.server.js"
     },
     "./config.server": {
       "types": "./dist/config.server.d.ts",
-      "import": "./dist/config.server.js"
+      "default": "./dist/config.server.js"
     },
     "./db.server": {
       "types": "./dist/db.server.d.ts",
-      "import": "./dist/db.server.js"
+      "default": "./dist/db.server.js"
     },
     "./data-storage.server": {
       "types": "./dist/data-storage.server.d.ts",
-      "import": "./dist/data-storage.server.js"
+      "default": "./dist/data-storage.server.js"
     },
     "./launch-editor.server": {
       "types": "./dist/launch-editor.server.d.ts",
-      "import": "./dist/launch-editor.server.js"
+      "default": "./dist/launch-editor.server.js"
     },
     "./timing.server": {
       "types": "./dist/timing.server.d.ts",
-      "import": "./dist/timing.server.js"
+      "default": "./dist/timing.server.js"
     },
     "./modified-time.server": {
       "types": "./dist/modified-time.server.d.ts",
-      "import": "./dist/modified-time.server.js"
+      "default": "./dist/modified-time.server.js"
     },
     "./compile-mdx.server": {
       "types": "./dist/compile-mdx.server.d.ts",
-      "import": "./dist/compile-mdx.server.js"
+      "default": "./dist/compile-mdx.server.js"
     },
     "./git.server": {
       "types": "./dist/git.server.d.ts",
-      "import": "./dist/git.server.js"
+      "default": "./dist/git.server.js"
     },
     "./iframe-sync": {
       "types": "./dist/iframe-sync.d.ts",
-      "import": "./dist/iframe-sync.js"
+      "default": "./dist/iframe-sync.js"
     },
     "./init-env": {
       "types": "./dist/init-env.d.ts",
-      "import": "./dist/init-env.js"
+      "default": "./dist/init-env.js"
     },
     "./logger": {
       "types": "./dist/logger.d.ts",
-      "import": "./dist/logger.js"
+      "default": "./dist/logger.js"
     },
     "./playwright.server": {
       "types": "./dist/playwright.server.d.ts",
-      "import": "./dist/playwright.server.js"
+      "default": "./dist/playwright.server.js"
     },
     "./notifications.server": {
       "types": "./dist/notifications.server.d.ts",
-      "import": "./dist/notifications.server.js"
+      "default": "./dist/notifications.server.js"
     },
     "./offline-videos.server": {
       "types": "./dist/offline-videos.server.d.ts",
-      "import": "./dist/offline-videos.server.js"
+      "default": "./dist/offline-videos.server.js"
     },
     "./process-manager.server": {
       "types": "./dist/process-manager.server.d.ts",
-      "import": "./dist/process-manager.server.js"
+      "default": "./dist/process-manager.server.js"
     },
     "./test": {
       "types": "./dist/test.d.ts",
-      "import": "./dist/test.js"
+      "default": "./dist/test.js"
     },
     "./request-context.server": {
       "types": "./dist/request-context.server.d.ts",
-      "import": "./dist/request-context.server.js"
+      "default": "./dist/request-context.server.js"
     },
     "./utils.server": {
       "types": "./dist/utils.server.d.ts",
-      "import": "./dist/utils.server.js"
+      "default": "./dist/utils.server.js"
     },
     "./utils": {
       "types": "./dist/utils.d.ts",
-      "import": "./dist/utils.js"
+      "default": "./dist/utils.js"
     },
     "./workshops.server": {
       "types": "./dist/workshops.server.d.ts",
-      "import": "./dist/workshops.server.js"
+      "default": "./dist/workshops.server.js"
     }
   },
   "files": [

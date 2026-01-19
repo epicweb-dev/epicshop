@@ -80,9 +80,8 @@ test('workshops start treats Ctrl+C (signal termination) as success', async () =
 		path.join(os.tmpdir(), 'epicshop workshop '),
 	)
 	try {
-		const { getWorkshop } = await import(
-			'@epic-web/workshop-utils/workshops.server'
-		)
+		const { getWorkshop } =
+			await import('@epic-web/workshop-utils/workshops.server')
 		vi.mocked(getWorkshop).mockResolvedValue({
 			title: 'Test Workshop',
 			path: workshopDir,
