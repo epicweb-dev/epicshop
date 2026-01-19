@@ -730,6 +730,8 @@ function MobileNavigation({
 	)
 	const isExtrasActive =
 		location.pathname === '/extra' || location.pathname.startsWith('/extra/')
+	const showExtrasPlaygroundLink = Boolean(playgroundExtra) && !isExtrasActive
+	const showExtrasPlaygroundLink = Boolean(playgroundExtra) && !isExtrasActive
 
 	// items
 	const listVariants = {
@@ -969,7 +971,7 @@ function MobileNavigation({
 											>
 												📚 Extras
 											</NavLink>
-											{playgroundExtra ? (
+											{showExtrasPlaygroundLink ? (
 												<Link
 													to={`/extra/${playgroundExtra.dirName}`}
 													prefetch="intent"
@@ -1433,7 +1435,7 @@ function Navigation({
 											>
 												📚 Extras
 											</NavLink>
-											{playgroundExtra ? (
+											{showExtrasPlaygroundLink ? (
 												<Link
 													to={`/extra/${playgroundExtra.dirName}`}
 													prefetch="intent"

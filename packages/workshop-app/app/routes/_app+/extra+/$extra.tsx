@@ -15,6 +15,7 @@ import {
 	makeTimings,
 	time,
 } from '@epic-web/workshop-utils/timing.server'
+import * as Tabs from '@radix-ui/react-tabs'
 import slugify from '@sindresorhus/slugify'
 import * as cookie from 'cookie'
 import { useMemo, useRef, useState } from 'react'
@@ -25,6 +26,7 @@ import {
 	type LoaderFunctionArgs,
 	type MetaFunction,
 	useLoaderData,
+	useSearchParams,
 } from 'react-router'
 import { EpicVideoInfoProvider } from '#app/components/epic-video.tsx'
 import { GeneralErrorBoundary } from '#app/components/error-boundary.tsx'
@@ -130,10 +132,18 @@ export async function loader({ request, params }: LoaderFunctionArgs) {
 				relativePath: path.join(extra.relativePath, 'README.mdx'),
 			},
 			playground: playgroundApp
-				? {
+				? ({
+						type: 'playground',
 						appName: playgroundApp.appName,
+						name: playgroundApp.name,
+						title: playgroundApp.title,
+						fullPath: playgroundApp.fullPath,
+						dev: playgroundApp.dev,
+						test: playgroundApp.test,
+						stackBlitzUrl: playgroundApp.stackBlitzUrl,
 						isUpToDate: playgroundApp.isUpToDate,
-					}
+						...(await getAppRunningState(playgroundApp)),
+					} as const)
 				: null,
 			previousExtra: previousExtra
 				? { dirName: previousExtra.dirName, title: previousExtra.title }
@@ -167,9 +177,42 @@ export default function ExtraRoute() {
 	const containerRef = useRef<HTMLDivElement>(null)
 	const leftPaneRef = useRef<HTMLDivElement>(null)
 	const [splitPercent, setSplitPercent] = useState<number>(data.splitPercent)
+	const [searchParams] = useSearchParams()
 	const showPlaygroundIndicator = data.playground?.appName !== data.extra.name
 	const shouldShowSetPlayground =
 		showPlaygroundIndicator || data.playground?.isUpToDate === false
+	const tabs = ['extra', 'playground'] as const
+	const preview = searchParams.get('preview')
+
+	function isValidPreview(value: string | null): value is (typeof tabs)[number] {
+		return Boolean(value && tabs.includes(value as (typeof tabs)[number]))
+	}
+
+	function shouldHideTab(tab: (typeof tabs)[number]) {
+		if (tab === 'playground') {
+			return ENV.EPICSHOP_DEPLOYED || !data.playground
+		}
+		return false
+	}
+
+	function withParam(
+		params: URLSearchParams,
+		key: string,
+		value: string | null,
+	) {
+		const next = new URLSearchParams(params)
+		if (value === null) {
+			next.delete(key)
+		} else {
+			next.set(key, value)
+		}
+		return next
+	}
+
+	const activeTab =
+		isValidPreview(preview) && !shouldHideTab(preview)
+			? preview
+			: tabs.find((tab) => !shouldHideTab(tab)) ?? 'extra'
 
 	// Create MDX components with extra-specific InlineFile
 	const mdxComponents = useMemo(() => {
@@ -383,12 +426,60 @@ export default function ExtraRoute() {
 						if (firstTouch) startDrag(firstTouch.clientX)
 					}}
 				/>
-				<div className="flex min-w-0 flex-1">
-					<Preview
-						appInfo={data.extra}
-						inBrowserBrowserRef={inBrowserBrowserRef}
-					/>
-				</div>
+				<Tabs.Root
+					className="relative flex min-h-0 min-w-0 flex-1 flex-col overflow-hidden"
+					value={activeTab}
+				>
+					<Tabs.List className="scrollbar-thin scrollbar-thumb-scrollbar h-14 min-h-14 overflow-x-auto border-b whitespace-nowrap">
+						{tabs.map((tab) => {
+							const hidden = shouldHideTab(tab)
+							return (
+								<Tabs.Trigger key={tab} value={tab} hidden={hidden} asChild>
+									<Link
+										id={`${tab}-tab`}
+										className={cn(
+											'clip-path-button radix-state-active:z-10 radix-state-active:bg-foreground radix-state-active:text-background radix-state-active:hover:bg-foreground/80 radix-state-active:hover:text-background/80 radix-state-inactive:hover:bg-foreground/20 radix-state-inactive:hover:text-foreground/80 focus:bg-foreground/80 focus:text-background/80 relative h-full px-6 py-4 font-mono text-sm uppercase outline-none',
+											hidden ? 'hidden' : 'inline-block',
+										)}
+										preventScrollReset
+										prefetch="intent"
+										to={`?${withParam(
+											searchParams,
+											'preview',
+											tab === 'extra' ? null : tab,
+										)}`}
+									>
+										<span className="flex items-center gap-2">
+											<span>{tab}</span>
+										</span>
+									</Link>
+								</Tabs.Trigger>
+							)
+						})}
+					</Tabs.List>
+					<div className="relative z-10 flex min-h-0 flex-1 flex-col overflow-hidden">
+						<Tabs.Content
+							value="extra"
+							className="radix-state-inactive:hidden flex min-h-0 w-full grow basis-0 items-stretch justify-center self-start"
+							forceMount
+						>
+							<Preview
+								appInfo={data.extra}
+								inBrowserBrowserRef={inBrowserBrowserRef}
+							/>
+						</Tabs.Content>
+						<Tabs.Content
+							value="playground"
+							className="radix-state-inactive:hidden flex min-h-0 w-full grow basis-0 items-stretch justify-center self-start"
+							forceMount
+						>
+							<Preview
+								appInfo={data.playground}
+								inBrowserBrowserRef={inBrowserBrowserRef}
+							/>
+						</Tabs.Content>
+					</div>
+				</Tabs.Root>
 			</main>
 		</div>
 	)
