@@ -184,7 +184,9 @@ export default function ExtraRoute() {
 	const tabs = ['extra', 'playground'] as const
 	const preview = searchParams.get('preview')
 
-	function isValidPreview(value: string | null): value is (typeof tabs)[number] {
+	function isValidPreview(
+		value: string | null,
+	): value is (typeof tabs)[number] {
 		return Boolean(value && tabs.includes(value as (typeof tabs)[number]))
 	}
 
@@ -212,7 +214,7 @@ export default function ExtraRoute() {
 	const activeTab =
 		isValidPreview(preview) && !shouldHideTab(preview)
 			? preview
-			: tabs.find((tab) => !shouldHideTab(tab)) ?? 'extra'
+			: (tabs.find((tab) => !shouldHideTab(tab)) ?? 'extra')
 
 	// Create MDX components with extra-specific InlineFile
 	const mdxComponents = useMemo(() => {
