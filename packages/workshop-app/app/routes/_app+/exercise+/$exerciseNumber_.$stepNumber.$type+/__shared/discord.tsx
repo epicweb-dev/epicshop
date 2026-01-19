@@ -150,7 +150,7 @@ function DiscordPost({
 									:{' '}
 								</span>
 							</div>
-							<span className="text-muted-foreground min-w-0 line-clamp-4">
+							<span className="text-muted-foreground line-clamp-4 min-w-0">
 								{thread.messagePreview}
 							</span>
 						</div>
