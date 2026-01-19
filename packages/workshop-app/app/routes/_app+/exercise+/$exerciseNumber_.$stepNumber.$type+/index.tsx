@@ -27,8 +27,8 @@ import {
 	type LoaderFunctionArgs,
 	useOutletContext,
 } from 'react-router'
-import { DiscordChat } from '#app/components/discord-chat.tsx'
 import { Diff } from '#app/components/diff.tsx'
+import { DiscordChat } from '#app/components/discord-chat.tsx'
 import { GeneralErrorBoundary } from '#app/components/error-boundary.tsx'
 import { type InBrowserBrowserRef } from '#app/components/in-browser-browser.tsx'
 import {

@@ -30,8 +30,8 @@ import {
 	useLoaderData,
 	useSearchParams,
 } from 'react-router'
-import { DiscordChat } from '#app/components/discord-chat.tsx'
 import { Diff } from '#app/components/diff.tsx'
+import { DiscordChat } from '#app/components/discord-chat.tsx'
 import { EpicVideoInfoProvider } from '#app/components/epic-video.tsx'
 import { GeneralErrorBoundary } from '#app/components/error-boundary.tsx'
 import { type InBrowserBrowserRef } from '#app/components/in-browser-browser.tsx'
@@ -41,24 +41,24 @@ import {
 	PreviewTabsList,
 } from '#app/components/preview-tabs.tsx'
 import { useRevalidationWS } from '#app/components/revalidation-ws.tsx'
-import { Preview } from '#app/routes/_app+/exercise+/$exerciseNumber_.$stepNumber.$type+/__shared/preview.tsx'
+import { useWorkshopConfig } from '#app/components/workshop-config.tsx'
 import { Playground } from '#app/routes/_app+/exercise+/$exerciseNumber_.$stepNumber.$type+/__shared/playground.tsx'
+import { Preview } from '#app/routes/_app+/exercise+/$exerciseNumber_.$stepNumber.$type+/__shared/preview.tsx'
 import { getAppRunningState } from '#app/routes/_app+/exercise+/$exerciseNumber_.$stepNumber.$type+/__shared/utils.tsx'
 import { EditFileOnGitHub } from '#app/routes/launch-editor.tsx'
 import { SetAppToPlayground } from '#app/routes/set-playground.tsx'
-import { createInlineFileComponent, Mdx } from '#app/utils/mdx.tsx'
 import { fetchDiscordPosts } from '#app/utils/discord.server.ts'
-import {
-	getSplitPercentFromRequest,
-	setSplitPercentCookie,
-	startSplitDrag,
-} from '#app/utils/split-layout.ts'
-import { useWorkshopConfig } from '#app/components/workshop-config.tsx'
+import { createInlineFileComponent, Mdx } from '#app/utils/mdx.tsx'
 import {
 	getRootMatchLoaderData,
 	useRootLoaderData,
 } from '#app/utils/root-loader.ts'
 import { getSeoMetaTags } from '#app/utils/seo.ts'
+import {
+	getSplitPercentFromRequest,
+	setSplitPercentCookie,
+	startSplitDrag,
+} from '#app/utils/split-layout.ts'
 
 function sortExtras(extras: ExtraApp[]) {
 	return extras.sort((a, b) =>
