@@ -6,7 +6,6 @@ import {
 	makeTimings,
 } from '@epic-web/workshop-utils/timing.server'
 import { Resvg } from '@resvg/resvg-js'
-import { renderToStaticMarkup } from 'react-dom/server.node'
 import { type LoaderFunctionArgs } from 'react-router'
 import satori, { type SatoriOptions } from 'satori'
 import { getDomainUrl, getErrorMessage } from '#app/utils/misc.tsx'
@@ -82,8 +81,9 @@ export async function loader({ request }: LoaderFunctionArgs) {
 
 	const renderHtml = url.searchParams.get('html')
 	if (renderHtml === 'true') {
-		return new Response(renderToStaticMarkup(element), {
-			headers: { 'Content-Type': 'text/html' },
+		return new Response('HTML render is disabled in RSC mode', {
+			status: 400,
+			headers: { 'Content-Type': 'text/plain' },
 		})
 	}
 
