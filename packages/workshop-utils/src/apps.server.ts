@@ -25,6 +25,7 @@ import {
 import { compileMdx } from './compile-mdx.server.ts'
 import { getAppConfig, getStackBlitzUrl } from './config.server.ts'
 import { getPreferences } from './db.server.ts'
+import { logger } from './logger.ts'
 import { getDirModifiedTime } from './modified-time.server.ts'
 import {
 	closeProcess,
@@ -36,7 +37,6 @@ import { requestStorageify } from './request-context.server.ts'
 import { getServerTimeHeader, time, type Timings } from './timing.server.ts'
 import { dayjs } from './utils.server.ts'
 import { getErrorMessage } from './utils.ts'
-import { logger } from './logger.ts'
 
 const log = logger('epic:apps')
 
