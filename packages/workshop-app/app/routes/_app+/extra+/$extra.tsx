@@ -50,7 +50,10 @@ import { SetAppToPlayground } from '#app/routes/set-playground.tsx'
 import { createInlineFileComponent, Mdx } from '#app/utils/mdx.tsx'
 import { fetchDiscordPosts } from '#app/utils/discord.server.ts'
 import { useWorkshopConfig } from '#app/components/workshop-config.tsx'
-import { getRootMatchLoaderData, useRootLoaderData } from '#app/utils/root-loader.ts'
+import {
+	getRootMatchLoaderData,
+	useRootLoaderData,
+} from '#app/utils/root-loader.ts'
 import { getSeoMetaTags } from '#app/utils/seo.ts'
 
 // shared split state helpers
@@ -113,7 +116,9 @@ export async function loader({ request, params }: LoaderFunctionArgs) {
 	const reqUrl = new URL(request.url)
 	const app1Name = reqUrl.searchParams.get('app1')
 	const app2Name = reqUrl.searchParams.get('app2')
-	const app1 = app1Name ? await getAppByName(app1Name) : playgroundApp ?? extra
+	const app1 = app1Name
+		? await getAppByName(app1Name)
+		: (playgroundApp ?? extra)
 	const app2 = app2Name ? await getAppByName(app2Name) : extra
 
 	const cookieHeader = request.headers.get('cookie')
@@ -143,7 +148,10 @@ export async function loader({ request, params }: LoaderFunctionArgs) {
 	}
 
 	const allApps = apps
-		.filter((app, index, list) => list.findIndex((item) => item.name === app.name) === index)
+		.filter(
+			(app, index, list) =>
+				list.findIndex((item) => item.name === app.name) === index,
+		)
 		.map((app) => ({
 			name: app.name,
 			displayName: getAppDisplayName(app, apps),
@@ -528,9 +536,7 @@ export default function ExtraRoute() {
 							value="chat"
 							className="radix-state-inactive:hidden flex h-full min-h-0 w-full grow basis-0 items-stretch justify-center self-start"
 						>
-							<DiscordChat
-								discordPostsPromise={data.discordPostsPromise}
-							/>
+							<DiscordChat discordPostsPromise={data.discordPostsPromise} />
 						</Tabs.Content>
 					</div>
 				</Tabs.Root>

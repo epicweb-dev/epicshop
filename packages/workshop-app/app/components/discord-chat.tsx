@@ -128,7 +128,9 @@ function DiscordPosts({
 }
 
 function DiscordPost({ thread }: { thread: DiscordThread }) {
-	const reactionsWithCounts = thread.reactions.filter((reaction) => reaction.count)
+	const reactionsWithCounts = thread.reactions.filter(
+		(reaction) => reaction.count,
+	)
 
 	return (
 		<div>

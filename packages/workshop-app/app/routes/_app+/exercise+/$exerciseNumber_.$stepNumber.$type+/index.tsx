@@ -380,9 +380,7 @@ export default function ExercisePartRoute({
 					value="chat"
 					className="radix-state-inactive:hidden flex h-full min-h-0 w-full grow basis-0 items-stretch justify-center self-start"
 				>
-					<DiscordChat
-						discordPostsPromise={loaderData.discordPostsPromise}
-					/>
+					<DiscordChat discordPostsPromise={loaderData.discordPostsPromise} />
 				</Tabs.Content>
 			</div>
 		</Tabs.Root>
