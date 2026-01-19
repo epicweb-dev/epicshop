@@ -23,7 +23,7 @@ import {
 	ResourceTemplate,
 } from '@modelcontextprotocol/sdk/server/mcp.js'
 import { type ReadResourceResult } from '@modelcontextprotocol/sdk/types.js'
-import { z } from 'zod/v4'
+import { z } from 'zod/v3'
 import { resourceDocs } from './server-metadata.ts'
 import {
 	handleWorkshopDirectory,

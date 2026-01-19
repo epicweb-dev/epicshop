@@ -37,7 +37,7 @@ import {
 	type ReadResourceResult,
 } from '@modelcontextprotocol/sdk/types.js'
 import * as client from 'openid-client'
-import { z } from 'zod/v4'
+import { z } from 'zod/v3'
 import { quizMe, quizMeInputSchema } from './prompts.ts'
 import {
 	diffBetweenAppsResource,

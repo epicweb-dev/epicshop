@@ -51,9 +51,7 @@ export function InBrowserTestRunner({
 			if (messageEvent.source !== iframeRef.current?.contentWindow) return
 			if ('request' in messageEvent.data) return
 
-			const result = testRunnerDataSchema.safeParse(messageEvent.data, {
-				path: ['messageEvent', 'data'],
-			})
+			const result = testRunnerDataSchema.safeParse(messageEvent.data)
 			if (!result.success) {
 				console.error(
 					`Invalid message from test iframe`,
