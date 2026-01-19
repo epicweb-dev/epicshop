@@ -36,6 +36,9 @@ import { requestStorageify } from './request-context.server.ts'
 import { getServerTimeHeader, time, type Timings } from './timing.server.ts'
 import { dayjs } from './utils.server.ts'
 import { getErrorMessage } from './utils.ts'
+import { logger } from './logger.ts'
+
+const log = logger('epic:apps')
 
 declare global {
 	var __epicshop_apps_initialized__: boolean | undefined
@@ -814,13 +817,23 @@ async function getTestInfo({
 	// tests are found in the corresponding solution directory
 	const testAppFullPath = (await findSolutionDir({ fullPath })) ?? fullPath
 
-	const dirList = await fs.promises.readdir(testAppFullPath)
-	const testFiles = dirList.filter((item) => item.includes('.test.'))
-	if (testFiles.length) {
-		return {
-			type: 'browser',
-			pathname: `${getPathname(fullPath)}test/`,
-			testFiles,
+	try {
+		const dirList = await fs.promises.readdir(testAppFullPath)
+		const testFiles = dirList.filter((item) => item.includes('.test.'))
+		if (testFiles.length) {
+			return {
+				type: 'browser',
+				pathname: `${getPathname(fullPath)}test/`,
+				testFiles,
+			}
+		}
+	} catch (error) {
+		// Handle ENOTDIR error (path is a file, not a directory)
+		if (error instanceof Error && 'code' in error && error.code === 'ENOTDIR') {
+			log(`Skipping non-directory path in getTestInfo: ${testAppFullPath}`)
+		} else {
+			// Re-throw other errors
+			throw error
 		}
 	}
 
@@ -973,9 +986,17 @@ async function getExampleApps({
 	request,
 }: CachifiedOptions = {}): Promise<Array<ExampleApp>> {
 	const examplesDir = path.join(getWorkshopRoot(), 'examples')
-	const exampleDirs = (await readDir(examplesDir)).map((p) =>
-		path.join(examplesDir, p),
-	)
+	// Filter to only include directories, not files like README.mdx
+	const entries = await fs.promises
+		.readdir(examplesDir, { withFileTypes: true })
+		.catch(() => [])
+	const exampleDirs = entries
+		.filter((entry) => {
+			if (entry.isDirectory()) return true
+			log(`Skipping non-directory in examples: ${entry.name}`)
+			return false
+		})
+		.map((entry) => path.join(examplesDir, entry.name))
 
 	const exampleApps: Array<ExampleApp> = []
 
