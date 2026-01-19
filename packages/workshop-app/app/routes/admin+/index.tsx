@@ -12,7 +12,7 @@ import { SimpleTooltip } from '#app/components/ui/tooltip.tsx'
 import {
 	useEpicProgress,
 	type SerializedProgress,
-} from '#app/routes/progress.tsx'
+} from '#app/routes/progress.client.tsx'
 import { cn, ensureUndeployed } from '#app/utils/misc.tsx'
 import { useDoubleCheck } from '#app/utils/misc.client.tsx'
 import { getRootMatchLoaderData } from '#app/utils/root-loader-utils.ts'

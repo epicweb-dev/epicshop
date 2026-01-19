@@ -3,7 +3,7 @@ import { readDb } from '@epic-web/workshop-utils/db.server'
 import { Icon } from '#app/components/icons.tsx'
 import { SimpleTooltip } from '#app/components/ui/tooltip.tsx'
 import { ensureUndeployed } from '#app/utils/misc.tsx'
-import { LaunchEditor } from '../launch-editor.tsx'
+import { LaunchEditor } from '../launch-editor.client.tsx'
 import { type Route } from './+types/db.ts'
 
 export async function loader() {

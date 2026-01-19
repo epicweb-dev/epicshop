@@ -1,5 +1,5 @@
 import { useEffect, useId, useRef } from 'react'
-import { useTheme } from '#app/routes/theme/index.tsx'
+import { useTheme } from '#app/routes/theme/index.client.tsx'
 
 type MermaidTheme = 'dark' | 'default'
 

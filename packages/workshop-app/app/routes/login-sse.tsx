@@ -1,27 +1,12 @@
 import { type LoaderFunctionArgs } from 'react-router'
 import { eventStream } from 'remix-utils/sse/server'
-import { z } from 'zod'
 import { EVENTS } from '#app/utils/auth-events.ts'
 import { authEmitter } from '#app/utils/auth.server.ts'
 import { ensureUndeployed } from '#app/utils/misc.tsx'
-
-const CodeReceivedEventSchema = z.object({
-	type: z.literal(EVENTS.USER_CODE_RECEIVED),
-	code: z.string(),
-	url: z.string(),
-})
-const AuthResolvedEventSchema = z.object({
-	type: z.literal(EVENTS.AUTH_RESOLVED),
-})
-const AuthRejectedEventSchema = z.object({
-	type: z.literal(EVENTS.AUTH_REJECTED),
-	error: z.string().optional().default('Unknown error'),
-})
-export const EventSchema = z.union([
-	CodeReceivedEventSchema,
-	AuthResolvedEventSchema,
+import {
 	AuthRejectedEventSchema,
-])
+	CodeReceivedEventSchema,
+} from './login-event-schema.ts'
 
 export async function loader({ request }: LoaderFunctionArgs) {
 	ensureUndeployed()

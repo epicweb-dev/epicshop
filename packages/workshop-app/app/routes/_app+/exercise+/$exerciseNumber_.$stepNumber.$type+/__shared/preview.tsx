@@ -7,7 +7,7 @@ import {
 	type InBrowserBrowserRef,
 } from '#app/components/in-browser-browser.tsx'
 import { Loading } from '#app/components/loading.tsx'
-import { useTheme } from '#app/routes/theme/index.tsx'
+import { useTheme } from '#app/routes/theme/index.client.tsx'
 import { cn, getBaseUrl } from '#app/utils/misc.tsx'
 import { useRequestInfo } from '#app/utils/root-loader.ts'
 

@@ -7,8 +7,8 @@ import {
 	useOnboardingIndicator,
 } from '#app/components/onboarding-indicator.tsx'
 import { SimpleTooltip } from '#app/components/ui/tooltip.tsx'
-import { LaunchEditor } from '#app/routes/launch-editor.tsx'
-import { SetAppToPlayground } from '#app/routes/set-playground.tsx'
+import { LaunchEditor } from '#app/routes/launch-editor.client.tsx'
+import { SetAppToPlayground } from '#app/routes/set-playground.client.tsx'
 import { type Route as LayoutRoute } from '../+types/_layout.tsx'
 
 function TouchedFiles({

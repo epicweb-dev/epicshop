@@ -18,7 +18,7 @@ import {
 	iconButtonClassName,
 } from '#app/components/button.tsx'
 import { Icon } from '#app/components/icons.tsx'
-import { LaunchEditor } from '#app/routes/launch-editor.tsx'
+import { LaunchEditor } from '#app/routes/launch-editor.client.tsx'
 import {
 	calculateExpirationTime,
 	cn,

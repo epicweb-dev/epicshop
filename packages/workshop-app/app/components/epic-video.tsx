@@ -18,11 +18,11 @@ import * as React from 'react'
 import { Await, Link, useFetcher } from 'react-router'
 import { useEventSource } from 'remix-utils/sse/react'
 import { toast } from 'sonner'
-import { useTheme } from '#app/routes/theme/index.tsx'
+import { useTheme } from '#app/routes/theme/index.client.tsx'
 import {
 	MuxPlayer,
 	usePlayerPreferences,
-} from '#app/routes/video-player/index.tsx'
+} from '#app/routes/video-player/index.client.tsx'
 import { cn } from '#app/utils/misc.tsx'
 import { useIsOnline } from '#app/utils/online.ts'
 import { useRootLoaderData } from '#app/utils/root-loader.ts'

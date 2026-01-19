@@ -6,7 +6,7 @@ import { DeferredEpicVideo } from '#app/components/epic-video.tsx'
 import { Icon } from '#app/components/icons'
 import { InBrowserTestRunner } from '#app/components/in-browser-test-runner'
 import { SimpleTooltip } from '#app/components/ui/tooltip.tsx'
-import { TestOutput } from '#app/routes/test'
+import { TestOutput } from '#app/routes/test.client.tsx'
 import { PlaygroundWindow } from './playground-window'
 
 export function Tests({

@@ -25,9 +25,9 @@ import { cn } from '#app/utils/misc.tsx'
 import { useIsOnline } from '#app/utils/online.ts'
 import { getRootMatchLoaderData } from '#app/utils/root-loader-utils.ts'
 import { getSeoMetaTags } from '#app/utils/seo.ts'
-import { EditFileOnGitHub } from '../launch-editor.tsx'
-import { ProgressToggle } from '../progress.tsx'
-import { useTheme } from '../theme/index.tsx'
+import { EditFileOnGitHub } from '../launch-editor.client.tsx'
+import { ProgressToggle } from '../progress.client.tsx'
+import { useTheme } from '../theme/index.client.tsx'
 import { type Route } from './+types/finished.tsx'
 
 export const handle: SEOHandle = {

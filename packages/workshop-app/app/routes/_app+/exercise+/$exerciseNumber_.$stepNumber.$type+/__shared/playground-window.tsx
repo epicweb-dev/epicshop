@@ -1,6 +1,9 @@
 import { Icon } from '#app/components/icons'
 import { SimpleTooltip } from '#app/components/ui/tooltip.tsx'
-import { PlaygroundChooser, SetPlayground } from '#app/routes/set-playground'
+import {
+	PlaygroundChooser,
+	SetPlayground,
+} from '#app/routes/set-playground.client.tsx'
 
 export function PlaygroundWindow({
 	playgroundAppName,

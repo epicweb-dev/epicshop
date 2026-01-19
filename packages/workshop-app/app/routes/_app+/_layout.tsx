@@ -62,8 +62,8 @@ import {
 	useNextExerciseRoute,
 	useProgressItemClassName,
 	type ProgressItemSearch,
-} from '../progress.tsx'
-import { ThemeSwitch } from '../theme/index.tsx'
+} from '../progress.client.tsx'
+import { ThemeSwitch } from '../theme/index.client.tsx'
 
 export async function loader({ request }: LoaderFunctionArgs) {
 	const timings = makeTimings('appLayoutLoader')

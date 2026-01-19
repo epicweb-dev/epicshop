@@ -1,6 +1,6 @@
 import AnsiToHTML from 'ansi-to-html'
 import { useMemo } from 'react'
-import { useTheme } from '#app/routes/theme/index.tsx'
+import { useTheme } from '#app/routes/theme/index.client.tsx'
 
 export function useAnsiToHtml() {
 	const theme = useTheme()

@@ -15,10 +15,13 @@ import slugify from '@sindresorhus/slugify'
 import { data, type HeadersFunction, Link } from 'react-router'
 import { EpicVideoInfoProvider } from '#app/components/epic-video.tsx'
 import { GeneralErrorBoundary } from '#app/components/error-boundary.tsx'
-import { EditFileOnGitHub } from '#app/routes/launch-editor.tsx'
+import { EditFileOnGitHub } from '#app/routes/launch-editor.client.tsx'
 import { Mdx } from '#app/utils/mdx.tsx'
 import { cn } from '#app/utils/misc.tsx'
-import { ProgressToggle, useExerciseProgressClassName } from '../progress.tsx'
+import {
+	ProgressToggle,
+	useExerciseProgressClassName,
+} from '../progress.client.tsx'
 import { type Route } from './+types/index.tsx'
 
 export async function loader({ request }: Route.LoaderArgs) {
