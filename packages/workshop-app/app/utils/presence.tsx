@@ -1,3 +1,5 @@
+'use client'
+
 import {
 	MessageSchema,
 	partykitBaseUrl,
@@ -15,6 +17,7 @@ import {
 	useState,
 } from 'react'
 import { useParams } from 'react-router'
+import { useHydrated } from 'remix-utils/use-hydrated'
 import { z } from 'zod'
 import { useIsOnline } from './online.ts'
 import { useRequestInfo, useRootLoaderData } from './root-loader.ts'
@@ -430,7 +433,15 @@ function PresenceOffline({
 	)
 }
 
-export function Presence({
+function PresenceServer({ children }: { children: React.ReactNode }) {
+	return (
+		<PresenceContext.Provider value={{ users: [] }}>
+			{children}
+		</PresenceContext.Provider>
+	)
+}
+
+function PresenceClient({
 	user,
 	children,
 }: {
@@ -440,9 +451,22 @@ export function Presence({
 	const isOnline = useIsOnline()
 	if (isOnline) {
 		return <PresenceOnline user={user}>{children}</PresenceOnline>
-	} else {
-		return <PresenceOffline user={user}>{children}</PresenceOffline>
 	}
+	return <PresenceOffline user={user}>{children}</PresenceOffline>
+}
+
+export function Presence({
+	user,
+	children,
+}: {
+	user?: User | null
+	children: React.ReactNode
+}) {
+	const isHydrated = useHydrated()
+	if (!isHydrated) {
+		return <PresenceServer>{children}</PresenceServer>
+	}
+	return <PresenceClient user={user}>{children}</PresenceClient>
 }
 
 export function usePresence() {
