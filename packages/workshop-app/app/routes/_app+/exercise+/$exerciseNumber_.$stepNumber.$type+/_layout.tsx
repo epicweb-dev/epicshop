@@ -537,7 +537,7 @@ export default function ExercisePartRoute({
 						if (firstTouch) startDrag(firstTouch.clientX)
 					}}
 				/>
-				<div className="flex min-w-0 flex-none min-h-[50vh] lg:min-h-0 lg:flex-1">
+				<div className="flex min-h-[50vh] min-w-0 flex-none lg:min-h-0 lg:flex-1">
 					<Outlet context={{ inBrowserBrowserRef }} />
 				</div>
 			</main>
