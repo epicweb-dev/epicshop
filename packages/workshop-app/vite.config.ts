@@ -43,6 +43,22 @@ const aliases = {
 
 const MODE = process.env.NODE_ENV
 
+const fixAsyncHooksCommonjsExternal = {
+	name: 'epicshop/fix-async-hooks-commonjs-external',
+	apply: 'build',
+	enforce: 'post',
+	renderChunk(code: string) {
+		if (!code.includes('\0node:async_hooks?commonjs-external')) return null
+		return {
+			code: code.replace(
+				/\0node:async_hooks\?commonjs-external/g,
+				'node:async_hooks',
+			),
+			map: null,
+		}
+	},
+}
+
 const rscEntryOverrides = {
 	name: 'epicshop/rsc-entry-overrides',
 	config() {
@@ -130,6 +146,7 @@ export default defineConfig((config) => ({
 		reactRouterRSC(),
 		rsc(),
 		rscEntryOverrides,
+		fixAsyncHooksCommonjsExternal,
 		MODE === 'production' && process.env.SENTRY_AUTH_TOKEN
 			? sentryReactRouter(sentryConfig, config)
 			: null,
