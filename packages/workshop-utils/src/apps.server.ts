@@ -558,7 +558,7 @@ async function _getApps({
 	await init()
 	const apps = await time(
 		async () => {
-		const [playgroundApp, problemApps, solutionApps, extraApps] =
+			const [playgroundApp, problemApps, solutionApps, extraApps] =
 				await Promise.all([
 					time(() => getPlaygroundApp({ request, timings }), {
 						type: 'getPlaygroundApp',
@@ -1073,17 +1073,12 @@ async function getExtraApps({
 			timings,
 			timingKey: extraDir.replace(`${extraDirInfo.fullPath}${path.sep}`, ''),
 			request,
-			forceFresh: await getForceFreshForDir(
-				extraAppCache.get(key),
-				extraDir,
-			),
+			forceFresh: await getForceFreshForDir(extraAppCache.get(key), extraDir),
 			getFreshValue: async () => {
-				return getExtraAppFromPath(extraDir, index, request).catch(
-					(error) => {
-						console.error(error)
-						return null
-					},
-				)
+				return getExtraAppFromPath(extraDir, index, request).catch((error) => {
+					console.error(error)
+					return null
+				})
 			},
 		})
 		if (extraApp) extraApps.push(extraApp)

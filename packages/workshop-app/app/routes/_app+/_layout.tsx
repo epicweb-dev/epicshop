@@ -390,7 +390,9 @@ function getUniqueProductHostEmojis(locations: Location[]): string | null {
 function hasExtras(apps: Array<{ relativePath: string }>) {
 	return apps.some((app) => {
 		const rootDir = app.relativePath.split(/[\\/]/)[0]
-		return rootDir === 'extra' || rootDir === 'example' || rootDir === 'examples'
+		return (
+			rootDir === 'extra' || rootDir === 'example' || rootDir === 'examples'
+		)
 	})
 }
 
@@ -404,7 +406,12 @@ export default function App() {
 
 	const [isMenuOpened, setMenuOpenedState] = React.useState(data.isMenuOpened)
 	useRevalidationWS({
-		watchPaths: ['./exercises/README.mdx', './extra', './example', './examples'],
+		watchPaths: [
+			'./exercises/README.mdx',
+			'./extra',
+			'./example',
+			'./examples',
+		],
 	})
 
 	function setMenuOpened(value: boolean) {
