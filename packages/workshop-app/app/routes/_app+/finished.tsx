@@ -25,6 +25,7 @@ import { cn } from '#app/utils/misc.tsx'
 import { useIsOnline } from '#app/utils/online.ts'
 import { getRootMatchLoaderData } from '#app/utils/root-loader.ts'
 import { getSeoMetaTags } from '#app/utils/seo.ts'
+import { RetrievalPractice } from '#app/components/retrieval-practice.tsx'
 import { EditFileOnGitHub } from '../launch-editor.tsx'
 import { ProgressToggle } from '../progress.tsx'
 import { useTheme } from '../theme/index.tsx'
@@ -144,6 +145,7 @@ export default function ExerciseFinished({
 							// TODO: render a random dad joke...
 							'No finished instructions yet...'
 						)}
+						<RetrievalPractice />
 					</article>
 					<ElementScrollRestoration elementQuery={`#${data.articleId}`} />
 					<ProgressToggle
