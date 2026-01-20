@@ -111,12 +111,12 @@ epicshop init
 
 ### `setup`
 
-Install workshop dependencies in the current directory. **Must be run from within
-a workshop directory** (a directory containing a `package.json` file).
+Install workshop dependencies in the current directory. **Must be run from
+within a workshop directory** (a directory containing a `package.json` file).
 
 This command automatically detects and uses your package manager (npm, pnpm,
-yarn, or bun) based on how you invoked epicshop. For example, if you run `pnpm
-dlx epicshop setup`, it will use pnpm for the install.
+yarn, or bun) based on how you invoked epicshop. For example, if you run
+`pnpm dlx epicshop setup`, it will use pnpm for the install.
 
 **Note**: You typically don't need to run this command manually. The `add`
 command automatically runs `setup` after cloning a workshop repository.

@@ -34,7 +34,6 @@ function formatHelp(helpText: string): string {
 		.replace(/-\w(?=\s|,)/g, (match) => chalk.yellow(match))
 }
 
-
 // Set up yargs CLI
 const cli = yargs(args)
 	.scriptName('epicshop')

@@ -110,7 +110,6 @@ export async function setReposDirectory(directory: string): Promise<void> {
 	await saveConfig(config)
 }
 
-
 export type ReposDirectoryStatus =
 	| { accessible: true }
 	| { accessible: false; error: string; path: string }

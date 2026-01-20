@@ -2,10 +2,7 @@ import fs from 'node:fs'
 import path from 'node:path'
 import { getErrorMessage } from '@epic-web/workshop-utils/utils'
 import chalk from 'chalk'
-import {
-	runCommand,
-	type CommandResult,
-} from '../utils/command-runner.js'
+import { runCommand, type CommandResult } from '../utils/command-runner.js'
 
 export type SetupOptions = {
 	cwd?: string
@@ -85,9 +82,7 @@ export async function setup(options: SetupOptions = {}): Promise<SetupResult> {
 
 	if (!silent) {
 		console.log(
-			chalk.cyan(
-				`📦 Installing dependencies using ${chalk.bold('pkgmgr')}...`,
-			),
+			chalk.cyan(`📦 Installing dependencies using ${chalk.bold('pkgmgr')}...`),
 		)
 		console.log(
 			chalk.gray(
