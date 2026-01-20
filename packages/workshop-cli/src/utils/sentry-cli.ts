@@ -1,5 +1,5 @@
-import * as Sentry from '@sentry/node'
 import { getEnv } from '@epic-web/workshop-utils/init-env'
+import * as Sentry from '@sentry/node'
 
 type CliCommandContext = {
 	command?: string
