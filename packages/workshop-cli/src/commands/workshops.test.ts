@@ -12,16 +12,11 @@ vi.mock('./setup.js', () => ({
 }))
 
 vi.mock('@epic-web/workshop-utils/workshops.server', () => ({
-	PACKAGE_MANAGERS: ['npm', 'pnpm', 'yarn', 'bun'],
-	clearPackageManager: vi.fn(async () => {}),
 	getDefaultReposDir: vi.fn(() => '/tmp/epicshop-workshops'),
-	getPackageManager: vi.fn(async () => 'npm'),
 	getReposDirectory: vi.fn(() => '/tmp/epicshop-workshops'),
 	getWorkshop: vi.fn(),
-	isPackageManagerConfigured: vi.fn(async () => false),
 	isReposDirectoryConfigured: vi.fn(async () => true),
 	listWorkshops: vi.fn(async () => []),
-	setPackageManager: vi.fn(async () => {}),
 	setReposDirectory: vi.fn(async () => {}),
 	workshopExists: vi.fn(async () => false),
 	verifyReposDirectory: vi.fn(async () => ({ accessible: true })),

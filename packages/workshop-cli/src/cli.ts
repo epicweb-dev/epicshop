@@ -1,22 +1,11 @@
 #!/usr/bin/env node
 
 import '@epic-web/workshop-utils/init-env'
-import {
-	PACKAGE_MANAGERS,
-	getPackageManager,
-	isPackageManagerConfigured,
-	setPackageManager,
-} from '@epic-web/workshop-utils/workshops.server'
 import chalk from 'chalk'
 import { matchSorter } from 'match-sorter'
 import yargs, { type ArgumentsCamelCase, type Argv } from 'yargs'
 import { hideBin } from 'yargs/helpers'
-import {
-	assertCanPrompt,
-	hasTty,
-	isCiEnvironment,
-} from './utils/cli-runtime.js'
-import { detectRuntimePackageManager } from './utils/package-manager.js'
+import { assertCanPrompt } from './utils/cli-runtime.js'
 import { initCliSentry } from './utils/sentry-cli.js'
 
 // Check for --help on start command before yargs parses
@@ -45,45 +34,6 @@ function formatHelp(helpText: string): string {
 		.replace(/-\w(?=\s|,)/g, (match) => chalk.yellow(match))
 }
 
-async function maybePromptToUpdatePackageManager(
-	parsedArgs: string[],
-): Promise<void> {
-	if (parsedArgs.includes('--help') || parsedArgs.includes('-h')) return
-	if (parsedArgs.includes('--silent') || parsedArgs.includes('-s')) return
-	if (parsedArgs[0] === 'config') return
-	if (isCiEnvironment() || !hasTty()) return
-
-	const runtimeManager = detectRuntimePackageManager()
-	if (!runtimeManager) return
-
-	const isConfigured = await isPackageManagerConfigured()
-	if (!isConfigured) return
-
-	const configuredManager = await getPackageManager()
-	if (configuredManager === runtimeManager) return
-
-	const { confirm } = await import('@inquirer/prompts')
-	const shouldUpdate = await confirm({
-		message: `You ran epicshop with ${runtimeManager}, but your default package manager is ${configuredManager}. Update the default?`,
-		default: true,
-	})
-
-	if (shouldUpdate) {
-		await setPackageManager(runtimeManager)
-		console.log(
-			chalk.green(`✅ Default package manager updated to ${runtimeManager}.`),
-		)
-	}
-}
-
-try {
-	await maybePromptToUpdatePackageManager(args)
-} catch (error) {
-	if ((error as Error).message === 'USER_QUIT') {
-		process.exit(0)
-	}
-	// Silently ignore other errors during package manager prompt to avoid disrupting CLI startup
-}
 
 // Set up yargs CLI
 const cli = yargs(args)
@@ -440,11 +390,6 @@ const cli = yargs(args)
 					type: 'string',
 					description: 'Set the default directory for workshop repos',
 				})
-				.option('package-manager', {
-					type: 'string',
-					choices: PACKAGE_MANAGERS,
-					description: 'Set the default package manager',
-				})
 				.option('silent', {
 					alias: 's',
 					type: 'boolean',
@@ -459,7 +404,6 @@ const cli = yargs(args)
 			argv: ArgumentsCamelCase<{
 				subcommand?: string
 				reposDir?: string
-				packageManager?: string
 				silent?: boolean
 			}>,
 		) => {
@@ -467,12 +411,6 @@ const cli = yargs(args)
 			const result = await config({
 				subcommand: argv.subcommand === 'reset' ? 'reset' : undefined,
 				reposDir: argv.reposDir,
-				packageManager: argv.packageManager as
-					| 'npm'
-					| 'pnpm'
-					| 'yarn'
-					| 'bun'
-					| undefined,
 				silent: argv.silent,
 			})
 			if (!result.success) {

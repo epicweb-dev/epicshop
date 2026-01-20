@@ -24,12 +24,10 @@ const EpicshopConfigSchema = z.object({
 
 export const PACKAGE_MANAGERS = ['npm', 'pnpm', 'yarn', 'bun'] as const
 export type PackageManager = (typeof PACKAGE_MANAGERS)[number]
-const PackageManagerSchema = z.enum(PACKAGE_MANAGERS)
 
 // Schema for workshop configuration (stored settings only)
 const ConfigSchema = z.object({
 	reposDirectory: z.string().optional(),
-	packageManager: PackageManagerSchema.optional(),
 })
 
 export type Workshop = {
@@ -112,29 +110,6 @@ export async function setReposDirectory(directory: string): Promise<void> {
 	await saveConfig(config)
 }
 
-export async function getPackageManager(): Promise<PackageManager> {
-	const config = await loadConfig()
-	return config.packageManager ?? 'npm'
-}
-
-export async function isPackageManagerConfigured(): Promise<boolean> {
-	const config = await loadConfig()
-	return Boolean(config.packageManager)
-}
-
-export async function setPackageManager(
-	packageManager: PackageManager,
-): Promise<void> {
-	const config = await loadConfig()
-	config.packageManager = packageManager
-	await saveConfig(config)
-}
-
-export async function clearPackageManager(): Promise<void> {
-	const config = await loadConfig()
-	delete config.packageManager
-	await saveConfig(config)
-}
 
 export type ReposDirectoryStatus =
 	| { accessible: true }

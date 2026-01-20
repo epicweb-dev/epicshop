@@ -7,23 +7,11 @@ import { cachified, githubCache } from '@epic-web/workshop-utils/cache.server'
 import { parseEpicshopConfig } from '@epic-web/workshop-utils/config.server'
 import { getAuthInfo } from '@epic-web/workshop-utils/db.server'
 import { userHasAccessToWorkshop } from '@epic-web/workshop-utils/epic-api.server'
-import {
-	PACKAGE_MANAGERS,
-	clearPackageManager,
-	getPackageManager,
-	isPackageManagerConfigured,
-	setPackageManager,
-	type PackageManager,
-} from '@epic-web/workshop-utils/workshops.server'
 import chalk from 'chalk'
 import { matchSorter, rankings } from 'match-sorter'
 import ora from 'ora'
 import { assertCanPrompt, isCiEnvironment } from '../utils/cli-runtime.js'
 import { runCommand, runCommandInteractive } from '../utils/command-runner.js'
-import {
-	formatPackageManagerCommand,
-	getPackageManagerRunArgs,
-} from '../utils/package-manager.js'
 import { setup } from './setup.js'
 
 const GITHUB_ORG = 'epicweb-dev'
@@ -353,7 +341,6 @@ export type StartOptions = {
 
 export type ConfigOptions = {
 	reposDir?: string
-	packageManager?: PackageManager
 	silent?: boolean
 	subcommand?: 'reset' | 'delete'
 }
@@ -1059,11 +1046,7 @@ export async function list({
 			},
 		})
 
-		const packageManager = await getPackageManager()
-		const startCommand = formatPackageManagerCommand(
-			packageManager,
-			getPackageManagerRunArgs(packageManager, 'start'),
-		)
+		const startCommand = 'npm run start'
 
 		// Show actions for selected workshop
 		const actionChoices = [
@@ -1391,11 +1374,8 @@ export async function startWorkshop(
 			console.log(chalk.gray(`   Path: ${workshopToStart.path}\n`))
 		}
 
-		const packageManager = await getPackageManager()
-		const startArgs = getPackageManagerRunArgs(packageManager, 'start')
-
 		// Run start script in the workshop directory
-		const startResult = await runCommandInteractive(packageManager, startArgs, {
+		const startResult = await runCommandInteractive('npm', ['run', 'start'], {
 			cwd: workshopToStart.path,
 		})
 
@@ -1641,13 +1621,6 @@ export async function config(
 			if (!silent) console.log(chalk.green(`✅ ${message}`))
 		}
 
-		if (options.packageManager) {
-			await setPackageManager(options.packageManager)
-			const message = `Package manager set to: ${options.packageManager}`
-			messages.push(message)
-			if (!silent) console.log(chalk.green(`✅ ${message}`))
-		}
-
 		// If either option was set, return now
 		if (messages.length > 0) {
 			return { success: true, message: messages.join('; ') }
@@ -1664,17 +1637,14 @@ export async function config(
 			reason: 'select a configuration option',
 			hints: [
 				'Set repos dir directly: npx epicshop config --repos-dir <path>',
-				'Set package manager directly: npx epicshop config --package-manager <npm|pnpm|yarn|bun>',
 				'Delete config non-interactively: npx epicshop config reset --silent',
 			],
 		})
-		const { search, confirm, select } = await import('@inquirer/prompts')
+		const { search, confirm } = await import('@inquirer/prompts')
 
 		const reposDir = await getReposDirectory()
 		const isConfigured = await isReposDirectoryConfigured()
 		const defaultDir = getDefaultReposDir()
-		const packageManager = await getPackageManager()
-		const isPackageManagerSet = await isPackageManagerConfigured()
 
 		// Build config options
 		const configOptions = [
@@ -1682,13 +1652,6 @@ export async function config(
 				name: `Repos directory`,
 				value: 'repos-dir',
 				description: isConfigured ? reposDir : `${reposDir} (default)`,
-			},
-			{
-				name: `Package manager`,
-				value: 'package-manager',
-				description: isPackageManagerSet
-					? packageManager
-					: `${packageManager} (default)`,
 			},
 			{
 				name: `Reset config file`,
@@ -1820,92 +1783,6 @@ export async function config(
 					return {
 						success: true,
 						message: `Repos directory reset to default: ${defaultDir}`,
-					}
-				} else {
-					console.log(chalk.gray('\nNo changes made.'))
-					return { success: true, message: 'Cancelled' }
-				}
-			} else {
-				console.log(chalk.gray('\nNo changes made.'))
-				return { success: true, message: 'Cancelled' }
-			}
-		}
-
-		if (selectedConfig === 'package-manager') {
-			console.log()
-			console.log(chalk.bold('  Current value:'))
-			if (isPackageManagerSet) {
-				console.log(chalk.white(`  ${packageManager}`))
-			} else {
-				console.log(
-					chalk.gray(`  ${packageManager} (default, not explicitly set)`),
-				)
-			}
-			console.log()
-
-			const actionChoices = [
-				{
-					name: 'Edit',
-					value: 'edit',
-					description: 'Change the default package manager',
-				},
-				...(isPackageManagerSet
-					? [
-							{
-								name: 'Remove',
-								value: 'remove',
-								description: 'Reset to default (npm)',
-							},
-						]
-					: []),
-				{
-					name: 'Cancel',
-					value: 'cancel',
-					description: 'Go back without changes',
-				},
-			]
-
-			const action = await search({
-				message: 'What would you like to do?',
-				source: async (input) => {
-					if (!input) return actionChoices
-					return matchSorter(actionChoices, input, {
-						keys: ['name', 'value', 'description'],
-					})
-				},
-			})
-
-			if (action === 'edit') {
-				const selectedManager = await select({
-					message: 'Select a package manager:',
-					choices: PACKAGE_MANAGERS.map((manager: PackageManager) => ({
-						name: manager,
-						value: manager,
-					})),
-				})
-				await setPackageManager(selectedManager)
-				console.log()
-				console.log(
-					chalk.green(
-						`✅ Package manager set to: ${chalk.bold(selectedManager)}`,
-					),
-				)
-				return {
-					success: true,
-					message: `Package manager set to: ${selectedManager}`,
-				}
-			} else if (action === 'remove') {
-				const shouldRemove = await confirm({
-					message: 'Reset package manager to default (npm)?',
-					default: false,
-				})
-				if (shouldRemove) {
-					await clearPackageManager()
-					console.log()
-					console.log(chalk.green(`✅ Package manager reset to default (npm).`))
-					return {
-						success: true,
-						message: 'Package manager reset to default (npm).',
 					}
 				} else {
 					console.log(chalk.gray('\nNo changes made.'))
@@ -2316,10 +2193,9 @@ async function promptAndSetupAccessibleWorkshops(): Promise<void> {
 			'🐨 Next, you can select any workshops you’d like me to set up for you.',
 		),
 	)
-	const packageManager = await getPackageManager()
 	console.log(
 		chalk.gray(
-			`   This will clone each workshop repo into your workshops directory and run setup using ${packageManager}.\n` +
+			`   This will clone each workshop repo into your workshops directory and run setup.\n` +
 				'   (If something fails, we’ll keep going and you can retry later with `npx epicshop add`.)\n',
 		),
 	)
@@ -2774,11 +2650,8 @@ async function ensureTutorialAndStart(): Promise<WorkshopsResult> {
 
 	console.log(chalk.cyan(`\n🚀 Starting ${chalk.bold(workshopTitle)}...\n`))
 
-	const packageManager = await getPackageManager()
-	const startArgs = getPackageManagerRunArgs(packageManager, 'start')
-
 	// Start the workshop
-	const startResult = await runCommandInteractive(packageManager, startArgs, {
+	const startResult = await runCommandInteractive('npm', ['run', 'start'], {
 		cwd: workshopPath,
 	})
 

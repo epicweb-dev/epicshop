@@ -111,8 +111,15 @@ epicshop init
 
 ### `setup`
 
-Install workshop dependencies in the current directory. Uses the configured
-package manager (default: `npm`).
+Install workshop dependencies in the current directory. **Must be run from within
+a workshop directory** (a directory containing a `package.json` file).
+
+This command automatically detects and uses your package manager (npm, pnpm,
+yarn, or bun) based on how you invoked epicshop. For example, if you run `pnpm
+dlx epicshop setup`, it will use pnpm for the install.
+
+**Note**: You typically don't need to run this command manually. The `add`
+command automatically runs `setup` after cloning a workshop repository.
 
 ```bash
 epicshop setup [options]
@@ -125,11 +132,17 @@ epicshop setup [options]
 #### Examples
 
 ```bash
-# Install workshop dependencies
+# Install workshop dependencies (uses pkgmgr to detect your package manager)
+cd ~/epicweb-workshops/full-stack-foundations
 epicshop setup
 
 # Install dependencies silently
 epicshop setup --silent
+
+# If you run with pnpm dlx, it uses pnpm; if you run with bunx, it uses bun, etc.
+pnpm dlx epicshop setup  # Uses pnpm
+bunx epicshop setup      # Uses bun
+yarn dlx epicshop setup  # Uses yarn
 ```
 
 ### `add <repo-name> [destination]`
@@ -163,8 +176,10 @@ epicshop add web-forms --directory ~/my-workshops
 #### What it does
 
 1. Clones the repository from `https://github.com/epicweb-dev/<repo-name>`
-2. Runs `epicshop setup` in the cloned directory (uses configured package
-   manager)
+2. Automatically runs `epicshop setup` in the cloned directory to install
+   dependencies. The package manager used for installation is automatically
+   detected based on how you invoked epicshop (e.g., `pnpm dlx epicshop add`
+   uses pnpm, `bunx epicshop add` uses bun)
 3. If cloned into your configured repos directory, it will show up in
    `epicshop list` and can be started/opened by name
 
@@ -305,8 +320,6 @@ epicshop config [options]
 #### Options
 
 - `--repos-dir <path>` - Set the default directory where workshops are cloned
-- `--package-manager <manager>` - Set the default package manager (`npm`,
-  `pnpm`, `yarn`, `bun`)
 - `--silent, -s` - Run without output logs (default: false)
 
 #### Examples
@@ -317,17 +330,12 @@ epicshop config
 
 # Set the repos directory
 epicshop config --repos-dir ~/epicweb-workshops
-
-# Set the default package manager
-epicshop config --package-manager pnpm
 ```
 
 #### Configuration
 
 - **Repos directory**: The default location where workshops are cloned. Defaults
   to `~/epicweb-workshops` on most systems.
-- **Package manager**: The default package manager used for installs. Defaults
-  to `npm`.
 
 ### `update` / `upgrade`
 
@@ -1206,6 +1214,11 @@ epicshop start --silent
 
 # Update silently
 epicshop update --silent
+
+# Use your preferred package manager - epicshop automatically detects it
+pnpm dlx epicshop add  # Uses pnpm for installs
+bunx epicshop add      # Uses bun for installs
+yarn dlx epicshop add  # Uses yarn for installs
 ```
 
 ### Production Deployment

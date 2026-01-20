@@ -1,23 +1,11 @@
 import fs from 'node:fs'
 import path from 'node:path'
 import { getErrorMessage } from '@epic-web/workshop-utils/utils'
-import {
-	getPackageManager,
-	isPackageManagerConfigured,
-	type PackageManager,
-} from '@epic-web/workshop-utils/workshops.server'
 import chalk from 'chalk'
-import { execa } from 'execa'
 import {
-	resolveCliCommand,
 	runCommand,
 	type CommandResult,
 } from '../utils/command-runner.js'
-import {
-	formatPackageManagerCommand,
-	getPackageManagerInstallArgs,
-	getPackageManagerRunArgs,
-} from '../utils/package-manager.js'
 
 export type SetupOptions = {
 	cwd?: string
@@ -45,33 +33,6 @@ function isPackageJson(value: unknown): value is PackageJson {
 	)
 }
 
-async function getPackageManagerVersion(
-	packageManager: PackageManager,
-): Promise<{ success: boolean; version?: string; error?: Error }> {
-	try {
-		const result = await execa(
-			resolveCliCommand(packageManager),
-			['--version'],
-			{
-				stdio: 'pipe',
-			},
-		)
-		return { success: true, version: result.stdout.trim() }
-	} catch (error: unknown) {
-		const message = getErrorMessage(error, 'Failed to check package manager')
-		const err = error instanceof Error ? error : new Error(message)
-		return { success: false, error: err }
-	}
-}
-
-function isNpmVersionSupported(version: string): boolean {
-	const [majorString, minorString] = version.split('.')
-	const major = Number(majorString)
-	const minor = Number(minorString)
-	if (!Number.isFinite(major) || !Number.isFinite(minor)) return false
-	return major > 8 || (major === 8 && minor >= 16)
-}
-
 function formatCommandResultError(
 	result: CommandResult,
 	fallbackMessage: string,
@@ -83,6 +44,14 @@ function formatCommandResultError(
 	}
 }
 
+/**
+ * Install workshop dependencies in the current directory.
+ * Must be run from within a workshop directory (containing package.json).
+ *
+ * Automatically detects and uses the package manager based on how epicshop was
+ * invoked (e.g., pnpm dlx epicshop setup uses pnpm, bunx epicshop setup uses bun).
+ * This is handled by pkgmgr, which detects the runtime package manager.
+ */
 export async function setup(options: SetupOptions = {}): Promise<SetupResult> {
 	const { silent = false } = options
 	const cwd = options.cwd ? path.resolve(options.cwd) : process.cwd()
@@ -114,57 +83,21 @@ export async function setup(options: SetupOptions = {}): Promise<SetupResult> {
 		return { success: false, message, error: error as Error }
 	}
 
-	const packageManager = await getPackageManager()
-	const isConfigured = await isPackageManagerConfigured()
-	const managerLabel = isConfigured
-		? packageManager
-		: `${packageManager} (default)`
-
-	const versionResult = await getPackageManagerVersion(packageManager)
-	if (!versionResult.success || !versionResult.version) {
-		const message = `Failed to run ${packageManager} --version. Please ensure ${packageManager} is installed.`
-		if (!silent) {
-			console.error(chalk.red(`❌ ${message}`))
-		}
-		return {
-			success: false,
-			message,
-			error: versionResult.error ?? new Error(message),
-		}
-	}
-
-	if (
-		packageManager === 'npm' &&
-		!isNpmVersionSupported(versionResult.version)
-	) {
-		const message = `npm version is ${versionResult.version} which is out of date. Please install npm@8.16.0 or greater.`
-		if (!silent) {
-			console.error(chalk.red(`❌ ${message}`))
-		}
-		return { success: false, message, error: new Error(message) }
-	}
-
-	const installArgs = getPackageManagerInstallArgs(packageManager)
-	const installCommand = formatPackageManagerCommand(
-		packageManager,
-		installArgs,
-	)
-
 	if (!silent) {
 		console.log(
 			chalk.cyan(
-				`📦 Installing dependencies using ${chalk.bold(managerLabel)}...`,
+				`📦 Installing dependencies using ${chalk.bold('pkgmgr')}...`,
 			),
 		)
 		console.log(
 			chalk.gray(
-				`   To change this, run: npx epicshop config --package-manager <npm|pnpm|yarn|bun>`,
+				`   pkgmgr automatically detects your package manager (npm, pnpm, yarn, or bun)`,
 			),
 		)
-		console.log(chalk.gray(`   Running: ${installCommand}`))
+		console.log(chalk.gray(`   Running: pkgmgr install`))
 	}
 
-	const installResult = await runCommand(packageManager, installArgs, {
+	const installResult = await runCommand('pkgmgr', ['install'], {
 		cwd,
 		silent,
 	})
@@ -178,17 +111,11 @@ export async function setup(options: SetupOptions = {}): Promise<SetupResult> {
 
 	const hasCustomSetup = Boolean(scripts?.['setup:custom'])
 	if (hasCustomSetup) {
-		const customArgs = getPackageManagerRunArgs(packageManager, 'setup:custom')
-		const customCommand = formatPackageManagerCommand(
-			packageManager,
-			customArgs,
-		)
-
 		if (!silent) {
-			console.log(chalk.cyan(`🔧 Running ${customCommand}...`))
+			console.log(chalk.cyan(`🔧 Running npm run setup:custom...`))
 		}
 
-		const customResult = await runCommand(packageManager, customArgs, {
+		const customResult = await runCommand('npm', ['run', 'setup:custom'], {
 			cwd,
 			silent,
 		})
