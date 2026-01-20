@@ -124,7 +124,12 @@ const offlineVideoDownloadResolutions = [
 ] as const
 type OfflineVideoDownloadResolution =
 	(typeof offlineVideoDownloadResolutions)[number]
-type OfflineVideoMuxVariant = 'high' | 'medium' | 'low' | 'source'
+type OfflineVideoMuxVariant =
+	| 'highest'
+	| 'high'
+	| 'medium'
+	| 'low'
+	| 'source'
 
 function isOfflineVideoDownloadResolution(
 	value: unknown,
@@ -520,32 +525,188 @@ async function getOfflineVideoDownloadResolution(): Promise<OfflineVideoDownload
 	return 'best'
 }
 
-const muxMp4Variants: Record<
-	OfflineVideoMuxVariant,
-	(playbackId: string) => string
-> = {
-	high: (playbackId) => `https://stream.mux.com/${playbackId}/high.mp4`,
-	medium: (playbackId) => `https://stream.mux.com/${playbackId}/medium.mp4`,
-	low: (playbackId) => `https://stream.mux.com/${playbackId}/low.mp4`,
-	source: (playbackId) => `https://stream.mux.com/${playbackId}.mp4`,
+const muxMp4Variants: Record<OfflineVideoMuxVariant, string> = {
+	highest: 'highest.mp4',
+	high: 'high.mp4',
+	medium: 'medium.mp4',
+	low: 'low.mp4',
+	source: '',
 }
 
 const muxResolutionOrder: Record<
 	OfflineVideoDownloadResolution,
 	Array<OfflineVideoMuxVariant>
 > = {
-	best: ['source', 'high', 'medium', 'low'],
-	high: ['high', 'medium', 'low', 'source'],
-	medium: ['medium', 'low', 'high', 'source'],
-	low: ['low', 'medium', 'high', 'source'],
+	best: ['source', 'highest', 'high', 'medium', 'low'],
+	high: ['high', 'highest', 'medium', 'low', 'source'],
+	medium: ['medium', 'high', 'highest', 'low', 'source'],
+	low: ['low', 'medium', 'high', 'highest', 'source'],
 }
 
-function getMuxMp4Urls(
+type ProductMuxResponse = {
+	mp4Files?: Array<string>
+	files?: Array<string>
+	mp4Urls?: Array<string>
+	urls?: Array<string>
+	staticRenditions?: {
+		files?: Array<{ name?: string; status?: string; ext?: string }>
+	}
+	static_renditions?: {
+		files?: Array<{ name?: string; status?: string; ext?: string }>
+	}
+}
+
+function getMuxMetadataUrl(playbackId: string) {
+	try {
+		const host = getWorkshopConfig().product.host
+		if (!host) return null
+		const base = host.startsWith('http') ? host : `https://${host}`
+		return `${base.replace(/\/$/, '')}/mux/${playbackId}`
+	} catch {
+		return null
+	}
+}
+
+function normalizeMp4Name(value: unknown) {
+	if (typeof value !== 'string') return null
+	const trimmed = value.trim()
+	if (!trimmed) return null
+	return trimmed.toLowerCase().endsWith('.mp4') ? trimmed : null
+}
+
+function normalizeMp4Url(value: unknown) {
+	if (typeof value !== 'string') return null
+	const trimmed = value.trim()
+	if (!trimmed) return null
+	const fileName = path.posix.basename(trimmed.split('?')[0] ?? '')
+	if (!fileName.toLowerCase().endsWith('.mp4')) return null
+	return { url: trimmed, fileName }
+}
+
+function extractMp4Files(
+	files?: Array<{ name?: string; status?: string; ext?: string }>,
+) {
+	if (!Array.isArray(files)) return []
+	return files
+		.filter((file) => !file?.status || file.status === 'ready')
+		.map((file) => normalizeMp4Name(file?.name ?? file?.ext))
+		.filter((name): name is string => Boolean(name))
+}
+
+function mergeUniqueMp4Names(source: Array<string>, additions: Array<string>) {
+	const result = [...source]
+	for (const name of additions) {
+		if (!result.some((item) => item.toLowerCase() === name.toLowerCase())) {
+			result.push(name)
+		}
+	}
+	return result
+}
+
+async function getMuxAvailableMp4Renditions(playbackId: string) {
+	const metadataUrl = getMuxMetadataUrl(playbackId)
+	if (!metadataUrl) return null
+	const authInfo = await getAuthInfo()
+	const accessToken = authInfo?.tokenSet.access_token
+	const response = await fetch(metadataUrl, {
+		headers: accessToken ? { authorization: `Bearer ${accessToken}` } : undefined,
+	}).catch((error) => {
+		log.warn('Mux metadata request failed', {
+			url: metadataUrl,
+			message: (error as Error).message,
+		})
+		return null
+	})
+	if (!response || !response.ok) {
+		log.warn('Mux metadata response not ok', {
+			url: metadataUrl,
+			status: response?.status,
+		})
+		return null
+	}
+	let json: ProductMuxResponse | null = null
+	try {
+		json = (await response.json()) as ProductMuxResponse
+	} catch (error) {
+		log.warn('Mux metadata response not JSON', {
+			url: metadataUrl,
+			message: (error as Error).message,
+		})
+		return null
+	}
+
+	const urlEntries = (json?.mp4Urls ?? json?.urls ?? [])
+		.map(normalizeMp4Url)
+		.filter((value): value is { url: string; fileName: string } => Boolean(value))
+
+	const filesFromNames = (json?.mp4Files ?? json?.files ?? [])
+		.map(normalizeMp4Name)
+		.filter((name): name is string => Boolean(name))
+
+	const filesFromRenditions = mergeUniqueMp4Names(
+		extractMp4Files(json?.static_renditions?.files),
+		extractMp4Files(json?.staticRenditions?.files),
+	)
+
+	const names = mergeUniqueMp4Names(
+		mergeUniqueMp4Names(filesFromNames, filesFromRenditions),
+		urlEntries.map((entry) => entry.fileName),
+	)
+
+	const urlsByName = new Map(
+		urlEntries.map((entry) => [entry.fileName.toLowerCase(), entry.url]),
+	)
+
+	return { names, urlsByName }
+}
+
+function buildMuxMp4Url(playbackId: string, fileName: string | null) {
+	return fileName
+		? `https://stream.mux.com/${playbackId}/${fileName}`
+		: `https://stream.mux.com/${playbackId}.mp4`
+}
+
+async function getMuxMp4Urls(
 	playbackId: string,
 	resolution: OfflineVideoDownloadResolution,
 ) {
 	const order = muxResolutionOrder[resolution] ?? muxResolutionOrder.best
-	return order.map((variant) => muxMp4Variants[variant](playbackId))
+	const available = await getMuxAvailableMp4Renditions(playbackId)
+	if (available && available.names.length > 0) {
+		const normalized = new Map(
+			available.names.map((name) => [name.toLowerCase(), name]),
+		)
+		const urls: Array<string> = []
+		const used = new Set<string>()
+
+		for (const variant of order) {
+			const fileName = muxMp4Variants[variant]
+			if (!fileName) continue
+			const original = normalized.get(fileName.toLowerCase())
+			if (!original) continue
+			const url =
+				available.urlsByName.get(original.toLowerCase()) ??
+				buildMuxMp4Url(playbackId, original)
+			if (used.has(url)) continue
+			urls.push(url)
+			used.add(url)
+		}
+
+		for (const name of available.names) {
+			const url =
+				available.urlsByName.get(name.toLowerCase()) ??
+				buildMuxMp4Url(playbackId, name)
+			if (used.has(url)) continue
+			urls.push(url)
+			used.add(url)
+		}
+
+		if (urls.length > 0) return urls
+	}
+
+	return order.map((variant) =>
+		buildMuxMp4Url(playbackId, muxMp4Variants[variant] || null),
+	)
 }
 
 async function isOfflineVideoReady(
@@ -584,7 +745,7 @@ async function downloadMuxVideo({
 	iv: Buffer
 	resolution: OfflineVideoDownloadResolution
 }) {
-	const urls = getMuxMp4Urls(playbackId, resolution)
+	const urls = await getMuxMp4Urls(playbackId, resolution)
 	let lastError: Error | null = null
 
 	emitDownloadProgress({
