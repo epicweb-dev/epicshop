@@ -173,6 +173,7 @@ export async function start(options: StartOptions = {}): Promise<StartResult> {
 		let server: http.Server | null = null
 		let child: ChildProcess | null = null
 		let restarting = false
+		let childWasKilled = false
 		let childPort: number | null = null
 		let childPortPromiseResolve: ((port: number) => void) | null = null
 		let childPortPromise: Promise<number>
@@ -263,6 +264,7 @@ export async function start(options: StartOptions = {}): Promise<StartResult> {
 				// Kill child FIRST to release file handles (prevents EBUSY on Windows)
 				console.log('🛑 Stopping app for update...')
 				restarting = true
+				childWasKilled = true
 				await killChild(child)
 
 				// Now run the update (npm install won't hit file locks)
@@ -286,7 +288,7 @@ export async function start(options: StartOptions = {}): Promise<StartResult> {
 			} catch (error) {
 				console.error('❌ Update functionality not available:', error)
 				// Restart app even if update failed
-				if (!child || child.killed) {
+				if (!child || childWasKilled) {
 					spawnChild()
 					restarting = false
 				}
@@ -370,6 +372,7 @@ export async function start(options: StartOptions = {}): Promise<StartResult> {
 			// Reset port tracking when spawning a new child
 			childPort = null
 			childPortPromise = createChildPortPromise()
+			childWasKilled = false
 
 			const childArgs = [...(sentryImport ? [sentryImport] : []), childScript]
 			child = spawn(process.execPath, childArgs, {
