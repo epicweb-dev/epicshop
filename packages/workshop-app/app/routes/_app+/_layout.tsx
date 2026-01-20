@@ -44,6 +44,11 @@ import {
 	DialogTrigger,
 } from '#app/components/ui/dialog.tsx'
 import {
+	Popover,
+	PopoverContent,
+	PopoverTrigger,
+} from '#app/components/ui/popover.tsx'
+import {
 	SimpleTooltip,
 	Tooltip,
 	TooltipContent,
@@ -1157,31 +1162,55 @@ function MobileNavigation({
 								<SidecarStatusIndicator status={data.sidecarStatus} />
 							</>
 						) : (
-							<SimpleTooltip
-								content={
-									data.sidecarStatus?.hasFailure
-										? 'Process error - click to see details'
-										: 'More options'
-								}
-							>
-								{data.sidecarStatus?.hasFailure ? (
-									<Link
-										to="/admin"
-										className="text-muted-foreground hover:text-foreground hover:bg-muted flex h-8 w-8 items-center justify-center rounded-md transition-colors"
+							<Popover>
+								<PopoverTrigger asChild>
+									<SimpleTooltip
+										content={
+											data.sidecarStatus?.hasFailure
+												? 'Process error - click to see details'
+												: 'More options'
+										}
 									>
-										<StatusIndicator status="failed" />
-									</Link>
-								) : (
-									<button
-										type="button"
-										aria-label="More options"
-										onClick={() => setMenuOpened(true)}
-										className="text-muted-foreground hover:text-foreground hover:bg-muted flex h-8 w-8 items-center justify-center rounded-md transition-colors"
-									>
-										<Icon name="MoreHorizontal" size="md" />
-									</button>
-								)}
-							</SimpleTooltip>
+										{data.sidecarStatus?.hasFailure ? (
+											<button
+												type="button"
+												aria-label="Process error - click to see details"
+												className="text-muted-foreground hover:text-foreground hover:bg-muted flex h-8 w-8 items-center justify-center rounded-md transition-colors"
+											>
+												<StatusIndicator status="failed" />
+											</button>
+										) : (
+											<button
+												type="button"
+												aria-label="More options"
+												className="text-muted-foreground hover:text-foreground hover:bg-muted flex h-8 w-8 items-center justify-center rounded-md transition-colors"
+											>
+												<svg
+													width="20"
+													height="20"
+													viewBox="0 0 20 20"
+													fill="none"
+													xmlns="http://www.w3.org/2000/svg"
+												>
+													<circle cx="5" cy="10" r="1.5" fill="currentColor" />
+													<circle cx="10" cy="10" r="1.5" fill="currentColor" />
+													<circle cx="15" cy="10" r="1.5" fill="currentColor" />
+												</svg>
+											</button>
+										)}
+									</SimpleTooltip>
+								</PopoverTrigger>
+								<PopoverContent
+									side="top"
+									align="start"
+									className="flex flex-col gap-2 p-3"
+								>
+									<div className="flex items-center gap-2">
+										<ThemeSwitch />
+										<SidecarStatusIndicator status={data.sidecarStatus} />
+									</div>
+								</PopoverContent>
+							</Popover>
 						)}
 					</div>
 				</div>
@@ -1685,31 +1714,65 @@ function Navigation({
 								<SidecarStatusIndicator status={data.sidecarStatus} />
 							</div>
 						) : (
-							<SimpleTooltip
-								content={
-									data.sidecarStatus?.hasFailure
-										? 'Process error - click to see details'
-										: 'More options'
-								}
-							>
-								{data.sidecarStatus?.hasFailure ? (
-									<Link
-										to="/admin"
-										className="text-muted-foreground hover:text-foreground hover:bg-muted flex h-8 w-8 items-center justify-center rounded-md transition-colors"
+							<Popover>
+								<PopoverTrigger asChild>
+									<SimpleTooltip
+										content={
+											data.sidecarStatus?.hasFailure
+												? 'Process error - click to see details'
+												: 'More options'
+										}
 									>
-										<StatusIndicator status="failed" />
-									</Link>
-								) : (
-									<button
-										type="button"
-										aria-label="More options"
-										onClick={() => setMenuOpened(true)}
-										className="text-muted-foreground hover:text-foreground hover:bg-muted flex h-8 w-8 items-center justify-center rounded-md transition-colors"
-									>
-										<Icon name="MoreHorizontal" size="md" />
-									</button>
-								)}
-							</SimpleTooltip>
+										{data.sidecarStatus?.hasFailure ? (
+											<button
+												type="button"
+												aria-label="Process error - click to see details"
+												className="text-muted-foreground hover:text-foreground hover:bg-muted flex h-8 w-8 items-center justify-center rounded-md transition-colors"
+											>
+												<StatusIndicator status="failed" />
+											</button>
+										) : (
+											<button
+												type="button"
+												aria-label="More options"
+												className="text-muted-foreground hover:text-foreground hover:bg-muted flex h-8 w-8 items-center justify-center rounded-md transition-colors"
+											>
+												<svg
+													width="20"
+													height="20"
+													viewBox="0 0 20 20"
+													fill="none"
+													xmlns="http://www.w3.org/2000/svg"
+												>
+													<circle cx="5" cy="10" r="1.5" fill="currentColor" />
+													<circle cx="10" cy="10" r="1.5" fill="currentColor" />
+													<circle cx="15" cy="10" r="1.5" fill="currentColor" />
+												</svg>
+											</button>
+										)}
+									</SimpleTooltip>
+								</PopoverTrigger>
+								<PopoverContent
+									side="right"
+									align="start"
+									className="flex flex-col gap-2 p-3"
+								>
+									<div className="flex items-center gap-2">
+										<ThemeSwitch />
+										<SimpleTooltip content="Keyboard shortcuts (press ?)">
+											<button
+												type="button"
+												aria-label="Keyboard shortcuts"
+												onClick={handleOpenShortcuts}
+												className="text-muted-foreground hover:text-foreground hover:bg-muted focus-visible:ring-ring flex h-8 w-8 items-center justify-center rounded-md transition-colors focus-visible:ring-2 focus-visible:ring-offset-2"
+											>
+												<Icon name="Question" size="md" />
+											</button>
+										</SimpleTooltip>
+										<SidecarStatusIndicator status={data.sidecarStatus} />
+									</div>
+								</PopoverContent>
+							</Popover>
 						)}
 					</div>
 				</div>

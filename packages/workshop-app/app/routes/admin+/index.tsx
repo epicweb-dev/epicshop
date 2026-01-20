@@ -167,71 +167,47 @@ export default function AdminLayout({
 			</div>
 
 			<div className="grid gap-6 md:grid-cols-2">
-				<Card>
-					<CardHeader>
-						<CardTitle>Progress</CardTitle>
-						<CardDescription>EpicWeb.dev lesson progress</CardDescription>
-					</CardHeader>
-					<CardContent>
-						{epicProgress ? (
-							<ul className="scrollbar-thin scrollbar-thumb-scrollbar flex max-h-72 flex-col gap-2 overflow-y-auto">
-								{epicProgress.sort(sortProgress).map((progress) => {
-									const status = progress.epicCompletedAt
-										? 'completed'
-										: 'incomplete'
-									const label = [
-										progress.epicLessonSlug,
-										progress.epicCompletedAt
-											? `(${progress.epicCompletedAt})`
-											: null,
-									]
-										.filter(Boolean)
-										.join(' ')
-									return (
-										<li
-											key={progress.epicLessonSlug}
-											className="hover:bg-muted/50 flex items-center gap-3 rounded-md p-2"
-										>
-											<span
-												className={clsx(
-													'h-3 w-3 shrink-0 rounded-full',
-													progressStatus[status],
-												)}
-												title={status}
-											/>
-											{progress.type === 'unknown' ? (
-												<span className="flex flex-1 items-center gap-2 truncate text-sm">
-													<span className="truncate">{label}</span>
-													<SimpleTooltip content="This video is in the workshop on EpicWeb.dev, but not in the local workshop.">
-														<Icon
-															name="Close"
-															className="text-destructive h-4 w-4 shrink-0"
-														/>
-													</SimpleTooltip>
-												</span>
+				{Object.entries(data.sidecarProcesses).length > 0 && (
+					<Card>
+						<CardHeader>
+							<CardTitle>Sidecar Processes</CardTitle>
+							<CardDescription>Background sidecar processes</CardDescription>
+						</CardHeader>
+						<CardContent>
+							<ul className="scrollbar-thin scrollbar-thumb-scrollbar flex max-h-48 flex-col gap-2 overflow-y-auto">
+								{Object.entries(data.sidecarProcesses).map(([key, process]) => (
+									<li
+										key={key}
+										className="border-border bg-muted/30 rounded-md border p-3"
+									>
+										<div className="flex items-center gap-2">
+											{process.running ? (
+												<Pinger status="running" />
 											) : (
-												<Link
-													to={linkProgress(progress)}
-													className="text-foreground flex-1 truncate text-sm hover:underline"
-												>
-													{label}
-												</Link>
+												<Pinger status="taken" />
 											)}
-											<Link
-												to={progress.epicLessonUrl}
-												className="text-muted-foreground hover:text-foreground shrink-0"
-											>
-												<Icon name="ExternalLink" className="h-4 w-4" />
-											</Link>
-										</li>
-									)
-								})}
+											<span className="font-mono text-sm font-semibold">
+												{key}
+											</span>
+										</div>
+										<div className="text-muted-foreground mt-2 flex flex-wrap gap-x-4 gap-y-1 text-xs">
+											{process.pid && (
+												<span>
+													<span className="font-medium">PID:</span>{' '}
+													{process.pid}
+												</span>
+											)}
+											<span>
+												<span className="font-medium">Status:</span>{' '}
+												{process.running ? 'Running' : 'Failed'}
+											</span>
+										</div>
+									</li>
+								))}
 							</ul>
-						) : (
-							<p className="text-muted-foreground text-sm">No progress data</p>
-						)}
-					</CardContent>
-				</Card>
+						</CardContent>
+					</Card>
+				)}
 
 				<Card>
 					<CardHeader>
@@ -406,47 +382,71 @@ export default function AdminLayout({
 					</Card>
 				)}
 
-				{Object.entries(data.sidecarProcesses).length > 0 && (
-					<Card>
-						<CardHeader>
-							<CardTitle>Sidecar Processes</CardTitle>
-							<CardDescription>Background sidecar processes</CardDescription>
-						</CardHeader>
-						<CardContent>
-							<ul className="scrollbar-thin scrollbar-thumb-scrollbar flex max-h-48 flex-col gap-2 overflow-y-auto">
-								{Object.entries(data.sidecarProcesses).map(([key, process]) => (
-									<li
-										key={key}
-										className="border-border bg-muted/30 rounded-md border p-3"
-									>
-										<div className="flex items-center gap-2">
-											{process.running ? (
-												<Pinger status="running" />
-											) : (
-												<Pinger status="taken" />
-											)}
-											<span className="font-mono text-sm font-semibold">
-												{key}
-											</span>
-										</div>
-										<div className="text-muted-foreground mt-2 flex flex-wrap gap-x-4 gap-y-1 text-xs">
-											{process.pid && (
-												<span>
-													<span className="font-medium">PID:</span>{' '}
-													{process.pid}
+				<Card>
+					<CardHeader>
+						<CardTitle>Progress</CardTitle>
+						<CardDescription>EpicWeb.dev lesson progress</CardDescription>
+					</CardHeader>
+					<CardContent>
+						{epicProgress ? (
+							<ul className="scrollbar-thin scrollbar-thumb-scrollbar flex max-h-72 flex-col gap-2 overflow-y-auto">
+								{epicProgress.sort(sortProgress).map((progress) => {
+									const status = progress.epicCompletedAt
+										? 'completed'
+										: 'incomplete'
+									const label = [
+										progress.epicLessonSlug,
+										progress.epicCompletedAt
+											? `(${progress.epicCompletedAt})`
+											: null,
+									]
+										.filter(Boolean)
+										.join(' ')
+									return (
+										<li
+											key={progress.epicLessonSlug}
+											className="hover:bg-muted/50 flex items-center gap-3 rounded-md p-2"
+										>
+											<span
+												className={clsx(
+													'h-3 w-3 shrink-0 rounded-full',
+													progressStatus[status],
+												)}
+												title={status}
+											/>
+											{progress.type === 'unknown' ? (
+												<span className="flex flex-1 items-center gap-2 truncate text-sm">
+													<span className="truncate">{label}</span>
+													<SimpleTooltip content="This video is in the workshop on EpicWeb.dev, but not in the local workshop.">
+														<Icon
+															name="Close"
+															className="text-destructive h-4 w-4 shrink-0"
+														/>
+													</SimpleTooltip>
 												</span>
+											) : (
+												<Link
+													to={linkProgress(progress)}
+													className="text-foreground flex-1 truncate text-sm hover:underline"
+												>
+													{label}
+												</Link>
 											)}
-											<span>
-												<span className="font-medium">Status:</span>{' '}
-												{process.running ? 'Running' : 'Failed'}
-											</span>
-										</div>
-									</li>
-								))}
+											<Link
+												to={progress.epicLessonUrl}
+												className="text-muted-foreground hover:text-foreground shrink-0"
+											>
+												<Icon name="ExternalLink" className="h-4 w-4" />
+											</Link>
+										</li>
+									)
+								})}
 							</ul>
-						</CardContent>
-					</Card>
-				)}
+						) : (
+							<p className="text-muted-foreground text-sm">No progress data</p>
+						)}
+					</CardContent>
+				</Card>
 			</div>
 		</div>
 	)
