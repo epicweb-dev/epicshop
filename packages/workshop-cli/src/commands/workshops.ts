@@ -1629,29 +1629,29 @@ export async function config(
 			}
 		}
 
-	// Handle CLI flags for setting config values
-	const messages: string[] = []
-	
-	if (options.reposDir) {
-		// Set the repos directory directly via CLI flag
-		const resolvedPath = path.resolve(options.reposDir)
-		await setReposDirectory(resolvedPath)
-		const message = `Repos directory set to: ${resolvedPath}`
-		messages.push(message)
-		if (!silent) console.log(chalk.green(`✅ ${message}`))
-	}
+		// Handle CLI flags for setting config values
+		const messages: string[] = []
 
-	if (options.packageManager) {
-		await setPackageManager(options.packageManager)
-		const message = `Package manager set to: ${options.packageManager}`
-		messages.push(message)
-		if (!silent) console.log(chalk.green(`✅ ${message}`))
-	}
+		if (options.reposDir) {
+			// Set the repos directory directly via CLI flag
+			const resolvedPath = path.resolve(options.reposDir)
+			await setReposDirectory(resolvedPath)
+			const message = `Repos directory set to: ${resolvedPath}`
+			messages.push(message)
+			if (!silent) console.log(chalk.green(`✅ ${message}`))
+		}
 
-	// If either option was set, return now
-	if (messages.length > 0) {
-		return { success: true, message: messages.join('; ') }
-	}
+		if (options.packageManager) {
+			await setPackageManager(options.packageManager)
+			const message = `Package manager set to: ${options.packageManager}`
+			messages.push(message)
+			if (!silent) console.log(chalk.green(`✅ ${message}`))
+		}
+
+		// If either option was set, return now
+		if (messages.length > 0) {
+			return { success: true, message: messages.join('; ') }
+		}
 
 		if (silent) {
 			// In silent mode, just return current config
