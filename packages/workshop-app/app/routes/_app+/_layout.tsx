@@ -990,10 +990,10 @@ function MobileNavigation({
 															to={`/extra/${extra.dirName}`}
 															prefetch="intent"
 															className={({ isActive }) =>
-																	getNavHighlightClassName(
-																		isActive,
-																		'leading-tight font-semibold',
-																	)
+																getNavHighlightClassName(
+																	isActive,
+																	'leading-tight font-semibold',
+																)
 															}
 														>
 															{extra.title}
@@ -1441,10 +1441,10 @@ function Navigation({
 															to={`/extra/${extra.dirName}`}
 															prefetch="intent"
 															className={({ isActive }) =>
-																	getNavHighlightClassName(
-																		isActive,
-																		'leading-tight font-semibold',
-																	)
+																getNavHighlightClassName(
+																	isActive,
+																	'leading-tight font-semibold',
+																)
 															}
 														>
 															{extra.title}
