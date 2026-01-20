@@ -1176,13 +1176,13 @@ function MobileNavigation({
 								<SidecarStatusIndicator status={data.sidecarStatus} />
 							</>
 						) : (
-							<Popover>
+							<Popover open={isMobilePopoverOpen} onOpenChange={setIsMobilePopoverOpen}>
 								{data.sidecarStatus?.hasFailure ? (
 									<PopoverTrigger asChild>
 										<button
 											type="button"
 											aria-label="Process error - click to see details"
-											title="Process error - click to see details"
+											title={isMobilePopoverOpen ? undefined : "Process error - click to see details"}
 											className="text-muted-foreground hover:text-foreground hover:bg-muted flex h-8 w-8 items-center justify-center rounded-md transition-colors"
 										>
 											<StatusIndicator status="failed" />
@@ -1193,7 +1193,7 @@ function MobileNavigation({
 										<button
 											type="button"
 											aria-label="More options"
-											title="More options"
+											title={isMobilePopoverOpen ? undefined : "More options"}
 											className="text-muted-foreground hover:text-foreground hover:bg-muted flex h-8 w-8 items-center justify-center rounded-md transition-colors"
 										>
 											<svg
@@ -1215,25 +1215,7 @@ function MobileNavigation({
 									align="start"
 									className="flex flex-col gap-1 p-2"
 								>
-									<div className="hover:bg-muted flex items-center gap-3 rounded-md px-2 py-1.5 text-sm transition-colors">
-										<div className="flex h-5 w-5 items-center justify-center">
-											<ThemeSwitch />
-										</div>
-										<span className="flex-1 text-left">
-											{themeLabel} theme
-										</span>
-									</div>
-									<button
-										type="button"
-										aria-label="Keyboard shortcuts"
-										onClick={handleOpenShortcuts}
-										className="hover:bg-muted flex items-center gap-3 rounded-md px-2 py-1.5 text-sm transition-colors"
-									>
-										<div className="flex h-5 w-5 items-center justify-center">
-											<Icon name="Question" size="md" />
-										</div>
-										<span className="flex-1 text-left">Keyboard shortcuts</span>
-									</button>
+									<ThemeSwitchRow themeLabel={themeLabel} />
 									{data.sidecarStatus ? (
 										<Link
 											to="/admin"
@@ -1763,13 +1745,13 @@ function Navigation({
 								<SidecarStatusIndicator status={data.sidecarStatus} />
 							</div>
 						) : (
-							<Popover>
+							<Popover open={isPopoverOpen} onOpenChange={setIsPopoverOpen}>
 								{data.sidecarStatus?.hasFailure ? (
 									<PopoverTrigger asChild>
 										<button
 											type="button"
 											aria-label="Process error - click to see details"
-											title="Process error - click to see details"
+											title={isPopoverOpen ? undefined : "Process error - click to see details"}
 											className="text-muted-foreground hover:text-foreground hover:bg-muted flex h-8 w-8 items-center justify-center rounded-md transition-colors"
 										>
 											<StatusIndicator status="failed" />
@@ -1780,7 +1762,7 @@ function Navigation({
 										<button
 											type="button"
 											aria-label="More options"
-											title="More options"
+											title={isPopoverOpen ? undefined : "More options"}
 											className="text-muted-foreground hover:text-foreground hover:bg-muted flex h-8 w-8 items-center justify-center rounded-md transition-colors"
 										>
 											<svg
@@ -1802,14 +1784,7 @@ function Navigation({
 									align="start"
 									className="flex flex-col gap-1 p-2"
 								>
-									<div className="hover:bg-muted flex items-center gap-3 rounded-md px-2 py-1.5 text-sm transition-colors">
-										<div className="flex h-5 w-5 items-center justify-center">
-											<ThemeSwitch />
-										</div>
-										<span className="flex-1 text-left">
-											{themeLabel} theme
-										</span>
-									</div>
+									<ThemeSwitchRow themeLabel={themeLabel} />
 									<button
 										type="button"
 										aria-label="Keyboard shortcuts"
@@ -1844,6 +1819,32 @@ function Navigation({
 				</div>
 			</motion.div>
 		</nav>
+	)
+}
+
+function ThemeSwitchRow({ themeLabel }: { themeLabel: string }) {
+	const wrapperRef = React.useRef<HTMLDivElement>(null)
+
+	const handleClick = () => {
+		const form = wrapperRef.current?.querySelector<HTMLFormElement>('form')
+		if (!form) return
+		const submitButton = form.querySelector<HTMLButtonElement>(
+			'button[type="submit"]',
+		)
+		submitButton?.click()
+	}
+
+	return (
+		<div
+			ref={wrapperRef}
+			onClick={handleClick}
+			className="hover:bg-muted flex cursor-pointer items-center gap-3 rounded-md px-2 py-1.5 text-sm transition-colors"
+		>
+			<div className="flex h-5 w-5 items-center justify-center">
+				<ThemeSwitch />
+			</div>
+			<span className="flex-1 text-left">{themeLabel} theme</span>
+		</div>
 	)
 }
 
