@@ -38,9 +38,11 @@ Sentry?.init({
 		/\/favicon.ico/,
 		/\/site\.webmanifest/,
 	],
-	integrations: [Sentry.httpIntegration(), nodeProfilingIntegration?.()].filter(
-		Boolean,
-	),
+	integrations: [
+		Sentry.httpIntegration({ tracing: true }),
+		Sentry.expressIntegration(),
+		nodeProfilingIntegration?.(),
+	].filter(Boolean),
 	tracesSampler(samplingContext) {
 		if (samplingContext.request?.url?.includes('/resources/healthcheck')) {
 			return 0

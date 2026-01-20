@@ -1,3 +1,11 @@
+import { useEffect } from 'react'
+import {
+	createRoutesFromChildren,
+	matchRoutes,
+	useLocation,
+	useNavigationType,
+} from 'react-router'
+
 // Dynamic import of Sentry with error handling
 const Sentry = await import('@sentry/react-router').catch((error) => {
 	console.warn(
@@ -8,14 +16,93 @@ const Sentry = await import('@sentry/react-router').catch((error) => {
 	return null
 })
 
+type TracePropagationTarget = string | RegExp
+type SentryModule = NonNullable<typeof Sentry>
+type SentryIntegration = ReturnType<SentryModule['replayIntegration']>
+
+function getTracePropagationTargets(): Array<TracePropagationTarget> {
+	if (typeof window === 'undefined') return []
+	return [window.location.origin, /^\//]
+}
+
+function getTracingIntegration(
+	tracePropagationTargets: Array<TracePropagationTarget>,
+): SentryIntegration | null {
+	if (!Sentry) return null
+
+	const sentryModule = Sentry as unknown as {
+		reactRouterTracingIntegration?: (options: {
+			useEffect: typeof useEffect
+			useLocation: typeof useLocation
+			useNavigationType: typeof useNavigationType
+			createRoutesFromChildren: typeof createRoutesFromChildren
+			matchRoutes: typeof matchRoutes
+			tracePropagationTargets?: Array<TracePropagationTarget>
+		}) => SentryIntegration
+		reactRouterV7BrowserTracingIntegration?: (options: {
+			useEffect: typeof useEffect
+			useLocation: typeof useLocation
+			useNavigationType: typeof useNavigationType
+			createRoutesFromChildren: typeof createRoutesFromChildren
+			matchRoutes: typeof matchRoutes
+			tracePropagationTargets?: Array<TracePropagationTarget>
+		}) => SentryIntegration
+		reactRouterV6BrowserTracingIntegration?: (options: {
+			useEffect: typeof useEffect
+			useLocation: typeof useLocation
+			useNavigationType: typeof useNavigationType
+			createRoutesFromChildren: typeof createRoutesFromChildren
+			matchRoutes: typeof matchRoutes
+			tracePropagationTargets?: Array<TracePropagationTarget>
+		}) => SentryIntegration
+		browserTracingIntegration?: (options?: {
+			tracePropagationTargets?: Array<TracePropagationTarget>
+		}) => SentryIntegration
+	}
+
+	const routerOptions = {
+		useEffect,
+		useLocation,
+		useNavigationType,
+		createRoutesFromChildren,
+		matchRoutes,
+		tracePropagationTargets,
+	}
+
+	if (sentryModule.reactRouterTracingIntegration) {
+		return sentryModule.reactRouterTracingIntegration(routerOptions)
+	}
+
+	if (sentryModule.reactRouterV7BrowserTracingIntegration) {
+		return sentryModule.reactRouterV7BrowserTracingIntegration(routerOptions)
+	}
+
+	if (sentryModule.reactRouterV6BrowserTracingIntegration) {
+		return sentryModule.reactRouterV6BrowserTracingIntegration(routerOptions)
+	}
+
+	return sentryModule.browserTracingIntegration?.({ tracePropagationTargets }) ?? null
+}
+
 export function init() {
 	if (!ENV.EPICSHOP_IS_PUBLISHED) return
+	if (!Sentry) return
 
-	Sentry?.init({
+	const tracePropagationTargets = getTracePropagationTargets()
+	const tracingIntegration = getTracingIntegration(tracePropagationTargets)
+	const integrations = [
+		Sentry.replayIntegration(),
+		Sentry.browserProfilingIntegration(),
+	]
+
+	if (tracingIntegration) integrations.unshift(tracingIntegration)
+
+	Sentry.init({
 		dsn: ENV.SENTRY_DSN,
 		sendDefaultPii: true,
 		environment: ENV.MODE,
 		tunnel: '/resources/lookout',
+		tracePropagationTargets,
 		ignoreErrors: [
 			"Failed to execute 'requestPictureInPicture' on 'HTMLVideoElement'",
 		],
@@ -92,10 +179,7 @@ export function init() {
 			}
 			return event
 		},
-		integrations: [
-			Sentry.replayIntegration(),
-			Sentry.browserProfilingIntegration(),
-		],
+		integrations,
 		tracesSampleRate: 1.0,
 		replaysSessionSampleRate: 0.1,
 		replaysOnErrorSampleRate: 1.0,
