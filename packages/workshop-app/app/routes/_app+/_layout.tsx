@@ -1216,7 +1216,7 @@ function MobileNavigation({
 									align="start"
 									className="flex flex-col gap-1 p-2"
 								>
-									<ThemeSwitchRow themeLabel={themeLabel} />
+									<ThemeSwitchRow themeLabel={themeLabel} disableTooltip={isMobilePopoverOpen} />
 									{data.sidecarStatus ? (
 										<Link
 											to="/admin"
@@ -1786,7 +1786,7 @@ function Navigation({
 									align="start"
 									className="flex flex-col gap-1 p-2"
 								>
-									<ThemeSwitchRow themeLabel={themeLabel} />
+									<ThemeSwitchRow themeLabel={themeLabel} disableTooltip={isPopoverOpen} />
 									<button
 										type="button"
 										aria-label="Keyboard shortcuts"
@@ -1824,7 +1824,13 @@ function Navigation({
 	)
 }
 
-function ThemeSwitchRow({ themeLabel }: { themeLabel: string }) {
+function ThemeSwitchRow({
+	themeLabel,
+	disableTooltip,
+}: {
+	themeLabel: string
+	disableTooltip?: boolean
+}) {
 	const wrapperRef = React.useRef<HTMLDivElement>(null)
 
 	const handleClick = () => {
@@ -1843,7 +1849,7 @@ function ThemeSwitchRow({ themeLabel }: { themeLabel: string }) {
 			className="hover:bg-muted flex cursor-pointer items-center gap-3 rounded-md px-2 py-1.5 text-sm transition-colors"
 		>
 			<div className="flex h-5 w-5 items-center justify-center">
-				<ThemeSwitch />
+				<ThemeSwitch disableTooltip={disableTooltip} />
 			</div>
 			<span className="flex-1 text-left">{themeLabel} theme</span>
 		</div>

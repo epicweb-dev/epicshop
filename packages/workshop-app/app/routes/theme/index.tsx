@@ -49,7 +49,7 @@ export async function action({ request }: Route.ActionArgs) {
 	return dataWithPE(request, formData, submission.reply(), responseInit)
 }
 
-export function ThemeSwitch() {
+export function ThemeSwitch({ disableTooltip }: { disableTooltip?: boolean } = {}) {
 	const requestInfo = useRequestInfo()
 	const peRedirectInput = usePERedirectInput()
 	const fetcher = useFetcher<Route.ComponentProps['actionData']>()
@@ -72,21 +72,29 @@ export function ThemeSwitch() {
 		system: <Icon size="md" name="Laptop" title="System mode" />,
 	}
 
+	const button = (
+		<button
+			type="submit"
+			name="intent"
+			value="update-theme"
+			className="flex h-8 w-8 cursor-pointer items-center justify-center"
+		>
+			{modeLabel[mode]}
+		</button>
+	)
+
 	return (
 		<fetcher.Form method="POST" action={ROUTE_PATH} {...getFormProps(form)}>
 			<div className="flex gap-2">
 				{peRedirectInput}
 				<input type="hidden" name="theme" value={nextMode} />
-				<SimpleTooltip content={`Change theme from ${mode} mode`}>
-					<button
-						type="submit"
-						name="intent"
-						value="update-theme"
-						className="flex h-8 w-8 cursor-pointer items-center justify-center"
-					>
-						{modeLabel[mode]}
-					</button>
-				</SimpleTooltip>
+				{disableTooltip ? (
+					button
+				) : (
+					<SimpleTooltip content={`Change theme from ${mode} mode`}>
+						{button}
+					</SimpleTooltip>
+				)}
 			</div>
 			<ErrorList errors={form.errors} id={form.errorId} />
 		</fetcher.Form>
