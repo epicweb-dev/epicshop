@@ -16,26 +16,23 @@ function color(modifier, string) {
 
 console.log(color('info', '▶️  Starting workshop setup...'))
 
-const output = spawnSync('npm --version', { shell: true })
-	.stdout.toString()
-	.trim()
-const outputParts = output.split('.')
-const major = Number(outputParts[0])
-const minor = Number(outputParts[1])
-if (major < 8 || (major === 8 && minor < 16)) {
-	console.error(
-		color(
-			'danger',
-			'🚨  npm version is ' +
-				output +
-				' which is out of date. Please install npm@8.16.0 or greater',
-		),
-	)
-	throw new Error('npm version is out of date')
-}
+const userAgent = (process.env.npm_config_user_agent ?? '').toLowerCase()
+const packageManager = userAgent.includes('pnpm')
+	? 'pnpm'
+	: userAgent.includes('yarn')
+		? 'yarn'
+		: userAgent.includes('bun')
+			? 'bun'
+			: 'npm'
 
 const command =
-	'npx "https://gist.github.com/kentcdodds/bb452ffe53a5caa3600197e1d8005733" -q'
+	packageManager === 'pnpm'
+		? 'pnpm dlx epicshop setup'
+		: packageManager === 'yarn'
+			? 'yarn dlx epicshop setup'
+			: packageManager === 'bun'
+				? 'bunx epicshop setup'
+				: 'npx --yes epicshop setup'
 console.log(
 	color('subtitle', '      Running the following command: ' + command),
 )

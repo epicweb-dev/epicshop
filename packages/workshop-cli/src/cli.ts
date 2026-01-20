@@ -1,11 +1,22 @@
 #!/usr/bin/env node
 
 import '@epic-web/workshop-utils/init-env'
+import {
+	PACKAGE_MANAGERS,
+	getPackageManager,
+	isPackageManagerConfigured,
+	setPackageManager,
+} from '@epic-web/workshop-utils/workshops.server'
 import chalk from 'chalk'
 import { matchSorter } from 'match-sorter'
 import yargs, { type ArgumentsCamelCase, type Argv } from 'yargs'
 import { hideBin } from 'yargs/helpers'
-import { assertCanPrompt } from './utils/cli-runtime.js'
+import {
+	assertCanPrompt,
+	hasTty,
+	isCiEnvironment,
+} from './utils/cli-runtime.js'
+import { detectRuntimePackageManager } from './utils/package-manager.js'
 import { initCliSentry } from './utils/sentry-cli.js'
 
 // Check for --help on start command before yargs parses
@@ -32,6 +43,46 @@ function formatHelp(helpText: string): string {
 		})
 		.replace(/--[\w-]+/g, (match) => chalk.yellow(match))
 		.replace(/-\w(?=\s|,)/g, (match) => chalk.yellow(match))
+}
+
+async function maybePromptToUpdatePackageManager(
+	parsedArgs: string[],
+): Promise<void> {
+	if (parsedArgs.includes('--help') || parsedArgs.includes('-h')) return
+	if (parsedArgs.includes('--silent') || parsedArgs.includes('-s')) return
+	if (parsedArgs[0] === 'config') return
+	if (isCiEnvironment() || !hasTty()) return
+
+	const runtimeManager = detectRuntimePackageManager()
+	if (!runtimeManager) return
+
+	const isConfigured = await isPackageManagerConfigured()
+	if (!isConfigured) return
+
+	const configuredManager = await getPackageManager()
+	if (configuredManager === runtimeManager) return
+
+	const { confirm } = await import('@inquirer/prompts')
+	const shouldUpdate = await confirm({
+		message: `You ran epicshop with ${runtimeManager}, but your default package manager is ${configuredManager}. Update the default?`,
+		default: true,
+	})
+
+	if (shouldUpdate) {
+		await setPackageManager(runtimeManager)
+		console.log(
+			chalk.green(`✅ Default package manager updated to ${runtimeManager}.`),
+		)
+	}
+}
+
+try {
+	await maybePromptToUpdatePackageManager(args)
+} catch (error) {
+	if ((error as Error).message === 'USER_QUIT') {
+		process.exit(0)
+	}
+	// Silently ignore other errors during package manager prompt to avoid disrupting CLI startup
 }
 
 // Set up yargs CLI
@@ -168,6 +219,27 @@ const cli = yargs(args)
 		async () => {
 			const { onboarding } = await import('./commands/workshops.js')
 			const result = await onboarding()
+			if (!result.success) {
+				process.exit(1)
+			}
+		},
+	)
+	.command(
+		'setup',
+		'Install workshop dependencies (uses configured package manager)',
+		(yargs: Argv) => {
+			return yargs
+				.option('silent', {
+					alias: 's',
+					type: 'boolean',
+					description: 'Run without output logs',
+					default: false,
+				})
+				.example('$0 setup', 'Install workshop dependencies')
+		},
+		async (argv: ArgumentsCamelCase<{ silent?: boolean }>) => {
+			const { setup } = await import('./commands/setup.js')
+			const result = await setup({ silent: argv.silent })
 			if (!result.success) {
 				process.exit(1)
 			}
@@ -368,6 +440,11 @@ const cli = yargs(args)
 					type: 'string',
 					description: 'Set the default directory for workshop repos',
 				})
+				.option('package-manager', {
+					type: 'string',
+					choices: PACKAGE_MANAGERS,
+					description: 'Set the default package manager',
+				})
 				.option('silent', {
 					alias: 's',
 					type: 'boolean',
@@ -382,6 +459,7 @@ const cli = yargs(args)
 			argv: ArgumentsCamelCase<{
 				subcommand?: string
 				reposDir?: string
+				packageManager?: string
 				silent?: boolean
 			}>,
 		) => {
@@ -389,6 +467,12 @@ const cli = yargs(args)
 			const result = await config({
 				subcommand: argv.subcommand === 'reset' ? 'reset' : undefined,
 				reposDir: argv.reposDir,
+				packageManager: argv.packageManager as
+					| 'npm'
+					| 'pnpm'
+					| 'yarn'
+					| 'bun'
+					| undefined,
 				silent: argv.silent,
 			})
 			if (!result.success) {
@@ -1486,6 +1570,11 @@ try {
 				description: 'Clone a workshop from epicweb-dev GitHub org',
 			},
 			{
+				name: `${chalk.green('setup')} - Install dependencies`,
+				value: 'setup' as const,
+				description: 'Install workshop dependencies (uses configured manager)',
+			},
+			{
 				name: `${chalk.green('remove')} - Remove a workshop`,
 				value: 'remove' as const,
 				description: workshopTitle
@@ -1595,6 +1684,12 @@ try {
 			case 'add': {
 				const { add } = await import('./commands/workshops.js')
 				const result = await add({})
+				if (!result.success) process.exit(1)
+				break
+			}
+			case 'setup': {
+				const { setup } = await import('./commands/setup.js')
+				const result = await setup({})
 				if (!result.success) process.exit(1)
 				break
 			}

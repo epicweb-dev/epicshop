@@ -7,12 +7,24 @@ import { cachified, githubCache } from '@epic-web/workshop-utils/cache.server'
 import { parseEpicshopConfig } from '@epic-web/workshop-utils/config.server'
 import { getAuthInfo } from '@epic-web/workshop-utils/db.server'
 import { userHasAccessToWorkshop } from '@epic-web/workshop-utils/epic-api.server'
-import { getErrorMessage } from '@epic-web/workshop-utils/utils'
+import {
+	PACKAGE_MANAGERS,
+	clearPackageManager,
+	getPackageManager,
+	isPackageManagerConfigured,
+	setPackageManager,
+	type PackageManager,
+} from '@epic-web/workshop-utils/workshops.server'
 import chalk from 'chalk'
-import { execa } from 'execa'
 import { matchSorter, rankings } from 'match-sorter'
 import ora from 'ora'
 import { assertCanPrompt, isCiEnvironment } from '../utils/cli-runtime.js'
+import { runCommand, runCommandInteractive } from '../utils/command-runner.js'
+import {
+	formatPackageManagerCommand,
+	getPackageManagerRunArgs,
+} from '../utils/package-manager.js'
+import { setup } from './setup.js'
 
 const GITHUB_ORG = 'epicweb-dev'
 const TUTORIAL_REPO = 'epicshop-tutorial'
@@ -341,6 +353,7 @@ export type StartOptions = {
 
 export type ConfigOptions = {
 	reposDir?: string
+	packageManager?: PackageManager
 	silent?: boolean
 	subcommand?: 'reset' | 'delete'
 }
@@ -473,15 +486,7 @@ async function addSingleWorkshop(
 		}
 	}
 
-	if (!silent) {
-		console.log(chalk.cyan(`🔧 Running npm run setup...`))
-	}
-
-	// Run npm run setup
-	const setupResult = await runCommand('npm', ['run', 'setup'], {
-		cwd: workshopPath,
-		silent,
-	})
+	const setupResult = await setup({ cwd: workshopPath, silent })
 
 	if (!setupResult.success) {
 		// Clean up the cloned directory on setup failure
@@ -495,7 +500,7 @@ async function addSingleWorkshop(
 		}
 		return {
 			success: false,
-			message: `Failed to run setup: ${setupResult.message}`,
+			message: `Failed to set up workshop: ${setupResult.message}`,
 			error: setupResult.error,
 		}
 	}
@@ -1054,12 +1059,18 @@ export async function list({
 			},
 		})
 
+		const packageManager = await getPackageManager()
+		const startCommand = formatPackageManagerCommand(
+			packageManager,
+			getPackageManagerRunArgs(packageManager, 'start'),
+		)
+
 		// Show actions for selected workshop
 		const actionChoices = [
 			{
 				name: 'Start workshop',
 				value: 'start',
-				description: 'Run npm start in the workshop directory',
+				description: `Run ${startCommand} in the workshop directory`,
 			},
 			{
 				name: 'Open in editor',
@@ -1380,8 +1391,11 @@ export async function startWorkshop(
 			console.log(chalk.gray(`   Path: ${workshopToStart.path}\n`))
 		}
 
-		// Run npm start in the workshop directory
-		const startResult = await runCommandInteractive('npm', ['start'], {
+		const packageManager = await getPackageManager()
+		const startArgs = getPackageManagerRunArgs(packageManager, 'start')
+
+		// Run start script in the workshop directory
+		const startResult = await runCommandInteractive(packageManager, startArgs, {
 			cwd: workshopToStart.path,
 		})
 
@@ -1615,14 +1629,29 @@ export async function config(
 			}
 		}
 
-		if (options.reposDir) {
-			// Set the repos directory directly via CLI flag
-			const resolvedPath = path.resolve(options.reposDir)
-			await setReposDirectory(resolvedPath)
-			const message = `Repos directory set to: ${resolvedPath}`
-			if (!silent) console.log(chalk.green(`✅ ${message}`))
-			return { success: true, message }
-		}
+	// Handle CLI flags for setting config values
+	const messages: string[] = []
+	
+	if (options.reposDir) {
+		// Set the repos directory directly via CLI flag
+		const resolvedPath = path.resolve(options.reposDir)
+		await setReposDirectory(resolvedPath)
+		const message = `Repos directory set to: ${resolvedPath}`
+		messages.push(message)
+		if (!silent) console.log(chalk.green(`✅ ${message}`))
+	}
+
+	if (options.packageManager) {
+		await setPackageManager(options.packageManager)
+		const message = `Package manager set to: ${options.packageManager}`
+		messages.push(message)
+		if (!silent) console.log(chalk.green(`✅ ${message}`))
+	}
+
+	// If either option was set, return now
+	if (messages.length > 0) {
+		return { success: true, message: messages.join('; ') }
+	}
 
 		if (silent) {
 			// In silent mode, just return current config
@@ -1635,14 +1664,17 @@ export async function config(
 			reason: 'select a configuration option',
 			hints: [
 				'Set repos dir directly: npx epicshop config --repos-dir <path>',
+				'Set package manager directly: npx epicshop config --package-manager <npm|pnpm|yarn|bun>',
 				'Delete config non-interactively: npx epicshop config reset --silent',
 			],
 		})
-		const { search, confirm } = await import('@inquirer/prompts')
+		const { search, confirm, select } = await import('@inquirer/prompts')
 
 		const reposDir = await getReposDirectory()
 		const isConfigured = await isReposDirectoryConfigured()
 		const defaultDir = getDefaultReposDir()
+		const packageManager = await getPackageManager()
+		const isPackageManagerSet = await isPackageManagerConfigured()
 
 		// Build config options
 		const configOptions = [
@@ -1650,6 +1682,13 @@ export async function config(
 				name: `Repos directory`,
 				value: 'repos-dir',
 				description: isConfigured ? reposDir : `${reposDir} (default)`,
+			},
+			{
+				name: `Package manager`,
+				value: 'package-manager',
+				description: isPackageManagerSet
+					? packageManager
+					: `${packageManager} (default)`,
 			},
 			{
 				name: `Reset config file`,
@@ -1781,6 +1820,92 @@ export async function config(
 					return {
 						success: true,
 						message: `Repos directory reset to default: ${defaultDir}`,
+					}
+				} else {
+					console.log(chalk.gray('\nNo changes made.'))
+					return { success: true, message: 'Cancelled' }
+				}
+			} else {
+				console.log(chalk.gray('\nNo changes made.'))
+				return { success: true, message: 'Cancelled' }
+			}
+		}
+
+		if (selectedConfig === 'package-manager') {
+			console.log()
+			console.log(chalk.bold('  Current value:'))
+			if (isPackageManagerSet) {
+				console.log(chalk.white(`  ${packageManager}`))
+			} else {
+				console.log(
+					chalk.gray(`  ${packageManager} (default, not explicitly set)`),
+				)
+			}
+			console.log()
+
+			const actionChoices = [
+				{
+					name: 'Edit',
+					value: 'edit',
+					description: 'Change the default package manager',
+				},
+				...(isPackageManagerSet
+					? [
+							{
+								name: 'Remove',
+								value: 'remove',
+								description: 'Reset to default (npm)',
+							},
+						]
+					: []),
+				{
+					name: 'Cancel',
+					value: 'cancel',
+					description: 'Go back without changes',
+				},
+			]
+
+			const action = await search({
+				message: 'What would you like to do?',
+				source: async (input) => {
+					if (!input) return actionChoices
+					return matchSorter(actionChoices, input, {
+						keys: ['name', 'value', 'description'],
+					})
+				},
+			})
+
+			if (action === 'edit') {
+				const selectedManager = await select({
+					message: 'Select a package manager:',
+					choices: PACKAGE_MANAGERS.map((manager: PackageManager) => ({
+						name: manager,
+						value: manager,
+					})),
+				})
+				await setPackageManager(selectedManager)
+				console.log()
+				console.log(
+					chalk.green(
+						`✅ Package manager set to: ${chalk.bold(selectedManager)}`,
+					),
+				)
+				return {
+					success: true,
+					message: `Package manager set to: ${selectedManager}`,
+				}
+			} else if (action === 'remove') {
+				const shouldRemove = await confirm({
+					message: 'Reset package manager to default (npm)?',
+					default: false,
+				})
+				if (shouldRemove) {
+					await clearPackageManager()
+					console.log()
+					console.log(chalk.green(`✅ Package manager reset to default (npm).`))
+					return {
+						success: true,
+						message: 'Package manager reset to default (npm).',
 					}
 				} else {
 					console.log(chalk.gray('\nNo changes made.'))
@@ -2191,9 +2316,10 @@ async function promptAndSetupAccessibleWorkshops(): Promise<void> {
 			'🐨 Next, you can select any workshops you’d like me to set up for you.',
 		),
 	)
+	const packageManager = await getPackageManager()
 	console.log(
 		chalk.gray(
-			'   This will clone each workshop repo into your workshops directory and run `npm run setup`.\n' +
+			`   This will clone each workshop repo into your workshops directory and run setup using ${packageManager}.\n` +
 				'   (If something fails, we’ll keep going and you can retry later with `npx epicshop add`.)\n',
 		),
 	)
@@ -2608,13 +2734,7 @@ async function ensureTutorialAndStart(): Promise<WorkshopsResult> {
 		}
 	}
 
-	console.log(chalk.cyan(`\n🔧 Running npm run setup...\n`))
-
-	// Run npm run setup
-	const setupResult = await runCommand('npm', ['run', 'setup'], {
-		cwd: workshopPath,
-		silent: false,
-	})
+	const setupResult = await setup({ cwd: workshopPath, silent: false })
 
 	if (!setupResult.success) {
 		// Clean up on failure
@@ -2624,10 +2744,12 @@ async function ensureTutorialAndStart(): Promise<WorkshopsResult> {
 		} catch {
 			// Ignore cleanup errors
 		}
-		console.error(chalk.red(`❌ Failed to run setup: ${setupResult.message}`))
+		console.error(
+			chalk.red(`❌ Failed to set up workshop: ${setupResult.message}`),
+		)
 		return {
 			success: false,
-			message: `Failed to run setup: ${setupResult.message}`,
+			message: `Failed to set up workshop: ${setupResult.message}`,
 			error: setupResult.error,
 		}
 	}
@@ -2652,8 +2774,11 @@ async function ensureTutorialAndStart(): Promise<WorkshopsResult> {
 
 	console.log(chalk.cyan(`\n🚀 Starting ${chalk.bold(workshopTitle)}...\n`))
 
+	const packageManager = await getPackageManager()
+	const startArgs = getPackageManagerRunArgs(packageManager, 'start')
+
 	// Start the workshop
-	const startResult = await runCommandInteractive('npm', ['start'], {
+	const startResult = await runCommandInteractive(packageManager, startArgs, {
 		cwd: workshopPath,
 	})
 
@@ -2845,69 +2970,4 @@ async function directoryExists(dirPath: string): Promise<boolean> {
 	} catch {
 		return false
 	}
-}
-
-type CommandResult = {
-	success: boolean
-	message?: string
-	error?: Error
-}
-
-function resolveCliCommand(command: string): string {
-	// On Windows, package manager binaries are typically shimmed as *.cmd files.
-	// Spawning "npm" directly can fail with ENOENT even though "npm.cmd" exists.
-	if (
-		process.platform === 'win32' &&
-		(command === 'npm' || command === 'npx')
-	) {
-		return `${command}.cmd`
-	}
-	return command
-}
-
-function runCommand(
-	command: string,
-	args: string[],
-	options: { cwd: string; silent?: boolean },
-): Promise<CommandResult> {
-	return execa(resolveCliCommand(command), args, {
-		cwd: options.cwd,
-		stdio: options.silent ? 'pipe' : 'inherit',
-	}).then(
-		() => ({ success: true }),
-		(error: unknown) => {
-			const message = getErrorMessage(error, 'Command failed')
-			const err = error instanceof Error ? error : new Error(message)
-			return { success: false, message, error: err }
-		},
-	)
-}
-
-function runCommandInteractive(
-	command: string,
-	args: string[],
-	options: { cwd: string },
-): Promise<CommandResult> {
-	return execa(resolveCliCommand(command), args, {
-		cwd: options.cwd,
-		stdio: 'inherit',
-	}).then(
-		() => ({ success: true }),
-		(error: unknown) => {
-			// If the process was terminated by a signal (e.g. user presses Ctrl+C),
-			// treat it as success so we don't show a confusing error message.
-			if (
-				error &&
-				typeof error === 'object' &&
-				'signal' in error &&
-				typeof (error as { signal?: unknown }).signal === 'string'
-			) {
-				return { success: true }
-			}
-
-			const message = getErrorMessage(error, 'Command failed')
-			const err = error instanceof Error ? error : new Error(message)
-			return { success: false, message, error: err }
-		},
-	)
 }
