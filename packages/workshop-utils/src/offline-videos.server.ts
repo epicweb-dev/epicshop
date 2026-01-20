@@ -173,6 +173,17 @@ function emitDownloadProgress(progress: VideoDownloadProgress) {
 	downloadProgressEmitter.emit(DOWNLOAD_PROGRESS_EVENTS.PROGRESS, progress)
 }
 
+function formatDownloadError(error: unknown) {
+	if (error instanceof Error) {
+		return {
+			name: error.name,
+			message: error.message,
+			stack: error.stack,
+		}
+	}
+	return { message: String(error) }
+}
+
 let downloadState: OfflineVideoDownloadState = {
 	status: 'idle',
 	startedAt: null,
@@ -586,6 +597,13 @@ async function downloadMuxVideo({
 }) {
 	const urls = getMuxMp4Urls(playbackId, resolution)
 	let lastError: Error | null = null
+	const attempts: Array<{
+		url: string
+		status?: number
+		statusText?: string
+		hasBody?: boolean
+		error?: string
+	}> = []
 
 	emitDownloadProgress({
 		playbackId,
@@ -597,12 +615,14 @@ async function downloadMuxVideo({
 	for (const url of urls) {
 		log.info('Attempting mux download', { playbackId, url })
 		const response = await fetch(url).catch((error) => {
-			lastError = error as Error
+			const message = error instanceof Error ? error.message : String(error)
+			lastError = error instanceof Error ? error : new Error(message)
 			log.warn('Mux download request failed', {
 				playbackId,
 				url,
-				message: lastError.message,
+				message,
 			})
+			attempts.push({ url, error: message })
 			return null
 		})
 		if (!response) continue
@@ -614,6 +634,13 @@ async function downloadMuxVideo({
 				playbackId,
 				url,
 				status: response.status,
+				statusText: response.statusText,
+				hasBody: Boolean(response.body),
+			})
+			attempts.push({
+				url,
+				status: response.status,
+				statusText: response.statusText,
 				hasBody: Boolean(response.body),
 			})
 			continue
@@ -669,6 +696,13 @@ async function downloadMuxVideo({
 		bytesDownloaded: 0,
 		totalBytes: null,
 		status: 'error',
+	})
+
+	log.error('Mux download failed', {
+		playbackId,
+		resolution,
+		attempts,
+		error: lastError ? formatDownloadError(lastError) : null,
 	})
 
 	throw lastError ?? new Error(`Unable to download video ${playbackId}`)
@@ -742,7 +776,15 @@ async function runOfflineVideoDownloads({
 				error: message,
 				updatedAt: new Date().toISOString(),
 			}
-			log.error(`Download failed for ${video.playbackId}`, error)
+			log.error('Offline video download failed', {
+				playbackId: video.playbackId,
+				title: video.title,
+				url: video.url,
+				resolution,
+				fileName: entry.fileName,
+				filePath: path.join(getOfflineVideoDir(), entry.fileName),
+				error: formatDownloadError(error),
+			})
 		} finally {
 			downloadState.completed += 1
 			downloadState.current = null
@@ -1010,7 +1052,15 @@ export async function downloadOfflineVideo({
 		const detailedMessage =
 			error instanceof Error ? error.message : 'Download failed'
 		const message = `Failed to download "${title}". Please try again.`
-		log.error(`Offline video download failed for ${playbackId}`, error)
+		log.error('Offline video download failed', {
+			playbackId,
+			title,
+			url,
+			resolution,
+			fileName: entry.fileName,
+			filePath: path.join(getOfflineVideoDir(), entry.fileName),
+			error: formatDownloadError(error),
+		})
 		index[playbackId] = {
 			...entry,
 			status: 'error',
