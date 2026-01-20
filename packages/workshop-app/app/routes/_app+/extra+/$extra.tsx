@@ -237,6 +237,24 @@ export default function ExtraRoute() {
 		showPlaygroundIndicator || data.playground?.isUpToDate === false
 	const tabs = ['playground', 'extra', 'diff', 'chat'] as const
 	const preview = searchParams.get('preview')
+	const previousExtraLink = data.previousExtra
+		? {
+				to: `/extra/${data.previousExtra.dirName}`,
+				'aria-label': 'Previous Extra',
+			}
+		: {
+				to: '/extra',
+				'aria-label': 'Extras',
+			}
+	const nextExtraLink = data.nextExtra
+		? {
+				to: `/extra/${data.nextExtra.dirName}`,
+				'aria-label': 'Next Extra',
+			}
+		: {
+				to: '/finished',
+				'aria-label': 'Workshop finished',
+			}
 
 	function isValidPreview(
 		value: string | null,
@@ -350,30 +368,22 @@ export default function ExtraRoute() {
 							</div>
 						)}
 						<div className="mt-auto flex justify-between">
-							{data.previousExtra ? (
-								<Link
-									to={`/extra/${data.previousExtra.dirName}`}
-									aria-label="Previous Extra"
-									prefetch="intent"
-								>
-									<span aria-hidden>←</span>
-									<span className="hidden xl:inline"> Previous</span>
-								</Link>
-							) : (
-								<span />
-							)}
-							{data.nextExtra ? (
-								<Link
-									to={`/extra/${data.nextExtra.dirName}`}
-									aria-label="Next Extra"
-									prefetch="intent"
-								>
-									<span className="hidden xl:inline">Next </span>
-									<span aria-hidden>→</span>
-								</Link>
-							) : (
-								<span />
-							)}
+							<Link
+								to={previousExtraLink.to}
+								aria-label={previousExtraLink['aria-label']}
+								prefetch="intent"
+							>
+								<span aria-hidden>←</span>
+								<span className="hidden xl:inline"> Previous</span>
+							</Link>
+							<Link
+								to={nextExtraLink.to}
+								aria-label={nextExtraLink['aria-label']}
+								prefetch="intent"
+							>
+								<span className="hidden xl:inline">Next </span>
+								<span aria-hidden>→</span>
+							</Link>
 						</div>
 					</article>
 					<ElementScrollRestoration
@@ -386,24 +396,7 @@ export default function ExtraRoute() {
 							appName={data.extra.name}
 							relativePath={data.extraReadme.relativePath}
 						/>
-						<NavChevrons
-							prev={
-								data.previousExtra
-									? {
-											to: `/extra/${data.previousExtra.dirName}`,
-											'aria-label': 'Previous Extra',
-										}
-									: null
-							}
-							next={
-								data.nextExtra
-									? {
-											to: `/extra/${data.nextExtra.dirName}`,
-											'aria-label': 'Next Extra',
-										}
-									: null
-							}
-						/>
+						<NavChevrons prev={previousExtraLink} next={nextExtraLink} />
 					</div>
 				</div>
 				<div
