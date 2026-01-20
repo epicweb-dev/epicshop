@@ -1163,43 +1163,39 @@ function MobileNavigation({
 							</>
 						) : (
 							<Popover>
-								<PopoverTrigger asChild>
-									<SimpleTooltip
-										content={
-											data.sidecarStatus?.hasFailure
-												? 'Process error - click to see details'
-												: 'More options'
-										}
-									>
-										{data.sidecarStatus?.hasFailure ? (
-											<button
-												type="button"
-												aria-label="Process error - click to see details"
-												className="text-muted-foreground hover:text-foreground hover:bg-muted flex h-8 w-8 items-center justify-center rounded-md transition-colors"
+								{data.sidecarStatus?.hasFailure ? (
+									<PopoverTrigger asChild>
+										<button
+											type="button"
+											aria-label="Process error - click to see details"
+											title="Process error - click to see details"
+											className="text-muted-foreground hover:text-foreground hover:bg-muted flex h-8 w-8 items-center justify-center rounded-md transition-colors"
+										>
+											<StatusIndicator status="failed" />
+										</button>
+									</PopoverTrigger>
+								) : (
+									<PopoverTrigger asChild>
+										<button
+											type="button"
+											aria-label="More options"
+											title="More options"
+											className="text-muted-foreground hover:text-foreground hover:bg-muted flex h-8 w-8 items-center justify-center rounded-md transition-colors"
+										>
+											<svg
+												width="20"
+												height="20"
+												viewBox="0 0 20 20"
+												fill="none"
+												xmlns="http://www.w3.org/2000/svg"
 											>
-												<StatusIndicator status="failed" />
-											</button>
-										) : (
-											<button
-												type="button"
-												aria-label="More options"
-												className="text-muted-foreground hover:text-foreground hover:bg-muted flex h-8 w-8 items-center justify-center rounded-md transition-colors"
-											>
-												<svg
-													width="20"
-													height="20"
-													viewBox="0 0 20 20"
-													fill="none"
-													xmlns="http://www.w3.org/2000/svg"
-												>
-													<circle cx="5" cy="10" r="1.5" fill="currentColor" />
-													<circle cx="10" cy="10" r="1.5" fill="currentColor" />
-													<circle cx="15" cy="10" r="1.5" fill="currentColor" />
-												</svg>
-											</button>
-										)}
-									</SimpleTooltip>
-								</PopoverTrigger>
+												<circle cx="5" cy="10" r="1.5" fill="currentColor" />
+												<circle cx="10" cy="10" r="1.5" fill="currentColor" />
+												<circle cx="15" cy="10" r="1.5" fill="currentColor" />
+											</svg>
+										</button>
+									</PopoverTrigger>
+								)}
 								<PopoverContent
 									side="top"
 									align="start"
@@ -1715,43 +1711,39 @@ function Navigation({
 							</div>
 						) : (
 							<Popover>
-								<PopoverTrigger asChild>
-									<SimpleTooltip
-										content={
-											data.sidecarStatus?.hasFailure
-												? 'Process error - click to see details'
-												: 'More options'
-										}
-									>
-										{data.sidecarStatus?.hasFailure ? (
-											<button
-												type="button"
-												aria-label="Process error - click to see details"
-												className="text-muted-foreground hover:text-foreground hover:bg-muted flex h-8 w-8 items-center justify-center rounded-md transition-colors"
+								{data.sidecarStatus?.hasFailure ? (
+									<PopoverTrigger asChild>
+										<button
+											type="button"
+											aria-label="Process error - click to see details"
+											title="Process error - click to see details"
+											className="text-muted-foreground hover:text-foreground hover:bg-muted flex h-8 w-8 items-center justify-center rounded-md transition-colors"
+										>
+											<StatusIndicator status="failed" />
+										</button>
+									</PopoverTrigger>
+								) : (
+									<PopoverTrigger asChild>
+										<button
+											type="button"
+											aria-label="More options"
+											title="More options"
+											className="text-muted-foreground hover:text-foreground hover:bg-muted flex h-8 w-8 items-center justify-center rounded-md transition-colors"
+										>
+											<svg
+												width="20"
+												height="20"
+												viewBox="0 0 20 20"
+												fill="none"
+												xmlns="http://www.w3.org/2000/svg"
 											>
-												<StatusIndicator status="failed" />
-											</button>
-										) : (
-											<button
-												type="button"
-												aria-label="More options"
-												className="text-muted-foreground hover:text-foreground hover:bg-muted flex h-8 w-8 items-center justify-center rounded-md transition-colors"
-											>
-												<svg
-													width="20"
-													height="20"
-													viewBox="0 0 20 20"
-													fill="none"
-													xmlns="http://www.w3.org/2000/svg"
-												>
-													<circle cx="5" cy="10" r="1.5" fill="currentColor" />
-													<circle cx="10" cy="10" r="1.5" fill="currentColor" />
-													<circle cx="15" cy="10" r="1.5" fill="currentColor" />
-												</svg>
-											</button>
-										)}
-									</SimpleTooltip>
-								</PopoverTrigger>
+												<circle cx="5" cy="10" r="1.5" fill="currentColor" />
+												<circle cx="10" cy="10" r="1.5" fill="currentColor" />
+												<circle cx="15" cy="10" r="1.5" fill="currentColor" />
+											</svg>
+										</button>
+									</PopoverTrigger>
+								)}
 								<PopoverContent
 									side="right"
 									align="start"
