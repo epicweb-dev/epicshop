@@ -46,6 +46,9 @@ const BaseWorkshopConfigFields = {
 	product: BaseProductSchema.optional(),
 }
 
+const formatFieldErrors = (errors: unknown) =>
+	Array.isArray(errors) ? errors.join(', ') : ''
+
 function transformProductFields<
 	T extends {
 		product?: {
@@ -77,6 +80,24 @@ function transformProductFields<
 	}
 }
 
+const defaultProductConfig = {
+	host: 'www.epicweb.dev',
+	displayName: 'EpicWeb.dev',
+	displayNameShort: 'Epic Web',
+	logo: '/logo.svg',
+}
+
+const defaultFormsConfig = {
+	workshop:
+		'https://docs.google.com/forms/d/e/1FAIpQLSdRmj9p8-5zyoqRzxp3UpqSbC3aFkweXvvJIKes0a5s894gzg/viewform?hl=en&embedded=true&entry.2123647600={workshopTitle}',
+	exercise:
+		'https://docs.google.com/forms/d/e/1FAIpQLSf3o9xyjQepTlOTH5Z7ZwkeSTdXh6YWI_RGc9KiyD3oUN0p6w/viewform?hl=en&embedded=true&entry.1836176234={workshopTitle}&entry.428900931={exerciseTitle}',
+}
+
+const defaultTestTabConfig = {
+	enabled: true,
+}
+
 const PartialWorkshopConfigSchema = z
 	.object(BaseWorkshopConfigFields)
 	.transform(transformProductFields)
@@ -99,7 +120,7 @@ const WorkshopConfigSchema = z
 				discordChannelId: z.string().optional(),
 				discordTags: z.array(z.string()).optional(),
 			})
-			.default({}),
+			.default(defaultProductConfig),
 		githubRepo: z
 			.string()
 			.transform((githubRepo) => githubRepo ?? getEnv().EPICSHOP_GITHUB_REPO),
@@ -109,23 +130,15 @@ const WorkshopConfigSchema = z
 		stackBlitzConfig: StackBlitzConfigSchema.optional(),
 		forms: z
 			.object({
-				workshop: z
-					.string()
-					.default(
-						'https://docs.google.com/forms/d/e/1FAIpQLSdRmj9p8-5zyoqRzxp3UpqSbC3aFkweXvvJIKes0a5s894gzg/viewform?hl=en&embedded=true&entry.2123647600={workshopTitle}',
-					),
-				exercise: z
-					.string()
-					.default(
-						'https://docs.google.com/forms/d/e/1FAIpQLSf3o9xyjQepTlOTH5Z7ZwkeSTdXh6YWI_RGc9KiyD3oUN0p6w/viewform?hl=en&embedded=true&entry.1836176234={workshopTitle}&entry.428900931={exerciseTitle}',
-					),
+				workshop: z.string().default(defaultFormsConfig.workshop),
+				exercise: z.string().default(defaultFormsConfig.exercise),
 			})
-			.default({}),
+			.default(defaultFormsConfig),
 		testTab: z
 			.object({
 				enabled: z.boolean().default(true),
 			})
-			.default({}),
+			.default(defaultTestTabConfig),
 		scripts: z
 			.object({
 				postupdate: z.string().optional(),
@@ -252,7 +265,7 @@ export function getWorkshopConfig(): WorkshopConfig {
 		if (error instanceof z.ZodError) {
 			const flattenedErrors = error.flatten()
 			const errorMessages = Object.entries(flattenedErrors.fieldErrors)
-				.map(([field, errors]) => `${field}: ${errors?.join(', ')}`)
+				.map(([field, errors]) => `${field}: ${formatFieldErrors(errors)}`)
 				.concat(flattenedErrors.formErrors)
 			throw new Error(
 				`Invalid epicshop configuration in ${getRootPkgJsonPath()}:\n${errorMessages.join('\n')}`,
@@ -384,7 +397,7 @@ export async function getAppConfig(fullPath: string) {
 					.optional()
 					.default(workshopConfig.testTab?.enabled ?? true),
 			})
-			.default({}),
+			.default({ enabled: workshopConfig.testTab?.enabled ?? true }),
 		scripts: z
 			.object({
 				test: z.string().optional(),
@@ -427,7 +440,7 @@ export async function getAppConfig(fullPath: string) {
 		if (error instanceof z.ZodError) {
 			const flattenedErrors = error.flatten()
 			const errorMessages = Object.entries(flattenedErrors.fieldErrors)
-				.map(([field, errors]) => `${field}: ${errors?.join(', ')}`)
+				.map(([field, errors]) => `${field}: ${formatFieldErrors(errors)}`)
 				.concat(flattenedErrors.formErrors)
 			throw new Error(
 				`Invalid app configuration for ${fullPath}:\n${errorMessages.join('\n')}`,

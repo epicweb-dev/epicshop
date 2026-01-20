@@ -2,7 +2,7 @@ import { getExercises } from '@epic-web/workshop-utils/apps.server'
 import { getWorkshopConfig } from '@epic-web/workshop-utils/config.server'
 import { type McpServer } from '@modelcontextprotocol/sdk/server/mcp.js'
 import { type GetPromptResult } from '@modelcontextprotocol/sdk/types.js'
-import { z } from 'zod'
+import { z } from 'zod/v3'
 import { exerciseContextResource } from './resources.ts'
 import { formatPromptDescription, promptDocs } from './server-metadata.ts'
 import {
@@ -10,7 +10,9 @@ import {
 	workshopDirectoryInputSchema,
 } from './utils.ts'
 
-export const quizMeInputSchema = {
+type PromptInputSchema = Record<string, z.ZodTypeAny>
+
+export const quizMeInputSchema: PromptInputSchema = {
 	workshopDirectory: workshopDirectoryInputSchema,
 	exerciseNumber: z
 		.string()
@@ -66,7 +68,8 @@ Please use this context to provide quiz questions, one at a time, to me to help 
 }
 
 export function initPrompts(server: McpServer) {
-	server.registerPrompt(
+	const registerPrompt = (server as any).registerPrompt.bind(server)
+	registerPrompt(
 		'quiz_me',
 		{
 			title: promptDocs.quiz_me.title,

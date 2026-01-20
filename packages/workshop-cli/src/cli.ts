@@ -278,9 +278,8 @@ const cli = yargs(args)
 				silent?: boolean
 			}>,
 		) => {
-			const { findWorkshopRoot, remove } = await import(
-				'./commands/workshops.ts'
-			)
+			const { findWorkshopRoot, remove } =
+				await import('./commands/workshops.ts')
 
 			let workshopToRemove = argv.workshop
 
@@ -327,9 +326,8 @@ const cli = yargs(args)
 				silent?: boolean
 			}>,
 		) => {
-			const { findWorkshopRoot, openWorkshop } = await import(
-				'./commands/workshops.ts'
-			)
+			const { findWorkshopRoot, openWorkshop } =
+				await import('./commands/workshops.ts')
 
 			let workshopToOpen = argv.workshop
 
@@ -446,9 +444,8 @@ const cli = yargs(args)
 				}
 			} else {
 				// Not inside a workshop, prompt user to select one
-				const { listWorkshops, getWorkshop } = await import(
-					'@epic-web/workshop-utils/workshops.server'
-				)
+				const { listWorkshops, getWorkshop } =
+					await import('@epic-web/workshop-utils/workshops.server')
 				const workshops = await listWorkshops()
 
 				if (workshops.length === 0) {
@@ -584,9 +581,8 @@ const cli = yargs(args)
 				}
 			} else {
 				// Not inside a workshop, prompt user to select one
-				const { listWorkshops, getWorkshop } = await import(
-					'@epic-web/workshop-utils/workshops.server'
-				)
+				const { listWorkshops, getWorkshop } =
+					await import('@epic-web/workshop-utils/workshops.server')
 				const workshops = await listWorkshops()
 
 				if (workshops.length === 0) {
@@ -1250,9 +1246,8 @@ const cli = yargs(args)
 			process.chdir(workshopRoot)
 
 			try {
-				const { showProgressDiff, showDiffBetweenApps } = await import(
-					'./commands/diff.js'
-				)
+				const { showProgressDiff, showDiffBetweenApps } =
+					await import('./commands/diff.js')
 
 				if (argv.app1 && argv.app2) {
 					const result = await showDiffBetweenApps({
@@ -1542,9 +1537,8 @@ try {
 
 		switch (subcommand) {
 			case 'start': {
-				const { findWorkshopRoot, startWorkshop } = await import(
-					'./commands/workshops.ts'
-				)
+				const { findWorkshopRoot, startWorkshop } =
+					await import('./commands/workshops.ts')
 				const wsRoot = await findWorkshopRoot()
 				if (wsRoot) {
 					// Inside a workshop, start it directly
@@ -1570,9 +1564,8 @@ try {
 				break
 			}
 			case 'open': {
-				const { findWorkshopRoot, openWorkshop } = await import(
-					'./commands/workshops.ts'
-				)
+				const { findWorkshopRoot, openWorkshop } =
+					await import('./commands/workshops.ts')
 				const workshopRoot = await findWorkshopRoot()
 				const result = await openWorkshop({
 					workshop: workshopRoot || undefined,
@@ -1593,9 +1586,8 @@ try {
 				break
 			}
 			case 'remove': {
-				const { findWorkshopRoot, remove } = await import(
-					'./commands/workshops.ts'
-				)
+				const { findWorkshopRoot, remove } =
+					await import('./commands/workshops.ts')
 				const workshopRoot = await findWorkshopRoot()
 				const result = await remove({
 					workshop: workshopRoot || undefined,
@@ -1618,9 +1610,8 @@ try {
 					}
 				} else {
 					// Need to select a workshop
-					const { listWorkshops, getWorkshop } = await import(
-						'@epic-web/workshop-utils/workshops.server'
-					)
+					const { listWorkshops, getWorkshop } =
+						await import('@epic-web/workshop-utils/workshops.server')
 					const workshops = await listWorkshops()
 					if (workshops.length === 0) {
 						console.log(
@@ -1678,9 +1669,8 @@ try {
 					}
 				} else {
 					// Need to select a workshop
-					const { listWorkshops, getWorkshop } = await import(
-						'@epic-web/workshop-utils/workshops.server'
-					)
+					const { listWorkshops, getWorkshop } =
+						await import('@epic-web/workshop-utils/workshops.server')
 					const workshops = await listWorkshops()
 					if (workshops.length === 0) {
 						console.log(
@@ -1816,9 +1806,8 @@ try {
 				const originalCwd = process.cwd()
 				process.chdir(wsRoot)
 				try {
-					const { list: listExercises } = await import(
-						'./commands/exercises.js'
-					)
+					const { list: listExercises } =
+						await import('./commands/exercises.js')
 					const result = await listExercises({})
 					if (!result.success) process.exit(1)
 				} finally {
@@ -1836,9 +1825,8 @@ try {
 				const originalCwd = process.cwd()
 				process.chdir(wsRoot)
 				try {
-					const { show: showPlayground } = await import(
-						'./commands/playground.js'
-					)
+					const { show: showPlayground } =
+						await import('./commands/playground.js')
 					const result = await showPlayground({})
 					if (!result.success) process.exit(1)
 				} finally {

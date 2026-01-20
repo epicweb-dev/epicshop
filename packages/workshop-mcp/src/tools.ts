@@ -37,7 +37,7 @@ import {
 	type ReadResourceResult,
 } from '@modelcontextprotocol/sdk/types.js'
 import * as client from 'openid-client'
-import { z } from 'zod'
+import { z } from 'zod/v3'
 import { quizMe, quizMeInputSchema } from './prompts.ts'
 import {
 	diffBetweenAppsResource,
@@ -162,7 +162,7 @@ function formatSavedPlaygroundTimestamp(createdAt: string) {
 }
 
 function parseResourceText(resource: ReadResourceResult['contents'][number]) {
-	if (typeof resource.text === 'string') {
+	if ('text' in resource && typeof resource.text === 'string') {
 		try {
 			return JSON.parse(resource.text)
 		} catch {
@@ -1269,15 +1269,18 @@ function getEmbeddedResourceContent(
 			type: 'resource' as const,
 			resource,
 		}
-	} else if (typeof resource.text === 'string') {
+	} else if ('text' in resource && typeof resource.text === 'string') {
 		return {
 			type: 'text' as const,
 			text: resource.text,
 		}
+	} else if ('blob' in resource) {
+		return {
+			type: 'text' as const,
+			text: `Binary resource ${resource.uri} (${resource.mimeType ?? 'unknown'})`,
+		}
 	} else {
-		throw new Error(
-			`Unknown resource type: ${resource.type} for ${resource.uri}`,
-		)
+		throw new Error(`Unknown resource content for ${resource.uri}`)
 	}
 }
 

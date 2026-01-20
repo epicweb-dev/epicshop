@@ -248,9 +248,8 @@ ${lanUrl ? `${chalk.bold('On Your Network:')}  ${chalk.cyan(lanUrl)}` : ''}
 			!ENV.EPICSHOP_DEPLOYED
 		) {
 			console.log(chalk.blue('🚀 Starting sidecar processes...'))
-			const { startSidecarProcesses } = await import(
-				'@epic-web/workshop-utils/process-manager.server'
-			)
+			const { startSidecarProcesses } =
+				await import('@epic-web/workshop-utils/process-manager.server')
 			startSidecarProcesses(workshopConfig.sidecarProcesses)
 		}
 	} catch (error) {

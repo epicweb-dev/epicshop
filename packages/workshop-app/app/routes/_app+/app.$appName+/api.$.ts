@@ -15,13 +15,16 @@ import { resolveApps } from './__utils'
 export async function loader(args: LoaderFunctionArgs) {
 	ensureUndeployed()
 	const api = await getApiModule(args)
+	const loaderFn = api.mod.loader as
+		| ((loaderArgs: LoaderFunctionArgs) => unknown)
+		| undefined
 	invariantResponse(
-		api.mod.loader,
+		loaderFn,
 		'Attempted to make a GET request to the api endpoint but the api module does not export a loader function',
 		{ status: 405 },
 	)
 	try {
-		const result = await api.mod.loader(args)
+		const result = await loaderFn(args)
 		return result
 	} catch (error) {
 		api.cleanupError(error)
@@ -31,13 +34,16 @@ export async function loader(args: LoaderFunctionArgs) {
 export async function action(args: ActionFunctionArgs) {
 	ensureUndeployed()
 	const api = await getApiModule(args)
+	const actionFn = api.mod.action as
+		| ((actionArgs: ActionFunctionArgs) => unknown)
+		| undefined
 	invariantResponse(
-		api.mod.action,
+		actionFn,
 		'Attempted to make a non-GET request to the api endpoint but the api module does not export an action function',
 		{ status: 405 },
 	)
 	try {
-		const result = await api.mod.action(args)
+		const result = await actionFn(args)
 		return result
 	} catch (error) {
 		api.cleanupError(error)

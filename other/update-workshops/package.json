@@ -6,7 +6,7 @@
 		"start": "node index.js"
 	},
 	"dependencies": {
-		"execa": "^9.5.2",
-		"globby": "^14.1.0"
+		"execa": "^9.6.1",
+		"globby": "^16.1.0"
 	}
 }

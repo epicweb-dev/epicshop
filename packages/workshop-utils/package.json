@@ -7,6 +7,9 @@
   "type": "module",
   "zshy": {
     "cjs": false,
+    "conditions": {
+      "import": "esm"
+    },
     "exports": {
       "./package.json": "./package.json",
       "./apps.server": "./src/apps.server.ts",
@@ -40,108 +43,134 @@
   "exports": {
     "./package.json": "./package.json",
     "./apps.server": {
+      "import": "./dist/apps.server.js",
       "types": "./dist/apps.server.d.ts",
-      "import": "./dist/apps.server.js"
+      "default": "./dist/apps.server.js"
     },
     "./diff.server": {
+      "import": "./dist/diff.server.js",
       "types": "./dist/diff.server.d.ts",
-      "import": "./dist/diff.server.js"
+      "default": "./dist/diff.server.js"
     },
     "./env.server": {
+      "import": "./dist/env.server.js",
       "types": "./dist/env.server.d.ts",
-      "import": "./dist/env.server.js"
+      "default": "./dist/env.server.js"
     },
     "./epic-api.server": {
+      "import": "./dist/epic-api.server.js",
       "types": "./dist/epic-api.server.d.ts",
-      "import": "./dist/epic-api.server.js"
+      "default": "./dist/epic-api.server.js"
     },
     "./user.server": {
+      "import": "./dist/user.server.js",
       "types": "./dist/user.server.d.ts",
-      "import": "./dist/user.server.js"
+      "default": "./dist/user.server.js"
     },
     "./cache.server": {
+      "import": "./dist/cache.server.js",
       "types": "./dist/cache.server.d.ts",
-      "import": "./dist/cache.server.js"
+      "default": "./dist/cache.server.js"
     },
     "./config.server": {
+      "import": "./dist/config.server.js",
       "types": "./dist/config.server.d.ts",
-      "import": "./dist/config.server.js"
+      "default": "./dist/config.server.js"
     },
     "./db.server": {
+      "import": "./dist/db.server.js",
       "types": "./dist/db.server.d.ts",
-      "import": "./dist/db.server.js"
+      "default": "./dist/db.server.js"
     },
     "./data-storage.server": {
+      "import": "./dist/data-storage.server.js",
       "types": "./dist/data-storage.server.d.ts",
-      "import": "./dist/data-storage.server.js"
+      "default": "./dist/data-storage.server.js"
     },
     "./launch-editor.server": {
+      "import": "./dist/launch-editor.server.js",
       "types": "./dist/launch-editor.server.d.ts",
-      "import": "./dist/launch-editor.server.js"
+      "default": "./dist/launch-editor.server.js"
     },
     "./timing.server": {
+      "import": "./dist/timing.server.js",
       "types": "./dist/timing.server.d.ts",
-      "import": "./dist/timing.server.js"
+      "default": "./dist/timing.server.js"
     },
     "./modified-time.server": {
+      "import": "./dist/modified-time.server.js",
       "types": "./dist/modified-time.server.d.ts",
-      "import": "./dist/modified-time.server.js"
+      "default": "./dist/modified-time.server.js"
     },
     "./compile-mdx.server": {
+      "import": "./dist/compile-mdx.server.js",
       "types": "./dist/compile-mdx.server.d.ts",
-      "import": "./dist/compile-mdx.server.js"
+      "default": "./dist/compile-mdx.server.js"
     },
     "./git.server": {
+      "import": "./dist/git.server.js",
       "types": "./dist/git.server.d.ts",
-      "import": "./dist/git.server.js"
+      "default": "./dist/git.server.js"
     },
     "./iframe-sync": {
+      "import": "./dist/iframe-sync.js",
       "types": "./dist/iframe-sync.d.ts",
-      "import": "./dist/iframe-sync.js"
+      "default": "./dist/iframe-sync.js"
     },
     "./init-env": {
+      "import": "./dist/init-env.js",
       "types": "./dist/init-env.d.ts",
-      "import": "./dist/init-env.js"
+      "default": "./dist/init-env.js"
     },
     "./logger": {
+      "import": "./dist/logger.js",
       "types": "./dist/logger.d.ts",
-      "import": "./dist/logger.js"
+      "default": "./dist/logger.js"
     },
     "./playwright.server": {
+      "import": "./dist/playwright.server.js",
       "types": "./dist/playwright.server.d.ts",
-      "import": "./dist/playwright.server.js"
+      "default": "./dist/playwright.server.js"
     },
     "./notifications.server": {
+      "import": "./dist/notifications.server.js",
       "types": "./dist/notifications.server.d.ts",
-      "import": "./dist/notifications.server.js"
+      "default": "./dist/notifications.server.js"
     },
     "./offline-videos.server": {
+      "import": "./dist/offline-videos.server.js",
       "types": "./dist/offline-videos.server.d.ts",
-      "import": "./dist/offline-videos.server.js"
+      "default": "./dist/offline-videos.server.js"
     },
     "./process-manager.server": {
+      "import": "./dist/process-manager.server.js",
       "types": "./dist/process-manager.server.d.ts",
-      "import": "./dist/process-manager.server.js"
+      "default": "./dist/process-manager.server.js"
     },
     "./test": {
+      "import": "./dist/test.js",
       "types": "./dist/test.d.ts",
-      "import": "./dist/test.js"
+      "default": "./dist/test.js"
     },
     "./request-context.server": {
+      "import": "./dist/request-context.server.js",
       "types": "./dist/request-context.server.d.ts",
-      "import": "./dist/request-context.server.js"
+      "default": "./dist/request-context.server.js"
     },
     "./utils.server": {
+      "import": "./dist/utils.server.js",
       "types": "./dist/utils.server.d.ts",
-      "import": "./dist/utils.server.js"
+      "default": "./dist/utils.server.js"
     },
     "./utils": {
+      "import": "./dist/utils.js",
       "types": "./dist/utils.d.ts",
-      "import": "./dist/utils.js"
+      "default": "./dist/utils.js"
     },
     "./workshops.server": {
+      "import": "./dist/workshops.server.js",
       "types": "./dist/workshops.server.d.ts",
-      "import": "./dist/workshops.server.js"
+      "default": "./dist/workshops.server.js"
     }
   },
   "files": [
@@ -160,62 +189,62 @@
     "@epic-web/remember": "^1.1.0",
     "@kentcdodds/md-temp": "^10.0.1",
     "@mdx-js/mdx": "^3.1.1",
-    "@playwright/test": "^1.56.1",
-    "@react-router/node": "^7.9.5",
-    "@sentry/react-router": "^10.25.0",
+    "@playwright/test": "^1.57.0",
+    "@react-router/node": "^7.12.0",
+    "@sentry/react-router": "^10.35.0",
     "@testing-library/dom": "^10.4.1",
     "@testing-library/jest-dom": "^6.9.1",
     "@total-typescript/ts-reset": "^0.6.1",
     "@types/chai": "^5.2.3",
     "@types/chai-dom": "^1.11.3",
-    "@vitest/expect": "^4.0.8",
-    "chai": "^6.2.1",
+    "@vitest/expect": "^4.0.17",
+    "chai": "^6.2.2",
     "chai-dom": "^1.12.1",
     "chalk": "^5.6.2",
-    "chokidar": "^4.0.3",
-    "close-with-grace": "^2.3.0",
-    "cookie": "^1.0.2",
+    "chokidar": "^5.0.0",
+    "close-with-grace": "^2.4.0",
+    "cookie": "^1.1.1",
     "cross-spawn": "^7.0.6",
     "dayjs": "^1.11.19",
-    "esbuild": "^0.27.0",
-    "execa": "^9.6.0",
+    "esbuild": "^0.27.2",
+    "execa": "^9.6.1",
     "find-process": "^2.0.0",
-    "fkill": "^10.0.0",
-    "fs-extra": "^11.3.2",
-    "globby": "^15.0.0",
+    "fkill": "^10.0.3",
+    "fs-extra": "^11.3.3",
+    "globby": "^16.1.0",
     "ignore": "^7.0.5",
     "json5": "^2.2.3",
-    "lru-cache": "^11.2.2",
+    "lru-cache": "^11.2.4",
     "lz-string": "^1.5.0",
     "md5-hex": "^5.0.0",
     "mdast-util-mdx-jsx": "^3.2.0",
     "mdx-bundler": "^10.1.1",
-    "p-queue": "^9.0.0",
+    "p-queue": "^9.1.0",
     "parse-git-diff": "^0.0.19",
-    "react": "^19.2.0",
-    "react-dom": "^19.2.0",
-    "react-router": "^7.9.5",
+    "react": "^19.2.3",
+    "react-dom": "^19.2.3",
+    "react-router": "^7.12.0",
     "rehype": "^13.0.2",
     "rehype-autolink-headings": "^7.1.0",
     "remark": "^15.0.1",
     "remark-emoji": "^5.0.2",
     "remark-gfm": "^4.0.1",
     "shell-quote": "^1.8.3",
-    "shiki": "^3.15.0",
+    "shiki": "^3.21.0",
     "unified": "^11.0.5",
     "unist-util-remove-position": "^5.0.0",
     "unist-util-visit": "^5.0.0",
-    "zod": "^3.25.76"
+    "zod": "^4.3.5"
   },
   "devDependencies": {
     "@types/hast": "^3.0.4",
     "@types/mdast": "^4.0.4",
-    "@types/node": "^24.10.0",
-    "@types/react": "^19.2.3",
-    "@types/react-dom": "^19.2.2",
+    "@types/node": "^25.0.9",
+    "@types/react": "^19.2.8",
+    "@types/react-dom": "^19.2.3",
     "@types/shell-quote": "^1.7.5",
-    "zshy": "^0.3.0",
-    "vitest": "^4.0.8"
+    "zshy": "^0.7.0",
+    "vitest": "^4.0.17"
   },
   "repository": {
     "type": "git",

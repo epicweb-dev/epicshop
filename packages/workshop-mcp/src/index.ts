@@ -27,9 +27,6 @@ const server = new McpServer(
 	{
 		name: 'epicshop',
 		version: '1.0.0',
-		capabilities: {
-			tools: {},
-		},
 	},
 	// TODO: add some common workflows to the instructions
 	{

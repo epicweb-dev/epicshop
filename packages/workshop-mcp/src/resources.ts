@@ -23,7 +23,7 @@ import {
 	ResourceTemplate,
 } from '@modelcontextprotocol/sdk/server/mcp.js'
 import { type ReadResourceResult } from '@modelcontextprotocol/sdk/types.js'
-import { z } from 'zod'
+import { z } from 'zod/v3'
 import { resourceDocs } from './server-metadata.ts'
 import {
 	handleWorkshopDirectory,
@@ -549,9 +549,8 @@ async function getDiffBetweenApps({
 }: InputSchemaType<typeof diffBetweenAppsInputSchema>) {
 	await handleWorkshopDirectory(workshopDirectory)
 
-	const { getDiffOutputWithRelativePaths } = await import(
-		'@epic-web/workshop-utils/diff.server'
-	)
+	const { getDiffOutputWithRelativePaths } =
+		await import('@epic-web/workshop-utils/diff.server')
 
 	const app1Name = extractNumbersAndTypeFromAppNameOrPath(app1)
 	const app2Name = extractNumbersAndTypeFromAppNameOrPath(app2)
@@ -626,9 +625,8 @@ async function getExerciseStepProgressDiff({
 }: InputSchemaType<typeof getExerciseStepProgressDiffInputSchema>) {
 	await handleWorkshopDirectory(workshopDirectory)
 
-	const { getDiffOutputWithRelativePaths } = await import(
-		'@epic-web/workshop-utils/diff.server'
-	)
+	const { getDiffOutputWithRelativePaths } =
+		await import('@epic-web/workshop-utils/diff.server')
 
 	const apps = await getApps()
 	const playgroundApp = apps.find(isPlaygroundApp)

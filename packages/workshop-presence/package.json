@@ -15,19 +15,22 @@
   },
   "dependencies": {
     "@epic-web/workshop-utils": "file:../workshop-utils",
-    "zod": "^3.25.76"
+    "zod": "^4.3.5"
   },
   "devDependencies": {
     "partykit": "0.0.115",
     "typescript": "^5.9.3",
-    "zshy": "^0.3.0",
-    "vitest": "^4.0.8"
+    "zshy": "^0.7.0",
+    "vitest": "^4.0.17"
   },
   "files": [
     "dist"
   ],
   "zshy": {
     "cjs": false,
+    "conditions": {
+      "import": "esm"
+    },
     "exports": {
       "./package.json": "./package.json",
       "./presence.server": "./src/presence.server.ts",
@@ -42,12 +45,14 @@
   "exports": {
     "./package.json": "./package.json",
     "./presence.server": {
+      "import": "./dist/presence.server.js",
       "types": "./dist/presence.server.d.ts",
-      "import": "./dist/presence.server.js"
+      "default": "./dist/presence.server.js"
     },
     "./presence": {
+      "import": "./dist/presence.js",
       "types": "./dist/presence.d.ts",
-      "import": "./dist/presence.js"
+      "default": "./dist/presence.js"
     }
   }
 }

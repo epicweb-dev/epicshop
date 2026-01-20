@@ -15,6 +15,27 @@ const TokenSetSchema = z.object({
 	token_type: z.string(),
 	scope: z.string(),
 })
+const defaultSubtitlePreferences = {
+	id: null,
+	mode: 'disabled',
+} as const
+const defaultPlayerPreferences = {
+	subtitle: defaultSubtitlePreferences,
+}
+const defaultOfflineVideoPreferences = {}
+const defaultPresencePreferences = {
+	optOut: false,
+}
+const defaultExerciseWarningPreferences = {
+	dismissed: false,
+}
+const defaultPreferences = {
+	player: defaultPlayerPreferences,
+	offlineVideo: defaultOfflineVideoPreferences,
+	presence: defaultPresencePreferences,
+	exerciseWarning: defaultExerciseWarningPreferences,
+	onboardingComplete: [],
+}
 export const PlayerPreferencesSchema = z
 	.object({
 		minResolution: z.number().optional(),
@@ -32,15 +53,14 @@ export const PlayerPreferencesSchema = z
 					.nullable()
 					.default('disabled'),
 			})
-			.optional()
-			.default({}),
+			.default(defaultSubtitlePreferences),
 		muted: z.boolean().optional(),
 		theater: z.boolean().optional(),
 		defaultView: z.string().optional(),
 		activeSidebarTab: z.number().optional(),
 	})
 	.optional()
-	.default({})
+	.default(defaultPlayerPreferences)
 
 const OfflineVideoResolutionSchema = z.enum(['best', 'high', 'medium', 'low'])
 const OfflineVideoPreferencesSchema = z
@@ -48,14 +68,14 @@ const OfflineVideoPreferencesSchema = z
 		downloadResolution: OfflineVideoResolutionSchema.optional(),
 	})
 	.optional()
-	.default({})
+	.default(defaultOfflineVideoPreferences)
 
 const PresencePreferencesSchema = z
 	.object({
 		optOut: z.boolean(),
 	})
 	.optional()
-	.default({ optOut: false })
+	.default(defaultPresencePreferences)
 
 const AuthInfoSchema = z.object({
 	id: z.string(),
@@ -83,12 +103,12 @@ const DataSchema = z.object({
 					dismissed: z.boolean().default(false),
 				})
 				.optional()
-				.default({ dismissed: false }),
+				.default(defaultExerciseWarningPreferences),
 			// Array of completed onboarding feature IDs (e.g., ['files-popover', 'persist-playground'])
 			onboardingComplete: z.array(z.string()).optional().default([]),
 		})
 		.optional()
-		.default({}),
+		.default(defaultPreferences),
 	// deprecated. Probably safe to remove in May 2026:
 	authInfo: AuthInfoSchema.optional(),
 	// new:

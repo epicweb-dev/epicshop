@@ -26,9 +26,8 @@ function setEnv(key: string, value: string | undefined) {
 }
 
 async function getUpdateLocalRepoMock() {
-	const { updateLocalRepo } = await import(
-		'@epic-web/workshop-utils/git.server'
-	)
+	const { updateLocalRepo } =
+		await import('@epic-web/workshop-utils/git.server')
 	const updateLocalRepoMock = vi.mocked(updateLocalRepo)
 	updateLocalRepoMock.mockReset()
 	return updateLocalRepoMock

@@ -2,7 +2,7 @@ import { getFormProps, useForm } from '@conform-to/react'
 import { parseWithZod } from '@conform-to/zod'
 import { data, redirect, useFetcher, useFetchers } from 'react-router'
 import { safeRedirect } from 'remix-utils/safe-redirect'
-import { z } from 'zod'
+import { z } from 'zod/v3'
 import { Icon } from '#app/components/icons.tsx'
 import { SimpleTooltip } from '#app/components/ui/tooltip.tsx'
 import { useHints } from '#app/utils/client-hints.tsx'
@@ -17,6 +17,11 @@ const ROUTE_PATH = '/theme'
 const ThemeFormSchema = z.object({
 	theme: z.enum(['system', 'light', 'dark']),
 })
+const ThemeFormSchemaForConform = ThemeFormSchema as z.ZodTypeAny
+const parseWithZodUnsafe = parseWithZod as unknown as (
+	formData: FormData,
+	options: { schema: z.ZodTypeAny },
+) => any
 
 export async function loader({ request }: Route.LoaderArgs) {
 	const referrer = request.headers.get('Referer')
@@ -27,8 +32,8 @@ export async function loader({ request }: Route.LoaderArgs) {
 
 export async function action({ request }: Route.ActionArgs) {
 	const formData = await request.formData()
-	const submission = parseWithZod(formData, {
-		schema: ThemeFormSchema,
+	const submission = parseWithZodUnsafe(formData, {
+		schema: ThemeFormSchemaForConform,
 	})
 	if (submission.status !== 'success') {
 		return data(submission.reply(), {
@@ -52,7 +57,9 @@ export function ThemeSwitch() {
 	const [form] = useForm({
 		lastResult: fetcher.data,
 		onValidate({ formData }) {
-			return parseWithZod(formData, { schema: ThemeFormSchema })
+			return parseWithZodUnsafe(formData, {
+				schema: ThemeFormSchemaForConform,
+			})
 		},
 	})
 
