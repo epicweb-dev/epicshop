@@ -44,15 +44,15 @@
     "@modelcontextprotocol/sdk": "^1.25.2",
     "@sentry/node": "^10.35.0",
     "openid-client": "^6.8.1",
-    "zod": "^4.3.5"
+    "zod": "^3.25.76"
   },
   "devDependencies": {
     "@modelcontextprotocol/inspector": "^0.18.0",
     "@types/node": "^25.0.9",
-    "zshy": "^0.7.0",
     "tsx": "^4.21.0",
     "typescript": "^5.9.3",
-    "vitest": "^4.0.17"
+    "vitest": "^4.0.17",
+    "zshy": "^0.7.0"
   },
   "repository": {
     "type": "git",
