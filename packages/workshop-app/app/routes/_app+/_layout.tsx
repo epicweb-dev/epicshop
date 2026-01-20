@@ -6,6 +6,7 @@ import {
 	isExtraApp,
 } from '@epic-web/workshop-utils/apps.server'
 import { getWorkshopConfig } from '@epic-web/workshop-utils/config.server'
+import { getProcesses } from '@epic-web/workshop-utils/process-manager.server'
 import {
 	combineServerTimings,
 	getServerTimeHeader,
@@ -34,6 +35,7 @@ import {
 } from '#app/components/onboarding-indicator.tsx'
 import { Logo } from '#app/components/product.tsx'
 import { useRevalidationWS } from '#app/components/revalidation-ws.tsx'
+import { StatusIndicator } from '#app/components/status-indicator.tsx'
 import {
 	Dialog,
 	DialogContent,
@@ -41,6 +43,11 @@ import {
 	DialogHeader,
 	DialogTrigger,
 } from '#app/components/ui/dialog.tsx'
+import {
+	Popover,
+	PopoverContent,
+	PopoverTrigger,
+} from '#app/components/ui/popover.tsx'
 import {
 	SimpleTooltip,
 	Tooltip,
@@ -59,14 +66,30 @@ import {
 	type Location,
 	type User,
 } from '#app/utils/presence.tsx'
-import { useApps } from '#app/utils/root-loader.ts'
+import { useRequestInfo, useApps  } from '#app/utils/root-loader.ts'
 import {
 	useExerciseProgressClassName,
 	useNextExerciseRoute,
 	useProgressItemClassName,
 	type ProgressItemSearch,
 } from '../progress.tsx'
-import { ThemeSwitch } from '../theme/index.tsx'
+import { ThemeSwitch, useTheme } from '../theme/index.tsx'
+
+function getSidecarStatus() {
+	const { sidecarProcesses } = getProcesses()
+	if (sidecarProcesses.size === 0) return null
+
+	const processes = Array.from(sidecarProcesses.entries()).map(
+		([name, { process }]) => ({
+			name,
+			running: process.exitCode === null,
+		}),
+	)
+
+	const hasFailure = processes.some((p) => !p.running)
+	const failureCount = processes.filter((p) => !p.running).length
+	return { processes, hasFailure, count: processes.length, failureCount }
+}
 
 export async function loader({ request }: LoaderFunctionArgs) {
 	const timings = makeTimings('appLayoutLoader')
@@ -86,6 +109,8 @@ export async function loader({ request }: LoaderFunctionArgs) {
 		stepNumber: Number(playgroundNumbersAndType?.stepNumber),
 		type: playgroundNumbersAndType?.type,
 	}
+
+	const sidecarStatus = getSidecarStatus()
 
 	const result = data(
 		{
@@ -131,6 +156,7 @@ export async function loader({ request }: LoaderFunctionArgs) {
 			playground,
 			isMenuOpened:
 				request.headers.get('cookie')?.includes('es_menu_open=true') ?? false,
+			sidecarStatus,
 		},
 		{
 			headers: {
@@ -759,6 +785,20 @@ function MobileNavigation({
 		},
 	}
 
+	const handleOpenShortcuts = React.useCallback(() => {
+		if (typeof window === 'undefined') return
+		window.dispatchEvent(new CustomEvent('toggle-keyboard-shortcuts'))
+	}, [])
+
+	const requestInfo = useRequestInfo()
+	const currentTheme = requestInfo.session.theme ?? 'system'
+	const themeLabel = {
+		light: 'Light',
+		dark: 'Dark',
+		system: 'System',
+	}[currentTheme]
+	const [isMobilePopoverOpen, setIsMobilePopoverOpen] = React.useState(false)
+
 	return (
 		<nav className="flex w-full border-b sm:hidden">
 			<div className="w-full">
@@ -1124,14 +1164,78 @@ function MobileNavigation({
 					) : null}
 					<div
 						className={cn(
-							'flex h-14 w-14 items-center justify-center self-start p-4 sm:mb-4 sm:w-full',
+							'flex h-14 items-center justify-center gap-2 self-start p-4 sm:mb-4',
 							{
 								'w-full border-t': isMenuOpened,
-								'border-l': !isMenuOpened,
+								'w-14 border-l': !isMenuOpened,
 							},
 						)}
 					>
-						<ThemeSwitch />
+						{isMenuOpened ? (
+							<>
+								<ThemeSwitch />
+								<SidecarStatusIndicator status={data.sidecarStatus} />
+							</>
+						) : (
+							<Popover open={isMobilePopoverOpen} onOpenChange={setIsMobilePopoverOpen}>
+								{data.sidecarStatus?.hasFailure ? (
+									<PopoverTrigger asChild>
+										<button
+											type="button"
+											aria-label="Process error - click to see details"
+											title={isMobilePopoverOpen ? undefined : "Process error - click to see details"}
+											className="text-muted-foreground hover:text-foreground hover:bg-muted flex h-8 w-8 items-center justify-center rounded-md transition-colors"
+										>
+											<StatusIndicator status="failed" />
+										</button>
+									</PopoverTrigger>
+								) : (
+									<PopoverTrigger asChild>
+										<button
+											type="button"
+											aria-label="More options"
+											title={isMobilePopoverOpen ? undefined : "More options"}
+											className="text-muted-foreground hover:text-foreground hover:bg-muted flex h-8 w-8 items-center justify-center rounded-md transition-colors"
+										>
+											<svg
+												width="20"
+												height="20"
+												viewBox="0 0 20 20"
+												fill="none"
+												xmlns="http://www.w3.org/2000/svg"
+											>
+												<circle cx="5" cy="10" r="1.5" fill="currentColor" />
+												<circle cx="10" cy="10" r="1.5" fill="currentColor" />
+												<circle cx="15" cy="10" r="1.5" fill="currentColor" />
+											</svg>
+										</button>
+									</PopoverTrigger>
+								)}
+								<PopoverContent
+									side="top"
+									align="start"
+									className="flex flex-col gap-1 p-2"
+								>
+									<ThemeSwitchRow themeLabel={themeLabel} disableTooltip={isMobilePopoverOpen} />
+									{data.sidecarStatus ? (
+										<Link
+											to="/admin"
+											className="hover:bg-muted flex items-center gap-3 rounded-md px-2 py-1.5 text-sm transition-colors"
+										>
+											<div className="flex h-5 w-5 items-center justify-center">
+												<StatusIndicator
+													status={data.sidecarStatus.hasFailure ? 'failed' : 'running'}
+												/>
+											</div>
+											<span className="flex-1 text-left">
+												Sidecar process{' '}
+												{data.sidecarStatus.hasFailure ? 'error' : 'running'}
+											</span>
+										</Link>
+									) : null}
+								</PopoverContent>
+							</Popover>
+						)}
 					</div>
 				</div>
 			</div>
@@ -1140,6 +1244,33 @@ function MobileNavigation({
 }
 
 const OPENED_MENU_WIDTH = 400
+
+function SidecarStatusIndicator({
+	status,
+}: {
+	status: { hasFailure: boolean; count: number; failureCount: number } | null
+}) {
+	if (!status) return null
+
+	return (
+		<SimpleTooltip
+			content={
+				status.hasFailure
+					? `${status.failureCount} sidecar${status.failureCount === 1 ? '' : 's'} failed`
+					: 'All sidecars running'
+			}
+		>
+			<Link
+				to="/admin"
+				className="text-muted-foreground hover:text-foreground hover:bg-muted flex h-8 w-8 items-center justify-center rounded-md transition-colors"
+			>
+				<StatusIndicator
+					status={status.hasFailure ? 'failed' : 'running'}
+				/>
+			</Link>
+		</SimpleTooltip>
+	)
+}
 
 function Navigation({
 	isMenuOpened,
@@ -1208,6 +1339,15 @@ function Navigation({
 		if (typeof window === 'undefined') return
 		window.dispatchEvent(new CustomEvent('toggle-keyboard-shortcuts'))
 	}, [])
+
+	const requestInfo = useRequestInfo()
+	const currentTheme = requestInfo.session.theme ?? 'system'
+	const themeLabel = {
+		light: 'Light',
+		dark: 'Dark',
+		system: 'System',
+	}[currentTheme]
+	const [isPopoverOpen, setIsPopoverOpen] = React.useState(false)
 
 	return (
 		<nav className="hidden border-r sm:flex">
@@ -1591,9 +1731,9 @@ function Navigation({
 						</SimpleTooltip>
 					) : null}
 					<div className="mb-4 w-full self-start border-t pt-[15px] pl-3">
-						<div className="flex items-center gap-2">
-							<ThemeSwitch />
-							{isMenuOpened ? (
+						{isMenuOpened ? (
+							<div className="flex items-center gap-2">
+								<ThemeSwitch />
 								<SimpleTooltip content="Keyboard shortcuts (press ?)">
 									<button
 										type="button"
@@ -1604,12 +1744,119 @@ function Navigation({
 										<Icon name="Question" size="md" />
 									</button>
 								</SimpleTooltip>
-							) : null}
-						</div>
+								<SidecarStatusIndicator status={data.sidecarStatus} />
+							</div>
+						) : (
+							<Popover open={isPopoverOpen} onOpenChange={setIsPopoverOpen}>
+								{data.sidecarStatus?.hasFailure ? (
+									<PopoverTrigger asChild>
+										<button
+											type="button"
+											aria-label="Process error - click to see details"
+											title={isPopoverOpen ? undefined : "Process error - click to see details"}
+											className="text-muted-foreground hover:text-foreground hover:bg-muted flex h-8 w-8 items-center justify-center rounded-md transition-colors"
+										>
+											<StatusIndicator status="failed" />
+										</button>
+									</PopoverTrigger>
+								) : (
+									<PopoverTrigger asChild>
+										<button
+											type="button"
+											aria-label="More options"
+											title={isPopoverOpen ? undefined : "More options"}
+											className="text-muted-foreground hover:text-foreground hover:bg-muted flex h-8 w-8 items-center justify-center rounded-md transition-colors"
+										>
+											<svg
+												width="20"
+												height="20"
+												viewBox="0 0 20 20"
+												fill="none"
+												xmlns="http://www.w3.org/2000/svg"
+											>
+												<circle cx="5" cy="10" r="1.5" fill="currentColor" />
+												<circle cx="10" cy="10" r="1.5" fill="currentColor" />
+												<circle cx="15" cy="10" r="1.5" fill="currentColor" />
+											</svg>
+										</button>
+									</PopoverTrigger>
+								)}
+								<PopoverContent
+									side="top"
+									align="start"
+									className="flex flex-col gap-1 p-2"
+								>
+									<ThemeSwitchRow themeLabel={themeLabel} disableTooltip={isPopoverOpen} />
+									<button
+										type="button"
+										aria-label="Keyboard shortcuts"
+										onClick={handleOpenShortcuts}
+										className="hover:bg-muted flex items-center gap-3 rounded-md px-2 py-1.5 text-sm transition-colors"
+									>
+										<div className="flex h-5 w-5 items-center justify-center">
+											<Icon name="Question" size="md" />
+										</div>
+										<span className="flex-1 text-left">Keyboard shortcuts</span>
+									</button>
+									{data.sidecarStatus ? (
+										<Link
+											to="/admin"
+											className="hover:bg-muted flex items-center gap-3 rounded-md px-2 py-1.5 text-sm transition-colors"
+										>
+											<div className="flex h-5 w-5 items-center justify-center">
+												<StatusIndicator
+													status={data.sidecarStatus.hasFailure ? 'failed' : 'running'}
+												/>
+											</div>
+											<span className="flex-1 text-left">
+												Sidecar process{' '}
+												{data.sidecarStatus.hasFailure ? 'error' : 'running'}
+											</span>
+										</Link>
+									) : null}
+								</PopoverContent>
+							</Popover>
+						)}
 					</div>
 				</div>
 			</motion.div>
 		</nav>
+	)
+}
+
+function ThemeSwitchRow({
+	themeLabel,
+	disableTooltip,
+}: {
+	themeLabel: string
+	disableTooltip?: boolean
+}) {
+	const wrapperRef = React.useRef<HTMLDivElement>(null)
+
+	const handleClick = (event: React.MouseEvent<HTMLDivElement>) => {
+		const form = wrapperRef.current?.querySelector<HTMLFormElement>('form')
+		if (!form) return
+		const submitButton = form.querySelector<HTMLButtonElement>(
+			'button[type="submit"]',
+		)
+		// Don't trigger click if the event originated from the submit button itself
+		if (submitButton?.contains(event.target as Node)) {
+			return
+		}
+		submitButton?.click()
+	}
+
+	return (
+		<div
+			ref={wrapperRef}
+			onClick={handleClick}
+			className="hover:bg-muted flex cursor-pointer items-center gap-3 rounded-md px-2 py-1.5 text-sm transition-colors"
+		>
+			<div className="flex h-5 w-5 items-center justify-center">
+				<ThemeSwitch disableTooltip={disableTooltip} />
+			</div>
+			<span className="flex-1 text-left">{themeLabel} theme</span>
+		</div>
 	)
 }
 
