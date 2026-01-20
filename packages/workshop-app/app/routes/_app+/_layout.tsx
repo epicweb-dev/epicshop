@@ -66,7 +66,7 @@ import {
 	type Location,
 	type User,
 } from '#app/utils/presence.tsx'
-import { useRequestInfo, useApps  } from '#app/utils/root-loader.ts'
+import { useRequestInfo, useApps } from '#app/utils/root-loader.ts'
 import {
 	useExerciseProgressClassName,
 	useNextExerciseRoute,
@@ -1177,13 +1177,20 @@ function MobileNavigation({
 								<SidecarStatusIndicator status={data.sidecarStatus} />
 							</>
 						) : (
-							<Popover open={isMobilePopoverOpen} onOpenChange={setIsMobilePopoverOpen}>
+							<Popover
+								open={isMobilePopoverOpen}
+								onOpenChange={setIsMobilePopoverOpen}
+							>
 								{data.sidecarStatus?.hasFailure ? (
 									<PopoverTrigger asChild>
 										<button
 											type="button"
 											aria-label="Process error - click to see details"
-											title={isMobilePopoverOpen ? undefined : "Process error - click to see details"}
+											title={
+												isMobilePopoverOpen
+													? undefined
+													: 'Process error - click to see details'
+											}
 											className="text-muted-foreground hover:text-foreground hover:bg-muted flex h-8 w-8 items-center justify-center rounded-md transition-colors"
 										>
 											<StatusIndicator status="failed" />
@@ -1194,7 +1201,7 @@ function MobileNavigation({
 										<button
 											type="button"
 											aria-label="More options"
-											title={isMobilePopoverOpen ? undefined : "More options"}
+											title={isMobilePopoverOpen ? undefined : 'More options'}
 											className="text-muted-foreground hover:text-foreground hover:bg-muted flex h-8 w-8 items-center justify-center rounded-md transition-colors"
 										>
 											<svg
@@ -1216,7 +1223,10 @@ function MobileNavigation({
 									align="start"
 									className="flex flex-col gap-1 p-2"
 								>
-									<ThemeSwitchRow themeLabel={themeLabel} disableTooltip={isMobilePopoverOpen} />
+									<ThemeSwitchRow
+										themeLabel={themeLabel}
+										disableTooltip={isMobilePopoverOpen}
+									/>
 									{data.sidecarStatus ? (
 										<Link
 											to="/admin"
@@ -1224,7 +1234,9 @@ function MobileNavigation({
 										>
 											<div className="flex h-5 w-5 items-center justify-center">
 												<StatusIndicator
-													status={data.sidecarStatus.hasFailure ? 'failed' : 'running'}
+													status={
+														data.sidecarStatus.hasFailure ? 'failed' : 'running'
+													}
 												/>
 											</div>
 											<span className="flex-1 text-left">
@@ -1264,9 +1276,7 @@ function SidecarStatusIndicator({
 				to="/admin"
 				className="text-muted-foreground hover:text-foreground hover:bg-muted flex h-8 w-8 items-center justify-center rounded-md transition-colors"
 			>
-				<StatusIndicator
-					status={status.hasFailure ? 'failed' : 'running'}
-				/>
+				<StatusIndicator status={status.hasFailure ? 'failed' : 'running'} />
 			</Link>
 		</SimpleTooltip>
 	)
@@ -1753,7 +1763,11 @@ function Navigation({
 										<button
 											type="button"
 											aria-label="Process error - click to see details"
-											title={isPopoverOpen ? undefined : "Process error - click to see details"}
+											title={
+												isPopoverOpen
+													? undefined
+													: 'Process error - click to see details'
+											}
 											className="text-muted-foreground hover:text-foreground hover:bg-muted flex h-8 w-8 items-center justify-center rounded-md transition-colors"
 										>
 											<StatusIndicator status="failed" />
@@ -1764,7 +1778,7 @@ function Navigation({
 										<button
 											type="button"
 											aria-label="More options"
-											title={isPopoverOpen ? undefined : "More options"}
+											title={isPopoverOpen ? undefined : 'More options'}
 											className="text-muted-foreground hover:text-foreground hover:bg-muted flex h-8 w-8 items-center justify-center rounded-md transition-colors"
 										>
 											<svg
@@ -1786,7 +1800,10 @@ function Navigation({
 									align="start"
 									className="flex flex-col gap-1 p-2"
 								>
-									<ThemeSwitchRow themeLabel={themeLabel} disableTooltip={isPopoverOpen} />
+									<ThemeSwitchRow
+										themeLabel={themeLabel}
+										disableTooltip={isPopoverOpen}
+									/>
 									<button
 										type="button"
 										aria-label="Keyboard shortcuts"
@@ -1805,7 +1822,9 @@ function Navigation({
 										>
 											<div className="flex h-5 w-5 items-center justify-center">
 												<StatusIndicator
-													status={data.sidecarStatus.hasFailure ? 'failed' : 'running'}
+													status={
+														data.sidecarStatus.hasFailure ? 'failed' : 'running'
+													}
 												/>
 											</div>
 											<span className="flex-1 text-left">

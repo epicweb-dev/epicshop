@@ -49,7 +49,9 @@ export async function action({ request }: Route.ActionArgs) {
 	return dataWithPE(request, formData, submission.reply(), responseInit)
 }
 
-export function ThemeSwitch({ disableTooltip }: { disableTooltip?: boolean } = {}) {
+export function ThemeSwitch({
+	disableTooltip,
+}: { disableTooltip?: boolean } = {}) {
 	const requestInfo = useRequestInfo()
 	const peRedirectInput = usePERedirectInput()
 	const fetcher = useFetcher<Route.ComponentProps['actionData']>()
