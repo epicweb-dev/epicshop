@@ -6,6 +6,7 @@ import {
 	getApps,
 	getExercise,
 	getWorkshopRoot,
+	isExtraApp,
 	isExerciseStepApp,
 } from '@epic-web/workshop-utils/apps.server'
 import { getWorkshopConfig } from '@epic-web/workshop-utils/config.server'
@@ -77,6 +78,7 @@ export async function loader({ request, params }: Route.LoaderArgs) {
 	)
 
 	const apps = await getApps({ request, timings })
+	const hasExtras = apps.some(isExtraApp)
 	const exerciseApps = apps
 		.filter(isExerciseStepApp)
 		.filter((app) => app.exerciseNumber === exercise.exerciseNumber)
@@ -111,10 +113,15 @@ export async function loader({ request, params }: Route.LoaderArgs) {
 						to: `/exercise/${nextExercise.exerciseNumber.toString().padStart(2, '0')}`,
 						'aria-label': `${nextExercise.title}`,
 					}
-				: {
-						to: '/finished',
-						'aria-label': 'Finished! 🎉',
-					},
+				: hasExtras
+					? {
+							to: '/extra',
+							'aria-label': 'Extras',
+						}
+					: {
+							to: '/finished',
+							'aria-label': 'Finished! 🎉',
+						},
 		},
 		{
 			headers: {
