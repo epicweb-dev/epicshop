@@ -59,6 +59,7 @@ import { useOptionalUser, useUserHasAccess } from '#app/components/user.tsx'
 import { useWorkshopConfig } from '#app/components/workshop-config.tsx'
 import { cn, getExercisePath, getExerciseStepPath } from '#app/utils/misc.tsx'
 import { useIsOnline } from '#app/utils/online.ts'
+import { useRequestInfo } from '#app/utils/root-loader.ts'
 import {
 	getProductHostEmoji,
 	productHostEmojis,
@@ -73,7 +74,7 @@ import {
 	useProgressItemClassName,
 	type ProgressItemSearch,
 } from '../progress.tsx'
-import { ThemeSwitch } from '../theme/index.tsx'
+import { ThemeSwitch, useTheme } from '../theme/index.tsx'
 
 function getSidecarStatus() {
 	const { sidecarProcesses } = getProcesses()
@@ -784,6 +785,19 @@ function MobileNavigation({
 		},
 	}
 
+	const handleOpenShortcuts = React.useCallback(() => {
+		if (typeof window === 'undefined') return
+		window.dispatchEvent(new CustomEvent('toggle-keyboard-shortcuts'))
+	}, [])
+
+	const requestInfo = useRequestInfo()
+	const currentTheme = requestInfo.session.theme ?? 'system'
+	const themeLabel = {
+		light: 'Light',
+		dark: 'Dark',
+		system: 'System',
+	}[currentTheme]
+
 	return (
 		<nav className="flex w-full border-b sm:hidden">
 			<div className="w-full">
@@ -1199,12 +1213,43 @@ function MobileNavigation({
 								<PopoverContent
 									side="top"
 									align="start"
-									className="flex flex-col gap-2 p-3"
+									className="flex flex-col gap-1 p-2"
 								>
-									<div className="flex items-center gap-2">
-										<ThemeSwitch />
-										<SidecarStatusIndicator status={data.sidecarStatus} />
+									<div className="hover:bg-muted flex items-center gap-3 rounded-md px-2 py-1.5 text-sm transition-colors">
+										<div className="flex h-5 w-5 items-center justify-center">
+											<ThemeSwitch />
+										</div>
+										<span className="flex-1 text-left">
+											{themeLabel} theme
+										</span>
 									</div>
+									<button
+										type="button"
+										aria-label="Keyboard shortcuts"
+										onClick={handleOpenShortcuts}
+										className="hover:bg-muted flex items-center gap-3 rounded-md px-2 py-1.5 text-sm transition-colors"
+									>
+										<div className="flex h-5 w-5 items-center justify-center">
+											<Icon name="Question" size="md" />
+										</div>
+										<span className="flex-1 text-left">Keyboard shortcuts</span>
+									</button>
+									{data.sidecarStatus ? (
+										<Link
+											to="/admin"
+											className="hover:bg-muted flex items-center gap-3 rounded-md px-2 py-1.5 text-sm transition-colors"
+										>
+											<div className="flex h-5 w-5 items-center justify-center">
+												<StatusIndicator
+													status={data.sidecarStatus.hasFailure ? 'failed' : 'running'}
+												/>
+											</div>
+											<span className="flex-1 text-left">
+												Sidecar process{' '}
+												{data.sidecarStatus.hasFailure ? 'error' : 'running'}
+											</span>
+										</Link>
+									) : null}
 								</PopoverContent>
 							</Popover>
 						)}
@@ -1311,6 +1356,14 @@ function Navigation({
 		if (typeof window === 'undefined') return
 		window.dispatchEvent(new CustomEvent('toggle-keyboard-shortcuts'))
 	}, [])
+
+	const requestInfo = useRequestInfo()
+	const currentTheme = requestInfo.session.theme ?? 'system'
+	const themeLabel = {
+		light: 'Light',
+		dark: 'Dark',
+		system: 'System',
+	}[currentTheme]
 
 	return (
 		<nav className="hidden border-r sm:flex">
@@ -1745,24 +1798,45 @@ function Navigation({
 									</PopoverTrigger>
 								)}
 								<PopoverContent
-									side="right"
+									side="top"
 									align="start"
-									className="flex flex-col gap-2 p-3"
+									className="flex flex-col gap-1 p-2"
 								>
-									<div className="flex items-center gap-2">
-										<ThemeSwitch />
-										<SimpleTooltip content="Keyboard shortcuts (press ?)">
-											<button
-												type="button"
-												aria-label="Keyboard shortcuts"
-												onClick={handleOpenShortcuts}
-												className="text-muted-foreground hover:text-foreground hover:bg-muted focus-visible:ring-ring flex h-8 w-8 items-center justify-center rounded-md transition-colors focus-visible:ring-2 focus-visible:ring-offset-2"
-											>
-												<Icon name="Question" size="md" />
-											</button>
-										</SimpleTooltip>
-										<SidecarStatusIndicator status={data.sidecarStatus} />
+									<div className="hover:bg-muted flex items-center gap-3 rounded-md px-2 py-1.5 text-sm transition-colors">
+										<div className="flex h-5 w-5 items-center justify-center">
+											<ThemeSwitch />
+										</div>
+										<span className="flex-1 text-left">
+											{themeLabel} theme
+										</span>
 									</div>
+									<button
+										type="button"
+										aria-label="Keyboard shortcuts"
+										onClick={handleOpenShortcuts}
+										className="hover:bg-muted flex items-center gap-3 rounded-md px-2 py-1.5 text-sm transition-colors"
+									>
+										<div className="flex h-5 w-5 items-center justify-center">
+											<Icon name="Question" size="md" />
+										</div>
+										<span className="flex-1 text-left">Keyboard shortcuts</span>
+									</button>
+									{data.sidecarStatus ? (
+										<Link
+											to="/admin"
+											className="hover:bg-muted flex items-center gap-3 rounded-md px-2 py-1.5 text-sm transition-colors"
+										>
+											<div className="flex h-5 w-5 items-center justify-center">
+												<StatusIndicator
+													status={data.sidecarStatus.hasFailure ? 'failed' : 'running'}
+												/>
+											</div>
+											<span className="flex-1 text-left">
+												Sidecar process{' '}
+												{data.sidecarStatus.hasFailure ? 'error' : 'running'}
+											</span>
+										</Link>
+									) : null}
 								</PopoverContent>
 							</Popover>
 						)}
