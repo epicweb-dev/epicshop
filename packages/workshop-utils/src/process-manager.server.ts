@@ -471,6 +471,9 @@ export async function restartSidecarProcess(name: string): Promise<boolean> {
 
 	const { command, process: proc } = entry
 
+	// Remove the entry immediately to prevent concurrent restarts
+	sidecarProcesses.delete(name)
+
 	// Kill the existing process if it's still running
 	if (proc.exitCode === null) {
 		console.log(`Stopping sidecar process: ${name}`)
@@ -490,9 +493,6 @@ export async function restartSidecarProcess(name: string): Promise<boolean> {
 			})
 		})
 	}
-
-	// Remove the old entry
-	sidecarProcesses.delete(name)
 
 	// Start a new process with the same command
 	startSidecarProcess(name, command)

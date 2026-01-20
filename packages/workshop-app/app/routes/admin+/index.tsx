@@ -470,8 +470,8 @@ function SidecarProcessItem({
 
 	// Update display logs when fetcher returns data
 	React.useEffect(() => {
-		if (logsFetcher.data?.logs) {
-			setDisplayLogs(logsFetcher.data.logs)
+		if (logsFetcher.data) {
+			setDisplayLogs(logsFetcher.data.logs ?? '')
 		}
 	}, [logsFetcher.data])
 
