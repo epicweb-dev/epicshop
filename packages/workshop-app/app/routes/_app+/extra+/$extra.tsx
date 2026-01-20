@@ -248,6 +248,16 @@ export default function ExtraRoute() {
 		if (tab === 'playground') {
 			return ENV.EPICSHOP_DEPLOYED
 		}
+		if (tab === 'extra') {
+			if (ENV.EPICSHOP_DEPLOYED) {
+				const devType = data.extra.dev.type
+				return (
+					devType !== 'browser' &&
+					devType !== 'export' &&
+					!data.extra.stackBlitzUrl
+				)
+			}
+		}
 		if (tab === 'chat') {
 			return !workshopConfig.product.discordChannelId
 		}
