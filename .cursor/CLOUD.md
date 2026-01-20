@@ -51,6 +51,12 @@ learning environment for EpicWeb.dev workshops.
 - E2E tests use Playwright and test against the `example/` workshop
 - For UI changes, test manually via `npm run dev` and browser
 
+## Agent Workflow
+
+- If you discover improvements that are unrelated to your current change,
+  open a new GitHub issue with a concise problem, proposal, and acceptance
+  criteria.
+
 ## Common Issues
 
 - If changes aren't reflected, ensure you've run `npm run build` first
