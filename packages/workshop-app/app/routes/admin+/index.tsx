@@ -6,7 +6,8 @@ import {
 } from '@epic-web/workshop-utils/timing.server'
 import { type SEOHandle } from '@nasa-gcn/remix-seo'
 import { clsx } from 'clsx'
-import { data, Form, Link, useNavigation } from 'react-router'
+import * as React from 'react'
+import { data, Form, Link, useFetcher, useNavigation } from 'react-router'
 import { Icon } from '#app/components/icons.tsx'
 import { SimpleTooltip } from '#app/components/ui/tooltip.tsx'
 import {
@@ -19,7 +20,9 @@ import { type Route } from './+types/index.tsx'
 import {
 	clearCaches,
 	clearData,
+	getSidecarLogLines,
 	isInspectorRunning,
+	restartSidecar,
 	startInspector,
 	stopInspector,
 } from './admin-utils.server.tsx'
@@ -61,12 +64,18 @@ export async function loader({ request }: Route.LoaderArgs) {
 		testProcesses[name] = { pid: process?.pid, exitCode }
 	}
 
-	const sidecarProcesses: Record<string, { pid?: number; running: boolean }> =
-		{}
-	for (const [name, { process }] of getProcesses().sidecarProcesses.entries()) {
+	const sidecarProcesses: Record<
+		string,
+		{ pid?: number; running: boolean; hasLogs: boolean }
+	> = {}
+	for (const [
+		name,
+		{ process, output },
+	] of getProcesses().sidecarProcesses.entries()) {
 		sidecarProcesses[name] = {
 			pid: process.pid,
 			running: process.exitCode === null,
+			hasLogs: output.length > 0,
 		}
 	}
 
@@ -106,6 +115,22 @@ export async function action({ request }: Route.ActionArgs) {
 		case 'stop-inspect': {
 			await stopInspector()
 			return { success: true }
+		}
+		case 'restart-sidecar': {
+			const name = formData.get('name')
+			if (typeof name !== 'string') {
+				throw new Error('Sidecar name is required')
+			}
+			const success = await restartSidecar(name)
+			return { success }
+		}
+		case 'get-sidecar-logs': {
+			const name = formData.get('name')
+			if (typeof name !== 'string') {
+				throw new Error('Sidecar name is required')
+			}
+			const logs = getSidecarLogLines(name, 100)
+			return { success: true, logs }
 		}
 		default: {
 			throw new Error(`Unknown intent: ${intent}`)
@@ -176,33 +201,13 @@ export default function AdminLayout({
 						<CardContent>
 							<ul className="scrollbar-thin scrollbar-thumb-scrollbar flex max-h-48 flex-col gap-2 overflow-y-auto">
 								{Object.entries(data.sidecarProcesses).map(([key, process]) => (
-									<li
+									<SidecarProcessItem
 										key={key}
-										className="border-border bg-muted/30 rounded-md border p-3"
-									>
-										<div className="flex items-center gap-2">
-											{process.running ? (
-												<Pinger status="running" />
-											) : (
-												<Pinger status="taken" />
-											)}
-											<span className="font-mono text-sm font-semibold">
-												{key}
-											</span>
-										</div>
-										<div className="text-muted-foreground mt-2 flex flex-wrap gap-x-4 gap-y-1 text-xs">
-											{process.pid && (
-												<span>
-													<span className="font-medium">PID:</span>{' '}
-													{process.pid}
-												</span>
-											)}
-											<span>
-												<span className="font-medium">Status:</span>{' '}
-												{process.running ? 'Running' : 'Failed'}
-											</span>
-										</div>
-									</li>
+										name={key}
+										pid={process.pid}
+										running={process.running}
+										hasLogs={process.hasLogs}
+									/>
 								))}
 							</ul>
 						</CardContent>
@@ -449,6 +454,106 @@ export default function AdminLayout({
 				</Card>
 			</div>
 		</div>
+	)
+}
+
+function SidecarProcessItem({
+	name,
+	pid,
+	running,
+	hasLogs,
+}: {
+	name: string
+	pid?: number
+	running: boolean
+	hasLogs: boolean
+}) {
+	const restartFetcher = useFetcher()
+	const logsFetcher = useFetcher<{ logs?: string }>()
+	const [copyStatus, setCopyStatus] = React.useState<
+		'idle' | 'copying' | 'copied'
+	>('idle')
+
+	const isRestarting = restartFetcher.state !== 'idle'
+	const isCopying = logsFetcher.state !== 'idle' || copyStatus === 'copying'
+
+	// Handle copying logs when fetcher returns data
+	React.useEffect(() => {
+		if (logsFetcher.data?.logs && copyStatus === 'copying') {
+			navigator.clipboard
+				.writeText(logsFetcher.data.logs)
+				.then(() => {
+					setCopyStatus('copied')
+					setTimeout(() => setCopyStatus('idle'), 2000)
+				})
+				.catch(() => {
+					setCopyStatus('idle')
+				})
+		}
+	}, [logsFetcher.data, copyStatus])
+
+	const handleCopyLogs = () => {
+		setCopyStatus('copying')
+		logsFetcher.submit(
+			{ intent: 'get-sidecar-logs', name },
+			{ method: 'POST' },
+		)
+	}
+
+	return (
+		<li className="border-border bg-muted/30 rounded-md border p-3">
+			<div className="flex items-center justify-between gap-2">
+				<div className="flex items-center gap-2">
+					{running ? <Pinger status="running" /> : <Pinger status="taken" />}
+					<span className="font-mono text-sm font-semibold">{name}</span>
+				</div>
+				<div className="flex items-center gap-1">
+					<SimpleTooltip content={hasLogs ? 'Copy logs' : 'No logs available'}>
+						<button
+							type="button"
+							onClick={handleCopyLogs}
+							disabled={!hasLogs || isCopying}
+							className={cn(
+								'text-muted-foreground hover:text-foreground hover:bg-muted rounded p-1.5 transition-colors disabled:cursor-not-allowed disabled:opacity-50',
+								copyStatus === 'copied' && 'text-success',
+							)}
+						>
+							<Icon
+								name={copyStatus === 'copied' ? 'CheckSmall' : 'Copy'}
+								className="h-4 w-4"
+							/>
+						</button>
+					</SimpleTooltip>
+					<restartFetcher.Form method="POST">
+						<input type="hidden" name="intent" value="restart-sidecar" />
+						<input type="hidden" name="name" value={name} />
+						<SimpleTooltip content="Restart process">
+							<button
+								type="submit"
+								disabled={isRestarting}
+								className="text-muted-foreground hover:text-foreground hover:bg-muted rounded p-1.5 transition-colors disabled:cursor-not-allowed disabled:opacity-50"
+							>
+								<Icon
+									name="Refresh"
+									className={cn('h-4 w-4', isRestarting && 'animate-spin')}
+								/>
+							</button>
+						</SimpleTooltip>
+					</restartFetcher.Form>
+				</div>
+			</div>
+			<div className="text-muted-foreground mt-2 flex flex-wrap gap-x-4 gap-y-1 text-xs">
+				{pid && (
+					<span>
+						<span className="font-medium">PID:</span> {pid}
+					</span>
+				)}
+				<span>
+					<span className="font-medium">Status:</span>{' '}
+					{isRestarting ? 'Restarting...' : running ? 'Running' : 'Failed'}
+				</span>
+			</div>
+		</li>
 	)
 }
 
