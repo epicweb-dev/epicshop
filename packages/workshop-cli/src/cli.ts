@@ -76,7 +76,14 @@ async function maybePromptToUpdatePackageManager(
 	}
 }
 
-await maybePromptToUpdatePackageManager(args)
+try {
+	await maybePromptToUpdatePackageManager(args)
+} catch (error) {
+	if ((error as Error).message === 'USER_QUIT') {
+		process.exit(0)
+	}
+	// Silently ignore other errors during package manager prompt to avoid disrupting CLI startup
+}
 
 // Set up yargs CLI
 const cli = yargs(args)
