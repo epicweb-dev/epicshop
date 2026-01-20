@@ -53,9 +53,8 @@ learning environment for EpicWeb.dev workshops.
 
 ## Agent Workflow
 
-- If you discover improvements that are unrelated to your current change,
-  open a new GitHub issue with a concise problem, proposal, and acceptance
-  criteria.
+- If you discover improvements that are unrelated to your current change, open a
+  new GitHub issue with a concise problem, proposal, and acceptance criteria.
 
 ## Common Issues
 
