@@ -171,6 +171,35 @@ export async function checkForUpdatesCached() {
 	})
 }
 
+async function runNpmInstallWithRetry(
+	cwd: string,
+	maxRetries = 3,
+	baseDelayMs = 1000,
+): Promise<void> {
+	for (let attempt = 1; attempt <= maxRetries; attempt++) {
+		try {
+			await execaCommand('npm install', { cwd, stdio: 'inherit' })
+			return
+		} catch (error) {
+			const isEbusy =
+				error instanceof Error &&
+				(error.message.includes('EBUSY') ||
+					(error as NodeJS.ErrnoException).code === 'EBUSY')
+
+			if (isEbusy && attempt < maxRetries) {
+				const delay = baseDelayMs * Math.pow(2, attempt - 1)
+				console.log(
+					`⚠️  File busy error (attempt ${attempt}/${maxRetries}). ` +
+						`Retrying in ${delay / 1000}s...`,
+				)
+				await new Promise((resolve) => setTimeout(resolve, delay))
+			} else {
+				throw error
+			}
+		}
+	}
+}
+
 export async function updateLocalRepo() {
 	const ENV = getEnv()
 	if (ENV.EPICSHOP_DEPLOYED) {
@@ -208,7 +237,25 @@ export async function updateLocalRepo() {
 		}
 
 		console.log('📦 Re-installing dependencies...')
-		await execaCommand('npm install', { cwd, stdio: 'inherit' })
+		try {
+			await runNpmInstallWithRetry(cwd)
+		} catch (error) {
+			const isEbusy =
+				error instanceof Error &&
+				(error.message.includes('EBUSY') ||
+					(error as NodeJS.ErrnoException).code === 'EBUSY')
+
+			if (isEbusy) {
+				return {
+					status: 'error',
+					message:
+						'npm install failed: files are locked. ' +
+						'Please close any editors or terminals using this directory, ' +
+						'then run: npm install',
+				} as const
+			}
+			throw error
+		}
 
 		await cleanupEmptyExerciseDirectories(cwd)
 

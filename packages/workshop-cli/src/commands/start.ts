@@ -173,6 +173,7 @@ export async function start(options: StartOptions = {}): Promise<StartResult> {
 		let server: http.Server | null = null
 		let child: ChildProcess | null = null
 		let restarting = false
+		let childWasKilled = false
 		let childPort: number | null = null
 		let childPortPromiseResolve: ((port: number) => void) | null = null
 		let childPortPromise: Promise<number>
@@ -259,25 +260,38 @@ export async function start(options: StartOptions = {}): Promise<StartResult> {
 			try {
 				const { updateLocalRepo } =
 					await import('@epic-web/workshop-utils/git.server')
+
+				// Kill child FIRST to release file handles (prevents EBUSY on Windows)
+				console.log('🛑 Stopping app for update...')
+				restarting = true
+				childWasKilled = true
+				await killChild(child)
+
+				// Now run the update (npm install won't hit file locks)
 				const result = await updateLocalRepo()
+
 				if (result.status === 'success') {
 					console.log(`✅ ${result.message}`)
 					console.log('\n🔄 Restarting...')
-					restarting = true
-					await killChild(child)
-					restarting = false
 					spawnChild()
+					restarting = false
 					const ready = await waitForChildReady()
 					return ready
 				} else {
 					console.error(`❌ ${result.message}`)
-					console.error(
-						'Update failed. Please try again or see the repo for manual setup.',
-					)
+					console.error('Update failed. Restarting app without updates...')
+					spawnChild()
+					restarting = false
+					await waitForChildReady()
 					return false
 				}
 			} catch (error) {
 				console.error('❌ Update functionality not available:', error)
+				// Restart app even if update failed
+				if (!child || childWasKilled) {
+					spawnChild()
+					restarting = false
+				}
 				return false
 			}
 		}
@@ -352,45 +366,48 @@ export async function start(options: StartOptions = {}): Promise<StartResult> {
 			server.listen(parentPort, '127.0.0.1')
 		}
 
-		function spawnChild() {
-			if (!appDir) return
+	function spawnChild() {
+		if (!appDir) return
 
-			// Reset port tracking when spawning a new child
-			childPort = null
-			childPortPromise = createChildPortPromise()
+		// Reset port tracking when spawning a new child
+		childPort = null
+		childPortPromise = createChildPortPromise()
 
-			const childArgs = [...(sentryImport ? [sentryImport] : []), childScript]
-			child = spawn(process.execPath, childArgs, {
-				cwd: appDir,
-				// Capture stdout for port detection
-				stdio: ['pipe', 'pipe', 'inherit'],
-				env: childEnv,
-			})
+		const childArgs = [...(sentryImport ? [sentryImport] : []), childScript]
+		child = spawn(process.execPath, childArgs, {
+			cwd: appDir,
+			// Capture stdout for port detection
+			stdio: ['pipe', 'pipe', 'inherit'],
+			env: childEnv,
+		})
 
-			if (child.stdout) {
-				child.stdout.on('data', (data: Buffer) => {
-					process.stdout.write(data)
-					if (!childPort) {
-						const str = data.toString('utf8')
-						const lines = str.split(/\r?\n/)
-						for (const line of lines) {
-							const port = parsePortFromLine(line)
-							if (port) {
-								childPortPromiseResolve?.(port)
-							}
+		// Reset flag only after spawn succeeds
+		childWasKilled = false
+
+		if (child.stdout) {
+			child.stdout.on('data', (data: Buffer) => {
+				process.stdout.write(data)
+				if (!childPort) {
+					const str = data.toString('utf8')
+					const lines = str.split(/\r?\n/)
+					for (const line of lines) {
+						const port = parsePortFromLine(line)
+						if (port) {
+							childPortPromiseResolve?.(port)
 						}
 					}
-				})
-			}
-			child.on('exit', async (code: number | null) => {
-				if (restarting) {
-					restarting = false
-				} else {
-					await new Promise((resolve) => server?.close(resolve))
-					process.exit(code ?? 0)
 				}
 			})
 		}
+		child.on('exit', async (code: number | null) => {
+			if (restarting) {
+				restarting = false
+			} else {
+				await new Promise((resolve) => server?.close(resolve))
+				process.exit(code ?? 0)
+			}
+		})
+	}
 
 		console.log(
 			`🐨 Welcome to the workshop, ${chalk.bold.italic(os.userInfo().username)}!`,
