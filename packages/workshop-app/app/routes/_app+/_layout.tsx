@@ -34,8 +34,8 @@ import {
 	useOnboardingIndicator,
 } from '#app/components/onboarding-indicator.tsx'
 import { Logo } from '#app/components/product.tsx'
-import { StatusIndicator } from '#app/components/status-indicator.tsx'
 import { useRevalidationWS } from '#app/components/revalidation-ws.tsx'
+import { StatusIndicator } from '#app/components/status-indicator.tsx'
 import {
 	Dialog,
 	DialogContent,
@@ -59,7 +59,6 @@ import { useOptionalUser, useUserHasAccess } from '#app/components/user.tsx'
 import { useWorkshopConfig } from '#app/components/workshop-config.tsx'
 import { cn, getExercisePath, getExerciseStepPath } from '#app/utils/misc.tsx'
 import { useIsOnline } from '#app/utils/online.ts'
-import { useRequestInfo } from '#app/utils/root-loader.ts'
 import {
 	getProductHostEmoji,
 	productHostEmojis,
@@ -67,7 +66,7 @@ import {
 	type Location,
 	type User,
 } from '#app/utils/presence.tsx'
-import { useApps } from '#app/utils/root-loader.ts'
+import { useRequestInfo, useApps  } from '#app/utils/root-loader.ts'
 import {
 	useExerciseProgressClassName,
 	useNextExerciseRoute,
@@ -88,7 +87,8 @@ function getSidecarStatus() {
 	)
 
 	const hasFailure = processes.some((p) => !p.running)
-	return { processes, hasFailure, count: processes.length }
+	const failureCount = processes.filter((p) => !p.running).length
+	return { processes, hasFailure, count: processes.length, failureCount }
 }
 
 export async function loader({ request }: LoaderFunctionArgs) {
@@ -1248,7 +1248,7 @@ const OPENED_MENU_WIDTH = 400
 function SidecarStatusIndicator({
 	status,
 }: {
-	status: { hasFailure: boolean; count: number } | null
+	status: { hasFailure: boolean; count: number; failureCount: number } | null
 }) {
 	if (!status) return null
 
@@ -1256,7 +1256,7 @@ function SidecarStatusIndicator({
 		<SimpleTooltip
 			content={
 				status.hasFailure
-					? `${status.count} sidecar${status.count === 1 ? '' : 's'} failed`
+					? `${status.failureCount} sidecar${status.failureCount === 1 ? '' : 's'} failed`
 					: 'All sidecars running'
 			}
 		>
@@ -1833,12 +1833,16 @@ function ThemeSwitchRow({
 }) {
 	const wrapperRef = React.useRef<HTMLDivElement>(null)
 
-	const handleClick = () => {
+	const handleClick = (event: React.MouseEvent<HTMLDivElement>) => {
 		const form = wrapperRef.current?.querySelector<HTMLFormElement>('form')
 		if (!form) return
 		const submitButton = form.querySelector<HTMLButtonElement>(
 			'button[type="submit"]',
 		)
+		// Don't trigger click if the event originated from the submit button itself
+		if (submitButton?.contains(event.target as Node)) {
+			return
+		}
 		submitButton?.click()
 	}
 
