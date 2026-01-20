@@ -6,6 +6,7 @@ import {
 	isExtraApp,
 } from '@epic-web/workshop-utils/apps.server'
 import { getWorkshopConfig } from '@epic-web/workshop-utils/config.server'
+import { getProcesses } from '@epic-web/workshop-utils/process-manager.server'
 import {
 	combineServerTimings,
 	getServerTimeHeader,
@@ -33,6 +34,7 @@ import {
 	useOnboardingIndicator,
 } from '#app/components/onboarding-indicator.tsx'
 import { Logo } from '#app/components/product.tsx'
+import { StatusIndicator } from '#app/components/status-indicator.tsx'
 import { useRevalidationWS } from '#app/components/revalidation-ws.tsx'
 import {
 	Dialog,
@@ -68,6 +70,21 @@ import {
 } from '../progress.tsx'
 import { ThemeSwitch } from '../theme/index.tsx'
 
+function getSidecarStatus() {
+	const { sidecarProcesses } = getProcesses()
+	if (sidecarProcesses.size === 0) return null
+
+	const processes = Array.from(sidecarProcesses.entries()).map(
+		([name, { process }]) => ({
+			name,
+			running: process.exitCode === null,
+		}),
+	)
+
+	const hasFailure = processes.some((p) => !p.running)
+	return { processes, hasFailure, count: processes.length }
+}
+
 export async function loader({ request }: LoaderFunctionArgs) {
 	const timings = makeTimings('appLayoutLoader')
 	const { title: workshopTitle } = getWorkshopConfig()
@@ -86,6 +103,8 @@ export async function loader({ request }: LoaderFunctionArgs) {
 		stepNumber: Number(playgroundNumbersAndType?.stepNumber),
 		type: playgroundNumbersAndType?.type,
 	}
+
+	const sidecarStatus = getSidecarStatus()
 
 	const result = data(
 		{
@@ -131,6 +150,7 @@ export async function loader({ request }: LoaderFunctionArgs) {
 			playground,
 			isMenuOpened:
 				request.headers.get('cookie')?.includes('es_menu_open=true') ?? false,
+			sidecarStatus,
 		},
 		{
 			headers: {
@@ -1124,14 +1144,45 @@ function MobileNavigation({
 					) : null}
 					<div
 						className={cn(
-							'flex h-14 w-14 items-center justify-center self-start p-4 sm:mb-4 sm:w-full',
+							'flex h-14 items-center justify-center gap-2 self-start p-4 sm:mb-4',
 							{
 								'w-full border-t': isMenuOpened,
-								'border-l': !isMenuOpened,
+								'w-14 border-l': !isMenuOpened,
 							},
 						)}
 					>
-						<ThemeSwitch />
+						{isMenuOpened ? (
+							<>
+								<ThemeSwitch />
+								<SidecarStatusIndicator status={data.sidecarStatus} />
+							</>
+						) : (
+							<SimpleTooltip
+								content={
+									data.sidecarStatus?.hasFailure
+										? 'Process error - click to see details'
+										: 'More options'
+								}
+							>
+								{data.sidecarStatus?.hasFailure ? (
+									<Link
+										to="/admin"
+										className="text-muted-foreground hover:text-foreground hover:bg-muted flex h-8 w-8 items-center justify-center rounded-md transition-colors"
+									>
+										<StatusIndicator status="failed" />
+									</Link>
+								) : (
+									<button
+										type="button"
+										aria-label="More options"
+										onClick={() => setMenuOpened(true)}
+										className="text-muted-foreground hover:text-foreground hover:bg-muted flex h-8 w-8 items-center justify-center rounded-md transition-colors"
+									>
+										<Icon name="MoreHorizontal" size="md" />
+									</button>
+								)}
+							</SimpleTooltip>
+						)}
 					</div>
 				</div>
 			</div>
@@ -1140,6 +1191,33 @@ function MobileNavigation({
 }
 
 const OPENED_MENU_WIDTH = 400
+
+function SidecarStatusIndicator({
+	status,
+}: {
+	status: { hasFailure: boolean; count: number } | null
+}) {
+	if (!status) return null
+
+	return (
+		<SimpleTooltip
+			content={
+				status.hasFailure
+					? `${status.count} sidecar${status.count === 1 ? '' : 's'} failed`
+					: 'All sidecars running'
+			}
+		>
+			<Link
+				to="/admin"
+				className="text-muted-foreground hover:text-foreground hover:bg-muted flex h-8 w-8 items-center justify-center rounded-md transition-colors"
+			>
+				<StatusIndicator
+					status={status.hasFailure ? 'failed' : 'running'}
+				/>
+			</Link>
+		</SimpleTooltip>
+	)
+}
 
 function Navigation({
 	isMenuOpened,
@@ -1591,9 +1669,9 @@ function Navigation({
 						</SimpleTooltip>
 					) : null}
 					<div className="mb-4 w-full self-start border-t pt-[15px] pl-3">
-						<div className="flex items-center gap-2">
-							<ThemeSwitch />
-							{isMenuOpened ? (
+						{isMenuOpened ? (
+							<div className="flex items-center gap-2">
+								<ThemeSwitch />
 								<SimpleTooltip content="Keyboard shortcuts (press ?)">
 									<button
 										type="button"
@@ -1604,8 +1682,35 @@ function Navigation({
 										<Icon name="Question" size="md" />
 									</button>
 								</SimpleTooltip>
-							) : null}
-						</div>
+								<SidecarStatusIndicator status={data.sidecarStatus} />
+							</div>
+						) : (
+							<SimpleTooltip
+								content={
+									data.sidecarStatus?.hasFailure
+										? 'Process error - click to see details'
+										: 'More options'
+								}
+							>
+								{data.sidecarStatus?.hasFailure ? (
+									<Link
+										to="/admin"
+										className="text-muted-foreground hover:text-foreground hover:bg-muted flex h-8 w-8 items-center justify-center rounded-md transition-colors"
+									>
+										<StatusIndicator status="failed" />
+									</Link>
+								) : (
+									<button
+										type="button"
+										aria-label="More options"
+										onClick={() => setMenuOpened(true)}
+										className="text-muted-foreground hover:text-foreground hover:bg-muted flex h-8 w-8 items-center justify-center rounded-md transition-colors"
+									>
+										<Icon name="MoreHorizontal" size="md" />
+									</button>
+								)}
+							</SimpleTooltip>
+						)}
 					</div>
 				</div>
 			</motion.div>

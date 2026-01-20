@@ -60,11 +60,22 @@ export async function loader({ request }: Route.LoaderArgs) {
 	] of getProcesses().testProcesses.entries()) {
 		testProcesses[name] = { pid: process?.pid, exitCode }
 	}
+
+	const sidecarProcesses: Record<string, { pid?: number; running: boolean }> =
+		{}
+	for (const [name, { process }] of getProcesses().sidecarProcesses.entries()) {
+		sidecarProcesses[name] = {
+			pid: process.pid,
+			running: process.exitCode === null,
+		}
+	}
+
 	return data(
 		{
 			apps,
 			processes,
 			testProcesses,
+			sidecarProcesses,
 			inspectorRunning: isInspectorRunning(),
 		},
 		{
@@ -386,6 +397,48 @@ export default function AdminLayout({
 												process.exitCode === undefined
 													? 'Running'
 													: process.exitCode}
+											</span>
+										</div>
+									</li>
+								))}
+							</ul>
+						</CardContent>
+					</Card>
+				)}
+
+				{Object.entries(data.sidecarProcesses).length > 0 && (
+					<Card>
+						<CardHeader>
+							<CardTitle>Sidecar Processes</CardTitle>
+							<CardDescription>Background sidecar processes</CardDescription>
+						</CardHeader>
+						<CardContent>
+							<ul className="scrollbar-thin scrollbar-thumb-scrollbar flex max-h-48 flex-col gap-2 overflow-y-auto">
+								{Object.entries(data.sidecarProcesses).map(([key, process]) => (
+									<li
+										key={key}
+										className="border-border bg-muted/30 rounded-md border p-3"
+									>
+										<div className="flex items-center gap-2">
+											{process.running ? (
+												<Pinger status="running" />
+											) : (
+												<Pinger status="taken" />
+											)}
+											<span className="font-mono text-sm font-semibold">
+												{key}
+											</span>
+										</div>
+										<div className="text-muted-foreground mt-2 flex flex-wrap gap-x-4 gap-y-1 text-xs">
+											{process.pid && (
+												<span>
+													<span className="font-medium">PID:</span>{' '}
+													{process.pid}
+												</span>
+											)}
+											<span>
+												<span className="font-medium">Status:</span>{' '}
+												{process.running ? 'Running' : 'Failed'}
 											</span>
 										</div>
 									</li>
