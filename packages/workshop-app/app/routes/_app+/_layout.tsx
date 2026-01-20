@@ -797,6 +797,7 @@ function MobileNavigation({
 		dark: 'Dark',
 		system: 'System',
 	}[currentTheme]
+	const [isMobilePopoverOpen, setIsMobilePopoverOpen] = React.useState(false)
 
 	return (
 		<nav className="flex w-full border-b sm:hidden">
@@ -1346,6 +1347,7 @@ function Navigation({
 		dark: 'Dark',
 		system: 'System',
 	}[currentTheme]
+	const [isPopoverOpen, setIsPopoverOpen] = React.useState(false)
 
 	return (
 		<nav className="hidden border-r sm:flex">
