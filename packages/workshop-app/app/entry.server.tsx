@@ -35,10 +35,13 @@ export async function handleError(
 	if (ENV.EPICSHOP_IS_PUBLISHED) {
 		const Sentry = await sentryPromise
 		if (Sentry) {
-			const [userId, user] = await Promise.all([
+			const [userIdResult, userResult] = await Promise.allSettled([
 				getUserId({ request }),
 				getUserInfo({ request }),
 			])
+			const userId =
+				userIdResult.status === 'fulfilled' ? userIdResult.value : null
+			const user = userResult.status === 'fulfilled' ? userResult.value : null
 			const sentryUser = getSentryUser({ user, userId })
 			Sentry.withScope((scope) => {
 				if (sentryUser) {
