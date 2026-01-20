@@ -1067,7 +1067,7 @@ setupWorkshop()
 - `GITHUB_TOKEN` - GitHub personal access token for API requests (helps avoid
   rate limits when fetching workshop information)
 - `NODE_ENV` - Set to `production` for production mode
-- `SENTRY_DSN` - Sentry DSN for error tracking in production
+- `SENTRY_DSN` - Sentry DSN for error tracking and distributed tracing in production
 
 ## Interactive Features
 

@@ -11,11 +11,15 @@ const Sentry = await import('@sentry/react-router').catch((error) => {
 export function init() {
 	if (!ENV.EPICSHOP_IS_PUBLISHED) return
 
+	const tracePropagationTargets =
+		typeof window === 'undefined' ? [] : [window.location.origin, /^\//]
+
 	Sentry?.init({
 		dsn: ENV.SENTRY_DSN,
 		sendDefaultPii: true,
 		environment: ENV.MODE,
 		tunnel: '/resources/lookout',
+		tracePropagationTargets,
 		ignoreErrors: [
 			"Failed to execute 'requestPictureInPicture' on 'HTMLVideoElement'",
 		],
@@ -93,6 +97,7 @@ export function init() {
 			return event
 		},
 		integrations: [
+			Sentry.browserTracingIntegration(),
 			Sentry.replayIntegration(),
 			Sentry.browserProfilingIntegration(),
 		],
