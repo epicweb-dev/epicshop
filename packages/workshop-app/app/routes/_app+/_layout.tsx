@@ -705,6 +705,18 @@ function NavigationExtrasListItem({ children }: { children: React.ReactNode }) {
 	)
 }
 
+const navHighlightBaseClassName =
+	'relative px-2 py-0.5 pr-3 whitespace-nowrap outline-none hover:underline focus:underline after:bg-background after:absolute after:-right-2.5 after:-bottom-2.5 after:h-5 after:w-5 after:scale-75 after:rotate-45 after:content-[""]'
+
+function getNavHighlightClassName(
+	isActive: boolean,
+	className?: string | null,
+) {
+	return clsx(navHighlightBaseClassName, className, {
+		'bg-foreground text-background': isActive,
+	})
+}
+
 function MobileNavigation({
 	isMenuOpened,
 	onMenuOpenChange: setMenuOpened,
@@ -882,14 +894,7 @@ function MobileNavigation({
 																					)}
 																					prefetch="intent"
 																					className={({ isActive }) =>
-																						clsx(
-																							'relative px-2 py-0.5 pr-3 whitespace-nowrap outline-none hover:underline focus:underline',
-																							'after:bg-background after:absolute after:-right-2.5 after:-bottom-2.5 after:h-5 after:w-5 after:scale-75 after:rotate-45 after:content-[""] hover:underline focus:underline',
-																							{
-																								'bg-foreground text-background':
-																									isActive,
-																							},
-																						)
+																						getNavHighlightClassName(isActive)
 																					}
 																				>
 																					Problem
@@ -908,14 +913,7 @@ function MobileNavigation({
 																					)}
 																					prefetch="intent"
 																					className={({ isActive }) =>
-																						clsx(
-																							'relative px-2 py-0.5 pr-3 whitespace-nowrap outline-none hover:underline focus:underline',
-																							'after:bg-background after:absolute after:-right-2.5 after:-bottom-2.5 after:h-5 after:w-5 after:scale-75 after:rotate-45 after:content-[""] hover:underline focus:underline',
-																							{
-																								'bg-foreground text-background':
-																									isActive,
-																							},
-																						)
+																						getNavHighlightClassName(isActive)
 																					}
 																				>
 																					Solution
@@ -992,10 +990,10 @@ function MobileNavigation({
 															to={`/extra/${extra.dirName}`}
 															prefetch="intent"
 															className={({ isActive }) =>
-																clsx(
-																	'leading-tight font-semibold',
-																	isActive ? 'underline' : null,
-																)
+																	getNavHighlightClassName(
+																		isActive,
+																		'leading-tight font-semibold',
+																	)
 															}
 														>
 															{extra.title}
@@ -1347,14 +1345,7 @@ function Navigation({
 																					)}
 																					prefetch="intent"
 																					className={({ isActive }) =>
-																						clsx(
-																							'relative px-2 py-0.5 pr-3 whitespace-nowrap outline-none hover:underline focus:underline',
-																							'after:bg-background after:absolute after:-right-2.5 after:-bottom-2.5 after:h-5 after:w-5 after:scale-75 after:rotate-45 after:content-[""] hover:underline focus:underline',
-																							{
-																								'bg-foreground text-background':
-																									isActive,
-																							},
-																						)
+																						getNavHighlightClassName(isActive)
 																					}
 																				>
 																					Problem
@@ -1373,14 +1364,7 @@ function Navigation({
 																					)}
 																					prefetch="intent"
 																					className={({ isActive }) =>
-																						clsx(
-																							'relative px-2 py-0.5 pr-3 whitespace-nowrap outline-none hover:underline focus:underline',
-																							'after:bg-background after:absolute after:-right-2.5 after:-bottom-2.5 after:h-5 after:w-5 after:scale-75 after:rotate-45 after:content-[""] hover:underline focus:underline',
-																							{
-																								'bg-foreground text-background':
-																									isActive,
-																							},
-																						)
+																						getNavHighlightClassName(isActive)
 																					}
 																				>
 																					Solution
@@ -1457,10 +1441,10 @@ function Navigation({
 															to={`/extra/${extra.dirName}`}
 															prefetch="intent"
 															className={({ isActive }) =>
-																clsx(
-																	'leading-tight font-semibold',
-																	isActive ? 'underline' : null,
-																)
+																	getNavHighlightClassName(
+																		isActive,
+																		'leading-tight font-semibold',
+																	)
 															}
 														>
 															{extra.title}
