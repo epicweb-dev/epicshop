@@ -581,7 +581,7 @@ export function PlaygroundChooser({
 					<Select.Content
 						position="popper"
 						align="start"
-						className="bg-popover text-popover-foreground z-20 max-h-[50vh] lg:max-h-[70vh]"
+						className="invert-theme bg-popover text-popover-foreground z-20 max-h-[50vh] lg:max-h-[70vh]"
 					>
 						<Select.ScrollUpButton className="flex h-5 cursor-default items-center justify-center">
 							<Icon name="ChevronUp" />
