@@ -9,6 +9,7 @@ export const handle: SEOHandle = {
 const sections = [
 	{ id: 'tutorial', label: 'Tutorial' },
 	{ id: 'logging-in', label: 'Logging In' },
+	{ id: 'interleaved-practice', label: 'Interleaved Practice' },
 	{ id: 'workshop-structure', label: 'Workshop Structure' },
 	{ id: 'lesson-page', label: 'The Lesson Page' },
 	{ id: 'file-links', label: 'File Links' },
@@ -141,6 +142,27 @@ export default function Guide() {
 							Tip: Log in early to start tracking your progress from the
 							beginning!
 						</p>
+					</section>
+
+					<section id="interleaved-practice" className="scroll-mt-8">
+						<h2 className="text-h3 mb-4">Interleaved Practice</h2>
+						<p className="mb-4">
+							Interleaved practice mixes previously learned material with new
+							content so your brain has to recall concepts instead of relying on
+							short-term memory. This spacing effect improves long-term
+							retention and makes it easier to apply skills in new contexts.
+						</p>
+						<p className="mb-4">
+							Once you're logged in and have completed at least two exercise
+							steps, you'll see a <strong>Practice a past lesson</strong> button
+							next to <strong>Continue to next lesson</strong> in the
+							navigation. Click it any time to jump to a random completed step
+							and refresh what you've learned.
+						</p>
+						<ul className="list-disc space-y-2 pl-6">
+							<li>You must be logged in.</li>
+							<li>You need two or more completed steps.</li>
+						</ul>
 					</section>
 
 					<section id="workshop-structure" className="scroll-mt-8">

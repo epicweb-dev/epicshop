@@ -92,6 +92,24 @@ export function useNextExerciseRoute() {
 	return null
 }
 
+export function useRandomCompletedExerciseRoute() {
+	const progress = useEpicProgress()
+	if (!progress) return null
+
+	const completedSteps = progress.filter(
+		(p) => p.type === 'step' && p.epicCompletedAt,
+	)
+	if (completedSteps.length < 2) return null
+
+	const randomStep =
+		completedSteps[Math.floor(Math.random() * completedSteps.length)]
+	if (!randomStep || randomStep.type !== 'step') return null
+
+	const ex = randomStep.exerciseNumber.toString().padStart(2, '0')
+	const st = randomStep.stepNumber.toString().padStart(2, '0')
+	return `/exercise/${ex}/${st}/problem`
+}
+
 const percentageClassNames = {
 	0: '',
 	1: 'before:h-[10%]',

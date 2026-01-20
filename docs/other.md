@@ -37,6 +37,21 @@ These will be provided with the following environment variables:
 
 These scripts will be run with the `cwd` set to the workshop root.
 
+## Interleaved practice
+
+The workshop app supports interleaved practice by showing a
+"Practice a past lesson" button next to "Continue to next lesson" in the
+navigation. Clicking the button takes learners to a random completed step so
+they revisit older material and strengthen long-term retention.
+
+This button appears only when:
+
+- The user is logged in
+- At least two exercise steps are completed
+
+Only `step` progress items are considered (not instructions or finished pages),
+and the route is picked with `Math.random()` on each render so it changes often.
+
 ## Update
 
 When the workshop app is started, it checks to see whether there are any updates
