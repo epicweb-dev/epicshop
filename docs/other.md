@@ -39,10 +39,10 @@ These scripts will be run with the `cwd` set to the workshop root.
 
 ## Interleaved practice
 
-The workshop app supports interleaved practice by showing a
-"Practice a past lesson" button next to "Continue to next lesson" in the
-navigation. Clicking the button takes learners to a random completed step so
-they revisit older material and strengthen long-term retention.
+The workshop app supports interleaved practice by showing a "Practice a past
+lesson" button next to "Continue to next lesson" in the navigation. Clicking the
+button takes learners to a random completed step so they revisit older material
+and strengthen long-term retention.
 
 This button appears only when:
 
