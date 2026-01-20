@@ -66,9 +66,8 @@ const schema = z
 		}
 		if (env.EPICSHOP_APP_LOCATION === undefined) {
 			try {
-				const workshopAppPath = import.meta.resolve(
-					'@epic-web/workshop-app/package.json',
-				)
+				const workshopAppPath = import.meta
+					.resolve('@epic-web/workshop-app/package.json')
 				const packagePath = fileURLToPath(workshopAppPath)
 				env.EPICSHOP_APP_LOCATION = path.dirname(packagePath)
 			} catch {

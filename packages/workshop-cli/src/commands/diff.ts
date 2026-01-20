@@ -29,9 +29,8 @@ export async function showProgressDiff(
 			findSolutionDir,
 			isPlaygroundApp,
 		} = await import('@epic-web/workshop-utils/apps.server')
-		const { getDiffOutputWithRelativePaths } = await import(
-			'@epic-web/workshop-utils/diff.server'
-		)
+		const { getDiffOutputWithRelativePaths } =
+			await import('@epic-web/workshop-utils/diff.server')
 
 		await init()
 
@@ -103,9 +102,8 @@ export async function showDiffBetweenApps(
 			isExerciseStepApp,
 			extractNumbersAndTypeFromAppNameOrPath,
 		} = await import('@epic-web/workshop-utils/apps.server')
-		const { getDiffOutputWithRelativePaths } = await import(
-			'@epic-web/workshop-utils/diff.server'
-		)
+		const { getDiffOutputWithRelativePaths } =
+			await import('@epic-web/workshop-utils/diff.server')
 
 		await init()
 

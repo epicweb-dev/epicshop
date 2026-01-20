@@ -23,11 +23,10 @@ chai.use(chaiDOM)
 // this works though so...
 ;(chai.expect as ExpectStatic).extend(chai.expect, matchers)
 declare module '@vitest/expect' {
-	interface JestAssertion<T = any>
-		extends matchers.TestingLibraryMatchers<
-			ReturnType<typeof expect.stringContaining>,
-			T
-		> {}
+	interface JestAssertion<T = any> extends matchers.TestingLibraryMatchers<
+		ReturnType<typeof expect.stringContaining>,
+		T
+	> {}
 }
 
 // in the browser logging out the element is not necessary

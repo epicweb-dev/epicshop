@@ -62,9 +62,8 @@ const DataSchema = z.object({
 })
 
 async function loadAuthData() {
-	const { loadJSON } = await import(
-		'@epic-web/workshop-utils/data-storage.server'
-	)
+	const { loadJSON } =
+		await import('@epic-web/workshop-utils/data-storage.server')
 	const { data } = await loadJSON()
 	if (!data) return null
 	const result = DataSchema.safeParse(data)
@@ -75,9 +74,8 @@ async function saveAuthData(
 	host: string,
 	authInfo: z.infer<typeof AuthInfoSchema> | null,
 ) {
-	const { loadJSON, saveJSON } = await import(
-		'@epic-web/workshop-utils/data-storage.server'
-	)
+	const { loadJSON, saveJSON } =
+		await import('@epic-web/workshop-utils/data-storage.server')
 	const { data } = await loadJSON()
 	const currentData = (data ?? {}) as Record<string, unknown>
 	const authInfos = (currentData.authInfos ?? {}) as Record<string, unknown>

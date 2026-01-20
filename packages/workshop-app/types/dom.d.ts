@@ -31,8 +31,9 @@ declare global {
 		'epicshop-toast-show': CustomEvent<ToastEventProps>
 	}
 
-	interface CustomEventListener<EVENT_TYPE>
-		extends EventListenerOrEventListenerObject {
+	interface CustomEventListener<
+		EVENT_TYPE,
+	> extends EventListenerOrEventListenerObject {
 		(evt: CustomEventMap<EVENT_TYPE>): void
 	}
 

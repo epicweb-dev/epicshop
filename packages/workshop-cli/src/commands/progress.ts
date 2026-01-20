@@ -30,12 +30,10 @@ export async function show(
 	try {
 		const { init } = await import('@epic-web/workshop-utils/apps.server')
 		const { getAuthInfo } = await import('@epic-web/workshop-utils/db.server')
-		const { getProgress, getUserInfo } = await import(
-			'@epic-web/workshop-utils/epic-api.server'
-		)
-		const { getWorkshopConfig } = await import(
-			'@epic-web/workshop-utils/config.server'
-		)
+		const { getProgress, getUserInfo } =
+			await import('@epic-web/workshop-utils/epic-api.server')
+		const { getWorkshopConfig } =
+			await import('@epic-web/workshop-utils/config.server')
 
 		await init()
 
@@ -207,9 +205,8 @@ export async function update(
 	try {
 		const { init } = await import('@epic-web/workshop-utils/apps.server')
 		const { getAuthInfo } = await import('@epic-web/workshop-utils/db.server')
-		const { updateProgress, getProgress } = await import(
-			'@epic-web/workshop-utils/epic-api.server'
-		)
+		const { updateProgress, getProgress } =
+			await import('@epic-web/workshop-utils/epic-api.server')
 
 		await init()
 

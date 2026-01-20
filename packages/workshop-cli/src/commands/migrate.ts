@@ -57,9 +57,8 @@ export async function migrate(): Promise<MigrateResult | null> {
  * it's own instance of a file system cache, so we'll delete the old one.
  */
 async function deleteFsCache(): Promise<MigrateResult | null> {
-	const { resolveCacheDir } = await import(
-		'@epic-web/workshop-utils/data-storage.server'
-	)
+	const { resolveCacheDir } =
+		await import('@epic-web/workshop-utils/data-storage.server')
 	const cacheDir = resolveCacheDir()
 	const fsCacheDir = path.join(
 		cacheDir,

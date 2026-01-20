@@ -29,12 +29,10 @@ export async function list(
 	try {
 		const { init, getExercises, getPlaygroundApp, isExerciseStepApp, getApps } =
 			await import('@epic-web/workshop-utils/apps.server')
-		const { getWorkshopConfig } = await import(
-			'@epic-web/workshop-utils/config.server'
-		)
-		const { getProgress } = await import(
-			'@epic-web/workshop-utils/epic-api.server'
-		)
+		const { getWorkshopConfig } =
+			await import('@epic-web/workshop-utils/config.server')
+		const { getProgress } =
+			await import('@epic-web/workshop-utils/epic-api.server')
 
 		await init()
 
@@ -187,9 +185,8 @@ export async function showExercise(
 			getPlaygroundApp,
 			extractNumbersAndTypeFromAppNameOrPath,
 		} = await import('@epic-web/workshop-utils/apps.server')
-		const { getProgress } = await import(
-			'@epic-web/workshop-utils/epic-api.server'
-		)
+		const { getProgress } =
+			await import('@epic-web/workshop-utils/epic-api.server')
 		const path = await import('node:path')
 
 		await init()

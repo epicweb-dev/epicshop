@@ -24,9 +24,8 @@ export async function update({
 	}
 
 	try {
-		const { updateLocalRepo } = await import(
-			'@epic-web/workshop-utils/git.server'
-		)
+		const { updateLocalRepo } =
+			await import('@epic-web/workshop-utils/git.server')
 		const result = await updateLocalRepo()
 		if (result.status === 'success') {
 			if (!silent) {

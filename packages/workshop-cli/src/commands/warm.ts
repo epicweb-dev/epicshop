@@ -21,15 +21,12 @@ export async function warm({
 	}
 
 	try {
-		const { getApps, isProblemApp, isSolutionApp } = await import(
-			'@epic-web/workshop-utils/apps.server'
-		)
-		const { getDiffFiles, getDiffCode } = await import(
-			'@epic-web/workshop-utils/diff.server'
-		)
-		const { warmCache: warmEpicAPICache } = await import(
-			'@epic-web/workshop-utils/epic-api.server'
-		)
+		const { getApps, isProblemApp, isSolutionApp } =
+			await import('@epic-web/workshop-utils/apps.server')
+		const { getDiffFiles, getDiffCode } =
+			await import('@epic-web/workshop-utils/diff.server')
+		const { warmCache: warmEpicAPICache } =
+			await import('@epic-web/workshop-utils/epic-api.server')
 
 		void warmEpicAPICache().catch(() => {}) // ignore failure
 
