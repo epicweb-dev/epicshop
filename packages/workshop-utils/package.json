@@ -234,7 +234,7 @@
     "unified": "^11.0.5",
     "unist-util-remove-position": "^5.0.0",
     "unist-util-visit": "^5.0.0",
-    "zod": "^4.3.5"
+    "zod": "^3.25.76"
   },
   "devDependencies": {
     "@types/hast": "^3.0.4",
@@ -243,8 +243,8 @@
     "@types/react": "^19.2.8",
     "@types/react-dom": "^19.2.3",
     "@types/shell-quote": "^1.7.5",
-    "zshy": "^0.7.0",
-    "vitest": "^4.0.17"
+    "vitest": "^4.0.17",
+    "zshy": "^0.7.0"
   },
   "repository": {
     "type": "git",
