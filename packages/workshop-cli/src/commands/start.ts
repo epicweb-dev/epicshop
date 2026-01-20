@@ -259,25 +259,37 @@ export async function start(options: StartOptions = {}): Promise<StartResult> {
 			try {
 				const { updateLocalRepo } =
 					await import('@epic-web/workshop-utils/git.server')
+
+				// Kill child FIRST to release file handles (prevents EBUSY on Windows)
+				console.log('🛑 Stopping app for update...')
+				restarting = true
+				await killChild(child)
+
+				// Now run the update (npm install won't hit file locks)
 				const result = await updateLocalRepo()
+
 				if (result.status === 'success') {
 					console.log(`✅ ${result.message}`)
 					console.log('\n🔄 Restarting...')
-					restarting = true
-					await killChild(child)
-					restarting = false
 					spawnChild()
+					restarting = false
 					const ready = await waitForChildReady()
 					return ready
 				} else {
 					console.error(`❌ ${result.message}`)
-					console.error(
-						'Update failed. Please try again or see the repo for manual setup.',
-					)
+					console.error('Update failed. Restarting app without updates...')
+					spawnChild()
+					restarting = false
+					await waitForChildReady()
 					return false
 				}
 			} catch (error) {
 				console.error('❌ Update functionality not available:', error)
+				// Restart app even if update failed
+				if (!child || child.killed) {
+					spawnChild()
+					restarting = false
+				}
 				return false
 			}
 		}
