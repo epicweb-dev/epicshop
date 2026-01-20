@@ -372,9 +372,15 @@ export function startSidecarProcess(name: string, command: string) {
 		throw new Error('cannot run sidecar processes in deployed mode')
 
 	// if the process is already running, don't start it again
-	if (sidecarProcesses.has(name)) {
+	const existingEntry = sidecarProcesses.get(name)
+	if (existingEntry && existingEntry.process.exitCode === null) {
 		console.log(`Sidecar process ${name} is already running`)
 		return
+	}
+
+	// If there's an old exited entry, clean it up first
+	if (existingEntry) {
+		sidecarProcesses.delete(name)
 	}
 
 	const color = getNextAvailableColor()
