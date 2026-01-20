@@ -17,10 +17,8 @@ import {
 	makeTimings,
 } from '@epic-web/workshop-utils/timing.server'
 import * as Tabs from '@radix-ui/react-tabs'
-import { clsx } from 'clsx'
 import * as React from 'react'
 import {
-	Link,
 	useNavigate,
 	useSearchParams,
 	data,
@@ -30,14 +28,17 @@ import {
 	useOutletContext,
 } from 'react-router'
 import { Diff } from '#app/components/diff.tsx'
+import { DiscordChat } from '#app/components/discord-chat.tsx'
 import { GeneralErrorBoundary } from '#app/components/error-boundary.tsx'
 import { type InBrowserBrowserRef } from '#app/components/in-browser-browser.tsx'
-import { StatusIndicator } from '#app/components/status-indicator.tsx'
+import {
+	getPreviewSearchParams,
+	PreviewTabsList,
+} from '#app/components/preview-tabs.tsx'
 import { useWorkshopConfig } from '#app/components/workshop-config.tsx'
+import { fetchDiscordPosts } from '#app/utils/discord.server.ts'
 import { useAltDown } from '#app/utils/misc.tsx'
 import { type Route } from './+types/index.ts'
-import { fetchDiscordPosts } from './__shared/discord.server.ts'
-import { DiscordChat } from './__shared/discord.tsx'
 import { Playground } from './__shared/playground.tsx'
 import { Preview } from './__shared/preview.tsx'
 import { Tests } from './__shared/tests.tsx'
@@ -216,20 +217,6 @@ const tabs = [
 const isValidPreview = (s: string | null): s is (typeof tabs)[number] =>
 	Boolean(s && tabs.includes(s as (typeof tabs)[number]))
 
-function withParam(
-	searchParams: URLSearchParams,
-	key: string,
-	value: string | null,
-) {
-	const newSearchParams = new URLSearchParams(searchParams)
-	if (value === null) {
-		newSearchParams.delete(key)
-	} else {
-		newSearchParams.set(key, value)
-	}
-	return newSearchParams
-}
-
 export default function ExercisePartRoute({
 	loaderData,
 }: Route.ComponentProps) {
@@ -308,6 +295,23 @@ export default function ExercisePartRoute({
 		}
 	}
 
+	const previewTabs = tabs.map((tab) => {
+		const hidden = shouldHideTab(tab)
+		const status = getTabStatus(tab)
+		const to =
+			tab === 'diff' && altDown
+				? altDiffUrl
+				: `?${getPreviewSearchParams(searchParams, tab, 'playground')}`
+		return {
+			id: tab,
+			label: tab,
+			hidden,
+			status,
+			to,
+			onClick: tab === 'diff' ? handleDiffTabClick : undefined,
+		}
+	})
+
 	return (
 		<Tabs.Root
 			className="relative flex min-h-0 min-w-0 flex-1 flex-col overflow-hidden sm:col-span-1 sm:row-span-1"
@@ -315,40 +319,7 @@ export default function ExercisePartRoute({
 			// intentionally no onValueChange here because the Link will trigger the
 			// change.
 		>
-			<Tabs.List className="scrollbar-thin scrollbar-thumb-scrollbar h-14 min-h-14 overflow-x-auto border-b whitespace-nowrap">
-				{tabs.map((tab) => {
-					const hidden = shouldHideTab(tab)
-					const status = getTabStatus(tab)
-					return (
-						<Tabs.Trigger key={tab} value={tab} hidden={hidden} asChild>
-							<Link
-								id={`${tab}-tab`}
-								className={clsx(
-									'clip-path-button radix-state-active:z-10 radix-state-active:bg-foreground radix-state-active:text-background radix-state-active:hover:bg-foreground/80 radix-state-active:hover:text-background/80 radix-state-inactive:hover:bg-foreground/20 radix-state-inactive:hover:text-foreground/80 focus:bg-foreground/80 focus:text-background/80 relative h-full px-6 py-4 font-mono text-sm uppercase outline-none',
-									hidden ? 'hidden' : 'inline-block',
-								)}
-								preventScrollReset
-								prefetch="intent"
-								onClick={tab === 'diff' ? handleDiffTabClick : undefined}
-								to={
-									tab === 'diff' && altDown
-										? altDiffUrl
-										: `?${withParam(
-												searchParams,
-												'preview',
-												tab === 'playground' ? null : tab,
-											)}`
-								}
-							>
-								<span className="flex items-center gap-2">
-									{status && <StatusIndicator status={status} />}
-									<span>{tab}</span>
-								</span>
-							</Link>
-						</Tabs.Trigger>
-					)
-				})}
-			</Tabs.List>
+			<PreviewTabsList tabs={previewTabs} />
 			<div className="relative z-10 flex min-h-0 flex-1 flex-col overflow-hidden">
 				<Tabs.Content
 					value="playground"
@@ -409,7 +380,7 @@ export default function ExercisePartRoute({
 					value="chat"
 					className="radix-state-inactive:hidden flex h-full min-h-0 w-full grow basis-0 items-stretch justify-center self-start"
 				>
-					<DiscordChat />
+					<DiscordChat discordPostsPromise={loaderData.discordPostsPromise} />
 				</Tabs.Content>
 			</div>
 		</Tabs.Root>

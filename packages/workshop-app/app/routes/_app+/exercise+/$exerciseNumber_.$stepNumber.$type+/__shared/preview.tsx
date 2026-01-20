@@ -37,6 +37,14 @@ export function Preview({
 	if (!appInfo) return <p>No app here. Sorry.</p>
 	const { isRunning, dev, name, portIsAvailable, title } = appInfo
 
+	if (!dev) {
+		return (
+			<div className="flex h-full items-center justify-center text-lg">
+				<p>No preview available for this app.</p>
+			</div>
+		)
+	}
+
 	if (ENV.EPICSHOP_DEPLOYED && appInfo.stackBlitzUrl) {
 		const url = new URL(appInfo.stackBlitzUrl)
 		url.searchParams.set('embed', '1')

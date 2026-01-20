@@ -2,11 +2,15 @@ import path from 'path'
 import { invariantResponse } from '@epic-web/invariant'
 import { ElementScrollRestoration } from '@epic-web/restore-scroll'
 import {
+	getAppByName,
+	getAppDisplayName,
 	getApps,
 	isExtraApp,
+	isPlaygroundApp,
 	type ExtraApp,
 } from '@epic-web/workshop-utils/apps.server'
 import { getWorkshopConfig } from '@epic-web/workshop-utils/config.server'
+import { getDiffCode } from '@epic-web/workshop-utils/diff.server'
 import { getEpicVideoInfos } from '@epic-web/workshop-utils/epic-api.server'
 import {
 	combineServerTimings,
@@ -14,8 +18,8 @@ import {
 	makeTimings,
 	time,
 } from '@epic-web/workshop-utils/timing.server'
+import * as Tabs from '@radix-ui/react-tabs'
 import slugify from '@sindresorhus/slugify'
-import * as cookie from 'cookie'
 import { useMemo, useRef, useState } from 'react'
 import {
 	Link,
@@ -24,29 +28,37 @@ import {
 	type LoaderFunctionArgs,
 	type MetaFunction,
 	useLoaderData,
+	useSearchParams,
 } from 'react-router'
+import { Diff } from '#app/components/diff.tsx'
+import { DiscordChat } from '#app/components/discord-chat.tsx'
 import { EpicVideoInfoProvider } from '#app/components/epic-video.tsx'
 import { GeneralErrorBoundary } from '#app/components/error-boundary.tsx'
 import { type InBrowserBrowserRef } from '#app/components/in-browser-browser.tsx'
 import { NavChevrons } from '#app/components/nav-chevrons.tsx'
+import {
+	getPreviewSearchParams,
+	PreviewTabsList,
+} from '#app/components/preview-tabs.tsx'
 import { useRevalidationWS } from '#app/components/revalidation-ws.tsx'
+import { useWorkshopConfig } from '#app/components/workshop-config.tsx'
+import { Playground } from '#app/routes/_app+/exercise+/$exerciseNumber_.$stepNumber.$type+/__shared/playground.tsx'
 import { Preview } from '#app/routes/_app+/exercise+/$exerciseNumber_.$stepNumber.$type+/__shared/preview.tsx'
 import { getAppRunningState } from '#app/routes/_app+/exercise+/$exerciseNumber_.$stepNumber.$type+/__shared/utils.tsx'
 import { EditFileOnGitHub } from '#app/routes/launch-editor.tsx'
+import { SetAppToPlayground } from '#app/routes/set-playground.tsx'
+import { fetchDiscordPosts } from '#app/utils/discord.server.ts'
 import { createInlineFileComponent, Mdx } from '#app/utils/mdx.tsx'
-import { getRootMatchLoaderData } from '#app/utils/root-loader.ts'
+import {
+	getRootMatchLoaderData,
+	useRootLoaderData,
+} from '#app/utils/root-loader.ts'
 import { getSeoMetaTags } from '#app/utils/seo.ts'
-
-// shared split state helpers
-const splitCookieName = 'es_split_pct'
-
-function computeSplitPercent(input: unknown, defaultValue = 50): number {
-	const value = typeof input === 'number' ? input : Number(input)
-	if (Number.isFinite(value)) {
-		return Math.min(80, Math.max(20, Math.round(value * 100) / 100))
-	}
-	return defaultValue
-}
+import {
+	getSplitPercentFromRequest,
+	setSplitPercentCookie,
+	startSplitDrag,
+} from '#app/utils/split-layout.ts'
 
 function sortExtras(extras: ExtraApp[]) {
 	return extras.sort((a, b) =>
@@ -77,12 +89,14 @@ export async function loader({ request, params }: LoaderFunctionArgs) {
 	invariantResponse(params.extra, 'extra is required')
 
 	const { title: workshopTitle } = getWorkshopConfig()
-	const apps = await time(() => getApps({ request, timings }), {
+	const cacheOptions = { request, timings }
+	const apps = await time(() => getApps(cacheOptions), {
 		timings,
 		type: 'getApps',
 		desc: 'getApps in extra loader',
 	})
 	const extras = sortExtras(apps.filter(isExtraApp))
+	const playgroundApp = apps.find(isPlaygroundApp)
 	const extraIndex = extras.findIndex((extra) => extra.dirName === params.extra)
 	const extra = extras[extraIndex]
 	if (!extra) {
@@ -92,14 +106,50 @@ export async function loader({ request, params }: LoaderFunctionArgs) {
 	const readmeFilepath = path.join(extra.fullPath, 'README.mdx')
 	const previousExtra = extras[extraIndex - 1]
 	const nextExtra = extras[extraIndex + 1]
-
-	const cookieHeader = request.headers.get('cookie')
-	const rawSplit = cookieHeader
-		? cookie.parse(cookieHeader)[splitCookieName]
-		: null
-	const splitPercent = computeSplitPercent(rawSplit, 50)
+	const reqUrl = new URL(request.url)
+	const app1Name = reqUrl.searchParams.get('app1')
+	const app2Name = reqUrl.searchParams.get('app2')
+	const app1 = app1Name
+		? await getAppByName(app1Name)
+		: (playgroundApp ?? extra)
+	const app2 = app2Name ? await getAppByName(app2Name) : extra
+	const splitPercent = getSplitPercentFromRequest(request, 50)
 
 	const { isRunning, portIsAvailable } = await getAppRunningState(extra)
+
+	async function getDiffProp() {
+		if (!app1 || !app2) {
+			return { app1: app1?.name, app2: app2?.name, diffCode: null }
+		}
+		const diffCode = await getDiffCode(app1, app2, {
+			...cacheOptions,
+			forceFresh: reqUrl.searchParams.get('forceFresh') === 'diff',
+		}).catch((error) => {
+			console.error(error)
+			return null
+		})
+		return {
+			app1: app1.name,
+			app2: app2.name,
+			diffCode,
+		}
+	}
+
+	const allApps = apps
+		.filter(
+			(app, index, list) =>
+				list.findIndex((item) => item.name === app.name) === index,
+		)
+		.map((app) => ({
+			name: app.name,
+			displayName: getAppDisplayName(app, apps),
+		}))
+		.sort((a, b) =>
+			a.displayName.localeCompare(b.displayName, undefined, {
+				numeric: true,
+				sensitivity: 'base',
+			}),
+		)
 
 	return data(
 		{
@@ -126,6 +176,23 @@ export async function loader({ request, params }: LoaderFunctionArgs) {
 				file: readmeFilepath,
 				relativePath: path.join(extra.relativePath, 'README.mdx'),
 			},
+			playground: playgroundApp
+				? ({
+						type: 'playground',
+						appName: playgroundApp.appName,
+						name: playgroundApp.name,
+						title: playgroundApp.title,
+						fullPath: playgroundApp.fullPath,
+						dev: playgroundApp.dev,
+						test: playgroundApp.test,
+						stackBlitzUrl: playgroundApp.stackBlitzUrl,
+						isUpToDate: playgroundApp.isUpToDate,
+						...(await getAppRunningState(playgroundApp)),
+					} as const)
+				: null,
+			allApps,
+			diff: getDiffProp(),
+			discordPostsPromise: fetchDiscordPosts({ request }),
 			previousExtra: previousExtra
 				? { dirName: previousExtra.dirName, title: previousExtra.title }
 				: null,
@@ -154,10 +221,63 @@ export const headers: HeadersFunction = ({ loaderHeaders, parentHeaders }) => {
 
 export default function ExtraRoute() {
 	const data = useLoaderData<typeof loader>()
+	const rootData = useRootLoaderData()
 	const inBrowserBrowserRef = useRef<InBrowserBrowserRef>(null)
 	const containerRef = useRef<HTMLDivElement>(null)
 	const leftPaneRef = useRef<HTMLDivElement>(null)
 	const [splitPercent, setSplitPercent] = useState<number>(data.splitPercent)
+	const [searchParams] = useSearchParams()
+	const workshopConfig = useWorkshopConfig()
+	const userHasAccessPromise = useMemo(
+		() => Promise.resolve(rootData.userHasAccess ?? false),
+		[rootData.userHasAccess],
+	)
+	const showPlaygroundIndicator = data.playground?.appName !== data.extra.name
+	const shouldShowSetPlayground =
+		showPlaygroundIndicator || data.playground?.isUpToDate === false
+	const tabs = ['playground', 'extra', 'diff', 'chat'] as const
+	const preview = searchParams.get('preview')
+
+	function isValidPreview(
+		value: string | null,
+	): value is (typeof tabs)[number] {
+		return Boolean(value && tabs.includes(value as (typeof tabs)[number]))
+	}
+
+	function shouldHideTab(tab: (typeof tabs)[number]) {
+		if (tab === 'playground') {
+			return ENV.EPICSHOP_DEPLOYED
+		}
+		if (tab === 'extra') {
+			if (ENV.EPICSHOP_DEPLOYED) {
+				const devType = data.extra.dev.type
+				return (
+					devType !== 'browser' &&
+					devType !== 'export' &&
+					!data.extra.stackBlitzUrl
+				)
+			}
+		}
+		if (tab === 'chat') {
+			return !workshopConfig.product.discordChannelId
+		}
+		return false
+	}
+
+	const activeTab =
+		isValidPreview(preview) && !shouldHideTab(preview)
+			? preview
+			: (tabs.find((tab) => !shouldHideTab(tab)) ?? 'playground')
+
+	const previewTabs = tabs.map((tab) => {
+		const hidden = shouldHideTab(tab)
+		return {
+			id: tab,
+			label: tab,
+			hidden,
+			to: `?${getPreviewSearchParams(searchParams, tab, 'playground')}`,
+		}
+	})
 
 	// Create MDX components with extra-specific InlineFile
 	const mdxComponents = useMemo(() => {
@@ -175,76 +295,6 @@ export default function ExtraRoute() {
 	useRevalidationWS({
 		watchPaths: [data.extraReadme.file],
 	})
-
-	function setCookie(percent: number) {
-		const clamped = computeSplitPercent(percent)
-		document.cookie = `${splitCookieName}=${clamped}; path=/; SameSite=Lax;`
-	}
-
-	function startDrag(initialClientX: number) {
-		const container = containerRef.current
-		if (!container) return
-		const rect = container.getBoundingClientRect()
-		let dragging = true
-
-		// Disable pointer events on iframes so the drag keeps receiving events
-		const iframes = Array.from(
-			document.querySelectorAll('iframe'),
-		) as HTMLIFrameElement[]
-		const originalPointerEvents = iframes.map((el) => el.style.pointerEvents)
-		iframes.forEach((el) => (el.style.pointerEvents = 'none'))
-
-		function handleMove(clientX: number) {
-			// Safety check: ensure user is still dragging
-			if (!dragging) {
-				cleanup()
-				return
-			}
-
-			const relativeX = clientX - rect.left
-			const percent = (relativeX / rect.width) * 100
-			const clamped = computeSplitPercent(percent)
-			setSplitPercent(clamped)
-			setCookie(clamped)
-		}
-
-		function onMouseMove(e: MouseEvent) {
-			if (!dragging || e.buttons === 0) {
-				cleanup()
-				return
-			}
-			handleMove(e.clientX)
-		}
-		function onTouchMove(e: TouchEvent) {
-			const firstTouch = e.touches?.[0]
-			if (!dragging || !firstTouch) {
-				cleanup()
-				return
-			}
-			handleMove(firstTouch.clientX)
-		}
-		function cleanup() {
-			if (!dragging) return
-			dragging = false
-			iframes.forEach(
-				(el, i) => (el.style.pointerEvents = originalPointerEvents[i] ?? ''),
-			)
-			window.removeEventListener('mousemove', onMouseMove)
-			window.removeEventListener('mouseup', cleanup)
-			window.removeEventListener('touchmove', onTouchMove)
-			window.removeEventListener('touchend', cleanup)
-			document.body.style.cursor = ''
-			document.body.style.userSelect = ''
-		}
-
-		window.addEventListener('mousemove', onMouseMove)
-		window.addEventListener('mouseup', cleanup)
-		window.addEventListener('touchmove', onTouchMove)
-		window.addEventListener('touchend', cleanup)
-		document.body.style.cursor = 'col-resize'
-		document.body.style.userSelect = 'none'
-		handleMove(initialClientX)
-	}
 
 	return (
 		<div className="flex max-w-full grow flex-col">
@@ -268,6 +318,14 @@ export default function ExtraRoute() {
 									<span>{data.extra.title}</span>
 								</Link>
 							</div>
+							{shouldShowSetPlayground ? (
+								<SetAppToPlayground
+									appName={data.extra.name}
+									isOutdated={data.playground?.isUpToDate === false}
+									hideTextOnNarrow
+									showOnboardingIndicator={showPlaygroundIndicator}
+								/>
+							) : null}
 						</div>
 					</h1>
 					<article
@@ -353,22 +411,73 @@ export default function ExtraRoute() {
 					aria-orientation="vertical"
 					title="Drag to resize"
 					className="bg-border hover:bg-muted hidden w-1 cursor-col-resize lg:block"
-					onMouseDown={(e) => startDrag(e.clientX)}
+					onMouseDown={(event) =>
+						startSplitDrag({
+							container: containerRef.current,
+							initialClientX: event.clientX,
+							setSplitPercent,
+						})
+					}
 					onDoubleClick={() => {
-						setSplitPercent(50)
-						setCookie(50)
+						setSplitPercent(setSplitPercentCookie(50))
 					}}
-					onTouchStart={(e) => {
-						const firstTouch = e.touches?.[0]
-						if (firstTouch) startDrag(firstTouch.clientX)
+					onTouchStart={(event) => {
+						const firstTouch = event.touches?.[0]
+						if (!firstTouch) return
+						startSplitDrag({
+							container: containerRef.current,
+							initialClientX: firstTouch.clientX,
+							setSplitPercent,
+						})
 					}}
 				/>
-				<div className="flex min-w-0 flex-1">
-					<Preview
-						appInfo={data.extra}
-						inBrowserBrowserRef={inBrowserBrowserRef}
-					/>
-				</div>
+				<Tabs.Root
+					className="relative flex min-h-0 min-w-0 flex-1 flex-col overflow-hidden"
+					value={activeTab}
+				>
+					<PreviewTabsList tabs={previewTabs} />
+					<div className="relative z-10 flex min-h-0 flex-1 flex-col overflow-hidden">
+						<Tabs.Content
+							value="playground"
+							className="radix-state-inactive:hidden flex min-h-0 w-full grow basis-0 items-stretch justify-center self-start"
+							forceMount
+						>
+							<Playground
+								appInfo={data.playground}
+								problemAppName={data.extra.name}
+								allApps={data.allApps ?? []}
+								isUpToDate={data.playground?.isUpToDate ?? false}
+								inBrowserBrowserRef={inBrowserBrowserRef}
+							/>
+						</Tabs.Content>
+						<Tabs.Content
+							value="extra"
+							className="radix-state-inactive:hidden flex min-h-0 w-full grow basis-0 items-stretch justify-center self-start"
+							forceMount
+						>
+							<Preview
+								appInfo={data.extra}
+								inBrowserBrowserRef={inBrowserBrowserRef}
+							/>
+						</Tabs.Content>
+						<Tabs.Content
+							value="diff"
+							className="radix-state-inactive:hidden flex h-full min-h-0 w-full grow basis-0 items-stretch justify-center self-start"
+						>
+							<Diff
+								diff={data.diff}
+								allApps={data.allApps}
+								userHasAccessPromise={userHasAccessPromise}
+							/>
+						</Tabs.Content>
+						<Tabs.Content
+							value="chat"
+							className="radix-state-inactive:hidden flex h-full min-h-0 w-full grow basis-0 items-stretch justify-center self-start"
+						>
+							<DiscordChat discordPostsPromise={data.discordPostsPromise} />
+						</Tabs.Content>
+					</div>
+				</Tabs.Root>
 			</main>
 		</div>
 	)
