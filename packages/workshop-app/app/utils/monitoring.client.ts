@@ -81,7 +81,10 @@ function getTracingIntegration(
 		return sentryModule.reactRouterV6BrowserTracingIntegration(routerOptions)
 	}
 
-	return sentryModule.browserTracingIntegration?.({ tracePropagationTargets }) ?? null
+	return (
+		sentryModule.browserTracingIntegration?.({ tracePropagationTargets }) ??
+		null
+	)
 }
 
 export function init() {
