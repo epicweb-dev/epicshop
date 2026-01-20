@@ -1,4 +1,4 @@
-import { toast as showToast } from 'sonner'
+import * as React from 'react'
 import { Icon } from '#app/components/icons.tsx'
 
 export function RetrievalPractice({
@@ -6,17 +6,25 @@ export function RetrievalPractice({
 }: {
 	exerciseNumber?: number
 }) {
+	const [copied, setCopied] = React.useState(false)
+
 	const prompt = exerciseNumber
 		? `Please quiz me on exercise ${exerciseNumber} using the epicshop MCP server. Call the get_quiz_instructions tool with exerciseNumber "${exerciseNumber}" to get the quiz instructions, then quiz me one question at a time.`
 		: `Please quiz me on this workshop using the epicshop MCP server. Call the get_quiz_instructions tool to get the quiz instructions, then quiz me one question at a time.`
 
+	React.useEffect(() => {
+		if (copied) {
+			const timeoutId = setTimeout(() => setCopied(false), 1000)
+			return () => clearTimeout(timeoutId)
+		}
+	}, [copied])
+
 	const handleCopy = async () => {
 		try {
 			await navigator.clipboard.writeText(prompt)
-			showToast.success('Copied prompt to clipboard')
+			setCopied(true)
 		} catch (error) {
 			console.error('Failed to copy to clipboard:', error)
-			showToast.error('Failed to copy to clipboard')
 		}
 	}
 
@@ -37,9 +45,9 @@ export function RetrievalPractice({
 				<button
 					onClick={handleCopy}
 					className="absolute top-4 right-4 text-muted-foreground hover:text-foreground transition-colors"
-					aria-label="Copy prompt to clipboard"
+					aria-label={copied ? 'Copied!' : 'Copy prompt to clipboard'}
 				>
-					<Icon name="Copy" size="sm" />
+					<Icon name={copied ? 'CheckSmall' : 'Copy'} size="sm" />
 				</button>
 			</div>
 			<p className="text-muted-foreground text-sm">
