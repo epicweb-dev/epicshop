@@ -57,6 +57,7 @@ import { ClientHintCheck, getHints } from './utils/client-hints'
 import { getConfetti } from './utils/confetti.server'
 import { cn, combineHeaders, getDomainUrl, useAltDown } from './utils/misc'
 import { Presence } from './utils/presence'
+import { getSentryUser } from './utils/sentry-user'
 import { getSeoMetaTags } from './utils/seo'
 import { getToast } from './utils/toast.server'
 
@@ -237,6 +238,23 @@ function App() {
 			window.removeEventListener('toggle-keyboard-shortcuts', handleToggle)
 		}
 	}, [])
+
+	React.useEffect(() => {
+		if (!ENV.EPICSHOP_IS_PUBLISHED) return
+		const sentryUser = getSentryUser({
+			user: data.user,
+			userId: data.userId,
+		})
+		void import('@sentry/react-router')
+			.then((Sentry) => {
+				if (sentryUser) {
+					Sentry.setUser(sentryUser)
+				} else {
+					Sentry.setUser(null)
+				}
+			})
+			.catch(() => {})
+	}, [data.user, data.userId])
 
 	const theme = useTheme()
 	return (
