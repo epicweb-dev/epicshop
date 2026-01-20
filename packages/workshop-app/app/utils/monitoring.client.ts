@@ -31,6 +31,14 @@ function getTracingIntegration(
 	if (!Sentry) return null
 
 	const sentryModule = Sentry as unknown as {
+		reactRouterTracingIntegration?: (options: {
+			useEffect: typeof useEffect
+			useLocation: typeof useLocation
+			useNavigationType: typeof useNavigationType
+			createRoutesFromChildren: typeof createRoutesFromChildren
+			matchRoutes: typeof matchRoutes
+			tracePropagationTargets?: Array<TracePropagationTarget>
+		}) => SentryIntegration
 		reactRouterV7BrowserTracingIntegration?: (options: {
 			useEffect: typeof useEffect
 			useLocation: typeof useLocation
@@ -59,6 +67,10 @@ function getTracingIntegration(
 		createRoutesFromChildren,
 		matchRoutes,
 		tracePropagationTargets,
+	}
+
+	if (sentryModule.reactRouterTracingIntegration) {
+		return sentryModule.reactRouterTracingIntegration(routerOptions)
 	}
 
 	if (sentryModule.reactRouterV7BrowserTracingIntegration) {
