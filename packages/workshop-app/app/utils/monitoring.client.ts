@@ -47,14 +47,6 @@ function getTracingIntegration(
 			matchRoutes: typeof matchRoutes
 			tracePropagationTargets?: Array<TracePropagationTarget>
 		}) => SentryIntegration
-		reactRouterV6BrowserTracingIntegration?: (options: {
-			useEffect: typeof useEffect
-			useLocation: typeof useLocation
-			useNavigationType: typeof useNavigationType
-			createRoutesFromChildren: typeof createRoutesFromChildren
-			matchRoutes: typeof matchRoutes
-			tracePropagationTargets?: Array<TracePropagationTarget>
-		}) => SentryIntegration
 		browserTracingIntegration?: (options?: {
 			tracePropagationTargets?: Array<TracePropagationTarget>
 		}) => SentryIntegration
@@ -75,10 +67,6 @@ function getTracingIntegration(
 
 	if (sentryModule.reactRouterV7BrowserTracingIntegration) {
 		return sentryModule.reactRouterV7BrowserTracingIntegration(routerOptions)
-	}
-
-	if (sentryModule.reactRouterV6BrowserTracingIntegration) {
-		return sentryModule.reactRouterV6BrowserTracingIntegration(routerOptions)
 	}
 
 	return (

@@ -6,10 +6,12 @@ import { matchSorter } from 'match-sorter'
 import yargs, { type ArgumentsCamelCase, type Argv } from 'yargs'
 import { hideBin } from 'yargs/helpers'
 import { assertCanPrompt } from './utils/cli-runtime.js'
+import { initCliSentry } from './utils/sentry-cli.js'
 
 // Check for --help on start command before yargs parses
 // (yargs exits before command handler when help is requested)
 const args = hideBin(process.argv)
+const cliSentry = initCliSentry(args)
 if (
 	(args.includes('--help') || args.includes('-h')) &&
 	(args.length === 0 || args[0] === 'start')
@@ -40,6 +42,9 @@ const cli = yargs(args)
 	.alias('h', 'help')
 	.version(false)
 	.showHelpOnFail(true)
+	.middleware((argv) => {
+		cliSentry.setCommandContextFromArgv(argv)
+	})
 	.command(
 		'start [workshop]',
 		'Start a workshop (auto-detects if inside a workshop directory)',
@@ -880,6 +885,13 @@ const cli = yargs(args)
 				}
 			}
 
+			if (!argv.subcommand) {
+				cliSentry.setCommandContext({
+					command: 'auth',
+					subcommand,
+				})
+			}
+
 			let result: { success: boolean }
 
 			switch (subcommand) {
@@ -1534,6 +1546,7 @@ try {
 				})
 			},
 		})
+		cliSentry.setCommandContext({ command: subcommand, interactive: true })
 
 		switch (subcommand) {
 			case 'start': {
@@ -1778,6 +1791,10 @@ try {
 						})
 					},
 				})
+				cliSentry.setCommandContext({
+					command: 'auth',
+					subcommand: authSubcommand,
+				})
 
 				let authResult: { success: boolean }
 				switch (authSubcommand) {
@@ -1882,6 +1899,8 @@ try {
 	if ((error as Error).message === 'USER_QUIT') {
 		process.exit(0)
 	}
+	cliSentry.captureException(error)
+	await cliSentry.flush()
 	console.error(chalk.red('❌ Error:'), error)
 	process.exit(1)
 }
