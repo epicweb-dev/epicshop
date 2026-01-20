@@ -18,12 +18,12 @@ import {
 import chalk from 'chalk'
 import { matchSorter, rankings } from 'match-sorter'
 import ora from 'ora'
+import { assertCanPrompt, isCiEnvironment } from '../utils/cli-runtime.js'
 import { runCommand, runCommandInteractive } from '../utils/command-runner.js'
 import {
 	formatPackageManagerCommand,
 	getPackageManagerRunArgs,
 } from '../utils/package-manager.js'
-import { assertCanPrompt, isCiEnvironment } from '../utils/cli-runtime.js'
 import { setup } from './setup.js'
 
 const GITHUB_ORG = 'epicweb-dev'
@@ -1894,9 +1894,7 @@ export async function config(
 				if (shouldRemove) {
 					await clearPackageManager()
 					console.log()
-					console.log(
-						chalk.green(`✅ Package manager reset to default (npm).`),
-					)
+					console.log(chalk.green(`✅ Package manager reset to default (npm).`))
 					return {
 						success: true,
 						message: 'Package manager reset to default (npm).',
@@ -2965,4 +2963,3 @@ async function directoryExists(dirPath: string): Promise<boolean> {
 		return false
 	}
 }
-

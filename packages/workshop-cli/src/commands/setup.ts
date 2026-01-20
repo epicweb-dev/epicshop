@@ -1,11 +1,11 @@
 import fs from 'node:fs'
 import path from 'node:path'
+import { getErrorMessage } from '@epic-web/workshop-utils/utils'
 import {
 	getPackageManager,
 	isPackageManagerConfigured,
 	type PackageManager,
 } from '@epic-web/workshop-utils/workshops.server'
-import { getErrorMessage } from '@epic-web/workshop-utils/utils'
 import chalk from 'chalk'
 import { execa } from 'execa'
 import {
@@ -49,9 +49,13 @@ async function getPackageManagerVersion(
 	packageManager: PackageManager,
 ): Promise<{ success: boolean; version?: string; error?: Error }> {
 	try {
-		const result = await execa(resolveCliCommand(packageManager), ['--version'], {
-			stdio: 'pipe',
-		})
+		const result = await execa(
+			resolveCliCommand(packageManager),
+			['--version'],
+			{
+				stdio: 'pipe',
+			},
+		)
 		return { success: true, version: result.stdout.trim() }
 	} catch (error: unknown) {
 		const message = getErrorMessage(error, 'Failed to check package manager')
@@ -79,9 +83,7 @@ function formatCommandResultError(
 	}
 }
 
-export async function setup(
-	options: SetupOptions = {},
-): Promise<SetupResult> {
+export async function setup(options: SetupOptions = {}): Promise<SetupResult> {
 	const { silent = false } = options
 	const cwd = options.cwd ? path.resolve(options.cwd) : process.cwd()
 	const packageJsonPath = path.join(cwd, 'package.json')
@@ -131,7 +133,10 @@ export async function setup(
 		}
 	}
 
-	if (packageManager === 'npm' && !isNpmVersionSupported(versionResult.version)) {
+	if (
+		packageManager === 'npm' &&
+		!isNpmVersionSupported(versionResult.version)
+	) {
 		const message = `npm version is ${versionResult.version} which is out of date. Please install npm@8.16.0 or greater.`
 		if (!silent) {
 			console.error(chalk.red(`❌ ${message}`))

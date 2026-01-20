@@ -1,4 +1,4 @@
-import type { PackageManager } from '@epic-web/workshop-utils/workshops.server'
+import { type PackageManager } from '@epic-web/workshop-utils/workshops.server'
 
 function detectPackageManager(value: string): PackageManager | null {
 	if (!value) return null

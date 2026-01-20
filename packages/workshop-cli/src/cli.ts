@@ -71,9 +71,7 @@ async function maybePromptToUpdatePackageManager(
 	if (shouldUpdate) {
 		await setPackageManager(runtimeManager)
 		console.log(
-			chalk.green(
-				`✅ Default package manager updated to ${runtimeManager}.`,
-			),
+			chalk.green(`✅ Default package manager updated to ${runtimeManager}.`),
 		)
 	}
 }

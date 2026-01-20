@@ -163,7 +163,8 @@ epicshop add web-forms --directory ~/my-workshops
 #### What it does
 
 1. Clones the repository from `https://github.com/epicweb-dev/<repo-name>`
-2. Runs `epicshop setup` in the cloned directory (uses configured package manager)
+2. Runs `epicshop setup` in the cloned directory (uses configured package
+   manager)
 3. If cloned into your configured repos directory, it will show up in
    `epicshop list` and can be started/opened by name
 
@@ -304,7 +305,8 @@ epicshop config [options]
 #### Options
 
 - `--repos-dir <path>` - Set the default directory where workshops are cloned
-- `--package-manager <manager>` - Set the default package manager (`npm`, `pnpm`, `yarn`, `bun`)
+- `--package-manager <manager>` - Set the default package manager (`npm`,
+  `pnpm`, `yarn`, `bun`)
 - `--silent, -s` - Run without output logs (default: false)
 
 #### Examples
@@ -324,7 +326,8 @@ epicshop config --package-manager pnpm
 
 - **Repos directory**: The default location where workshops are cloned. Defaults
   to `~/epicweb-workshops` on most systems.
-- **Package manager**: The default package manager used for installs. Defaults to `npm`.
+- **Package manager**: The default package manager used for installs. Defaults
+  to `npm`.
 
 ### `update` / `upgrade`
 
