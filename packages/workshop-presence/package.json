@@ -15,7 +15,7 @@
   },
   "dependencies": {
     "@epic-web/workshop-utils": "file:../workshop-utils",
-    "zod": "^3.25.76"
+    "zod": "^4.3.5"
   },
   "devDependencies": {
     "partykit": "0.0.115",

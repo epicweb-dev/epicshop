@@ -109,7 +109,7 @@
     "tailwind-merge": "^3.4.0",
     "vite-env-only": "^3.0.3",
     "ws": "^8.19.0",
-    "zod": "^3.25.76"
+    "zod": "^4.3.5"
   },
   "devDependencies": {
     "@playwright/test": "^1.57.0",
