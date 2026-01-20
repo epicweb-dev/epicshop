@@ -1,5 +1,7 @@
 import { PassThrough } from 'stream'
 import { createReadableStreamFromReadable } from '@react-router/node'
+import { getUserInfo } from '@epic-web/workshop-utils/epic-api.server'
+import { getUserId } from '@epic-web/workshop-utils/user.server'
 // Dynamic import of Sentry with error handling
 const sentryPromise = import('@sentry/react-router').catch((error) => {
 	console.warn(
@@ -18,6 +20,7 @@ import {
 	type LoaderFunctionArgs,
 	type ActionFunctionArgs,
 } from 'react-router'
+import { getSentryUser } from './utils/sentry-user'
 
 export const streamTimeout = 60000
 const ABORT_DELAY = streamTimeout + 1000
@@ -31,7 +34,19 @@ export async function handleError(
 	if (isbot(request.headers.get('user-agent'))) return
 	if (ENV.EPICSHOP_IS_PUBLISHED) {
 		const Sentry = await sentryPromise
-		Sentry?.captureException(error)
+		if (Sentry) {
+			const [userId, user] = await Promise.all([
+				getUserId({ request }),
+				getUserInfo({ request }),
+			])
+			const sentryUser = getSentryUser({ user, userId })
+			Sentry.withScope((scope) => {
+				if (sentryUser) {
+					scope.setUser(sentryUser)
+				}
+				Sentry.captureException(error)
+			})
+		}
 	}
 }
 
