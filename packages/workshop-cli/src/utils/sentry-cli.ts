@@ -12,17 +12,12 @@ type CliCommandContext = {
 type CliSentry = {
 	enabled: boolean
 	setCommandContext: (update: Partial<CliCommandContext>) => void
+	setCommandContextFromArgv: (argv: { _: Array<string | number> }) => void
 	captureException: (error: unknown) => void
 	flush: (timeoutMs?: number) => Promise<boolean>
 }
 
 const HELP_FLAGS = new Set(['--help', '-h'])
-const SUBCOMMANDS = new Map<string, Set<string>>([
-	['auth', new Set(['status', 'login', 'logout'])],
-	['playground', new Set(['show', 'set', 'saved'])],
-	['progress', new Set(['show', 'update'])],
-	['config', new Set(['reset'])],
-])
 
 function extractFlags(args: string[]) {
 	const flags = new Set<string>()
@@ -52,15 +47,9 @@ function deriveCommandContext(args: string[]): CliCommandContext {
 	const help = args.some((arg) => HELP_FLAGS.has(arg))
 	const flags = extractFlags(args)
 	let command: string | undefined
-	let subcommand: string | undefined
 	const firstNonFlagIndex = args.findIndex((arg) => !arg.startsWith('-'))
 	if (firstNonFlagIndex >= 0) {
 		command = args[firstNonFlagIndex]
-		const allowedSubs = command ? SUBCOMMANDS.get(command) : undefined
-		const candidate = args[firstNonFlagIndex + 1]
-		if (allowedSubs && candidate && allowedSubs.has(candidate)) {
-			subcommand = candidate
-		}
 	}
 	if (!command) {
 		if (help) {
@@ -71,10 +60,35 @@ function deriveCommandContext(args: string[]): CliCommandContext {
 	}
 	return {
 		command,
-		subcommand,
 		flags,
 		interactive,
 		help: help || command === 'help',
+	}
+}
+
+function deriveCommandContextFromArgv(
+	args: string[],
+	argv: {
+		_: Array<string | number>
+		help?: boolean
+		h?: boolean
+		subcommand?: unknown
+	},
+): CliCommandContext {
+	const baseContext = deriveCommandContext(args)
+	const segments = argv._?.map(String).filter(Boolean) ?? []
+	const command = segments[0] ?? baseContext.command
+	const hasSubcommand = Object.prototype.hasOwnProperty.call(argv, 'subcommand')
+	const subcommand =
+		hasSubcommand && typeof argv.subcommand === 'string'
+			? argv.subcommand
+			: baseContext.subcommand
+	const help = Boolean(argv.help ?? argv.h ?? baseContext.help)
+	return {
+		...baseContext,
+		command,
+		subcommand,
+		help,
 	}
 }
 
@@ -105,6 +119,7 @@ export function initCliSentry(args: string[]): CliSentry {
 		return {
 			enabled,
 			setCommandContext: () => {},
+			setCommandContextFromArgv: () => {},
 			captureException: () => {},
 			flush: async () => true,
 		}
@@ -132,6 +147,10 @@ export function initCliSentry(args: string[]): CliSentry {
 		enabled,
 		setCommandContext(update) {
 			currentContext = { ...currentContext, ...update }
+			applyCommandContext(currentContext)
+		},
+		setCommandContextFromArgv(argv) {
+			currentContext = deriveCommandContextFromArgv(args, argv)
 			applyCommandContext(currentContext)
 		},
 		captureException(error) {

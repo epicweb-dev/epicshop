@@ -42,6 +42,9 @@ const cli = yargs(args)
 	.alias('h', 'help')
 	.version(false)
 	.showHelpOnFail(true)
+	.middleware((argv) => {
+		cliSentry.setCommandContextFromArgv(argv)
+	})
 	.command(
 		'start [workshop]',
 		'Start a workshop (auto-detects if inside a workshop directory)',
@@ -382,10 +385,6 @@ const cli = yargs(args)
 				silent?: boolean
 			}>,
 		) => {
-			cliSentry.setCommandContext({
-				command: 'config',
-				subcommand: argv.subcommand,
-			})
 			const { config } = await import('./commands/workshops.js')
 			const result = await config({
 				subcommand: argv.subcommand === 'reset' ? 'reset' : undefined,
@@ -886,10 +885,12 @@ const cli = yargs(args)
 				}
 			}
 
-			cliSentry.setCommandContext({
-				command: 'auth',
-				subcommand,
-			})
+			if (!argv.subcommand) {
+				cliSentry.setCommandContext({
+					command: 'auth',
+					subcommand,
+				})
+			}
 
 			let result: { success: boolean }
 
@@ -1020,10 +1021,6 @@ const cli = yargs(args)
 				} = await import('./commands/playground.js')
 
 				const subcommand = argv.subcommand || 'show'
-				cliSentry.setCommandContext({
-					command: 'playground',
-					subcommand,
-				})
 
 				if (subcommand === 'show') {
 					const result = await show({ silent: argv.silent })
@@ -1187,10 +1184,6 @@ const cli = yargs(args)
 				const { show, update } = await import('./commands/progress.js')
 
 				const subcommand = argv.subcommand || 'show'
-				cliSentry.setCommandContext({
-					command: 'progress',
-					subcommand,
-				})
 
 				if (subcommand === 'show') {
 					const result = await show({
