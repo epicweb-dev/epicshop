@@ -14,6 +14,7 @@
     "exports": {
       "./package.json": "./package.json",
       "./cleanup": "./src/commands/cleanup.ts",
+      "./setup": "./src/commands/setup.ts",
       "./warm": "./src/commands/warm.ts",
       "./start": "./src/commands/start.ts",
       "./update": "./src/commands/update.ts",
@@ -32,6 +33,11 @@
       "import": "./dist/commands/cleanup.js",
       "types": "./dist/commands/cleanup.d.ts",
       "default": "./dist/commands/cleanup.js"
+    },
+    "./setup": {
+      "import": "./dist/commands/setup.js",
+      "types": "./dist/commands/setup.d.ts",
+      "default": "./dist/commands/setup.js"
     },
     "./warm": {
       "import": "./dist/commands/warm.js",

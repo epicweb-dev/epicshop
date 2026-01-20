@@ -109,6 +109,29 @@ epicshop init
 epicshop init
 ```
 
+### `setup`
+
+Install workshop dependencies in the current directory. Uses the configured
+package manager (default: `npm`).
+
+```bash
+epicshop setup [options]
+```
+
+#### Options
+
+- `--silent, -s` - Run without output logs (default: false)
+
+#### Examples
+
+```bash
+# Install workshop dependencies
+epicshop setup
+
+# Install dependencies silently
+epicshop setup --silent
+```
+
 ### `add <repo-name> [destination]`
 
 Add a workshop by cloning it from the epicweb-dev GitHub organization and
@@ -140,7 +163,7 @@ epicshop add web-forms --directory ~/my-workshops
 #### What it does
 
 1. Clones the repository from `https://github.com/epicweb-dev/<repo-name>`
-2. Runs `npm run setup` in the cloned directory
+2. Runs `epicshop setup` in the cloned directory (uses configured package manager)
 3. If cloned into your configured repos directory, it will show up in
    `epicshop list` and can be started/opened by name
 
@@ -281,6 +304,7 @@ epicshop config [options]
 #### Options
 
 - `--repos-dir <path>` - Set the default directory where workshops are cloned
+- `--package-manager <manager>` - Set the default package manager (`npm`, `pnpm`, `yarn`, `bun`)
 - `--silent, -s` - Run without output logs (default: false)
 
 #### Examples
@@ -291,12 +315,16 @@ epicshop config
 
 # Set the repos directory
 epicshop config --repos-dir ~/epicweb-workshops
+
+# Set the default package manager
+epicshop config --package-manager pnpm
 ```
 
 #### Configuration
 
 - **Repos directory**: The default location where workshops are cloned. Defaults
   to `~/epicweb-workshops` on most systems.
+- **Package manager**: The default package manager used for installs. Defaults to `npm`.
 
 ### `update` / `upgrade`
 
@@ -1195,6 +1223,7 @@ epicshop start
 | `epicshop`            | Interactive command chooser       | ✓             |
 | `epicshop start`      | Start a workshop                  | ✓             |
 | `epicshop init`       | First-time setup wizard           | ✗             |
+| `epicshop setup`      | Install workshop dependencies     | ✗             |
 | `epicshop add`        | Clone a workshop from epicweb-dev | ✗             |
 | `epicshop list`       | List all workshops                | ✗             |
 | `epicshop remove`     | Remove a workshop                 | ✓             |
