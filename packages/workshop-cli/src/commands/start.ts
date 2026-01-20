@@ -366,48 +366,48 @@ export async function start(options: StartOptions = {}): Promise<StartResult> {
 			server.listen(parentPort, '127.0.0.1')
 		}
 
-	function spawnChild() {
-		if (!appDir) return
+		function spawnChild() {
+			if (!appDir) return
 
-		// Reset port tracking when spawning a new child
-		childPort = null
-		childPortPromise = createChildPortPromise()
+			// Reset port tracking when spawning a new child
+			childPort = null
+			childPortPromise = createChildPortPromise()
 
-		const childArgs = [...(sentryImport ? [sentryImport] : []), childScript]
-		child = spawn(process.execPath, childArgs, {
-			cwd: appDir,
-			// Capture stdout for port detection
-			stdio: ['pipe', 'pipe', 'inherit'],
-			env: childEnv,
-		})
+			const childArgs = [...(sentryImport ? [sentryImport] : []), childScript]
+			child = spawn(process.execPath, childArgs, {
+				cwd: appDir,
+				// Capture stdout for port detection
+				stdio: ['pipe', 'pipe', 'inherit'],
+				env: childEnv,
+			})
 
-		// Reset flag only after spawn succeeds
-		childWasKilled = false
+			// Reset flag only after spawn succeeds
+			childWasKilled = false
 
-		if (child.stdout) {
-			child.stdout.on('data', (data: Buffer) => {
-				process.stdout.write(data)
-				if (!childPort) {
-					const str = data.toString('utf8')
-					const lines = str.split(/\r?\n/)
-					for (const line of lines) {
-						const port = parsePortFromLine(line)
-						if (port) {
-							childPortPromiseResolve?.(port)
+			if (child.stdout) {
+				child.stdout.on('data', (data: Buffer) => {
+					process.stdout.write(data)
+					if (!childPort) {
+						const str = data.toString('utf8')
+						const lines = str.split(/\r?\n/)
+						for (const line of lines) {
+							const port = parsePortFromLine(line)
+							if (port) {
+								childPortPromiseResolve?.(port)
+							}
 						}
 					}
+				})
+			}
+			child.on('exit', async (code: number | null) => {
+				if (restarting) {
+					restarting = false
+				} else {
+					await new Promise((resolve) => server?.close(resolve))
+					process.exit(code ?? 0)
 				}
 			})
 		}
-		child.on('exit', async (code: number | null) => {
-			if (restarting) {
-				restarting = false
-			} else {
-				await new Promise((resolve) => server?.close(resolve))
-				process.exit(code ?? 0)
-			}
-		})
-	}
 
 		console.log(
 			`🐨 Welcome to the workshop, ${chalk.bold.italic(os.userInfo().username)}!`,
