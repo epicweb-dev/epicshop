@@ -23,8 +23,11 @@ function extractFlags(args: string[]) {
 	const flags = new Set<string>()
 	for (let i = 0; i < args.length; i += 1) {
 		const arg = args[i]
-		if (!arg || arg === '--' || arg === '-' || !arg.startsWith('-')) {
+		if (!arg || arg === '-' || !arg.startsWith('-')) {
 			continue
+		}
+		if (arg === '--') {
+			break
 		}
 		if (arg.startsWith('--')) {
 			const [flag] = arg.split('=')
@@ -44,7 +47,10 @@ function extractFlags(args: string[]) {
 
 function deriveCommandContext(args: string[]): CliCommandContext {
 	const interactive = args.length === 0
-	const help = args.some((arg) => HELP_FLAGS.has(arg))
+	const doubleDashIndex = args.indexOf('--')
+	const argsBeforeDoubleDash =
+		doubleDashIndex >= 0 ? args.slice(0, doubleDashIndex) : args
+	const help = argsBeforeDoubleDash.some((arg) => HELP_FLAGS.has(arg))
 	const flags = extractFlags(args)
 	let command: string | undefined
 	const firstNonFlagIndex = args.findIndex((arg) => !arg.startsWith('-'))
