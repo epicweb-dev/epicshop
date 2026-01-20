@@ -6,10 +6,12 @@ import { matchSorter } from 'match-sorter'
 import yargs, { type ArgumentsCamelCase, type Argv } from 'yargs'
 import { hideBin } from 'yargs/helpers'
 import { assertCanPrompt } from './utils/cli-runtime.js'
+import { initCliSentry } from './utils/sentry-cli.js'
 
 // Check for --help on start command before yargs parses
 // (yargs exits before command handler when help is requested)
 const args = hideBin(process.argv)
+const cliSentry = initCliSentry(args)
 if (
 	(args.includes('--help') || args.includes('-h')) &&
 	(args.length === 0 || args[0] === 'start')
@@ -380,6 +382,10 @@ const cli = yargs(args)
 				silent?: boolean
 			}>,
 		) => {
+			cliSentry.setCommandContext({
+				command: 'config',
+				subcommand: argv.subcommand,
+			})
 			const { config } = await import('./commands/workshops.js')
 			const result = await config({
 				subcommand: argv.subcommand === 'reset' ? 'reset' : undefined,
@@ -880,6 +886,11 @@ const cli = yargs(args)
 				}
 			}
 
+			cliSentry.setCommandContext({
+				command: 'auth',
+				subcommand,
+			})
+
 			let result: { success: boolean }
 
 			switch (subcommand) {
@@ -1009,6 +1020,10 @@ const cli = yargs(args)
 				} = await import('./commands/playground.js')
 
 				const subcommand = argv.subcommand || 'show'
+				cliSentry.setCommandContext({
+					command: 'playground',
+					subcommand,
+				})
 
 				if (subcommand === 'show') {
 					const result = await show({ silent: argv.silent })
@@ -1172,6 +1187,10 @@ const cli = yargs(args)
 				const { show, update } = await import('./commands/progress.js')
 
 				const subcommand = argv.subcommand || 'show'
+				cliSentry.setCommandContext({
+					command: 'progress',
+					subcommand,
+				})
 
 				if (subcommand === 'show') {
 					const result = await show({
@@ -1534,6 +1553,7 @@ try {
 				})
 			},
 		})
+		cliSentry.setCommandContext({ command: subcommand, interactive: true })
 
 		switch (subcommand) {
 			case 'start': {
@@ -1778,6 +1798,10 @@ try {
 						})
 					},
 				})
+				cliSentry.setCommandContext({
+					command: 'auth',
+					subcommand: authSubcommand,
+				})
 
 				let authResult: { success: boolean }
 				switch (authSubcommand) {
@@ -1882,6 +1906,8 @@ try {
 	if ((error as Error).message === 'USER_QUIT') {
 		process.exit(0)
 	}
+	cliSentry.captureException(error)
+	await cliSentry.flush()
 	console.error(chalk.red('❌ Error:'), error)
 	process.exit(1)
 }
