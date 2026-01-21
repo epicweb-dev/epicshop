@@ -199,25 +199,79 @@ export async function start(options: StartOptions = {}): Promise<StartResult> {
 					await import('@epic-web/workshop-utils/db.server')
 
 				const updates = await checkForUpdatesCached()
-				if (updates.updatesAvailable && updates.remoteCommit) {
-					// Check if update notification is muted
-					const mutedNotifications = await getMutedNotifications()
-					const updateNotificationId = `update-repo-${updates.remoteCommit}`
+				const updateNotificationId =
+					'updateNotificationId' in updates
+						? (
+								updates as {
+									updateNotificationId?: string | null
+								}
+							).updateNotificationId ?? null
+						: null
+				const repoUpdatesAvailable =
+					'repoUpdatesAvailable' in updates
+						? Boolean(
+								(
+									updates as { repoUpdatesAvailable?: boolean }
+								).repoUpdatesAvailable,
+							)
+						: updates.updatesAvailable
+				const dependenciesNeedInstall =
+					'dependenciesNeedInstall' in updates
+						? Boolean(
+								(
+									updates as { dependenciesNeedInstall?: boolean }
+								).dependenciesNeedInstall,
+							)
+						: false
 
-					if (!mutedNotifications.includes(updateNotificationId)) {
-						const updateLink = chalk.blue.bgWhite(` ${updates.diffLink} `)
-						console.log(
-							'\n',
-							`🎉  There are ${chalk.yellow(
-								'updates available',
-							)} for this workshop repository.  🎉\n\nTo get the updates, ${chalk.green.bold.bgWhite(
-								`press the "u" key`,
-							)}\n\nTo view a diff, check:\n  ${updateLink}\n\nTo dismiss this notification, ${chalk.red.bold.bgWhite(
-								`press the "d" key`,
-							)}\n`,
-						)
-					}
+				if (!updates.updatesAvailable || !updateNotificationId) {
+					return
 				}
+
+				// Check if update notification is muted
+				const mutedNotifications = await getMutedNotifications()
+				if (mutedNotifications.includes(updateNotificationId)) {
+					return
+				}
+
+				const updateLink =
+					repoUpdatesAvailable && updates.diffLink
+						? chalk.blue.bgWhite(` ${updates.diffLink} `)
+						: null
+				const headline = repoUpdatesAvailable
+					? `🎉  There are ${chalk.yellow('updates available')} for this workshop repository.  🎉`
+					: `📦  ${chalk.yellow('Dependencies are out of date')} for this workshop repository.  📦`
+				const lines = [headline]
+
+				if (dependenciesNeedInstall) {
+					lines.push(
+						`Your installed packages don't match ${chalk.cyan(
+							'package-lock.json',
+						)}.`,
+					)
+				}
+
+				lines.push(
+					repoUpdatesAvailable
+						? `To get the updates${dependenciesNeedInstall ? ' and reinstall dependencies' : ''}, ${chalk.green.bold.bgWhite(
+								`press the "u" key`,
+							)}`
+						: `To reinstall dependencies, ${chalk.green.bold.bgWhite(
+								`press the "u" key`,
+							)}`,
+				)
+
+				if (updateLink) {
+					lines.push(`To view a diff, check:\n  ${updateLink}`)
+				}
+
+				lines.push(
+					`To dismiss this notification, ${chalk.red.bold.bgWhite(
+						`press the "d" key`,
+					)}`,
+				)
+
+				console.log('\n', `${lines.join('\n\n')}\n`)
 			} catch {
 				// Silently ignore update check errors
 			}

@@ -1,5 +1,6 @@
 import './init-env.ts'
 
+import { createHash } from 'node:crypto'
 import fs from 'node:fs/promises'
 import path from 'node:path'
 import { execa, execaCommand } from 'execa'
@@ -25,6 +26,72 @@ function isDirectory(dirPath: string) {
 		(s) => s.isDirectory(),
 		() => false,
 	)
+}
+
+type PackageLockStatus = {
+	dependenciesNeedInstall: boolean
+	lockfileHash: string | null
+	reason:
+		| 'missing-package-lock'
+		| 'missing-installed-lock'
+		| 'lockfile-mismatch'
+		| 'up-to-date'
+}
+
+function hashLockfile(contents: string) {
+	return createHash('sha256').update(contents).digest('hex').slice(0, 8)
+}
+
+async function readFileIfExists(filePath: string) {
+	try {
+		return await fs.readFile(filePath, 'utf8')
+	} catch {
+		return null
+	}
+}
+
+async function getPackageLockStatus(cwd: string): Promise<PackageLockStatus> {
+	const packageLockPath = path.join(cwd, 'package-lock.json')
+	const packageLockContents = await readFileIfExists(packageLockPath)
+	if (!packageLockContents) {
+		return {
+			dependenciesNeedInstall: false,
+			lockfileHash: null,
+			reason: 'missing-package-lock',
+		}
+	}
+
+	const lockfileHash = hashLockfile(packageLockContents)
+	const installedLockPath = path.join(cwd, 'node_modules', '.package-lock.json')
+	const installedLockContents = await readFileIfExists(installedLockPath)
+
+	if (!installedLockContents) {
+		return {
+			dependenciesNeedInstall: true,
+			lockfileHash,
+			reason: 'missing-installed-lock',
+		}
+	}
+
+	const installedHash = hashLockfile(installedLockContents)
+	if (installedHash !== lockfileHash) {
+		return {
+			dependenciesNeedInstall: true,
+			lockfileHash,
+			reason: 'lockfile-mismatch',
+		}
+	}
+
+	return {
+		dependenciesNeedInstall: false,
+		lockfileHash,
+		reason: 'up-to-date',
+	}
+}
+
+function getDependencyNotificationId(lockfileHash: string | null) {
+	if (!lockfileHash) return null
+	return `update-deps-${lockfileHash}`
 }
 
 async function cleanupEmptyExerciseDirectories(cwd: string) {
@@ -81,14 +148,37 @@ async function getDiffUrl(commitBefore: string, commitAfter: string) {
 
 export async function checkForUpdates() {
 	const ENV = getEnv()
-	if (ENV.EPICSHOP_DEPLOYED) {
-		return { updatesAvailable: false, message: 'The app is deployed' } as const
+	const cwd = getWorkshopRoot()
+	const packageLockStatus = await getPackageLockStatus(cwd)
+
+	const baseResult = {
+		updatesAvailable: packageLockStatus.dependenciesNeedInstall,
+		repoUpdatesAvailable: false,
+		dependenciesNeedInstall: packageLockStatus.dependenciesNeedInstall,
+		updateNotificationId: packageLockStatus.dependenciesNeedInstall
+			? getDependencyNotificationId(packageLockStatus.lockfileHash)
+			: null,
+		commitsAhead: null,
+		commitsBehind: null,
+		localCommit: null,
+		remoteCommit: null,
+		diffLink: null,
+		message: null,
 	}
 
-	const cwd = getWorkshopRoot()
+	if (ENV.EPICSHOP_DEPLOYED) {
+		return {
+			...baseResult,
+			updatesAvailable: false,
+			dependenciesNeedInstall: false,
+			updateNotificationId: null,
+			message: 'The app is deployed',
+		} as const
+	}
+
 	const online = await checkConnection()
 	if (!online) {
-		return { updatesAvailable: false, message: 'You are offline' } as const
+		return { ...baseResult, message: 'You are offline' } as const
 	}
 
 	const isInRepo = await execaCommand('git rev-parse --is-inside-work-tree', {
@@ -98,15 +188,16 @@ export async function checkForUpdates() {
 		() => false,
 	)
 	if (!isInRepo) {
-		return { updatesAvailable: false, message: 'Not in a git repo' } as const
+		return { ...baseResult, message: 'Not in a git repo' } as const
 	}
 
 	const { stdout: remote } = await execaCommand('git remote', { cwd })
 	if (!remote) {
-		return { updatesAvailable: false, message: 'Cannot find remote' } as const
+		return { ...baseResult, message: 'Cannot find remote' } as const
 	}
 
-	let localCommit, remoteCommit
+	let localCommit: string | null = null
+	let remoteCommit: string | null = null
 	try {
 		const currentBranch = (
 			await execaCommand('git rev-parse --abbrev-ref HEAD', { cwd })
@@ -130,21 +221,29 @@ export async function checkForUpdates() {
 			{ cwd },
 		)
 		const [ahead = 0, behind = 0] = stdout.trim().split(/\s+/).map(Number)
-		const updatesAvailable = behind > 0
+		const repoUpdatesAvailable = behind > 0
+		const updatesAvailable =
+			repoUpdatesAvailable || packageLockStatus.dependenciesNeedInstall
+		const updateNotificationId = repoUpdatesAvailable
+			? `update-repo-${remoteCommit}`
+			: baseResult.updateNotificationId
 
 		return {
 			updatesAvailable,
+			repoUpdatesAvailable,
+			dependenciesNeedInstall: packageLockStatus.dependenciesNeedInstall,
+			updateNotificationId,
 			commitsAhead: ahead,
 			commitsBehind: behind,
 			localCommit,
 			remoteCommit,
 			diffLink: await getDiffUrl(localCommit, remoteCommit),
-			message: null,
+			message: baseResult.message,
 		} as const
 	} catch (error) {
 		console.error('Unable to check for updates', getErrorMessage(error))
 		return {
-			updatesAvailable: false,
+			...baseResult,
 			localCommit,
 			remoteCommit,
 			diffLink:
@@ -158,7 +257,18 @@ export async function checkForUpdates() {
 export async function checkForUpdatesCached() {
 	const ENV = getEnv()
 	if (ENV.EPICSHOP_DEPLOYED) {
-		return { updatesAvailable: false } as const
+		return {
+			updatesAvailable: false,
+			repoUpdatesAvailable: false,
+			dependenciesNeedInstall: false,
+			updateNotificationId: null,
+			commitsAhead: null,
+			commitsBehind: null,
+			localCommit: null,
+			remoteCommit: null,
+			diffLink: null,
+			message: 'The app is deployed',
+		} as const
 	}
 
 	const key = 'checkForUpdates'
@@ -212,60 +322,86 @@ export async function updateLocalRepo() {
 	const cwd = getWorkshopRoot()
 	try {
 		const updates = await checkForUpdates()
-		if (!updates.updatesAvailable) {
+		const repoUpdatesAvailable = updates.repoUpdatesAvailable
+		let dependenciesNeedInstall = updates.dependenciesNeedInstall
+
+		if (!repoUpdatesAvailable && !dependenciesNeedInstall) {
 			return {
 				status: 'success',
 				message: updates.message ?? 'No updates available.',
 			} as const
 		}
 
-		const uncommittedChanges =
-			(await execaCommand('git status --porcelain', { cwd })).stdout.trim()
-				.length > 0
+		let didPull = false
+		let didInstall = false
 
-		if (uncommittedChanges) {
-			console.log('👜 Stashing uncommitted changes...')
-			await execaCommand('git stash --include-untracked', { cwd })
-		}
+		if (repoUpdatesAvailable) {
+			const uncommittedChanges =
+				(await execaCommand('git status --porcelain', { cwd })).stdout.trim()
+					.length > 0
 
-		console.log('⬇️ Pulling latest changes...')
-		await execaCommand('git pull origin HEAD', { cwd })
-
-		if (uncommittedChanges) {
-			console.log('👜 re-applying stashed changes...')
-			await execaCommand('git stash pop', { cwd })
-		}
-
-		console.log('📦 Re-installing dependencies...')
-		try {
-			await runNpmInstallWithRetry(cwd)
-		} catch (error) {
-			const isEbusy =
-				error instanceof Error &&
-				(error.message.includes('EBUSY') ||
-					(error as NodeJS.ErrnoException).code === 'EBUSY')
-
-			if (isEbusy) {
-				return {
-					status: 'error',
-					message:
-						'npm install failed: files are locked. ' +
-						'Please close any editors or terminals using this directory, ' +
-						'then run: npm install',
-				} as const
+			if (uncommittedChanges) {
+				console.log('👜 Stashing uncommitted changes...')
+				await execaCommand('git stash --include-untracked', { cwd })
 			}
-			throw error
+
+			console.log('⬇️ Pulling latest changes...')
+			await execaCommand('git pull origin HEAD', { cwd })
+
+			if (uncommittedChanges) {
+				console.log('👜 re-applying stashed changes...')
+				await execaCommand('git stash pop', { cwd })
+			}
+
+			didPull = true
+			const postUpdateStatus = await getPackageLockStatus(cwd)
+			dependenciesNeedInstall = postUpdateStatus.dependenciesNeedInstall
 		}
 
-		await cleanupEmptyExerciseDirectories(cwd)
+		if (dependenciesNeedInstall) {
+			console.log('📦 Re-installing dependencies...')
+			try {
+				await runNpmInstallWithRetry(cwd)
+				didInstall = true
+			} catch (error) {
+				const isEbusy =
+					error instanceof Error &&
+					(error.message.includes('EBUSY') ||
+						(error as NodeJS.ErrnoException).code === 'EBUSY')
 
-		const postUpdateScript = getWorkshopConfig().scripts?.postupdate
-		if (postUpdateScript) {
-			console.log('🏃 Running post update script...')
-			await execaCommand(postUpdateScript, { cwd, stdio: 'inherit' })
+				if (isEbusy) {
+					return {
+						status: 'error',
+						message:
+							'npm install failed: files are locked. ' +
+							'Please close any editors or terminals using this directory, ' +
+							'then run: npm install',
+					} as const
+				}
+				throw error
+			}
+		} else if (repoUpdatesAvailable) {
+			console.log(
+				'📦 Dependencies already match package-lock.json. Skipping npm install.',
+			)
 		}
 
-		return { status: 'success', message: 'Updated successfully.' } as const
+		if (didPull || didInstall) {
+			await cleanupEmptyExerciseDirectories(cwd)
+
+			const postUpdateScript = getWorkshopConfig().scripts?.postupdate
+			if (postUpdateScript) {
+				console.log('🏃 Running post update script...')
+				await execaCommand(postUpdateScript, { cwd, stdio: 'inherit' })
+			}
+		}
+
+		return {
+			status: 'success',
+			message: repoUpdatesAvailable
+				? 'Updated successfully.'
+				: 'Dependencies updated successfully.',
+		} as const
 	} catch (error) {
 		return { status: 'error', message: getErrorMessage(error) } as const
 	}
