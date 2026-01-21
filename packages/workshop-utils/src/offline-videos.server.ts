@@ -837,6 +837,35 @@ export async function getOfflineVideoSummary({
 	}
 }
 
+export async function getOfflineVideoPlaybackIds(): Promise<Array<string> | null> {
+	try {
+		const workshop = getWorkshopIdentity()
+		const keyInfo = await getOfflineVideoKeyInfo({
+			userId: null,
+			allowUserIdUpdate: false,
+		})
+		if (!keyInfo) return []
+		const index = await readOfflineVideoIndex()
+		const playbackIds: Array<string> = []
+
+		for (const [playbackId, entry] of Object.entries(index)) {
+			if (entry.status !== 'ready') continue
+			if (entry.keyId !== keyInfo.keyId) continue
+			if (entry.cryptoVersion !== keyInfo.config.version) continue
+			if (!hasWorkshop(entry, workshop.id)) continue
+			if (typeof entry.size === 'number' && entry.size <= 0) continue
+			playbackIds.push(playbackId)
+		}
+
+		return playbackIds
+	} catch (error) {
+		log.warn('Failed to load offline video playback ids', {
+			error: formatDownloadError(error),
+		})
+		return null
+	}
+}
+
 export async function warmOfflineVideoSummary() {
 	await getWorkshopVideoCollection()
 }

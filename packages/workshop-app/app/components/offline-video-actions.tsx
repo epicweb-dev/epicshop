@@ -44,6 +44,7 @@ function DeleteIcon(props: React.ComponentPropsWithoutRef<'svg'>) {
 export type OfflineVideoActionButtonsProps = {
 	isAvailable: boolean
 	isBusy?: boolean
+	isVisible?: boolean
 	/**
 	 * Download progress percentage (0-100). When defined, shows a progress indicator.
 	 * When undefined and isBusy is true, shows an indeterminate progress indicator.
@@ -56,10 +57,19 @@ export type OfflineVideoActionButtonsProps = {
 export function OfflineVideoActionButtons({
 	isAvailable,
 	isBusy = false,
+	isVisible = true,
 	downloadProgress,
 	onDownload,
 	onDelete,
 }: OfflineVideoActionButtonsProps) {
+	if (!isVisible) {
+		return (
+			<span
+				aria-hidden="true"
+				className="inline-flex h-7 w-7 items-center justify-center rounded"
+			/>
+		)
+	}
 	const isDownloading = isBusy && !isAvailable
 	const showProgressIndicator = isDownloading
 	const label = isAvailable

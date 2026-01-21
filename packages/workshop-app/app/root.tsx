@@ -17,6 +17,7 @@ import {
 	checkForUpdatesCached,
 	checkForExerciseChanges,
 } from '@epic-web/workshop-utils/git.server'
+import { getOfflineVideoPlaybackIds } from '@epic-web/workshop-utils/offline-videos.server'
 import { getUnmutedNotifications } from '@epic-web/workshop-utils/notifications.server'
 import { makeTimings } from '@epic-web/workshop-utils/timing.server'
 import {
@@ -119,6 +120,7 @@ export async function loader({ request }: Route.LoaderArgs) {
 		unmutedNotifications: getUnmutedNotifications(),
 		exerciseChanges: checkForExerciseChanges(),
 		loggedInProductHosts: getLoggedInProductHosts(),
+		offlineVideoPlaybackIds: getOfflineVideoPlaybackIds(),
 	})
 
 	const presentUsers = await getPresentUsers({
@@ -170,6 +172,7 @@ export async function loader({ request }: Route.LoaderArgs) {
 			},
 			repoUpdates,
 			exerciseChanges: asyncStuff.exerciseChanges,
+			offlineVideoPlaybackIds: asyncStuff.offlineVideoPlaybackIds,
 		},
 		{
 			headers: combineHeaders(
