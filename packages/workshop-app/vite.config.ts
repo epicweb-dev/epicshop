@@ -40,66 +40,76 @@ const aliases = {
 	)),
 }
 
-const MODE = process.env.NODE_ENV
-
-const sentryConfig: SentryReactRouterBuildOptions = {
-	authToken: process.env.SENTRY_AUTH_TOKEN,
-	org: process.env.SENTRY_ORG,
-	project: process.env.SENTRY_PROJECT,
-	unstable_sentryVitePluginOptions: {
-		release: {
-			name: process.env.EPICSHOP_APP_COMMIT_SHA,
-			setCommits: {
-				auto: true,
+export default defineConfig((config) => {
+	const isProduction = config.mode === 'production'
+	const releaseName =
+		process.env.SENTRY_RELEASE ??
+		process.env.EPICSHOP_APP_COMMIT_SHA ??
+		process.env.EPICSHOP_APP_VERSION
+	const sentryConfig: SentryReactRouterBuildOptions = {
+		authToken: process.env.SENTRY_AUTH_TOKEN,
+		org: process.env.SENTRY_ORG,
+		project: process.env.SENTRY_PROJECT,
+		unstable_sentryVitePluginOptions: {
+			release: releaseName
+				? {
+						name: releaseName,
+						setCommits: {
+							auto: true,
+						},
+					}
+				: undefined,
+			sourcemaps: {
+				filesToDeleteAfterUpload: [
+					'./build/**/*.map',
+					'.server-build/**/*.map',
+				],
 			},
 		},
-		sourcemaps: {
-			filesToDeleteAfterUpload: ['./build/**/*.map', '.server-build/**/*.map'],
-		},
-	},
-}
+	}
 
-export default defineConfig((config) => ({
-	optimizeDeps: {
-		exclude: [
-			'fsevents',
-			'globby',
-			'@epic-web/workshop-utils',
-			'@epic-web/workshop-presence',
-			'crypto',
-			'stream',
-			'execa',
-			'npm-run-path',
-			'unicorn-magic',
-			'@resvg/resvg-js',
-		],
-	},
-	build: {
-		cssMinify: MODE === 'production',
-		rollupOptions: {
-			external: [
-				/node:.*/,
-				'stream',
-				'crypto',
+	return {
+		optimizeDeps: {
+			exclude: [
 				'fsevents',
 				'globby',
+				'@epic-web/workshop-utils',
+				'@epic-web/workshop-presence',
+				'crypto',
+				'stream',
 				'execa',
 				'npm-run-path',
 				'unicorn-magic',
-				/^@epic-web\/workshop-utils.*/,
 				'@resvg/resvg-js',
 			],
 		},
-	},
-	resolve: { alias: aliases },
-	sentryConfig,
-	plugins: [
-		envOnlyMacros(),
-		tailwindcss(),
-		reactRouter(),
-		MODE === 'production' && process.env.SENTRY_AUTH_TOKEN
-			? sentryReactRouter(sentryConfig, config)
-			: null,
-		devtoolsJson(),
-	].filter(Boolean),
-}))
+		build: {
+			cssMinify: isProduction,
+			rollupOptions: {
+				external: [
+					/node:.*/,
+					'stream',
+					'crypto',
+					'fsevents',
+					'globby',
+					'execa',
+					'npm-run-path',
+					'unicorn-magic',
+					/^@epic-web\/workshop-utils.*/,
+					'@resvg/resvg-js',
+				],
+			},
+		},
+		resolve: { alias: aliases },
+		sentryConfig,
+		plugins: [
+			envOnlyMacros(),
+			tailwindcss(),
+			reactRouter(),
+			isProduction && process.env.SENTRY_AUTH_TOKEN
+				? sentryReactRouter(sentryConfig, config)
+				: null,
+			devtoolsJson(),
+		].filter(Boolean),
+	}
+})

@@ -23,12 +23,17 @@ const profilingModule = await import('@sentry/profiling-node').catch(
 )
 
 const nodeProfilingIntegration = profilingModule?.nodeProfilingIntegration
+const release =
+	process.env.SENTRY_RELEASE ??
+	process.env.EPICSHOP_APP_COMMIT_SHA ??
+	process.env.EPICSHOP_APP_VERSION
 
 // Only initialize Sentry if we successfully imported the required modules
 Sentry?.init({
 	dsn: process.env.SENTRY_DSN,
 	sendDefaultPii: true,
 	environment: process.env.NODE_ENV ?? 'development',
+	release,
 	denyUrls: [
 		/\/resources\/healthcheck/,
 		/\/build\//,
