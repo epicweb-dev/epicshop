@@ -61,6 +61,7 @@
     "vitest": "^4.0.17"
   },
   "overrides": {
-    "unicorn-magic": "^0.4.0"
+    "unicorn-magic": "^0.4.0",
+    "vite": "7.3.1"
   }
 }
