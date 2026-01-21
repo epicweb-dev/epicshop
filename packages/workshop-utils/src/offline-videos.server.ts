@@ -134,6 +134,7 @@ type OfflineVideoDownloadQuality =
 	| 'high'
 	| 'medium'
 	| 'low'
+type OfflineVideoMuxVariant = 'high' | 'medium' | 'low' | 'source'
 type EpicVideoDownload = NonNullable<EpicVideoMetadata['downloads']>[number]
 
 function isOfflineVideoDownloadResolution(
@@ -551,6 +552,34 @@ const videoDownloadQualityOrder: Record<
 	low: ['low', 'medium', 'high', 'highest', 'source'],
 }
 
+const muxFallbackVariants: Record<
+	OfflineVideoMuxVariant,
+	(playbackId: string) => string
+> = {
+	high: (playbackId) => `https://stream.mux.com/${playbackId}/high.mp4`,
+	medium: (playbackId) => `https://stream.mux.com/${playbackId}/medium.mp4`,
+	low: (playbackId) => `https://stream.mux.com/${playbackId}/low.mp4`,
+	source: (playbackId) => `https://stream.mux.com/${playbackId}.mp4`,
+}
+
+const muxFallbackOrder: Record<
+	OfflineVideoDownloadResolution,
+	Array<OfflineVideoMuxVariant>
+> = {
+	best: ['source', 'high', 'medium', 'low'],
+	high: ['high', 'medium', 'low', 'source'],
+	medium: ['medium', 'low', 'high', 'source'],
+	low: ['low', 'medium', 'high', 'source'],
+}
+
+function getMuxFallbackUrls(
+	playbackId: string,
+	resolution: OfflineVideoDownloadResolution,
+) {
+	const order = muxFallbackOrder[resolution] ?? muxFallbackOrder.best
+	return order.map((variant) => muxFallbackVariants[variant](playbackId))
+}
+
 const knownDownloadQualities = new Set<OfflineVideoDownloadQuality>([
 	'source',
 	'highest',
@@ -633,7 +662,7 @@ async function getVideoDownloadUrls({
 			playbackId,
 			videoUrl,
 		})
-		return []
+		return getMuxFallbackUrls(playbackId, resolution)
 	}
 	const downloads = metadata.downloads ?? []
 	if (downloads.length === 0) {
@@ -642,7 +671,7 @@ async function getVideoDownloadUrls({
 			videoUrl,
 			status: metadata.status,
 		})
-		return []
+		return getMuxFallbackUrls(playbackId, resolution)
 	}
 	const ordered = sortVideoDownloads(downloads, resolution)
 	return ordered.map((download) => download.url).filter(Boolean)
