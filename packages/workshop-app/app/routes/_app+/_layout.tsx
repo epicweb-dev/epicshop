@@ -1343,11 +1343,11 @@ function Navigation({
 	)
 	const app =
 		params.type === 'solution'
-			? exercise?.solutions.find(
+			? exercise?.solutions?.find(
 					(s) => s.stepNumber === Number(params.stepNumber),
 				)
 			: params.type === 'problem'
-				? exercise?.problems.find(
+				? exercise?.problems?.find(
 						(p) => p.stepNumber === Number(params.stepNumber),
 					)
 				: null
