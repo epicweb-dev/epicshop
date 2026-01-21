@@ -13,7 +13,11 @@ import {
 import { getWorkshopConfig } from './config.server.ts'
 import { resolvePrimaryDir } from './data-storage.server.ts'
 import { getAuthInfo, getClientId, getPreferences } from './db.server.ts'
-import { getEpicVideoInfos } from './epic-api.server.ts'
+import {
+	type EpicVideoMetadata,
+	getEpicVideoInfos,
+	getEpicVideoMetadata,
+} from './epic-api.server.ts'
 import { getEnv } from './init-env.ts'
 import { logger } from './logger.ts'
 import {
@@ -124,7 +128,8 @@ const offlineVideoDownloadResolutions = [
 ] as const
 type OfflineVideoDownloadResolution =
 	(typeof offlineVideoDownloadResolutions)[number]
-type OfflineVideoMuxVariant = 'high' | 'medium' | 'low' | 'source'
+type OfflineVideoDownloadQuality = 'source' | 'highest' | 'high' | 'medium' | 'low'
+type EpicVideoDownload = NonNullable<EpicVideoMetadata['downloads']>[number]
 
 function isOfflineVideoDownloadResolution(
 	value: unknown,
@@ -531,32 +536,108 @@ async function getOfflineVideoDownloadResolution(): Promise<OfflineVideoDownload
 	return 'best'
 }
 
-const muxMp4Variants: Record<
-	OfflineVideoMuxVariant,
-	(playbackId: string) => string
-> = {
-	high: (playbackId) => `https://stream.mux.com/${playbackId}/high.mp4`,
-	medium: (playbackId) => `https://stream.mux.com/${playbackId}/medium.mp4`,
-	low: (playbackId) => `https://stream.mux.com/${playbackId}/low.mp4`,
-	source: (playbackId) => `https://stream.mux.com/${playbackId}.mp4`,
-}
-
-const muxResolutionOrder: Record<
+const videoDownloadQualityOrder: Record<
 	OfflineVideoDownloadResolution,
-	Array<OfflineVideoMuxVariant>
+	Array<OfflineVideoDownloadQuality>
 > = {
-	best: ['source', 'high', 'medium', 'low'],
-	high: ['high', 'medium', 'low', 'source'],
-	medium: ['medium', 'low', 'high', 'source'],
-	low: ['low', 'medium', 'high', 'source'],
+	best: ['source', 'highest', 'high', 'medium', 'low'],
+	high: ['high', 'medium', 'low', 'highest', 'source'],
+	medium: ['medium', 'low', 'high', 'highest', 'source'],
+	low: ['low', 'medium', 'high', 'highest', 'source'],
 }
 
-function getMuxMp4Urls(
-	playbackId: string,
+const knownDownloadQualities = new Set<OfflineVideoDownloadQuality>([
+	'source',
+	'highest',
+	'high',
+	'medium',
+	'low',
+])
+
+function normalizeDownloadQuality(
+	quality: string,
+): OfflineVideoDownloadQuality | null {
+	const normalized = quality.toLowerCase()
+	return knownDownloadQualities.has(normalized as OfflineVideoDownloadQuality)
+		? (normalized as OfflineVideoDownloadQuality)
+		: null
+}
+
+function sortVideoDownloads(
+	downloads: Array<EpicVideoDownload>,
 	resolution: OfflineVideoDownloadResolution,
 ) {
-	const order = muxResolutionOrder[resolution] ?? muxResolutionOrder.best
-	return order.map((variant) => muxMp4Variants[variant](playbackId))
+	const order = videoDownloadQualityOrder[resolution] ?? videoDownloadQualityOrder.best
+	const qualityRank = new Map(
+		order.map((quality, index) => [quality, index]),
+	)
+	return [...downloads].sort((a, b) => {
+		const aQuality = normalizeDownloadQuality(a.quality)
+		const bQuality = normalizeDownloadQuality(b.quality)
+		const aRank = aQuality ? (qualityRank.get(aQuality) ?? order.length) : order.length + 1
+		const bRank = bQuality ? (qualityRank.get(bQuality) ?? order.length) : order.length + 1
+		if (aRank !== bRank) return aRank - bRank
+		const aWidth = a.width ?? 0
+		const bWidth = b.width ?? 0
+		if (aWidth !== bWidth) return bWidth - aWidth
+		const aBitrate = a.bitrate ?? 0
+		const bBitrate = b.bitrate ?? 0
+		return bBitrate - aBitrate
+	})
+}
+
+function getVideoApiHost(videoUrl: string) {
+	try {
+		const host = new URL(videoUrl).host
+		if (host === 'epicweb.dev') return 'www.epicweb.dev'
+		if (host === 'epicreact.dev') return 'www.epicreact.dev'
+		if (host === 'epicai.pro') return 'www.epicai.pro'
+		return host
+	} catch (error) {
+		log.warn('Unable to parse video URL for metadata', {
+			videoUrl,
+			error: formatDownloadError(error),
+		})
+		return null
+	}
+}
+
+async function getVideoDownloadUrls({
+	playbackId,
+	videoUrl,
+	resolution,
+	accessToken,
+}: {
+	playbackId: string
+	videoUrl: string
+	resolution: OfflineVideoDownloadResolution
+	accessToken?: string
+}) {
+	const host = getVideoApiHost(videoUrl)
+	if (!host) return []
+	const metadata = await getEpicVideoMetadata({
+		playbackId,
+		host,
+		accessToken,
+	})
+	if (!metadata) {
+		log.warn('Video metadata unavailable for offline download', {
+			playbackId,
+			videoUrl,
+		})
+		return []
+	}
+	const downloads = metadata.downloads ?? []
+	if (downloads.length === 0) {
+		log.warn('Video metadata missing downloads for offline download', {
+			playbackId,
+			videoUrl,
+			status: metadata.status,
+		})
+		return []
+	}
+	const ordered = sortVideoDownloads(downloads, resolution)
+	return ordered.map((download) => download.url).filter(Boolean)
 }
 
 async function isOfflineVideoReady(
@@ -582,20 +663,32 @@ async function isOfflineVideoReady(
 	}
 }
 
-async function downloadMuxVideo({
+async function downloadVideo({
 	playbackId,
 	filePath,
 	key,
 	iv,
 	resolution,
+	videoUrl,
+	accessToken,
 }: {
 	playbackId: string
 	filePath: string
 	key: Buffer
 	iv: Buffer
 	resolution: OfflineVideoDownloadResolution
+	videoUrl: string
+	accessToken?: string
 }) {
-	const urls = getMuxMp4Urls(playbackId, resolution)
+	const urls = await getVideoDownloadUrls({
+		playbackId,
+		videoUrl,
+		resolution,
+		accessToken,
+	})
+	if (urls.length === 0) {
+		throw new Error(`No download URLs available for ${playbackId}`)
+	}
 	let lastError: Error | null = null
 	const attempts: Array<{
 		url: string
@@ -613,11 +706,11 @@ async function downloadMuxVideo({
 	})
 
 	for (const url of urls) {
-		log.info('Attempting mux download', { playbackId, url })
+		log.info('Attempting video download', { playbackId, url })
 		const response = await fetch(url).catch((error) => {
 			const message = error instanceof Error ? error.message : String(error)
 			lastError = error instanceof Error ? error : new Error(message)
-			log.warn('Mux download request failed', {
+			log.warn('Video download request failed', {
 				playbackId,
 				url,
 				message,
@@ -630,7 +723,7 @@ async function downloadMuxVideo({
 			lastError = new Error(
 				`Failed to download ${playbackId} from ${url} (${response.status})`,
 			)
-			log.warn('Mux download response not ok', {
+			log.warn('Video download response not ok', {
 				playbackId,
 				url,
 				status: response.status,
@@ -683,7 +776,7 @@ async function downloadMuxVideo({
 			totalBytes: stat.size,
 			status: 'complete',
 		})
-		log.info('Mux download complete', {
+		log.info('Video download complete', {
 			playbackId,
 			url,
 			size: stat.size,
@@ -698,7 +791,7 @@ async function downloadMuxVideo({
 		status: 'error',
 	})
 
-	log.error('Mux download failed', {
+	log.error('Video download failed', {
 		playbackId,
 		resolution,
 		attempts,
@@ -714,12 +807,14 @@ async function runOfflineVideoDownloads({
 	keyInfo,
 	workshop,
 	resolution,
+	accessToken,
 }: {
 	videos: Array<WorkshopVideoInfo>
 	index: OfflineVideoIndex
 	keyInfo: OfflineVideoKeyInfo
 	workshop: WorkshopIdentity
 	resolution: OfflineVideoDownloadResolution
+	accessToken?: string
 }) {
 	for (const video of videos) {
 		const updatedAt = new Date().toISOString()
@@ -750,12 +845,14 @@ async function runOfflineVideoDownloads({
 		await writeOfflineVideoIndex(index)
 
 		try {
-			const { size } = await downloadMuxVideo({
+			const { size } = await downloadVideo({
 				playbackId: video.playbackId,
 				filePath: path.join(getOfflineVideoDir(), entry.fileName),
 				key: keyInfo.key,
 				iv,
 				resolution,
+				videoUrl: video.url,
+				accessToken,
 			})
 			index[video.playbackId] = {
 				...entry,
@@ -984,6 +1081,7 @@ export async function startOfflineVideoDownload({
 			keyInfo,
 			workshop,
 			resolution,
+			accessToken: authInfo?.tokenSet.access_token,
 		}).catch((error) => {
 			log.error('Offline video downloads failed', error)
 			downloadState.status = 'error'
@@ -1061,12 +1159,14 @@ export async function downloadOfflineVideo({
 	await writeOfflineVideoIndex(index)
 
 	try {
-		const { size } = await downloadMuxVideo({
+		const { size } = await downloadVideo({
 			playbackId,
 			filePath: path.join(getOfflineVideoDir(), entry.fileName),
 			key: keyInfo.key,
 			iv,
 			resolution,
+			videoUrl: url,
+			accessToken: authInfo?.tokenSet.access_token,
 		})
 		index[playbackId] = {
 			...entry,

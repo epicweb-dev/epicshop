@@ -57,6 +57,23 @@ const EpicVideoInfoSchema = z
 		return data
 	})
 
+const EpicVideoDownloadSchema = z.object({
+	quality: z.string(),
+	url: z.string(),
+	width: z.number().optional(),
+	height: z.number().optional(),
+	bitrate: z.number().optional(),
+	filesize: z.number().optional(),
+})
+
+const EpicVideoMetadataSchema = z.object({
+	playbackId: z.string(),
+	assetId: z.string().nullable().optional(),
+	status: z.string().nullable().optional(),
+	duration: z.number().nullable().optional(),
+	downloads: z.array(EpicVideoDownloadSchema).nullable().optional(),
+})
+
 function hmsToSeconds(str: string) {
 	const p = str.split(':')
 	let s = 0
@@ -111,8 +128,88 @@ export type EpicVideoInfos = Record<
 	Awaited<ReturnType<typeof getEpicVideoInfo>>
 >
 
+export type EpicVideoMetadata = z.infer<typeof EpicVideoMetadataSchema>
+
 const videoInfoLog = log.logger('video-info')
+const videoMetadataLog = log.logger('video-metadata')
 const EPIC_VIDEO_INFO_CONCURRENCY = 6
+
+function normalizeVideoApiHost(host: string) {
+	if (host === 'epicweb.dev') return 'www.epicweb.dev'
+	if (host === 'epicreact.dev') return 'www.epicreact.dev'
+	if (host === 'epicai.pro') return 'www.epicai.pro'
+	return host
+}
+
+export async function getEpicVideoMetadata({
+	playbackId,
+	host,
+	accessToken,
+	request,
+	timings,
+}: {
+	playbackId: string
+	host: string
+	accessToken?: string
+	request?: Request
+	timings?: Timings
+}) {
+	if (getEnv().EPICSHOP_DEPLOYED) return null
+	const normalizedHost = normalizeVideoApiHost(host)
+	const key = `epic-video-metadata:${normalizedHost}:${playbackId}`
+	return cachified({
+		key,
+		request,
+		cache: epicApiCache,
+		timings,
+		ttl: 1000 * 60 * 60,
+		swr: 1000 * 60 * 60 * 24 * 365 * 10,
+		offlineFallbackValue: null,
+		checkValue: EpicVideoMetadataSchema.nullable(),
+		async getFreshValue(context): Promise<EpicVideoMetadata | null> {
+			const apiUrl = `https://${normalizedHost}/api/video/${encodeURIComponent(
+				playbackId,
+			)}`
+			videoMetadataLog(`making video metadata request to: ${apiUrl}`)
+			const response = await fetch(
+				apiUrl,
+				accessToken
+					? { headers: { authorization: `Bearer ${accessToken}` } }
+					: undefined,
+			).catch((e) => new Response(getErrorMessage(e), { status: 500 }))
+			videoMetadataLog(
+				`video metadata response: ${response.status} ${response.statusText}`,
+			)
+			if (!response.ok) {
+				context.metadata.ttl = 1000 * 2
+				context.metadata.swr = 0
+				return null
+			}
+			const rawInfo = await response.json()
+			const parsedInfo = EpicVideoMetadataSchema.safeParse(rawInfo)
+			if (parsedInfo.success) {
+				return parsedInfo.data
+			}
+			context.metadata.ttl = 1000 * 2
+			context.metadata.swr = 0
+			videoMetadataLog.error(
+				`video metadata parsing failed for ${playbackId}`,
+				{
+					host: normalizedHost,
+					rawInfo,
+					parseError: parsedInfo.error,
+				},
+			)
+			return null
+		},
+	}).catch((e) => {
+		videoMetadataLog.error(
+			`failed to fetch video metadata for ${playbackId}:`,
+			e,
+		)
+		return null
+	})
+}
 
 export async function getEpicVideoInfos(
 	epicWebUrls?: Array<string> | null,
@@ -220,12 +317,21 @@ async function getEpicVideoInfo({
 				}
 				const infoResult = EpicVideoInfoSchema.safeParse(rawInfo)
 				if (infoResult.success) {
+					const metadata = await getEpicVideoMetadata({
+						playbackId: infoResult.data.muxPlaybackId,
+						host: epicUrl.host,
+						accessToken,
+						request,
+						timings,
+					})
+					const duration = metadata?.duration ?? infoResult.data.duration
 					videoInfoLog(`successfully parsed video info for ${epicVideoEmbed}`)
 					return {
 						status: 'success',
 						statusCode: status,
 						statusText,
 						...infoResult.data,
+						duration,
 					} as const
 				} else {
 					// don't cache errors for long...
