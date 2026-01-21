@@ -10,7 +10,10 @@ set -euo pipefail
 repo_root="$(git rev-parse --show-toplevel)"
 cd "$repo_root"
 
-mapfile -d '' -t files < <(git diff --cached --name-only --diff-filter=ACMR -z)
+files=()
+while IFS= read -r -d '' file; do
+  files+=("$file")
+done < <(git diff --cached --name-only --diff-filter=ACMR -z)
 
 if [ "\${#files[@]}" -eq 0 ]; then
   exit 0
@@ -42,18 +45,30 @@ const installHook = async () => {
 	// Cursor installs a wrapper hook with an "@cursor-managed" marker, so chain
 	// our hook instead of overwriting the wrapper when it's detected.
 	const wrapperContents = await readFile(wrapperPath, 'utf8').catch(() => null)
-	const hookPath = wrapperContents?.includes('@cursor-managed')
-		? path.join(hooksDir, 'pre-commit.cursor-auto-format')
-		: wrapperPath
+	const isCursorManaged = wrapperContents?.includes('@cursor-managed')
 
-	const existing = await readFile(hookPath, 'utf8').catch(() => null)
-	if (existing && !existing.includes(hookMarker)) {
-		return
+	if (isCursorManaged) {
+		// If already chained, skip
+		if (wrapperContents.includes(hookMarker)) {
+			return
+		}
+		// Chain our hook by appending it to Cursor's wrapper
+		const chainedContents = wrapperContents + '\n' + hookContents
+		await writeFile(wrapperPath, chainedContents, 'utf8')
+		await chmod(wrapperPath, 0o755)
+		console.log(
+			`Chained pre-commit hook into Cursor's wrapper at ${wrapperPath}`,
+		)
+	} else {
+		// No Cursor wrapper, install our hook normally
+		const existing = await readFile(wrapperPath, 'utf8').catch(() => null)
+		if (existing && !existing.includes(hookMarker)) {
+			return
+		}
+		await writeFile(wrapperPath, hookContents, 'utf8')
+		await chmod(wrapperPath, 0o755)
+		console.log(`Installed pre-commit hook at ${wrapperPath}`)
 	}
-
-	await writeFile(hookPath, hookContents, 'utf8')
-	await chmod(hookPath, 0o755)
-	console.log(`Installed pre-commit hook at ${hookPath}`)
 }
 
 installHook().catch((error) => {
