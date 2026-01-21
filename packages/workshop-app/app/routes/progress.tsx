@@ -92,6 +92,57 @@ export function useNextExerciseRoute() {
 	return null
 }
 
+export function useRandomCompletedExerciseRoute() {
+	const location = useLocation()
+	const progress = useEpicProgress()
+	const [randomRoute, setRandomRoute] = React.useState<string | null>(null)
+
+	React.useEffect(() => {
+		if (!progress) {
+			setRandomRoute(null)
+			return
+		}
+
+		const completedSteps = progress.filter(
+			(p) => p.type === 'step' && p.epicCompletedAt,
+		)
+
+		if (completedSteps.length < 2) {
+			setRandomRoute(null)
+			return
+		}
+
+		// Filter out current page to avoid navigating to the same route
+		const currentPath = location.pathname
+		const availableSteps = completedSteps.filter((step) => {
+			if (step.type !== 'step') return false
+			const ex = step.exerciseNumber.toString().padStart(2, '0')
+			const st = step.stepNumber.toString().padStart(2, '0')
+			const problemRoute = `/exercise/${ex}/${st}/problem`
+			const solutionRoute = `/exercise/${ex}/${st}/solution`
+			return currentPath !== problemRoute && currentPath !== solutionRoute
+		})
+
+		if (availableSteps.length === 0) {
+			setRandomRoute(null)
+			return
+		}
+
+		const randomStep =
+			availableSteps[Math.floor(Math.random() * availableSteps.length)]
+		if (!randomStep || randomStep.type !== 'step') {
+			setRandomRoute(null)
+			return
+		}
+
+		const ex = randomStep.exerciseNumber.toString().padStart(2, '0')
+		const st = randomStep.stepNumber.toString().padStart(2, '0')
+		setRandomRoute(`/exercise/${ex}/${st}/problem`)
+	}, [progress, location.pathname])
+
+	return randomRoute
+}
+
 const percentageClassNames = {
 	0: '',
 	1: 'before:h-[10%]',

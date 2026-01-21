@@ -71,6 +71,7 @@ import {
 	useExerciseProgressClassName,
 	useNextExerciseRoute,
 	useProgressItemClassName,
+	useRandomCompletedExerciseRoute,
 	type ProgressItemSearch,
 } from '../progress.tsx'
 import { ThemeSwitch, useTheme } from '../theme/index.tsx'
@@ -754,6 +755,7 @@ function MobileNavigation({
 	const apps = useApps()
 	const user = useOptionalUser()
 	const nextExerciseRoute = useNextExerciseRoute()
+	const randomExerciseRoute = useRandomCompletedExerciseRoute()
 	const params = useParams()
 	const location = useLocation()
 	const isOnline = useIsOnline()
@@ -1162,6 +1164,32 @@ function MobileNavigation({
 							</Link>
 						</SimpleTooltip>
 					) : null}
+					{ENV.EPICSHOP_DEPLOYED ? null : user && randomExerciseRoute ? (
+						<SimpleTooltip
+							content={isMenuOpened ? null : 'Practice a past lesson'}
+						>
+							<Link
+								to={randomExerciseRoute}
+								prefetch="intent"
+								className={clsx(
+									'flex h-14 w-full items-center space-x-3 border-l px-4 py-4 pl-[18px] no-underline hover:underline',
+								)}
+							>
+								<Icon name="Refresh" className="shrink-0" size="md" />
+								{isMenuOpened ? (
+									<motion.div
+										className="flex items-center whitespace-nowrap"
+										initial={{ opacity: 0 }}
+										animate={{ opacity: 1 }}
+									>
+										Practice a past lesson
+									</motion.div>
+								) : (
+									<span className="sr-only">Practice a past lesson</span>
+								)}
+							</Link>
+						</SimpleTooltip>
+					) : null}
 					<div
 						className={cn(
 							'flex h-14 items-center justify-center gap-2 self-start p-4 sm:mb-4',
@@ -1293,6 +1321,7 @@ function Navigation({
 	const apps = useApps()
 	const user = useOptionalUser()
 	const nextExerciseRoute = useNextExerciseRoute()
+	const randomExerciseRoute = useRandomCompletedExerciseRoute()
 	const params = useParams()
 	const location = useLocation()
 	const isOnline = useIsOnline()
@@ -1736,6 +1765,32 @@ function Navigation({
 									</motion.div>
 								) : (
 									<span className="sr-only">Continue to next lesson</span>
+								)}
+							</Link>
+						</SimpleTooltip>
+					) : null}
+					{ENV.EPICSHOP_DEPLOYED ? null : user && randomExerciseRoute ? (
+						<SimpleTooltip
+							content={isMenuOpened ? null : 'Practice a past lesson'}
+						>
+							<Link
+								to={randomExerciseRoute}
+								prefetch="intent"
+								className={clsx(
+									'flex h-14 w-full items-center space-x-3 border-t px-4 py-4 pl-[18px] no-underline hover:underline',
+								)}
+							>
+								<Icon name="Refresh" className="shrink-0" size="md" />
+								{isMenuOpened ? (
+									<motion.div
+										className="flex items-center whitespace-nowrap"
+										initial={{ opacity: 0 }}
+										animate={{ opacity: 1 }}
+									>
+										Practice a past lesson
+									</motion.div>
+								) : (
+									<span className="sr-only">Practice a past lesson</span>
 								)}
 							</Link>
 						</SimpleTooltip>
