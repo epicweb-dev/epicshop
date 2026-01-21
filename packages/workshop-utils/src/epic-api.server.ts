@@ -66,6 +66,11 @@ const EpicVideoDownloadSchema = z.object({
 	filesize: z.number().optional(),
 })
 
+const EpicVideoDownloadSizeSchema = z.object({
+	quality: z.string(),
+	size: z.number().nullable(),
+})
+
 const EpicVideoMetadataSchema = z.object({
 	playbackId: z.string(),
 	assetId: z.string().nullable().optional(),
@@ -99,7 +104,8 @@ const CachedEpicVideoInfoSchema = z
 		muxPlaybackId: z.string(),
 		duration: z.number().nullable().optional(),
 		durationEstimate: z.number().nullable().optional(),
-		downloadsAvailable: z.boolean(),
+		downloadsAvailable: z.boolean().optional().default(false),
+		downloadSizes: z.array(EpicVideoDownloadSizeSchema).optional().default([]),
 		status: z.literal('success'),
 		statusCode: z.number(),
 		statusText: z.string(),
@@ -326,9 +332,17 @@ async function getEpicVideoInfo({
 						timings,
 					})
 					const duration = metadata?.duration ?? infoResult.data.duration
-					const downloadsAvailable = Boolean(
-						metadata?.downloads?.some((download) => Boolean(download.url)),
-					)
+					const downloadSizes =
+						metadata?.downloads
+							?.filter((download) => Boolean(download.url))
+							.map((download) => ({
+								quality: download.quality,
+								size:
+									typeof download.filesize === 'number'
+										? download.filesize
+										: null,
+							})) ?? []
+					const downloadsAvailable = downloadSizes.length > 0
 					videoInfoLog(`successfully parsed video info for ${epicVideoEmbed}`)
 					return {
 						status: 'success',
@@ -337,6 +351,7 @@ async function getEpicVideoInfo({
 						...infoResult.data,
 						duration,
 						downloadsAvailable,
+						downloadSizes,
 					} as const
 				} else {
 					// don't cache errors for long...

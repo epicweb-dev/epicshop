@@ -69,6 +69,12 @@ type WorkshopVideoInfo = {
 	title: string
 	url: string
 	downloadable: boolean
+	downloadSizes: Array<WorkshopVideoDownloadSize>
+}
+
+type WorkshopVideoDownloadSize = {
+	quality: string
+	size: number | null
 }
 
 type WorkshopIdentity = {
@@ -88,6 +94,7 @@ export type OfflineVideoSummary = {
 	downloadedVideos: number
 	unavailableVideos: number
 	notDownloadableVideos: number
+	remainingDownloadBytes: number
 	totalBytes: number
 	downloadState: OfflineVideoDownloadState
 }
@@ -528,6 +535,9 @@ async function getWorkshopVideoCollection({
 			unavailable += 1
 			continue
 		}
+		const downloadSizes = Array.isArray(info.downloadSizes)
+			? info.downloadSizes
+			: []
 		const downloadable = info.downloadsAvailable === true
 		if (!downloadable) {
 			notDownloadable += 1
@@ -537,6 +547,7 @@ async function getWorkshopVideoCollection({
 			title: info.title ?? embed,
 			url: embed,
 			downloadable,
+			downloadSizes,
 		})
 	}
 
@@ -603,6 +614,28 @@ function sortVideoDownloads(
 		const bBitrate = b.bitrate ?? 0
 		return bBitrate - aBitrate
 	})
+}
+
+function getPreferredDownloadSize(
+	downloadSizes: Array<WorkshopVideoDownloadSize>,
+	resolution: OfflineVideoDownloadResolution,
+) {
+	if (downloadSizes.length === 0) return null
+	const sizeByQuality = new Map(
+		downloadSizes.map((download) => [
+			download.quality.toLowerCase(),
+			download.size,
+		]),
+	)
+	const order = videoDownloadQualityOrder[resolution] ?? videoDownloadQualityOrder.best
+	for (const quality of order) {
+		const size = sizeByQuality.get(quality)
+		if (typeof size === 'number' && size > 0) return size
+	}
+	return (
+		downloadSizes.find((download) => typeof download.size === 'number')
+			?.size ?? null
+	)
 }
 
 function getVideoApiHost(videoUrl: string) {
@@ -930,24 +963,33 @@ export async function getOfflineVideoSummary({
 	const { videos, unavailable, notDownloadable } =
 		await getWorkshopVideoCollection({ request })
 	const index = await readOfflineVideoIndex()
+	const resolution = await getOfflineVideoDownloadResolution()
 	const keyInfo = await getOfflineVideoKeyInfo({
 		userId: null,
 		allowUserIdUpdate: false,
 	})
 	let downloadedVideos = 0
 	let totalBytes = 0
+	let remainingDownloadBytes = 0
 
 	for (const video of videos) {
 		const entry = index[video.playbackId]
-		if (
+		const isDownloaded = Boolean(
 			entry?.status === 'ready' &&
-			keyInfo &&
+			keyInfo?.keyId &&
 			entry.keyId === keyInfo.keyId &&
 			entry.cryptoVersion === keyInfo.config.version &&
-			hasWorkshop(entry, workshop.id)
-		) {
+			hasWorkshop(entry, workshop.id),
+		)
+		if (isDownloaded) {
 			downloadedVideos += 1
 			totalBytes += entry.size ?? 0
+			continue
+		}
+		if (!video.downloadable) continue
+		const size = getPreferredDownloadSize(video.downloadSizes, resolution)
+		if (typeof size === 'number') {
+			remainingDownloadBytes += size
 		}
 	}
 
@@ -956,6 +998,7 @@ export async function getOfflineVideoSummary({
 		downloadedVideos,
 		unavailableVideos: unavailable,
 		notDownloadableVideos: notDownloadable,
+		remainingDownloadBytes,
 		totalBytes,
 		downloadState,
 	}

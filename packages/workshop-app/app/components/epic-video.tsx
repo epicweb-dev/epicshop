@@ -38,6 +38,11 @@ const EpicVideoInfoContext = React.createContext<
 
 type OfflineVideoDownloadResolution = 'best' | 'high' | 'medium' | 'low'
 
+type OfflineVideoDownloadSize = {
+	quality: string
+	size: number | null
+}
+
 const offlineVideoResolutionLabels: Record<
 	OfflineVideoDownloadResolution,
 	string
@@ -53,6 +58,45 @@ function getOfflineVideoResolutionLabel(value: unknown) {
 		return offlineVideoResolutionLabels[value]
 	}
 	return offlineVideoResolutionLabels.best
+}
+
+const offlineVideoDownloadQualityOrder: Record<
+	OfflineVideoDownloadResolution,
+	Array<string>
+> = {
+	best: ['source', 'highest', 'high', 'medium', 'low'],
+	high: ['high', 'medium', 'low', 'highest', 'source'],
+	medium: ['medium', 'low', 'high', 'highest', 'source'],
+	low: ['low', 'medium', 'high', 'highest', 'source'],
+}
+
+function getOfflineVideoResolution(value: unknown): OfflineVideoDownloadResolution {
+	if (value === 'high' || value === 'medium' || value === 'low') return value
+	return 'best'
+}
+
+function getPreferredDownloadSize(
+	downloadSizes: Array<OfflineVideoDownloadSize>,
+	resolution: OfflineVideoDownloadResolution,
+) {
+	if (downloadSizes.length === 0) return null
+	const sizeByQuality = new Map(
+		downloadSizes.map((download) => [
+			download.quality.toLowerCase(),
+			download.size,
+		]),
+	)
+	const order =
+		offlineVideoDownloadQualityOrder[resolution] ??
+		offlineVideoDownloadQualityOrder.best
+	for (const quality of order) {
+		const size = sizeByQuality.get(quality)
+		if (typeof size === 'number' && size > 0) return size
+	}
+	return (
+		downloadSizes.find((download) => typeof download.size === 'number')?.size ??
+		null
+	)
 }
 
 type OfflineVideoActionData = {
@@ -379,7 +423,8 @@ export function DeferredEpicVideo({
 									transcript={info.transcript}
 									duration={info.duration}
 									durationEstimate={info.durationEstimate}
-									downloadsAvailable={info.downloadsAvailable}
+									downloadsAvailable={info.downloadsAvailable ?? false}
+									downloadSizes={info.downloadSizes ?? []}
 								/>
 							)
 						} else if (info.type === 'region-restricted') {
@@ -486,6 +531,7 @@ function EpicVideo({
 	duration,
 	durationEstimate,
 	downloadsAvailable,
+	downloadSizes,
 }: {
 	url: string
 	title?: string
@@ -493,7 +539,8 @@ function EpicVideo({
 	transcript: string
 	duration?: number | null
 	durationEstimate?: number | null
-	downloadsAvailable: boolean
+	downloadsAvailable?: boolean
+	downloadSizes: Array<OfflineVideoDownloadSize>
 }) {
 	const muxPlayerRef = React.useRef<MuxPlayerRefAttributes>(null)
 	const nativeVideoRef = React.useRef<HTMLVideoElement>(null)
@@ -501,6 +548,9 @@ function EpicVideo({
 	const playerPreferences = usePlayerPreferences()
 	const rootData = useRootLoaderData()
 	const downloadResolutionLabel = getOfflineVideoResolutionLabel(
+		rootData.preferences?.offlineVideo?.downloadResolution,
+	)
+	const downloadResolution = getOfflineVideoResolution(
 		rootData.preferences?.offlineVideo?.downloadResolution,
 	)
 	const offlineVideoPlaybackIds = rootData.offlineVideoPlaybackIds
@@ -771,12 +821,18 @@ function EpicVideo({
 		if (!element) return
 		element.setAttribute('seekoffset', '10')
 	}, [])
-	const showOfflineActions = downloadsAvailable
+	const hasDownloadOptions = Boolean(downloadsAvailable || downloadSizes.length > 0)
+	const downloadSizeBytes = getPreferredDownloadSize(
+		downloadSizes,
+		downloadResolution,
+	)
+	const showOfflineActions = offlineVideo.available || hasDownloadOptions
 	const offlineActions = showOfflineActions ? (
 		<OfflineVideoActionButtons
 			isAvailable={offlineVideo.available}
 			isBusy={isOfflineActionBusy}
 			downloadProgress={downloadProgress}
+			downloadSizeBytes={downloadSizeBytes}
 			isVisible={offlineVideo.checked}
 			onDownload={handleDownload}
 			onDelete={handleDelete}

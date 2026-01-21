@@ -41,10 +41,20 @@ function DeleteIcon(props: React.ComponentPropsWithoutRef<'svg'>) {
 	)
 }
 
+function formatBytes(bytes: number) {
+	if (bytes < 1024) return `${bytes} B`
+	const kb = bytes / 1024
+	if (kb < 1024) return `${kb.toFixed(1)} KB`
+	const mb = kb / 1024
+	if (mb < 1024) return `${mb.toFixed(1)} MB`
+	return `${(mb / 1024).toFixed(1)} GB`
+}
+
 export type OfflineVideoActionButtonsProps = {
 	isAvailable: boolean
 	isBusy?: boolean
 	isVisible?: boolean
+	downloadSizeBytes?: number | null
 	/**
 	 * Download progress percentage (0-100). When defined, shows a progress indicator.
 	 * When undefined and isBusy is true, shows an indeterminate progress indicator.
@@ -58,6 +68,7 @@ export function OfflineVideoActionButtons({
 	isAvailable,
 	isBusy = false,
 	isVisible = true,
+	downloadSizeBytes,
 	downloadProgress,
 	onDownload,
 	onDelete,
@@ -72,13 +83,17 @@ export function OfflineVideoActionButtons({
 	}
 	const isDownloading = isBusy && !isAvailable
 	const showProgressIndicator = isDownloading
+	const downloadSizeLabel =
+		typeof downloadSizeBytes === 'number' && downloadSizeBytes > 0
+			? ` (${formatBytes(downloadSizeBytes)})`
+			: ''
 	const label = isAvailable
 		? 'Delete offline video'
 		: isDownloading
 			? downloadProgress !== undefined
 				? `Downloading: ${Math.round(downloadProgress)}%`
 				: 'Downloading...'
-			: 'Download offline video'
+			: `Download offline video${downloadSizeLabel}`
 	const onClick = isAvailable ? onDelete : onDownload
 	const className = isAvailable
 		? 'text-foreground-destructive hover:bg-foreground-destructive/10'

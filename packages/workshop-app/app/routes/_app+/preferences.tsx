@@ -40,6 +40,15 @@ function isDownloadResolutionOption(
 	)
 }
 
+function formatBytes(bytes: number) {
+	if (bytes < 1024) return `${bytes} B`
+	const kb = bytes / 1024
+	if (kb < 1024) return `${kb.toFixed(1)} KB`
+	const mb = kb / 1024
+	if (mb < 1024) return `${mb.toFixed(1)} MB`
+	return `${(mb / 1024).toFixed(1)} GB`
+}
+
 export async function loader({ request }: Route.LoaderArgs) {
 	ensureUndeployed()
 	const [preferences, offlineVideos] = await Promise.all([
@@ -376,6 +385,17 @@ export default function AccountSettings() {
 							downloaded
 							{offlineVideoNotes ? ` (${offlineVideoNotes})` : null}
 						</span>
+					</div>
+					<div className="text-muted-foreground text-sm">
+						{offlineVideos.downloadedVideos > 0 ? (
+							<p>Downloaded size: {formatBytes(offlineVideos.totalBytes)}</p>
+						) : null}
+						{offlineVideos.remainingDownloadBytes > 0 ? (
+							<p>
+								Download all size:{' '}
+								{formatBytes(offlineVideos.remainingDownloadBytes)}
+							</p>
+						) : null}
 					</div>
 					{isDownloading ? (
 						<div className="text-muted-foreground text-sm">
