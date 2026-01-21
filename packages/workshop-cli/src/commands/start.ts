@@ -201,26 +201,24 @@ export async function start(options: StartOptions = {}): Promise<StartResult> {
 				const updates = await checkForUpdatesCached()
 				const updateNotificationId =
 					'updateNotificationId' in updates
-						? (
+						? ((
 								updates as {
 									updateNotificationId?: string | null
 								}
-							).updateNotificationId ?? null
+							).updateNotificationId ?? null)
 						: null
 				const repoUpdatesAvailable =
 					'repoUpdatesAvailable' in updates
 						? Boolean(
-								(
-									updates as { repoUpdatesAvailable?: boolean }
-								).repoUpdatesAvailable,
+								(updates as { repoUpdatesAvailable?: boolean })
+									.repoUpdatesAvailable,
 							)
 						: updates.updatesAvailable
 				const dependenciesNeedInstall =
 					'dependenciesNeedInstall' in updates
 						? Boolean(
-								(
-									updates as { dependenciesNeedInstall?: boolean }
-								).dependenciesNeedInstall,
+								(updates as { dependenciesNeedInstall?: boolean })
+									.dependenciesNeedInstall,
 							)
 						: false
 
