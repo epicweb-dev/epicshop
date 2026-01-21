@@ -57,6 +57,7 @@ import tailwindStylesheetUrl from './styles/tailwind.css?url'
 import { ClientHintCheck, getHints } from './utils/client-hints'
 import { getConfetti } from './utils/confetti.server'
 import { cn, combineHeaders, getDomainUrl, useAltDown } from './utils/misc'
+import { getPracticePastLessonData } from './utils/practice-past-lesson'
 import { Presence } from './utils/presence'
 import { getSentryUser } from './utils/sentry-user'
 import { getSeoMetaTags } from './utils/seo'
@@ -94,6 +95,7 @@ export const meta: Route.MetaFunction = ({ loaderData }) => {
 export async function loader({ request }: Route.LoaderArgs) {
 	const timings = makeTimings('rootLoader')
 	const workshopConfig = getWorkshopConfig()
+	const requestUrl = new URL(request.url)
 	const {
 		title: workshopTitle,
 		subtitle: workshopSubtitle,
@@ -143,6 +145,11 @@ export async function loader({ request }: Route.LoaderArgs) {
 		}
 	}
 
+	const practicePastLesson = getPracticePastLessonData({
+		progress: asyncStuff.progress,
+		currentPath: requestUrl.pathname,
+	})
+
 	return data(
 		{
 			...asyncStuff,
@@ -156,14 +163,15 @@ export async function loader({ request }: Route.LoaderArgs) {
 				relativePath,
 			})),
 			ENV: getEnv(),
+			practicePastLesson,
 			requestInfo: {
-				protocol: new URL(request.url).protocol,
-				hostname: new URL(request.url).hostname,
-				port: new URL(request.url).port,
-				origin: new URL(request.url).origin,
+				protocol: requestUrl.protocol,
+				hostname: requestUrl.hostname,
+				port: requestUrl.port,
+				origin: requestUrl.origin,
 				domain: getDomainUrl(request),
 				hints: getHints(request),
-				path: new URL(request.url).pathname,
+				path: requestUrl.pathname,
 				session: { theme },
 				separator: path.sep,
 				online: await isOnlinePromise,
