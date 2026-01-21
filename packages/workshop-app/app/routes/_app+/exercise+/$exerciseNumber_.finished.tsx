@@ -24,6 +24,7 @@ import { Icon } from '#app/components/icons.tsx'
 import { Loading } from '#app/components/loading.tsx'
 import { NavChevrons } from '#app/components/nav-chevrons.tsx'
 import { useRevalidationWS } from '#app/components/revalidation-ws.tsx'
+import { RetrievalPractice } from '#app/components/retrieval-practice.tsx'
 import { EditFileOnGitHub } from '#app/routes/launch-editor.tsx'
 import { ProgressToggle } from '#app/routes/progress.tsx'
 import { useTheme } from '#app/routes/theme/index.tsx'
@@ -186,6 +187,7 @@ export default function ExerciseFinished({
 							// TODO: render a random dad joke...
 							'No finished instructions yet...'
 						)}
+						<RetrievalPractice exerciseNumber={data.exercise.exerciseNumber} />
 					</article>
 					<ElementScrollRestoration elementQuery={`#${data.articleId}`} />
 					<ProgressToggle
