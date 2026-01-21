@@ -800,6 +800,7 @@ function MobileNavigation({
 		system: 'System',
 	}[currentTheme]
 	const [isMobilePopoverOpen, setIsMobilePopoverOpen] = React.useState(false)
+	const showMobilePopover = Boolean(data.sidecarStatus)
 
 	return (
 		<nav className="flex w-full border-b sm:hidden">
@@ -1204,7 +1205,7 @@ function MobileNavigation({
 								<ThemeSwitch />
 								<SidecarStatusIndicator status={data.sidecarStatus} />
 							</>
-						) : (
+						) : showMobilePopover ? (
 							<Popover
 								open={isMobilePopoverOpen}
 								onOpenChange={setIsMobilePopoverOpen}
@@ -1275,6 +1276,8 @@ function MobileNavigation({
 									) : null}
 								</PopoverContent>
 							</Popover>
+						) : (
+							<ThemeSwitch />
 						)}
 					</div>
 				</div>
