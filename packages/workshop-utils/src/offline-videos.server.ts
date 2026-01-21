@@ -17,6 +17,7 @@ import {
 	type EpicVideoMetadata,
 	getEpicVideoInfos,
 	getEpicVideoMetadata,
+	normalizeVideoApiHost,
 } from './epic-api.server.ts'
 import { getEnv } from './init-env.ts'
 import { logger } from './logger.ts'
@@ -626,10 +627,7 @@ function sortVideoDownloads(
 function getVideoApiHost(videoUrl: string) {
 	try {
 		const host = new URL(videoUrl).host
-		if (host === 'epicweb.dev') return 'www.epicweb.dev'
-		if (host === 'epicreact.dev') return 'www.epicreact.dev'
-		if (host === 'epicai.pro') return 'www.epicai.pro'
-		return host
+		return normalizeVideoApiHost(host)
 	} catch (error) {
 		log.warn('Unable to parse video URL for metadata', {
 			videoUrl,
@@ -651,7 +649,7 @@ async function getVideoDownloadUrls({
 	accessToken?: string
 }) {
 	const host = getVideoApiHost(videoUrl)
-	if (!host) return []
+	if (!host) return getMuxFallbackUrls(playbackId, resolution)
 	const metadata = await getEpicVideoMetadata({
 		playbackId,
 		host,
@@ -674,7 +672,16 @@ async function getVideoDownloadUrls({
 		return getMuxFallbackUrls(playbackId, resolution)
 	}
 	const ordered = sortVideoDownloads(downloads, resolution)
-	return ordered.map((download) => download.url).filter(Boolean)
+	const urls = ordered.map((download) => download.url).filter(Boolean)
+	if (urls.length === 0) {
+		log.warn('Video metadata has downloads but all URLs are invalid', {
+			playbackId,
+			videoUrl,
+			downloadsCount: downloads.length,
+		})
+		return getMuxFallbackUrls(playbackId, resolution)
+	}
+	return urls
 }
 
 async function isOfflineVideoReady(

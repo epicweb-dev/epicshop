@@ -134,7 +134,7 @@ const videoInfoLog = log.logger('video-info')
 const videoMetadataLog = log.logger('video-metadata')
 const EPIC_VIDEO_INFO_CONCURRENCY = 6
 
-function normalizeVideoApiHost(host: string) {
+export function normalizeVideoApiHost(host: string) {
 	if (host === 'epicweb.dev') return 'www.epicweb.dev'
 	if (host === 'epicreact.dev') return 'www.epicreact.dev'
 	if (host === 'epicai.pro') return 'www.epicai.pro'
