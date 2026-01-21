@@ -232,7 +232,7 @@ export async function start(options: StartOptions = {}): Promise<StartResult> {
 				if (dependenciesNeedInstall) {
 					lines.push(
 						`Your installed packages don't match ${chalk.cyan(
-							'package-lock.json',
+							'package.json',
 						)}.`,
 					)
 				}

@@ -52,7 +52,7 @@ export function UpdateToast({
 				</div>
 			) : (
 				<div>
-					{`Your installed packages don't match package-lock.json. `}
+					{`Your installed packages don't match package.json. `}
 					{`Click the update button to reinstall dependencies.`}
 				</div>
 			)

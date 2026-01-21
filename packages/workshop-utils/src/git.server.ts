@@ -1,6 +1,5 @@
 import './init-env.ts'
 
-import { createHash } from 'node:crypto'
 import fs from 'node:fs/promises'
 import path from 'node:path'
 import { execa, execaCommand } from 'execa'
@@ -9,6 +8,10 @@ import { cachified, checkForUpdatesCache } from './cache.server.ts'
 import { getWorkshopConfig } from './config.server.ts'
 import { getEnv } from './env.server.ts'
 import { logger } from './logger.ts'
+import {
+	getInstallCommand,
+	getWorkspaceInstallStatus,
+} from './package-install/package-install-check.server.ts'
 import { checkConnection } from './utils.server.ts'
 import { getErrorMessage } from './utils.ts'
 
@@ -28,122 +31,9 @@ function isDirectory(dirPath: string) {
 	)
 }
 
-type PackageLockStatus = {
-	dependenciesNeedInstall: boolean
-	lockfileHash: string | null
-	reason:
-		| 'missing-package-lock'
-		| 'missing-installed-lock'
-		| 'lockfile-mismatch'
-		| 'up-to-date'
-}
-
-function hashLockfile(contents: string) {
-	return createHash('sha256').update(contents).digest('hex').slice(0, 8)
-}
-
-async function readFileIfExists(filePath: string) {
-	try {
-		return await fs.readFile(filePath, 'utf8')
-	} catch {
-		return null
-	}
-}
-
-async function getPackageLockStatus(cwd: string): Promise<PackageLockStatus> {
-	const packageLockPath = path.join(cwd, 'package-lock.json')
-	const packageLockContents = await readFileIfExists(packageLockPath)
-	if (!packageLockContents) {
-		return {
-			dependenciesNeedInstall: false,
-			lockfileHash: null,
-			reason: 'missing-package-lock',
-		}
-	}
-
-	const lockfileHash = hashLockfile(packageLockContents)
-	const installedLockPath = path.join(cwd, 'node_modules', '.package-lock.json')
-	const installedLockContents = await readFileIfExists(installedLockPath)
-
-	if (!installedLockContents) {
-		// Check if dependencies were installed with a different package manager
-		// pnpm creates .pnpm directory, yarn creates .yarn-integrity, etc.
-		const nodeModulesPath = path.join(cwd, 'node_modules')
-		try {
-			const nodeModulesStats = await fs.stat(nodeModulesPath)
-			if (nodeModulesStats.isDirectory()) {
-				const entries = await fs.readdir(nodeModulesPath)
-				// If node_modules exists and has content (excluding hidden files/dirs),
-				// assume dependencies are installed by another package manager
-				const hasContent = entries.some((entry) => !entry.startsWith('.'))
-				if (hasContent) {
-					// Dependencies installed with non-npm package manager
-					return {
-						dependenciesNeedInstall: false,
-						lockfileHash,
-						reason: 'up-to-date',
-					}
-				}
-			}
-		} catch {
-			// node_modules doesn't exist or not accessible
-		}
-
-		return {
-			dependenciesNeedInstall: true,
-			lockfileHash,
-			reason: 'missing-installed-lock',
-		}
-	}
-
-	// Parse both lockfiles to compare only the installed packages
-	try {
-		const mainLockfile = JSON.parse(packageLockContents) as {
-			packages: Record<string, unknown>
-		}
-		const installedLockfile = JSON.parse(installedLockContents) as {
-			packages: Record<string, unknown>
-		}
-
-		// Extract packages from both, excluding the root package ("") from main lockfile
-		const mainPackages: Record<string, unknown> = { ...mainLockfile.packages }
-		delete mainPackages['']
-
-		const installedPackages: Record<string, unknown> = installedLockfile.packages
-
-		// Compare by hashing the normalized package data
-		const mainPackagesHash = hashLockfile(JSON.stringify(mainPackages))
-		const installedPackagesHash = hashLockfile(JSON.stringify(installedPackages))
-
-		if (mainPackagesHash !== installedPackagesHash) {
-			return {
-				dependenciesNeedInstall: true,
-				lockfileHash,
-				reason: 'lockfile-mismatch',
-			}
-		}
-	} catch {
-		// If parsing fails, fall back to simple comparison (which will likely show mismatch)
-		const installedHash = hashLockfile(installedLockContents)
-		if (installedHash !== lockfileHash) {
-			return {
-				dependenciesNeedInstall: true,
-				lockfileHash,
-				reason: 'lockfile-mismatch',
-			}
-		}
-	}
-
-	return {
-		dependenciesNeedInstall: false,
-		lockfileHash,
-		reason: 'up-to-date',
-	}
-}
-
-function getDependencyNotificationId(lockfileHash: string | null) {
-	if (!lockfileHash) return null
-	return `update-deps-${lockfileHash}`
+function getDependencyNotificationId(dependencyHash: string | null) {
+	if (!dependencyHash) return null
+	return `update-deps-${dependencyHash}`
 }
 
 async function cleanupEmptyExerciseDirectories(cwd: string) {
@@ -201,15 +91,16 @@ async function getDiffUrl(commitBefore: string, commitAfter: string) {
 export async function checkForUpdates() {
 	const ENV = getEnv()
 	const cwd = getWorkshopRoot()
-	const packageLockStatus = await getPackageLockStatus(cwd)
+	const dependencyStatus = await getWorkspaceInstallStatus(cwd)
+	const dependencyNotificationId = dependencyStatus.dependenciesNeedInstall
+		? getDependencyNotificationId(dependencyStatus.dependencyHash)
+		: null
 
 	const baseResult = {
-		updatesAvailable: packageLockStatus.dependenciesNeedInstall,
+		updatesAvailable: dependencyStatus.dependenciesNeedInstall,
 		repoUpdatesAvailable: false,
-		dependenciesNeedInstall: packageLockStatus.dependenciesNeedInstall,
-		updateNotificationId: packageLockStatus.dependenciesNeedInstall
-			? getDependencyNotificationId(packageLockStatus.lockfileHash)
-			: null,
+		dependenciesNeedInstall: dependencyStatus.dependenciesNeedInstall,
+		updateNotificationId: dependencyNotificationId,
 		commitsAhead: null,
 		commitsBehind: null,
 		localCommit: null,
@@ -275,15 +166,15 @@ export async function checkForUpdates() {
 		const [ahead = 0, behind = 0] = stdout.trim().split(/\s+/).map(Number)
 		const repoUpdatesAvailable = behind > 0
 		const updatesAvailable =
-			repoUpdatesAvailable || packageLockStatus.dependenciesNeedInstall
+			repoUpdatesAvailable || dependencyStatus.dependenciesNeedInstall
 		const updateNotificationId = repoUpdatesAvailable
 			? `update-repo-${remoteCommit}`
-			: baseResult.updateNotificationId
+			: dependencyNotificationId
 
 		return {
 			updatesAvailable,
 			repoUpdatesAvailable,
-			dependenciesNeedInstall: packageLockStatus.dependenciesNeedInstall,
+			dependenciesNeedInstall: dependencyStatus.dependenciesNeedInstall,
 			updateNotificationId,
 			commitsAhead: ahead,
 			commitsBehind: behind,
@@ -333,14 +224,16 @@ export async function checkForUpdatesCached() {
 	})
 }
 
-async function runNpmInstallWithRetry(
+async function runInstallWithRetry(
 	cwd: string,
+	command: string,
+	args: Array<string>,
 	maxRetries = 3,
 	baseDelayMs = 1000,
 ): Promise<void> {
 	for (let attempt = 1; attempt <= maxRetries; attempt++) {
 		try {
-			await execaCommand('npm install', { cwd, stdio: 'inherit' })
+			await execa(command, args, { cwd, stdio: 'inherit' })
 			return
 		} catch (error) {
 			const isEbusy =
@@ -375,9 +268,12 @@ export async function updateLocalRepo() {
 	try {
 		const updates = await checkForUpdates()
 		const repoUpdatesAvailable = updates.repoUpdatesAvailable
-		let dependenciesNeedInstall = updates.dependenciesNeedInstall
+		let dependencyStatus = await getWorkspaceInstallStatus(cwd)
+		let rootsNeedingInstall = dependencyStatus.roots.filter(
+			(status) => status.dependenciesNeedInstall,
+		)
 
-		if (!repoUpdatesAvailable && !dependenciesNeedInstall) {
+		if (!repoUpdatesAvailable && rootsNeedingInstall.length === 0) {
 			return {
 				status: 'success',
 				message: updates.message ?? 'No updates available.',
@@ -406,35 +302,45 @@ export async function updateLocalRepo() {
 			}
 
 			didPull = true
-			const postUpdateStatus = await getPackageLockStatus(cwd)
-			dependenciesNeedInstall = postUpdateStatus.dependenciesNeedInstall
+			dependencyStatus = await getWorkspaceInstallStatus(cwd)
+			rootsNeedingInstall = dependencyStatus.roots.filter(
+				(status) => status.dependenciesNeedInstall,
+			)
 		}
 
-		if (dependenciesNeedInstall) {
-			console.log('📦 Re-installing dependencies...')
-			try {
-				await runNpmInstallWithRetry(cwd)
-				didInstall = true
-			} catch (error) {
-				const isEbusy =
-					error instanceof Error &&
-					(error.message.includes('EBUSY') ||
-						(error as NodeJS.ErrnoException).code === 'EBUSY')
+		if (rootsNeedingInstall.length > 0) {
+			for (const root of rootsNeedingInstall) {
+				const rootLabel =
+					path.relative(cwd, root.rootDir).replace(/\\/g, '/') || '.'
+				const { command, args } = getInstallCommand(root.packageManager)
+				const commandLabel = `${command} ${args.join(' ')}`.trim()
+				console.log(
+					`📦 Installing dependencies in ${rootLabel} using ${commandLabel}...`,
+				)
+				try {
+					await runInstallWithRetry(root.rootDir, command, args)
+					didInstall = true
+				} catch (error) {
+					const isEbusy =
+						error instanceof Error &&
+						(error.message.includes('EBUSY') ||
+							(error as NodeJS.ErrnoException).code === 'EBUSY')
 
-				if (isEbusy) {
-					return {
-						status: 'error',
-						message:
-							'npm install failed: files are locked. ' +
-							'Please close any editors or terminals using this directory, ' +
-							'then run: npm install',
-					} as const
+					if (isEbusy) {
+						return {
+							status: 'error',
+							message:
+								`${commandLabel} failed: files are locked. ` +
+								'Please close any editors or terminals using this directory, ' +
+								`then run: ${commandLabel}`,
+						} as const
+					}
+					throw error
 				}
-				throw error
 			}
 		} else if (repoUpdatesAvailable) {
 			console.log(
-				'📦 Dependencies already match package-lock.json. Skipping npm install.',
+				'📦 Dependencies already match package.json. Skipping install.',
 			)
 		}
 

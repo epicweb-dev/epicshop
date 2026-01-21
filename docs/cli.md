@@ -1114,8 +1114,8 @@ setupWorkshop()
 When running `epicshop start`, the following interactive features are available:
 
 - **Update Check**: The CLI automatically checks for updates on startup
-- **Dependency Check**: Prompts when `package-lock.json` and installed packages
-  are out of sync
+- **Dependency Check**: Prompts when `package.json` and installed packages are
+  out of sync
 - **Keyboard Shortcuts**:
   - Press `u` to check for and apply updates
   - Press `d` to dismiss update notifications
