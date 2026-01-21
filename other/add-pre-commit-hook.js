@@ -39,6 +39,8 @@ const installHook = async () => {
 
 	await mkdir(hooksDir, { recursive: true })
 
+	// Cursor installs a wrapper hook with an "@cursor-managed" marker, so chain
+	// our hook instead of overwriting the wrapper when it's detected.
 	const wrapperContents = await readFile(wrapperPath, 'utf8').catch(() => null)
 	const hookPath = wrapperContents?.includes('@cursor-managed')
 		? path.join(hooksDir, 'pre-commit.cursor-auto-format')
