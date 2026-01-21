@@ -1108,6 +1108,11 @@ setupWorkshop()
 - `NODE_ENV` - Set to `production` for production mode
 - `SENTRY_DSN` - Sentry DSN for error tracking and distributed tracing in
   production
+- `SENTRY_AUTH_TOKEN` - Sentry auth token for source map uploads during build
+- `SENTRY_ORG` - Sentry organization slug for source map uploads
+- `SENTRY_PROJECT` - Sentry project slug for source map uploads
+- `SENTRY_RELEASE` - Optional release name for matching source maps to events
+- `EPICSHOP_APP_COMMIT_SHA` - Release fallback for source map matching
 
 ## Interactive Features
 

@@ -88,10 +88,16 @@ export function init() {
 
 	if (tracingIntegration) integrations.unshift(tracingIntegration)
 
+	const release =
+		ENV.SENTRY_RELEASE ??
+		ENV.EPICSHOP_APP_COMMIT_SHA ??
+		ENV.EPICSHOP_APP_VERSION
+
 	Sentry.init({
 		dsn: ENV.SENTRY_DSN,
 		sendDefaultPii: true,
 		environment: ENV.MODE,
+		release,
 		tunnel: '/resources/lookout',
 		tracePropagationTargets,
 		ignoreErrors: [

@@ -18,6 +18,7 @@ const schema = z
 		EPICSHOP_GITHUB_REPO: z.string().default(''),
 		EPICSHOP_GITHUB_ROOT: z.string().default(''),
 		EPICSHOP_APP_VERSION: z.string().optional(),
+		EPICSHOP_APP_COMMIT_SHA: z.string().optional(),
 		EPICSHOP_PARENT_PORT: z.string().optional(),
 		EPICSHOP_PARENT_TOKEN: z.string().optional(),
 		EPICSHOP_APP_LOCATION: z.string().optional(),
@@ -34,6 +35,7 @@ const schema = z
 		SENTRY_ORG: z.string().default('kent-c-dodds-tech-llc'),
 		SENTRY_PROJECT: z.string().default('epicshop'),
 		SENTRY_PROJECT_ID: z.string().default('4509630082252800'),
+		SENTRY_RELEASE: z.string().optional(),
 	})
 	.transform(async (env) => {
 		if (env.EPICSHOP_CONTEXT_CWD === '') {
@@ -150,11 +152,13 @@ export function getEnv() {
 			process.env.EPICSHOP_DEPLOYED === 'true' ||
 			process.env.EPICSHOP_DEPLOYED === '1',
 		EPICSHOP_APP_VERSION: process.env.EPICSHOP_APP_VERSION,
+		EPICSHOP_APP_COMMIT_SHA: process.env.EPICSHOP_APP_COMMIT_SHA,
 		EPICSHOP_PARENT_PORT: process.env.EPICSHOP_PARENT_PORT,
 		EPICSHOP_PARENT_TOKEN: process.env.EPICSHOP_PARENT_TOKEN,
 		EPICSHOP_IS_PUBLISHED: process.env.EPICSHOP_IS_PUBLISHED === 'true',
 		SENTRY_DSN: process.env.SENTRY_DSN,
 		SENTRY_PROJECT_ID: process.env.SENTRY_PROJECT_ID,
+		SENTRY_RELEASE: process.env.SENTRY_RELEASE,
 	}
 }
 
