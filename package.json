@@ -4,7 +4,7 @@
   "type": "module",
   "scripts": {
     "cli": "tsx ./packages/workshop-cli/src/cli.ts",
-    "postinstall": "cd ./example && npm install --prefer-offline --no-audit --no-fund",
+    "postinstall": "node ./other/add-pre-commit-hook.js && cd ./example && npm install --prefer-offline --no-audit --no-fund",
     "typecheck": "./other/nx-fallback.js run-many --target typecheck",
     "lint": "./other/nx-fallback.js lint",
     "build": "./other/nx-fallback.js run-many --target build",
