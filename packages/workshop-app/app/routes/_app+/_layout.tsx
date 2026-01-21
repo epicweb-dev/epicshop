@@ -79,16 +79,17 @@ function getSidecarStatus() {
 	const { sidecarProcesses } = getProcesses()
 	if (sidecarProcesses.size === 0) return null
 
-	const processes = Array.from(sidecarProcesses.entries()).map(
-		([name, { process }]) => ({
-			name,
-			running: process.exitCode === null,
-		}),
-	)
+	let hasFailure = false
+	let failedCount = 0
 
-	const hasFailure = processes.some((p) => !p.running)
-	const failedCount = processes.filter((p) => !p.running).length
-	return { processes, hasFailure, count: processes.length, failedCount }
+	for (const [, { process }] of sidecarProcesses.entries()) {
+		if (process.exitCode !== null) {
+			hasFailure = true
+			failedCount++
+		}
+	}
+
+	return { hasFailure, failedCount }
 }
 
 export async function loader({ request }: LoaderFunctionArgs) {
@@ -1225,7 +1226,7 @@ const OPENED_MENU_WIDTH = 400
 function SidecarStatusIndicator({
 	status,
 }: {
-	status: { hasFailure: boolean; count: number; failedCount: number } | null
+	status: { hasFailure: boolean; failedCount: number } | null
 }) {
 	if (!status) return null
 
