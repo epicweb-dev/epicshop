@@ -651,6 +651,25 @@ function getVideoApiHost(videoUrl: string) {
 	}
 }
 
+function getMuxFallbackUrls(
+	playbackId: string,
+	resolution: OfflineVideoDownloadResolution,
+): Array<string> {
+	const qualityMap: Record<
+		OfflineVideoDownloadResolution,
+		Array<'high' | 'medium' | 'low'>
+	> = {
+		best: ['high', 'medium', 'low'],
+		high: ['high', 'medium', 'low'],
+		medium: ['medium', 'low', 'high'],
+		low: ['low', 'medium', 'high'],
+	}
+	const qualities = qualityMap[resolution] ?? qualityMap.best
+	return qualities.map(
+		(quality) => `https://stream.mux.com/${playbackId}/${quality}.mp4`,
+	)
+}
+
 async function getVideoDownloadUrls({
 	playbackId,
 	videoUrl,
@@ -663,37 +682,49 @@ async function getVideoDownloadUrls({
 	accessToken?: string
 }) {
 	const host = getVideoApiHost(videoUrl)
-	if (!host) return []
+	if (!host) {
+		log.info('Using Mux fallback URLs (no video API host)', { playbackId })
+		return getMuxFallbackUrls(playbackId, resolution)
+	}
 	const metadata = await getEpicVideoMetadata({
 		playbackId,
 		host,
 		accessToken,
 	})
 	if (!metadata) {
-		log.warn('Video metadata unavailable for offline download', {
-			playbackId,
-			videoUrl,
-		})
-		return []
+		log.warn(
+			'Video metadata unavailable for offline download, using Mux fallback URLs',
+			{
+				playbackId,
+				videoUrl,
+			},
+		)
+		return getMuxFallbackUrls(playbackId, resolution)
 	}
 	const downloads = metadata.downloads ?? []
 	if (downloads.length === 0) {
-		log.warn('Video metadata missing downloads for offline download', {
-			playbackId,
-			videoUrl,
-			status: metadata.status,
-		})
-		return []
+		log.warn(
+			'Video metadata missing downloads for offline download, using Mux fallback URLs',
+			{
+				playbackId,
+				videoUrl,
+				status: metadata.status,
+			},
+		)
+		return getMuxFallbackUrls(playbackId, resolution)
 	}
 	const ordered = sortVideoDownloads(downloads, resolution)
 	const urls = ordered.map((download) => download.url).filter(Boolean)
 	if (urls.length === 0) {
-		log.warn('Video metadata has downloads but all URLs are invalid', {
-			playbackId,
-			videoUrl,
-			downloadsCount: downloads.length,
-		})
-		return []
+		log.warn(
+			'Video metadata has downloads but all URLs are invalid, using Mux fallback URLs',
+			{
+				playbackId,
+				videoUrl,
+				downloadsCount: downloads.length,
+			},
+		)
+		return getMuxFallbackUrls(playbackId, resolution)
 	}
 	return urls
 }
@@ -981,7 +1012,7 @@ export async function getOfflineVideoSummary({
 			entry.cryptoVersion === keyInfo.config.version &&
 			hasWorkshop(entry, workshop.id),
 		)
-		if (isDownloaded) {
+		if (isDownloaded && entry) {
 			downloadedVideos += 1
 			totalBytes += entry.size ?? 0
 			continue
