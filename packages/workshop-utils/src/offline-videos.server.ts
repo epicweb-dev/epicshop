@@ -617,25 +617,6 @@ function getVideoApiHost(videoUrl: string) {
 	}
 }
 
-function getMuxFallbackUrls(
-	playbackId: string,
-	resolution: OfflineVideoDownloadResolution,
-): Array<string> {
-	const qualityMap: Record<
-		OfflineVideoDownloadResolution,
-		Array<'high' | 'medium' | 'low'>
-	> = {
-		best: ['high', 'medium', 'low'],
-		high: ['high', 'medium', 'low'],
-		medium: ['medium', 'low', 'high'],
-		low: ['low', 'medium', 'high'],
-	}
-	const qualities = qualityMap[resolution] ?? qualityMap.best
-	return qualities.map(
-		(quality) => `https://stream.mux.com/${playbackId}/${quality}.mp4`,
-	)
-}
-
 async function getVideoDownloadUrls({
 	playbackId,
 	videoUrl,
@@ -649,8 +630,11 @@ async function getVideoDownloadUrls({
 }) {
 	const host = getVideoApiHost(videoUrl)
 	if (!host) {
-		log.info('Using Mux fallback URLs (no video API host)', { playbackId })
-		return getMuxFallbackUrls(playbackId, resolution)
+		log.warn('No video API host found for offline download', {
+			playbackId,
+			videoUrl,
+		})
+		return []
 	}
 	const metadata = await getEpicVideoMetadata({
 		playbackId,
@@ -658,39 +642,30 @@ async function getVideoDownloadUrls({
 		accessToken,
 	})
 	if (!metadata) {
-		log.warn(
-			'Video metadata unavailable for offline download, using Mux fallback URLs',
-			{
-				playbackId,
-				videoUrl,
-			},
-		)
-		return getMuxFallbackUrls(playbackId, resolution)
+		log.warn('Video metadata unavailable for offline download', {
+			playbackId,
+			videoUrl,
+		})
+		return []
 	}
 	const downloads = metadata.downloads ?? []
 	if (downloads.length === 0) {
-		log.warn(
-			'Video metadata missing downloads for offline download, using Mux fallback URLs',
-			{
-				playbackId,
-				videoUrl,
-				status: metadata.status,
-			},
-		)
-		return getMuxFallbackUrls(playbackId, resolution)
+		log.warn('Video metadata missing downloads for offline download', {
+			playbackId,
+			videoUrl,
+			status: metadata.status,
+		})
+		return []
 	}
 	const ordered = sortVideoDownloads(downloads, resolution)
 	const urls = ordered.map((download) => download.url).filter(Boolean)
 	if (urls.length === 0) {
-		log.warn(
-			'Video metadata has downloads but all URLs are invalid, using Mux fallback URLs',
-			{
-				playbackId,
-				videoUrl,
-				downloadsCount: downloads.length,
-			},
-		)
-		return getMuxFallbackUrls(playbackId, resolution)
+		log.warn('Video metadata has downloads but all URLs are invalid', {
+			playbackId,
+			videoUrl,
+			downloadsCount: downloads.length,
+		})
+		return []
 	}
 	return urls
 }
@@ -1075,6 +1050,7 @@ export async function startOfflineVideoDownload({
 	const workshop = getWorkshopIdentity()
 	const { videos, unavailable, notDownloadable } =
 		await getWorkshopVideoCollection({ request })
+	const downloadableVideos = videos.filter((video) => video.downloadable)
 	const index = await readOfflineVideoIndex()
 	const authInfo = await getAuthInfo()
 	const keyInfo = await getOfflineVideoKeyInfo({
@@ -1083,12 +1059,12 @@ export async function startOfflineVideoDownload({
 	})
 	if (!keyInfo) {
 		log.warn('Offline video download unavailable: missing key info', {
-			available: videos.length,
+			available: downloadableVideos.length,
 			unavailable,
 		})
 		return {
 			state: downloadState,
-			available: videos.length,
+			available: downloadableVideos.length,
 			queued: 0,
 			unavailable,
 			notDownloadable,
@@ -1098,7 +1074,7 @@ export async function startOfflineVideoDownload({
 	const downloads: Array<WorkshopVideoInfo> = []
 	let alreadyDownloaded = 0
 
-	for (const video of videos) {
+	for (const video of downloadableVideos) {
 		const entry = index[video.playbackId]
 		if (
 			entry?.status === 'ready' &&
@@ -1162,7 +1138,7 @@ export async function startOfflineVideoDownload({
 
 	return {
 		state: downloadState,
-		available: videos.length,
+		available: downloadableVideos.length,
 		queued: downloads.length,
 		unavailable,
 		notDownloadable,

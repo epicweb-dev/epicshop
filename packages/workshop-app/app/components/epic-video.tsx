@@ -791,12 +791,14 @@ function EpicVideo({
 		if (!element) return
 		element.setAttribute('seekoffset', '10')
 	}, [])
+	const hasDownloadOptions = Boolean(
+		downloadsAvailable || downloadSizes.length > 0,
+	)
 	const downloadSizeBytes = getPreferredDownloadSize(
 		downloadSizes,
 		downloadResolution,
 	)
-	// Always show offline actions - even if API metadata is unavailable, Mux fallback URLs can be used
-	const showOfflineActions = true
+	const showOfflineActions = offlineVideo.available || hasDownloadOptions
 	const offlineActions = showOfflineActions ? (
 		<OfflineVideoActionButtons
 			isAvailable={offlineVideo.available}
