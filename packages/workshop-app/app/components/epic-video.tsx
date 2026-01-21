@@ -379,6 +379,7 @@ export function DeferredEpicVideo({
 									transcript={info.transcript}
 									duration={info.duration}
 									durationEstimate={info.durationEstimate}
+									downloadsAvailable={info.downloadsAvailable}
 								/>
 							)
 						} else if (info.type === 'region-restricted') {
@@ -484,6 +485,7 @@ function EpicVideo({
 	transcript,
 	duration,
 	durationEstimate,
+	downloadsAvailable,
 }: {
 	url: string
 	title?: string
@@ -491,6 +493,7 @@ function EpicVideo({
 	transcript: string
 	duration?: number | null
 	durationEstimate?: number | null
+	downloadsAvailable: boolean
 }) {
 	const muxPlayerRef = React.useRef<MuxPlayerRefAttributes>(null)
 	const nativeVideoRef = React.useRef<HTMLVideoElement>(null)
@@ -768,7 +771,8 @@ function EpicVideo({
 		if (!element) return
 		element.setAttribute('seekoffset', '10')
 	}, [])
-	const offlineActions = (
+	const showOfflineActions = downloadsAvailable || offlineVideo.available
+	const offlineActions = showOfflineActions ? (
 		<OfflineVideoActionButtons
 			isAvailable={offlineVideo.available}
 			isBusy={isOfflineActionBusy}
@@ -777,7 +781,7 @@ function EpicVideo({
 			onDownload={handleDownload}
 			onDelete={handleDelete}
 		/>
-	)
+	) : null
 	return (
 		<div>
 			<div className="shadow-lg">

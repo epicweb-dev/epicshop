@@ -68,6 +68,7 @@ type WorkshopVideoInfo = {
 	playbackId: string
 	title: string
 	url: string
+	downloadable: boolean
 }
 
 type WorkshopIdentity = {
@@ -79,12 +80,14 @@ type WorkshopVideoCollection = {
 	videos: Array<WorkshopVideoInfo>
 	totalEmbeds: number
 	unavailable: number
+	notDownloadable: number
 }
 
 export type OfflineVideoSummary = {
 	totalVideos: number
 	downloadedVideos: number
 	unavailableVideos: number
+	notDownloadableVideos: number
 	totalBytes: number
 	downloadState: OfflineVideoDownloadState
 }
@@ -94,6 +97,7 @@ export type OfflineVideoStartResult = {
 	available: number
 	queued: number
 	unavailable: number
+	notDownloadable: number
 	alreadyDownloaded: number
 }
 
@@ -135,7 +139,6 @@ type OfflineVideoDownloadQuality =
 	| 'high'
 	| 'medium'
 	| 'low'
-type OfflineVideoMuxVariant = 'high' | 'medium' | 'low' | 'source'
 type EpicVideoDownload = NonNullable<EpicVideoMetadata['downloads']>[number]
 
 function isOfflineVideoDownloadResolution(
@@ -517,6 +520,7 @@ async function getWorkshopVideoCollection({
 	const epicVideoInfos = await getEpicVideoInfos(embedList, { request })
 	const videos: Array<WorkshopVideoInfo> = []
 	let unavailable = 0
+	let notDownloadable = 0
 
 	for (const embed of embedList) {
 		const info = epicVideoInfos[embed]
@@ -524,14 +528,19 @@ async function getWorkshopVideoCollection({
 			unavailable += 1
 			continue
 		}
+		const downloadable = info.downloadsAvailable === true
+		if (!downloadable) {
+			notDownloadable += 1
+		}
 		videos.push({
 			playbackId: info.muxPlaybackId,
 			title: info.title ?? embed,
 			url: embed,
+			downloadable,
 		})
 	}
 
-	return { videos, totalEmbeds: embedUrls.size, unavailable }
+	return { videos, totalEmbeds: embedUrls.size, unavailable, notDownloadable }
 }
 
 async function getOfflineVideoDownloadResolution(): Promise<OfflineVideoDownloadResolution> {
@@ -551,34 +560,6 @@ const videoDownloadQualityOrder: Record<
 	high: ['high', 'medium', 'low', 'highest', 'source'],
 	medium: ['medium', 'low', 'high', 'highest', 'source'],
 	low: ['low', 'medium', 'high', 'highest', 'source'],
-}
-
-const muxFallbackVariants: Record<
-	OfflineVideoMuxVariant,
-	(playbackId: string) => string
-> = {
-	high: (playbackId) => `https://stream.mux.com/${playbackId}/high.mp4`,
-	medium: (playbackId) => `https://stream.mux.com/${playbackId}/medium.mp4`,
-	low: (playbackId) => `https://stream.mux.com/${playbackId}/low.mp4`,
-	source: (playbackId) => `https://stream.mux.com/${playbackId}.mp4`,
-}
-
-const muxFallbackOrder: Record<
-	OfflineVideoDownloadResolution,
-	Array<OfflineVideoMuxVariant>
-> = {
-	best: ['source', 'high', 'medium', 'low'],
-	high: ['high', 'medium', 'low', 'source'],
-	medium: ['medium', 'low', 'high', 'source'],
-	low: ['low', 'medium', 'high', 'source'],
-}
-
-function getMuxFallbackUrls(
-	playbackId: string,
-	resolution: OfflineVideoDownloadResolution,
-) {
-	const order = muxFallbackOrder[resolution] ?? muxFallbackOrder.best
-	return order.map((variant) => muxFallbackVariants[variant](playbackId))
 }
 
 const knownDownloadQualities = new Set<OfflineVideoDownloadQuality>([
@@ -649,7 +630,7 @@ async function getVideoDownloadUrls({
 	accessToken?: string
 }) {
 	const host = getVideoApiHost(videoUrl)
-	if (!host) return getMuxFallbackUrls(playbackId, resolution)
+	if (!host) return []
 	const metadata = await getEpicVideoMetadata({
 		playbackId,
 		host,
@@ -660,7 +641,7 @@ async function getVideoDownloadUrls({
 			playbackId,
 			videoUrl,
 		})
-		return getMuxFallbackUrls(playbackId, resolution)
+		return []
 	}
 	const downloads = metadata.downloads ?? []
 	if (downloads.length === 0) {
@@ -669,7 +650,7 @@ async function getVideoDownloadUrls({
 			videoUrl,
 			status: metadata.status,
 		})
-		return getMuxFallbackUrls(playbackId, resolution)
+		return []
 	}
 	const ordered = sortVideoDownloads(downloads, resolution)
 	const urls = ordered.map((download) => download.url).filter(Boolean)
@@ -679,7 +660,7 @@ async function getVideoDownloadUrls({
 			videoUrl,
 			downloadsCount: downloads.length,
 		})
-		return getMuxFallbackUrls(playbackId, resolution)
+		return []
 	}
 	return urls
 }
@@ -946,7 +927,8 @@ export async function getOfflineVideoSummary({
 	request,
 }: { request?: Request } = {}): Promise<OfflineVideoSummary> {
 	const workshop = getWorkshopIdentity()
-	const { videos, unavailable } = await getWorkshopVideoCollection({ request })
+	const { videos, unavailable, notDownloadable } =
+		await getWorkshopVideoCollection({ request })
 	const index = await readOfflineVideoIndex()
 	const keyInfo = await getOfflineVideoKeyInfo({
 		userId: null,
@@ -973,6 +955,7 @@ export async function getOfflineVideoSummary({
 		totalVideos: videos.length,
 		downloadedVideos,
 		unavailableVideos: unavailable,
+		notDownloadableVideos: notDownloadable,
 		totalBytes,
 		downloadState,
 	}
@@ -1020,6 +1003,7 @@ export async function startOfflineVideoDownload({
 			available: 0,
 			queued: 0,
 			unavailable: 0,
+			notDownloadable: 0,
 			alreadyDownloaded: 0,
 		}
 	}
@@ -1030,6 +1014,7 @@ export async function startOfflineVideoDownload({
 			available: downloadState.total + downloadState.skipped,
 			queued: downloadState.total,
 			unavailable: 0,
+			notDownloadable: 0,
 			alreadyDownloaded: downloadState.skipped,
 		}
 	}
@@ -1048,7 +1033,9 @@ export async function startOfflineVideoDownload({
 	}
 
 	const workshop = getWorkshopIdentity()
-	const { videos, unavailable } = await getWorkshopVideoCollection({ request })
+	const { videos, unavailable, notDownloadable } =
+		await getWorkshopVideoCollection({ request })
+	const downloadableVideos = videos.filter((video) => video.downloadable)
 	const index = await readOfflineVideoIndex()
 	const authInfo = await getAuthInfo()
 	const keyInfo = await getOfflineVideoKeyInfo({
@@ -1057,21 +1044,22 @@ export async function startOfflineVideoDownload({
 	})
 	if (!keyInfo) {
 		log.warn('Offline video download unavailable: missing key info', {
-			available: videos.length,
+			available: downloadableVideos.length,
 			unavailable,
 		})
 		return {
 			state: downloadState,
-			available: videos.length,
+			available: downloadableVideos.length,
 			queued: 0,
 			unavailable,
+			notDownloadable,
 			alreadyDownloaded: 0,
 		}
 	}
 	const downloads: Array<WorkshopVideoInfo> = []
 	let alreadyDownloaded = 0
 
-	for (const video of videos) {
+	for (const video of downloadableVideos) {
 		const entry = index[video.playbackId]
 		if (
 			entry?.status === 'ready' &&
@@ -1135,9 +1123,10 @@ export async function startOfflineVideoDownload({
 
 	return {
 		state: downloadState,
-		available: videos.length,
+		available: downloadableVideos.length,
 		queued: downloads.length,
 		unavailable,
+		notDownloadable,
 		alreadyDownloaded,
 	}
 }

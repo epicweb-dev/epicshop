@@ -138,6 +138,16 @@ export default function AccountSettings() {
 	const offlineVideos =
 		offlineVideosFetcher.data?.offlineVideos ?? loaderData.offlineVideos
 	const isDownloading = offlineVideos.downloadState.status === 'running'
+	const offlineVideoNotes = [
+		offlineVideos.unavailableVideos > 0
+			? `${offlineVideos.unavailableVideos} unavailable`
+			: null,
+		offlineVideos.notDownloadableVideos > 0
+			? `${offlineVideos.notDownloadableVideos} not downloadable`
+			: null,
+	]
+		.filter(Boolean)
+		.join(', ')
 
 	const isSubmitting = navigation.state === 'submitting'
 
@@ -364,9 +374,7 @@ export default function AccountSettings() {
 						<span className="text-muted-foreground text-sm">
 							{offlineVideos.downloadedVideos} of {offlineVideos.totalVideos}{' '}
 							downloaded
-							{offlineVideos.unavailableVideos > 0
-								? ` (${offlineVideos.unavailableVideos} unavailable)`
-								: null}
+							{offlineVideoNotes ? ` (${offlineVideoNotes})` : null}
 						</span>
 					</div>
 					{isDownloading ? (

@@ -99,6 +99,7 @@ const CachedEpicVideoInfoSchema = z
 		muxPlaybackId: z.string(),
 		duration: z.number().nullable().optional(),
 		durationEstimate: z.number().nullable().optional(),
+		downloadsAvailable: z.boolean(),
 		status: z.literal('success'),
 		statusCode: z.number(),
 		statusText: z.string(),
@@ -325,6 +326,9 @@ async function getEpicVideoInfo({
 						timings,
 					})
 					const duration = metadata?.duration ?? infoResult.data.duration
+					const downloadsAvailable = Boolean(
+						metadata?.downloads?.some((download) => Boolean(download.url)),
+					)
 					videoInfoLog(`successfully parsed video info for ${epicVideoEmbed}`)
 					return {
 						status: 'success',
@@ -332,6 +336,7 @@ async function getEpicVideoInfo({
 						statusText,
 						...infoResult.data,
 						duration,
+						downloadsAvailable,
 					} as const
 				} else {
 					// don't cache errors for long...
