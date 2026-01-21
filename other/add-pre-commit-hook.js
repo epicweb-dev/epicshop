@@ -26,16 +26,18 @@ if [ ! -x "$prettier_bin" ]; then
 fi
 
 # Stash unstaged changes to avoid formatting them
-git diff --binary > /tmp/epicshop-unstaged.patch || true
+patch_file="/tmp/epicshop-unstaged-$$.patch"
+trap 'if [ -s "$patch_file" ]; then git apply "$patch_file" 2>/dev/null || true; rm "$patch_file"; fi' EXIT
+git diff --binary > "$patch_file" || true
 git checkout -- "\${files[@]}"
 
 "$prettier_bin" --write --ignore-unknown "\${files[@]}"
 git add "\${files[@]}"
 
 # Restore unstaged changes
-if [ -s /tmp/epicshop-unstaged.patch ]; then
-  git apply /tmp/epicshop-unstaged.patch 2>/dev/null || true
-  rm /tmp/epicshop-unstaged.patch
+if [ -s "$patch_file" ]; then
+  git apply "$patch_file" 2>/dev/null || true
+  rm "$patch_file"
 fi
 `
 
@@ -71,8 +73,7 @@ const installHook = async () => {
 		)
 	} else {
 		// No Cursor wrapper, install our hook normally
-		const existing = await readFile(wrapperPath, 'utf8').catch(() => null)
-		if (existing && !existing.includes(hookMarker)) {
+		if (wrapperContents && !wrapperContents.includes(hookMarker)) {
 			return
 		}
 		await writeFile(wrapperPath, hookContents, 'utf8')
