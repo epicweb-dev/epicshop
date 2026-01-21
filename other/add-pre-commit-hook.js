@@ -25,8 +25,18 @@ if [ ! -x "$prettier_bin" ]; then
   exit 0
 fi
 
+# Stash unstaged changes to avoid formatting them
+git diff --binary > /tmp/epicshop-unstaged.patch || true
+git checkout -- "\${files[@]}"
+
 "$prettier_bin" --write --ignore-unknown "\${files[@]}"
 git add "\${files[@]}"
+
+# Restore unstaged changes
+if [ -s /tmp/epicshop-unstaged.patch ]; then
+  git apply /tmp/epicshop-unstaged.patch 2>/dev/null || true
+  rm /tmp/epicshop-unstaged.patch
+fi
 `
 
 const installHook = async () => {
