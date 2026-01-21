@@ -66,6 +66,29 @@ async function getPackageLockStatus(cwd: string): Promise<PackageLockStatus> {
 	const installedLockContents = await readFileIfExists(installedLockPath)
 
 	if (!installedLockContents) {
+		// Check if dependencies were installed with a different package manager
+		// pnpm creates .pnpm directory, yarn creates .yarn-integrity, etc.
+		const nodeModulesPath = path.join(cwd, 'node_modules')
+		try {
+			const nodeModulesStats = await fs.stat(nodeModulesPath)
+			if (nodeModulesStats.isDirectory()) {
+				const entries = await fs.readdir(nodeModulesPath)
+				// If node_modules exists and has content (excluding hidden files/dirs),
+				// assume dependencies are installed by another package manager
+				const hasContent = entries.some((entry) => !entry.startsWith('.'))
+				if (hasContent) {
+					// Dependencies installed with non-npm package manager
+					return {
+						dependenciesNeedInstall: false,
+						lockfileHash,
+						reason: 'up-to-date',
+					}
+				}
+			}
+		} catch {
+			// node_modules doesn't exist or not accessible
+		}
+
 		return {
 			dependenciesNeedInstall: true,
 			lockfileHash,
