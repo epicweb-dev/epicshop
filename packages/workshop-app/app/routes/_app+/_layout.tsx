@@ -87,7 +87,8 @@ function getSidecarStatus() {
 	)
 
 	const hasFailure = processes.some((p) => !p.running)
-	return { processes, hasFailure, count: processes.length }
+	const failedCount = processes.filter((p) => !p.running).length
+	return { processes, hasFailure, count: processes.length, failedCount }
 }
 
 export async function loader({ request }: LoaderFunctionArgs) {
@@ -1224,7 +1225,7 @@ const OPENED_MENU_WIDTH = 400
 function SidecarStatusIndicator({
 	status,
 }: {
-	status: { hasFailure: boolean; count: number } | null
+	status: { hasFailure: boolean; count: number; failedCount: number } | null
 }) {
 	if (!status) return null
 
@@ -1232,7 +1233,7 @@ function SidecarStatusIndicator({
 		<SimpleTooltip
 			content={
 				status.hasFailure
-					? `${status.count} sidecar${status.count === 1 ? '' : 's'} failed`
+					? `${status.failedCount} sidecar${status.failedCount === 1 ? '' : 's'} failed`
 					: 'All sidecars running'
 			}
 		>

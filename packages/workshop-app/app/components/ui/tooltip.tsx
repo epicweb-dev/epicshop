@@ -33,22 +33,40 @@ function TooltipContent({
 }
 TooltipContent.displayName = TooltipPrimitive.Content.displayName
 
-export function SimpleTooltip({
-	content,
-	children,
-	side = 'top',
-}: {
-	content: React.ReactNode
-	children: React.ReactNode
-	side?: 'top' | 'bottom' | 'left' | 'right'
-}) {
-	if (!content) return children
+export const SimpleTooltip = React.forwardRef<
+	HTMLElement,
+	{
+		content: React.ReactNode | null
+		children: React.ReactNode
+		side?: 'top' | 'bottom' | 'left' | 'right'
+	} & React.HTMLAttributes<HTMLElement>
+>(({ content, children, side = 'top', ...props }, forwardedRef): React.ReactElement | null => {
+	// Merge props onto the child element to support asChild pattern from Radix
+	const mergePropsOntoChild = (child: React.ReactNode): React.ReactNode => {
+		if (React.isValidElement(child)) {
+			const childProps = typeof child.props === 'object' && child.props !== null ? child.props : {}
+			return React.cloneElement(child, {
+				...props,
+				...childProps,
+				ref: forwardedRef,
+			} as any)
+		}
+		return child
+	}
+
+	if (!content) {
+		return mergePropsOntoChild(children) as any
+	}
+	
 	return (
 		<Tooltip>
-			<TooltipTrigger asChild>{children}</TooltipTrigger>
+			<TooltipTrigger asChild>
+				{mergePropsOntoChild(children)}
+			</TooltipTrigger>
 			<TooltipContent side={side}>{content}</TooltipContent>
 		</Tooltip>
-	)
-}
+	) as any
+})
+SimpleTooltip.displayName = 'SimpleTooltip'
 
 export { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger }
