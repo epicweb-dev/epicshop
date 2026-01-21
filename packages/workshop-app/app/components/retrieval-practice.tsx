@@ -29,8 +29,8 @@ export function RetrievalPractice({
 	}
 
 	return (
-		<div className="border-t border-border pt-6 mt-6">
-			<h2 className="text-foreground text-xl font-semibold mb-3">
+		<div className="border-border mt-6 border-t pt-6">
+			<h2 className="text-foreground mb-3 text-xl font-semibold">
 				Test Your Knowledge
 			</h2>
 			<p className="text-muted-foreground mb-4">
@@ -38,13 +38,13 @@ export function RetrievalPractice({
 				information. Use this prompt with your AI assistant to quiz yourself on
 				what you've learned.
 			</p>
-			<div className="bg-background border border-border rounded-lg p-4 mb-4 relative">
-				<pre className="text-foreground text-sm whitespace-pre-wrap break-words pr-10">
+			<div className="bg-background border-border relative mb-4 rounded-lg border p-4">
+				<pre className="text-foreground pr-10 text-sm break-words whitespace-pre-wrap">
 					{prompt}
 				</pre>
 				<button
 					onClick={handleCopy}
-					className="absolute top-4 right-4 text-muted-foreground hover:text-foreground transition-colors"
+					className="text-muted-foreground hover:text-foreground absolute top-4 right-4 transition-colors"
 					aria-label={copied ? 'Copied!' : 'Copy prompt to clipboard'}
 				>
 					<Icon name={copied ? 'CheckSmall' : 'Copy'} size="sm" />
@@ -55,7 +55,7 @@ export function RetrievalPractice({
 					href="https://www.epicai.pro/your-ai-assistant-instructor-the-epicshop-mcp-server-0eazr"
 					target="_blank"
 					rel="noopener noreferrer"
-					className="text-foreground hover:underline inline-flex items-center gap-1.5"
+					className="text-foreground inline-flex items-center gap-1.5 hover:underline"
 				>
 					Learn how to set up the epicshop MCP server
 					<Icon name="ExternalLink" size="sm" />
