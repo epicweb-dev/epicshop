@@ -432,7 +432,12 @@ export function startSidecarProcess(name: string, command: string) {
 	}
 	sidecarProcess.stderr?.on('data', handleStdErrData)
 
-	sidecarProcesses.set(name, { color, process: sidecarProcess, command, output })
+	sidecarProcesses.set(name, {
+		color,
+		process: sidecarProcess,
+		command,
+		output,
+	})
 
 	sidecarProcess.on('exit', (code: number | null, signal: string | null) => {
 		sidecarProcess.stdout?.off('data', handleStdOutData)
@@ -512,7 +517,10 @@ export async function restartSidecarProcess(name: string): Promise<boolean> {
 		newEntry.output.unshift(...oldOutput)
 		// Trim to max entries if needed
 		if (newEntry.output.length > MAX_SIDECAR_LOG_ENTRIES) {
-			newEntry.output.splice(0, newEntry.output.length - MAX_SIDECAR_LOG_ENTRIES)
+			newEntry.output.splice(
+				0,
+				newEntry.output.length - MAX_SIDECAR_LOG_ENTRIES,
+			)
 		}
 	}
 
