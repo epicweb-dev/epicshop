@@ -119,12 +119,12 @@ export async function loader({ request }: LoaderFunctionArgs) {
 			exercises: exercises.map((e) => ({
 				exerciseNumber: e.exerciseNumber,
 				title: e.title,
-				solutions: e.solutions.map(({ stepNumber, title, name }) => ({
+				solutions: (e.solutions ?? []).map(({ stepNumber, title, name }) => ({
 					stepNumber,
 					title,
 					name,
 				})),
-				problems: e.problems.map(({ stepNumber, title, name }) => ({
+				problems: (e.problems ?? []).map(({ stepNumber, title, name }) => ({
 					stepNumber,
 					title,
 					name,
@@ -1343,11 +1343,11 @@ function Navigation({
 	)
 	const app =
 		params.type === 'solution'
-			? exercise?.solutions?.find(
+			? exercise?.solutions.find(
 					(s) => s.stepNumber === Number(params.stepNumber),
 				)
 			: params.type === 'problem'
-				? exercise?.problems?.find(
+				? exercise?.problems.find(
 						(p) => p.stepNumber === Number(params.stepNumber),
 					)
 				: null
