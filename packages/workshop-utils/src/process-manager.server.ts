@@ -475,7 +475,7 @@ export async function restartSidecarProcess(name: string): Promise<boolean> {
 		return false
 	}
 
-	const { command, process: proc } = entry
+	const { command, process: proc, output: oldOutput } = entry
 
 	// Remove the entry immediately to prevent concurrent restarts
 	sidecarProcesses.delete(name)
@@ -502,6 +502,14 @@ export async function restartSidecarProcess(name: string): Promise<boolean> {
 
 	// Start a new process with the same command
 	startSidecarProcess(name, command)
+
+	// Preserve logs from the old process
+	const newEntry = sidecarProcesses.get(name)
+	if (newEntry) {
+		// Prepend old logs to new logs, respecting the max log entries limit
+		const combinedOutput = [...oldOutput, ...newEntry.output]
+		newEntry.output = combinedOutput.slice(-MAX_SIDECAR_LOG_ENTRIES)
+	}
 
 	return true
 }
