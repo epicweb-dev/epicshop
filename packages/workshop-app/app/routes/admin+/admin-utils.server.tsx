@@ -3,6 +3,10 @@ import path from 'node:path'
 import { getWorkshopRoot } from '@epic-web/workshop-utils/apps.server'
 import { deleteCache } from '@epic-web/workshop-utils/cache.server'
 import { deleteDb } from '@epic-web/workshop-utils/db.server'
+import {
+	getSidecarLogs,
+	restartSidecarProcess,
+} from '@epic-web/workshop-utils/process-manager.server'
 import fsExtra from 'fs-extra'
 
 export function isInspectorRunning(): boolean {
@@ -11,6 +15,19 @@ export function isInspectorRunning(): boolean {
 	} catch {
 		return false
 	}
+}
+
+export async function restartSidecar(name: string): Promise<boolean> {
+	if (ENV.EPICSHOP_DEPLOYED) return false
+	return restartSidecarProcess(name)
+}
+
+export function getSidecarLogLines(
+	name: string,
+	lineCount: number = 50,
+): string {
+	if (ENV.EPICSHOP_DEPLOYED) return ''
+	return getSidecarLogs(name, lineCount)
 }
 
 export async function clearData() {

@@ -6,7 +6,8 @@ import {
 } from '@epic-web/workshop-utils/timing.server'
 import { type SEOHandle } from '@nasa-gcn/remix-seo'
 import { clsx } from 'clsx'
-import { data, Form, Link, useNavigation } from 'react-router'
+import * as React from 'react'
+import { data, Form, Link, useFetcher, useNavigation } from 'react-router'
 import { Icon } from '#app/components/icons.tsx'
 import { SimpleTooltip } from '#app/components/ui/tooltip.tsx'
 import {
@@ -19,7 +20,9 @@ import { type Route } from './+types/index.tsx'
 import {
 	clearCaches,
 	clearData,
+	getSidecarLogLines,
 	isInspectorRunning,
+	restartSidecar,
 	startInspector,
 	stopInspector,
 } from './admin-utils.server.tsx'
@@ -107,6 +110,22 @@ export async function action({ request }: Route.ActionArgs) {
 			await stopInspector()
 			return { success: true }
 		}
+		case 'restart-sidecar': {
+			const name = formData.get('name')
+			if (typeof name !== 'string') {
+				throw new Error('Sidecar name is required')
+			}
+			const success = await restartSidecar(name)
+			return { success }
+		}
+		case 'get-sidecar-logs': {
+			const name = formData.get('name')
+			if (typeof name !== 'string') {
+				throw new Error('Sidecar name is required')
+			}
+			const logs = getSidecarLogLines(name, 1000)
+			return { success: true, logs }
+		}
 		default: {
 			throw new Error(`Unknown intent: ${intent}`)
 		}
@@ -174,35 +193,14 @@ export default function AdminLayout({
 							<CardDescription>Background sidecar processes</CardDescription>
 						</CardHeader>
 						<CardContent>
-							<ul className="scrollbar-thin scrollbar-thumb-scrollbar flex max-h-48 flex-col gap-2 overflow-y-auto">
+							<ul className="flex flex-col gap-2">
 								{Object.entries(data.sidecarProcesses).map(([key, process]) => (
-									<li
+									<SidecarProcessItem
 										key={key}
-										className="border-border bg-muted/30 rounded-md border p-3"
-									>
-										<div className="flex items-center gap-2">
-											{process.running ? (
-												<Pinger status="running" />
-											) : (
-												<Pinger status="taken" />
-											)}
-											<span className="font-mono text-sm font-semibold">
-												{key}
-											</span>
-										</div>
-										<div className="text-muted-foreground mt-2 flex flex-wrap gap-x-4 gap-y-1 text-xs">
-											{process.pid && (
-												<span>
-													<span className="font-medium">PID:</span>{' '}
-													{process.pid}
-												</span>
-											)}
-											<span>
-												<span className="font-medium">Status:</span>{' '}
-												{process.running ? 'Running' : 'Failed'}
-											</span>
-										</div>
-									</li>
+										name={key}
+										pid={process.pid}
+										running={process.running}
+									/>
 								))}
 							</ul>
 						</CardContent>
@@ -449,6 +447,131 @@ export default function AdminLayout({
 				</Card>
 			</div>
 		</div>
+	)
+}
+
+function SidecarProcessItem({
+	name,
+	pid,
+	running,
+}: {
+	name: string
+	pid?: number
+	running: boolean
+}) {
+	const restartFetcher = useFetcher()
+	const logsFetcher = useFetcher<{ logs?: string }>()
+	const [copyStatus, setCopyStatus] = React.useState<'idle' | 'copied'>('idle')
+	const [logsOpen, setLogsOpen] = React.useState(false)
+	const [displayLogs, setDisplayLogs] = React.useState<string | null>(null)
+
+	const isRestarting = restartFetcher.state !== 'idle'
+	const isLoadingLogs = logsFetcher.state !== 'idle'
+
+	// Update display logs when fetcher returns data
+	React.useEffect(() => {
+		if (logsFetcher.data) {
+			setDisplayLogs(logsFetcher.data.logs ?? '')
+		}
+	}, [logsFetcher.data])
+
+	const handleCopyLogs = () => {
+		if (!displayLogs) return
+		navigator.clipboard
+			.writeText(displayLogs)
+			.then(() => {
+				setCopyStatus('copied')
+				setTimeout(() => setCopyStatus('idle'), 2000)
+			})
+			.catch(() => {
+				// silently fail
+			})
+	}
+
+	const handleToggleLogs = (open: boolean) => {
+		setLogsOpen(open)
+		if (open) {
+			// Fetch logs when opening
+			void logsFetcher.submit(
+				{ intent: 'get-sidecar-logs', name },
+				{ method: 'POST' },
+			)
+		}
+	}
+
+	return (
+		<li className="border-border bg-muted/30 rounded-md border p-3">
+			<div className="flex items-center justify-between gap-2">
+				<div className="flex items-center gap-2">
+					{running ? <Pinger status="running" /> : <Pinger status="taken" />}
+					<span className="font-mono text-sm font-semibold">{name}</span>
+				</div>
+				<div className="flex items-center gap-1">
+					<restartFetcher.Form method="POST">
+						<input type="hidden" name="intent" value="restart-sidecar" />
+						<input type="hidden" name="name" value={name} />
+						<SimpleTooltip content="Restart process">
+							<button
+								type="submit"
+								disabled={isRestarting}
+								className="text-muted-foreground hover:text-foreground hover:bg-muted rounded p-1.5 transition-colors disabled:cursor-not-allowed disabled:opacity-50"
+							>
+								<Icon
+									name="Refresh"
+									className={cn('h-4 w-4', isRestarting && 'animate-spin')}
+								/>
+							</button>
+						</SimpleTooltip>
+					</restartFetcher.Form>
+				</div>
+			</div>
+			<div className="text-muted-foreground mt-2 flex flex-wrap gap-x-4 gap-y-1 text-xs">
+				{pid && (
+					<span>
+						<span className="font-medium">PID:</span> {pid}
+					</span>
+				)}
+				<span>
+					<span className="font-medium">Status:</span>{' '}
+					{isRestarting ? 'Restarting...' : running ? 'Running' : 'Failed'}
+				</span>
+			</div>
+			<details
+				className="mt-3"
+				open={logsOpen}
+				onToggle={(e) => handleToggleLogs(e.currentTarget.open)}
+			>
+				<summary className="text-muted-foreground hover:text-foreground cursor-pointer text-xs font-medium">
+					{isLoadingLogs ? 'Loading logs...' : 'View logs'}
+				</summary>
+				<div className="mt-2">
+					<div className="mb-1 flex justify-end">
+						<SimpleTooltip
+							content={copyStatus === 'copied' ? 'Copied!' : 'Copy logs'}
+						>
+							<button
+								type="button"
+								onClick={handleCopyLogs}
+								disabled={!displayLogs}
+								className={cn(
+									'text-muted-foreground hover:text-foreground hover:bg-muted rounded p-1 transition-colors disabled:cursor-not-allowed disabled:opacity-50',
+									copyStatus === 'copied' && 'text-success',
+								)}
+							>
+								<Icon
+									name={copyStatus === 'copied' ? 'CheckSmall' : 'Copy'}
+									className="h-3.5 w-3.5"
+								/>
+							</button>
+						</SimpleTooltip>
+					</div>
+					<pre className="scrollbar-thin scrollbar-thumb-scrollbar bg-background max-h-96 overflow-auto rounded border p-2 text-xs">
+						{displayLogs ||
+							(isLoadingLogs ? 'Loading...' : 'No logs available')}
+					</pre>
+				</div>
+			</details>
+		</li>
 	)
 }
 

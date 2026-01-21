@@ -30,13 +30,20 @@ type DevProcessesMap = Map<
 	}
 >
 
-type SidecarProcessesMap = Map<
-	string,
-	{
-		color: (typeof colors)[number]
-		process: ChildProcess
-	}
->
+type SidecarOutputLine = {
+	type: 'stdout' | 'stderr'
+	content: string
+	timestamp: number
+}
+
+type SidecarProcessEntry = {
+	color: (typeof colors)[number]
+	process: ChildProcess
+	command: string
+	output: Array<SidecarOutputLine>
+}
+
+type SidecarProcessesMap = Map<string, SidecarProcessEntry>
 
 type OutputLine = {
 	type: 'stdout' | 'stderr'
@@ -357,14 +364,23 @@ export function startSidecarProcesses(processes: Record<string, string>) {
 	}
 }
 
+// Maximum number of log entries to keep per sidecar process
+const MAX_SIDECAR_LOG_ENTRIES = 1000
+
 export function startSidecarProcess(name: string, command: string) {
 	if (isDeployed)
 		throw new Error('cannot run sidecar processes in deployed mode')
 
 	// if the process is already running, don't start it again
-	if (sidecarProcesses.has(name)) {
+	const existingEntry = sidecarProcesses.get(name)
+	if (existingEntry && existingEntry.process.exitCode === null) {
 		console.log(`Sidecar process ${name} is already running`)
 		return
+	}
+
+	// If there's an old exited entry, clean it up first
+	if (existingEntry) {
+		sidecarProcesses.delete(name)
 	}
 
 	const color = getNextAvailableColor()
@@ -382,11 +398,21 @@ export function startSidecarProcess(name: string, command: string) {
 	})
 
 	const prefix = chalk[color](`[${name}]`)
+	const output: Array<SidecarOutputLine> = []
+
+	function addOutputLine(type: 'stdout' | 'stderr', content: string) {
+		output.push({ type, content, timestamp: Date.now() })
+		// Keep only the last MAX_SIDECAR_LOG_ENTRIES entries
+		if (output.length > MAX_SIDECAR_LOG_ENTRIES) {
+			output.shift()
+		}
+	}
 
 	function handleStdOutData(data: Buffer) {
+		const content = data.toString('utf-8')
+		addOutputLine('stdout', content)
 		console.log(
-			data
-				.toString('utf-8')
+			content
 				.split('\n')
 				.map((line) => `${prefix} ${line}`)
 				.join('\n'),
@@ -395,9 +421,10 @@ export function startSidecarProcess(name: string, command: string) {
 	sidecarProcess.stdout?.on('data', handleStdOutData)
 
 	function handleStdErrData(data: Buffer) {
+		const content = data.toString('utf-8')
+		addOutputLine('stderr', content)
 		console.error(
-			data
-				.toString('utf-8')
+			content
 				.split('\n')
 				.map((line) => `${prefix} ${line}`)
 				.join('\n'),
@@ -405,7 +432,7 @@ export function startSidecarProcess(name: string, command: string) {
 	}
 	sidecarProcess.stderr?.on('data', handleStdErrData)
 
-	sidecarProcesses.set(name, { color, process: sidecarProcess })
+	sidecarProcesses.set(name, { color, process: sidecarProcess, command, output })
 
 	sidecarProcess.on('exit', (code: number | null, signal: string | null) => {
 		sidecarProcess.stdout?.off('data', handleStdOutData)
@@ -417,24 +444,88 @@ export function startSidecarProcess(name: string, command: string) {
 				`${prefix} exited with code ${code}${signal ? ` (signal: ${signal})` : ''}`,
 			)
 		}
-		sidecarProcesses.delete(name)
+		// Don't delete the entry so we can still access logs after exit
+		// Just mark it as not running by keeping the process reference
 	})
 
 	sidecarProcess.on('error', (error) => {
 		console.error(`${prefix} failed to start: ${error.message}`)
-		sidecarProcesses.delete(name)
+		addOutputLine('stderr', `Failed to start: ${error.message}`)
 	})
 
 	console.log(`${prefix} started`)
+}
+
+export function getSidecarLogs(name: string, lineCount: number = 50): string {
+	const entry = sidecarProcesses.get(name)
+	if (!entry) return ''
+
+	// Get the last N lines of output
+	const logs = entry.output.slice(-lineCount)
+	return logs.map((line) => line.content).join('')
+}
+
+export async function restartSidecarProcess(name: string): Promise<boolean> {
+	if (isDeployed)
+		throw new Error('cannot restart sidecar processes in deployed mode')
+
+	const entry = sidecarProcesses.get(name)
+	if (!entry) {
+		console.log(`Sidecar process ${name} not found`)
+		return false
+	}
+
+	const { command, process: proc, output: oldOutput } = entry
+
+	// Remove the entry immediately to prevent concurrent restarts
+	sidecarProcesses.delete(name)
+
+	// Kill the existing process if it's still running
+	if (proc.exitCode === null) {
+		console.log(`Stopping sidecar process: ${name}`)
+		proc.kill()
+
+		// Wait for the process to exit
+		await new Promise<void>((resolve) => {
+			const timeout = setTimeout(() => {
+				// Force kill if it doesn't exit in time
+				proc.kill('SIGKILL')
+				resolve()
+			}, 5000)
+
+			proc.once('exit', () => {
+				clearTimeout(timeout)
+				resolve()
+			})
+		})
+	}
+
+	// Start a new process with the same command
+	startSidecarProcess(name, command)
+
+	// Preserve logs from the old process by prepending them to the new array
+	// We must modify the existing array (not replace it) because event handlers
+	// have already captured it in their closure
+	const newEntry = sidecarProcesses.get(name)
+	if (newEntry) {
+		// Prepend old logs to the existing array that handlers are writing to
+		newEntry.output.unshift(...oldOutput)
+		// Trim to max entries if needed
+		if (newEntry.output.length > MAX_SIDECAR_LOG_ENTRIES) {
+			newEntry.output.splice(0, newEntry.output.length - MAX_SIDECAR_LOG_ENTRIES)
+		}
+	}
+
+	return true
 }
 
 export function stopSidecarProcesses() {
 	if (isDeployed)
 		throw new Error('cannot stop sidecar processes in deployed mode')
 
-	for (const [name, proc] of sidecarProcesses.entries()) {
+	for (const [name, entry] of sidecarProcesses.entries()) {
 		console.log(`Stopping sidecar process: ${name}`)
-		proc.process.kill()
+		entry.process.kill()
 	}
 	sidecarProcesses.clear()
 }
