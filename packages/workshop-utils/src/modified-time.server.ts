@@ -4,6 +4,7 @@ import fs from 'node:fs'
 import path from 'node:path'
 import { isGitIgnored } from 'globby'
 import PQueue from 'p-queue'
+import { z } from 'zod'
 import { cachified, dirModifiedTimeCache } from './cache.server.ts'
 
 async function getDirModifiedTime(
@@ -15,6 +16,7 @@ async function getDirModifiedTime(
 		cache: dirModifiedTimeCache,
 		ttl: 200,
 		forceFresh,
+		checkValue: z.number(),
 		getFreshValue: () => getDirModifiedTimeImpl(dir),
 	})
 	return result

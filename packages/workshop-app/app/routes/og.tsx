@@ -9,10 +9,12 @@ import { Resvg } from '@resvg/resvg-js'
 import { renderToStaticMarkup } from 'react-dom/server'
 import { type LoaderFunctionArgs } from 'react-router'
 import satori, { type SatoriOptions } from 'satori'
+import { z } from 'zod'
 import { getDomainUrl, getErrorMessage } from '#app/utils/misc.tsx'
 
 const WIDTH = 1200
 const HEIGHT = 630
+const OgImageSchema = z.instanceof(Uint8Array)
 
 export async function loader({ request }: LoaderFunctionArgs) {
 	const timings = makeTimings('og', 'og image loader')
@@ -100,6 +102,7 @@ export async function loader({ request }: LoaderFunctionArgs) {
 			cache: ogCache,
 			ttl: 1000 * 60 * 60 * 24 * 7,
 			staleWhileRevalidate: 1000 * 60 * 60 * 24 * 365,
+			checkValue: OgImageSchema,
 			getFreshValue: async () => {
 				return await getOgImg(element, { request, timings })
 			},
@@ -169,6 +172,7 @@ async function getEmoji(
 		request,
 		timings,
 		timingKey: `loading ${emojiCode}`,
+		checkValue: z.string(),
 		getFreshValue: async () => {
 			const response = await fetch(emojiUrl)
 			return response.text()
@@ -209,6 +213,7 @@ async function getFont({
 		timings,
 		timingKey: `font-${font}`,
 		request,
+		checkValue: z.string(),
 		getFreshValue: async () => {
 			return fetch(fetchUrl, {
 				headers: {

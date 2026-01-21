@@ -9,6 +9,15 @@ import {
 import { getDirModifiedTime } from '@epic-web/workshop-utils/modified-time.server'
 import { type Timings } from '@epic-web/workshop-utils/timing.server'
 import * as esbuild from 'esbuild'
+import { z } from 'zod'
+
+const CompileResultSchema = z
+	.object({
+		outputFiles: z.array(z.any()),
+		errors: z.array(z.any()),
+		warnings: z.array(z.any()),
+	})
+	.passthrough()
 
 async function getForceFresh(
 	filePath: string,
@@ -52,6 +61,7 @@ export async function compileTs(
 			(await getForceFresh(filePath, compiledCodeCache.get(key))) ||
 			(await getForceFresh(fullPath, compiledCodeCache.get(key))),
 		cache: compiledCodeCache,
+		checkValue: (value) => CompileResultSchema.safeParse(value).success,
 		getFreshValue: async () => {
 			try {
 				const result = await esbuild.build({
@@ -76,7 +86,11 @@ export async function compileTs(
 					sourcemap: 'inline',
 					...esbuildOptions,
 				})
-				return result
+				return {
+					outputFiles: result.outputFiles ?? [],
+					errors: result.errors,
+					warnings: result.warnings,
+				}
 			} catch (error) {
 				// esbuild throws errors when build fails, but the error object contains
 				// the errors array. We need to catch it and return it in a consistent format
@@ -92,14 +106,14 @@ export async function compileTs(
 						outputFiles: [],
 						errors: (error as { errors: unknown[] }).errors,
 						warnings: [],
-					} as unknown as esbuild.BuildResult
+					}
 				}
 				// If it's not an esbuild error, wrap it
 				return {
 					outputFiles: [],
 					errors: [error],
 					warnings: [],
-				} as unknown as esbuild.BuildResult
+				}
 			}
 		},
 	})

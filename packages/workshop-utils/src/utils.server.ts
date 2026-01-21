@@ -3,6 +3,7 @@ import './init-env.ts'
 import { cachified, connectionCache } from './cache.server.ts'
 import { logger } from './logger.ts'
 import { type Timings } from './timing.server.ts'
+import { z } from 'zod'
 
 export { dayjs } from './utils.ts'
 
@@ -68,6 +69,7 @@ export async function checkConnection({
 		timings,
 		key: 'connected',
 		ttl: 1000 * 10,
+		checkValue: z.boolean(),
 		async getFreshValue(context) {
 			connectionLog('getting fresh connection value')
 			const isOnline = await raceConnectivity()

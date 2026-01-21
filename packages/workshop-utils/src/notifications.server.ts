@@ -36,6 +36,7 @@ async function getRemoteNotifications() {
 		ttl: 1000 * 60 * 60 * 6,
 		swr: 1000 * 60 * 60 * 24,
 		offlineFallbackValue: [],
+		checkValue: NotificationSchema.array(),
 		async getFreshValue() {
 			const URL =
 				'https://gist.github.com/kentcdodds/c3aaa5141f591cdbb0e6bfcacd361f39'

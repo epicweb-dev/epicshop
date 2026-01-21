@@ -10,6 +10,7 @@ import { userHasAccessToWorkshop } from '@epic-web/workshop-utils/epic-api.serve
 import chalk from 'chalk'
 import { matchSorter, rankings } from 'match-sorter'
 import ora from 'ora'
+import { z } from 'zod'
 import { assertCanPrompt, isCiEnvironment } from '../utils/cli-runtime.js'
 import { runCommand, runCommandInteractive } from '../utils/command-runner.js'
 import { setup } from './setup.js'
@@ -98,20 +99,22 @@ export type AddOptions = {
 	silent?: boolean
 }
 
-type GitHubRepo = {
-	name: string
-	description: string | null
-	html_url: string
-	stargazers_count: number
-	topics: string[]
-	archived: boolean
-}
+const GitHubRepoSchema = z.object({
+	name: z.string(),
+	description: z.string().nullable(),
+	html_url: z.string(),
+	stargazers_count: z.number(),
+	topics: z.array(z.string()).default([]),
+	archived: z.boolean(),
+})
+const GitHubSearchResponseSchema = z.object({
+	total_count: z.number(),
+	incomplete_results: z.boolean(),
+	items: z.array(GitHubRepoSchema),
+})
+const PackageJsonSchema = z.record(z.unknown())
 
-type GitHubSearchResponse = {
-	total_count: number
-	incomplete_results: boolean
-	items: GitHubRepo[]
-}
+type GitHubRepo = z.infer<typeof GitHubRepoSchema>
 
 type EnrichedWorkshop = GitHubRepo & {
 	productHost?: string
@@ -158,6 +161,7 @@ async function fetchAvailableWorkshops(): Promise<GitHubRepo[]> {
 		cache: githubCache,
 		ttl: 1000 * 60 * 15, // 15 minutes
 		swr: 1000 * 60 * 60 * 6, // 6 hours stale-while-revalidate
+		checkValue: GitHubRepoSchema.array(),
 		async getFreshValue() {
 			// Note: `archived:false` is supported by GitHub search.
 			const baseUrl = `https://api.github.com/search/repositories?q=topic:workshop+org:${GITHUB_ORG}+archived:false&sort=stars&order=desc`
@@ -188,11 +192,16 @@ async function fetchAvailableWorkshops(): Promise<GitHubRepo[]> {
 					)
 				}
 
-				const data = (await response.json()) as Partial<GitHubSearchResponse>
-				const items = Array.isArray(data.items) ? data.items : []
-				if (typeof data.total_count === 'number') {
-					totalCount = data.total_count
+				const parseResult = GitHubSearchResponseSchema.safeParse(
+					await response.json(),
+				)
+				if (!parseResult.success) {
+					throw new Error(
+						`Failed to parse GitHub API response: ${parseResult.error.message}`,
+					)
 				}
+				const { items, total_count } = parseResult.data
+				totalCount = total_count
 
 				allItems.push(...items)
 
@@ -218,6 +227,7 @@ async function fetchWorkshopPackageJson(
 		cache: githubCache,
 		ttl: 1000 * 60 * 60 * 6, // 6 hours
 		swr: 1000 * 60 * 60 * 24 * 30, // 30 days stale-while-revalidate
+		checkValue: PackageJsonSchema.nullable(),
 		async getFreshValue() {
 			const url = `https://raw.githubusercontent.com/${GITHUB_ORG}/${repoName}/main/package.json`
 
@@ -233,7 +243,8 @@ async function fetchWorkshopPackageJson(
 			}
 
 			try {
-				return (await response.json()) as Record<string, unknown>
+				const parsed = PackageJsonSchema.safeParse(await response.json())
+				return parsed.success ? parsed.data : null
 			} catch {
 				return null
 			}
