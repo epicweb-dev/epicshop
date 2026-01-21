@@ -20,7 +20,9 @@ export type PracticePastLessonData = {
 	key: string | null
 }
 
-function getCompletedSteps(progress: Array<ProgressEntry>): Array<CompletedStep> {
+function getCompletedSteps(
+	progress: Array<ProgressEntry>,
+): Array<CompletedStep> {
 	const completedSteps: Array<CompletedStep> = []
 	for (const entry of progress) {
 		if (entry.type !== 'step' || !entry.epicCompletedAt) continue
@@ -79,10 +81,7 @@ export function getPracticePastLessonKey({
 }
 
 export function getPracticePastLessonRoute(
-	{
-		progress,
-		currentPath,
-	}: PracticePastLessonInput,
+	{ progress, currentPath }: PracticePastLessonInput,
 	random: () => number = Math.random,
 ) {
 	if (!progress) return null
