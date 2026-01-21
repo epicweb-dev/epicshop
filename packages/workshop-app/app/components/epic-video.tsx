@@ -771,7 +771,7 @@ function EpicVideo({
 		if (!element) return
 		element.setAttribute('seekoffset', '10')
 	}, [])
-	const showOfflineActions = downloadsAvailable || offlineVideo.available
+	const showOfflineActions = downloadsAvailable
 	const offlineActions = showOfflineActions ? (
 		<OfflineVideoActionButtons
 			isAvailable={offlineVideo.available}
