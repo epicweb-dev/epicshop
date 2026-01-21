@@ -33,9 +33,14 @@ const installHook = async () => {
 		cwd: gitRoot,
 	})
 	const hooksDir = path.resolve(gitRoot, gitDir, 'hooks')
-	const hookPath = path.join(hooksDir, 'pre-commit')
+	const wrapperPath = path.join(hooksDir, 'pre-commit')
 
 	await mkdir(hooksDir, { recursive: true })
+
+	const wrapperContents = await readFile(wrapperPath, 'utf8').catch(() => null)
+	const hookPath = wrapperContents?.includes('@cursor-managed')
+		? path.join(hooksDir, 'pre-commit.cursor-auto-format')
+		: wrapperPath
 
 	const existing = await readFile(hookPath, 'utf8').catch(() => null)
 	if (existing && !existing.includes(hookMarker)) {
