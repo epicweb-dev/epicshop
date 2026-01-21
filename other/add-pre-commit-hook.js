@@ -1,4 +1,3 @@
-#!/usr/bin/env node
 import { execa } from 'execa'
 import { chmod, mkdir, readFile, writeFile } from 'node:fs/promises'
 import path from 'node:path'
@@ -28,7 +27,10 @@ git add "\${files[@]}"
 `
 
 const installHook = async () => {
-	const { stdout: gitRoot } = await execa('git', ['rev-parse', '--show-toplevel'])
+	const { stdout: gitRoot } = await execa('git', [
+		'rev-parse',
+		'--show-toplevel',
+	])
 	const { stdout: gitDir } = await execa('git', ['rev-parse', '--git-dir'], {
 		cwd: gitRoot,
 	})
@@ -44,9 +46,6 @@ const installHook = async () => {
 
 	const existing = await readFile(hookPath, 'utf8').catch(() => null)
 	if (existing && !existing.includes(hookMarker)) {
-		console.warn(
-			`pre-commit hook already exists at ${hookPath}; skipping install.`,
-		)
 		return
 	}
 
