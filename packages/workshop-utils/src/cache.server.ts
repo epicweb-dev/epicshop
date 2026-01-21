@@ -261,9 +261,15 @@ export const dirModifiedTimeCache = makeSingletonCache<number>(
 export const connectionCache = makeSingletonCache<boolean>('ConnectionCache')
 export const checkForUpdatesCache = makeSingletonCache<{
 	updatesAvailable: boolean
-	localCommit: string
-	remoteCommit: string
+	repoUpdatesAvailable: boolean
+	dependenciesNeedInstall: boolean
+	updateNotificationId: string | null
+	commitsAhead: number | null
+	commitsBehind: number | null
+	localCommit: string | null
+	remoteCommit: string | null
 	diffLink: string | null
+	message: string | null
 }>('CheckForUpdatesCache')
 export const notificationsCache =
 	makeSingletonCache<Array<Notification>>('NotificationsCache')

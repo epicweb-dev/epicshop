@@ -9,10 +9,13 @@ export function UpdateToast({
 }: {
 	repoUpdates: Awaited<ReturnType<typeof checkForUpdatesCached>>
 }) {
-	const { updatesAvailable } = repoUpdates
-	const diffLink = 'diffLink' in repoUpdates ? repoUpdates.diffLink : null
-	const remoteCommit =
-		'remoteCommit' in repoUpdates ? repoUpdates.remoteCommit : undefined
+	const {
+		updatesAvailable,
+		repoUpdatesAvailable,
+		dependenciesNeedInstall,
+		updateNotificationId: updateNotificationKey,
+		diffLink,
+	} = repoUpdates
 	const fetcher = useFetcher()
 	const fetcherRef = useRef(fetcher)
 	useEffect(() => {
@@ -23,30 +26,46 @@ export function UpdateToast({
 	const inProgressToastId = useRef<ReturnType<typeof toast.loading> | null>(
 		null,
 	)
-	const updateNotificationId = useRef<ReturnType<typeof toast.info> | null>(
-		null,
-	)
+	const updateToastId = useRef<ReturnType<typeof toast.info> | null>(null)
 	const updateInProgress = useRef(false)
 
 	useEffect(() => {
-		if (updatesAvailable && remoteCommit) {
-			const id = toast.info('New workshop updates available', {
+		if (updatesAvailable && updateNotificationKey) {
+			// Dismiss any existing toast before creating a new one
+			if (updateToastId.current) {
+				toast.dismiss(updateToastId.current)
+				updateToastId.current = null
+			}
+
+			const title = repoUpdatesAvailable
+				? 'New workshop updates available'
+				: 'Dependencies out of date'
+			const description = repoUpdatesAvailable ? (
+				<div>
+					{dependenciesNeedInstall
+						? `Get the latest updates and reinstall dependencies by clicking the update button. `
+						: `Get the latest updates by clicking the update button. `}
+					{diffLink ? (
+						<a
+							href={diffLink}
+							target="_blank"
+							rel="noreferrer"
+							className="text-xs underline"
+						>
+							View changes
+						</a>
+					) : null}
+				</div>
+			) : (
+				<div>
+					{`Your installed packages don't match package.json. `}
+					{`Click the update button to reinstall dependencies.`}
+				</div>
+			)
+
+			const id = toast.info(title, {
 				duration: Infinity,
-				description: (
-					<div>
-						{`Get the latest updates by clicking the update button. `}
-						{diffLink ? (
-							<a
-								href={diffLink}
-								target="_blank"
-								rel="noreferrer"
-								className="text-xs underline"
-							>
-								View changes
-							</a>
-						) : null}
-					</div>
-				),
+				description,
 				onDismiss: () => {
 					// No-op for now, could call a dismiss endpoint if needed
 				},
@@ -54,9 +73,9 @@ export function UpdateToast({
 					label: 'Update',
 					onClick: async () => {
 						// Dismiss the update notification immediately
-						if (updateNotificationId.current) {
-							toast.dismiss(updateNotificationId.current)
-							updateNotificationId.current = null
+						if (updateToastId.current) {
+							toast.dismiss(updateToastId.current)
+							updateToastId.current = null
 						}
 						// Show in-progress toast
 						if (!inProgressToastId.current) {
@@ -136,21 +155,27 @@ export function UpdateToast({
 					label: 'Dismiss',
 					onClick: () => {
 						// Dismiss the notification toast
-						if (updateNotificationId.current) {
-							toast.dismiss(updateNotificationId.current)
-							updateNotificationId.current = null
+						if (updateToastId.current) {
+							toast.dismiss(updateToastId.current)
+							updateToastId.current = null
 						}
 						// Mute the notification persistently
 						void fetcherRef.current.submit(
-							{ intent: 'mute', id: `update-repo-${remoteCommit}` },
+							{ intent: 'mute', id: updateNotificationKey },
 							{ method: 'post', action: '/admin/notifications' },
 						)
 					},
 				},
 			})
-			updateNotificationId.current = id
+			updateToastId.current = id
 		}
-	}, [updatesAvailable, diffLink, remoteCommit])
+	}, [
+		updatesAvailable,
+		updateNotificationKey,
+		repoUpdatesAvailable,
+		dependenciesNeedInstall,
+		diffLink,
+	])
 
 	return null
 }

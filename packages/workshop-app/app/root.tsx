@@ -132,12 +132,15 @@ export async function loader({ request }: Route.LoaderArgs) {
 	const mutedNotifications = await getMutedNotifications()
 	let repoUpdates = asyncStuff.repoUpdates
 	if (
-		repoUpdates &&
-		'remoteCommit' in repoUpdates &&
-		repoUpdates.remoteCommit &&
-		mutedNotifications.includes(`update-repo-${repoUpdates.remoteCommit}`)
+		repoUpdates?.updateNotificationId &&
+		mutedNotifications.includes(repoUpdates.updateNotificationId)
 	) {
-		repoUpdates = { ...repoUpdates, updatesAvailable: false }
+		repoUpdates = {
+			...repoUpdates,
+			updatesAvailable: false,
+			repoUpdatesAvailable: false,
+			dependenciesNeedInstall: false,
+		}
 	}
 
 	return data(

@@ -198,26 +198,66 @@ export async function start(options: StartOptions = {}): Promise<StartResult> {
 				const { getMutedNotifications } =
 					await import('@epic-web/workshop-utils/db.server')
 
-				const updates = await checkForUpdatesCached()
-				if (updates.updatesAvailable && updates.remoteCommit) {
-					// Check if update notification is muted
-					const mutedNotifications = await getMutedNotifications()
-					const updateNotificationId = `update-repo-${updates.remoteCommit}`
-
-					if (!mutedNotifications.includes(updateNotificationId)) {
-						const updateLink = chalk.blue.bgWhite(` ${updates.diffLink} `)
-						console.log(
-							'\n',
-							`🎉  There are ${chalk.yellow(
-								'updates available',
-							)} for this workshop repository.  🎉\n\nTo get the updates, ${chalk.green.bold.bgWhite(
-								`press the "u" key`,
-							)}\n\nTo view a diff, check:\n  ${updateLink}\n\nTo dismiss this notification, ${chalk.red.bold.bgWhite(
-								`press the "d" key`,
-							)}\n`,
-						)
-					}
+				const updates = (await checkForUpdatesCached()) as {
+					updatesAvailable: boolean
+					diffLink: string | null
+					updateNotificationId?: string | null
+					repoUpdatesAvailable?: boolean
+					dependenciesNeedInstall?: boolean
 				}
+				const updateNotificationId = updates.updateNotificationId ?? null
+				const repoUpdatesAvailable =
+					updates.repoUpdatesAvailable ?? updates.updatesAvailable
+				const dependenciesNeedInstall = updates.dependenciesNeedInstall ?? false
+
+				if (!updates.updatesAvailable || !updateNotificationId) {
+					return
+				}
+
+				// Check if update notification is muted
+				const mutedNotifications = await getMutedNotifications()
+				if (mutedNotifications.includes(updateNotificationId)) {
+					return
+				}
+
+				const updateLink =
+					repoUpdatesAvailable && updates.diffLink
+						? chalk.blue.bgWhite(` ${updates.diffLink} `)
+						: null
+				const headline = repoUpdatesAvailable
+					? `🎉  There are ${chalk.yellow('updates available')} for this workshop repository.  🎉`
+					: `📦  ${chalk.yellow('Dependencies are out of date')} for this workshop repository.  📦`
+				const lines = [headline]
+
+				if (dependenciesNeedInstall) {
+					lines.push(
+						`Your installed packages don't match ${chalk.cyan(
+							'package.json',
+						)}.`,
+					)
+				}
+
+				lines.push(
+					repoUpdatesAvailable
+						? `To get the updates${dependenciesNeedInstall ? ' and reinstall dependencies' : ''}, ${chalk.green.bold.bgWhite(
+								`press the "u" key`,
+							)}`
+						: `To reinstall dependencies, ${chalk.green.bold.bgWhite(
+								`press the "u" key`,
+							)}`,
+				)
+
+				if (updateLink) {
+					lines.push(`To view a diff, check:\n  ${updateLink}`)
+				}
+
+				lines.push(
+					`To dismiss this notification, ${chalk.red.bold.bgWhite(
+						`press the "d" key`,
+					)}`,
+				)
+
+				console.log('\n', `${lines.join('\n\n')}\n`)
 			} catch {
 				// Silently ignore update check errors
 			}
@@ -495,10 +535,12 @@ export async function start(options: StartOptions = {}): Promise<StartResult> {
 							await import('@epic-web/workshop-utils/git.server')
 						const { muteNotification } =
 							await import('@epic-web/workshop-utils/db.server')
-						const updates = await checkForUpdatesCached()
-						if (updates.updatesAvailable && updates.remoteCommit) {
-							const updateNotificationId = `update-repo-${updates.remoteCommit}`
-							await muteNotification(updateNotificationId)
+						const updates = (await checkForUpdatesCached()) as {
+							updatesAvailable: boolean
+							updateNotificationId?: string | null
+						}
+						if (updates.updatesAvailable && updates.updateNotificationId) {
+							await muteNotification(updates.updateNotificationId)
 							console.log(
 								chalk.green(
 									'\n✅ Update notification dismissed permanently.\n',

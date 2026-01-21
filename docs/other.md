@@ -55,10 +55,13 @@ and the route is picked with `Math.random()` on each render so it changes often.
 ## Update
 
 When the workshop app is started, it checks to see whether there are any updates
-to the repository. If there are, it will show a message to the user that there
-is an update available and will tell them to hit the `u` key to update the
-workshop. If you want to run anything after the update, add a `postupdate`
-script to `epicshop.scripts` in the root `package.json`:
+to the repository and whether installed dependencies match `package.json`. If
+updates are available or dependencies are out of date, it will show a message to
+the user that there is an update available and will tell them to hit the `u` key
+to update the workshop. The update automation only runs install commands when
+the installed packages are out of sync with the root `package.json` files. If
+you want to run anything after the update, add a `postupdate` script to
+`epicshop.scripts` in the root `package.json`:
 
 ```json
 {
