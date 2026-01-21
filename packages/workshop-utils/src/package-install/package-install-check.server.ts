@@ -61,7 +61,9 @@ function getDependencySnapshot(packageJson: PackageJson) {
 	return {
 		dependencies: normalizeDependencyMap(packageJson.dependencies),
 		devDependencies: normalizeDependencyMap(packageJson.devDependencies),
-		optionalDependencies: normalizeDependencyMap(packageJson.optionalDependencies),
+		optionalDependencies: normalizeDependencyMap(
+			packageJson.optionalDependencies,
+		),
 	}
 }
 
@@ -101,7 +103,7 @@ async function getWorkspacePackageJsonPaths(packageJsonPath: string) {
 	if (!packageJson) return []
 	const workspaces = Array.isArray(packageJson.workspaces)
 		? packageJson.workspaces
-		: packageJson.workspaces?.packages ?? []
+		: (packageJson.workspaces?.packages ?? [])
 	if (!workspaces.length) return []
 
 	const workspacePatterns = workspaces.map(normalizeWorkspacePattern)
@@ -172,7 +174,9 @@ export async function getRootPackageJsonPaths(cwd: string) {
 
 	return allPackageJsonPaths
 		.map((packageJsonPath) => path.resolve(packageJsonPath))
-		.filter((packageJsonPath) => !workspacePackageJsonPaths.has(packageJsonPath))
+		.filter(
+			(packageJsonPath) => !workspacePackageJsonPaths.has(packageJsonPath),
+		)
 		.sort()
 }
 
