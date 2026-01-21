@@ -419,7 +419,10 @@ function getAppTestFiles(app: App) {
 	return app.test.type === 'browser' ? app.test.testFiles : []
 }
 
-async function getDiffFilesImpl(app1: App, app2: App): Promise<Array<DiffFile>> {
+async function getDiffFilesImpl(
+	app1: App,
+	app2: App,
+): Promise<Array<DiffFile>> {
 	if (app1.name === app2.name) {
 		return []
 	}

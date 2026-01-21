@@ -3,12 +3,12 @@ import './init-env.ts'
 import fs from 'node:fs/promises'
 import path from 'node:path'
 import { execa, execaCommand } from 'execa'
+import { z } from 'zod'
 import { getWorkshopRoot } from './apps.server.ts'
 import { cachified, checkForUpdatesCache } from './cache.server.ts'
 import { getWorkshopConfig } from './config.server.ts'
 import { getEnv } from './env.server.ts'
 import { logger } from './logger.ts'
-import { z } from 'zod'
 import {
 	getInstallCommand,
 	getWorkspaceInstallStatus,

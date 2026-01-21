@@ -14,7 +14,7 @@ import { getDomainUrl, getErrorMessage } from '#app/utils/misc.tsx'
 
 const WIDTH = 1200
 const HEIGHT = 630
-const OgImageSchema = z.instanceof(Uint8Array)
+const OgImageSchema = z.instanceof(Buffer)
 
 export async function loader({ request }: LoaderFunctionArgs) {
 	const timings = makeTimings('og', 'og image loader')
