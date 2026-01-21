@@ -1,4 +1,8 @@
 import { type EpicVideoInfos } from '@epic-web/workshop-utils/epic-api.server'
+import {
+	type OfflineVideoDownloadResolution,
+	getPreferredDownloadSize,
+} from '@epic-web/workshop-utils/offline-video-utils'
 import { type MuxPlayerRefAttributes } from '@mux/mux-player-react'
 import {
 	MediaControlBar,
@@ -36,7 +40,10 @@ const EpicVideoInfoContext = React.createContext<
 	Promise<EpicVideoInfos> | null | undefined
 >(null)
 
-type OfflineVideoDownloadResolution = 'best' | 'high' | 'medium' | 'low'
+type OfflineVideoDownloadSize = {
+	quality: string
+	size: number | null
+}
 
 const offlineVideoResolutionLabels: Record<
 	OfflineVideoDownloadResolution,
@@ -53,6 +60,13 @@ function getOfflineVideoResolutionLabel(value: unknown) {
 		return offlineVideoResolutionLabels[value]
 	}
 	return offlineVideoResolutionLabels.best
+}
+
+function getOfflineVideoResolution(
+	value: unknown,
+): OfflineVideoDownloadResolution {
+	if (value === 'high' || value === 'medium' || value === 'low') return value
+	return 'best'
 }
 
 type OfflineVideoActionData = {
@@ -379,6 +393,8 @@ export function DeferredEpicVideo({
 									transcript={info.transcript}
 									duration={info.duration}
 									durationEstimate={info.durationEstimate}
+									downloadsAvailable={info.downloadsAvailable ?? false}
+									downloadSizes={info.downloadSizes ?? []}
 								/>
 							)
 						} else if (info.type === 'region-restricted') {
@@ -484,6 +500,8 @@ function EpicVideo({
 	transcript,
 	duration,
 	durationEstimate,
+	downloadsAvailable,
+	downloadSizes,
 }: {
 	url: string
 	title?: string
@@ -491,6 +509,8 @@ function EpicVideo({
 	transcript: string
 	duration?: number | null
 	durationEstimate?: number | null
+	downloadsAvailable?: boolean
+	downloadSizes: Array<OfflineVideoDownloadSize>
 }) {
 	const muxPlayerRef = React.useRef<MuxPlayerRefAttributes>(null)
 	const nativeVideoRef = React.useRef<HTMLVideoElement>(null)
@@ -498,6 +518,9 @@ function EpicVideo({
 	const playerPreferences = usePlayerPreferences()
 	const rootData = useRootLoaderData()
 	const downloadResolutionLabel = getOfflineVideoResolutionLabel(
+		rootData.preferences?.offlineVideo?.downloadResolution,
+	)
+	const downloadResolution = getOfflineVideoResolution(
 		rootData.preferences?.offlineVideo?.downloadResolution,
 	)
 	const offlineVideoPlaybackIds = rootData.offlineVideoPlaybackIds
@@ -768,16 +791,25 @@ function EpicVideo({
 		if (!element) return
 		element.setAttribute('seekoffset', '10')
 	}, [])
-	const offlineActions = (
+	const hasDownloadOptions = Boolean(
+		downloadsAvailable || downloadSizes.length > 0,
+	)
+	const downloadSizeBytes = getPreferredDownloadSize(
+		downloadSizes,
+		downloadResolution,
+	)
+	const showOfflineActions = offlineVideo.available || hasDownloadOptions
+	const offlineActions = showOfflineActions ? (
 		<OfflineVideoActionButtons
 			isAvailable={offlineVideo.available}
 			isBusy={isOfflineActionBusy}
 			downloadProgress={downloadProgress}
+			downloadSizeBytes={downloadSizeBytes}
 			isVisible={offlineVideo.checked}
 			onDownload={handleDownload}
 			onDelete={handleDelete}
 		/>
-	)
+	) : null
 	return (
 		<div>
 			<div className="shadow-lg">
@@ -903,9 +935,10 @@ function hmsToSeconds(str: string) {
 }
 
 function formatDuration(seconds: number): string {
-	const hours = Math.floor(seconds / 3600)
-	const minutes = Math.floor((seconds % 3600) / 60)
-	const secs = Math.floor(seconds % 60)
+	const totalSeconds = Math.max(0, Math.round(seconds))
+	const hours = Math.floor(totalSeconds / 3600)
+	const minutes = Math.floor((totalSeconds % 3600) / 60)
+	const secs = totalSeconds % 60
 
 	if (hours > 0) {
 		return `${hours}:${minutes.toString().padStart(2, '0')}:${secs.toString().padStart(2, '0')}`

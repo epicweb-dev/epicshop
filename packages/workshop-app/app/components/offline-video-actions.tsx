@@ -1,6 +1,7 @@
 import * as React from 'react'
 import { DownloadProgressIndicator } from '#app/components/download-progress-indicator.tsx'
 import { SimpleTooltip } from '#app/components/ui/tooltip.tsx'
+import { formatBytes } from '#app/utils/format.ts'
 
 function DownloadIcon(props: React.ComponentPropsWithoutRef<'svg'>) {
 	return (
@@ -45,6 +46,7 @@ export type OfflineVideoActionButtonsProps = {
 	isAvailable: boolean
 	isBusy?: boolean
 	isVisible?: boolean
+	downloadSizeBytes?: number | null
 	/**
 	 * Download progress percentage (0-100). When defined, shows a progress indicator.
 	 * When undefined and isBusy is true, shows an indeterminate progress indicator.
@@ -58,6 +60,7 @@ export function OfflineVideoActionButtons({
 	isAvailable,
 	isBusy = false,
 	isVisible = true,
+	downloadSizeBytes,
 	downloadProgress,
 	onDownload,
 	onDelete,
@@ -72,13 +75,17 @@ export function OfflineVideoActionButtons({
 	}
 	const isDownloading = isBusy && !isAvailable
 	const showProgressIndicator = isDownloading
+	const downloadSizeLabel =
+		typeof downloadSizeBytes === 'number' && downloadSizeBytes > 0
+			? ` (${formatBytes(downloadSizeBytes)})`
+			: ''
 	const label = isAvailable
 		? 'Delete offline video'
 		: isDownloading
 			? downloadProgress !== undefined
 				? `Downloading: ${Math.round(downloadProgress)}%`
 				: 'Downloading...'
-			: 'Download offline video'
+			: `Download offline video${downloadSizeLabel}`
 	const onClick = isAvailable ? onDelete : onDownload
 	const className = isAvailable
 		? 'text-foreground-destructive hover:bg-foreground-destructive/10'

@@ -17,6 +17,7 @@ import {
 import { Button } from '#app/components/button.tsx'
 import { Icon } from '#app/components/icons.tsx'
 import { SimpleTooltip } from '#app/components/ui/tooltip.tsx'
+import { formatBytes } from '#app/utils/format.ts'
 import { ensureUndeployed, useInterval } from '#app/utils/misc.tsx'
 import { useRootLoaderData } from '#app/utils/root-loader.ts'
 import { redirectWithToast } from '#app/utils/toast.server.ts'
@@ -138,6 +139,20 @@ export default function AccountSettings() {
 	const offlineVideos =
 		offlineVideosFetcher.data?.offlineVideos ?? loaderData.offlineVideos
 	const isDownloading = offlineVideos.downloadState.status === 'running'
+	const offlineVideoNotes = [
+		offlineVideos.unavailableVideos > 0
+			? `${offlineVideos.unavailableVideos} unavailable`
+			: null,
+		offlineVideos.notDownloadableVideos > 0
+			? `${offlineVideos.notDownloadableVideos} not downloadable`
+			: null,
+	]
+		.filter(Boolean)
+		.join(', ')
+	const showRemainingDownloadSize =
+		offlineVideos.totalVideos > 0 &&
+		offlineVideos.downloadedVideos < offlineVideos.totalVideos &&
+		offlineVideos.remainingDownloadBytes > 0
 
 	const isSubmitting = navigation.state === 'submitting'
 
@@ -364,10 +379,19 @@ export default function AccountSettings() {
 						<span className="text-muted-foreground text-sm">
 							{offlineVideos.downloadedVideos} of {offlineVideos.totalVideos}{' '}
 							downloaded
-							{offlineVideos.unavailableVideos > 0
-								? ` (${offlineVideos.unavailableVideos} unavailable)`
-								: null}
+							{offlineVideoNotes ? ` (${offlineVideoNotes})` : null}
 						</span>
+					</div>
+					<div className="text-muted-foreground text-sm">
+						{offlineVideos.downloadedVideos > 0 ? (
+							<p>Downloaded size: {formatBytes(offlineVideos.totalBytes)}</p>
+						) : null}
+						{showRemainingDownloadSize ? (
+							<p>
+								Download all size:{' '}
+								{formatBytes(offlineVideos.remainingDownloadBytes)}
+							</p>
+						) : null}
 					</div>
 					{isDownloading ? (
 						<div className="text-muted-foreground text-sm">
