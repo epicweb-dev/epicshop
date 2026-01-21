@@ -547,21 +547,23 @@ function EpicVideo({
 	const timestampRegex = /(\d+:\d+)/g
 	// turn the transcript into an array of React elements
 	const transcriptElements: Array<React.ReactNode> = []
-	let match
+	let match: RegExpExecArray | null
 	let prevIndex = 0
 	while ((match = timestampRegex.exec(transcript))) {
 		const timestamp = match[1]
-		if (!timestampRegex.lastIndex || !timestamp) break
+		if (!timestampRegex.lastIndex || !timestamp || match.index == null) break
 
 		const timestampIndexStart = match.index
 		const timestampIndexEnd = timestampRegex.lastIndex
-		const textBeforeTimestamp = transcript.slice(
-			prevIndex + 1,
-			timestampIndexStart - 1,
-		)
-		transcriptElements.push(
-			<span key={`span-${timestampIndexStart}`}>{textBeforeTimestamp}</span>,
-		)
+		let textBeforeTimestamp = transcript.slice(prevIndex, timestampIndexStart)
+		if (textBeforeTimestamp.endsWith('[')) {
+			textBeforeTimestamp = textBeforeTimestamp.slice(0, -1)
+		}
+		if (textBeforeTimestamp) {
+			transcriptElements.push(
+				<span key={`span-${timestampIndexStart}`}>{textBeforeTimestamp}</span>,
+			)
+		}
 		transcriptElements.push(
 			<button
 				key={`button-${timestampIndexStart}`}
@@ -588,12 +590,16 @@ function EpicVideo({
 			</button>,
 		)
 		prevIndex = timestampIndexEnd
+		if (transcript.charAt(prevIndex) === ']') {
+			prevIndex += 1
+		}
 	}
-	transcriptElements.push(
-		<span key={transcript.length}>
-			{transcript.slice(prevIndex + 1, transcript.length)}
-		</span>,
-	)
+	const remainingTranscript = transcript.slice(prevIndex)
+	if (remainingTranscript) {
+		transcriptElements.push(
+			<span key={transcript.length}>{remainingTranscript}</span>,
+		)
+	}
 
 	React.useEffect(() => {
 		if (!nativeVideoRef.current) return
