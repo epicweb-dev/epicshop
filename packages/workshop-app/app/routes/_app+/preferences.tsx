@@ -17,6 +17,7 @@ import {
 import { Button } from '#app/components/button.tsx'
 import { Icon } from '#app/components/icons.tsx'
 import { SimpleTooltip } from '#app/components/ui/tooltip.tsx'
+import { formatBytes } from '#app/utils/format.ts'
 import { ensureUndeployed, useInterval } from '#app/utils/misc.tsx'
 import { useRootLoaderData } from '#app/utils/root-loader.ts'
 import { redirectWithToast } from '#app/utils/toast.server.ts'
@@ -38,16 +39,6 @@ function isDownloadResolutionOption(
 		typeof value === 'string' &&
 		downloadResolutionOptions.some((option) => option.value === value)
 	)
-}
-
-function formatBytes(bytes: number) {
-	if (!Number.isFinite(bytes)) return '—'
-	if (bytes < 1024) return `${bytes} B`
-	const kb = bytes / 1024
-	if (kb < 1024) return `${kb.toFixed(1)} KB`
-	const mb = kb / 1024
-	if (mb < 1024) return `${mb.toFixed(1)} MB`
-	return `${(mb / 1024).toFixed(1)} GB`
 }
 
 export async function loader({ request }: Route.LoaderArgs) {

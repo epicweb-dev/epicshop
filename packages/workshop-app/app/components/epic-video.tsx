@@ -1,4 +1,8 @@
 import { type EpicVideoInfos } from '@epic-web/workshop-utils/epic-api.server'
+import {
+	type OfflineVideoDownloadResolution,
+	getPreferredDownloadSize,
+} from '@epic-web/workshop-utils/offline-video-utils'
 import { type MuxPlayerRefAttributes } from '@mux/mux-player-react'
 import {
 	MediaControlBar,
@@ -36,8 +40,6 @@ const EpicVideoInfoContext = React.createContext<
 	Promise<EpicVideoInfos> | null | undefined
 >(null)
 
-type OfflineVideoDownloadResolution = 'best' | 'high' | 'medium' | 'low'
-
 type OfflineVideoDownloadSize = {
 	quality: string
 	size: number | null
@@ -60,48 +62,11 @@ function getOfflineVideoResolutionLabel(value: unknown) {
 	return offlineVideoResolutionLabels.best
 }
 
-const offlineVideoDownloadQualityOrder: Record<
-	OfflineVideoDownloadResolution,
-	Array<string>
-> = {
-	best: ['source', 'highest', 'high', 'medium', 'low'],
-	high: ['high', 'medium', 'low', 'highest', 'source'],
-	medium: ['medium', 'low', 'high', 'highest', 'source'],
-	low: ['low', 'medium', 'high', 'highest', 'source'],
-}
-
 function getOfflineVideoResolution(
 	value: unknown,
 ): OfflineVideoDownloadResolution {
 	if (value === 'high' || value === 'medium' || value === 'low') return value
 	return 'best'
-}
-
-function getPreferredDownloadSize(
-	downloadSizes: Array<OfflineVideoDownloadSize>,
-	resolution: OfflineVideoDownloadResolution,
-) {
-	if (downloadSizes.length === 0) return null
-	const sizeByQuality = new Map(
-		downloadSizes.map((download) => [
-			download.quality.toLowerCase(),
-			download.size,
-		]),
-	)
-	const order =
-		offlineVideoDownloadQualityOrder[resolution] ??
-		offlineVideoDownloadQualityOrder.best
-	for (const quality of order) {
-		const size = sizeByQuality.get(quality)
-		if (typeof size === 'number' && Number.isFinite(size) && size > 0)
-			return size
-	}
-	return (
-		downloadSizes.find(
-			(download) =>
-				typeof download.size === 'number' && Number.isFinite(download.size),
-		)?.size ?? null
-	)
 }
 
 type OfflineVideoActionData = {
@@ -535,7 +500,7 @@ function EpicVideo({
 	transcript,
 	duration,
 	durationEstimate,
-	downloadsAvailable,
+	downloadsAvailable: _downloadsAvailable,
 	downloadSizes,
 }: {
 	url: string
@@ -826,14 +791,12 @@ function EpicVideo({
 		if (!element) return
 		element.setAttribute('seekoffset', '10')
 	}, [])
-	const hasDownloadOptions = Boolean(
-		downloadsAvailable || downloadSizes.length > 0,
-	)
 	const downloadSizeBytes = getPreferredDownloadSize(
 		downloadSizes,
 		downloadResolution,
 	)
-	const showOfflineActions = offlineVideo.available || hasDownloadOptions
+	// Always show offline actions - even if API metadata is unavailable, Mux fallback URLs can be used
+	const showOfflineActions = true
 	const offlineActions = showOfflineActions ? (
 		<OfflineVideoActionButtons
 			isAvailable={offlineVideo.available}

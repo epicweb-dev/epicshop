@@ -33,6 +33,12 @@ import {
 	getCryptoRange,
 	incrementIv,
 } from './offline-video-crypto.server.ts'
+import {
+	type OfflineVideoDownloadResolution,
+	getPreferredDownloadSize,
+	offlineVideoDownloadResolutions,
+	videoDownloadQualityOrder,
+} from './offline-video-utils.ts'
 
 type OfflineVideoEntryStatus = 'ready' | 'downloading' | 'error'
 
@@ -132,14 +138,6 @@ type OfflineVideoConfig = {
 	userId: string | null
 }
 
-const offlineVideoDownloadResolutions = [
-	'best',
-	'high',
-	'medium',
-	'low',
-] as const
-type OfflineVideoDownloadResolution =
-	(typeof offlineVideoDownloadResolutions)[number]
 type OfflineVideoDownloadQuality =
 	| 'source'
 	| 'highest'
@@ -563,16 +561,6 @@ async function getOfflineVideoDownloadResolution(): Promise<OfflineVideoDownload
 	return 'best'
 }
 
-const videoDownloadQualityOrder: Record<
-	OfflineVideoDownloadResolution,
-	Array<OfflineVideoDownloadQuality>
-> = {
-	best: ['source', 'highest', 'high', 'medium', 'low'],
-	high: ['high', 'medium', 'low', 'highest', 'source'],
-	medium: ['medium', 'low', 'high', 'highest', 'source'],
-	low: ['low', 'medium', 'high', 'highest', 'source'],
-}
-
 const knownDownloadQualities = new Set<OfflineVideoDownloadQuality>([
 	'source',
 	'highest',
@@ -614,32 +602,6 @@ function sortVideoDownloads(
 		const bBitrate = b.bitrate ?? 0
 		return bBitrate - aBitrate
 	})
-}
-
-function getPreferredDownloadSize(
-	downloadSizes: Array<WorkshopVideoDownloadSize>,
-	resolution: OfflineVideoDownloadResolution,
-) {
-	if (downloadSizes.length === 0) return null
-	const sizeByQuality = new Map(
-		downloadSizes.map((download) => [
-			download.quality.toLowerCase(),
-			download.size,
-		]),
-	)
-	const order =
-		videoDownloadQualityOrder[resolution] ?? videoDownloadQualityOrder.best
-	for (const quality of order) {
-		const size = sizeByQuality.get(quality)
-		if (typeof size === 'number' && Number.isFinite(size) && size > 0)
-			return size
-	}
-	return (
-		downloadSizes.find(
-			(download) =>
-				typeof download.size === 'number' && Number.isFinite(download.size),
-		)?.size ?? null
-	)
 }
 
 function getVideoApiHost(videoUrl: string) {
@@ -1113,7 +1075,6 @@ export async function startOfflineVideoDownload({
 	const workshop = getWorkshopIdentity()
 	const { videos, unavailable, notDownloadable } =
 		await getWorkshopVideoCollection({ request })
-	const downloadableVideos = videos.filter((video) => video.downloadable)
 	const index = await readOfflineVideoIndex()
 	const authInfo = await getAuthInfo()
 	const keyInfo = await getOfflineVideoKeyInfo({
@@ -1122,12 +1083,12 @@ export async function startOfflineVideoDownload({
 	})
 	if (!keyInfo) {
 		log.warn('Offline video download unavailable: missing key info', {
-			available: downloadableVideos.length,
+			available: videos.length,
 			unavailable,
 		})
 		return {
 			state: downloadState,
-			available: downloadableVideos.length,
+			available: videos.length,
 			queued: 0,
 			unavailable,
 			notDownloadable,
@@ -1137,7 +1098,7 @@ export async function startOfflineVideoDownload({
 	const downloads: Array<WorkshopVideoInfo> = []
 	let alreadyDownloaded = 0
 
-	for (const video of downloadableVideos) {
+	for (const video of videos) {
 		const entry = index[video.playbackId]
 		if (
 			entry?.status === 'ready' &&
@@ -1201,7 +1162,7 @@ export async function startOfflineVideoDownload({
 
 	return {
 		state: downloadState,
-		available: downloadableVideos.length,
+		available: videos.length,
 		queued: downloads.length,
 		unavailable,
 		notDownloadable,
