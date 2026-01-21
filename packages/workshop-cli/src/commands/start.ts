@@ -208,8 +208,7 @@ export async function start(options: StartOptions = {}): Promise<StartResult> {
 				const updateNotificationId = updates.updateNotificationId ?? null
 				const repoUpdatesAvailable =
 					updates.repoUpdatesAvailable ?? updates.updatesAvailable
-				const dependenciesNeedInstall =
-					updates.dependenciesNeedInstall ?? false
+				const dependenciesNeedInstall = updates.dependenciesNeedInstall ?? false
 
 				if (!updates.updatesAvailable || !updateNotificationId) {
 					return
