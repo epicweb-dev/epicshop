@@ -503,12 +503,17 @@ export async function restartSidecarProcess(name: string): Promise<boolean> {
 	// Start a new process with the same command
 	startSidecarProcess(name, command)
 
-	// Preserve logs from the old process
+	// Preserve logs from the old process by prepending them to the new array
+	// We must modify the existing array (not replace it) because event handlers
+	// have already captured it in their closure
 	const newEntry = sidecarProcesses.get(name)
 	if (newEntry) {
-		// Prepend old logs to new logs, respecting the max log entries limit
-		const combinedOutput = [...oldOutput, ...newEntry.output]
-		newEntry.output = combinedOutput.slice(-MAX_SIDECAR_LOG_ENTRIES)
+		// Prepend old logs to the existing array that handlers are writing to
+		newEntry.output.unshift(...oldOutput)
+		// Trim to max entries if needed
+		if (newEntry.output.length > MAX_SIDECAR_LOG_ENTRIES) {
+			newEntry.output.splice(0, newEntry.output.length - MAX_SIDECAR_LOG_ENTRIES)
+		}
 	}
 
 	return true

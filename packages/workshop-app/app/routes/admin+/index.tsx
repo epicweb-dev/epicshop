@@ -492,7 +492,7 @@ function SidecarProcessItem({
 		setLogsOpen(open)
 		if (open) {
 			// Fetch logs when opening
-			logsFetcher.submit(
+			void logsFetcher.submit(
 				{ intent: 'get-sidecar-logs', name },
 				{ method: 'POST' },
 			)
