@@ -338,7 +338,8 @@ async function getEpicVideoInfo({
 							.map((download) => ({
 								quality: download.quality,
 								size:
-									typeof download.filesize === 'number'
+									typeof download.filesize === 'number' &&
+									Number.isFinite(download.filesize)
 										? download.filesize
 										: null,
 							})) ?? []
