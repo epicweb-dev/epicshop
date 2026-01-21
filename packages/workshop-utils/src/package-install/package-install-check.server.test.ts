@@ -167,7 +167,7 @@ describe('getRootPackageInstallStatus', () => {
 			path.join(tempDir, 'package.json'),
 		)
 
-		expect(status.packageManager).toBe(null)
+		expect(status.packageManager).toBeNull()
 		expect(status.dependenciesNeedInstall).toBe(false)
 	})
 
@@ -289,7 +289,7 @@ describe('getRootPackageInstallStatus', () => {
 
 		expect(status.dependenciesNeedInstall).toBe(false)
 		expect(status.reason).toBe('package-json-unreadable')
-		expect(status.packageManager).toBe(null)
+		expect(status.packageManager).toBeNull()
 		expect(console.warn).toHaveBeenCalledWith(
 			expect.stringContaining('Failed to read package.json'),
 			expect.any(String),
@@ -474,6 +474,6 @@ describe('getWorkspaceInstallStatus', () => {
 
 		expect(status.dependenciesNeedInstall).toBe(false)
 		expect(status.roots).toHaveLength(0)
-		expect(status.dependencyHash).toBe(null)
+		expect(status.dependencyHash).toBeNull()
 	})
 })

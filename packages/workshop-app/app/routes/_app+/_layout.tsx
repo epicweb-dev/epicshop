@@ -74,7 +74,7 @@ import {
 	useRandomCompletedExerciseRoute,
 	type ProgressItemSearch,
 } from '../progress.tsx'
-import { ThemeSwitch, useTheme } from '../theme/index.tsx'
+import { ThemeSwitch } from '../theme/index.tsx'
 
 function getSidecarStatus() {
 	const { sidecarProcesses } = getProcesses()
@@ -786,11 +786,6 @@ function MobileNavigation({
 			opacity: 0,
 		},
 	}
-
-	const handleOpenShortcuts = React.useCallback(() => {
-		if (typeof window === 'undefined') return
-		window.dispatchEvent(new CustomEvent('toggle-keyboard-shortcuts'))
-	}, [])
 
 	const requestInfo = useRequestInfo()
 	const currentTheme = requestInfo.session.theme ?? 'system'
