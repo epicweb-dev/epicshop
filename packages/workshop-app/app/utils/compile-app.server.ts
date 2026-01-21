@@ -61,7 +61,7 @@ export async function compileTs(
 			(await getForceFresh(filePath, compiledCodeCache.get(key))) ||
 			(await getForceFresh(fullPath, compiledCodeCache.get(key))),
 		cache: compiledCodeCache,
-		checkValue: (value) => CompileResultSchema.safeParse(value).success,
+		checkValue: CompileResultSchema,
 		getFreshValue: async () => {
 			try {
 				const result = await esbuild.build({
