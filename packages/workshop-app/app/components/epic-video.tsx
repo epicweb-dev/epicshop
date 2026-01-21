@@ -500,7 +500,7 @@ function EpicVideo({
 	transcript,
 	duration,
 	durationEstimate,
-	downloadsAvailable: _downloadsAvailable,
+	downloadsAvailable,
 	downloadSizes,
 }: {
 	url: string

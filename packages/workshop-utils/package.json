@@ -32,6 +32,7 @@
       "./playwright.server": "./src/playwright.server.ts",
       "./notifications.server": "./src/notifications.server.ts",
       "./offline-videos.server": "./src/offline-videos.server.ts",
+      "./offline-video-utils": "./src/offline-video-utils.ts",
       "./process-manager.server": "./src/process-manager.server.ts",
       "./test": "./src/test.ts",
       "./request-context.server": "./src/request-context.server.ts",
@@ -141,6 +142,11 @@
       "import": "./dist/offline-videos.server.js",
       "types": "./dist/offline-videos.server.d.ts",
       "default": "./dist/offline-videos.server.js"
+    },
+    "./offline-video-utils": {
+      "import": "./dist/offline-video-utils.js",
+      "types": "./dist/offline-video-utils.d.ts",
+      "default": "./dist/offline-video-utils.js"
     },
     "./process-manager.server": {
       "import": "./dist/process-manager.server.js",
