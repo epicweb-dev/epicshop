@@ -535,10 +535,12 @@ export async function start(options: StartOptions = {}): Promise<StartResult> {
 							await import('@epic-web/workshop-utils/git.server')
 						const { muteNotification } =
 							await import('@epic-web/workshop-utils/db.server')
-						const updates = await checkForUpdatesCached()
-						if (updates.updatesAvailable && updates.remoteCommit) {
-							const updateNotificationId = `update-repo-${updates.remoteCommit}`
-							await muteNotification(updateNotificationId)
+						const updates = (await checkForUpdatesCached()) as {
+							updatesAvailable: boolean
+							updateNotificationId?: string | null
+						}
+						if (updates.updatesAvailable && updates.updateNotificationId) {
+							await muteNotification(updates.updateNotificationId)
 							console.log(
 								chalk.green(
 									'\n✅ Update notification dismissed permanently.\n',

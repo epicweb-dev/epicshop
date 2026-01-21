@@ -73,12 +73,41 @@ async function getPackageLockStatus(cwd: string): Promise<PackageLockStatus> {
 		}
 	}
 
-	const installedHash = hashLockfile(installedLockContents)
-	if (installedHash !== lockfileHash) {
-		return {
-			dependenciesNeedInstall: true,
-			lockfileHash,
-			reason: 'lockfile-mismatch',
+	// Parse both lockfiles to compare only the installed packages
+	try {
+		const mainLockfile = JSON.parse(packageLockContents) as {
+			packages: Record<string, unknown>
+		}
+		const installedLockfile = JSON.parse(installedLockContents) as {
+			packages: Record<string, unknown>
+		}
+
+		// Extract packages from both, excluding the root package ("") from main lockfile
+		const mainPackages: Record<string, unknown> = { ...mainLockfile.packages }
+		delete mainPackages['']
+
+		const installedPackages: Record<string, unknown> = installedLockfile.packages
+
+		// Compare by hashing the normalized package data
+		const mainPackagesHash = hashLockfile(JSON.stringify(mainPackages))
+		const installedPackagesHash = hashLockfile(JSON.stringify(installedPackages))
+
+		if (mainPackagesHash !== installedPackagesHash) {
+			return {
+				dependenciesNeedInstall: true,
+				lockfileHash,
+				reason: 'lockfile-mismatch',
+			}
+		}
+	} catch {
+		// If parsing fails, fall back to simple comparison (which will likely show mismatch)
+		const installedHash = hashLockfile(installedLockContents)
+		if (installedHash !== lockfileHash) {
+			return {
+				dependenciesNeedInstall: true,
+				lockfileHash,
+				reason: 'lockfile-mismatch',
+			}
 		}
 	}
 
