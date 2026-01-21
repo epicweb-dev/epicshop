@@ -61,15 +61,28 @@ type OfflineVideoActionData = {
 	message?: string
 }
 
-function useOfflineVideoAvailability(playbackId: string, refreshKey: number) {
-	const [available, setAvailable] = React.useState(false)
-	const [checked, setChecked] = React.useState(false)
+type OfflineVideoAvailabilityOptions = {
+	initialAvailability?: boolean | null
+}
+
+function useOfflineVideoAvailability(
+	playbackId: string,
+	refreshKey: number,
+	options: OfflineVideoAvailabilityOptions = {},
+) {
+	const initialAvailability =
+		options.initialAvailability === undefined ? null : options.initialAvailability
+	const [available, setAvailable] = React.useState(initialAvailability ?? false)
+	const [checked, setChecked] = React.useState(initialAvailability !== null)
 	const offlineUrl = `/resources/offline-videos/${encodeURIComponent(playbackId)}`
 
 	React.useEffect(() => {
+		setAvailable(initialAvailability ?? false)
+		setChecked(initialAvailability !== null)
+	}, [initialAvailability, playbackId])
+
+	React.useEffect(() => {
 		if (typeof window === 'undefined') return
-		setAvailable(false)
-		setChecked(false)
 		const controller = new AbortController()
 		let isActive = true
 
@@ -485,10 +498,16 @@ function EpicVideo({
 	const downloadResolutionLabel = getOfflineVideoResolutionLabel(
 		rootData.preferences?.offlineVideo?.downloadResolution,
 	)
+	const offlineVideoPlaybackIds = rootData.offlineVideoPlaybackIds
+	const initialOfflineAvailability =
+		offlineVideoPlaybackIds == null
+			? null
+			: offlineVideoPlaybackIds.includes(muxPlaybackId)
 	const [availabilityKey, setAvailabilityKey] = React.useState(0)
 	const offlineVideo = useOfflineVideoAvailability(
 		muxPlaybackId,
 		availabilityKey,
+		{ initialAvailability: initialOfflineAvailability },
 	)
 	const shouldUseOfflineVideo = offlineVideo.available
 	const offlineVideoFetcher = useFetcher<OfflineVideoActionData>()
@@ -752,6 +771,7 @@ function EpicVideo({
 			isAvailable={offlineVideo.available}
 			isBusy={isOfflineActionBusy}
 			downloadProgress={downloadProgress}
+			isVisible={offlineVideo.checked}
 			onDownload={handleDownload}
 			onDelete={handleDelete}
 		/>
