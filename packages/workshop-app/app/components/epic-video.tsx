@@ -99,7 +99,7 @@ function useOfflineVideoAvailability(playbackId: string, refreshKey: number) {
 function OfflineVideoUnavailable() {
 	return (
 		<div className="relative aspect-video w-full shrink-0 shadow-lg">
-			<div className="not-prose text-foreground-destructive absolute inset-0 z-10 flex items-center justify-center p-8">
+			<div className="text-foreground-destructive absolute inset-0 z-10 flex items-center justify-center p-8">
 				<Icon name="WifiNoConnection" size="xl">
 					<span>
 						Offline video not available. Download offline videos in{' '}
@@ -211,8 +211,8 @@ export function VideoEmbed({
 	const isOnline = useIsOnline()
 	if (!isOnline) {
 		return (
-			<div className="relative aspect-video w-full shrink-0 shadow-lg">
-				<div className="not-prose text-foreground-destructive absolute inset-0 z-10 flex items-center justify-center p-8">
+			<div className="not-prose relative aspect-video w-full shrink-0 shadow-lg">
+				<div className="text-foreground-destructive absolute inset-0 z-10 flex items-center justify-center p-8">
 					<Icon name="WifiNoConnection" size="xl">
 						<span>
 							{'Unable to load the video '}
@@ -306,7 +306,7 @@ export function DeferredEpicVideo({
 	const epicVideoInfosPromise = React.useContext(EpicVideoInfoContext)
 	const linkUI = <VideoLink url={url} title={title} />
 	return (
-		<div>
+		<div className="not-prose">
 			<React.Suspense
 				fallback={
 					<div>
@@ -370,7 +370,7 @@ export function DeferredEpicVideo({
 							return (
 								<div>
 									<div className="flex aspect-video min-h-full min-w-full flex-col items-center justify-start gap-2 overflow-y-scroll border-2 p-4 lg:justify-center lg:gap-4 lg:text-xl">
-										<div className="!text-foreground-destructive">
+										<div className="text-foreground-destructive">
 											Error: Region Restricted
 										</div>
 										<div>
@@ -448,7 +448,7 @@ export function DeferredEpicVideo({
 									<EpicVideoEmbed url={url} title={title} />
 									<div className="mt-4 flex flex-col gap-2">
 										{linkUI}
-										<div className="!text-foreground-destructive">
+										<div className="text-foreground-destructive">
 											Unknown error (check console)
 										</div>
 									</div>
@@ -754,7 +754,7 @@ function EpicVideo({
 		<div>
 			<div className="shadow-lg">
 				{shouldUseOfflineVideo ? (
-					<div className="not-prose flex aspect-video w-full items-center justify-center bg-black">
+					<div className="flex aspect-video w-full items-center justify-center bg-black">
 						<MediaController
 							tabIndex={0}
 							aria-label={`${title} video player`}
