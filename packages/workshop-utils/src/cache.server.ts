@@ -24,6 +24,14 @@ import { checkConnection } from './utils.server.ts'
 const MAX_CACHE_FILE_SIZE = 3 * 1024 * 1024 // 3MB in bytes
 const cacheDir = resolveCacheDir()
 const log = logger('epic:cache')
+type DiffStatus = 'renamed' | 'modified' | 'deleted' | 'added' | 'unknown'
+type DiffFile = { status: DiffStatus; path: string; line: number }
+type CompiledCodeResult = {
+	outputFiles?: Array<unknown>
+	errors: Array<unknown>
+	warnings: Array<unknown>
+}
+type OgCacheValue = string | Uint8Array
 
 // Throttle repeated Sentry reports for corrupted cache files to reduce noise
 const corruptedReportThrottle = remember(
@@ -241,15 +249,17 @@ export const extraAppCache = makeSingletonFsCache<ExtraApp>('ExtraAppCache')
 export const playgroundAppCache =
 	makeSingletonFsCache<PlaygroundApp>('PlaygroundAppCache')
 export const diffCodeCache = makeSingletonFsCache<string>('DiffCodeCache')
-export const diffFilesCache = makeSingletonFsCache<string>('DiffFilesCache')
-export const copyUnignoredFilesCache = makeSingletonCache<string>(
+export const diffFilesCache =
+	makeSingletonFsCache<Array<DiffFile>>('DiffFilesCache')
+export const copyUnignoredFilesCache = makeSingletonCache<boolean>(
 	'CopyUnignoredFilesCache',
 )
 export const compiledMarkdownCache = makeSingletonFsCache<string>(
 	'CompiledMarkdownCache',
 )
-export const compiledCodeCache = makeSingletonCache<string>('CompiledCodeCache')
-export const ogCache = makeSingletonCache<string>('OgCache')
+export const compiledCodeCache =
+	makeSingletonCache<CompiledCodeResult>('CompiledCodeCache')
+export const ogCache = makeSingletonCache<OgCacheValue>('OgCache')
 export const compiledInstructionMarkdownCache = makeSingletonFsCache<{
 	code: string
 	title: string | null

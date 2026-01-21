@@ -300,6 +300,7 @@ async function isDirectoryEmpty(dirPath: string): Promise<boolean> {
 		cache: directoryEmptyCache,
 		ttl: 1000 * 60 * 5,
 		swr: 1000 * 60 * 20,
+		checkValue: z.boolean(),
 		forceFresh: await getForceFreshForDir(
 			directoryEmptyCache.get(dirPath),
 			dirPath,
@@ -955,6 +956,7 @@ export async function getPlaygroundApp({
 		ttl: 1000 * 60 * 5,
 		swr: 1000 * 60 * 60 * 24 * 30,
 
+		checkValue: PlaygroundAppSchema.nullable(),
 		timings,
 		timingKey: playgroundDir.replace(`${playgroundDir}${path.sep}`, ''),
 		request,
@@ -1103,6 +1105,7 @@ async function getExtraApps({
 			ttl: 1000 * 60 * 5,
 			swr: 1000 * 60 * 60 * 24 * 30,
 
+			checkValue: ExtraAppSchema.nullable(),
 			timings,
 			timingKey: extraDir.replace(`${extraDirInfo.fullPath}${path.sep}`, ''),
 			request,
@@ -1187,6 +1190,7 @@ async function getSolutionApps({
 			ttl: 1000 * 60 * 5,
 			swr: 1000 * 60 * 60 * 24 * 30,
 
+			checkValue: SolutionAppSchema.nullable(),
 			forceFresh: await getForceFreshForDir(
 				solutionAppCache.get(solutionDir),
 				solutionDir,
@@ -1271,6 +1275,7 @@ async function getProblemApps({
 			ttl: 1000 * 60 * 5,
 			swr: 1000 * 60 * 60 * 24 * 30,
 
+			checkValue: ProblemAppSchema.nullable(),
 			forceFresh: await getForceFreshForDir(
 				problemAppCache.get(problemDir),
 				problemDir,

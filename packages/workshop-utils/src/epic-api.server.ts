@@ -177,9 +177,7 @@ async function getEpicVideoInfo({
 		swr: 1000 * 60 * 60 * 24 * 365 * 10,
 		offlineFallbackValue: null,
 		checkValue: CachedEpicVideoInfoSchema,
-		async getFreshValue(
-			context,
-		): Promise<z.infer<typeof CachedEpicVideoInfoSchema>> {
+		async getFreshValue(context) {
 			const epicUrl = new URL(epicVideoEmbed)
 			if (
 				epicUrl.host !== 'www.epicweb.dev' &&
@@ -366,7 +364,7 @@ async function getEpicProgress({
 		swr: 1000 * 60 * 60 * 24 * 365 * 10,
 		offlineFallbackValue: [],
 		checkValue: EpicProgressSchema,
-		async getFreshValue(context): Promise<z.infer<typeof EpicProgressSchema>> {
+		async getFreshValue(context) {
 			const progressUrl = `https://${host}/api/progress`
 			log(`making progress API request to: ${progressUrl}`)
 
@@ -641,7 +639,7 @@ export async function getWorkshopData(
 		timings,
 		offlineFallbackValue: { resources: [] },
 		checkValue: ModuleSchema,
-		async getFreshValue(): Promise<z.infer<typeof ModuleSchema>> {
+		async getFreshValue() {
 			const workshopUrl = `https://${host}/api/workshops/${encodeURIComponent(slug)}`
 			log(`making workshop data request to: ${workshopUrl}`)
 
@@ -903,7 +901,7 @@ export async function getUserInfo({
 		swr: 1000 * 60 * 60 * 24 * 365 * 10,
 		offlineFallbackValue: null,
 		checkValue: UserInfoSchema,
-		async getFreshValue(): Promise<UserInfo> {
+		async getFreshValue() {
 			userinfoLog(`getting fresh value for user info from: ${url}`)
 
 			const response = await fetch(url, {

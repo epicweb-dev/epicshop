@@ -9,6 +9,7 @@ import fsExtra from 'fs-extra'
 import ignore from 'ignore'
 import parseGitDiff, { type AnyFileChange } from 'parse-git-diff'
 import { bundledLanguagesInfo } from 'shiki/langs'
+import { z } from 'zod'
 import {
 	getForceFreshForDir,
 	getRelativePath,
@@ -31,6 +32,40 @@ const epicshopTempDir = path.join(os.tmpdir(), 'epicshop')
 const isDeployed = getEnv().EPICSHOP_DEPLOYED
 
 const diffTmpDir = path.join(epicshopTempDir, 'diff')
+const DiffStatusSchema = z.enum([
+	'renamed',
+	'modified',
+	'deleted',
+	'added',
+	'unknown',
+])
+const DiffFileSchema = z.object({
+	status: DiffStatusSchema,
+	path: z.string(),
+	line: z.number(),
+})
+type DiffStatus = z.infer<typeof DiffStatusSchema>
+type DiffFile = z.infer<typeof DiffFileSchema>
+
+function getDiffStatus(fileType: AnyFileChange['type']): DiffStatus {
+	switch (fileType) {
+		case 'ChangedFile': {
+			return 'modified'
+		}
+		case 'AddedFile': {
+			return 'added'
+		}
+		case 'DeletedFile': {
+			return 'deleted'
+		}
+		case 'RenamedFile': {
+			return 'renamed'
+		}
+		default: {
+			return 'unknown'
+		}
+	}
+}
 
 /**
  * Converts a diff file path to a relative path for display and lookup.
@@ -221,6 +256,7 @@ async function copyUnignoredFiles(
 	await cachified({
 		key,
 		cache: copyUnignoredFilesCache,
+		checkValue: z.boolean(),
 		forceFresh: await getForceFreshForDir(
 			copyUnignoredFilesCache.get(key),
 			srcDir,
@@ -236,6 +272,7 @@ async function copyUnignoredFiles(
 					return !ig.ignores(path.relative(srcDir, file))
 				},
 			})
+			return true
 		},
 	})
 }
@@ -372,6 +409,7 @@ export async function getDiffFiles(
 			forceFresh || (await getForceFreshForDiff(app1, app2, cacheEntry)),
 		timings,
 		request,
+		checkValue: DiffFileSchema.array(),
 		getFreshValue: () => getDiffFilesImpl(app1, app2),
 	})
 	return result
@@ -381,7 +419,10 @@ function getAppTestFiles(app: App) {
 	return app.test.type === 'browser' ? app.test.testFiles : []
 }
 
-async function getDiffFilesImpl(app1: App, app2: App) {
+async function getDiffFilesImpl(
+	app1: App,
+	app2: App,
+): Promise<Array<DiffFile>> {
 	if (app1.name === app2.name) {
 		return []
 	}
@@ -404,13 +445,6 @@ async function getDiffFilesImpl(app1: App, app2: App) {
 	void fsExtra.remove(app1CopyPath).catch(() => {})
 	void fsExtra.remove(app2CopyPath).catch(() => {})
 
-	const typesMap = {
-		ChangedFile: 'modified',
-		AddedFile: 'added',
-		DeletedFile: 'deleted',
-		RenamedFile: 'renamed',
-	}
-
 	const parsed = parseGitDiff(diffOutput, { noPrefix: true })
 
 	const testFiles = Array.from(
@@ -431,9 +465,7 @@ async function getDiffFilesImpl(app1: App, app2: App) {
 
 	return parsed.files
 		.map((file) => ({
-			// prettier-ignore
-
-			status: (typesMap[file.type] ?? 'unknown') as 'renamed' | 'modified' | 'deleted' | 'added' | 'unknown',
+			status: getDiffStatus(file.type),
 			path: diffPathToRelative(
 				file.type === 'RenamedFile' ? file.pathBefore : file.path,
 			),
@@ -460,6 +492,7 @@ export async function getDiffCode(
 			forceFresh || (await getForceFreshForDiff(app1, app2, cacheEntry)),
 		timings,
 		request,
+		checkValue: z.string(),
 		getFreshValue: () => getDiffCodeImpl(app1, app2),
 	})
 	return result

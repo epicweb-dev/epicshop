@@ -27,6 +27,24 @@ const NotificationSchema = z.object({
 		.transform((val) => (val ? new Date(val) : null)),
 })
 
+// Schema for validating cached notifications (post-transform, with Date objects)
+const CachedNotificationSchema = z.object({
+	id: z.string(),
+	title: z.string(),
+	message: z.string(),
+	link: z.string().optional(),
+	type: z.enum(['info', 'warning', 'danger']),
+	products: z
+		.array(
+			z.object({
+				host: z.string(),
+				slug: z.string().optional(),
+			}),
+		)
+		.optional(),
+	expiresAt: z.instanceof(Date).nullable(),
+})
+
 export type Notification = z.infer<typeof NotificationSchema>
 
 async function getRemoteNotifications() {
@@ -36,6 +54,7 @@ async function getRemoteNotifications() {
 		ttl: 1000 * 60 * 60 * 6,
 		swr: 1000 * 60 * 60 * 24,
 		offlineFallbackValue: [],
+		checkValue: CachedNotificationSchema.array(),
 		async getFreshValue() {
 			const URL =
 				'https://gist.github.com/kentcdodds/c3aaa5141f591cdbb0e6bfcacd361f39'

@@ -3,6 +3,7 @@ import './init-env.ts'
 import fs from 'node:fs/promises'
 import path from 'node:path'
 import { execa, execaCommand } from 'execa'
+import { z } from 'zod'
 import { getWorkshopRoot } from './apps.server.ts'
 import { cachified, checkForUpdatesCache } from './cache.server.ts'
 import { getWorkshopConfig } from './config.server.ts'
@@ -16,6 +17,18 @@ import { checkConnection } from './utils.server.ts'
 import { getErrorMessage } from './utils.ts'
 
 const gitLog = logger('epic:git')
+const CheckForUpdatesSchema = z.object({
+	updatesAvailable: z.boolean(),
+	repoUpdatesAvailable: z.boolean(),
+	dependenciesNeedInstall: z.boolean(),
+	updateNotificationId: z.string().nullable(),
+	commitsAhead: z.number().nullable(),
+	commitsBehind: z.number().nullable(),
+	localCommit: z.string().nullable(),
+	remoteCommit: z.string().nullable(),
+	diffLink: z.string().nullable(),
+	message: z.string().nullable(),
+})
 
 function dirHasTrackedFiles(cwd: string, dirPath: string) {
 	return execa('git', ['ls-files', dirPath], { cwd }).then(
@@ -219,6 +232,7 @@ export async function checkForUpdatesCached() {
 		ttl: 1000 * 60,
 		swr: 1000 * 60 * 60 * 24,
 		key,
+		checkValue: CheckForUpdatesSchema,
 		getFreshValue: checkForUpdates,
 		cache: checkForUpdatesCache,
 	})

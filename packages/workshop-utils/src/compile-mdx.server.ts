@@ -19,6 +19,7 @@ import emoji from 'remark-emoji'
 import gfm from 'remark-gfm'
 import { type PluggableList } from 'unified'
 import { visit } from 'unist-util-visit'
+import { z } from 'zod'
 import {
 	cachified,
 	compiledInstructionMarkdownCache,
@@ -32,6 +33,11 @@ type MermaidTheme = 'dark' | 'default'
 
 const themeCookieName = 'EpicShop_theme'
 const themeHintCookieName = 'EpicShop_CH-prefers-color-scheme'
+const CompiledInstructionMarkdownSchema = z.object({
+	code: z.string(),
+	title: z.string().nullable(),
+	epicVideoEmbeds: z.array(z.string()),
+})
 
 function getMermaidTheme(request?: Request): MermaidTheme {
 	if (!request) return 'default'
@@ -230,6 +236,7 @@ export async function compileMdx(
 		request,
 		timings,
 		forceFresh,
+		checkValue: CompiledInstructionMarkdownSchema,
 		getFreshValue: () => compileMdxImpl(file, { mermaidTheme }),
 	})
 }
@@ -332,6 +339,7 @@ export async function compileMarkdownString(markdownString: string) {
 		key: md5(markdownString),
 		cache: compiledMarkdownCache,
 		ttl: 1000 * 60 * 60 * 24,
+		checkValue: z.string(),
 		getFreshValue: async () => {
 			try {
 				verboseLog(`Compiling string`, markdownString)
