@@ -128,7 +128,12 @@ const offlineVideoDownloadResolutions = [
 ] as const
 type OfflineVideoDownloadResolution =
 	(typeof offlineVideoDownloadResolutions)[number]
-type OfflineVideoDownloadQuality = 'source' | 'highest' | 'high' | 'medium' | 'low'
+type OfflineVideoDownloadQuality =
+	| 'source'
+	| 'highest'
+	| 'high'
+	| 'medium'
+	| 'low'
 type EpicVideoDownload = NonNullable<EpicVideoMetadata['downloads']>[number]
 
 function isOfflineVideoDownloadResolution(
@@ -567,15 +572,18 @@ function sortVideoDownloads(
 	downloads: Array<EpicVideoDownload>,
 	resolution: OfflineVideoDownloadResolution,
 ) {
-	const order = videoDownloadQualityOrder[resolution] ?? videoDownloadQualityOrder.best
-	const qualityRank = new Map(
-		order.map((quality, index) => [quality, index]),
-	)
+	const order =
+		videoDownloadQualityOrder[resolution] ?? videoDownloadQualityOrder.best
+	const qualityRank = new Map(order.map((quality, index) => [quality, index]))
 	return [...downloads].sort((a, b) => {
 		const aQuality = normalizeDownloadQuality(a.quality)
 		const bQuality = normalizeDownloadQuality(b.quality)
-		const aRank = aQuality ? (qualityRank.get(aQuality) ?? order.length) : order.length + 1
-		const bRank = bQuality ? (qualityRank.get(bQuality) ?? order.length) : order.length + 1
+		const aRank = aQuality
+			? (qualityRank.get(aQuality) ?? order.length)
+			: order.length + 1
+		const bRank = bQuality
+			? (qualityRank.get(bQuality) ?? order.length)
+			: order.length + 1
 		if (aRank !== bRank) return aRank - bRank
 		const aWidth = a.width ?? 0
 		const bWidth = b.width ?? 0
