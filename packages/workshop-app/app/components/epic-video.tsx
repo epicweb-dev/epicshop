@@ -71,7 +71,9 @@ function useOfflineVideoAvailability(
 	options: OfflineVideoAvailabilityOptions = {},
 ) {
 	const initialAvailability =
-		options.initialAvailability === undefined ? null : options.initialAvailability
+		options.initialAvailability === undefined
+			? null
+			: options.initialAvailability
 	const [available, setAvailable] = React.useState(initialAvailability ?? false)
 	const [checked, setChecked] = React.useState(initialAvailability !== null)
 	const offlineUrl = `/resources/offline-videos/${encodeURIComponent(playbackId)}`

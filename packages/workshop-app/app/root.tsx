@@ -17,8 +17,8 @@ import {
 	checkForUpdatesCached,
 	checkForExerciseChanges,
 } from '@epic-web/workshop-utils/git.server'
-import { getOfflineVideoPlaybackIds } from '@epic-web/workshop-utils/offline-videos.server'
 import { getUnmutedNotifications } from '@epic-web/workshop-utils/notifications.server'
+import { getOfflineVideoPlaybackIds } from '@epic-web/workshop-utils/offline-videos.server'
 import { makeTimings } from '@epic-web/workshop-utils/timing.server'
 import {
 	getSetClientIdCookieHeader,
