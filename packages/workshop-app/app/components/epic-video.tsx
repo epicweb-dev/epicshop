@@ -70,7 +70,9 @@ const offlineVideoDownloadQualityOrder: Record<
 	low: ['low', 'medium', 'high', 'highest', 'source'],
 }
 
-function getOfflineVideoResolution(value: unknown): OfflineVideoDownloadResolution {
+function getOfflineVideoResolution(
+	value: unknown,
+): OfflineVideoDownloadResolution {
 	if (value === 'high' || value === 'medium' || value === 'low') return value
 	return 'best'
 }
@@ -821,7 +823,9 @@ function EpicVideo({
 		if (!element) return
 		element.setAttribute('seekoffset', '10')
 	}, [])
-	const hasDownloadOptions = Boolean(downloadsAvailable || downloadSizes.length > 0)
+	const hasDownloadOptions = Boolean(
+		downloadsAvailable || downloadSizes.length > 0,
+	)
 	const downloadSizeBytes = getPreferredDownloadSize(
 		downloadSizes,
 		downloadResolution,

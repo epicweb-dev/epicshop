@@ -627,14 +627,15 @@ function getPreferredDownloadSize(
 			download.size,
 		]),
 	)
-	const order = videoDownloadQualityOrder[resolution] ?? videoDownloadQualityOrder.best
+	const order =
+		videoDownloadQualityOrder[resolution] ?? videoDownloadQualityOrder.best
 	for (const quality of order) {
 		const size = sizeByQuality.get(quality)
 		if (typeof size === 'number' && size > 0) return size
 	}
 	return (
-		downloadSizes.find((download) => typeof download.size === 'number')
-			?.size ?? null
+		downloadSizes.find((download) => typeof download.size === 'number')?.size ??
+		null
 	)
 }
 
