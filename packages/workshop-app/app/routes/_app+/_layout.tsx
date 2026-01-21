@@ -34,8 +34,8 @@ import {
 	useOnboardingIndicator,
 } from '#app/components/onboarding-indicator.tsx'
 import { Logo } from '#app/components/product.tsx'
-import { StatusIndicator } from '#app/components/status-indicator.tsx'
 import { useRevalidationWS } from '#app/components/revalidation-ws.tsx'
+import { StatusIndicator } from '#app/components/status-indicator.tsx'
 import {
 	Dialog,
 	DialogContent,
