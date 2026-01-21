@@ -157,6 +157,9 @@ export default function AccountSettings() {
 	]
 		.filter(Boolean)
 		.join(', ')
+	const showRemainingDownloadSize =
+		offlineVideos.totalVideos > 0 &&
+		offlineVideos.downloadedVideos < offlineVideos.totalVideos
 
 	const isSubmitting = navigation.state === 'submitting'
 
@@ -390,7 +393,7 @@ export default function AccountSettings() {
 						{offlineVideos.downloadedVideos > 0 ? (
 							<p>Downloaded size: {formatBytes(offlineVideos.totalBytes)}</p>
 						) : null}
-						{offlineVideos.remainingDownloadBytes > 0 ? (
+						{showRemainingDownloadSize ? (
 							<p>
 								Download all size:{' '}
 								{formatBytes(offlineVideos.remainingDownloadBytes)}
