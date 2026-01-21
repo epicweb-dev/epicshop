@@ -31,6 +31,12 @@ export function UpdateToast({
 
 	useEffect(() => {
 		if (updatesAvailable && updateNotificationKey) {
+			// Dismiss any existing toast before creating a new one
+			if (updateToastId.current) {
+				toast.dismiss(updateToastId.current)
+				updateToastId.current = null
+			}
+
 			const title = repoUpdatesAvailable
 				? 'New workshop updates available'
 				: 'Dependencies out of date'
