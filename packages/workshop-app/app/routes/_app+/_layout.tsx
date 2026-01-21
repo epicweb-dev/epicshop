@@ -800,6 +800,14 @@ function MobileNavigation({
 		system: 'System',
 	}[currentTheme]
 	const [isMobilePopoverOpen, setIsMobilePopoverOpen] = React.useState(false)
+	const showMobilePopover = Boolean(data.sidecarStatus)
+
+	// Reset popover state when it should not be shown to prevent stale state
+	React.useEffect(() => {
+		if (!showMobilePopover) {
+			setIsMobilePopoverOpen(false)
+		}
+	}, [showMobilePopover])
 
 	return (
 		<nav className="flex w-full border-b sm:hidden">
@@ -1204,7 +1212,7 @@ function MobileNavigation({
 								<ThemeSwitch />
 								<SidecarStatusIndicator status={data.sidecarStatus} />
 							</>
-						) : (
+						) : showMobilePopover ? (
 							<Popover
 								open={isMobilePopoverOpen}
 								onOpenChange={setIsMobilePopoverOpen}
@@ -1275,6 +1283,8 @@ function MobileNavigation({
 									) : null}
 								</PopoverContent>
 							</Popover>
+						) : (
+							<ThemeSwitch />
 						)}
 					</div>
 				</div>
