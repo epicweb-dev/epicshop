@@ -198,29 +198,18 @@ export async function start(options: StartOptions = {}): Promise<StartResult> {
 				const { getMutedNotifications } =
 					await import('@epic-web/workshop-utils/db.server')
 
-				const updates = await checkForUpdatesCached()
-				const updateNotificationId =
-					'updateNotificationId' in updates
-						? ((
-								updates as {
-									updateNotificationId?: string | null
-								}
-							).updateNotificationId ?? null)
-						: null
+				const updates = (await checkForUpdatesCached()) as {
+					updatesAvailable: boolean
+					diffLink: string | null
+					updateNotificationId?: string | null
+					repoUpdatesAvailable?: boolean
+					dependenciesNeedInstall?: boolean
+				}
+				const updateNotificationId = updates.updateNotificationId ?? null
 				const repoUpdatesAvailable =
-					'repoUpdatesAvailable' in updates
-						? Boolean(
-								(updates as { repoUpdatesAvailable?: boolean })
-									.repoUpdatesAvailable,
-							)
-						: updates.updatesAvailable
+					updates.repoUpdatesAvailable ?? updates.updatesAvailable
 				const dependenciesNeedInstall =
-					'dependenciesNeedInstall' in updates
-						? Boolean(
-								(updates as { dependenciesNeedInstall?: boolean })
-									.dependenciesNeedInstall,
-							)
-						: false
+					updates.dependenciesNeedInstall ?? false
 
 				if (!updates.updatesAvailable || !updateNotificationId) {
 					return
