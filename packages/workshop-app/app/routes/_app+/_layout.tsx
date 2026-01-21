@@ -765,7 +765,7 @@ function MobileNavigation({
 	const [showAccountBadge, dismissAccountBadge] =
 		useOnboardingIndicator('account-link')
 	const showExtrasLink = hasExtras(apps)
-	const playgroundExtra = data.extras.find(
+	const playgroundExtra = data.extras?.find(
 		(extra) => extra.name === data.playground.appName,
 	)
 	const isExtrasActive =
@@ -1019,14 +1019,14 @@ function MobileNavigation({
 												</Link>
 											) : null}
 										</span>
-										{isExtrasActive && data.extras.length ? (
+										{isExtrasActive && data.extras?.length ? (
 											<motion.ul
 												variants={listVariants}
 												initial="hidden"
 												animate="visible"
 												className="mt-2 ml-4 flex flex-col"
 											>
-												{data.extras.map((extra) => (
+												{data.extras?.map((extra) => (
 													<NavigationExtrasListItem key={extra.dirName}>
 														<NavLink
 															to={`/extra/${extra.dirName}`}
@@ -1331,7 +1331,7 @@ function Navigation({
 	const [showAccountBadge, dismissAccountBadge] =
 		useOnboardingIndicator('account-link')
 	const showExtrasLink = hasExtras(apps)
-	const playgroundExtra = data.extras.find(
+	const playgroundExtra = data.extras?.find(
 		(extra) => extra.name === data.playground.appName,
 	)
 	const isExtrasActive =
@@ -1343,11 +1343,11 @@ function Navigation({
 	)
 	const app =
 		params.type === 'solution'
-			? exercise?.solutions?.find(
+			? exercise?.solutions.find(
 					(s) => s.stepNumber === Number(params.stepNumber),
 				)
 			: params.type === 'problem'
-				? exercise?.problems?.find(
+				? exercise?.problems.find(
 						(p) => p.stepNumber === Number(params.stepNumber),
 					)
 				: null
@@ -1607,14 +1607,14 @@ function Navigation({
 												</Link>
 											) : null}
 										</span>
-										{isExtrasActive && data.extras.length ? (
+										{isExtrasActive && data.extras?.length ? (
 											<motion.ul
 												variants={listVariants}
 												initial="hidden"
 												animate="visible"
 												className="mt-2 ml-4 flex flex-col"
 											>
-												{data.extras.map((extra) => (
+												{data.extras?.map((extra) => (
 													<NavigationExtrasListItem key={extra.dirName}>
 														<NavLink
 															to={`/extra/${extra.dirName}`}
