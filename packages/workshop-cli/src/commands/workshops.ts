@@ -309,10 +309,7 @@ async function fetchWorkshopPackageJson(
 			const rawHeaders = getGitHubHeadersWithAccept(
 				'application/vnd.github.raw',
 			)
-			const rawUrls = buildRawPackageJsonUrls(
-				repo.name,
-				repo.default_branch,
-			)
+			const rawUrls = buildRawPackageJsonUrls(repo.name, repo.default_branch)
 
 			for (const url of rawUrls) {
 				const packageJson = await fetchPackageJsonFromUrl(url, rawHeaders)
