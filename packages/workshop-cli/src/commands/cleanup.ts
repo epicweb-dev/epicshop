@@ -16,6 +16,7 @@ import {
 	getUnpushedChanges,
 } from '@epic-web/workshop-utils/workshops.server'
 import chalk from 'chalk'
+import ora from 'ora'
 import { assertCanPrompt } from '../utils/cli-runtime.js'
 
 export type CleanupTarget =
@@ -59,6 +60,8 @@ type WorkshopEntry = {
 	repoName: string
 	path: string
 }
+
+type Spinner = ReturnType<typeof ora>
 
 const CLEANUP_TARGETS: Array<{
 	value: CleanupTarget
@@ -128,6 +131,19 @@ function resolveWorkshopCleanupTargets(
 		WORKSHOP_CLEANUP_TARGETS.map((target) => target.value),
 	)
 	return Array.from(new Set(targets.filter((target) => allowed.has(target))))
+}
+
+function startSpinner(text: string, silent: boolean): Spinner | null {
+	if (silent) return null
+	return ora(text).start()
+}
+
+function updateSpinner(spinner: Spinner | null, text: string) {
+	if (spinner) spinner.text = text
+}
+
+function stopSpinner(spinner: Spinner | null) {
+	if (spinner?.isSpinning) spinner.stop()
 }
 
 async function resolveCleanupPaths(
@@ -576,15 +592,25 @@ type WorkshopSummary = WorkshopEntry & {
 	cacheBytes: number
 }
 
+type WorkshopSummaryProgress = {
+	current: number
+	total: number
+	workshop: WorkshopEntry
+}
+
 async function getWorkshopSummaries({
 	workshops,
 	cacheDir,
+	onProgress,
 }: {
 	workshops: WorkshopEntry[]
 	cacheDir: string
+	onProgress?: (progress: WorkshopSummaryProgress) => void
 }): Promise<WorkshopSummary[]> {
 	const summaries: WorkshopSummary[] = []
-	for (const workshop of workshops) {
+	const total = workshops.length
+	for (const [index, workshop] of workshops.entries()) {
+		onProgress?.({ current: index + 1, total, workshop })
 		const id = getWorkshopInstanceId(workshop.path)
 		const sizeBytes = await getPathSize(workshop.path)
 		const cacheBytes = await getPathSize(path.join(cacheDir, id))
@@ -740,22 +766,53 @@ export async function cleanup({
 			}
 		}
 
-		const { reposDir, cacheDir, legacyCacheDir, dataPaths, offlineVideosDir } =
-			await resolveCleanupPaths(paths)
-		const allWorkshops = await listWorkshopsInDirectory(reposDir)
-		const workshopSummaries = await getWorkshopSummaries({
-			workshops: allWorkshops,
-			cacheDir,
-		})
-		const workshopBytes = workshopSummaries.reduce(
-			(total, workshop) => total + workshop.sizeBytes,
-			0,
-		)
-		const legacyCacheBytes = await getPathSize(legacyCacheDir)
-		const cacheBytes = (await getPathSize(cacheDir)) + legacyCacheBytes
-		const offlineVideosBytes = await getPathSize(offlineVideosDir)
-		const { preferencesBytes, authBytes } =
-			await getDataCleanupSizeSummary(dataPaths)
+		const analysisSpinner = startSpinner('Scanning local epicshop data...', silent)
+		let reposDir = ''
+		let cacheDir = ''
+		let legacyCacheDir = ''
+		let dataPaths: string[] = []
+		let offlineVideosDir = ''
+		let workshopSummaries: WorkshopSummary[] = []
+		let workshopBytes = 0
+		let legacyCacheBytes = 0
+		let cacheBytes = 0
+		let offlineVideosBytes = 0
+		let preferencesBytes = 0
+		let authBytes = 0
+
+		try {
+			updateSpinner(analysisSpinner, 'Resolving cleanup locations...')
+			;({ reposDir, cacheDir, legacyCacheDir, dataPaths, offlineVideosDir } =
+				await resolveCleanupPaths(paths))
+			updateSpinner(analysisSpinner, 'Finding installed workshops...')
+			const allWorkshops = await listWorkshopsInDirectory(reposDir)
+			updateSpinner(analysisSpinner, 'Calculating workshop sizes...')
+			workshopSummaries = await getWorkshopSummaries({
+				workshops: allWorkshops,
+				cacheDir,
+				onProgress: (progress) => {
+					updateSpinner(
+						analysisSpinner,
+						`Calculating workshop sizes (${progress.current}/${progress.total}): ${progress.workshop.repoName}`,
+					)
+				},
+			})
+			workshopBytes = workshopSummaries.reduce(
+				(total, workshop) => total + workshop.sizeBytes,
+				0,
+			)
+			updateSpinner(analysisSpinner, 'Calculating cache sizes...')
+			legacyCacheBytes = await getPathSize(legacyCacheDir)
+			const cacheDirBytes = await getPathSize(cacheDir)
+			cacheBytes = cacheDirBytes + legacyCacheBytes
+			updateSpinner(analysisSpinner, 'Calculating offline video sizes...')
+			offlineVideosBytes = await getPathSize(offlineVideosDir)
+			updateSpinner(analysisSpinner, 'Scanning preferences and auth data...')
+			;({ preferencesBytes, authBytes } =
+				await getDataCleanupSizeSummary(dataPaths))
+		} finally {
+			stopSpinner(analysisSpinner)
+		}
 
 		const cleanupChoices = CLEANUP_TARGETS.map((target) => {
 			const sizeByTarget: Record<CleanupTarget, number> = {
@@ -821,13 +878,27 @@ export async function cleanup({
 					(total, workshop) => total + workshop.cacheBytes,
 					0,
 				)
-				const offlineVideoIndex = await readOfflineVideoIndex(offlineVideosDir)
-				const workshopOfflineBytes =
-					await estimateOfflineVideoBytesForWorkshops(
+				const selectionSpinner = startSpinner(
+					'Calculating workshop cleanup sizes...',
+					silent,
+				)
+				let workshopOfflineBytes = 0
+				try {
+					updateSpinner(selectionSpinner, 'Loading offline video index...')
+					const offlineVideoIndex =
+						await readOfflineVideoIndex(offlineVideosDir)
+					updateSpinner(
+						selectionSpinner,
+						'Calculating workshop offline video sizes...',
+					)
+					workshopOfflineBytes = await estimateOfflineVideoBytesForWorkshops(
 						offlineVideosDir,
 						offlineVideoIndex,
 						selectedWorkshopIds,
 					)
+				} finally {
+					stopSpinner(selectionSpinner)
+				}
 				const workshopChoices = WORKSHOP_CLEANUP_TARGETS.map((target) => {
 					const sizeByTarget: Record<WorkshopCleanupTarget, number> = {
 						files: workshopFileBytes,
@@ -886,17 +957,30 @@ export async function cleanup({
 			return { success: true, message, selectedTargets }
 		}
 
-		const unpushedSummaries =
+		let unpushedSummaries: Array<{
+			workshop: WorkshopSummary
+			unpushedChanges: Awaited<ReturnType<typeof getUnpushedChanges>>
+		}> = []
+		if (
 			!silent &&
 			selectedWorkshopTargets.includes('files') &&
 			selectedWorkshops.length > 0
-				? await Promise.all(
-						selectedWorkshops.map(async (workshop) => ({
-							workshop,
-							unpushedChanges: await getUnpushedChanges(workshop.path),
-						})),
-					)
-				: []
+		) {
+			const unpushedSpinner = startSpinner(
+				'Checking for unpushed workshop changes...',
+				silent,
+			)
+			try {
+				unpushedSummaries = await Promise.all(
+					selectedWorkshops.map(async (workshop) => ({
+						workshop,
+						unpushedChanges: await getUnpushedChanges(workshop.path),
+					})),
+				)
+			} finally {
+				stopSpinner(unpushedSpinner)
+			}
+		}
 
 		if (!silent) {
 			console.log(chalk.yellow('This will clean up the following:'))
