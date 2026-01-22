@@ -157,14 +157,19 @@ function getFailingDependencies(
 async function checkDependenciesWithNpmLs(
 	rootDir: string,
 	expectedDependencies: Array<string>,
+	packageManager: string | null,
 ) {
 	if (expectedDependencies.length === 0) {
 		return { ok: true, failingDependencies: [] as Array<string> }
 	}
 
+	// Use the detected package manager, defaulting to npm
+	// pnpm has compatible ls output format
+	const command = packageManager === 'pnpm' ? 'pnpm' : 'npm'
+
 	try {
 		const result = await execa(
-			'npm',
+			command,
 			['ls', '--depth=0', '--json', ...expectedDependencies],
 			{ cwd: rootDir, reject: false },
 		)
@@ -263,6 +268,7 @@ export async function getRootPackageInstallStatus(
 	const npmLsResult = await checkDependenciesWithNpmLs(
 		rootDir,
 		expectedDependencies,
+		packageManager,
 	)
 	const failingDependencies = new Set(npmLsResult.failingDependencies)
 	const missingDependencies = dependencies.filter((dep) =>
@@ -274,7 +280,9 @@ export async function getRootPackageInstallStatus(
 	const missingOptionalDependencies = optionalDependencies.filter((dep) =>
 		failingDependencies.has(dep),
 	)
-	const dependenciesNeedInstall = !npmLsResult.ok
+	// Optional dependencies should not trigger install requirement
+	const dependenciesNeedInstall =
+		missingDependencies.length > 0 || missingDevDependencies.length > 0
 
 	return {
 		rootDir,

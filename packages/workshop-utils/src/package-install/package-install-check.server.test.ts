@@ -328,7 +328,8 @@ describe('getRootPackageInstallStatus', () => {
 			path.join(tempDir, 'package.json'),
 		)
 
-		expect(status.dependenciesNeedInstall).toBe(true)
+		// Missing optional dependencies should not trigger install requirement
+		expect(status.dependenciesNeedInstall).toBe(false)
 		expect(status.missingOptionalDependencies).toEqual(['optional-pkg'])
 	})
 
