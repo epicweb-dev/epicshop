@@ -1,4 +1,6 @@
 import chalk from 'chalk'
+import { matchSorter } from 'match-sorter'
+import { assertCanPrompt } from '../utils/cli-runtime.js'
 
 export type DiffResult = {
 	success: boolean
@@ -74,6 +76,157 @@ export async function showProgressDiff(
 		}
 
 		return { success: true, diff: diffCode }
+	} catch (error) {
+		const message = error instanceof Error ? error.message : String(error)
+		if (!silent) {
+			console.error(chalk.red(`❌ Failed to generate diff: ${message}`))
+		}
+		return {
+			success: false,
+			message,
+			error: error instanceof Error ? error : new Error(message),
+		}
+	}
+}
+
+/**
+ * Interactive diff selection between two apps
+ */
+export async function selectAndShowDiff(
+	options: { silent?: boolean } = {},
+): Promise<DiffResult> {
+	const { silent = false } = options
+
+	try {
+		const {
+			findSolutionDir,
+			getAppDisplayName,
+			getApps,
+			getFullPathFromAppName,
+			init,
+			isPlaygroundApp,
+		} = await import('@epic-web/workshop-utils/apps.server')
+		const { getDiffOutputWithRelativePaths } =
+			await import('@epic-web/workshop-utils/diff.server')
+
+		await init()
+
+		assertCanPrompt({
+			reason: 'select apps to diff',
+			hints: [
+				'Provide the apps directly: npx epicshop diff 01.02.problem 01.02.solution',
+			],
+		})
+
+		const { search } = await import('@inquirer/prompts')
+
+		const apps = await getApps()
+		if (apps.length < 2) {
+			throw new Error('Need at least two apps to diff')
+		}
+
+		const playgroundApp = apps.find(isPlaygroundApp)
+		let defaultFirstApp = playgroundApp
+		let defaultSecondApp = undefined as (typeof apps)[number] | undefined
+		if (playgroundApp) {
+			try {
+				const solutionDir = await findSolutionDir({
+					fullPath: await getFullPathFromAppName(playgroundApp.appName),
+				})
+				defaultSecondApp = apps.find((app) => app.fullPath === solutionDir)
+			} catch {
+				// Ignore default selection errors; still allow interactive selection.
+			}
+		}
+
+		const choices = apps.map((app) => ({
+			name: getAppDisplayName(app, apps),
+			value: app,
+			description: app.fullPath,
+		}))
+
+		const orderChoices = (
+			allChoices: typeof choices,
+			preferredName?: string,
+		) => {
+			if (!preferredName) return allChoices
+			const preferred = allChoices.find(
+				(choice) => choice.value.name === preferredName,
+			)
+			if (!preferred) return allChoices
+			return [
+				preferred,
+				...allChoices.filter((choice) => choice.value.name !== preferredName),
+			]
+		}
+
+		const selectApp = async (
+			message: string,
+			options: { excludeName?: string; preferredName?: string } = {},
+		) => {
+			const { excludeName, preferredName } = options
+			const availableChoices = excludeName
+				? choices.filter((choice) => choice.value.name !== excludeName)
+				: choices
+			const orderedChoices = orderChoices(availableChoices, preferredName)
+
+			return search({
+				message,
+				source: async (input) => {
+					if (!input) return orderedChoices
+					return matchSorter(availableChoices, input, {
+						keys: ['name', 'value.name', 'description'],
+					})
+				},
+			})
+		}
+
+		try {
+			const app1 = await selectApp('Select the first app to diff:', {
+				preferredName: defaultFirstApp?.name,
+			})
+			const app2 = await selectApp('Select the second app to diff:', {
+				excludeName: app1.name,
+				preferredName:
+					defaultSecondApp?.name === app1.name
+						? undefined
+						: defaultSecondApp?.name,
+			})
+			const diffCode = await getDiffOutputWithRelativePaths(app1, app2)
+			const app1Label = getAppDisplayName(app1, apps)
+			const app2Label = getAppDisplayName(app2, apps)
+
+			if (!diffCode) {
+				if (!silent) {
+					console.log(chalk.green('✓ No differences between the apps!'))
+				}
+				return { success: true, message: 'No changes', diff: '' }
+			}
+
+			if (!silent) {
+				console.log(
+					chalk.bold.cyan(`\n📋 Diff: ${app1Label} vs ${app2Label}\n`),
+				)
+				console.log(
+					chalk.gray(
+						`Lines starting with - are in ${app1Label} but not ${app2Label}`,
+					),
+				)
+				console.log(
+					chalk.gray(
+						`Lines starting with + are in ${app2Label} but not ${app1Label}\n`,
+					),
+				)
+				console.log(formatDiff(diffCode))
+			}
+
+			return { success: true, diff: diffCode }
+		} catch (error) {
+			if ((error as Error).message === 'USER_QUIT') {
+				return { success: false, message: 'Cancelled' }
+			}
+			throw error
+		}
 	} catch (error) {
 		const message = error instanceof Error ? error.message : String(error)
 		if (!silent) {

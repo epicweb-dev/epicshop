@@ -567,7 +567,7 @@ epicshop playground [subcommand] [target] [options]
 epicshop playground
 epicshop playground show
 
-# Set to the next incomplete step (or next problem if not logged in)
+# Select an exercise step to set as the playground (default preselects next step)
 epicshop playground set
 
 # Set to a specific step using shorthand notation
@@ -593,11 +593,9 @@ epicshop playground saved
 
 #### Behavior
 
-- When setting without arguments while logged in, automatically sets to the next
-  incomplete step based on your progress
-- When setting without arguments while not logged in, sets to the next problem
-  app after the current playground
-- Interactive selection is available when no target is specified
+- When setting without arguments, prompts you to select an exercise step
+  (default selection matches the next incomplete step or next problem after the
+  current playground)
 - Saved playground selection requires persistence to be enabled in Preferences
 
 ### `progress`
@@ -663,8 +661,8 @@ epicshop diff [app1] [app2] [options]
 - `app1` (optional) - First app identifier (e.g., `01.02.problem`)
 - `app2` (optional) - Second app identifier (e.g., `01.02.solution`)
 
-If no arguments are provided, shows the diff between the current playground and
-its solution.
+If no arguments are provided, you will be prompted to select the two apps to
+diff (default selection is the playground vs solution).
 
 #### Options
 
@@ -673,7 +671,7 @@ its solution.
 #### Examples
 
 ```bash
-# Show diff between current playground and its solution
+# Select apps to diff (defaults to playground vs solution)
 epicshop diff
 
 # Show diff between two specific apps

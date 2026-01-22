@@ -993,7 +993,10 @@ const cli = yargs(args)
 				})
 				.example('$0 playground', 'Show current playground status')
 				.example('$0 playground show', 'Show current playground status')
-				.example('$0 playground set', 'Set playground (auto-detect next)')
+				.example(
+					'$0 playground set',
+					'Select a playground app to set (defaults to next step)',
+				)
 				.example('$0 playground set 1.2.problem', 'Set to specific step')
 				.example('$0 playground set --exercise 1 --step 2', 'Set with options')
 				.example(
@@ -1072,17 +1075,10 @@ const cli = yargs(args)
 						type = parsed.type ?? type
 					}
 
-					// If no specific target, check if we should show interactive or auto
+					// If no specific target, prompt for selection
 					if (!exerciseNumber && !stepNumber && !type) {
-						// Auto-detect next step or show interactive
-						const result = await set({ silent: argv.silent })
-						if (!result.success) {
-							// If auto-detect fails, try interactive
-							const interactiveResult = await selectAndSet({
-								silent: argv.silent,
-							})
-							if (!interactiveResult.success) process.exit(1)
-						}
+						const result = await selectAndSet({ silent: argv.silent })
+						if (!result.success) process.exit(1)
 					} else {
 						const result = await set({
 							exerciseNumber,
@@ -1241,7 +1237,7 @@ const cli = yargs(args)
 			return yargs
 				.positional('app1', {
 					describe:
-						'First app identifier (e.g., 01.02.problem). If omitted, shows playground vs solution.',
+						'First app identifier (e.g., 01.02.problem). If omitted, prompts with playground vs solution as the default.',
 					type: 'string',
 				})
 				.positional('app2', {
@@ -1254,7 +1250,10 @@ const cli = yargs(args)
 					description: 'Run without output logs',
 					default: false,
 				})
-				.example('$0 diff', 'Show diff between playground and solution')
+				.example(
+					'$0 diff',
+					'Select apps to diff (defaults to playground vs solution)',
+				)
 				.example(
 					'$0 diff 01.02.problem 01.02.solution',
 					'Show diff between two apps',
@@ -1283,7 +1282,7 @@ const cli = yargs(args)
 			process.chdir(workshopRoot)
 
 			try {
-				const { showProgressDiff, showDiffBetweenApps } =
+				const { showDiffBetweenApps, selectAndShowDiff } =
 					await import('./commands/diff.js')
 
 				if (argv.app1 && argv.app2) {
@@ -1299,7 +1298,7 @@ const cli = yargs(args)
 					)
 					process.exit(1)
 				} else {
-					const result = await showProgressDiff({ silent: argv.silent })
+					const result = await selectAndShowDiff({ silent: argv.silent })
 					if (!result.success) process.exit(1)
 				}
 			} finally {
@@ -1915,8 +1914,8 @@ try {
 				const originalCwd = process.cwd()
 				process.chdir(wsRoot)
 				try {
-					const { showProgressDiff } = await import('./commands/diff.js')
-					const result = await showProgressDiff({})
+					const { selectAndShowDiff } = await import('./commands/diff.js')
+					const result = await selectAndShowDiff({})
 					if (!result.success) process.exit(1)
 				} finally {
 					process.chdir(originalCwd)

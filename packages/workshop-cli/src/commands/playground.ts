@@ -35,6 +35,90 @@ type SavedPlaygroundEntry = {
 	displayName: string
 }
 
+/**
+ * Score progress items for sorting to find the next incomplete step
+ */
+function scoreProgress(
+	a: Array<{
+		type: string
+		exerciseNumber?: number
+		stepNumber?: number
+	}>[number],
+): number {
+	if (a.type === 'workshop-instructions') return 0
+	if (a.type === 'workshop-finished') return 10000
+	if (a.type === 'instructions') return a.exerciseNumber! * 100
+	if (a.type === 'step') return a.exerciseNumber! * 100 + a.stepNumber!
+	if (a.type === 'finished') return a.exerciseNumber! * 100 + 100
+	if (a.type === 'unknown') return 100000
+	return -1
+}
+
+/**
+ * Find the default playground app based on progress or next step
+ */
+async function findDefaultPlaygroundApp(params: {
+	exerciseStepApps: Array<{
+		name: string
+		exerciseNumber: number
+		stepNumber: number
+		type: 'problem' | 'solution'
+		fullPath: string
+	}>
+	progress: Array<{
+		type: string
+		exerciseNumber?: number
+		stepNumber?: number
+		epicCompletedAt?: string | null
+	}>
+	authInfo: unknown
+	getPlaygroundAppName: () => Promise<string | null>
+	isProblemApp: (app: { type: string }) => boolean
+}): Promise<
+	| {
+			name: string
+			exerciseNumber: number
+			stepNumber: number
+			type: 'problem' | 'solution'
+			fullPath: string
+	  }
+	| undefined
+> {
+	const {
+		exerciseStepApps,
+		progress,
+		authInfo,
+		getPlaygroundAppName,
+		isProblemApp,
+	} = params
+
+	// If authenticated, try to find the next incomplete step based on progress
+	if (authInfo) {
+		const sortedProgress = [...progress].sort((a, b) => {
+			return scoreProgress(a) - scoreProgress(b)
+		})
+		const nextProgress = sortedProgress.find((p) => !p.epicCompletedAt)
+
+		if (nextProgress && nextProgress.type === 'step') {
+			const app = exerciseStepApps.find(
+				(a) =>
+					a.exerciseNumber === nextProgress.exerciseNumber &&
+					a.stepNumber === nextProgress.stepNumber &&
+					a.type === 'problem',
+			)
+			if (app) return app
+		}
+	}
+
+	// Otherwise, find the next step from current
+	const playgroundAppName = await getPlaygroundAppName()
+	const currentIndex = exerciseStepApps.findIndex(
+		(a) => a.name === playgroundAppName,
+	)
+
+	return exerciseStepApps.slice(currentIndex + 1).find(isProblemApp)
+}
+
 async function getSavedPlaygroundEntries(): Promise<
 	Array<SavedPlaygroundEntry>
 > {
@@ -147,7 +231,6 @@ export async function set(
 		const {
 			init,
 			getApps,
-			getExerciseApp,
 			getPlaygroundAppName,
 			isExerciseStepApp,
 			isProblemApp,
@@ -163,58 +246,17 @@ export async function set(
 
 		// If no arguments provided, try to set based on progress or next step
 		if (!exerciseNumber && !stepNumber && !type) {
-			if (authInfo) {
-				// Try to find the next incomplete step based on progress
-				const progress = await getProgress()
-				const scoreProgress = (a: (typeof progress)[number]) => {
-					if (a.type === 'workshop-instructions') return 0
-					if (a.type === 'workshop-finished') return 10000
-					if (a.type === 'instructions') return a.exerciseNumber * 100
-					if (a.type === 'step') return a.exerciseNumber * 100 + a.stepNumber
-					if (a.type === 'finished') return a.exerciseNumber * 100 + 100
-					if (a.type === 'unknown') return 100000
-					return -1
-				}
-				const sortedProgress = progress.sort((a, b) => {
-					return scoreProgress(a) - scoreProgress(b)
-				})
-				const nextProgress = sortedProgress.find((p) => !p.epicCompletedAt)
-
-				if (nextProgress && nextProgress.type === 'step') {
-					const exerciseApp = await getExerciseApp({
-						exerciseNumber: nextProgress.exerciseNumber.toString(),
-						stepNumber: nextProgress.stepNumber.toString(),
-						type: 'problem',
-					})
-					if (!exerciseApp) {
-						throw new Error('No exercise app found')
-					}
-					await setPlayground(exerciseApp.fullPath)
-					if (!silent) {
-						console.log(
-							chalk.green(
-								`✅ Playground set to ${exerciseApp.exerciseNumber}.${exerciseApp.stepNumber}.${exerciseApp.type}`,
-							),
-						)
-					}
-					return {
-						success: true,
-						message: `Playground set to ${exerciseApp.exerciseNumber}.${exerciseApp.stepNumber}.${exerciseApp.type}`,
-					}
-				}
-			}
-
-			// Otherwise, find the next step from current
 			const apps = await getApps()
 			const exerciseStepApps = apps.filter(isExerciseStepApp)
-			const playgroundAppName = await getPlaygroundAppName()
-			const currentIndex = exerciseStepApps.findIndex(
-				(a) => a.name === playgroundAppName,
-			)
+			const progress = await getProgress()
 
-			const desiredApp = exerciseStepApps
-				.slice(currentIndex + 1)
-				.find(isProblemApp)
+			const desiredApp = await findDefaultPlaygroundApp({
+				exerciseStepApps,
+				progress,
+				authInfo,
+				getPlaygroundAppName,
+				isProblemApp,
+			})
 
 			if (!desiredApp) {
 				const message =
@@ -293,8 +335,15 @@ export async function selectAndSet(
 	const { silent = false } = options
 
 	try {
-		const { init, getApps, isExerciseStepApp, setPlayground } =
-			await import('@epic-web/workshop-utils/apps.server')
+		const {
+			init,
+			getApps,
+			getPlaygroundAppName,
+			isExerciseStepApp,
+			isProblemApp,
+			setPlayground,
+		} = await import('@epic-web/workshop-utils/apps.server')
+		const { getAuthInfo } = await import('@epic-web/workshop-utils/db.server')
 		const { getProgress } =
 			await import('@epic-web/workshop-utils/epic-api.server')
 
@@ -313,6 +362,15 @@ export async function selectAndSet(
 		const apps = await getApps()
 		const exerciseStepApps = apps.filter(isExerciseStepApp)
 		const progress = await getProgress()
+		const authInfo = await getAuthInfo()
+
+		const defaultApp = await findDefaultPlaygroundApp({
+			exerciseStepApps,
+			progress,
+			authInfo,
+			getPlaygroundAppName,
+			isProblemApp,
+		})
 
 		const choices = exerciseStepApps.map((app) => {
 			const ex = app.exerciseNumber.toString().padStart(2, '0')
@@ -332,12 +390,26 @@ export async function selectAndSet(
 				description: app.fullPath,
 			}
 		})
+		const orderedChoices = defaultApp
+			? (() => {
+					const preferred = choices.find(
+						(choice) => choice.value.name === defaultApp?.name,
+					)
+					if (!preferred) return choices
+					return [
+						preferred,
+						...choices.filter(
+							(choice) => choice.value.name !== defaultApp?.name,
+						),
+					]
+				})()
+			: choices
 
 		try {
 			const selectedApp = await search({
 				message: 'Select an exercise step to set as playground:',
 				source: async (input) => {
-					if (!input) return choices
+					if (!input) return orderedChoices
 					return matchSorter(choices, input, {
 						keys: ['name', 'value.name'],
 					})
