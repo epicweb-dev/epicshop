@@ -1,0 +1,85 @@
+<!doctype html>
+<html lang="en">
+	<head>
+		<meta charset="UTF-8" />
+		<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+		<title>Epic Workshop App - Home</title>
+		<style>
+			* {
+				box-sizing: border-box;
+			}
+			body {
+				margin: 0;
+				font-family: "Inter", "Helvetica Neue", Arial, sans-serif;
+				background: #0b0b0b;
+				color: #f8f7f4;
+			}
+			.header {
+				display: flex;
+				justify-content: space-between;
+				align-items: center;
+				padding: 20px 28px;
+				border-bottom: 1px solid rgba(248, 247, 244, 0.1);
+				background: rgba(12, 12, 12, 0.9);
+			}
+			.tag {
+				font-size: 12px;
+				letter-spacing: 2px;
+				text-transform: uppercase;
+				color: rgba(248, 247, 244, 0.6);
+			}
+			.content {
+				padding: 28px;
+				display: grid;
+				gap: 18px;
+			}
+			.card {
+				padding: 18px 20px;
+				border-radius: 16px;
+				background: rgba(248, 247, 244, 0.05);
+				border: 1px solid rgba(248, 247, 244, 0.08);
+			}
+			.progress {
+				height: 8px;
+				border-radius: 999px;
+				background: rgba(248, 247, 244, 0.15);
+				overflow: hidden;
+			}
+			.progress span {
+				display: block;
+				height: 100%;
+				width: 65%;
+				background: #f8f7f4;
+			}
+		</style>
+	</head>
+	<body>
+		<div class="header">
+			<div>
+				<div class="tag">Epic Workshop</div>
+				<div style="font-size: 20px; font-weight: 600">Welcome back</div>
+			</div>
+			<div style="font-size: 14px; color: rgba(248, 247, 244, 0.6)">
+				Progress synced
+			</div>
+		</div>
+		<div class="content">
+			<div class="card">
+				<div style="font-size: 16px; font-weight: 600">Continue: Exercise 3</div>
+				<div style="margin-top: 8px; color: rgba(248, 247, 244, 0.7)">
+					Auth patterns · Step 2
+				</div>
+				<div style="margin-top: 14px" class="progress">
+					<span></span>
+				</div>
+			</div>
+			<div class="card">
+				<div class="tag">Recent wins</div>
+				<ul style="margin: 12px 0 0 16px; color: rgba(248, 247, 244, 0.8)">
+					<li>Tests green for Step 1</li>
+					<li>Saved playground snapshot</li>
+				</ul>
+			</div>
+		</div>
+	</body>
+</html>

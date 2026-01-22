@@ -51,6 +51,20 @@ npm run build --workspace=@epic-web/workshop-presence
 npm run dev --workspace=@epic-web/workshop-app
 ```
 
+## Promo video (Remotion)
+
+Preview the promo composition in Remotion Studio:
+
+```bash
+npm run remotion:studio --workspace=@epic-web/workshop-app
+```
+
+Render the promo to a video file:
+
+```bash
+npm run remotion:render:promo --workspace=@epic-web/workshop-app
+```
+
 ## Documentation
 
 - Repo docs: `https://github.com/epicweb-dev/epicshop/tree/main/docs`

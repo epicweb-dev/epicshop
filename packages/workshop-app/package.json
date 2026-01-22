@@ -30,6 +30,8 @@
     "dev": "node ./server/dev-server.js",
     "format": "prettier --write .",
     "lint": "eslint --cache --cache-location ./node_modules/.cache/eslint .",
+    "remotion:render:promo": "remotion render ./remotion/index.tsx PromoVideo",
+    "remotion:studio": "remotion studio ./remotion/index.tsx",
     "start": "cross-env NODE_ENV=production node ./start.js",
     "typecheck": "react-router typegen && tsc --noEmit",
     "validate": "run-p lint typecheck"
@@ -101,6 +103,7 @@
     "react-router": "^7.12.0",
     "remix-flat-routes": "^0.8.5",
     "remix-utils": "^9.0.0",
+    "remotion": "^4.0.409",
     "satori": "^0.19.1",
     "semver": "^7.7.3",
     "sonner": "^2.0.7",
@@ -114,6 +117,8 @@
   "devDependencies": {
     "@playwright/test": "^1.57.0",
     "@react-router/dev": "^7.12.0",
+    "@remotion/cli": "^4.0.409",
+    "@remotion/transitions": "^4.0.409",
     "@tailwindcss/typography": "^0.5.19",
     "@tailwindcss/vite": "^4.1.18",
     "@testing-library/dom": "^10.4.1",
