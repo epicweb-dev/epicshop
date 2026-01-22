@@ -9,18 +9,18 @@ since v6.45.0, grouped by theme rather than release order.
 - A new tutorial workshop (`epicshop-tutorial`) is now the default first run.
   `epicshop init` clones it automatically and starts the tutorial, replacing the
   old onboarding video with a hands-on walkthrough.
-- The onboarding flow now supports optional authentication, clearer prompts,
-  and a multi-select workshop picker so you can grab multiple workshops at once.
-- Onboarding indicators and guide content now point out key features (like
-  Files and Playground) the first time you encounter them, with a first-time
-  "Set Playground" dialog that prevents accidental overwrites.
+- The onboarding flow now supports optional authentication, clearer prompts, and
+  a multi-select workshop picker so you can grab multiple workshops at once.
+- Onboarding indicators and guide content now point out key features (like Files
+  and Playground) the first time you encounter them, with a first-time "Set
+  Playground" dialog that prevents accidental overwrites.
 
 ## Learning flow and practice
 
-- Interleaved practice mode adds a "practice a past lesson" button that jumps
-  to a random completed step to reinforce retention.
-- Finished pages now surface retrieval practice components so you can reflect
-  on what you just completed before moving on.
+- Interleaved practice mode adds a "practice a past lesson" button that jumps to
+  a random completed step to reinforce retention.
+- Finished pages now surface retrieval practice components so you can reflect on
+  what you just completed before moving on.
 - Extras navigation now flows directly from the final exercise into the extra
   apps list, with consistent previous/next controls inside the extras section.
 - Exercise step headers and layouts were refined to avoid horizontal scrolling
@@ -38,8 +38,8 @@ since v6.45.0, grouped by theme rather than release order.
   more accurate, and download URLs are more reliable.
 - Transcript parsing and duration estimates improve how the video player
   represents timing, especially across long lessons.
-- Mermaid diagrams now render correctly in dark mode, improving readability
-  for embedded visuals.
+- Mermaid diagrams now render correctly in dark mode, improving readability for
+  embedded visuals.
 
 ## Playgrounds, extras, and examples
 
@@ -59,8 +59,8 @@ since v6.45.0, grouped by theme rather than release order.
 - `epicshop add` supports `repo#ref` so you can clone a specific workshop
   version, plus custom destination directories when you want to control where
   the repo is checked out.
-- Setup flows now auto-detect your package manager and support configuration
-  for more predictable installs across npm, pnpm, yarn, and bun.
+- Setup flows now auto-detect your package manager and support configuration for
+  more predictable installs across npm, pnpm, yarn, and bun.
 - Update flows and dependency checks are smarter, with clearer prompts when a
   workshop or dependency is out of date.
 - Windows-specific fixes make editor detection, command resolution, and clone
