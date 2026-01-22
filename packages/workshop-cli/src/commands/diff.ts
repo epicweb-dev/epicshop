@@ -127,7 +127,7 @@ export async function selectAndShowDiff(
 
 		const playgroundApp = apps.find(isPlaygroundApp)
 		let defaultFirstApp = playgroundApp
-		let defaultSecondApp = undefined as typeof playgroundApp | undefined
+		let defaultSecondApp = undefined as (typeof apps)[number] | undefined
 		if (playgroundApp) {
 			try {
 				const solutionDir = await findSolutionDir({
