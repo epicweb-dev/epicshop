@@ -142,4 +142,3 @@ test('workshops start treats Ctrl+C (signal termination) as success', async () =
 		await fs.rm(workshopDir, { recursive: true, force: true })
 	}
 })
-
