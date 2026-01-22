@@ -94,6 +94,7 @@ export type WorkshopsResult = {
 
 export type AddOptions = {
 	repoName?: string
+	repoRef?: string
 	directory?: string
 	destination?: string
 	silent?: boolean
@@ -139,6 +140,22 @@ function resolvePathWithTilde(inputPath: string): string {
 		return path.join(os.homedir(), trimmed.slice(2))
 	}
 	return trimmed
+}
+
+function parseRepoSpecifier(value: string): { repoName: string; repoRef?: string } {
+	const trimmed = value.trim()
+	const hashIndex = trimmed.indexOf('#')
+	if (hashIndex === -1) {
+		return { repoName: trimmed }
+	}
+	const repoName = trimmed.slice(0, hashIndex).trim()
+	const repoRef = trimmed.slice(hashIndex + 1).trim()
+	if (!repoName || !repoRef) {
+		throw new Error(
+			'Invalid repo specifier. Use the format: <repo-name>#<tag|branch|commit>.',
+		)
+	}
+	return { repoName, repoRef }
 }
 
 function getGitHubHeaders(): HeadersInit {
@@ -364,7 +381,7 @@ async function addSingleWorkshop(
 	repoName: string,
 	options: AddOptions,
 ): Promise<WorkshopsResult> {
-	const { silent = false } = options
+	const { silent = false, repoRef } = options
 
 	const hasExplicitCloneDestination = Boolean(
 		options.destination?.trim() || options.directory?.trim(),
@@ -463,7 +480,8 @@ async function addSingleWorkshop(
 	const repoUrl = `https://github.com/${GITHUB_ORG}/${repoName}.git`
 
 	if (!silent) {
-		console.log(chalk.cyan(`📦 Cloning ${repoUrl}...`))
+		const refHint = repoRef ? ` (${repoRef})` : ''
+		console.log(chalk.cyan(`📦 Cloning ${repoUrl}${refHint}...`))
 	}
 
 	// Clone the repository
@@ -481,6 +499,35 @@ async function addSingleWorkshop(
 			success: false,
 			message: `Failed to clone repository: ${cloneResult.message}`,
 			error: cloneResult.error,
+		}
+	}
+
+	if (repoRef) {
+		if (!silent) {
+			console.log(chalk.cyan(`🔀 Checking out ${repoRef}...`))
+		}
+		const checkoutResult = await runCommand(
+			'git',
+			['checkout', repoRef],
+			{
+				cwd: workshopPath,
+				silent,
+			},
+		)
+		if (!checkoutResult.success) {
+			if (!silent) {
+				console.log(chalk.yellow(`🧹 Cleaning up cloned directory...`))
+			}
+			try {
+				await fs.promises.rm(workshopPath, { recursive: true, force: true })
+			} catch {
+				// Ignore cleanup errors
+			}
+			return {
+				success: false,
+				message: `Failed to check out ${repoRef}: ${checkoutResult.message}`,
+				error: checkoutResult.error,
+			}
 		}
 	}
 
@@ -503,7 +550,8 @@ async function addSingleWorkshop(
 		}
 	}
 
-	const message = `Workshop "${repoName}" cloned successfully to ${workshopPath}`
+	const refSuffix = repoRef ? ` (${repoRef})` : ''
+	const message = `Workshop "${repoName}"${refSuffix} cloned successfully to ${workshopPath}`
 	if (!silent) {
 		console.log(chalk.green(`✅ ${message}`))
 	}
@@ -517,6 +565,25 @@ async function addSingleWorkshop(
 export async function add(options: AddOptions): Promise<WorkshopsResult> {
 	const { silent = false } = options
 	let { repoName } = options
+	let repoRef = options.repoRef
+
+	if (repoName) {
+		try {
+			const parsed = parseRepoSpecifier(repoName)
+			repoName = parsed.repoName
+			repoRef = parsed.repoRef ?? repoRef
+		} catch (error) {
+			const message = error instanceof Error ? error.message : String(error)
+			if (!silent) {
+				console.error(chalk.red(`❌ ${message}`))
+			}
+			return {
+				success: false,
+				message,
+				error: error instanceof Error ? error : new Error(message),
+			}
+		}
+	}
 
 	try {
 		// If no repo name provided, fetch available workshops and let user select
@@ -533,6 +600,7 @@ export async function add(options: AddOptions): Promise<WorkshopsResult> {
 				hints: [
 					'Provide the repo name: npx epicshop add <repo-name>',
 					'Example: npx epicshop add react-fundamentals',
+					'Pin to a tag/branch/commit: npx epicshop add react-fundamentals#v1.2.0',
 				],
 			})
 
@@ -865,7 +933,10 @@ export async function add(options: AddOptions): Promise<WorkshopsResult> {
 						chalk.cyan(`🏎️  Setting up ${chalk.bold(displayName)}...\n`),
 					)
 
-					const result = await addSingleWorkshop(selectedRepo, options)
+					const result = await addSingleWorkshop(selectedRepo, {
+						...options,
+						repoRef,
+					})
 					if (result.success) {
 						successCount++
 						console.log(
@@ -925,7 +996,7 @@ export async function add(options: AddOptions): Promise<WorkshopsResult> {
 			const displayName = getDisplayName(repoName)
 			console.log(chalk.cyan(`🏎️  Setting up ${chalk.bold(displayName)}...\n`))
 
-			const result = await addSingleWorkshop(repoName, options)
+			const result = await addSingleWorkshop(repoName, { ...options, repoRef })
 			if (result.success) {
 				console.log(
 					chalk.green(`🏁 Finished setting up ${chalk.bold(displayName)}\n`),
@@ -955,7 +1026,7 @@ export async function add(options: AddOptions): Promise<WorkshopsResult> {
 		if (!silent) {
 			console.log(chalk.cyan(`🏎️  Setting up ${chalk.bold(repoName)}...\n`))
 		}
-		const result = await addSingleWorkshop(repoName, options)
+		const result = await addSingleWorkshop(repoName, { ...options, repoRef })
 		if (result.success && !silent) {
 			console.log(
 				chalk.green(`🏁 Finished setting up ${chalk.bold(repoName)}\n`),

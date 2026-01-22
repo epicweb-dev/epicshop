@@ -145,13 +145,13 @@ bunx epicshop setup      # Uses bun
 yarn dlx epicshop setup  # Uses yarn
 ```
 
-### `add <repo-name> [destination]`
+### `add <repo-name[#ref]> [destination]`
 
 Add a workshop by cloning it from the epicweb-dev GitHub organization and
 running the setup script.
 
 ```bash
-epicshop add <repo-name> [destination] [options]
+epicshop add <repo-name[#ref]> [destination] [options]
 ```
 
 #### Options
@@ -166,6 +166,9 @@ epicshop add <repo-name> [destination] [options]
 # Clone and set up the full-stack-foundations workshop
 epicshop add full-stack-foundations
 
+# Clone and set up a specific ref
+epicshop add full-stack-foundations#v1.2.0
+
 # Clone to a specific destination directory (bypasses configured repos directory)
 epicshop add react-fundamentals ~/Desktop/react-fundamentals
 
@@ -176,11 +179,12 @@ epicshop add web-forms --directory ~/my-workshops
 #### What it does
 
 1. Clones the repository from `https://github.com/epicweb-dev/<repo-name>`
-2. Automatically runs `epicshop setup` in the cloned directory to install
+2. If a `#ref` is provided, checks out that tag, branch, or commit
+3. Automatically runs `epicshop setup` in the cloned directory to install
    dependencies. The package manager used for installation is automatically
    detected based on how you invoked epicshop (e.g., `pnpm dlx epicshop add`
    uses pnpm, `bunx epicshop add` uses bun)
-3. If cloned into your configured repos directory, it will show up in
+4. If cloned into your configured repos directory, it will show up in
    `epicshop list` and can be started/opened by name
 
 #### Interactive Workshop Selection
@@ -1180,6 +1184,9 @@ epicshop init
 
 # Or add a specific workshop
 epicshop add full-stack-foundations
+
+# Or add a specific ref
+epicshop add full-stack-foundations#v1.2.0
 
 # Start the workshop
 epicshop start

@@ -79,6 +79,45 @@ test('workshops add treats destination as the full clone path', async () => {
 	}
 })
 
+test('workshops add checks out a repo ref when provided (aha)', async () => {
+	vi.mocked(execa).mockClear()
+	vi.mocked(execa).mockResolvedValue({} as never)
+
+	const baseDir = await fs.mkdtemp(path.join(os.tmpdir(), 'epicshop user '))
+	const directory = path.join(baseDir, 'workshops dir')
+
+	try {
+		const repoName = 'mcp-fundamentals'
+		const repoRef = 'v1.2.3'
+		const result = await add({
+			repoName: `${repoName}#${repoRef}`,
+			directory,
+			silent: true,
+		})
+
+		expect(result.success).toBe(true)
+
+		const repoUrl = `https://github.com/epicweb-dev/${repoName}.git`
+		const reposDir = path.resolve(directory)
+		const workshopPath = path.join(reposDir, repoName)
+
+		expect(execa).toHaveBeenNthCalledWith(
+			1,
+			'git',
+			['clone', repoUrl, workshopPath],
+			expect.objectContaining({ cwd: reposDir }),
+		)
+		expect(execa).toHaveBeenNthCalledWith(
+			2,
+			'git',
+			['checkout', repoRef],
+			expect.objectContaining({ cwd: workshopPath }),
+		)
+	} finally {
+		await fs.rm(baseDir, { recursive: true, force: true })
+	}
+})
+
 test('workshops start treats Ctrl+C (signal termination) as success', async () => {
 	const workshopDir = await fs.mkdtemp(
 		path.join(os.tmpdir(), 'epicshop workshop '),

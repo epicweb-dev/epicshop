@@ -201,7 +201,7 @@ const cli = yargs(args)
 			return yargs
 				.positional('repo-name', {
 					describe:
-						'Repository name from epicweb-dev org (optional, shows list if omitted)',
+						'Repository name from epicweb-dev org (optional, shows list if omitted). Use <repo>#<tag|branch|commit> to pin a ref.',
 					type: 'string',
 				})
 				.positional('destination', {
@@ -233,6 +233,10 @@ const cli = yargs(args)
 				.example(
 					'$0 add react-fundamentals ~/Desktop/react-fundamentals',
 					'Clone workshop to a specific destination directory',
+				)
+				.example(
+					'$0 add react-fundamentals#v1.2.0',
+					'Clone a workshop at a specific tag, branch, or commit',
 				)
 		},
 		async (
