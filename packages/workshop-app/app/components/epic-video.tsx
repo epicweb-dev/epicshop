@@ -692,7 +692,8 @@ function EpicVideo({
 			void revalidator.revalidate()
 		} else if (data.action === 'download' && data.status === 'error') {
 			const description =
-				data.message ?? 'Offline video download failed. Check the terminal logs.'
+				data.message ??
+				'Offline video download failed. Check the terminal logs.'
 			toast.error('Offline video download failed', { description })
 		}
 	}, [offlineVideoFetcher.state, offlineVideoFetcher.data, revalidator])
