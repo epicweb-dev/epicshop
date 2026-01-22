@@ -95,7 +95,8 @@ export default defineConfig((config) => {
 					'execa',
 					'npm-run-path',
 					'unicorn-magic',
-					/^@epic-web\/workshop-utils.*/,
+					// Only externalize .server modules, not client-safe modules like offline-video-utils
+					/^@epic-web\/workshop-utils\/.*\.server$/,
 					'@resvg/resvg-js',
 				],
 			},
