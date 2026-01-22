@@ -1904,8 +1904,8 @@ try {
 				const originalCwd = process.cwd()
 				process.chdir(wsRoot)
 				try {
-				const { selectAndShowDiff } = await import('./commands/diff.js')
-				const result = await selectAndShowDiff({})
+					const { selectAndShowDiff } = await import('./commands/diff.js')
+					const result = await selectAndShowDiff({})
 					if (!result.success) process.exit(1)
 				} finally {
 					process.chdir(originalCwd)

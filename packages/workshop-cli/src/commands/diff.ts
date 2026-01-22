@@ -98,9 +98,8 @@ export async function selectAndShowDiff(
 	const { silent = false } = options
 
 	try {
-		const { init, getApps, getAppDisplayName } = await import(
-			'@epic-web/workshop-utils/apps.server'
-		)
+		const { init, getApps, getAppDisplayName } =
+			await import('@epic-web/workshop-utils/apps.server')
 		const { getDiffOutputWithRelativePaths } =
 			await import('@epic-web/workshop-utils/diff.server')
 
@@ -157,12 +156,18 @@ export async function selectAndShowDiff(
 			}
 
 			if (!silent) {
-				console.log(chalk.bold.cyan(`\n📋 Diff: ${app1Label} vs ${app2Label}\n`))
 				console.log(
-					chalk.gray(`Lines starting with - are in ${app1Label} but not ${app2Label}`),
+					chalk.bold.cyan(`\n📋 Diff: ${app1Label} vs ${app2Label}\n`),
 				)
 				console.log(
-					chalk.gray(`Lines starting with + are in ${app2Label} but not ${app1Label}\n`),
+					chalk.gray(
+						`Lines starting with - are in ${app1Label} but not ${app2Label}`,
+					),
+				)
+				console.log(
+					chalk.gray(
+						`Lines starting with + are in ${app2Label} but not ${app1Label}\n`,
+					),
 				)
 				console.log(formatDiff(diffCode))
 			}
