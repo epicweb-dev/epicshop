@@ -71,8 +71,9 @@ The editor selection algorithm uses a priority cascade. It first checks the
 `EPICSHOP_EDITOR` environment variable; if set, it uses that. Otherwise, it
 detects running editors by scanning active processes: on macOS it runs `ps x`
 and matches against a map of common editor process paths; on Windows it uses
-`wmic` to list processes and checks executable names against a whitelist; on
-Linux it uses `ps x` with process name filtering. The first matching editor from
+`wmic` when available (with a PowerShell `Get-Process` fallback) to list
+processes and checks executable names against a whitelist; on Linux it uses
+`ps x` with process name filtering. The first matching editor from
 the platform-specific list is selected.
 
 If no running editor is detected, the algorithm falls back to the `VISUAL`

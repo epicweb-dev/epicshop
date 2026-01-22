@@ -207,6 +207,39 @@ function getArgumentsForLineNumber(
 	return [fileName]
 }
 
+function getWindowsProcessPaths(): string[] {
+	const systemRoot = process.env.SystemRoot ?? process.env.WINDIR
+	const wmicPath = systemRoot
+		? path.join(systemRoot, 'System32', 'wbem', 'wmic.exe')
+		: null
+
+	if (wmicPath && fs.existsSync(wmicPath)) {
+		try {
+			const output = child_process
+				.execSync(
+					`"${wmicPath}" process where "executablepath is not null" get executablepath`,
+					{ stdio: ['ignore', 'pipe', 'ignore'] },
+				)
+				.toString()
+			return output.split(/\r?\n/)
+		} catch {
+			// Fall through to PowerShell
+		}
+	}
+
+	try {
+		const output = child_process
+			.execSync(
+				'powershell.exe -NoProfile -Command "Get-Process | Where-Object { $_.Path } | ForEach-Object { $_.Path }"',
+				{ stdio: ['ignore', 'pipe', 'ignore'] },
+			)
+			.toString()
+		return output.split(/\r?\n/)
+	} catch {
+		return []
+	}
+}
+
 function guessEditor(): Array<string | null> {
 	// Explicit config always wins
 	if (process.env.EPICSHOP_EDITOR) {
@@ -232,12 +265,7 @@ function guessEditor(): Array<string | null> {
 		} else if (process.platform === 'win32') {
 			// Some processes need elevated rights to get its executable path.
 			// Just filter them out upfront. This also saves 10-20ms on the command.
-			const output = child_process
-				.execSync(
-					'wmic process where "executablepath is not null" get executablepath',
-				)
-				.toString()
-			const runningProcesses = output.split('\r\n')
+			const runningProcesses = getWindowsProcessPaths()
 			for (let i = 0; i < runningProcesses.length; i++) {
 				const processPath = runningProcesses[i]?.trim()
 				if (!processPath) continue
