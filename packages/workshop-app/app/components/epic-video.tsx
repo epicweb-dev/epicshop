@@ -19,7 +19,7 @@ import {
 	MediaVolumeRange,
 } from 'media-chrome/react'
 import * as React from 'react'
-import { Await, Link, useFetcher } from 'react-router'
+import { Await, Link, useFetcher, useRevalidator } from 'react-router'
 import { useEventSource } from 'remix-utils/sse/react'
 import { toast } from 'sonner'
 import { useTheme } from '#app/routes/theme/index.tsx'
@@ -73,56 +73,6 @@ type OfflineVideoActionData = {
 	status: string
 	action?: string
 	message?: string
-}
-
-type OfflineVideoAvailabilityOptions = {
-	initialAvailability?: boolean | null
-}
-
-function useOfflineVideoAvailability(
-	playbackId: string,
-	refreshKey: number,
-	options: OfflineVideoAvailabilityOptions = {},
-) {
-	const initialAvailability =
-		options.initialAvailability === undefined
-			? null
-			: options.initialAvailability
-	const [available, setAvailable] = React.useState(initialAvailability ?? false)
-	const [checked, setChecked] = React.useState(initialAvailability !== null)
-	const offlineUrl = `/resources/offline-videos/${encodeURIComponent(playbackId)}`
-
-	React.useEffect(() => {
-		setAvailable(initialAvailability ?? false)
-		setChecked(initialAvailability !== null)
-	}, [initialAvailability, playbackId])
-
-	React.useEffect(() => {
-		if (typeof window === 'undefined') return
-		const controller = new AbortController()
-		let isActive = true
-
-		fetch(offlineUrl, { method: 'HEAD', signal: controller.signal })
-			.then((response) => {
-				if (!isActive) return
-				setAvailable(response.ok)
-			})
-			.catch(() => {
-				if (!isActive) return
-				setAvailable(false)
-			})
-			.finally(() => {
-				if (!isActive) return
-				setChecked(true)
-			})
-
-		return () => {
-			isActive = false
-			controller.abort()
-		}
-	}, [offlineUrl, refreshKey])
-
-	return { available, checked, offlineUrl }
 }
 
 function OfflineVideoUnavailable() {
@@ -524,17 +474,11 @@ function EpicVideo({
 		rootData.preferences?.offlineVideo?.downloadResolution,
 	)
 	const offlineVideoPlaybackIds = rootData.offlineVideoPlaybackIds
-	const initialOfflineAvailability =
-		offlineVideoPlaybackIds == null
-			? null
-			: offlineVideoPlaybackIds.includes(muxPlaybackId)
-	const [availabilityKey, setAvailabilityKey] = React.useState(0)
-	const offlineVideo = useOfflineVideoAvailability(
-		muxPlaybackId,
-		availabilityKey,
-		{ initialAvailability: initialOfflineAvailability },
-	)
-	const shouldUseOfflineVideo = offlineVideo.available
+	const offlineVideoAvailable =
+		offlineVideoPlaybackIds?.includes(muxPlaybackId) ?? false
+	const offlineVideoUrl = `/resources/offline-videos/${encodeURIComponent(muxPlaybackId)}`
+	const shouldUseOfflineVideo = offlineVideoAvailable
+	const revalidator = useRevalidator()
 	const offlineVideoFetcher = useFetcher<OfflineVideoActionData>()
 	const isOfflineActionBusy = offlineVideoFetcher.state !== 'idle'
 	const [downloadProgress, setDownloadProgress] = React.useState<
@@ -542,7 +486,7 @@ function EpicVideo({
 	>(undefined)
 
 	// Subscribe to download progress via SSE when downloading
-	const isDownloading = isOfflineActionBusy && !offlineVideo.available
+	const isDownloading = isOfflineActionBusy && !offlineVideoAvailable
 	const progressMessage = useEventSource(
 		`/resources/offline-video-progress/${encodeURIComponent(muxPlaybackId)}`,
 		{ enabled: isDownloading },
@@ -560,7 +504,13 @@ function EpicVideo({
 				status: 'downloading' | 'complete' | 'error'
 			}
 
-			if (progress.status === 'complete' || progress.status === 'error') {
+			if (progress.status === 'complete') {
+				setDownloadProgress(undefined)
+				void revalidator.revalidate()
+				return
+			}
+
+			if (progress.status === 'error') {
 				setDownloadProgress(undefined)
 				return
 			}
@@ -575,7 +525,7 @@ function EpicVideo({
 		} catch {
 			// Ignore JSON parse errors
 		}
-	}, [progressMessage])
+	}, [progressMessage, revalidator])
 
 	// Reset progress when download state changes
 	React.useEffect(() => {
@@ -735,19 +685,17 @@ function EpicVideo({
 
 	React.useEffect(() => {
 		if (offlineVideoFetcher.state !== 'idle') return
-		if (offlineVideoFetcher.data?.status) {
-			setAvailabilityKey((key) => key + 1)
-		}
-	}, [offlineVideoFetcher.state, offlineVideoFetcher.data])
-
-	React.useEffect(() => {
-		if (offlineVideoFetcher.state !== 'idle') return
 		const data = offlineVideoFetcher.data
-		if (!data || data.action !== 'download' || data.status !== 'error') return
-		const description =
-			data.message ?? 'Offline video download failed. Check the terminal logs.'
-		toast.error('Offline video download failed', { description })
-	}, [offlineVideoFetcher.state, offlineVideoFetcher.data])
+		if (!data) return
+
+		if (data.action === 'delete' && data.status === 'success') {
+			void revalidator.revalidate()
+		} else if (data.action === 'download' && data.status === 'error') {
+			const description =
+				data.message ?? 'Offline video download failed. Check the terminal logs.'
+			toast.error('Offline video download failed', { description })
+		}
+	}, [offlineVideoFetcher.state, offlineVideoFetcher.data, revalidator])
 
 	const handleDownload = React.useCallback(() => {
 		toast.success(
@@ -798,14 +746,13 @@ function EpicVideo({
 		downloadSizes,
 		downloadResolution,
 	)
-	const showOfflineActions = offlineVideo.available || hasDownloadOptions
+	const showOfflineActions = offlineVideoAvailable || hasDownloadOptions
 	const offlineActions = showOfflineActions ? (
 		<OfflineVideoActionButtons
-			isAvailable={offlineVideo.available}
+			isAvailable={offlineVideoAvailable}
 			isBusy={isOfflineActionBusy}
 			downloadProgress={downloadProgress}
 			downloadSizeBytes={downloadSizeBytes}
-			isVisible={offlineVideo.checked}
 			onDownload={handleDownload}
 			onDelete={handleDelete}
 		/>
@@ -851,7 +798,7 @@ function EpicVideo({
 								className="h-full w-full"
 								playsInline
 								preload="metadata"
-								src={offlineVideo.offlineUrl}
+								src={offlineVideoUrl}
 								onTimeUpdate={handleOfflineTimeUpdate}
 							/>
 							<div className="bg-foreground/40 text-background w-full space-y-1 px-3 pt-1 pb-1.5 text-sm leading-none backdrop-blur select-none">
@@ -889,12 +836,8 @@ function EpicVideo({
 							</div>
 						</MediaController>
 					</div>
-				) : !isOnline && offlineVideo.checked ? (
-					<OfflineVideoUnavailable />
 				) : !isOnline ? (
-					<div className="flex aspect-video w-full items-center justify-center">
-						<Loading>Checking offline videos...</Loading>
-					</div>
+					<OfflineVideoUnavailable />
 				) : (
 					<MuxPlayer
 						playbackId={muxPlaybackId}
