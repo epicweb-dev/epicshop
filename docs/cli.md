@@ -589,9 +589,9 @@ epicshop playground saved
 
 #### Behavior
 
-- When setting without arguments, prompts you to select an exercise step (default
-  selection matches the next incomplete step or next problem after the current
-  playground)
+- When setting without arguments, prompts you to select an exercise step
+  (default selection matches the next incomplete step or next problem after the
+  current playground)
 - Saved playground selection requires persistence to be enabled in Preferences
 
 ### `progress`

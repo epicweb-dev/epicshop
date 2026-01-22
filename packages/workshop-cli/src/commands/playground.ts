@@ -353,9 +353,7 @@ export async function selectAndSet(
 			const currentIndex = exerciseStepApps.findIndex(
 				(app) => app.name === playgroundAppName,
 			)
-			defaultApp = exerciseStepApps
-				.slice(currentIndex + 1)
-				.find(isProblemApp)
+			defaultApp = exerciseStepApps.slice(currentIndex + 1).find(isProblemApp)
 		}
 
 		const choices = exerciseStepApps.map((app) => {
