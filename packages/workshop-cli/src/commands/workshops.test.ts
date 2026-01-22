@@ -23,8 +23,9 @@ vi.mock('@epic-web/workshop-utils/workshops.server', () => ({
 }))
 
 const { execa } = await import('execa')
+const { githubCache } = await import('@epic-web/workshop-utils/cache.server')
 
-const { add, startWorkshop } = await import('./workshops.ts')
+const { add, startWorkshop, __test__ } = await import('./workshops.ts')
 
 test('workshops add passes a clone destination containing spaces as a single argument (aha)', async () => {
 	vi.mocked(execa).mockClear()
@@ -140,5 +141,39 @@ test('workshops start treats Ctrl+C (signal termination) as success', async () =
 		expect(result.success).toBe(true)
 	} finally {
 		await fs.rm(workshopDir, { recursive: true, force: true })
+	}
+})
+
+test('fetchWorkshopPackageJson falls back to GitHub API when raw fails (aha)', async () => {
+	const fetchMock = vi.fn(async (url: string | URL) => {
+		const urlString = String(url)
+		if (urlString.includes('raw.githubusercontent.com')) {
+			return new Response('Not Found', { status: 404 })
+		}
+		if (urlString.includes('api.github.com')) {
+			return new Response(
+				JSON.stringify({ epicshop: { title: 'Test Workshop' } }),
+				{ status: 200, headers: { 'content-type': 'application/json' } },
+			)
+		}
+		return new Response('Not Found', { status: 404 })
+	})
+
+	vi.stubGlobal('fetch', fetchMock)
+
+	try {
+		await githubCache.delete('github-package-json:test-workshop')
+
+		const result = await __test__.fetchWorkshopPackageJson({
+			name: 'test-workshop',
+			default_branch: 'main',
+		})
+
+		expect(result?.epicshop).toEqual(
+			expect.objectContaining({ title: 'Test Workshop' }),
+		)
+		expect(fetchMock).toHaveBeenCalled()
+	} finally {
+		vi.unstubAllGlobals()
 	}
 })
