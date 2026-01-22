@@ -878,7 +878,6 @@ export async function cleanup({
 					(total, workshop) => total + workshop.cacheBytes,
 					0,
 				)
-				const offlineVideoIndex = await readOfflineVideoIndex(offlineVideosDir)
 				const selectionSpinner = startSpinner(
 					'Calculating workshop cleanup sizes...',
 					silent,
