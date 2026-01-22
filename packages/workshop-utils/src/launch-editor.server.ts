@@ -305,6 +305,108 @@ function guessEditor(): Array<string | null> {
 	return [null]
 }
 
+export type EditorChoice = {
+	command: string
+	label: string
+}
+
+const EDITOR_LABELS: Record<string, string> = {
+	atom: 'Atom',
+	brackets: 'Brackets',
+	cursor: 'Cursor',
+	code: 'Visual Studio Code',
+	'code-insiders': 'Visual Studio Code - Insiders',
+	vscodium: 'VSCodium',
+	emacs: 'Emacs',
+	gvim: 'GVim',
+	vim: 'Vim',
+	mvim: 'MacVim',
+	subl: 'Sublime Text',
+	sublime_text: 'Sublime Text',
+	'notepad++': 'Notepad++',
+	idea: 'IntelliJ IDEA',
+	phpstorm: 'PhpStorm',
+	pycharm: 'PyCharm',
+	rubymine: 'RubyMine',
+	webstorm: 'WebStorm',
+	goland: 'GoLand',
+	rider: 'Rider',
+	appcode: 'AppCode',
+	zed: 'Zed',
+}
+
+function normalizeEditorCommand(command: string): string {
+	const base = path.basename(command).replace(/\.(exe|cmd|bat)$/i, '')
+	return base.trim().toLowerCase()
+}
+
+export function formatEditorLabel(command: string): string {
+	const normalized = normalizeEditorCommand(command)
+	return EDITOR_LABELS[normalized] ?? command
+}
+
+function isCommandAvailable(command: string): boolean {
+	if (!command) return false
+	if (path.isAbsolute(command)) {
+		return fs.existsSync(command)
+	}
+	if (command.includes(path.sep)) {
+		return fs.existsSync(command)
+	}
+	return commandExistsInPath(command)
+}
+
+function commandExistsInPath(command: string): boolean {
+	const pathValue = process.env.PATH ?? ''
+	if (!pathValue) return false
+	const pathExt =
+		process.platform === 'win32'
+			? (process.env.PATHEXT ?? '.EXE;.CMD;.BAT;.COM').split(';')
+			: ['']
+	const hasExtension = Boolean(path.extname(command))
+
+	for (const dir of pathValue.split(path.delimiter)) {
+		if (!dir) continue
+		for (const ext of pathExt) {
+			const suffix = hasExtension ? '' : ext
+			const fullPath = path.join(dir, `${command}${suffix}`)
+			if (fs.existsSync(fullPath)) return true
+		}
+	}
+	return false
+}
+
+function getSupportedEditorCommands(): string[] {
+	if (process.platform === 'darwin') {
+		return Array.from(new Set(Object.values(COMMON_EDITORS_OSX)))
+	}
+	if (process.platform === 'win32') {
+		return Array.from(new Set(COMMON_EDITORS_WIN))
+	}
+	return Array.from(new Set(Object.values(COMMON_EDITORS_LINUX)))
+}
+
+export function getAvailableEditors(): EditorChoice[] {
+	const available: EditorChoice[] = []
+	const seen = new Set<string>()
+	for (const command of getSupportedEditorCommands()) {
+		if (!isCommandAvailable(command)) continue
+		if (seen.has(command)) continue
+		seen.add(command)
+		available.push({
+			command,
+			label: formatEditorLabel(command),
+		})
+	}
+	return available.sort((a, b) => a.label.localeCompare(b.label))
+}
+
+export function getDefaultEditorCommand(): string | null {
+	const editorInfo = guessEditor()
+	const editor = editorInfo[0]
+	return editor ? String(editor) : null
+}
+
 let _childProcess: ReturnType<typeof child_process.spawn> | null = null
 export type Result =
 	| { status: 'success' }

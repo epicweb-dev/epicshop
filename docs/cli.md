@@ -313,6 +313,10 @@ The command will try to detect your editor in the following order:
 Supported editors include VS Code, Cursor, Sublime Text, Atom, Vim, Emacs, and
 many JetBrains IDEs.
 
+You can also set a preferred editor via `epicshop config editor` (or
+`epicshop config --editor <command>`). The `open` command will prompt you to
+confirm the detected editor the first time and then reuse your preference.
+
 ### `config`
 
 View or update workshop configuration settings.
@@ -324,6 +328,7 @@ epicshop config [options]
 #### Options
 
 - `--repos-dir <path>` - Set the default directory where workshops are cloned
+- `--editor <command>` - Set the preferred editor command
 - `--silent, -s` - Run without output logs (default: false)
 
 #### Examples
@@ -334,12 +339,19 @@ epicshop config
 
 # Set the repos directory
 epicshop config --repos-dir ~/epicweb-workshops
+
+# Choose a preferred editor
+epicshop config editor
+
+# Set preferred editor to VS Code
+epicshop config --editor code
 ```
 
 #### Configuration
 
 - **Repos directory**: The default location where workshops are cloned. Defaults
   to `~/epicweb-workshops` on most systems.
+- **Preferred editor**: The editor command the CLI uses when opening workshops.
 
 ### `update` / `upgrade`
 

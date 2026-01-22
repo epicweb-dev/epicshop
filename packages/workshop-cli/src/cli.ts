@@ -387,11 +387,15 @@ const cli = yargs(args)
 				.positional('subcommand', {
 					describe: 'Config subcommand (reset)',
 					type: 'string',
-					choices: ['reset'],
+					choices: ['reset', 'editor'],
 				})
 				.option('repos-dir', {
 					type: 'string',
 					description: 'Set the default directory for workshop repos',
+				})
+				.option('editor', {
+					type: 'string',
+					description: 'Set the preferred editor command',
 				})
 				.option('silent', {
 					alias: 's',
@@ -402,18 +406,27 @@ const cli = yargs(args)
 				.example('$0 config', 'View current configuration')
 				.example('$0 config reset', 'Delete config file and reset to defaults')
 				.example('$0 config --repos-dir ~/epicweb', 'Set the repos directory')
+				.example('$0 config editor', 'Choose a preferred editor')
+				.example('$0 config --editor code', 'Set preferred editor to VS Code')
 		},
 		async (
 			argv: ArgumentsCamelCase<{
 				subcommand?: string
 				reposDir?: string
+				editor?: string
 				silent?: boolean
 			}>,
 		) => {
 			const { config } = await import('./commands/workshops.js')
 			const result = await config({
-				subcommand: argv.subcommand === 'reset' ? 'reset' : undefined,
+				subcommand:
+					argv.subcommand === 'reset'
+						? 'reset'
+						: argv.subcommand === 'editor'
+							? 'editor'
+							: undefined,
 				reposDir: argv.reposDir,
+				preferredEditor: argv.editor,
 				silent: argv.silent,
 			})
 			if (!result.success) {

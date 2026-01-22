@@ -28,6 +28,7 @@ export type PackageManager = (typeof PACKAGE_MANAGERS)[number]
 // Schema for workshop configuration (stored settings only)
 const ConfigSchema = z.object({
 	reposDirectory: z.string().optional(),
+	preferredEditor: z.string().optional(),
 })
 
 export type Workshop = {
@@ -107,6 +108,23 @@ export function getDefaultReposDir(): string {
 export async function setReposDirectory(directory: string): Promise<void> {
 	const config = await loadConfig()
 	config.reposDirectory = path.resolve(directory)
+	await saveConfig(config)
+}
+
+export async function getPreferredEditor(): Promise<string | undefined> {
+	const config = await loadConfig()
+	return config.preferredEditor
+}
+
+export async function setPreferredEditor(editor: string): Promise<void> {
+	const config = await loadConfig()
+	config.preferredEditor = editor
+	await saveConfig(config)
+}
+
+export async function clearPreferredEditor(): Promise<void> {
+	const config = await loadConfig()
+	delete config.preferredEditor
 	await saveConfig(config)
 }
 
