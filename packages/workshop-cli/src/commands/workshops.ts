@@ -143,6 +143,25 @@ function resolvePathWithTilde(inputPath: string): string {
 	return trimmed
 }
 
+function formatEditorChoiceName(editor: { label: string; command: string }) {
+	return editor.label === editor.command
+		? editor.label
+		: `${editor.label} (${editor.command})`
+}
+
+async function getInstalledEditorChoices(): Promise<
+	Array<{ name: string; value: string; description?: string }>
+> {
+	const { getAvailableEditors } =
+		await import('@epic-web/workshop-utils/launch-editor.server')
+	const editors = getAvailableEditors()
+	return editors.map((editor) => ({
+		name: formatEditorChoiceName(editor),
+		value: editor.command,
+		description: editor.label === editor.command ? undefined : editor.command,
+	}))
+}
+
 function parseRepoSpecifier(value: string): {
 	repoName: string
 	repoRef?: string
@@ -414,10 +433,14 @@ async function checkWorkshopDownloadStatus(
  */
 async function checkWorkshopAccess(
 	workshops: EnrichedWorkshop[],
+	authStatusMap?: Map<string, boolean>,
 ): Promise<EnrichedWorkshop[]> {
 	const accessResults = await Promise.all(
 		workshops.map(async (workshop) => {
 			if (!workshop.productHost || !workshop.productSlug) {
+				return undefined
+			}
+			if (authStatusMap?.get(workshop.productHost) === false) {
 				return undefined
 			}
 			return userHasAccessToWorkshop({
@@ -440,8 +463,79 @@ export type StartOptions = {
 
 export type ConfigOptions = {
 	reposDir?: string
+	preferredEditor?: string
 	silent?: boolean
-	subcommand?: 'reset' | 'delete'
+	subcommand?: 'reset' | 'delete' | 'editor'
+}
+
+async function resolvePreferredEditor({
+	silent,
+}: {
+	silent: boolean
+}): Promise<string | null> {
+	const { getPreferredEditor, setPreferredEditor } =
+		await import('@epic-web/workshop-utils/workshops.server')
+	const { getDefaultEditorCommand, formatEditorLabel } =
+		await import('@epic-web/workshop-utils/launch-editor.server')
+
+	const preferredEditor = await getPreferredEditor()
+	if (preferredEditor) return preferredEditor
+
+	const defaultEditor = getDefaultEditorCommand()
+	if (silent) return defaultEditor
+
+	assertCanPrompt({
+		reason: 'choose a preferred editor',
+		hints: ['Set it later with: npx epicshop config editor'],
+	})
+
+	const { select, confirm } = await import('@inquirer/prompts')
+	const availableEditors = await getInstalledEditorChoices()
+
+	if (defaultEditor) {
+		const defaultLabel = formatEditorLabel(defaultEditor)
+		if (availableEditors.length === 0) {
+			const useDefault = await confirm({
+				message: `Use ${defaultLabel} to open workshops?`,
+				default: true,
+			})
+			if (useDefault) {
+				await setPreferredEditor(defaultEditor)
+				return defaultEditor
+			}
+			return null
+		}
+
+		const decision = await select({
+			message: `Open workshops with ${defaultLabel}?`,
+			choices: [
+				{ name: `Use ${defaultLabel}`, value: 'use' },
+				{ name: 'Choose a different editor', value: 'choose' },
+			],
+		})
+
+		if (decision === 'use') {
+			await setPreferredEditor(defaultEditor)
+			return defaultEditor
+		}
+	}
+
+	if (availableEditors.length === 0) {
+		console.log(
+			chalk.yellow(
+				'⚠️  No supported editors detected. Set EPICSHOP_EDITOR or install a supported editor.',
+			),
+		)
+		return defaultEditor
+	}
+
+	const selectedEditor = await select({
+		message: 'Select your preferred editor:',
+		choices: availableEditors,
+	})
+
+	await setPreferredEditor(selectedEditor)
+	return selectedEditor
 }
 
 /**
@@ -717,7 +811,10 @@ export async function add(options: AddOptions): Promise<WorkshopsResult> {
 				}
 
 				spinner.start('Checking access...')
-				enrichedWorkshops = await checkWorkshopAccess(enrichedWorkshops)
+				enrichedWorkshops = await checkWorkshopAccess(
+					enrichedWorkshops,
+					authStatusMap,
+				)
 
 				enrichedWorkshops.sort((a, b) => {
 					const aHasAccess = a.hasAccess === true
@@ -1672,6 +1769,11 @@ export async function openWorkshop(
 			return { success: false, message }
 		}
 
+		const preferredEditor = await resolvePreferredEditor({ silent })
+		if (preferredEditor) {
+			process.env.EPICSHOP_EDITOR = preferredEditor
+		}
+
 		if (!silent) {
 			console.log(
 				chalk.cyan(
@@ -1724,6 +1826,9 @@ export async function config(
 			loadConfig,
 			saveConfig,
 			getDefaultReposDir,
+			getPreferredEditor,
+			setPreferredEditor,
+			clearPreferredEditor,
 			deleteConfig,
 		} = await import('@epic-web/workshop-utils/workshops.server')
 
@@ -1770,6 +1875,13 @@ export async function config(
 			if (!silent) console.log(chalk.green(`✅ ${message}`))
 		}
 
+		if (options.preferredEditor) {
+			await setPreferredEditor(options.preferredEditor)
+			const message = `Preferred editor set to: ${options.preferredEditor}`
+			messages.push(message)
+			if (!silent) console.log(chalk.green(`✅ ${message}`))
+		}
+
 		// If either option was set, return now
 		if (messages.length > 0) {
 			return { success: true, message: messages.join('; ') }
@@ -1778,7 +1890,14 @@ export async function config(
 		if (silent) {
 			// In silent mode, just return current config
 			const reposDir = await getReposDirectory()
-			return { success: true, message: `Repos directory: ${reposDir}` }
+			const preferredEditor = await getPreferredEditor()
+			const editorMessage = preferredEditor
+				? `Preferred editor: ${preferredEditor}`
+				: 'Preferred editor: not set'
+			return {
+				success: true,
+				message: `Repos directory: ${reposDir}; ${editorMessage}`,
+			}
 		}
 
 		// Interactive config selection
@@ -1786,14 +1905,24 @@ export async function config(
 			reason: 'select a configuration option',
 			hints: [
 				'Set repos dir directly: npx epicshop config --repos-dir <path>',
+				'Set preferred editor: npx epicshop config --editor <command>',
 				'Delete config non-interactively: npx epicshop config reset --silent',
 			],
 		})
-		const { search, confirm } = await import('@inquirer/prompts')
+		const { search, confirm, select } = await import('@inquirer/prompts')
+		const { formatEditorLabel } =
+			await import('@epic-web/workshop-utils/launch-editor.server')
 
 		const reposDir = await getReposDirectory()
 		const isConfigured = await isReposDirectoryConfigured()
 		const defaultDir = getDefaultReposDir()
+		const preferredEditor = await getPreferredEditor()
+		const preferredEditorDescription = preferredEditor
+			? formatEditorChoiceName({
+					label: formatEditorLabel(preferredEditor),
+					command: preferredEditor,
+				})
+			: 'Not set'
 
 		// Build config options
 		const configOptions = [
@@ -1803,13 +1932,107 @@ export async function config(
 				description: isConfigured ? reposDir : `${reposDir} (default)`,
 			},
 			{
+				name: 'Preferred editor',
+				value: 'preferred-editor',
+				description: preferredEditorDescription,
+			},
+			{
 				name: `Reset config file`,
 				value: 'reset',
 				description: 'Delete config file and reset all settings to defaults',
 			},
 		]
 
+		const handlePreferredEditorConfig = async (): Promise<WorkshopsResult> => {
+			console.log()
+			console.log(chalk.bold('  Current value:'))
+			if (preferredEditor) {
+				console.log(chalk.white(`  ${preferredEditorDescription}`))
+			} else {
+				console.log(chalk.gray('  Not set'))
+			}
+			console.log()
+
+			const actionChoices = [
+				{
+					name: 'Edit',
+					value: 'edit',
+					description: 'Choose a preferred editor',
+				},
+				...(preferredEditor
+					? [
+							{
+								name: 'Remove',
+								value: 'remove',
+								description: 'Clear the preferred editor',
+							},
+						]
+					: []),
+				{
+					name: 'Cancel',
+					value: 'cancel',
+					description: 'Go back without changes',
+				},
+			]
+
+			const action = await search({
+				message: 'What would you like to do?',
+				source: async (input) => {
+					if (!input) return actionChoices
+					return matchSorter(actionChoices, input, {
+						keys: ['name', 'value', 'description'],
+					})
+				},
+			})
+
+			if (action === 'edit') {
+				const editorChoices = await getInstalledEditorChoices()
+				if (editorChoices.length === 0) {
+					console.log(
+						chalk.yellow(
+							'⚠️  No supported editors detected. Set EPICSHOP_EDITOR or install a supported editor.',
+						),
+					)
+					return {
+						success: true,
+						message: 'No supported editors detected',
+					}
+				}
+
+				const selectedEditor = await select({
+					message: 'Select your preferred editor:',
+					choices: editorChoices,
+				})
+
+				await setPreferredEditor(selectedEditor)
+				console.log()
+				console.log(
+					chalk.green(
+						`✅ Preferred editor set to: ${chalk.bold(selectedEditor)}`,
+					),
+				)
+				return {
+					success: true,
+					message: `Preferred editor set to: ${selectedEditor}`,
+				}
+			}
+
+			if (action === 'remove') {
+				await clearPreferredEditor()
+				console.log()
+				console.log(chalk.green('✅ Preferred editor cleared.'))
+				return { success: true, message: 'Preferred editor cleared' }
+			}
+
+			console.log(chalk.gray('\nNo changes made.'))
+			return { success: true, message: 'Cancelled' }
+		}
+
 		console.log(chalk.bold.cyan('\n⚙️  Workshop Configuration\n'))
+
+		if (options.subcommand === 'editor') {
+			return await handlePreferredEditorConfig()
+		}
 
 		const selectedConfig = await search({
 			message: 'Select a setting to configure:',
@@ -1844,6 +2067,10 @@ export async function config(
 				console.log(chalk.gray('\nNo changes made.'))
 				return { success: true, message: 'Cancelled' }
 			}
+		}
+
+		if (selectedConfig === 'preferred-editor') {
+			return await handlePreferredEditorConfig()
 		}
 
 		if (selectedConfig === 'repos-dir') {
@@ -2401,7 +2628,10 @@ async function promptAndSetupAccessibleWorkshops(): Promise<void> {
 			spinner.start('Checking access...')
 		}
 
-		enrichedWorkshops = await checkWorkshopAccess(enrichedWorkshops)
+		enrichedWorkshops = await checkWorkshopAccess(
+			enrichedWorkshops,
+			authStatusMap,
+		)
 		spinner.succeed(`Found ${enrichedWorkshops.length} available workshops`)
 	} catch (error) {
 		const message = error instanceof Error ? error.message : String(error)
@@ -2414,11 +2644,18 @@ async function promptAndSetupAccessibleWorkshops(): Promise<void> {
 		return
 	}
 
-	const candidates = enrichedWorkshops.filter(
-		(w) => w.name !== TUTORIAL_REPO && w.hasAccess === true && !w.isDownloaded,
+	const availableWorkshops = enrichedWorkshops.filter(
+		(w) => w.name !== TUTORIAL_REPO && !w.isDownloaded,
 	)
+	const accessibleWorkshops = availableWorkshops.filter(
+		(w) => w.hasAccess === true,
+	)
+	const selectableWorkshops =
+		accessibleWorkshops.length > 0
+			? accessibleWorkshops
+			: availableWorkshops.filter((w) => w.hasAccess !== false)
 
-	if (candidates.length === 0) {
+	if (selectableWorkshops.length === 0) {
 		console.log(
 			chalk.gray(
 				'No additional workshops to set up right now (either none found, none accessible, or already downloaded).\n',
@@ -2428,7 +2665,11 @@ async function promptAndSetupAccessibleWorkshops(): Promise<void> {
 	}
 
 	console.log()
-	console.log(chalk.bold.cyan('Available Workshops You Have Access To\n'))
+	const header =
+		accessibleWorkshops.length > 0
+			? 'Available Workshops You Have Access To\n'
+			: 'Available Workshops\n'
+	console.log(chalk.bold.cyan(header))
 	console.log(chalk.gray('Icon Key:'))
 	console.log(chalk.gray(`  🚀 EpicReact.dev`))
 	console.log(chalk.gray(`  🌌 EpicWeb.dev`))
@@ -2436,8 +2677,22 @@ async function promptAndSetupAccessibleWorkshops(): Promise<void> {
 	console.log(chalk.gray(`  🔑 You have access to this workshop`))
 	console.log()
 
+	if (accessibleWorkshops.length === 0) {
+		console.log(
+			chalk.yellow(
+				'💡 We could not confirm access for available workshops. You can still select them to try setup.',
+			),
+		)
+		console.log(
+			chalk.gray(
+				`   To verify access, log in with: ${chalk.cyan('npx epicshop auth')}`,
+			),
+		)
+		console.log()
+	}
+
 	// Filter workshops that are part of a product (for "All My Workshops" option)
-	const workshopsWithProduct = candidates.filter((w) => w.productSlug)
+	const workshopsWithProduct = accessibleWorkshops.filter((w) => w.productSlug)
 
 	// Group workshops by product for quick-select options
 	const workshopsByProduct = new Map<string, string[]>()
@@ -2531,11 +2786,11 @@ async function promptAndSetupAccessibleWorkshops(): Promise<void> {
 		)
 	} else {
 		// Show checkbox for individual selection
-		const individualChoices = candidates.map((w) => {
+		const individualChoices = selectableWorkshops.map((w) => {
 			const productIcon = w.productHost
 				? PRODUCT_ICONS[w.productHost] || ''
 				: ''
-			const accessIcon = chalk.yellow('🔑')
+			const accessIcon = w.hasAccess === true ? chalk.yellow('🔑') : ''
 			const name = [productIcon, w.title || w.name, accessIcon]
 				.filter(Boolean)
 				.join(' ')
@@ -2573,7 +2828,7 @@ async function promptAndSetupAccessibleWorkshops(): Promise<void> {
 
 	// Create a map from repo name to workshop title for nice display
 	const repoToTitle = new Map<string, string>()
-	for (const w of candidates) {
+	for (const w of selectableWorkshops) {
 		repoToTitle.set(w.name, w.title || w.name)
 	}
 	const getDisplayName = (repo: string) => repoToTitle.get(repo) || repo
