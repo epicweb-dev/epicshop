@@ -534,7 +534,8 @@ function EpicVideo({
 		availabilityKey,
 		{ initialAvailability: initialOfflineAvailability },
 	)
-	const shouldUseOfflineVideo = offlineVideo.available
+	const shouldUseOfflineVideo =
+		offlineVideo.available && offlineVideo.checked
 	const offlineVideoFetcher = useFetcher<OfflineVideoActionData>()
 	const isOfflineActionBusy = offlineVideoFetcher.state !== 'idle'
 	const [downloadProgress, setDownloadProgress] = React.useState<
