@@ -563,7 +563,7 @@ epicshop playground [subcommand] [target] [options]
 epicshop playground
 epicshop playground show
 
-# Select an exercise step to set as the playground
+# Select an exercise step to set as the playground (default preselects next step)
 epicshop playground set
 
 # Set to a specific step using shorthand notation
@@ -589,7 +589,9 @@ epicshop playground saved
 
 #### Behavior
 
-- When setting without arguments, prompts you to select an exercise step
+- When setting without arguments, prompts you to select an exercise step (default
+  selection matches the next incomplete step or next problem after the current
+  playground)
 - Saved playground selection requires persistence to be enabled in Preferences
 
 ### `progress`
@@ -656,7 +658,7 @@ epicshop diff [app1] [app2] [options]
 - `app2` (optional) - Second app identifier (e.g., `01.02.solution`)
 
 If no arguments are provided, you will be prompted to select the two apps to
-diff.
+diff (default selection is the playground vs solution).
 
 #### Options
 
@@ -665,7 +667,7 @@ diff.
 #### Examples
 
 ```bash
-# Select apps to diff
+# Select apps to diff (defaults to playground vs solution)
 epicshop diff
 
 # Show diff between two specific apps

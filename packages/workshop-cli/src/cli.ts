@@ -989,7 +989,10 @@ const cli = yargs(args)
 				})
 				.example('$0 playground', 'Show current playground status')
 				.example('$0 playground show', 'Show current playground status')
-				.example('$0 playground set', 'Select a playground app to set')
+				.example(
+					'$0 playground set',
+					'Select a playground app to set (defaults to next step)',
+				)
 				.example('$0 playground set 1.2.problem', 'Set to specific step')
 				.example('$0 playground set --exercise 1 --step 2', 'Set with options')
 				.example(
@@ -1230,7 +1233,7 @@ const cli = yargs(args)
 			return yargs
 				.positional('app1', {
 					describe:
-						'First app identifier (e.g., 01.02.problem). If omitted, shows playground vs solution.',
+						'First app identifier (e.g., 01.02.problem). If omitted, prompts with playground vs solution as the default.',
 					type: 'string',
 				})
 				.positional('app2', {
@@ -1243,7 +1246,10 @@ const cli = yargs(args)
 					description: 'Run without output logs',
 					default: false,
 				})
-				.example('$0 diff', 'Select apps to diff')
+				.example(
+					'$0 diff',
+					'Select apps to diff (defaults to playground vs solution)',
+				)
 				.example(
 					'$0 diff 01.02.problem 01.02.solution',
 					'Show diff between two apps',

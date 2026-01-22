@@ -98,8 +98,14 @@ export async function selectAndShowDiff(
 	const { silent = false } = options
 
 	try {
-		const { init, getApps, getAppDisplayName } =
-			await import('@epic-web/workshop-utils/apps.server')
+		const {
+			findSolutionDir,
+			getAppDisplayName,
+			getApps,
+			getFullPathFromAppName,
+			init,
+			isPlaygroundApp,
+		} = await import('@epic-web/workshop-utils/apps.server')
 		const { getDiffOutputWithRelativePaths } =
 			await import('@epic-web/workshop-utils/diff.server')
 
@@ -119,21 +125,55 @@ export async function selectAndShowDiff(
 			throw new Error('Need at least two apps to diff')
 		}
 
+		const playgroundApp = apps.find(isPlaygroundApp)
+		let defaultFirstApp = playgroundApp
+		let defaultSecondApp = undefined as typeof playgroundApp | undefined
+		if (playgroundApp) {
+			try {
+				const solutionDir = await findSolutionDir({
+					fullPath: await getFullPathFromAppName(playgroundApp.appName),
+				})
+				defaultSecondApp = apps.find((app) => app.fullPath === solutionDir)
+			} catch {
+				// Ignore default selection errors; still allow interactive selection.
+			}
+		}
+
 		const choices = apps.map((app) => ({
 			name: getAppDisplayName(app, apps),
 			value: app,
 			description: app.fullPath,
 		}))
 
-		const selectApp = async (message: string, excludeName?: string) => {
+		const orderChoices = (
+			allChoices: typeof choices,
+			preferredName?: string,
+		) => {
+			if (!preferredName) return allChoices
+			const preferred = allChoices.find(
+				(choice) => choice.value.name === preferredName,
+			)
+			if (!preferred) return allChoices
+			return [
+				preferred,
+				...allChoices.filter((choice) => choice.value.name !== preferredName),
+			]
+		}
+
+		const selectApp = async (
+			message: string,
+			options: { excludeName?: string; preferredName?: string } = {},
+		) => {
+			const { excludeName, preferredName } = options
 			const availableChoices = excludeName
 				? choices.filter((choice) => choice.value.name !== excludeName)
 				: choices
+			const orderedChoices = orderChoices(availableChoices, preferredName)
 
 			return search({
 				message,
 				source: async (input) => {
-					if (!input) return availableChoices
+					if (!input) return orderedChoices
 					return matchSorter(availableChoices, input, {
 						keys: ['name', 'value.name', 'description'],
 					})
@@ -142,8 +182,16 @@ export async function selectAndShowDiff(
 		}
 
 		try {
-			const app1 = await selectApp('Select the first app to diff:')
-			const app2 = await selectApp('Select the second app to diff:', app1.name)
+			const app1 = await selectApp('Select the first app to diff:', {
+				preferredName: defaultFirstApp?.name,
+			})
+			const app2 = await selectApp('Select the second app to diff:', {
+				excludeName: app1.name,
+				preferredName:
+					defaultSecondApp?.name === app1.name
+						? undefined
+						: defaultSecondApp?.name,
+			})
 			const diffCode = await getDiffOutputWithRelativePaths(app1, app2)
 			const app1Label = getAppDisplayName(app1, apps)
 			const app2Label = getAppDisplayName(app2, apps)
