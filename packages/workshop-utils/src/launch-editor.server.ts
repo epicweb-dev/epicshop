@@ -353,6 +353,7 @@ const EDITOR_LABELS: Record<string, string> = {
 	subl: 'Sublime Text',
 	sublime_text: 'Sublime Text',
 	'notepad++': 'Notepad++',
+	clion: 'CLion',
 	idea: 'IntelliJ IDEA',
 	phpstorm: 'PhpStorm',
 	pycharm: 'PyCharm',
