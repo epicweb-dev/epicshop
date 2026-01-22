@@ -33,7 +33,6 @@ export type RootPackageInstallStatus = {
 	missingDevDependencies: Array<string>
 	missingOptionalDependencies: Array<string>
 	reason:
-		| 'missing-node-modules'
 		| 'missing-dependencies'
 		| 'package-json-unreadable'
 		| 'up-to-date'
