@@ -18,6 +18,10 @@ import {
 import { createConfettiHeaders } from '#app/utils/confetti.server.ts'
 import { combineHeaders, ensureUndeployed } from '#app/utils/misc.tsx'
 import { dataWithPE, usePERedirectInput } from '#app/utils/pe.tsx'
+import {
+	getPracticePastLessonKey,
+	getPracticePastLessonRoute,
+} from '#app/utils/practice-past-lesson.ts'
 import { useRootLoaderData } from '#app/utils/root-loader.ts'
 import { createToastHeaders } from '#app/utils/toast.server.ts'
 
@@ -95,49 +99,28 @@ export function useNextExerciseRoute() {
 export function useRandomCompletedExerciseRoute() {
 	const location = useLocation()
 	const progress = useEpicProgress()
-	const [randomRoute, setRandomRoute] = React.useState<string | null>(null)
+	const { practicePastLesson } = useRootLoaderData()
+	const [randomRoute, setRandomRoute] = React.useState<string | null>(
+		practicePastLesson?.route ?? null,
+	)
+	const lastKeyRef = React.useRef(practicePastLesson?.key ?? null)
 
 	React.useEffect(() => {
-		if (!progress) {
-			setRandomRoute(null)
-			return
-		}
-
-		const completedSteps = progress.filter(
-			(p) => p.type === 'step' && p.epicCompletedAt,
-		)
-
-		if (completedSteps.length < 2) {
-			setRandomRoute(null)
-			return
-		}
-
-		// Filter out current page to avoid navigating to the same route
-		const currentPath = location.pathname
-		const availableSteps = completedSteps.filter((step) => {
-			if (step.type !== 'step') return false
-			const ex = step.exerciseNumber.toString().padStart(2, '0')
-			const st = step.stepNumber.toString().padStart(2, '0')
-			const problemRoute = `/exercise/${ex}/${st}/problem`
-			const solutionRoute = `/exercise/${ex}/${st}/solution`
-			return currentPath !== problemRoute && currentPath !== solutionRoute
+		const nextKey = getPracticePastLessonKey({
+			progress,
+			currentPath: location.pathname,
 		})
+		if (nextKey === lastKeyRef.current) return
 
-		if (availableSteps.length === 0) {
-			setRandomRoute(null)
-			return
-		}
-
-		const randomStep =
-			availableSteps[Math.floor(Math.random() * availableSteps.length)]
-		if (!randomStep || randomStep.type !== 'step') {
-			setRandomRoute(null)
-			return
-		}
-
-		const ex = randomStep.exerciseNumber.toString().padStart(2, '0')
-		const st = randomStep.stepNumber.toString().padStart(2, '0')
-		setRandomRoute(`/exercise/${ex}/${st}/problem`)
+		lastKeyRef.current = nextKey
+		setRandomRoute(
+			nextKey
+				? getPracticePastLessonRoute({
+						progress,
+						currentPath: location.pathname,
+					})
+				: null,
+		)
 	}, [progress, location.pathname])
 
 	return randomRoute
