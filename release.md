@@ -41,10 +41,10 @@ since v6.45.0, grouped by theme rather than release order.
 - Mermaid diagrams now render correctly in dark mode, improving readability for
   embedded visuals.
 
-## Playgrounds, extras, and examples
+## Playgrounds and extras
 
-- A new Examples section makes standalone example apps discoverable with a
-  dedicated list and detail pages.
+- Extras are now easier to discover with dedicated list and detail pages for
+  standalone extra apps.
 - Extras now have their own navigation sub-list and a "Set to Playground"
   button, making it easy to explore and switch your playground target.
 - Saved playgrounds can be restored from a dedicated dialog, keeping your
@@ -65,6 +65,28 @@ since v6.45.0, grouped by theme rather than release order.
   workshop or dependency is out of date.
 - Windows-specific fixes make editor detection, command resolution, and clone
   workflows more reliable.
+
+Examples:
+
+```bash
+epicshop init
+epicshop add epicshop-tutorial
+epicshop add full-stack-foundations#v1.2.0
+epicshop add web-forms --directory ~/my-workshops
+epicshop list
+epicshop start
+epicshop open
+epicshop playground set
+epicshop diff
+epicshop update
+```
+
+## MCP server and AI assistant support
+
+- The MCP server now supports a Notifications API so assistants can surface
+  important events from your workshop session.
+- New MCP tools can list and restore saved playgrounds, helping assistants keep
+  your learning state in sync.
 
 ## Reliability and polish
 
