@@ -433,8 +433,9 @@ async function resolvePreferredEditor({
 			})
 			if (useDefault) {
 				await setPreferredEditor(defaultEditor)
+				return defaultEditor
 			}
-			return defaultEditor
+			return null
 		}
 
 		const decision = await select({
