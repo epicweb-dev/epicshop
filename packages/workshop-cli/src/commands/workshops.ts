@@ -107,6 +107,7 @@ const GitHubRepoSchema = z.object({
 	stargazers_count: z.number(),
 	topics: z.array(z.string()).default([]),
 	archived: z.boolean(),
+	default_branch: z.string().optional(),
 })
 const GitHubSearchResponseSchema = z.object({
 	total_count: z.number(),
@@ -162,14 +163,70 @@ function parseRepoSpecifier(value: string): {
 }
 
 function getGitHubHeaders(): HeadersInit {
+	return getGitHubHeadersWithAccept('application/vnd.github.v3+json')
+}
+
+function getGitHubHeadersWithAccept(accept: string): HeadersInit {
 	const headers: HeadersInit = {
-		Accept: 'application/vnd.github.v3+json',
+		Accept: accept,
 		'User-Agent': 'epicshop-cli',
 	}
 	if (GITHUB_TOKEN) {
 		headers.Authorization = `Bearer ${GITHUB_TOKEN}`
 	}
 	return headers
+}
+
+const DEFAULT_BRANCHES = ['main', 'master'] as const
+
+function buildRawPackageJsonUrls(
+	repoName: string,
+	defaultBranch?: string,
+): string[] {
+	const branches = [defaultBranch, ...DEFAULT_BRANCHES].filter(
+		(branch): branch is string => Boolean(branch),
+	)
+	const uniqueBranches = Array.from(new Set(branches))
+	return uniqueBranches.map(
+		(branch) =>
+			`https://raw.githubusercontent.com/${GITHUB_ORG}/${repoName}/${branch}/package.json`,
+	)
+}
+
+async function parsePackageJsonResponse(
+	response: Response,
+): Promise<Record<string, unknown> | null> {
+	try {
+		const parsed = PackageJsonSchema.safeParse(await response.json())
+		return parsed.success ? parsed.data : null
+	} catch {
+		return null
+	}
+}
+
+async function fetchPackageJsonFromUrl(
+	url: string,
+	headers: HeadersInit,
+): Promise<Record<string, unknown> | null> {
+	try {
+		const response = await fetch(url, { headers })
+		if (!response.ok) return null
+		return await parsePackageJsonResponse(response)
+	} catch {
+		return null
+	}
+}
+
+function normalizeProductHost(host?: string): string | undefined {
+	if (!host) return undefined
+	const normalized = host
+		.replace(/^https?:\/\//, '')
+		.replace(/\/$/, '')
+		.toLowerCase()
+	if (normalized === 'epicweb.dev') return 'www.epicweb.dev'
+	if (normalized === 'epicreact.dev') return 'www.epicreact.dev'
+	if (normalized === 'epicai.pro') return 'www.epicai.pro'
+	return normalized
 }
 
 /**
@@ -240,34 +297,39 @@ async function fetchAvailableWorkshops(): Promise<GitHubRepo[]> {
  * Fetch a workshop's package.json from GitHub raw content
  */
 async function fetchWorkshopPackageJson(
-	repoName: string,
+	repo: Pick<GitHubRepo, 'name' | 'default_branch'>,
 ): Promise<Record<string, unknown> | null> {
 	return cachified({
-		key: `github-package-json:${repoName}`,
+		key: `github-package-json:${repo.name}`,
 		cache: githubCache,
 		ttl: 1000 * 60 * 60 * 6, // 6 hours
 		swr: 1000 * 60 * 60 * 24 * 30, // 30 days stale-while-revalidate
 		checkValue: PackageJsonSchema.nullable(),
-		async getFreshValue() {
-			const url = `https://raw.githubusercontent.com/${GITHUB_ORG}/${repoName}/main/package.json`
+		async getFreshValue(context) {
+			const rawHeaders = getGitHubHeadersWithAccept(
+				'application/vnd.github.raw',
+			)
+			const rawUrls = buildRawPackageJsonUrls(repo.name, repo.default_branch)
 
-			const response = await fetch(url, {
-				headers: {
-					'User-Agent': 'epicshop-cli',
-					...(GITHUB_TOKEN ? { Authorization: `Bearer ${GITHUB_TOKEN}` } : {}),
-				},
-			})
-
-			if (!response.ok) {
-				return null
+			for (const url of rawUrls) {
+				const packageJson = await fetchPackageJsonFromUrl(url, rawHeaders)
+				if (packageJson) {
+					return packageJson
+				}
 			}
 
-			try {
-				const parsed = PackageJsonSchema.safeParse(await response.json())
-				return parsed.success ? parsed.data : null
-			} catch {
-				return null
+			const apiUrl = `https://api.github.com/repos/${GITHUB_ORG}/${repo.name}/contents/package.json`
+			const apiPackageJson = await fetchPackageJsonFromUrl(
+				apiUrl,
+				getGitHubHeadersWithAccept('application/vnd.github.raw'),
+			)
+			if (apiPackageJson) {
+				return apiPackageJson
 			}
+
+			context.metadata.ttl = 1000 * 60
+			context.metadata.swr = 0
+			return null
 		},
 	})
 }
@@ -279,16 +341,22 @@ async function enrichWorkshopsWithMetadata(
 	workshops: GitHubRepo[],
 ): Promise<EnrichedWorkshop[]> {
 	const packageJsons = await Promise.all(
-		workshops.map((w) => fetchWorkshopPackageJson(w.name)),
+		workshops.map((w) =>
+			fetchWorkshopPackageJson({
+				name: w.name,
+				default_branch: w.default_branch,
+			}),
+		),
 	)
 
 	return workshops.map((workshop, index) => {
 		const packageJson = packageJsons[index]
 		const config = packageJson ? parseEpicshopConfig(packageJson) : null
+		const productHost = normalizeProductHost(config?.product?.host)
 
 		return {
 			...workshop,
-			productHost: config?.product?.host,
+			productHost,
 			productSlug: config?.product?.slug,
 			productDisplayName: config?.product?.displayName,
 			instructorName: config?.instructor?.name,
