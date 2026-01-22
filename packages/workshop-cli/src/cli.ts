@@ -706,7 +706,13 @@ const cli = yargs(args)
 				.option('targets', {
 					alias: 't',
 					type: 'array',
-					choices: ['caches', 'offline-videos', 'preferences', 'auth', 'config'],
+					choices: [
+						'caches',
+						'offline-videos',
+						'preferences',
+						'auth',
+						'config',
+					],
 					description:
 						'Cleanup targets (repeatable): caches, offline-videos, preferences, auth, config',
 				})
