@@ -32,10 +32,7 @@ export type RootPackageInstallStatus = {
 	missingDependencies: Array<string>
 	missingDevDependencies: Array<string>
 	missingOptionalDependencies: Array<string>
-	reason:
-		| 'missing-dependencies'
-		| 'package-json-unreadable'
-		| 'up-to-date'
+	reason: 'missing-dependencies' | 'package-json-unreadable' | 'up-to-date'
 }
 
 export type WorkspaceInstallStatus = {

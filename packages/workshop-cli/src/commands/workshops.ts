@@ -142,7 +142,10 @@ function resolvePathWithTilde(inputPath: string): string {
 	return trimmed
 }
 
-function parseRepoSpecifier(value: string): { repoName: string; repoRef?: string } {
+function parseRepoSpecifier(value: string): {
+	repoName: string
+	repoRef?: string
+} {
 	const trimmed = value.trim()
 	const hashIndex = trimmed.indexOf('#')
 	if (hashIndex === -1) {
@@ -506,14 +509,10 @@ async function addSingleWorkshop(
 		if (!silent) {
 			console.log(chalk.cyan(`🔀 Checking out ${repoRef}...`))
 		}
-		const checkoutResult = await runCommand(
-			'git',
-			['checkout', repoRef],
-			{
-				cwd: workshopPath,
-				silent,
-			},
-		)
+		const checkoutResult = await runCommand('git', ['checkout', repoRef], {
+			cwd: workshopPath,
+			silent,
+		})
 		if (!checkoutResult.success) {
 			if (!silent) {
 				console.log(chalk.yellow(`🧹 Cleaning up cloned directory...`))
