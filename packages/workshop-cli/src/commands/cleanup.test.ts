@@ -51,6 +51,39 @@ test('cleanup removes caches and deletes data file when empty', async () => {
 	}
 })
 
+test('cleanup removes CLI config file', async () => {
+	const root = await mkdtemp(path.join(os.tmpdir(), 'epicshop-cleanup-'))
+	const reposDir = path.join(root, 'repos')
+	const configPath = path.join(root, 'workshops-config.json')
+
+	try {
+		await mkdir(reposDir, { recursive: true })
+		await writeFile(
+			configPath,
+			JSON.stringify({ reposDirectory: '/tmp/epic-workshops' }, null, 2),
+		)
+
+		const result = await cleanup({
+			silent: true,
+			force: true,
+			targets: ['config'],
+			paths: {
+				reposDir,
+				configPath,
+				cacheDir: path.join(root, 'cache'),
+				legacyCacheDir: path.join(root, 'legacy-cache'),
+				offlineVideosDir: path.join(root, 'offline-videos'),
+				dataPaths: [],
+			},
+		})
+
+		expect(result.success).toBe(true)
+		await expect(stat(configPath)).rejects.toThrow()
+	} finally {
+		await rm(root, { recursive: true, force: true })
+	}
+})
+
 test('cleanup removes workshops but keeps non-workshop entries', async () => {
 	const root = await mkdtemp(path.join(os.tmpdir(), 'epicshop-cleanup-'))
 	const reposDir = path.join(root, 'repos')

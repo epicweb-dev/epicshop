@@ -65,6 +65,10 @@ async function atomicWriteJSON(filePath: string, data: unknown) {
 	await fs.rename(tmp, filePath)
 }
 
+export function getConfigPath(): string {
+	return resolveConfigPath()
+}
+
 export async function loadConfig(): Promise<WorkshopsConfig> {
 	const configPath = resolveConfigPath()
 	try {

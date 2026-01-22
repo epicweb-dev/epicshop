@@ -12,6 +12,7 @@ import {
 } from '@epic-web/workshop-utils/data-storage.server'
 import {
 	deleteWorkshop,
+	getConfigPath,
 	getReposDirectory,
 	getUnpushedChanges,
 } from '@epic-web/workshop-utils/workshops.server'
@@ -25,6 +26,7 @@ export type CleanupTarget =
 	| 'offline-videos'
 	| 'preferences'
 	| 'auth'
+	| 'config'
 
 export type WorkshopCleanupTarget = 'files' | 'caches' | 'offline-videos'
 
@@ -44,6 +46,7 @@ type CleanupPaths = {
 	legacyCacheDir: string
 	dataPaths: string[]
 	offlineVideosDir: string
+	configPath: string
 }
 
 export type CleanupOptions = {
@@ -87,6 +90,11 @@ const CLEANUP_TARGETS: Array<{
 		value: 'preferences',
 		name: 'Preferences',
 		description: 'Clear stored preferences and local settings',
+	},
+	{
+		value: 'config',
+		name: 'CLI config',
+		description: 'Remove saved CLI config (workshops directory setting)',
 	},
 	{
 		value: 'auth',
@@ -159,7 +167,15 @@ async function resolveCleanupPaths(
 	]
 	const offlineVideosDir =
 		paths.offlineVideosDir ?? path.join(resolvePrimaryDir(), 'offline-videos')
-	return { reposDir, cacheDir, legacyCacheDir, dataPaths, offlineVideosDir }
+	const configPath = paths.configPath ?? getConfigPath()
+	return {
+		reposDir,
+		cacheDir,
+		legacyCacheDir,
+		dataPaths,
+		offlineVideosDir,
+		configPath,
+	}
 }
 
 async function pathExists(targetPath: string): Promise<boolean> {
@@ -766,53 +782,63 @@ export async function cleanup({
 			}
 		}
 
-		const analysisSpinner = startSpinner('Scanning local epicshop data...', silent)
-		let reposDir = ''
-		let cacheDir = ''
-		let legacyCacheDir = ''
-		let dataPaths: string[] = []
-		let offlineVideosDir = ''
-		let workshopSummaries: WorkshopSummary[] = []
-		let workshopBytes = 0
-		let legacyCacheBytes = 0
-		let cacheBytes = 0
-		let offlineVideosBytes = 0
-		let preferencesBytes = 0
-		let authBytes = 0
+	const analysisSpinner = startSpinner('Scanning local epicshop data...', silent)
+	let reposDir = ''
+	let cacheDir = ''
+	let legacyCacheDir = ''
+	let dataPaths: string[] = []
+	let offlineVideosDir = ''
+	let configPath = ''
+	let workshopSummaries: WorkshopSummary[] = []
+	let workshopBytes = 0
+	let legacyCacheBytes = 0
+	let cacheBytes = 0
+	let offlineVideosBytes = 0
+	let preferencesBytes = 0
+	let authBytes = 0
+	let configBytes = 0
 
-		try {
-			updateSpinner(analysisSpinner, 'Resolving cleanup locations...')
-			;({ reposDir, cacheDir, legacyCacheDir, dataPaths, offlineVideosDir } =
-				await resolveCleanupPaths(paths))
-			updateSpinner(analysisSpinner, 'Finding installed workshops...')
-			const allWorkshops = await listWorkshopsInDirectory(reposDir)
-			updateSpinner(analysisSpinner, 'Calculating workshop sizes...')
-			workshopSummaries = await getWorkshopSummaries({
-				workshops: allWorkshops,
-				cacheDir,
-				onProgress: (progress) => {
-					updateSpinner(
-						analysisSpinner,
-						`Calculating workshop sizes (${progress.current}/${progress.total}): ${progress.workshop.repoName}`,
-					)
-				},
-			})
-			workshopBytes = workshopSummaries.reduce(
-				(total, workshop) => total + workshop.sizeBytes,
-				0,
-			)
-			updateSpinner(analysisSpinner, 'Calculating cache sizes...')
-			legacyCacheBytes = await getPathSize(legacyCacheDir)
-			const cacheDirBytes = await getPathSize(cacheDir)
-			cacheBytes = cacheDirBytes + legacyCacheBytes
-			updateSpinner(analysisSpinner, 'Calculating offline video sizes...')
-			offlineVideosBytes = await getPathSize(offlineVideosDir)
-			updateSpinner(analysisSpinner, 'Scanning preferences and auth data...')
-			;({ preferencesBytes, authBytes } =
-				await getDataCleanupSizeSummary(dataPaths))
-		} finally {
-			stopSpinner(analysisSpinner)
-		}
+	try {
+		updateSpinner(analysisSpinner, 'Resolving cleanup locations...')
+		;({
+			reposDir,
+			cacheDir,
+			legacyCacheDir,
+			dataPaths,
+			offlineVideosDir,
+			configPath,
+		} = await resolveCleanupPaths(paths))
+		updateSpinner(analysisSpinner, 'Finding installed workshops...')
+		const allWorkshops = await listWorkshopsInDirectory(reposDir)
+		updateSpinner(analysisSpinner, 'Calculating workshop sizes...')
+		workshopSummaries = await getWorkshopSummaries({
+			workshops: allWorkshops,
+			cacheDir,
+			onProgress: (progress) => {
+				updateSpinner(
+					analysisSpinner,
+					`Calculating workshop sizes (${progress.current}/${progress.total}): ${progress.workshop.repoName}`,
+				)
+			},
+		})
+		workshopBytes = workshopSummaries.reduce(
+			(total, workshop) => total + workshop.sizeBytes,
+			0,
+		)
+		updateSpinner(analysisSpinner, 'Calculating cache sizes...')
+		legacyCacheBytes = await getPathSize(legacyCacheDir)
+		const cacheDirBytes = await getPathSize(cacheDir)
+		cacheBytes = cacheDirBytes + legacyCacheBytes
+		updateSpinner(analysisSpinner, 'Calculating offline video sizes...')
+		offlineVideosBytes = await getPathSize(offlineVideosDir)
+		updateSpinner(analysisSpinner, 'Calculating CLI config size...')
+		configBytes = await getPathSize(configPath)
+		updateSpinner(analysisSpinner, 'Scanning preferences and auth data...')
+		;({ preferencesBytes, authBytes } =
+			await getDataCleanupSizeSummary(dataPaths))
+	} finally {
+		stopSpinner(analysisSpinner)
+	}
 
 		const cleanupChoices = CLEANUP_TARGETS.map((target) => {
 			const sizeByTarget: Record<CleanupTarget, number> = {
@@ -821,6 +847,7 @@ export async function cleanup({
 				'offline-videos': offlineVideosBytes,
 				preferences: preferencesBytes,
 				auth: authBytes,
+				config: configBytes,
 			}
 			return {
 				...target,
@@ -1035,6 +1062,13 @@ export async function cleanup({
 					),
 				)
 			}
+			if (selectedTargets.includes('config')) {
+				console.log(
+					chalk.yellow(
+						`- CLI config: ${formatBytes(configBytes)} (${configPath})`,
+					),
+				)
+			}
 			if (selectedTargets.includes('auth')) {
 				console.log(
 					chalk.yellow(
@@ -1086,6 +1120,8 @@ export async function cleanup({
 						switch (target) {
 							case 'offline-videos':
 								return 'Offline videos'
+							case 'config':
+								return 'CLI config'
 							default:
 								return target.charAt(0).toUpperCase() + target.slice(1)
 						}
@@ -1191,6 +1227,10 @@ export async function cleanup({
 				skippedPaths,
 				failures,
 			})
+		}
+
+		if (selectedTargets.includes('config')) {
+			await removePath(configPath, removedPaths, skippedPaths, failures)
 		}
 
 		if (failures.length > 0) {

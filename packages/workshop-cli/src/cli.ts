@@ -706,9 +706,9 @@ const cli = yargs(args)
 				.option('targets', {
 					alias: 't',
 					type: 'array',
-					choices: ['caches', 'offline-videos', 'preferences', 'auth'],
+					choices: ['caches', 'offline-videos', 'preferences', 'auth', 'config'],
 					description:
-						'Cleanup targets (repeatable): caches, offline-videos, preferences, auth',
+						'Cleanup targets (repeatable): caches, offline-videos, preferences, auth, config',
 				})
 				.option('workshops', {
 					type: 'array',
@@ -758,7 +758,7 @@ const cli = yargs(args)
 				silent: argv.silent,
 				force: argv.force,
 				targets: argv.targets as Array<
-					'caches' | 'offline-videos' | 'preferences' | 'auth'
+					'caches' | 'offline-videos' | 'preferences' | 'auth' | 'config'
 				>,
 				workshops: argv.workshops,
 				workshopTargets: argv.workshopActions as Array<
