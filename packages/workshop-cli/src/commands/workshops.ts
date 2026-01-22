@@ -571,7 +571,7 @@ export async function add(options: AddOptions): Promise<WorkshopsResult> {
 		try {
 			const parsed = parseRepoSpecifier(repoName)
 			repoName = parsed.repoName
-			repoRef = parsed.repoRef
+			repoRef = parsed.repoRef ?? repoRef
 		} catch (error) {
 			const message = error instanceof Error ? error.message : String(error)
 			if (!silent) {
