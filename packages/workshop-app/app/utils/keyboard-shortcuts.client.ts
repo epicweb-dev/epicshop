@@ -338,8 +338,11 @@ function handleKeyDown(e: KeyboardEvent) {
 			e.preventDefault()
 			if (document.pictureInPictureElement) {
 				void document.exitPictureInPicture().catch(() => {})
-			} else {
-				void muxPlayer?.media?.requestPictureInPicture()
+			} else if (
+				muxPlayer.media &&
+				'requestPictureInPicture' in muxPlayer.media
+			) {
+				void (muxPlayer.media as HTMLVideoElement).requestPictureInPicture()
 			}
 		}
 		// arrow up/down to adjust volume
