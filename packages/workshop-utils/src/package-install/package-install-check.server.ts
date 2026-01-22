@@ -1,6 +1,7 @@
 import { createHash } from 'node:crypto'
 import fs from 'node:fs/promises'
 import path from 'node:path'
+import { execa } from 'execa'
 import { globby } from 'globby'
 import { getErrorMessage } from '../utils.ts'
 
@@ -11,6 +12,15 @@ type PackageJson = {
 	dependencies?: Record<string, string>
 	devDependencies?: Record<string, string>
 	optionalDependencies?: Record<string, string>
+}
+
+type NpmLsDependency = {
+	invalid?: boolean
+	missing?: boolean
+}
+
+type NpmLsOutput = {
+	dependencies?: Record<string, NpmLsDependency>
 }
 
 export type RootPackageInstallStatus = {
@@ -122,36 +132,60 @@ async function listPackageJsonPaths(cwd: string) {
 	})
 }
 
-async function listInstalledPackages(nodeModulesPath: string) {
+function parseNpmLsOutput(raw: string): NpmLsOutput | null {
+	const trimmed = raw.trim()
+	if (!trimmed) return null
 	try {
-		const entries = await fs.readdir(nodeModulesPath, { withFileTypes: true })
-		const packages = new Set<string>()
-
-		for (const entry of entries) {
-			if (entry.name.startsWith('.')) continue
-			if (entry.name.startsWith('@')) {
-				if (!entry.isDirectory()) continue
-				const scopePath = path.join(nodeModulesPath, entry.name)
-				const scopeEntries = await fs.readdir(scopePath, {
-					withFileTypes: true,
-				})
-				for (const scopedEntry of scopeEntries) {
-					if (scopedEntry.name.startsWith('.')) continue
-					if (scopedEntry.isDirectory() || scopedEntry.isSymbolicLink()) {
-						packages.add(`${entry.name}/${scopedEntry.name}`)
-					}
-				}
-				continue
-			}
-
-			if (entry.isDirectory() || entry.isSymbolicLink()) {
-				packages.add(entry.name)
-			}
-		}
-
-		return packages
+		return JSON.parse(trimmed) as NpmLsOutput
 	} catch {
 		return null
+	}
+}
+
+function getFailingDependencies(
+	expectedDependencies: Array<string>,
+	output: NpmLsOutput | null,
+) {
+	if (!output?.dependencies) return expectedDependencies
+	return expectedDependencies.filter((dependency) => {
+		const entry = output.dependencies?.[dependency]
+		if (!entry) return true
+		return Boolean(entry.missing || entry.invalid)
+	})
+}
+
+async function checkDependenciesWithNpmLs(
+	rootDir: string,
+	expectedDependencies: Array<string>,
+) {
+	if (expectedDependencies.length === 0) {
+		return { ok: true, failingDependencies: [] as Array<string> }
+	}
+
+	try {
+		const result = await execa(
+			'npm',
+			['ls', '--depth=0', '--json', ...expectedDependencies],
+			{ cwd: rootDir, reject: false },
+		)
+		const output = parseNpmLsOutput(result.stdout)
+		const ok = result.exitCode === 0
+		const failingDependencies = ok
+			? []
+			: getFailingDependencies(expectedDependencies, output)
+		return {
+			ok,
+			failingDependencies:
+				ok || failingDependencies.length > 0
+					? failingDependencies
+					: expectedDependencies,
+		}
+	} catch (error) {
+		console.warn(
+			`⚠️  Failed to run npm ls in ${rootDir}:`,
+			getErrorMessage(error),
+		)
+		return { ok: false, failingDependencies: expectedDependencies }
 	}
 }
 
@@ -208,11 +242,9 @@ export async function getRootPackageInstallStatus(
 	const optionalDependencies = getExpectedDependencies(
 		packageJson.optionalDependencies,
 	)
-	const expectedDependencies = [
-		...dependencies,
-		...devDependencies,
-		...optionalDependencies,
-	]
+	const expectedDependencies = Array.from(
+		new Set([...dependencies, ...devDependencies, ...optionalDependencies]),
+	)
 
 	if (expectedDependencies.length === 0) {
 		return {
@@ -228,34 +260,21 @@ export async function getRootPackageInstallStatus(
 		}
 	}
 
-	const installedPackages = await listInstalledPackages(
-		path.join(rootDir, 'node_modules'),
+	const npmLsResult = await checkDependenciesWithNpmLs(
+		rootDir,
+		expectedDependencies,
 	)
-	if (!installedPackages) {
-		return {
-			rootDir,
-			packageJsonPath,
-			packageManager,
-			dependencyHash,
-			dependenciesNeedInstall: true,
-			missingDependencies: dependencies,
-			missingDevDependencies: devDependencies,
-			missingOptionalDependencies: optionalDependencies,
-			reason: 'missing-node-modules',
-		}
-	}
-
-	const missingDependencies = dependencies.filter(
-		(dep) => !installedPackages.has(dep),
+	const failingDependencies = new Set(npmLsResult.failingDependencies)
+	const missingDependencies = dependencies.filter((dep) =>
+		failingDependencies.has(dep),
 	)
-	const missingDevDependencies = devDependencies.filter(
-		(dep) => !installedPackages.has(dep),
+	const missingDevDependencies = devDependencies.filter((dep) =>
+		failingDependencies.has(dep),
 	)
-	const missingOptionalDependencies = optionalDependencies.filter(
-		(dep) => !installedPackages.has(dep),
+	const missingOptionalDependencies = optionalDependencies.filter((dep) =>
+		failingDependencies.has(dep),
 	)
-	const dependenciesNeedInstall =
-		missingDependencies.length > 0 || missingDevDependencies.length > 0
+	const dependenciesNeedInstall = !npmLsResult.ok
 
 	return {
 		rootDir,

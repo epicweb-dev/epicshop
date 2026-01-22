@@ -2,17 +2,24 @@ import fs from 'node:fs/promises'
 import os from 'node:os'
 import path from 'node:path'
 import { afterEach, beforeEach, describe, expect, test, vi } from 'vitest'
-import {
+
+vi.mock('execa', () => ({
+	execa: vi.fn(),
+}))
+
+const { execa } = await import('execa')
+const {
 	getInstallCommand,
 	getRootPackageInstallStatus,
 	getRootPackageJsonPaths,
 	getWorkspaceInstallStatus,
-} from './package-install-check.server.ts'
+} = await import('./package-install-check.server.ts')
 
 let tempDir: string
 
 beforeEach(async () => {
 	tempDir = await fs.mkdtemp(path.join(os.tmpdir(), 'package-install-test-'))
+	vi.mocked(execa).mockReset()
 })
 
 afterEach(async () => {
@@ -36,23 +43,20 @@ async function writePackageJson(
 	)
 }
 
-async function createNodeModules(
-	dir: string,
-	packages: Array<string>,
-): Promise<void> {
-	const nodeModulesPath = path.join(dir, 'node_modules')
-	await fs.mkdir(nodeModulesPath, { recursive: true })
-
-	for (const pkg of packages) {
-		if (pkg.startsWith('@')) {
-			const [scope, name] = pkg.split('/')
-			const scopePath = path.join(nodeModulesPath, scope!)
-			await fs.mkdir(scopePath, { recursive: true })
-			await fs.mkdir(path.join(scopePath, name!), { recursive: true })
-		} else {
-			await fs.mkdir(path.join(nodeModulesPath, pkg), { recursive: true })
-		}
-	}
+function mockNpmLsResult({
+	exitCode,
+	dependencies = {},
+	stdout,
+}: {
+	exitCode: number
+	dependencies?: Record<string, { missing?: boolean; invalid?: boolean }>
+	stdout?: string
+}) {
+	vi.mocked(execa).mockResolvedValue({
+		exitCode,
+		stdout: stdout ?? JSON.stringify({ dependencies }),
+		stderr: '',
+	} as never)
 }
 
 describe('getInstallCommand', () => {
@@ -94,7 +98,10 @@ describe('getRootPackageInstallStatus', () => {
 			packageManager: 'npm@10.0.0',
 			dependencies: { react: '^18.0.0' },
 		})
-		await createNodeModules(tempDir, ['react'])
+		mockNpmLsResult({
+			exitCode: 0,
+			dependencies: { react: {} },
+		})
 
 		const status = await getRootPackageInstallStatus(
 			path.join(tempDir, 'package.json'),
@@ -111,7 +118,10 @@ describe('getRootPackageInstallStatus', () => {
 			packageManager: 'pnpm@8.0.0',
 			dependencies: { react: '^18.0.0' },
 		})
-		await createNodeModules(tempDir, ['react'])
+		mockNpmLsResult({
+			exitCode: 0,
+			dependencies: { react: {} },
+		})
 
 		const status = await getRootPackageInstallStatus(
 			path.join(tempDir, 'package.json'),
@@ -128,7 +138,10 @@ describe('getRootPackageInstallStatus', () => {
 			packageManager: 'yarn@4.0.0',
 			dependencies: { react: '^18.0.0' },
 		})
-		await createNodeModules(tempDir, ['react'])
+		mockNpmLsResult({
+			exitCode: 0,
+			dependencies: { react: {} },
+		})
 
 		const status = await getRootPackageInstallStatus(
 			path.join(tempDir, 'package.json'),
@@ -145,7 +158,10 @@ describe('getRootPackageInstallStatus', () => {
 			packageManager: 'bun@1.0.0',
 			dependencies: { react: '^18.0.0' },
 		})
-		await createNodeModules(tempDir, ['react'])
+		mockNpmLsResult({
+			exitCode: 0,
+			dependencies: { react: {} },
+		})
 
 		const status = await getRootPackageInstallStatus(
 			path.join(tempDir, 'package.json'),
@@ -161,7 +177,10 @@ describe('getRootPackageInstallStatus', () => {
 			name: 'test-package',
 			dependencies: { react: '^18.0.0' },
 		})
-		await createNodeModules(tempDir, ['react'])
+		mockNpmLsResult({
+			exitCode: 0,
+			dependencies: { react: {} },
+		})
 
 		const status = await getRootPackageInstallStatus(
 			path.join(tempDir, 'package.json'),
@@ -176,13 +195,17 @@ describe('getRootPackageInstallStatus', () => {
 			name: 'test-package',
 			dependencies: { react: '^18.0.0' },
 		})
+		mockNpmLsResult({
+			exitCode: 1,
+			stdout: '',
+		})
 
 		const status = await getRootPackageInstallStatus(
 			path.join(tempDir, 'package.json'),
 		)
 
 		expect(status.dependenciesNeedInstall).toBe(true)
-		expect(status.reason).toBe('missing-node-modules')
+		expect(status.reason).toBe('missing-dependencies')
 		expect(status.missingDependencies).toEqual(['react'])
 	})
 
@@ -191,7 +214,13 @@ describe('getRootPackageInstallStatus', () => {
 			name: 'test-package',
 			dependencies: { react: '^18.0.0', 'react-dom': '^18.0.0' },
 		})
-		await createNodeModules(tempDir, ['react'])
+		mockNpmLsResult({
+			exitCode: 1,
+			dependencies: {
+				react: {},
+				'react-dom': { missing: true },
+			},
+		})
 
 		const status = await getRootPackageInstallStatus(
 			path.join(tempDir, 'package.json'),
@@ -200,6 +229,11 @@ describe('getRootPackageInstallStatus', () => {
 		expect(status.dependenciesNeedInstall).toBe(true)
 		expect(status.reason).toBe('missing-dependencies')
 		expect(status.missingDependencies).toEqual(['react-dom'])
+		expect(execa).toHaveBeenCalledWith(
+			'npm',
+			['ls', '--depth=0', '--json', 'react', 'react-dom'],
+			expect.objectContaining({ cwd: tempDir, reject: false }),
+		)
 	})
 
 	test('detects missing devDependencies', async () => {
@@ -208,7 +242,14 @@ describe('getRootPackageInstallStatus', () => {
 			dependencies: { react: '^18.0.0' },
 			devDependencies: { typescript: '^5.0.0', vitest: '^1.0.0' },
 		})
-		await createNodeModules(tempDir, ['react', 'typescript'])
+		mockNpmLsResult({
+			exitCode: 1,
+			dependencies: {
+				react: {},
+				typescript: {},
+				vitest: { missing: true },
+			},
+		})
 
 		const status = await getRootPackageInstallStatus(
 			path.join(tempDir, 'package.json'),
@@ -224,7 +265,10 @@ describe('getRootPackageInstallStatus', () => {
 			name: 'test-package',
 			dependencies: { '@epic-web/workshop-utils': '^1.0.0' },
 		})
-		await createNodeModules(tempDir, ['@epic-web/workshop-utils'])
+		mockNpmLsResult({
+			exitCode: 0,
+			dependencies: { '@epic-web/workshop-utils': {} },
+		})
 
 		const status = await getRootPackageInstallStatus(
 			path.join(tempDir, 'package.json'),
@@ -239,7 +283,10 @@ describe('getRootPackageInstallStatus', () => {
 			name: 'test-package',
 			dependencies: { '@epic-web/workshop-utils': '^1.0.0' },
 		})
-		await createNodeModules(tempDir, [])
+		mockNpmLsResult({
+			exitCode: 1,
+			dependencies: { '@epic-web/workshop-utils': { missing: true } },
+		})
 
 		const status = await getRootPackageInstallStatus(
 			path.join(tempDir, 'package.json'),
@@ -269,14 +316,19 @@ describe('getRootPackageInstallStatus', () => {
 			dependencies: { react: '^18.0.0' },
 			optionalDependencies: { 'optional-pkg': '^1.0.0' },
 		})
-		await createNodeModules(tempDir, ['react'])
+		mockNpmLsResult({
+			exitCode: 1,
+			dependencies: {
+				react: {},
+				'optional-pkg': { missing: true },
+			},
+		})
 
 		const status = await getRootPackageInstallStatus(
 			path.join(tempDir, 'package.json'),
 		)
 
-		// Missing optional dependencies should not trigger install requirement
-		expect(status.dependenciesNeedInstall).toBe(false)
+		expect(status.dependenciesNeedInstall).toBe(true)
 		expect(status.missingOptionalDependencies).toEqual(['optional-pkg'])
 	})
 
@@ -301,7 +353,10 @@ describe('getRootPackageInstallStatus', () => {
 			name: 'test-package',
 			dependencies: { react: '^18.0.0', 'react-dom': '^18.0.0' },
 		})
-		await createNodeModules(tempDir, ['react', 'react-dom'])
+		mockNpmLsResult({
+			exitCode: 0,
+			dependencies: { react: {}, 'react-dom': {} },
+		})
 
 		const status1 = await getRootPackageInstallStatus(
 			path.join(tempDir, 'package.json'),
@@ -316,7 +371,10 @@ describe('getRootPackageInstallStatus', () => {
 				name: 'different-name',
 				dependencies: { react: '^18.0.0', 'react-dom': '^18.0.0' },
 			})
-			await createNodeModules(tempDir2, ['react', 'react-dom'])
+			mockNpmLsResult({
+				exitCode: 0,
+				dependencies: { react: {}, 'react-dom': {} },
+			})
 
 			const status2 = await getRootPackageInstallStatus(
 				path.join(tempDir2, 'package.json'),
@@ -411,7 +469,10 @@ describe('getWorkspaceInstallStatus', () => {
 			packageManager: 'pnpm@8.0.0',
 			dependencies: { react: '^18.0.0' },
 		})
-		await createNodeModules(tempDir, ['react'])
+		mockNpmLsResult({
+			exitCode: 0,
+			dependencies: { react: {} },
+		})
 
 		const status = await getWorkspaceInstallStatus(tempDir)
 
@@ -426,7 +487,19 @@ describe('getWorkspaceInstallStatus', () => {
 			name: 'root-package',
 			dependencies: { react: '^18.0.0' },
 		})
-		await createNodeModules(tempDir, ['react'])
+		vi.mocked(execa)
+			.mockResolvedValueOnce({
+				exitCode: 0,
+				stdout: JSON.stringify({ dependencies: { react: {} } }),
+				stderr: '',
+			} as never)
+			.mockResolvedValueOnce({
+				exitCode: 1,
+				stdout: JSON.stringify({
+					dependencies: { typescript: { missing: true } },
+				}),
+				stderr: '',
+			} as never)
 
 		const subDir = path.join(tempDir, 'sub')
 		await fs.mkdir(subDir, { recursive: true })
@@ -434,7 +507,6 @@ describe('getWorkspaceInstallStatus', () => {
 			name: 'sub-package',
 			dependencies: { typescript: '^5.0.0' },
 		})
-		// Don't create node_modules for sub
 
 		const status = await getWorkspaceInstallStatus(tempDir)
 
@@ -450,7 +522,17 @@ describe('getWorkspaceInstallStatus', () => {
 			packageManager: 'yarn@4.0.0',
 			dependencies: { react: '^18.0.0' },
 		})
-		await createNodeModules(tempDir, ['react'])
+		vi.mocked(execa)
+			.mockResolvedValueOnce({
+				exitCode: 0,
+				stdout: JSON.stringify({ dependencies: { react: {} } }),
+				stderr: '',
+			} as never)
+			.mockResolvedValueOnce({
+				exitCode: 0,
+				stdout: JSON.stringify({ dependencies: { typescript: {} } }),
+				stderr: '',
+			} as never)
 
 		const subDir = path.join(tempDir, 'sub')
 		await fs.mkdir(subDir, { recursive: true })
@@ -459,7 +541,6 @@ describe('getWorkspaceInstallStatus', () => {
 			packageManager: 'bun@1.0.0',
 			dependencies: { typescript: '^5.0.0' },
 		})
-		await createNodeModules(subDir, ['typescript'])
 
 		const status = await getWorkspaceInstallStatus(tempDir)
 
