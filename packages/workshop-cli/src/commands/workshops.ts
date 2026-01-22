@@ -2993,9 +2993,3 @@ async function directoryExists(dirPath: string): Promise<boolean> {
 		return false
 	}
 }
-
-export const __test__ = {
-	fetchWorkshopPackageJson,
-	buildRawPackageJsonUrls,
-	normalizeProductHost,
-}
