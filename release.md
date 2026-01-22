@@ -69,22 +69,32 @@ since v6.45.0, grouped by theme rather than release order.
 Examples:
 
 ```bash
+# Run the guided first-time setup and start the tutorial workshop.
 epicshop init
+# Add the tutorial workshop later if you skipped it.
 epicshop add epicshop-tutorial
+# Clone a workshop at an exact version tag for consistency.
 epicshop add full-stack-foundations#v1.2.0
+# Clone a workshop into a custom directory.
 epicshop add web-forms --directory ~/my-workshops
+# See what workshops are available locally.
 epicshop list
+# Start the workshop app in the current workshop folder.
 epicshop start
+# Open the current workshop in your editor.
 epicshop open
+# Set the playground to a specific step with an interactive picker.
 epicshop playground set
+# Pick two apps to compare with an interactive diff picker.
 epicshop diff
+# Check for updates and apply them.
 epicshop update
 ```
 
 ## MCP server and AI assistant support
 
-- The MCP server now supports a Notifications API so assistants can surface
-  important events from your workshop session.
+- The MCP server now ships with clearer tool descriptions and responses, so AI
+  assistants can use it more efficiently and reliably.
 - New MCP tools can list and restore saved playgrounds, helping assistants keep
   your learning state in sync.
 
