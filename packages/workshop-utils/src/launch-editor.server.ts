@@ -118,6 +118,35 @@ const COMMON_EDITORS_WIN = [
 	'zed.exe',
 ]
 
+// Map Windows executable names to their CLI commands
+const WINDOWS_CLI_COMMANDS: Record<string, string> = {
+	'Code.exe': 'code',
+	'Cursor.exe': 'cursor',
+	'Code - Insiders.exe': 'code-insiders',
+	'VSCodium.exe': 'vscodium',
+	'atom.exe': 'atom',
+	'Brackets.exe': 'brackets',
+	'sublime_text.exe': 'subl',
+	'notepad++.exe': 'notepad++',
+	'clion.exe': 'clion',
+	'clion64.exe': 'clion',
+	'idea.exe': 'idea',
+	'idea64.exe': 'idea',
+	'phpstorm.exe': 'phpstorm',
+	'phpstorm64.exe': 'phpstorm',
+	'pycharm.exe': 'pycharm',
+	'pycharm64.exe': 'pycharm',
+	'rubymine.exe': 'rubymine',
+	'rubymine64.exe': 'rubymine',
+	'webstorm.exe': 'webstorm',
+	'webstorm64.exe': 'webstorm',
+	'goland.exe': 'goland',
+	'goland64.exe': 'goland',
+	'rider.exe': 'rider',
+	'rider64.exe': 'rider',
+	'zed.exe': 'zed',
+}
+
 // Transpiled version of: /^([A-Za-z]:[/\\])?[\p{L}0-9/.\-_\\]+$/u
 // Non-transpiled version requires support for Unicode property regex. Allows
 // alphanumeric characters, periods, dashes, slashes, and underscores.
@@ -381,7 +410,11 @@ function getSupportedEditorCommands(): string[] {
 		return Array.from(new Set(Object.values(COMMON_EDITORS_OSX)))
 	}
 	if (process.platform === 'win32') {
-		return Array.from(new Set(COMMON_EDITORS_WIN))
+		return Array.from(
+			new Set(
+				COMMON_EDITORS_WIN.map((exe) => WINDOWS_CLI_COMMANDS[exe] ?? exe),
+			),
+		)
 	}
 	return Array.from(new Set(Object.values(COMMON_EDITORS_LINUX)))
 }

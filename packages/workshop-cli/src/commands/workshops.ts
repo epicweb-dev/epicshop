@@ -151,9 +151,8 @@ function formatEditorChoiceName(editor: { label: string; command: string }) {
 async function getInstalledEditorChoices(): Promise<
 	Array<{ name: string; value: string; description?: string }>
 > {
-	const { getAvailableEditors } = await import(
-		'@epic-web/workshop-utils/launch-editor.server'
-	)
+	const { getAvailableEditors } =
+		await import('@epic-web/workshop-utils/launch-editor.server')
 	const editors = getAvailableEditors()
 	return editors.map((editor) => ({
 		name: formatEditorChoiceName(editor),
@@ -406,13 +405,10 @@ async function resolvePreferredEditor({
 }: {
 	silent: boolean
 }): Promise<string | null> {
-	const { getPreferredEditor, setPreferredEditor } = await import(
-		'@epic-web/workshop-utils/workshops.server'
-	)
-	const {
-		getDefaultEditorCommand,
-		formatEditorLabel,
-	} = await import('@epic-web/workshop-utils/launch-editor.server')
+	const { getPreferredEditor, setPreferredEditor } =
+		await import('@epic-web/workshop-utils/workshops.server')
+	const { getDefaultEditorCommand, formatEditorLabel } =
+		await import('@epic-web/workshop-utils/launch-editor.server')
 
 	const preferredEditor = await getPreferredEditor()
 	if (preferredEditor) return preferredEditor
@@ -1845,9 +1841,8 @@ export async function config(
 			],
 		})
 		const { search, confirm, select } = await import('@inquirer/prompts')
-		const { formatEditorLabel } = await import(
-			'@epic-web/workshop-utils/launch-editor.server'
-		)
+		const { formatEditorLabel } =
+			await import('@epic-web/workshop-utils/launch-editor.server')
 
 		const reposDir = await getReposDirectory()
 		const isConfigured = await isReposDirectoryConfigured()
@@ -2620,7 +2615,9 @@ async function promptAndSetupAccessibleWorkshops(): Promise<void> {
 			),
 		)
 		console.log(
-			chalk.gray(`   To verify access, log in with: ${chalk.cyan('npx epicshop auth')}`),
+			chalk.gray(
+				`   To verify access, log in with: ${chalk.cyan('npx epicshop auth')}`,
+			),
 		)
 		console.log()
 	}
