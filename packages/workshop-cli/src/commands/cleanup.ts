@@ -782,63 +782,66 @@ export async function cleanup({
 			}
 		}
 
-	const analysisSpinner = startSpinner('Scanning local epicshop data...', silent)
-	let reposDir = ''
-	let cacheDir = ''
-	let legacyCacheDir = ''
-	let dataPaths: string[] = []
-	let offlineVideosDir = ''
-	let configPath = ''
-	let workshopSummaries: WorkshopSummary[] = []
-	let workshopBytes = 0
-	let legacyCacheBytes = 0
-	let cacheBytes = 0
-	let offlineVideosBytes = 0
-	let preferencesBytes = 0
-	let authBytes = 0
-	let configBytes = 0
-
-	try {
-		updateSpinner(analysisSpinner, 'Resolving cleanup locations...')
-		;({
-			reposDir,
-			cacheDir,
-			legacyCacheDir,
-			dataPaths,
-			offlineVideosDir,
-			configPath,
-		} = await resolveCleanupPaths(paths))
-		updateSpinner(analysisSpinner, 'Finding installed workshops...')
-		const allWorkshops = await listWorkshopsInDirectory(reposDir)
-		updateSpinner(analysisSpinner, 'Calculating workshop sizes...')
-		workshopSummaries = await getWorkshopSummaries({
-			workshops: allWorkshops,
-			cacheDir,
-			onProgress: (progress) => {
-				updateSpinner(
-					analysisSpinner,
-					`Calculating workshop sizes (${progress.current}/${progress.total}): ${progress.workshop.repoName}`,
-				)
-			},
-		})
-		workshopBytes = workshopSummaries.reduce(
-			(total, workshop) => total + workshop.sizeBytes,
-			0,
+		const analysisSpinner = startSpinner(
+			'Scanning local epicshop data...',
+			silent,
 		)
-		updateSpinner(analysisSpinner, 'Calculating cache sizes...')
-		legacyCacheBytes = await getPathSize(legacyCacheDir)
-		const cacheDirBytes = await getPathSize(cacheDir)
-		cacheBytes = cacheDirBytes + legacyCacheBytes
-		updateSpinner(analysisSpinner, 'Calculating offline video sizes...')
-		offlineVideosBytes = await getPathSize(offlineVideosDir)
-		updateSpinner(analysisSpinner, 'Calculating CLI config size...')
-		configBytes = await getPathSize(configPath)
-		updateSpinner(analysisSpinner, 'Scanning preferences and auth data...')
-		;({ preferencesBytes, authBytes } =
-			await getDataCleanupSizeSummary(dataPaths))
-	} finally {
-		stopSpinner(analysisSpinner)
-	}
+		let reposDir = ''
+		let cacheDir = ''
+		let legacyCacheDir = ''
+		let dataPaths: string[] = []
+		let offlineVideosDir = ''
+		let configPath = ''
+		let workshopSummaries: WorkshopSummary[] = []
+		let workshopBytes = 0
+		let legacyCacheBytes = 0
+		let cacheBytes = 0
+		let offlineVideosBytes = 0
+		let preferencesBytes = 0
+		let authBytes = 0
+		let configBytes = 0
+
+		try {
+			updateSpinner(analysisSpinner, 'Resolving cleanup locations...')
+			;({
+				reposDir,
+				cacheDir,
+				legacyCacheDir,
+				dataPaths,
+				offlineVideosDir,
+				configPath,
+			} = await resolveCleanupPaths(paths))
+			updateSpinner(analysisSpinner, 'Finding installed workshops...')
+			const allWorkshops = await listWorkshopsInDirectory(reposDir)
+			updateSpinner(analysisSpinner, 'Calculating workshop sizes...')
+			workshopSummaries = await getWorkshopSummaries({
+				workshops: allWorkshops,
+				cacheDir,
+				onProgress: (progress) => {
+					updateSpinner(
+						analysisSpinner,
+						`Calculating workshop sizes (${progress.current}/${progress.total}): ${progress.workshop.repoName}`,
+					)
+				},
+			})
+			workshopBytes = workshopSummaries.reduce(
+				(total, workshop) => total + workshop.sizeBytes,
+				0,
+			)
+			updateSpinner(analysisSpinner, 'Calculating cache sizes...')
+			legacyCacheBytes = await getPathSize(legacyCacheDir)
+			const cacheDirBytes = await getPathSize(cacheDir)
+			cacheBytes = cacheDirBytes + legacyCacheBytes
+			updateSpinner(analysisSpinner, 'Calculating offline video sizes...')
+			offlineVideosBytes = await getPathSize(offlineVideosDir)
+			updateSpinner(analysisSpinner, 'Calculating CLI config size...')
+			configBytes = await getPathSize(configPath)
+			updateSpinner(analysisSpinner, 'Scanning preferences and auth data...')
+			;({ preferencesBytes, authBytes } =
+				await getDataCleanupSizeSummary(dataPaths))
+		} finally {
+			stopSpinner(analysisSpinner)
+		}
 
 		const cleanupChoices = CLEANUP_TARGETS.map((target) => {
 			const sizeByTarget: Record<CleanupTarget, number> = {
