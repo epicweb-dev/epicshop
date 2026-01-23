@@ -488,25 +488,33 @@ describe('getWorkspaceInstallStatus', () => {
 			name: 'root-package',
 			dependencies: { react: '^18.0.0' },
 		})
-		vi.mocked(execa)
-			.mockResolvedValueOnce({
-				exitCode: 0,
-				stdout: JSON.stringify({ dependencies: { react: {} } }),
-				stderr: '',
-			} as never)
-			.mockResolvedValueOnce({
-				exitCode: 1,
-				stdout: JSON.stringify({
-					dependencies: { typescript: { missing: true } },
-				}),
-				stderr: '',
-			} as never)
 
 		const subDir = path.join(tempDir, 'sub')
 		await fs.mkdir(subDir, { recursive: true })
 		await writePackageJson(subDir, {
 			name: 'sub-package',
 			dependencies: { typescript: '^5.0.0' },
+		})
+
+		vi.mocked(execa).mockImplementation(async (_command, _args, options) => {
+			const cwd = (options as { cwd?: string }).cwd
+			if (cwd === tempDir) {
+				return {
+					exitCode: 0,
+					stdout: JSON.stringify({ dependencies: { react: {} } }),
+					stderr: '',
+				} as never
+			}
+			if (cwd === subDir) {
+				return {
+					exitCode: 1,
+					stdout: JSON.stringify({
+						dependencies: { typescript: { missing: true } },
+					}),
+					stderr: '',
+				} as never
+			}
+			return { exitCode: 1, stdout: '', stderr: '' } as never
 		})
 
 		const status = await getWorkspaceInstallStatus(tempDir)
