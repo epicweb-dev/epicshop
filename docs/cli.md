@@ -425,7 +425,7 @@ epicshop warm --silent
 ### `cleanup`
 
 Clean up local epicshop data using a multi-select prompt. Choose what to delete
-from workshops, caches, offline videos, preferences, and auth data.
+from workshops, caches, offline videos, preferences, auth data, and CLI config.
 
 ```bash
 epicshop cleanup [options]
@@ -434,7 +434,7 @@ epicshop cleanup [options]
 #### Options
 
 - `--targets, -t <name>` - Cleanup targets (repeatable): `caches`,
-  `offline-videos`, `preferences`, `auth`
+  `offline-videos`, `preferences`, `auth`, `config`
 - `--workshops <name>` - Workshops to clean (repeatable, by repo name or path)
 - `--workshop-actions <name>` - Workshop cleanup actions (repeatable): `files`,
   `caches`, `offline-videos`
@@ -462,6 +462,7 @@ epicshop cleanup \
 - Warns about unpushed workshop changes before deletion
 - Removes cache and legacy cache directories when selected
 - Preferences/auth cleanup updates local data files in-place
+- Config cleanup removes the saved workshops directory setting
 - Workshop cleanup prompts for specific workshops, then what to clean for them
 - Workshop actions are scoped to selected workshops, not all workshops
 

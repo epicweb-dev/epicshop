@@ -48,7 +48,7 @@ epicshop start <workshop>
 - `epicshop update`: pull the latest workshop changes
 - `epicshop warm`: warm caches for faster workshop startup
 - `epicshop cleanup`: select what to delete (workshops, caches, offline videos,
-  prefs, auth)
+  prefs, auth, config)
 - `epicshop exercises`: list exercises with progress (context-aware)
 - `epicshop playground`: view, set, or restore saved playgrounds (context-aware)
 - `epicshop progress`: view or update your progress (context-aware)
