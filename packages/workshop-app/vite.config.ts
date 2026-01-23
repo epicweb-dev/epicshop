@@ -85,6 +85,7 @@ export default defineConfig((config) => {
 		},
 		build: {
 			cssMinify: isProduction,
+			sourcemap: true,
 			rollupOptions: {
 				external: [
 					/node:.*/,
@@ -107,10 +108,10 @@ export default defineConfig((config) => {
 			envOnlyMacros(),
 			tailwindcss(),
 			reactRouter(),
+			devtoolsJson(),
 			isProduction && process.env.SENTRY_AUTH_TOKEN
 				? sentryReactRouter(sentryConfig, config)
 				: null,
-			devtoolsJson(),
 		].filter(Boolean),
 	}
 })
