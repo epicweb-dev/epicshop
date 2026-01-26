@@ -33,6 +33,7 @@ import { useRootLoaderData } from '#app/utils/root-loader.ts'
 import { Icon } from './icons.tsx'
 import { Loading } from './loading.tsx'
 import { OfflineVideoActionButtons } from './offline-video-actions.tsx'
+import { TimelineZoom } from './timeline-zoom.tsx'
 import { useOptionalUser } from './user.tsx'
 import { useWorkshopConfig } from './workshop-config.tsx'
 
@@ -478,6 +479,9 @@ function EpicVideo({
 		offlineVideoPlaybackIds?.includes(muxPlaybackId) ?? false
 	const offlineVideoUrl = `/resources/offline-videos/${encodeURIComponent(muxPlaybackId)}`
 	const shouldUseOfflineVideo = offlineVideoAvailable
+	const timelineMediaRef = shouldUseOfflineVideo
+		? nativeVideoRef
+		: muxPlayerRef
 	const revalidator = useRevalidator()
 	const offlineVideoFetcher = useFetcher<OfflineVideoActionData>()
 	const isOfflineActionBusy = offlineVideoFetcher.state !== 'idle'
@@ -847,6 +851,7 @@ function EpicVideo({
 					/>
 				)}
 			</div>
+			<TimelineZoom className="mt-3" mediaRef={timelineMediaRef} />
 			<div className="mt-4 flex flex-col gap-2">
 				<VideoLink
 					url={urlString}
