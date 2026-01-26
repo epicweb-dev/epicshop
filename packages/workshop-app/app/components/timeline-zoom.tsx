@@ -74,7 +74,10 @@ export function TimelineZoom({ mediaRef, className }: TimelineZoomProps) {
 
 	const safeDuration = Number.isFinite(duration) ? duration : 0
 	const maxZoom = safeDuration
-		? Math.min(MAX_ZOOM, Math.max(1, Math.floor(safeDuration / MIN_WINDOW_SECONDS)))
+		? Math.min(
+				MAX_ZOOM,
+				Math.max(1, Math.floor(safeDuration / MIN_WINDOW_SECONDS)),
+			)
 		: 1
 	const clampedZoom = clamp(zoom, 1, maxZoom)
 
@@ -98,11 +101,7 @@ export function TimelineZoom({ mediaRef, className }: TimelineZoomProps) {
 	React.useEffect(() => {
 		if (!isReady) return
 		if (currentTime >= windowStart && currentTime <= windowEnd) return
-		const centeredStart = clamp(
-			currentTime - windowSize / 2,
-			0,
-			maxWindowStart,
-		)
+		const centeredStart = clamp(currentTime - windowSize / 2, 0, maxWindowStart)
 		if (Math.abs(centeredStart - windowStart) > EPSILON) {
 			setWindowStart(centeredStart)
 		}
@@ -226,9 +225,7 @@ export function TimelineZoom({ mediaRef, className }: TimelineZoomProps) {
 					<button
 						type="button"
 						disabled={!isReady}
-						onClick={() =>
-							handleScrub(Math.max(0, currentTime - 1))
-						}
+						onClick={() => handleScrub(Math.max(0, currentTime - 1))}
 						className="border-border bg-background text-foreground hover:bg-muted rounded border px-2 py-1 disabled:cursor-not-allowed disabled:opacity-50"
 					>
 						-1s
@@ -239,9 +236,7 @@ export function TimelineZoom({ mediaRef, className }: TimelineZoomProps) {
 						max={windowEnd}
 						step={scrubStep}
 						value={scrubValue}
-						onChange={(event) =>
-							handleScrub(Number(event.currentTarget.value))
-						}
+						onChange={(event) => handleScrub(Number(event.currentTarget.value))}
 						disabled={!isReady}
 						className="accent-foreground h-2 flex-1"
 						aria-label="Playhead position"
@@ -249,9 +244,7 @@ export function TimelineZoom({ mediaRef, className }: TimelineZoomProps) {
 					<button
 						type="button"
 						disabled={!isReady}
-						onClick={() =>
-							handleScrub(Math.min(safeDuration, currentTime + 1))
-						}
+						onClick={() => handleScrub(Math.min(safeDuration, currentTime + 1))}
 						className="border-border bg-background text-foreground hover:bg-muted rounded border px-2 py-1 disabled:cursor-not-allowed disabled:opacity-50"
 					>
 						+1s

@@ -479,9 +479,7 @@ function EpicVideo({
 		offlineVideoPlaybackIds?.includes(muxPlaybackId) ?? false
 	const offlineVideoUrl = `/resources/offline-videos/${encodeURIComponent(muxPlaybackId)}`
 	const shouldUseOfflineVideo = offlineVideoAvailable
-	const timelineMediaRef = shouldUseOfflineVideo
-		? nativeVideoRef
-		: muxPlayerRef
+	const timelineMediaRef = shouldUseOfflineVideo ? nativeVideoRef : muxPlayerRef
 	const revalidator = useRevalidator()
 	const offlineVideoFetcher = useFetcher<OfflineVideoActionData>()
 	const isOfflineActionBusy = offlineVideoFetcher.state !== 'idle'
