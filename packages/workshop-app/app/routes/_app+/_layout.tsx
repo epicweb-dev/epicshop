@@ -846,6 +846,9 @@ function MobileNavigation({
 									</NavLink>
 								</span>
 								{data.exercises.map(({ exerciseNumber, title, steps }) => {
+									const exerciseNumberLabel = exerciseNumber
+										.toString()
+										.padStart(2, '0')
 									const isActive =
 										Number(params.exerciseNumber) === exerciseNumber
 									const showPlayground =
@@ -866,7 +869,10 @@ function MobileNavigation({
 														{ 'bg-foreground text-background': isActive },
 													)}
 												>
-													{title}
+													<span className="text-muted-foreground tabular-nums">
+														{exerciseNumberLabel}.
+													</span>{' '}
+													<span>{title}</span>
 												</Link>
 												{showPlayground ? (
 													<Link
@@ -1436,6 +1442,9 @@ function Navigation({
 									</NavLink>
 								</span>
 								{data.exercises.map(({ exerciseNumber, title, steps }) => {
+									const exerciseNumberLabel = exerciseNumber
+										.toString()
+										.padStart(2, '0')
 									const isActive =
 										Number(params.exerciseNumber) === exerciseNumber
 									const showPlayground =
@@ -1456,7 +1465,10 @@ function Navigation({
 														{ 'bg-foreground text-background': isActive },
 													)}
 												>
-													{title}
+													<span className="text-muted-foreground tabular-nums">
+														{exerciseNumberLabel}.
+													</span>{' '}
+													<span>{title}</span>
 												</Link>
 												{showPlayground ? (
 													<Link
