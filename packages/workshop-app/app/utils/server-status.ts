@@ -9,6 +9,11 @@ export function useServerStatus() {
 	const isOnline = useIsOnline()
 	const [isServerDown, setIsServerDown] = useState(false)
 	const isCancelledRef = useRef(false)
+	const isOnlineRef = useRef(isOnline)
+
+	useEffect(() => {
+		isOnlineRef.current = isOnline
+	}, [isOnline])
 
 	useEffect(() => {
 		isCancelledRef.current = false
@@ -37,11 +42,11 @@ export function useServerStatus() {
 				cache: 'no-store',
 				headers: { 'x-healthcheck': 'true' },
 			})
-			if (!isCancelledRef.current) {
+			if (!isCancelledRef.current && isOnlineRef.current) {
 				setIsServerDown(!response.ok)
 			}
 		} catch {
-			if (!isCancelledRef.current) {
+			if (!isCancelledRef.current && isOnlineRef.current) {
 				setIsServerDown(true)
 			}
 		}
