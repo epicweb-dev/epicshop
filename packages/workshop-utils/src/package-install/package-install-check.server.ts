@@ -48,6 +48,8 @@ const workspaceIgnorePatterns = [
 	'**/dist/**',
 	'**/build/**',
 	'**/coverage/**',
+	'**/playground/**',
+	'**/saved-playgrounds/**',
 ]
 
 function hashString(value: string) {
