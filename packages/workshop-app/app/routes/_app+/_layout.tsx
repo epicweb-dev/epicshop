@@ -1124,7 +1124,7 @@ function MobileNavigation({
 							</div>
 						</SimpleTooltip>
 					)}
-					{isServerDown ? (
+					{isServerDown && isOnline ? (
 						<SimpleTooltip
 							content={isMenuOpened ? null : serverShutdownTooltip}
 						>
@@ -1765,7 +1765,7 @@ function Navigation({
 							</div>
 						</SimpleTooltip>
 					)}
-					{isServerDown ? (
+					{isServerDown && isOnline ? (
 						<SimpleTooltip
 							content={isMenuOpened ? null : serverShutdownTooltip}
 						>
