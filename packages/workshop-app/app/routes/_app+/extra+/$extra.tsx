@@ -51,6 +51,7 @@ import { fetchDiscordPosts } from '#app/utils/discord.server.ts'
 import { createInlineFileComponent, Mdx } from '#app/utils/mdx.tsx'
 import {
 	getRootMatchLoaderData,
+	useApps,
 	useRootLoaderData,
 } from '#app/utils/root-loader.ts'
 import { getSeoMetaTags } from '#app/utils/seo.ts'
@@ -222,6 +223,7 @@ export const headers: HeadersFunction = ({ loaderHeaders, parentHeaders }) => {
 export default function ExtraRoute() {
 	const data = useLoaderData<typeof loader>()
 	const rootData = useRootLoaderData()
+	const apps = useApps()
 	const inBrowserBrowserRef = useRef<InBrowserBrowserRef>(null)
 	const containerRef = useRef<HTMLDivElement>(null)
 	const leftPaneRef = useRef<HTMLDivElement>(null)
@@ -310,8 +312,14 @@ export default function ExtraRoute() {
 		}
 	}, [data.extra.name, data.extra.fullPath])
 
+	const playgroundBasePath = apps.find(
+		(app) => app.name === data.playground?.appName,
+	)?.fullPath
+
 	useRevalidationWS({
-		watchPaths: [data.extraReadme.file],
+		watchPaths: [data.extraReadme.file, playgroundBasePath].filter(
+			(path): path is string => Boolean(path),
+		),
 	})
 
 	return (
