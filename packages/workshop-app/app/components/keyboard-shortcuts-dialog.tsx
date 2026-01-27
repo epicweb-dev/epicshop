@@ -39,7 +39,7 @@ const shortcutCategories: ShortcutCategory[] = [
 			{ keys: ['g', 'p'], description: 'Go to previous step/page' },
 			{ keys: ['g', 'n'], description: 'Go to next step/page' },
 			{
-				keys: ['g', 's'],
+				keys: ['s', 'p'],
 				description: 'Set playground to current exercise',
 			},
 			{

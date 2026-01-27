@@ -12,6 +12,14 @@ let gKeySequence: {
 	clearTimeout: null,
 }
 
+let spKeySequence: {
+	waitingForP: boolean
+	clearTimeout: ReturnType<typeof setTimeout> | null
+} = {
+	waitingForP: false,
+	clearTimeout: null,
+}
+
 const G_KEY_TIMEOUT = 1000
 const NAVIGATION_DELAY = 300
 
@@ -26,6 +34,16 @@ function clearGKeySequence() {
 		exerciseNumber: null,
 		waitingForDot: false,
 		navigationTimeout: null,
+		clearTimeout: null,
+	}
+}
+
+function clearSPKeySequence() {
+	if (spKeySequence.clearTimeout) {
+		clearTimeout(spKeySequence.clearTimeout)
+	}
+	spKeySequence = {
+		waitingForP: false,
 		clearTimeout: null,
 	}
 }
@@ -80,16 +98,6 @@ function handleGNavigation(e: KeyboardEvent): boolean {
 		if (e.key === 'p') {
 			e.preventDefault()
 			if (clickElementByDataAttribute('g+p')) {
-				clearGKeySequence()
-				return true
-			}
-			clearGKeySequence()
-			return false
-		}
-
-		if (e.key === 's') {
-			e.preventDefault()
-			if (clickElementByDataAttribute('g+s')) {
 				clearGKeySequence()
 				return true
 			}
@@ -182,6 +190,34 @@ function handleGNavigation(e: KeyboardEvent): boolean {
 	return false
 }
 
+function handleSetPlaygroundShortcut(e: KeyboardEvent): boolean {
+	if (e.key === 's' && !e.metaKey && !e.ctrlKey) {
+		clearSPKeySequence()
+		spKeySequence.waitingForP = true
+		spKeySequence.clearTimeout = setTimeout(clearSPKeySequence, G_KEY_TIMEOUT)
+		return false
+	}
+
+	if (spKeySequence.waitingForP) {
+		if (e.key === 'p') {
+			e.preventDefault()
+			if (clickElementByDataAttribute('s+p')) {
+				clearSPKeySequence()
+				return true
+			}
+			clearSPKeySequence()
+			return false
+		}
+
+		// Invalid key during active sequence - clear it and prevent default
+		e.preventDefault()
+		clearSPKeySequence()
+		return true
+	}
+
+	return false
+}
+
 function getParentMuxPlayer(el: unknown) {
 	return el instanceof HTMLElement ? el.closest('mux-player') : null
 }
@@ -239,6 +275,11 @@ function handleKeyDown(e: KeyboardEvent) {
 
 	// Handle 'g' navigation shortcuts
 	if (handleGNavigation(e)) {
+		return
+	}
+
+	// Handle 's' + 'p' to set playground to current exercise
+	if (handleSetPlaygroundShortcut(e)) {
 		return
 	}
 
