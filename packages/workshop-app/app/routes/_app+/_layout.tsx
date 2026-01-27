@@ -744,6 +744,25 @@ function getNavHighlightClassName(
 	})
 }
 
+function ExerciseNumberLabel({
+	label,
+	isActive,
+}: {
+	label: string
+	isActive: boolean
+}) {
+	return (
+		<span
+			className={clsx('mr-1 align-super text-xs tabular-nums', {
+				'text-background': isActive,
+				'text-muted-foreground': !isActive,
+			})}
+		>
+			{label}.
+		</span>
+	)
+}
+
 function MobileNavigation({
 	isMenuOpened,
 	onMenuOpenChange: setMenuOpened,
@@ -869,9 +888,10 @@ function MobileNavigation({
 														{ 'bg-foreground text-background': isActive },
 													)}
 												>
-													<span className="text-muted-foreground mr-1 align-super text-xs tabular-nums">
-														{exerciseNumberLabel}.
-													</span>
+													<ExerciseNumberLabel
+														label={exerciseNumberLabel}
+														isActive={isActive}
+													/>
 													<span>{title}</span>
 												</Link>
 												{showPlayground ? (
@@ -1465,9 +1485,10 @@ function Navigation({
 														{ 'bg-foreground text-background': isActive },
 													)}
 												>
-													<span className="text-muted-foreground mr-1 align-super text-xs tabular-nums">
-														{exerciseNumberLabel}.
-													</span>
+													<ExerciseNumberLabel
+														label={exerciseNumberLabel}
+														isActive={isActive}
+													/>
 													<span>{title}</span>
 												</Link>
 												{showPlayground ? (
