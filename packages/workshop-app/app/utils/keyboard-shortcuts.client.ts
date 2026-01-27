@@ -87,6 +87,26 @@ function handleGNavigation(e: KeyboardEvent): boolean {
 			return false
 		}
 
+		if (e.key === 's') {
+			e.preventDefault()
+			if (clickElementByDataAttribute('g+s')) {
+				clearGKeySequence()
+				return true
+			}
+			clearGKeySequence()
+			return false
+		}
+
+		if (e.key === 'o') {
+			e.preventDefault()
+			if (clickElementByDataAttribute('g+o')) {
+				clearGKeySequence()
+				return true
+			}
+			clearGKeySequence()
+			return false
+		}
+
 		if (e.key === 'd') {
 			e.preventDefault()
 			clearGKeySequence()

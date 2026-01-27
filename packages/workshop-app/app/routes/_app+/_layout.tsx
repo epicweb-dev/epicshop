@@ -452,6 +452,15 @@ export default function App() {
 	const isWide = useIsWide()
 	const isHydrated = useHydrated()
 	const { isServerDown } = useServerStatus()
+	const playgroundExercisePath =
+		Number.isFinite(data.playground.exerciseNumber) &&
+		Number.isFinite(data.playground.stepNumber)
+			? getExerciseStepPath(
+					data.playground.exerciseNumber,
+					data.playground.stepNumber,
+					data.playground.type,
+				)
+			: null
 
 	const [isMenuOpened, setMenuOpenedState] = React.useState(data.isMenuOpened)
 	useRevalidationWS({
@@ -470,6 +479,17 @@ export default function App() {
 
 	return (
 		<div className="flex flex-col">
+			{playgroundExercisePath ? (
+				<Link
+					to={playgroundExercisePath}
+					data-keyboard-action="g+o"
+					className="sr-only"
+					aria-hidden="true"
+					tabIndex={-1}
+				>
+					Go to playground exercise
+				</Link>
+			) : null}
 			{user ? null : <NoUserBanner />}
 			{/*
 				this isn't placed in a conditional with isWide because the server render
