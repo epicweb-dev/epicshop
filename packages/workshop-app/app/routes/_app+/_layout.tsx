@@ -869,9 +869,9 @@ function MobileNavigation({
 														{ 'bg-foreground text-background': isActive },
 													)}
 												>
-													<span className="text-muted-foreground tabular-nums">
+													<span className="text-muted-foreground mr-1 align-super text-xs tabular-nums">
 														{exerciseNumberLabel}.
-													</span>{' '}
+													</span>
 													<span>{title}</span>
 												</Link>
 												{showPlayground ? (
@@ -1465,9 +1465,9 @@ function Navigation({
 														{ 'bg-foreground text-background': isActive },
 													)}
 												>
-													<span className="text-muted-foreground tabular-nums">
+													<span className="text-muted-foreground mr-1 align-super text-xs tabular-nums">
 														{exerciseNumberLabel}.
-													</span>{' '}
+													</span>
 													<span>{title}</span>
 												</Link>
 												{showPlayground ? (
