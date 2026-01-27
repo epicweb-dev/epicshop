@@ -439,6 +439,33 @@ describe('getRootPackageJsonPaths', () => {
 		expect(paths).toContain(path.resolve(subDir, 'package.json'))
 	})
 
+	test('ignores playground and saved-playgrounds package.json files', async () => {
+		await writePackageJson(tempDir, {
+			name: 'root-package',
+		})
+
+		const playgroundDir = path.join(tempDir, 'playground')
+		await fs.mkdir(playgroundDir, { recursive: true })
+		await writePackageJson(playgroundDir, {
+			name: 'playground-package',
+		})
+
+		const savedPlaygroundDir = path.join(
+			tempDir,
+			'saved-playgrounds',
+			'2026.01.27_11.35.51_01.01.problem',
+		)
+		await fs.mkdir(savedPlaygroundDir, { recursive: true })
+		await writePackageJson(savedPlaygroundDir, {
+			name: 'saved-playground-package',
+		})
+
+		const paths = await getRootPackageJsonPaths(tempDir)
+
+		expect(paths).toHaveLength(1)
+		expect(paths[0]).toBe(path.resolve(tempDir, 'package.json'))
+	})
+
 	test('handles workspaces defined as object', async () => {
 		await writePackageJson(tempDir, {
 			name: 'root-package',
