@@ -59,6 +59,7 @@ import { useOptionalUser, useUserHasAccess } from '#app/components/user.tsx'
 import { useWorkshopConfig } from '#app/components/workshop-config.tsx'
 import { cn, getExercisePath, getExerciseStepPath } from '#app/utils/misc.tsx'
 import { useIsOnline } from '#app/utils/online.ts'
+import { useServerStatus } from '#app/utils/server-status.ts'
 import {
 	getProductHostEmoji,
 	productHostEmojis,
@@ -185,6 +186,9 @@ const shadows = [
 	'shadow-[0_0_7px_0_rgba(0,0,0,0.3)]',
 	'shadow-[0_0_10px_0_rgba(0,0,0,0.3)]',
 ]
+const serverShutdownTooltip =
+	'Local workshop server shut down. Restart the workshop app to reconnect.'
+const serverShutdownLabel = 'Server shut down'
 function getScoreClassNames(score: number) {
 	const opacityNumber = Math.round(score * opacities.length - 1)
 	const shadowNumber = Math.round(score * shadows.length - 1)
@@ -447,6 +451,7 @@ export default function App() {
 	const user = useOptionalUser()
 	const isWide = useIsWide()
 	const isHydrated = useHydrated()
+	const { isServerDown } = useServerStatus()
 
 	const [isMenuOpened, setMenuOpenedState] = React.useState(data.isMenuOpened)
 	useRevalidationWS({
@@ -478,6 +483,7 @@ export default function App() {
 				<MobileNavigation
 					isMenuOpened={isMenuOpened}
 					onMenuOpenChange={setMenuOpened}
+					isServerDown={isServerDown}
 				/>
 			)}
 			<div
@@ -495,6 +501,7 @@ export default function App() {
 					<Navigation
 						isMenuOpened={isMenuOpened}
 						onMenuOpenChange={setMenuOpened}
+						isServerDown={isServerDown}
 					/>
 				) : null}
 				<div
@@ -766,9 +773,11 @@ function ExerciseNumberLabel({
 function MobileNavigation({
 	isMenuOpened,
 	onMenuOpenChange: setMenuOpened,
+	isServerDown,
 }: {
 	isMenuOpened: boolean
 	onMenuOpenChange: (change: boolean) => void
+	isServerDown: boolean
 }) {
 	const data = useLoaderData<typeof loader>()
 	const apps = useApps()
@@ -1115,6 +1124,25 @@ function MobileNavigation({
 							</div>
 						</SimpleTooltip>
 					)}
+					{isServerDown ? (
+						<SimpleTooltip
+							content={isMenuOpened ? null : serverShutdownTooltip}
+						>
+							<div
+								className={cn(
+									'flex h-14 items-center justify-start p-4',
+									isMenuOpened ? 'w-full border-t' : 'border-l',
+								)}
+							>
+								<Icon
+									name="TriangleAlert"
+									className="text-foreground-destructive"
+								>
+									{isMenuOpened ? serverShutdownLabel : null}
+								</Icon>
+							</div>
+						</SimpleTooltip>
+					) : null}
 					<div
 						className={cn(
 							'flex items-center justify-start p-4',
@@ -1344,9 +1372,11 @@ function SidecarStatusIndicator({
 function Navigation({
 	isMenuOpened,
 	onMenuOpenChange: setMenuOpened,
+	isServerDown,
 }: {
 	isMenuOpened: boolean
 	onMenuOpenChange: (change: boolean) => void
+	isServerDown: boolean
 }) {
 	const data = useLoaderData<typeof loader>()
 	const apps = useApps()
@@ -1735,6 +1765,29 @@ function Navigation({
 							</div>
 						</SimpleTooltip>
 					)}
+					{isServerDown ? (
+						<SimpleTooltip
+							content={isMenuOpened ? null : serverShutdownTooltip}
+						>
+							<div
+								className={cn(
+									'flex w-full items-center border-t p-4',
+									isMenuOpened ? 'justify-start' : 'justify-center',
+								)}
+							>
+								<Icon
+									name="TriangleAlert"
+									className="text-foreground-destructive"
+								>
+									{isMenuOpened ? (
+										<span className="whitespace-nowrap">
+											{serverShutdownLabel}
+										</span>
+									) : null}
+								</Icon>
+							</div>
+						</SimpleTooltip>
+					) : null}
 					<div
 						className={cn(
 							'flex w-full items-center justify-start border-t p-4 transition-[height]',
