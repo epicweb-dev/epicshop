@@ -41,9 +41,9 @@ export function TimelineZoom({ mediaRef, className }: TimelineZoomProps) {
 	const [currentTime, setCurrentTime] = React.useState(0)
 	const [zoom, setZoom] = React.useState(1)
 	const [windowStart, setWindowStart] = React.useState(0)
-	const mediaElement = mediaRef.current
 
 	React.useEffect(() => {
+		const mediaElement = mediaRef.current
 		if (!mediaElement) return
 		const updateDuration = () => {
 			const nextDuration = Number.isFinite(mediaElement.duration)
@@ -70,7 +70,7 @@ export function TimelineZoom({ mediaRef, className }: TimelineZoomProps) {
 			mediaElement.removeEventListener?.('durationchange', updateDuration)
 			mediaElement.removeEventListener?.('loadedmetadata', updateDuration)
 		}
-	}, [mediaElement])
+	}, [mediaRef])
 
 	const safeDuration = Number.isFinite(duration) ? duration : 0
 	const maxZoom = safeDuration

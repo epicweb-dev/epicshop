@@ -849,7 +849,9 @@ function EpicVideo({
 					/>
 				)}
 			</div>
-			<TimelineZoom className="mt-3" mediaRef={timelineMediaRef} />
+			{(shouldUseOfflineVideo || isOnline) && (
+				<TimelineZoom className="mt-3" mediaRef={timelineMediaRef} />
+			)}
 			<div className="mt-4 flex flex-col gap-2">
 				<VideoLink
 					url={urlString}
