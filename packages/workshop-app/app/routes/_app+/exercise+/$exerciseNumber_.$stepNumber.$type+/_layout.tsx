@@ -38,7 +38,7 @@ import { EditFileOnGitHub } from '#app/routes/launch-editor.tsx'
 import { ProgressToggle } from '#app/routes/progress.tsx'
 import { SetAppToPlayground } from '#app/routes/set-playground.tsx'
 import { getExercisePath } from '#app/utils/misc.tsx'
-import { getRootMatchLoaderData } from '#app/utils/root-loader.ts'
+import { getRootMatchLoaderData, useApps } from '#app/utils/root-loader.ts'
 import { getSeoMetaTags } from '#app/utils/seo.ts'
 import {
 	getSplitPercentFromRequest,
@@ -292,6 +292,7 @@ export const headers: HeadersFunction = ({ loaderHeaders, parentHeaders }) => {
 export default function ExercisePartRoute({
 	loaderData: data,
 }: Route.ComponentProps) {
+	const apps = useApps()
 	const inBrowserBrowserRef = useRef<InBrowserBrowserRef>(null)
 	const containerRef = useRef<HTMLDivElement>(null)
 	const leftPaneRef = useRef<HTMLDivElement>(null)
@@ -299,8 +300,15 @@ export default function ExercisePartRoute({
 
 	const titleBits = pageTitle(data)
 
+	const playgroundBasePath = apps.find(
+		(app) => app.name === data.playground?.appName,
+	)?.fullPath
+
 	useRevalidationWS({
-		watchPaths: [`${data.exerciseStepApp.relativePath}/README.mdx`],
+		watchPaths: [
+			`${data.exerciseStepApp.relativePath}/README.mdx`,
+			playgroundBasePath,
+		].filter((path): path is string => Boolean(path)),
 	})
 
 	const showPlaygroundIndicator = data.problem
