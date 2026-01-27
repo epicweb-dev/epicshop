@@ -59,7 +59,6 @@ import { useOptionalUser, useUserHasAccess } from '#app/components/user.tsx'
 import { useWorkshopConfig } from '#app/components/workshop-config.tsx'
 import { cn, getExercisePath, getExerciseStepPath } from '#app/utils/misc.tsx'
 import { useIsOnline } from '#app/utils/online.ts'
-import { useServerStatus } from '#app/utils/server-status.ts'
 import {
 	getProductHostEmoji,
 	productHostEmojis,
@@ -68,6 +67,7 @@ import {
 	type User,
 } from '#app/utils/presence.tsx'
 import { useRequestInfo, useApps } from '#app/utils/root-loader.ts'
+import { useServerStatus } from '#app/utils/server-status.ts'
 import {
 	useExerciseProgressClassName,
 	useNextExerciseRoute,

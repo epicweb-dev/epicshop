@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from 'react'
+import { useCallback, useEffect, useRef, useState } from 'react'
 import { useInterval } from './misc.tsx'
 import { useIsOnline } from './online.ts'
 
@@ -28,7 +28,7 @@ export function useServerStatus() {
 		}
 	}, [isOnline])
 
-	const checkHealth = async () => {
+	const checkHealth = useCallback(async () => {
 		if (ENV.EPICSHOP_DEPLOYED || !isOnline) {
 			return
 		}
@@ -40,17 +40,17 @@ export function useServerStatus() {
 			if (!isCancelledRef.current) {
 				setIsServerDown(!response.ok)
 			}
-		} catch (error) {
+		} catch {
 			if (!isCancelledRef.current) {
 				setIsServerDown(true)
 			}
 		}
-	}
+	}, [isOnline])
 
 	useEffect(() => {
 		if (ENV.EPICSHOP_DEPLOYED || !isOnline) return
 		void checkHealth()
-	}, [isOnline])
+	}, [checkHealth, isOnline])
 
 	useInterval(
 		() => {
