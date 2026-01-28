@@ -362,6 +362,7 @@ export default function ExercisePartRoute({
 									isOutdated={data.playground?.isUpToDate === false}
 									hideTextOnNarrow
 									showOnboardingIndicator={showPlaygroundIndicator}
+									data-keyboard-action="s+p"
 								/>
 							) : null}
 						</div>

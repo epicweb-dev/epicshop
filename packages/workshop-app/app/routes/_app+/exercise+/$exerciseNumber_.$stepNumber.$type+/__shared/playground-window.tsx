@@ -43,7 +43,6 @@ export function PlaygroundWindow({
 						<SetPlayground
 							appName={problemAppName}
 							tooltipText={setPlaygroundTooltipText}
-							data-keyboard-action="s+p"
 						>
 							{playgroundLinkedUI}
 						</SetPlayground>

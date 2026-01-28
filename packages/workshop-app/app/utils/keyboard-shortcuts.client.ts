@@ -88,10 +88,13 @@ function navigateTo(path: string) {
 	window.location.href = path
 }
 
-function clickElementByDataAttribute(attribute: string): boolean {
-	const element = document.querySelector(
-		`[data-keyboard-action="${attribute}"]`,
-	)
+function clickElementByDataAttribute(attribute: string | string[]): boolean {
+	const attributes = Array.isArray(attribute) ? attribute : [attribute]
+	const element = attributes
+		.map((value) =>
+			document.querySelector(`[data-keyboard-action="${value}"]`),
+		)
+		.find((value) => value instanceof HTMLElement)
 	if (element instanceof HTMLElement) {
 		element.click()
 		return true
@@ -216,12 +219,6 @@ function handleGNavigation(e: KeyboardEvent): boolean {
 		}
 	}
 
-	// Allow 's' to interrupt g-sequence and start a new sequence
-	if (e.key === 's') {
-		gSequence.clear()
-		return false
-	}
-
 	return gSequence.handleInvalid(e)
 	}
 
@@ -230,7 +227,6 @@ function handleGNavigation(e: KeyboardEvent): boolean {
 
 function handleSetPlaygroundShortcut(e: KeyboardEvent): boolean {
 	if (e.key === 's' && !e.metaKey && !e.ctrlKey) {
-		gSequence.clear()
 		spSequence.clear()
 		spSequence.start()
 		return false
@@ -239,7 +235,9 @@ function handleSetPlaygroundShortcut(e: KeyboardEvent): boolean {
 	if (spSequence.isActive()) {
 		if (e.key === 'p') {
 			e.preventDefault()
-			if (clickElementByDataAttribute('s+p')) {
+			const targetAttributes = ['s+p', 'g+s'] as const
+			const didClick = clickElementByDataAttribute(targetAttributes)
+			if (didClick) {
 				spSequence.clear()
 				return true
 			}
