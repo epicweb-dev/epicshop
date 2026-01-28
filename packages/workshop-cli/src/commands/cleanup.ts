@@ -171,7 +171,14 @@ async function resolveCleanupPaths(
 	]
 	const offlineVideosDir =
 		paths.offlineVideosDir ?? path.join(resolvePrimaryDir(), 'offline-videos')
-	const configPath = paths.configPath ?? getConfigPath()
+	let configPath = paths.configPath
+	if (!configPath) {
+		try {
+			configPath = getConfigPath()
+		} catch {
+			configPath = path.join(resolvePrimaryDir(), 'workshops-config.json')
+		}
+	}
 	return {
 		reposDir,
 		cacheDir,
