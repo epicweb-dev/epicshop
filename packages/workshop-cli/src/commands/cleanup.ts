@@ -12,7 +12,6 @@ import {
 } from '@epic-web/workshop-utils/data-storage.server'
 import {
 	deleteWorkshop,
-	getConfigPath,
 	getReposDirectory,
 	getUnpushedChanges,
 } from '@epic-web/workshop-utils/workshops.server'
@@ -171,14 +170,9 @@ async function resolveCleanupPaths(
 	]
 	const offlineVideosDir =
 		paths.offlineVideosDir ?? path.join(resolvePrimaryDir(), 'offline-videos')
-	let configPath = paths.configPath
-	if (!configPath) {
-		try {
-			configPath = getConfigPath()
-		} catch {
-			configPath = path.join(resolvePrimaryDir(), 'workshops-config.json')
-		}
-	}
+	const configPath =
+		paths.configPath ??
+		path.join(resolvePrimaryDir(), 'workshops-config.json')
 	return {
 		reposDir,
 		cacheDir,
