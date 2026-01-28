@@ -171,8 +171,7 @@ async function resolveCleanupPaths(
 	const offlineVideosDir =
 		paths.offlineVideosDir ?? path.join(resolvePrimaryDir(), 'offline-videos')
 	const configPath =
-		paths.configPath ??
-		path.join(resolvePrimaryDir(), 'workshops-config.json')
+		paths.configPath ?? path.join(resolvePrimaryDir(), 'workshops-config.json')
 	return {
 		reposDir,
 		cacheDir,
@@ -906,7 +905,10 @@ export async function cleanup({
 			return offlineVideoIndex
 		}
 		const ensureSelectedWorkshopSummaries = async (spinnerLabel: string) => {
-			if (selectedWorkshopSummaries.length > 0 || selectedWorkshops.length === 0) {
+			if (
+				selectedWorkshopSummaries.length > 0 ||
+				selectedWorkshops.length === 0
+			) {
 				return
 			}
 			if (workshopSummaries.length > 0) {
