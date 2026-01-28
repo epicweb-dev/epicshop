@@ -41,7 +41,7 @@ afterEach(() => {
 	if (originalContext) {
 		process.env.EPICSHOP_CONTEXT_CWD = originalContext
 	} else {
-		delete process.env.EPICSHOP_CONTEXT_CWD
+		process.env.EPICSHOP_CONTEXT_CWD = undefined
 	}
 })
 
