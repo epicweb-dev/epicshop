@@ -235,7 +235,7 @@ function handleSetPlaygroundShortcut(e: KeyboardEvent): boolean {
 	if (spSequence.isActive()) {
 		if (e.key === 'p') {
 			e.preventDefault()
-			const targetAttributes = ['s+p', 'g+s'] as const
+			const targetAttributes = ['s+p', 'g+s']
 			const didClick = clickElementByDataAttribute(targetAttributes)
 			if (didClick) {
 				spSequence.clear()
