@@ -31,7 +31,7 @@ async function createTempWorkshop() {
 
 	return {
 		root,
-		async cleanup() {
+		async [Symbol.asyncDispose]() {
 			await fs.rm(root, { recursive: true, force: true })
 		},
 	}
@@ -48,9 +48,9 @@ afterEach(() => {
 test(
 	'returns playground info when base app is missing',
 	async () => {
-	const { root, cleanup } = await createTempWorkshop()
+	const workshop = await createTempWorkshop()
 	try {
-		process.env.EPICSHOP_CONTEXT_CWD = root
+		process.env.EPICSHOP_CONTEXT_CWD = workshop.root
 		;(globalThis as { __epicshop_apps_initialized__?: boolean })
 			.__epicshop_apps_initialized__ = false
 		vi.resetModules()
@@ -58,14 +58,14 @@ test(
 		const { getPlaygroundApp, setWorkshopRoot } = await import(
 			'./apps.server.ts'
 		)
-		setWorkshopRoot(root)
+		setWorkshopRoot(workshop.root)
 
 		const playgroundApp = await getPlaygroundApp()
 		expect(playgroundApp).not.toBeNull()
 		expect(playgroundApp?.appName).toBe('05.02.problem')
 		expect(playgroundApp?.isUpToDate).toBe(false)
 	} finally {
-		await cleanup()
+		await workshop[Symbol.asyncDispose]()
 	}
 	},
 	15000,
