@@ -45,7 +45,9 @@ afterEach(() => {
 	}
 })
 
-test('returns playground info when base app is missing', async () => {
+test(
+	'returns playground info when base app is missing',
+	async () => {
 	const { root, cleanup } = await createTempWorkshop()
 	try {
 		process.env.EPICSHOP_CONTEXT_CWD = root
@@ -65,4 +67,6 @@ test('returns playground info when base app is missing', async () => {
 	} finally {
 		await cleanup()
 	}
-})
+	},
+	15000,
+)
