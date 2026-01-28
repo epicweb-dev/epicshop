@@ -38,6 +38,14 @@ const shortcutCategories: ShortcutCategory[] = [
 			},
 			{ keys: ['g', 'p'], description: 'Go to previous step/page' },
 			{ keys: ['g', 'n'], description: 'Go to next step/page' },
+			{
+				keys: ['s', 'p'],
+				description: 'Set playground to current exercise',
+			},
+			{
+				keys: ['g', 'o'],
+				description: 'Go to exercise set in playground',
+			},
 			{ keys: ['g', 'a'], description: 'Go to account page' },
 			{ keys: ['g', 'd'], description: 'Go to admin page' },
 			{ keys: ['g', 'l'], description: 'Go to last exercise solution' },

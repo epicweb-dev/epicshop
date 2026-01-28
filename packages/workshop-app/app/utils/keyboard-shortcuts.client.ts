@@ -1,43 +1,100 @@
 import { type MuxPlayerRefAttributes } from '@mux/mux-player-react'
 
-let gKeySequence: {
+let gNavigationState: {
 	exerciseNumber: string | null
 	waitingForDot: boolean
 	navigationTimeout: ReturnType<typeof setTimeout> | null
-	clearTimeout: ReturnType<typeof setTimeout> | null
 } = {
 	exerciseNumber: null,
 	waitingForDot: false,
 	navigationTimeout: null,
-	clearTimeout: null,
 }
 
 const G_KEY_TIMEOUT = 1000
 const NAVIGATION_DELAY = 300
 
-function clearGKeySequence() {
-	if (gKeySequence.navigationTimeout) {
-		clearTimeout(gKeySequence.navigationTimeout)
+type KeySequenceController = {
+	start: () => void
+	clear: () => void
+	scheduleClear: () => void
+	isActive: () => boolean
+	handleInvalid: (event: KeyboardEvent) => boolean
+}
+
+function createKeySequence({
+	timeoutMs,
+	onClear,
+}: {
+	timeoutMs: number
+	onClear?: () => void
+}): KeySequenceController {
+	let clearTimeoutId: ReturnType<typeof setTimeout> | null = null
+	let active = false
+
+	function clear() {
+		if (clearTimeoutId) {
+			clearTimeout(clearTimeoutId)
+		}
+		clearTimeoutId = null
+		active = false
+		onClear?.()
 	}
-	if (gKeySequence.clearTimeout) {
-		clearTimeout(gKeySequence.clearTimeout)
+
+	function scheduleClear() {
+		if (clearTimeoutId) {
+			clearTimeout(clearTimeoutId)
+		}
+		clearTimeoutId = setTimeout(clear, timeoutMs)
 	}
-	gKeySequence = {
+
+	function start() {
+		active = true
+		scheduleClear()
+	}
+
+	function handleInvalid(event: KeyboardEvent) {
+		event.preventDefault()
+		clear()
+		return true
+	}
+
+	return {
+		start,
+		clear,
+		scheduleClear,
+		isActive: () => active,
+		handleInvalid,
+	}
+}
+
+function resetGNavigationState() {
+	if (gNavigationState.navigationTimeout) {
+		clearTimeout(gNavigationState.navigationTimeout)
+	}
+	gNavigationState = {
 		exerciseNumber: null,
 		waitingForDot: false,
 		navigationTimeout: null,
-		clearTimeout: null,
 	}
 }
+
+const gSequence = createKeySequence({
+	timeoutMs: G_KEY_TIMEOUT,
+	onClear: resetGNavigationState,
+})
+const spSequence = createKeySequence({ timeoutMs: G_KEY_TIMEOUT })
 
 function navigateTo(path: string) {
 	window.location.href = path
 }
 
-function clickElementByDataAttribute(attribute: string): boolean {
-	const element = document.querySelector(
-		`[data-keyboard-action="${attribute}"]`,
-	)
+function clickElementByDataAttribute(attribute: string | string[]): boolean {
+	const attributes = Array.isArray(attribute) ? attribute : [attribute]
+	const element = attributes
+		.map((value) =>
+			document.querySelector(`[data-keyboard-action="${value}"]`),
+		)
+		.find((value) => value instanceof HTMLElement)
 	if (element instanceof HTMLElement) {
 		element.click()
 		return true
@@ -47,22 +104,23 @@ function clickElementByDataAttribute(attribute: string): boolean {
 
 function handleGNavigation(e: KeyboardEvent): boolean {
 	if (e.key === 'g' && !e.metaKey && !e.ctrlKey) {
-		clearGKeySequence()
-		gKeySequence.clearTimeout = setTimeout(clearGKeySequence, G_KEY_TIMEOUT)
+		spSequence.clear()
+		gSequence.clear()
+		gSequence.start()
 		return false
 	}
 
-	if (gKeySequence.clearTimeout || gKeySequence.exerciseNumber) {
+	if (gSequence.isActive()) {
 		if (e.key === 'h') {
 			e.preventDefault()
-			clearGKeySequence()
+			gSequence.clear()
 			navigateTo('/')
 			return true
 		}
 
 		if (e.key === 'a') {
 			e.preventDefault()
-			clearGKeySequence()
+			gSequence.clear()
 			navigateTo('/account')
 			return true
 		}
@@ -70,93 +128,124 @@ function handleGNavigation(e: KeyboardEvent): boolean {
 		if (e.key === 'n') {
 			e.preventDefault()
 			if (clickElementByDataAttribute('g+n')) {
-				clearGKeySequence()
+				gSequence.clear()
 				return true
 			}
-			clearGKeySequence()
+			gSequence.clear()
 			return false
 		}
 
 		if (e.key === 'p') {
 			e.preventDefault()
 			if (clickElementByDataAttribute('g+p')) {
-				clearGKeySequence()
+				gSequence.clear()
 				return true
 			}
-			clearGKeySequence()
+			gSequence.clear()
+			return false
+		}
+
+		if (e.key === 'o') {
+			e.preventDefault()
+			if (clickElementByDataAttribute('g+o')) {
+				gSequence.clear()
+				return true
+			}
+			gSequence.clear()
 			return false
 		}
 
 		if (e.key === 'd') {
 			e.preventDefault()
-			clearGKeySequence()
+			gSequence.clear()
 			navigateTo('/admin')
 			return true
 		}
 
 		if (e.key === 'l') {
 			e.preventDefault()
-			clearGKeySequence()
+			gSequence.clear()
 			navigateTo('/l')
 			return true
 		}
 
-		if (/^[1-9]$/.test(e.key) && !gKeySequence.exerciseNumber) {
+		if (/^[1-9]$/.test(e.key) && !gNavigationState.exerciseNumber) {
 			e.preventDefault()
-			gKeySequence.exerciseNumber = e.key
-			gKeySequence.waitingForDot = false
-			if (gKeySequence.clearTimeout) {
-				clearTimeout(gKeySequence.clearTimeout)
-				gKeySequence.clearTimeout = null
-			}
-			gKeySequence.navigationTimeout = setTimeout(() => {
-				if (gKeySequence.exerciseNumber && !gKeySequence.waitingForDot) {
-					const exerciseNumber = gKeySequence.exerciseNumber.padStart(2, '0')
-					clearGKeySequence()
+			gNavigationState.exerciseNumber = e.key
+			gNavigationState.waitingForDot = false
+			gSequence.scheduleClear()
+			gNavigationState.navigationTimeout = setTimeout(() => {
+				if (
+					gNavigationState.exerciseNumber &&
+					!gNavigationState.waitingForDot
+				) {
+					const exerciseNumber =
+						gNavigationState.exerciseNumber.padStart(2, '0')
+					gSequence.clear()
 					navigateTo(`/exercise/${exerciseNumber}`)
 				}
 			}, NAVIGATION_DELAY)
-			gKeySequence.clearTimeout = setTimeout(clearGKeySequence, G_KEY_TIMEOUT)
 			return true
 		}
 
-		if (gKeySequence.exerciseNumber) {
-			if (e.key === '.' && !gKeySequence.waitingForDot) {
+		if (gNavigationState.exerciseNumber) {
+			if (e.key === '.' && !gNavigationState.waitingForDot) {
 				e.preventDefault()
-				if (gKeySequence.navigationTimeout) {
-					clearTimeout(gKeySequence.navigationTimeout)
-					gKeySequence.navigationTimeout = null
+				if (gNavigationState.navigationTimeout) {
+					clearTimeout(gNavigationState.navigationTimeout)
+					gNavigationState.navigationTimeout = null
 				}
-				gKeySequence.waitingForDot = true
-				if (gKeySequence.clearTimeout) {
-					clearTimeout(gKeySequence.clearTimeout)
-				}
-				gKeySequence.clearTimeout = setTimeout(clearGKeySequence, G_KEY_TIMEOUT)
+				gNavigationState.waitingForDot = true
+				gSequence.scheduleClear()
 				return true
 			}
 
-			if (e.key === 'f' && gKeySequence.waitingForDot) {
+			if (e.key === 'f' && gNavigationState.waitingForDot) {
 				e.preventDefault()
-				const exerciseNumber = gKeySequence.exerciseNumber.padStart(2, '0')
-				clearGKeySequence()
+				const exerciseNumber =
+					gNavigationState.exerciseNumber.padStart(2, '0')
+				gSequence.clear()
 				navigateTo(`/exercise/${exerciseNumber}/finished`)
 				return true
 			}
 
-			if (/^[1-9]$/.test(e.key) && gKeySequence.waitingForDot) {
-				e.preventDefault()
-				const exerciseNumber = gKeySequence.exerciseNumber.padStart(2, '0')
-				const stepNumber = e.key.padStart(2, '0')
-				clearGKeySequence()
-				navigateTo(`/exercise/${exerciseNumber}/${stepNumber}/problem`)
+		if (/^[1-9]$/.test(e.key) && gNavigationState.waitingForDot) {
+			e.preventDefault()
+			const exerciseNumber = gNavigationState.exerciseNumber.padStart(2, '0')
+			const stepNumber = e.key.padStart(2, '0')
+			gSequence.clear()
+			navigateTo(`/exercise/${exerciseNumber}/${stepNumber}/problem`)
+			return true
+		}
+	}
+
+	return gSequence.handleInvalid(e)
+	}
+
+	return false
+}
+
+function handleSetPlaygroundShortcut(e: KeyboardEvent): boolean {
+	if (e.key === 's' && !e.metaKey && !e.ctrlKey) {
+		spSequence.clear()
+		spSequence.start()
+		return false
+	}
+
+	if (spSequence.isActive()) {
+		if (e.key === 'p') {
+			e.preventDefault()
+			const targetAttributes = ['s+p', 'g+s']
+			const didClick = clickElementByDataAttribute(targetAttributes)
+			if (didClick) {
+				spSequence.clear()
 				return true
 			}
+			spSequence.clear()
+			return false
 		}
 
-		// Invalid key during active sequence - clear it and prevent default
-		e.preventDefault()
-		clearGKeySequence()
-		return true
+		return spSequence.handleInvalid(e)
 	}
 
 	return false
@@ -219,6 +308,11 @@ function handleKeyDown(e: KeyboardEvent) {
 
 	// Handle 'g' navigation shortcuts
 	if (handleGNavigation(e)) {
+		return
+	}
+
+	// Handle 's' + 'p' to set playground to current exercise
+	if (handleSetPlaygroundShortcut(e)) {
 		return
 	}
 
