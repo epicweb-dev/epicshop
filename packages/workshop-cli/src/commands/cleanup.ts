@@ -64,6 +64,10 @@ type WorkshopEntry = {
 	path: string
 }
 
+type WorkshopIdentity = WorkshopEntry & {
+	id: string
+}
+
 type Spinner = ReturnType<typeof ora>
 
 const CLEANUP_TARGETS: Array<{
@@ -659,10 +663,7 @@ async function selectWorkshops(workshops: WorkshopSummary[]) {
 	})
 }
 
-function matchesWorkshopInput(
-	workshop: WorkshopSummary,
-	input: string,
-): boolean {
+function matchesWorkshopInput(workshop: WorkshopEntry, input: string): boolean {
 	const normalized = input.trim().toLowerCase()
 	if (!normalized) return false
 	const candidates = [
@@ -691,10 +692,10 @@ function expandTilde(inputPath: string): string {
 }
 
 function resolveWorkshopSelection(
-	workshops: WorkshopSummary[],
+	workshops: WorkshopIdentity[],
 	requested: string[],
-): { selected: WorkshopSummary[]; missing: string[] } {
-	const selected = new Map<string, WorkshopSummary>()
+): { selected: WorkshopIdentity[]; missing: string[] } {
+	const selected = new Map<string, WorkshopIdentity>()
 	const missing: string[] = []
 	for (const entry of requested) {
 		const match = workshops.find((workshop) =>
@@ -792,6 +793,8 @@ export async function cleanup({
 		let dataPaths: string[] = []
 		let offlineVideosDir = ''
 		let configPath = ''
+		let allWorkshops: WorkshopEntry[] = []
+		let workshopIdentities: WorkshopIdentity[] = []
 		let workshopSummaries: WorkshopSummary[] = []
 		let workshopBytes = 0
 		let legacyCacheBytes = 0
@@ -800,6 +803,10 @@ export async function cleanup({
 		let preferencesBytes = 0
 		let authBytes = 0
 		let configBytes = 0
+		let cacheSizeCalculated = false
+		let offlineVideosSizeCalculated = false
+		let configSizeCalculated = false
+		let dataSizeCalculated = false
 
 		try {
 			updateSpinner(analysisSpinner, 'Resolving cleanup locations...')
@@ -811,56 +818,72 @@ export async function cleanup({
 				offlineVideosDir,
 				configPath,
 			} = await resolveCleanupPaths(paths))
-			updateSpinner(analysisSpinner, 'Finding installed workshops...')
-			const allWorkshops = await listWorkshopsInDirectory(reposDir)
-			updateSpinner(analysisSpinner, 'Calculating workshop sizes...')
-			workshopSummaries = await getWorkshopSummaries({
-				workshops: allWorkshops,
-				cacheDir,
-				onProgress: (progress) => {
-					updateSpinner(
-						analysisSpinner,
-						`Calculating workshop sizes (${progress.current}/${progress.total}): ${progress.workshop.repoName}`,
+			const needsWorkshopInventory =
+				selectedTargets.length === 0 || selectedTargets.includes('workshops')
+			if (needsWorkshopInventory) {
+				updateSpinner(analysisSpinner, 'Finding installed workshops...')
+				allWorkshops = await listWorkshopsInDirectory(reposDir)
+				workshopIdentities = allWorkshops.map((workshop) => ({
+					...workshop,
+					id: getWorkshopInstanceId(workshop.path),
+				}))
+			}
+
+			if (selectedTargets.length === 0) {
+				if (allWorkshops.length > 0) {
+					updateSpinner(analysisSpinner, 'Calculating workshop sizes...')
+					workshopSummaries = await getWorkshopSummaries({
+						workshops: allWorkshops,
+						cacheDir,
+						onProgress: (progress) => {
+							updateSpinner(
+								analysisSpinner,
+								`Calculating workshop sizes (${progress.current}/${progress.total}): ${progress.workshop.repoName}`,
+							)
+						},
+					})
+					workshopBytes = workshopSummaries.reduce(
+						(total, workshop) => total + workshop.sizeBytes,
+						0,
 					)
-				},
-			})
-			workshopBytes = workshopSummaries.reduce(
-				(total, workshop) => total + workshop.sizeBytes,
-				0,
-			)
-			updateSpinner(analysisSpinner, 'Calculating cache sizes...')
-			legacyCacheBytes = await getPathSize(legacyCacheDir)
-			const cacheDirBytes = await getPathSize(cacheDir)
-			cacheBytes = cacheDirBytes + legacyCacheBytes
-			updateSpinner(analysisSpinner, 'Calculating offline video sizes...')
-			offlineVideosBytes = await getPathSize(offlineVideosDir)
-			updateSpinner(analysisSpinner, 'Calculating CLI config size...')
-			configBytes = await getPathSize(configPath)
-			updateSpinner(analysisSpinner, 'Scanning preferences and auth data...')
-			;({ preferencesBytes, authBytes } =
-				await getDataCleanupSizeSummary(dataPaths))
+				}
+				updateSpinner(analysisSpinner, 'Calculating cache sizes...')
+				legacyCacheBytes = await getPathSize(legacyCacheDir)
+				const cacheDirBytes = await getPathSize(cacheDir)
+				cacheBytes = cacheDirBytes + legacyCacheBytes
+				cacheSizeCalculated = true
+				updateSpinner(analysisSpinner, 'Calculating offline video sizes...')
+				offlineVideosBytes = await getPathSize(offlineVideosDir)
+				offlineVideosSizeCalculated = true
+				updateSpinner(analysisSpinner, 'Calculating CLI config size...')
+				configBytes = await getPathSize(configPath)
+				configSizeCalculated = true
+				updateSpinner(analysisSpinner, 'Scanning preferences and auth data...')
+				;({ preferencesBytes, authBytes } =
+					await getDataCleanupSizeSummary(dataPaths))
+				dataSizeCalculated = true
+			}
 		} finally {
 			stopSpinner(analysisSpinner)
 		}
 
-		const cleanupChoices = CLEANUP_TARGETS.map((target) => {
-			const sizeByTarget: Record<CleanupTarget, number> = {
-				workshops: workshopBytes,
-				caches: cacheBytes,
-				'offline-videos': offlineVideosBytes,
-				preferences: preferencesBytes,
-				auth: authBytes,
-				config: configBytes,
-			}
-			return {
-				...target,
-				description: `${target.description} (${formatBytes(
-					sizeByTarget[target.value],
-				)})`,
-			}
-		})
-
 		if (selectedTargets.length === 0) {
+			const cleanupChoices = CLEANUP_TARGETS.map((target) => {
+				const sizeByTarget: Record<CleanupTarget, number> = {
+					workshops: workshopBytes,
+					caches: cacheBytes,
+					'offline-videos': offlineVideosBytes,
+					preferences: preferencesBytes,
+					auth: authBytes,
+					config: configBytes,
+				}
+				return {
+					...target,
+					description: `${target.description} (${formatBytes(
+						sizeByTarget[target.value],
+					)})`,
+				}
+			})
 			selectedTargets = await selectCleanupTargets(cleanupChoices)
 		}
 
@@ -870,14 +893,53 @@ export async function cleanup({
 			return { success: true, message, selectedTargets }
 		}
 
-		let selectedWorkshops: WorkshopSummary[] = []
+		let selectedWorkshops: WorkshopIdentity[] = []
+		let selectedWorkshopSummaries: WorkshopSummary[] = []
+		let offlineVideoIndex: OfflineVideoIndex = {}
+		let offlineVideoIndexLoaded = false
+		const loadOfflineVideoIndex = async () => {
+			if (!offlineVideoIndexLoaded) {
+				offlineVideoIndex = await readOfflineVideoIndex(offlineVideosDir)
+				offlineVideoIndexLoaded = true
+			}
+			return offlineVideoIndex
+		}
+		const ensureSelectedWorkshopSummaries = async (spinnerLabel: string) => {
+			if (selectedWorkshopSummaries.length > 0 || selectedWorkshops.length === 0) {
+				return
+			}
+			if (workshopSummaries.length > 0) {
+				const selectedIds = new Set(
+					selectedWorkshops.map((workshop) => workshop.id),
+				)
+				selectedWorkshopSummaries = workshopSummaries.filter((workshop) =>
+					selectedIds.has(workshop.id),
+				)
+				return
+			}
+			const workshopSpinner = startSpinner(spinnerLabel, silent)
+			try {
+				selectedWorkshopSummaries = await getWorkshopSummaries({
+					workshops: selectedWorkshops,
+					cacheDir,
+					onProgress: (progress) => {
+						updateSpinner(
+							workshopSpinner,
+							`${spinnerLabel} (${progress.current}/${progress.total}): ${progress.workshop.repoName}`,
+						)
+					},
+				})
+			} finally {
+				stopSpinner(workshopSpinner)
+			}
+		}
 		if (selectedTargets.includes('workshops')) {
-			if (workshopSummaries.length === 0) {
+			if (workshopIdentities.length === 0) {
 				if (!silent) {
 					console.log(chalk.yellow('No workshops found to clean up.'))
 				}
 			} else if (workshops && workshops.length > 0) {
-				const resolved = resolveWorkshopSelection(workshopSummaries, workshops)
+				const resolved = resolveWorkshopSelection(workshopIdentities, workshops)
 				if (resolved.missing.length > 0) {
 					return {
 						success: false,
@@ -887,6 +949,26 @@ export async function cleanup({
 				}
 				selectedWorkshops = resolved.selected
 			} else {
+				if (workshopSummaries.length === 0) {
+					const workshopSpinner = startSpinner(
+						'Calculating workshop sizes...',
+						silent,
+					)
+					try {
+						workshopSummaries = await getWorkshopSummaries({
+							workshops: allWorkshops,
+							cacheDir,
+							onProgress: (progress) => {
+								updateSpinner(
+									workshopSpinner,
+									`Calculating workshop sizes (${progress.current}/${progress.total}): ${progress.workshop.repoName}`,
+								)
+							},
+						})
+					} finally {
+						stopSpinner(workshopSpinner)
+					}
+				}
 				const selectedIds = await selectWorkshops(workshopSummaries)
 				selectedWorkshops = workshopSummaries.filter((workshop) =>
 					selectedIds.includes(workshop.id),
@@ -900,11 +982,14 @@ export async function cleanup({
 				const selectedWorkshopIds = new Set(
 					selectedWorkshops.map((workshop) => workshop.id),
 				)
-				const workshopFileBytes = selectedWorkshops.reduce(
+				await ensureSelectedWorkshopSummaries(
+					'Calculating selected workshop sizes...',
+				)
+				const workshopFileBytes = selectedWorkshopSummaries.reduce(
 					(total, workshop) => total + workshop.sizeBytes,
 					0,
 				)
-				const workshopCacheBytes = selectedWorkshops.reduce(
+				const workshopCacheBytes = selectedWorkshopSummaries.reduce(
 					(total, workshop) => total + workshop.cacheBytes,
 					0,
 				)
@@ -915,8 +1000,7 @@ export async function cleanup({
 				let workshopOfflineBytes = 0
 				try {
 					updateSpinner(selectionSpinner, 'Loading offline video index...')
-					const offlineVideoIndex =
-						await readOfflineVideoIndex(offlineVideosDir)
+					const offlineVideoIndex = await loadOfflineVideoIndex()
 					updateSpinner(
 						selectionSpinner,
 						'Calculating workshop offline video sizes...',
@@ -953,29 +1037,102 @@ export async function cleanup({
 		const selectedWorkshopIds = new Set(
 			selectedWorkshops.map((workshop) => workshop.id),
 		)
-		const workshopFileBytes = selectedWorkshops.reduce(
-			(total, workshop) => total + workshop.sizeBytes,
-			0,
-		)
-		const workshopCacheBytes = selectedWorkshops.reduce(
-			(total, workshop) => total + workshop.cacheBytes,
-			0,
-		)
-		const emptyOfflineVideoIndex: OfflineVideoIndex = {}
-		const offlineVideoIndex =
+		if (
 			selectedWorkshopTargets.includes('offline-videos') ||
 			selectedTargets.includes('offline-videos')
-				? await readOfflineVideoIndex(offlineVideosDir)
-				: emptyOfflineVideoIndex
-		const workshopOfflineBytes = selectedWorkshopTargets.includes(
-			'offline-videos',
-		)
-			? await estimateOfflineVideoBytesForWorkshops(
-					offlineVideosDir,
-					offlineVideoIndex,
-					selectedWorkshopIds,
+		) {
+			await loadOfflineVideoIndex()
+		}
+
+		if (!silent) {
+			if (
+				selectedWorkshops.length > 0 &&
+				(selectedWorkshopTargets.includes('files') ||
+					selectedWorkshopTargets.includes('caches'))
+			) {
+				await ensureSelectedWorkshopSummaries(
+					'Calculating selected workshop sizes...',
 				)
-			: 0
+			}
+			if (selectedTargets.includes('caches') && !cacheSizeCalculated) {
+				const cacheSpinner = startSpinner('Calculating cache sizes...', silent)
+				try {
+					legacyCacheBytes = await getPathSize(legacyCacheDir)
+					const cacheDirBytes = await getPathSize(cacheDir)
+					cacheBytes = cacheDirBytes + legacyCacheBytes
+					cacheSizeCalculated = true
+				} finally {
+					stopSpinner(cacheSpinner)
+				}
+			}
+			if (
+				selectedTargets.includes('offline-videos') &&
+				!offlineVideosSizeCalculated
+			) {
+				const offlineSpinner = startSpinner(
+					'Calculating offline video sizes...',
+					silent,
+				)
+				try {
+					offlineVideosBytes = await getPathSize(offlineVideosDir)
+					offlineVideosSizeCalculated = true
+				} finally {
+					stopSpinner(offlineSpinner)
+				}
+			}
+			if (
+				(selectedTargets.includes('preferences') ||
+					selectedTargets.includes('auth')) &&
+				!dataSizeCalculated
+			) {
+				const dataSpinner = startSpinner(
+					'Scanning preferences and auth data...',
+					silent,
+				)
+				try {
+					;({ preferencesBytes, authBytes } =
+						await getDataCleanupSizeSummary(dataPaths))
+					dataSizeCalculated = true
+				} finally {
+					stopSpinner(dataSpinner)
+				}
+			}
+			if (selectedTargets.includes('config') && !configSizeCalculated) {
+				const configSpinner = startSpinner(
+					'Calculating CLI config size...',
+					silent,
+				)
+				try {
+					configBytes = await getPathSize(configPath)
+					configSizeCalculated = true
+				} finally {
+					stopSpinner(configSpinner)
+				}
+			}
+		}
+
+		const workshopFileBytes =
+			!silent && selectedWorkshopTargets.includes('files')
+				? selectedWorkshopSummaries.reduce(
+						(total, workshop) => total + workshop.sizeBytes,
+						0,
+					)
+				: 0
+		const workshopCacheBytes =
+			!silent && selectedWorkshopTargets.includes('caches')
+				? selectedWorkshopSummaries.reduce(
+						(total, workshop) => total + workshop.cacheBytes,
+						0,
+					)
+				: 0
+		const workshopOfflineBytes =
+			!silent && selectedWorkshopTargets.includes('offline-videos')
+				? await estimateOfflineVideoBytesForWorkshops(
+						offlineVideosDir,
+						offlineVideoIndex,
+						selectedWorkshopIds,
+					)
+				: 0
 
 		const hasWorkshopActions = selectedWorkshopTargets.length > 0
 		const hasOtherTargets = selectedTargets.some(
@@ -988,7 +1145,7 @@ export async function cleanup({
 		}
 
 		let unpushedSummaries: Array<{
-			workshop: WorkshopSummary
+			workshop: WorkshopIdentity
 			unpushedChanges: Awaited<ReturnType<typeof getUnpushedChanges>>
 		}> = []
 		if (
