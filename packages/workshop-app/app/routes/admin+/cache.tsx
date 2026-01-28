@@ -324,7 +324,8 @@ function InlineEntryEditor({
 	const [baselineValue, setBaselineValue] = useState<string | null>(null)
 	const [hasChanges, setHasChanges] = useState(false)
 	const [hasRequested, setHasRequested] = useState(false)
-	const prevStatusRef = useRef<string | undefined>(undefined)
+	const submittedValueRef = useRef<string | null>(null)
+	const prevUpdateStateRef = useRef<string>(updateFetcher.state)
 
 	const entryPath = `${workshopId}/${cacheName}/${filename}`
 	const entryValue = entryFetcher.data?.entry?.value
@@ -332,6 +333,11 @@ function InlineEntryEditor({
 		entryFetcher.state !== 'idle' && entryFetcher.data === undefined
 	const hasEntry = Boolean(entryFetcher.data?.entry)
 	const entryMissing = entryFetcher.data?.entry === null
+	const entryFetchFailed =
+		hasRequested &&
+		!isEntryLoading &&
+		entryFetcher.data === undefined &&
+		entryFetcher.state === 'idle'
 
 	useEffect(() => {
 		if (entryValue !== undefined) {
@@ -343,17 +349,20 @@ function InlineEntryEditor({
 	}, [entryValue])
 
 	useEffect(() => {
-		const currentStatus = updateFetcher.data?.status
-		if (currentStatus === 'success' && prevStatusRef.current !== 'success') {
-			setBaselineValue(editValue ?? '')
+		const currentUpdateState = updateFetcher.state
+		const wasSubmitting = prevUpdateStateRef.current !== 'idle'
+		const nowIdle = currentUpdateState === 'idle'
+
+		if (wasSubmitting && nowIdle && updateFetcher.data?.status === 'success') {
+			setBaselineValue(submittedValueRef.current ?? '')
 			setHasChanges(false)
 		}
-		prevStatusRef.current = currentStatus
-		// eslint-disable-next-line react-hooks/exhaustive-deps
-	}, [updateFetcher.data?.status])
+		prevUpdateStateRef.current = currentUpdateState
+	}, [updateFetcher.state, updateFetcher.data?.status])
 
 	const handleSave = () => {
 		if (editValue === null) return
+		submittedValueRef.current = editValue
 		void updateFetcher.submit(
 			{
 				intent: 'update-entry',
@@ -389,7 +398,18 @@ function InlineEntryEditor({
 				}),
 			)
 			setHasRequested(true)
+		} else if (!event.currentTarget.open) {
+			// Reset on close to allow retry
+			setHasRequested(false)
 		}
+	}
+
+	const handleRetry = () => {
+		void entryFetcher.load(
+			href('/admin/cache/*', {
+				'*': entryPath,
+			}),
+		)
 	}
 
 	return (
@@ -406,7 +426,17 @@ function InlineEntryEditor({
 						Entry details were not found.
 					</p>
 				) : null}
-				{!hasEntry && !isEntryLoading && !entryMissing ? (
+				{entryFetchFailed ? (
+					<div className="space-y-2">
+						<p className="text-destructive text-sm">
+							Failed to load entry details.
+						</p>
+						<Button varient="mono" onClick={handleRetry}>
+							Retry
+						</Button>
+					</div>
+				) : null}
+				{!hasEntry && !isEntryLoading && !entryMissing && !entryFetchFailed ? (
 					<p className="text-muted-foreground text-sm">
 						Open to load entry details.
 					</p>
