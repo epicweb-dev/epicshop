@@ -324,6 +324,7 @@ function InlineEntryEditor({
 	const [baselineValue, setBaselineValue] = useState<string | null>(null)
 	const [hasChanges, setHasChanges] = useState(false)
 	const [hasRequested, setHasRequested] = useState(false)
+	const [hasStartedLoading, setHasStartedLoading] = useState(false)
 	const submittedValueRef = useRef<string | null>(null)
 	const prevUpdateStateRef = useRef<string>(updateFetcher.state)
 
@@ -335,9 +336,16 @@ function InlineEntryEditor({
 	const entryMissing = entryFetcher.data?.entry === null
 	const entryFetchFailed =
 		hasRequested &&
+		hasStartedLoading &&
 		!isEntryLoading &&
 		entryFetcher.data === undefined &&
 		entryFetcher.state === 'idle'
+
+	useEffect(() => {
+		if (entryFetcher.state !== 'idle') {
+			setHasStartedLoading(true)
+		}
+	}, [entryFetcher.state])
 
 	useEffect(() => {
 		if (entryValue !== undefined) {
@@ -401,6 +409,7 @@ function InlineEntryEditor({
 		} else if (!event.currentTarget.open) {
 			// Reset on close to allow retry
 			setHasRequested(false)
+			setHasStartedLoading(false)
 		}
 	}
 
