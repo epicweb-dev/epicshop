@@ -324,6 +324,7 @@ function InlineEntryEditor({
 	const [baselineValue, setBaselineValue] = useState<string | null>(null)
 	const [hasChanges, setHasChanges] = useState(false)
 	const [hasRequested, setHasRequested] = useState(false)
+	const prevStatusRef = useRef<string | undefined>(undefined)
 
 	const entryPath = `${workshopId}/${cacheName}/${filename}`
 	const entryValue = entryFetcher.data?.entry?.value
@@ -342,11 +343,14 @@ function InlineEntryEditor({
 	}, [entryValue])
 
 	useEffect(() => {
-		if (updateFetcher.data?.status === 'success') {
+		const currentStatus = updateFetcher.data?.status
+		if (currentStatus === 'success' && prevStatusRef.current !== 'success') {
 			setBaselineValue(editValue ?? '')
 			setHasChanges(false)
 		}
-	}, [updateFetcher.data?.status, editValue])
+		prevStatusRef.current = currentStatus
+		// eslint-disable-next-line react-hooks/exhaustive-deps
+	}, [updateFetcher.data?.status])
 
 	const handleSave = () => {
 		if (editValue === null) return
