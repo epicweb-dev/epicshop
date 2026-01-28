@@ -111,7 +111,8 @@ export async function loader({ request }: Route.LoaderArgs) {
 				.filter((cache) => cache.entries.length > 0 || normalizedQuery === ''),
 		}))
 		.filter(
-			(workshopCache) => workshopCache.caches.length > 0 || normalizedQuery === '',
+			(workshopCache) =>
+				workshopCache.caches.length > 0 || normalizedQuery === '',
 		)
 
 	return {
