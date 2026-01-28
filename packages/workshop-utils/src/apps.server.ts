@@ -806,6 +806,13 @@ export async function getFullPathFromAppName(appName: string) {
 	return dir ?? appName
 }
 
+async function resolveExistingAppPath(appName: string) {
+	const fullPath = await getFullPathFromAppName(appName)
+	if (!path.isAbsolute(fullPath)) return null
+	if (!(await exists(fullPath))) return null
+	return fullPath
+}
+
 export async function findSolutionDir({
 	fullPath,
 }: {
@@ -944,11 +951,14 @@ export async function getPlaygroundApp({
 }: CachifiedOptions = {}): Promise<PlaygroundApp | null> {
 	const playgroundDir = path.join(getWorkshopRoot(), 'playground')
 	const baseAppName = await getPlaygroundAppName()
+	const baseAppFullPath = baseAppName
+		? await resolveExistingAppPath(baseAppName)
+		: null
+	if (baseAppName && !baseAppFullPath) {
+		log.warn(`Playground base app missing: ${baseAppName}`)
+	}
 	const key = `playground-${baseAppName}`
 
-	const baseAppFullPath = baseAppName
-		? await getFullPathFromAppName(baseAppName)
-		: null
 	const playgroundCacheEntry = await playgroundAppCache.get(key)
 	return cachified({
 		key,
@@ -978,10 +988,10 @@ export async function getPlaygroundApp({
 				getDevInfo({ fullPath: playgroundDir, portNumber }),
 			])
 
-			const appModifiedTime = await getDirModifiedTime(
-				await getFullPathFromAppName(baseAppName),
-			)
 			const playgroundAppModifiedTime = await getDirModifiedTime(playgroundDir)
+			const appModifiedTime = baseAppFullPath
+				? await getDirModifiedTime(baseAppFullPath)
+				: -1
 			const type = 'playground'
 
 			const title = compiledReadme?.title ?? name
@@ -989,7 +999,9 @@ export async function getPlaygroundApp({
 				name,
 				appName: baseAppName,
 				type,
-				isUpToDate: appModifiedTime <= playgroundAppModifiedTime,
+				isUpToDate: baseAppFullPath
+					? appModifiedTime <= playgroundAppModifiedTime
+					: false,
 				fullPath: playgroundDir,
 				relativePath: playgroundDir.replace(
 					`${getWorkshopRoot()}${path.sep}`,
