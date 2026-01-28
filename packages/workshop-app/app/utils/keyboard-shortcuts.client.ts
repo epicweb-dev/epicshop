@@ -91,9 +91,7 @@ function navigateTo(path: string) {
 function clickElementByDataAttribute(attribute: string | string[]): boolean {
 	const attributes = Array.isArray(attribute) ? attribute : [attribute]
 	const element = attributes
-		.map((value) =>
-			document.querySelector(`[data-keyboard-action="${value}"]`),
-		)
+		.map((value) => document.querySelector(`[data-keyboard-action="${value}"]`))
 		.find((value) => value instanceof HTMLElement)
 	if (element instanceof HTMLElement) {
 		element.click()
@@ -179,8 +177,10 @@ function handleGNavigation(e: KeyboardEvent): boolean {
 					gNavigationState.exerciseNumber &&
 					!gNavigationState.waitingForDot
 				) {
-					const exerciseNumber =
-						gNavigationState.exerciseNumber.padStart(2, '0')
+					const exerciseNumber = gNavigationState.exerciseNumber.padStart(
+						2,
+						'0',
+					)
 					gSequence.clear()
 					navigateTo(`/exercise/${exerciseNumber}`)
 				}
@@ -202,24 +202,23 @@ function handleGNavigation(e: KeyboardEvent): boolean {
 
 			if (e.key === 'f' && gNavigationState.waitingForDot) {
 				e.preventDefault()
-				const exerciseNumber =
-					gNavigationState.exerciseNumber.padStart(2, '0')
+				const exerciseNumber = gNavigationState.exerciseNumber.padStart(2, '0')
 				gSequence.clear()
 				navigateTo(`/exercise/${exerciseNumber}/finished`)
 				return true
 			}
 
-		if (/^[1-9]$/.test(e.key) && gNavigationState.waitingForDot) {
-			e.preventDefault()
-			const exerciseNumber = gNavigationState.exerciseNumber.padStart(2, '0')
-			const stepNumber = e.key.padStart(2, '0')
-			gSequence.clear()
-			navigateTo(`/exercise/${exerciseNumber}/${stepNumber}/problem`)
-			return true
+			if (/^[1-9]$/.test(e.key) && gNavigationState.waitingForDot) {
+				e.preventDefault()
+				const exerciseNumber = gNavigationState.exerciseNumber.padStart(2, '0')
+				const stepNumber = e.key.padStart(2, '0')
+				gSequence.clear()
+				navigateTo(`/exercise/${exerciseNumber}/${stepNumber}/problem`)
+				return true
+			}
 		}
-	}
 
-	return gSequence.handleInvalid(e)
+		return gSequence.handleInvalid(e)
 	}
 
 	return false
