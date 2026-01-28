@@ -206,17 +206,23 @@ function handleGNavigation(e: KeyboardEvent): boolean {
 				return true
 			}
 
-			if (/^[1-9]$/.test(e.key) && gNavigationState.waitingForDot) {
-				e.preventDefault()
-				const exerciseNumber = gNavigationState.exerciseNumber.padStart(2, '0')
-				const stepNumber = e.key.padStart(2, '0')
-				gSequence.clear()
-				navigateTo(`/exercise/${exerciseNumber}/${stepNumber}/problem`)
-				return true
-			}
+		if (/^[1-9]$/.test(e.key) && gNavigationState.waitingForDot) {
+			e.preventDefault()
+			const exerciseNumber = gNavigationState.exerciseNumber.padStart(2, '0')
+			const stepNumber = e.key.padStart(2, '0')
+			gSequence.clear()
+			navigateTo(`/exercise/${exerciseNumber}/${stepNumber}/problem`)
+			return true
 		}
+	}
 
-		return gSequence.handleInvalid(e)
+	// Allow 's' to interrupt g-sequence and start a new sequence
+	if (e.key === 's') {
+		gSequence.clear()
+		return false
+	}
+
+	return gSequence.handleInvalid(e)
 	}
 
 	return false
@@ -224,6 +230,7 @@ function handleGNavigation(e: KeyboardEvent): boolean {
 
 function handleSetPlaygroundShortcut(e: KeyboardEvent): boolean {
 	if (e.key === 's' && !e.metaKey && !e.ctrlKey) {
+		gSequence.clear()
 		spSequence.clear()
 		spSequence.start()
 		return false
