@@ -378,7 +378,7 @@ function InlineEntryEditor({
 
 	const handleToggle = (event: React.SyntheticEvent<HTMLDetailsElement>) => {
 		if (event.currentTarget.open && !hasRequested) {
-			entryFetcher.load(
+			void entryFetcher.load(
 				href('/admin/cache/*', {
 					'*': entryPath,
 				}),
