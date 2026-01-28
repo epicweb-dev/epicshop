@@ -834,10 +834,11 @@ export async function findSolutionDir({
 		}
 	} else if (fullPath.endsWith('playground')) {
 		const appName = await getPlaygroundAppName()
-		if (appName) {
-			return findSolutionDir({
-				fullPath: await getFullPathFromAppName(appName),
-			})
+		const baseAppFullPath = appName
+			? await resolveExistingAppPath(appName)
+			: null
+		if (baseAppFullPath) {
+			return findSolutionDir({ fullPath: baseAppFullPath })
 		}
 	}
 	return null
@@ -864,8 +865,11 @@ export async function findProblemDir({
 		}
 	} else if (fullPath.endsWith('playground')) {
 		const appName = await getPlaygroundAppName()
-		if (appName) {
-			return findProblemDir({ fullPath: await getFullPathFromAppName(appName) })
+		const baseAppFullPath = appName
+			? await resolveExistingAppPath(appName)
+			: null
+		if (baseAppFullPath) {
+			return findProblemDir({ fullPath: baseAppFullPath })
 		}
 	}
 	return null
