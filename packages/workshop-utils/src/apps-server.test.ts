@@ -41,23 +41,21 @@ afterEach(() => {
 	if (originalContext) {
 		process.env.EPICSHOP_CONTEXT_CWD = originalContext
 	} else {
-		process.env.EPICSHOP_CONTEXT_CWD = undefined
+		delete process.env.EPICSHOP_CONTEXT_CWD
 	}
 })
 
-test(
-	'returns playground info when base app is missing',
-	async () => {
+test('returns playground info when base app is missing', async () => {
 	const workshop = await createTempWorkshop()
 	try {
 		process.env.EPICSHOP_CONTEXT_CWD = workshop.root
-		;(globalThis as { __epicshop_apps_initialized__?: boolean })
-			.__epicshop_apps_initialized__ = false
+		;(
+			globalThis as { __epicshop_apps_initialized__?: boolean }
+		).__epicshop_apps_initialized__ = false
 		vi.resetModules()
 
-		const { getPlaygroundApp, setWorkshopRoot } = await import(
-			'./apps.server.ts'
-		)
+		const { getPlaygroundApp, setWorkshopRoot } =
+			await import('./apps.server.ts')
 		setWorkshopRoot(workshop.root)
 
 		const playgroundApp = await getPlaygroundApp()
@@ -67,6 +65,4 @@ test(
 	} finally {
 		await workshop[Symbol.asyncDispose]()
 	}
-	},
-	15000,
-)
+}, 15000)
