@@ -348,13 +348,13 @@ function InlineEntryEditor({
 	}, [entryFetcher.state])
 
 	useEffect(() => {
-		if (entryValue !== undefined) {
+		if (hasEntry) {
 			const formattedValue = JSON.stringify(entryValue, null, 2) ?? ''
 			setEditValue(formattedValue)
 			setBaselineValue(formattedValue)
 			setHasChanges(false)
 		}
-	}, [entryValue])
+	}, [hasEntry, entryValue])
 
 	useEffect(() => {
 		const currentUpdateState = updateFetcher.state
