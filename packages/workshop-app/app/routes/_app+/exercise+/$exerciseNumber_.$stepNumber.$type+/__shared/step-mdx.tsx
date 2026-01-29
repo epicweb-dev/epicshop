@@ -203,9 +203,8 @@ function InlineFile({
 	const expectedPlaygroundAppName = data.problem?.name ?? data[data.type]?.name
 	const isPlaygroundReady =
 		type !== 'playground' ||
-		(Boolean(data.playground) &&
-			Boolean(expectedPlaygroundAppName) &&
-			data.playground.appName === expectedPlaygroundAppName)
+		(Boolean(expectedPlaygroundAppName) &&
+			data.playground?.appName === expectedPlaygroundAppName)
 	const disabledReason =
 		type === 'playground' && !isPlaygroundReady
 			? 'Set the playground to this step before opening a file.'
