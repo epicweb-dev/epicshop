@@ -88,6 +88,10 @@ function navigateTo(path: string) {
 	window.location.href = path
 }
 
+function isDiffRoute() {
+	return window.location.pathname.startsWith('/diff')
+}
+
 function clickElementByDataAttribute(attribute: string | string[]): boolean {
 	const attributes = Array.isArray(attribute) ? attribute : [attribute]
 	const element = attributes
@@ -250,6 +254,21 @@ function handleSetPlaygroundShortcut(e: KeyboardEvent): boolean {
 	return false
 }
 
+function handleDiffArrowNavigation(e: KeyboardEvent): boolean {
+	if (!isDiffRoute()) return false
+	if (e.key === 'ArrowRight') {
+		e.preventDefault()
+		clickElementByDataAttribute('g+n')
+		return true
+	}
+	if (e.key === 'ArrowLeft') {
+		e.preventDefault()
+		clickElementByDataAttribute('g+p')
+		return true
+	}
+	return false
+}
+
 function getParentMuxPlayer(el: unknown) {
 	return el instanceof HTMLElement ? el.closest('mux-player') : null
 }
@@ -312,6 +331,10 @@ function handleKeyDown(e: KeyboardEvent) {
 
 	// Handle 's' + 'p' to set playground to current exercise
 	if (handleSetPlaygroundShortcut(e)) {
+		return
+	}
+
+	if (handleDiffArrowNavigation(e)) {
 		return
 	}
 
