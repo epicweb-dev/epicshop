@@ -32,6 +32,25 @@ import {
 } from '#app/utils/misc.tsx'
 import { type Route } from './+types/cache.ts'
 
+function normalizeSearchQuery(query: string) {
+	return query.trim().toLowerCase()
+}
+
+function entryValueMatches(value: unknown, query: string) {
+	if (!query) return true
+	if (value === null || value === undefined) return false
+	if (typeof value === 'string') {
+		return value.toLowerCase().includes(query)
+	}
+	try {
+		const serialized = JSON.stringify(value)
+		if (!serialized) return false
+		return serialized.toLowerCase().includes(query)
+	} catch {
+		return false
+	}
+}
+
 export async function loader({ request }: Route.LoaderArgs) {
 	ensureUndeployed()
 	const currentWorkshopId = getEnv().EPICSHOP_WORKSHOP_INSTANCE_ID
@@ -56,6 +75,7 @@ export async function loader({ request }: Route.LoaderArgs) {
 		currentWorkshopId,
 		...(globalDirExists ? ['global'] : []),
 	]
+	const normalizedQuery = normalizeSearchQuery(filterQuery)
 
 	// Filter caches based on search query and selected workshops
 	const filteredCaches = allCaches
@@ -67,24 +87,36 @@ export async function loader({ request }: Route.LoaderArgs) {
 		.map((workshopCache) => ({
 			...workshopCache,
 			caches: workshopCache.caches
-				.map((cache) => ({
-					...cache,
-					entries: cache.entries.filter(
-						(entry) =>
-							filterQuery === '' ||
-							entry.key.toLowerCase().includes(filterQuery.toLowerCase()) ||
-							cache.name.toLowerCase().includes(filterQuery.toLowerCase()),
-					),
-				}))
-				.filter((cache) => cache.entries.length > 0 || filterQuery === ''),
+				.map((cache) => {
+					const cacheNameMatches =
+						normalizedQuery === ''
+							? true
+							: cache.name.toLowerCase().includes(normalizedQuery)
+					const entries = cache.entries
+						.filter((entry) => {
+							if (normalizedQuery === '') return true
+							if (cacheNameMatches) return true
+							if (entry.key.toLowerCase().includes(normalizedQuery)) return true
+							return entryValueMatches(entry.entry.value, normalizedQuery)
+						})
+						.map((entry) => ({
+							key: entry.key,
+							filename: entry.filename,
+							size: entry.size,
+							filepath: entry.filepath,
+							metadata: entry.entry.metadata,
+						}))
+					return { ...cache, entries }
+				})
+				.filter((cache) => cache.entries.length > 0 || normalizedQuery === ''),
 		}))
 		.filter(
-			(workshopCache) => workshopCache.caches.length > 0 || filterQuery === '',
+			(workshopCache) =>
+				workshopCache.caches.length > 0 || normalizedQuery === '',
 		)
 
 	return {
 		currentWorkshopId,
-		allWorkshopCaches: allCaches,
 		filteredCaches,
 		filterQuery,
 		selectedWorkshops,
@@ -270,23 +302,75 @@ function InlineEntryEditor({
 	workshopId,
 	cacheName,
 	filename,
-	currentValue,
 	entryKey,
 }: {
 	workshopId: string
 	cacheName: string
 	filename: string
-	currentValue: any
 	entryKey: string
 }) {
-	const fetcher = useFetcher<typeof action>()
-	const [editValue, setEditValue] = useState(
-		JSON.stringify(currentValue, null, 2),
-	)
+	const entryFetcher = useFetcher<{
+		entry: {
+			value: unknown
+			metadata: {
+				createdTime: number
+				ttl?: number | null
+				swr?: number
+			}
+		} | null
+	}>()
+	const updateFetcher = useFetcher<typeof action>()
+	const [editValue, setEditValue] = useState<string | null>(null)
+	const [baselineValue, setBaselineValue] = useState<string | null>(null)
 	const [hasChanges, setHasChanges] = useState(false)
+	const [hasRequested, setHasRequested] = useState(false)
+	const [hasStartedLoading, setHasStartedLoading] = useState(false)
+	const submittedValueRef = useRef<string | null>(null)
+	const prevUpdateStateRef = useRef<string>(updateFetcher.state)
+
+	const entryPath = `${workshopId}/${cacheName}/${filename}`
+	const entryValue = entryFetcher.data?.entry?.value
+	const isEntryLoading = entryFetcher.state === 'loading'
+	const hasEntry = Boolean(entryFetcher.data?.entry)
+	const entryMissing = entryFetcher.data?.entry === null
+	const entryFetchFailed =
+		hasRequested &&
+		hasStartedLoading &&
+		!isEntryLoading &&
+		entryFetcher.data === undefined &&
+		entryFetcher.state === 'idle'
+
+	useEffect(() => {
+		if (entryFetcher.state !== 'idle') {
+			setHasStartedLoading(true)
+		}
+	}, [entryFetcher.state])
+
+	useEffect(() => {
+		if (hasEntry) {
+			const formattedValue = JSON.stringify(entryValue, null, 2) ?? ''
+			setEditValue(formattedValue)
+			setBaselineValue(formattedValue)
+			setHasChanges(false)
+		}
+	}, [hasEntry, entryValue])
+
+	useEffect(() => {
+		const currentUpdateState = updateFetcher.state
+		const wasSubmitting = prevUpdateStateRef.current !== 'idle'
+		const nowIdle = currentUpdateState === 'idle'
+
+		if (wasSubmitting && nowIdle && updateFetcher.data?.status === 'success') {
+			setBaselineValue(submittedValueRef.current ?? '')
+			setHasChanges(false)
+		}
+		prevUpdateStateRef.current = currentUpdateState
+	}, [updateFetcher.state, updateFetcher.data?.status])
 
 	const handleSave = () => {
-		void fetcher.submit(
+		if (editValue === null) return
+		submittedValueRef.current = editValue
+		void updateFetcher.submit(
 			{
 				intent: 'update-entry',
 				workshopId,
@@ -296,52 +380,106 @@ function InlineEntryEditor({
 			},
 			{ method: 'POST' },
 		)
-		setHasChanges(false)
 	}
 
 	const handleChange = (value: string) => {
 		setEditValue(value)
-		setHasChanges(value !== JSON.stringify(currentValue, null, 2))
+		if (baselineValue === null) {
+			setHasChanges(false)
+			return
+		}
+		setHasChanges(value !== baselineValue)
 	}
 
 	const handleReset = () => {
-		setEditValue(JSON.stringify(currentValue, null, 2))
+		if (baselineValue === null) return
+		setEditValue(baselineValue)
 		setHasChanges(false)
 	}
 
+	const handleToggle = (event: React.SyntheticEvent<HTMLDetailsElement>) => {
+		if (event.currentTarget.open && !hasRequested) {
+			void entryFetcher.load(
+				href('/admin/cache/*', {
+					'*': entryPath,
+				}),
+			)
+			setHasRequested(true)
+		} else if (!event.currentTarget.open) {
+			// Reset on close to allow retry
+			setHasRequested(false)
+			setHasStartedLoading(false)
+		}
+	}
+
+	const handleRetry = () => {
+		void entryFetcher.load(
+			href('/admin/cache/*', {
+				'*': entryPath,
+			}),
+		)
+	}
+
 	return (
-		<details className="mt-2">
+		<details className="mt-2" onToggle={handleToggle}>
 			<summary className="text-muted-foreground hover:text-foreground cursor-pointer text-sm">
 				Edit entry details
 			</summary>
 			<div className="border-border bg-muted mt-2 space-y-3 rounded border p-3">
-				<div>
-					<label className="mb-1 block text-sm font-medium">Key:</label>
-					<code className="bg-background rounded border px-2 py-1 text-sm">
-						{entryKey}
-					</code>
-				</div>
-				<div>
-					<label className="mb-1 block text-sm font-medium">Value:</label>
-					<textarea
-						value={editValue}
-						onChange={(e) => handleChange(e.target.value)}
-						className="resize-vertical border-border bg-background text-foreground focus:ring-ring h-32 w-full rounded border p-2 font-mono text-sm focus:ring-2 focus:outline-none"
-						placeholder="Enter JSON value..."
-					/>
-				</div>
-				<div className="flex gap-2">
-					<Button
-						varient="primary"
-						onClick={handleSave}
-						disabled={!hasChanges || fetcher.state !== 'idle'}
-					>
-						{fetcher.state !== 'idle' ? 'Saving...' : 'Save'}
-					</Button>
-					<Button varient="mono" onClick={handleReset} disabled={!hasChanges}>
-						Reset
-					</Button>
-				</div>
+				{isEntryLoading ? (
+					<p className="text-muted-foreground text-sm">Loading entry...</p>
+				) : entryFetchFailed ? (
+					<div className="space-y-2">
+						<p className="text-destructive text-sm">
+							Failed to load entry details.
+						</p>
+						<Button varient="mono" onClick={handleRetry}>
+							Retry
+						</Button>
+					</div>
+				) : entryMissing ? (
+					<p className="text-destructive text-sm">
+						Entry details were not found.
+					</p>
+				) : hasEntry ? (
+					<>
+						<div>
+							<label className="mb-1 block text-sm font-medium">Key:</label>
+							<code className="bg-background rounded border px-2 py-1 text-sm">
+								{entryKey}
+							</code>
+						</div>
+						<div>
+							<label className="mb-1 block text-sm font-medium">Value:</label>
+							<textarea
+								value={editValue ?? ''}
+								onChange={(e) => handleChange(e.target.value)}
+								className="resize-vertical border-border bg-background text-foreground focus:ring-ring h-32 w-full rounded border p-2 font-mono text-sm focus:ring-2 focus:outline-none"
+								placeholder="Enter JSON value..."
+							/>
+						</div>
+						<div className="flex gap-2">
+							<Button
+								varient="primary"
+								onClick={handleSave}
+								disabled={!hasChanges || updateFetcher.state !== 'idle'}
+							>
+								{updateFetcher.state !== 'idle' ? 'Saving...' : 'Save'}
+							</Button>
+							<Button
+								varient="mono"
+								onClick={handleReset}
+								disabled={!hasChanges}
+							>
+								Reset
+							</Button>
+						</div>
+					</>
+				) : (
+					<p className="text-muted-foreground text-sm">
+						Open to load entry details.
+					</p>
+				)}
 			</div>
 		</details>
 	)
@@ -609,7 +747,7 @@ export default function CacheManagement({ loaderData }: Route.ComponentProps) {
 
 											<div className="space-y-2">
 												{cache.entries.map(
-													({ key, entry, filename, size, filepath }) => (
+													({ key, metadata, filename, size, filepath }) => (
 														<div
 															key={key}
 															className="border-border bg-background rounded border p-3"
@@ -632,7 +770,7 @@ export default function CacheManagement({ loaderData }: Route.ComponentProps) {
 																			</span>
 																		) : null}
 																	</div>
-																	<CacheMetadata metadata={entry.metadata} />
+																	<CacheMetadata metadata={metadata} />
 																</div>
 																<div className="ml-4 flex shrink-0 gap-1">
 																	<a
@@ -679,7 +817,6 @@ export default function CacheManagement({ loaderData }: Route.ComponentProps) {
 																workshopId={workshopCache.workshopId}
 																cacheName={cache.name}
 																filename={filename}
-																currentValue={entry.value}
 																entryKey={key}
 															/>
 														</div>
