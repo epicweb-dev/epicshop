@@ -43,6 +43,10 @@ const shortcutCategories: ShortcutCategory[] = [
 				description: 'Set playground to current exercise',
 			},
 			{
+				keys: ['s', 'p', 'p'],
+				description: 'Reset playground to current exercise',
+			},
+			{
 				keys: ['g', 'o'],
 				description: 'Go to exercise set in playground',
 			},

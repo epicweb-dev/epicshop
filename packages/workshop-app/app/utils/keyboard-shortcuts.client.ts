@@ -82,7 +82,13 @@ const gSequence = createKeySequence({
 	timeoutMs: G_KEY_TIMEOUT,
 	onClear: resetGNavigationState,
 })
-const spSequence = createKeySequence({ timeoutMs: G_KEY_TIMEOUT })
+const spSequenceState = { waitingForSecondP: false }
+const spSequence = createKeySequence({
+	timeoutMs: G_KEY_TIMEOUT,
+	onClear: () => {
+		spSequenceState.waitingForSecondP = false
+	},
+})
 
 function navigateTo(path: string) {
 	window.location.href = path
@@ -228,19 +234,26 @@ function handleSetPlaygroundShortcut(e: KeyboardEvent): boolean {
 	if (e.key === 's' && !e.metaKey && !e.ctrlKey) {
 		spSequence.clear()
 		spSequence.start()
+		spSequenceState.waitingForSecondP = false
 		return false
 	}
 
 	if (spSequence.isActive()) {
 		if (e.key === 'p') {
 			e.preventDefault()
+			if (spSequenceState.waitingForSecondP) {
+				const didClick = clickElementByDataAttribute('s+p+p')
+				spSequence.clear()
+				return didClick
+			}
 			const targetAttributes = ['s+p', 'g+s']
 			const didClick = clickElementByDataAttribute(targetAttributes)
 			if (didClick) {
 				spSequence.clear()
 				return true
 			}
-			spSequence.clear()
+			spSequenceState.waitingForSecondP = true
+			spSequence.scheduleClear()
 			return false
 		}
 
