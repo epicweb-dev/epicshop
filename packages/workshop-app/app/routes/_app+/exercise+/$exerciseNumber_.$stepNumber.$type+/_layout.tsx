@@ -326,7 +326,7 @@ export default function ExercisePartRoute({
 					style={{ ['--split-pct' as any]: `${splitPercent}%` }}
 					ref={leftPaneRef}
 				>
-					<h1 className="@container h-14 border-b pr-5 pl-10 text-sm leading-tight font-medium">
+					<h1 className="@container h-14 max-w-full overflow-x-auto overflow-y-hidden border-b pr-5 pl-10 text-sm leading-tight font-medium scrollbar-thin scrollbar-thumb-scrollbar">
 						<div className="flex h-14 items-center justify-between gap-x-2 py-2 whitespace-nowrap">
 							<div className="flex items-center justify-start gap-x-2 uppercase">
 								<Link
