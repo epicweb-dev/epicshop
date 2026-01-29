@@ -35,7 +35,7 @@
     "@nx/js": "22.3.3",
     "@nx/playwright": "22.3.3",
     "@nx/workspace": "22.3.3",
-    "@playwright/test": "^1.57.0",
+    "@playwright/test": "^1.58.0",
     "@types/yargs": "^17.0.35",
     "cross-env": "^10.1.0",
     "dotenv": "^17.2.3",
@@ -58,7 +58,7 @@
   "devDependencies": {
     "chromium-bidi": "^13.0.1",
     "unicorn-magic": "^0.4.0",
-    "vitest": "^4.0.17"
+    "vitest": "^4.0.18"
   },
   "overrides": {
     "unicorn-magic": "^0.4.0",
