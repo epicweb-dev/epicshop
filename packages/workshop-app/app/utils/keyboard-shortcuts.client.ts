@@ -234,7 +234,6 @@ function handleSetPlaygroundShortcut(e: KeyboardEvent): boolean {
 	if (e.key === 's' && !e.metaKey && !e.ctrlKey) {
 		spSequence.clear()
 		spSequence.start()
-		spSequenceState.waitingForSecondP = false
 		return false
 	}
 
@@ -245,6 +244,15 @@ function handleSetPlaygroundShortcut(e: KeyboardEvent): boolean {
 				const didClick = clickElementByDataAttribute('s+p+p')
 				spSequence.clear()
 				return didClick
+			}
+			// Check if s+p+p element exists - if so, wait for potential second p
+			const hasSppElement = document.querySelector(
+				'[data-keyboard-action="s+p+p"]',
+			)
+			if (hasSppElement) {
+				spSequenceState.waitingForSecondP = true
+				spSequence.scheduleClear()
+				return false
 			}
 			const targetAttributes = ['s+p', 'g+s']
 			const didClick = clickElementByDataAttribute(targetAttributes)
