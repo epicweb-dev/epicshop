@@ -97,7 +97,7 @@
     "p-queue": "^9.1.0",
     "partysocket": "^1.1.10",
     "react": "^19.2.4",
-    "react-dom": "^19.2.3",
+    "react-dom": "^19.2.4",
     "react-error-boundary": "^6.1.0",
     "react-router": "^7.13.0",
     "remix-flat-routes": "^0.8.5",
