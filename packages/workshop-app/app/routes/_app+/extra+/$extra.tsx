@@ -319,13 +319,7 @@ export default function ExtraRoute() {
 			h1: () => null,
 			InlineFile,
 		}
-	}, [
-		data.playground?.appName,
-		data.playground?.name,
-		data.playground?.fullPath,
-		data.extra.name,
-		data.extra.fullPath,
-	])
+	}, [data.playground, data.extra.name])
 
 	const playgroundBasePath = apps.find(
 		(app) => app.name === data.playground?.appName,
