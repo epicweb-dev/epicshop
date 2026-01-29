@@ -200,6 +200,16 @@ function InlineFile({
 }) {
 	const data = useLoaderData<typeof loader>()
 	const app = data[type] || data[data.type]
+	const expectedPlaygroundAppName = data.problem?.name ?? data[data.type]?.name
+	const isPlaygroundReady =
+		type !== 'playground' ||
+		(Boolean(data.playground) &&
+			Boolean(expectedPlaygroundAppName) &&
+			data.playground.appName === expectedPlaygroundAppName)
+	const disabledReason =
+		type === 'playground' && !isPlaygroundReady
+			? 'Set the playground to this step before opening a file.'
+			: null
 
 	const info = (
 		<div className="launch-editor-button-wrapper flex underline underline-offset-4">
@@ -209,6 +219,14 @@ function InlineFile({
 			</svg>
 		</div>
 	)
+
+	if (disabledReason) {
+		return (
+			<SimpleTooltip content={disabledReason}>
+				<div className="inline-block grow cursor-not-allowed">{info}</div>
+			</SimpleTooltip>
+		)
+	}
 
 	return ENV.EPICSHOP_DEPLOYED && app ? (
 		<div className="inline-block grow">

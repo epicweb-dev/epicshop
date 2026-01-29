@@ -301,16 +301,18 @@ export default function ExtraRoute() {
 
 	// Create MDX components with playground-specific InlineFile
 	const mdxComponents = useMemo(() => {
-		const InlineFile = createInlineFileComponent(() =>
-			data.playground && data.playground.appName === data.extra.name
-				? {
-						name: data.playground.name,
-						fullPath: data.playground.fullPath,
-					}
-				: {
-						name: data.extra.name,
-						fullPath: data.extra.fullPath,
-					},
+		const InlineFile = createInlineFileComponent(
+			() =>
+				data.playground
+					? {
+							name: data.playground.name,
+							fullPath: data.playground.fullPath,
+						}
+					: null,
+			() =>
+				!data.playground || data.playground.appName !== data.extra.name
+					? 'Set the playground to this extra before opening a file.'
+					: null,
 		)
 		return {
 			// we'll render the title ourselves thank you
