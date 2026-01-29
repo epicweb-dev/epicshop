@@ -245,6 +245,7 @@ function handleSetPlaygroundShortcut(e: KeyboardEvent): boolean {
 			e.preventDefault()
 			if (spSequenceState.waitingForSecondP) {
 				const didClick = clickElementByDataAttribute('s+p+p')
+				spSequenceState.waitingForSecondP = false
 				spSequence.clear()
 				return didClick
 			}
@@ -257,14 +258,14 @@ function handleSetPlaygroundShortcut(e: KeyboardEvent): boolean {
 				spSequence.scheduleClear()
 				return false
 			}
-		const targetAttributes = ['s+p', 'g+s']
-		const didClick = clickElementByDataAttribute(targetAttributes)
-		if (didClick) {
+			const targetAttributes = ['s+p', 'g+s']
+			const didClick = clickElementByDataAttribute(targetAttributes)
+			if (didClick) {
+				spSequence.clear()
+				return true
+			}
 			spSequence.clear()
-			return true
-		}
-		spSequence.clear()
-		return false
+			return false
 		}
 
 		return spSequence.handleInvalid(e)
