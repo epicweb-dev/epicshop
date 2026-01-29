@@ -129,7 +129,7 @@
     "@types/mdast": "^4.0.4",
     "@types/mime-types": "^3.0.1",
     "@types/morgan": "^1.9.10",
-    "@types/node": "^25.0.9",
+    "@types/node": "^25.1.0",
     "@types/react": "^19.2.9",
     "@types/react-dom": "^19.2.3",
     "@types/source-map-support": "^0.5.10",
