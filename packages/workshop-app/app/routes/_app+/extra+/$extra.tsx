@@ -302,7 +302,7 @@ export default function ExtraRoute() {
 	// Create MDX components with playground-specific InlineFile
 	const mdxComponents = useMemo(() => {
 		const InlineFile = createInlineFileComponent(() =>
-			data.playground
+			data.playground && data.playground.appName === data.extra.name
 				? {
 						name: data.playground.name,
 						fullPath: data.playground.fullPath,
@@ -317,7 +317,13 @@ export default function ExtraRoute() {
 			h1: () => null,
 			InlineFile,
 		}
-	}, [data.playground?.name, data.playground?.fullPath, data.extra.name, data.extra.fullPath])
+	}, [
+		data.playground?.appName,
+		data.playground?.name,
+		data.playground?.fullPath,
+		data.extra.name,
+		data.extra.fullPath,
+	])
 
 	const playgroundBasePath = apps.find(
 		(app) => app.name === data.playground?.appName,
