@@ -240,7 +240,7 @@ function InlineFile({
 			</LaunchEditor>
 		</div>
 	) : (
-		<>children</>
+		<>{children}</>
 	)
 }
 
