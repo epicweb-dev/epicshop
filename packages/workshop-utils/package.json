@@ -220,7 +220,7 @@
     "globby": "^16.1.0",
     "ignore": "^7.0.5",
     "json5": "^2.2.3",
-    "lru-cache": "^11.2.4",
+    "lru-cache": "^11.2.5",
     "lz-string": "^1.5.0",
     "md5-hex": "^5.0.0",
     "mdast-util-mdx-jsx": "^3.2.0",
