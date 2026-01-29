@@ -58,7 +58,7 @@
   "devDependencies": {
     "chromium-bidi": "^13.0.1",
     "unicorn-magic": "^0.4.0",
-    "vitest": "^4.0.17"
+    "vitest": "^4.0.18"
   },
   "overrides": {
     "unicorn-magic": "^0.4.0",

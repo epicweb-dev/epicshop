@@ -116,7 +116,7 @@
     "@epic-web/config": "^1.21.3",
     "@types/node": "^25.1.0",
     "@types/yargs": "^17.0.35",
-    "vitest": "^4.0.17",
+    "vitest": "^4.0.18",
     "zshy": "^0.7.0"
   },
   "repository": {

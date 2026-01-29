@@ -20,7 +20,7 @@
   "devDependencies": {
     "partykit": "0.0.115",
     "typescript": "^5.9.3",
-    "vitest": "^4.0.17",
+    "vitest": "^4.0.18",
     "zshy": "^0.7.0"
   },
   "files": [

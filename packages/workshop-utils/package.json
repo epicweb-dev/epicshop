@@ -250,7 +250,7 @@
     "@types/react": "^19.2.10",
     "@types/react-dom": "^19.2.3",
     "@types/shell-quote": "^1.7.5",
-    "vitest": "^4.0.17",
+    "vitest": "^4.0.18",
     "zshy": "^0.7.0"
   },
   "repository": {
