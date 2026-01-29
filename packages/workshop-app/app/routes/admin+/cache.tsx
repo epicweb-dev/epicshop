@@ -428,13 +428,7 @@ function InlineEntryEditor({
 			<div className="border-border bg-muted mt-2 space-y-3 rounded border p-3">
 				{isEntryLoading ? (
 					<p className="text-muted-foreground text-sm">Loading entry...</p>
-				) : null}
-				{entryMissing ? (
-					<p className="text-destructive text-sm">
-						Entry details were not found.
-					</p>
-				) : null}
-				{entryFetchFailed ? (
+				) : entryFetchFailed ? (
 					<div className="space-y-2">
 						<p className="text-destructive text-sm">
 							Failed to load entry details.
@@ -443,13 +437,11 @@ function InlineEntryEditor({
 							Retry
 						</Button>
 					</div>
-				) : null}
-				{!hasEntry && !isEntryLoading && !entryMissing && !entryFetchFailed ? (
-					<p className="text-muted-foreground text-sm">
-						Open to load entry details.
+				) : entryMissing ? (
+					<p className="text-destructive text-sm">
+						Entry details were not found.
 					</p>
-				) : null}
-				{hasEntry ? (
+				) : hasEntry ? (
 					<>
 						<div>
 							<label className="mb-1 block text-sm font-medium">Key:</label>
@@ -483,7 +475,11 @@ function InlineEntryEditor({
 							</Button>
 						</div>
 					</>
-				) : null}
+				) : (
+					<p className="text-muted-foreground text-sm">
+						Open to load entry details.
+					</p>
+				)}
 			</div>
 		</details>
 	)
