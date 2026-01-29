@@ -281,7 +281,10 @@ export type MdxAppInfo = {
  * @param getApp - Function to get the app info given the type
  * @returns InlineFile component
  */
-export function createInlineFileComponent(getApp: () => MdxAppInfo | null) {
+export function createInlineFileComponent(
+	getApp: () => MdxAppInfo | null,
+	getDisabledReason?: () => string | null,
+) {
 	return function InlineFile({
 		file,
 		children = <code>{file}</code>,
@@ -290,6 +293,7 @@ export function createInlineFileComponent(getApp: () => MdxAppInfo | null) {
 		file: string
 	}) {
 		const app = getApp()
+		const disabledReason = getDisabledReason?.() ?? null
 
 		const info = (
 			<div className="launch-editor-button-wrapper flex underline underline-offset-4">
@@ -299,6 +303,14 @@ export function createInlineFileComponent(getApp: () => MdxAppInfo | null) {
 				</svg>
 			</div>
 		)
+
+		if (disabledReason) {
+			return (
+				<SimpleTooltip content={disabledReason}>
+					<div className="inline-block grow cursor-not-allowed">{info}</div>
+				</SimpleTooltip>
+			)
+		}
 
 		if (!app) {
 			return (
