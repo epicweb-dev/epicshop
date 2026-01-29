@@ -190,7 +190,7 @@
     "build:watch": "nx watch --projects=@epic-web/workshop-utils -- nx run \\$NX_PROJECT_NAME:build"
   },
   "dependencies": {
-    "@epic-web/cachified": "^5.6.0",
+    "@epic-web/cachified": "^5.6.1",
     "@epic-web/invariant": "^1.0.0",
     "@epic-web/remember": "^1.1.0",
     "@kentcdodds/md-temp": "^10.0.1",
