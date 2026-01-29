@@ -330,8 +330,7 @@ function InlineEntryEditor({
 
 	const entryPath = `${workshopId}/${cacheName}/${filename}`
 	const entryValue = entryFetcher.data?.entry?.value
-	const isEntryLoading =
-		entryFetcher.state !== 'idle' && entryFetcher.data === undefined
+	const isEntryLoading = entryFetcher.state === 'loading'
 	const hasEntry = Boolean(entryFetcher.data?.entry)
 	const entryMissing = entryFetcher.data?.entry === null
 	const entryFetchFailed =
