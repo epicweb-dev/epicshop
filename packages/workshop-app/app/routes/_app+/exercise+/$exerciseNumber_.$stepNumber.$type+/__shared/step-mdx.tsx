@@ -239,11 +239,6 @@ function InlineFile({
 				{info}
 			</LaunchEditor>
 		</div>
-	) : type === 'playground' ? (
-		// playground does not exist yet
-		<SimpleTooltip content="You must 'Set to Playground' before opening a file">
-			<div className="inline-block grow cursor-not-allowed">{info}</div>
-		</SimpleTooltip>
 	) : (
 		<>children</>
 	)
