@@ -86,7 +86,10 @@ const spSequenceState = { waitingForSecondP: false }
 const spSequence = createKeySequence({
 	timeoutMs: G_KEY_TIMEOUT,
 	onClear: () => {
-		spSequenceState.waitingForSecondP = false
+		if (spSequenceState.waitingForSecondP) {
+			spSequenceState.waitingForSecondP = false
+			clickElementByDataAttribute(['s+p', 'g+s'])
+		}
 	},
 })
 
@@ -254,15 +257,14 @@ function handleSetPlaygroundShortcut(e: KeyboardEvent): boolean {
 				spSequence.scheduleClear()
 				return false
 			}
-			const targetAttributes = ['s+p', 'g+s']
-			const didClick = clickElementByDataAttribute(targetAttributes)
-			if (didClick) {
-				spSequence.clear()
-				return true
-			}
-			spSequenceState.waitingForSecondP = true
-			spSequence.scheduleClear()
-			return false
+		const targetAttributes = ['s+p', 'g+s']
+		const didClick = clickElementByDataAttribute(targetAttributes)
+		if (didClick) {
+			spSequence.clear()
+			return true
+		}
+		spSequence.clear()
+		return false
 		}
 
 		return spSequence.handleInvalid(e)
