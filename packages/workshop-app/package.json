@@ -58,7 +58,7 @@
     "@react-router/node": "^7.13.0",
     "@react-router/remix-routes-option-adapter": "^7.13.0",
     "@resvg/resvg-js": "^2.6.2",
-    "@sentry/profiling-node": "^10.36.0",
+    "@sentry/profiling-node": "^10.38.0",
     "@sentry/react-router": "^10.36.0",
     "@sentry/vite-plugin": "^4.7.0",
     "@sindresorhus/slugify": "^3.0.0",
