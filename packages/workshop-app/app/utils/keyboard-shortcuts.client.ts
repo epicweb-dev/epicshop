@@ -82,7 +82,16 @@ const gSequence = createKeySequence({
 	timeoutMs: G_KEY_TIMEOUT,
 	onClear: resetGNavigationState,
 })
-const spSequence = createKeySequence({ timeoutMs: G_KEY_TIMEOUT })
+const spSequenceState = { waitingForSecondP: false }
+const spSequence = createKeySequence({
+	timeoutMs: G_KEY_TIMEOUT,
+	onClear: () => {
+		if (spSequenceState.waitingForSecondP) {
+			spSequenceState.waitingForSecondP = false
+			clickElementByDataAttribute('s+p')
+		}
+	},
+})
 
 function navigateTo(path: string) {
 	window.location.href = path
@@ -234,8 +243,22 @@ function handleSetPlaygroundShortcut(e: KeyboardEvent): boolean {
 	if (spSequence.isActive()) {
 		if (e.key === 'p') {
 			e.preventDefault()
-			const targetAttributes = ['s+p', 'g+s']
-			const didClick = clickElementByDataAttribute(targetAttributes)
+			if (spSequenceState.waitingForSecondP) {
+				const didClick = clickElementByDataAttribute('s+p+p')
+				spSequenceState.waitingForSecondP = false
+				spSequence.clear()
+				return didClick
+			}
+			// Check if s+p+p element exists - if so, wait for potential second p
+			const hasSppElement = document.querySelector(
+				'[data-keyboard-action="s+p+p"]',
+			)
+			if (hasSppElement) {
+				spSequenceState.waitingForSecondP = true
+				spSequence.scheduleClear()
+				return false
+			}
+			const didClick = clickElementByDataAttribute('s+p')
 			if (didClick) {
 				spSequence.clear()
 				return true

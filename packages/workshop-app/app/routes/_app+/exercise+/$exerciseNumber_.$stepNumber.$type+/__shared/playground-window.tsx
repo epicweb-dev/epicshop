@@ -60,6 +60,7 @@ export function PlaygroundWindow({
 							appName={playgroundAppName}
 							reset
 							tooltipText="Reset Playground"
+							data-keyboard-action="s+p+p"
 						>
 							<div className="flex h-7 w-7 items-center justify-center">
 								<Icon name="Refresh" />
