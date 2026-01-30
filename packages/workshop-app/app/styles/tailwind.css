@@ -6,7 +6,7 @@
 @custom-variant dark (&:is(.dark *));
 
 @source '../**/*.{ts,tsx,jsx,js}';
-@source '../../../example/**/*.md';
+@source '../../../example/**/*.{md,mdx}';
 @source '../../../workshop-utils/src/**/*.ts';
 
 @plugin '@tailwindcss/typography';
@@ -269,8 +269,12 @@
 }
 
 @layer base {
-	* {
-		@apply border-border;
+	*,
+	::after,
+	::before,
+	::backdrop,
+	::file-selector-button {
+		border-color: hsl(var(--border));
 	}
 	body {
 		@apply bg-background text-foreground;
