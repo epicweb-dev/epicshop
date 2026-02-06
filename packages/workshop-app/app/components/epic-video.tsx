@@ -535,9 +535,8 @@ function EpicVideo({
 	}, [isDownloading])
 
 	const currentTimeSessionKey = `${muxPlaybackId}:currentTime`
-	const playbackStateSessionKey = `${muxPlaybackId}:playbackState`
-	const [isPlaying, setIsPlaying] = React.useState(false)
 	const autoplayPendingRef = React.useRef(false)
+	const lastKnownPlayingRef = React.useRef(false)
 	const previousShouldUseOfflineVideoRef = React.useRef(shouldUseOfflineVideo)
 	const [offlineStartTime, setOfflineStartTime] = React.useState<number | null>(
 		null,
@@ -613,31 +612,16 @@ function EpicVideo({
 		shouldUseOfflineVideo,
 	])
 
-	const updatePlaybackState = React.useCallback(
-		(playing: boolean) => {
-			setIsPlaying(playing)
-			if (typeof document === 'undefined') return
-			sessionStorage.setItem(
-				playbackStateSessionKey,
-				playing ? 'playing' : 'paused',
-			)
-		},
-		[playbackStateSessionKey],
-	)
-
-	const getStoredPlaybackState = React.useCallback(() => {
-		if (typeof document === 'undefined') return null
-		return sessionStorage.getItem(playbackStateSessionKey)
-	}, [playbackStateSessionKey])
-
 	React.useEffect(() => {
-		const stored = getStoredPlaybackState()
-		if (stored === 'playing') {
-			setIsPlaying(true)
-		} else if (stored === 'paused') {
-			setIsPlaying(false)
+		const player = shouldUseOfflineVideo
+			? nativeVideoRef.current
+			: muxPlayerRef.current
+		return () => {
+			if (!player) return
+			lastKnownPlayingRef.current =
+				typeof player.paused === 'boolean' ? !player.paused : false
 		}
-	}, [getStoredPlaybackState])
+	}, [shouldUseOfflineVideo])
 
 	React.useEffect(() => {
 		if (!shouldUseOfflineVideo) return
@@ -699,36 +683,37 @@ function EpicVideo({
 		const wasUsingOfflineVideo = previousShouldUseOfflineVideoRef.current
 		if (wasUsingOfflineVideo === shouldUseOfflineVideo) return
 		previousShouldUseOfflineVideoRef.current = shouldUseOfflineVideo
-		if (wasUsingOfflineVideo || !shouldUseOfflineVideo) return
-
-		const storedPlaybackState = getStoredPlaybackState()
-		autoplayPendingRef.current =
-			isPlaying || storedPlaybackState === 'playing'
-	}, [getStoredPlaybackState, isPlaying, shouldUseOfflineVideo])
+		autoplayPendingRef.current = lastKnownPlayingRef.current
+	}, [shouldUseOfflineVideo])
 
 	React.useEffect(() => {
-		if (!shouldUseOfflineVideo) return
 		if (!autoplayPendingRef.current) return
-		const video = nativeVideoRef.current
-		if (!video) return
+		const player = shouldUseOfflineVideo
+			? nativeVideoRef.current
+			: muxPlayerRef.current
+		if (!player) return
 
 		const attemptPlay = () => {
 			autoplayPendingRef.current = false
 			try {
-				void video.play()
+				void player.play()
 			} catch {
 				// ignore autoplay errors
 			}
 		}
 
-		if (video.readyState >= 1) {
+		const readyState =
+			'readyState' in player && typeof player.readyState === 'number'
+				? player.readyState
+				: 1
+		if (readyState >= 1) {
 			attemptPlay()
 			return
 		}
 
-		video.addEventListener('loadedmetadata', attemptPlay, { once: true })
+		player.addEventListener('loadedmetadata', attemptPlay, { once: true })
 		return () => {
-			video.removeEventListener('loadedmetadata', attemptPlay)
+			player.removeEventListener('loadedmetadata', attemptPlay)
 		}
 	}, [shouldUseOfflineVideo])
 
@@ -868,9 +853,6 @@ function EpicVideo({
 								preload="metadata"
 								src={offlineVideoUrl}
 								onTimeUpdate={handleOfflineTimeUpdate}
-								onPlay={() => updatePlaybackState(true)}
-								onPause={() => updatePlaybackState(false)}
-								onEnded={() => updatePlaybackState(false)}
 							/>
 							<div className="bg-foreground/40 text-background w-full space-y-1 px-3 pt-1 pb-1.5 text-sm leading-none backdrop-blur select-none">
 								<MediaTimeRange className="w-full" />
@@ -914,9 +896,6 @@ function EpicVideo({
 						playbackId={muxPlaybackId}
 						muxPlayerRef={muxPlayerRef}
 						title={title}
-						onPlay={() => updatePlaybackState(true)}
-						onPause={() => updatePlaybackState(false)}
-						onEnded={() => updatePlaybackState(false)}
 					/>
 				)}
 			</div>
