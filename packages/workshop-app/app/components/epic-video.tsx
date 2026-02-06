@@ -612,7 +612,7 @@ function EpicVideo({
 		shouldUseOfflineVideo,
 	])
 
-	React.useEffect(() => {
+	React.useLayoutEffect(() => {
 		const player = shouldUseOfflineVideo
 			? nativeVideoRef.current
 			: muxPlayerRef.current
@@ -696,7 +696,7 @@ function EpicVideo({
 		const attemptPlay = () => {
 			autoplayPendingRef.current = false
 			try {
-				void player.play()
+				void player.play().catch(() => {})
 			} catch {
 				// ignore autoplay errors
 			}
