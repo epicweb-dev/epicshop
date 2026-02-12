@@ -108,13 +108,13 @@
     "get-port": "^7.1.0",
     "match-sorter": "^8.2.0",
     "open": "^11.0.0",
-    "openid-client": "^6.8.1",
-    "ora": "^9.1.0",
+    "openid-client": "^6.8.2",
+    "ora": "^9.3.0",
     "yargs": "^18.0.0"
   },
   "devDependencies": {
-    "@epic-web/config": "^1.21.3",
-    "@types/node": "^25.1.0",
+    "@epic-web/config": "^1.22.0",
+    "@types/node": "^25.2.3",
     "@types/yargs": "^17.0.35",
     "vitest": "^4.0.18",
     "zshy": "^0.7.0"
