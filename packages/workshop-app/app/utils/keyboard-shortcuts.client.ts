@@ -273,7 +273,9 @@ function handleSetPlaygroundShortcut(e: KeyboardEvent): boolean {
 	return false
 }
 
-function isActivePlayerElement(element: Element | null): element is HTMLElement {
+function isActivePlayerElement(
+	element: Element | null,
+): element is HTMLElement {
 	if (!(element instanceof HTMLElement)) return false
 	if (element.getAttribute('data-player-state') === 'inactive') return false
 	if (element.getAttribute('aria-hidden') === 'true') return false

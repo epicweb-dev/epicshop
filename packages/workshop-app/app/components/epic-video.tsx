@@ -817,10 +817,7 @@ function EpicVideo({
 										ref={setSeekOffset}
 										seekOffset={10}
 									/>
-									<MediaSeekForwardButton
-										ref={setSeekOffset}
-										seekOffset={10}
-									/>
+									<MediaSeekForwardButton ref={setSeekOffset} seekOffset={10} />
 									<MediaTimeDisplay
 										showDuration
 										className="text-background text-xs tabular-nums"
