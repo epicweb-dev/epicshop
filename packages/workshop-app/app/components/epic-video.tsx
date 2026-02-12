@@ -563,7 +563,9 @@ function EpicVideo({
 				key={`button-${timestampIndexStart}`}
 				className="underline"
 				onClick={(event) => {
-					const videoElement = nativeVideoRef.current ?? muxPlayerRef.current
+					const videoElement = shouldUseOfflineVideo
+						? nativeVideoRef.current
+						: muxPlayerRef.current
 					if (videoElement) {
 						videoElement.currentTime = hmsToSeconds(timestamp)
 						try {
