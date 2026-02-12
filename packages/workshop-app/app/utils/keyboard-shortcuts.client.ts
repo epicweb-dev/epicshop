@@ -273,12 +273,31 @@ function handleSetPlaygroundShortcut(e: KeyboardEvent): boolean {
 	return false
 }
 
+function isActivePlayerElement(element: Element | null): element is HTMLElement {
+	if (!(element instanceof HTMLElement)) return false
+	if (element.getAttribute('data-player-state') === 'inactive') return false
+	if (element.getAttribute('aria-hidden') === 'true') return false
+	if (element.hasAttribute('hidden')) return false
+	return true
+}
+
 function getParentMuxPlayer(el: unknown) {
-	return el instanceof HTMLElement ? el.closest('mux-player') : null
+	const player = el instanceof HTMLElement ? el.closest('mux-player') : null
+	return isActivePlayerElement(player) ? player : null
 }
 
 function getParentMediaController(el: unknown) {
-	return el instanceof HTMLElement ? el.closest('media-controller') : null
+	const controller =
+		el instanceof HTMLElement ? el.closest('media-controller') : null
+	return isActivePlayerElement(controller) ? controller : null
+}
+
+function getFirstActivePlayer() {
+	const players = document.querySelectorAll('mux-player, media-controller')
+	for (const player of players) {
+		if (isActivePlayerElement(player)) return player
+	}
+	return null
 }
 
 type MediaControllerElement = HTMLElement & {
@@ -343,8 +362,7 @@ function handleKeyDown(e: KeyboardEvent) {
 	const parentMuxPlayer = getParentMuxPlayer(activeElement)
 	const parentMediaController = getParentMediaController(activeElement)
 	const focusIsInPlayer = Boolean(parentMuxPlayer ?? parentMediaController)
-	const firstPlayer =
-		document.querySelector('mux-player, media-controller') ?? null
+	const firstPlayer = getFirstActivePlayer()
 	const playerElement = parentMuxPlayer ?? parentMediaController ?? firstPlayer
 	if (!playerElement) return
 

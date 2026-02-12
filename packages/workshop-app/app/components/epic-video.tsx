@@ -758,94 +758,101 @@ function EpicVideo({
 			onDelete={handleDelete}
 		/>
 	) : null
+	const isOfflinePlayerActive = shouldUseOfflineVideo
+	const showOnlinePlayer = !isOfflinePlayerActive && isOnline
+	const showOfflineUnavailable = !isOfflinePlayerActive && !isOnline
 	return (
 		<div>
 			<div className="shadow-lg">
-				{shouldUseOfflineVideo ? (
-					<div className="flex aspect-video w-full items-center justify-center bg-black">
-						<MediaController
-							tabIndex={0}
-							aria-label={`${title} video player`}
-							onPointerDown={(event) => {
-								event.currentTarget.focus()
-							}}
-							className="focus-visible:ring-ring flex h-full w-full flex-col justify-end outline-none focus-visible:ring-2 focus-visible:ring-offset-2"
-							style={
-								{
-									'--media-primary-color': 'hsl(var(--background))',
-									'--media-text-color': 'hsl(var(--background))',
-									'--media-secondary-color': 'transparent',
-									'--media-control-background': 'transparent',
-									'--media-control-hover-background':
-										'hsl(var(--background) / 0.18)',
-									'--media-control-height': '18px',
-									'--media-range-padding': '2px',
-									'--media-time-range-hover-height': '18px',
-									'--media-time-range-hover-bottom': '-4px',
-									'--media-range-track-height': '3px',
-									'--media-range-thumb-height': '8px',
-									'--media-range-thumb-width': '8px',
-									'--media-range-track-background':
-										'hsl(var(--background) / 0.35)',
-									'--media-range-track-pointer-background':
-										'hsl(var(--background) / 0.85)',
-								} as React.CSSProperties
-							}
-						>
-							<video
-								ref={nativeVideoRef}
-								slot="media"
-								aria-label={title}
-								className="h-full w-full"
-								playsInline
-								preload="metadata"
-								src={offlineVideoUrl}
-								onTimeUpdate={handleOfflineTimeUpdate}
-							/>
-							<div className="bg-foreground/40 text-background w-full space-y-1 px-3 pt-1 pb-1.5 text-sm leading-none backdrop-blur select-none">
-								<MediaTimeRange className="w-full" />
-								<MediaControlBar className="w-full items-center gap-3">
-									<div className="flex items-center gap-3">
-										<MediaPlayButton />
-										<MediaSeekBackwardButton
-											ref={setSeekOffset}
-											seekOffset={10}
-										/>
-										<MediaSeekForwardButton
-											ref={setSeekOffset}
-											seekOffset={10}
-										/>
-										<MediaTimeDisplay
-											showDuration
-											className="text-background text-xs tabular-nums"
-										/>
-										<MediaMuteButton />
-										<MediaVolumeRange className="w-24" />
-									</div>
-									<div className="ml-auto flex items-center gap-3">
-										<MediaPlaybackRateButton
-											className="text-background text-xs"
-											rates={[
-												0.5, 0.75, 0.8, 0.9, 1, 1.25, 1.5, 1.75, 2, 2.5, 3, 3.5,
-												4,
-											]}
-										/>
-										<MediaPipButton />
-										<MediaFullscreenButton />
-									</div>
-								</MediaControlBar>
-							</div>
-						</MediaController>
-					</div>
-				) : !isOnline ? (
+				<div
+					className="flex aspect-video w-full items-center justify-center bg-black"
+					hidden={!isOfflinePlayerActive}
+				>
+					<MediaController
+						tabIndex={isOfflinePlayerActive ? 0 : -1}
+						aria-label={`${title} video player`}
+						data-player-state={isOfflinePlayerActive ? 'active' : 'inactive'}
+						onPointerDown={(event) => {
+							event.currentTarget.focus()
+						}}
+						className="focus-visible:ring-ring flex h-full w-full flex-col justify-end outline-none focus-visible:ring-2 focus-visible:ring-offset-2"
+						style={
+							{
+								'--media-primary-color': 'hsl(var(--background))',
+								'--media-text-color': 'hsl(var(--background))',
+								'--media-secondary-color': 'transparent',
+								'--media-control-background': 'transparent',
+								'--media-control-hover-background':
+									'hsl(var(--background) / 0.18)',
+								'--media-control-height': '18px',
+								'--media-range-padding': '2px',
+								'--media-time-range-hover-height': '18px',
+								'--media-time-range-hover-bottom': '-4px',
+								'--media-range-track-height': '3px',
+								'--media-range-thumb-height': '8px',
+								'--media-range-thumb-width': '8px',
+								'--media-range-track-background':
+									'hsl(var(--background) / 0.35)',
+								'--media-range-track-pointer-background':
+									'hsl(var(--background) / 0.85)',
+							} as React.CSSProperties
+						}
+					>
+						<video
+							ref={nativeVideoRef}
+							slot="media"
+							aria-label={title}
+							className="h-full w-full"
+							playsInline
+							preload={isOfflinePlayerActive ? 'metadata' : 'none'}
+							src={isOfflinePlayerActive ? offlineVideoUrl : undefined}
+							onTimeUpdate={handleOfflineTimeUpdate}
+						/>
+						<div className="bg-foreground/40 text-background w-full space-y-1 px-3 pt-1 pb-1.5 text-sm leading-none backdrop-blur select-none">
+							<MediaTimeRange className="w-full" />
+							<MediaControlBar className="w-full items-center gap-3">
+								<div className="flex items-center gap-3">
+									<MediaPlayButton />
+									<MediaSeekBackwardButton
+										ref={setSeekOffset}
+										seekOffset={10}
+									/>
+									<MediaSeekForwardButton
+										ref={setSeekOffset}
+										seekOffset={10}
+									/>
+									<MediaTimeDisplay
+										showDuration
+										className="text-background text-xs tabular-nums"
+									/>
+									<MediaMuteButton />
+									<MediaVolumeRange className="w-24" />
+								</div>
+								<div className="ml-auto flex items-center gap-3">
+									<MediaPlaybackRateButton
+										className="text-background text-xs"
+										rates={[
+											0.5, 0.75, 0.8, 0.9, 1, 1.25, 1.5, 1.75, 2, 2.5, 3, 3.5,
+											4,
+										]}
+									/>
+									<MediaPipButton />
+									<MediaFullscreenButton />
+								</div>
+							</MediaControlBar>
+						</div>
+					</MediaController>
+				</div>
+				{showOfflineUnavailable ? (
 					<OfflineVideoUnavailable />
-				) : (
+				) : showOnlinePlayer ? (
 					<MuxPlayer
 						playbackId={muxPlaybackId}
 						muxPlayerRef={muxPlayerRef}
 						title={title}
+						data-player-state="active"
 					/>
-				)}
+				) : null}
 			</div>
 			<div className="mt-4 flex flex-col gap-2">
 				<VideoLink
