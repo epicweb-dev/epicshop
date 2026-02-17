@@ -55,14 +55,6 @@ function createGoToOptions(
 			value: '/finished',
 		},
 		{
-			id: 'last-exercise-solution',
-			title: 'Last exercise solution',
-			subtitle: '/l',
-			group: 'Pages',
-			keywords: ['last', 'final', 'solution'],
-			value: '/l',
-		},
-		{
 			id: 'extras',
 			title: 'Extras',
 			subtitle: '/extra',
@@ -143,19 +135,10 @@ function createGoToOptions(
 				step.title,
 			]
 
-			options.push({
-				id: `exercise:${exerciseNumberStr}:step:${stepNumberStr}:instructions`,
-				title: `${baseTitle} — Instructions`,
-				subtitle: getExerciseStepPath(exercise.exerciseNumber, step.stepNumber),
-				group: 'Steps',
-				keywords: [...baseKeywords, 'instructions'],
-				value: getExerciseStepPath(exercise.exerciseNumber, step.stepNumber),
-			})
-
 			if (step.problem) {
 				options.push({
 					id: `exercise:${exerciseNumberStr}:step:${stepNumberStr}:problem`,
-					title: `${baseTitle} — Problem`,
+					title: `💪 ${baseTitle}`,
 					subtitle: getExerciseStepPath(
 						exercise.exerciseNumber,
 						step.stepNumber,
@@ -173,7 +156,7 @@ function createGoToOptions(
 			if (step.solution) {
 				options.push({
 					id: `exercise:${exerciseNumberStr}:step:${stepNumberStr}:solution`,
-					title: `${baseTitle} — Solution`,
+					title: `🏁 ${baseTitle}`,
 					subtitle: getExerciseStepPath(
 						exercise.exerciseNumber,
 						step.stepNumber,
@@ -197,41 +180,31 @@ function createGoToOptions(
 function createDefaultCommands(): CommandPaletteCommand[] {
 	return [
 		{
-			id: 'help.toggle-keyboard-shortcuts',
-			title: 'Toggle keyboard shortcuts',
-			subtitle: 'Show the built-in keyboard shortcut reference',
-			group: 'Help',
-			shortcut: '?',
-			keywords: ['help', 'shortcuts', 'keyboard'],
-			run() {
-				if (!isBrowser()) return
-				window.dispatchEvent(new CustomEvent('toggle-keyboard-shortcuts'))
-			},
-		},
-		{
-			id: 'navigation.go-next',
-			title: 'Go to next step/page',
+			id: 'navigation.go-to',
+			title: 'Go to…',
+			subtitle: 'Search destinations (pages, exercises, steps, extras)',
 			group: 'Navigation',
-			shortcut: 'g n',
-			keywords: ['next', 'forward', 'navigation'],
-			isEnabled() {
-				return hasKeyboardAction('g+n')
-			},
-			run(ctx) {
-				ctx.clickKeyboardAction('g+n')
-			},
-		},
-		{
-			id: 'navigation.go-previous',
-			title: 'Go to previous step/page',
-			group: 'Navigation',
-			shortcut: 'g p',
-			keywords: ['previous', 'back', 'navigation'],
-			isEnabled() {
-				return hasKeyboardAction('g+p')
-			},
-			run(ctx) {
-				ctx.clickKeyboardAction('g+p')
+			keywords: [
+				'go to',
+				'navigate',
+				'exercise',
+				'step',
+				'problem',
+				'solution',
+			],
+			async run(ctx) {
+				const path = await ctx.prompt.select<string>({
+					type: 'select',
+					title: 'Go to',
+					placeholder: 'Search destinations…',
+					options: createGoToOptions(ctx),
+				})
+				if (path === null) {
+					// User backed out to the main palette.
+					ctx.keepOpen()
+					return
+				}
+				ctx.navigate(path)
 			},
 		},
 		{
@@ -261,31 +234,15 @@ function createDefaultCommands(): CommandPaletteCommand[] {
 			},
 		},
 		{
-			id: 'navigation.go-to',
-			title: 'Go to…',
-			subtitle: 'Search destinations (pages, exercises, steps, extras)',
-			group: 'Navigation',
-			keywords: [
-				'go to',
-				'navigate',
-				'exercise',
-				'step',
-				'problem',
-				'solution',
-			],
-			async run(ctx) {
-				const path = await ctx.prompt.select<string>({
-					type: 'select',
-					title: 'Go to',
-					placeholder: 'Search destinations…',
-					options: createGoToOptions(ctx),
-				})
-				if (path === null) {
-					// User backed out to the main palette.
-					ctx.keepOpen()
-					return
-				}
-				ctx.navigate(path)
+			id: 'help.toggle-keyboard-shortcuts',
+			title: 'Toggle keyboard shortcuts',
+			subtitle: 'Show the built-in keyboard shortcut reference',
+			group: 'Help',
+			shortcut: '?',
+			keywords: ['help', 'shortcuts', 'keyboard'],
+			run() {
+				if (!isBrowser()) return
+				window.dispatchEvent(new CustomEvent('toggle-keyboard-shortcuts'))
 			},
 		},
 	]

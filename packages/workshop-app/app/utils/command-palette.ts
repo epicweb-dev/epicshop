@@ -494,16 +494,29 @@ export class CommandPaletteController {
 		const stack = this.#state.viewStack
 		const active = stack[stack.length - 1]
 		if (!active) return
-		const maxIndex = Math.max(0, this.#state.entries.length - 1)
-		const selectedIndex = Math.min(
-			maxIndex,
-			Math.max(0, active.selectedIndex + delta),
-		)
-		if (selectedIndex === active.selectedIndex) return
-		const nextActive = { ...active, selectedIndex } as CommandPaletteView
-		this.#setState({
-			viewStack: [...stack.slice(0, -1), nextActive],
-		})
+		const entries = this.#state.entries
+		if (entries.length === 0) return
+
+		let selectedIndex = active.selectedIndex
+		// If the current selection is invalid or disabled, treat as "nothing selected".
+		if (!isSelectableIndex(entries, selectedIndex)) selectedIndex = -1
+
+		const direction = Math.sign(delta)
+		const steps = Math.abs(delta)
+		if (direction === 0 || steps === 0) return
+
+		let nextIndex = selectedIndex
+		// If nothing is selected, ArrowUp should go to the last enabled entry.
+		if (nextIndex === -1 && direction < 0) nextIndex = entries.length
+		for (let i = 0; i < steps; i++) {
+			const found = findNextSelectableIndex(entries, nextIndex, direction)
+			if (found === null) break
+			nextIndex = found
+		}
+
+		if (nextIndex === active.selectedIndex) return
+		const nextActive = { ...active, selectedIndex: nextIndex } as CommandPaletteView
+		this.#setState({ viewStack: [...stack.slice(0, -1), nextActive] })
 	}
 
 	setSelection(index: number) {
@@ -511,13 +524,15 @@ export class CommandPaletteController {
 		const stack = this.#state.viewStack
 		const active = stack[stack.length - 1]
 		if (!active) return
-		const maxIndex = Math.max(0, this.#state.entries.length - 1)
-		const selectedIndex = Math.min(maxIndex, Math.max(0, index))
+		const entries = this.#state.entries
+		const selectedIndex = clampIndex(index, entries.length)
 		if (selectedIndex === active.selectedIndex) return
+
+		// Don't allow hover/keyboard selection to land on disabled entries.
+		if (!isSelectableIndex(entries, selectedIndex)) return
+
 		const nextActive = { ...active, selectedIndex } as CommandPaletteView
-		this.#setState({
-			viewStack: [...stack.slice(0, -1), nextActive],
-		})
+		this.#setState({ viewStack: [...stack.slice(0, -1), nextActive] })
 	}
 
 	async submitSelected() {
@@ -716,7 +731,9 @@ export class CommandPaletteController {
 						threshold: rankings.MATCHES,
 					})
 				: commands
-			const entries: CommandPaletteEntry[] = items.map((command) => {
+			// Disabled commands (via `isEnabled`) don't show up at all.
+			const enabledItems = items.filter((command) => command.enabled)
+			const entries: CommandPaletteEntry[] = enabledItems.map((command) => {
 				const keywords = [
 					command.id,
 					command.title,
@@ -737,7 +754,10 @@ export class CommandPaletteController {
 					keywords,
 				}
 			})
-			const selectedIndex = clampIndex(active.selectedIndex, entries.length)
+			const selectedIndex = resolveSelectableIndex(
+				entries,
+				clampIndex(active.selectedIndex, entries.length),
+			)
 			const nextActive = { ...active, selectedIndex } as CommandPaletteView
 			this.#setState({
 				entries,
@@ -782,7 +802,10 @@ export class CommandPaletteController {
 				disabled: Boolean(o.disabled),
 				keywords: o.keywords ?? [],
 			}))
-			const selectedIndex = clampIndex(active.selectedIndex, entries.length)
+			const selectedIndex = resolveSelectableIndex(
+				entries,
+				clampIndex(active.selectedIndex, entries.length),
+			)
 			const nextActive = { ...active, selectedIndex } as CommandPaletteView
 			this.#setState({
 				entries,
@@ -950,8 +973,42 @@ export class CommandPaletteController {
 }
 
 function clampIndex(index: number, length: number) {
-	if (length <= 0) return 0
+	if (length <= 0) return -1
 	return Math.min(length - 1, Math.max(0, index))
 }
 
 export const commandPaletteController = new CommandPaletteController()
+
+function isSelectableIndex(entries: CommandPaletteEntry[], index: number) {
+	const entry = entries[index]
+	return Boolean(entry && !entry.disabled)
+}
+
+function resolveSelectableIndex(entries: CommandPaletteEntry[], preferredIndex: number) {
+	if (entries.length === 0) return -1
+	if (isSelectableIndex(entries, preferredIndex)) return preferredIndex
+
+	// Prefer moving forward, then backward, otherwise no selection.
+	for (let i = preferredIndex + 1; i < entries.length; i++) {
+		if (isSelectableIndex(entries, i)) return i
+	}
+	for (let i = Math.min(preferredIndex - 1, entries.length - 1); i >= 0; i--) {
+		if (isSelectableIndex(entries, i)) return i
+	}
+	return -1
+}
+
+function findNextSelectableIndex(
+	entries: CommandPaletteEntry[],
+	fromIndex: number,
+	direction: number,
+) {
+	if (entries.length === 0) return null
+	const dir = direction < 0 ? -1 : 1
+	let i = fromIndex + dir
+	while (i >= 0 && i < entries.length) {
+		if (isSelectableIndex(entries, i)) return i
+		i += dir
+	}
+	return null
+}
