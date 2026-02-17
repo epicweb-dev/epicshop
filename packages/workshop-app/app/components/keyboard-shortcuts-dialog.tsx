@@ -21,7 +21,10 @@ const shortcutCategories: ShortcutCategory[] = [
 	{
 		title: 'Command Palette',
 		shortcuts: [
-			{ keys: ['Cmd', 'Shift', 'P'], description: 'Open command palette' },
+			{
+				keys: ['Cmd/Ctrl', 'Shift', 'P'],
+				description: 'Open command palette',
+			},
 		],
 	},
 	{
