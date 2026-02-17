@@ -778,6 +778,7 @@ export class CommandPaletteController {
 
 		this.#keepOpenAfterRun = false
 		this.#setState({ isExecuting: true, errorMessage: null })
+		this.#recomputeEntries()
 		try {
 			const ctx = this.#createCommandContext()
 			await command.run(ctx)
