@@ -294,6 +294,20 @@ body {
 	background: var(--highlight-removed-selection);
 }
 
+.diff-inline-add,
+.diff-inline-remove {
+	border-radius: 0.125rem;
+	padding-inline: 0.05rem;
+}
+
+.diff-inline-add {
+	background: var(--highlight-added-selection);
+}
+
+.diff-inline-remove {
+	background: var(--highlight-removed-selection);
+}
+
 .prose pre {
 	position: relative;
 }

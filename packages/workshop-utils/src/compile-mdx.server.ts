@@ -26,6 +26,7 @@ import {
 	compiledMarkdownCache,
 	shouldForceFresh,
 } from './cache.server.ts'
+import { rehypeInlineCodeDiff } from './rehype-inline-code-diff.server.ts'
 import { type Timings } from './timing.server.ts'
 import { checkConnection } from './utils.server.ts'
 
@@ -196,6 +197,7 @@ const rehypePlugins = [
 	[rehypeAutolinkHeadings, { behavior: 'wrap' }],
 	trimCodeBlocks,
 	rehypeCodeBlocksShiki,
+	rehypeInlineCodeDiff,
 	removePreContainerDivs,
 ] satisfies PluggableList
 
