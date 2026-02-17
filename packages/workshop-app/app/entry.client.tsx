@@ -1,8 +1,10 @@
 import { hydrateRoot } from 'react-dom/client'
 import { HydratedRouter } from 'react-router/dom'
+import { init as initCommandPalette } from './utils/command-palette.client'
 import { init as initKeyboardShortcuts } from './utils/keyboard-shortcuts.client'
 import { init as initMonitoring } from './utils/monitoring.client'
 
+initCommandPalette()
 initKeyboardShortcuts()
 initMonitoring()
 

@@ -19,6 +19,12 @@ interface ShortcutCategory {
 
 const shortcutCategories: ShortcutCategory[] = [
 	{
+		title: 'Command Palette',
+		shortcuts: [
+			{ keys: ['Cmd', 'Shift', 'P'], description: 'Open command palette' },
+		],
+	},
+	{
 		title: 'Navigation',
 		shortcuts: [
 			{ keys: ['g', 'h'], description: 'Go to home' },

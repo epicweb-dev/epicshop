@@ -42,6 +42,7 @@ import { promiseHash } from 'remix-utils/promise'
 import { useSpinDelay } from 'spin-delay'
 import { type Route } from './+types/root.tsx'
 import { Confetti } from './components/confetti'
+import { CommandPalette } from './components/command-palette'
 import { GeneralErrorBoundary } from './components/error-boundary'
 import { ExerciseWarningBanner } from './components/exercise-warning-banner'
 import { KeyboardShortcutsDialog } from './components/keyboard-shortcuts-dialog'
@@ -242,6 +243,13 @@ function App() {
 	const altDown = useAltDown()
 	const [showKeyboardShortcuts, setShowKeyboardShortcuts] =
 		React.useState(false)
+	const commandPaletteRootData = React.useMemo(
+		() => ({
+			user: data.user,
+			userHasAccess: data.userHasAccess,
+		}),
+		[data.user, data.userHasAccess],
+	)
 
 	React.useEffect(() => {
 		const handleToggle = () => {
@@ -296,6 +304,7 @@ function App() {
 			<UpdateToast repoUpdates={data.repoUpdates} />
 			<EpicProgress />
 			<Notifications unmutedNotifications={data.unmutedNotifications} />
+			<CommandPalette rootData={commandPaletteRootData} />
 			<KeyboardShortcutsDialog
 				open={showKeyboardShortcuts}
 				onOpenChange={setShowKeyboardShortcuts}
