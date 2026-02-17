@@ -24,7 +24,7 @@ vi.mock('@epic-web/workshop-utils/workshops.server', () => ({
 
 const { execa } = await import('execa')
 
-const { add, startWorkshop } = await import('./workshops.ts')
+const { add, findWorkshopRoot, startWorkshop } = await import('./workshops.ts')
 
 test('workshops add passes a clone destination containing spaces as a single argument (aha)', async () => {
 	vi.mocked(execa).mockClear()
@@ -140,5 +140,48 @@ test('workshops start treats Ctrl+C (signal termination) as success', async () =
 		expect(result.success).toBe(true)
 	} finally {
 		await fs.rm(workshopDir, { recursive: true, force: true })
+	}
+})
+
+test('findWorkshopRoot can be given an explicit start directory (workshop-dir flag support)', async () => {
+	const baseDir = await fs.mkdtemp(path.join(os.tmpdir(), 'epicshop wsroot '))
+	const workshopRoot = path.join(baseDir, 'my-workshop')
+	const nestedDir = path.join(workshopRoot, 'apps', '01.01.problem')
+	const fileInsideNestedDir = path.join(nestedDir, 'some-file.txt')
+
+	const originalCwd = process.cwd()
+	try {
+		await fs.mkdir(nestedDir, { recursive: true })
+		await fs.writeFile(
+			path.join(workshopRoot, 'package.json'),
+			JSON.stringify({ name: 'my-workshop', epicshop: { title: 'My Workshop' } }),
+		)
+		await fs.writeFile(fileInsideNestedDir, 'hello')
+
+		// macOS commonly aliases /var -> /private/var; compare real paths
+		const expectedRoot = await fs.realpath(workshopRoot)
+
+		// Default behavior: uses process.cwd()
+		process.chdir(nestedDir)
+		const rootFromCwd = await findWorkshopRoot()
+		expect(rootFromCwd ? await fs.realpath(rootFromCwd) : rootFromCwd).toBe(
+			expectedRoot,
+		)
+
+		// Explicit directory: works without changing cwd
+		process.chdir(originalCwd)
+		const rootFromArg = await findWorkshopRoot(nestedDir)
+		expect(rootFromArg ? await fs.realpath(rootFromArg) : rootFromArg).toBe(
+			expectedRoot,
+		)
+
+		// File path: should treat parent directory as start point
+		const rootFromFile = await findWorkshopRoot(fileInsideNestedDir)
+		expect(rootFromFile ? await fs.realpath(rootFromFile) : rootFromFile).toBe(
+			expectedRoot,
+		)
+	} finally {
+		process.chdir(originalCwd)
+		await fs.rm(baseDir, { recursive: true, force: true })
 	}
 })

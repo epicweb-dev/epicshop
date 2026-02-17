@@ -48,8 +48,21 @@ const EPIC_SITES: Array<EpicSite> = [
  * looking for a package.json with an epicshop field.
  * Returns the workshop root path if found, null otherwise.
  */
-export async function findWorkshopRoot(): Promise<string | null> {
-	let currentDir = process.cwd()
+export async function findWorkshopRoot(startDir?: string): Promise<string | null> {
+	let currentDir = startDir
+		? path.resolve(resolvePathWithTilde(startDir))
+		: process.cwd()
+
+	// If the user gave us a file path (or something that isn't a directory),
+	// treat the containing folder as the start point.
+	try {
+		const stat = await fs.promises.stat(currentDir)
+		if (!stat.isDirectory()) {
+			currentDir = path.dirname(currentDir)
+		}
+	} catch {
+		// If the path doesn't exist, we still attempt to walk upward from it.
+	}
 	const root = path.parse(currentDir).root
 
 	while (currentDir !== root) {

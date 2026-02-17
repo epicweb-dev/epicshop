@@ -24,6 +24,9 @@ automatically detect if you're inside a workshop directory and act accordingly:
 - **Inside a workshop directory**: Commands operate on that workshop
 - **Outside a workshop directory**: Commands show an interactive selection of
   your managed workshops
+- **Override workshop context**: For workshop-scoped commands (like `exercises`,
+  `playground`, `progress`, and `diff`), you can pass `--workshop-dir`/`-w` to
+  point at a workshop directory instead of `cd`'ing first.
 
 This makes the CLI intuitive to use - just `cd` into a workshop and run commands
 without needing to specify which workshop you mean.
@@ -545,8 +548,8 @@ epicshop auth logout epicreact
 
 Manage the playground environment. The playground is where you work on exercises
 
-- it's a copy of the problem app that you can modify. Context-aware: must be run
-  from inside a workshop directory.
+- it's a copy of the problem app that you can modify. Context-aware: uses the
+  workshop from your current directory, or pass `--workshop-dir`.
 
 ```bash
 epicshop playground [subcommand] [target] [options]
@@ -571,6 +574,7 @@ epicshop playground [subcommand] [target] [options]
 - `--list` - List saved playgrounds (saved subcommand)
 - `--latest` - Restore the most recent saved playground (saved subcommand)
 - `--json` - Output saved playgrounds as JSON (saved list)
+- `--workshop-dir, -w <path>` - Workshop directory to use as context
 - `--silent, -s` - Run without output logs (default: false)
 
 #### Examples
@@ -579,6 +583,9 @@ epicshop playground [subcommand] [target] [options]
 # Show current playground status
 epicshop playground
 epicshop playground show
+
+# Run from outside the workshop by providing context
+epicshop playground show --workshop-dir ~/epicweb-workshops/web-forms
 
 # Select an exercise step to set as the playground (default preselects next step)
 epicshop playground set
@@ -614,7 +621,7 @@ epicshop playground saved
 ### `progress`
 
 View and manage your learning progress for the current workshop. Context-aware:
-must be run from inside a workshop directory.
+uses the workshop from your current directory, or pass `--workshop-dir`.
 
 ```bash
 epicshop progress [subcommand] [lesson-slug] [options]
@@ -634,6 +641,7 @@ epicshop progress [subcommand] [lesson-slug] [options]
 - `--complete, -c` - Mark as complete (default: true)
 - `--incomplete, -i` - Mark as incomplete
 - `--json` - Output as JSON
+- `--workshop-dir, -w <path>` - Workshop directory to use as context
 - `--silent, -s` - Run without output logs (default: false)
 
 #### Examples
@@ -642,6 +650,9 @@ epicshop progress [subcommand] [lesson-slug] [options]
 # Show progress for current workshop
 epicshop progress
 epicshop progress show
+
+# Run from outside the workshop by providing context
+epicshop progress show -w ~/epicweb-workshops/web-forms
 
 # Output progress as JSON (useful for scripts)
 epicshop progress show --json
@@ -663,7 +674,8 @@ epicshop progress update 01-01-problem --incomplete
 ### `diff`
 
 Show differences between your work and the solution, or between any two apps.
-Context-aware: must be run from inside a workshop directory.
+Context-aware: uses the workshop from your current directory, or pass
+`--workshop-dir`.
 
 ```bash
 epicshop diff [app1] [app2] [options]
@@ -680,6 +692,7 @@ diff (default selection is the playground vs solution).
 #### Options
 
 - `--silent, -s` - Run without output logs (default: false)
+- `--workshop-dir, -w <path>` - Workshop directory to use as context
 
 #### Examples
 
@@ -689,6 +702,9 @@ epicshop diff
 
 # Show diff between two specific apps
 epicshop diff 01.02.problem 01.02.solution
+
+# Run from outside the workshop by providing context
+epicshop diff -w ~/epicweb-workshops/web-forms 01.02.problem 01.02.solution
 
 # Compare different steps
 epicshop diff 01.01.solution 01.02.problem
@@ -704,8 +720,8 @@ The output is formatted as a git diff with colors:
 
 ### `exercises`
 
-List exercises or show detailed exercise information. Context-aware: must be run
-from inside a workshop directory.
+List exercises or show detailed exercise information. Context-aware: uses the
+workshop from your current directory, or pass `--workshop-dir`.
 
 ```bash
 epicshop exercises [exercise] [step] [options]
@@ -720,6 +736,7 @@ epicshop exercises [exercise] [step] [options]
 #### Options
 
 - `--json` - Output as JSON
+- `--workshop-dir, -w <path>` - Workshop directory to use as context
 - `--silent, -s` - Run without output logs (default: false)
 
 #### Examples
@@ -730,6 +747,9 @@ epicshop exercises
 
 # Output exercises as JSON
 epicshop exercises --json
+
+# Run from outside the workshop by providing context
+epicshop exercises -w ~/epicweb-workshops/web-forms
 
 # Show details for a specific exercise
 epicshop exercises 1
@@ -1116,6 +1136,7 @@ setupWorkshop()
 ## Environment Variables
 
 - `EPICSHOP_APP_LOCATION` - Path to the workshop app directory
+- `EPICSHOP_CONTEXT_CWD` - Optional override for workshop context for workshop-scoped commands (side note: `--workshop-dir` takes precedence)
 - `EPICSHOP_DEPLOYED` - Set to `true` or `1` for deployed environments
 - `EPICSHOP_EDITOR` - Preferred editor for opening workshops
 - `GITHUB_TOKEN` - GitHub personal access token for API requests (helps avoid

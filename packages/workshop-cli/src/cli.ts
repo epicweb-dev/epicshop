@@ -34,6 +34,13 @@ function formatHelp(helpText: string): string {
 		.replace(/-\w(?=\s|,)/g, (match) => chalk.yellow(match))
 }
 
+function resolveWorkshopContextCwd(explicitWorkshopDir?: string): string | undefined {
+	const fromFlag = explicitWorkshopDir?.trim() ? explicitWorkshopDir.trim() : undefined
+	if (fromFlag) return fromFlag
+	const fromEnv = process.env.EPICSHOP_CONTEXT_CWD
+	return fromEnv?.trim() ? fromEnv.trim() : undefined
+}
+
 // Set up yargs CLI
 const cli = yargs(args)
 	.scriptName('epicshop')
@@ -1004,6 +1011,12 @@ const cli = yargs(args)
 					description: 'Output saved playgrounds as JSON (saved list)',
 					default: false,
 				})
+				.option('workshop-dir', {
+					alias: 'w',
+					type: 'string',
+					description:
+						'Path to a workshop directory to use as context (instead of the current working directory)',
+				})
 				.option('silent', {
 					alias: 's',
 					type: 'boolean',
@@ -1038,16 +1051,19 @@ const cli = yargs(args)
 				list?: boolean
 				latest?: boolean
 				json?: boolean
+				workshopDir?: string
 				silent?: boolean
 			}>,
 		) => {
 			const { findWorkshopRoot } = await import('./commands/workshops.js')
-			const workshopRoot = await findWorkshopRoot()
+			const workshopRoot = await findWorkshopRoot(
+				resolveWorkshopContextCwd(argv.workshopDir),
+			)
 
 			if (!workshopRoot) {
 				console.error(
 					chalk.red(
-						'❌ Not inside a workshop directory. Please cd into a workshop first.',
+						'❌ Workshop not found. Please cd into a workshop directory or pass --workshop-dir.',
 					),
 				)
 				process.exit(1)
@@ -1180,6 +1196,12 @@ const cli = yargs(args)
 					description: 'Output as JSON',
 					default: false,
 				})
+				.option('workshop-dir', {
+					alias: 'w',
+					type: 'string',
+					description:
+						'Path to a workshop directory to use as context (instead of the current working directory)',
+				})
 				.option('silent', {
 					alias: 's',
 					type: 'boolean',
@@ -1202,16 +1224,19 @@ const cli = yargs(args)
 				complete?: boolean
 				incomplete?: boolean
 				json?: boolean
+				workshopDir?: string
 				silent?: boolean
 			}>,
 		) => {
 			const { findWorkshopRoot } = await import('./commands/workshops.js')
-			const workshopRoot = await findWorkshopRoot()
+			const workshopRoot = await findWorkshopRoot(
+				resolveWorkshopContextCwd(argv.workshopDir),
+			)
 
 			if (!workshopRoot) {
 				console.error(
 					chalk.red(
-						'❌ Not inside a workshop directory. Please cd into a workshop first.',
+						'❌ Workshop not found. Please cd into a workshop directory or pass --workshop-dir.',
 					),
 				)
 				process.exit(1)
@@ -1269,6 +1294,12 @@ const cli = yargs(args)
 					description: 'Run without output logs',
 					default: false,
 				})
+				.option('workshop-dir', {
+					alias: 'w',
+					type: 'string',
+					description:
+						'Path to a workshop directory to use as context (instead of the current working directory)',
+				})
 				.example(
 					'$0 diff',
 					'Select apps to diff (defaults to playground vs solution)',
@@ -1282,16 +1313,19 @@ const cli = yargs(args)
 			argv: ArgumentsCamelCase<{
 				app1?: string
 				app2?: string
+				workshopDir?: string
 				silent?: boolean
 			}>,
 		) => {
 			const { findWorkshopRoot } = await import('./commands/workshops.js')
-			const workshopRoot = await findWorkshopRoot()
+			const workshopRoot = await findWorkshopRoot(
+				resolveWorkshopContextCwd(argv.workshopDir),
+			)
 
 			if (!workshopRoot) {
 				console.error(
 					chalk.red(
-						'❌ Not inside a workshop directory. Please cd into a workshop first.',
+						'❌ Workshop not found. Please cd into a workshop directory or pass --workshop-dir.',
 					),
 				)
 				process.exit(1)
@@ -1349,6 +1383,12 @@ const cli = yargs(args)
 					description: 'Run without output logs',
 					default: false,
 				})
+				.option('workshop-dir', {
+					alias: 'w',
+					type: 'string',
+					description:
+						'Path to a workshop directory to use as context (instead of the current working directory)',
+				})
 				.example('$0 exercises', 'List all exercises with progress')
 				.example('$0 exercises 1', 'Show details for exercise 1')
 				.example('$0 exercises 1 2', 'Show details for exercise 1 step 2')
@@ -1359,16 +1399,19 @@ const cli = yargs(args)
 				exercise?: string
 				step?: string
 				json?: boolean
+				workshopDir?: string
 				silent?: boolean
 			}>,
 		) => {
 			const { findWorkshopRoot } = await import('./commands/workshops.js')
-			const workshopRoot = await findWorkshopRoot()
+			const workshopRoot = await findWorkshopRoot(
+				resolveWorkshopContextCwd(argv.workshopDir),
+			)
 
 			if (!workshopRoot) {
 				console.error(
 					chalk.red(
-						'❌ Not inside a workshop directory. Please cd into a workshop first.',
+						'❌ Workshop not found. Please cd into a workshop directory or pass --workshop-dir.',
 					),
 				)
 				process.exit(1)
@@ -1433,7 +1476,7 @@ try {
 	if (args.length === 0) {
 		// Check if we're inside a workshop first
 		const { findWorkshopRoot } = await import('./commands/workshops.js')
-		const workshopRoot = await findWorkshopRoot()
+		const workshopRoot = await findWorkshopRoot(resolveWorkshopContextCwd())
 
 		// Get workshop title if we're inside one
 		let workshopTitle: string | null = null
@@ -1869,7 +1912,7 @@ try {
 			}
 			case 'exercises': {
 				const { findWorkshopRoot } = await import('./commands/workshops.js')
-				const wsRoot = await findWorkshopRoot()
+				const wsRoot = await findWorkshopRoot(resolveWorkshopContextCwd())
 				if (!wsRoot) {
 					console.error(chalk.red('❌ Not inside a workshop directory'))
 					process.exit(1)
@@ -1888,7 +1931,7 @@ try {
 			}
 			case 'playground': {
 				const { findWorkshopRoot } = await import('./commands/workshops.js')
-				const wsRoot = await findWorkshopRoot()
+				const wsRoot = await findWorkshopRoot(resolveWorkshopContextCwd())
 				if (!wsRoot) {
 					console.error(chalk.red('❌ Not inside a workshop directory'))
 					process.exit(1)
@@ -1907,7 +1950,7 @@ try {
 			}
 			case 'progress': {
 				const { findWorkshopRoot } = await import('./commands/workshops.js')
-				const wsRoot = await findWorkshopRoot()
+				const wsRoot = await findWorkshopRoot(resolveWorkshopContextCwd())
 				if (!wsRoot) {
 					console.error(chalk.red('❌ Not inside a workshop directory'))
 					process.exit(1)
@@ -1925,7 +1968,7 @@ try {
 			}
 			case 'diff': {
 				const { findWorkshopRoot } = await import('./commands/workshops.js')
-				const wsRoot = await findWorkshopRoot()
+				const wsRoot = await findWorkshopRoot(resolveWorkshopContextCwd())
 				if (!wsRoot) {
 					console.error(chalk.red('❌ Not inside a workshop directory'))
 					process.exit(1)
