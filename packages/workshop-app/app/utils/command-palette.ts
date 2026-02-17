@@ -438,6 +438,7 @@ export class CommandPaletteController {
 			return
 		}
 		const active = stack[stack.length - 1]
+		if (!active) return
 		if ('promptId' in active) {
 			const prompt = this.#activePrompts.get(active.promptId)
 			// Resolve as cancelled before popping.
@@ -455,6 +456,7 @@ export class CommandPaletteController {
 		if (!this.#state.open) return
 		const stack = this.#state.viewStack
 		const active = stack[stack.length - 1]
+		if (!active) return
 		const nextActive = { ...active, query, selectedIndex: 0 } as CommandPaletteView
 		this.#setState({
 			viewStack: [...stack.slice(0, -1), nextActive],
@@ -467,6 +469,7 @@ export class CommandPaletteController {
 		if (!this.#state.open) return
 		const stack = this.#state.viewStack
 		const active = stack[stack.length - 1]
+		if (!active) return
 		const maxIndex = Math.max(0, this.#state.entries.length - 1)
 		const selectedIndex = Math.min(
 			maxIndex,
@@ -483,6 +486,7 @@ export class CommandPaletteController {
 		if (!this.#state.open) return
 		const stack = this.#state.viewStack
 		const active = stack[stack.length - 1]
+		if (!active) return
 		const maxIndex = Math.max(0, this.#state.entries.length - 1)
 		const selectedIndex = Math.min(maxIndex, Math.max(0, index))
 		if (selectedIndex === active.selectedIndex) return
@@ -495,6 +499,7 @@ export class CommandPaletteController {
 	async submitSelected() {
 		const stack = this.#state.viewStack
 		const active = stack[stack.length - 1]
+		if (!active) return
 		const entry = this.#state.entries[active.selectedIndex]
 		if (!entry || entry.disabled) return
 
@@ -521,6 +526,7 @@ export class CommandPaletteController {
 	async submitCurrentInput() {
 		const stack = this.#state.viewStack
 		const active = stack[stack.length - 1]
+		if (!active) return
 		if (!('promptId' in active)) return
 		const prompt = this.#activePrompts.get(active.promptId)
 		if (!prompt) return
@@ -593,13 +599,18 @@ export class CommandPaletteController {
 			},
 			clickKeyboardAction,
 			prompt: {
-				select<TValue>(prompt) {
-					return controller.#promptSelect(prompt)
+				select<TValue>(
+					prompt: Omit<
+						Extract<CommandPalettePrompt, { type: 'select' }>,
+						'options'
+					> & { options: Array<CommandPaletteSelectOption<TValue>> },
+				) {
+					return controller.#promptSelect<TValue>(prompt)
 				},
-				text(prompt) {
+				text(prompt: Extract<CommandPalettePrompt, { type: 'text' }>) {
 					return controller.#promptText(prompt)
 				},
-				number(prompt) {
+				number(prompt: Extract<CommandPalettePrompt, { type: 'number' }>) {
 					return controller.#promptNumber(prompt)
 				},
 			},
@@ -649,6 +660,7 @@ export class CommandPaletteController {
 		if (!this.#state.open) return
 		const stack = this.#state.viewStack
 		const active = stack[stack.length - 1]
+		if (!active) return
 		const query = active.query.trim()
 
 		if (active.type === 'commands') {
@@ -688,12 +700,10 @@ export class CommandPaletteController {
 				}
 			})
 			const selectedIndex = clampIndex(active.selectedIndex, entries.length)
+			const nextActive = { ...active, selectedIndex } as CommandPaletteView
 			this.#setState({
 				entries,
-				viewStack: [
-					...stack.slice(0, -1),
-					{ ...active, selectedIndex },
-				],
+				viewStack: [...stack.slice(0, -1), nextActive],
 			})
 			return
 		}
@@ -735,12 +745,10 @@ export class CommandPaletteController {
 				keywords: o.keywords ?? [],
 			}))
 			const selectedIndex = clampIndex(active.selectedIndex, entries.length)
+			const nextActive = { ...active, selectedIndex } as CommandPaletteView
 			this.#setState({
 				entries,
-				viewStack: [
-					...stack.slice(0, -1),
-					{ ...active, selectedIndex },
-				],
+				viewStack: [...stack.slice(0, -1), nextActive],
 			})
 			return
 		}
@@ -763,6 +771,7 @@ export class CommandPaletteController {
 			if (this.#state.open) {
 				const stack = this.#state.viewStack
 				const active = stack[stack.length - 1]
+				if (!active) return
 				const inPrompt = active.type !== 'commands'
 				if (!inPrompt && !this.#keepOpenAfterRun) {
 					this.close()

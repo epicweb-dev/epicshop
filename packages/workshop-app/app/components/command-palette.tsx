@@ -1,12 +1,12 @@
 import * as DialogPrimitive from '@radix-ui/react-dialog'
 import * as React from 'react'
 import { useLocation, useMatches, useNavigate } from 'react-router'
-import { cn } from '#app/utils/misc.tsx'
 import {
 	commandPaletteController,
 	type CommandPaletteHost,
 	type CommandPaletteState,
 } from '#app/utils/command-palette.ts'
+import { cn } from '#app/utils/misc.tsx'
 import { Dialog, DialogOverlay, DialogPortal } from './ui/dialog'
 
 function CommandPaletteContent({
@@ -65,29 +65,43 @@ export function CommandPalette({
 	const matches = useMatches()
 
 	const appLayoutData = React.useMemo(() => pickAppLayoutData(matches), [matches])
-	const host = React.useMemo<CommandPaletteHost>(
-		() => ({
+	const host = React.useMemo<CommandPaletteHost>(() => {
+		const next: CommandPaletteHost = {
 			navigate,
 			pathname: location.pathname,
 			appLayoutData,
-			rootData: rootData ?? null,
-		}),
-		[navigate, location.pathname, appLayoutData, rootData],
-	)
+		}
+		if (rootData) next.rootData = rootData
+		return next
+	}, [navigate, location.pathname, appLayoutData, rootData])
 
 	React.useEffect(() => {
 		commandPaletteController.setHost(host)
 		return () => commandPaletteController.setHost(null)
 	}, [host])
 
-	const view = state.viewStack[state.viewStack.length - 1]
+	const fallbackView = React.useMemo(
+		() =>
+			({
+				type: 'commands',
+				placeholder: 'Type a command…',
+				query: '',
+				selectedIndex: 0,
+			}) as const,
+		[],
+	)
+	const view =
+		state.viewStack[state.viewStack.length - 1] ??
+		state.viewStack[0] ??
+		fallbackView
+	const promptKey = 'promptId' in view ? view.promptId : null
 	const inputRef = React.useRef<HTMLInputElement>(null)
 
 	React.useEffect(() => {
 		if (!state.open) return
 		const id = window.setTimeout(() => inputRef.current?.focus(), 0)
 		return () => window.clearTimeout(id)
-	}, [state.open, view.type, 'promptId' in view ? view.promptId : null])
+	}, [state.open, view.type, promptKey])
 
 	const hint =
 		view.type === 'commands' || view.type === 'select'
