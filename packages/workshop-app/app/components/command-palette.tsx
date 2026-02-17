@@ -111,9 +111,11 @@ export function CommandPalette({
 	}, [state.open, view.type, promptKey])
 
 	const hint =
-		view.type === 'commands' || view.type === 'select'
-			? 'Enter to run • Esc to close'
-			: 'Enter to submit • Esc to go back'
+		view.type === 'commands'
+			? 'Enter to run • Backspace to close • Esc to close'
+			: view.type === 'select'
+				? 'Enter to select • Backspace to go back • Esc to close'
+				: 'Enter to submit • Backspace to go back • Esc to close'
 
 	function handleOpenChange(open: boolean) {
 		if (open) {
@@ -136,7 +138,16 @@ export function CommandPalette({
 		}
 		if (event.key === 'Escape') {
 			event.preventDefault()
-			commandPaletteController.back()
+			commandPaletteController.close()
+			return
+		}
+		if (event.key === 'Backspace' && view.query.length === 0) {
+			event.preventDefault()
+			if (state.viewStack.length > 1) {
+				commandPaletteController.back()
+			} else {
+				commandPaletteController.close()
+			}
 			return
 		}
 		if (event.key === 'Enter') {
@@ -166,7 +177,11 @@ export function CommandPalette({
 	let lastGroup: string | undefined
 	return (
 		<Dialog open={state.open} onOpenChange={handleOpenChange}>
-			<CommandPaletteContent aria-label="Command palette" className="p-0">
+			<CommandPaletteContent className="p-0">
+				<DialogPrimitive.Title className="sr-only">{title}</DialogPrimitive.Title>
+				<DialogPrimitive.Description className="sr-only">
+					{description ? `${hint}. ${description}` : hint}
+				</DialogPrimitive.Description>
 				<div className="border-border border-b px-4 py-3">
 					<div className="flex items-center justify-between gap-3">
 						<div className="min-w-0">
