@@ -14,20 +14,6 @@ function hasKeyboardAction(action: string) {
 	return Boolean(document.querySelector(`[data-keyboard-action="${action}"]`))
 }
 
-function normalizePath(value: string) {
-	const trimmed = value.trim()
-	if (!trimmed) return null
-	if (trimmed.startsWith('http://') || trimmed.startsWith('https://')) {
-		try {
-			const url = new URL(trimmed)
-			return url.pathname + url.search + url.hash
-		} catch {
-			return null
-		}
-	}
-	return trimmed.startsWith('/') ? trimmed : `/${trimmed}`
-}
-
 function formatExerciseNumber(n: number) {
 	return n.toString().padStart(2, '0')
 }
@@ -83,25 +69,6 @@ function createGoToOptions(
 			group: 'Pages',
 			keywords: ['extra', 'extras', 'library'],
 			value: '/extra',
-		},
-		{
-			id: 'path',
-			title: 'Path…',
-			subtitle: 'Enter a URL path (e.g. /exercise/01/01/problem)',
-			group: 'Advanced',
-			keywords: ['path', 'url', 'navigate'],
-			getValue: async (ctx) => {
-				const raw = await ctx.prompt.text({
-					type: 'text',
-					title: 'Go to path',
-					placeholder: '/exercise/01/01/problem',
-					validate(value) {
-						const normalized = normalizePath(value)
-						return normalized ? null : 'Enter a path.'
-					},
-				})
-				return raw ? normalizePath(raw) : null
-			},
 		},
 	]
 

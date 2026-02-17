@@ -103,12 +103,31 @@ export function CommandPalette({
 		fallbackView
 	const promptKey = 'promptId' in view ? view.promptId : null
 	const inputRef = React.useRef<HTMLInputElement>(null)
+	const resultsRef = React.useRef<HTMLDivElement>(null)
 
 	React.useEffect(() => {
 		if (!state.open) return
 		const id = window.setTimeout(() => inputRef.current?.focus(), 0)
 		return () => window.clearTimeout(id)
 	}, [state.open, view.type, promptKey])
+
+	React.useEffect(() => {
+		if (!state.open) return
+		if (view.type === 'text' || view.type === 'number') return
+		const container = resultsRef.current
+		if (!container) return
+		const selected = container.querySelector<HTMLElement>(
+			`[data-command-palette-entry][data-entry-index="${view.selectedIndex}"]`,
+		)
+		selected?.scrollIntoView({ block: 'nearest' })
+	}, [
+		state.open,
+		view.type,
+		promptKey,
+		view.selectedIndex,
+		view.query,
+		state.entries.length,
+	])
 
 	const hint =
 		view.type === 'commands'
@@ -228,7 +247,7 @@ export function CommandPalette({
 					</div>
 				</div>
 
-				<div className="max-h-[55vh] overflow-y-auto p-1">
+				<div ref={resultsRef} className="max-h-[55vh] overflow-y-auto p-1">
 					{view.type === 'text' || view.type === 'number' ? (
 						<div className="text-muted-foreground px-4 py-6 text-sm">
 							Press{' '}
@@ -255,6 +274,8 @@ export function CommandPalette({
 										<li>
 											<button
 												type="button"
+												data-command-palette-entry
+												data-entry-index={index}
 												disabled={entry.disabled}
 												onMouseMove={() =>
 													commandPaletteController.setSelection(index)

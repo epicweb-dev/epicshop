@@ -713,7 +713,7 @@ export class CommandPaletteController {
 			const items = query
 				? matchSorter(commands, query, {
 						keys: ['title', 'subtitle', 'keywords', 'id', 'group', 'shortcut'],
-						threshold: rankings.CONTAINS,
+						threshold: rankings.MATCHES,
 					})
 				: commands
 			const entries: CommandPaletteEntry[] = items.map((command) => {
@@ -767,7 +767,7 @@ export class CommandPaletteController {
 			const filtered = query
 				? matchSorter(options, query, {
 						keys: ['title', 'subtitle', 'keywords', 'id', 'group', 'shortcut'],
-						threshold: rankings.CONTAINS,
+						threshold: rankings.MATCHES,
 					})
 				: options
 			const entries: CommandPaletteEntry[] = filtered.map((o) => ({
