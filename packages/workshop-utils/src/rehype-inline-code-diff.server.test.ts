@@ -1,6 +1,6 @@
-import { test, expect } from 'vitest'
+import { type Content, type Element, type Root } from 'hast'
+import { expect, test } from 'vitest'
 import { rehypeInlineCodeDiff } from './rehype-inline-code-diff.server.ts'
-import type { Content, Element, Root } from 'hast'
 
 function isElement(node: Content | Root): node is Element {
 	return (node as any).type === 'element'
