@@ -453,9 +453,14 @@ export class CommandPaletteController {
 		if (!active) return
 		if ('promptId' in active) {
 			const prompt = this.#activePrompts.get(active.promptId)
+			const shouldKeepOpenAfterRun =
+				prompt?.type === 'text' || prompt?.type === 'number'
 			// Resolve as cancelled before popping.
 			prompt?.resolve(null)
 			this.#activePrompts.delete(active.promptId)
+			if (shouldKeepOpenAfterRun) {
+				this.#keepOpenAfterRun = true
+			}
 		}
 		this.#setState({
 			viewStack: stack.slice(0, -1),
@@ -750,7 +755,7 @@ export class CommandPaletteController {
 				subtitle: o.subtitle,
 				group: o.group,
 				shortcut: o.shortcut,
-				disabled: Boolean(o.disabled) || this.#state.isExecuting,
+				disabled: Boolean(o.disabled),
 				keywords: o.keywords ?? [],
 			}))
 			const selectedIndex = clampIndex(active.selectedIndex, entries.length)
