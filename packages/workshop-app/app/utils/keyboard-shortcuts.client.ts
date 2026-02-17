@@ -1,4 +1,5 @@
 import { type MuxPlayerRefAttributes } from '@mux/mux-player-react'
+import { clickKeyboardAction } from '#app/utils/keyboard-action.ts'
 
 let gNavigationState: {
 	exerciseNumber: string | null
@@ -88,25 +89,13 @@ const spSequence = createKeySequence({
 	onClear: () => {
 		if (spSequenceState.waitingForSecondP) {
 			spSequenceState.waitingForSecondP = false
-			clickElementByDataAttribute('s+p')
+			clickKeyboardAction('s+p')
 		}
 	},
 })
 
 function navigateTo(path: string) {
 	window.location.href = path
-}
-
-function clickElementByDataAttribute(attribute: string | string[]): boolean {
-	const attributes = Array.isArray(attribute) ? attribute : [attribute]
-	const element = attributes
-		.map((value) => document.querySelector(`[data-keyboard-action="${value}"]`))
-		.find((value) => value instanceof HTMLElement)
-	if (element instanceof HTMLElement) {
-		element.click()
-		return true
-	}
-	return false
 }
 
 function handleGNavigation(e: KeyboardEvent): boolean {
@@ -134,7 +123,7 @@ function handleGNavigation(e: KeyboardEvent): boolean {
 
 		if (e.key === 'n') {
 			e.preventDefault()
-			if (clickElementByDataAttribute('g+n')) {
+			if (clickKeyboardAction('g+n')) {
 				gSequence.clear()
 				return true
 			}
@@ -144,7 +133,7 @@ function handleGNavigation(e: KeyboardEvent): boolean {
 
 		if (e.key === 'p') {
 			e.preventDefault()
-			if (clickElementByDataAttribute('g+p')) {
+			if (clickKeyboardAction('g+p')) {
 				gSequence.clear()
 				return true
 			}
@@ -154,7 +143,7 @@ function handleGNavigation(e: KeyboardEvent): boolean {
 
 		if (e.key === 'o') {
 			e.preventDefault()
-			if (clickElementByDataAttribute('g+o')) {
+			if (clickKeyboardAction('g+o')) {
 				gSequence.clear()
 				return true
 			}
@@ -244,7 +233,7 @@ function handleSetPlaygroundShortcut(e: KeyboardEvent): boolean {
 		if (e.key === 'p') {
 			e.preventDefault()
 			if (spSequenceState.waitingForSecondP) {
-				const didClick = clickElementByDataAttribute('s+p+p')
+				const didClick = clickKeyboardAction('s+p+p')
 				spSequenceState.waitingForSecondP = false
 				spSequence.clear()
 				return didClick
@@ -258,7 +247,7 @@ function handleSetPlaygroundShortcut(e: KeyboardEvent): boolean {
 				spSequence.scheduleClear()
 				return false
 			}
-			const didClick = clickElementByDataAttribute('s+p')
+			const didClick = clickKeyboardAction('s+p')
 			if (didClick) {
 				spSequence.clear()
 				return true

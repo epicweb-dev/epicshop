@@ -1,4 +1,5 @@
 import { matchSorter, rankings } from 'match-sorter'
+import { clickKeyboardAction } from '#app/utils/keyboard-action.ts'
 
 export type CommandPaletteScope = string
 
@@ -267,19 +268,6 @@ function getKeywords(
 	return (list ?? []).filter(Boolean)
 }
 
-function clickKeyboardAction(action: string | string[]) {
-	if (!isBrowser()) return false
-	const actions = Array.isArray(action) ? action : [action]
-	const el = actions
-		.map((a) => document.querySelector(`[data-keyboard-action="${a}"]`))
-		.find((v) => v instanceof HTMLElement)
-	if (el instanceof HTMLElement) {
-		el.click()
-		return true
-	}
-	return false
-}
-
 class CommandRegistry {
 	#commands = new Map<string, CommandPaletteCommand>()
 	#order: string[] = []
@@ -464,6 +452,8 @@ export class CommandPaletteController {
 		}
 		const active = stack[stack.length - 1]
 		if (!active) return
+		const nextStack = stack.slice(0, -1)
+		const nextActive = nextStack[nextStack.length - 1]
 		if ('promptId' in active) {
 			const prompt = this.#activePrompts.get(active.promptId)
 			const shouldKeepOpenAfterRun =
@@ -471,12 +461,12 @@ export class CommandPaletteController {
 			// Resolve as cancelled before popping.
 			prompt?.resolve(null)
 			this.#activePrompts.delete(active.promptId)
-			if (shouldKeepOpenAfterRun) {
+			if (shouldKeepOpenAfterRun && nextActive?.type === 'commands') {
 				this.#keepOpenAfterRun = true
 			}
 		}
 		this.#setState({
-			viewStack: stack.slice(0, -1),
+			viewStack: nextStack,
 			errorMessage: null,
 		})
 		this.#recomputeEntries()
