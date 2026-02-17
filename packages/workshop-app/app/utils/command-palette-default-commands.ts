@@ -32,21 +32,17 @@ function formatExerciseNumber(n: number) {
 	return n.toString().padStart(2, '0')
 }
 
-type GoToTarget =
-	| { kind: 'path'; path: string }
-	| { kind: 'prompt.path' }
-
 function createGoToOptions(
 	ctx: Parameters<CommandPaletteCommand['run']>[0],
-): Array<CommandPaletteSelectOption<GoToTarget>> {
-	const options: Array<CommandPaletteSelectOption<GoToTarget>> = [
+): Array<CommandPaletteSelectOption<string>> {
+	const options: Array<CommandPaletteSelectOption<string>> = [
 		{
 			id: 'home',
 			title: 'Home',
 			subtitle: '/',
 			group: 'Pages',
 			keywords: ['home', 'start'],
-			value: { kind: 'path', path: '/' },
+			value: '/',
 		},
 		{
 			id: 'account',
@@ -54,7 +50,7 @@ function createGoToOptions(
 			subtitle: '/account',
 			group: 'Pages',
 			keywords: ['account', 'profile', 'user'],
-			value: { kind: 'path', path: '/account' },
+			value: '/account',
 		},
 		{
 			id: 'admin',
@@ -62,7 +58,7 @@ function createGoToOptions(
 			subtitle: '/admin',
 			group: 'Pages',
 			keywords: ['admin', 'processes', 'sidecar', 'status'],
-			value: { kind: 'path', path: '/admin' },
+			value: '/admin',
 		},
 		{
 			id: 'workshop-feedback',
@@ -70,7 +66,7 @@ function createGoToOptions(
 			subtitle: '/finished',
 			group: 'Pages',
 			keywords: ['feedback', 'workshop', 'finished'],
-			value: { kind: 'path', path: '/finished' },
+			value: '/finished',
 		},
 		{
 			id: 'last-exercise-solution',
@@ -78,7 +74,7 @@ function createGoToOptions(
 			subtitle: '/l',
 			group: 'Pages',
 			keywords: ['last', 'final', 'solution'],
-			value: { kind: 'path', path: '/l' },
+			value: '/l',
 		},
 		{
 			id: 'extras',
@@ -86,7 +82,7 @@ function createGoToOptions(
 			subtitle: '/extra',
 			group: 'Pages',
 			keywords: ['extra', 'extras', 'library'],
-			value: { kind: 'path', path: '/extra' },
+			value: '/extra',
 		},
 		{
 			id: 'path',
@@ -94,7 +90,18 @@ function createGoToOptions(
 			subtitle: 'Enter a URL path (e.g. /exercise/01/01/problem)',
 			group: 'Advanced',
 			keywords: ['path', 'url', 'navigate'],
-			value: { kind: 'prompt.path' },
+			getValue: async (ctx) => {
+				const raw = await ctx.prompt.text({
+					type: 'text',
+					title: 'Go to path',
+					placeholder: '/exercise/01/01/problem',
+					validate(value) {
+						const normalized = normalizePath(value)
+						return normalized ? null : 'Enter a path.'
+					},
+				})
+				return raw ? normalizePath(raw) : null
+			},
 		},
 	]
 
@@ -117,9 +124,7 @@ function createGoToOptions(
 		group: 'Playground',
 		keywords: ['playground', 'exercise', 'current'],
 		disabled: playgroundPath ? false : true,
-		value: playgroundPath
-			? { kind: 'path', path: playgroundPath }
-			: { kind: 'prompt.path' },
+		value: playgroundPath ?? '/extra',
 	})
 
 	for (const extra of appLayoutData.extras) {
@@ -129,7 +134,7 @@ function createGoToOptions(
 			subtitle: `/extra/${extra.dirName}`,
 			group: 'Extras',
 			keywords: ['extra', 'extras', extra.title, extra.dirName],
-			value: { kind: 'path', path: `/extra/${extra.dirName}` },
+			value: `/extra/${extra.dirName}`,
 		})
 	}
 
@@ -148,7 +153,7 @@ function createGoToOptions(
 			subtitle: getExercisePath(exercise.exerciseNumber),
 			group: 'Exercises',
 			keywords: [...exerciseBaseKeywords, 'intro', 'instructions'],
-			value: { kind: 'path', path: getExercisePath(exercise.exerciseNumber) },
+			value: getExercisePath(exercise.exerciseNumber),
 		})
 
 		options.push({
@@ -157,10 +162,7 @@ function createGoToOptions(
 			subtitle: getExercisePath(exercise.exerciseNumber, 'finished'),
 			group: 'Exercises',
 			keywords: [...exerciseBaseKeywords, 'finished', 'elaboration'],
-			value: {
-				kind: 'path',
-				path: getExercisePath(exercise.exerciseNumber, 'finished'),
-			},
+			value: getExercisePath(exercise.exerciseNumber, 'finished'),
 		})
 
 		for (const step of exercise.steps) {
@@ -180,10 +182,7 @@ function createGoToOptions(
 				subtitle: getExerciseStepPath(exercise.exerciseNumber, step.stepNumber),
 				group: 'Steps',
 				keywords: [...baseKeywords, 'instructions'],
-				value: {
-					kind: 'path',
-					path: getExerciseStepPath(exercise.exerciseNumber, step.stepNumber),
-				},
+				value: getExerciseStepPath(exercise.exerciseNumber, step.stepNumber),
 			})
 
 			if (step.problem) {
@@ -197,14 +196,11 @@ function createGoToOptions(
 					),
 					group: 'Steps',
 					keywords: [...baseKeywords, 'problem'],
-					value: {
-						kind: 'path',
-						path: getExerciseStepPath(
-							exercise.exerciseNumber,
-							step.stepNumber,
-							'problem',
-						),
-					},
+					value: getExerciseStepPath(
+						exercise.exerciseNumber,
+						step.stepNumber,
+						'problem',
+					),
 				})
 			}
 			if (step.solution) {
@@ -218,14 +214,11 @@ function createGoToOptions(
 					),
 					group: 'Steps',
 					keywords: [...baseKeywords, 'solution'],
-					value: {
-						kind: 'path',
-						path: getExerciseStepPath(
-							exercise.exerciseNumber,
-							step.stepNumber,
-							'solution',
-						),
-					},
+					value: getExerciseStepPath(
+						exercise.exerciseNumber,
+						step.stepNumber,
+						'solution',
+					),
 				})
 			}
 		}
@@ -305,32 +298,27 @@ function createDefaultCommands(): CommandPaletteCommand[] {
 			title: 'Go to…',
 			subtitle: 'Search destinations (pages, exercises, steps, extras)',
 			group: 'Navigation',
-			keywords: ['go to', 'navigate', 'exercise', 'step', 'problem', 'solution'],
+			keywords: [
+				'go to',
+				'navigate',
+				'exercise',
+				'step',
+				'problem',
+				'solution',
+			],
 			async run(ctx) {
-				const target = await ctx.prompt.select<GoToTarget>({
+				const path = await ctx.prompt.select<string>({
 					type: 'select',
 					title: 'Go to',
 					placeholder: 'Search destinations…',
 					options: createGoToOptions(ctx),
 				})
-				if (!target) return
-
-				if (target.kind === 'path') {
-					ctx.navigate(target.path)
+				if (path === null) {
+					// User backed out to the main palette.
+					ctx.keepOpen()
 					return
 				}
-
-				const raw = await ctx.prompt.text({
-					type: 'text',
-					title: 'Go to path',
-					placeholder: '/exercise/01/01/problem',
-					validate(value) {
-						const normalized = normalizePath(value)
-						return normalized ? null : 'Enter a path.'
-					},
-				})
-				const path = raw ? normalizePath(raw) : null
-				if (path) ctx.navigate(path)
+				ctx.navigate(path)
 			},
 		},
 	]

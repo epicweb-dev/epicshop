@@ -178,7 +178,9 @@ export function CommandPalette({
 	return (
 		<Dialog open={state.open} onOpenChange={handleOpenChange}>
 			<CommandPaletteContent className="p-0">
-				<DialogPrimitive.Title className="sr-only">{title}</DialogPrimitive.Title>
+				<DialogPrimitive.Title className="sr-only">
+					{title}
+				</DialogPrimitive.Title>
 				<DialogPrimitive.Description className="sr-only">
 					{description ? `${hint}. ${description}` : hint}
 				</DialogPrimitive.Description>

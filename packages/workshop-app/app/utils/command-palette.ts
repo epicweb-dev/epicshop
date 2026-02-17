@@ -163,8 +163,21 @@ export type CommandPaletteSelectOption<TValue> = {
 	group?: string
 	shortcut?: string
 	disabled?: boolean
-	value: TValue
-}
+} & (
+	| {
+			value: TValue
+			/**
+			 * Optional chained input step. If provided, selecting this option opens
+			 * the follow-up prompt and only resolves the parent select once that
+			 * prompt yields a value.
+			 */
+			getValue?: never
+	  }
+	| {
+			value?: TValue
+			getValue: (ctx: CommandPaletteCommandContext) => Promise<TValue | null>
+	  }
+)
 
 export type CommandPalettePrompt =
 	| {
@@ -535,10 +548,31 @@ export class CommandPaletteController {
 		const option = prompt.options.find((o) => o.id === entry.optionId)
 		if (!option || option.disabled) return
 
-		prompt.resolve(option.value)
+		if ('getValue' in option && typeof option.getValue === 'function') {
+			const ctx = this.#createCommandContext()
+			const value = await option.getValue(ctx)
+			if (!this.#state.open) return
+			// If the follow-up prompt was canceled, keep the parent select open.
+			if (value === null) {
+				this.#setState({ errorMessage: null })
+				this.#recomputeEntries()
+				return
+			}
+
+			prompt.resolve(value)
+		} else {
+			prompt.resolve(option.value)
+		}
+
 		this.#activePrompts.delete(prompt.promptId)
+
+		// Pop the active select view (it should be on top at this point).
+		const currentStack = this.#state.viewStack
+		const last = currentStack[currentStack.length - 1]
+		const shouldPopLast =
+			last && 'promptId' in last && last.promptId === prompt.promptId
 		this.#setState({
-			viewStack: stack.slice(0, -1),
+			viewStack: shouldPopLast ? currentStack.slice(0, -1) : currentStack,
 			errorMessage: null,
 		})
 		this.#recomputeEntries()
