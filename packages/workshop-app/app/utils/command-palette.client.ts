@@ -44,4 +44,3 @@ export function init() {
 
 	return cleanup
 }
-

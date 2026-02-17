@@ -47,7 +47,11 @@ function pickAppLayoutData(matches: ReturnType<typeof useMatches>) {
 			playground?: unknown
 			extras?: unknown
 		}
-		if (Array.isArray(maybe.exercises) && Array.isArray(maybe.extras) && maybe.playground) {
+		if (
+			Array.isArray(maybe.exercises) &&
+			Array.isArray(maybe.extras) &&
+			maybe.playground
+		) {
 			return maybe as NonNullable<CommandPaletteHost['appLayoutData']>
 		}
 	}
@@ -64,7 +68,10 @@ export function CommandPalette({
 	const location = useLocation()
 	const matches = useMatches()
 
-	const appLayoutData = React.useMemo(() => pickAppLayoutData(matches), [matches])
+	const appLayoutData = React.useMemo(
+		() => pickAppLayoutData(matches),
+		[matches],
+	)
 	const host = React.useMemo<CommandPaletteHost>(() => {
 		const next: CommandPaletteHost = {
 			navigate,
@@ -143,9 +150,15 @@ export function CommandPalette({
 	}
 
 	const title =
-		view.type === 'commands' ? 'Command Palette' : 'title' in view ? view.title : ''
+		view.type === 'commands'
+			? 'Command Palette'
+			: 'title' in view
+				? view.title
+				: ''
 	const description =
-		view.type === 'text' || view.type === 'number' ? view.description : undefined
+		view.type === 'text' || view.type === 'number'
+			? view.description
+			: undefined
 
 	// Only render when open to avoid having Radix register global listeners during SSR.
 	if (!state.open) return null
@@ -170,7 +183,9 @@ export function CommandPalette({
 						<input
 							ref={inputRef}
 							value={view.query}
-							onChange={(e) => commandPaletteController.setQuery(e.target.value)}
+							onChange={(e) =>
+								commandPaletteController.setQuery(e.target.value)
+							}
 							onKeyDown={handleKeyDown}
 							placeholder={view.placeholder}
 							autoCapitalize="none"
@@ -180,11 +195,13 @@ export function CommandPalette({
 							inputMode={view.type === 'number' ? 'numeric' : 'search'}
 							className={cn(
 								'border-border bg-background text-foreground placeholder:text-muted-foreground w-full rounded-md border px-3 py-2 text-sm outline-none',
-								'focus-visible:ring-ring focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:ring-offset-background',
+								'focus-visible:ring-ring focus-visible:ring-offset-background focus-visible:ring-2 focus-visible:ring-offset-2',
 							)}
 						/>
 						{description ? (
-							<p className="text-muted-foreground mt-2 text-xs">{description}</p>
+							<p className="text-muted-foreground mt-2 text-xs">
+								{description}
+							</p>
 						) : null}
 						{state.errorMessage ? (
 							<p className="text-foreground-destructive mt-2 text-xs">
@@ -197,7 +214,11 @@ export function CommandPalette({
 				<div className="max-h-[55vh] overflow-y-auto p-1">
 					{view.type === 'text' || view.type === 'number' ? (
 						<div className="text-muted-foreground px-4 py-6 text-sm">
-							Press <kbd className="border-border bg-muted mx-1 rounded border px-1.5 py-0.5 font-mono text-[11px]">Enter</kbd> to submit.
+							Press{' '}
+							<kbd className="border-border bg-muted mx-1 rounded border px-1.5 py-0.5 font-mono text-[11px]">
+								Enter
+							</kbd>{' '}
+							to submit.
 						</div>
 					) : state.entries.length ? (
 						<ul className="flex flex-col gap-0.5">
@@ -218,7 +239,9 @@ export function CommandPalette({
 											<button
 												type="button"
 												disabled={entry.disabled}
-												onMouseMove={() => commandPaletteController.setSelection(index)}
+												onMouseMove={() =>
+													commandPaletteController.setSelection(index)
+												}
 												onClick={() => {
 													commandPaletteController.setSelection(index)
 													void commandPaletteController.submitSelected()
@@ -262,4 +285,3 @@ export function CommandPalette({
 		</Dialog>
 	)
 }
-

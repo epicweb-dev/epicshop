@@ -128,10 +128,14 @@ export type CommandPaletteView =
 export type CommandPaletteCommand = {
 	id: string
 	title: string | ((ctx: CommandPaletteCommandContext) => string)
-	subtitle?: string | ((ctx: CommandPaletteCommandContext) => string | undefined)
+	subtitle?:
+		| string
+		| ((ctx: CommandPaletteCommandContext) => string | undefined)
 	keywords?: string[] | ((ctx: CommandPaletteCommandContext) => string[])
 	group?: string | ((ctx: CommandPaletteCommandContext) => string | undefined)
-	shortcut?: string | ((ctx: CommandPaletteCommandContext) => string | undefined)
+	shortcut?:
+		| string
+		| ((ctx: CommandPaletteCommandContext) => string | undefined)
 	scopes?: CommandPaletteScope[]
 	isVisible?: (ctx: CommandPaletteCommandContext) => boolean
 	isEnabled?: (ctx: CommandPaletteCommandContext) => boolean
@@ -220,12 +224,20 @@ function createId(prefix: string) {
 	return `${prefix}_${Date.now()}_${Math.random().toString(36).slice(2, 9)}`
 }
 
-function getCommandTitle(command: CommandPaletteCommand, ctx: CommandPaletteCommandContext) {
-	return typeof command.title === 'function' ? command.title(ctx) : command.title
+function getCommandTitle(
+	command: CommandPaletteCommand,
+	ctx: CommandPaletteCommandContext,
+) {
+	return typeof command.title === 'function'
+		? command.title(ctx)
+		: command.title
 }
 
 function getMaybe(
-	value: string | ((ctx: CommandPaletteCommandContext) => string | undefined) | undefined,
+	value:
+		| string
+		| ((ctx: CommandPaletteCommandContext) => string | undefined)
+		| undefined,
 	ctx: CommandPaletteCommandContext,
 ) {
 	return typeof value === 'function' ? value(ctx) : value
@@ -457,7 +469,11 @@ export class CommandPaletteController {
 		const stack = this.#state.viewStack
 		const active = stack[stack.length - 1]
 		if (!active) return
-		const nextActive = { ...active, query, selectedIndex: 0 } as CommandPaletteView
+		const nextActive = {
+			...active,
+			query,
+			selectedIndex: 0,
+		} as CommandPaletteView
 		this.#setState({
 			viewStack: [...stack.slice(0, -1), nextActive],
 			errorMessage: null,
@@ -667,14 +683,7 @@ export class CommandPaletteController {
 			const commands = this.#resolveCommands()
 			const items = query
 				? matchSorter(commands, query, {
-						keys: [
-							'title',
-							'subtitle',
-							'keywords',
-							'id',
-							'group',
-							'shortcut',
-						],
+						keys: ['title', 'subtitle', 'keywords', 'id', 'group', 'shortcut'],
 						threshold: rankings.CONTAINS,
 					})
 				: commands
@@ -916,4 +925,3 @@ function clampIndex(index: number, length: number) {
 }
 
 export const commandPaletteController = new CommandPaletteController()
-

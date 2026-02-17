@@ -33,7 +33,9 @@ function formatExerciseNumber(n: number) {
 }
 
 type ExerciseFromLayout = NonNullable<
-	NonNullable<Parameters<CommandPaletteCommand['run']>[0]['host']>['appLayoutData']
+	NonNullable<
+		Parameters<CommandPaletteCommand['run']>[0]['host']
+	>['appLayoutData']
 >['exercises'][number]
 
 function createDefaultCommands(): CommandPaletteCommand[] {
@@ -169,7 +171,14 @@ function createDefaultCommands(): CommandPaletteCommand[] {
 			title: 'Go to exercise page…',
 			subtitle: 'Pick an exercise, then pick a page',
 			group: 'Navigation',
-			keywords: ['go to', 'exercise', 'step', 'problem', 'solution', 'finished'],
+			keywords: [
+				'go to',
+				'exercise',
+				'step',
+				'problem',
+				'solution',
+				'finished',
+			],
 			async run(ctx) {
 				const exercises = ctx.host?.appLayoutData?.exercises ?? []
 				if (!exercises.length) {
@@ -336,7 +345,9 @@ function createDefaultCommands(): CommandPaletteCommand[] {
 			async run(ctx) {
 				const max = Math.max(
 					1,
-					...(ctx.host?.appLayoutData?.exercises ?? []).map((e) => e.exerciseNumber),
+					...(ctx.host?.appLayoutData?.exercises ?? []).map(
+						(e) => e.exerciseNumber,
+					),
 				)
 				const exerciseNumber = await ctx.prompt.number({
 					type: 'number',
@@ -358,4 +369,3 @@ export function registerDefaultCommands(controller: CommandPaletteController) {
 	)
 	return () => disposers.forEach((d) => d())
 }
-
