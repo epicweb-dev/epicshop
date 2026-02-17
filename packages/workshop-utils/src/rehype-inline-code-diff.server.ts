@@ -1,9 +1,9 @@
-import { type Content, type Element, type Root } from 'hast'
+import { type Element, type ElementContent, type Root, type Text } from 'hast'
 import { visit } from 'unist-util-visit'
 
 type TextRange = { start: number; end: number }
 
-function isElement(node: Content): node is Element {
+function isElement(node: ElementContent): node is Element {
 	return node.type === 'element'
 }
 
@@ -19,7 +19,7 @@ function hasClass(node: Element, className: string) {
 	return getClassName(node).includes(className)
 }
 
-function getNodeText(node: Content): string {
+function getNodeText(node: ElementContent): string {
 	if (node.type === 'text') return node.value
 	if (!isElement(node)) return ''
 	return (node.children ?? []).map(getNodeText).join('')
@@ -106,19 +106,19 @@ function computeInlineDiffRanges(
 	return { removeRanges, addRanges }
 }
 
-function cloneNodeWithText(node: Content, text: string): Content {
+function cloneNodeWithText(node: ElementContent, text: string): ElementContent {
 	if (node.type === 'text') return { type: 'text', value: text }
 	if (isElement(node)) {
 		return {
 			...node,
 			properties: { ...(node.properties ?? {}) },
-			children: [{ type: 'text', value: text }],
+			children: [{ type: 'text', value: text } satisfies Text],
 		}
 	}
 	return node
 }
 
-function wrapInlineDiff(node: Content, className: string): Element {
+function wrapInlineDiff(node: ElementContent, className: string): Element {
 	return {
 		type: 'element',
 		tagName: 'span',
@@ -144,9 +144,10 @@ function wrapRangesInLine(
 	if (alreadyWrapped) return
 
 	const children = [...lineNode.children]
+	const lastChild = children.at(-1)
 	const newline =
-		children.at(-1)?.type === 'text' && children.at(-1)?.value === '\n'
-			? (children.pop() as Content)
+		lastChild?.type === 'text' && lastChild.value === '\n'
+			? (children.pop() as Text)
 			: null
 
 	const lineText = children.map(getNodeText).join('')
@@ -155,7 +156,7 @@ function wrapRangesInLine(
 
 	let rangeIndex = 0
 	let pos = 0
-	const newChildren: Array<Content> = []
+	const newChildren: Array<ElementContent> = []
 
 	for (const child of children) {
 		const childText = getNodeText(child)
