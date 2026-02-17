@@ -515,7 +515,10 @@ export class CommandPaletteController {
 		}
 
 		if (nextIndex === active.selectedIndex) return
-		const nextActive = { ...active, selectedIndex: nextIndex } as CommandPaletteView
+		const nextActive = {
+			...active,
+			selectedIndex: nextIndex,
+		} as CommandPaletteView
 		this.#setState({ viewStack: [...stack.slice(0, -1), nextActive] })
 	}
 
@@ -984,7 +987,10 @@ function isSelectableIndex(entries: CommandPaletteEntry[], index: number) {
 	return Boolean(entry && !entry.disabled)
 }
 
-function resolveSelectableIndex(entries: CommandPaletteEntry[], preferredIndex: number) {
+function resolveSelectableIndex(
+	entries: CommandPaletteEntry[],
+	preferredIndex: number,
+) {
 	if (entries.length === 0) return -1
 	if (isSelectableIndex(entries, preferredIndex)) return preferredIndex
 
