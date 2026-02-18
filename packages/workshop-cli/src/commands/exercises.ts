@@ -1,3 +1,5 @@
+import path from 'node:path'
+
 import chalk from 'chalk'
 
 export type ExercisesResult = {
@@ -16,6 +18,239 @@ export type ExerciseContextOptions = {
 	stepNumber?: number
 	silent?: boolean
 	json?: boolean
+}
+
+export type ExportContextOptions = {
+	silent?: boolean
+	output?: string
+}
+
+/**
+ * Export all workshop context (instructions, diffs, transcripts) as JSON.
+ * Excludes user-specific data (progress, auth, playground state).
+ */
+export async function exportContext(
+	options: ExportContextOptions = {},
+): Promise<ExercisesResult> {
+	const { silent = false, output: outputPath } = options
+
+	try {
+		const {
+			init,
+			getExercises,
+			getApps,
+			getWorkshopRoot,
+			isProblemApp,
+			isSolutionApp,
+		} = await import('@epic-web/workshop-utils/apps.server')
+		const { getWorkshopConfig } =
+			await import('@epic-web/workshop-utils/config.server')
+		const { getDiffOutputWithRelativePaths } =
+			await import('@epic-web/workshop-utils/diff.server')
+		const { getEpicVideoInfos } =
+			await import('@epic-web/workshop-utils/epic-api.server')
+		const fs = await import('node:fs/promises')
+
+		await init()
+
+		const config = getWorkshopConfig()
+		const exercises = await getExercises()
+		const apps = await getApps()
+
+		// Workshop-level instructions (raw MDX)
+		const workshopRoot = getWorkshopRoot()
+		const instructionsContent = await safeReadFile(
+			path.join(workshopRoot, 'exercises', 'README.mdx'),
+		)
+		const finishedInstructionsContent = await safeReadFile(
+			path.join(workshopRoot, 'exercises', 'FINISHED.mdx'),
+		)
+
+		const output = {
+			workshop: {
+				title: config.title,
+				subtitle: config.subtitle,
+			},
+			instructions: { content: instructionsContent ?? null },
+			finishedInstructions: { content: finishedInstructionsContent ?? null },
+			exercises: [] as Array<{
+				exerciseNumber: number
+				title: string
+				instructions: { content: string | null }
+				finishedInstructions: { content: string | null }
+				steps: Array<{
+					stepNumber: number
+					title: string
+					problem: {
+						instructions: string | null
+						transcripts: Array<{
+							embed: string
+							transcript?: string
+							status?: string
+							message?: string
+						}>
+					} | null
+					solution: {
+						instructions: string | null
+						transcripts: Array<{
+							embed: string
+							transcript?: string
+							status?: string
+							message?: string
+						}>
+					} | null
+					diff: string | null
+				}>
+			}>,
+		}
+
+		for (const exercise of exercises) {
+			const exerciseInstructions = await safeReadFile(
+				path.join(exercise.fullPath, 'README.mdx'),
+			)
+			const exerciseFinished = await safeReadFile(
+				path.join(exercise.fullPath, 'FINISHED.mdx'),
+			)
+
+			const steps: (typeof output.exercises)[number]['steps'] = []
+
+			for (const step of exercise.steps) {
+				const stepTitle =
+					step.problem?.title ?? step.solution?.title ?? 'Untitled'
+
+				// Collect all embeds for this step and fetch once
+				const problemEmbeds = step.problem?.epicVideoEmbeds ?? []
+				const solutionEmbeds = step.solution?.epicVideoEmbeds ?? []
+				const allStepEmbeds = [
+					...new Set([...problemEmbeds, ...solutionEmbeds]),
+				]
+				const videoInfos = await getEpicVideoInfos(allStepEmbeds)
+
+				// Problem instructions and transcripts
+				let problemData: (typeof steps)[number]['problem'] = null
+				if (step.problem) {
+					const problemInstructions = await safeReadFile(
+						path.join(step.problem.fullPath, 'README.mdx'),
+					)
+					const problemTranscripts = buildTranscriptsForExport(
+						problemEmbeds,
+						videoInfos,
+					)
+					problemData = {
+						instructions: problemInstructions,
+						transcripts: problemTranscripts,
+					}
+				}
+
+				// Solution instructions and transcripts
+				let solutionData: (typeof steps)[number]['solution'] = null
+				if (step.solution) {
+					const solutionInstructions = await safeReadFile(
+						path.join(step.solution.fullPath, 'README.mdx'),
+					)
+					const solutionTranscripts = buildTranscriptsForExport(
+						solutionEmbeds,
+						videoInfos,
+					)
+					solutionData = {
+						instructions: solutionInstructions,
+						transcripts: solutionTranscripts,
+					}
+				}
+
+				// Diff (problem vs solution)
+				let diffOutput: string | null = null
+				if (step.problem && step.solution) {
+					const problemApp = apps.find(
+						(a) =>
+							isProblemApp(a) &&
+							a.exerciseNumber === exercise.exerciseNumber &&
+							a.stepNumber === step.stepNumber,
+					)
+					const solutionApp = apps.find(
+						(a) =>
+							isSolutionApp(a) &&
+							a.exerciseNumber === exercise.exerciseNumber &&
+							a.stepNumber === step.stepNumber,
+					)
+					if (problemApp && solutionApp) {
+						diffOutput =
+							await getDiffOutputWithRelativePaths(
+								problemApp,
+								solutionApp,
+							) || null
+					}
+				}
+
+				steps.push({
+					stepNumber: step.stepNumber,
+					title: stepTitle,
+					problem: problemData,
+					solution: solutionData,
+					diff: diffOutput,
+				})
+			}
+
+			output.exercises.push({
+				exerciseNumber: exercise.exerciseNumber,
+				title: exercise.title,
+				instructions: { content: exerciseInstructions },
+				finishedInstructions: { content: exerciseFinished },
+				steps,
+			})
+		}
+
+		const jsonOutput = JSON.stringify(output, null, 2)
+
+		if (outputPath) {
+			await fs.writeFile(outputPath, jsonOutput, 'utf-8')
+			if (!silent) {
+				console.error(chalk.green(`✓ Context written to ${outputPath}`))
+			}
+		} else {
+			console.log(jsonOutput)
+		}
+
+		return { success: true }
+	} catch (error) {
+		const message = error instanceof Error ? error.message : String(error)
+		if (!silent) {
+			console.error(
+				chalk.red(`❌ Failed to export context: ${message}`),
+			)
+		}
+		return {
+			success: false,
+			message,
+			error: error instanceof Error ? error : new Error(message),
+		}
+	}
+}
+
+function buildTranscriptsForExport(
+	embeds: Array<string>,
+	videoInfos: Record<string, { transcript?: string; status?: string } | null>,
+): Array<{ embed: string; transcript?: string; status?: string; message?: string }> {
+	if (!embeds.length) return []
+	return embeds.map((embed) => {
+		const info = videoInfos[embed]
+		if (info && info.transcript) {
+			return { embed, transcript: info.transcript, status: 'success' }
+		}
+		if (info && (info as { status?: string }).status === 'error') {
+			const err = info as { status?: string; type?: string; message?: string }
+			return {
+				embed,
+				status: 'error',
+				message: err.message ?? err.type ?? 'Unknown error',
+			}
+		}
+		return {
+			embed,
+			status: 'error',
+			message: 'No transcript found',
+		}
+	})
 }
 
 /**
@@ -187,7 +422,6 @@ export async function showExercise(
 		} = await import('@epic-web/workshop-utils/apps.server')
 		const { getProgress } =
 			await import('@epic-web/workshop-utils/epic-api.server')
-		const path = await import('node:path')
 
 		await init()
 

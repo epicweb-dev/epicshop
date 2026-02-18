@@ -730,12 +730,13 @@ epicshop exercises [exercise] [step] [options]
 #### Arguments
 
 - `exercise` (optional) - Exercise number to show details for (e.g., `1` or
-  `01`)
+  `01`), or `context` to export all workshop context
 - `step` (optional) - Step number to show details for (e.g., `2` or `02`)
 
 #### Options
 
 - `--json` - Output as JSON
+- `--output, -o <path>` - Write context to file (for `exercises context` only)
 - `--workshop-dir, -w <path>` - Workshop directory to use as context
 - `--silent, -s` - Run without output logs (default: false)
 
@@ -750,6 +751,10 @@ epicshop exercises --json
 
 # Run from outside the workshop by providing context
 epicshop exercises -w ~/epicweb-workshops/web-forms
+
+# Export all workshop context as JSON
+epicshop exercises context
+epicshop exercises context -o context.json
 
 # Show details for a specific exercise
 epicshop exercises 1
@@ -795,6 +800,79 @@ The output depends on whether you pass `exercise` and `step`:
     completion/current flags)
   - With an exercise/step: includes instruction content from
     `README.mdx`/`FINISHED.mdx` (this can be large)
+#### `exercises context` subcommand
+
+Export all workshop context (instructions, diffs, transcripts) as JSON. Excludes
+user-specific data (progress, auth, playground state). Useful for AI tools,
+documentation, or sharing workshop content.
+
+NOTE: The result of this can be **extremely** large.
+
+```bash
+epicshop exercises context [options]
+```
+
+**Options:**
+
+- `--output, -o <path>` - Write to file instead of stdout (recommended for large
+  workshops)
+- `--workshop-dir, -w <path>` - Workshop directory to use as context
+- `--silent, -s` - Suppress progress output (e.g. when writing to file)
+
+**Output structure:**
+
+```json
+{
+	"workshop": { "title": "...", "subtitle": "..." },
+	"instructions": { "content": "..." },
+	"finishedInstructions": { "content": "..." },
+	"exercises": [
+		{
+			"exerciseNumber": 1,
+			"title": "...",
+			"instructions": { "content": "..." },
+			"finishedInstructions": { "content": "..." },
+			"steps": [
+				{
+					"stepNumber": 1,
+					"title": "...",
+					"problem": {
+						"instructions": "...",
+						"transcripts": [{ "embed": "...", "transcript": "..." }]
+					},
+					"solution": {
+						"instructions": "...",
+						"transcripts": [{ "embed": "...", "transcript": "..." }]
+					},
+					"diff": "git diff output (problem vs solution)"
+				}
+			]
+		}
+	]
+}
+```
+
+**Examples:**
+
+```bash
+# Export context to stdout
+epicshop exercises context
+
+# Export to file (recommended for large workshops)
+epicshop exercises context -o context.json
+
+# Run from outside the workshop
+epicshop exercises context -w ~/epicweb-workshops/web-forms -o context.json
+```
+
+**Notes:**
+
+- This command may take some time to run for workshops with many exercises and
+  steps. Running `epicshop warm` beforehand can speed it up by pre-generating
+  diffs.
+- Transcripts are included when available (requires Epic Web/React/AI access).
+  When unavailable, the output includes the embed URL and an error status.
+- Excludes user-specific data: progress, auth info, playground state.
 
 ## Interactive Command Chooser
 
@@ -1037,13 +1115,18 @@ const appsDiffResult = await showDiffBetweenApps({
 ### Using the Exercises Command
 
 ```javascript
-import { list, showExercise } from 'epicshop/exercises'
+import { list, showExercise, exportContext } from 'epicshop/exercises'
 
 // List all exercises
 const listResult = await list({ silent: false })
 
 // Output as JSON
 const jsonListResult = await list({ json: true })
+
+// Export all workshop context (instructions, diffs, transcripts)
+const contextResult = await exportContext({ silent: false })
+// Or write to file:
+await exportContext({ output: 'context.json', silent: true })
 
 // Show details for a specific exercise
 const exerciseResult = await showExercise({
@@ -1104,9 +1187,11 @@ import {
 import {
 	list as listExercises,
 	showExercise,
+	exportContext,
 	type ExercisesResult,
 	type ExercisesListOptions,
 	type ExerciseContextOptions,
+	type ExportContextOptions,
 } from 'epicshop/exercises'
 import {
 	status,

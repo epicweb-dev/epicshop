@@ -1369,7 +1369,8 @@ const cli = yargs(args)
 		(yargs: Argv) => {
 			return yargs
 				.positional('exercise', {
-					describe: 'Exercise number to show details for (e.g., 1 or 01)',
+					describe:
+						'Exercise number or "context" to export all workshop context',
 					type: 'string',
 				})
 				.positional('step', {
@@ -1393,7 +1394,15 @@ const cli = yargs(args)
 					description:
 						'Path to a workshop directory to use as context (instead of the current working directory)',
 				})
+				.option('output', {
+					alias: 'o',
+					type: 'string',
+					description:
+						'Write context output to file (for exercises context subcommand)',
+				})
 				.example('$0 exercises', 'List all exercises with progress')
+				.example('$0 exercises context', 'Export all workshop context as JSON')
+				.example('$0 exercises context -o context.json', 'Export context to file')
 				.example('$0 exercises 1', 'Show details for exercise 1')
 				.example('$0 exercises 1 2', 'Show details for exercise 1 step 2')
 				.example('$0 exercises --json', 'Output exercises as JSON')
@@ -1405,6 +1414,7 @@ const cli = yargs(args)
 				json?: boolean
 				workshopDir?: string
 				silent?: boolean
+				output?: string
 			}>,
 		) => {
 			const { findWorkshopRoot } = await import('./commands/workshops.js')
@@ -1425,6 +1435,17 @@ const cli = yargs(args)
 			process.chdir(workshopRoot)
 
 			try {
+				// "context" subcommand: export all workshop context
+				if (argv.exercise === 'context') {
+					const { exportContext } = await import('./commands/exercises.js')
+					const result = await exportContext({
+						silent: argv.silent,
+						output: argv.output,
+					})
+					if (!result.success) process.exit(1)
+					return
+				}
+
 				const { list, showExercise } = await import('./commands/exercises.js')
 
 				if (argv.exercise) {
@@ -1432,7 +1453,7 @@ const cli = yargs(args)
 					if (isNaN(exerciseNumber)) {
 						console.error(
 							chalk.red(
-								`❌ Invalid exercise number: "${argv.exercise}". Expected a number.`,
+								`❌ Invalid exercise number: "${argv.exercise}". Expected a number or "context".`,
 							),
 						)
 						process.exit(1)
