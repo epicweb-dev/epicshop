@@ -477,7 +477,9 @@ function EpicVideo({
 	const offlineVideoAvailable =
 		offlineVideoPlaybackIds?.includes(muxPlaybackId) ?? false
 	const offlineVideoUrl = `/resources/offline-videos/${encodeURIComponent(muxPlaybackId)}`
-	const shouldUseOfflineVideo = offlineVideoAvailable
+	const [shouldUseOfflineVideo, setShouldUseOfflineVideo] = React.useState(
+		() => offlineVideoAvailable && !isOnline,
+	)
 	const revalidator = useRevalidator()
 	const offlineVideoFetcher = useFetcher<OfflineVideoActionData>()
 	const isOfflineActionBusy = offlineVideoFetcher.state !== 'idle'
@@ -533,6 +535,19 @@ function EpicVideo({
 			setDownloadProgress(undefined)
 		}
 	}, [isDownloading])
+
+	// Avoid switching to the offline player while online to prevent
+	// media-chrome DOM updates racing React revalidation.
+	React.useEffect(() => {
+		if (!offlineVideoAvailable) {
+			setShouldUseOfflineVideo(false)
+			return
+		}
+
+		if (!isOnline) {
+			setShouldUseOfflineVideo(true)
+		}
+	}, [isOnline, offlineVideoAvailable])
 
 	const currentTimeSessionKey = `${muxPlaybackId}:currentTime`
 	const [offlineStartTime, setOfflineStartTime] = React.useState<number | null>(
