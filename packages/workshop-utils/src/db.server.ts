@@ -136,7 +136,10 @@ function tryGetWorkshopProductHost(): string | undefined {
 
 const AuthInfosSchema = z.record(z.string(), AuthInfoSchema)
 
-function getAuthInfosFromEnv(): Record<string, z.infer<typeof AuthInfoSchema>> | null {
+function getAuthInfosFromEnv(): Record<
+	string,
+	z.infer<typeof AuthInfoSchema>
+> | null {
 	const raw = process.env.EPICSHOP_AUTH_INFOS?.trim()
 	if (!raw) return null
 	try {
