@@ -39,11 +39,7 @@ function CommandPaletteContent({
 }
 
 function useCommandPaletteState(): CommandPaletteState {
-	return React.useSyncExternalStore(
-		subscribe,
-		getSnapshot,
-		getSnapshot,
-	)
+	return React.useSyncExternalStore(subscribe, getSnapshot, getSnapshot)
 }
 
 function pickAppLayoutData(matches: ReturnType<typeof useMatches>) {
