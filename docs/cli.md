@@ -1264,6 +1264,27 @@ setupWorkshop()
 - `SENTRY_PROJECT` - Sentry project slug for source map uploads
 - `SENTRY_RELEASE` - Optional release name for matching source maps to events
 - `EPICSHOP_APP_COMMIT_SHA` - Release fallback for source map matching
+- `EPICSHOP_AUTH_INFOS` - Base64-encoded JSON of the `authInfos` object
+  (host-to-AuthInfo map). Checked before the database; when set, used for all
+  auth lookups. Useful for CI, headless, and deployed environments. Obtain by
+  running `epicshop auth login` locally, then base64-encoding the `authInfos`
+  from your data file (`~/.epicshop/data.json` or platform equivalent).
+
+## Headless / CI Authentication
+
+For CI, headless, or deployed environments where interactive login is not
+possible, you can provide auth via the `EPICSHOP_AUTH_INFOS` environment
+variable:
+
+```bash
+# Encode authInfos from local login
+EPICSHOP_AUTH_INFOS=$(echo -n '{"www.epicweb.dev":{"id":"...","tokenSet":{"access_token":"...","token_type":"Bearer","scope":""},"email":"...","name":"..."}}' | base64)
+epicshop start
+```
+
+The value must be a base64-encoded JSON object matching the `authInfos`
+structure in your data file. Run `epicshop auth login` locally first, then
+extract and encode the `authInfos` from your data file.
 
 ## Interactive Features
 

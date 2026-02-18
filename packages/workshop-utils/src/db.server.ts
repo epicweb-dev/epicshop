@@ -134,6 +134,20 @@ function tryGetWorkshopProductHost(): string | undefined {
 	}
 }
 
+const AuthInfosSchema = z.record(z.string(), AuthInfoSchema)
+
+function getAuthInfosFromEnv(): Record<string, z.infer<typeof AuthInfoSchema>> | null {
+	const raw = process.env.EPICSHOP_AUTH_INFOS?.trim()
+	if (!raw) return null
+	try {
+		const json = Buffer.from(raw, 'base64').toString('utf-8')
+		const parsed = JSON.parse(json)
+		return AuthInfosSchema.parse(parsed)
+	} catch {
+		return null
+	}
+}
+
 export async function logout({ productHost }: { productHost?: string } = {}) {
 	const host = productHost ?? tryGetWorkshopProductHost()
 	if (host) {
@@ -227,6 +241,13 @@ export async function getAuthInfo({
 	productHost,
 }: { productHost?: string } = {}) {
 	const host = productHost ?? tryGetWorkshopProductHost()
+
+	// Check env first (before database)
+	const envAuthInfos = getAuthInfosFromEnv()
+	if (envAuthInfos && host && host in envAuthInfos) {
+		return envAuthInfos[host]
+	}
+
 	const data = await readDb()
 	if (host && typeof data?.authInfos === 'object') {
 		if (host in data.authInfos) {
@@ -251,6 +272,12 @@ export async function getAuthInfo({
  * Returns an array of normalized product hosts (e.g., 'www.epicweb.dev').
  */
 export async function getLoggedInProductHosts(): Promise<string[]> {
+	// Check env first (before database)
+	const envAuthInfos = getAuthInfosFromEnv()
+	if (envAuthInfos) {
+		return Object.keys(envAuthInfos)
+	}
+
 	const data = await readDb()
 	const loggedInHosts: string[] = []
 
