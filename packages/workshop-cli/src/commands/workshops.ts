@@ -48,7 +48,9 @@ const EPIC_SITES: Array<EpicSite> = [
  * looking for a package.json with an epicshop field.
  * Returns the workshop root path if found, null otherwise.
  */
-export async function findWorkshopRoot(startDir?: string): Promise<string | null> {
+export async function findWorkshopRoot(
+	startDir?: string,
+): Promise<string | null> {
 	let currentDir = startDir
 		? path.resolve(resolvePathWithTilde(startDir))
 		: process.cwd()

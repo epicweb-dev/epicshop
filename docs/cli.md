@@ -1136,7 +1136,8 @@ setupWorkshop()
 ## Environment Variables
 
 - `EPICSHOP_APP_LOCATION` - Path to the workshop app directory
-- `EPICSHOP_CONTEXT_CWD` - Optional override for workshop context for workshop-scoped commands (side note: `--workshop-dir` takes precedence)
+- `EPICSHOP_CONTEXT_CWD` - Optional override for workshop context for
+  workshop-scoped commands (side note: `--workshop-dir` takes precedence)
 - `EPICSHOP_DEPLOYED` - Set to `true` or `1` for deployed environments
 - `EPICSHOP_EDITOR` - Preferred editor for opening workshops
 - `GITHUB_TOKEN` - GitHub personal access token for API requests (helps avoid

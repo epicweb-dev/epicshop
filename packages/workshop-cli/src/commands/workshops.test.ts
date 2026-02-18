@@ -154,7 +154,10 @@ test('findWorkshopRoot can be given an explicit start directory (workshop-dir fl
 		await fs.mkdir(nestedDir, { recursive: true })
 		await fs.writeFile(
 			path.join(workshopRoot, 'package.json'),
-			JSON.stringify({ name: 'my-workshop', epicshop: { title: 'My Workshop' } }),
+			JSON.stringify({
+				name: 'my-workshop',
+				epicshop: { title: 'My Workshop' },
+			}),
 		)
 		await fs.writeFile(fileInsideNestedDir, 'hello')
 

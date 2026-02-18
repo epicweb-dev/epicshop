@@ -34,8 +34,12 @@ function formatHelp(helpText: string): string {
 		.replace(/-\w(?=\s|,)/g, (match) => chalk.yellow(match))
 }
 
-function resolveWorkshopContextCwd(explicitWorkshopDir?: string): string | undefined {
-	const fromFlag = explicitWorkshopDir?.trim() ? explicitWorkshopDir.trim() : undefined
+function resolveWorkshopContextCwd(
+	explicitWorkshopDir?: string,
+): string | undefined {
+	const fromFlag = explicitWorkshopDir?.trim()
+		? explicitWorkshopDir.trim()
+		: undefined
 	if (fromFlag) return fromFlag
 	const fromEnv = process.env.EPICSHOP_CONTEXT_CWD
 	return fromEnv?.trim() ? fromEnv.trim() : undefined
