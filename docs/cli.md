@@ -761,12 +761,35 @@ epicshop exercises 01 02
 
 #### Output
 
-Lists all exercises with:
+The output depends on whether you pass `exercise` and `step`:
 
-- Completion status (✓ complete, ◐ partial, ○ not started)
-- Exercise title and step count
-- Individual step completion status
-- Current playground indicator
+- `epicshop exercises` (no args) prints a workshop overview:
+  - Workshop title (and subtitle, if configured)
+  - A tree of all exercises, each with:
+    - Completion icon: `✓` (all steps complete), `◐` (some steps complete), `○` (none)
+    - Exercise number + title
+    - Progress count like `(3/7)`
+    - A `← current` marker when the playground is currently on that exercise
+  - Under each exercise, a list of steps with:
+    - Step completion icon: `✓` (complete) or `○` (not complete)
+    - Two-digit step number and title (e.g. `02. Validating Forms`)
+    - A `← current` marker when the playground is currently on that step
+
+- `epicshop exercises 1` (exercise only) prints exercise details:
+  - Exercise path on disk
+  - Step count and progress (e.g. `Progress: 3/7`)
+  - A preview of the exercise instructions (first ~15 lines of `README.mdx`, if present)
+  - A list of the exercise's steps with completion icons and titles
+
+- `epicshop exercises 1 2` (exercise + step) prints step details:
+  - Step title and status (`Completed` or `In Progress`)
+  - Problem path on disk
+  - A preview of the step instructions (first ~20 lines of the step `README.mdx`, if present)
+  - Solution path on disk (if present)
+
+- `--json` changes the output to structured JSON for the same scope:
+  - With no args: workshop + current playground + all exercises/steps (with completion/current flags)
+  - With an exercise/step: includes instruction content from `README.mdx`/`FINISHED.mdx` (this can be large)
 
 ## Interactive Command Chooser
 
