@@ -563,9 +563,7 @@ function EpicVideo({
 				key={`button-${timestampIndexStart}`}
 				className="underline"
 				onClick={(event) => {
-					const videoElement = shouldUseOfflineVideo
-						? nativeVideoRef.current
-						: muxPlayerRef.current
+					const videoElement = nativeVideoRef.current ?? muxPlayerRef.current
 					if (videoElement) {
 						videoElement.currentTime = hmsToSeconds(timestamp)
 						try {
@@ -819,7 +817,10 @@ function EpicVideo({
 										ref={setSeekOffset}
 										seekOffset={10}
 									/>
-									<MediaSeekForwardButton ref={setSeekOffset} seekOffset={10} />
+									<MediaSeekForwardButton
+										ref={setSeekOffset}
+										seekOffset={10}
+									/>
 									<MediaTimeDisplay
 										showDuration
 										className="text-background text-xs tabular-nums"
