@@ -765,8 +765,10 @@ function EpicVideo({
 		<div>
 			<div className="shadow-lg">
 				<div
-					className="flex aspect-video w-full items-center justify-center bg-black"
-					hidden={!isOfflinePlayerActive}
+					className={cn(
+						'aspect-video w-full items-center justify-center bg-black',
+						isOfflinePlayerActive ? 'flex' : 'hidden',
+					)}
 				>
 					<MediaController
 						tabIndex={isOfflinePlayerActive ? 0 : -1}
