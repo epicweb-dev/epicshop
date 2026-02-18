@@ -9,6 +9,14 @@ import {
 import { cn } from '#app/utils/misc.tsx'
 import { Dialog, DialogOverlay, DialogPortal } from './ui/dialog'
 
+function subscribe(listener: () => void) {
+	return commandPaletteController.subscribe(listener)
+}
+
+function getSnapshot() {
+	return commandPaletteController.getSnapshot()
+}
+
 function CommandPaletteContent({
 	className,
 	children,
@@ -32,9 +40,9 @@ function CommandPaletteContent({
 
 function useCommandPaletteState(): CommandPaletteState {
 	return React.useSyncExternalStore(
-		(listener) => commandPaletteController.subscribe(listener),
-		() => commandPaletteController.getSnapshot(),
-		() => commandPaletteController.getSnapshot(),
+		subscribe,
+		getSnapshot,
+		getSnapshot,
 	)
 }
 
