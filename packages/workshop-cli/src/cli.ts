@@ -1,5 +1,7 @@
 #!/usr/bin/env node
 
+import path from 'node:path'
+
 import '@epic-web/workshop-utils/init-env'
 import chalk from 'chalk'
 import { matchSorter } from 'match-sorter'
@@ -1441,9 +1443,12 @@ const cli = yargs(args)
 				// "context" subcommand: export all workshop context
 				if (argv.exercise === 'context') {
 					const { exportContext } = await import('./commands/exercises.js')
+					const outputPath = argv.output
+						? path.resolve(originalCwd, argv.output)
+						: undefined
 					const result = await exportContext({
 						silent: argv.silent,
-						output: argv.output,
+						output: outputPath,
 					})
 					if (!result.success) process.exit(1)
 					return

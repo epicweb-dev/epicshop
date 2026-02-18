@@ -736,7 +736,8 @@ epicshop exercises [exercise] [step] [options]
 #### Options
 
 - `--json` - Output as JSON
-- `--output, -o <path>` - Write context to file (for `exercises context` only)
+- `--output, -o <path>` - Write context to file (for `exercises context` only).
+  Path is relative to the current working directory, not `-w`
 - `--workshop-dir, -w <path>` - Workshop directory to use as context
 - `--silent, -s` - Run without output logs (default: false)
 
@@ -816,7 +817,7 @@ epicshop exercises context [options]
 **Options:**
 
 - `--output, -o <path>` - Write to file instead of stdout (recommended for large
-  workshops)
+  workshops). Path is relative to the current working directory, not `-w`.
 - `--workshop-dir, -w <path>` - Workshop directory to use as context
 - `--silent, -s` - Suppress progress output (e.g. when writing to file)
 
