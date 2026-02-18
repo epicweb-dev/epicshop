@@ -175,10 +175,8 @@ export async function exportContext(
 					)
 					if (problemApp && solutionApp) {
 						diffOutput =
-							await getDiffOutputWithRelativePaths(
-								problemApp,
-								solutionApp,
-							) || null
+							(await getDiffOutputWithRelativePaths(problemApp, solutionApp)) ||
+							null
 					}
 				}
 
@@ -215,9 +213,7 @@ export async function exportContext(
 	} catch (error) {
 		const message = error instanceof Error ? error.message : String(error)
 		if (!silent) {
-			console.error(
-				chalk.red(`❌ Failed to export context: ${message}`),
-			)
+			console.error(chalk.red(`❌ Failed to export context: ${message}`))
 		}
 		return {
 			success: false,
@@ -230,7 +226,12 @@ export async function exportContext(
 function buildTranscriptsForExport(
 	embeds: Array<string>,
 	videoInfos: Record<string, { transcript?: string; status?: string } | null>,
-): Array<{ embed: string; transcript?: string; status?: string; message?: string }> {
+): Array<{
+	embed: string
+	transcript?: string
+	status?: string
+	message?: string
+}> {
 	if (!embeds.length) return []
 	return embeds.map((embed) => {
 		const info = videoInfos[embed]

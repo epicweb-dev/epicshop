@@ -1402,7 +1402,10 @@ const cli = yargs(args)
 				})
 				.example('$0 exercises', 'List all exercises with progress')
 				.example('$0 exercises context', 'Export all workshop context as JSON')
-				.example('$0 exercises context -o context.json', 'Export context to file')
+				.example(
+					'$0 exercises context -o context.json',
+					'Export context to file',
+				)
 				.example('$0 exercises 1', 'Show details for exercise 1')
 				.example('$0 exercises 1 2', 'Show details for exercise 1 step 2')
 				.example('$0 exercises --json', 'Output exercises as JSON')

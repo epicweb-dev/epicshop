@@ -800,6 +800,7 @@ The output depends on whether you pass `exercise` and `step`:
     completion/current flags)
   - With an exercise/step: includes instruction content from
     `README.mdx`/`FINISHED.mdx` (this can be large)
+
 #### `exercises context` subcommand
 
 Export all workshop context (instructions, diffs, transcripts) as JSON. Excludes
