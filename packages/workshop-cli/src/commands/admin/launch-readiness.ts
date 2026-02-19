@@ -28,6 +28,10 @@ export type LaunchReadinessOptions = {
 	 * Skip the remote "product lessons" check (only run local checks).
 	 */
 	skipRemote?: boolean
+	/**
+	 * Skip checking that EpicVideo urls respond 200 to HEAD.
+	 */
+	skipHead?: boolean
 }
 
 export type LaunchReadinessResult = {
@@ -44,6 +48,11 @@ type VideoCheckFile = {
 		| 'exercise-summary'
 		| 'step-problem'
 		| 'step-solution'
+	fullPath: string
+	relativePath: string
+}
+
+type ContentCheckFile = {
 	fullPath: string
 	relativePath: string
 }
@@ -104,8 +113,6 @@ async function resolveMdxFile(
 ): Promise<string | null> {
 	const mdx = path.join(dir, `${baseName}.mdx`)
 	if (await pathExists(mdx)) return mdx
-	const md = path.join(dir, `${baseName}.md`)
-	if (await pathExists(md)) return md
 	return null
 }
 
@@ -117,11 +124,13 @@ function buildExpectedFiles({
 	exerciseDirName: string
 }): Promise<{
 	files: Array<VideoCheckFile>
+	contentFiles: Array<ContentCheckFile>
 	issues: Array<Issue>
 }> {
 	return (async () => {
 		const issues: Array<Issue> = []
 		const files: Array<VideoCheckFile> = []
+		const contentFiles: Array<ContentCheckFile> = []
 
 		const exerciseRoot = path.join(workshopRoot, 'exercises', exerciseDirName)
 		const exerciseIntro = await resolveMdxFile(exerciseRoot, 'README')
@@ -140,6 +149,10 @@ function buildExpectedFiles({
 				fullPath: exerciseIntro,
 				relativePath: path.relative(workshopRoot, exerciseIntro),
 			})
+			contentFiles.push({
+				fullPath: exerciseIntro,
+				relativePath: path.relative(workshopRoot, exerciseIntro),
+			})
 		}
 
 		if (!exerciseSummary) {
@@ -152,6 +165,10 @@ function buildExpectedFiles({
 		} else {
 			files.push({
 				kind: 'exercise-summary',
+				fullPath: exerciseSummary,
+				relativePath: path.relative(workshopRoot, exerciseSummary),
+			})
+			contentFiles.push({
 				fullPath: exerciseSummary,
 				relativePath: path.relative(workshopRoot, exerciseSummary),
 			})
@@ -169,7 +186,7 @@ function buildExpectedFiles({
 				)}`,
 				file: exerciseRoot,
 			})
-			return { files, issues }
+			return { files, contentFiles, issues }
 		}
 		const stepDirRegex =
 			/^(?<stepNumber>\d+)\.(?<type>problem|solution)(\..*)?$/
@@ -258,6 +275,25 @@ function buildExpectedFiles({
 						fullPath: problemReadme,
 						relativePath: path.relative(workshopRoot, problemReadme),
 					})
+					contentFiles.push({
+						fullPath: problemReadme,
+						relativePath: path.relative(workshopRoot, problemReadme),
+					})
+				}
+
+				const problemFinished = await resolveMdxFile(problemDir, 'FINISHED')
+				if (!problemFinished) {
+					issues.push({
+						level: 'error',
+						code: 'missing-step-problem-finished',
+						message: `Missing step problem FINISHED.mdx for step ${stepNumber}`,
+						file: path.join(problemDir, 'FINISHED.mdx'),
+					})
+				} else {
+					contentFiles.push({
+						fullPath: problemFinished,
+						relativePath: path.relative(workshopRoot, problemFinished),
+					})
 				}
 			}
 
@@ -276,11 +312,30 @@ function buildExpectedFiles({
 						fullPath: solutionReadme,
 						relativePath: path.relative(workshopRoot, solutionReadme),
 					})
+					contentFiles.push({
+						fullPath: solutionReadme,
+						relativePath: path.relative(workshopRoot, solutionReadme),
+					})
+				}
+
+				const solutionFinished = await resolveMdxFile(solutionDir, 'FINISHED')
+				if (!solutionFinished) {
+					issues.push({
+						level: 'error',
+						code: 'missing-step-solution-finished',
+						message: `Missing step solution FINISHED.mdx for step ${stepNumber}`,
+						file: path.join(solutionDir, 'FINISHED.mdx'),
+					})
+				} else {
+					contentFiles.push({
+						fullPath: solutionFinished,
+						relativePath: path.relative(workshopRoot, solutionFinished),
+					})
 				}
 			}
 		}
 
-		return { files, issues }
+		return { files, contentFiles, issues }
 	})()
 }
 
@@ -390,6 +445,117 @@ async function fetchRemoteWorkshopLessonSlugs({
 	return { status: 'success', lessonSlugs }
 }
 
+async function checkMinContentLength({
+	fullPath,
+	minChars,
+}: {
+	fullPath: string
+	minChars: number
+}): Promise<Issue | null> {
+	try {
+		const raw = await fs.readFile(fullPath, 'utf8')
+		const trimmed = raw.trim()
+		if (trimmed.length >= minChars) return null
+		return {
+			level: 'error',
+			code: 'mdx-too-short',
+			message: `File content too short (<${minChars} chars after trimming)`,
+			file: fullPath,
+		}
+	} catch (error) {
+		return {
+			level: 'error',
+			code: 'mdx-read-failed',
+			message: `Failed to read file content: ${getErrorMessage(error)}`,
+			file: fullPath,
+		}
+	}
+}
+
+async function asyncPool<TItem, TResult>(
+	limit: number,
+	items: Array<TItem>,
+	mapper: (item: TItem) => Promise<TResult>,
+): Promise<Array<TResult>> {
+	const results: Array<TResult> = []
+	let nextIndex = 0
+	const workers = Array.from({ length: Math.max(1, limit) }, async () => {
+		while (true) {
+			const currentIndex = nextIndex++
+			if (currentIndex >= items.length) return
+			results[currentIndex] = await mapper(items[currentIndex]!)
+		}
+	})
+	await Promise.all(workers)
+	return results
+}
+
+async function checkEpicVideoUrlsHead({
+	embedOccurrences,
+}: {
+	embedOccurrences: Map<string, Set<string>>
+}): Promise<Array<Issue>> {
+	const urls = [...embedOccurrences.keys()]
+	const issues: Array<Issue> = []
+
+	await asyncPool(8, urls, async (urlString) => {
+		const usedBy = embedOccurrences.get(urlString) ?? new Set<string>()
+		const timeout = AbortSignal.timeout(10_000)
+
+		const headResult = await fetch(urlString, {
+			method: 'HEAD',
+			redirect: 'follow',
+			signal: timeout,
+		}).catch((error) => ({ error }) as const)
+
+		if ('error' in headResult) {
+			for (const file of usedBy) {
+				issues.push({
+					level: 'error',
+					code: 'epic-video-head-failed',
+					message: `EpicVideo url HEAD request failed: ${getErrorMessage(
+						headResult.error,
+					)} (${urlString})`,
+					file,
+				})
+			}
+			return null
+		}
+
+		if (headResult.status === 200) return null
+
+		let extra = ''
+		if (headResult.status === 405) {
+			// Some origins disable HEAD. Try a small GET to provide actionable diagnostics.
+			const getTimeout = AbortSignal.timeout(10_000)
+			const getResult = await fetch(urlString, {
+				method: 'GET',
+				headers: { range: 'bytes=0-0' },
+				redirect: 'follow',
+				signal: getTimeout,
+			}).catch((error) => ({ error }) as const)
+			if ('error' in getResult) {
+				extra = ` (GET fallback failed: ${getErrorMessage(getResult.error)})`
+			} else {
+				extra = ` (GET fallback status: ${getResult.status} ${getResult.statusText})`
+			}
+		}
+
+		for (const file of usedBy) {
+			issues.push({
+				level: 'error',
+				code: 'epic-video-head-non-200',
+				message: `EpicVideo url HEAD status was ${headResult.status} ${headResult.statusText} (expected 200): ${urlString}${extra}`,
+				file,
+			})
+		}
+
+		return null
+	})
+
+	return issues
+}
+
 export async function launchReadiness(
 	options: LaunchReadinessOptions = {},
 ): Promise<LaunchReadinessResult> {
@@ -398,7 +564,7 @@ export async function launchReadiness(
 	)
 	process.env.EPICSHOP_CONTEXT_CWD = workshopRoot
 
-	const { silent = false, skipRemote = false } = options
+	const { silent = false, skipRemote = false, skipHead = false } = options
 
 	const issues: Array<Issue> = []
 
@@ -577,6 +743,7 @@ export async function launchReadiness(
 	}
 
 	const filesToCheck: Array<VideoCheckFile> = []
+	const contentFilesToCheck: Array<ContentCheckFile> = []
 
 	// Workshop intro + wrap-up (launch doc)
 	const workshopIntro = await resolveMdxFile(exercisesRoot, 'README')
@@ -595,6 +762,10 @@ export async function launchReadiness(
 			fullPath: workshopIntro,
 			relativePath: path.relative(workshopRoot, workshopIntro),
 		})
+		contentFilesToCheck.push({
+			fullPath: workshopIntro,
+			relativePath: path.relative(workshopRoot, workshopIntro),
+		})
 	}
 
 	if (!workshopWrapUp) {
@@ -607,6 +778,10 @@ export async function launchReadiness(
 	} else {
 		filesToCheck.push({
 			kind: 'workshop-wrap-up',
+			fullPath: workshopWrapUp,
+			relativePath: path.relative(workshopRoot, workshopWrapUp),
+		})
+		contentFilesToCheck.push({
 			fullPath: workshopWrapUp,
 			relativePath: path.relative(workshopRoot, workshopWrapUp),
 		})
@@ -635,12 +810,32 @@ export async function launchReadiness(
 	}
 
 	for (const exerciseDirName of exerciseDirNames) {
-		const { files, issues: fileIssues } = await buildExpectedFiles({
+		const { files, contentFiles, issues: fileIssues } = await buildExpectedFiles({
 			workshopRoot,
 			exerciseDirName,
 		})
 		issues.push(...fileIssues)
 		filesToCheck.push(...files)
+		contentFilesToCheck.push(...contentFiles)
+	}
+
+	// --------------------------------------
+	// 2a) MDX content exists and is non-trivial
+	// --------------------------------------
+	{
+		const minChars = 30
+		const uniqueContentFiles = new Map<string, ContentCheckFile>()
+		for (const file of contentFilesToCheck) {
+			uniqueContentFiles.set(file.fullPath, file)
+		}
+		for (const file of uniqueContentFiles.values()) {
+			if (!(await pathExists(file.fullPath))) continue
+			const issue = await checkMinContentLength({
+				fullPath: file.fullPath,
+				minChars,
+			})
+			if (issue) issues.push(issue)
+		}
 	}
 
 	const embedOccurrences = new Map<string, Set<string>>() // url -> files
@@ -687,7 +882,14 @@ export async function launchReadiness(
 	}
 
 	// ------------------------------------------------
-	// 3) Validate embed URLs match the configured host
+	// 3) HEAD-check EpicVideo urls
+	// ------------------------------------------------
+	if (!skipHead) {
+		issues.push(...(await checkEpicVideoUrlsHead({ embedOccurrences })))
+	}
+
+	// ------------------------------------------------
+	// 4) Validate embed URLs match the configured host
 	// ------------------------------------------------
 	if (productHost && productSlug) {
 		const normalizedConfigHost = normalizeHost(productHost)

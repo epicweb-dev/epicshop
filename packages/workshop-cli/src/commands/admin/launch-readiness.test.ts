@@ -80,8 +80,16 @@ async function createWorkshopFixture({
 		`# Step Problem\n\n<EpicVideo url="https://${productHost}/workshops/${productSlug}/step-problem" />\n`,
 	)
 	await writeFile(
+		path.join(exRoot, '01.problem', 'FINISHED.mdx'),
+		`# Step Problem Finished\n\nThis step is finished. Great work!\n`,
+	)
+	await writeFile(
 		path.join(exRoot, '01.solution', 'README.mdx'),
 		`# Step Solution\n\n<EpicVideo url="https://${productHost}/workshops/${productSlug}/step-solution" />\n`,
+	)
+	await writeFile(
+		path.join(exRoot, '01.solution', 'FINISHED.mdx'),
+		`# Step Solution Finished\n\nThis step is finished. Great work!\n`,
 	)
 
 	return root
@@ -96,7 +104,12 @@ test('passes with configured product + videos (skip remote)', async () => {
 
 	try {
 		await expect(
-			launchReadiness({ workshopRoot, silent: true, skipRemote: true }),
+			launchReadiness({
+				workshopRoot,
+				silent: true,
+				skipRemote: true,
+				skipHead: true,
+			}),
 		).resolves.toEqual(expect.objectContaining({ success: true }))
 	} finally {
 		await fs.rm(workshopRoot, { recursive: true, force: true })
@@ -110,7 +123,12 @@ test('fails when epicshop.product.slug missing', async () => {
 
 	try {
 		await expect(
-			launchReadiness({ workshopRoot, silent: true, skipRemote: true }),
+			launchReadiness({
+				workshopRoot,
+				silent: true,
+				skipRemote: true,
+				skipHead: true,
+			}),
 		).resolves.toEqual(expect.objectContaining({ success: false }))
 	} finally {
 		await fs.rm(workshopRoot, { recursive: true, force: true })
@@ -139,6 +157,7 @@ test('fails when a required MDX file has no EpicVideo embed (and prints helpful 
 			workshopRoot,
 			silent: false,
 			skipRemote: true,
+			skipHead: true,
 		})
 
 		expect(result.success).toBe(false)
@@ -175,7 +194,73 @@ test('remote lesson check fails when product lesson slug not represented locally
 
 	try {
 		await expect(
-			launchReadiness({ workshopRoot, silent: true, skipRemote: false }),
+			launchReadiness({
+				workshopRoot,
+				silent: true,
+				skipRemote: false,
+				skipHead: true,
+			}),
+		).resolves.toEqual(expect.objectContaining({ success: false }))
+	} finally {
+		await fs.rm(workshopRoot, { recursive: true, force: true })
+	}
+})
+
+test('fails when a required FINISHED.mdx is too short', async () => {
+	const workshopRoot = await createWorkshopFixture()
+
+	await writeFile(
+		path.join(
+			workshopRoot,
+			'exercises',
+			'01.first-exercise',
+			'01.problem',
+			'FINISHED.mdx',
+		),
+		`Short.\n`,
+	)
+
+	const logSpy = vi.spyOn(console, 'log').mockImplementation(() => {})
+
+	try {
+		const result = await launchReadiness({
+			workshopRoot,
+			silent: false,
+			skipRemote: true,
+			skipHead: true,
+		})
+		expect(result.success).toBe(false)
+		const output = logSpy.mock.calls.map((c) => c.join(' ')).join('\n')
+		expect(output).toContain('File content too short')
+		expect(output).toContain('exercises/01.first-exercise/01.problem/FINISHED.mdx')
+	} finally {
+		logSpy.mockRestore()
+		await fs.rm(workshopRoot, { recursive: true, force: true })
+	}
+})
+
+test('fails when an EpicVideo url does not return 200 to HEAD', async () => {
+	const workshopRoot = await createWorkshopFixture()
+
+	vi.stubGlobal(
+		'fetch',
+		vi.fn(async (input: any, init?: any) => {
+			const url = typeof input === 'string' ? input : String(input)
+			if (init?.method === 'HEAD' && url.includes('step-problem')) {
+				return new Response(null, { status: 404, statusText: 'Not Found' })
+			}
+			return new Response(null, { status: 200, statusText: 'OK' })
+		}),
+	)
+
+	try {
+		await expect(
+			launchReadiness({
+				workshopRoot,
+				silent: true,
+				skipRemote: true,
+				skipHead: false,
+			}),
 		).resolves.toEqual(expect.objectContaining({ success: false }))
 	} finally {
 		await fs.rm(workshopRoot, { recursive: true, force: true })

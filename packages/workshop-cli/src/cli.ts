@@ -999,6 +999,12 @@ const cli = yargs(args)
 						'Skip the remote "product lessons" check (only run local checks)',
 					default: false,
 				})
+				.option('skip-head', {
+					type: 'boolean',
+					description:
+						'Skip checking that EpicVideo urls return 200 to HEAD (network required)',
+					default: false,
+				})
 				.example(
 					'$0 admin launch-readiness',
 					'Check workshop launch readiness (hidden command)',
@@ -1010,6 +1016,7 @@ const cli = yargs(args)
 				workshopDir?: string
 				silent?: boolean
 				skipRemote?: boolean
+				skipHead?: boolean
 			}>,
 		) => {
 			const { findWorkshopRoot } = await import('./commands/workshops.js')
@@ -1037,6 +1044,7 @@ const cli = yargs(args)
 						const result = await launchReadiness({
 							silent: argv.silent,
 							skipRemote: argv.skipRemote,
+							skipHead: argv.skipHead,
 						})
 						if (!result.success) process.exit(1)
 						break
