@@ -563,8 +563,7 @@ export async function getProgress({
 		epicCompletedAt: string | null
 	}
 	const progress: Array<
-		ProgressInfo &
-			(ReturnType<typeof getProgressForLesson> | { type: 'unknown' })
+		ProgressInfo & (LocalProgressForEpicLesson | { type: 'unknown' })
 	> = []
 
 	for (const resource of workshopData.resources ?? []) {
