@@ -616,7 +616,9 @@ function stripEpicAiSlugSuffix(value: string) {
 	return value.replace(/~[^ ]*$/, '')
 }
 
-function isProblemOrSolutionSubpage(value: string): value is 'problem' | 'solution' {
+function isProblemOrSolutionSubpage(
+	value: string,
+): value is 'problem' | 'solution' {
 	return value === 'problem' || value === 'solution'
 }
 
