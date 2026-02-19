@@ -1,4 +1,10 @@
-import { getApps } from '@epic-web/workshop-utils/apps.server'
+import {
+	getApps,
+	getExercises,
+	getWorkshopFinished,
+	getWorkshopInstructions,
+} from '@epic-web/workshop-utils/apps.server'
+import { getEpicVideoInfos } from '@epic-web/workshop-utils/epic-api.server'
 import { getProcesses } from '@epic-web/workshop-utils/process-manager.server'
 import {
 	getServerTimeHeader,
@@ -14,7 +20,13 @@ import {
 	useEpicProgress,
 	type SerializedProgress,
 } from '#app/routes/progress.tsx'
-import { cn, ensureUndeployed, useDoubleCheck } from '#app/utils/misc.tsx'
+import {
+	cn,
+	ensureUndeployed,
+	getExercisePath,
+	getExerciseStepPath,
+	useDoubleCheck,
+} from '#app/utils/misc.tsx'
 import { getRootMatchLoaderData } from '#app/utils/root-loader.ts'
 import { type Route } from './+types/index.tsx'
 import {
@@ -34,6 +46,60 @@ export const handle: SEOHandle = {
 export const meta: Route.MetaFunction = ({ matches }) => {
 	const rootData = getRootMatchLoaderData(matches)
 	return [{ title: `👷 | ${rootData?.workshopTitle}` }]
+}
+
+type VideoEmbedDiagnosticsPageRef = { path: string; label: string }
+type VideoEmbedDiagnosticsResolutionSummary =
+	| { status: 'missing' }
+	| {
+			status: 'error'
+			statusCode: number
+			statusText: string
+			type: 'unknown' | 'region-restricted'
+			requestCountry?: string
+			restrictedCountry?: string
+	  }
+type VideoEmbedDiagnosticsFailure = {
+	embedUrl: string
+	pages: Array<VideoEmbedDiagnosticsPageRef>
+	resolution: VideoEmbedDiagnosticsResolutionSummary
+}
+type VideoEmbedDiagnostics = {
+	totalEmbeds: number
+	totalPages: number
+	pagesWithFailures: number
+	failures: Array<VideoEmbedDiagnosticsFailure>
+	errorMessage: string | null
+}
+
+function groupVideoEmbedFailuresByPage(
+	failures: Array<VideoEmbedDiagnosticsFailure>,
+) {
+	const byPage = new Map<
+		string,
+		{
+			label: string
+			items: Array<{
+				embedUrl: string
+				resolution: VideoEmbedDiagnosticsResolutionSummary
+			}>
+		}
+	>()
+
+	for (const failure of failures) {
+		for (const page of failure.pages) {
+			const existing = byPage.get(page.path) ?? { label: page.label, items: [] }
+			existing.items.push({
+				embedUrl: failure.embedUrl,
+				resolution: failure.resolution,
+			})
+			byPage.set(page.path, existing)
+		}
+	}
+
+	return [...byPage.entries()]
+		.map(([path, info]) => ({ path, ...info }))
+		.sort((a, b) => a.label.localeCompare(b.label))
 }
 
 export async function loader({ request }: Route.LoaderArgs) {
@@ -73,6 +139,167 @@ export async function loader({ request }: Route.LoaderArgs) {
 		}
 	}
 
+	const videoEmbedDiagnostics: VideoEmbedDiagnostics = await (async () => {
+		const embedToPages = new Map<string, Array<VideoEmbedDiagnosticsPageRef>>()
+		const pagePaths = new Set<string>()
+
+		function addEmbeds(
+			page: VideoEmbedDiagnosticsPageRef,
+			embeds?: Array<string> | null,
+		) {
+			if (!embeds || embeds.length === 0) return
+			pagePaths.add(page.path)
+			for (const embedUrl of embeds) {
+				if (typeof embedUrl !== 'string' || embedUrl.length === 0) continue
+				const existing = embedToPages.get(embedUrl) ?? []
+				if (!existing.some((p) => p.path === page.path)) existing.push(page)
+				embedToPages.set(embedUrl, existing)
+			}
+		}
+
+		try {
+			const [workshopInstructions, workshopFinished, exercises] =
+				await Promise.all([
+					getWorkshopInstructions({ request }),
+					getWorkshopFinished({ request }),
+					getExercises({ request, timings }),
+				])
+
+			if (workshopInstructions.compiled.status === 'success') {
+				addEmbeds(
+					{ path: '/', label: 'Workshop intro' },
+					workshopInstructions.compiled.epicVideoEmbeds,
+				)
+			}
+			if (workshopFinished.compiled.status === 'success') {
+				addEmbeds(
+					{ path: '/finished', label: 'Workshop finished' },
+					workshopFinished.compiled.epicVideoEmbeds,
+				)
+			}
+
+			for (const exercise of exercises) {
+				const exLabel = exercise.exerciseNumber.toString().padStart(2, '0')
+				addEmbeds(
+					{
+						path: getExercisePath(exercise.exerciseNumber),
+						label: `Exercise ${exLabel} intro`,
+					},
+					exercise.instructionsEpicVideoEmbeds,
+				)
+				addEmbeds(
+					{
+						path: getExercisePath(exercise.exerciseNumber, 'finished'),
+						label: `Exercise ${exLabel} finished`,
+					},
+					exercise.finishedEpicVideoEmbeds,
+				)
+
+				for (const step of exercise.steps.filter(Boolean)) {
+					const stepLabel = step.stepNumber.toString().padStart(2, '0')
+					addEmbeds(
+						{
+							path: getExerciseStepPath(
+								exercise.exerciseNumber,
+								step.stepNumber,
+								'problem',
+							),
+							label: `Exercise ${exLabel}/${stepLabel} problem`,
+						},
+						step.problem?.epicVideoEmbeds,
+					)
+					addEmbeds(
+						{
+							path: getExerciseStepPath(
+								exercise.exerciseNumber,
+								step.stepNumber,
+								'solution',
+							),
+							label: `Exercise ${exLabel}/${stepLabel} solution`,
+						},
+						step.solution?.epicVideoEmbeds,
+					)
+				}
+			}
+		} catch (error) {
+			return {
+				totalEmbeds: 0,
+				totalPages: 0,
+				pagesWithFailures: 0,
+				failures: [],
+				errorMessage: error instanceof Error ? error.message : String(error),
+			}
+		}
+
+		const embedUrls = Array.from(embedToPages.keys())
+		if (embedUrls.length === 0) {
+			return {
+				totalEmbeds: 0,
+				totalPages: 0,
+				pagesWithFailures: 0,
+				failures: [],
+				errorMessage: null,
+			}
+		}
+
+		try {
+			const epicVideoInfos = await getEpicVideoInfos(embedUrls, {
+				request,
+				timings,
+			})
+
+			const failures: Array<VideoEmbedDiagnosticsFailure> = []
+			for (const embedUrl of embedUrls) {
+				const info = epicVideoInfos[embedUrl]
+				if (info?.status === 'success') continue
+
+				const resolution: VideoEmbedDiagnosticsResolutionSummary = info
+					? info.type === 'region-restricted'
+						? {
+								status: 'error',
+								statusCode: info.statusCode,
+								statusText: info.statusText,
+								type: info.type,
+								requestCountry: info.requestCountry,
+								restrictedCountry: info.restrictedCountry,
+							}
+						: {
+								status: 'error',
+								statusCode: info.statusCode,
+								statusText: info.statusText,
+								type: info.type,
+							}
+					: { status: 'missing' }
+
+				failures.push({
+					embedUrl,
+					pages: embedToPages.get(embedUrl) ?? [],
+					resolution,
+				})
+			}
+
+			const pagesWithFailures = new Set(
+				failures.flatMap((f) => f.pages.map((p) => p.path)),
+			).size
+
+			return {
+				totalEmbeds: embedUrls.length,
+				totalPages: pagePaths.size,
+				pagesWithFailures,
+				failures,
+				errorMessage: null,
+			}
+		} catch (error) {
+			return {
+				totalEmbeds: embedUrls.length,
+				totalPages: pagePaths.size,
+				pagesWithFailures: 0,
+				failures: [],
+				errorMessage: error instanceof Error ? error.message : String(error),
+			}
+		}
+	})()
+
 	return data(
 		{
 			apps,
@@ -80,6 +307,7 @@ export async function loader({ request }: Route.LoaderArgs) {
 			testProcesses,
 			sidecarProcesses,
 			inspectorRunning: isInspectorRunning(),
+			videoEmbedDiagnostics,
 		},
 		{
 			headers: {
@@ -149,15 +377,45 @@ function linkProgress(progress: SerializedProgress) {
 		case 'workshop-finished':
 			return '/finished'
 		case 'instructions':
-			return `/${progress.exerciseNumber.toString().padStart(2, '0')}`
+			return getExercisePath(progress.exerciseNumber)
 		case 'step':
-			return `/${progress.exerciseNumber
-				.toString()
-				.padStart(2, '0')}/${progress.stepNumber.toString().padStart(2, '0')}`
+			return getExerciseStepPath(
+				progress.exerciseNumber,
+				progress.stepNumber,
+				// Prefer linking directly to the page that contains the embed.
+				'stepType' in progress ? progress.stepType : undefined,
+			)
 		case 'finished':
-			return `/${progress.exerciseNumber.toString().padStart(2, '0')}/finished`
+			return getExercisePath(progress.exerciseNumber, 'finished')
 		default:
 			return ''
+	}
+}
+
+function labelProgressLocation(progress: SerializedProgress) {
+	switch (progress.type) {
+		case 'workshop-instructions':
+			return 'Workshop intro'
+		case 'workshop-finished':
+			return 'Workshop finished'
+		case 'instructions': {
+			const ex = progress.exerciseNumber.toString().padStart(2, '0')
+			return `Exercise ${ex} intro`
+		}
+		case 'finished': {
+			const ex = progress.exerciseNumber.toString().padStart(2, '0')
+			return `Exercise ${ex} finished`
+		}
+		case 'step': {
+			const ex = progress.exerciseNumber.toString().padStart(2, '0')
+			const st = progress.stepNumber.toString().padStart(2, '0')
+			const stepType = 'stepType' in progress ? progress.stepType : null
+			return stepType
+				? `Exercise ${ex}/${st} ${stepType}`
+				: `Exercise ${ex}/${st}`
+		}
+		default:
+			return null
 	}
 }
 
@@ -175,6 +433,9 @@ export default function AdminLayout({
 		completed: 'bg-success',
 		incomplete: 'bg-warning',
 	}
+	const videoEmbedFailuresByPage = groupVideoEmbedFailuresByPage(
+		data.videoEmbedDiagnostics.failures,
+	)
 
 	return (
 		<div className="flex flex-col gap-6 p-6">
@@ -400,6 +661,12 @@ export default function AdminLayout({
 									]
 										.filter(Boolean)
 										.join(' ')
+									const localTo =
+										progress.type === 'unknown' ? null : linkProgress(progress)
+									const localLabel =
+										progress.type === 'unknown'
+											? null
+											: labelProgressLocation(progress)
 									return (
 										<li
 											key={progress.epicLessonSlug}
@@ -412,24 +679,33 @@ export default function AdminLayout({
 												)}
 												title={status}
 											/>
-											{progress.type === 'unknown' ? (
-												<span className="flex flex-1 items-center gap-2 truncate text-sm">
+											<div className="min-w-0 flex-1">
+												<div className="flex items-center gap-2 truncate text-sm">
 													<span className="truncate">{label}</span>
-													<SimpleTooltip content="This video is in the workshop on EpicWeb.dev, but not in the local workshop.">
-														<Icon
-															name="Close"
-															className="text-destructive h-4 w-4 shrink-0"
-														/>
-													</SimpleTooltip>
-												</span>
-											) : (
-												<Link
-													to={linkProgress(progress)}
-													className="text-foreground flex-1 truncate text-sm hover:underline"
-												>
-													{label}
-												</Link>
-											)}
+													{progress.type === 'unknown' ? (
+														<SimpleTooltip content="This video is in the workshop on EpicWeb.dev, but not in the local workshop.">
+															<span className="inline-flex">
+																<Icon
+																	name="Close"
+																	className="text-destructive h-4 w-4 shrink-0"
+																/>
+															</span>
+														</SimpleTooltip>
+													) : null}
+												</div>
+												{localTo && localLabel ? (
+													<Link
+														to={localTo}
+														className="text-muted-foreground hover:text-foreground block truncate text-xs hover:underline"
+													>
+														{localLabel}
+													</Link>
+												) : (
+													<span className="text-muted-foreground block truncate text-xs">
+														No local page found
+													</span>
+												)}
+											</div>
 											<Link
 												to={progress.epicLessonUrl}
 												className="text-muted-foreground hover:text-foreground shrink-0"
@@ -443,6 +719,61 @@ export default function AdminLayout({
 						) : (
 							<p className="text-muted-foreground text-sm">No progress data</p>
 						)}
+						<details className="mt-4">
+							<summary className="text-muted-foreground hover:text-foreground cursor-pointer text-sm font-medium">
+								Local video links with missing info (
+								{data.videoEmbedDiagnostics.failures.length}/
+								{data.videoEmbedDiagnostics.totalEmbeds})
+							</summary>
+							{data.videoEmbedDiagnostics.errorMessage ? (
+								<p className="text-muted-foreground mt-2 text-sm">
+									Unable to check video metadata:{' '}
+									{data.videoEmbedDiagnostics.errorMessage}
+								</p>
+							) : data.videoEmbedDiagnostics.failures.length === 0 ? (
+								<p className="text-muted-foreground mt-2 text-sm">
+									All exercise video links resolved.
+								</p>
+							) : (
+								<ul className="mt-3 flex flex-col gap-2">
+									{videoEmbedFailuresByPage.map((info) => (
+										<li
+											key={info.path}
+											className="border-border bg-muted/30 rounded-md border p-2"
+										>
+											<Link
+												to={info.path}
+												className="text-foreground block truncate text-sm font-medium hover:underline"
+											>
+												{info.label}
+											</Link>
+											<ul className="mt-2 flex flex-col gap-1">
+												{info.items.map((item) => (
+													<li
+														key={`${info.path}:${item.embedUrl}`}
+														className="text-muted-foreground flex items-start justify-between gap-2 text-xs"
+													>
+														<a
+															href={item.embedUrl}
+															target="_blank"
+															rel="noreferrer"
+															className="min-w-0 flex-1 truncate font-mono underline-offset-4 hover:underline"
+														>
+															{item.embedUrl}
+														</a>
+														<span className="shrink-0">
+															{item.resolution.status === 'missing'
+																? 'missing'
+																: `${item.resolution.statusCode} ${item.resolution.statusText}`}
+														</span>
+													</li>
+												))}
+											</ul>
+										</li>
+									))}
+								</ul>
+							)}
+						</details>
 					</CardContent>
 				</Card>
 			</div>
