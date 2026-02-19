@@ -450,6 +450,9 @@ epicshop cleanup [options]
 # Pick cleanup targets interactively (multi-select)
 epicshop cleanup
 
+# Inside a workshop - clean that workshop without selecting from a list
+epicshop cleanup --workshop-actions caches --force
+
 # Clean selected targets without prompting
 epicshop cleanup --targets caches --targets preferences --force
 
