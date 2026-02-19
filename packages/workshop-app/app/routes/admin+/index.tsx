@@ -1,10 +1,10 @@
 import { getApps, getExercises } from '@epic-web/workshop-utils/apps.server'
+import { getEpicVideoInfos } from '@epic-web/workshop-utils/epic-api.server'
 import { getProcesses } from '@epic-web/workshop-utils/process-manager.server'
 import {
 	getServerTimeHeader,
 	makeTimings,
 } from '@epic-web/workshop-utils/timing.server'
-import { getEpicVideoInfos } from '@epic-web/workshop-utils/epic-api.server'
 import { type SEOHandle } from '@nasa-gcn/remix-seo'
 import { clsx } from 'clsx'
 import * as React from 'react'
@@ -67,7 +67,9 @@ type VideoEmbedDiagnostics = {
 	errorMessage: string | null
 }
 
-function groupVideoEmbedFailuresByPage(failures: Array<VideoEmbedDiagnosticsFailure>) {
+function groupVideoEmbedFailuresByPage(
+	failures: Array<VideoEmbedDiagnosticsFailure>,
+) {
 	const byPage = new Map<
 		string,
 		{
@@ -217,7 +219,10 @@ export async function loader({ request }: Route.LoaderArgs) {
 		}
 
 		try {
-			const epicVideoInfos = await getEpicVideoInfos(embedUrls, { request, timings })
+			const epicVideoInfos = await getEpicVideoInfos(embedUrls, {
+				request,
+				timings,
+			})
 
 			const failures: Array<VideoEmbedDiagnosticsFailure> = []
 			for (const embedUrl of embedUrls) {

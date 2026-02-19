@@ -71,7 +71,9 @@ test('resolves step problem video location', () => {
 					{
 						stepNumber: 2,
 						problem: {
-							epicVideoEmbeds: ['https://www.epicweb.dev/workshops/ws/step-3-2'],
+							epicVideoEmbeds: [
+								'https://www.epicweb.dev/workshops/ws/step-3-2',
+							],
 						},
 						solution: { epicVideoEmbeds: [] },
 					},
@@ -202,4 +204,3 @@ test('strips EpicAI ~ suffix when matching (aha)', () => {
 		}),
 	).toEqual({ type: 'instructions', exerciseNumber: 2 })
 })
-

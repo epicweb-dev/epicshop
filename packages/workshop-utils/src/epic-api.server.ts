@@ -575,11 +575,14 @@ export async function getProgress({
 				({ lessonId }) => lessonId === lesson._id,
 			)
 			const epicCompletedAt = lessonProgress ? lessonProgress.completedAt : null
-			const progressForLesson = resolveLocalProgressForEpicLesson(epicLessonSlug, {
-				workshopInstructions,
-				workshopFinished,
-				exercises,
-			})
+			const progressForLesson = resolveLocalProgressForEpicLesson(
+				epicLessonSlug,
+				{
+					workshopInstructions,
+					workshopFinished,
+					exercises,
+				},
+			)
 			const epicLessonUrl = `https://${host}/workshops/${slug}/${epicLessonSlug}`
 			if (progressForLesson) {
 				progress.push({
@@ -622,11 +625,17 @@ function parseEpicLessonSlugFromEmbedUrl(urlString: string): {
 		if (!last) return { lessonSlug: null, subpage: null }
 		if (last === 'problem' || last === 'solution') {
 			const slug = segments.at(-2) ?? null
-			return { lessonSlug: slug ? stripEpicAiSlugSuffix(slug) : null, subpage: last }
+			return {
+				lessonSlug: slug ? stripEpicAiSlugSuffix(slug) : null,
+				subpage: last,
+			}
 		}
 		if (last === 'embed') {
 			const slug = segments.at(-2) ?? null
-			return { lessonSlug: slug ? stripEpicAiSlugSuffix(slug) : null, subpage: null }
+			return {
+				lessonSlug: slug ? stripEpicAiSlugSuffix(slug) : null,
+				subpage: null,
+			}
 		}
 		return { lessonSlug: stripEpicAiSlugSuffix(last), subpage: null }
 	} catch {
@@ -639,11 +648,17 @@ function parseEpicLessonSlugFromEmbedUrl(urlString: string): {
 		if (!last) return { lessonSlug: null, subpage: null }
 		if (last === 'problem' || last === 'solution') {
 			const slug = segments.at(-2) ?? null
-			return { lessonSlug: slug ? stripEpicAiSlugSuffix(slug) : null, subpage: last }
+			return {
+				lessonSlug: slug ? stripEpicAiSlugSuffix(slug) : null,
+				subpage: last,
+			}
 		}
 		if (last === 'embed') {
 			const slug = segments.at(-2) ?? null
-			return { lessonSlug: slug ? stripEpicAiSlugSuffix(slug) : null, subpage: null }
+			return {
+				lessonSlug: slug ? stripEpicAiSlugSuffix(slug) : null,
+				subpage: null,
+			}
 		}
 		return { lessonSlug: stripEpicAiSlugSuffix(last), subpage: null }
 	}
