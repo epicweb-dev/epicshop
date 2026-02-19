@@ -611,6 +611,10 @@ function stripEpicAiSlugSuffix(value: string) {
 	return value.replace(/~[^ ]*$/, '')
 }
 
+function isProblemOrSolutionSubpage(value: string): value is 'problem' | 'solution' {
+	return value === 'problem' || value === 'solution'
+}
+
 function parseEpicLessonSlugFromEmbedUrl(urlString: string): {
 	lessonSlug: string | null
 	// Some embeds point at a /problem or /solution subpage.
@@ -622,7 +626,7 @@ function parseEpicLessonSlugFromEmbedUrl(urlString: string): {
 		if (segments.length === 0) return { lessonSlug: null, subpage: null }
 		const last = segments.at(-1) ?? null
 		if (!last) return { lessonSlug: null, subpage: null }
-		if (last === 'problem' || last === 'solution') {
+		if (isProblemOrSolutionSubpage(last)) {
 			const slug = segments.at(-2) ?? null
 			return {
 				lessonSlug: slug ? stripEpicAiSlugSuffix(slug) : null,
@@ -645,7 +649,7 @@ function parseEpicLessonSlugFromEmbedUrl(urlString: string): {
 		const segments = withoutQuery.split('/').filter(Boolean)
 		const last = segments.at(-1) ?? null
 		if (!last) return { lessonSlug: null, subpage: null }
-		if (last === 'problem' || last === 'solution') {
+		if (isProblemOrSolutionSubpage(last)) {
 			const slug = segments.at(-2) ?? null
 			return {
 				lessonSlug: slug ? stripEpicAiSlugSuffix(slug) : null,
