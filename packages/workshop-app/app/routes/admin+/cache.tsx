@@ -167,7 +167,8 @@ export async function loader({ request }: Route.LoaderArgs) {
 							.filter((entry) => {
 								if (normalizedQuery === '') return true
 								if (cacheNameMatches) return true
-								if (entry.key.toLowerCase().includes(normalizedQuery)) return true
+								if (entry.key.toLowerCase().includes(normalizedQuery))
+									return true
 								return entryValueMatches(entry.entry.value, normalizedQuery)
 							})
 							.map((entry) => ({
@@ -179,7 +180,9 @@ export async function loader({ request }: Route.LoaderArgs) {
 							}))
 						return { ...cache, entries }
 					})
-					.filter((cache) => cache.entries.length > 0 || normalizedQuery === ''),
+					.filter(
+						(cache) => cache.entries.length > 0 || normalizedQuery === '',
+					),
 			}
 		})
 		.filter(
@@ -194,7 +197,8 @@ export async function loader({ request }: Route.LoaderArgs) {
 		),
 		filterQuery,
 		selectedWorkshops,
-		availableWorkshops: Array.from(availableWorkshopIds).sort(compareWorkshopIds),
+		availableWorkshops:
+			Array.from(availableWorkshopIds).sort(compareWorkshopIds),
 		workshopIdentifiers,
 	}
 }
@@ -829,9 +833,10 @@ export default function CacheManagement({ loaderData }: Route.ComponentProps) {
 									</h3>
 									{workshopIdentifiers[workshopCache.workshopId]
 										?.hasStoredDisplayName &&
-										workshopCache.workshopId !== 'global' ? (
+									workshopCache.workshopId !== 'global' ? (
 										<div className="text-muted-foreground mt-1 flex flex-wrap items-center gap-2 text-xs">
-											{workshopIdentifiers[workshopCache.workshopId]?.repoName ? (
+											{workshopIdentifiers[workshopCache.workshopId]
+												?.repoName ? (
 												<span className="truncate">
 													{
 														workshopIdentifiers[workshopCache.workshopId]
@@ -851,10 +856,7 @@ export default function CacheManagement({ loaderData }: Route.ComponentProps) {
 												className="font-mono"
 												title={workshopCache.workshopId}
 											>
-												{
-													workshopIdentifiers[workshopCache.workshopId]
-														?.shortId
-												}
+												{workshopIdentifiers[workshopCache.workshopId]?.shortId}
 											</span>
 										</div>
 									) : null}

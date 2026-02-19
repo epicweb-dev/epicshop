@@ -80,4 +80,3 @@ test('ensureWorkshopCacheMetadataFile does not overwrite existing metadata', asy
 		await fsExtra.remove(tmp)
 	}
 })
-

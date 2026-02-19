@@ -305,7 +305,9 @@ async function getCurrentWorkshopDisplayInfo(): Promise<
 > {
 	const env = getEnv()
 	const contextCwd = env.EPICSHOP_CONTEXT_CWD
-	const repoName = contextCwd ? path.basename(contextCwd) || undefined : undefined
+	const repoName = contextCwd
+		? path.basename(contextCwd) || undefined
+		: undefined
 
 	let displayName = repoName || env.EPICSHOP_WORKSHOP_INSTANCE_ID || 'Unknown'
 	let subtitle: string | undefined
@@ -326,7 +328,8 @@ async function ensureWorkshopCacheMetadata(workshopId: string) {
 	if (!workshopId) return
 	if (ensuredWorkshopCacheMetadata.has(workshopId)) return
 
-	const { displayName, repoName, subtitle } = await getCurrentWorkshopDisplayInfo()
+	const { displayName, repoName, subtitle } =
+		await getCurrentWorkshopDisplayInfo()
 	const metadata = await ensureWorkshopCacheMetadataFile({
 		cacheDir,
 		workshopId,
@@ -775,11 +778,7 @@ export function makeSingletonCache<CacheEntryType>(name: string) {
 export function makeSingletonFsCache<CacheEntryType>(name: string) {
 	return remember(name, () => {
 		const workshopId = getEnv().EPICSHOP_WORKSHOP_INSTANCE_ID
-		const cacheInstanceDir = path.join(
-			cacheDir,
-			workshopId,
-			name,
-		)
+		const cacheInstanceDir = path.join(cacheDir, workshopId, name)
 
 		const fsCache: C.Cache<CacheEntryType> = {
 			name: `Filesystem cache (${name})`,
