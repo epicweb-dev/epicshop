@@ -660,10 +660,12 @@ export default function AdminLayout({
 													<span className="truncate">{label}</span>
 													{progress.type === 'unknown' ? (
 														<SimpleTooltip content="This video is in the workshop on EpicWeb.dev, but not in the local workshop.">
-															<Icon
-																name="Close"
-																className="text-destructive h-4 w-4 shrink-0"
-															/>
+															<span className="inline-flex">
+																<Icon
+																	name="Close"
+																	className="text-destructive h-4 w-4 shrink-0"
+																/>
+															</span>
 														</SimpleTooltip>
 													) : null}
 												</div>
