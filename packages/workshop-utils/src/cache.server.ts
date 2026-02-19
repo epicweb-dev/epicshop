@@ -319,9 +319,7 @@ async function getCurrentWorkshopDisplayInfo(): Promise<
 	return { displayName, repoName, subtitle }
 }
 
-async function ensureCurrentWorkshopCacheMetadata() {
-	const env = getEnv()
-	const workshopId = env.EPICSHOP_WORKSHOP_INSTANCE_ID
+async function ensureWorkshopCacheMetadata(workshopId: string) {
 	if (!workshopId) return
 	if (ensuredWorkshopCacheMetadata.has(workshopId)) return
 
@@ -773,9 +771,10 @@ export function makeSingletonCache<CacheEntryType>(name: string) {
 
 export function makeSingletonFsCache<CacheEntryType>(name: string) {
 	return remember(name, () => {
+		const workshopId = getEnv().EPICSHOP_WORKSHOP_INSTANCE_ID
 		const cacheInstanceDir = path.join(
 			cacheDir,
-			getEnv().EPICSHOP_WORKSHOP_INSTANCE_ID,
+			workshopId,
 			name,
 		)
 
@@ -816,7 +815,7 @@ export function makeSingletonFsCache<CacheEntryType>(name: string) {
 			},
 			async set(key, entry) {
 				try {
-					await ensureCurrentWorkshopCacheMetadata()
+					await ensureWorkshopCacheMetadata(workshopId)
 				} catch {
 					// Ignore: this is optional metadata only.
 				}
