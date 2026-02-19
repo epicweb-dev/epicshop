@@ -621,9 +621,7 @@ function parseEpicLessonSlugFromEmbedUrl(urlString: string): {
 	// Some embeds point at a /problem or /solution subpage.
 	subpage: 'problem' | 'solution' | null
 } {
-	try {
-		const url = new URL(urlString)
-		const segments = url.pathname.split('/').filter(Boolean)
+	const parseSegments = (segments: Array<string>) => {
 		if (segments.length === 0) return { lessonSlug: null, subpage: null }
 		const last = segments.at(-1) ?? null
 		if (!last) return { lessonSlug: null, subpage: null }
@@ -642,29 +640,18 @@ function parseEpicLessonSlugFromEmbedUrl(urlString: string): {
 			}
 		}
 		return { lessonSlug: stripEpicAiSlugSuffix(last), subpage: null }
+	}
+	try {
+		const url = new URL(urlString)
+		const segments = url.pathname.split('/').filter(Boolean)
+		return parseSegments(segments)
 	} catch {
 		// Fall back to naive parsing; this is best-effort and only used for
 		// mapping Epic lesson slugs -> local pages in admin UI/progress.
 		const withoutHash = urlString.split('#')[0] ?? urlString
 		const withoutQuery = withoutHash.split('?')[0] ?? withoutHash
 		const segments = withoutQuery.split('/').filter(Boolean)
-		const last = segments.at(-1) ?? null
-		if (!last) return { lessonSlug: null, subpage: null }
-		if (last === 'problem' || last === 'solution') {
-			const slug = segments.at(-2) ?? null
-			return {
-				lessonSlug: slug ? stripEpicAiSlugSuffix(slug) : null,
-				subpage: last,
-			}
-		}
-		if (last === 'embed') {
-			const slug = segments.at(-2) ?? null
-			return {
-				lessonSlug: slug ? stripEpicAiSlugSuffix(slug) : null,
-				subpage: null,
-			}
-		}
-		return { lessonSlug: stripEpicAiSlugSuffix(last), subpage: null }
+		return parseSegments(segments)
 	}
 }
 
@@ -672,13 +659,8 @@ function embedMatchesLessonSlug(embedUrl: string, epicLessonSlug: string) {
 	const parsed = parseEpicLessonSlugFromEmbedUrl(embedUrl)
 	if (!parsed.lessonSlug) return false
 	if (parsed.lessonSlug === epicLessonSlug) return true
-	const normalizedEmbedSlug = stripEpicAiSlugSuffix(parsed.lessonSlug)
 	const normalizedLessonSlug = stripEpicAiSlugSuffix(epicLessonSlug)
-	return (
-		parsed.lessonSlug === normalizedLessonSlug ||
-		normalizedEmbedSlug === epicLessonSlug ||
-		normalizedEmbedSlug === normalizedLessonSlug
-	)
+	return parsed.lessonSlug === normalizedLessonSlug
 }
 
 export type LocalProgressForEpicLesson =
