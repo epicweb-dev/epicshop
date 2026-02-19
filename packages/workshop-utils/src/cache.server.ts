@@ -15,6 +15,11 @@ import {
 	type ProblemApp,
 	type SolutionApp,
 } from './apps.server.ts'
+import {
+	ensureWorkshopCacheMetadataFile,
+	readWorkshopCacheMetadataFile,
+	type WorkshopCacheMetadata,
+} from './workshop-cache-metadata.server.ts'
 import { resolveCacheDir } from './data-storage.server.ts'
 import { logger } from './logger.ts'
 import { type Notification } from './notifications.server.ts'
@@ -38,6 +43,8 @@ const corruptedReportThrottle = remember(
 	'epic:cache:corruption-throttle',
 	() => new LRUCache<string, number>({ max: 2000, ttl: 60_000 }),
 )
+
+const ensuredWorkshopCacheMetadata = new Set<string>()
 
 // Format cache time helper function (copied from @epic-web/cachified for consistency)
 function formatCacheTime(
@@ -289,6 +296,45 @@ export const directoryEmptyCache = makeSingletonCache<boolean>(
 
 export const discordCache = makeSingletonFsCache('DiscordCache')
 export const epicApiCache = makeSingletonFsCache('EpicApiCache')
+
+async function getCurrentWorkshopDisplayInfo(): Promise<
+	Pick<WorkshopCacheMetadata, 'displayName' | 'repoName' | 'subtitle'>
+> {
+	const env = getEnv()
+	const contextCwd = env.EPICSHOP_CONTEXT_CWD
+	const repoName = contextCwd ? path.basename(contextCwd) || undefined : undefined
+
+	let displayName = repoName || env.EPICSHOP_WORKSHOP_INSTANCE_ID || 'Unknown'
+	let subtitle: string | undefined
+
+	try {
+		const { getWorkshopConfig } = await import('./config.server.ts')
+		const config = getWorkshopConfig()
+		displayName = config.title || displayName
+		subtitle = config.subtitle
+	} catch {
+		// Best-effort only: cache metadata should never break caching.
+	}
+
+	return { displayName, repoName, subtitle }
+}
+
+async function ensureCurrentWorkshopCacheMetadata() {
+	const env = getEnv()
+	const workshopId = env.EPICSHOP_WORKSHOP_INSTANCE_ID
+	if (!workshopId) return
+	if (ensuredWorkshopCacheMetadata.has(workshopId)) return
+	ensuredWorkshopCacheMetadata.add(workshopId)
+
+	const { displayName, repoName, subtitle } = await getCurrentWorkshopDisplayInfo()
+	await ensureWorkshopCacheMetadataFile({
+		cacheDir,
+		workshopId,
+		displayName,
+		repoName,
+		subtitle,
+	})
+}
 
 export function makeGlobalFsCache<CacheEntryType>(name: string) {
 	return remember(`global-${name}`, () => {
@@ -599,6 +645,10 @@ export async function getGlobalCaches() {
 	}))
 }
 
+export async function readWorkshopCacheMetadata(workshopId: string) {
+	return readWorkshopCacheMetadataFile({ cacheDir, workshopId })
+}
+
 export async function getWorkshopFileCaches() {
 	const workshopCacheDir = path.join(
 		cacheDir,
@@ -762,6 +812,11 @@ export function makeSingletonFsCache<CacheEntryType>(name: string) {
 				return null
 			},
 			async set(key, entry) {
+				try {
+					await ensureCurrentWorkshopCacheMetadata()
+				} catch {
+					// Ignore: this is optional metadata only.
+				}
 				const filePath = path.join(cacheInstanceDir, md5(key))
 				const tempPath = `${filePath}.tmp`
 				await fsExtra.ensureDir(path.dirname(filePath))

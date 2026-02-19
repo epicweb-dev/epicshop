@@ -4,6 +4,7 @@ import {
 	getAllWorkshopCaches,
 	getGlobalCaches,
 	globalCacheDirectoryExists,
+	readWorkshopCacheMetadata,
 	updateCacheEntry,
 } from '@epic-web/workshop-utils/cache.server'
 import { getEnv } from '@epic-web/workshop-utils/env.server'
@@ -60,166 +61,9 @@ function getShortHash(value: string) {
 	return `${value.slice(0, 7)}...${value.slice(-6)}`
 }
 
-function getBasenameFromPath(value: string | undefined) {
-	if (!value) return null
-	const trimmed = value.replace(/[\\/]+$/, '')
-	const parts = trimmed.split(/[\\/]/).filter(Boolean)
-	return parts.at(-1) ?? null
-}
-
-const workshopIdAdjectives = [
-	'amber',
-	'ancient',
-	'aqua',
-	'brisk',
-	'bright',
-	'calm',
-	'candid',
-	'cobalt',
-	'cool',
-	'cosmic',
-	'crisp',
-	'curious',
-	'daring',
-	'dawn',
-	'eager',
-	'ember',
-	'exact',
-	'fancy',
-	'fast',
-	'gentle',
-	'glad',
-	'grand',
-	'green',
-	'happy',
-	'honest',
-	'icy',
-	'jolly',
-	'kind',
-	'lucky',
-	'mellow',
-	'mighty',
-	'modern',
-	'neat',
-	'noble',
-	'peach',
-	'plain',
-	'proud',
-	'quick',
-	'quiet',
-	'rapid',
-	'rare',
-	'ready',
-	'rich',
-	'safe',
-	'sandy',
-	'sharp',
-	'shy',
-	'silent',
-	'simple',
-	'smart',
-	'solid',
-	'swift',
-	'tender',
-	'tidy',
-	'tiny',
-	'true',
-	'vivid',
-	'warm',
-	'witty',
-	'young',
-	'zesty',
-] as const
-
-const workshopIdAnimals = [
-	'ant',
-	'bear',
-	'beaver',
-	'bison',
-	'cat',
-	'cobra',
-	'crane',
-	'crow',
-	'deer',
-	'dingo',
-	'dolphin',
-	'duck',
-	'eagle',
-	'ferret',
-	'fox',
-	'frog',
-	'gecko',
-	'goat',
-	'goose',
-	'hawk',
-	'heron',
-	'horse',
-	'ibis',
-	'iguana',
-	'jaguar',
-	'koala',
-	'lemur',
-	'lion',
-	'llama',
-	'lynx',
-	'marten',
-	'moose',
-	'mouse',
-	'otter',
-	'owl',
-	'panda',
-	'panther',
-	'parrot',
-	'penguin',
-	'pigeon',
-	'quail',
-	'rabbit',
-	'raccoon',
-	'ram',
-	'rat',
-	'raven',
-	'seal',
-	'shark',
-	'sheep',
-	'skunk',
-	'sloth',
-	'snake',
-	'sparrow',
-	'squid',
-	'swan',
-	'tiger',
-	'toad',
-	'turkey',
-	'turtle',
-	'walrus',
-	'whale',
-	'wolf',
-	'yak',
-	'zebra',
-] as const
-
-function getCodenameFromMd5(hash: string) {
-	if (!isLikelyMd5Hash(hash)) return null
-
-	const normalized = hash.toLowerCase()
-	const bytes: number[] = []
-	for (let i = 0; i < normalized.length; i += 2) {
-		const byte = Number.parseInt(normalized.slice(i, i + 2), 16)
-		if (!Number.isFinite(byte)) return null
-		bytes.push(byte)
-	}
-
-	const adjective = workshopIdAdjectives[bytes[0]! % workshopIdAdjectives.length]
-	const animal = workshopIdAnimals[bytes[1]! % workshopIdAnimals.length]
-	const number = ((bytes[2]! << 8) + bytes[3]!) % 1000
-
-	return `${adjective}-${animal}-${String(number).padStart(3, '0')}`
-}
-
 export async function loader({ request }: Route.LoaderArgs) {
 	ensureUndeployed()
-	const env = getEnv()
-	const currentWorkshopId = env.EPICSHOP_WORKSHOP_INSTANCE_ID
+	const currentWorkshopId = getEnv().EPICSHOP_WORKSHOP_INSTANCE_ID
 	const allWorkshopCaches = await getAllWorkshopCaches()
 	const globalCaches = await getGlobalCaches()
 	const allCaches = [...allWorkshopCaches, ...globalCaches]
@@ -252,76 +96,35 @@ export async function loader({ request }: Route.LoaderArgs) {
 		shortId: string
 		repoName?: string
 		subtitle?: string
-		kind: 'current' | 'known' | 'unknown' | 'global'
+		hasStoredDisplayName: boolean
 	}
 
 	const workshopIdentifiers: Record<string, WorkshopIdentifier> = {}
-	const currentWorkshopRepoName = getBasenameFromPath(env.EPICSHOP_CONTEXT_CWD)
-	let currentWorkshopLabel = currentWorkshopRepoName || currentWorkshopId
-	let currentWorkshopSubtitle: string | undefined
-
-	try {
-		const { getWorkshopConfig } = await import(
-			'@epic-web/workshop-utils/config.server'
-		)
-		const config = getWorkshopConfig()
-		currentWorkshopLabel = config.title || currentWorkshopLabel
-		currentWorkshopSubtitle = config.subtitle
-	} catch {
-		// If we can't read workshop config, fall back to repo folder name + hash.
-	}
-
-	if (currentWorkshopId) {
-		workshopIdentifiers[currentWorkshopId] = {
-			label: currentWorkshopLabel,
-			shortId: getShortHash(currentWorkshopId),
-			repoName: currentWorkshopRepoName ?? undefined,
-			subtitle: currentWorkshopSubtitle,
-			kind: 'current',
-		}
-	}
 
 	if (availableWorkshopIds.has('global')) {
 		workshopIdentifiers.global = {
 			label: 'Global caches',
 			shortId: 'global',
-			kind: 'global',
+			hasStoredDisplayName: true,
 		}
 	}
 
-	try {
-		const { listWorkshops } = await import(
-			'@epic-web/workshop-utils/workshops.server'
-		)
-		const workshops = await listWorkshops()
-		if (workshops.length > 0) {
-			const { createHash } = await import('node:crypto')
-			const md5Hex = (value: string) =>
-				createHash('md5').update(value).digest('hex')
-			for (const workshop of workshops) {
-				const workshopId = md5Hex(workshop.path)
-				if (workshopIdentifiers[workshopId]?.kind === 'current') continue
-				workshopIdentifiers[workshopId] = {
-					label: workshop.title,
-					shortId: getShortHash(workshopId),
-					repoName: workshop.repoName,
-					subtitle: workshop.subtitle,
-					kind: 'known',
-				}
-			}
-		}
-	} catch {
-		// Ignore: repos directory may be missing/unconfigured.
-	}
-
-	for (const workshopId of availableWorkshopIds) {
-		if (workshopId === 'global') continue
-		if (workshopIdentifiers[workshopId]) continue
-		const codename = getCodenameFromMd5(workshopId)
+	const workshopIds = Array.from(availableWorkshopIds).filter(
+		(workshopId) => workshopId !== 'global',
+	)
+	const workshopIdMetas = await Promise.all(
+		workshopIds.map(async (workshopId) => {
+			const meta = await readWorkshopCacheMetadata(workshopId)
+			return [workshopId, meta] as const
+		}),
+	)
+	for (const [workshopId, meta] of workshopIdMetas) {
 		workshopIdentifiers[workshopId] = {
-			label: codename ? `Unknown workshop (${codename})` : 'Unknown workshop',
+			label: meta?.displayName ?? workshopId,
 			shortId: getShortHash(workshopId),
-			kind: 'unknown',
+			repoName: meta?.repoName,
+			subtitle: meta?.subtitle,
+			hasStoredDisplayName: Boolean(meta?.displayName),
 		}
 	}
 
@@ -485,7 +288,7 @@ function WorkshopChooser({
 			shortId: string
 			repoName?: string
 			subtitle?: string
-			kind: 'current' | 'known' | 'unknown' | 'global'
+			hasStoredDisplayName: boolean
 		}
 	>
 }) {
@@ -514,39 +317,57 @@ function WorkshopChooser({
 					const label = meta?.label ?? workshop
 					const shortId = meta?.shortId ?? getShortHash(workshop)
 					const secondary = meta?.repoName ?? meta?.subtitle
+					const hasStoredDisplayName = meta?.hasStoredDisplayName ?? false
+					const showDetailsLine = hasStoredDisplayName && workshop !== 'global'
 					return (
 						<label
 							key={workshop}
 							className="flex items-center gap-2"
 							title={secondary ? `${label} (${secondary})` : label}
 						>
-						<input
-							type="checkbox"
-							checked={selectedWorkshops.includes(workshop)}
-							onChange={(e) => handleWorkshopChange(workshop, e.target.checked)}
-							className="rounded"
-						/>
-						<span
-							className={cn(
-								'text-sm',
-								workshop === currentWorkshopId ? 'text-primary font-bold' : null,
-							)}
-						>
-							<span className="inline-flex max-w-[22rem] flex-col leading-tight">
-								<span className="truncate">{label}</span>
-								<span
-									className={cn(
-										'text-muted-foreground font-mono text-xs font-normal',
-										workshop === currentWorkshopId ? 'text-primary/80' : null,
-									)}
-									title={workshop}
-								>
-									{secondary ? `${secondary} • ` : null}
-									{shortId}
-								</span>
-							</span>{' '}
-							{workshop === currentWorkshopId ? '(current)' : null}
-						</span>
+							<input
+								type="checkbox"
+								checked={selectedWorkshops.includes(workshop)}
+								onChange={(e) =>
+									handleWorkshopChange(workshop, e.target.checked)
+								}
+								className="rounded"
+							/>
+							<span
+								className={cn(
+									'text-sm',
+									workshop === currentWorkshopId
+										? 'text-primary font-bold'
+										: null,
+								)}
+							>
+								<span className="inline-flex max-w-[22rem] flex-col leading-tight">
+									<span
+										className={cn(
+											hasStoredDisplayName
+												? 'truncate'
+												: 'font-mono text-xs break-all',
+										)}
+									>
+										{label}
+									</span>
+									{showDetailsLine ? (
+										<span
+											className={cn(
+												'text-muted-foreground font-mono text-xs font-normal',
+												workshop === currentWorkshopId
+													? 'text-primary/80'
+													: null,
+											)}
+											title={workshop}
+										>
+											{secondary ? `${secondary} • ` : null}
+											{shortId}
+										</span>
+									) : null}
+								</span>{' '}
+								{workshop === currentWorkshopId ? '(current)' : null}
+							</span>
 						</label>
 					)
 				})}
@@ -926,10 +747,18 @@ export default function CacheManagement({ loaderData }: Route.ComponentProps) {
 				<p className="text-muted-foreground">
 					Current Workshop:{' '}
 					<span className="text-foreground font-semibold">
-						{currentWorkshopMeta?.label ?? currentWorkshopId}
+						<span
+							className={cn(
+								currentWorkshopMeta?.hasStoredDisplayName
+									? null
+									: 'font-mono text-xs',
+							)}
+						>
+							{currentWorkshopMeta?.label ?? currentWorkshopId}
+						</span>
 					</span>
 				</p>
-				{currentWorkshopMeta?.shortId ? (
+				{currentWorkshopMeta?.hasStoredDisplayName ? (
 					<p className="text-muted-foreground mt-1 text-xs">
 						Instance ID:{' '}
 						<span className="font-mono" title={currentWorkshopId}>
@@ -978,7 +807,13 @@ export default function CacheManagement({ loaderData }: Route.ComponentProps) {
 									<h3 className="text-card-foreground flex min-w-0 items-center gap-2 text-lg font-semibold">
 										<Icon name="Files" className="h-5 w-5 shrink-0" />
 										<span
-											className="min-w-0 truncate"
+											className={cn(
+												'min-w-0',
+												workshopIdentifiers[workshopCache.workshopId]
+													?.hasStoredDisplayName
+													? 'truncate'
+													: 'font-mono text-xs break-all',
+											)}
 											title={workshopCache.workshopId}
 										>
 											{workshopIdentifiers[workshopCache.workshopId]?.label ??
@@ -992,24 +827,36 @@ export default function CacheManagement({ loaderData }: Route.ComponentProps) {
 											</span>
 										) : null}
 									</h3>
-									<div className="text-muted-foreground mt-1 flex flex-wrap items-center gap-2 text-xs">
-										{workshopIdentifiers[workshopCache.workshopId]?.repoName ? (
-											<span className="truncate">
-												{workshopIdentifiers[workshopCache.workshopId]?.repoName}
+									{workshopIdentifiers[workshopCache.workshopId]
+										?.hasStoredDisplayName ? (
+										<div className="text-muted-foreground mt-1 flex flex-wrap items-center gap-2 text-xs">
+											{workshopIdentifiers[workshopCache.workshopId]?.repoName ? (
+												<span className="truncate">
+													{
+														workshopIdentifiers[workshopCache.workshopId]
+															?.repoName
+													}
+												</span>
+											) : workshopIdentifiers[workshopCache.workshopId]
+													?.subtitle ? (
+												<span className="truncate">
+													{
+														workshopIdentifiers[workshopCache.workshopId]
+															?.subtitle
+													}
+												</span>
+											) : null}
+											<span
+												className="font-mono"
+												title={workshopCache.workshopId}
+											>
+												{
+													workshopIdentifiers[workshopCache.workshopId]
+														?.shortId
+												}
 											</span>
-										) : workshopIdentifiers[workshopCache.workshopId]?.subtitle ? (
-											<span className="truncate">
-												{workshopIdentifiers[workshopCache.workshopId]?.subtitle}
-											</span>
-										) : null}
-										<span
-											className="font-mono"
-											title={workshopCache.workshopId}
-										>
-											{workshopIdentifiers[workshopCache.workshopId]?.shortId ??
-												getShortHash(workshopCache.workshopId)}
-										</span>
-									</div>
+										</div>
+									) : null}
 								</div>
 								<DoubleCheckButton
 									onConfirm={() =>
@@ -1107,14 +954,6 @@ export default function CacheManagement({ loaderData }: Route.ComponentProps) {
 																		>
 																			{key}
 																		</div>
-																		{isLikelyMd5Hash(key) ? (
-																			<span
-																				className="bg-muted text-muted-foreground inline-flex items-center rounded px-1.5 py-0.5 font-mono text-xs whitespace-nowrap"
-																				title="Friendly label derived from md5 key"
-																			>
-																				{getCodenameFromMd5(key)}
-																			</span>
-																		) : null}
 																		{size ? (
 																			<span
 																				className="bg-muted text-muted-foreground inline-flex items-center rounded px-1.5 py-0.5 text-xs whitespace-nowrap"
