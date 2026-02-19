@@ -132,6 +132,78 @@ test('resolves step solution video location via /solution URL', () => {
 	})
 })
 
+test('resolves step solution video location via /solution/embed URL (aha)', () => {
+	const local = createLocalData({
+		exercises: [
+			{
+				exerciseNumber: 3,
+				instructionsEpicVideoEmbeds: [],
+				finishedEpicVideoEmbeds: [],
+				steps: [
+					{
+						stepNumber: 2,
+						problem: { epicVideoEmbeds: [] },
+						solution: {
+							epicVideoEmbeds: [
+								'https://www.epicweb.dev/workshops/ws/step-3-2/solution/embed',
+							],
+						},
+					},
+				],
+			},
+		],
+	})
+
+	expect(
+		resolveLocalProgressForEpicLesson('step-3-2', {
+			workshopInstructions: local.workshopInstructions,
+			workshopFinished: local.workshopFinished,
+			exercises: local.exercises,
+		}),
+	).toEqual({
+		type: 'step',
+		exerciseNumber: 3,
+		stepNumber: 2,
+		stepType: 'solution',
+	})
+})
+
+test('resolves step problem video location via /problem/embed URL (aha)', () => {
+	const local = createLocalData({
+		exercises: [
+			{
+				exerciseNumber: 3,
+				instructionsEpicVideoEmbeds: [],
+				finishedEpicVideoEmbeds: [],
+				steps: [
+					{
+						stepNumber: 2,
+						problem: {
+							epicVideoEmbeds: [
+								'https://www.epicweb.dev/workshops/ws/step-3-2/problem/embed',
+							],
+						},
+						solution: { epicVideoEmbeds: [] },
+					},
+				],
+			},
+		],
+	})
+
+	expect(
+		resolveLocalProgressForEpicLesson('step-3-2', {
+			workshopInstructions: local.workshopInstructions,
+			workshopFinished: local.workshopFinished,
+			exercises: local.exercises,
+		}),
+	).toEqual({
+		type: 'step',
+		exerciseNumber: 3,
+		stepNumber: 2,
+		stepType: 'problem',
+	})
+})
+
 test('tolerates trailing slashes and /embed suffixes when matching', () => {
 	const local = createLocalData({
 		exercises: [

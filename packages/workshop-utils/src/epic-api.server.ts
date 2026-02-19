@@ -631,18 +631,15 @@ function parseEpicLessonSlugFromEmbedUrl(urlString: string): {
 		if (segments.length === 0) return { lessonSlug: null, subpage: null }
 		const last = segments.at(-1) ?? null
 		if (!last) return { lessonSlug: null, subpage: null }
+		// `/embed` can be appended to either the lesson page itself or a
+		// `/problem`/`/solution` subpage (e.g. `/lesson/solution/embed`). Strip it
+		// first so we can apply the subpage logic consistently.
+		if (last === 'embed') return parseSegments(segments.slice(0, -1))
 		if (isProblemOrSolutionSubpage(last)) {
 			const slug = segments.at(-2) ?? null
 			return {
 				lessonSlug: slug ? stripEpicAiSlugSuffix(slug) : null,
 				subpage: last,
-			}
-		}
-		if (last === 'embed') {
-			const slug = segments.at(-2) ?? null
-			return {
-				lessonSlug: slug ? stripEpicAiSlugSuffix(slug) : null,
-				subpage: null,
 			}
 		}
 		return { lessonSlug: stripEpicAiSlugSuffix(last), subpage: null }
