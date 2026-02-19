@@ -17,6 +17,10 @@ component.
 <EpicVideo url="https://www.epicweb.dev/workshops/full-stack-foundations/styling/intro-to-full-stack-foundations-workshop" />
 ```
 
+To validate launch readiness locally, run:
+
+`npx epicshop admin launch-readiness`
+
 You must also add the `product.slug` and `product.host` to the `epicshop`
 section in `package.json`:
 

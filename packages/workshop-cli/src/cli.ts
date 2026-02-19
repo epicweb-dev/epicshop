@@ -972,6 +972,96 @@ const cli = yargs(args)
 		},
 	)
 	.command(
+		'admin <subcommand>',
+		false,
+		(yargs: Argv) => {
+			return yargs
+				.positional('subcommand', {
+					describe: 'Admin subcommand',
+					type: 'string',
+					choices: ['launch-readiness'],
+				})
+				.option('workshop-dir', {
+					alias: 'w',
+					type: 'string',
+					description:
+						'Path to a workshop directory to use as context (instead of the current working directory)',
+				})
+				.option('silent', {
+					alias: 's',
+					type: 'boolean',
+					description: 'Run without output logs',
+					default: false,
+				})
+				.option('skip-remote', {
+					type: 'boolean',
+					description:
+						'Skip the remote "product lessons" check (only run local checks)',
+					default: false,
+				})
+				.option('skip-head', {
+					type: 'boolean',
+					description:
+						'Skip checking that EpicVideo urls return 200 to HEAD (network required)',
+					default: false,
+				})
+				.example(
+					'$0 admin launch-readiness',
+					'Check workshop launch readiness (hidden command)',
+				)
+		},
+		async (
+			argv: ArgumentsCamelCase<{
+				subcommand: string
+				workshopDir?: string
+				silent?: boolean
+				skipRemote?: boolean
+				skipHead?: boolean
+			}>,
+		) => {
+			const { findWorkshopRoot } = await import('./commands/workshops.js')
+			const workshopRoot = await findWorkshopRoot(
+				resolveWorkshopContextCwd(argv.workshopDir),
+			)
+
+			if (!workshopRoot) {
+				console.error(
+					chalk.red(
+						'❌ Workshop not found. Please cd into a workshop directory or pass --workshop-dir.',
+					),
+				)
+				process.exit(1)
+			}
+
+			const originalCwd = process.cwd()
+			process.chdir(workshopRoot)
+			process.env.EPICSHOP_CONTEXT_CWD = workshopRoot
+
+			try {
+				switch (argv.subcommand) {
+					case 'launch-readiness': {
+						const { launchReadiness } = await import('./commands/admin.js')
+						const result = await launchReadiness({
+							silent: argv.silent,
+							skipRemote: argv.skipRemote,
+							skipHead: argv.skipHead,
+						})
+						if (!result.success) process.exit(1)
+						break
+					}
+					default: {
+						console.error(
+							chalk.red(`❌ Unknown admin subcommand: ${argv.subcommand}`),
+						)
+						process.exit(1)
+					}
+				}
+			} finally {
+				process.chdir(originalCwd)
+			}
+		},
+	)
+	.command(
 		'playground [subcommand] [target]',
 		'Manage the playground environment (context-aware)',
 		(yargs: Argv) => {
