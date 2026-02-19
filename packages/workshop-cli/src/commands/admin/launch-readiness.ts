@@ -890,7 +890,9 @@ export async function launchReadiness(
 	{
 		const videoFilePaths = new Set(filesToCheck.map((f) => f.fullPath))
 		const extraContentFilePaths = new Set(
-			contentFilesToCheck.map((f) => f.fullPath).filter((p) => !videoFilePaths.has(p)),
+			contentFilesToCheck
+				.map((f) => f.fullPath)
+				.filter((p) => !videoFilePaths.has(p)),
 		)
 
 		for (const fullPath of extraContentFilePaths) {
