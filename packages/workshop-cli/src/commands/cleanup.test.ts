@@ -1,3 +1,4 @@
+import { createHash } from 'node:crypto'
 import { mkdtemp, mkdir, readdir, rm, stat, writeFile } from 'node:fs/promises'
 import os from 'node:os'
 import path from 'node:path'
@@ -162,6 +163,83 @@ test('cleanup removes offline videos directory', async () => {
 		expect(result.success).toBe(true)
 		await expect(stat(offlineVideosDir)).rejects.toThrow()
 	} finally {
+		await rm(root, { recursive: true, force: true })
+	}
+})
+
+test('cleanup defaults to current workshop when run inside one', async () => {
+	const originalCwd = process.cwd()
+	const root = await mkdtemp(path.join(os.tmpdir(), 'epicshop-cleanup-'))
+	const reposDir = path.join(root, 'repos')
+	const cacheDir = path.join(root, 'cache')
+	const legacyCacheDir = path.join(root, 'legacy-cache')
+	const offlineVideosDir = path.join(root, 'offline-videos')
+
+	const workshopA = path.join(reposDir, 'workshop-a')
+	const workshopB = path.join(reposDir, 'workshop-b')
+	const workshopASubdir = path.join(workshopA, 'nested')
+
+	const workshopAId = createHash('md5')
+		.update(path.resolve(workshopA))
+		.digest('hex')
+	const workshopBId = createHash('md5')
+		.update(path.resolve(workshopB))
+		.digest('hex')
+	const workshopACache = path.join(cacheDir, workshopAId)
+	const workshopBCache = path.join(cacheDir, workshopBId)
+
+	try {
+		await mkdir(reposDir, { recursive: true })
+		await mkdir(cacheDir, { recursive: true })
+		await mkdir(legacyCacheDir, { recursive: true })
+
+		await mkdir(workshopA, { recursive: true })
+		await writeFile(
+			path.join(workshopA, 'package.json'),
+			JSON.stringify(
+				{ name: 'workshop-a', epicshop: { title: 'Workshop A' } },
+				null,
+				2,
+			),
+		)
+		await mkdir(workshopASubdir, { recursive: true })
+
+		await mkdir(workshopB, { recursive: true })
+		await writeFile(
+			path.join(workshopB, 'package.json'),
+			JSON.stringify(
+				{ name: 'workshop-b', epicshop: { title: 'Workshop B' } },
+				null,
+				2,
+			),
+		)
+
+		await mkdir(workshopACache, { recursive: true })
+		await writeFile(path.join(workshopACache, 'cache.txt'), 'a')
+		await mkdir(workshopBCache, { recursive: true })
+		await writeFile(path.join(workshopBCache, 'cache.txt'), 'b')
+
+		process.chdir(workshopASubdir)
+		const result = await cleanup({
+			silent: true,
+			force: true,
+			targets: ['workshops'],
+			workshopTargets: ['caches'],
+			paths: {
+				reposDir,
+				cacheDir,
+				legacyCacheDir,
+				offlineVideosDir,
+				dataPaths: [],
+				configPath: path.join(root, 'workshops-config.json'),
+			},
+		})
+
+		expect(result.success).toBe(true)
+		await expect(stat(workshopACache)).rejects.toThrow()
+		await expect(stat(workshopBCache)).resolves.toBeDefined()
+	} finally {
+		process.chdir(originalCwd)
 		await rm(root, { recursive: true, force: true })
 	}
 })
