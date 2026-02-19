@@ -200,6 +200,55 @@ async function isDirectoryEmpty(targetPath: string): Promise<boolean> {
 	}
 }
 
+async function findWorkshopEntryFromCwd(
+	startDir?: string,
+): Promise<WorkshopEntry | null> {
+	let currentDir = startDir ? path.resolve(startDir) : process.cwd()
+
+	// If the user gave us a file path (or something that isn't a directory),
+	// treat the containing folder as the start point.
+	try {
+		const stats = await fs.stat(currentDir)
+		if (!stats.isDirectory()) {
+			currentDir = path.dirname(currentDir)
+		}
+	} catch {
+		// If the path doesn't exist, we still attempt to walk upward from it.
+	}
+
+	const root = path.parse(currentDir).root
+	while (currentDir !== root) {
+		const packageJsonPath = path.join(currentDir, 'package.json')
+		try {
+			const packageJson = JSON.parse(
+				await fs.readFile(packageJsonPath, 'utf8'),
+			) as {
+				name?: string
+				epicshop?: { title?: string } | unknown
+			}
+			if (packageJson.epicshop) {
+				return {
+					title:
+						(typeof (packageJson.epicshop as any)?.title === 'string' &&
+						(packageJson.epicshop as any).title
+							? (packageJson.epicshop as any).title
+							: packageJson.name || path.basename(currentDir)) ?? currentDir,
+					repoName: path.basename(currentDir),
+					path: currentDir,
+				}
+			}
+		} catch {
+			// Not a workshop root, keep walking up.
+		}
+
+		const parentDir = path.dirname(currentDir)
+		if (parentDir === currentDir) break
+		currentDir = parentDir
+	}
+
+	return null
+}
+
 async function listWorkshopsInDirectory(
 	reposDir: string,
 ): Promise<WorkshopEntry[]> {
@@ -777,6 +826,7 @@ export async function cleanup({
 	try {
 		let selectedTargets = resolveCleanupTargets(targets)
 		let selectedWorkshopTargets = resolveWorkshopCleanupTargets(workshopTargets)
+		const hasExplicitWorkshopSelection = (workshops?.length ?? 0) > 0
 		if ((workshops?.length ?? 0) > 0 || selectedWorkshopTargets.length > 0) {
 			if (!selectedTargets.includes('workshops')) {
 				selectedTargets.push('workshops')
@@ -795,6 +845,7 @@ export async function cleanup({
 		let configPath = ''
 		let allWorkshops: WorkshopEntry[] = []
 		let workshopIdentities: WorkshopIdentity[] = []
+		let contextWorkshop: WorkshopIdentity | null = null
 		let workshopSummaries: WorkshopSummary[] = []
 		let workshopBytes = 0
 		let legacyCacheBytes = 0
@@ -821,12 +872,42 @@ export async function cleanup({
 			const needsWorkshopInventory =
 				selectedTargets.length === 0 || selectedTargets.includes('workshops')
 			if (needsWorkshopInventory) {
-				updateSpinner(analysisSpinner, 'Finding installed workshops...')
-				allWorkshops = await listWorkshopsInDirectory(reposDir)
+				const workshopFromCwd = await findWorkshopEntryFromCwd()
+				const shouldScopeToCwdWorkshop =
+					!hasExplicitWorkshopSelection && Boolean(workshopFromCwd)
+
+				if (shouldScopeToCwdWorkshop && workshopFromCwd) {
+					// Context-aware behavior: when running inside a workshop and no
+					// explicit `--workshops` were provided, we treat the current workshop
+					// as the only workshop candidate. This avoids suggesting other
+					// workshops in prompts and keeps size estimates accurate.
+					allWorkshops = [workshopFromCwd]
+				} else {
+					updateSpinner(analysisSpinner, 'Finding installed workshops...')
+					allWorkshops = await listWorkshopsInDirectory(reposDir)
+
+					// If we're inside a workshop that isn't in the configured repos
+					// directory (e.g. working on a workshop repo elsewhere), still allow
+					// cleanup to target the current workshop.
+					if (workshopFromCwd) {
+						const cwdId = getWorkshopInstanceId(workshopFromCwd.path)
+						const alreadyIncluded = allWorkshops.some(
+							(w) => getWorkshopInstanceId(w.path) === cwdId,
+						)
+						if (!alreadyIncluded) {
+							allWorkshops.push(workshopFromCwd)
+						}
+					}
+				}
 				workshopIdentities = allWorkshops.map((workshop) => ({
 					...workshop,
 					id: getWorkshopInstanceId(workshop.path),
 				}))
+				if (workshopFromCwd) {
+					const cwdId = getWorkshopInstanceId(workshopFromCwd.path)
+					contextWorkshop =
+						workshopIdentities.find((workshop) => workshop.id === cwdId) ?? null
+				}
 			}
 
 			if (selectedTargets.length === 0) {
@@ -941,6 +1022,11 @@ export async function cleanup({
 				if (!silent) {
 					console.log(chalk.yellow('No workshops found to clean up.'))
 				}
+			} else if (!hasExplicitWorkshopSelection && contextWorkshop) {
+				// Context-aware default: if we're running from inside a workshop and no
+				// `--workshops` were provided, skip suggesting other workshops and
+				// default to the current workshop.
+				selectedWorkshops = [contextWorkshop]
 			} else if (workshops && workshops.length > 0) {
 				const resolved = resolveWorkshopSelection(workshopIdentities, workshops)
 				if (resolved.missing.length > 0) {

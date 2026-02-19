@@ -450,6 +450,9 @@ epicshop cleanup [options]
 # Pick cleanup targets interactively (multi-select)
 epicshop cleanup
 
+# Inside a workshop - clean that workshop without selecting from a list
+epicshop cleanup --workshop-actions caches --force
+
 # Clean selected targets without prompting
 epicshop cleanup --targets caches --targets preferences --force
 
@@ -466,7 +469,9 @@ epicshop cleanup \
 - Removes cache and legacy cache directories when selected
 - Preferences/auth cleanup updates local data files in-place
 - Config cleanup removes the saved workshops directory setting
-- Workshop cleanup prompts for specific workshops, then what to clean for them
+- Workshop cleanup prompts for what to clean for workshops
+- If run inside a workshop directory and `--workshops` is not provided, workshop
+  cleanup defaults to the current workshop and does not suggest other workshops
 - Workshop actions are scoped to selected workshops, not all workshops
 
 ### `migrate`
