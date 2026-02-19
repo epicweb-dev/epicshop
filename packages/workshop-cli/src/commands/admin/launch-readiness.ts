@@ -885,6 +885,34 @@ export async function launchReadiness(
 		}
 	}
 
+	// Also scan the remaining required MDX files for EpicVideo embeds (e.g. step FINISHED.mdx),
+	// but do not require that they include a video.
+	{
+		const videoFilePaths = new Set(filesToCheck.map((f) => f.fullPath))
+		const extraContentFilePaths = new Set(
+			contentFilesToCheck.map((f) => f.fullPath).filter((p) => !videoFilePaths.has(p)),
+		)
+
+		for (const fullPath of extraContentFilePaths) {
+			if (!(await pathExists(fullPath))) continue
+			try {
+				const compiled = await compileMdx(fullPath)
+				for (const embed of compiled.epicVideoEmbeds ?? []) {
+					const set = embedOccurrences.get(embed) ?? new Set<string>()
+					set.add(fullPath)
+					embedOccurrences.set(embed, set)
+				}
+			} catch (error) {
+				issues.push({
+					level: 'error',
+					code: 'mdx-compile-failed',
+					message: `Failed to compile MDX: ${getErrorMessage(error)}`,
+					file: fullPath,
+				})
+			}
+		}
+	}
+
 	// ------------------------------------------------
 	// 3) HEAD-check EpicVideo urls
 	// ------------------------------------------------
