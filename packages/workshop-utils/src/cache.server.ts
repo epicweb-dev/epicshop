@@ -324,16 +324,18 @@ async function ensureCurrentWorkshopCacheMetadata() {
 	const workshopId = env.EPICSHOP_WORKSHOP_INSTANCE_ID
 	if (!workshopId) return
 	if (ensuredWorkshopCacheMetadata.has(workshopId)) return
-	ensuredWorkshopCacheMetadata.add(workshopId)
 
 	const { displayName, repoName, subtitle } = await getCurrentWorkshopDisplayInfo()
-	await ensureWorkshopCacheMetadataFile({
+	const metadata = await ensureWorkshopCacheMetadataFile({
 		cacheDir,
 		workshopId,
 		displayName,
 		repoName,
 		subtitle,
 	})
+	if (metadata) {
+		ensuredWorkshopCacheMetadata.add(workshopId)
+	}
 }
 
 export function makeGlobalFsCache<CacheEntryType>(name: string) {
@@ -706,6 +708,7 @@ export async function deleteWorkshopCache(
 			if (await fsExtra.exists(workshopCachePath)) {
 				await fsExtra.remove(workshopCachePath)
 			}
+			ensuredWorkshopCacheMetadata.delete(workshopId)
 		}
 	} catch (error) {
 		console.error(
