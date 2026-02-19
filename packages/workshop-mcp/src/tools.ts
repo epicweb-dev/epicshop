@@ -425,8 +425,12 @@ export function initTools(server: McpServer) {
 							nextProgress.type === 'workshop-instructions' ||
 							nextProgress.type === 'workshop-finished'
 						) {
+							const label =
+								nextProgress.type === 'workshop-instructions'
+									? 'workshop instructions'
+									: 'workshop finished'
 							throw new Error(
-								`The user needs to mark the ${nextProgress.exerciseNumber} ${nextProgress.type === 'workshop-instructions' ? 'Workshop instructions' : 'Workshop finished'} as complete before they can continue. Have them watch the video at ${nextProgress.epicLessonUrl}, then mark it as complete.`,
+								`The user needs to mark the ${label} as complete before they can continue. Have them watch the video at ${nextProgress.epicLessonUrl}, then mark it as complete.`,
 							)
 						}
 
