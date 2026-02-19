@@ -23,7 +23,8 @@
       "./progress": "./src/commands/progress.ts",
       "./diff": "./src/commands/diff.ts",
       "./exercises": "./src/commands/exercises.ts",
-      "./auth": "./src/commands/auth.ts"
+      "./auth": "./src/commands/auth.ts",
+      "./admin": "./src/commands/admin.ts"
     },
     "bin": "./src/cli.ts"
   },
@@ -83,6 +84,11 @@
       "import": "./dist/commands/auth.js",
       "types": "./dist/commands/auth.d.ts",
       "default": "./dist/commands/auth.js"
+    },
+    "./admin": {
+      "import": "./dist/commands/admin.js",
+      "types": "./dist/commands/admin.d.ts",
+      "default": "./dist/commands/admin.js"
     }
   },
   "files": [
