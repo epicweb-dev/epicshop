@@ -828,7 +828,8 @@ export default function CacheManagement({ loaderData }: Route.ComponentProps) {
 										) : null}
 									</h3>
 									{workshopIdentifiers[workshopCache.workshopId]
-										?.hasStoredDisplayName ? (
+										?.hasStoredDisplayName &&
+										workshopCache.workshopId !== 'global' ? (
 										<div className="text-muted-foreground mt-1 flex flex-wrap items-center gap-2 text-xs">
 											{workshopIdentifiers[workshopCache.workshopId]?.repoName ? (
 												<span className="truncate">
