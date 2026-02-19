@@ -299,6 +299,11 @@ async function getEpicVideoInfo({
 					'/workshops/',
 				)
 			}
+			const epicPathSegments = epicUrl.pathname.split('/').filter(Boolean)
+			if (epicPathSegments.at(-1) === 'embed') {
+				epicPathSegments.pop()
+				epicUrl.pathname = `/${epicPathSegments.join('/')}`
+			}
 
 			// special case for epicai.pro videos
 			const apiUrl =
