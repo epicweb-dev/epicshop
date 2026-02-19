@@ -11,7 +11,9 @@ vi.mock('@epic-web/workshop-utils/compile-mdx.server', async () => {
 			const content = await fs.readFile(file, 'utf8').catch(() => '')
 			const embeds = Array.from(
 				content.matchAll(/<EpicVideo[^>]*\burl=["']([^"']+)["'][^>]*\/?>/g),
-			).map((m) => (m[1] ?? '').replace(/\/$/, '')).filter(Boolean)
+			)
+				.map((m) => (m[1] ?? '').replace(/\/$/, ''))
+				.filter(Boolean)
 			return { code: '', title: null, epicVideoEmbeds: embeds }
 		}),
 	}
@@ -102,7 +104,9 @@ test('passes with configured product + videos (skip remote)', async () => {
 })
 
 test('fails when epicshop.product.slug missing', async () => {
-	const workshopRoot = await createWorkshopFixture({ includeProductSlug: false })
+	const workshopRoot = await createWorkshopFixture({
+		includeProductSlug: false,
+	})
 
 	try {
 		await expect(
@@ -118,7 +122,13 @@ test('fails when a required MDX file has no EpicVideo embed (and prints helpful 
 
 	// Remove the EpicVideo embed from the step problem README.
 	await writeFile(
-		path.join(workshopRoot, 'exercises', '01.first-exercise', '01.problem', 'README.mdx'),
+		path.join(
+			workshopRoot,
+			'exercises',
+			'01.first-exercise',
+			'01.problem',
+			'README.mdx',
+		),
 		`# Step Problem\n\nNo video yet.\n`,
 	)
 
@@ -171,4 +181,3 @@ test('remote lesson check fails when product lesson slug not represented locally
 		await fs.rm(workshopRoot, { recursive: true, force: true })
 	}
 })
-

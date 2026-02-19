@@ -1,11 +1,11 @@
+import type { Dirent } from 'node:fs'
 import fs from 'node:fs/promises'
 import path from 'node:path'
-
-import chalk from 'chalk'
 
 import { compileMdx } from '@epic-web/workshop-utils/compile-mdx.server'
 import { getAuthInfo } from '@epic-web/workshop-utils/db.server'
 import { getErrorMessage } from '@epic-web/workshop-utils/utils'
+import chalk from 'chalk'
 import { pathExists } from '../../utils/filesystem.js'
 
 type IssueLevel = 'error' | 'warning'
@@ -157,7 +157,7 @@ function buildExpectedFiles({
 			})
 		}
 
-		let entries: Array<import('node:fs').Dirent> = []
+		let entries: Array<Dirent> = []
 		try {
 			entries = await fs.readdir(exerciseRoot, { withFileTypes: true })
 		} catch (error) {
@@ -366,15 +366,27 @@ async function fetchRemoteWorkshopLessonSlugs({
 
 	const lessonSlugs: Array<string> = []
 	for (const resource of resources) {
-		if (resource && typeof resource === 'object' && resource._type === 'lesson') {
+		if (
+			resource &&
+			typeof resource === 'object' &&
+			resource._type === 'lesson'
+		) {
 			if (typeof resource.slug === 'string') lessonSlugs.push(resource.slug)
 			continue
 		}
-		if (resource && typeof resource === 'object' && resource._type === 'section') {
+		if (
+			resource &&
+			typeof resource === 'object' &&
+			resource._type === 'section'
+		) {
 			const lessons = resource.lessons
 			if (Array.isArray(lessons)) {
 				for (const lesson of lessons) {
-					if (lesson && typeof lesson === 'object' && typeof lesson.slug === 'string') {
+					if (
+						lesson &&
+						typeof lesson === 'object' &&
+						typeof lesson.slug === 'string'
+					) {
 						lessonSlugs.push(lesson.slug)
 					}
 				}
@@ -415,7 +427,9 @@ export async function launchReadiness(
 				? rawPackageJson.epicshop
 				: null
 		rawProduct =
-			rawEpicshop && typeof rawEpicshop === 'object' ? rawEpicshop.product : null
+			rawEpicshop && typeof rawEpicshop === 'object'
+				? rawEpicshop.product
+				: null
 	} catch (error) {
 		issues.push({
 			level: 'error',
@@ -510,9 +524,13 @@ export async function launchReadiness(
 	}
 
 	const githubRepo =
-		typeof rawEpicshop?.githubRepo === 'string' ? rawEpicshop.githubRepo.trim() : ''
+		typeof rawEpicshop?.githubRepo === 'string'
+			? rawEpicshop.githubRepo.trim()
+			: ''
 	const githubRoot =
-		typeof rawEpicshop?.githubRoot === 'string' ? rawEpicshop.githubRoot.trim() : ''
+		typeof rawEpicshop?.githubRoot === 'string'
+			? rawEpicshop.githubRoot.trim()
+			: ''
 	if (!githubRepo && !githubRoot) {
 		issues.push({
 			level: 'error',
@@ -604,7 +622,9 @@ export async function launchReadiness(
 	// Exercise + step files
 	let exerciseDirNames: Array<string> = []
 	if (await isDirectory(exercisesRoot)) {
-		const exerciseEntries = await fs.readdir(exercisesRoot, { withFileTypes: true })
+		const exerciseEntries = await fs.readdir(exercisesRoot, {
+			withFileTypes: true,
+		})
 		exerciseDirNames = exerciseEntries
 			.filter((e) => e.isDirectory() && /^\d+\./.test(e.name))
 			.map((e) => e.name)
@@ -857,4 +877,3 @@ export async function launchReadiness(
 				),
 			}
 }
-
