@@ -329,7 +329,10 @@ async function ensureWorkshopCacheMetadata(workshopId: string) {
 	if (!workshopId) return
 	if (ensuredWorkshopCacheMetadata.has(workshopId)) {
 		try {
-			const filePath = getWorkshopCacheMetadataFilePath({ cacheDir, workshopId })
+			const filePath = getWorkshopCacheMetadataFilePath({
+				cacheDir,
+				workshopId,
+			})
 			if (await fsExtra.pathExists(filePath)) return
 		} catch {
 			// Treat errors as "missing" and attempt to re-create.
