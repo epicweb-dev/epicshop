@@ -61,6 +61,15 @@ function getShortHash(value: string) {
 	return `${value.slice(0, 7)}...${value.slice(-6)}`
 }
 
+type WorkshopMeta = {
+	id: string
+	displayName: string
+	shortId: string
+	repoName?: string
+	subtitle?: string
+	hasStoredDisplayName: boolean
+}
+
 export async function loader({ request }: Route.LoaderArgs) {
 	ensureUndeployed()
 	const currentWorkshopId = getEnv().EPICSHOP_WORKSHOP_INSTANCE_ID
@@ -91,19 +100,12 @@ export async function loader({ request }: Route.LoaderArgs) {
 	]
 	const normalizedQuery = normalizeSearchQuery(filterQuery)
 
-	type WorkshopIdentifier = {
-		label: string
-		shortId: string
-		repoName?: string
-		subtitle?: string
-		hasStoredDisplayName: boolean
-	}
-
-	const workshopIdentifiers: Record<string, WorkshopIdentifier> = {}
+	const workshopMetaById: Record<string, WorkshopMeta> = {}
 
 	if (availableWorkshopIds.has('global')) {
-		workshopIdentifiers.global = {
-			label: 'Global caches',
+		workshopMetaById.global = {
+			id: 'global',
+			displayName: 'Global caches',
 			shortId: 'global',
 			hasStoredDisplayName: true,
 		}
@@ -119,8 +121,9 @@ export async function loader({ request }: Route.LoaderArgs) {
 		}),
 	)
 	for (const [workshopId, meta] of workshopIdMetas) {
-		workshopIdentifiers[workshopId] = {
-			label: meta?.displayName ?? workshopId,
+		workshopMetaById[workshopId] = {
+			id: workshopId,
+			displayName: meta?.displayName ?? workshopId,
 			shortId: getShortHash(workshopId),
 			repoName: meta?.repoName,
 			subtitle: meta?.subtitle,
@@ -133,8 +136,8 @@ export async function loader({ request }: Route.LoaderArgs) {
 		if (b === currentWorkshopId) return 1
 		if (a === 'global') return -1
 		if (b === 'global') return 1
-		const aLabel = workshopIdentifiers[a]?.label ?? a
-		const bLabel = workshopIdentifiers[b]?.label ?? b
+		const aLabel = workshopMetaById[a]?.displayName ?? a
+		const bLabel = workshopMetaById[b]?.displayName ?? b
 		return aLabel.localeCompare(bLabel)
 	}
 
@@ -146,9 +149,15 @@ export async function loader({ request }: Route.LoaderArgs) {
 				selectedWorkshops.length === 0,
 		)
 		.map((workshopCache) => {
-			const workshopLabel =
-				workshopIdentifiers[workshopCache.workshopId]?.label ??
-				workshopCache.workshopId
+			const workshop =
+				workshopMetaById[workshopCache.workshopId] ??
+				({
+					id: workshopCache.workshopId,
+					displayName: workshopCache.workshopId,
+					shortId: getShortHash(workshopCache.workshopId),
+					hasStoredDisplayName: false,
+				} satisfies WorkshopMeta)
+			const workshopLabel = workshop.displayName
 			const workshopMatchesQuery =
 				normalizedQuery === ''
 					? true
@@ -156,6 +165,7 @@ export async function loader({ request }: Route.LoaderArgs) {
 						workshopCache.workshopId.toLowerCase().includes(normalizedQuery)
 			return {
 				...workshopCache,
+				workshop,
 				caches: workshopCache.caches
 					.map((cache) => {
 						const cacheNameMatches =
@@ -192,14 +202,32 @@ export async function loader({ request }: Route.LoaderArgs) {
 
 	return {
 		currentWorkshopId,
+		currentWorkshop:
+			workshopMetaById[currentWorkshopId] ??
+			({
+				id: currentWorkshopId,
+				displayName: currentWorkshopId,
+				shortId: getShortHash(currentWorkshopId),
+				hasStoredDisplayName: false,
+			} satisfies WorkshopMeta),
 		filteredCaches: [...filteredCaches].sort((a, b) =>
 			compareWorkshopIds(a.workshopId, b.workshopId),
 		),
 		filterQuery,
 		selectedWorkshops,
-		availableWorkshops:
-			Array.from(availableWorkshopIds).sort(compareWorkshopIds),
-		workshopIdentifiers,
+		availableWorkshops: Array.from(availableWorkshopIds)
+			.map((workshopId) => {
+				return (
+					workshopMetaById[workshopId] ??
+					({
+						id: workshopId,
+						displayName: workshopId,
+						shortId: getShortHash(workshopId),
+						hasStoredDisplayName: false,
+					} satisfies WorkshopMeta)
+				)
+			})
+			.sort((a, b) => compareWorkshopIds(a.id, b.id)),
 	}
 }
 
@@ -280,21 +308,10 @@ function WorkshopChooser({
 	selectedWorkshops,
 	availableWorkshops,
 	currentWorkshopId,
-	workshopIdentifiers,
 }: {
 	selectedWorkshops: string[]
-	availableWorkshops: string[]
+	availableWorkshops: Array<WorkshopMeta>
 	currentWorkshopId: string
-	workshopIdentifiers: Record<
-		string,
-		{
-			label: string
-			shortId: string
-			repoName?: string
-			subtitle?: string
-			hasStoredDisplayName: boolean
-		}
-	>
 }) {
 	const [searchParams, setSearchParams] = useSearchParams()
 
@@ -317,30 +334,30 @@ function WorkshopChooser({
 			<h3 className="mb-3 text-lg font-semibold">Workshop Filter</h3>
 			<div className="flex flex-wrap gap-3">
 				{availableWorkshops.map((workshop) => {
-					const meta = workshopIdentifiers[workshop]
-					const label = meta?.label ?? workshop
-					const shortId = meta?.shortId ?? getShortHash(workshop)
-					const secondary = meta?.repoName ?? meta?.subtitle
-					const hasStoredDisplayName = meta?.hasStoredDisplayName ?? false
-					const showDetailsLine = hasStoredDisplayName && workshop !== 'global'
+					const label = workshop.displayName
+					const shortId = workshop.shortId
+					const secondary = workshop.repoName ?? workshop.subtitle
+					const hasStoredDisplayName = workshop.hasStoredDisplayName
+					const showDetailsLine =
+						hasStoredDisplayName && workshop.id !== 'global'
 					return (
 						<label
-							key={workshop}
+							key={workshop.id}
 							className="flex items-center gap-2"
 							title={secondary ? `${label} (${secondary})` : label}
 						>
 							<input
 								type="checkbox"
-								checked={selectedWorkshops.includes(workshop)}
+								checked={selectedWorkshops.includes(workshop.id)}
 								onChange={(e) =>
-									handleWorkshopChange(workshop, e.target.checked)
+									handleWorkshopChange(workshop.id, e.target.checked)
 								}
 								className="rounded"
 							/>
 							<span
 								className={cn(
 									'text-sm',
-									workshop === currentWorkshopId
+									workshop.id === currentWorkshopId
 										? 'text-primary font-bold'
 										: null,
 								)}
@@ -359,18 +376,18 @@ function WorkshopChooser({
 										<span
 											className={cn(
 												'text-muted-foreground font-mono text-xs font-normal',
-												workshop === currentWorkshopId
+												workshop.id === currentWorkshopId
 													? 'text-primary/80'
 													: null,
 											)}
-											title={workshop}
+											title={workshop.id}
 										>
 											{secondary ? `${secondary} • ` : null}
 											{shortId}
 										</span>
 									) : null}
 								</span>{' '}
-								{workshop === currentWorkshopId ? '(current)' : null}
+								{workshop.id === currentWorkshopId ? '(current)' : null}
 							</span>
 						</label>
 					)
@@ -736,13 +753,13 @@ export default function CacheManagement({ loaderData }: Route.ComponentProps) {
 
 	const {
 		currentWorkshopId,
+		currentWorkshop,
 		filteredCaches,
 		filterQuery,
 		selectedWorkshops,
 		availableWorkshops,
-		workshopIdentifiers,
 	} = loaderData
-	const currentWorkshopMeta = workshopIdentifiers[currentWorkshopId]
+	const currentWorkshopMeta = currentWorkshop
 
 	return (
 		<div className="space-y-6">
@@ -758,7 +775,7 @@ export default function CacheManagement({ loaderData }: Route.ComponentProps) {
 									: 'font-mono text-xs',
 							)}
 						>
-							{currentWorkshopMeta?.label ?? currentWorkshopId}
+							{currentWorkshopMeta.displayName ?? currentWorkshopId}
 						</span>
 					</span>
 				</p>
@@ -776,7 +793,6 @@ export default function CacheManagement({ loaderData }: Route.ComponentProps) {
 				selectedWorkshops={selectedWorkshops}
 				availableWorkshops={availableWorkshops}
 				currentWorkshopId={currentWorkshopId}
-				workshopIdentifiers={workshopIdentifiers}
 			/>
 
 			<SearchFilter filterQuery={filterQuery} />
@@ -813,17 +829,13 @@ export default function CacheManagement({ loaderData }: Route.ComponentProps) {
 										<span
 											className={cn(
 												'min-w-0',
-												workshopIdentifiers[workshopCache.workshopId]
-													?.hasStoredDisplayName
+												workshopCache.workshop.hasStoredDisplayName
 													? 'truncate'
 													: 'font-mono text-xs break-all',
 											)}
 											title={workshopCache.workshopId}
 										>
-											{workshopIdentifiers[workshopCache.workshopId]?.label ??
-												(workshopCache.workshopId === 'global'
-													? 'Global caches'
-													: workshopCache.workshopId)}
+											{workshopCache.workshop.displayName}
 										</span>
 										{workshopCache.workshopId === currentWorkshopId ? (
 											<span className="bg-primary text-primary-foreground rounded px-2 py-1 text-xs">
@@ -831,32 +843,23 @@ export default function CacheManagement({ loaderData }: Route.ComponentProps) {
 											</span>
 										) : null}
 									</h3>
-									{workshopIdentifiers[workshopCache.workshopId]
-										?.hasStoredDisplayName &&
+									{workshopCache.workshop.hasStoredDisplayName &&
 									workshopCache.workshopId !== 'global' ? (
 										<div className="text-muted-foreground mt-1 flex flex-wrap items-center gap-2 text-xs">
-											{workshopIdentifiers[workshopCache.workshopId]
-												?.repoName ? (
+											{workshopCache.workshop.repoName ? (
 												<span className="truncate">
-													{
-														workshopIdentifiers[workshopCache.workshopId]
-															?.repoName
-													}
+													{workshopCache.workshop.repoName}
 												</span>
-											) : workshopIdentifiers[workshopCache.workshopId]
-													?.subtitle ? (
+											) : workshopCache.workshop.subtitle ? (
 												<span className="truncate">
-													{
-														workshopIdentifiers[workshopCache.workshopId]
-															?.subtitle
-													}
+													{workshopCache.workshop.subtitle}
 												</span>
 											) : null}
 											<span
 												className="font-mono"
 												title={workshopCache.workshopId}
 											>
-												{workshopIdentifiers[workshopCache.workshopId]?.shortId}
+												{workshopCache.workshop.shortId}
 											</span>
 										</div>
 									) : null}
