@@ -22,6 +22,7 @@ import { cachifiedTimingReporter, type Timings } from './timing.server.ts'
 import { checkConnection } from './utils.server.ts'
 import {
 	ensureWorkshopCacheMetadataFile,
+	getWorkshopCacheMetadataFilePath,
 	readWorkshopCacheMetadataFile,
 	type WorkshopCacheMetadata,
 } from './workshop-cache-metadata.server.ts'
@@ -326,7 +327,15 @@ async function getCurrentWorkshopDisplayInfo(): Promise<
 
 async function ensureWorkshopCacheMetadata(workshopId: string) {
 	if (!workshopId) return
-	if (ensuredWorkshopCacheMetadata.has(workshopId)) return
+	if (ensuredWorkshopCacheMetadata.has(workshopId)) {
+		try {
+			const filePath = getWorkshopCacheMetadataFilePath({ cacheDir, workshopId })
+			if (await fsExtra.pathExists(filePath)) return
+		} catch {
+			// Treat errors as "missing" and attempt to re-create.
+		}
+		ensuredWorkshopCacheMetadata.delete(workshopId)
+	}
 
 	const { displayName, repoName, subtitle } =
 		await getCurrentWorkshopDisplayInfo()
@@ -677,6 +686,7 @@ export async function deleteCache() {
 		if (await fsExtra.exists(cacheDir)) {
 			await fsExtra.remove(cacheDir)
 		}
+		ensuredWorkshopCacheMetadata.clear()
 	} catch (error) {
 		console.error(`Error deleting the cache in ${cacheDir}`, error)
 	}
