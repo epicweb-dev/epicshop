@@ -7,27 +7,26 @@ The Epic Workshop app can be configured using the `epicshop` field in the
 
 These options should be set in the root `package.json` of your workshop.
 
-| Option                                 | Type      | Description                                        | Default                                                       |
-| -------------------------------------- | --------- | -------------------------------------------------- | ------------------------------------------------------------- |
-| `title`                                | `string`  | The title of your workshop                         | Required                                                      |
-| `subtitle`                             | `string`  | A subtitle for your workshop                       | Optional                                                      |
-| `instructor`                           | `object`  | Information about the instructor                   | Optional                                                      |
-| `instructor.name`                      | `string`  | Name of the instructor                             | Optional                                                      |
-| `instructor.avatar`                    | `string`  | Path to the instructor's avatar image              | Optional                                                      |
-| `instructor.𝕏` or `instructor.xHandle` | `string`  | Instructor's X (formerly Twitter) handle           | Optional                                                      |
-| `subdomain`                            | `string`  | Subdomain for the workshop                         | Optional (falls back to sanitized `name` property if not set) |
-| `product`                              | `object`  | Product configuration                              | Optional                                                      |
-| `githubRepo`                           | `string`  | URL to the GitHub repository                       | Required if `githubRoot` is not provided                      |
-| `githubRoot`                           | `string`  | Root URL for GitHub file links                     | Required if `githubRepo` is not provided                      |
-| `stackBlitzConfig`                     | `object`  | Configuration for StackBlitz                       | Optional                                                      |
-| `forms.workshop`                       | `string`  | URL template for workshop feedback form            | Has a default value                                           |
-| `forms.exercise`                       | `string`  | URL template for exercise feedback form            | Has a default value                                           |
-| `testTab.enabled`                      | `boolean` | Whether to enable the test tab                     | `true`                                                        |
-| `scripts.postupdate`                   | `string`  | Script to run after workshop update                | Optional                                                      |
-| `initialRoute`                         | `string`  | Initial route for the app                          | `"/"`                                                         |
-| `notifications`                        | `array`   | Custom notifications for this workshop             | `[]`                                                          |
-| `sidecarProcesses`                     | `object`  | Additional processes to run alongside the workshop | `{}`                                                          |
-| `appType`                              | `string`  | Default app type for simple apps (`"export"`)      | Optional                                                      |
+| Option                                 | Type      | Description                                        | Default                                  |
+| -------------------------------------- | --------- | -------------------------------------------------- | ---------------------------------------- |
+| `title`                                | `string`  | The title of your workshop                         | Required                                 |
+| `subtitle`                             | `string`  | A subtitle for your workshop                       | Optional                                 |
+| `instructor`                           | `object`  | Information about the instructor                   | Optional                                 |
+| `instructor.name`                      | `string`  | Name of the instructor                             | Optional                                 |
+| `instructor.avatar`                    | `string`  | Path to the instructor's avatar image              | Optional                                 |
+| `instructor.𝕏` or `instructor.xHandle` | `string`  | Instructor's X (formerly Twitter) handle           | Optional                                 |
+| `product`                              | `object`  | Product configuration                              | Optional                                 |
+| `githubRepo`                           | `string`  | URL to the GitHub repository                       | Required if `githubRoot` is not provided |
+| `githubRoot`                           | `string`  | Root URL for GitHub file links                     | Required if `githubRepo` is not provided |
+| `stackBlitzConfig`                     | `object`  | Configuration for StackBlitz                       | Optional                                 |
+| `forms.workshop`                       | `string`  | URL template for workshop feedback form            | Has a default value                      |
+| `forms.exercise`                       | `string`  | URL template for exercise feedback form            | Has a default value                      |
+| `testTab.enabled`                      | `boolean` | Whether to enable the test tab                     | `true`                                   |
+| `scripts.postupdate`                   | `string`  | Script to run after workshop update                | Optional                                 |
+| `initialRoute`                         | `string`  | Initial route for the app                          | `"/"`                                    |
+| `notifications`                        | `array`   | Custom notifications for this workshop             | `[]`                                     |
+| `sidecarProcesses`                     | `object`  | Additional processes to run alongside the workshop | `{}`                                     |
+| `appType`                              | `string`  | Default app type for simple apps (`"export"`)      | Optional                                 |
 
 ## Product Configuration
 
@@ -111,63 +110,7 @@ When you start your workshop, you'll see output like this:
 4. **Test locally** to ensure all processes start correctly before sharing your
    workshop
 
-## Subdomain Configuration
-
-You can configure your workshop to use a custom subdomain by setting the
-`subdomain` option in your `epicshop` configuration. This is useful for branding
-your workshop or creating a more professional URL structure.
-
-### How it Works
-
-When you configure a subdomain, the workshop will be available at
-`{subdomain}.localhost:{PORT}` instead of the default `localhost:{PORT}`. The
-system automatically:
-
-1. **Generates subdomain URLs** - All workshop URLs will use the subdomain
-   format
-2. **Adds redirect functionality** - Requests to the non-subdomain URL will be
-   automatically redirected to the subdomain URL
-3. **Updates CLI output** - The command line interface will display the
-   subdomain URL and mention the redirect
-4. **Fallback to package name** - If no `subdomain` is configured, the workshop
-   will automatically use the sanitized `name` property from your root
-   `package.json` as the subdomain. This means your workshop will be available
-   at `{sanitized-name}.localhost:{PORT}`. The name is lowercased,
-   non-alphanumeric characters are replaced with dashes, and leading/trailing
-   dashes are removed.
-
-### Example
-
-```json
-{
-	"epicshop": {
-		"title": "Advanced React Patterns",
-		"subdomain": "react-patterns"
-		// ... other configuration
-	}
-}
-```
-
-With this configuration:
-
-- Workshop will be available at `http://react-patterns.localhost:5639`
-- Requests to `http://localhost:5639` will redirect to
-  `http://react-patterns.localhost:5639`
-- CLI will show:
-  `Local: http://react-patterns.localhost:5639 (redirects from http://localhost:5639)`
-
-### Notes
-
-- The subdomain only works with `localhost` - it's designed for local
-  development
-- The subdomain should be a valid hostname (lowercase letters, numbers, and
-  hyphens)
-- If no subdomain is configured, the workshop will use the sanitized `name`
-  property from your root `package.json` as the subdomain
-- All workshop functionality (hot reloading, WebSocket connections, etc.) works
-  normally with subdomains
-
-### Logo
+## Logo
 
 You can provide a custom logo for your workshop. A regular image placed in the
 workshop's `public` directory will do, but if you want to support
@@ -356,7 +299,6 @@ Here's an example of some configuration in the root `package.json`:
   "epicshop": {
     "title": "Advanced React Patterns",
     "subtitle": "Master complex React patterns",
-    "subdomain": "react-patterns",
     "instructor": {
       "name": "Kent C. Dodds",
       "avatar": "/images/instructor.png",
