@@ -4,6 +4,7 @@ import {
 	getAllWorkshopCaches,
 	getGlobalCaches,
 	globalCacheDirectoryExists,
+	readWorkshopCacheMetadata,
 	updateCacheEntry,
 } from '@epic-web/workshop-utils/cache.server'
 import { getEnv } from '@epic-web/workshop-utils/env.server'
@@ -51,6 +52,24 @@ function entryValueMatches(value: unknown, query: string) {
 	}
 }
 
+function isLikelyMd5Hash(value: string) {
+	return /^[a-f0-9]{32}$/i.test(value)
+}
+
+function getShortHash(value: string) {
+	if (!isLikelyMd5Hash(value)) return value
+	return `${value.slice(0, 7)}...${value.slice(-6)}`
+}
+
+type WorkshopMeta = {
+	id: string
+	displayName: string
+	shortId: string
+	repoName?: string
+	subtitle?: string
+	hasStoredDisplayName: boolean
+}
+
 export async function loader({ request }: Route.LoaderArgs) {
 	ensureUndeployed()
 	const currentWorkshopId = getEnv().EPICSHOP_WORKSHOP_INSTANCE_ID
@@ -67,6 +86,10 @@ export async function loader({ request }: Route.LoaderArgs) {
 	if (globalDirExists) {
 		availableWorkshopIds.add('global')
 	}
+	// Always include the current workshop in the UI, even if it has no caches yet.
+	if (currentWorkshopId) {
+		availableWorkshopIds.add(currentWorkshopId)
+	}
 
 	const selectedWorkshops = url.searchParams
 		.get('workshops')
@@ -77,6 +100,47 @@ export async function loader({ request }: Route.LoaderArgs) {
 	]
 	const normalizedQuery = normalizeSearchQuery(filterQuery)
 
+	const workshopMetaById: Record<string, WorkshopMeta> = {}
+
+	if (availableWorkshopIds.has('global')) {
+		workshopMetaById.global = {
+			id: 'global',
+			displayName: 'Global caches',
+			shortId: 'global',
+			hasStoredDisplayName: true,
+		}
+	}
+
+	const workshopIds = Array.from(availableWorkshopIds).filter(
+		(workshopId) => workshopId !== 'global',
+	)
+	const workshopIdMetas = await Promise.all(
+		workshopIds.map(async (workshopId) => {
+			const meta = await readWorkshopCacheMetadata(workshopId)
+			return [workshopId, meta] as const
+		}),
+	)
+	for (const [workshopId, meta] of workshopIdMetas) {
+		workshopMetaById[workshopId] = {
+			id: workshopId,
+			displayName: meta?.displayName ?? workshopId,
+			shortId: getShortHash(workshopId),
+			repoName: meta?.repoName,
+			subtitle: meta?.subtitle,
+			hasStoredDisplayName: Boolean(meta?.displayName),
+		}
+	}
+
+	const compareWorkshopIds = (a: string, b: string) => {
+		if (a === currentWorkshopId) return -1
+		if (b === currentWorkshopId) return 1
+		if (a === 'global') return -1
+		if (b === 'global') return 1
+		const aLabel = workshopMetaById[a]?.displayName ?? a
+		const bLabel = workshopMetaById[b]?.displayName ?? b
+		return aLabel.localeCompare(bLabel)
+	}
+
 	// Filter caches based on search query and selected workshops
 	const filteredCaches = allCaches
 		.filter(
@@ -84,32 +148,53 @@ export async function loader({ request }: Route.LoaderArgs) {
 				selectedWorkshops.includes(workshopCache.workshopId) ||
 				selectedWorkshops.length === 0,
 		)
-		.map((workshopCache) => ({
-			...workshopCache,
-			caches: workshopCache.caches
-				.map((cache) => {
-					const cacheNameMatches =
-						normalizedQuery === ''
-							? true
-							: cache.name.toLowerCase().includes(normalizedQuery)
-					const entries = cache.entries
-						.filter((entry) => {
-							if (normalizedQuery === '') return true
-							if (cacheNameMatches) return true
-							if (entry.key.toLowerCase().includes(normalizedQuery)) return true
-							return entryValueMatches(entry.entry.value, normalizedQuery)
-						})
-						.map((entry) => ({
-							key: entry.key,
-							filename: entry.filename,
-							size: entry.size,
-							filepath: entry.filepath,
-							metadata: entry.entry.metadata,
-						}))
-					return { ...cache, entries }
-				})
-				.filter((cache) => cache.entries.length > 0 || normalizedQuery === ''),
-		}))
+		.map((workshopCache) => {
+			const workshop =
+				workshopMetaById[workshopCache.workshopId] ??
+				({
+					id: workshopCache.workshopId,
+					displayName: workshopCache.workshopId,
+					shortId: getShortHash(workshopCache.workshopId),
+					hasStoredDisplayName: false,
+				} satisfies WorkshopMeta)
+			const workshopLabel = workshop.displayName
+			const workshopMatchesQuery =
+				normalizedQuery === ''
+					? true
+					: workshopLabel.toLowerCase().includes(normalizedQuery) ||
+						workshopCache.workshopId.toLowerCase().includes(normalizedQuery)
+			return {
+				...workshopCache,
+				workshop,
+				caches: workshopCache.caches
+					.map((cache) => {
+						const cacheNameMatches =
+							normalizedQuery === ''
+								? true
+								: workshopMatchesQuery ||
+									cache.name.toLowerCase().includes(normalizedQuery)
+						const entries = cache.entries
+							.filter((entry) => {
+								if (normalizedQuery === '') return true
+								if (cacheNameMatches) return true
+								if (entry.key.toLowerCase().includes(normalizedQuery))
+									return true
+								return entryValueMatches(entry.entry.value, normalizedQuery)
+							})
+							.map((entry) => ({
+								key: entry.key,
+								filename: entry.filename,
+								size: entry.size,
+								filepath: entry.filepath,
+								metadata: entry.entry.metadata,
+							}))
+						return { ...cache, entries }
+					})
+					.filter(
+						(cache) => cache.entries.length > 0 || normalizedQuery === '',
+					),
+			}
+		})
 		.filter(
 			(workshopCache) =>
 				workshopCache.caches.length > 0 || normalizedQuery === '',
@@ -117,10 +202,32 @@ export async function loader({ request }: Route.LoaderArgs) {
 
 	return {
 		currentWorkshopId,
-		filteredCaches,
+		currentWorkshop:
+			workshopMetaById[currentWorkshopId] ??
+			({
+				id: currentWorkshopId,
+				displayName: currentWorkshopId,
+				shortId: getShortHash(currentWorkshopId),
+				hasStoredDisplayName: false,
+			} satisfies WorkshopMeta),
+		filteredCaches: [...filteredCaches].sort((a, b) =>
+			compareWorkshopIds(a.workshopId, b.workshopId),
+		),
 		filterQuery,
 		selectedWorkshops,
-		availableWorkshops: Array.from(availableWorkshopIds),
+		availableWorkshops: Array.from(availableWorkshopIds)
+			.map((workshopId) => {
+				return (
+					workshopMetaById[workshopId] ??
+					({
+						id: workshopId,
+						displayName: workshopId,
+						shortId: getShortHash(workshopId),
+						hasStoredDisplayName: false,
+					} satisfies WorkshopMeta)
+				)
+			})
+			.sort((a, b) => compareWorkshopIds(a.id, b.id)),
 	}
 }
 
@@ -203,7 +310,7 @@ function WorkshopChooser({
 	currentWorkshopId,
 }: {
 	selectedWorkshops: string[]
-	availableWorkshops: string[]
+	availableWorkshops: Array<WorkshopMeta>
 	currentWorkshopId: string
 }) {
 	const [searchParams, setSearchParams] = useSearchParams()
@@ -226,21 +333,65 @@ function WorkshopChooser({
 		<div className="mb-6">
 			<h3 className="mb-3 text-lg font-semibold">Workshop Filter</h3>
 			<div className="flex flex-wrap gap-3">
-				{availableWorkshops.map((workshop) => (
-					<label key={workshop} className="flex items-center gap-2">
-						<input
-							type="checkbox"
-							checked={selectedWorkshops.includes(workshop)}
-							onChange={(e) => handleWorkshopChange(workshop, e.target.checked)}
-							className="rounded"
-						/>
-						<span
-							className={`text-sm ${workshop === currentWorkshopId ? 'text-primary font-bold' : ''}`}
+				{availableWorkshops.map((workshop) => {
+					const label = workshop.displayName
+					const shortId = workshop.shortId
+					const secondary = workshop.repoName ?? workshop.subtitle
+					const hasStoredDisplayName = workshop.hasStoredDisplayName
+					const showDetailsLine =
+						hasStoredDisplayName && workshop.id !== 'global'
+					return (
+						<label
+							key={workshop.id}
+							className="flex items-center gap-2"
+							title={secondary ? `${label} (${secondary})` : label}
 						>
-							{workshop} {workshop === currentWorkshopId ? '(current)' : null}
-						</span>
-					</label>
-				))}
+							<input
+								type="checkbox"
+								checked={selectedWorkshops.includes(workshop.id)}
+								onChange={(e) =>
+									handleWorkshopChange(workshop.id, e.target.checked)
+								}
+								className="rounded"
+							/>
+							<span
+								className={cn(
+									'text-sm',
+									workshop.id === currentWorkshopId
+										? 'text-primary font-bold'
+										: null,
+								)}
+							>
+								<span className="inline-flex max-w-[22rem] flex-col leading-tight">
+									<span
+										className={cn(
+											hasStoredDisplayName
+												? 'truncate'
+												: 'font-mono text-xs break-all',
+										)}
+									>
+										{label}
+									</span>
+									{showDetailsLine ? (
+										<span
+											className={cn(
+												'text-muted-foreground font-mono text-xs font-normal',
+												workshop.id === currentWorkshopId
+													? 'text-primary/80'
+													: null,
+											)}
+											title={workshop.id}
+										>
+											{secondary ? `${secondary} • ` : null}
+											{shortId}
+										</span>
+									) : null}
+								</span>{' '}
+								{workshop.id === currentWorkshopId ? '(current)' : null}
+							</span>
+						</label>
+					)
+				})}
 			</div>
 		</div>
 	)
@@ -279,7 +430,7 @@ function SearchFilter({ filterQuery }: { filterQuery: string }) {
 				<input
 					ref={inputRef}
 					type="text"
-					placeholder="Search by key or cache name..."
+					placeholder="Search by key, value, cache name, or workshop..."
 					value={inputValue}
 					onChange={(e) => {
 						setInputValue(e.target.value)
@@ -602,11 +753,13 @@ export default function CacheManagement({ loaderData }: Route.ComponentProps) {
 
 	const {
 		currentWorkshopId,
+		currentWorkshop,
 		filteredCaches,
 		filterQuery,
 		selectedWorkshops,
 		availableWorkshops,
 	} = loaderData
+	const currentWorkshopMeta = currentWorkshop
 
 	return (
 		<div className="space-y-6">
@@ -615,9 +768,25 @@ export default function CacheManagement({ loaderData }: Route.ComponentProps) {
 				<p className="text-muted-foreground">
 					Current Workshop:{' '}
 					<span className="text-foreground font-semibold">
-						{currentWorkshopId}
+						<span
+							className={cn(
+								currentWorkshopMeta?.hasStoredDisplayName
+									? null
+									: 'font-mono text-xs',
+							)}
+						>
+							{currentWorkshopMeta.displayName ?? currentWorkshopId}
+						</span>
 					</span>
 				</p>
+				{currentWorkshopMeta?.hasStoredDisplayName ? (
+					<p className="text-muted-foreground mt-1 text-xs">
+						Instance ID:{' '}
+						<span className="font-mono" title={currentWorkshopId}>
+							{currentWorkshopMeta.shortId}
+						</span>
+					</p>
+				) : null}
 			</div>
 
 			<WorkshopChooser
@@ -653,18 +822,48 @@ export default function CacheManagement({ loaderData }: Route.ComponentProps) {
 						open={workshopCache.workshopId === currentWorkshopId}
 					>
 						<summary className="border-border bg-card hover:bg-accent cursor-pointer rounded-lg border p-4">
-							<div className="flex items-center justify-between">
-								<h3 className="text-card-foreground flex items-center gap-2 text-lg font-semibold">
-									<Icon name="Files" className="h-5 w-5" />
-									{workshopCache.workshopId === 'global'
-										? 'Global Caches'
-										: workshopCache.workshopId}
-									{workshopCache.workshopId === currentWorkshopId ? (
-										<span className="bg-primary text-primary-foreground rounded px-2 py-1 text-xs">
-											Current
+							<div className="flex items-center justify-between gap-4">
+								<div className="min-w-0">
+									<h3 className="text-card-foreground flex min-w-0 items-center gap-2 text-lg font-semibold">
+										<Icon name="Files" className="h-5 w-5 shrink-0" />
+										<span
+											className={cn(
+												'min-w-0',
+												workshopCache.workshop.hasStoredDisplayName
+													? 'truncate'
+													: 'font-mono text-xs break-all',
+											)}
+											title={workshopCache.workshopId}
+										>
+											{workshopCache.workshop.displayName}
 										</span>
+										{workshopCache.workshopId === currentWorkshopId ? (
+											<span className="bg-primary text-primary-foreground rounded px-2 py-1 text-xs">
+												Current
+											</span>
+										) : null}
+									</h3>
+									{workshopCache.workshop.hasStoredDisplayName &&
+									workshopCache.workshopId !== 'global' ? (
+										<div className="text-muted-foreground mt-1 flex flex-wrap items-center gap-2 text-xs">
+											{workshopCache.workshop.repoName ? (
+												<span className="truncate">
+													{workshopCache.workshop.repoName}
+												</span>
+											) : workshopCache.workshop.subtitle ? (
+												<span className="truncate">
+													{workshopCache.workshop.subtitle}
+												</span>
+											) : null}
+											<span
+												className="font-mono"
+												title={workshopCache.workshopId}
+											>
+												{workshopCache.workshop.shortId}
+											</span>
+										</div>
 									) : null}
-								</h3>
+								</div>
 								<DoubleCheckButton
 									onConfirm={() =>
 										deleteWorkshopCache(workshopCache.workshopId)

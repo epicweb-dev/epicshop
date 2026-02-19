@@ -20,6 +20,12 @@ import { logger } from './logger.ts'
 import { type Notification } from './notifications.server.ts'
 import { cachifiedTimingReporter, type Timings } from './timing.server.ts'
 import { checkConnection } from './utils.server.ts'
+import {
+	ensureWorkshopCacheMetadataFile,
+	getWorkshopCacheMetadataFilePath,
+	readWorkshopCacheMetadataFile,
+	type WorkshopCacheMetadata,
+} from './workshop-cache-metadata.server.ts'
 
 const MAX_CACHE_FILE_SIZE = 3 * 1024 * 1024 // 3MB in bytes
 const cacheDir = resolveCacheDir()
@@ -37,6 +43,11 @@ type OgCacheValue = string | Uint8Array
 const corruptedReportThrottle = remember(
 	'epic:cache:corruption-throttle',
 	() => new LRUCache<string, number>({ max: 2000, ttl: 60_000 }),
+)
+
+const ensuredWorkshopCacheMetadata = remember(
+	'epic:cache:ensured-workshop-cache-metadata',
+	() => new Set<string>(),
 )
 
 // Format cache time helper function (copied from @epic-web/cachified for consistency)
@@ -289,6 +300,56 @@ export const directoryEmptyCache = makeSingletonCache<boolean>(
 
 export const discordCache = makeSingletonFsCache('DiscordCache')
 export const epicApiCache = makeSingletonFsCache('EpicApiCache')
+
+async function getCurrentWorkshopDisplayInfo(): Promise<
+	Pick<WorkshopCacheMetadata, 'displayName' | 'repoName' | 'subtitle'>
+> {
+	const env = getEnv()
+	const contextCwd = env.EPICSHOP_CONTEXT_CWD
+	const repoName = contextCwd
+		? path.basename(contextCwd) || undefined
+		: undefined
+
+	let displayName = repoName || env.EPICSHOP_WORKSHOP_INSTANCE_ID || 'Unknown'
+	let subtitle: string | undefined
+
+	try {
+		const { getWorkshopConfig } = await import('./config.server.ts')
+		const config = getWorkshopConfig()
+		displayName = config.title || displayName
+		subtitle = config.subtitle
+	} catch {
+		// Best-effort only: cache metadata should never break caching.
+	}
+
+	return { displayName, repoName, subtitle }
+}
+
+async function ensureWorkshopCacheMetadata(workshopId: string) {
+	if (!workshopId) return
+	if (ensuredWorkshopCacheMetadata.has(workshopId)) {
+		try {
+			const filePath = getWorkshopCacheMetadataFilePath({ cacheDir, workshopId })
+			if (await fsExtra.pathExists(filePath)) return
+		} catch {
+			// Treat errors as "missing" and attempt to re-create.
+		}
+		ensuredWorkshopCacheMetadata.delete(workshopId)
+	}
+
+	const { displayName, repoName, subtitle } =
+		await getCurrentWorkshopDisplayInfo()
+	const metadata = await ensureWorkshopCacheMetadataFile({
+		cacheDir,
+		workshopId,
+		displayName,
+		repoName,
+		subtitle,
+	})
+	if (metadata) {
+		ensuredWorkshopCacheMetadata.add(workshopId)
+	}
+}
 
 export function makeGlobalFsCache<CacheEntryType>(name: string) {
 	return remember(`global-${name}`, () => {
@@ -599,6 +660,10 @@ export async function getGlobalCaches() {
 	}))
 }
 
+export async function readWorkshopCacheMetadata(workshopId: string) {
+	return readWorkshopCacheMetadataFile({ cacheDir, workshopId })
+}
+
 export async function getWorkshopFileCaches() {
 	const workshopCacheDir = path.join(
 		cacheDir,
@@ -621,6 +686,7 @@ export async function deleteCache() {
 		if (await fsExtra.exists(cacheDir)) {
 			await fsExtra.remove(cacheDir)
 		}
+		ensuredWorkshopCacheMetadata.clear()
 	} catch (error) {
 		console.error(`Error deleting the cache in ${cacheDir}`, error)
 	}
@@ -656,6 +722,7 @@ export async function deleteWorkshopCache(
 			if (await fsExtra.exists(workshopCachePath)) {
 				await fsExtra.remove(workshopCachePath)
 			}
+			ensuredWorkshopCacheMetadata.delete(workshopId)
 		}
 	} catch (error) {
 		console.error(
@@ -720,11 +787,8 @@ export function makeSingletonCache<CacheEntryType>(name: string) {
 
 export function makeSingletonFsCache<CacheEntryType>(name: string) {
 	return remember(name, () => {
-		const cacheInstanceDir = path.join(
-			cacheDir,
-			getEnv().EPICSHOP_WORKSHOP_INSTANCE_ID,
-			name,
-		)
+		const workshopId = getEnv().EPICSHOP_WORKSHOP_INSTANCE_ID
+		const cacheInstanceDir = path.join(cacheDir, workshopId, name)
 
 		const fsCache: C.Cache<CacheEntryType> = {
 			name: `Filesystem cache (${name})`,
@@ -762,6 +826,11 @@ export function makeSingletonFsCache<CacheEntryType>(name: string) {
 				return null
 			},
 			async set(key, entry) {
+				try {
+					await ensureWorkshopCacheMetadata(workshopId)
+				} catch {
+					// Ignore: this is optional metadata only.
+				}
 				const filePath = path.join(cacheInstanceDir, md5(key))
 				const tempPath = `${filePath}.tmp`
 				await fsExtra.ensureDir(path.dirname(filePath))
