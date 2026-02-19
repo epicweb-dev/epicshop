@@ -575,7 +575,7 @@ export async function getProgress({
 				({ lessonId }) => lessonId === lesson._id,
 			)
 			const epicCompletedAt = lessonProgress ? lessonProgress.completedAt : null
-			const progressForLesson = getProgressForLesson(epicLessonSlug, {
+			const progressForLesson = resolveLocalProgressForEpicLesson(epicLessonSlug, {
 				workshopInstructions,
 				workshopFinished,
 				exercises,
@@ -603,7 +603,78 @@ export async function getProgress({
 	return progress
 }
 
-function getProgressForLesson(
+function stripEpicAiSlugSuffix(value: string) {
+	// EpicAI embeds sometimes include a `~...` suffix in the slug segment.
+	// Keep the comparison tolerant by stripping it.
+	return value.replace(/~[^ ]*$/, '')
+}
+
+function parseEpicLessonSlugFromEmbedUrl(urlString: string): {
+	lessonSlug: string | null
+	// Some embeds point at a /problem or /solution subpage.
+	subpage: 'problem' | 'solution' | null
+} {
+	try {
+		const url = new URL(urlString)
+		const segments = url.pathname.split('/').filter(Boolean)
+		if (segments.length === 0) return { lessonSlug: null, subpage: null }
+		const last = segments.at(-1) ?? null
+		if (!last) return { lessonSlug: null, subpage: null }
+		if (last === 'problem' || last === 'solution') {
+			const slug = segments.at(-2) ?? null
+			return { lessonSlug: slug ? stripEpicAiSlugSuffix(slug) : null, subpage: last }
+		}
+		if (last === 'embed') {
+			const slug = segments.at(-2) ?? null
+			return { lessonSlug: slug ? stripEpicAiSlugSuffix(slug) : null, subpage: null }
+		}
+		return { lessonSlug: stripEpicAiSlugSuffix(last), subpage: null }
+	} catch {
+		// Fall back to naive parsing; this is best-effort and only used for
+		// mapping Epic lesson slugs -> local pages in admin UI/progress.
+		const withoutHash = urlString.split('#')[0] ?? urlString
+		const withoutQuery = withoutHash.split('?')[0] ?? withoutHash
+		const segments = withoutQuery.split('/').filter(Boolean)
+		const last = segments.at(-1) ?? null
+		if (!last) return { lessonSlug: null, subpage: null }
+		if (last === 'problem' || last === 'solution') {
+			const slug = segments.at(-2) ?? null
+			return { lessonSlug: slug ? stripEpicAiSlugSuffix(slug) : null, subpage: last }
+		}
+		if (last === 'embed') {
+			const slug = segments.at(-2) ?? null
+			return { lessonSlug: slug ? stripEpicAiSlugSuffix(slug) : null, subpage: null }
+		}
+		return { lessonSlug: stripEpicAiSlugSuffix(last), subpage: null }
+	}
+}
+
+function embedMatchesLessonSlug(embedUrl: string, epicLessonSlug: string) {
+	const parsed = parseEpicLessonSlugFromEmbedUrl(embedUrl)
+	if (!parsed.lessonSlug) return false
+	if (parsed.lessonSlug === epicLessonSlug) return true
+	const normalizedEmbedSlug = stripEpicAiSlugSuffix(parsed.lessonSlug)
+	const normalizedLessonSlug = stripEpicAiSlugSuffix(epicLessonSlug)
+	return (
+		parsed.lessonSlug === normalizedLessonSlug ||
+		normalizedEmbedSlug === epicLessonSlug ||
+		normalizedEmbedSlug === normalizedLessonSlug
+	)
+}
+
+export type LocalProgressForEpicLesson =
+	| { type: 'workshop-instructions' }
+	| { type: 'workshop-finished' }
+	| { type: 'instructions'; exerciseNumber: number }
+	| { type: 'finished'; exerciseNumber: number }
+	| {
+			type: 'step'
+			exerciseNumber: number
+			stepNumber: number
+			stepType: 'problem' | 'solution'
+	  }
+
+export function resolveLocalProgressForEpicLesson(
 	epicLessonSlug: string,
 	{
 		workshopInstructions,
@@ -615,8 +686,9 @@ function getProgressForLesson(
 		exercises: Awaited<ReturnType<typeof getExercises>>
 	},
 ) {
-	const hasEmbed = (embed?: Array<string>) =>
-		embed?.some((e) => e.split('/').at(-1) === epicLessonSlug)
+	const hasEmbed = (embeds?: Array<string>) =>
+		embeds?.some((embedUrl) => embedMatchesLessonSlug(embedUrl, epicLessonSlug))
+
 	if (
 		workshopInstructions.compiled.status === 'success' &&
 		hasEmbed(workshopInstructions.compiled.epicVideoEmbeds)
@@ -648,6 +720,15 @@ function getProgressForLesson(
 					type: 'step',
 					exerciseNumber: exercise.exerciseNumber,
 					stepNumber: step.stepNumber,
+					stepType: 'problem',
+				} as const
+			}
+			if (hasEmbed(step.solution?.epicVideoEmbeds)) {
+				return {
+					type: 'step',
+					exerciseNumber: exercise.exerciseNumber,
+					stepNumber: step.stepNumber,
+					stepType: 'solution',
 				} as const
 			}
 		}
