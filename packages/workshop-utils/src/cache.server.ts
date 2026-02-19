@@ -44,7 +44,10 @@ const corruptedReportThrottle = remember(
 	() => new LRUCache<string, number>({ max: 2000, ttl: 60_000 }),
 )
 
-const ensuredWorkshopCacheMetadata = new Set<string>()
+const ensuredWorkshopCacheMetadata = remember(
+	'epic:cache:ensured-workshop-cache-metadata',
+	() => new Set<string>(),
+)
 
 // Format cache time helper function (copied from @epic-web/cachified for consistency)
 function formatCacheTime(
