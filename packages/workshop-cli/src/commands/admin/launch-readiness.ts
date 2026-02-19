@@ -1,4 +1,4 @@
-import type { Dirent } from 'node:fs'
+import { type Dirent } from 'node:fs'
 import fs from 'node:fs/promises'
 import path from 'node:path'
 
@@ -366,30 +366,23 @@ async function fetchRemoteWorkshopLessonSlugs({
 
 	const lessonSlugs: Array<string> = []
 	for (const resource of resources) {
-		if (
-			resource &&
-			typeof resource === 'object' &&
-			resource._type === 'lesson'
-		) {
-			if (typeof resource.slug === 'string') lessonSlugs.push(resource.slug)
+		if (!resource || typeof resource !== 'object') continue
+		const r = resource as Record<string, unknown>
+
+		if (r._type === 'lesson') {
+			const slug = r.slug
+			if (typeof slug === 'string') lessonSlugs.push(slug)
 			continue
 		}
-		if (
-			resource &&
-			typeof resource === 'object' &&
-			resource._type === 'section'
-		) {
-			const lessons = resource.lessons
-			if (Array.isArray(lessons)) {
-				for (const lesson of lessons) {
-					if (
-						lesson &&
-						typeof lesson === 'object' &&
-						typeof lesson.slug === 'string'
-					) {
-						lessonSlugs.push(lesson.slug)
-					}
-				}
+
+		if (r._type === 'section') {
+			const lessons = r.lessons
+			if (!Array.isArray(lessons)) continue
+			for (const lesson of lessons) {
+				if (!lesson || typeof lesson !== 'object') continue
+				const l = lesson as Record<string, unknown>
+				const slug = l.slug
+				if (typeof slug === 'string') lessonSlugs.push(slug)
 			}
 		}
 	}
