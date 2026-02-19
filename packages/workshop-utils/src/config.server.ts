@@ -109,7 +109,6 @@ const WorkshopConfigSchema = z
 	.object({
 		...BaseWorkshopConfigFields,
 		title: z.string(),
-		subdomain: z.string().optional(),
 		product: z
 			.object({
 				host: z.string().default('www.epicweb.dev'),
