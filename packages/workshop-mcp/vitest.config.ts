@@ -4,5 +4,6 @@ export default defineConfig({
 	test: {
 		name: 'mcp',
 		setupFiles: ['../../tests/vitest-setup.ts'],
+		mockReset: true,
 	},
 })

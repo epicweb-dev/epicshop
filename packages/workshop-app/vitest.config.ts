@@ -20,6 +20,7 @@ export default defineConfig({
 		include: ['packages/workshop-app/**/*.browser.{test,spec}.?(c|m)[jt]s?(x)'],
 		passWithNoTests: true,
 		setupFiles: ['../../tests/vitest-setup.ts'],
+		mockReset: true,
 		browser: {
 			enabled: true,
 			provider: playwright(),

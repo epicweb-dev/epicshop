@@ -29,7 +29,7 @@
     "packages/*"
   ],
   "dependencies": {
-    "@epic-web/config": "^1.22.0",
+    "@epic-web/config": "^1.24.0",
     "@nx/devkit": "22.5.0",
     "@nx/eslint": "22.5.0",
     "@nx/js": "22.5.0",

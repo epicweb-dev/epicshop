@@ -4,5 +4,6 @@ export default defineConfig({
 	test: {
 		name: 'utils',
 		setupFiles: ['../../tests/vitest-setup.ts'],
+		mockReset: true,
 	},
 })

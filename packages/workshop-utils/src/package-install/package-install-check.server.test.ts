@@ -1,7 +1,7 @@
 import fs from 'node:fs/promises'
 import os from 'node:os'
 import path from 'node:path'
-import { afterEach, beforeEach, describe, expect, test, vi } from 'vitest'
+import { describe, expect, test, vi } from 'vitest'
 
 vi.mock('execa', () => ({
 	execa: vi.fn(),
@@ -15,16 +15,15 @@ const {
 	getWorkspaceInstallStatus,
 } = await import('./package-install-check.server.ts')
 
-let tempDir: string
-
-beforeEach(async () => {
-	tempDir = await fs.mkdtemp(path.join(os.tmpdir(), 'package-install-test-'))
-	vi.mocked(execa).mockReset()
-})
-
-afterEach(async () => {
-	await fs.rm(tempDir, { recursive: true, force: true })
-})
+async function createTempDir() {
+	const dir = await fs.mkdtemp(path.join(os.tmpdir(), 'package-install-test-'))
+	return {
+		dir,
+		async [Symbol.asyncDispose]() {
+			await fs.rm(dir, { recursive: true, force: true })
+		},
+	}
+}
 
 async function writePackageJson(
 	dir: string,
@@ -93,6 +92,9 @@ describe('getInstallCommand', () => {
 
 describe('getRootPackageInstallStatus', () => {
 	test('detects npm package manager from packageManager field', async () => {
+		await using temp = await createTempDir()
+		const tempDir = temp.dir
+
 		await writePackageJson(tempDir, {
 			name: 'test-package',
 			packageManager: 'npm@10.0.0',
@@ -113,6 +115,9 @@ describe('getRootPackageInstallStatus', () => {
 	})
 
 	test('detects pnpm package manager from packageManager field', async () => {
+		await using temp = await createTempDir()
+		const tempDir = temp.dir
+
 		await writePackageJson(tempDir, {
 			name: 'test-package',
 			packageManager: 'pnpm@8.0.0',
@@ -133,6 +138,9 @@ describe('getRootPackageInstallStatus', () => {
 	})
 
 	test('detects yarn package manager from packageManager field', async () => {
+		await using temp = await createTempDir()
+		const tempDir = temp.dir
+
 		await writePackageJson(tempDir, {
 			name: 'test-package',
 			packageManager: 'yarn@4.0.0',
@@ -153,6 +161,9 @@ describe('getRootPackageInstallStatus', () => {
 	})
 
 	test('detects bun package manager from packageManager field', async () => {
+		await using temp = await createTempDir()
+		const tempDir = temp.dir
+
 		await writePackageJson(tempDir, {
 			name: 'test-package',
 			packageManager: 'bun@1.0.0',
@@ -173,6 +184,9 @@ describe('getRootPackageInstallStatus', () => {
 	})
 
 	test('returns null package manager when not specified', async () => {
+		await using temp = await createTempDir()
+		const tempDir = temp.dir
+
 		await writePackageJson(tempDir, {
 			name: 'test-package',
 			dependencies: { react: '^18.0.0' },
@@ -191,6 +205,9 @@ describe('getRootPackageInstallStatus', () => {
 	})
 
 	test('detects missing node_modules directory', async () => {
+		await using temp = await createTempDir()
+		const tempDir = temp.dir
+
 		await writePackageJson(tempDir, {
 			name: 'test-package',
 			dependencies: { react: '^18.0.0' },
@@ -210,6 +227,9 @@ describe('getRootPackageInstallStatus', () => {
 	})
 
 	test('detects missing dependencies', async () => {
+		await using temp = await createTempDir()
+		const tempDir = temp.dir
+
 		await writePackageJson(tempDir, {
 			name: 'test-package',
 			dependencies: { react: '^18.0.0', 'react-dom': '^18.0.0' },
@@ -237,6 +257,9 @@ describe('getRootPackageInstallStatus', () => {
 	})
 
 	test('detects missing devDependencies', async () => {
+		await using temp = await createTempDir()
+		const tempDir = temp.dir
+
 		await writePackageJson(tempDir, {
 			name: 'test-package',
 			dependencies: { react: '^18.0.0' },
@@ -261,6 +284,9 @@ describe('getRootPackageInstallStatus', () => {
 	})
 
 	test('handles scoped packages correctly', async () => {
+		await using temp = await createTempDir()
+		const tempDir = temp.dir
+
 		await writePackageJson(tempDir, {
 			name: 'test-package',
 			dependencies: { '@epic-web/workshop-utils': '^1.0.0' },
@@ -279,6 +305,9 @@ describe('getRootPackageInstallStatus', () => {
 	})
 
 	test('detects missing scoped packages', async () => {
+		await using temp = await createTempDir()
+		const tempDir = temp.dir
+
 		await writePackageJson(tempDir, {
 			name: 'test-package',
 			dependencies: { '@epic-web/workshop-utils': '^1.0.0' },
@@ -297,6 +326,9 @@ describe('getRootPackageInstallStatus', () => {
 	})
 
 	test('handles package.json with no dependencies', async () => {
+		await using temp = await createTempDir()
+		const tempDir = temp.dir
+
 		await writePackageJson(tempDir, {
 			name: 'test-package',
 		})
@@ -311,6 +343,9 @@ describe('getRootPackageInstallStatus', () => {
 	})
 
 	test('handles missing optionalDependencies gracefully', async () => {
+		await using temp = await createTempDir()
+		const tempDir = temp.dir
+
 		await writePackageJson(tempDir, {
 			name: 'test-package',
 			dependencies: { react: '^18.0.0' },
@@ -334,6 +369,9 @@ describe('getRootPackageInstallStatus', () => {
 	})
 
 	test('handles unreadable package.json', async () => {
+		await using temp = await createTempDir()
+		const tempDir = temp.dir
+
 		vi.mocked(console.warn).mockImplementation(() => {})
 
 		const status = await getRootPackageInstallStatus(
@@ -350,6 +388,9 @@ describe('getRootPackageInstallStatus', () => {
 	})
 
 	test('generates consistent dependency hash', async () => {
+		await using temp = await createTempDir()
+		const tempDir = temp.dir
+
 		await writePackageJson(tempDir, {
 			name: 'test-package',
 			dependencies: { react: '^18.0.0', 'react-dom': '^18.0.0' },
@@ -364,32 +405,29 @@ describe('getRootPackageInstallStatus', () => {
 		)
 
 		// Create a second temp directory with the same dependencies
-		const tempDir2 = await fs.mkdtemp(
-			path.join(os.tmpdir(), 'package-install-test-'),
+		await using temp2 = await createTempDir()
+		await writePackageJson(temp2.dir, {
+			name: 'different-name',
+			dependencies: { react: '^18.0.0', 'react-dom': '^18.0.0' },
+		})
+		mockNpmLsResult({
+			exitCode: 0,
+			dependencies: { react: {}, 'react-dom': {} },
+		})
+
+		const status2 = await getRootPackageInstallStatus(
+			path.join(temp2.dir, 'package.json'),
 		)
-		try {
-			await writePackageJson(tempDir2, {
-				name: 'different-name',
-				dependencies: { react: '^18.0.0', 'react-dom': '^18.0.0' },
-			})
-			mockNpmLsResult({
-				exitCode: 0,
-				dependencies: { react: {}, 'react-dom': {} },
-			})
 
-			const status2 = await getRootPackageInstallStatus(
-				path.join(tempDir2, 'package.json'),
-			)
-
-			expect(status1.dependencyHash).toBe(status2.dependencyHash)
-		} finally {
-			await fs.rm(tempDir2, { recursive: true, force: true })
-		}
+		expect(status1.dependencyHash).toBe(status2.dependencyHash)
 	})
 })
 
 describe('getRootPackageJsonPaths', () => {
 	test('finds single root package.json', async () => {
+		await using temp = await createTempDir()
+		const tempDir = temp.dir
+
 		await writePackageJson(tempDir, {
 			name: 'root-package',
 		})
@@ -401,6 +439,9 @@ describe('getRootPackageJsonPaths', () => {
 	})
 
 	test('excludes workspace member package.json files', async () => {
+		await using temp = await createTempDir()
+		const tempDir = temp.dir
+
 		await writePackageJson(tempDir, {
 			name: 'root-package',
 			workspaces: ['packages/*'],
@@ -422,6 +463,9 @@ describe('getRootPackageJsonPaths', () => {
 	})
 
 	test('finds multiple independent roots', async () => {
+		await using temp = await createTempDir()
+		const tempDir = temp.dir
+
 		await writePackageJson(tempDir, {
 			name: 'root-package',
 		})
@@ -440,6 +484,9 @@ describe('getRootPackageJsonPaths', () => {
 	})
 
 	test('ignores playground and saved-playgrounds package.json files', async () => {
+		await using temp = await createTempDir()
+		const tempDir = temp.dir
+
 		await writePackageJson(tempDir, {
 			name: 'root-package',
 		})
@@ -467,6 +514,9 @@ describe('getRootPackageJsonPaths', () => {
 	})
 
 	test('handles workspaces defined as object', async () => {
+		await using temp = await createTempDir()
+		const tempDir = temp.dir
+
 		await writePackageJson(tempDir, {
 			name: 'root-package',
 			workspaces: {
@@ -492,6 +542,9 @@ describe('getRootPackageJsonPaths', () => {
 
 describe('getWorkspaceInstallStatus', () => {
 	test('aggregates status for single root', async () => {
+		await using temp = await createTempDir()
+		const tempDir = temp.dir
+
 		await writePackageJson(tempDir, {
 			name: 'test-package',
 			packageManager: 'pnpm@8.0.0',
@@ -511,6 +564,9 @@ describe('getWorkspaceInstallStatus', () => {
 	})
 
 	test('detects install needed in workspace with multiple roots', async () => {
+		await using temp = await createTempDir()
+		const tempDir = temp.dir
+
 		await writePackageJson(tempDir, {
 			name: 'root-package',
 			dependencies: { react: '^18.0.0' },
@@ -553,6 +609,9 @@ describe('getWorkspaceInstallStatus', () => {
 	})
 
 	test('returns all up-to-date when all roots satisfied', async () => {
+		await using temp = await createTempDir()
+		const tempDir = temp.dir
+
 		await writePackageJson(tempDir, {
 			name: 'root-package',
 			packageManager: 'yarn@4.0.0',
@@ -587,6 +646,9 @@ describe('getWorkspaceInstallStatus', () => {
 	})
 
 	test('handles empty workspace', async () => {
+		await using temp = await createTempDir()
+		const tempDir = temp.dir
+
 		const status = await getWorkspaceInstallStatus(tempDir)
 
 		expect(status.dependenciesNeedInstall).toBe(false)
