@@ -810,7 +810,11 @@ export async function launchReadiness(
 	}
 
 	for (const exerciseDirName of exerciseDirNames) {
-		const { files, contentFiles, issues: fileIssues } = await buildExpectedFiles({
+		const {
+			files,
+			contentFiles,
+			issues: fileIssues,
+		} = await buildExpectedFiles({
 			workshopRoot,
 			exerciseDirName,
 		})

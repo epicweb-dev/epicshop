@@ -232,7 +232,9 @@ test('fails when a required FINISHED.mdx is too short', async () => {
 		expect(result.success).toBe(false)
 		const output = logSpy.mock.calls.map((c) => c.join(' ')).join('\n')
 		expect(output).toContain('File content too short')
-		expect(output).toContain('exercises/01.first-exercise/01.problem/FINISHED.mdx')
+		expect(output).toContain(
+			'exercises/01.first-exercise/01.problem/FINISHED.mdx',
+		)
 	} finally {
 		logSpy.mockRestore()
 		await fs.rm(workshopRoot, { recursive: true, force: true })
