@@ -1,4 +1,9 @@
-import { getApps, getExercises } from '@epic-web/workshop-utils/apps.server'
+import {
+	getApps,
+	getExercises,
+	getWorkshopFinished,
+	getWorkshopInstructions,
+} from '@epic-web/workshop-utils/apps.server'
 import { getEpicVideoInfos } from '@epic-web/workshop-utils/epic-api.server'
 import { getProcesses } from '@epic-web/workshop-utils/process-manager.server'
 import {
@@ -153,7 +158,26 @@ export async function loader({ request }: Route.LoaderArgs) {
 		}
 
 		try {
-			const exercises = await getExercises({ request, timings })
+			const [workshopInstructions, workshopFinished, exercises] =
+				await Promise.all([
+					getWorkshopInstructions({ request }),
+					getWorkshopFinished({ request }),
+					getExercises({ request, timings }),
+				])
+
+			if (workshopInstructions.compiled.status === 'success') {
+				addEmbeds(
+					{ path: '/', label: 'Workshop intro' },
+					workshopInstructions.compiled.epicVideoEmbeds,
+				)
+			}
+			if (workshopFinished.compiled.status === 'success') {
+				addEmbeds(
+					{ path: '/finished', label: 'Workshop finished' },
+					workshopFinished.compiled.epicVideoEmbeds,
+				)
+			}
+
 			for (const exercise of exercises) {
 				const exLabel = exercise.exerciseNumber.toString().padStart(2, '0')
 				addEmbeds(
