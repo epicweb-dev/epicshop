@@ -278,21 +278,6 @@ async function buildExpectedFiles({
 					relativePath: path.relative(workshopRoot, problemReadme),
 				})
 			}
-
-			const problemFinished = await resolveMdxFile(problemDir, 'FINISHED')
-			if (!problemFinished) {
-				issues.push({
-					level: 'error',
-					code: 'missing-step-problem-finished',
-					message: `Missing step problem FINISHED.mdx for step ${stepNumber}`,
-					file: path.join(problemDir, 'FINISHED.mdx'),
-				})
-			} else {
-				contentFiles.push({
-					fullPath: problemFinished,
-					relativePath: path.relative(workshopRoot, problemFinished),
-				})
-			}
 		}
 
 		for (const solutionDir of dirs.solutions) {
@@ -313,21 +298,6 @@ async function buildExpectedFiles({
 				contentFiles.push({
 					fullPath: solutionReadme,
 					relativePath: path.relative(workshopRoot, solutionReadme),
-				})
-			}
-
-			const solutionFinished = await resolveMdxFile(solutionDir, 'FINISHED')
-			if (!solutionFinished) {
-				issues.push({
-					level: 'error',
-					code: 'missing-step-solution-finished',
-					message: `Missing step solution FINISHED.mdx for step ${stepNumber}`,
-					file: path.join(solutionDir, 'FINISHED.mdx'),
-				})
-			} else {
-				contentFiles.push({
-					fullPath: solutionFinished,
-					relativePath: path.relative(workshopRoot, solutionFinished),
 				})
 			}
 		}
@@ -882,7 +852,7 @@ export async function launchReadiness(
 		}
 	}
 
-	// Also scan the remaining required MDX files for EpicVideo embeds (e.g. step FINISHED.mdx),
+	// Also scan the remaining required MDX files for EpicVideo embeds,
 	// but do not require that they include a video.
 	{
 		const videoFilePaths = new Set(filesToCheck.map((f) => f.fullPath))

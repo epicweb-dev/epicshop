@@ -80,16 +80,8 @@ async function createWorkshopFixture({
 		`# Step Problem\n\n<EpicVideo url="https://${productHost}/workshops/${productSlug}/step-problem" />\n`,
 	)
 	await writeFile(
-		path.join(exRoot, '01.problem', 'FINISHED.mdx'),
-		`# Step Problem Finished\n\nThis step is finished. Great work!\n`,
-	)
-	await writeFile(
 		path.join(exRoot, '01.solution', 'README.mdx'),
 		`# Step Solution\n\n<EpicVideo url="https://${productHost}/workshops/${productSlug}/step-solution" />\n`,
-	)
-	await writeFile(
-		path.join(exRoot, '01.solution', 'FINISHED.mdx'),
-		`# Step Solution Finished\n\nThis step is finished. Great work!\n`,
 	)
 
 	return root
@@ -214,7 +206,6 @@ test('fails when a required FINISHED.mdx is too short', async () => {
 			workshopRoot,
 			'exercises',
 			'01.first-exercise',
-			'01.problem',
 			'FINISHED.mdx',
 		),
 		`Short.\n`,
@@ -233,7 +224,7 @@ test('fails when a required FINISHED.mdx is too short', async () => {
 		const output = logSpy.mock.calls.map((c) => c.join(' ')).join('\n')
 		expect(output).toContain('File content too short')
 		expect(output).toContain(
-			'exercises/01.first-exercise/01.problem/FINISHED.mdx',
+			'exercises/01.first-exercise/FINISHED.mdx',
 		)
 	} finally {
 		logSpy.mockRestore()
