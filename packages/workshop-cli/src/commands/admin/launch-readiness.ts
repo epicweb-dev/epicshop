@@ -116,7 +116,7 @@ async function resolveMdxFile(
 	return null
 }
 
-function buildExpectedFiles({
+async function buildExpectedFiles({
 	workshopRoot,
 	exerciseDirName,
 }: {
@@ -127,216 +127,213 @@ function buildExpectedFiles({
 	contentFiles: Array<ContentCheckFile>
 	issues: Array<Issue>
 }> {
-	return (async () => {
-		const issues: Array<Issue> = []
-		const files: Array<VideoCheckFile> = []
-		const contentFiles: Array<ContentCheckFile> = []
+	const issues: Array<Issue> = []
+	const files: Array<VideoCheckFile> = []
+	const contentFiles: Array<ContentCheckFile> = []
 
-		const exerciseRoot = path.join(workshopRoot, 'exercises', exerciseDirName)
-		const exerciseIntro = await resolveMdxFile(exerciseRoot, 'README')
-		const exerciseSummary = await resolveMdxFile(exerciseRoot, 'FINISHED')
+	const exerciseRoot = path.join(workshopRoot, 'exercises', exerciseDirName)
+	const exerciseIntro = await resolveMdxFile(exerciseRoot, 'README')
+	const exerciseSummary = await resolveMdxFile(exerciseRoot, 'FINISHED')
 
-		if (!exerciseIntro) {
-			issues.push({
-				level: 'error',
-				code: 'missing-exercise-readme',
-				message: `Missing exercise intro file (expected README.mdx)`,
-				file: path.join(exerciseRoot, 'README.mdx'),
-			})
-		} else {
-			files.push({
-				kind: 'exercise-intro',
-				fullPath: exerciseIntro,
-				relativePath: path.relative(workshopRoot, exerciseIntro),
-			})
-			contentFiles.push({
-				fullPath: exerciseIntro,
-				relativePath: path.relative(workshopRoot, exerciseIntro),
-			})
+	if (!exerciseIntro) {
+		issues.push({
+			level: 'error',
+			code: 'missing-exercise-readme',
+			message: `Missing exercise intro file (expected README.mdx)`,
+			file: path.join(exerciseRoot, 'README.mdx'),
+		})
+	} else {
+		files.push({
+			kind: 'exercise-intro',
+			fullPath: exerciseIntro,
+			relativePath: path.relative(workshopRoot, exerciseIntro),
+		})
+		contentFiles.push({
+			fullPath: exerciseIntro,
+			relativePath: path.relative(workshopRoot, exerciseIntro),
+		})
+	}
+
+	if (!exerciseSummary) {
+		issues.push({
+			level: 'error',
+			code: 'missing-exercise-finished',
+			message: `Missing exercise summary file (expected FINISHED.mdx)`,
+			file: path.join(exerciseRoot, 'FINISHED.mdx'),
+		})
+	} else {
+		files.push({
+			kind: 'exercise-summary',
+			fullPath: exerciseSummary,
+			relativePath: path.relative(workshopRoot, exerciseSummary),
+		})
+		contentFiles.push({
+			fullPath: exerciseSummary,
+			relativePath: path.relative(workshopRoot, exerciseSummary),
+		})
+	}
+
+	let entries: Array<Dirent> = []
+	try {
+		entries = await fs.readdir(exerciseRoot, { withFileTypes: true })
+	} catch (error) {
+		issues.push({
+			level: 'error',
+			code: 'exercise-readdir-failed',
+			message: `Failed to read exercise directory contents: ${getErrorMessage(
+				error,
+			)}`,
+			file: exerciseRoot,
+		})
+		return { files, contentFiles, issues }
+	}
+	const stepDirRegex = /^(?<stepNumber>\d+)\.(?<type>problem|solution)(\..*)?$/
+	const stepsByNumber = new Map<
+		number,
+		{ problems: Array<string>; solutions: Array<string> }
+	>()
+
+	for (const entry of entries) {
+		if (!entry.isDirectory()) continue
+		const match = stepDirRegex.exec(entry.name)
+		if (!match?.groups) continue
+		const stepNumber = Number(match.groups.stepNumber)
+		const type = match.groups.type as 'problem' | 'solution'
+		if (!Number.isFinite(stepNumber) || stepNumber <= 0) continue
+
+		const current = stepsByNumber.get(stepNumber) ?? {
+			problems: [],
+			solutions: [],
 		}
 
-		if (!exerciseSummary) {
-			issues.push({
-				level: 'error',
-				code: 'missing-exercise-finished',
-				message: `Missing exercise summary file (expected FINISHED.mdx)`,
-				file: path.join(exerciseRoot, 'FINISHED.mdx'),
-			})
-		} else {
-			files.push({
-				kind: 'exercise-summary',
-				fullPath: exerciseSummary,
-				relativePath: path.relative(workshopRoot, exerciseSummary),
-			})
-			contentFiles.push({
-				fullPath: exerciseSummary,
-				relativePath: path.relative(workshopRoot, exerciseSummary),
-			})
-		}
+		const fullStepDir = path.join(exerciseRoot, entry.name)
+		if (type === 'problem') current.problems.push(fullStepDir)
+		if (type === 'solution') current.solutions.push(fullStepDir)
+		stepsByNumber.set(stepNumber, current)
+	}
 
-		let entries: Array<Dirent> = []
-		try {
-			entries = await fs.readdir(exerciseRoot, { withFileTypes: true })
-		} catch (error) {
+	if (stepsByNumber.size === 0) {
+		issues.push({
+			level: 'warning',
+			code: 'no-steps-found',
+			message:
+				'No step app directories found in this exercise (expected folders like "01.problem" and "01.solution")',
+			file: exerciseRoot,
+		})
+	}
+
+	for (const [stepNumber, dirs] of [...stepsByNumber.entries()].sort(
+		(a, b) => a[0] - b[0],
+	)) {
+		if (dirs.problems.length === 0) {
 			issues.push({
 				level: 'error',
-				code: 'exercise-readdir-failed',
-				message: `Failed to read exercise directory contents: ${getErrorMessage(
-					error,
-				)}`,
+				code: 'missing-step-problem-dir',
+				message: `Missing problem app directory for step ${stepNumber}`,
 				file: exerciseRoot,
 			})
-			return { files, contentFiles, issues }
 		}
-		const stepDirRegex =
-			/^(?<stepNumber>\d+)\.(?<type>problem|solution)(\..*)?$/
-		const stepsByNumber = new Map<
-			number,
-			{ problems: Array<string>; solutions: Array<string> }
-		>()
-
-		for (const entry of entries) {
-			if (!entry.isDirectory()) continue
-			const match = stepDirRegex.exec(entry.name)
-			if (!match?.groups) continue
-			const stepNumber = Number(match.groups.stepNumber)
-			const type = match.groups.type as 'problem' | 'solution'
-			if (!Number.isFinite(stepNumber) || stepNumber <= 0) continue
-
-			const current = stepsByNumber.get(stepNumber) ?? {
-				problems: [],
-				solutions: [],
-			}
-
-			const fullStepDir = path.join(exerciseRoot, entry.name)
-			if (type === 'problem') current.problems.push(fullStepDir)
-			if (type === 'solution') current.solutions.push(fullStepDir)
-			stepsByNumber.set(stepNumber, current)
+		if (dirs.solutions.length === 0) {
+			issues.push({
+				level: 'error',
+				code: 'missing-step-solution-dir',
+				message: `Missing solution app directory for step ${stepNumber}`,
+				file: exerciseRoot,
+			})
 		}
-
-		if (stepsByNumber.size === 0) {
+		if (dirs.problems.length > 1) {
 			issues.push({
 				level: 'warning',
-				code: 'no-steps-found',
-				message:
-					'No step app directories found in this exercise (expected folders like "01.problem" and "01.solution")',
+				code: 'multiple-step-problem-dirs',
+				message: `Multiple problem app directories found for step ${stepNumber}`,
+				file: exerciseRoot,
+			})
+		}
+		if (dirs.solutions.length > 1) {
+			issues.push({
+				level: 'warning',
+				code: 'multiple-step-solution-dirs',
+				message: `Multiple solution app directories found for step ${stepNumber}`,
 				file: exerciseRoot,
 			})
 		}
 
-		for (const [stepNumber, dirs] of [...stepsByNumber.entries()].sort(
-			(a, b) => a[0] - b[0],
-		)) {
-			if (dirs.problems.length === 0) {
+		for (const problemDir of dirs.problems) {
+			const problemReadme = await resolveMdxFile(problemDir, 'README')
+			if (!problemReadme) {
 				issues.push({
 					level: 'error',
-					code: 'missing-step-problem-dir',
-					message: `Missing problem app directory for step ${stepNumber}`,
-					file: exerciseRoot,
+					code: 'missing-step-problem-readme',
+					message: `Missing step problem README.mdx for step ${stepNumber}`,
+					file: path.join(problemDir, 'README.mdx'),
+				})
+			} else {
+				files.push({
+					kind: 'step-problem',
+					fullPath: problemReadme,
+					relativePath: path.relative(workshopRoot, problemReadme),
+				})
+				contentFiles.push({
+					fullPath: problemReadme,
+					relativePath: path.relative(workshopRoot, problemReadme),
 				})
 			}
-			if (dirs.solutions.length === 0) {
+
+			const problemFinished = await resolveMdxFile(problemDir, 'FINISHED')
+			if (!problemFinished) {
 				issues.push({
 					level: 'error',
-					code: 'missing-step-solution-dir',
-					message: `Missing solution app directory for step ${stepNumber}`,
-					file: exerciseRoot,
+					code: 'missing-step-problem-finished',
+					message: `Missing step problem FINISHED.mdx for step ${stepNumber}`,
+					file: path.join(problemDir, 'FINISHED.mdx'),
 				})
-			}
-			if (dirs.problems.length > 1) {
-				issues.push({
-					level: 'warning',
-					code: 'multiple-step-problem-dirs',
-					message: `Multiple problem app directories found for step ${stepNumber}`,
-					file: exerciseRoot,
+			} else {
+				contentFiles.push({
+					fullPath: problemFinished,
+					relativePath: path.relative(workshopRoot, problemFinished),
 				})
-			}
-			if (dirs.solutions.length > 1) {
-				issues.push({
-					level: 'warning',
-					code: 'multiple-step-solution-dirs',
-					message: `Multiple solution app directories found for step ${stepNumber}`,
-					file: exerciseRoot,
-				})
-			}
-
-			for (const problemDir of dirs.problems) {
-				const problemReadme = await resolveMdxFile(problemDir, 'README')
-				if (!problemReadme) {
-					issues.push({
-						level: 'error',
-						code: 'missing-step-problem-readme',
-						message: `Missing step problem README.mdx for step ${stepNumber}`,
-						file: path.join(problemDir, 'README.mdx'),
-					})
-				} else {
-					files.push({
-						kind: 'step-problem',
-						fullPath: problemReadme,
-						relativePath: path.relative(workshopRoot, problemReadme),
-					})
-					contentFiles.push({
-						fullPath: problemReadme,
-						relativePath: path.relative(workshopRoot, problemReadme),
-					})
-				}
-
-				const problemFinished = await resolveMdxFile(problemDir, 'FINISHED')
-				if (!problemFinished) {
-					issues.push({
-						level: 'error',
-						code: 'missing-step-problem-finished',
-						message: `Missing step problem FINISHED.mdx for step ${stepNumber}`,
-						file: path.join(problemDir, 'FINISHED.mdx'),
-					})
-				} else {
-					contentFiles.push({
-						fullPath: problemFinished,
-						relativePath: path.relative(workshopRoot, problemFinished),
-					})
-				}
-			}
-
-			for (const solutionDir of dirs.solutions) {
-				const solutionReadme = await resolveMdxFile(solutionDir, 'README')
-				if (!solutionReadme) {
-					issues.push({
-						level: 'error',
-						code: 'missing-step-solution-readme',
-						message: `Missing step solution README.mdx for step ${stepNumber}`,
-						file: path.join(solutionDir, 'README.mdx'),
-					})
-				} else {
-					files.push({
-						kind: 'step-solution',
-						fullPath: solutionReadme,
-						relativePath: path.relative(workshopRoot, solutionReadme),
-					})
-					contentFiles.push({
-						fullPath: solutionReadme,
-						relativePath: path.relative(workshopRoot, solutionReadme),
-					})
-				}
-
-				const solutionFinished = await resolveMdxFile(solutionDir, 'FINISHED')
-				if (!solutionFinished) {
-					issues.push({
-						level: 'error',
-						code: 'missing-step-solution-finished',
-						message: `Missing step solution FINISHED.mdx for step ${stepNumber}`,
-						file: path.join(solutionDir, 'FINISHED.mdx'),
-					})
-				} else {
-					contentFiles.push({
-						fullPath: solutionFinished,
-						relativePath: path.relative(workshopRoot, solutionFinished),
-					})
-				}
 			}
 		}
 
-		return { files, contentFiles, issues }
-	})()
+		for (const solutionDir of dirs.solutions) {
+			const solutionReadme = await resolveMdxFile(solutionDir, 'README')
+			if (!solutionReadme) {
+				issues.push({
+					level: 'error',
+					code: 'missing-step-solution-readme',
+					message: `Missing step solution README.mdx for step ${stepNumber}`,
+					file: path.join(solutionDir, 'README.mdx'),
+				})
+			} else {
+				files.push({
+					kind: 'step-solution',
+					fullPath: solutionReadme,
+					relativePath: path.relative(workshopRoot, solutionReadme),
+				})
+				contentFiles.push({
+					fullPath: solutionReadme,
+					relativePath: path.relative(workshopRoot, solutionReadme),
+				})
+			}
+
+			const solutionFinished = await resolveMdxFile(solutionDir, 'FINISHED')
+			if (!solutionFinished) {
+				issues.push({
+					level: 'error',
+					code: 'missing-step-solution-finished',
+					message: `Missing step solution FINISHED.mdx for step ${stepNumber}`,
+					file: path.join(solutionDir, 'FINISHED.mdx'),
+				})
+			} else {
+				contentFiles.push({
+					fullPath: solutionFinished,
+					relativePath: path.relative(workshopRoot, solutionFinished),
+				})
+			}
+		}
+	}
+
+	return { files, contentFiles, issues }
 }
 
 async function fetchRemoteWorkshopLessonSlugs({
