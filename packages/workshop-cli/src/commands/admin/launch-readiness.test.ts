@@ -184,16 +184,89 @@ test('remote lesson check fails when product lesson slug not represented locally
 		}),
 	)
 
+	const logSpy = vi.spyOn(console, 'log').mockImplementation(() => {})
+
 	try {
-		await expect(
-			launchReadiness({
-				workshopRoot,
-				silent: true,
-				skipRemote: false,
-				skipHead: true,
-			}),
-		).resolves.toEqual(expect.objectContaining({ success: false }))
+		const result = await launchReadiness({
+			workshopRoot,
+			silent: false,
+			skipRemote: false,
+			skipHead: true,
+		})
+
+		expect(result.success).toBe(false)
+		const output = logSpy.mock.calls.map((c) => c.join(' ')).join('\n')
+		expect(output).toContain('Missing videos in workshop for product lessons:')
+		expect(output).toContain('missing-lesson')
+		expect(output).toContain(
+			`https://${productHost}/workshops/${productSlug}/missing-lesson`,
+		)
 	} finally {
+		logSpy.mockRestore()
+		await fs.rm(workshopRoot, { recursive: true, force: true })
+	}
+})
+
+test('warns about extra embeds only for configured workshop (includes offending url + file)', async () => {
+	const productHost = 'www.epicweb.dev'
+	const productSlug = 'test-workshop'
+	const workshopRoot = await createWorkshopFixture({ productHost, productSlug })
+
+	// Add an extra embed for this workshop (should warn) and one outside /workshops (should not).
+	const exerciseIntroPath = path.join(
+		workshopRoot,
+		'exercises',
+		'01.first-exercise',
+		'README.mdx',
+	)
+	await writeFile(
+		exerciseIntroPath,
+		`# Exercise Intro
+
+<EpicVideo url="https://${productHost}/workshops/${productSlug}/exercise-intro" />
+<EpicVideo url="https://${productHost}/workshops/${productSlug}/extra-lesson" />
+<EpicVideo url="https://${productHost}/blog/some-post" />
+`,
+	)
+
+	vi.stubGlobal(
+		'fetch',
+		vi.fn(async () => {
+			return new Response(
+				JSON.stringify({
+					resources: [
+						{ _type: 'lesson', _id: '1', slug: 'workshop-intro' },
+						{ _type: 'lesson', _id: '2', slug: 'workshop-wrap-up' },
+						{ _type: 'lesson', _id: '3', slug: 'exercise-intro' },
+						{ _type: 'lesson', _id: '4', slug: 'exercise-summary' },
+						{ _type: 'lesson', _id: '5', slug: 'step-problem' },
+						{ _type: 'lesson', _id: '6', slug: 'step-solution' },
+					],
+				}),
+				{ status: 200 },
+			)
+		}),
+	)
+
+	const logSpy = vi.spyOn(console, 'log').mockImplementation(() => {})
+
+	try {
+		const result = await launchReadiness({
+			workshopRoot,
+			silent: false,
+			skipRemote: false,
+			skipHead: true,
+		})
+
+		expect(result.success).toBe(true)
+		const output = logSpy.mock.calls.map((c) => c.join(' ')).join('\n')
+		expect(output).toContain(
+			`EpicVideo embed not present in the product lesson list: https://${productHost}/workshops/${productSlug}/extra-lesson`,
+		)
+		expect(output).toContain('exercises/01.first-exercise/README.mdx')
+		expect(output).not.toContain('some-post')
+	} finally {
+		logSpy.mockRestore()
 		await fs.rm(workshopRoot, { recursive: true, force: true })
 	}
 })

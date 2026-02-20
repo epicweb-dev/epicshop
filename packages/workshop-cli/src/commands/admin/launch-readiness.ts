@@ -66,6 +66,27 @@ function normalizeHost(host: string) {
 	return host.toLowerCase().replace(/^www\./, '')
 }
 
+function parseEpicWorkshopSlugFromEmbedUrl(urlString: string): string | null {
+	const parseSegments = (segments: Array<string>) => {
+		// Expected: /workshops/<workshopSlug>/...
+		if (segments[0] !== 'workshops') return null
+		const workshopSlug = segments[1] ?? null
+		return workshopSlug ? stripEpicAiSlugSuffix(workshopSlug) : null
+	}
+
+	try {
+		const url = new URL(urlString)
+		const segments = url.pathname.split('/').filter(Boolean)
+		return parseSegments(segments)
+	} catch {
+		// Fall back to naive parsing (best-effort).
+		const withoutHash = urlString.split('#')[0] ?? urlString
+		const withoutQuery = withoutHash.split('?')[0] ?? withoutHash
+		const segments = withoutQuery.split('/').filter(Boolean)
+		return parseSegments(segments)
+	}
+}
+
 function parseEpicLessonSlugFromEmbedUrl(urlString: string): string | null {
 	const parseSegments = (segments: Array<string>) => {
 		if (segments.length === 0) return null
@@ -89,6 +110,19 @@ function parseEpicLessonSlugFromEmbedUrl(urlString: string): string | null {
 		const segments = withoutQuery.split('/').filter(Boolean)
 		return parseSegments(segments)
 	}
+}
+
+function formatProductLessonUrl({
+	productHost,
+	productSlug,
+	lessonSlug,
+}: {
+	productHost: string
+	productSlug: string
+	lessonSlug: string
+}) {
+	// The product site will typically redirect to a section-specific path when needed.
+	return `https://${productHost}/workshops/${productSlug}/${lessonSlug}`
 }
 
 function formatIssue(issue: Issue, workshopRoot: string) {
@@ -953,14 +987,27 @@ export async function launchReadiness(
 	// -------------------------------------------------------
 	// 4) Remote product lesson list vs local embedded videos
 	// -------------------------------------------------------
-	const localLessonSlugs = new Set<string>()
-	for (const embedUrl of embedOccurrences.keys()) {
-		const slug = parseEpicLessonSlugFromEmbedUrl(embedUrl)
-		if (slug) localLessonSlugs.add(slug)
-	}
-
 	if (!skipRemote) {
 		if (productHost && productSlug) {
+			// Only consider embeds that belong to this workshop on the configured host.
+			// It's valid for content to include EpicVideo embeds from other workshops/paths.
+			const localProductLessonSlugs = new Set<string>()
+			const normalizedConfigHost = normalizeHost(productHost)
+			for (const embedUrl of embedOccurrences.keys()) {
+				const lessonSlug = parseEpicLessonSlugFromEmbedUrl(embedUrl)
+				if (!lessonSlug) continue
+				const workshopSlug = parseEpicWorkshopSlugFromEmbedUrl(embedUrl)
+				if (!workshopSlug || workshopSlug !== productSlug) continue
+				try {
+					const url = new URL(embedUrl)
+					if (normalizeHost(url.host) !== normalizedConfigHost) continue
+				} catch {
+					// Invalid URLs are reported elsewhere (host/path validation); ignore here.
+					continue
+				}
+				localProductLessonSlugs.add(lessonSlug)
+			}
+
 			const remote = await fetchRemoteWorkshopLessonSlugs({
 				productHost,
 				workshopSlug: productSlug,
@@ -987,29 +1034,49 @@ export async function launchReadiness(
 				}
 
 				const missing = remoteLessonSlugs.filter(
-					(slug) => !localLessonSlugs.has(slug),
+					(slug) => !localProductLessonSlugs.has(slug),
 				)
 				if (missing.length) {
+					const formatted = missing
+						.sort()
+						.map(
+							(slug) =>
+								`- ${slug}: ${formatProductLessonUrl({
+									productHost,
+									productSlug,
+									lessonSlug: slug,
+								})}`,
+						)
+						.join('\n')
 					issues.push({
 						level: 'error',
 						code: 'missing-product-videos-in-workshop',
-						message: `Missing videos in workshop for product lessons: ${missing
-							.sort()
-							.join(', ')}`,
+						message: `Missing videos in workshop for product lessons:\n${formatted}`,
 					})
 				}
 
-				const extras = [...localLessonSlugs].filter(
-					(slug) => !remoteLessonSlugs.includes(slug),
-				)
-				if (extras.length) {
-					issues.push({
-						level: 'warning',
-						code: 'extra-local-videos',
-						message: `Found EpicVideo embeds for lesson slugs not present in the product lesson list: ${extras
-							.sort()
-							.join(', ')}`,
-					})
+				const remoteLessonSlugSet = new Set(remoteLessonSlugs)
+				for (const [embedUrl, usedBy] of embedOccurrences.entries()) {
+					const lessonSlug = parseEpicLessonSlugFromEmbedUrl(embedUrl)
+					if (!lessonSlug) continue
+					const workshopSlug = parseEpicWorkshopSlugFromEmbedUrl(embedUrl)
+					if (!workshopSlug || workshopSlug !== productSlug) continue
+					try {
+						const url = new URL(embedUrl)
+						if (normalizeHost(url.host) !== normalizedConfigHost) continue
+					} catch {
+						continue
+					}
+
+					if (remoteLessonSlugSet.has(lessonSlug)) continue
+					for (const file of usedBy) {
+						issues.push({
+							level: 'warning',
+							code: 'extra-local-videos',
+							message: `EpicVideo embed not present in the product lesson list: ${embedUrl}`,
+							file,
+						})
+					}
 				}
 			}
 		}
