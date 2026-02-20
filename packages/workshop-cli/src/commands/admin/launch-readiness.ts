@@ -116,13 +116,17 @@ function formatProductLessonUrl({
 	productHost,
 	productSlug,
 	lessonSlug,
+	sectionSlug,
 }: {
 	productHost: string
 	productSlug: string
 	lessonSlug: string
+	sectionSlug: string | null
 }) {
 	// The product site will typically redirect to a section-specific path when needed.
-	return `https://${productHost}/workshops/${productSlug}/${lessonSlug}`
+	return sectionSlug
+		? `https://${productHost}/workshops/${productSlug}/${sectionSlug}/${lessonSlug}`
+		: `https://${productHost}/workshops/${productSlug}/${lessonSlug}`
 }
 
 function formatIssue(issue: Issue, workshopRoot: string) {
@@ -347,7 +351,10 @@ async function fetchRemoteWorkshopLessonSlugs({
 	productHost: string
 	workshopSlug: string
 }): Promise<
-	| { status: 'success'; lessonSlugs: Array<string> }
+	| {
+			status: 'success'
+			lessons: Array<{ slug: string; sectionSlug: string | null }>
+	  }
 	| { status: 'error'; message: string }
 > {
 	const url = `https://${productHost}/api/workshops/${encodeURIComponent(workshopSlug)}`
@@ -420,30 +427,36 @@ async function fetchRemoteWorkshopLessonSlugs({
 		}
 	}
 
-	const lessonSlugs: Array<string> = []
+	const lessons: Array<{ slug: string; sectionSlug: string | null }> = []
 	for (const resource of resources) {
 		if (!resource || typeof resource !== 'object') continue
 		const r = resource as Record<string, unknown>
 
 		if (r._type === 'lesson') {
 			const slug = r.slug
-			if (typeof slug === 'string') lessonSlugs.push(slug)
+			if (typeof slug === 'string') lessons.push({ slug, sectionSlug: null })
 			continue
 		}
 
 		if (r._type === 'section') {
-			const lessons = r.lessons
-			if (!Array.isArray(lessons)) continue
-			for (const lesson of lessons) {
+			const sectionSlug =
+				typeof r.slug === 'string' && r.slug.trim().length > 0
+					? r.slug.trim()
+					: null
+			const sectionLessons = r.lessons
+			if (!Array.isArray(sectionLessons)) continue
+			for (const lesson of sectionLessons) {
 				if (!lesson || typeof lesson !== 'object') continue
 				const l = lesson as Record<string, unknown>
 				const slug = l.slug
-				if (typeof slug === 'string') lessonSlugs.push(slug)
+				if (typeof slug === 'string') {
+					lessons.push({ slug, sectionSlug })
+				}
 			}
 		}
 	}
 
-	return { status: 'success', lessonSlugs }
+	return { status: 'success', lessons }
 }
 
 async function checkMinContentLength({
@@ -1020,9 +1033,25 @@ export async function launchReadiness(
 					message: remote.message,
 				})
 			} else {
-				const remoteLessonSlugs = Array.from(
-					new Set(remote.lessonSlugs.map(stripEpicAiSlugSuffix)),
-				)
+				const remoteLessons = remote.lessons
+					.map((l) => ({
+						slug: stripEpicAiSlugSuffix(l.slug),
+						sectionSlug: l.sectionSlug
+							? stripEpicAiSlugSuffix(l.sectionSlug)
+							: null,
+					}))
+					.filter((l) => l.slug.trim().length > 0)
+
+				// Preserve the first sectionSlug seen for a given lesson slug.
+				const remoteLessonBySlug = new Map<
+					string,
+					{ slug: string; sectionSlug: string | null }
+				>()
+				for (const l of remoteLessons) {
+					if (!remoteLessonBySlug.has(l.slug)) remoteLessonBySlug.set(l.slug, l)
+				}
+
+				const remoteLessonSlugs = [...remoteLessonBySlug.keys()]
 
 				if (remoteLessonSlugs.length === 0) {
 					issues.push({
@@ -1039,14 +1068,15 @@ export async function launchReadiness(
 				if (missing.length) {
 					const formatted = missing
 						.sort()
-						.map(
-							(slug) =>
-								`- ${slug}: ${formatProductLessonUrl({
-									productHost,
-									productSlug,
-									lessonSlug: slug,
-								})}`,
-						)
+						.map((slug) => {
+							const remoteLesson = remoteLessonBySlug.get(slug)
+							return `- ${slug}: ${formatProductLessonUrl({
+								productHost,
+								productSlug,
+								lessonSlug: slug,
+								sectionSlug: remoteLesson?.sectionSlug ?? null,
+							})}`
+						})
 						.join('\n')
 					issues.push({
 						level: 'error',

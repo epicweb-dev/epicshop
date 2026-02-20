@@ -176,7 +176,12 @@ test('remote lesson check fails when product lesson slug not represented locally
 				JSON.stringify({
 					resources: [
 						{ _type: 'lesson', _id: '1', slug: 'workshop-intro' },
-						{ _type: 'lesson', _id: '2', slug: 'missing-lesson' },
+						{
+							_type: 'section',
+							_id: 's1',
+							slug: 'functions-section',
+							lessons: [{ _type: 'lesson', _id: '2', slug: 'missing-lesson' }],
+						},
 					],
 				}),
 				{ status: 200 },
@@ -199,7 +204,7 @@ test('remote lesson check fails when product lesson slug not represented locally
 		expect(output).toContain('Missing videos in workshop for product lessons:')
 		expect(output).toContain('missing-lesson')
 		expect(output).toContain(
-			`https://${productHost}/workshops/${productSlug}/missing-lesson`,
+			`https://${productHost}/workshops/${productSlug}/functions-section/missing-lesson`,
 		)
 	} finally {
 		logSpy.mockRestore()
