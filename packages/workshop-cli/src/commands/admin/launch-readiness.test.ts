@@ -202,12 +202,7 @@ test('fails when a required FINISHED.mdx is too short', async () => {
 	const workshopRoot = await createWorkshopFixture()
 
 	await writeFile(
-		path.join(
-			workshopRoot,
-			'exercises',
-			'01.first-exercise',
-			'FINISHED.mdx',
-		),
+		path.join(workshopRoot, 'exercises', '01.first-exercise', 'FINISHED.mdx'),
 		`Short.\n`,
 	)
 
@@ -223,9 +218,7 @@ test('fails when a required FINISHED.mdx is too short', async () => {
 		expect(result.success).toBe(false)
 		const output = logSpy.mock.calls.map((c) => c.join(' ')).join('\n')
 		expect(output).toContain('File content too short')
-		expect(output).toContain(
-			'exercises/01.first-exercise/FINISHED.mdx',
-		)
+		expect(output).toContain('exercises/01.first-exercise/FINISHED.mdx')
 	} finally {
 		logSpy.mockRestore()
 		await fs.rm(workshopRoot, { recursive: true, force: true })
