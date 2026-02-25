@@ -21,14 +21,6 @@ vi.mock('@epic-web/workshop-utils/compile-mdx.server', async () => {
 
 import { launchReadiness } from './launch-readiness.ts'
 
-function dispose(callback: () => void) {
-	return {
-		[Symbol.dispose]() {
-			callback()
-		},
-	}
-}
-
 async function writeJson(filePath: string, value: unknown) {
 	await fs.mkdir(path.dirname(filePath), { recursive: true })
 	await fs.writeFile(filePath, JSON.stringify(value, null, 2))
@@ -101,7 +93,6 @@ async function createWorkshopFixture({
 }
 
 test('passes with configured product + videos (skip remote)', async () => {
-	using ignoredUnstubGlobals = dispose(() => vi.unstubAllGlobals())
 	await using workshop = await createWorkshopFixture()
 
 	await expect(
@@ -115,7 +106,6 @@ test('passes with configured product + videos (skip remote)', async () => {
 })
 
 test('fails when epicshop.product.slug missing', async () => {
-	using ignoredUnstubGlobals = dispose(() => vi.unstubAllGlobals())
 	await using workshop = await createWorkshopFixture({
 		includeProductSlug: false,
 	})
@@ -131,7 +121,6 @@ test('fails when epicshop.product.slug missing', async () => {
 })
 
 test('fails when a required MDX file has no EpicVideo embed (and prints helpful path)', async () => {
-	using ignoredUnstubGlobals = dispose(() => vi.unstubAllGlobals())
 	await using workshop = await createWorkshopFixture()
 
 	// Remove the EpicVideo embed from the step problem README.
@@ -147,7 +136,6 @@ test('fails when a required MDX file has no EpicVideo embed (and prints helpful 
 	)
 
 	const logSpy = vi.spyOn(console, 'log').mockImplementation(() => {})
-	using ignoredRestoreLogSpy = dispose(() => logSpy.mockRestore())
 
 	const result = await launchReadiness({
 		workshopRoot: workshop.root,
@@ -165,7 +153,6 @@ test('fails when a required MDX file has no EpicVideo embed (and prints helpful 
 test('remote lesson check fails when product lesson slug not represented locally', async () => {
 	const productHost = 'www.epicweb.dev'
 	const productSlug = 'test-workshop'
-	using ignoredUnstubGlobals = dispose(() => vi.unstubAllGlobals())
 	await using workshop = await createWorkshopFixture({ productHost, productSlug })
 
 	vi.stubGlobal(
@@ -189,7 +176,6 @@ test('remote lesson check fails when product lesson slug not represented locally
 	)
 
 	const logSpy = vi.spyOn(console, 'log').mockImplementation(() => {})
-	using ignoredRestoreLogSpy = dispose(() => logSpy.mockRestore())
 
 	const result = await launchReadiness({
 		workshopRoot: workshop.root,
@@ -210,7 +196,6 @@ test('remote lesson check fails when product lesson slug not represented locally
 test('warns about extra embeds only for configured workshop (includes offending url + file)', async () => {
 	const productHost = 'www.epicweb.dev'
 	const productSlug = 'test-workshop'
-	using ignoredUnstubGlobals = dispose(() => vi.unstubAllGlobals())
 	await using workshop = await createWorkshopFixture({ productHost, productSlug })
 
 	// Add an extra embed for this workshop (should warn) and one outside /workshops (should not).
@@ -250,7 +235,6 @@ test('warns about extra embeds only for configured workshop (includes offending 
 	)
 
 	const logSpy = vi.spyOn(console, 'log').mockImplementation(() => {})
-	using ignoredRestoreLogSpy = dispose(() => logSpy.mockRestore())
 
 	const result = await launchReadiness({
 		workshopRoot: workshop.root,
@@ -269,7 +253,6 @@ test('warns about extra embeds only for configured workshop (includes offending 
 })
 
 test('fails when a required FINISHED.mdx is too short', async () => {
-	using ignoredUnstubGlobals = dispose(() => vi.unstubAllGlobals())
 	await using workshop = await createWorkshopFixture()
 
 	await writeFile(
@@ -278,7 +261,6 @@ test('fails when a required FINISHED.mdx is too short', async () => {
 	)
 
 	const logSpy = vi.spyOn(console, 'log').mockImplementation(() => {})
-	using ignoredRestoreLogSpy = dispose(() => logSpy.mockRestore())
 
 	const result = await launchReadiness({
 		workshopRoot: workshop.root,
@@ -293,7 +275,6 @@ test('fails when a required FINISHED.mdx is too short', async () => {
 })
 
 test('fails when an EpicVideo url does not return 200 to HEAD', async () => {
-	using ignoredUnstubGlobals = dispose(() => vi.unstubAllGlobals())
 	await using workshop = await createWorkshopFixture()
 
 	vi.stubGlobal(

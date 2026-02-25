@@ -5,5 +5,7 @@ export default defineConfig({
 		name: 'cli',
 		setupFiles: ['../../tests/vitest-setup.ts'],
 		mockReset: true,
+		restoreMocks: true,
+		unstubGlobals: true,
 	},
 })

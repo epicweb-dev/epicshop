@@ -6,14 +6,6 @@ import { expect, test, vi } from 'vitest'
 
 import { setVideos } from './set-videos.ts'
 
-function dispose(callback: () => void) {
-	return {
-		[Symbol.dispose]() {
-			callback()
-		},
-	}
-}
-
 async function writeJson(filePath: string, value: unknown) {
 	await fs.mkdir(path.dirname(filePath), { recursive: true })
 	await fs.writeFile(filePath, JSON.stringify(value, null, 2))
@@ -170,7 +162,6 @@ function mockProductWorkshopResponse({
 }
 
 test('maps product lesson order to files and only updates top EpicVideo under title', async () => {
-	using ignoredUnstubGlobals = dispose(() => vi.unstubAllGlobals())
 	await using fixture = await createWorkshopFixture()
 	const { root, paths } = fixture
 
@@ -242,7 +233,6 @@ test('maps product lesson order to files and only updates top EpicVideo under ti
 })
 
 test('dry-run reports updates but does not write files', async () => {
-	using ignoredUnstubGlobals = dispose(() => vi.unstubAllGlobals())
 	await using fixture = await createWorkshopFixture()
 	const { root, paths } = fixture
 
@@ -293,7 +283,6 @@ test('dry-run reports updates but does not write files', async () => {
 })
 
 test('fails when product lessons are fewer than required files and applies no edits', async () => {
-	using ignoredUnstubGlobals = dispose(() => vi.unstubAllGlobals())
 	await using fixture = await createWorkshopFixture()
 	const { root, paths } = fixture
 
@@ -325,7 +314,6 @@ test('fails when product lessons are fewer than required files and applies no ed
 })
 
 test('prints failure details when set-videos fails and silent is false', async () => {
-	using ignoredUnstubGlobals = dispose(() => vi.unstubAllGlobals())
 	await using fixture = await createWorkshopFixture()
 	const { root } = fixture
 
@@ -341,7 +329,6 @@ test('prints failure details when set-videos fails and silent is false', async (
 	})
 
 	const logSpy = vi.spyOn(console, 'log').mockImplementation(() => {})
-	using ignoredRestoreLogSpy = dispose(() => logSpy.mockRestore())
 
 	const result = await setVideos({ workshopRoot: root, silent: false })
 	expect(result.success).toBe(false)
