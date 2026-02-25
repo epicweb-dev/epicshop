@@ -21,6 +21,13 @@ To validate launch readiness locally, run:
 
 `npx epicshop admin launch-readiness`
 
+To auto-set workshop videos from the current product lesson order, run:
+
+`npx epicshop admin set-videos`
+
+This command only inserts/updates the `EpicVideo` directly below the file title,
+and leaves any additional `EpicVideo` components in the file unchanged.
+
 You must also add the `product.slug` and `product.host` to the `epicshop`
 section in `package.json`:
 

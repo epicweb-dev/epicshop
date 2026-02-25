@@ -979,7 +979,7 @@ const cli = yargs(args)
 				.positional('subcommand', {
 					describe: 'Admin subcommand',
 					type: 'string',
-					choices: ['launch-readiness'],
+					choices: ['launch-readiness', 'set-videos'],
 				})
 				.option('workshop-dir', {
 					alias: 'w',
@@ -1008,6 +1008,10 @@ const cli = yargs(args)
 				.example(
 					'$0 admin launch-readiness',
 					'Check workshop launch readiness (hidden command)',
+				)
+				.example(
+					'$0 admin set-videos',
+					'Set top EpicVideo embeds from product lesson order (hidden command)',
 				)
 		},
 		async (
@@ -1045,6 +1049,14 @@ const cli = yargs(args)
 							silent: argv.silent,
 							skipRemote: argv.skipRemote,
 							skipHead: argv.skipHead,
+						})
+						if (!result.success) process.exit(1)
+						break
+					}
+					case 'set-videos': {
+						const { setVideos } = await import('./commands/admin.js')
+						const result = await setVideos({
+							silent: argv.silent,
 						})
 						if (!result.success) process.exit(1)
 						break
