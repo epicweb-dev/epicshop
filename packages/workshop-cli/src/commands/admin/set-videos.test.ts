@@ -323,3 +323,29 @@ test('fails when product lessons are fewer than required files and applies no ed
 	expect(afterWorkshopReadme).toBe(beforeWorkshopReadme)
 	expect(afterExerciseReadme).toBe(beforeExerciseReadme)
 })
+
+test('prints failure details when set-videos fails and silent is false', async () => {
+	using ignoredUnstubGlobals = dispose(() => vi.unstubAllGlobals())
+	await using fixture = await createWorkshopFixture()
+	const { root } = fixture
+
+	mockProductWorkshopResponse({
+		remoteLessons: [
+			{ type: 'lesson', slug: 'workshop-intro' },
+			{
+				type: 'section',
+				slug: 'first-section',
+				lessons: [{ slug: 'exercise-intro' }],
+			},
+		],
+	})
+
+	const logSpy = vi.spyOn(console, 'log').mockImplementation(() => {})
+	using ignoredRestoreLogSpy = dispose(() => logSpy.mockRestore())
+
+	const result = await setVideos({ workshopRoot: root, silent: false })
+	expect(result.success).toBe(false)
+	const output = logSpy.mock.calls.map((call) => call.join(' ')).join('\n')
+	expect(output).toContain('Admin: Set videos')
+	expect(output).toContain('Not enough product lessons to map onto workshop files')
+})

@@ -521,15 +521,35 @@ export async function setVideos(
 	process.env.EPICSHOP_CONTEXT_CWD = workshopRoot
 	const { silent = false, dryRun = false } = options
 
+	const fail = (
+		message: string,
+		{ warnings = [] as Array<string> }: { warnings?: Array<string> } = {},
+	): SetVideosResult => {
+		if (!silent) {
+			console.log(chalk.bold.cyan('\n🛠️  Admin: Set videos\n'))
+			console.log(chalk.red(`❌ ${message}`))
+			if (warnings.length > 0) {
+				console.log()
+				for (const warning of warnings) {
+					console.log(chalk.yellow(`⚠️ ${warning}`))
+				}
+			}
+			console.log()
+		}
+		return {
+			...createFailureResult(message, { dryRun }),
+			warnings,
+		}
+	}
+
 	const packageJsonPath = path.join(workshopRoot, 'package.json')
 	let packageJson: unknown
 	try {
 		const raw = await fs.readFile(packageJsonPath, 'utf8')
 		packageJson = JSON.parse(raw)
 	} catch (error) {
-		return createFailureResult(
+		return fail(
 			`Failed to read/parse package.json: ${getErrorMessage(error)}`,
-			{ dryRun },
 		)
 	}
 
@@ -552,21 +572,18 @@ export async function setVideos(
 			: ''
 
 	if (!productHost) {
-		return createFailureResult(
+		return fail(
 			'Missing `epicshop.product.host` in package.json (required for set-videos)',
-			{ dryRun },
 		)
 	}
 	if (/^https?:\/\//i.test(productHost) || productHost.includes('/')) {
-		return createFailureResult(
+		return fail(
 			'`epicshop.product.host` should be a host only (for example: "www.epicweb.dev")',
-			{ dryRun },
 		)
 	}
 	if (!productSlug) {
-		return createFailureResult(
+		return fail(
 			'Missing `epicshop.product.slug` in package.json (required for set-videos)',
-			{ dryRun },
 		)
 	}
 
@@ -575,10 +592,9 @@ export async function setVideos(
 	})
 	if (errors.length > 0) {
 		const message = `Cannot set videos because workshop structure is invalid:\n- ${errors.join('\n- ')}`
-		return {
-			...createFailureResult(message, { dryRun }),
+		return fail(message, {
 			warnings,
-		}
+		})
 	}
 
 	const remoteResult = await fetchRemoteWorkshopLessons({
@@ -586,21 +602,19 @@ export async function setVideos(
 		workshopSlug: productSlug,
 	})
 	if (remoteResult.status === 'error') {
-		return {
-			...createFailureResult(remoteResult.message, { dryRun }),
+		return fail(remoteResult.message, {
 			warnings,
-		}
+		})
 	}
 
 	const remoteLessons = remoteResult.lessons
 	if (remoteLessons.length === 0) {
-		return {
-			...createFailureResult(
-				'Product API returned no lessons. Is the workshop published on the product site?',
-				{ dryRun },
-			),
-			warnings,
-		}
+		return fail(
+			'Product API returned no lessons. Is the workshop published on the product site?',
+			{
+				warnings,
+			},
+		)
 	}
 
 	if (remoteLessons.length < files.length) {
@@ -608,13 +622,12 @@ export async function setVideos(
 			.slice(remoteLessons.length)
 			.map((file) => `- ${file.relativePath}`)
 			.join('\n')
-		return {
-			...createFailureResult(
-				`Not enough product lessons to map onto workshop files.\nExpected at least ${files.length} lessons, but received ${remoteLessons.length}.\nUnassigned files:\n${unassignedFiles}`,
-				{ dryRun },
-			),
-			warnings,
-		}
+		return fail(
+			`Not enough product lessons to map onto workshop files.\nExpected at least ${files.length} lessons, but received ${remoteLessons.length}.\nUnassigned files:\n${unassignedFiles}`,
+			{
+				warnings,
+			},
+		)
 	}
 
 	const plannedEdits: Array<{
@@ -661,13 +674,9 @@ export async function setVideos(
 	}
 
 	if (editErrors.length > 0) {
-		return {
-			...createFailureResult(
-				`Could not update videos for all files:\n- ${editErrors.join('\n- ')}`,
-				{ dryRun },
-			),
+		return fail(`Could not update videos for all files:\n- ${editErrors.join('\n- ')}`, {
 			warnings,
-		}
+		})
 	}
 
 	if (!dryRun) {
