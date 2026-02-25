@@ -306,6 +306,19 @@ test('fails when product lessons are fewer than required files and applies no ed
 	expect(result.message).toContain(
 		'Not enough product lessons to map onto workshop files',
 	)
+	expect(result.message).toContain('Assigned file/video pairs (in order):')
+	expect(result.message).toContain('Unassigned local files (in order):')
+	expect(result.message).toContain('Product lessons returned by API (in order):')
+	expect(result.message).toContain('Required local files (in order):')
+	expect(result.message).toContain(
+		'1. exercises/README.mdx -> https://www.epicweb.dev/workshops/test-workshop/workshop-intro',
+	)
+	expect(result.message).toContain(
+		'2. exercises/01.first-exercise/README.mdx -> https://www.epicweb.dev/workshops/test-workshop/first-section/exercise-intro',
+	)
+	expect(result.message).toContain(
+		'3. exercises/01.first-exercise/01.problem/README.mdx',
+	)
 
 	const afterWorkshopReadme = await fs.readFile(paths.workshopReadmePath, 'utf8')
 	const afterExerciseReadme = await fs.readFile(paths.exerciseReadmePath, 'utf8')
@@ -335,4 +348,5 @@ test('prints failure details when set-videos fails and silent is false', async (
 	const output = logSpy.mock.calls.map((call) => call.join(' ')).join('\n')
 	expect(output).toContain('Admin: Set videos')
 	expect(output).toContain('Not enough product lessons to map onto workshop files')
+	expect(output).toContain('Product lessons returned by API (in order):')
 })

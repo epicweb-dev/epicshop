@@ -512,6 +512,10 @@ function upsertTitleEpicVideo({
 	}
 }
 
+function formatNumberedList(items: Array<string>, { startAt = 1 }: { startAt?: number } = {}) {
+	return items.map((item, index) => `${startAt + index}. ${item}`).join('\n')
+}
+
 export async function setVideos(
 	options: SetVideosOptions = {},
 ): Promise<SetVideosResult> {
@@ -618,12 +622,45 @@ export async function setVideos(
 	}
 
 	if (remoteLessons.length < files.length) {
-		const unassignedFiles = files
+		const assignedPairs = files.slice(0, remoteLessons.length).map((file, index) => {
+			const lesson = remoteLessons[index]
+			if (!lesson) return `${file.relativePath} -> (no lesson)`
+			const lessonUrl = formatProductLessonUrl({
+				productHost,
+				productSlug,
+				lessonSlug: lesson.slug,
+				sectionSlug: lesson.sectionSlug,
+			})
+			return `${file.relativePath} -> ${lessonUrl}`
+		})
+		const unassignedLocalFiles = files
 			.slice(remoteLessons.length)
-			.map((file) => `- ${file.relativePath}`)
-			.join('\n')
+			.map((file) => file.relativePath)
+		const remoteLessonsInOrder = remoteLessons.map((lesson) => {
+			const lessonPath = lesson.sectionSlug
+				? `${lesson.sectionSlug}/${lesson.slug}`
+				: lesson.slug
+			const lessonUrl = formatProductLessonUrl({
+				productHost,
+				productSlug,
+				lessonSlug: lesson.slug,
+				sectionSlug: lesson.sectionSlug,
+			})
+			return `${lessonPath} -> ${lessonUrl}`
+		})
+		const requiredLocalFilesInOrder = files.map((file) => file.relativePath)
 		return fail(
-			`Not enough product lessons to map onto workshop files.\nExpected at least ${files.length} lessons, but received ${remoteLessons.length}.\nUnassigned files:\n${unassignedFiles}`,
+			`Not enough product lessons to map onto workshop files.\nExpected at least ${files.length} lessons, but received ${remoteLessons.length}.\nMissing ${files.length - remoteLessons.length} lesson(s).\n\nAssigned file/video pairs (in order):\n${
+				assignedPairs.length > 0
+					? formatNumberedList(assignedPairs)
+					: '(none)'
+			}\n\nUnassigned local files (in order):\n${formatNumberedList(unassignedLocalFiles, {
+				startAt: remoteLessons.length + 1,
+			})}\n\nProduct lessons returned by API (in order):\n${formatNumberedList(
+				remoteLessonsInOrder,
+			)}\n\nRequired local files (in order):\n${formatNumberedList(
+				requiredLocalFilesInOrder,
+			)}\n\nHint: verify the product workshop has all expected lessons published and in the same order as the local exercise/step instruction files.`,
 			{
 				warnings,
 			},
