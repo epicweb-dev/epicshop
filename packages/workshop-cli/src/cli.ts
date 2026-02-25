@@ -1005,6 +1005,12 @@ const cli = yargs(args)
 						'Skip checking that EpicVideo urls return 200 to HEAD (network required)',
 					default: false,
 				})
+				.option('dry-run', {
+					type: 'boolean',
+					description:
+						'Preview set-videos changes without writing files (set-videos only)',
+					default: false,
+				})
 				.example(
 					'$0 admin launch-readiness',
 					'Check workshop launch readiness (hidden command)',
@@ -1012,6 +1018,10 @@ const cli = yargs(args)
 				.example(
 					'$0 admin set-videos',
 					'Set top EpicVideo embeds from product lesson order (hidden command)',
+				)
+				.example(
+					'$0 admin set-videos --dry-run',
+					'Preview top EpicVideo changes without writing files',
 				)
 		},
 		async (
@@ -1021,6 +1031,7 @@ const cli = yargs(args)
 				silent?: boolean
 				skipRemote?: boolean
 				skipHead?: boolean
+				dryRun?: boolean
 			}>,
 		) => {
 			const { findWorkshopRoot } = await import('./commands/workshops.js')
@@ -1057,6 +1068,7 @@ const cli = yargs(args)
 						const { setVideos } = await import('./commands/admin.js')
 						const result = await setVideos({
 							silent: argv.silent,
+							dryRun: argv.dryRun,
 						})
 						if (!result.success) process.exit(1)
 						break

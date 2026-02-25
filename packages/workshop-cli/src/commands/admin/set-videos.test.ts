@@ -193,6 +193,7 @@ test('maps product lesson order to files and only updates top EpicVideo under ti
 
 	const result = await setVideos({ workshopRoot: root, silent: true })
 	expect(result.success).toBe(true)
+	expect(result.dryRun).toBe(false)
 	expect(result.inserted).toBe(3)
 	expect(result.updated).toBe(3)
 	expect(result.unchanged).toBe(0)
@@ -240,6 +241,57 @@ test('maps product lesson order to files and only updates top EpicVideo under ti
 	)
 })
 
+test('dry-run reports updates but does not write files', async () => {
+	using ignoredUnstubGlobals = dispose(() => vi.unstubAllGlobals())
+	await using fixture = await createWorkshopFixture()
+	const { root, paths } = fixture
+
+	mockProductWorkshopResponse({
+		remoteLessons: [
+			{ type: 'lesson', slug: 'workshop-intro' },
+			{
+				type: 'section',
+				slug: 'first-section',
+				lessons: [
+					{ slug: 'exercise-intro' },
+					{ slug: 'step-problem' },
+					{ slug: 'step-solution' },
+					{ slug: 'exercise-summary' },
+				],
+			},
+			{ type: 'lesson', slug: 'workshop-wrap-up' },
+		],
+	})
+
+	const before = {
+		workshopReadme: await fs.readFile(paths.workshopReadmePath, 'utf8'),
+		workshopFinished: await fs.readFile(paths.workshopFinishedPath, 'utf8'),
+		exerciseReadme: await fs.readFile(paths.exerciseReadmePath, 'utf8'),
+		exerciseFinished: await fs.readFile(paths.exerciseFinishedPath, 'utf8'),
+		problemReadme: await fs.readFile(paths.problemReadmePath, 'utf8'),
+		solutionReadme: await fs.readFile(paths.solutionReadmePath, 'utf8'),
+	}
+
+	const result = await setVideos({ workshopRoot: root, silent: true, dryRun: true })
+	expect(result.success).toBe(true)
+	expect(result.dryRun).toBe(true)
+	expect(result.message).toContain('dry run')
+	expect(result.inserted).toBe(3)
+	expect(result.updated).toBe(3)
+	expect(result.unchanged).toBe(0)
+
+	const after = {
+		workshopReadme: await fs.readFile(paths.workshopReadmePath, 'utf8'),
+		workshopFinished: await fs.readFile(paths.workshopFinishedPath, 'utf8'),
+		exerciseReadme: await fs.readFile(paths.exerciseReadmePath, 'utf8'),
+		exerciseFinished: await fs.readFile(paths.exerciseFinishedPath, 'utf8'),
+		problemReadme: await fs.readFile(paths.problemReadmePath, 'utf8'),
+		solutionReadme: await fs.readFile(paths.solutionReadmePath, 'utf8'),
+	}
+
+	expect(after).toEqual(before)
+})
+
 test('fails when product lessons are fewer than required files and applies no edits', async () => {
 	using ignoredUnstubGlobals = dispose(() => vi.unstubAllGlobals())
 	await using fixture = await createWorkshopFixture()
@@ -261,6 +313,7 @@ test('fails when product lessons are fewer than required files and applies no ed
 
 	const result = await setVideos({ workshopRoot: root, silent: true })
 	expect(result.success).toBe(false)
+	expect(result.dryRun).toBe(false)
 	expect(result.message).toContain(
 		'Not enough product lessons to map onto workshop files',
 	)

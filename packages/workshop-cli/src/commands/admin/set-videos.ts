@@ -26,6 +26,7 @@ export type SetVideosOptions = {
 	 */
 	workshopRoot?: string
 	silent?: boolean
+	dryRun?: boolean
 }
 
 export type SetVideosResult = {
@@ -36,9 +37,13 @@ export type SetVideosResult = {
 	updated: number
 	unchanged: number
 	warnings: Array<string>
+	dryRun: boolean
 }
 
-function createFailureResult(message: string): SetVideosResult {
+function createFailureResult(
+	message: string,
+	{ dryRun = false }: { dryRun?: boolean } = {},
+): SetVideosResult {
 	return {
 		success: false,
 		message,
@@ -47,6 +52,7 @@ function createFailureResult(message: string): SetVideosResult {
 		updated: 0,
 		unchanged: 0,
 		warnings: [],
+		dryRun,
 	}
 }
 
@@ -513,7 +519,7 @@ export async function setVideos(
 		options.workshopRoot ?? process.env.EPICSHOP_CONTEXT_CWD ?? process.cwd(),
 	)
 	process.env.EPICSHOP_CONTEXT_CWD = workshopRoot
-	const { silent = false } = options
+	const { silent = false, dryRun = false } = options
 
 	const packageJsonPath = path.join(workshopRoot, 'package.json')
 	let packageJson: unknown
@@ -523,6 +529,7 @@ export async function setVideos(
 	} catch (error) {
 		return createFailureResult(
 			`Failed to read/parse package.json: ${getErrorMessage(error)}`,
+			{ dryRun },
 		)
 	}
 
@@ -547,16 +554,19 @@ export async function setVideos(
 	if (!productHost) {
 		return createFailureResult(
 			'Missing `epicshop.product.host` in package.json (required for set-videos)',
+			{ dryRun },
 		)
 	}
 	if (/^https?:\/\//i.test(productHost) || productHost.includes('/')) {
 		return createFailureResult(
 			'`epicshop.product.host` should be a host only (for example: "www.epicweb.dev")',
+			{ dryRun },
 		)
 	}
 	if (!productSlug) {
 		return createFailureResult(
 			'Missing `epicshop.product.slug` in package.json (required for set-videos)',
+			{ dryRun },
 		)
 	}
 
@@ -566,7 +576,7 @@ export async function setVideos(
 	if (errors.length > 0) {
 		const message = `Cannot set videos because workshop structure is invalid:\n- ${errors.join('\n- ')}`
 		return {
-			...createFailureResult(message),
+			...createFailureResult(message, { dryRun }),
 			warnings,
 		}
 	}
@@ -577,7 +587,7 @@ export async function setVideos(
 	})
 	if (remoteResult.status === 'error') {
 		return {
-			...createFailureResult(remoteResult.message),
+			...createFailureResult(remoteResult.message, { dryRun }),
 			warnings,
 		}
 	}
@@ -587,6 +597,7 @@ export async function setVideos(
 		return {
 			...createFailureResult(
 				'Product API returned no lessons. Is the workshop published on the product site?',
+				{ dryRun },
 			),
 			warnings,
 		}
@@ -600,6 +611,7 @@ export async function setVideos(
 		return {
 			...createFailureResult(
 				`Not enough product lessons to map onto workshop files.\nExpected at least ${files.length} lessons, but received ${remoteLessons.length}.\nUnassigned files:\n${unassignedFiles}`,
+				{ dryRun },
 			),
 			warnings,
 		}
@@ -652,14 +664,17 @@ export async function setVideos(
 		return {
 			...createFailureResult(
 				`Could not update videos for all files:\n- ${editErrors.join('\n- ')}`,
+				{ dryRun },
 			),
 			warnings,
 		}
 	}
 
-	for (const edit of plannedEdits) {
-		if (edit.outcome === 'unchanged') continue
-		await fs.writeFile(edit.file.fullPath, edit.nextContent)
+	if (!dryRun) {
+		for (const edit of plannedEdits) {
+			if (edit.outcome === 'unchanged') continue
+			await fs.writeFile(edit.file.fullPath, edit.nextContent)
+		}
 	}
 
 	const inserted = plannedEdits.filter((edit) => edit.outcome === 'inserted').length
@@ -688,9 +703,12 @@ export async function setVideos(
 		console.log(chalk.bold.cyan('\n🛠️  Admin: Set videos\n'))
 		console.log(
 			chalk.green(
-				`✅ Updated EpicVideo mappings (inserted: ${inserted}, updated: ${updated}, unchanged: ${unchanged})`,
+				`✅ ${dryRun ? 'Planned' : 'Updated'} EpicVideo mappings (inserted: ${inserted}, updated: ${updated}, unchanged: ${unchanged})`,
 			),
 		)
+		if (dryRun) {
+			console.log(chalk.yellow('🧪 Dry run enabled: no files were modified.'))
+		}
 		if (warnings.length > 0) {
 			console.log()
 			for (const warning of warnings) {
@@ -702,10 +720,13 @@ export async function setVideos(
 
 	return {
 		success: true,
-		message: 'Set videos completed successfully',
+		message: dryRun
+			? 'Set videos dry run completed successfully'
+			: 'Set videos completed successfully',
 		inserted,
 		updated,
 		unchanged,
 		warnings,
+		dryRun,
 	}
 }
