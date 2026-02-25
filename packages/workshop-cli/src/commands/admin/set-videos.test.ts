@@ -170,7 +170,7 @@ function mockProductWorkshopResponse({
 }
 
 test('maps product lesson order to files and only updates top EpicVideo under title', async () => {
-	using _unstubGlobals = dispose(() => vi.unstubAllGlobals())
+	using ignoredUnstubGlobals = dispose(() => vi.unstubAllGlobals())
 	await using fixture = await createWorkshopFixture()
 	const { root, paths } = fixture
 
@@ -241,7 +241,7 @@ test('maps product lesson order to files and only updates top EpicVideo under ti
 })
 
 test('fails when product lessons are fewer than required files and applies no edits', async () => {
-	using _unstubGlobals = dispose(() => vi.unstubAllGlobals())
+	using ignoredUnstubGlobals = dispose(() => vi.unstubAllGlobals())
 	await using fixture = await createWorkshopFixture()
 	const { root, paths } = fixture
 
