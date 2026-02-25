@@ -174,7 +174,6 @@ test('maps product lesson order to files and only updates top EpicVideo under ti
 				lessons: [
 					{ slug: 'exercise-intro' },
 					{ slug: 'step-problem' },
-					{ slug: 'step-solution' },
 					{ slug: 'exercise-summary' },
 				],
 			},
@@ -188,6 +187,7 @@ test('maps product lesson order to files and only updates top EpicVideo under ti
 	expect(result.inserted).toBe(3)
 	expect(result.updated).toBe(3)
 	expect(result.unchanged).toBe(0)
+	expect(result.warnings).toHaveLength(0)
 
 	const workshopReadme = await fs.readFile(paths.workshopReadmePath, 'utf8')
 	expect(workshopReadme).toContain(
@@ -218,7 +218,7 @@ test('maps product lesson order to files and only updates top EpicVideo under ti
 
 	const solutionReadme = await fs.readFile(paths.solutionReadmePath, 'utf8')
 	expect(solutionReadme).toContain(
-		'<EpicVideo url="https://www.epicweb.dev/workshops/test-workshop/first-section/step-solution" />',
+		'<EpicVideo url="https://www.epicweb.dev/workshops/test-workshop/first-section/step-problem" />',
 	)
 
 	const exerciseFinished = await fs.readFile(paths.exerciseFinishedPath, 'utf8')
@@ -245,7 +245,6 @@ test('dry-run reports updates but does not write files', async () => {
 				lessons: [
 					{ slug: 'exercise-intro' },
 					{ slug: 'step-problem' },
-					{ slug: 'step-solution' },
 					{ slug: 'exercise-summary' },
 				],
 			},

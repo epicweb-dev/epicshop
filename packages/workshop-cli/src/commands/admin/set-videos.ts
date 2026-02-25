@@ -8,8 +8,17 @@ import chalk from 'chalk'
 import { pathExists } from '../../utils/filesystem.js'
 
 type OrderedVideoFile = {
+	kind:
+		| 'workshop-intro'
+		| 'workshop-wrap-up'
+		| 'exercise-intro'
+		| 'exercise-summary'
+		| 'step-problem'
+		| 'step-solution'
 	fullPath: string
 	relativePath: string
+	exerciseNumber?: number
+	stepNumber?: number
 }
 
 type SetVideosOutcome = 'inserted' | 'updated' | 'unchanged'
@@ -242,6 +251,7 @@ async function collectOrderedVideoFiles({
 		errors.push('Missing workshop intro file `exercises/README.mdx`')
 	} else {
 		files.push({
+			kind: 'workshop-intro',
 			fullPath: workshopIntro,
 			relativePath: path.relative(workshopRoot, workshopIntro),
 		})
@@ -266,6 +276,10 @@ async function collectOrderedVideoFiles({
 
 	for (const exerciseDirName of exerciseDirNames) {
 		const exerciseRoot = path.join(exercisesRoot, exerciseDirName)
+		const exerciseNumberMatch = /^(\d+)\./.exec(exerciseDirName)
+		const exerciseNumber = exerciseNumberMatch
+			? Number(exerciseNumberMatch[1])
+			: undefined
 		const exerciseIntro = await resolveMdxFile(exerciseRoot, 'README')
 		if (!exerciseIntro) {
 			errors.push(
@@ -273,8 +287,10 @@ async function collectOrderedVideoFiles({
 			)
 		} else {
 			files.push({
+				kind: 'exercise-intro',
 				fullPath: exerciseIntro,
 				relativePath: path.relative(workshopRoot, exerciseIntro),
+				exerciseNumber,
 			})
 		}
 
@@ -354,8 +370,11 @@ async function collectOrderedVideoFiles({
 					continue
 				}
 				files.push({
+					kind: 'step-problem',
 					fullPath: problemReadme,
 					relativePath: path.relative(workshopRoot, problemReadme),
+					exerciseNumber,
+					stepNumber,
 				})
 			}
 
@@ -370,8 +389,11 @@ async function collectOrderedVideoFiles({
 					continue
 				}
 				files.push({
+					kind: 'step-solution',
 					fullPath: solutionReadme,
 					relativePath: path.relative(workshopRoot, solutionReadme),
+					exerciseNumber,
+					stepNumber,
 				})
 			}
 		}
@@ -383,14 +405,17 @@ async function collectOrderedVideoFiles({
 			)
 		} else {
 			files.push({
+				kind: 'exercise-summary',
 				fullPath: exerciseSummary,
 				relativePath: path.relative(workshopRoot, exerciseSummary),
+				exerciseNumber,
 			})
 		}
 	}
 
 	if (workshopWrapUp) {
 		files.push({
+			kind: 'workshop-wrap-up',
 			fullPath: workshopWrapUp,
 			relativePath: path.relative(workshopRoot, workshopWrapUp),
 		})
@@ -516,6 +541,46 @@ function formatNumberedList(items: Array<string>, { startAt = 1 }: { startAt?: n
 	return items.map((item, index) => `${startAt + index}. ${item}`).join('\n')
 }
 
+type FileLessonSlotPlan = {
+	file: OrderedVideoFile
+	lessonSlotIndex: number
+}
+
+function buildFileLessonSlotPlans(
+	files: Array<OrderedVideoFile>,
+): {
+	plans: Array<FileLessonSlotPlan>
+	requiredLessonSlots: number
+} {
+	const plans: Array<FileLessonSlotPlan> = []
+	const stepSlotByKey = new Map<string, number>()
+	let nextLessonSlotIndex = 0
+
+	for (const file of files) {
+		if (
+			(file.kind === 'step-problem' || file.kind === 'step-solution') &&
+			typeof file.exerciseNumber === 'number' &&
+			typeof file.stepNumber === 'number'
+		) {
+			const key = `${file.exerciseNumber}:${file.stepNumber}`
+			const existingSlot = stepSlotByKey.get(key)
+			if (typeof existingSlot === 'number') {
+				plans.push({ file, lessonSlotIndex: existingSlot })
+				continue
+			}
+			const newSlot = nextLessonSlotIndex++
+			stepSlotByKey.set(key, newSlot)
+			plans.push({ file, lessonSlotIndex: newSlot })
+			continue
+		}
+
+		const slot = nextLessonSlotIndex++
+		plans.push({ file, lessonSlotIndex: slot })
+	}
+
+	return { plans, requiredLessonSlots: nextLessonSlotIndex }
+}
+
 export async function setVideos(
 	options: SetVideosOptions = {},
 ): Promise<SetVideosResult> {
@@ -621,21 +686,29 @@ export async function setVideos(
 		)
 	}
 
-	if (remoteLessons.length < files.length) {
-		const assignedPairs = files.slice(0, remoteLessons.length).map((file, index) => {
-			const lesson = remoteLessons[index]
-			if (!lesson) return `${file.relativePath} -> (no lesson)`
-			const lessonUrl = formatProductLessonUrl({
-				productHost,
-				productSlug,
-				lessonSlug: lesson.slug,
-				sectionSlug: lesson.sectionSlug,
+	const { plans: fileLessonSlotPlans, requiredLessonSlots } =
+		buildFileLessonSlotPlans(files)
+
+	if (remoteLessons.length < requiredLessonSlots) {
+		const assignedPairs = fileLessonSlotPlans
+			.filter((plan) => plan.lessonSlotIndex < remoteLessons.length)
+			.map((plan) => {
+				const lesson = remoteLessons[plan.lessonSlotIndex]
+				if (!lesson) return `${plan.file.relativePath} -> (no lesson)`
+				const lessonUrl = formatProductLessonUrl({
+					productHost,
+					productSlug,
+					lessonSlug: lesson.slug,
+					sectionSlug: lesson.sectionSlug,
+				})
+				return `${plan.file.relativePath} -> ${lessonUrl}`
 			})
-			return `${file.relativePath} -> ${lessonUrl}`
-		})
-		const unassignedLocalFiles = files
-			.slice(remoteLessons.length)
-			.map((file) => file.relativePath)
+		const unassignedLocalFiles = fileLessonSlotPlans
+			.filter((plan) => plan.lessonSlotIndex >= remoteLessons.length)
+			.map(
+				(plan) =>
+					`${plan.file.relativePath} (lesson slot ${plan.lessonSlotIndex + 1})`,
+			)
 		const remoteLessonsInOrder = remoteLessons.map((lesson) => {
 			const lessonPath = lesson.sectionSlug
 				? `${lesson.sectionSlug}/${lesson.slug}`
@@ -648,14 +721,17 @@ export async function setVideos(
 			})
 			return `${lessonPath} -> ${lessonUrl}`
 		})
-		const requiredLocalFilesInOrder = files.map((file) => file.relativePath)
+		const requiredLocalFilesInOrder = fileLessonSlotPlans.map(
+			(plan) =>
+				`${plan.file.relativePath} (lesson slot ${plan.lessonSlotIndex + 1})`,
+		)
 		return fail(
-			`Not enough product lessons to map onto workshop files.\nExpected at least ${files.length} lessons, but received ${remoteLessons.length}.\nMissing ${files.length - remoteLessons.length} lesson(s).\n\nAssigned file/video pairs (in order):\n${
+			`Not enough product lessons to map onto workshop files.\nExpected at least ${requiredLessonSlots} lessons, but received ${remoteLessons.length}.\nMissing ${requiredLessonSlots - remoteLessons.length} lesson(s).\nThis mapping uses one lesson slot for workshop intro/wrap-up, exercise intro/summary, and one shared lesson slot per exercise step (applied to both problem + solution files).\n\nAssigned file/video pairs (in order):\n${
 				assignedPairs.length > 0
 					? formatNumberedList(assignedPairs)
 					: '(none)'
 			}\n\nUnassigned local files (in order):\n${formatNumberedList(unassignedLocalFiles, {
-				startAt: remoteLessons.length + 1,
+				startAt: assignedPairs.length + 1,
 			})}\n\nProduct lessons returned by API (in order):\n${formatNumberedList(
 				remoteLessonsInOrder,
 			)}\n\nRequired local files (in order):\n${formatNumberedList(
@@ -674,8 +750,8 @@ export async function setVideos(
 	}> = []
 	const editErrors: Array<string> = []
 
-	for (const [index, file] of files.entries()) {
-		const lesson = remoteLessons[index]
+	for (const plan of fileLessonSlotPlans) {
+		const lesson = remoteLessons[plan.lessonSlotIndex]
 		if (!lesson) continue
 		const targetUrl = formatProductLessonUrl({
 			productHost,
@@ -686,10 +762,10 @@ export async function setVideos(
 
 		let currentContent = ''
 		try {
-			currentContent = await fs.readFile(file.fullPath, 'utf8')
+			currentContent = await fs.readFile(plan.file.fullPath, 'utf8')
 		} catch (error) {
 			editErrors.push(
-				`Failed to read "${file.relativePath}": ${getErrorMessage(error)}`,
+				`Failed to read "${plan.file.relativePath}": ${getErrorMessage(error)}`,
 			)
 			continue
 		}
@@ -699,12 +775,12 @@ export async function setVideos(
 			url: targetUrl,
 		})
 		if (result.status === 'error') {
-			editErrors.push(`${file.relativePath}: ${result.message}`)
+			editErrors.push(`${plan.file.relativePath}: ${result.message}`)
 			continue
 		}
 
 		plannedEdits.push({
-			file,
+			file: plan.file,
 			nextContent: result.nextContent,
 			outcome: result.outcome,
 		})
@@ -729,9 +805,9 @@ export async function setVideos(
 		(edit) => edit.outcome === 'unchanged',
 	).length
 
-	if (remoteLessons.length > files.length) {
+	if (remoteLessons.length > requiredLessonSlots) {
 		const extras = remoteLessons
-			.slice(files.length)
+			.slice(requiredLessonSlots)
 			.map((lesson) =>
 				formatProductLessonUrl({
 					productHost,
@@ -741,7 +817,7 @@ export async function setVideos(
 				}),
 			)
 		warnings.push(
-			`Product has ${extras.length} extra lesson(s) beyond mapped files:\n- ${extras.join('\n- ')}`,
+			`Product has ${extras.length} extra lesson(s) beyond mapped lesson slots:\n- ${extras.join('\n- ')}`,
 		)
 	}
 
