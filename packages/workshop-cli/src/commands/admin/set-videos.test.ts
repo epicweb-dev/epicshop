@@ -2,7 +2,7 @@ import fs from 'node:fs/promises'
 import os from 'node:os'
 import path from 'node:path'
 
-import { afterEach, expect, test, vi } from 'vitest'
+import { expect, test, vi } from 'vitest'
 
 import { setVideos } from './set-videos.ts'
 
@@ -158,10 +158,6 @@ function mockProductWorkshopResponse({
 	)
 }
 
-afterEach(() => {
-	vi.unstubAllGlobals()
-})
-
 test('maps product lesson order to files and only updates top EpicVideo under title', async () => {
 	const { root, paths } = await createWorkshopFixture()
 
@@ -231,6 +227,7 @@ test('maps product lesson order to files and only updates top EpicVideo under ti
 			'<EpicVideo url="https://www.epicweb.dev/workshops/test-workshop/workshop-wrap-up" />',
 		)
 	} finally {
+		vi.unstubAllGlobals()
 		await fs.rm(root, { recursive: true, force: true })
 	}
 })
@@ -264,6 +261,7 @@ test('fails when product lessons are fewer than required files and applies no ed
 		expect(afterWorkshopReadme).toBe(beforeWorkshopReadme)
 		expect(afterExerciseReadme).toBe(beforeExerciseReadme)
 	} finally {
+		vi.unstubAllGlobals()
 		await fs.rm(root, { recursive: true, force: true })
 	}
 })
