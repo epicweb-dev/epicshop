@@ -6,6 +6,14 @@ import { expect, test, vi } from 'vitest'
 
 import { setVideos } from './set-videos.ts'
 
+function dispose(callback: () => void) {
+	return {
+		[Symbol.dispose]() {
+			callback()
+		},
+	}
+}
+
 async function writeJson(filePath: string, value: unknown) {
 	await fs.mkdir(path.dirname(filePath), { recursive: true })
 	await fs.writeFile(filePath, JSON.stringify(value, null, 2))
@@ -109,6 +117,9 @@ Here is the solution.
 			problemReadmePath,
 			solutionReadmePath,
 		},
+		async [Symbol.asyncDispose]() {
+			await fs.rm(root, { recursive: true, force: true })
+		},
 	}
 }
 
@@ -159,7 +170,9 @@ function mockProductWorkshopResponse({
 }
 
 test('maps product lesson order to files and only updates top EpicVideo under title', async () => {
-	const { root, paths } = await createWorkshopFixture()
+	using _unstubGlobals = dispose(() => vi.unstubAllGlobals())
+	await using fixture = await createWorkshopFixture()
+	const { root, paths } = fixture
 
 	mockProductWorkshopResponse({
 		remoteLessons: [
@@ -178,62 +191,59 @@ test('maps product lesson order to files and only updates top EpicVideo under ti
 		],
 	})
 
-	try {
-		const result = await setVideos({ workshopRoot: root, silent: true })
-		expect(result.success).toBe(true)
-		expect(result.inserted).toBe(3)
-		expect(result.updated).toBe(3)
-		expect(result.unchanged).toBe(0)
+	const result = await setVideos({ workshopRoot: root, silent: true })
+	expect(result.success).toBe(true)
+	expect(result.inserted).toBe(3)
+	expect(result.updated).toBe(3)
+	expect(result.unchanged).toBe(0)
 
-		const workshopReadme = await fs.readFile(paths.workshopReadmePath, 'utf8')
-		expect(workshopReadme).toContain(
-			'<EpicVideo url="https://www.epicweb.dev/workshops/test-workshop/workshop-intro" />',
-		)
-		expect(workshopReadme).toMatch(
-			/^# Workshop Intro\n\n<EpicVideo url="https:\/\/www\.epicweb\.dev\/workshops\/test-workshop\/workshop-intro" \/>/m,
-		)
+	const workshopReadme = await fs.readFile(paths.workshopReadmePath, 'utf8')
+	expect(workshopReadme).toContain(
+		'<EpicVideo url="https://www.epicweb.dev/workshops/test-workshop/workshop-intro" />',
+	)
+	expect(workshopReadme).toMatch(
+		/^# Workshop Intro\n\n<EpicVideo url="https:\/\/www\.epicweb\.dev\/workshops\/test-workshop\/workshop-intro" \/>/m,
+	)
 
-		const exerciseReadme = await fs.readFile(paths.exerciseReadmePath, 'utf8')
-		expect(exerciseReadme).toContain(
-			'<EpicVideo url="https://www.epicweb.dev/workshops/test-workshop/first-section/exercise-intro" />',
-		)
-		expect(exerciseReadme).toContain(
-			'<EpicVideo url="https://keep.example/extra-exercise-video" />',
-		)
+	const exerciseReadme = await fs.readFile(paths.exerciseReadmePath, 'utf8')
+	expect(exerciseReadme).toContain(
+		'<EpicVideo url="https://www.epicweb.dev/workshops/test-workshop/first-section/exercise-intro" />',
+	)
+	expect(exerciseReadme).toContain(
+		'<EpicVideo url="https://keep.example/extra-exercise-video" />',
+	)
 
-		const problemReadme = await fs.readFile(paths.problemReadmePath, 'utf8')
-		expect(problemReadme).toContain(
-			'<EpicVideo url="https://www.epicweb.dev/workshops/test-workshop/first-section/step-problem" />',
-		)
-		expect(problemReadme).toContain(
-			'<EpicVideo url="https://keep.example/problem-extra-video" />',
-		)
-		expect(problemReadme).toMatch(
-			/^# Step Problem\n\n<EpicVideo url="https:\/\/www\.epicweb\.dev\/workshops\/test-workshop\/first-section\/step-problem" \/>/m,
-		)
+	const problemReadme = await fs.readFile(paths.problemReadmePath, 'utf8')
+	expect(problemReadme).toContain(
+		'<EpicVideo url="https://www.epicweb.dev/workshops/test-workshop/first-section/step-problem" />',
+	)
+	expect(problemReadme).toContain(
+		'<EpicVideo url="https://keep.example/problem-extra-video" />',
+	)
+	expect(problemReadme).toMatch(
+		/^# Step Problem\n\n<EpicVideo url="https:\/\/www\.epicweb\.dev\/workshops\/test-workshop\/first-section\/step-problem" \/>/m,
+	)
 
-		const solutionReadme = await fs.readFile(paths.solutionReadmePath, 'utf8')
-		expect(solutionReadme).toContain(
-			'<EpicVideo url="https://www.epicweb.dev/workshops/test-workshop/first-section/step-solution" />',
-		)
+	const solutionReadme = await fs.readFile(paths.solutionReadmePath, 'utf8')
+	expect(solutionReadme).toContain(
+		'<EpicVideo url="https://www.epicweb.dev/workshops/test-workshop/first-section/step-solution" />',
+	)
 
-		const exerciseFinished = await fs.readFile(paths.exerciseFinishedPath, 'utf8')
-		expect(exerciseFinished).toContain(
-			'<EpicVideo url="https://www.epicweb.dev/workshops/test-workshop/first-section/exercise-summary" />',
-		)
+	const exerciseFinished = await fs.readFile(paths.exerciseFinishedPath, 'utf8')
+	expect(exerciseFinished).toContain(
+		'<EpicVideo url="https://www.epicweb.dev/workshops/test-workshop/first-section/exercise-summary" />',
+	)
 
-		const workshopFinished = await fs.readFile(paths.workshopFinishedPath, 'utf8')
-		expect(workshopFinished).toContain(
-			'<EpicVideo url="https://www.epicweb.dev/workshops/test-workshop/workshop-wrap-up" />',
-		)
-	} finally {
-		vi.unstubAllGlobals()
-		await fs.rm(root, { recursive: true, force: true })
-	}
+	const workshopFinished = await fs.readFile(paths.workshopFinishedPath, 'utf8')
+	expect(workshopFinished).toContain(
+		'<EpicVideo url="https://www.epicweb.dev/workshops/test-workshop/workshop-wrap-up" />',
+	)
 })
 
 test('fails when product lessons are fewer than required files and applies no edits', async () => {
-	const { root, paths } = await createWorkshopFixture()
+	using _unstubGlobals = dispose(() => vi.unstubAllGlobals())
+	await using fixture = await createWorkshopFixture()
+	const { root, paths } = fixture
 
 	mockProductWorkshopResponse({
 		remoteLessons: [
@@ -249,19 +259,14 @@ test('fails when product lessons are fewer than required files and applies no ed
 	const beforeWorkshopReadme = await fs.readFile(paths.workshopReadmePath, 'utf8')
 	const beforeExerciseReadme = await fs.readFile(paths.exerciseReadmePath, 'utf8')
 
-	try {
-		const result = await setVideos({ workshopRoot: root, silent: true })
-		expect(result.success).toBe(false)
-		expect(result.message).toContain(
-			'Not enough product lessons to map onto workshop files',
-		)
+	const result = await setVideos({ workshopRoot: root, silent: true })
+	expect(result.success).toBe(false)
+	expect(result.message).toContain(
+		'Not enough product lessons to map onto workshop files',
+	)
 
-		const afterWorkshopReadme = await fs.readFile(paths.workshopReadmePath, 'utf8')
-		const afterExerciseReadme = await fs.readFile(paths.exerciseReadmePath, 'utf8')
-		expect(afterWorkshopReadme).toBe(beforeWorkshopReadme)
-		expect(afterExerciseReadme).toBe(beforeExerciseReadme)
-	} finally {
-		vi.unstubAllGlobals()
-		await fs.rm(root, { recursive: true, force: true })
-	}
+	const afterWorkshopReadme = await fs.readFile(paths.workshopReadmePath, 'utf8')
+	const afterExerciseReadme = await fs.readFile(paths.exerciseReadmePath, 'utf8')
+	expect(afterWorkshopReadme).toBe(beforeWorkshopReadme)
+	expect(afterExerciseReadme).toBe(beforeExerciseReadme)
 })

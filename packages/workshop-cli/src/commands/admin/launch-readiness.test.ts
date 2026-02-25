@@ -2,7 +2,7 @@ import fs from 'node:fs/promises'
 import os from 'node:os'
 import path from 'node:path'
 
-import { afterEach, expect, test, vi } from 'vitest'
+import { expect, test, vi } from 'vitest'
 
 vi.mock('@epic-web/workshop-utils/compile-mdx.server', async () => {
 	const fs = await import('node:fs/promises')
@@ -20,6 +20,14 @@ vi.mock('@epic-web/workshop-utils/compile-mdx.server', async () => {
 })
 
 import { launchReadiness } from './launch-readiness.ts'
+
+function dispose(callback: () => void) {
+	return {
+		[Symbol.dispose]() {
+			callback()
+		},
+	}
+}
 
 async function writeJson(filePath: string, value: unknown) {
 	await fs.mkdir(path.dirname(filePath), { recursive: true })
@@ -84,56 +92,52 @@ async function createWorkshopFixture({
 		`# Step Solution\n\n<EpicVideo url="https://${productHost}/workshops/${productSlug}/step-solution" />\n`,
 	)
 
-	return root
+	return {
+		root,
+		async [Symbol.asyncDispose]() {
+			await fs.rm(root, { recursive: true, force: true })
+		},
+	}
 }
 
-afterEach(async () => {
-	vi.unstubAllGlobals()
-})
-
 test('passes with configured product + videos (skip remote)', async () => {
-	const workshopRoot = await createWorkshopFixture()
+	using _unstubGlobals = dispose(() => vi.unstubAllGlobals())
+	await using workshop = await createWorkshopFixture()
 
-	try {
-		await expect(
-			launchReadiness({
-				workshopRoot,
-				silent: true,
-				skipRemote: true,
-				skipHead: true,
-			}),
-		).resolves.toEqual(expect.objectContaining({ success: true }))
-	} finally {
-		await fs.rm(workshopRoot, { recursive: true, force: true })
-	}
+	await expect(
+		launchReadiness({
+			workshopRoot: workshop.root,
+			silent: true,
+			skipRemote: true,
+			skipHead: true,
+		}),
+	).resolves.toEqual(expect.objectContaining({ success: true }))
 })
 
 test('fails when epicshop.product.slug missing', async () => {
-	const workshopRoot = await createWorkshopFixture({
+	using _unstubGlobals = dispose(() => vi.unstubAllGlobals())
+	await using workshop = await createWorkshopFixture({
 		includeProductSlug: false,
 	})
 
-	try {
-		await expect(
-			launchReadiness({
-				workshopRoot,
-				silent: true,
-				skipRemote: true,
-				skipHead: true,
-			}),
-		).resolves.toEqual(expect.objectContaining({ success: false }))
-	} finally {
-		await fs.rm(workshopRoot, { recursive: true, force: true })
-	}
+	await expect(
+		launchReadiness({
+			workshopRoot: workshop.root,
+			silent: true,
+			skipRemote: true,
+			skipHead: true,
+		}),
+	).resolves.toEqual(expect.objectContaining({ success: false }))
 })
 
 test('fails when a required MDX file has no EpicVideo embed (and prints helpful path)', async () => {
-	const workshopRoot = await createWorkshopFixture()
+	using _unstubGlobals = dispose(() => vi.unstubAllGlobals())
+	await using workshop = await createWorkshopFixture()
 
 	// Remove the EpicVideo embed from the step problem README.
 	await writeFile(
 		path.join(
-			workshopRoot,
+			workshop.root,
 			'exercises',
 			'01.first-exercise',
 			'01.problem',
@@ -143,31 +147,26 @@ test('fails when a required MDX file has no EpicVideo embed (and prints helpful 
 	)
 
 	const logSpy = vi.spyOn(console, 'log').mockImplementation(() => {})
+	using _restoreLogSpy = dispose(() => logSpy.mockRestore())
 
-	try {
-		const result = await launchReadiness({
-			workshopRoot,
-			silent: false,
-			skipRemote: true,
-			skipHead: true,
-		})
+	const result = await launchReadiness({
+		workshopRoot: workshop.root,
+		silent: false,
+		skipRemote: true,
+		skipHead: true,
+	})
 
-		expect(result.success).toBe(false)
-		const output = logSpy.mock.calls.map((c) => c.join(' ')).join('\n')
-		expect(output).toContain('No <EpicVideo url="..."> embed found')
-		expect(output).toContain(
-			'exercises/01.first-exercise/01.problem/README.mdx',
-		)
-	} finally {
-		logSpy.mockRestore()
-		await fs.rm(workshopRoot, { recursive: true, force: true })
-	}
+	expect(result.success).toBe(false)
+	const output = logSpy.mock.calls.map((c) => c.join(' ')).join('\n')
+	expect(output).toContain('No <EpicVideo url="..."> embed found')
+	expect(output).toContain('exercises/01.first-exercise/01.problem/README.mdx')
 })
 
 test('remote lesson check fails when product lesson slug not represented locally', async () => {
 	const productHost = 'www.epicweb.dev'
 	const productSlug = 'test-workshop'
-	const workshopRoot = await createWorkshopFixture({ productHost, productSlug })
+	using _unstubGlobals = dispose(() => vi.unstubAllGlobals())
+	await using workshop = await createWorkshopFixture({ productHost, productSlug })
 
 	vi.stubGlobal(
 		'fetch',
@@ -190,36 +189,33 @@ test('remote lesson check fails when product lesson slug not represented locally
 	)
 
 	const logSpy = vi.spyOn(console, 'log').mockImplementation(() => {})
+	using _restoreLogSpy = dispose(() => logSpy.mockRestore())
 
-	try {
-		const result = await launchReadiness({
-			workshopRoot,
-			silent: false,
-			skipRemote: false,
-			skipHead: true,
-		})
+	const result = await launchReadiness({
+		workshopRoot: workshop.root,
+		silent: false,
+		skipRemote: false,
+		skipHead: true,
+	})
 
-		expect(result.success).toBe(false)
-		const output = logSpy.mock.calls.map((c) => c.join(' ')).join('\n')
-		expect(output).toContain('Missing videos in workshop for product lessons:')
-		expect(output).toContain('missing-lesson')
-		expect(output).toContain(
-			`https://${productHost}/workshops/${productSlug}/functions-section/missing-lesson`,
-		)
-	} finally {
-		logSpy.mockRestore()
-		await fs.rm(workshopRoot, { recursive: true, force: true })
-	}
+	expect(result.success).toBe(false)
+	const output = logSpy.mock.calls.map((c) => c.join(' ')).join('\n')
+	expect(output).toContain('Missing videos in workshop for product lessons:')
+	expect(output).toContain('missing-lesson')
+	expect(output).toContain(
+		`https://${productHost}/workshops/${productSlug}/functions-section/missing-lesson`,
+	)
 })
 
 test('warns about extra embeds only for configured workshop (includes offending url + file)', async () => {
 	const productHost = 'www.epicweb.dev'
 	const productSlug = 'test-workshop'
-	const workshopRoot = await createWorkshopFixture({ productHost, productSlug })
+	using _unstubGlobals = dispose(() => vi.unstubAllGlobals())
+	await using workshop = await createWorkshopFixture({ productHost, productSlug })
 
 	// Add an extra embed for this workshop (should warn) and one outside /workshops (should not).
 	const exerciseIntroPath = path.join(
-		workshopRoot,
+		workshop.root,
 		'exercises',
 		'01.first-exercise',
 		'README.mdx',
@@ -254,57 +250,51 @@ test('warns about extra embeds only for configured workshop (includes offending 
 	)
 
 	const logSpy = vi.spyOn(console, 'log').mockImplementation(() => {})
+	using _restoreLogSpy = dispose(() => logSpy.mockRestore())
 
-	try {
-		const result = await launchReadiness({
-			workshopRoot,
-			silent: false,
-			skipRemote: false,
-			skipHead: true,
-		})
+	const result = await launchReadiness({
+		workshopRoot: workshop.root,
+		silent: false,
+		skipRemote: false,
+		skipHead: true,
+	})
 
-		expect(result.success).toBe(true)
-		const output = logSpy.mock.calls.map((c) => c.join(' ')).join('\n')
-		expect(output).toContain(
-			`EpicVideo embed not present in the product lesson list: https://${productHost}/workshops/${productSlug}/extra-lesson`,
-		)
-		expect(output).toContain('exercises/01.first-exercise/README.mdx')
-		expect(output).not.toContain('some-post')
-	} finally {
-		logSpy.mockRestore()
-		await fs.rm(workshopRoot, { recursive: true, force: true })
-	}
+	expect(result.success).toBe(true)
+	const output = logSpy.mock.calls.map((c) => c.join(' ')).join('\n')
+	expect(output).toContain(
+		`EpicVideo embed not present in the product lesson list: https://${productHost}/workshops/${productSlug}/extra-lesson`,
+	)
+	expect(output).toContain('exercises/01.first-exercise/README.mdx')
+	expect(output).not.toContain('some-post')
 })
 
 test('fails when a required FINISHED.mdx is too short', async () => {
-	const workshopRoot = await createWorkshopFixture()
+	using _unstubGlobals = dispose(() => vi.unstubAllGlobals())
+	await using workshop = await createWorkshopFixture()
 
 	await writeFile(
-		path.join(workshopRoot, 'exercises', '01.first-exercise', 'FINISHED.mdx'),
+		path.join(workshop.root, 'exercises', '01.first-exercise', 'FINISHED.mdx'),
 		`Short.\n`,
 	)
 
 	const logSpy = vi.spyOn(console, 'log').mockImplementation(() => {})
+	using _restoreLogSpy = dispose(() => logSpy.mockRestore())
 
-	try {
-		const result = await launchReadiness({
-			workshopRoot,
-			silent: false,
-			skipRemote: true,
-			skipHead: true,
-		})
-		expect(result.success).toBe(false)
-		const output = logSpy.mock.calls.map((c) => c.join(' ')).join('\n')
-		expect(output).toContain('File content too short')
-		expect(output).toContain('exercises/01.first-exercise/FINISHED.mdx')
-	} finally {
-		logSpy.mockRestore()
-		await fs.rm(workshopRoot, { recursive: true, force: true })
-	}
+	const result = await launchReadiness({
+		workshopRoot: workshop.root,
+		silent: false,
+		skipRemote: true,
+		skipHead: true,
+	})
+	expect(result.success).toBe(false)
+	const output = logSpy.mock.calls.map((c) => c.join(' ')).join('\n')
+	expect(output).toContain('File content too short')
+	expect(output).toContain('exercises/01.first-exercise/FINISHED.mdx')
 })
 
 test('fails when an EpicVideo url does not return 200 to HEAD', async () => {
-	const workshopRoot = await createWorkshopFixture()
+	using _unstubGlobals = dispose(() => vi.unstubAllGlobals())
+	await using workshop = await createWorkshopFixture()
 
 	vi.stubGlobal(
 		'fetch',
@@ -317,16 +307,12 @@ test('fails when an EpicVideo url does not return 200 to HEAD', async () => {
 		}),
 	)
 
-	try {
-		await expect(
-			launchReadiness({
-				workshopRoot,
-				silent: true,
-				skipRemote: true,
-				skipHead: false,
-			}),
-		).resolves.toEqual(expect.objectContaining({ success: false }))
-	} finally {
-		await fs.rm(workshopRoot, { recursive: true, force: true })
-	}
+	await expect(
+		launchReadiness({
+			workshopRoot: workshop.root,
+			silent: true,
+			skipRemote: true,
+			skipHead: false,
+		}),
+	).resolves.toEqual(expect.objectContaining({ success: false }))
 })
