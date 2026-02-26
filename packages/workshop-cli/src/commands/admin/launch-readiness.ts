@@ -8,6 +8,7 @@ import chalk from 'chalk'
 import { pathExists } from '../../utils/filesystem.js'
 import {
 	collectStepDirectories,
+	formatProductLessonUrl,
 	fetchRemoteWorkshopLessons,
 	isDirectory,
 	resolveMdxFile,
@@ -111,23 +112,6 @@ function parseEpicLessonSlugFromEmbedUrl(urlString: string): string | null {
 		const segments = withoutQuery.split('/').filter(Boolean)
 		return parseSegments(segments)
 	}
-}
-
-function formatProductLessonUrl({
-	productHost,
-	productSlug,
-	lessonSlug,
-	sectionSlug,
-}: {
-	productHost: string
-	productSlug: string
-	lessonSlug: string
-	sectionSlug: string | null
-}) {
-	// The product site will typically redirect to a section-specific path when needed.
-	return sectionSlug
-		? `https://${productHost}/workshops/${productSlug}/${sectionSlug}/${lessonSlug}`
-		: `https://${productHost}/workshops/${productSlug}/${lessonSlug}`
 }
 
 function formatIssue(issue: Issue, workshopRoot: string) {

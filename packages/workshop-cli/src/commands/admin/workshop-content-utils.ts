@@ -18,6 +18,23 @@ export function stripEpicAiSlugSuffix(value: string) {
 	return value.replace(/~[^ ]*$/, '')
 }
 
+export function formatProductLessonUrl({
+	productHost,
+	productSlug,
+	lessonSlug,
+	sectionSlug,
+}: {
+	productHost: string
+	productSlug: string
+	lessonSlug: string
+	sectionSlug: string | null
+}) {
+	// The product site will typically redirect to a section-specific path when needed.
+	return sectionSlug
+		? `https://${productHost}/workshops/${productSlug}/${sectionSlug}/${lessonSlug}`
+		: `https://${productHost}/workshops/${productSlug}/${lessonSlug}`
+}
+
 export async function isDirectory(targetPath: string) {
 	try {
 		return (await fs.stat(targetPath)).isDirectory()

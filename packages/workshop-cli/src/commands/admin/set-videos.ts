@@ -6,6 +6,7 @@ import { getErrorMessage } from '@epic-web/workshop-utils/utils'
 import chalk from 'chalk'
 import {
 	collectStepDirectories,
+	formatProductLessonUrl,
 	fetchRemoteWorkshopLessons,
 	isDirectory,
 	resolveMdxFile,
@@ -63,22 +64,6 @@ function createFailureResult(
 		warnings: [],
 		dryRun,
 	}
-}
-
-function formatProductLessonUrl({
-	productHost,
-	productSlug,
-	lessonSlug,
-	sectionSlug,
-}: {
-	productHost: string
-	productSlug: string
-	lessonSlug: string
-	sectionSlug: string | null
-}) {
-	return sectionSlug
-		? `https://${productHost}/workshops/${productSlug}/${sectionSlug}/${lessonSlug}`
-		: `https://${productHost}/workshops/${productSlug}/${lessonSlug}`
 }
 
 async function collectOrderedVideoFiles({
