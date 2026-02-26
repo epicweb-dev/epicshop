@@ -153,7 +153,10 @@ test('fails when a required MDX file has no EpicVideo embed (and prints helpful 
 test('remote lesson check fails when product lesson slug not represented locally', async () => {
 	const productHost = 'www.epicweb.dev'
 	const productSlug = 'test-workshop'
-	await using workshop = await createWorkshopFixture({ productHost, productSlug })
+	await using workshop = await createWorkshopFixture({
+		productHost,
+		productSlug,
+	})
 
 	vi.stubGlobal(
 		'fetch',
@@ -196,7 +199,10 @@ test('remote lesson check fails when product lesson slug not represented locally
 test('warns about extra embeds only for configured workshop (includes offending url + file)', async () => {
 	const productHost = 'www.epicweb.dev'
 	const productSlug = 'test-workshop'
-	await using workshop = await createWorkshopFixture({ productHost, productSlug })
+	await using workshop = await createWorkshopFixture({
+		productHost,
+		productSlug,
+	})
 
 	// Add an extra embed for this workshop (should warn) and one outside /workshops (should not).
 	const exerciseIntroPath = path.join(

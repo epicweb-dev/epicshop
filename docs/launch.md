@@ -26,8 +26,8 @@ To auto-set workshop videos from the current product lesson order, run:
 `npx epicshop admin set-videos`
 
 This command only inserts/updates the `EpicVideo` directly below the file title,
-and leaves any additional `EpicVideo` components in the file unchanged.
-Use `--dry-run` to preview what would change without writing files.
+and leaves any additional `EpicVideo` components in the file unchanged. Use
+`--dry-run` to preview what would change without writing files.
 
 You must also add the `product.slug` and `product.host` to the `epicshop`
 section in `package.json`:

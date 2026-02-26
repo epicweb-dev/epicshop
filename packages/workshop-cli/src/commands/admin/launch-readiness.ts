@@ -305,7 +305,6 @@ async function buildExpectedFiles({
 	return { files, contentFiles, issues }
 }
 
-
 async function checkMinContentLength({
 	fullPath,
 	minChars,

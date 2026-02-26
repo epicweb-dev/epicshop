@@ -116,7 +116,9 @@ async function collectOrderedVideoFiles({
 		errors.push('Missing workshop wrap-up file `exercises/FINISHED.mdx`')
 	}
 
-	const exerciseEntries = await fs.readdir(exercisesRoot, { withFileTypes: true })
+	const exerciseEntries = await fs.readdir(exercisesRoot, {
+		withFileTypes: true,
+	})
 	const exerciseDirNames = exerciseEntries
 		.filter((e) => e.isDirectory() && /^\d+\./.test(e.name))
 		.map((e) => e.name)
@@ -326,7 +328,8 @@ function upsertTitleEpicVideo({
 		if (blockEnd < 0) {
 			return {
 				status: 'error',
-				message: 'Found a top EpicVideo block but could not find its closing tag',
+				message:
+					'Found a top EpicVideo block but could not find its closing tag',
 			}
 		}
 
@@ -368,7 +371,10 @@ function upsertTitleEpicVideo({
 	}
 }
 
-function formatNumberedList(items: Array<string>, { startAt = 1 }: { startAt?: number } = {}) {
+function formatNumberedList(
+	items: Array<string>,
+	{ startAt = 1 }: { startAt?: number } = {},
+) {
 	return items.map((item, index) => `${startAt + index}. ${item}`).join('\n')
 }
 
@@ -377,9 +383,7 @@ type FileLessonSlotPlan = {
 	lessonSlotIndex: number
 }
 
-function buildFileLessonSlotPlans(
-	files: Array<OrderedVideoFile>,
-): {
+function buildFileLessonSlotPlans(files: Array<OrderedVideoFile>): {
 	plans: Array<FileLessonSlotPlan>
 	requiredLessonSlots: number
 } {
@@ -448,9 +452,7 @@ export async function setVideos(
 		const raw = await fs.readFile(packageJsonPath, 'utf8')
 		packageJson = JSON.parse(raw)
 	} catch (error) {
-		return fail(
-			`Failed to read/parse package.json: ${getErrorMessage(error)}`,
-		)
+		return fail(`Failed to read/parse package.json: ${getErrorMessage(error)}`)
 	}
 
 	const product =
@@ -563,12 +565,13 @@ export async function setVideos(
 		)
 		return fail(
 			`Not enough product lessons to map onto workshop files.\nExpected at least ${requiredLessonSlots} lessons, but received ${remoteLessons.length}.\nMissing ${requiredLessonSlots - remoteLessons.length} lesson(s).\nThis mapping uses one lesson slot for workshop intro/wrap-up, exercise intro/summary, and one shared lesson slot per exercise step (applied to both problem + solution files).\n\nAssigned file/video pairs (in order):\n${
-				assignedPairs.length > 0
-					? formatNumberedList(assignedPairs)
-					: '(none)'
-			}\n\nUnassigned local files (in order):\n${formatNumberedList(unassignedLocalFiles, {
-				startAt: assignedPairs.length + 1,
-			})}\n\nProduct lessons returned by API (in order):\n${formatNumberedList(
+				assignedPairs.length > 0 ? formatNumberedList(assignedPairs) : '(none)'
+			}\n\nUnassigned local files (in order):\n${formatNumberedList(
+				unassignedLocalFiles,
+				{
+					startAt: assignedPairs.length + 1,
+				},
+			)}\n\nProduct lessons returned by API (in order):\n${formatNumberedList(
 				remoteLessonsInOrder,
 			)}\n\nRequired local files (in order):\n${formatNumberedList(
 				requiredLocalFilesInOrder,
@@ -623,9 +626,12 @@ export async function setVideos(
 	}
 
 	if (editErrors.length > 0) {
-		return fail(`Could not update videos for all files:\n- ${editErrors.join('\n- ')}`, {
-			warnings,
-		})
+		return fail(
+			`Could not update videos for all files:\n- ${editErrors.join('\n- ')}`,
+			{
+				warnings,
+			},
+		)
 	}
 
 	if (!dryRun) {
@@ -635,23 +641,25 @@ export async function setVideos(
 		}
 	}
 
-	const inserted = plannedEdits.filter((edit) => edit.outcome === 'inserted').length
-	const updated = plannedEdits.filter((edit) => edit.outcome === 'updated').length
+	const inserted = plannedEdits.filter(
+		(edit) => edit.outcome === 'inserted',
+	).length
+	const updated = plannedEdits.filter(
+		(edit) => edit.outcome === 'updated',
+	).length
 	const unchanged = plannedEdits.filter(
 		(edit) => edit.outcome === 'unchanged',
 	).length
 
 	if (remoteLessons.length > requiredLessonSlots) {
-		const extras = remoteLessons
-			.slice(requiredLessonSlots)
-			.map((lesson) =>
-				formatProductLessonUrl({
-					productHost,
-					productSlug,
-					lessonSlug: lesson.slug,
-					sectionSlug: lesson.sectionSlug,
-				}),
-			)
+		const extras = remoteLessons.slice(requiredLessonSlots).map((lesson) =>
+			formatProductLessonUrl({
+				productHost,
+				productSlug,
+				lessonSlug: lesson.slug,
+				sectionSlug: lesson.sectionSlug,
+			}),
+		)
 		warnings.push(
 			`Product has ${extras.length} extra lesson(s) beyond mapped lesson slots:\n- ${extras.join('\n- ')}`,
 		)

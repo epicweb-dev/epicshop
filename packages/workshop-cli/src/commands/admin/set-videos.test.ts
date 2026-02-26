@@ -31,7 +31,11 @@ async function createWorkshopFixture({
 	const exerciseReadmePath = path.join(exerciseRoot, 'README.mdx')
 	const exerciseFinishedPath = path.join(exerciseRoot, 'FINISHED.mdx')
 	const problemReadmePath = path.join(exerciseRoot, '01.problem', 'README.mdx')
-	const solutionReadmePath = path.join(exerciseRoot, '01.solution', 'README.mdx')
+	const solutionReadmePath = path.join(
+		exerciseRoot,
+		'01.solution',
+		'README.mdx',
+	)
 
 	await writeJson(path.join(root, 'package.json'), {
 		name: 'test-workshop',
@@ -261,7 +265,11 @@ test('dry-run reports updates but does not write files', async () => {
 		solutionReadme: await fs.readFile(paths.solutionReadmePath, 'utf8'),
 	}
 
-	const result = await setVideos({ workshopRoot: root, silent: true, dryRun: true })
+	const result = await setVideos({
+		workshopRoot: root,
+		silent: true,
+		dryRun: true,
+	})
 	expect(result.success).toBe(true)
 	expect(result.dryRun).toBe(true)
 	expect(result.message).toContain('dry run')
@@ -296,8 +304,14 @@ test('fails when product lessons are fewer than required files and applies no ed
 		],
 	})
 
-	const beforeWorkshopReadme = await fs.readFile(paths.workshopReadmePath, 'utf8')
-	const beforeExerciseReadme = await fs.readFile(paths.exerciseReadmePath, 'utf8')
+	const beforeWorkshopReadme = await fs.readFile(
+		paths.workshopReadmePath,
+		'utf8',
+	)
+	const beforeExerciseReadme = await fs.readFile(
+		paths.exerciseReadmePath,
+		'utf8',
+	)
 
 	const result = await setVideos({ workshopRoot: root, silent: true })
 	expect(result.success).toBe(false)
@@ -307,7 +321,9 @@ test('fails when product lessons are fewer than required files and applies no ed
 	)
 	expect(result.message).toContain('Assigned file/video pairs (in order):')
 	expect(result.message).toContain('Unassigned local files (in order):')
-	expect(result.message).toContain('Product lessons returned by API (in order):')
+	expect(result.message).toContain(
+		'Product lessons returned by API (in order):',
+	)
 	expect(result.message).toContain('Required local files (in order):')
 	expect(result.message).toContain(
 		'1. exercises/README.mdx -> https://www.epicweb.dev/workshops/test-workshop/workshop-intro',
@@ -319,8 +335,14 @@ test('fails when product lessons are fewer than required files and applies no ed
 		'3. exercises/01.first-exercise/01.problem/README.mdx',
 	)
 
-	const afterWorkshopReadme = await fs.readFile(paths.workshopReadmePath, 'utf8')
-	const afterExerciseReadme = await fs.readFile(paths.exerciseReadmePath, 'utf8')
+	const afterWorkshopReadme = await fs.readFile(
+		paths.workshopReadmePath,
+		'utf8',
+	)
+	const afterExerciseReadme = await fs.readFile(
+		paths.exerciseReadmePath,
+		'utf8',
+	)
 	expect(afterWorkshopReadme).toBe(beforeWorkshopReadme)
 	expect(afterExerciseReadme).toBe(beforeExerciseReadme)
 })
@@ -346,6 +368,8 @@ test('prints failure details when set-videos fails and silent is false', async (
 	expect(result.success).toBe(false)
 	const output = logSpy.mock.calls.map((call) => call.join(' ')).join('\n')
 	expect(output).toContain('Admin: Set videos')
-	expect(output).toContain('Not enough product lessons to map onto workshop files')
+	expect(output).toContain(
+		'Not enough product lessons to map onto workshop files',
+	)
 	expect(output).toContain('Product lessons returned by API (in order):')
 })

@@ -176,10 +176,7 @@ export async function fetchRemoteWorkshopLessons({
 			const slug = item.slug
 			if (typeof slug === 'string') {
 				const normalizedSlug = applyNormalizer(slug, normalizeLessonSlug)
-				if (
-					requireNonEmptyLessonSlug &&
-					normalizedSlug.trim().length === 0
-				) {
+				if (requireNonEmptyLessonSlug && normalizedSlug.trim().length === 0) {
 					continue
 				}
 				lessons.push({ slug: normalizedSlug, sectionSlug: null })
@@ -207,10 +204,7 @@ export async function fetchRemoteWorkshopLessons({
 				const slug = lessonItem.slug
 				if (typeof slug === 'string') {
 					const normalizedSlug = applyNormalizer(slug, normalizeLessonSlug)
-					if (
-						requireNonEmptyLessonSlug &&
-						normalizedSlug.trim().length === 0
-					) {
+					if (requireNonEmptyLessonSlug && normalizedSlug.trim().length === 0) {
 						continue
 					}
 					lessons.push({ slug: normalizedSlug, sectionSlug })
