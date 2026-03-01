@@ -21,6 +21,7 @@ import {
 import * as React from 'react'
 import { Await, Link, useFetcher, useRevalidator } from 'react-router'
 import { ClientOnly } from 'remix-utils/client-only'
+import { useHydrated } from 'remix-utils/use-hydrated'
 import { useEventSource } from 'remix-utils/sse/react'
 import { toast } from 'sonner'
 import { useTheme } from '#app/routes/theme/index.tsx'
@@ -595,9 +596,10 @@ function EpicVideo({
 			<span key={transcript.length}>{remainingTranscript}</span>,
 		)
 	}
+	const isHydrated = useHydrated()
 
 	React.useEffect(() => {
-		if (!nativeVideoRef.current) return
+		if (!isHydrated || !nativeVideoRef.current) return
 		if (typeof playerPreferences?.playbackRate === 'number') {
 			nativeVideoRef.current.playbackRate = playerPreferences.playbackRate
 		}
@@ -608,6 +610,7 @@ function EpicVideo({
 		playerPreferences?.playbackRate,
 		playerPreferences?.volumeRate,
 		shouldUseOfflineVideo,
+		isHydrated,
 	])
 
 	React.useEffect(() => {
