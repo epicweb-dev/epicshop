@@ -33,6 +33,7 @@ import { useIsOnline } from '#app/utils/online.ts'
 import { useRootLoaderData } from '#app/utils/root-loader.ts'
 import { Icon } from './icons.tsx'
 import { Loading } from './loading.tsx'
+import { useApplyNativeVideoPreferences } from './native-video-preferences.ts'
 import { OfflineVideoActionButtons } from './offline-video-actions.tsx'
 import { useOptionalUser } from './user.tsx'
 import { useWorkshopConfig } from './workshop-config.tsx'
@@ -465,6 +466,8 @@ function EpicVideo({
 }) {
 	const muxPlayerRef = React.useRef<MuxPlayerRefAttributes>(null)
 	const nativeVideoRef = React.useRef<HTMLVideoElement>(null)
+	const [nativeVideoElement, setNativeVideoElement] =
+		React.useState<HTMLVideoElement | null>(null)
 	const isOnline = useIsOnline()
 	const playerPreferences = usePlayerPreferences()
 	const rootData = useRootLoaderData()
@@ -539,6 +542,13 @@ function EpicVideo({
 	const [offlineStartTime, setOfflineStartTime] = React.useState<number | null>(
 		null,
 	)
+	const setNativeVideoRef = React.useCallback(
+		(element: HTMLVideoElement | null) => {
+			nativeVideoRef.current = element
+			setNativeVideoElement(element)
+		},
+		[],
+	)
 	const timestampRegex = /(\d+:\d+)/g
 	// turn the transcript into an array of React elements
 	const transcriptElements: Array<React.ReactNode> = []
@@ -596,19 +606,11 @@ function EpicVideo({
 		)
 	}
 
-	React.useEffect(() => {
-		if (!nativeVideoRef.current) return
-		if (typeof playerPreferences?.playbackRate === 'number') {
-			nativeVideoRef.current.playbackRate = playerPreferences.playbackRate
-		}
-		if (typeof playerPreferences?.volumeRate === 'number') {
-			nativeVideoRef.current.volume = playerPreferences.volumeRate
-		}
-	}, [
-		playerPreferences?.playbackRate,
-		playerPreferences?.volumeRate,
-		shouldUseOfflineVideo,
-	])
+	useApplyNativeVideoPreferences({
+		shouldApply: shouldUseOfflineVideo,
+		videoElement: nativeVideoElement,
+		playerPreferences,
+	})
 
 	React.useEffect(() => {
 		if (!shouldUseOfflineVideo) return
@@ -801,7 +803,7 @@ function EpicVideo({
 									}
 								>
 									<video
-										ref={nativeVideoRef}
+										ref={setNativeVideoRef}
 										slot="media"
 										aria-label={title}
 										className="h-full w-full"
