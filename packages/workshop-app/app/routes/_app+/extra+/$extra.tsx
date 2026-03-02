@@ -10,7 +10,7 @@ import {
 	type ExtraApp,
 } from '@epic-web/workshop-utils/apps.server'
 import { getWorkshopConfig } from '@epic-web/workshop-utils/config.server'
-import { getDiffCode } from '@epic-web/workshop-utils/diff.server'
+import { getDiffPatch } from '@epic-web/workshop-utils/diff.server'
 import { getEpicVideoInfos } from '@epic-web/workshop-utils/epic-api.server'
 import {
 	combineServerTimings,
@@ -120,9 +120,9 @@ export async function loader({ request, params }: LoaderFunctionArgs) {
 
 	async function getDiffProp() {
 		if (!app1 || !app2) {
-			return { app1: app1?.name, app2: app2?.name, diffCode: null }
+			return { app1: app1?.name, app2: app2?.name, diffPatch: null }
 		}
-		const diffCode = await getDiffCode(app1, app2, {
+		const diffPatch = await getDiffPatch(app1, app2, {
 			...cacheOptions,
 			forceFresh: reqUrl.searchParams.get('forceFresh') === 'diff',
 		}).catch((error) => {
@@ -132,7 +132,7 @@ export async function loader({ request, params }: LoaderFunctionArgs) {
 		return {
 			app1: app1.name,
 			app2: app2.name,
-			diffCode,
+			diffPatch,
 		}
 	}
 

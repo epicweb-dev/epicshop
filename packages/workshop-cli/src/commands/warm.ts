@@ -23,7 +23,7 @@ export async function warm({
 	try {
 		const { getApps, isProblemApp, isSolutionApp } =
 			await import('@epic-web/workshop-utils/apps.server')
-		const { getDiffFiles, getDiffCode, getDiffPatch } =
+		const { getDiffFiles, getDiffPatch } =
 			await import('@epic-web/workshop-utils/diff.server')
 		const { warmCache: warmEpicAPICache } =
 			await import('@epic-web/workshop-utils/epic-api.server')
@@ -66,7 +66,6 @@ export async function warm({
 
 				try {
 					await getDiffPatch(problemApp, solutionApp)
-					await getDiffCode(problemApp, solutionApp)
 					await getDiffFiles(problemApp, solutionApp)
 					diffCount++
 					if (!silent) {

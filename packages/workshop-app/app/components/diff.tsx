@@ -29,6 +29,14 @@ type diffProp = {
 
 type ParsedDiffFile = ReturnType<typeof parsePatchFiles>[number]['files'][number]
 
+function useSafeTheme() {
+	try {
+		return useTheme()
+	} catch {
+		return 'dark'
+	}
+}
+
 function RevalidateApps({
 	app1: app1Name,
 	app2: app2Name,
@@ -122,7 +130,7 @@ export function DiffImplementation({
 		delay: 0,
 		minDuration: 1000,
 	})
-	const theme = useTheme()
+	const theme = useSafeTheme()
 	const fileDiffOptions = {
 		themeType: theme,
 		diffStyle: 'unified' as const,
