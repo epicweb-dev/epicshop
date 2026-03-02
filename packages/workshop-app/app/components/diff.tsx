@@ -1,3 +1,4 @@
+import * as Accordion from '@radix-ui/react-accordion'
 import { parsePatchFiles } from '@pierre/diffs'
 import { FileDiff } from '@pierre/diffs/react'
 import * as Select from '@radix-ui/react-select'
@@ -28,6 +29,56 @@ type diffProp = {
 }
 
 type ParsedDiffFile = ReturnType<typeof parsePatchFiles>[number]['files'][number]
+type DiffFileVariant = 'changed' | 'added' | 'deleted' | 'renamed'
+
+function getDiffFileValue(fileDiff: ParsedDiffFile) {
+	return `${fileDiff.prevName ?? ''}::${fileDiff.name}`
+}
+
+function getDiffFileTitle(fileDiff: ParsedDiffFile) {
+	if (fileDiff.prevName && fileDiff.prevName !== fileDiff.name) {
+		return `${fileDiff.prevName} -> ${fileDiff.name}`
+	}
+	return fileDiff.name
+}
+
+function getDiffFileVariant(fileDiff: ParsedDiffFile): DiffFileVariant {
+	switch (fileDiff.type) {
+		case 'new':
+			return 'added'
+		case 'deleted':
+			return 'deleted'
+		case 'rename-pure':
+		case 'rename-changed':
+			return 'renamed'
+		default:
+			return 'changed'
+	}
+}
+
+function getDiffFileIcon(fileDiff: ParsedDiffFile) {
+	const variant = getDiffFileVariant(fileDiff)
+	switch (variant) {
+		case 'added':
+			return 'Added' as const
+		case 'deleted':
+			return 'Deleted' as const
+		case 'renamed':
+			return 'Renamed' as const
+		default:
+			return 'Modified' as const
+	}
+}
+
+function getDiffLineCounts(fileDiff: ParsedDiffFile) {
+	return fileDiff.hunks.reduce(
+		(acc, hunk) => ({
+			added: acc.added + hunk.additionCount,
+			deleted: acc.deleted + hunk.deletionCount,
+		}),
+		{ added: 0, deleted: 0 },
+	)
+}
 
 function useSafeTheme() {
 	try {
@@ -130,12 +181,14 @@ export function DiffImplementation({
 		delay: 0,
 		minDuration: 1000,
 	})
+	const [openFileDiffs, setOpenFileDiffs] = React.useState<Array<string>>([])
 	const theme = useSafeTheme()
 	const fileDiffOptions = {
 		themeType: theme,
 		diffStyle: 'unified' as const,
 		hunkSeparators: 'line-info' as const,
 		overflow: 'scroll' as const,
+		disableFileHeader: true,
 	}
 
 	const hiddenInputs: Array<React.ReactNode> = []
@@ -221,15 +274,51 @@ export function DiffImplementation({
 										There was a problem rendering the diff
 									</p>
 								) : parsedDiffFiles.length ? (
-									<div className="space-y-3 p-4">
-										{parsedDiffFiles.map((fileDiff, index) => (
-											<FileDiff
-												key={`${fileDiff.prevName ?? fileDiff.name}:${fileDiff.name}:${index}`}
-												fileDiff={fileDiff}
-												options={fileDiffOptions}
-											/>
-										))}
-									</div>
+									<Accordion.Root
+										type="multiple"
+										value={openFileDiffs}
+										onValueChange={setOpenFileDiffs}
+										className="w-full"
+									>
+										{parsedDiffFiles.map((fileDiff, index) => {
+											const fileValue = getDiffFileValue(fileDiff)
+											const lineCounts = getDiffLineCounts(fileDiff)
+
+											return (
+												<Accordion.Item
+													key={`${fileValue}:${index}`}
+													value={fileValue}
+													className="border-b"
+												>
+													<Accordion.Header>
+														<Accordion.Trigger className="group hover:bg-foreground/10 flex w-full items-center justify-between gap-3 px-4 py-2 text-left">
+															<span className="flex min-w-0 items-center gap-2 font-mono text-sm">
+																<Icon
+																	name={getDiffFileIcon(fileDiff)}
+																	className="text-muted-foreground shrink-0"
+																/>
+																<span className="truncate">
+																	{getDiffFileTitle(fileDiff)}
+																</span>
+															</span>
+															<span className="text-muted-foreground flex shrink-0 items-center gap-2 font-mono text-xs">
+																<span>-{lineCounts.deleted}</span>
+																<span>+{lineCounts.added}</span>
+																<Icon
+																	name="TriangleDownSmall"
+																	className="group-radix-state-open:rotate-180 transition"
+																	aria-hidden
+																/>
+															</span>
+														</Accordion.Trigger>
+													</Accordion.Header>
+													<Accordion.Content className="radix-state-closed:hidden">
+														<FileDiff fileDiff={fileDiff} options={fileDiffOptions} />
+													</Accordion.Content>
+												</Accordion.Item>
+											)
+										})}
+									</Accordion.Root>
 								) : diff.diffPatch === '' ? (
 									<p className="bg-foreground text-background m-5 inline-flex items-center justify-center px-1 py-0.5 font-mono text-sm uppercase">
 										No changes
