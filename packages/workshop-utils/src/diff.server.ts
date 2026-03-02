@@ -440,10 +440,10 @@ async function getDiffPatchImpl(app1: App, app2: App) {
 			.replaceAll(`b${app1CopyPath}`, 'b')
 			.replaceAll(`a${app2CopyPath}`, 'a')
 			.replaceAll(`b${app2CopyPath}`, 'b')
-			.replaceAll(`a/${app1Relative}`, 'a')
-			.replaceAll(`b/${app1Relative}`, 'b')
-			.replaceAll(`a/${app2Relative}`, 'a')
-			.replaceAll(`b/${app2Relative}`, 'b'),
+			.replaceAll(`${app1CopyPath}/`, '')
+			.replaceAll(`${app2CopyPath}/`, '')
+			.replaceAll(`${app1Relative}/`, '')
+			.replaceAll(`${app2Relative}/`, ''),
 		testFiles,
 	)
 
