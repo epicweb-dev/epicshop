@@ -15,6 +15,7 @@ import {
 } from 'react-router'
 import { useSpinDelay } from 'spin-delay'
 import { useTheme } from '#app/routes/theme/index.tsx'
+import { LaunchEditor } from '#app/routes/launch-editor.tsx'
 import { cn } from '#app/utils/misc.tsx'
 import { useApps } from '#app/utils/root-loader.ts'
 import { DeferredEpicVideo } from './epic-video.tsx'
@@ -28,11 +29,31 @@ type diffProp = {
 	diffPatch?: string | null
 }
 
-type ParsedDiffFile = ReturnType<typeof parsePatchFiles>[number]['files'][number]
+type ParsedDiffFile = ReturnType<
+	typeof parsePatchFiles
+>[number]['files'][number]
 type DiffFileVariant = 'changed' | 'added' | 'deleted' | 'renamed'
 
 const diffThemeNameLight = 'epic-base16-light'
 const diffThemeNameDark = 'epic-base16-dark'
+const diffSelectionStyles = `
+[data-line-type='change-addition'] [data-column-content]::selection,
+[data-line-type='change-addition'] [data-column-content] *::selection {
+	background: var(--highlight-added-selection);
+}
+
+[data-line-type='change-deletion'] [data-column-content]::selection,
+[data-line-type='change-deletion'] [data-column-content] *::selection {
+	background: var(--highlight-removed-selection);
+}
+
+[data-line-type='context'] [data-column-content]::selection,
+[data-line-type='context'] [data-column-content] *::selection,
+[data-line-type='context-expanded'] [data-column-content]::selection,
+[data-line-type='context-expanded'] [data-column-content] *::selection {
+	background: var(--diffs-bg-selection);
+}
+`
 const diffThemeDefaults = {
 	foreground: 'var(--base05)',
 	background: 'var(--base00)',
@@ -116,6 +137,91 @@ function getDiffLineCounts(fileDiff: ParsedDiffFile) {
 			deleted: acc.deleted + hunk.deletionCount,
 		}),
 		{ added: 0, deleted: 0 },
+	)
+}
+
+function normalizeDiffPath(path: string | undefined) {
+	if (!path || path === '/dev/null') return undefined
+	const withoutQuotes = path.replace(/^["']|["']$/g, '')
+	return withoutQuotes.replace(/^[ab]\//, '')
+}
+
+function getDiffFilePaths(fileDiff: ParsedDiffFile) {
+	return {
+		app1Path: normalizeDiffPath(fileDiff.prevName ?? fileDiff.name),
+		app2Path: normalizeDiffPath(fileDiff.name ?? fileDiff.prevName),
+	}
+}
+
+function getDiffOpenLines(fileDiff: ParsedDiffFile) {
+	const firstHunk = fileDiff.hunks[0]
+	return {
+		app1Line: firstHunk?.deletionStart || firstHunk?.splitLineStart || 1,
+		app2Line: firstHunk?.additionStart || firstHunk?.splitLineStart || 1,
+	}
+}
+
+function DiffFileActions({
+	fileDiff,
+	app1Name,
+	app2Name,
+}: {
+	fileDiff: ParsedDiffFile
+	app1Name?: string
+	app2Name?: string
+}) {
+	if (!app1Name || !app2Name) return null
+
+	const { app1Path, app2Path } = getDiffFilePaths(fileDiff)
+	if (!app1Path || !app2Path) return null
+	const { app1Line, app2Line } = getDiffOpenLines(fileDiff)
+	const actionButtonClassName =
+		'bg-background/80 border-border/80 hover:bg-background inline-flex h-6 cursor-pointer items-center justify-center rounded border'
+	const appButtonClassName = cn(
+		actionButtonClassName,
+		'w-11 px-1.5 font-mono text-[10px] leading-none uppercase',
+	)
+	const arrowButtonClassName = cn(actionButtonClassName, 'text-foreground w-6')
+
+	return (
+		<div
+			className="flex items-center gap-1"
+			onClick={(event) => event.stopPropagation()}
+			onPointerDown={(event) => event.stopPropagation()}
+		>
+			<LaunchEditor
+				appFile={`${app1Path},${app1Line},1`}
+				appName={app1Name}
+				className={appButtonClassName}
+			>
+				App 1
+			</LaunchEditor>
+			<div className="display-alt-down flex items-center gap-1">
+				<LaunchEditor
+					appFile={app1Path}
+					appName={app1Name}
+					syncTo={{ appFile: app2Path, appName: app2Name }}
+					className={arrowButtonClassName}
+				>
+					<Icon name="ArrowLeft" title="Copy app 2 file to app 1" />
+				</LaunchEditor>
+				<LaunchEditor
+					appFile={app2Path}
+					appName={app2Name}
+					syncTo={{ appFile: app1Path, appName: app1Name }}
+					className={arrowButtonClassName}
+				>
+					<Icon name="ArrowRight" title="Copy app 1 file to app 2" />
+				</LaunchEditor>
+			</div>
+			<LaunchEditor
+				appFile={`${app2Path},${app2Line},1`}
+				appName={app2Name}
+				className={appButtonClassName}
+			>
+				App 2
+			</LaunchEditor>
+		</div>
 	)
 }
 
@@ -224,6 +330,7 @@ export function DiffImplementation({
 		hunkSeparators: 'line-info' as const,
 		overflow: 'scroll' as const,
 		disableFileHeader: true,
+		unsafeCSS: diffSelectionStyles,
 	}
 
 	const hiddenInputs: Array<React.ReactNode> = []
@@ -325,8 +432,8 @@ export function DiffImplementation({
 													value={fileValue}
 													className="border-b"
 												>
-													<Accordion.Header>
-														<Accordion.Trigger className="group hover:bg-foreground/10 flex w-full items-center justify-between gap-3 px-4 py-2 text-left">
+													<Accordion.Header className="hover:bg-foreground/10 relative flex w-full items-center gap-3 px-4 py-2">
+														<Accordion.Trigger className="group flex min-w-0 flex-1 items-center justify-between gap-3 pr-38 text-left">
 															<span className="flex min-w-0 items-center gap-2 font-mono text-sm">
 																<Icon
 																	name={getDiffFileIcon(fileDiff)}
@@ -340,8 +447,12 @@ export function DiffImplementation({
 																</span>
 															</span>
 															<span className="text-muted-foreground flex shrink-0 items-center gap-2 font-mono text-xs">
-																<span>-{lineCounts.deleted}</span>
-																<span>+{lineCounts.added}</span>
+																<span className="text-(--diff-color-deleted)">
+																	-{lineCounts.deleted}
+																</span>
+																<span className="text-(--diff-color-added)">
+																	+{lineCounts.added}
+																</span>
 																<Icon
 																	name="TriangleDownSmall"
 																	className="group-radix-state-open:rotate-180 transition"
@@ -349,9 +460,19 @@ export function DiffImplementation({
 																/>
 															</span>
 														</Accordion.Trigger>
+														<div className="absolute top-1/2 right-4 -translate-y-1/2">
+															<DiffFileActions
+																fileDiff={fileDiff}
+																app1Name={diff.app1}
+																app2Name={diff.app2}
+															/>
+														</div>
 													</Accordion.Header>
 													<Accordion.Content className="radix-state-closed:hidden">
-														<FileDiff fileDiff={fileDiff} options={fileDiffOptions} />
+														<FileDiff
+															fileDiff={fileDiff}
+															options={fileDiffOptions}
+														/>
 													</Accordion.Content>
 												</Accordion.Item>
 											)
