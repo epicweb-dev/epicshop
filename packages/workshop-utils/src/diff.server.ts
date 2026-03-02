@@ -269,6 +269,57 @@ function getAppTestFiles(app: App) {
 	return app.test.type === 'browser' ? app.test.testFiles : []
 }
 
+function filterTestFilesFromPatch(patch: string, testFiles: Set<string>) {
+	if (!patch || testFiles.size === 0) {
+		return patch
+	}
+
+	const normalizePath = (value: string) => value.replace(/^\.\/+/, '')
+	const parseDiffPaths = (line: string) => {
+		if (!line.startsWith('diff --git ')) return null
+		const rest = line.slice('diff --git '.length)
+		const quotedMatch = rest.match(/^"a\/(.+)" "b\/(.+)"$/)
+		if (quotedMatch) {
+			return {
+				a: normalizePath(quotedMatch[1]),
+				b: normalizePath(quotedMatch[2]),
+			}
+		}
+		const match = rest.match(/^a\/(.+) b\/(.+)$/)
+		if (match) {
+			return { a: normalizePath(match[1]), b: normalizePath(match[2]) }
+		}
+		return null
+	}
+
+	const lines = patch.split('\n')
+	const filtered: Array<string> = []
+	let currentBlock: Array<string> = []
+	let includeBlock = true
+
+	const flushBlock = () => {
+		if (currentBlock.length > 0 && includeBlock) {
+			filtered.push(...currentBlock)
+		}
+		currentBlock = []
+	}
+
+	for (const line of lines) {
+		if (line.startsWith('diff --git ')) {
+			flushBlock()
+			const paths = parseDiffPaths(line)
+			includeBlock = paths
+				? !testFiles.has(paths.a) && !testFiles.has(paths.b)
+				: true
+		}
+		currentBlock.push(line)
+	}
+
+	flushBlock()
+
+	return filtered.join('\n')
+}
+
 async function getDiffFilesImpl(
 	app1: App,
 	app2: App,
@@ -378,15 +429,25 @@ async function getDiffPatchImpl(app1: App, app2: App) {
 	const app1Relative = app1CopyPath.slice(1)
 	const app2Relative = app2CopyPath.slice(1)
 
-	return normalizedOutput
-		.replaceAll(`a${app1CopyPath}`, 'a')
-		.replaceAll(`b${app1CopyPath}`, 'b')
-		.replaceAll(`a${app2CopyPath}`, 'a')
-		.replaceAll(`b${app2CopyPath}`, 'b')
-		.replaceAll(`a/${app1Relative}`, 'a')
-		.replaceAll(`b/${app1Relative}`, 'b')
-		.replaceAll(`a/${app2Relative}`, 'a')
-		.replaceAll(`b/${app2Relative}`, 'b')
+	const testFiles = new Set([
+		...getAppTestFiles(app1),
+		...getAppTestFiles(app2),
+	])
+
+	const filteredOutput = filterTestFilesFromPatch(
+		normalizedOutput
+			.replaceAll(`a${app1CopyPath}`, 'a')
+			.replaceAll(`b${app1CopyPath}`, 'b')
+			.replaceAll(`a${app2CopyPath}`, 'a')
+			.replaceAll(`b${app2CopyPath}`, 'b')
+			.replaceAll(`a/${app1Relative}`, 'a')
+			.replaceAll(`b/${app1Relative}`, 'b')
+			.replaceAll(`a/${app2Relative}`, 'a')
+			.replaceAll(`b/${app2Relative}`, 'b'),
+		testFiles,
+	)
+
+	return filteredOutput
 }
 
 export async function getDiffOutputWithRelativePaths(app1: App, app2: App) {
