@@ -279,14 +279,14 @@ function filterTestFilesFromPatch(patch: string, testFiles: Set<string>) {
 		if (!line.startsWith('diff --git ')) return null
 		const rest = line.slice('diff --git '.length)
 		const quotedMatch = rest.match(/^"a\/(.+)" "b\/(.+)"$/)
-		if (quotedMatch) {
+		if (quotedMatch?.[1] && quotedMatch?.[2]) {
 			return {
 				a: normalizePath(quotedMatch[1]),
 				b: normalizePath(quotedMatch[2]),
 			}
 		}
 		const match = rest.match(/^a\/(.+) b\/(.+)$/)
-		if (match) {
+		if (match?.[1] && match?.[2]) {
 			return { a: normalizePath(match[1]), b: normalizePath(match[2]) }
 		}
 		return null
