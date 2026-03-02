@@ -51,7 +51,7 @@ import { EpicToaster } from './components/toaster'
 import { TooltipProvider } from './components/ui/tooltip'
 import { UpdateToast } from './components/update-repo'
 import { Notifications } from './routes/admin+/notifications'
-import { useTheme } from './routes/theme/index'
+import { ThemeProvider, useTheme } from './routes/theme/index'
 import { getTheme } from './routes/theme/theme-session.server'
 import appStylesheetUrl from './styles/app.css?url'
 import tailwindStylesheetUrl from './styles/tailwind.css?url'
@@ -318,7 +318,9 @@ export default function AppWithProviders() {
 	return (
 		<Presence user={user}>
 			<TooltipProvider>
-				<App />
+				<ThemeProvider>
+					<App />
+				</ThemeProvider>
 			</TooltipProvider>
 		</Presence>
 	)

@@ -80,14 +80,6 @@ function getDiffLineCounts(fileDiff: ParsedDiffFile) {
 	)
 }
 
-function useSafeTheme() {
-	try {
-		return useTheme()
-	} catch {
-		return 'dark'
-	}
-}
-
 function RevalidateApps({
 	app1: app1Name,
 	app2: app2Name,
@@ -182,7 +174,7 @@ export function DiffImplementation({
 		minDuration: 1000,
 	})
 	const [openFileDiffs, setOpenFileDiffs] = React.useState<Array<string>>([])
-	const theme = useSafeTheme()
+	const theme = useTheme()
 	const fileDiffOptions = {
 		themeType: theme,
 		diffStyle: 'unified' as const,
