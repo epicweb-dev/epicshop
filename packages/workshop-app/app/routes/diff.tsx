@@ -4,7 +4,7 @@ import {
 	getApps,
 	isExerciseStepApp,
 } from '@epic-web/workshop-utils/apps.server'
-import { getDiffCode } from '@epic-web/workshop-utils/diff.server'
+import { getDiffPatch } from '@epic-web/workshop-utils/diff.server'
 import { userHasAccessToWorkshop } from '@epic-web/workshop-utils/epic-api.server'
 import { makeTimings } from '@epic-web/workshop-utils/timing.server'
 import {
@@ -44,10 +44,10 @@ export async function loader({ request }: LoaderFunctionArgs) {
 			return {
 				app1: app1?.name,
 				app2: app2?.name,
-				diffCode: null,
+				diffPatch: null,
 			}
 		}
-		const diffCode = await getDiffCode(app1, app2, {
+		const diffPatch = await getDiffPatch(app1, app2, {
 			...cacheOptions,
 			forceFresh: searchParams.get('forceFresh') === 'diff',
 		}).catch((e) => {
@@ -57,7 +57,7 @@ export async function loader({ request }: LoaderFunctionArgs) {
 		return {
 			app1: app1.name,
 			app2: app2.name,
-			diffCode,
+			diffPatch,
 		}
 	}
 

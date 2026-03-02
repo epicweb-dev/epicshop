@@ -8,7 +8,7 @@ import {
 	setPlayground,
 } from '@epic-web/workshop-utils/apps.server'
 import { getPreferences } from '@epic-web/workshop-utils/db.server'
-import { getDiffCode } from '@epic-web/workshop-utils/diff.server'
+import { getDiffPatch } from '@epic-web/workshop-utils/diff.server'
 import { clearTestProcessEntry } from '@epic-web/workshop-utils/process-manager.server'
 import {
 	data,
@@ -129,7 +129,7 @@ export async function action({ request }: ActionFunctionArgs) {
 	if (playground) {
 		clearTestProcessEntry(playground)
 		if (converseApp) {
-			void getDiffCode(playground, converseApp, { forceFresh: true })
+			void getDiffPatch(playground, converseApp, { forceFresh: true })
 		}
 	}
 

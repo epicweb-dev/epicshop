@@ -259,7 +259,7 @@ export const problemAppCache =
 export const extraAppCache = makeSingletonFsCache<ExtraApp>('ExtraAppCache')
 export const playgroundAppCache =
 	makeSingletonFsCache<PlaygroundApp>('PlaygroundAppCache')
-export const diffCodeCache = makeSingletonFsCache<string>('DiffCodeCache')
+export const diffPatchCache = makeSingletonFsCache<string>('DiffPatchCache')
 export const diffFilesCache =
 	makeSingletonFsCache<Array<DiffFile>>('DiffFilesCache')
 export const copyUnignoredFilesCache = makeSingletonCache<boolean>(

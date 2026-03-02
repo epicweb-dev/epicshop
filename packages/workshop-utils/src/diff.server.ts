@@ -1,6 +1,3 @@
-// oxlint-disable-next-line import/order -- this must be first
-import { getEnv } from './init-env.ts'
-
 import os from 'os'
 import path from 'path'
 import { type CacheEntry } from '@epic-web/cachified'
@@ -8,11 +5,9 @@ import { execa } from 'execa'
 import fsExtra from 'fs-extra'
 import ignore from 'ignore'
 import parseGitDiff, { type AnyFileChange } from 'parse-git-diff'
-import { bundledLanguagesInfo } from 'shiki/langs'
 import { z } from 'zod'
 import {
 	getForceFreshForDir,
-	getRelativePath,
 	getWorkshopRoot,
 	modifiedTimes,
 	type App,
@@ -20,16 +15,13 @@ import {
 import {
 	cachified,
 	copyUnignoredFilesCache,
-	diffCodeCache,
 	diffFilesCache,
+	diffPatchCache,
 } from './cache.server.ts'
-import { compileMarkdownString } from './compile-mdx.server.ts'
 import { modifiedMoreRecentlyThan } from './modified-time.server.ts'
 import { type Timings } from './timing.server.ts'
 
 const epicshopTempDir = path.join(os.tmpdir(), 'epicshop')
-
-const isDeployed = getEnv().EPICSHOP_DEPLOYED
 
 const diffTmpDir = path.join(epicshopTempDir, 'diff')
 const DiffStatusSchema = z.enum([
@@ -92,148 +84,6 @@ function diffPathToRelative(filePath: string) {
 		.slice(3)
 
 	return relativePath.join(path.sep)
-}
-
-function getLanguage(ext: string) {
-	return (
-		bundledLanguagesInfo.find((l) => l.id === ext || l.aliases?.includes(ext))
-			?.id ?? 'text'
-	)
-}
-
-function getFileCodeblocks(
-	file: ReturnType<typeof parseGitDiff>['files'][number],
-	filePathApp1: string,
-	filePathApp2: string,
-	type: string,
-) {
-	if (!file.chunks.length) {
-		return [
-			`<p className="m-0 p-4 border-b text-muted-foreground">No changes</p>`,
-		]
-	}
-	const filepath = diffPathToRelative(
-		file.type === 'RenamedFile' ? file.pathAfter : file.path,
-	)
-	const extension = path.extname(filepath).slice(1)
-	const lang = getLanguage(extension)
-	const pathToCopy = file.type === 'RenamedFile' ? file.pathBefore : file.path
-	const relativePath = diffPathToRelative(pathToCopy)
-	const markdownLines = []
-	for (const chunk of file.chunks) {
-		const removedLineNumbers = []
-		const addedLineNumbers = []
-		const lines = []
-		let toStartLine = 0
-		let startLine = 1
-		if (chunk.type === 'BinaryFilesChunk') {
-			lines.push(
-				type === 'AddedFile'
-					? `Binary file added`
-					: type === 'DeletedFile'
-						? 'Binary file deleted'
-						: 'Binary file changed',
-			)
-		} else {
-			startLine =
-				chunk.type === 'Chunk'
-					? chunk.fromFileRange.start
-					: chunk.type === 'CombinedChunk'
-						? chunk.fromFileRangeA.start
-						: 1
-			toStartLine = chunk.toFileRange.start
-			for (
-				let lineNumber = 0;
-				lineNumber < chunk.changes.length;
-				lineNumber++
-			) {
-				const change = chunk.changes[lineNumber]
-				if (!change) continue
-				lines.push(change.content)
-				switch (change.type) {
-					case 'AddedLine': {
-						addedLineNumbers.push(startLine + lineNumber)
-						break
-					}
-					case 'DeletedLine': {
-						removedLineNumbers.push(startLine + lineNumber)
-						break
-					}
-					default: {
-						break
-					}
-				}
-			}
-		}
-
-		const params = [
-			['filename', relativePath.replace(/\\/g, '\\\\')],
-			['start', startLine.toString()],
-			removedLineNumbers.length
-				? ['remove', removedLineNumbers.join(',')]
-				: null,
-			addedLineNumbers.length ? ['add', addedLineNumbers.join(',')] : null,
-		]
-			.filter(Boolean)
-			.map(([key, value]) => `${key}=${value}`)
-			.join(' ')
-
-		const launchEditorClassName =
-			'border hover:bg-foreground/20 rounded px-2 py-0.5 font-mono text-xs font-semibold'
-
-		function launchEditor(appNum: number, line: number) {
-			line ||= 1 // handle 0
-			if (isDeployed) {
-				if (type === 'DeletedFile' && appNum === 2) return ''
-				if (type === 'AddedFile' && appNum === 1) return ''
-			}
-
-			const label =
-				(type === 'AddedFile' && appNum === 1) ||
-				(type === 'DeletedFile' && appNum === 2)
-					? `CREATE in APP ${appNum}`
-					: `OPEN in APP ${appNum}`
-			const file = JSON.stringify(appNum === 1 ? filePathApp1 : filePathApp2)
-			const fixedTitle = getRelativePath(file)
-
-			return `
-<LaunchEditor file=${file} line={${line}}>
-	<span title="${fixedTitle}" className="${launchEditorClassName}">${label}</span>
-</LaunchEditor>`
-		}
-
-		markdownLines.push(`
-<div className="relative">
-
-\`\`\`${lang} ${params}
-${lines.join('\n')}
-\`\`\`
-
-<div className="flex gap-4 absolute top-1 right-3 items-center">
-	${launchEditor(1, startLine)}
-	<div className="display-alt-down flex gap-2">
-		<LaunchEditor file=${JSON.stringify(
-			filePathApp1,
-		)} syncTo={{file: ${JSON.stringify(filePathApp2)}}}>
-			<span className="block ${launchEditorClassName}">
-				<Icon name="ArrowLeft" title="Copy app 2 file to app 1" />
-			</span>
-		</LaunchEditor>
-		<LaunchEditor file=${JSON.stringify(
-			filePathApp2,
-		)} syncTo={{file: ${JSON.stringify(filePathApp1)}}}>
-			<span className="block ${launchEditorClassName}">
-				<Icon name="ArrowRight" title="Copy app 1 file to app 2" />
-			</span>
-		</LaunchEditor>
-	</div>
-	${launchEditor(2, toStartLine)}
-</div>
-
-</div>
-`)
-	}
-	return markdownLines
 }
 
 const DEFAULT_IGNORE_PATTERNS = [
@@ -419,6 +269,57 @@ function getAppTestFiles(app: App) {
 	return app.test.type === 'browser' ? app.test.testFiles : []
 }
 
+function filterTestFilesFromPatch(patch: string, testFiles: Set<string>) {
+	if (!patch || testFiles.size === 0) {
+		return patch
+	}
+
+	const normalizePath = (value: string) => value.replace(/^\.\/+/, '')
+	const parseDiffPaths = (line: string) => {
+		if (!line.startsWith('diff --git ')) return null
+		const rest = line.slice('diff --git '.length)
+		const quotedMatch = rest.match(/^"a\/(.+)" "b\/(.+)"$/)
+		if (quotedMatch?.[1] && quotedMatch?.[2]) {
+			return {
+				a: normalizePath(quotedMatch[1]),
+				b: normalizePath(quotedMatch[2]),
+			}
+		}
+		const match = rest.match(/^a\/(.+) b\/(.+)$/)
+		if (match?.[1] && match?.[2]) {
+			return { a: normalizePath(match[1]), b: normalizePath(match[2]) }
+		}
+		return null
+	}
+
+	const lines = patch.split('\n')
+	const filtered: Array<string> = []
+	let currentBlock: Array<string> = []
+	let includeBlock = true
+
+	const flushBlock = () => {
+		if (currentBlock.length > 0 && includeBlock) {
+			filtered.push(...currentBlock)
+		}
+		currentBlock = []
+	}
+
+	for (const line of lines) {
+		if (line.startsWith('diff --git ')) {
+			flushBlock()
+			const paths = parseDiffPaths(line)
+			includeBlock = paths
+				? !testFiles.has(paths.a) && !testFiles.has(paths.b)
+				: true
+		}
+		currentBlock.push(line)
+	}
+
+	flushBlock()
+
+	return filtered.join('\n')
+}
+
 async function getDiffFilesImpl(
 	app1: App,
 	app2: App,
@@ -474,7 +375,7 @@ async function getDiffFilesImpl(
 		.filter((file) => !testFiles.includes(file.path))
 }
 
-export async function getDiffCode(
+export async function getDiffPatch(
 	app1: App,
 	app2: App,
 	{
@@ -484,29 +385,23 @@ export async function getDiffCode(
 	}: { forceFresh?: boolean; timings?: Timings; request?: Request } = {},
 ) {
 	const key = `${app1.relativePath}__vs__${app2.relativePath}`
-	const cacheEntry = await diffCodeCache.get(key)
+	const cacheEntry = await diffPatchCache.get(key)
 	const result = await cachified({
 		key,
-		cache: diffCodeCache,
+		cache: diffPatchCache,
 		forceFresh:
 			forceFresh || (await getForceFreshForDiff(app1, app2, cacheEntry)),
 		timings,
 		request,
 		checkValue: z.string(),
-		getFreshValue: () => getDiffCodeImpl(app1, app2),
+		getFreshValue: () => getDiffPatchImpl(app1, app2),
 	})
 	return result
 }
 
-async function getDiffCodeImpl(app1: App, app2: App) {
-	const markdownLines = ['']
-
+async function getDiffPatchImpl(app1: App, app2: App) {
 	if (app1.name === app2.name) {
-		markdownLines.push(
-			'<p className="p-4 text-center">You are comparing the same app</p>',
-		)
-		const code = await compileMarkdownString(markdownLines.join('\n'))
-		return code
+		return ''
 	}
 
 	const { app1CopyPath, app2CopyPath } = await prepareForDiff(app1, app2)
@@ -520,93 +415,39 @@ async function getDiffCodeImpl(app1: App, app2: App) {
 			app2CopyPath,
 			'--color=never',
 			'--color-moved-ws=allow-indentation-change',
-			'--no-prefix',
 			'--ignore-blank-lines',
 			'--ignore-space-change',
 		],
 		{ cwd: diffTmpDir },
 		// --no-index implies --exit-code, so we need to use the error output
-	).catch((e) => e as { stdout: string })
+	).catch((e) => e as { stdout?: string })
 
 	void fsExtra.remove(app1CopyPath).catch(() => {})
 	void fsExtra.remove(app2CopyPath).catch(() => {})
 
-	const parsed = parseGitDiff(diffOutput)
+	const normalizedOutput = String(diffOutput ?? '')
+	const app1Relative = app1CopyPath.slice(1)
+	const app2Relative = app2CopyPath.slice(1)
 
-	if (!parsed.files.length) {
-		markdownLines.push(
-			'<div className="m-5 inline-flex items-center justify-center bg-foreground px-1 py-0.5 font-mono text-sm uppercase text-background">No changes</div>',
-		)
-	}
+	const testFiles = new Set([
+		...getAppTestFiles(app1),
+		...getAppTestFiles(app2),
+	])
 
-	const app1TestFiles = getAppTestFiles(app1)
-	const app2TestFiles = getAppTestFiles(app2)
+	const filteredOutput = filterTestFilesFromPatch(
+		normalizedOutput
+			.replaceAll(`a${app1CopyPath}`, 'a')
+			.replaceAll(`b${app1CopyPath}`, 'b')
+			.replaceAll(`a${app2CopyPath}`, 'a')
+			.replaceAll(`b${app2CopyPath}`, 'b')
+			.replaceAll(`${app1CopyPath}/`, '')
+			.replaceAll(`${app2CopyPath}/`, '')
+			.replaceAll(`${app1Relative}/`, '')
+			.replaceAll(`${app2Relative}/`, ''),
+		testFiles,
+	)
 
-	for (const file of parsed.files) {
-		const pathToCopy = file.type === 'RenamedFile' ? file.pathBefore : file.path
-		const relativePath = diffPathToRelative(pathToCopy)
-		if (app1TestFiles.includes(relativePath)) continue
-		const filePathApp1 = path.join(app1.fullPath, relativePath)
-
-		const pathToApp2 = file.type === 'RenamedFile' ? file.pathAfter : file.path
-		const relativePathApp2 = diffPathToRelative(pathToApp2)
-		if (app2TestFiles.includes(relativePathApp2)) continue
-		const filePathApp2 = path.join(app2.fullPath, relativePathApp2)
-
-		switch (file.type) {
-			case 'ChangedFile': {
-				markdownLines.push(`
-
-<Accordion title=${JSON.stringify(relativePath)} variant="changed">
-
-${getFileCodeblocks(file, filePathApp1, filePathApp2, file.type).join('\n')}
-
-</Accordion>
-
-`)
-				break
-			}
-			case 'DeletedFile': {
-				markdownLines.push(`
-<Accordion title=${JSON.stringify(relativePath)} variant="deleted">
-
-${getFileCodeblocks(file, filePathApp1, filePathApp2, file.type).join('\n')}
-
-</Accordion>
-`)
-				break
-			}
-			case 'RenamedFile': {
-				const relativeBefore = diffPathToRelative(file.pathBefore)
-				const relativeAfter = diffPathToRelative(file.pathAfter)
-				const title = JSON.stringify(`${relativeBefore} ▶️ ${relativeAfter}`)
-				markdownLines.push(`
-<Accordion title=${title} variant="renamed">
-
-${getFileCodeblocks(file, filePathApp1, filePathApp2, file.type).join('\n')}
-
-</Accordion>
-`)
-				break
-			}
-			case 'AddedFile': {
-				markdownLines.push(`
-<Accordion title=${JSON.stringify(relativePath)} variant="added">
-
-${getFileCodeblocks(file, filePathApp1, filePathApp2, file.type).join('\n')}
-
-</Accordion>
-`)
-				break
-			}
-			default: {
-				console.error(file)
-				throw new Error(`Unknown file type: ${file}`)
-			}
-		}
-	}
-	const code = await compileMarkdownString(markdownLines.join('\n'))
-	return code
+	return filteredOutput
 }
 
 export async function getDiffOutputWithRelativePaths(app1: App, app2: App) {

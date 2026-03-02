@@ -37,11 +37,20 @@ const LaunchSchema = z.intersection(
 export async function action({ request }: ActionFunctionArgs) {
 	ensureUndeployed()
 	const formData = await request.formData()
+	const appFileValues = formData
+		.getAll('appFile')
+		.filter((value): value is string => typeof value === 'string')
+	const syncToAppFileValues = formData
+		.getAll('syncTo.appFile')
+		.filter((value): value is string => typeof value === 'string')
+	if (syncToAppFileValues.length > 1) {
+		throw new Response('Expected a single syncTo.appFile value', { status: 400 })
+	}
 	const syncTo = {
 		type: formData.get('syncTo.type') ?? undefined,
 		file: formData.get('syncTo.file') ?? undefined,
 		workshopFile: formData.get('syncTo.workshopFile') ?? undefined,
-		appFile: formData.getAll('syncTo.appFile'),
+		appFile: syncToAppFileValues[0] ?? undefined,
 		appName: formData.get('syncTo.appName') ?? undefined,
 	}
 	const syncToIsProvided = Object.values(syncTo).some((v) =>
@@ -51,7 +60,7 @@ export async function action({ request }: ActionFunctionArgs) {
 		type: formData.get('type'),
 		file: formData.get('file'),
 		workshopFile: formData.get('workshopFile'),
-		appFile: formData.getAll('appFile'),
+		appFile: appFileValues,
 		appName: formData.get('appName'),
 		line: formData.get('line') ?? undefined,
 		column: formData.get('column') ?? undefined,
@@ -60,12 +69,16 @@ export async function action({ request }: ActionFunctionArgs) {
 					type: formData.get('syncTo.type'),
 					file: formData.get('syncTo.file'),
 					workshopFile: formData.get('syncTo.workshopFile'),
-					appFile: formData.getAll('syncTo.appFile'),
+					appFile: syncToAppFileValues[0] ?? undefined,
 					appName: formData.get('syncTo.appName'),
 				}
 			: undefined,
 	}
-	const form = LaunchSchema.parse(rawData)
+	const parsedForm = LaunchSchema.safeParse(rawData)
+	if (!parsedForm.success) {
+		throw parsedForm.error
+	}
+	const form = parsedForm.data
 
 	async function getFiles(
 		fileDescriptor:
@@ -286,7 +299,7 @@ function LaunchGitHub({
 		const githubFileRoot = ENV.EPICSHOP_GITHUB_ROOT.replace('/tree/', '/blob/')
 		return (
 			<a
-				className="launch_button !no-underline"
+				className="launch_button no-underline!"
 				href={
 					safePath(file).replace(
 						safePath(ENV.EPICSHOP_CONTEXT_CWD),
@@ -314,7 +327,7 @@ function LaunchGitHub({
 	].join('/')
 	return (
 		<a
-			className={cn('launch_button !no-underline', className)}
+			className={cn('launch_button no-underline!', className)}
 			href={`${githubFileRoot}/${path}${lineNumber ? `#L${lineNumber}` : ''}`}
 			rel="noreferrer"
 			target="_blank"

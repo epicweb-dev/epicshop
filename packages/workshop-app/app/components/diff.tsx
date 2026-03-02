@@ -1,4 +1,6 @@
 import * as Accordion from '@radix-ui/react-accordion'
+import { parsePatchFiles, registerCustomCSSVariableTheme } from '@pierre/diffs'
+import { FileDiff } from '@pierre/diffs/react'
 import * as Select from '@radix-ui/react-select'
 import { clsx } from 'clsx'
 import React, { Suspense } from 'react'
@@ -12,8 +14,8 @@ import {
 	useSubmit,
 } from 'react-router'
 import { useSpinDelay } from 'spin-delay'
-import AccordionComponent from '#app/components/accordion.tsx'
-import { Mdx } from '#app/utils/mdx.tsx'
+import { useTheme } from '#app/routes/theme/index.tsx'
+import { LaunchEditor } from '#app/routes/launch-editor.tsx'
 import { cn } from '#app/utils/misc.tsx'
 import { useApps } from '#app/utils/root-loader.ts'
 import { DeferredEpicVideo } from './epic-video.tsx'
@@ -24,15 +26,203 @@ import { SimpleTooltip } from './ui/tooltip.tsx'
 type diffProp = {
 	app1?: string
 	app2?: string
-	diffCode?: string | null
+	diffPatch?: string | null
 }
 
-const pre = (props: any) => <pre {...props} />
+type ParsedDiffFile = ReturnType<
+	typeof parsePatchFiles
+>[number]['files'][number]
+type DiffFileVariant = 'changed' | 'added' | 'deleted' | 'renamed'
 
-const mdxComponents = {
-	Accordion: AccordionComponent,
-	// override the pre-with-buttons
-	pre,
+const diffThemeNameLight = 'epic-base16-light'
+const diffThemeNameDark = 'epic-base16-dark'
+const diffSelectionStyles = `
+[data-line-type='change-addition'] [data-column-content]::selection,
+[data-line-type='change-addition'] [data-column-content] *::selection {
+	background: var(--highlight-added-selection);
+}
+
+[data-line-type='change-deletion'] [data-column-content]::selection,
+[data-line-type='change-deletion'] [data-column-content] *::selection {
+	background: var(--highlight-removed-selection);
+}
+
+[data-line-type='context'] [data-column-content]::selection,
+[data-line-type='context'] [data-column-content] *::selection,
+[data-line-type='context-expanded'] [data-column-content]::selection,
+[data-line-type='context-expanded'] [data-column-content] *::selection {
+	background: var(--diffs-bg-selection);
+}
+`
+const diffThemeDefaults = {
+	foreground: 'var(--base05)',
+	background: 'var(--base00)',
+	'token-link': 'var(--base0D)',
+	'token-string': 'var(--base0B)',
+	'token-comment': 'var(--base03)',
+	'token-constant': 'var(--base08)',
+	'token-keyword': 'var(--base0A)',
+	'token-parameter': 'var(--base08)',
+	'token-function': 'var(--base0D)',
+	'token-string-expression': 'var(--base0C)',
+	'token-punctuation': 'var(--base0E)',
+	'token-inserted': 'var(--diff-color-added)',
+	'token-deleted': 'var(--diff-color-deleted)',
+	'token-changed': 'var(--diff-color-modified)',
+	'ansi-green': 'var(--diff-color-added)',
+	'ansi-red': 'var(--diff-color-deleted)',
+	'ansi-blue': 'var(--diff-color-modified)',
+} satisfies Record<string, string>
+registerCustomCSSVariableTheme(diffThemeNameLight, diffThemeDefaults)
+registerCustomCSSVariableTheme(diffThemeNameDark, diffThemeDefaults)
+
+function getDiffFileValue(fileDiff: ParsedDiffFile) {
+	return `${fileDiff.prevName ?? ''}::${fileDiff.name}`
+}
+
+function getDiffFileTitle(fileDiff: ParsedDiffFile) {
+	if (fileDiff.prevName && fileDiff.prevName !== fileDiff.name) {
+		return `${fileDiff.prevName} -> ${fileDiff.name}`
+	}
+	return fileDiff.name
+}
+
+function getDiffFileVariant(fileDiff: ParsedDiffFile): DiffFileVariant {
+	switch (fileDiff.type) {
+		case 'new':
+			return 'added'
+		case 'deleted':
+			return 'deleted'
+		case 'rename-pure':
+		case 'rename-changed':
+			return 'renamed'
+		default:
+			return 'changed'
+	}
+}
+
+function getDiffFileIcon(fileDiff: ParsedDiffFile) {
+	const variant = getDiffFileVariant(fileDiff)
+	switch (variant) {
+		case 'added':
+			return 'Added' as const
+		case 'deleted':
+			return 'Deleted' as const
+		case 'renamed':
+			return 'Renamed' as const
+		default:
+			return 'Modified' as const
+	}
+}
+
+function getDiffFileIconClass(fileDiff: ParsedDiffFile) {
+	const variant = getDiffFileVariant(fileDiff)
+	switch (variant) {
+		case 'added':
+			return 'text-[var(--diff-color-added)]'
+		case 'deleted':
+			return 'text-[var(--diff-color-deleted)]'
+		case 'renamed':
+			return 'text-[var(--diff-color-renamed)]'
+		case 'changed':
+		default:
+			return 'text-[var(--diff-color-modified)]'
+	}
+}
+
+function getDiffLineCounts(fileDiff: ParsedDiffFile) {
+	return fileDiff.hunks.reduce(
+		(acc, hunk) => ({
+			added: acc.added + hunk.additionCount,
+			deleted: acc.deleted + hunk.deletionCount,
+		}),
+		{ added: 0, deleted: 0 },
+	)
+}
+
+function normalizeDiffPath(path: string | undefined) {
+	if (!path || path === '/dev/null') return undefined
+	const withoutQuotes = path.replace(/^["']|["']$/g, '')
+	return withoutQuotes.replace(/^[ab]\//, '')
+}
+
+function getDiffFilePaths(fileDiff: ParsedDiffFile) {
+	return {
+		app1Path: normalizeDiffPath(fileDiff.prevName ?? fileDiff.name),
+		app2Path: normalizeDiffPath(fileDiff.name ?? fileDiff.prevName),
+	}
+}
+
+function getDiffOpenLines(fileDiff: ParsedDiffFile) {
+	const firstHunk = fileDiff.hunks[0]
+	return {
+		app1Line: firstHunk?.deletionStart || firstHunk?.splitLineStart || 1,
+		app2Line: firstHunk?.additionStart || firstHunk?.splitLineStart || 1,
+	}
+}
+
+function DiffFileActions({
+	fileDiff,
+	app1Name,
+	app2Name,
+}: {
+	fileDiff: ParsedDiffFile
+	app1Name?: string
+	app2Name?: string
+}) {
+	if (!app1Name || !app2Name) return null
+
+	const { app1Path, app2Path } = getDiffFilePaths(fileDiff)
+	if (!app1Path || !app2Path) return null
+	const { app1Line, app2Line } = getDiffOpenLines(fileDiff)
+	const actionButtonClassName =
+		'bg-background/80 border-border/80 hover:bg-background inline-flex h-6 cursor-pointer items-center justify-center rounded border'
+	const appButtonClassName = cn(
+		actionButtonClassName,
+		'w-11 px-1.5 font-mono text-[10px] leading-none uppercase',
+	)
+	const arrowButtonClassName = cn(actionButtonClassName, 'text-foreground w-6')
+
+	return (
+		<div
+			className="flex items-center gap-1"
+			onClick={(event) => event.stopPropagation()}
+			onPointerDown={(event) => event.stopPropagation()}
+		>
+			<LaunchEditor
+				appFile={`${app1Path},${app1Line},1`}
+				appName={app1Name}
+				className={appButtonClassName}
+			>
+				App 1
+			</LaunchEditor>
+			<div className="display-alt-down flex items-center gap-1">
+				<LaunchEditor
+					appFile={app1Path}
+					appName={app1Name}
+					syncTo={{ appFile: app2Path, appName: app2Name }}
+					className={arrowButtonClassName}
+				>
+					<Icon name="ArrowLeft" title="Copy app 2 file to app 1" />
+				</LaunchEditor>
+				<LaunchEditor
+					appFile={app2Path}
+					appName={app2Name}
+					syncTo={{ appFile: app1Path, appName: app1Name }}
+					className={arrowButtonClassName}
+				>
+					<Icon name="ArrowRight" title="Copy app 1 file to app 2" />
+				</LaunchEditor>
+			</div>
+			<LaunchEditor
+				appFile={`${app2Path},${app2Line},1`}
+				appName={app2Name}
+				className={appButtonClassName}
+			>
+				App 2
+			</LaunchEditor>
+		</div>
+	)
 }
 
 function RevalidateApps({
@@ -128,6 +318,20 @@ export function DiffImplementation({
 		delay: 0,
 		minDuration: 1000,
 	})
+	const [openFileDiffs, setOpenFileDiffs] = React.useState<Array<string>>([])
+	const theme = useTheme()
+	const fileDiffOptions = {
+		theme: {
+			light: diffThemeNameLight,
+			dark: diffThemeNameDark,
+		},
+		themeType: theme,
+		diffStyle: 'unified' as const,
+		hunkSeparators: 'line-info' as const,
+		overflow: 'scroll' as const,
+		disableFileHeader: true,
+		unsafeCSS: diffSelectionStyles,
+	}
 
 	const hiddenInputs: Array<React.ReactNode> = []
 	for (const [key, value] of params.entries()) {
@@ -155,63 +359,143 @@ export function DiffImplementation({
 					</p>
 				}
 			>
-				{(diff) => (
-					<div className="flex h-full w-full flex-col">
-						<div className="flex h-14 min-h-14 w-full overflow-x-hidden border-b">
-							<div className="border-r">
-								<SimpleTooltip content="Reload diff">
-									<Link
-										to={`.?${paramsWithForcedRefresh}`}
-										className="flex h-full w-14 items-center justify-center"
-									>
-										<Icon
-											name="Refresh"
-											className={cn({ 'animate-spin': spinnerNavigating })}
-										/>
-									</Link>
-								</SimpleTooltip>
-							</div>
-							<Form
-								onChange={(e) => submit(e.currentTarget)}
-								className="scrollbar-thin scrollbar-thumb-scrollbar flex h-full flex-1 items-center overflow-x-auto"
-								key={`${diff.app1}${diff.app2}`}
-							>
-								{hiddenInputs}
-								<SelectFileToDiff
-									name="app1"
-									label="App 1"
-									className="border-r"
-									allApps={allApps}
-									defaultValue={diff.app1}
-								/>
-								<SelectFileToDiff
-									name="app2"
-									label="App 2"
-									allApps={allApps}
-									defaultValue={diff.app2}
-								/>
-							</Form>
-						</div>
-						<div className="scrollbar-thin scrollbar-thumb-scrollbar grow overflow-y-scroll">
-							{diff.diffCode ? (
-								<div>
-									<Accordion.Root className="w-full" type="multiple">
-										<Mdx code={diff.diffCode} components={mdxComponents} />
-									</Accordion.Root>
+				{(diff) => {
+					let parsedDiffFiles: Array<ParsedDiffFile> = []
+					let hasPatchParseError = false
+
+					if (diff.diffPatch) {
+						try {
+							parsedDiffFiles = parsePatchFiles(diff.diffPatch).flatMap(
+								(parsedPatch) => parsedPatch.files,
+							)
+						} catch {
+							hasPatchParseError = true
+						}
+					}
+
+					return (
+						<div className="flex h-full w-full flex-col">
+							<div className="flex h-14 min-h-14 w-full overflow-x-hidden border-b">
+								<div className="border-r">
+									<SimpleTooltip content="Reload diff">
+										<Link
+											to={`.?${paramsWithForcedRefresh}`}
+											className="flex h-full w-14 items-center justify-center"
+										>
+											<Icon
+												name="Refresh"
+												className={cn({ 'animate-spin': spinnerNavigating })}
+											/>
+										</Link>
+									</SimpleTooltip>
 								</div>
-							) : diff.app1 && diff.app2 ? (
-								<p className="bg-foreground text-background m-5 inline-flex items-center justify-center px-1 py-0.5 font-mono text-sm uppercase">
-									There was a problem generating the diff
-								</p>
-							) : (
-								<p className="bg-foreground text-background m-5 inline-flex items-center justify-center px-1 py-0.5 font-mono text-sm uppercase">
-									Select two apps to compare
-								</p>
-							)}
+								<Form
+									onChange={(e) => submit(e.currentTarget)}
+									className="scrollbar-thin scrollbar-thumb-scrollbar flex h-full flex-1 items-center overflow-x-auto"
+									key={`${diff.app1}${diff.app2}`}
+								>
+									{hiddenInputs}
+									<SelectFileToDiff
+										name="app1"
+										label="App 1"
+										className="border-r"
+										allApps={allApps}
+										defaultValue={diff.app1}
+									/>
+									<SelectFileToDiff
+										name="app2"
+										label="App 2"
+										allApps={allApps}
+										defaultValue={diff.app2}
+									/>
+								</Form>
+							</div>
+							<div className="scrollbar-thin scrollbar-thumb-scrollbar grow overflow-y-scroll">
+								{hasPatchParseError ? (
+									<p className="bg-foreground text-background m-5 inline-flex items-center justify-center px-1 py-0.5 font-mono text-sm uppercase">
+										There was a problem rendering the diff
+									</p>
+								) : parsedDiffFiles.length ? (
+									<Accordion.Root
+										type="multiple"
+										value={openFileDiffs}
+										onValueChange={setOpenFileDiffs}
+										className="w-full"
+									>
+										{parsedDiffFiles.map((fileDiff, index) => {
+											const fileValue = getDiffFileValue(fileDiff)
+											const lineCounts = getDiffLineCounts(fileDiff)
+
+											return (
+												<Accordion.Item
+													key={`${fileValue}:${index}`}
+													value={fileValue}
+													className="border-b"
+												>
+													<Accordion.Header className="hover:bg-foreground/10 relative flex w-full items-center gap-3 px-4 py-2">
+														<Accordion.Trigger className="group flex min-w-0 flex-1 items-center justify-between gap-3 pr-38 text-left">
+															<span className="flex min-w-0 items-center gap-2 font-mono text-sm">
+																<Icon
+																	name={getDiffFileIcon(fileDiff)}
+																	className={cn(
+																		'shrink-0',
+																		getDiffFileIconClass(fileDiff),
+																	)}
+																/>
+																<span className="truncate">
+																	{getDiffFileTitle(fileDiff)}
+																</span>
+															</span>
+															<span className="text-muted-foreground flex shrink-0 items-center gap-2 font-mono text-xs">
+																<span className="text-(--diff-color-deleted)">
+																	-{lineCounts.deleted}
+																</span>
+																<span className="text-(--diff-color-added)">
+																	+{lineCounts.added}
+																</span>
+																<Icon
+																	name="TriangleDownSmall"
+																	className="group-radix-state-open:rotate-180 transition"
+																	aria-hidden
+																/>
+															</span>
+														</Accordion.Trigger>
+														<div className="absolute top-1/2 right-4 -translate-y-1/2">
+															<DiffFileActions
+																fileDiff={fileDiff}
+																app1Name={diff.app1}
+																app2Name={diff.app2}
+															/>
+														</div>
+													</Accordion.Header>
+													<Accordion.Content className="radix-state-closed:hidden">
+														<FileDiff
+															fileDiff={fileDiff}
+															options={fileDiffOptions}
+														/>
+													</Accordion.Content>
+												</Accordion.Item>
+											)
+										})}
+									</Accordion.Root>
+								) : diff.diffPatch === '' ? (
+									<p className="bg-foreground text-background m-5 inline-flex items-center justify-center px-1 py-0.5 font-mono text-sm uppercase">
+										No changes
+									</p>
+								) : diff.app1 && diff.app2 ? (
+									<p className="bg-foreground text-background m-5 inline-flex items-center justify-center px-1 py-0.5 font-mono text-sm uppercase">
+										There was a problem generating the diff
+									</p>
+								) : (
+									<p className="bg-foreground text-background m-5 inline-flex items-center justify-center px-1 py-0.5 font-mono text-sm uppercase">
+										Select two apps to compare
+									</p>
+								)}
+							</div>
+							<RevalidateApps app1={diff.app1} app2={diff.app2} />
 						</div>
-						<RevalidateApps app1={diff.app1} app2={diff.app2} />
-					</div>
-				)}
+					)
+				}}
 			</Await>
 		</Suspense>
 	)

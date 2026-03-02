@@ -237,7 +237,6 @@
     "remark-emoji": "^5.0.2",
     "remark-gfm": "^4.0.1",
     "shell-quote": "^1.8.3",
-    "shiki": "^3.22.0",
     "unified": "^11.0.5",
     "unist-util-remove-position": "^5.0.0",
     "unist-util-visit": "^5.1.0",
