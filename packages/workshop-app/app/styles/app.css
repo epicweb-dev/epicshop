@@ -82,6 +82,16 @@ body {
 	--highlight-added-selection: #7fdbca47;
 	--highlight-removed: #d3423e;
 	--highlight-removed-selection: #d3433e57;
+
+	--diff-color-added: var(--highlight-added);
+	--diff-color-deleted: var(--highlight-removed);
+	--diff-color-modified: var(--base0A);
+	--diff-color-renamed: var(--diff-color-modified);
+
+	/* Keep custom and library diff colors aligned */
+	--diffs-addition-color-override: var(--diff-color-added);
+	--diffs-deletion-color-override: var(--diff-color-deleted);
+	--diffs-modified-color-override: var(--diff-color-modified);
 }
 
 :root .light,

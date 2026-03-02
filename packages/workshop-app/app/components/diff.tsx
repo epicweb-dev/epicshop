@@ -1,5 +1,5 @@
 import * as Accordion from '@radix-ui/react-accordion'
-import { parsePatchFiles } from '@pierre/diffs'
+import { parsePatchFiles, registerCustomCSSVariableTheme } from '@pierre/diffs'
 import { FileDiff } from '@pierre/diffs/react'
 import * as Select from '@radix-ui/react-select'
 import { clsx } from 'clsx'
@@ -30,6 +30,30 @@ type diffProp = {
 
 type ParsedDiffFile = ReturnType<typeof parsePatchFiles>[number]['files'][number]
 type DiffFileVariant = 'changed' | 'added' | 'deleted' | 'renamed'
+
+const diffThemeNameLight = 'epic-base16-light'
+const diffThemeNameDark = 'epic-base16-dark'
+const diffThemeDefaults = {
+	foreground: 'var(--base05)',
+	background: 'var(--base00)',
+	'token-link': 'var(--base0D)',
+	'token-string': 'var(--base0B)',
+	'token-comment': 'var(--base03)',
+	'token-constant': 'var(--base08)',
+	'token-keyword': 'var(--base0A)',
+	'token-parameter': 'var(--base08)',
+	'token-function': 'var(--base0D)',
+	'token-string-expression': 'var(--base0C)',
+	'token-punctuation': 'var(--base0E)',
+	'token-inserted': 'var(--diff-color-added)',
+	'token-deleted': 'var(--diff-color-deleted)',
+	'token-changed': 'var(--diff-color-modified)',
+	'ansi-green': 'var(--diff-color-added)',
+	'ansi-red': 'var(--diff-color-deleted)',
+	'ansi-blue': 'var(--diff-color-modified)',
+} satisfies Record<string, string>
+registerCustomCSSVariableTheme(diffThemeNameLight, diffThemeDefaults)
+registerCustomCSSVariableTheme(diffThemeNameDark, diffThemeDefaults)
 
 function getDiffFileValue(fileDiff: ParsedDiffFile) {
 	return `${fileDiff.prevName ?? ''}::${fileDiff.name}`
@@ -74,13 +98,14 @@ function getDiffFileIconClass(fileDiff: ParsedDiffFile) {
 	const variant = getDiffFileVariant(fileDiff)
 	switch (variant) {
 		case 'added':
-			return 'text-success'
+			return 'text-[var(--diff-color-added)]'
 		case 'deleted':
-			return 'text-foreground-destructive'
+			return 'text-[var(--diff-color-deleted)]'
 		case 'renamed':
+			return 'text-[var(--diff-color-renamed)]'
 		case 'changed':
 		default:
-			return 'text-warning'
+			return 'text-[var(--diff-color-modified)]'
 	}
 }
 
@@ -190,6 +215,10 @@ export function DiffImplementation({
 	const [openFileDiffs, setOpenFileDiffs] = React.useState<Array<string>>([])
 	const theme = useTheme()
 	const fileDiffOptions = {
+		theme: {
+			light: diffThemeNameLight,
+			dark: diffThemeNameDark,
+		},
 		themeType: theme,
 		diffStyle: 'unified' as const,
 		hunkSeparators: 'line-info' as const,
