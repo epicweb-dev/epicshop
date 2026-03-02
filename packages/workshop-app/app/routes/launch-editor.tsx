@@ -44,7 +44,9 @@ export async function action({ request }: ActionFunctionArgs) {
 		.getAll('syncTo.appFile')
 		.filter((value): value is string => typeof value === 'string')
 	if (syncToAppFileValues.length > 1) {
-		throw new Response('Expected a single syncTo.appFile value', { status: 400 })
+		throw new Response('Expected a single syncTo.appFile value', {
+			status: 400,
+		})
 	}
 	const syncTo = {
 		type: formData.get('syncTo.type') ?? undefined,
