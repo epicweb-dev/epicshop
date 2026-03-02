@@ -22,6 +22,7 @@ import {
 	copyUnignoredFilesCache,
 	diffCodeCache,
 	diffFilesCache,
+	diffPatchCache,
 } from './cache.server.ts'
 import { compileMarkdownString } from './compile-mdx.server.ts'
 import { modifiedMoreRecentlyThan } from './modified-time.server.ts'
@@ -496,6 +497,71 @@ export async function getDiffCode(
 		getFreshValue: () => getDiffCodeImpl(app1, app2),
 	})
 	return result
+}
+
+export async function getDiffPatch(
+	app1: App,
+	app2: App,
+	{
+		forceFresh,
+		timings,
+		request,
+	}: { forceFresh?: boolean; timings?: Timings; request?: Request } = {},
+) {
+	const key = `${app1.relativePath}__vs__${app2.relativePath}`
+	const cacheEntry = await diffPatchCache.get(key)
+	const result = await cachified({
+		key,
+		cache: diffPatchCache,
+		forceFresh:
+			forceFresh || (await getForceFreshForDiff(app1, app2, cacheEntry)),
+		timings,
+		request,
+		checkValue: z.string(),
+		getFreshValue: () => getDiffPatchImpl(app1, app2),
+	})
+	return result
+}
+
+async function getDiffPatchImpl(app1: App, app2: App) {
+	if (app1.name === app2.name) {
+		return ''
+	}
+
+	const { app1CopyPath, app2CopyPath } = await prepareForDiff(app1, app2)
+
+	const { stdout: diffOutput } = await execa(
+		'git',
+		[
+			'diff',
+			'--no-index',
+			app1CopyPath,
+			app2CopyPath,
+			'--color=never',
+			'--color-moved-ws=allow-indentation-change',
+			'--ignore-blank-lines',
+			'--ignore-space-change',
+		],
+		{ cwd: diffTmpDir },
+		// --no-index implies --exit-code, so we need to use the error output
+	).catch((e) => e as { stdout?: string })
+
+	void fsExtra.remove(app1CopyPath).catch(() => {})
+	void fsExtra.remove(app2CopyPath).catch(() => {})
+
+	const normalizedOutput = String(diffOutput ?? '')
+	const app1Relative = app1CopyPath.slice(1)
+	const app2Relative = app2CopyPath.slice(1)
+
+	return normalizedOutput
+		.replaceAll(`a${app1CopyPath}`, 'a')
+		.replaceAll(`b${app1CopyPath}`, 'b')
+		.replaceAll(`a${app2CopyPath}`, 'a')
+		.replaceAll(`b${app2CopyPath}`, 'b')
+		.replaceAll(`a/${app1Relative}`, 'a')
+		.replaceAll(`b/${app1Relative}`, 'b')
+		.replaceAll(`a/${app2Relative}`, 'a')
+		.replaceAll(`b/${app2Relative}`, 'b')
 }
 
 async function getDiffCodeImpl(app1: App, app2: App) {

@@ -1,4 +1,5 @@
-import * as Accordion from '@radix-ui/react-accordion'
+import { parsePatchFiles } from '@pierre/diffs'
+import { FileDiff } from '@pierre/diffs/react'
 import * as Select from '@radix-ui/react-select'
 import { clsx } from 'clsx'
 import React, { Suspense } from 'react'
@@ -12,8 +13,7 @@ import {
 	useSubmit,
 } from 'react-router'
 import { useSpinDelay } from 'spin-delay'
-import AccordionComponent from '#app/components/accordion.tsx'
-import { Mdx } from '#app/utils/mdx.tsx'
+import { useTheme } from '#app/routes/theme/index.tsx'
 import { cn } from '#app/utils/misc.tsx'
 import { useApps } from '#app/utils/root-loader.ts'
 import { DeferredEpicVideo } from './epic-video.tsx'
@@ -24,16 +24,10 @@ import { SimpleTooltip } from './ui/tooltip.tsx'
 type diffProp = {
 	app1?: string
 	app2?: string
-	diffCode?: string | null
+	diffPatch?: string | null
 }
 
-const pre = (props: any) => <pre {...props} />
-
-const mdxComponents = {
-	Accordion: AccordionComponent,
-	// override the pre-with-buttons
-	pre,
-}
+type ParsedDiffFile = ReturnType<typeof parsePatchFiles>[number]['files'][number]
 
 function RevalidateApps({
 	app1: app1Name,
@@ -128,6 +122,13 @@ export function DiffImplementation({
 		delay: 0,
 		minDuration: 1000,
 	})
+	const theme = useTheme()
+	const fileDiffOptions = {
+		themeType: theme,
+		diffStyle: 'unified' as const,
+		hunkSeparators: 'line-info' as const,
+		overflow: 'scroll' as const,
+	}
 
 	const hiddenInputs: Array<React.ReactNode> = []
 	for (const [key, value] of params.entries()) {
@@ -155,63 +156,90 @@ export function DiffImplementation({
 					</p>
 				}
 			>
-				{(diff) => (
-					<div className="flex h-full w-full flex-col">
-						<div className="flex h-14 min-h-14 w-full overflow-x-hidden border-b">
-							<div className="border-r">
-								<SimpleTooltip content="Reload diff">
-									<Link
-										to={`.?${paramsWithForcedRefresh}`}
-										className="flex h-full w-14 items-center justify-center"
-									>
-										<Icon
-											name="Refresh"
-											className={cn({ 'animate-spin': spinnerNavigating })}
-										/>
-									</Link>
-								</SimpleTooltip>
-							</div>
-							<Form
-								onChange={(e) => submit(e.currentTarget)}
-								className="scrollbar-thin scrollbar-thumb-scrollbar flex h-full flex-1 items-center overflow-x-auto"
-								key={`${diff.app1}${diff.app2}`}
-							>
-								{hiddenInputs}
-								<SelectFileToDiff
-									name="app1"
-									label="App 1"
-									className="border-r"
-									allApps={allApps}
-									defaultValue={diff.app1}
-								/>
-								<SelectFileToDiff
-									name="app2"
-									label="App 2"
-									allApps={allApps}
-									defaultValue={diff.app2}
-								/>
-							</Form>
-						</div>
-						<div className="scrollbar-thin scrollbar-thumb-scrollbar grow overflow-y-scroll">
-							{diff.diffCode ? (
-								<div>
-									<Accordion.Root className="w-full" type="multiple">
-										<Mdx code={diff.diffCode} components={mdxComponents} />
-									</Accordion.Root>
+				{(diff) => {
+					let parsedDiffFiles: Array<ParsedDiffFile> = []
+					let hasPatchParseError = false
+
+					if (diff.diffPatch) {
+						try {
+							parsedDiffFiles = parsePatchFiles(diff.diffPatch).flatMap(
+								(parsedPatch) => parsedPatch.files,
+							)
+						} catch {
+							hasPatchParseError = true
+						}
+					}
+
+					return (
+						<div className="flex h-full w-full flex-col">
+							<div className="flex h-14 min-h-14 w-full overflow-x-hidden border-b">
+								<div className="border-r">
+									<SimpleTooltip content="Reload diff">
+										<Link
+											to={`.?${paramsWithForcedRefresh}`}
+											className="flex h-full w-14 items-center justify-center"
+										>
+											<Icon
+												name="Refresh"
+												className={cn({ 'animate-spin': spinnerNavigating })}
+											/>
+										</Link>
+									</SimpleTooltip>
 								</div>
-							) : diff.app1 && diff.app2 ? (
-								<p className="bg-foreground text-background m-5 inline-flex items-center justify-center px-1 py-0.5 font-mono text-sm uppercase">
-									There was a problem generating the diff
-								</p>
-							) : (
-								<p className="bg-foreground text-background m-5 inline-flex items-center justify-center px-1 py-0.5 font-mono text-sm uppercase">
-									Select two apps to compare
-								</p>
-							)}
+								<Form
+									onChange={(e) => submit(e.currentTarget)}
+									className="scrollbar-thin scrollbar-thumb-scrollbar flex h-full flex-1 items-center overflow-x-auto"
+									key={`${diff.app1}${diff.app2}`}
+								>
+									{hiddenInputs}
+									<SelectFileToDiff
+										name="app1"
+										label="App 1"
+										className="border-r"
+										allApps={allApps}
+										defaultValue={diff.app1}
+									/>
+									<SelectFileToDiff
+										name="app2"
+										label="App 2"
+										allApps={allApps}
+										defaultValue={diff.app2}
+									/>
+								</Form>
+							</div>
+							<div className="scrollbar-thin scrollbar-thumb-scrollbar grow overflow-y-scroll">
+								{hasPatchParseError ? (
+									<p className="bg-foreground text-background m-5 inline-flex items-center justify-center px-1 py-0.5 font-mono text-sm uppercase">
+										There was a problem rendering the diff
+									</p>
+								) : parsedDiffFiles.length ? (
+									<div className="space-y-3 p-4">
+										{parsedDiffFiles.map((fileDiff, index) => (
+											<FileDiff
+												key={`${fileDiff.prevName ?? fileDiff.name}:${fileDiff.name}:${index}`}
+												fileDiff={fileDiff}
+												options={fileDiffOptions}
+											/>
+										))}
+									</div>
+								) : diff.diffPatch === '' ? (
+									<p className="bg-foreground text-background m-5 inline-flex items-center justify-center px-1 py-0.5 font-mono text-sm uppercase">
+										No changes
+									</p>
+								) : diff.app1 && diff.app2 ? (
+									<p className="bg-foreground text-background m-5 inline-flex items-center justify-center px-1 py-0.5 font-mono text-sm uppercase">
+										There was a problem generating the diff
+									</p>
+								) : (
+									<p className="bg-foreground text-background m-5 inline-flex items-center justify-center px-1 py-0.5 font-mono text-sm uppercase">
+										Select two apps to compare
+									</p>
+								)}
+							</div>
+							<RevalidateApps app1={diff.app1} app2={diff.app2} />
 						</div>
-						<RevalidateApps app1={diff.app1} app2={diff.app2} />
-					</div>
-				)}
+					)
+				}}
 			</Await>
 		</Suspense>
 	)

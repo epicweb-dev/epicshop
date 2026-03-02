@@ -23,6 +23,12 @@ Instead, it's much faster to copy the files over to a temporary directory
 temporary directories. This may seem counter-intuitive, but it's definitely
 faster and more reliable.
 
+## Rendering engine
+
+The `/diff` route renders raw git patch output with `@pierre/diffs` (see
+https://diffs.com) so we can use the same diff rendering primitives in the app
+and keep the UI behavior consistent with the diffs.com component model.
+
 ## Cache
 
 Because the diffs are pretty expensive, we load them asynchronously (streamed to
