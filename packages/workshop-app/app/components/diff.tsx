@@ -70,6 +70,20 @@ function getDiffFileIcon(fileDiff: ParsedDiffFile) {
 	}
 }
 
+function getDiffFileIconClass(fileDiff: ParsedDiffFile) {
+	const variant = getDiffFileVariant(fileDiff)
+	switch (variant) {
+		case 'added':
+			return 'text-success'
+		case 'deleted':
+			return 'text-foreground-destructive'
+		case 'renamed':
+		case 'changed':
+		default:
+			return 'text-warning'
+	}
+}
+
 function getDiffLineCounts(fileDiff: ParsedDiffFile) {
 	return fileDiff.hunks.reduce(
 		(acc, hunk) => ({
@@ -287,7 +301,10 @@ export function DiffImplementation({
 															<span className="flex min-w-0 items-center gap-2 font-mono text-sm">
 																<Icon
 																	name={getDiffFileIcon(fileDiff)}
-																	className="text-muted-foreground shrink-0"
+																	className={cn(
+																		'shrink-0',
+																		getDiffFileIconClass(fileDiff),
+																	)}
 																/>
 																<span className="truncate">
 																	{getDiffFileTitle(fileDiff)}
