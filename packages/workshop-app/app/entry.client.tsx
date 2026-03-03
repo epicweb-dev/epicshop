@@ -1,3 +1,4 @@
+import './utils/media-chrome-template-patch.client.ts'
 import { hydrateRoot } from 'react-dom/client'
 import { HydratedRouter } from 'react-router/dom'
 import { init as initCommandPalette } from './utils/command-palette.client'
