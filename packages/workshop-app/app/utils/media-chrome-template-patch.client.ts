@@ -6,7 +6,7 @@ type ChildNodePartInstance = {
 	replace: (...nodes: Array<unknown>) => void
 }
 
-const prototype = ChildNodePart.prototype as ChildNodePartInstance &
+const prototype = ChildNodePart.prototype as unknown as ChildNodePartInstance &
 	Record<string, unknown>
 
 if (!prototype[patchKey]) {
