@@ -1,19 +1,9 @@
 import { connectionCache } from '@epic-web/workshop-utils/cache.server'
 import * as React from 'react'
-import {
-	data,
-	useFetcher,
-	type ActionFunctionArgs,
-	type LoaderFunctionArgs,
-} from 'react-router'
+import { data, useFetcher, type ActionFunctionArgs } from 'react-router'
 import { ensureUndeployed } from '#app/utils/misc.tsx'
 
 const CONNECTION_CACHE_KEY = 'connected'
-
-export async function loader({}: LoaderFunctionArgs) {
-	ensureUndeployed()
-	return data({ ok: true })
-}
 
 export async function action({ request }: ActionFunctionArgs) {
 	ensureUndeployed()
