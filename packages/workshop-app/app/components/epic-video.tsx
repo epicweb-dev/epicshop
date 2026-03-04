@@ -702,8 +702,14 @@ function EpicVideo({
 	}, [offlineVideoFetcher.state, offlineVideoFetcher.data, revalidator])
 
 	const handleDownload = React.useCallback(() => {
-		toast.success(
-			`Download of ${title} has started (${downloadResolutionLabel} quality).`,
+		if (!isOnline) {
+			toast.error('Cannot download while offline', {
+				description: 'Reconnect to the internet and try again.',
+			})
+			return
+		}
+		toast.info(
+			`Starting download for ${title} (${downloadResolutionLabel} quality).`,
 			{
 				description: (
 					<span>
@@ -731,6 +737,7 @@ function EpicVideo({
 		title,
 		urlString,
 		downloadResolutionLabel,
+		isOnline,
 	])
 
 	const handleDelete = React.useCallback(() => {
@@ -754,6 +761,7 @@ function EpicVideo({
 	const offlineActions = showOfflineActions ? (
 		<OfflineVideoActionButtons
 			isAvailable={offlineVideoAvailable}
+			isDownloadAvailable={isOnline}
 			isBusy={isOfflineActionBusy}
 			downloadProgress={downloadProgress}
 			downloadSizeBytes={downloadSizeBytes}
