@@ -1,4 +1,4 @@
-import type { Route } from './+types/app'
+import  { type Route } from './+types/app'
 import { requireExerciseApp } from '@epic-web/workshop-utils/apps.server'
 import {
 	combineServerTimings,

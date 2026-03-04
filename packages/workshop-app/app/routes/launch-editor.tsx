@@ -1,4 +1,4 @@
-import type { Route } from './+types/launch-editor'
+import  { type Route } from './+types/launch-editor'
 import path from 'path'
 import { getAppByName } from '@epic-web/workshop-utils/apps.server'
 import { launchEditor } from '@epic-web/workshop-utils/launch-editor.server'

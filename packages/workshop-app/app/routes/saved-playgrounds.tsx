@@ -1,4 +1,4 @@
-import type { Route } from './+types/saved-playgrounds'
+import  { type Route } from './+types/saved-playgrounds'
 import {
 	getAppByName,
 	getApps,

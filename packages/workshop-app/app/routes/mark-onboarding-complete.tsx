@@ -1,4 +1,4 @@
-import type { Route } from './+types/mark-onboarding-complete'
+import  { type Route } from './+types/mark-onboarding-complete'
 import { markOnboardingComplete } from '@epic-web/workshop-utils/db.server'
 import { ensureUndeployed } from '#app/utils/misc.tsx'
 import { ensureProgressiveEnhancement } from '#app/utils/pe.tsx'

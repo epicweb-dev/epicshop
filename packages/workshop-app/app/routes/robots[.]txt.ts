@@ -1,4 +1,4 @@
-import type { Route } from './+types/robots[.]txt'
+import  { type Route } from './+types/robots[.]txt'
 import { generateRobotsTxt } from '@nasa-gcn/remix-seo'
 import { getDomainUrl } from '#app/utils/misc.tsx'
 

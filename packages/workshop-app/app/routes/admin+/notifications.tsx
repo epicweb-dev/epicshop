@@ -1,4 +1,4 @@
-import type { Route } from './+types/notifications'
+import  { type Route } from './+types/notifications'
 import { muteNotification } from '@epic-web/workshop-utils/db.server'
 import { type getUnmutedNotifications } from '@epic-web/workshop-utils/notifications.server'
 import { useEffect, useRef } from 'react'

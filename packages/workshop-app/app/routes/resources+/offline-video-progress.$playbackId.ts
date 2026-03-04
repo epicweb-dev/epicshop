@@ -1,4 +1,4 @@
-import type { Route } from './+types/offline-video-progress.$playbackId'
+import  { type Route } from './+types/offline-video-progress.$playbackId'
 import {
 	downloadProgressEmitter,
 	DOWNLOAD_PROGRESS_EVENTS,

@@ -1,4 +1,4 @@
-import type { Route } from './+types/sitemap[.]xml'
+import  { type Route } from './+types/sitemap[.]xml'
 import { generateSitemap } from '@nasa-gcn/remix-seo'
 import { type ServerBuild } from 'react-router'
 import { getDomainUrl } from '#app/utils/misc.tsx'

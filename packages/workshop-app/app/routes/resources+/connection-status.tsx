@@ -1,4 +1,4 @@
-import type { Route } from './+types/connection-status'
+import  { type Route } from './+types/connection-status'
 import * as React from 'react'
 import { data, useFetcher } from 'react-router'
 import { ensureUndeployed } from '#app/utils/misc.tsx'

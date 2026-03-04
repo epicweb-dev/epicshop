@@ -1,4 +1,4 @@
-import type { Route } from './+types/$exerciseNumber_.$stepNumber.index'
+import  { type Route } from './+types/$exerciseNumber_.$stepNumber.index'
 import { invariantResponse } from '@epic-web/invariant'
 import {
 	getExerciseApp,

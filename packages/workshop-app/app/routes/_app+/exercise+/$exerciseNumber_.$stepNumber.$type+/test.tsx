@@ -1,4 +1,4 @@
-import type { Route } from './+types/test'
+import  { type Route } from './+types/test'
 import { requireExerciseApp } from '@epic-web/workshop-utils/apps.server'
 import { userHasAccessToExerciseStep } from '@epic-web/workshop-utils/epic-api.server'
 import {

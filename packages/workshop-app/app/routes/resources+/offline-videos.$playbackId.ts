@@ -1,4 +1,4 @@
-import type { Route } from './+types/offline-videos.$playbackId'
+import  { type Route } from './+types/offline-videos.$playbackId'
 import { invariantResponse } from '@epic-web/invariant'
 import { getOfflineVideoAsset } from '@epic-web/workshop-utils/offline-videos.server'
 import { createReadableStreamFromReadable } from '@react-router/node'

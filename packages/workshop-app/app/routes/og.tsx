@@ -1,4 +1,4 @@
-import type { Route } from './+types/og'
+import  { type Route } from './+types/og'
 import { invariant } from '@epic-web/invariant'
 import { cachified, ogCache } from '@epic-web/workshop-utils/cache.server'
 import { getWorkshopConfig } from '@epic-web/workshop-utils/config.server'

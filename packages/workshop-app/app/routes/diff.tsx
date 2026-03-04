@@ -1,4 +1,4 @@
-import type { Route } from './+types/diff'
+import  { type Route } from './+types/diff'
 import {
 	getAppByName,
 	getAppDisplayName,

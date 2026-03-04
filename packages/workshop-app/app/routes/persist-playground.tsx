@@ -1,4 +1,4 @@
-import type { Route } from './+types/persist-playground'
+import  { type Route } from './+types/persist-playground'
 import {
 	getPreferences,
 	setPreferences,
