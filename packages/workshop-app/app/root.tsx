@@ -255,15 +255,16 @@ function App() {
 		[data.user, data.userHasAccess],
 	)
 	const wasOnlineRef = React.useRef(isOnline)
+	const revalidatorState = revalidator.state
 
 	React.useEffect(() => {
 		const wasOnline = wasOnlineRef.current
 		const shouldRevalidate = !wasOnline && isOnline
-		if (shouldRevalidate && revalidator.state !== 'idle') return
+		if (shouldRevalidate && revalidatorState !== 'idle') return
 		wasOnlineRef.current = isOnline
 		if (!shouldRevalidate) return
 		revalidator.revalidate()
-	}, [isOnline, revalidator])
+	}, [isOnline, revalidator, revalidatorState])
 
 	React.useEffect(() => {
 		const handleToggle = () => {

@@ -15,10 +15,12 @@ import { getWorkshopConfig } from './config.server.ts'
 import {
 	getAuthInfo,
 	getPendingProgressMutations,
+	isPendingProgressMutationInScope,
 	queuePendingProgressMutation,
+	replacePendingProgressMutationsForScope,
 	setAuthInfo,
-	setPendingProgressMutations,
 	type PendingProgressMutation,
+	type PendingProgressMutationScope,
 } from './db.server.ts'
 import { getEnv } from './init-env.ts'
 import { logger } from './logger.ts'
@@ -567,6 +569,22 @@ type DroppedProgressMutation = {
 	reason: string
 }
 
+function createPendingProgressMutationScope({
+	host,
+	workshopSlug,
+	userId,
+}: {
+	host: string
+	workshopSlug: string | undefined
+	userId: string
+}): PendingProgressMutationScope {
+	return {
+		host,
+		workshopSlug: workshopSlug ?? '__unknown-workshop__',
+		userId,
+	}
+}
+
 function pendingProgressQueuesEqual(
 	a: Array<PendingProgressMutation>,
 	b: Array<PendingProgressMutation>,
@@ -628,17 +646,19 @@ async function postProgressMutation({
 }
 
 async function syncPendingProgressMutations({
+	scope,
 	host,
 	accessToken,
 	request,
 	timings,
 }: {
+	scope: PendingProgressMutationScope
 	host: string
 	accessToken: string
 	request?: Request
 	timings?: Timings
 }) {
-	const pendingProgressMutations = await getPendingProgressMutations()
+	const pendingProgressMutations = await getPendingProgressMutations({ scope })
 	if (!pendingProgressMutations.length) {
 		return {
 			pendingProgressMutations,
@@ -729,7 +749,11 @@ async function syncPendingProgressMutations({
 		} as const
 	}
 
-	await setPendingProgressMutations(remainingProgressMutations)
+	await replacePendingProgressMutationsForScope({
+		scope,
+		basePendingProgressMutations: pendingProgressMutations,
+		nextPendingProgressMutations: remainingProgressMutations,
+	})
 	log(
 		`queued progress replay complete. synced: ${syncedCount}, remaining: ${remainingProgressMutations.length}`,
 	)
@@ -788,8 +812,14 @@ export async function getProgress({
 		product: { slug, host },
 	} = getWorkshopConfig()
 	if (!slug) return []
+	const progressMutationScope = createPendingProgressMutationScope({
+		host,
+		workshopSlug: slug,
+		userId: authInfo.id,
+	})
 
 	const syncResult = await syncPendingProgressMutations({
+		scope: progressMutationScope,
 		host,
 		accessToken: authInfo.tokenSet.access_token,
 		request,
@@ -1029,21 +1059,32 @@ export async function updateProgress(
 	}
 
 	const {
-		product: { host },
+		product: { host, slug },
 	} = getWorkshopConfig()
+	const progressMutationScope = createPendingProgressMutationScope({
+		host,
+		workshopSlug: slug,
+		userId: authInfo.id,
+	})
 	const normalizedComplete = Boolean(complete)
 	log(
 		`updating progress for lesson: ${lessonSlug} (complete: ${normalizedComplete})`,
 	)
 	const pendingProgressMutations = await queuePendingProgressMutation({
+		scope: progressMutationScope,
 		lessonSlug,
 		complete: normalizedComplete,
 	})
+	const scopedPendingProgressMutations = pendingProgressMutations.filter(
+		(mutation) =>
+			isPendingProgressMutationInScope(mutation, progressMutationScope),
+	)
 	log(
-		`queued progress mutation for lesson: ${lessonSlug}. pending count: ${pendingProgressMutations.length}`,
+		`queued progress mutation for lesson: ${lessonSlug}. pending count: ${scopedPendingProgressMutations.length}`,
 	)
 
 	const syncResult = await syncPendingProgressMutations({
+		scope: progressMutationScope,
 		host,
 		accessToken: authInfo.tokenSet.access_token,
 		request,

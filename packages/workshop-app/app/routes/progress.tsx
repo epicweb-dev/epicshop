@@ -61,7 +61,7 @@ export function useEpicProgress() {
 		)
 		const shouldApplyOptimisticState =
 			progressFetcher.state !== 'idle' ||
-			(actionStatus === 'queued' && progressItem?.syncStatus !== 'synced')
+			(actionStatus === 'queued' && progressItem?.syncStatus === 'pending')
 		if (!shouldApplyOptimisticState) continue
 
 		optimisticProgressUpdates.set(lessonSlug, {

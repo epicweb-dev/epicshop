@@ -2,6 +2,7 @@ import './init-env.ts'
 
 import { randomUUID as cuid } from 'crypto'
 import fsExtra from 'fs-extra'
+import PQueue from 'p-queue'
 import { redirect } from 'react-router'
 import { z } from 'zod'
 import { getWorkshopConfig } from './config.server.ts'
@@ -89,10 +90,18 @@ const PendingProgressMutationSchema = z.object({
 	lessonSlug: z.string(),
 	complete: z.boolean(),
 	queuedAt: z.string(),
+	host: z.string().optional(),
+	workshopSlug: z.string().optional(),
+	userId: z.string().optional(),
 })
 export type PendingProgressMutation = z.infer<
 	typeof PendingProgressMutationSchema
 >
+export type PendingProgressMutationScope = {
+	host: string
+	workshopSlug: string
+	userId: string
+}
 
 const DataSchema = z.object({
 	preferences: z
@@ -405,40 +414,158 @@ export async function setPreferences(
 	return updatedData.preferences
 }
 
-export async function getPendingProgressMutations() {
+const pendingProgressMutationWriteQueue = new PQueue({ concurrency: 1 })
+
+export function hasPendingProgressMutationScope(
+	mutation: PendingProgressMutation,
+): mutation is PendingProgressMutation & PendingProgressMutationScope {
+	return Boolean(mutation.host && mutation.workshopSlug && mutation.userId)
+}
+
+export function isPendingProgressMutationInScope(
+	mutation: PendingProgressMutation,
+	scope: PendingProgressMutationScope,
+) {
+	return (
+		hasPendingProgressMutationScope(mutation) &&
+		mutation.host === scope.host &&
+		mutation.workshopSlug === scope.workshopSlug &&
+		mutation.userId === scope.userId
+	)
+}
+
+function getPendingProgressMutationKey(mutation: PendingProgressMutation) {
+	return [
+		mutation.host ?? '',
+		mutation.workshopSlug ?? '',
+		mutation.userId ?? '',
+		mutation.lessonSlug,
+		mutation.complete ? '1' : '0',
+		mutation.queuedAt,
+	].join('|')
+}
+
+function mergePendingProgressMutationsByLesson(
+	mutations: Array<PendingProgressMutation>,
+) {
+	const mergedByLessonSlug = new Map<string, PendingProgressMutation>()
+	for (const mutation of mutations) {
+		const existingMutation = mergedByLessonSlug.get(mutation.lessonSlug)
+		if (!existingMutation) {
+			mergedByLessonSlug.set(mutation.lessonSlug, mutation)
+			continue
+		}
+		const existingQueuedAt = Date.parse(existingMutation.queuedAt)
+		const nextQueuedAt = Date.parse(mutation.queuedAt)
+		if (nextQueuedAt >= existingQueuedAt) {
+			mergedByLessonSlug.set(mutation.lessonSlug, mutation)
+		}
+	}
+	return Array.from(mergedByLessonSlug.values())
+}
+
+export async function mutatePendingProgressMutations(
+	updater: (
+		pendingProgressMutations: Array<PendingProgressMutation>,
+	) => Array<PendingProgressMutation>,
+) {
+	return pendingProgressMutationWriteQueue.add(async () => {
+		const data = await readDb()
+		const pendingProgressMutations = data?.pendingProgressMutations ?? []
+		const nextPendingProgressMutations = updater(pendingProgressMutations)
+		const updatedData = {
+			...data,
+			pendingProgressMutations: nextPendingProgressMutations,
+		}
+		await saveJSON(updatedData)
+		return updatedData.pendingProgressMutations
+	})
+}
+
+export async function getPendingProgressMutations({
+	scope,
+}: { scope?: PendingProgressMutationScope } = {}) {
 	const data = await readDb()
-	return data?.pendingProgressMutations ?? []
+	const pendingProgressMutations = data?.pendingProgressMutations ?? []
+	if (!scope) return pendingProgressMutations
+	return pendingProgressMutations.filter((mutation) =>
+		isPendingProgressMutationInScope(mutation, scope),
+	)
 }
 
 export async function setPendingProgressMutations(
 	pendingProgressMutations: Array<PendingProgressMutation>,
 ) {
-	const data = await readDb()
-	const updatedData = {
-		...data,
-		pendingProgressMutations,
-	}
-	await saveJSON(updatedData)
-	return updatedData.pendingProgressMutations
+	return mutatePendingProgressMutations(() => pendingProgressMutations)
 }
 
 export async function queuePendingProgressMutation({
+	scope,
 	lessonSlug,
 	complete,
 	queuedAt = new Date().toISOString(),
 }: {
+	scope: PendingProgressMutationScope
 	lessonSlug: string
 	complete: boolean
 	queuedAt?: string
 }) {
-	const pendingProgressMutations = await getPendingProgressMutations()
-	const nextPendingProgressMutations = [
+	return mutatePendingProgressMutations((pendingProgressMutations) => [
 		...pendingProgressMutations.filter(
-			(mutation) => mutation.lessonSlug !== lessonSlug,
+			(mutation) =>
+				!(
+					isPendingProgressMutationInScope(mutation, scope) &&
+					mutation.lessonSlug === lessonSlug
+				),
 		),
-		{ lessonSlug, complete, queuedAt },
-	]
-	return setPendingProgressMutations(nextPendingProgressMutations)
+		{
+			host: scope.host,
+			workshopSlug: scope.workshopSlug,
+			userId: scope.userId,
+			lessonSlug,
+			complete,
+			queuedAt,
+		},
+	])
+}
+
+export async function replacePendingProgressMutationsForScope({
+	scope,
+	basePendingProgressMutations,
+	nextPendingProgressMutations,
+}: {
+	scope: PendingProgressMutationScope
+	basePendingProgressMutations: Array<PendingProgressMutation>
+	nextPendingProgressMutations: Array<PendingProgressMutation>
+}) {
+	return mutatePendingProgressMutations((pendingProgressMutations) => {
+		const outOfScopePendingProgressMutations = pendingProgressMutations.filter(
+			(mutation) => !isPendingProgressMutationInScope(mutation, scope),
+		)
+		const currentScopedPendingProgressMutations =
+			pendingProgressMutations.filter((mutation) =>
+				isPendingProgressMutationInScope(mutation, scope),
+			)
+		const basePendingProgressMutationKeys = new Set(
+			basePendingProgressMutations.map(getPendingProgressMutationKey),
+		)
+		const newScopedPendingProgressMutations =
+			currentScopedPendingProgressMutations.filter(
+				(mutation) =>
+					!basePendingProgressMutationKeys.has(
+						getPendingProgressMutationKey(mutation),
+					),
+			)
+		const mergedScopedPendingProgressMutations =
+			mergePendingProgressMutationsByLesson([
+				...nextPendingProgressMutations,
+				...newScopedPendingProgressMutations,
+			])
+		return [
+			...outOfScopePendingProgressMutations,
+			...mergedScopedPendingProgressMutations,
+		]
+	})
 }
 
 /**
