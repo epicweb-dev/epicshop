@@ -2,14 +2,13 @@
   "name": "epicshop-example",
   "private": true,
   "epicshop": {
-    "title": "Web App Fundamentals 🔭",
+    "title": "Epic Workshop Tutorial 🔭",
     "subtitle": "Learn the foundational tools and skills of building web applications",
     "product": {
-      "host": "www.epicreact.dev",
-      "slug": "react-fundamentals",
-      "logo": "/images/logo.svg",
-      "displayName": "EpicReact.dev",
-      "displayNameShort": "EpicReact",
+      "host": "www.epicweb.dev",
+      "slug": "learn-how-to-use-the-epic-workshop-app~kfmou",
+      "displayName": "EpicWeb.dev",
+      "displayNameShort": "Epic Web",
       "discordChannelId": "1285244676286189569",
       "discordTags": [
         "1285246046498328627",
