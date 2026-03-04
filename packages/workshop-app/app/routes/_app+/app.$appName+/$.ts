@@ -1,10 +1,11 @@
+import { type Route } from './+types/$'
 import path from 'path'
 import { invariantResponse } from '@epic-web/invariant'
 import { makeTimings } from '@epic-web/workshop-utils/timing.server'
 import etag from 'etag'
 import fsExtra from 'fs-extra'
 import mimeTypes from 'mime-types'
-import { redirect, type LoaderFunctionArgs } from 'react-router'
+import { redirect } from 'react-router'
 import { z } from 'zod'
 import { compileTs } from '#app/utils/compile-app.server.ts'
 import {
@@ -173,7 +174,7 @@ function generateErrorJavaScript(
 `
 }
 
-export async function loader({ request, params }: LoaderFunctionArgs) {
+export async function loader({ request, params }: Route.LoaderArgs) {
 	ensureUndeployed()
 	const timings = makeTimings('app-file')
 	const { fileApp, app } = await resolveApps({ request, params, timings })

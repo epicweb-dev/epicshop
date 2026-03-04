@@ -1,3 +1,4 @@
+import { type Route } from './+types/index'
 import {
 	getAppByName,
 	getAppDisplayName,
@@ -24,7 +25,6 @@ import {
 	data,
 	redirect,
 	type HeadersFunction,
-	type LoaderFunctionArgs,
 	useOutletContext,
 } from 'react-router'
 import { Diff } from '#app/components/diff.tsx'
@@ -38,13 +38,12 @@ import {
 import { useWorkshopConfig } from '#app/components/workshop-config.tsx'
 import { fetchDiscordPosts } from '#app/utils/discord.server.ts'
 import { useAltDown } from '#app/utils/misc.tsx'
-import { type Route } from './+types/index.ts'
 import { Playground } from './__shared/playground.tsx'
 import { Preview } from './__shared/preview.tsx'
 import { Tests } from './__shared/tests.tsx'
 import { getAppRunningState, getTestState } from './__shared/utils.tsx'
 
-export async function loader({ request, params }: LoaderFunctionArgs) {
+export async function loader({ request, params }: Route.LoaderArgs) {
 	const timings = makeTimings('exerciseStepTypeIndexLoader')
 	const searchParams = new URL(request.url).searchParams
 	const cacheOptions = { request, timings }

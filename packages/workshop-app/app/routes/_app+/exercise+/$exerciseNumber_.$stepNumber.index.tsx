@@ -1,15 +1,16 @@
+import { type Route } from './+types/$exerciseNumber_.$stepNumber.index'
 import { invariantResponse } from '@epic-web/invariant'
 import {
 	getExerciseApp,
 	isProblemApp,
 	isSolutionApp,
 } from '@epic-web/workshop-utils/apps.server'
-import { redirect, type LoaderFunctionArgs } from 'react-router'
+import { redirect } from 'react-router'
 import { GeneralErrorBoundary } from '#app/components/error-boundary.tsx'
 import { getStep404Data } from './__shared/error-boundary.server.ts'
 import { Exercise404ErrorBoundary } from './__shared/error-boundary.tsx'
 
-export async function loader({ params }: LoaderFunctionArgs) {
+export async function loader({ params }: Route.LoaderArgs) {
 	invariantResponse(params.exerciseNumber, 'exerciseNumber is required')
 	const problemApp = await getExerciseApp({ ...params, type: 'problem' }).then(
 		(a) => (isProblemApp(a) ? a : null),

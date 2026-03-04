@@ -1,4 +1,4 @@
-import { type LoaderFunctionArgs } from 'react-router'
+import { type Route } from './+types/login-sse'
 import { eventStream } from 'remix-utils/sse/server'
 import { z } from 'zod'
 import { EVENTS } from '#app/utils/auth-events.ts'
@@ -23,7 +23,7 @@ export const EventSchema = z.union([
 	AuthRejectedEventSchema,
 ])
 
-export async function loader({ request }: LoaderFunctionArgs) {
+export async function loader({ request }: Route.LoaderArgs) {
 	ensureUndeployed()
 	return eventStream(request.signal, function setup(send) {
 		function handleCodeReceived(data: any) {

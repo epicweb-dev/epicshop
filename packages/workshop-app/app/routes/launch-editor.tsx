@@ -1,9 +1,10 @@
+import { type Route } from './+types/launch-editor'
 import path from 'path'
 import { getAppByName } from '@epic-web/workshop-utils/apps.server'
 import { launchEditor } from '@epic-web/workshop-utils/launch-editor.server'
 import fsExtra from 'fs-extra'
 import { useEffect } from 'react'
-import { Link, useFetcher, type ActionFunctionArgs } from 'react-router'
+import { Link, useFetcher } from 'react-router'
 import { z, type ZodTypeAny } from 'zod'
 import { showProgressBarField } from '#app/components/progress-bar.tsx'
 import { cn, ensureUndeployed } from '#app/utils/misc.tsx'
@@ -34,7 +35,7 @@ const LaunchSchema = z.intersection(
 	getFileDescriptorSchema(z.array(z.string())),
 )
 
-export async function action({ request }: ActionFunctionArgs) {
+export async function action({ request }: Route.ActionArgs) {
 	ensureUndeployed()
 	const formData = await request.formData()
 	const appFileValues = formData

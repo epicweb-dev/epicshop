@@ -1,10 +1,11 @@
+import { type Route } from './+types/notifications'
 import { muteNotification } from '@epic-web/workshop-utils/db.server'
 import { type getUnmutedNotifications } from '@epic-web/workshop-utils/notifications.server'
 import { useEffect, useRef } from 'react'
-import { data, type ActionFunctionArgs, useFetcher } from 'react-router'
+import { data, useFetcher } from 'react-router'
 import { toast } from 'sonner'
 
-export async function action({ request }: ActionFunctionArgs) {
+export async function action({ request }: Route.ActionArgs) {
 	const formData = await request.formData()
 	const intent = formData.get('intent')
 	const id = formData.get('id')

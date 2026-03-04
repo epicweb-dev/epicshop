@@ -1,3 +1,4 @@
+import { type Route } from './+types/account'
 import { deleteCache } from '@epic-web/workshop-utils/cache.server'
 import {
 	logout,
@@ -5,7 +6,7 @@ import {
 	setPreferences,
 } from '@epic-web/workshop-utils/db.server'
 import { type SEOHandle } from '@nasa-gcn/remix-seo'
-import { redirect, type LoaderFunctionArgs, Form, Link } from 'react-router'
+import { redirect, Form, Link } from 'react-router'
 import { Button } from '#app/components/button.tsx'
 import { Icon } from '#app/components/icons.tsx'
 import {
@@ -26,13 +27,13 @@ export const handle: SEOHandle = {
 	getSitemapEntries: () => null,
 }
 
-export async function loader({ request }: LoaderFunctionArgs) {
+export async function loader({ request }: Route.LoaderArgs) {
 	ensureUndeployed()
 	await requireAuthInfo({ request })
 	return {}
 }
 
-export async function action({ request }: { request: Request }) {
+export async function action({ request }: Route.ActionArgs) {
 	ensureUndeployed()
 	const formData = await request.formData()
 	const intent = formData.get('intent')

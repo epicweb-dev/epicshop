@@ -1,9 +1,9 @@
+import { type Route } from './+types/mark-onboarding-complete'
 import { markOnboardingComplete } from '@epic-web/workshop-utils/db.server'
-import { type ActionFunctionArgs } from 'react-router'
 import { ensureUndeployed } from '#app/utils/misc.tsx'
 import { ensureProgressiveEnhancement } from '#app/utils/pe.tsx'
 
-export async function action({ request }: ActionFunctionArgs) {
+export async function action({ request }: Route.ActionArgs) {
 	ensureUndeployed()
 
 	if (request.method !== 'POST') {

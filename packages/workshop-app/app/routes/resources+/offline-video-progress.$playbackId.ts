@@ -1,13 +1,14 @@
+import { type Route } from './+types/offline-video-progress.$playbackId'
 import {
 	downloadProgressEmitter,
 	DOWNLOAD_PROGRESS_EVENTS,
 	type VideoDownloadProgress,
 } from '@epic-web/workshop-utils/offline-videos.server'
-import { data, type LoaderFunctionArgs } from 'react-router'
+import { data } from 'react-router'
 import { eventStream } from 'remix-utils/sse/server'
 import { ensureUndeployed } from '#app/utils/misc.tsx'
 
-export async function loader({ request, params }: LoaderFunctionArgs) {
+export async function loader({ request, params }: Route.LoaderArgs) {
 	ensureUndeployed()
 	const { playbackId } = params
 

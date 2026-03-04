@@ -1,9 +1,10 @@
+import { type Route } from './+types/connection-status'
 import * as React from 'react'
-import { data, useFetcher, type ActionFunctionArgs } from 'react-router'
+import { data, useFetcher } from 'react-router'
 import { ensureUndeployed } from '#app/utils/misc.tsx'
 import { checkConnection } from '@epic-web/workshop-utils/utils.server'
 
-export async function action({ request }: ActionFunctionArgs) {
+export async function action({ request }: Route.ActionArgs) {
 	ensureUndeployed()
 	await checkConnection({ request, forceFresh: true })
 	return data({ ok: true })

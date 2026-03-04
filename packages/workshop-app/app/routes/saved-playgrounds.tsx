@@ -1,3 +1,4 @@
+import { type Route } from './+types/saved-playgrounds'
 import {
 	getAppByName,
 	getApps,
@@ -10,11 +11,7 @@ import {
 import { getPreferences } from '@epic-web/workshop-utils/db.server'
 import { getDiffPatch } from '@epic-web/workshop-utils/diff.server'
 import { clearTestProcessEntry } from '@epic-web/workshop-utils/process-manager.server'
-import {
-	data,
-	type ActionFunctionArgs,
-	type LoaderFunctionArgs,
-} from 'react-router'
+import { data } from 'react-router'
 import { z } from 'zod'
 import { ensureUndeployed, getErrorMessage } from '#app/utils/misc.tsx'
 import { dataWithPE } from '#app/utils/pe.tsx'
@@ -24,7 +21,7 @@ const SavedPlaygroundSchema = z.object({
 	savedPlaygroundId: z.string().min(1),
 })
 
-export async function loader({ request: _request }: LoaderFunctionArgs) {
+export async function loader({ request: _request }: Route.LoaderArgs) {
 	ensureUndeployed()
 	const persistEnabled = (await getPreferences())?.playground?.persist ?? false
 	if (!persistEnabled) {
@@ -41,7 +38,7 @@ export async function loader({ request: _request }: LoaderFunctionArgs) {
 	} as const)
 }
 
-export async function action({ request }: ActionFunctionArgs) {
+export async function action({ request }: Route.ActionArgs) {
 	ensureUndeployed()
 	if (request.method !== 'POST') {
 		return Response.json({ error: 'Method not allowed' }, { status: 405 })

@@ -1,22 +1,19 @@
+import { type Route } from './+types/api.$'
 import path from 'node:path'
 import { invariantResponse } from '@epic-web/invariant'
 import { makeTimings } from '@epic-web/workshop-utils/timing.server'
 import fsExtra from 'fs-extra'
-import {
-	redirect,
-	type ActionFunctionArgs,
-	type LoaderFunctionArgs,
-} from 'react-router'
+import { redirect } from 'react-router'
 import { z } from 'zod'
 import { compileTs } from '#app/utils/compile-app.server.ts'
 import { ensureUndeployed, getBaseUrl } from '#app/utils/misc.tsx'
 import { resolveApps } from './__utils'
 
-export async function loader(args: LoaderFunctionArgs) {
+export async function loader(args: Route.LoaderArgs) {
 	ensureUndeployed()
 	const api = await getApiModule(args)
 	const loaderFn = api.mod.loader as
-		| ((loaderArgs: LoaderFunctionArgs) => unknown)
+		| ((loaderArgs: Route.LoaderArgs) => unknown)
 		| undefined
 	invariantResponse(
 		loaderFn,
@@ -31,11 +28,11 @@ export async function loader(args: LoaderFunctionArgs) {
 	}
 }
 
-export async function action(args: ActionFunctionArgs) {
+export async function action(args: Route.ActionArgs) {
 	ensureUndeployed()
 	const api = await getApiModule(args)
 	const actionFn = api.mod.action as
-		| ((actionArgs: ActionFunctionArgs) => unknown)
+		| ((actionArgs: Route.ActionArgs) => unknown)
 		| undefined
 	invariantResponse(
 		actionFn,
@@ -55,7 +52,7 @@ const ApiModuleSchema = z.object({
 	action: z.function().optional(),
 })
 
-async function getApiModule({ request, params }: LoaderFunctionArgs) {
+async function getApiModule({ request, params }: Route.LoaderArgs) {
 	const timings = makeTimings('app-api')
 	const { fileApp, app } = await resolveApps({ request, params, timings })
 	if (!fileApp || !app) {

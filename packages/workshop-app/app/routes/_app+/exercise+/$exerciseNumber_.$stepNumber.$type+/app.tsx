@@ -1,20 +1,16 @@
+import { type Route } from './+types/app'
 import { requireExerciseApp } from '@epic-web/workshop-utils/apps.server'
 import {
 	combineServerTimings,
 	makeTimings,
 } from '@epic-web/workshop-utils/timing.server'
 import { useRef } from 'react'
-import {
-	data,
-	type HeadersFunction,
-	type LoaderFunctionArgs,
-	useLoaderData,
-} from 'react-router'
+import { data, type HeadersFunction, useLoaderData } from 'react-router'
 import { type InBrowserBrowserRef } from '#app/components/in-browser-browser.ts'
 import { Preview } from './__shared/preview.tsx'
 import { getAppRunningState } from './__shared/utils.tsx'
 
-export async function loader({ request, params }: LoaderFunctionArgs) {
+export async function loader({ request, params }: Route.LoaderArgs) {
 	const timings = makeTimings('exercise-step-test')
 	const exerciseStepApp = await requireExerciseApp(params, { request, timings })
 	const { isRunning, portIsAvailable } =

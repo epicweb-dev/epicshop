@@ -1,13 +1,13 @@
+import { type Route } from './+types/persist-playground'
 import {
 	getPreferences,
 	setPreferences,
 } from '@epic-web/workshop-utils/db.server'
-import { type ActionFunctionArgs } from 'react-router'
 import { ensureUndeployed } from '#app/utils/misc.tsx'
 import { dataWithPE } from '#app/utils/pe.tsx'
 import { createToastHeaders } from '#app/utils/toast.server.ts'
 
-export async function action({ request }: ActionFunctionArgs) {
+export async function action({ request }: Route.ActionArgs) {
 	ensureUndeployed()
 	if (request.method !== 'POST') {
 		return Response.json({ error: 'Method not allowed' }, { status: 405 })
