@@ -493,12 +493,6 @@ export async function getPendingProgressMutations({
 	)
 }
 
-export async function setPendingProgressMutations(
-	pendingProgressMutations: Array<PendingProgressMutation>,
-) {
-	return mutatePendingProgressMutations(() => pendingProgressMutations)
-}
-
 export async function queuePendingProgressMutation({
 	scope,
 	lessonSlug,

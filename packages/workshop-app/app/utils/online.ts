@@ -18,7 +18,7 @@ export function useIsOnline() {
 	const requestInfo = useRequestInfo()
 	return useSyncExternalStore(
 		subscribe,
-		() => requestInfo.online && getNavigatorOnlineSnapshot(),
+		getNavigatorOnlineSnapshot,
 		() => requestInfo.online,
 	)
 }
