@@ -44,6 +44,7 @@ function DeleteIcon(props: React.ComponentPropsWithoutRef<'svg'>) {
 
 export type OfflineVideoActionButtonsProps = {
 	isAvailable: boolean
+	isDownloadAvailable?: boolean
 	isBusy?: boolean
 	downloadSizeBytes?: number | null
 	/**
@@ -57,12 +58,14 @@ export type OfflineVideoActionButtonsProps = {
 
 export function OfflineVideoActionButtons({
 	isAvailable,
+	isDownloadAvailable = true,
 	isBusy = false,
 	downloadSizeBytes,
 	downloadProgress,
 	onDownload,
 	onDelete,
 }: OfflineVideoActionButtonsProps) {
+	const isDownloadUnavailable = !isAvailable && !isDownloadAvailable
 	const isDownloading = isBusy && !isAvailable
 	const showProgressIndicator = isDownloading
 	const downloadSizeLabel =
@@ -75,18 +78,23 @@ export function OfflineVideoActionButtons({
 			? downloadProgress !== undefined
 				? `Downloading: ${Math.round(downloadProgress)}%`
 				: 'Downloading...'
-			: `Download offline video${downloadSizeLabel}`
+			: isDownloadUnavailable
+				? 'Reconnect to download offline video'
+				: `Download offline video${downloadSizeLabel}`
 	const onClick = isAvailable ? onDelete : onDownload
 	const className = isAvailable
 		? 'text-foreground-destructive hover:bg-foreground-destructive/10'
-		: 'text-foreground hover:bg-muted'
+		: isDownloadUnavailable
+			? 'text-muted-foreground'
+			: 'text-foreground hover:bg-muted'
+	const isDisabled = isBusy || isDownloadUnavailable
 
 	return (
 		<SimpleTooltip content={label}>
 			<button
 				type="button"
 				onClick={onClick}
-				disabled={isBusy}
+				disabled={isDisabled}
 				className={`${className} inline-flex h-7 w-7 items-center justify-center rounded disabled:cursor-not-allowed disabled:opacity-50`}
 				aria-label={label}
 			>
