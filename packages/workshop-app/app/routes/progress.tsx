@@ -15,6 +15,7 @@ import {
 	useNavigation,
 	type ActionFunctionArgs,
 } from 'react-router'
+import { SimpleTooltip } from '#app/components/ui/tooltip.tsx'
 import { createConfettiHeaders } from '#app/utils/confetti.server.ts'
 import { combineHeaders, ensureUndeployed } from '#app/utils/misc.tsx'
 import { dataWithPE, usePERedirectInput } from '#app/utils/pe.tsx'
@@ -181,6 +182,56 @@ const percentageClassNames = {
 	8: 'before:h-[80%]',
 	9: 'before:h-[90%]',
 	10: 'before:h-[100%]',
+}
+
+export function ProgressToggleCheckIndicator({
+	optimisticCompleted,
+	showQueuedCheckTooltip,
+}: {
+	optimisticCompleted: boolean
+	showQueuedCheckTooltip: boolean
+}) {
+	const checkMarker = (
+		<motion.div
+			aria-hidden
+			className={clsx(
+				'relative flex h-8 w-8 items-center justify-center overflow-hidden rounded-full border transition',
+				{
+					'bg-foreground text-background duration-1000': optimisticCompleted,
+					'group-hover:bg-background duration-100': !optimisticCompleted,
+				},
+			)}
+		>
+			{optimisticCompleted ? (
+				'✓'
+			) : (
+				<div className="absolute -translate-y-10 opacity-25 transition group-hover:translate-y-0">
+					✓
+				</div>
+			)}
+			{showQueuedCheckTooltip ? (
+				<span
+					aria-hidden
+					className="bg-muted-foreground absolute top-1 right-1 h-1.5 w-1.5 rounded-full"
+				/>
+			) : null}
+		</motion.div>
+	)
+
+	if (!showQueuedCheckTooltip) {
+		return checkMarker
+	}
+
+	return (
+		<SimpleTooltip content="Saved locally. Waiting to sync online.">
+			<span
+				aria-label="Progress is saved locally and waiting to sync"
+				className="inline-flex"
+			>
+				{checkMarker}
+			</span>
+		</SimpleTooltip>
+	)
 }
 
 export function useExerciseProgressClassName(exerciseNumber: number) {
@@ -352,6 +403,8 @@ export function ProgressToggle({
 	const optimisticCompleted = progressFetcher.formData?.has('complete')
 		? progressFetcher.formData.get('complete') === 'true'
 		: Boolean(progressItem?.epicCompletedAt)
+	const isSyncPending = progressItem?.syncStatus === 'pending'
+	const showQueuedCheckTooltip = optimisticCompleted && isSyncPending
 
 	const [startAnimation, setStartAnimation] = React.useState(false)
 
@@ -445,25 +498,10 @@ export function ProgressToggle({
 						}}
 					/>
 				) : null}
-				<motion.div
-					aria-hidden
-					className={clsx(
-						'relative flex h-8 w-8 items-center justify-center overflow-hidden rounded-full border transition',
-						{
-							'bg-foreground text-background duration-1000':
-								optimisticCompleted,
-							'group-hover:bg-background duration-100': !optimisticCompleted,
-						},
-					)}
-				>
-					{optimisticCompleted ? (
-						'✓'
-					) : (
-						<div className="absolute -translate-y-10 opacity-25 transition group-hover:translate-y-0">
-							✓
-						</div>
-					)}
-				</motion.div>
+				<ProgressToggleCheckIndicator
+					optimisticCompleted={optimisticCompleted}
+					showQueuedCheckTooltip={showQueuedCheckTooltip}
+				/>
 			</motion.button>
 		</progressFetcher.Form>
 	)
