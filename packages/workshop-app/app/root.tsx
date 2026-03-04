@@ -258,8 +258,10 @@ function App() {
 
 	React.useEffect(() => {
 		const wasOnline = wasOnlineRef.current
+		const shouldRevalidate = !wasOnline && isOnline
+		if (shouldRevalidate && revalidator.state !== 'idle') return
 		wasOnlineRef.current = isOnline
-		if (wasOnline || !isOnline || revalidator.state !== 'idle') return
+		if (!shouldRevalidate) return
 		revalidator.revalidate()
 	}, [isOnline, revalidator])
 
