@@ -15,6 +15,7 @@ import {
 	useNavigation,
 	type ActionFunctionArgs,
 } from 'react-router'
+import { SimpleTooltip } from '#app/components/ui/tooltip.tsx'
 import { createConfettiHeaders } from '#app/utils/confetti.server.ts'
 import { combineHeaders, ensureUndeployed } from '#app/utils/misc.tsx'
 import { dataWithPE, usePERedirectInput } from '#app/utils/pe.tsx'
@@ -25,26 +26,73 @@ import {
 import { useRootLoaderData } from '#app/utils/root-loader.ts'
 import { createToastHeaders } from '#app/utils/toast.server.ts'
 
+function getProgressActionStatus(
+	value: unknown,
+): 'success' | 'queued' | 'error' | null {
+	if (!value || typeof value !== 'object' || !('status' in value)) {
+		return null
+	}
+	const status = (value as { status?: unknown }).status
+	if (status === 'success' || status === 'queued' || status === 'error') {
+		return status
+	}
+	return null
+}
+
 export function useEpicProgress() {
 	const data = useRootLoaderData()
-	const progressFetcher = useFetchers().find(
+	const progressFetchers = useFetchers().filter(
 		(f) => f.formAction === '/progress' && f.formData?.has('complete'),
 	)
-	if (!progressFetcher || !data.progress) return data.progress ?? null
+	if (!data.progress) return null
+	if (!progressFetchers.length) return data.progress
+
+	const optimisticProgressUpdates = new Map<
+		string,
+		{ complete: boolean; syncStatus?: 'pending' }
+	>()
+	for (const progressFetcher of progressFetchers) {
+		const lessonSlug = progressFetcher.formData?.get('lessonSlug')
+		if (typeof lessonSlug !== 'string') continue
+		const complete = progressFetcher.formData?.get('complete') === 'true'
+		const actionStatus = getProgressActionStatus(progressFetcher.data)
+		const progressItem = data.progress.find(
+			(p) => p.epicLessonSlug === lessonSlug,
+		)
+		const shouldApplyOptimisticState =
+			progressFetcher.state !== 'idle' ||
+			(actionStatus === 'queued' && progressItem?.syncStatus === 'pending')
+		if (!shouldApplyOptimisticState) continue
+
+		optimisticProgressUpdates.set(lessonSlug, {
+			complete,
+			syncStatus: actionStatus === 'queued' ? 'pending' : undefined,
+		})
+	}
+	if (!optimisticProgressUpdates.size) return data.progress
+
 	return data.progress.map((p) => {
-		const optimisticCompleted =
-			progressFetcher.formData?.get('complete') === 'true'
-		const optimisticLessonSlug = progressFetcher.formData?.get('lessonSlug')
-		if (optimisticLessonSlug === p.epicLessonSlug) {
+		const optimisticUpdate = optimisticProgressUpdates.get(p.epicLessonSlug)
+		if (optimisticUpdate) {
 			return {
 				...p,
-				epicCompletedAt: optimisticCompleted ? Date.now() : null,
+				epicCompletedAt: optimisticUpdate.complete ? Date.now() : null,
+				syncStatus: optimisticUpdate.syncStatus ?? p.syncStatus,
 			}
 		} else {
 			return p
 		}
 	})
 }
+
+export function useUnsyncedProgressCount() {
+	const progress = useEpicProgress()
+	if (!progress?.length) return 0
+	return progress.filter(
+		(progressItem) => progressItem.syncStatus === 'pending',
+	).length
+}
+
 export type SerializedProgress = ReturnType<
 	typeof useRequireEpicProgress
 >[number]
@@ -138,6 +186,53 @@ const percentageClassNames = {
 	8: 'before:h-[80%]',
 	9: 'before:h-[90%]',
 	10: 'before:h-[100%]',
+}
+
+export function ProgressToggleCheckIndicator({
+	optimisticCompleted,
+	showQueuedCheckTooltip,
+}: {
+	optimisticCompleted: boolean
+	showQueuedCheckTooltip: boolean
+}) {
+	const checkMarker = (
+		<motion.div
+			aria-hidden
+			className={clsx(
+				'relative flex h-8 w-8 items-center justify-center overflow-hidden rounded-full border transition',
+				{
+					'bg-foreground text-background duration-1000': optimisticCompleted,
+					'group-hover:bg-background duration-100': !optimisticCompleted,
+				},
+				{
+					'animate-pulse opacity-70': showQueuedCheckTooltip,
+				},
+			)}
+		>
+			{optimisticCompleted ? (
+				'✓'
+			) : (
+				<div className="absolute -translate-y-10 opacity-25 transition group-hover:translate-y-0">
+					✓
+				</div>
+			)}
+		</motion.div>
+	)
+
+	if (!showQueuedCheckTooltip) {
+		return checkMarker
+	}
+
+	return (
+		<SimpleTooltip content="Saved locally. Waiting to sync online.">
+			<span
+				aria-label="Progress is saved locally and waiting to sync"
+				className="inline-flex"
+			>
+				{checkMarker}
+			</span>
+		</SimpleTooltip>
+	)
 }
 
 export function useExerciseProgressClassName(exerciseNumber: number) {
@@ -279,7 +374,8 @@ export async function action({ request }: ActionFunctionArgs) {
 		)
 		return otherAreFinished ? `You completed exercise ${exerciseNumber}!` : null
 	}
-	const announcement = getCompletionAnnouncement()
+	const announcement =
+		result.status === 'error' ? null : getCompletionAnnouncement()
 
 	return dataWithPE(request, formData, result, {
 		headers: combineHeaders(
@@ -308,6 +404,8 @@ export function ProgressToggle({
 	const optimisticCompleted = progressFetcher.formData?.has('complete')
 		? progressFetcher.formData.get('complete') === 'true'
 		: Boolean(progressItem?.epicCompletedAt)
+	const isSyncPending = progressItem?.syncStatus === 'pending'
+	const showQueuedCheckTooltip = optimisticCompleted && isSyncPending
 
 	const [startAnimation, setStartAnimation] = React.useState(false)
 
@@ -401,25 +499,10 @@ export function ProgressToggle({
 						}}
 					/>
 				) : null}
-				<motion.div
-					aria-hidden
-					className={clsx(
-						'relative flex h-8 w-8 items-center justify-center overflow-hidden rounded-full border transition',
-						{
-							'bg-foreground text-background duration-1000':
-								optimisticCompleted,
-							'group-hover:bg-background duration-100': !optimisticCompleted,
-						},
-					)}
-				>
-					{optimisticCompleted ? (
-						'✓'
-					) : (
-						<div className="absolute -translate-y-10 opacity-25 transition group-hover:translate-y-0">
-							✓
-						</div>
-					)}
-				</motion.div>
+				<ProgressToggleCheckIndicator
+					optimisticCompleted={optimisticCompleted}
+					showQueuedCheckTooltip={showQueuedCheckTooltip}
+				/>
 			</motion.button>
 		</progressFetcher.Form>
 	)

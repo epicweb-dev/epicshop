@@ -12,11 +12,21 @@ import {
 } from './apps.server.ts'
 import { cachified, epicApiCache } from './cache.server.ts'
 import { getWorkshopConfig } from './config.server.ts'
-import { getAuthInfo, setAuthInfo } from './db.server.ts'
+import {
+	getAuthInfo,
+	getPendingProgressMutations,
+	isPendingProgressMutationInScope,
+	queuePendingProgressMutation,
+	replacePendingProgressMutationsForScope,
+	setAuthInfo,
+	type PendingProgressMutation,
+	type PendingProgressMutationScope,
+} from './db.server.ts'
 import { getEnv } from './init-env.ts'
 import { logger } from './logger.ts'
 import { type Timings } from './timing.server.ts'
 import { getErrorMessage } from './utils.ts'
+import { checkConnection } from './utils.server.ts'
 
 // Module-level logger for epic-api operations
 const log = logger('epic:api')
@@ -173,7 +183,7 @@ export async function getEpicVideoMetadata({
 		swr: 1000 * 60 * 60 * 24 * 365 * 10,
 		offlineFallbackValue: null,
 		checkValue: EpicVideoMetadataSchema.nullable(),
-		async getFreshValue(context): Promise<EpicVideoMetadata | null> {
+		async getFreshValue(): Promise<EpicVideoMetadata | null> {
 			const apiUrl = `https://${normalizedHost}/api/video/${encodeURIComponent(
 				playbackId,
 			)}`
@@ -188,17 +198,15 @@ export async function getEpicVideoMetadata({
 				`video metadata response: ${response.status} ${response.statusText}`,
 			)
 			if (!response.ok) {
-				context.metadata.ttl = 1000 * 2
-				context.metadata.swr = 0
-				return null
+				throw new Error(
+					`Failed to fetch video metadata: ${response.status} ${response.statusText}`,
+				)
 			}
 			const rawInfo = await response.json()
 			const parsedInfo = EpicVideoMetadataSchema.safeParse(rawInfo)
 			if (parsedInfo.success) {
 				return parsedInfo.data
 			}
-			context.metadata.ttl = 1000 * 2
-			context.metadata.swr = 0
 			videoMetadataLog.error(
 				`video metadata parsing failed for ${playbackId}`,
 				{
@@ -207,7 +215,7 @@ export async function getEpicVideoMetadata({
 					parseError: parsedInfo.error,
 				},
 			)
-			return null
+			throw new Error(`Failed to parse video metadata for ${playbackId}`)
 		},
 	}).catch((e) => {
 		videoMetadataLog.error(
@@ -489,7 +497,7 @@ async function getEpicProgress({
 		swr: 1000 * 60 * 60 * 24 * 365 * 10,
 		offlineFallbackValue: [],
 		checkValue: EpicProgressSchema,
-		async getFreshValue(context) {
+		async getFreshValue() {
 			const progressUrl = `https://${host}/api/progress`
 			log(`making progress API request to: ${progressUrl}`)
 
@@ -508,10 +516,9 @@ async function getEpicProgress({
 				console.error(
 					`Failed to fetch progress from EpicWeb: ${response.status} ${response.statusText}`,
 				)
-				// don't cache errors for long...
-				context.metadata.ttl = 1000 * 2
-				context.metadata.swr = 0
-				return []
+				throw new Error(
+					`Failed to fetch progress from EpicWeb: ${response.status} ${response.statusText}`,
+				)
 			}
 
 			const progressData = await response.json()
@@ -519,7 +526,276 @@ async function getEpicProgress({
 			log(`successfully fetched ${parsedProgress.length} progress entries`)
 			return parsedProgress
 		},
+	}).catch((error) => {
+		log.error(
+			'failed to get progress via cache/api and no cache fallback is available',
+			error,
+		)
+		return []
 	})
+}
+
+export function shouldQueueProgressMutationForStatus(status: number) {
+	// Retry-worthy statuses and auth failures should remain queued so they can
+	// be replayed later once connectivity/auth recovers.
+	return (
+		status === 401 ||
+		status === 403 ||
+		status === 408 ||
+		status === 425 ||
+		status === 429 ||
+		status >= 500
+	)
+}
+
+export function resolveProgressSyncState({
+	epicCompletedAt,
+	pendingProgressMutation,
+}: {
+	epicCompletedAt: string | null
+	pendingProgressMutation?: PendingProgressMutation
+}) {
+	if (!pendingProgressMutation) {
+		return { epicCompletedAt, syncStatus: 'synced' as const }
+	}
+	return {
+		epicCompletedAt: pendingProgressMutation.complete
+			? pendingProgressMutation.queuedAt
+			: null,
+		syncStatus: 'pending' as const,
+	}
+}
+
+type DroppedProgressMutation = {
+	lessonSlug: string
+	complete: boolean
+	reason: string
+}
+
+function createPendingProgressMutationScope({
+	host,
+	workshopSlug,
+	userId,
+}: {
+	host: string
+	workshopSlug: string | undefined
+	userId: string
+}): PendingProgressMutationScope {
+	return {
+		host,
+		workshopSlug: workshopSlug ?? '__unknown-workshop__',
+		userId,
+	}
+}
+
+function pendingProgressQueuesEqual(
+	a: Array<PendingProgressMutation>,
+	b: Array<PendingProgressMutation>,
+) {
+	if (a.length !== b.length) return false
+	return a.every((entry, index) => {
+		const other = b[index]
+		if (!other) return false
+		return (
+			entry.lessonSlug === other.lessonSlug &&
+			entry.complete === other.complete &&
+			entry.queuedAt === other.queuedAt
+		)
+	})
+}
+
+async function postProgressMutation({
+	host,
+	accessToken,
+	lessonSlug,
+	complete,
+}: {
+	host: string
+	accessToken: string
+	lessonSlug: string
+	complete: boolean
+}): Promise<
+	| {
+			status: 'success'
+			response: Response
+			payload: { lessonSlug: string } | { lessonSlug: string; remove: true }
+	  }
+	| {
+			status: 'error'
+			error: string
+			payload: { lessonSlug: string } | { lessonSlug: string; remove: true }
+	  }
+> {
+	const progressUrl = `https://${host}/api/progress`
+	const payload = complete
+		? { lessonSlug }
+		: { lessonSlug, remove: true as const }
+	log(
+		`making POST request to: ${progressUrl} with payload: ${JSON.stringify(payload)}`,
+	)
+	try {
+		const response = await fetch(progressUrl, {
+			method: 'POST',
+			headers: {
+				authorization: `Bearer ${accessToken}`,
+				'content-type': 'application/json',
+			},
+			body: JSON.stringify(payload),
+		})
+		return { status: 'success', response, payload }
+	} catch (error) {
+		return { status: 'error', error: getErrorMessage(error), payload }
+	}
+}
+
+async function syncPendingProgressMutations({
+	scope,
+	host,
+	accessToken,
+	request,
+	timings,
+}: {
+	scope: PendingProgressMutationScope
+	host: string
+	accessToken: string
+	request?: Request
+	timings?: Timings
+}) {
+	const pendingProgressMutations = await getPendingProgressMutations({ scope })
+	if (!pendingProgressMutations.length) {
+		return {
+			pendingProgressMutations,
+			syncedCount: 0,
+			droppedProgressMutations: [] as Array<DroppedProgressMutation>,
+		} as const
+	}
+
+	const isOnline = await checkConnection({ request, timings }).catch(
+		() => false,
+	)
+	if (!isOnline) {
+		log(
+			`connection offline, skipping replay of ${pendingProgressMutations.length} queued progress mutation${pendingProgressMutations.length === 1 ? '' : 's'}`,
+		)
+		return {
+			pendingProgressMutations,
+			syncedCount: 0,
+			droppedProgressMutations: [] as Array<DroppedProgressMutation>,
+		} as const
+	}
+
+	let syncedCount = 0
+	let queueChanged = false
+	const droppedProgressMutations: Array<DroppedProgressMutation> = []
+	let remainingProgressMutations: Array<PendingProgressMutation> = []
+
+	for (let index = 0; index < pendingProgressMutations.length; index++) {
+		const pendingMutation = pendingProgressMutations[index]
+		if (!pendingMutation) continue
+
+		log(
+			`replaying queued progress mutation (${index + 1}/${pendingProgressMutations.length}) for lesson: ${pendingMutation.lessonSlug} (complete: ${pendingMutation.complete})`,
+		)
+		const response = await postProgressMutation({
+			host,
+			accessToken,
+			lessonSlug: pendingMutation.lessonSlug,
+			complete: pendingMutation.complete,
+		})
+		if (response.status === 'error') {
+			log.error(
+				`failed replaying queued progress mutation for ${pendingMutation.lessonSlug}: ${response.error}`,
+			)
+			remainingProgressMutations = pendingProgressMutations.slice(index)
+			break
+		}
+
+		log(
+			`queued progress replay response: ${response.response.status} ${response.response.statusText}`,
+		)
+		if (response.response.ok) {
+			syncedCount++
+			queueChanged = true
+			continue
+		}
+
+		if (shouldQueueProgressMutationForStatus(response.response.status)) {
+			log(
+				`queued progress mutation for ${pendingMutation.lessonSlug} still not syncable (${response.response.status}), keeping in queue`,
+			)
+			remainingProgressMutations = pendingProgressMutations.slice(index)
+			break
+		}
+
+		log.error(
+			`dropping queued progress mutation for ${pendingMutation.lessonSlug}: ${response.response.status} ${response.response.statusText}`,
+		)
+		droppedProgressMutations.push({
+			lessonSlug: pendingMutation.lessonSlug,
+			complete: pendingMutation.complete,
+			reason: `${response.response.status} ${response.response.statusText}`,
+		})
+		queueChanged = true
+	}
+
+	if (
+		!queueChanged &&
+		pendingProgressQueuesEqual(
+			remainingProgressMutations,
+			pendingProgressMutations,
+		)
+	) {
+		return {
+			pendingProgressMutations,
+			syncedCount,
+			droppedProgressMutations,
+		} as const
+	}
+
+	await replacePendingProgressMutationsForScope({
+		scope,
+		basePendingProgressMutations: pendingProgressMutations,
+		nextPendingProgressMutations: remainingProgressMutations,
+	})
+	log(
+		`queued progress replay complete. synced: ${syncedCount}, remaining: ${remainingProgressMutations.length}`,
+	)
+	return {
+		pendingProgressMutations: remainingProgressMutations,
+		syncedCount,
+		droppedProgressMutations,
+	} as const
+}
+
+export function resolveProgressMutationOutcome({
+	lessonSlug,
+	syncResult,
+}: {
+	lessonSlug: string
+	syncResult: {
+		pendingProgressMutations: Array<PendingProgressMutation>
+		droppedProgressMutations: Array<DroppedProgressMutation>
+	}
+}) {
+	const droppedProgressMutation = syncResult.droppedProgressMutations.find(
+		(mutation) => mutation.lessonSlug === lessonSlug,
+	)
+	if (droppedProgressMutation) {
+		return {
+			status: 'error',
+			error: droppedProgressMutation.reason,
+		} as const
+	}
+	const isStillPending = syncResult.pendingProgressMutations.some(
+		(mutation) => mutation.lessonSlug === lessonSlug,
+	)
+	if (isStillPending) {
+		return {
+			status: 'queued',
+			queuedCount: syncResult.pendingProgressMutations.length,
+		} as const
+	}
+	return { status: 'success' } as const
 }
 
 export type Progress = Awaited<ReturnType<typeof getProgress>>[number]
@@ -539,6 +815,25 @@ export async function getProgress({
 		product: { slug, host },
 	} = getWorkshopConfig()
 	if (!slug) return []
+	const progressMutationScope = createPendingProgressMutationScope({
+		host,
+		workshopSlug: slug,
+		userId: authInfo.id,
+	})
+
+	const syncResult = await syncPendingProgressMutations({
+		scope: progressMutationScope,
+		host,
+		accessToken: authInfo.tokenSet.access_token,
+		request,
+		timings,
+	})
+	const pendingProgressByLessonSlug = new Map(
+		syncResult.pendingProgressMutations.map((mutation) => [
+			mutation.lessonSlug,
+			mutation,
+		]),
+	)
 
 	log(`aggregating progress data for workshop: ${slug}`)
 	const [
@@ -549,7 +844,11 @@ export async function getProgress({
 		exercises,
 	] = await Promise.all([
 		getWorkshopData(slug, { request, timings }),
-		getEpicProgress({ request, timings }),
+		getEpicProgress({
+			request,
+			timings,
+			forceFresh: syncResult.syncedCount > 0,
+		}),
 		getWorkshopInstructions({ request }),
 		getWorkshopFinished({ request }),
 		getExercises({ request, timings }),
@@ -559,6 +858,7 @@ export async function getProgress({
 		epicLessonUrl: string
 		epicLessonSlug: string
 		epicCompletedAt: string | null
+		syncStatus: 'synced' | 'pending'
 	}
 	const progress: Array<
 		ProgressInfo & (LocalProgressForEpicLesson | { type: 'unknown' })
@@ -571,7 +871,12 @@ export async function getProgress({
 			const lessonProgress = epicProgress.find(
 				({ lessonId }) => lessonId === lesson._id,
 			)
-			const epicCompletedAt = lessonProgress ? lessonProgress.completedAt : null
+			const pendingProgressMutation =
+				pendingProgressByLessonSlug.get(epicLessonSlug)
+			const progressSyncState = resolveProgressSyncState({
+				epicCompletedAt: lessonProgress ? lessonProgress.completedAt : null,
+				pendingProgressMutation,
+			})
 			const progressForLesson = resolveLocalProgressForEpicLesson(
 				epicLessonSlug,
 				{
@@ -586,14 +891,16 @@ export async function getProgress({
 					...progressForLesson,
 					epicLessonUrl,
 					epicLessonSlug,
-					epicCompletedAt,
+					epicCompletedAt: progressSyncState.epicCompletedAt,
+					syncStatus: progressSyncState.syncStatus,
 				})
 			} else {
 				progress.push({
 					type: 'unknown',
 					epicLessonUrl,
 					epicLessonSlug,
-					epicCompletedAt,
+					epicCompletedAt: progressSyncState.epicCompletedAt,
+					syncStatus: progressSyncState.syncStatus,
 				})
 			}
 		}
@@ -755,41 +1062,53 @@ export async function updateProgress(
 	}
 
 	const {
-		product: { host },
+		product: { host, slug },
 	} = getWorkshopConfig()
-
-	const progressUrl = `https://${host}/api/progress`
-	const payload = complete ? { lessonSlug } : { lessonSlug, remove: true }
-
-	log(`updating progress for lesson: ${lessonSlug} (complete: ${complete})`)
+	const progressMutationScope = createPendingProgressMutationScope({
+		host,
+		workshopSlug: slug,
+		userId: authInfo.id,
+	})
+	const normalizedComplete = Boolean(complete)
 	log(
-		`making POST request to: ${progressUrl} with payload: ${JSON.stringify(payload)}`,
+		`updating progress for lesson: ${lessonSlug} (complete: ${normalizedComplete})`,
+	)
+	const pendingProgressMutations = await queuePendingProgressMutation({
+		scope: progressMutationScope,
+		lessonSlug,
+		complete: normalizedComplete,
+	})
+	const scopedPendingProgressMutations = pendingProgressMutations.filter(
+		(mutation) =>
+			isPendingProgressMutationInScope(mutation, progressMutationScope),
+	)
+	log(
+		`queued progress mutation for lesson: ${lessonSlug}. pending count: ${scopedPendingProgressMutations.length}`,
 	)
 
-	const response = await fetch(progressUrl, {
-		method: 'POST',
-		headers: {
-			authorization: `Bearer ${authInfo.tokenSet.access_token}`,
-			'content-type': 'application/json',
-		},
-		body: JSON.stringify(payload),
-	}).catch((e) => new Response(getErrorMessage(e), { status: 500 }))
-
-	log(`progress update response: ${response.status} ${response.statusText}`)
-
-	// force the progress to be fresh whether or not we're successful
-	await getEpicProgress({ forceFresh: true, request, timings })
-
-	if (response.status < 200 || response.status >= 300) {
-		log(`progress update failed: ${response.status} ${response.statusText}`)
-		return {
-			status: 'error',
-			error: `${response.status} ${response.statusText}`,
-		} as const
+	const syncResult = await syncPendingProgressMutations({
+		scope: progressMutationScope,
+		host,
+		accessToken: authInfo.tokenSet.access_token,
+		request,
+		timings,
+	})
+	if (syncResult.syncedCount > 0) {
+		// Force a fresh pull so loaders and CLIs see synchronized progress.
+		await getEpicProgress({ forceFresh: true, request, timings })
 	}
 
-	log(`progress update successful for lesson: ${lessonSlug}`)
-	return { status: 'success' } as const
+	const outcome = resolveProgressMutationOutcome({ lessonSlug, syncResult })
+	if (outcome.status === 'success') {
+		log(`progress update successful for lesson: ${lessonSlug}`)
+	} else if (outcome.status === 'queued') {
+		log(
+			`progress update queued for lesson: ${lessonSlug}. pending count: ${outcome.queuedCount}`,
+		)
+	} else {
+		log(`progress update failed for lesson: ${lessonSlug}: ${outcome.error}`)
+	}
+	return outcome
 }
 
 const ModuleSchema = z.object({
@@ -855,13 +1174,11 @@ export async function getWorkshopData(
 			log(`workshop data response: ${response.status} ${response.statusText}`)
 
 			if (response.status < 200 || response.status >= 300) {
-				log.error(
-					`failed to fetch workshop data from EpicWeb for ${slug}: ${response.status} ${response.statusText}`,
-				)
-				console.error(
-					`Failed to fetch workshop data from EpicWeb for ${slug}: ${response.status} ${response.statusText}`,
-				)
-				return { resources: [] }
+				const errorMessage = `Failed to fetch workshop data from EpicWeb for ${slug}: ${response.status} ${response.statusText}`
+				log.error(errorMessage)
+				if (!log.enabled) console.error(errorMessage)
+
+				throw new Error(errorMessage)
 			}
 
 			const jsonResponse = await response.json()
@@ -871,6 +1188,9 @@ export async function getWorkshopData(
 			)
 			return parsedData
 		},
+	}).catch((error) => {
+		log.error(`failed to get workshop data for ${slug} via cache/api`, error)
+		return { resources: [] }
 	})
 }
 

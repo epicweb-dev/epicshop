@@ -37,6 +37,7 @@ import {
 	ScrollRestoration,
 	useLoaderData,
 	useNavigation,
+	useRevalidator,
 } from 'react-router'
 import { promiseHash } from 'remix-utils/promise'
 import { useSpinDelay } from 'spin-delay'
@@ -51,6 +52,7 @@ import { EpicToaster } from './components/toaster'
 import { TooltipProvider } from './components/ui/tooltip'
 import { UpdateToast } from './components/update-repo'
 import { Notifications } from './routes/admin+/notifications'
+import { ConnectionStatusSync } from './routes/resources+/connection-status'
 import { useTheme } from './routes/theme/index'
 import { getTheme } from './routes/theme/theme-session.server'
 import appStylesheetUrl from './styles/app.css?url'
@@ -63,6 +65,7 @@ import { Presence } from './utils/presence'
 import { getSentryUser } from './utils/sentry-user'
 import { getSeoMetaTags } from './utils/seo'
 import { getToast } from './utils/toast.server'
+import { useIsOnline } from './utils/online'
 
 export const links: LinksFunction = () => {
 	return [
@@ -108,7 +111,7 @@ export async function loader({ request }: Route.LoaderArgs) {
 	const asyncStuff = await promiseHash({
 		userId: getUserId({ request }),
 		preferences: getPreferences(),
-		progress: getProgress({ timings }).catch((e) => {
+		progress: getProgress({ request, timings }).catch((e) => {
 			console.error('Failed to get progress', e)
 			const emptyProgress: Awaited<ReturnType<typeof getProgress>> = []
 			return emptyProgress
@@ -233,6 +236,8 @@ function Document({
 function App() {
 	const data = useLoaderData<typeof loader>()
 	const navigation = useNavigation()
+	const revalidator = useRevalidator()
+	const isOnline = useIsOnline()
 	const showSpinner = useSpinDelay(navigation.state !== 'idle', {
 		delay: 400,
 		minDuration: 200,
@@ -247,6 +252,17 @@ function App() {
 		}),
 		[data.user, data.userHasAccess],
 	)
+	const wasOnlineRef = React.useRef(isOnline)
+	const revalidatorState = revalidator.state
+
+	React.useEffect(() => {
+		const wasOnline = wasOnlineRef.current
+		const shouldRevalidate = !wasOnline && isOnline
+		if (shouldRevalidate && revalidatorState !== 'idle') return
+		wasOnlineRef.current = isOnline
+		if (!shouldRevalidate) return
+		revalidator.revalidate()
+	}, [isOnline, revalidator, revalidatorState])
 
 	React.useEffect(() => {
 		const handleToggle = () => {
@@ -296,6 +312,7 @@ function App() {
 					<ExerciseWarningBanner />
 				)}
 			<Outlet />
+			<ConnectionStatusSync />
 			<Confetti id={data.confettiId} />
 			<EpicToaster toast={data.toast} />
 			<UpdateToast repoUpdates={data.repoUpdates} />

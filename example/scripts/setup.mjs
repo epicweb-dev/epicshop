@@ -44,4 +44,3 @@ if (result.status === 0) {
 } else {
 	process.exit(result.status)
 }
-

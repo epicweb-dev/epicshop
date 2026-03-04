@@ -58,9 +58,11 @@ async function raceConnectivity(): Promise<boolean> {
 export async function checkConnection({
 	request,
 	timings,
+	forceFresh,
 }: {
 	request?: Request
 	timings?: Timings
+	forceFresh?: boolean
 } = {}) {
 	connectionLog('calling cachified to check connection')
 	const isOnline = await cachified({
@@ -69,6 +71,7 @@ export async function checkConnection({
 		timings,
 		key: 'connected',
 		ttl: 1000 * 10,
+		forceFresh,
 		checkValue: z.boolean(),
 		async getFreshValue(context) {
 			connectionLog('getting fresh connection value')

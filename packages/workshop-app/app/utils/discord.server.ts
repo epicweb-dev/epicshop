@@ -105,7 +105,9 @@ export async function fetchDiscordPosts({ request }: { request: Request }) {
 				} catch {
 					// ignore
 				}
-				return []
+				throw new Error(
+					`Discord forum feed request failed: ${result.status} ${result.statusText}`,
+				)
 			}
 
 			const jsonResult = await result.json()
@@ -115,16 +117,21 @@ export async function fetchDiscordPosts({ request }: { request: Request }) {
 				if (epicForumResponseResult.data.status === 'error') {
 					console.error(`There was an error communicating with discord`)
 					console.error(epicForumResponseResult.data.error)
-					return []
+					throw new Error(epicForumResponseResult.data.error)
 				} else {
 					return epicForumResponseResult.data.threadData
 				}
 			} else {
 				console.error(`There was an error parsing the discord response`)
 				console.error(epicForumResponseResult.error.flatten())
-				return []
+				throw new Error(
+					`Failed to parse Discord forum response: ${epicForumResponseResult.error.message}`,
+				)
 			}
 		},
+	}).catch((error) => {
+		console.error('Failed to load Discord posts via cache/api', error)
+		return []
 	})
 
 	const hints = getHints(request)

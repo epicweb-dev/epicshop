@@ -279,15 +279,29 @@ export async function update(
 			}
 		}
 
-		await updateProgress({ lessonSlug: targetSlug, complete })
+		const result = await updateProgress({ lessonSlug: targetSlug, complete })
+		if (result.status === 'error') {
+			throw new Error(result.error)
+		}
 
 		const statusWord = complete ? 'complete' : 'incomplete'
 		if (!silent) {
-			console.log(chalk.green(`✅ Marked "${targetSlug}" as ${statusWord}`))
+			if (result.status === 'queued') {
+				console.log(
+					chalk.yellow(
+						`🕓 Saved "${targetSlug}" as ${statusWord} locally. It will sync when online.`,
+					),
+				)
+			} else {
+				console.log(chalk.green(`✅ Marked "${targetSlug}" as ${statusWord}`))
+			}
 		}
 		return {
 			success: true,
-			message: `Marked "${targetSlug}" as ${statusWord}`,
+			message:
+				result.status === 'queued'
+					? `Saved "${targetSlug}" as ${statusWord} locally. It will sync when online.`
+					: `Marked "${targetSlug}" as ${statusWord}`,
 		}
 	} catch (error) {
 		const message = error instanceof Error ? error.message : String(error)

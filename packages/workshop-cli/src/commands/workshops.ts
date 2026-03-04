@@ -361,11 +361,11 @@ async function fetchWorkshopPackageJson(
 				return apiPackageJson
 			}
 
-			context.metadata.ttl = 1000 * 60
-			context.metadata.swr = 0
-			return null
+			throw new Error(
+				`Failed to fetch package.json for workshop "${repo.name}" from GitHub`,
+			)
 		},
-	})
+	}).catch(() => null)
 }
 
 /**

@@ -614,11 +614,24 @@ export function initTools(server: McpServer) {
 		},
 		async ({ workshopDirectory, epicLessonSlug, complete }) => {
 			await handleWorkshopDirectory(workshopDirectory)
-			await updateProgress({ lessonSlug: epicLessonSlug, complete })
+			const result = await updateProgress({
+				lessonSlug: epicLessonSlug,
+				complete,
+			})
+			if (result.status === 'error') {
+				throw new Error(result.error)
+			}
 			return createToolResponse({
 				toolName: 'update_progress',
-				summary: `Lesson "${epicLessonSlug}" marked as ${complete ? 'complete' : 'incomplete'}.`,
-				structuredContent: { epicLessonSlug, complete },
+				summary:
+					result.status === 'queued'
+						? `Lesson "${epicLessonSlug}" saved locally and queued to sync when online.`
+						: `Lesson "${epicLessonSlug}" marked as ${complete ? 'complete' : 'incomplete'}.`,
+				structuredContent: {
+					epicLessonSlug,
+					complete,
+					status: result.status,
+				},
 			})
 		},
 	)

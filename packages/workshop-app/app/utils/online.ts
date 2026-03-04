@@ -1,7 +1,7 @@
 import { useSyncExternalStore } from 'react'
 import { useRequestInfo } from './root-loader.ts'
 
-function getSnapshot() {
+function getNavigatorOnlineSnapshot() {
 	return window.navigator.onLine
 }
 
@@ -16,5 +16,9 @@ function subscribe(callback: () => void) {
 
 export function useIsOnline() {
 	const requestInfo = useRequestInfo()
-	return useSyncExternalStore(subscribe, getSnapshot, () => requestInfo.online)
+	return useSyncExternalStore(
+		subscribe,
+		getNavigatorOnlineSnapshot,
+		() => requestInfo.online,
+	)
 }

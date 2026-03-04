@@ -73,6 +73,7 @@ import {
 	useNextExerciseRoute,
 	useProgressItemClassName,
 	useRandomCompletedExerciseRoute,
+	useUnsyncedProgressCount,
 	type ProgressItemSearch,
 } from '../progress.tsx'
 import { ThemeSwitch } from '../theme/index.tsx'
@@ -807,6 +808,11 @@ function MobileNavigation({
 	const params = useParams()
 	const location = useLocation()
 	const isOnline = useIsOnline()
+	const unsyncedProgressCount = useUnsyncedProgressCount()
+	const unsyncedProgressLabel =
+		unsyncedProgressCount < 1
+			? null
+			: `${unsyncedProgressCount} progress update${unsyncedProgressCount === 1 ? '' : 's'} waiting to sync`
 	const { users } = usePresence()
 
 	// Onboarding indicators
@@ -1128,19 +1134,30 @@ function MobileNavigation({
 					)}
 					<div className="grow" />
 					{isOnline ? null : (
-						<SimpleTooltip content={isMenuOpened ? null : 'You are offline'}>
+						<SimpleTooltip
+							content={
+								isMenuOpened
+									? null
+									: unsyncedProgressLabel
+										? `You are offline. ${unsyncedProgressLabel}`
+										: 'You are offline'
+							}
+						>
 							<div
 								className={cn(
 									'flex h-14 animate-pulse items-center justify-start p-4',
 									isMenuOpened ? 'w-full border-t' : 'border-l',
 								)}
 							>
-								<Icon
-									name="WifiNoConnection"
-									className="text-foreground-destructive"
-								>
-									{isMenuOpened ? 'You are offline' : null}
-								</Icon>
+								<div className="relative">
+									<Icon
+										name="WifiNoConnection"
+										className="text-foreground-destructive"
+									>
+										{isMenuOpened ? 'You are offline' : null}
+									</Icon>
+									<PendingProgressBadge visible={unsyncedProgressCount > 0} />
+								</div>
 							</div>
 						</SimpleTooltip>
 					)}
@@ -1279,6 +1296,7 @@ function MobileNavigation({
 						{isMenuOpened ? (
 							<>
 								<ThemeSwitch />
+								<ProgressSyncIndicator unsyncedCount={unsyncedProgressCount} />
 								<SidecarStatusIndicator status={data.sidecarStatus} />
 							</>
 						) : showMobilePopover ? (
@@ -1296,7 +1314,7 @@ function MobileNavigation({
 													? undefined
 													: 'Process error - click to see details'
 											}
-											className="text-muted-foreground hover:text-foreground hover:bg-muted flex h-8 w-8 items-center justify-center rounded-md transition-colors"
+											className="text-muted-foreground hover:text-foreground hover:bg-muted relative flex h-8 w-8 items-center justify-center rounded-md transition-colors"
 										>
 											<StatusIndicator status="failed" />
 										</button>
@@ -1307,7 +1325,7 @@ function MobileNavigation({
 											type="button"
 											aria-label="More options"
 											title={isMobilePopoverOpen ? undefined : 'More options'}
-											className="text-muted-foreground hover:text-foreground hover:bg-muted flex h-8 w-8 items-center justify-center rounded-md transition-colors"
+											className="text-muted-foreground hover:text-foreground hover:bg-muted relative flex h-8 w-8 items-center justify-center rounded-md transition-colors"
 										>
 											<svg
 												width="20"
@@ -1389,6 +1407,32 @@ function SidecarStatusIndicator({
 	)
 }
 
+function PendingProgressBadge({ visible }: { visible: boolean }) {
+	if (!visible) return null
+	return (
+		<span
+			aria-hidden
+			className="bg-foreground-destructive absolute top-0 right-0 h-1.5 w-1.5 animate-ping rounded-full"
+		/>
+	)
+}
+
+function ProgressSyncIndicator({ unsyncedCount }: { unsyncedCount: number }) {
+	if (unsyncedCount < 1) return null
+	const label = `${unsyncedCount} progress update${unsyncedCount === 1 ? '' : 's'} waiting to sync`
+	return (
+		<SimpleTooltip content={label}>
+			<div
+				aria-label={label}
+				className="text-muted-foreground flex h-8 w-8 items-center justify-center rounded-md"
+			>
+				<StatusIndicator status="stopped" />
+				<span className="sr-only">{label}</span>
+			</div>
+		</SimpleTooltip>
+	)
+}
+
 function Navigation({
 	isMenuOpened,
 	onMenuOpenChange: setMenuOpened,
@@ -1406,6 +1450,11 @@ function Navigation({
 	const params = useParams()
 	const location = useLocation()
 	const isOnline = useIsOnline()
+	const unsyncedProgressCount = useUnsyncedProgressCount()
+	const unsyncedProgressLabel =
+		unsyncedProgressCount < 1
+			? null
+			: `${unsyncedProgressCount} progress update${unsyncedProgressCount === 1 ? '' : 's'} waiting to sync`
 	const { users } = usePresence()
 
 	// Onboarding indicators
@@ -1767,21 +1816,32 @@ function Navigation({
 						</div>
 					)}
 					{isOnline ? null : (
-						<SimpleTooltip content={isMenuOpened ? null : 'You are offline'}>
+						<SimpleTooltip
+							content={
+								isMenuOpened
+									? null
+									: unsyncedProgressLabel
+										? `You are offline. ${unsyncedProgressLabel}`
+										: 'You are offline'
+							}
+						>
 							<div
 								className={cn(
 									'flex w-full animate-pulse items-center border-t p-4',
 									isMenuOpened ? 'justify-start' : 'justify-center',
 								)}
 							>
-								<Icon
-									name="WifiNoConnection"
-									className="text-foreground-destructive"
-								>
-									{isMenuOpened ? (
-										<span className="whitespace-nowrap">You are offline</span>
-									) : null}
-								</Icon>
+								<div className="relative flex h-6 w-6 items-center justify-center">
+									<Icon
+										name="WifiNoConnection"
+										className="text-foreground-destructive"
+									>
+										{isMenuOpened ? (
+											<span className="whitespace-nowrap">You are offline</span>
+										) : null}
+									</Icon>
+									<PendingProgressBadge visible={unsyncedProgressCount > 0} />
+								</div>
 							</div>
 						</SimpleTooltip>
 					)}
@@ -1920,6 +1980,7 @@ function Navigation({
 										<Icon name="Question" size="md" />
 									</button>
 								</SimpleTooltip>
+								<ProgressSyncIndicator unsyncedCount={unsyncedProgressCount} />
 								<SidecarStatusIndicator status={data.sidecarStatus} />
 							</div>
 						) : (
@@ -1934,7 +1995,7 @@ function Navigation({
 													? undefined
 													: 'Process error - click to see details'
 											}
-											className="text-muted-foreground hover:text-foreground hover:bg-muted flex h-8 w-8 items-center justify-center rounded-md transition-colors"
+											className="text-muted-foreground hover:text-foreground hover:bg-muted relative flex h-8 w-8 items-center justify-center rounded-md transition-colors"
 										>
 											<StatusIndicator status="failed" />
 										</button>
@@ -1945,7 +2006,7 @@ function Navigation({
 											type="button"
 											aria-label="More options"
 											title={isPopoverOpen ? undefined : 'More options'}
-											className="text-muted-foreground hover:text-foreground hover:bg-muted flex h-8 w-8 items-center justify-center rounded-md transition-colors"
+											className="text-muted-foreground hover:text-foreground hover:bg-muted relative flex h-8 w-8 items-center justify-center rounded-md transition-colors"
 										>
 											<svg
 												width="20"

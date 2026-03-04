@@ -175,6 +175,11 @@ async function getEmoji(
 		checkValue: z.string(),
 		getFreshValue: async () => {
 			const response = await fetch(emojiUrl)
+			if (!response.ok) {
+				throw new Error(
+					`Failed to fetch emoji SVG: ${response.status} ${response.statusText}`,
+				)
+			}
 			return response.text()
 		},
 	})
@@ -221,7 +226,14 @@ async function getFont({
 					'User-Agent':
 						'Mozilla/5.0 (Macintosh; U; Intel Mac OS X 10_6_8; de-at) AppleWebKit/533.21.1 (KHTML, like Gecko) Version/5.0.5 Safari/533.21.1',
 				},
-			}).then((response) => response.text())
+			}).then((response) => {
+				if (!response.ok) {
+					throw new Error(
+						`Failed to fetch Google font CSS: ${response.status} ${response.statusText}`,
+					)
+				}
+				return response.text()
+			})
 		},
 	})
 
@@ -237,7 +249,14 @@ async function getFont({
 					url,
 					() => `Expected a URL to be parsed from the google font:\n${css}`,
 				)
-				return fetch(url).then((response) => response.arrayBuffer())
+				return fetch(url).then((response) => {
+					if (!response.ok) {
+						throw new Error(
+							`Failed to fetch font file: ${response.status} ${response.statusText}`,
+						)
+					}
+					return response.arrayBuffer()
+				})
 			})
 			.map(async (buffer, i) => ({
 				name: font,
