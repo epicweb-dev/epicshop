@@ -25,26 +25,69 @@ import {
 import { useRootLoaderData } from '#app/utils/root-loader.ts'
 import { createToastHeaders } from '#app/utils/toast.server.ts'
 
+function getProgressActionStatus(
+	value: unknown,
+): 'success' | 'queued' | 'error' | null {
+	if (!value || typeof value !== 'object' || !('status' in value)) {
+		return null
+	}
+	const status = (value as { status?: unknown }).status
+	if (status === 'success' || status === 'queued' || status === 'error') {
+		return status
+	}
+	return null
+}
+
 export function useEpicProgress() {
 	const data = useRootLoaderData()
-	const progressFetcher = useFetchers().find(
+	if (!data.progress) return null
+	const progressFetchers = useFetchers().filter(
 		(f) => f.formAction === '/progress' && f.formData?.has('complete'),
 	)
-	if (!progressFetcher || !data.progress) return data.progress ?? null
+	if (!progressFetchers.length) return data.progress
+
+	const optimisticProgressUpdates = new Map<
+		string,
+		{ complete: boolean; syncStatus?: 'pending' }
+	>()
+	for (const progressFetcher of progressFetchers) {
+		const lessonSlug = progressFetcher.formData?.get('lessonSlug')
+		if (typeof lessonSlug !== 'string') continue
+		const complete = progressFetcher.formData?.get('complete') === 'true'
+		const actionStatus = getProgressActionStatus(progressFetcher.data)
+		const shouldApplyOptimisticState =
+			progressFetcher.state !== 'idle' || actionStatus === 'queued'
+		if (!shouldApplyOptimisticState) continue
+
+		optimisticProgressUpdates.set(lessonSlug, {
+			complete,
+			syncStatus: actionStatus === 'queued' ? 'pending' : undefined,
+		})
+	}
+	if (!optimisticProgressUpdates.size) return data.progress
+
 	return data.progress.map((p) => {
-		const optimisticCompleted =
-			progressFetcher.formData?.get('complete') === 'true'
-		const optimisticLessonSlug = progressFetcher.formData?.get('lessonSlug')
-		if (optimisticLessonSlug === p.epicLessonSlug) {
+		const optimisticUpdate = optimisticProgressUpdates.get(p.epicLessonSlug)
+		if (optimisticUpdate) {
 			return {
 				...p,
-				epicCompletedAt: optimisticCompleted ? Date.now() : null,
+				epicCompletedAt: optimisticUpdate.complete ? Date.now() : null,
+				syncStatus: optimisticUpdate.syncStatus ?? p.syncStatus,
 			}
 		} else {
 			return p
 		}
 	})
 }
+
+export function useUnsyncedProgressCount() {
+	const progress = useEpicProgress()
+	if (!progress?.length) return 0
+	return progress.filter(
+		(progressItem) => progressItem.syncStatus === 'pending',
+	).length
+}
+
 export type SerializedProgress = ReturnType<
 	typeof useRequireEpicProgress
 >[number]
@@ -279,7 +322,8 @@ export async function action({ request }: ActionFunctionArgs) {
 		)
 		return otherAreFinished ? `You completed exercise ${exerciseNumber}!` : null
 	}
-	const announcement = getCompletionAnnouncement()
+	const announcement =
+		result.status === 'error' ? null : getCompletionAnnouncement()
 
 	return dataWithPE(request, formData, result, {
 		headers: combineHeaders(

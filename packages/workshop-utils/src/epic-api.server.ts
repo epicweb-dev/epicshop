@@ -12,11 +12,19 @@ import {
 } from './apps.server.ts'
 import { cachified, epicApiCache } from './cache.server.ts'
 import { getWorkshopConfig } from './config.server.ts'
-import { getAuthInfo, setAuthInfo } from './db.server.ts'
+import {
+	getAuthInfo,
+	getPendingProgressMutations,
+	queuePendingProgressMutation,
+	setAuthInfo,
+	setPendingProgressMutations,
+	type PendingProgressMutation,
+} from './db.server.ts'
 import { getEnv } from './init-env.ts'
 import { logger } from './logger.ts'
 import { type Timings } from './timing.server.ts'
 import { getErrorMessage } from './utils.ts'
+import { checkConnection } from './utils.server.ts'
 
 // Module-level logger for epic-api operations
 const log = logger('epic:api')
@@ -522,6 +530,169 @@ async function getEpicProgress({
 	})
 }
 
+export function shouldQueueProgressMutationForStatus(status: number) {
+	// Retry-worthy statuses and auth failures should remain queued so they can
+	// be replayed later once connectivity/auth recovers.
+	return (
+		status === 401 ||
+		status === 403 ||
+		status === 408 ||
+		status === 425 ||
+		status === 429 ||
+		status >= 500
+	)
+}
+
+export function resolveProgressSyncState({
+	epicCompletedAt,
+	pendingProgressMutation,
+}: {
+	epicCompletedAt: string | null
+	pendingProgressMutation?: PendingProgressMutation
+}) {
+	if (!pendingProgressMutation) {
+		return { epicCompletedAt, syncStatus: 'synced' as const }
+	}
+	return {
+		epicCompletedAt: pendingProgressMutation.complete
+			? pendingProgressMutation.queuedAt
+			: null,
+		syncStatus: 'pending' as const,
+	}
+}
+
+async function postProgressMutation({
+	host,
+	accessToken,
+	lessonSlug,
+	complete,
+}: {
+	host: string
+	accessToken: string
+	lessonSlug: string
+	complete: boolean
+}): Promise<
+	| {
+			status: 'success'
+			response: Response
+			payload: { lessonSlug: string } | { lessonSlug: string; remove: true }
+	  }
+	| {
+			status: 'error'
+			error: string
+			payload: { lessonSlug: string } | { lessonSlug: string; remove: true }
+	  }
+> {
+	const progressUrl = `https://${host}/api/progress`
+	const payload = complete
+		? { lessonSlug }
+		: { lessonSlug, remove: true as const }
+	log(
+		`making POST request to: ${progressUrl} with payload: ${JSON.stringify(payload)}`,
+	)
+	try {
+		const response = await fetch(progressUrl, {
+			method: 'POST',
+			headers: {
+				authorization: `Bearer ${accessToken}`,
+				'content-type': 'application/json',
+			},
+			body: JSON.stringify(payload),
+		})
+		return { status: 'success', response, payload }
+	} catch (error) {
+		return { status: 'error', error: getErrorMessage(error), payload }
+	}
+}
+
+async function syncPendingProgressMutations({
+	host,
+	accessToken,
+	request,
+	timings,
+}: {
+	host: string
+	accessToken: string
+	request?: Request
+	timings?: Timings
+}) {
+	const pendingProgressMutations = await getPendingProgressMutations()
+	if (!pendingProgressMutations.length) {
+		return { pendingProgressMutations, syncedCount: 0 } as const
+	}
+
+	const isOnline = await checkConnection({ request, timings }).catch(
+		() => false,
+	)
+	if (!isOnline) {
+		log(
+			`connection offline, skipping replay of ${pendingProgressMutations.length} queued progress mutation${pendingProgressMutations.length === 1 ? '' : 's'}`,
+		)
+		return { pendingProgressMutations, syncedCount: 0 } as const
+	}
+
+	let syncedCount = 0
+	let queueChanged = false
+	let remainingProgressMutations: Array<PendingProgressMutation> = []
+
+	for (let index = 0; index < pendingProgressMutations.length; index++) {
+		const pendingMutation = pendingProgressMutations[index]
+		if (!pendingMutation) continue
+
+		log(
+			`replaying queued progress mutation (${index + 1}/${pendingProgressMutations.length}) for lesson: ${pendingMutation.lessonSlug} (complete: ${pendingMutation.complete})`,
+		)
+		const response = await postProgressMutation({
+			host,
+			accessToken,
+			lessonSlug: pendingMutation.lessonSlug,
+			complete: pendingMutation.complete,
+		})
+		if (response.status === 'error') {
+			log.error(
+				`failed replaying queued progress mutation for ${pendingMutation.lessonSlug}: ${response.error}`,
+			)
+			remainingProgressMutations = pendingProgressMutations.slice(index)
+			break
+		}
+
+		log(
+			`queued progress replay response: ${response.response.status} ${response.response.statusText}`,
+		)
+		if (response.response.ok) {
+			syncedCount++
+			queueChanged = true
+			continue
+		}
+
+		if (shouldQueueProgressMutationForStatus(response.response.status)) {
+			log(
+				`queued progress mutation for ${pendingMutation.lessonSlug} still not syncable (${response.response.status}), keeping in queue`,
+			)
+			remainingProgressMutations = pendingProgressMutations.slice(index)
+			break
+		}
+
+		log.error(
+			`dropping queued progress mutation for ${pendingMutation.lessonSlug}: ${response.response.status} ${response.response.statusText}`,
+		)
+		queueChanged = true
+	}
+
+	if (!queueChanged && remainingProgressMutations.length === 0) {
+		return { pendingProgressMutations, syncedCount } as const
+	}
+
+	await setPendingProgressMutations(remainingProgressMutations)
+	log(
+		`queued progress replay complete. synced: ${syncedCount}, remaining: ${remainingProgressMutations.length}`,
+	)
+	return {
+		pendingProgressMutations: remainingProgressMutations,
+		syncedCount,
+	} as const
+}
+
 export type Progress = Awaited<ReturnType<typeof getProgress>>[number]
 export async function getProgress({
 	timings,
@@ -540,6 +711,19 @@ export async function getProgress({
 	} = getWorkshopConfig()
 	if (!slug) return []
 
+	const syncResult = await syncPendingProgressMutations({
+		host,
+		accessToken: authInfo.tokenSet.access_token,
+		request,
+		timings,
+	})
+	const pendingProgressByLessonSlug = new Map(
+		syncResult.pendingProgressMutations.map((mutation) => [
+			mutation.lessonSlug,
+			mutation,
+		]),
+	)
+
 	log(`aggregating progress data for workshop: ${slug}`)
 	const [
 		workshopData,
@@ -549,7 +733,11 @@ export async function getProgress({
 		exercises,
 	] = await Promise.all([
 		getWorkshopData(slug, { request, timings }),
-		getEpicProgress({ request, timings }),
+		getEpicProgress({
+			request,
+			timings,
+			forceFresh: syncResult.syncedCount > 0,
+		}),
 		getWorkshopInstructions({ request }),
 		getWorkshopFinished({ request }),
 		getExercises({ request, timings }),
@@ -559,6 +747,7 @@ export async function getProgress({
 		epicLessonUrl: string
 		epicLessonSlug: string
 		epicCompletedAt: string | null
+		syncStatus: 'synced' | 'pending'
 	}
 	const progress: Array<
 		ProgressInfo & (LocalProgressForEpicLesson | { type: 'unknown' })
@@ -571,7 +760,12 @@ export async function getProgress({
 			const lessonProgress = epicProgress.find(
 				({ lessonId }) => lessonId === lesson._id,
 			)
-			const epicCompletedAt = lessonProgress ? lessonProgress.completedAt : null
+			const pendingProgressMutation =
+				pendingProgressByLessonSlug.get(epicLessonSlug)
+			const progressSyncState = resolveProgressSyncState({
+				epicCompletedAt: lessonProgress ? lessonProgress.completedAt : null,
+				pendingProgressMutation,
+			})
 			const progressForLesson = resolveLocalProgressForEpicLesson(
 				epicLessonSlug,
 				{
@@ -586,14 +780,16 @@ export async function getProgress({
 					...progressForLesson,
 					epicLessonUrl,
 					epicLessonSlug,
-					epicCompletedAt,
+					epicCompletedAt: progressSyncState.epicCompletedAt,
+					syncStatus: progressSyncState.syncStatus,
 				})
 			} else {
 				progress.push({
 					type: 'unknown',
 					epicLessonUrl,
 					epicLessonSlug,
-					epicCompletedAt,
+					epicCompletedAt: progressSyncState.epicCompletedAt,
+					syncStatus: progressSyncState.syncStatus,
 				})
 			}
 		}
@@ -757,37 +953,74 @@ export async function updateProgress(
 	const {
 		product: { host },
 	} = getWorkshopConfig()
-
-	const progressUrl = `https://${host}/api/progress`
-	const payload = complete ? { lessonSlug } : { lessonSlug, remove: true }
-
-	log(`updating progress for lesson: ${lessonSlug} (complete: ${complete})`)
+	const normalizedComplete = Boolean(complete)
 	log(
-		`making POST request to: ${progressUrl} with payload: ${JSON.stringify(payload)}`,
+		`updating progress for lesson: ${lessonSlug} (complete: ${normalizedComplete})`,
 	)
 
-	const response = await fetch(progressUrl, {
-		method: 'POST',
-		headers: {
-			authorization: `Bearer ${authInfo.tokenSet.access_token}`,
-			'content-type': 'application/json',
-		},
-		body: JSON.stringify(payload),
-	}).catch((e) => new Response(getErrorMessage(e), { status: 500 }))
-
-	log(`progress update response: ${response.status} ${response.statusText}`)
-
-	// force the progress to be fresh whether or not we're successful
-	await getEpicProgress({ forceFresh: true, request, timings })
-
-	if (response.status < 200 || response.status >= 300) {
-		log(`progress update failed: ${response.status} ${response.statusText}`)
+	const queueProgressMutation = async () => {
+		const pendingProgressMutations = await queuePendingProgressMutation({
+			lessonSlug,
+			complete: normalizedComplete,
+		})
+		log(
+			`queued progress mutation for lesson: ${lessonSlug}. pending count: ${pendingProgressMutations.length}`,
+		)
 		return {
-			status: 'error',
-			error: `${response.status} ${response.statusText}`,
+			status: 'queued',
+			queuedCount: pendingProgressMutations.length,
 		} as const
 	}
 
+	await syncPendingProgressMutations({
+		host,
+		accessToken: authInfo.tokenSet.access_token,
+		request,
+		timings,
+	})
+
+	const isOnline = await checkConnection({ request, timings }).catch(
+		() => false,
+	)
+	if (!isOnline) {
+		log(`connection offline, queueing progress mutation for ${lessonSlug}`)
+		return queueProgressMutation()
+	}
+
+	const response = await postProgressMutation({
+		host,
+		accessToken: authInfo.tokenSet.access_token,
+		lessonSlug,
+		complete: normalizedComplete,
+	})
+	if (response.status === 'error') {
+		log(
+			`progress update request failed for ${lessonSlug}: ${response.error}. queueing mutation`,
+		)
+		return queueProgressMutation()
+	}
+
+	log(
+		`progress update response: ${response.response.status} ${response.response.statusText}`,
+	)
+	if (!response.response.ok) {
+		if (shouldQueueProgressMutationForStatus(response.response.status)) {
+			log(
+				`progress update not syncable right now for ${lessonSlug} (${response.response.status}), queueing mutation`,
+			)
+			return queueProgressMutation()
+		}
+		log(
+			`progress update failed permanently for ${lessonSlug}: ${response.response.status} ${response.response.statusText}`,
+		)
+		return {
+			status: 'error',
+			error: `${response.response.status} ${response.response.statusText}`,
+		} as const
+	}
+
+	// Force a fresh pull so loaders and CLIs see the synchronized progress.
+	await getEpicProgress({ forceFresh: true, request, timings })
 	log(`progress update successful for lesson: ${lessonSlug}`)
 	return { status: 'success' } as const
 }

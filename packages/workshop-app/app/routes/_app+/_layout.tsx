@@ -73,6 +73,7 @@ import {
 	useNextExerciseRoute,
 	useProgressItemClassName,
 	useRandomCompletedExerciseRoute,
+	useUnsyncedProgressCount,
 	type ProgressItemSearch,
 } from '../progress.tsx'
 import { ThemeSwitch } from '../theme/index.tsx'
@@ -807,6 +808,7 @@ function MobileNavigation({
 	const params = useParams()
 	const location = useLocation()
 	const isOnline = useIsOnline()
+	const unsyncedProgressCount = useUnsyncedProgressCount()
 	const { users } = usePresence()
 
 	// Onboarding indicators
@@ -843,7 +845,9 @@ function MobileNavigation({
 		system: 'System',
 	}[currentTheme]
 	const [isMobilePopoverOpen, setIsMobilePopoverOpen] = React.useState(false)
-	const showMobilePopover = Boolean(data.sidecarStatus)
+	const showMobilePopover = Boolean(
+		data.sidecarStatus || unsyncedProgressCount > 0,
+	)
 
 	// Reset popover state when it should not be shown to prevent stale state
 	React.useEffect(() => {
@@ -1279,6 +1283,7 @@ function MobileNavigation({
 						{isMenuOpened ? (
 							<>
 								<ThemeSwitch />
+								<ProgressSyncIndicator unsyncedCount={unsyncedProgressCount} />
 								<SidecarStatusIndicator status={data.sidecarStatus} />
 							</>
 						) : showMobilePopover ? (
@@ -1296,9 +1301,12 @@ function MobileNavigation({
 													? undefined
 													: 'Process error - click to see details'
 											}
-											className="text-muted-foreground hover:text-foreground hover:bg-muted flex h-8 w-8 items-center justify-center rounded-md transition-colors"
+											className="text-muted-foreground hover:text-foreground hover:bg-muted relative flex h-8 w-8 items-center justify-center rounded-md transition-colors"
 										>
 											<StatusIndicator status="failed" />
+											<PendingProgressBadge
+												visible={unsyncedProgressCount > 0}
+											/>
 										</button>
 									</PopoverTrigger>
 								) : (
@@ -1307,7 +1315,7 @@ function MobileNavigation({
 											type="button"
 											aria-label="More options"
 											title={isMobilePopoverOpen ? undefined : 'More options'}
-											className="text-muted-foreground hover:text-foreground hover:bg-muted flex h-8 w-8 items-center justify-center rounded-md transition-colors"
+											className="text-muted-foreground hover:text-foreground hover:bg-muted relative flex h-8 w-8 items-center justify-center rounded-md transition-colors"
 										>
 											<svg
 												width="20"
@@ -1320,6 +1328,9 @@ function MobileNavigation({
 												<circle cx="10" cy="10" r="1.5" fill="currentColor" />
 												<circle cx="15" cy="10" r="1.5" fill="currentColor" />
 											</svg>
+											<PendingProgressBadge
+												visible={unsyncedProgressCount > 0}
+											/>
 										</button>
 									</PopoverTrigger>
 								)}
@@ -1331,6 +1342,9 @@ function MobileNavigation({
 									<ThemeSwitchRow
 										themeLabel={themeLabel}
 										disableTooltip={isMobilePopoverOpen}
+									/>
+									<ProgressSyncPopoverRow
+										unsyncedCount={unsyncedProgressCount}
 									/>
 									{data.sidecarStatus ? (
 										<Link
@@ -1389,6 +1403,45 @@ function SidecarStatusIndicator({
 	)
 }
 
+function PendingProgressBadge({ visible }: { visible: boolean }) {
+	if (!visible) return null
+	return (
+		<span
+			aria-hidden
+			className="bg-muted-foreground absolute top-1.5 right-1.5 h-1.5 w-1.5 rounded-full"
+		/>
+	)
+}
+
+function ProgressSyncIndicator({ unsyncedCount }: { unsyncedCount: number }) {
+	if (unsyncedCount < 1) return null
+	const label = `${unsyncedCount} progress update${unsyncedCount === 1 ? '' : 's'} waiting to sync`
+	return (
+		<SimpleTooltip content={label}>
+			<div
+				aria-label={label}
+				className="text-muted-foreground flex h-8 w-8 items-center justify-center rounded-md"
+			>
+				<StatusIndicator status="stopped" />
+				<span className="sr-only">{label}</span>
+			</div>
+		</SimpleTooltip>
+	)
+}
+
+function ProgressSyncPopoverRow({ unsyncedCount }: { unsyncedCount: number }) {
+	if (unsyncedCount < 1) return null
+	const label = `${unsyncedCount} progress update${unsyncedCount === 1 ? '' : 's'} waiting to sync`
+	return (
+		<div className="text-muted-foreground flex items-center gap-3 rounded-md px-2 py-1.5 text-sm">
+			<div className="flex h-5 w-5 items-center justify-center">
+				<StatusIndicator status="stopped" />
+			</div>
+			<span className="flex-1 text-left">{label}</span>
+		</div>
+	)
+}
+
 function Navigation({
 	isMenuOpened,
 	onMenuOpenChange: setMenuOpened,
@@ -1406,6 +1459,7 @@ function Navigation({
 	const params = useParams()
 	const location = useLocation()
 	const isOnline = useIsOnline()
+	const unsyncedProgressCount = useUnsyncedProgressCount()
 	const { users } = usePresence()
 
 	// Onboarding indicators
@@ -1920,6 +1974,7 @@ function Navigation({
 										<Icon name="Question" size="md" />
 									</button>
 								</SimpleTooltip>
+								<ProgressSyncIndicator unsyncedCount={unsyncedProgressCount} />
 								<SidecarStatusIndicator status={data.sidecarStatus} />
 							</div>
 						) : (
@@ -1934,9 +1989,12 @@ function Navigation({
 													? undefined
 													: 'Process error - click to see details'
 											}
-											className="text-muted-foreground hover:text-foreground hover:bg-muted flex h-8 w-8 items-center justify-center rounded-md transition-colors"
+											className="text-muted-foreground hover:text-foreground hover:bg-muted relative flex h-8 w-8 items-center justify-center rounded-md transition-colors"
 										>
 											<StatusIndicator status="failed" />
+											<PendingProgressBadge
+												visible={unsyncedProgressCount > 0}
+											/>
 										</button>
 									</PopoverTrigger>
 								) : (
@@ -1945,7 +2003,7 @@ function Navigation({
 											type="button"
 											aria-label="More options"
 											title={isPopoverOpen ? undefined : 'More options'}
-											className="text-muted-foreground hover:text-foreground hover:bg-muted flex h-8 w-8 items-center justify-center rounded-md transition-colors"
+											className="text-muted-foreground hover:text-foreground hover:bg-muted relative flex h-8 w-8 items-center justify-center rounded-md transition-colors"
 										>
 											<svg
 												width="20"
@@ -1958,6 +2016,9 @@ function Navigation({
 												<circle cx="10" cy="10" r="1.5" fill="currentColor" />
 												<circle cx="15" cy="10" r="1.5" fill="currentColor" />
 											</svg>
+											<PendingProgressBadge
+												visible={unsyncedProgressCount > 0}
+											/>
 										</button>
 									</PopoverTrigger>
 								)}
@@ -1969,6 +2030,9 @@ function Navigation({
 									<ThemeSwitchRow
 										themeLabel={themeLabel}
 										disableTooltip={isPopoverOpen}
+									/>
+									<ProgressSyncPopoverRow
+										unsyncedCount={unsyncedProgressCount}
 									/>
 									<button
 										type="button"

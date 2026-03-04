@@ -85,6 +85,14 @@ const AuthInfoSchema = z.object({
 })
 
 const MutedNotificationSchema = z.array(z.string()).default([])
+const PendingProgressMutationSchema = z.object({
+	lessonSlug: z.string(),
+	complete: z.boolean(),
+	queuedAt: z.string(),
+})
+export type PendingProgressMutation = z.infer<
+	typeof PendingProgressMutationSchema
+>
 
 const DataSchema = z.object({
 	preferences: z
@@ -115,6 +123,10 @@ const DataSchema = z.object({
 	authInfos: z.record(z.string(), AuthInfoSchema).optional(),
 	clientId: z.string().optional(),
 	mutedNotifications: MutedNotificationSchema.optional(),
+	pendingProgressMutations: z
+		.array(PendingProgressMutationSchema)
+		.optional()
+		.default([]),
 })
 
 export async function getClientId() {
@@ -391,6 +403,42 @@ export async function setPreferences(
 	}
 	await saveJSON(updatedData)
 	return updatedData.preferences
+}
+
+export async function getPendingProgressMutations() {
+	const data = await readDb()
+	return data?.pendingProgressMutations ?? []
+}
+
+export async function setPendingProgressMutations(
+	pendingProgressMutations: Array<PendingProgressMutation>,
+) {
+	const data = await readDb()
+	const updatedData = {
+		...data,
+		pendingProgressMutations,
+	}
+	await saveJSON(updatedData)
+	return updatedData.pendingProgressMutations
+}
+
+export async function queuePendingProgressMutation({
+	lessonSlug,
+	complete,
+	queuedAt = new Date().toISOString(),
+}: {
+	lessonSlug: string
+	complete: boolean
+	queuedAt?: string
+}) {
+	const pendingProgressMutations = await getPendingProgressMutations()
+	const nextPendingProgressMutations = [
+		...pendingProgressMutations.filter(
+			(mutation) => mutation.lessonSlug !== lessonSlug,
+		),
+		{ lessonSlug, complete, queuedAt },
+	]
+	return setPendingProgressMutations(nextPendingProgressMutations)
 }
 
 /**

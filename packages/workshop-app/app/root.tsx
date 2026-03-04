@@ -37,6 +37,7 @@ import {
 	ScrollRestoration,
 	useLoaderData,
 	useNavigation,
+	useRevalidator,
 } from 'react-router'
 import { promiseHash } from 'remix-utils/promise'
 import { useSpinDelay } from 'spin-delay'
@@ -63,6 +64,7 @@ import { Presence } from './utils/presence'
 import { getSentryUser } from './utils/sentry-user'
 import { getSeoMetaTags } from './utils/seo'
 import { getToast } from './utils/toast.server'
+import { useIsOnline } from './utils/online'
 
 export const links: LinksFunction = () => {
 	return [
@@ -111,7 +113,7 @@ export async function loader({ request }: Route.LoaderArgs) {
 	const asyncStuff = await promiseHash({
 		userId: getUserId({ request }),
 		preferences: getPreferences(),
-		progress: getProgress({ timings }).catch((e) => {
+		progress: getProgress({ request, timings }).catch((e) => {
 			console.error('Failed to get progress', e)
 			const emptyProgress: Awaited<ReturnType<typeof getProgress>> = []
 			return emptyProgress
@@ -236,6 +238,8 @@ function Document({
 function App() {
 	const data = useLoaderData<typeof loader>()
 	const navigation = useNavigation()
+	const revalidator = useRevalidator()
+	const isOnline = useIsOnline()
 	const showSpinner = useSpinDelay(navigation.state !== 'idle', {
 		delay: 400,
 		minDuration: 200,
@@ -250,6 +254,14 @@ function App() {
 		}),
 		[data.user, data.userHasAccess],
 	)
+	const wasOnlineRef = React.useRef(isOnline)
+
+	React.useEffect(() => {
+		const wasOnline = wasOnlineRef.current
+		wasOnlineRef.current = isOnline
+		if (wasOnline || !isOnline || revalidator.state !== 'idle') return
+		revalidator.revalidate()
+	}, [isOnline, revalidator])
 
 	React.useEffect(() => {
 		const handleToggle = () => {
