@@ -56,8 +56,12 @@ export function useEpicProgress() {
 		if (typeof lessonSlug !== 'string') continue
 		const complete = progressFetcher.formData?.get('complete') === 'true'
 		const actionStatus = getProgressActionStatus(progressFetcher.data)
+		const progressItem = data.progress.find(
+			(p) => p.epicLessonSlug === lessonSlug,
+		)
 		const shouldApplyOptimisticState =
-			progressFetcher.state !== 'idle' || actionStatus === 'queued'
+			progressFetcher.state !== 'idle' ||
+			(actionStatus === 'queued' && progressItem?.syncStatus !== 'synced')
 		if (!shouldApplyOptimisticState) continue
 
 		optimisticProgressUpdates.set(lessonSlug, {
