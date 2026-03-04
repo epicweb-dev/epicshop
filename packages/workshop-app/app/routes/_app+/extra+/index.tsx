@@ -1,3 +1,4 @@
+import type { Route } from './+types/index'
 import { ElementScrollRestoration } from '@epic-web/restore-scroll'
 import {
 	getApps,
@@ -13,14 +14,7 @@ import {
 	time,
 } from '@epic-web/workshop-utils/timing.server'
 import slugify from '@sindresorhus/slugify'
-import {
-	data,
-	type HeadersFunction,
-	Link,
-	type LoaderFunctionArgs,
-	type MetaFunction,
-	useLoaderData,
-} from 'react-router'
+import { data, type HeadersFunction, Link, useLoaderData } from 'react-router'
 import { EpicVideoInfoProvider } from '#app/components/epic-video.tsx'
 import { GeneralErrorBoundary } from '#app/components/error-boundary.tsx'
 import { useRevalidationWS } from '#app/components/revalidation-ws.tsx'
@@ -30,7 +24,7 @@ import { cn } from '#app/utils/misc.tsx'
 import { getRootMatchLoaderData } from '#app/utils/root-loader.ts'
 import { getSeoMetaTags } from '#app/utils/seo.ts'
 
-export const meta: MetaFunction<typeof loader> = (args) => {
+export const meta: Route.MetaFunction = (args) => {
 	const loaderData = args.data
 	const rootData = getRootMatchLoaderData(args.matches)
 	if (!loaderData || !rootData) return [{ title: '🦉 | Error' }]
@@ -45,7 +39,7 @@ export const meta: MetaFunction<typeof loader> = (args) => {
 	})
 }
 
-export async function loader({ request }: LoaderFunctionArgs) {
+export async function loader({ request }: Route.LoaderArgs) {
 	const timings = makeTimings('extrasIndexLoader')
 	const { title: workshopTitle } = getWorkshopConfig()
 	const [extrasReadme, apps] = await Promise.all([

@@ -1,3 +1,4 @@
+import type { Route } from './+types/_layout'
 import {
 	extractNumbersAndTypeFromAppNameOrPath,
 	getApps,
@@ -24,7 +25,6 @@ import {
 	useParams,
 	data,
 	type HeadersFunction,
-	type LoaderFunctionArgs,
 } from 'react-router'
 import { useHydrated } from 'remix-utils/use-hydrated'
 import { Icon } from '#app/components/icons.tsx'
@@ -94,7 +94,7 @@ function getSidecarStatus() {
 	return { processes, hasFailure, count: processes.length, failureCount }
 }
 
-export async function loader({ request }: LoaderFunctionArgs) {
+export async function loader({ request }: Route.LoaderArgs) {
 	const timings = makeTimings('appLayoutLoader')
 	const { title: workshopTitle } = getWorkshopConfig()
 	const [exercises, playgroundAppName, apps] = await Promise.all([

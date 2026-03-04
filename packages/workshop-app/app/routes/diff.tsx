@@ -1,3 +1,4 @@
+import type { Route } from './+types/diff'
 import {
 	getAppByName,
 	getAppDisplayName,
@@ -7,18 +8,13 @@ import {
 import { getDiffPatch } from '@epic-web/workshop-utils/diff.server'
 import { userHasAccessToWorkshop } from '@epic-web/workshop-utils/epic-api.server'
 import { makeTimings } from '@epic-web/workshop-utils/timing.server'
-import {
-	type LoaderFunctionArgs,
-	useLoaderData,
-	useNavigation,
-	useSearchParams,
-} from 'react-router'
+import { useLoaderData, useNavigation, useSearchParams } from 'react-router'
 import { useSpinDelay } from 'spin-delay'
 import { Diff } from '#app/components/diff.tsx'
 import { NavChevrons } from '#app/components/nav-chevrons.tsx'
 import { cn } from '#app/utils/misc.tsx'
 
-export async function loader({ request }: LoaderFunctionArgs) {
+export async function loader({ request }: Route.LoaderArgs) {
 	const reqUrl = new URL(request.url)
 	const searchParams = reqUrl.searchParams
 	const timings = makeTimings('diffLoader')

@@ -1,7 +1,7 @@
+import type { Route } from './+types/offline-videos.$playbackId'
 import { invariantResponse } from '@epic-web/invariant'
 import { getOfflineVideoAsset } from '@epic-web/workshop-utils/offline-videos.server'
 import { createReadableStreamFromReadable } from '@react-router/node'
-import { type LoaderFunctionArgs } from 'react-router'
 import { ensureUndeployed } from '#app/utils/misc.tsx'
 
 function parseRange(rangeHeader: string, size: number) {
@@ -14,7 +14,7 @@ function parseRange(rangeHeader: string, size: number) {
 	return { start, end }
 }
 
-export async function loader({ request, params }: LoaderFunctionArgs) {
+export async function loader({ request, params }: Route.LoaderArgs) {
 	ensureUndeployed()
 	const playbackId = params.playbackId
 	invariantResponse(playbackId, 'Playback ID is required', { status: 400 })

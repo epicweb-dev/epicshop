@@ -1,3 +1,4 @@
+import type { Route } from './+types/index'
 import {
 	PlayerPreferencesSchema,
 	setPreferences,
@@ -8,12 +9,7 @@ import RealMuxPlayer, {
 	MaxResolution,
 } from '@mux/mux-player-react'
 import * as React from 'react'
-import {
-	data,
-	type ActionFunctionArgs,
-	useFetcher,
-	useFetchers,
-} from 'react-router'
+import { data, useFetcher, useFetchers } from 'react-router'
 import { z } from 'zod'
 import { useDebounce } from '#app/utils/misc.tsx'
 import './mux-player.css'
@@ -49,7 +45,7 @@ export function usePlayerPreferences() {
 
 type MuxPlayerProps = React.ComponentProps<typeof RealMuxPlayer>
 
-export async function action({ request }: ActionFunctionArgs) {
+export async function action({ request }: Route.ActionArgs) {
 	const result = PlayerPreferencesSchema.safeParse(await request.json())
 	if (!result.success) {
 		return data({ status: 'error', error: result.error.flatten() } as const, {

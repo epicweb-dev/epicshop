@@ -1,3 +1,4 @@
+import type { Route } from './+types/og'
 import { invariant } from '@epic-web/invariant'
 import { cachified, ogCache } from '@epic-web/workshop-utils/cache.server'
 import { getWorkshopConfig } from '@epic-web/workshop-utils/config.server'
@@ -7,7 +8,6 @@ import {
 } from '@epic-web/workshop-utils/timing.server'
 import { Resvg } from '@resvg/resvg-js'
 import { renderToStaticMarkup } from 'react-dom/server'
-import { type LoaderFunctionArgs } from 'react-router'
 import satori, { type SatoriOptions } from 'satori'
 import { z } from 'zod'
 import { getDomainUrl, getErrorMessage } from '#app/utils/misc.tsx'
@@ -16,7 +16,7 @@ const WIDTH = 1200
 const HEIGHT = 630
 const OgImageSchema = z.instanceof(Buffer)
 
-export async function loader({ request }: LoaderFunctionArgs) {
+export async function loader({ request }: Route.LoaderArgs) {
 	const timings = makeTimings('og', 'og image loader')
 	const url = new URL(request.url)
 	const workshopConfig = getWorkshopConfig()

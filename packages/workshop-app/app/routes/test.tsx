@@ -1,3 +1,4 @@
+import type { Route } from './+types/test'
 import { getAppByName } from '@epic-web/workshop-utils/apps.server'
 import { userHasAccessToWorkshop } from '@epic-web/workshop-utils/epic-api.server'
 import {
@@ -7,13 +8,7 @@ import {
 	runAppTests,
 } from '@epic-web/workshop-utils/process-manager.server'
 import { useEffect, useReducer, useRef } from 'react'
-import {
-	data,
-	type ActionFunctionArgs,
-	type LoaderFunctionArgs,
-	useFetcher,
-	useRevalidator,
-} from 'react-router'
+import { data, useFetcher, useRevalidator } from 'react-router'
 import { useEventSource } from 'remix-utils/sse/react'
 import { eventStream } from 'remix-utils/sse/server'
 import { z } from 'zod'
@@ -68,7 +63,7 @@ const testEventQueueSchema = z.array(testEventSchema)
 type TestEvent = z.infer<typeof testEventSchema>
 type TestEventQueue = z.infer<typeof testEventQueueSchema>
 
-export async function loader({ request }: LoaderFunctionArgs) {
+export async function loader({ request }: Route.LoaderArgs) {
 	ensureUndeployed()
 	const url = new URL(request.url)
 	const name = url.searchParams.get('name')
@@ -147,7 +142,7 @@ export async function loader({ request }: LoaderFunctionArgs) {
 	})
 }
 
-export async function action({ request }: ActionFunctionArgs) {
+export async function action({ request }: Route.ActionArgs) {
 	ensureUndeployed()
 	const formData = await request.formData()
 	const userHasAccess = await userHasAccessToWorkshop({

@@ -1,3 +1,4 @@
+import type { Route } from './+types/set-playground'
 import {
 	getAppByName,
 	getApps,
@@ -12,7 +13,7 @@ import { clearTestProcessEntry } from '@epic-web/workshop-utils/process-manager.
 import * as Select from '@radix-ui/react-select'
 import { clsx } from 'clsx'
 import * as React from 'react'
-import { type ActionFunctionArgs, useFetcher } from 'react-router'
+import { useFetcher } from 'react-router'
 import { z } from 'zod'
 import { Button } from '#app/components/button.tsx'
 import { Icon } from '#app/components/icons.tsx'
@@ -46,7 +47,7 @@ const SetPlaygroundSchema = z.object({
 		.transform((v) => v === 'true'),
 })
 
-export async function action({ request }: ActionFunctionArgs) {
+export async function action({ request }: Route.ActionArgs) {
 	ensureUndeployed()
 	const formData = await request.formData()
 	const rawData = {

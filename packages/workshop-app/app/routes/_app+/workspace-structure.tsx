@@ -1,3 +1,4 @@
+import type { Route } from './+types/workspace-structure'
 import {
 	getPreferences,
 	setPreferences,
@@ -13,7 +14,7 @@ export async function loader() {
 	return { preferences }
 }
 
-export async function action({ request }: { request: Request }) {
+export async function action({ request }: Route.ActionArgs) {
 	ensureUndeployed()
 	const formData = await request.formData()
 	const dismissed = formData.get('dismissWarning') === 'on'

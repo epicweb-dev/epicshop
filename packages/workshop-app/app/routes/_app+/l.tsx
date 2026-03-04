@@ -1,7 +1,8 @@
+import type { Route } from './+types/l'
 import { getExercises } from '@epic-web/workshop-utils/apps.server'
-import { redirect, type LoaderFunctionArgs } from 'react-router'
+import { redirect } from 'react-router'
 
-export async function loader({ request }: LoaderFunctionArgs) {
+export async function loader({ request }: Route.LoaderArgs) {
 	const exercises = await getExercises({ request })
 	if (!exercises.length) {
 		throw new Response('No exercises found', { status: 404 })

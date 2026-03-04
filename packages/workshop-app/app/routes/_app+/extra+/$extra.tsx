@@ -1,3 +1,4 @@
+import type { Route } from './+types/$extra'
 import path from 'path'
 import { invariantResponse } from '@epic-web/invariant'
 import { ElementScrollRestoration } from '@epic-web/restore-scroll'
@@ -25,8 +26,6 @@ import {
 	Link,
 	data,
 	type HeadersFunction,
-	type LoaderFunctionArgs,
-	type MetaFunction,
 	useLoaderData,
 	useSearchParams,
 } from 'react-router'
@@ -70,7 +69,7 @@ function sortExtras(extras: ExtraApp[]) {
 	)
 }
 
-export const meta: MetaFunction<typeof loader> = (args) => {
+export const meta: Route.MetaFunction = (args) => {
 	const loaderData = args.data
 	const rootData = getRootMatchLoaderData(args.matches)
 	if (!loaderData || !rootData) return [{ title: '🦉 | Error' }]
@@ -85,7 +84,7 @@ export const meta: MetaFunction<typeof loader> = (args) => {
 	})
 }
 
-export async function loader({ request, params }: LoaderFunctionArgs) {
+export async function loader({ request, params }: Route.LoaderArgs) {
 	const timings = makeTimings('extraLoader')
 	invariantResponse(params.extra, 'extra is required')
 

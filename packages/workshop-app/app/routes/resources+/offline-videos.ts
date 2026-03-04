@@ -1,22 +1,19 @@
+import type { Route } from './+types/offline-videos'
 import {
 	deleteOfflineVideo,
 	downloadOfflineVideo,
 	getOfflineVideoSummary,
 } from '@epic-web/workshop-utils/offline-videos.server'
-import {
-	data,
-	type ActionFunctionArgs,
-	type LoaderFunctionArgs,
-} from 'react-router'
+import { data } from 'react-router'
 import { ensureUndeployed } from '#app/utils/misc.tsx'
 
-export async function loader({ request }: LoaderFunctionArgs) {
+export async function loader({ request }: Route.LoaderArgs) {
 	ensureUndeployed()
 	const offlineVideos = await getOfflineVideoSummary({ request })
 	return data({ offlineVideos })
 }
 
-export async function action({ request }: ActionFunctionArgs) {
+export async function action({ request }: Route.ActionArgs) {
 	ensureUndeployed()
 	const formData = await request.formData()
 	const intent = formData.get('intent')

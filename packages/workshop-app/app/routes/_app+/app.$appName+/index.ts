@@ -1,3 +1,4 @@
+import type { Route } from './+types/index'
 import path from 'path'
 import {
 	getAppByName,
@@ -14,11 +15,11 @@ import {
 	makeTimings,
 } from '@epic-web/workshop-utils/timing.server'
 import fsExtra from 'fs-extra'
-import { redirect, type LoaderFunctionArgs } from 'react-router'
+import { redirect } from 'react-router'
 import { ensureUndeployed, getBaseUrl } from '#app/utils/misc.tsx'
 import { resolveApps } from './__utils.ts'
 
-export async function loader({ request, params }: LoaderFunctionArgs) {
+export async function loader({ request, params }: Route.LoaderArgs) {
 	ensureUndeployed()
 	const timings = makeTimings('app')
 	const { fileApp, app } = await resolveApps({ request, params, timings })

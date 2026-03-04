@@ -1,3 +1,4 @@
+import type { Route } from './+types/$'
 // This is called a "splat route" and as it's in the root `/app/routes/`
 // directory, it's a catchall. If no other routes match, this one will and we
 // can know that the user is hitting a URL that doesn't exist. By throwing a
@@ -5,11 +6,11 @@
 // ensure the user gets the right status code and we can display a nicer error
 // message for them than the Remix and/or browser default.
 
-import { type LoaderFunctionArgs, Link, useLocation } from 'react-router'
+import { Link, useLocation } from 'react-router'
 import { GeneralErrorBoundary } from '#app/components/error-boundary.tsx'
 import { Icon } from '#app/components/icons.tsx'
 
-export async function loader({ params }: LoaderFunctionArgs) {
+export async function loader({ params }: Route.LoaderArgs) {
 	const splat = params['*']
 	const segments = splat?.split('/') ?? []
 	if (segments.length > 0 && !isNaN(Number(segments[0]))) {

@@ -1,3 +1,4 @@
+import type { Route } from './+types/progress'
 import { invariantResponse } from '@epic-web/invariant'
 import { requireAuthInfo } from '@epic-web/workshop-utils/db.server'
 import {
@@ -13,7 +14,6 @@ import {
 	useFetchers,
 	useLocation,
 	useNavigation,
-	type ActionFunctionArgs,
 } from 'react-router'
 import { SimpleTooltip } from '#app/components/ui/tooltip.tsx'
 import { createConfettiHeaders } from '#app/utils/confetti.server.ts'
@@ -324,7 +324,7 @@ export function useProgressItem({
 	return null
 }
 
-export async function action({ request }: ActionFunctionArgs) {
+export async function action({ request }: Route.ActionArgs) {
 	ensureUndeployed()
 	await requireAuthInfo({ request })
 	const formData = await request.formData()

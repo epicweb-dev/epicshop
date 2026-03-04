@@ -1,3 +1,4 @@
+import type { Route } from './+types/start'
 import { invariant, invariantResponse } from '@epic-web/invariant'
 import { getAppByName } from '@epic-web/workshop-utils/apps.server'
 import {
@@ -6,7 +7,7 @@ import {
 	stopPort,
 	waitOnApp,
 } from '@epic-web/workshop-utils/process-manager.server'
-import { data, type ActionFunctionArgs, useFetcher } from 'react-router'
+import { data, useFetcher } from 'react-router'
 import { Button } from '#app/components/button.tsx'
 import { Loading } from '#app/components/loading.tsx'
 import { showProgressBarField } from '#app/components/progress-bar.tsx'
@@ -14,7 +15,7 @@ import { ensureUndeployed, useAltDown } from '#app/utils/misc.tsx'
 import { dataWithPE, usePERedirectInput } from '#app/utils/pe.tsx'
 import { createToastHeaders } from '#app/utils/toast.server'
 
-export async function action({ request }: ActionFunctionArgs) {
+export async function action({ request }: Route.ActionArgs) {
 	ensureUndeployed()
 	const formData = await request.formData()
 	const intent = formData.get('intent')
