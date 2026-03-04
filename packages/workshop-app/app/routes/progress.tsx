@@ -41,10 +41,10 @@ function getProgressActionStatus(
 
 export function useEpicProgress() {
 	const data = useRootLoaderData()
-	if (!data.progress) return null
 	const progressFetchers = useFetchers().filter(
 		(f) => f.formAction === '/progress' && f.formData?.has('complete'),
 	)
+	if (!data.progress) return null
 	if (!progressFetchers.length) return data.progress
 
 	const optimisticProgressUpdates = new Map<
