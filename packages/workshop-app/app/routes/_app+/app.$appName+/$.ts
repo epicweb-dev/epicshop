@@ -1,4 +1,4 @@
-import  { type Route } from './+types/$'
+import { type Route } from './+types/$'
 import path from 'path'
 import { invariantResponse } from '@epic-web/invariant'
 import { makeTimings } from '@epic-web/workshop-utils/timing.server'

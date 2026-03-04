@@ -1,4 +1,4 @@
-import  { type Route } from './+types/l'
+import { type Route } from './+types/l'
 import { getExercises } from '@epic-web/workshop-utils/apps.server'
 import { redirect } from 'react-router'
 

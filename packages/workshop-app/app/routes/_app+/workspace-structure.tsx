@@ -1,4 +1,4 @@
-import  { type Route } from './+types/workspace-structure'
+import { type Route } from './+types/workspace-structure'
 import {
 	getPreferences,
 	setPreferences,

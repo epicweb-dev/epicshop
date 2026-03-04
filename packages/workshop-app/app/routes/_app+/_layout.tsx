@@ -1,4 +1,4 @@
-import  { type Route } from './+types/_layout'
+import { type Route } from './+types/_layout'
 import {
 	extractNumbersAndTypeFromAppNameOrPath,
 	getApps,

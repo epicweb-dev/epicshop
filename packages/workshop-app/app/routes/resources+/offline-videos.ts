@@ -1,4 +1,4 @@
-import  { type Route } from './+types/offline-videos'
+import { type Route } from './+types/offline-videos'
 import {
 	deleteOfflineVideo,
 	downloadOfflineVideo,

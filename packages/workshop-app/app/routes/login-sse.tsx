@@ -1,4 +1,4 @@
-import  { type Route } from './+types/login-sse'
+import { type Route } from './+types/login-sse'
 import { eventStream } from 'remix-utils/sse/server'
 import { z } from 'zod'
 import { EVENTS } from '#app/utils/auth-events.ts'

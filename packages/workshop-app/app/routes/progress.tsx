@@ -1,4 +1,4 @@
-import  { type Route } from './+types/progress'
+import { type Route } from './+types/progress'
 import { invariantResponse } from '@epic-web/invariant'
 import { requireAuthInfo } from '@epic-web/workshop-utils/db.server'
 import {

@@ -1,4 +1,4 @@
-import  { type Route } from './+types/api.$'
+import { type Route } from './+types/api.$'
 import path from 'node:path'
 import { invariantResponse } from '@epic-web/invariant'
 import { makeTimings } from '@epic-web/workshop-utils/timing.server'

@@ -1,4 +1,4 @@
-import  { type Route } from './+types/$extra'
+import { type Route } from './+types/$extra'
 import path from 'path'
 import { invariantResponse } from '@epic-web/invariant'
 import { ElementScrollRestoration } from '@epic-web/restore-scroll'

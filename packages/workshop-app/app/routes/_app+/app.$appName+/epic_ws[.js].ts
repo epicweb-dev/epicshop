@@ -1,4 +1,4 @@
-import  { type Route } from './+types/epic_ws[.js]'
+import { type Route } from './+types/epic_ws[.js]'
 import { makeTimings } from '@epic-web/workshop-utils/timing.server'
 import { redirect } from 'react-router'
 import { ensureUndeployed, getBaseUrl } from '#app/utils/misc.tsx'

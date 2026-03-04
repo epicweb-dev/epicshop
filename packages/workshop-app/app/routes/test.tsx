@@ -1,4 +1,4 @@
-import  { type Route } from './+types/test'
+import { type Route } from './+types/test'
 import { getAppByName } from '@epic-web/workshop-utils/apps.server'
 import { userHasAccessToWorkshop } from '@epic-web/workshop-utils/epic-api.server'
 import {

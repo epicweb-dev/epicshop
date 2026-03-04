@@ -1,4 +1,4 @@
-import  { type Route } from './+types/start'
+import { type Route } from './+types/start'
 import { invariant, invariantResponse } from '@epic-web/invariant'
 import { getAppByName } from '@epic-web/workshop-utils/apps.server'
 import {

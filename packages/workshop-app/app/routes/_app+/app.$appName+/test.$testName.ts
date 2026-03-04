@@ -1,4 +1,4 @@
-import  { type Route } from './+types/test.$testName'
+import { type Route } from './+types/test.$testName'
 import path from 'path'
 import { invariantResponse } from '@epic-web/invariant'
 import {

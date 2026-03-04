@@ -1,4 +1,4 @@
-import  { type Route } from './+types/apps'
+import { type Route } from './+types/apps'
 import { getApps } from '@epic-web/workshop-utils/apps.server'
 import {
 	getServerTimeHeader,

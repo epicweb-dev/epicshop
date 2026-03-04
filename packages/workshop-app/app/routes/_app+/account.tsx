@@ -1,4 +1,4 @@
-import  { type Route } from './+types/account'
+import { type Route } from './+types/account'
 import { deleteCache } from '@epic-web/workshop-utils/cache.server'
 import {
 	logout,

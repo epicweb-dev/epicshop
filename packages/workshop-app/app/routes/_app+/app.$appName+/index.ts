@@ -1,4 +1,4 @@
-import  { type Route } from './+types/index'
+import { type Route } from './+types/index'
 import path from 'path'
 import {
 	getAppByName,
