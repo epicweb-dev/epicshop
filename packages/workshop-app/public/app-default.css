@@ -1,6 +1,7 @@
 /* This is used by default for non-server apps */
 
 @import ('/neogrotesk-font.css');
+@import ('/ibm-plex-mono-font.css');
 
 html {
 	font-family:

@@ -67,10 +67,7 @@ import { getToast } from './utils/toast.server'
 export const links: LinksFunction = () => {
 	return [
 		{ rel: 'stylesheet', href: '/neogrotesk-font.css' },
-		{
-			rel: 'stylesheet',
-			href: 'https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:ital,wght@0,200;0,300;0,400;0,500;0,600;1,700&display=swap',
-		},
+		{ rel: 'stylesheet', href: '/ibm-plex-mono-font.css' },
 		{ rel: 'stylesheet', href: tailwindStylesheetUrl },
 		{ rel: 'stylesheet', href: appStylesheetUrl },
 		{

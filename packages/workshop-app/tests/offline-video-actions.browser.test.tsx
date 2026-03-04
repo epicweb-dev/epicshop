@@ -49,6 +49,25 @@ test('disables actions while busy', async () => {
 	)
 
 	await expect
-		.element(page.getByRole('button', { name: 'Download offline video' }))
+		.element(page.getByRole('button', { name: 'Downloading...' }))
+		.toBeDisabled()
+})
+
+test('disables download when offline (aha)', async () => {
+	await render(
+		<TooltipProvider>
+			<OfflineVideoActionButtons
+				isAvailable={false}
+				isDownloadAvailable={false}
+				onDownload={() => {}}
+				onDelete={() => {}}
+			/>
+		</TooltipProvider>,
+	)
+
+	await expect
+		.element(
+			page.getByRole('button', { name: 'Reconnect to download offline video' }),
+		)
 		.toBeDisabled()
 })
