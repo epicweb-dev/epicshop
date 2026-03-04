@@ -52,6 +52,7 @@ import { EpicToaster } from './components/toaster'
 import { TooltipProvider } from './components/ui/tooltip'
 import { UpdateToast } from './components/update-repo'
 import { Notifications } from './routes/admin+/notifications'
+import { ConnectionStatusSync } from './routes/resources+/connection-status'
 import { useTheme } from './routes/theme/index'
 import { getTheme } from './routes/theme/theme-session.server'
 import appStylesheetUrl from './styles/app.css?url'
@@ -314,6 +315,7 @@ function App() {
 					<ExerciseWarningBanner />
 				)}
 			<Outlet />
+			<ConnectionStatusSync />
 			<Confetti id={data.confettiId} />
 			<EpicToaster toast={data.toast} />
 			<UpdateToast repoUpdates={data.repoUpdates} />

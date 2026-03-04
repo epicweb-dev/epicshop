@@ -510,14 +510,51 @@ export async function queuePendingProgressMutation({
 	complete: boolean
 	queuedAt?: string
 }) {
-	return mutatePendingProgressMutations((pendingProgressMutations) => [
-		...pendingProgressMutations.filter(
-			(mutation) =>
-				!(
-					isPendingProgressMutationInScope(mutation, scope) &&
-					mutation.lessonSlug === lessonSlug
-				),
-		),
+	return mutatePendingProgressMutations((pendingProgressMutations) =>
+		reconcileQueuedProgressMutation({
+			pendingProgressMutations,
+			scope,
+			lessonSlug,
+			complete,
+			queuedAt,
+		}),
+	)
+}
+
+export function reconcileQueuedProgressMutation({
+	pendingProgressMutations,
+	scope,
+	lessonSlug,
+	complete,
+	queuedAt = new Date().toISOString(),
+}: {
+	pendingProgressMutations: Array<PendingProgressMutation>
+	scope: PendingProgressMutationScope
+	lessonSlug: string
+	complete: boolean
+	queuedAt?: string
+}) {
+	const existingMutation = pendingProgressMutations.find(
+		(mutation) =>
+			isPendingProgressMutationInScope(mutation, scope) &&
+			mutation.lessonSlug === lessonSlug,
+	)
+	const pendingWithoutLessonMutation = pendingProgressMutations.filter(
+		(mutation) =>
+			!(
+				isPendingProgressMutationInScope(mutation, scope) &&
+				mutation.lessonSlug === lessonSlug
+			),
+	)
+
+	// If the new mutation undoes the queued one for this lesson, drop both so
+	// the queue reflects the net effect.
+	if (existingMutation && existingMutation.complete !== complete) {
+		return pendingWithoutLessonMutation
+	}
+
+	return [
+		...pendingWithoutLessonMutation,
 		{
 			host: scope.host,
 			workshopSlug: scope.workshopSlug,
@@ -526,7 +563,7 @@ export async function queuePendingProgressMutation({
 			complete,
 			queuedAt,
 		},
-	])
+	]
 }
 
 export async function replacePendingProgressMutationsForScope({

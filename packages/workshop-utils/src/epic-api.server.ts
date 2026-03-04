@@ -183,7 +183,7 @@ export async function getEpicVideoMetadata({
 		swr: 1000 * 60 * 60 * 24 * 365 * 10,
 		offlineFallbackValue: null,
 		checkValue: EpicVideoMetadataSchema.nullable(),
-		async getFreshValue(context): Promise<EpicVideoMetadata | null> {
+		async getFreshValue(): Promise<EpicVideoMetadata | null> {
 			const apiUrl = `https://${normalizedHost}/api/video/${encodeURIComponent(
 				playbackId,
 			)}`
@@ -198,17 +198,15 @@ export async function getEpicVideoMetadata({
 				`video metadata response: ${response.status} ${response.statusText}`,
 			)
 			if (!response.ok) {
-				context.metadata.ttl = 1000 * 2
-				context.metadata.swr = 0
-				return null
+				throw new Error(
+					`Failed to fetch video metadata: ${response.status} ${response.statusText}`,
+				)
 			}
 			const rawInfo = await response.json()
 			const parsedInfo = EpicVideoMetadataSchema.safeParse(rawInfo)
 			if (parsedInfo.success) {
 				return parsedInfo.data
 			}
-			context.metadata.ttl = 1000 * 2
-			context.metadata.swr = 0
 			videoMetadataLog.error(
 				`video metadata parsing failed for ${playbackId}`,
 				{
@@ -217,7 +215,7 @@ export async function getEpicVideoMetadata({
 					parseError: parsedInfo.error,
 				},
 			)
-			return null
+			throw new Error(`Failed to parse video metadata for ${playbackId}`)
 		},
 	}).catch((e) => {
 		videoMetadataLog.error(
@@ -499,7 +497,7 @@ async function getEpicProgress({
 		swr: 1000 * 60 * 60 * 24 * 365 * 10,
 		offlineFallbackValue: [],
 		checkValue: EpicProgressSchema,
-		async getFreshValue(context) {
+		async getFreshValue() {
 			const progressUrl = `https://${host}/api/progress`
 			log(`making progress API request to: ${progressUrl}`)
 
@@ -518,10 +516,9 @@ async function getEpicProgress({
 				console.error(
 					`Failed to fetch progress from EpicWeb: ${response.status} ${response.statusText}`,
 				)
-				// don't cache errors for long...
-				context.metadata.ttl = 1000 * 2
-				context.metadata.swr = 0
-				return []
+				throw new Error(
+					`Failed to fetch progress from EpicWeb: ${response.status} ${response.statusText}`,
+				)
 			}
 
 			const progressData = await response.json()
@@ -529,6 +526,12 @@ async function getEpicProgress({
 			log(`successfully fetched ${parsedProgress.length} progress entries`)
 			return parsedProgress
 		},
+	}).catch((error) => {
+		log.error(
+			'failed to get progress via cache/api and no cache fallback is available',
+			error,
+		)
+		return []
 	})
 }
 
@@ -1171,13 +1174,11 @@ export async function getWorkshopData(
 			log(`workshop data response: ${response.status} ${response.statusText}`)
 
 			if (response.status < 200 || response.status >= 300) {
-				log.error(
-					`failed to fetch workshop data from EpicWeb for ${slug}: ${response.status} ${response.statusText}`,
-				)
-				console.error(
-					`Failed to fetch workshop data from EpicWeb for ${slug}: ${response.status} ${response.statusText}`,
-				)
-				return { resources: [] }
+				const errorMessage = `Failed to fetch workshop data from EpicWeb for ${slug}: ${response.status} ${response.statusText}`
+				log.error(errorMessage)
+				if (!log.enabled) console.error(errorMessage)
+
+				throw new Error(errorMessage)
 			}
 
 			const jsonResponse = await response.json()
@@ -1187,6 +1188,9 @@ export async function getWorkshopData(
 			)
 			return parsedData
 		},
+	}).catch((error) => {
+		log.error(`failed to get workshop data for ${slug} via cache/api`, error)
+		return { resources: [] }
 	})
 }
 

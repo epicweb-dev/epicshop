@@ -809,6 +809,10 @@ function MobileNavigation({
 	const location = useLocation()
 	const isOnline = useIsOnline()
 	const unsyncedProgressCount = useUnsyncedProgressCount()
+	const unsyncedProgressLabel =
+		unsyncedProgressCount < 1
+			? null
+			: `${unsyncedProgressCount} progress update${unsyncedProgressCount === 1 ? '' : 's'} waiting to sync`
 	const { users } = usePresence()
 
 	// Onboarding indicators
@@ -845,9 +849,7 @@ function MobileNavigation({
 		system: 'System',
 	}[currentTheme]
 	const [isMobilePopoverOpen, setIsMobilePopoverOpen] = React.useState(false)
-	const showMobilePopover = Boolean(
-		data.sidecarStatus || unsyncedProgressCount > 0,
-	)
+	const showMobilePopover = Boolean(data.sidecarStatus)
 
 	// Reset popover state when it should not be shown to prevent stale state
 	React.useEffect(() => {
@@ -1132,19 +1134,30 @@ function MobileNavigation({
 					)}
 					<div className="grow" />
 					{isOnline ? null : (
-						<SimpleTooltip content={isMenuOpened ? null : 'You are offline'}>
+						<SimpleTooltip
+							content={
+								isMenuOpened
+									? null
+									: unsyncedProgressLabel
+										? `You are offline. ${unsyncedProgressLabel}`
+										: 'You are offline'
+							}
+						>
 							<div
 								className={cn(
 									'flex h-14 animate-pulse items-center justify-start p-4',
 									isMenuOpened ? 'w-full border-t' : 'border-l',
 								)}
 							>
-								<Icon
-									name="WifiNoConnection"
-									className="text-foreground-destructive"
-								>
-									{isMenuOpened ? 'You are offline' : null}
-								</Icon>
+								<div className="relative">
+									<Icon
+										name="WifiNoConnection"
+										className="text-foreground-destructive"
+									>
+										{isMenuOpened ? 'You are offline' : null}
+									</Icon>
+									<PendingProgressBadge visible={unsyncedProgressCount > 0} />
+								</div>
 							</div>
 						</SimpleTooltip>
 					)}
@@ -1304,9 +1317,6 @@ function MobileNavigation({
 											className="text-muted-foreground hover:text-foreground hover:bg-muted relative flex h-8 w-8 items-center justify-center rounded-md transition-colors"
 										>
 											<StatusIndicator status="failed" />
-											<PendingProgressBadge
-												visible={unsyncedProgressCount > 0}
-											/>
 										</button>
 									</PopoverTrigger>
 								) : (
@@ -1328,9 +1338,6 @@ function MobileNavigation({
 												<circle cx="10" cy="10" r="1.5" fill="currentColor" />
 												<circle cx="15" cy="10" r="1.5" fill="currentColor" />
 											</svg>
-											<PendingProgressBadge
-												visible={unsyncedProgressCount > 0}
-											/>
 										</button>
 									</PopoverTrigger>
 								)}
@@ -1342,9 +1349,6 @@ function MobileNavigation({
 									<ThemeSwitchRow
 										themeLabel={themeLabel}
 										disableTooltip={isMobilePopoverOpen}
-									/>
-									<ProgressSyncPopoverRow
-										unsyncedCount={unsyncedProgressCount}
 									/>
 									{data.sidecarStatus ? (
 										<Link
@@ -1408,7 +1412,7 @@ function PendingProgressBadge({ visible }: { visible: boolean }) {
 	return (
 		<span
 			aria-hidden
-			className="bg-muted-foreground absolute top-1.5 right-1.5 h-1.5 w-1.5 rounded-full"
+			className="bg-foreground-destructive absolute top-0 right-0 h-1.5 w-1.5 animate-ping rounded-full"
 		/>
 	)
 }
@@ -1426,19 +1430,6 @@ function ProgressSyncIndicator({ unsyncedCount }: { unsyncedCount: number }) {
 				<span className="sr-only">{label}</span>
 			</div>
 		</SimpleTooltip>
-	)
-}
-
-function ProgressSyncPopoverRow({ unsyncedCount }: { unsyncedCount: number }) {
-	if (unsyncedCount < 1) return null
-	const label = `${unsyncedCount} progress update${unsyncedCount === 1 ? '' : 's'} waiting to sync`
-	return (
-		<div className="text-muted-foreground flex items-center gap-3 rounded-md px-2 py-1.5 text-sm">
-			<div className="flex h-5 w-5 items-center justify-center">
-				<StatusIndicator status="stopped" />
-			</div>
-			<span className="flex-1 text-left">{label}</span>
-		</div>
 	)
 }
 
@@ -1460,6 +1451,10 @@ function Navigation({
 	const location = useLocation()
 	const isOnline = useIsOnline()
 	const unsyncedProgressCount = useUnsyncedProgressCount()
+	const unsyncedProgressLabel =
+		unsyncedProgressCount < 1
+			? null
+			: `${unsyncedProgressCount} progress update${unsyncedProgressCount === 1 ? '' : 's'} waiting to sync`
 	const { users } = usePresence()
 
 	// Onboarding indicators
@@ -1821,21 +1816,32 @@ function Navigation({
 						</div>
 					)}
 					{isOnline ? null : (
-						<SimpleTooltip content={isMenuOpened ? null : 'You are offline'}>
+						<SimpleTooltip
+							content={
+								isMenuOpened
+									? null
+									: unsyncedProgressLabel
+										? `You are offline. ${unsyncedProgressLabel}`
+										: 'You are offline'
+							}
+						>
 							<div
 								className={cn(
 									'flex w-full animate-pulse items-center border-t p-4',
 									isMenuOpened ? 'justify-start' : 'justify-center',
 								)}
 							>
-								<Icon
-									name="WifiNoConnection"
-									className="text-foreground-destructive"
-								>
-									{isMenuOpened ? (
-										<span className="whitespace-nowrap">You are offline</span>
-									) : null}
-								</Icon>
+								<div className="relative flex h-6 w-6 items-center justify-center">
+									<Icon
+										name="WifiNoConnection"
+										className="text-foreground-destructive"
+									>
+										{isMenuOpened ? (
+											<span className="whitespace-nowrap">You are offline</span>
+										) : null}
+									</Icon>
+									<PendingProgressBadge visible={unsyncedProgressCount > 0} />
+								</div>
 							</div>
 						</SimpleTooltip>
 					)}
@@ -1992,9 +1998,6 @@ function Navigation({
 											className="text-muted-foreground hover:text-foreground hover:bg-muted relative flex h-8 w-8 items-center justify-center rounded-md transition-colors"
 										>
 											<StatusIndicator status="failed" />
-											<PendingProgressBadge
-												visible={unsyncedProgressCount > 0}
-											/>
 										</button>
 									</PopoverTrigger>
 								) : (
@@ -2016,9 +2019,6 @@ function Navigation({
 												<circle cx="10" cy="10" r="1.5" fill="currentColor" />
 												<circle cx="15" cy="10" r="1.5" fill="currentColor" />
 											</svg>
-											<PendingProgressBadge
-												visible={unsyncedProgressCount > 0}
-											/>
 										</button>
 									</PopoverTrigger>
 								)}
@@ -2030,9 +2030,6 @@ function Navigation({
 									<ThemeSwitchRow
 										themeLabel={themeLabel}
 										disableTooltip={isPopoverOpen}
-									/>
-									<ProgressSyncPopoverRow
-										unsyncedCount={unsyncedProgressCount}
 									/>
 									<button
 										type="button"

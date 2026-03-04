@@ -204,6 +204,9 @@ export function ProgressToggleCheckIndicator({
 					'bg-foreground text-background duration-1000': optimisticCompleted,
 					'group-hover:bg-background duration-100': !optimisticCompleted,
 				},
+				{
+					'animate-pulse opacity-70': showQueuedCheckTooltip,
+				},
 			)}
 		>
 			{optimisticCompleted ? (
@@ -213,12 +216,6 @@ export function ProgressToggleCheckIndicator({
 					✓
 				</div>
 			)}
-			{showQueuedCheckTooltip ? (
-				<span
-					aria-hidden
-					className="bg-muted-foreground absolute top-1 right-1 h-1.5 w-1.5 rounded-full"
-				/>
-			) : null}
 		</motion.div>
 	)
 
