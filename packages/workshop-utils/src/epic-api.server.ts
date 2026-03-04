@@ -561,6 +561,28 @@ export function resolveProgressSyncState({
 	}
 }
 
+type DroppedProgressMutation = {
+	lessonSlug: string
+	complete: boolean
+	reason: string
+}
+
+function pendingProgressQueuesEqual(
+	a: Array<PendingProgressMutation>,
+	b: Array<PendingProgressMutation>,
+) {
+	if (a.length !== b.length) return false
+	return a.every((entry, index) => {
+		const other = b[index]
+		if (!other) return false
+		return (
+			entry.lessonSlug === other.lessonSlug &&
+			entry.complete === other.complete &&
+			entry.queuedAt === other.queuedAt
+		)
+	})
+}
+
 async function postProgressMutation({
 	host,
 	accessToken,
@@ -618,7 +640,11 @@ async function syncPendingProgressMutations({
 }) {
 	const pendingProgressMutations = await getPendingProgressMutations()
 	if (!pendingProgressMutations.length) {
-		return { pendingProgressMutations, syncedCount: 0 } as const
+		return {
+			pendingProgressMutations,
+			syncedCount: 0,
+			droppedProgressMutations: [] as Array<DroppedProgressMutation>,
+		} as const
 	}
 
 	const isOnline = await checkConnection({ request, timings }).catch(
@@ -628,11 +654,16 @@ async function syncPendingProgressMutations({
 		log(
 			`connection offline, skipping replay of ${pendingProgressMutations.length} queued progress mutation${pendingProgressMutations.length === 1 ? '' : 's'}`,
 		)
-		return { pendingProgressMutations, syncedCount: 0 } as const
+		return {
+			pendingProgressMutations,
+			syncedCount: 0,
+			droppedProgressMutations: [] as Array<DroppedProgressMutation>,
+		} as const
 	}
 
 	let syncedCount = 0
 	let queueChanged = false
+	const droppedProgressMutations: Array<DroppedProgressMutation> = []
 	let remainingProgressMutations: Array<PendingProgressMutation> = []
 
 	for (let index = 0; index < pendingProgressMutations.length; index++) {
@@ -676,11 +707,26 @@ async function syncPendingProgressMutations({
 		log.error(
 			`dropping queued progress mutation for ${pendingMutation.lessonSlug}: ${response.response.status} ${response.response.statusText}`,
 		)
+		droppedProgressMutations.push({
+			lessonSlug: pendingMutation.lessonSlug,
+			complete: pendingMutation.complete,
+			reason: `${response.response.status} ${response.response.statusText}`,
+		})
 		queueChanged = true
 	}
 
-	if (!queueChanged && remainingProgressMutations.length === 0) {
-		return { pendingProgressMutations, syncedCount } as const
+	if (
+		!queueChanged &&
+		pendingProgressQueuesEqual(
+			remainingProgressMutations,
+			pendingProgressMutations,
+		)
+	) {
+		return {
+			pendingProgressMutations,
+			syncedCount,
+			droppedProgressMutations,
+		} as const
 	}
 
 	await setPendingProgressMutations(remainingProgressMutations)
@@ -690,7 +736,39 @@ async function syncPendingProgressMutations({
 	return {
 		pendingProgressMutations: remainingProgressMutations,
 		syncedCount,
+		droppedProgressMutations,
 	} as const
+}
+
+export function resolveProgressMutationOutcome({
+	lessonSlug,
+	syncResult,
+}: {
+	lessonSlug: string
+	syncResult: {
+		pendingProgressMutations: Array<PendingProgressMutation>
+		droppedProgressMutations: Array<DroppedProgressMutation>
+	}
+}) {
+	const droppedProgressMutation = syncResult.droppedProgressMutations.find(
+		(mutation) => mutation.lessonSlug === lessonSlug,
+	)
+	if (droppedProgressMutation) {
+		return {
+			status: 'error',
+			error: droppedProgressMutation.reason,
+		} as const
+	}
+	const isStillPending = syncResult.pendingProgressMutations.some(
+		(mutation) => mutation.lessonSlug === lessonSlug,
+	)
+	if (isStillPending) {
+		return {
+			status: 'queued',
+			queuedCount: syncResult.pendingProgressMutations.length,
+		} as const
+	}
+	return { status: 'success' } as const
 }
 
 export type Progress = Awaited<ReturnType<typeof getProgress>>[number]
@@ -957,72 +1035,36 @@ export async function updateProgress(
 	log(
 		`updating progress for lesson: ${lessonSlug} (complete: ${normalizedComplete})`,
 	)
+	const pendingProgressMutations = await queuePendingProgressMutation({
+		lessonSlug,
+		complete: normalizedComplete,
+	})
+	log(
+		`queued progress mutation for lesson: ${lessonSlug}. pending count: ${pendingProgressMutations.length}`,
+	)
 
-	const queueProgressMutation = async () => {
-		const pendingProgressMutations = await queuePendingProgressMutation({
-			lessonSlug,
-			complete: normalizedComplete,
-		})
-		log(
-			`queued progress mutation for lesson: ${lessonSlug}. pending count: ${pendingProgressMutations.length}`,
-		)
-		return {
-			status: 'queued',
-			queuedCount: pendingProgressMutations.length,
-		} as const
-	}
-
-	await syncPendingProgressMutations({
+	const syncResult = await syncPendingProgressMutations({
 		host,
 		accessToken: authInfo.tokenSet.access_token,
 		request,
 		timings,
 	})
-
-	const isOnline = await checkConnection({ request, timings }).catch(
-		() => false,
-	)
-	if (!isOnline) {
-		log(`connection offline, queueing progress mutation for ${lessonSlug}`)
-		return queueProgressMutation()
+	if (syncResult.syncedCount > 0) {
+		// Force a fresh pull so loaders and CLIs see synchronized progress.
+		await getEpicProgress({ forceFresh: true, request, timings })
 	}
 
-	const response = await postProgressMutation({
-		host,
-		accessToken: authInfo.tokenSet.access_token,
-		lessonSlug,
-		complete: normalizedComplete,
-	})
-	if (response.status === 'error') {
+	const outcome = resolveProgressMutationOutcome({ lessonSlug, syncResult })
+	if (outcome.status === 'success') {
+		log(`progress update successful for lesson: ${lessonSlug}`)
+	} else if (outcome.status === 'queued') {
 		log(
-			`progress update request failed for ${lessonSlug}: ${response.error}. queueing mutation`,
+			`progress update queued for lesson: ${lessonSlug}. pending count: ${outcome.queuedCount}`,
 		)
-		return queueProgressMutation()
+	} else {
+		log(`progress update failed for lesson: ${lessonSlug}: ${outcome.error}`)
 	}
-
-	log(
-		`progress update response: ${response.response.status} ${response.response.statusText}`,
-	)
-	if (!response.response.ok) {
-		if (shouldQueueProgressMutationForStatus(response.response.status)) {
-			log(
-				`progress update not syncable right now for ${lessonSlug} (${response.response.status}), queueing mutation`,
-			)
-			return queueProgressMutation()
-		}
-		log(
-			`progress update failed permanently for ${lessonSlug}: ${response.response.status} ${response.response.statusText}`,
-		)
-		return {
-			status: 'error',
-			error: `${response.response.status} ${response.response.statusText}`,
-		} as const
-	}
-
-	// Force a fresh pull so loaders and CLIs see the synchronized progress.
-	await getEpicProgress({ forceFresh: true, request, timings })
-	log(`progress update successful for lesson: ${lessonSlug}`)
-	return { status: 'success' } as const
+	return outcome
 }
 
 const ModuleSchema = z.object({
