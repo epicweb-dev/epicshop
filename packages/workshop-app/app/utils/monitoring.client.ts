@@ -136,6 +136,15 @@ export function init() {
 				}
 			}
 
+			const domMutationErrors =
+				event.exception?.values?.some((value) => {
+					if (typeof value.value !== 'string') return false
+					return /insertBefore/i.test(value.value)
+						? true
+						: /removeChild/i.test(value.value)
+				}) ?? false
+			if (domMutationErrors) return null
+
 			// Very common when learners shut down the local server and the browser keeps trying to fetch
 			const failedToFetch =
 				event.exception?.values?.some(
