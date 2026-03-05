@@ -136,19 +136,14 @@ export function init() {
 				}
 			}
 
-			const insertBeforeNullError =
-				event.exception?.values?.some(
-					(value) =>
-						value.type === 'TypeError' &&
-						typeof value.value === 'string' &&
-						/Cannot read properties of null \(reading 'insertBefore'\)/.test(
-							value.value,
-						) &&
-						value.stacktrace?.frames?.some((frame) =>
-							frame.filename?.includes('media-chrome'),
-						),
-				) ?? false
-			if (insertBeforeNullError) return null
+			const domMutationErrors =
+				event.exception?.values?.some((value) => {
+					if (typeof value.value !== 'string') return false
+					return /insertBefore/i.test(value.value)
+						? true
+						: /Failed to execute 'removeChild' on 'Node'/i.test(value.value)
+				}) ?? false
+			if (domMutationErrors) return null
 
 			// Very common when learners shut down the local server and the browser keeps trying to fetch
 			const failedToFetch =
