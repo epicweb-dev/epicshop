@@ -836,7 +836,8 @@ function EpicVideo({
 										<MediaPlaybackRateButton
 											className="text-background text-xs"
 											rates={[
-												0.5, 0.75, 0.8, 0.9, 1, 1.25, 1.5, 1.75, 2, 2.5, 3, 3.5, 4,
+												0.5, 0.75, 0.8, 0.9, 1, 1.25, 1.5, 1.75, 2, 2.5, 3, 3.5,
+												4,
 											]}
 										/>
 										<MediaPipButton />
