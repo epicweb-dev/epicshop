@@ -1,6 +1,7 @@
 import { type Dirent } from 'node:fs'
 import fs from 'node:fs/promises'
 import path from 'node:path'
+import { debuglog } from 'node:util'
 
 import { compileMdx } from '@epic-web/workshop-utils/compile-mdx.server'
 import { getErrorMessage } from '@epic-web/workshop-utils/utils'
@@ -13,6 +14,8 @@ import {
 	isDirectory,
 	resolveMdxFile,
 } from './workshop-content-utils.js'
+
+const debug = debuglog('epic:launch-readiness')
 
 type IssueLevel = 'error' | 'warning'
 
@@ -106,6 +109,31 @@ function parseEpicLessonSlugFromEmbedUrl(urlString: string): string | null {
 			return slug ? stripEpicAiSlugSuffix(slug) : null
 		}
 		return stripEpicAiSlugSuffix(last)
+	}
+
+	try {
+		const url = new URL(urlString)
+		const segments = url.pathname.split('/').filter(Boolean)
+		return parseSegments(segments)
+	} catch {
+		// Fall back to naive parsing (best-effort).
+		const withoutHash = urlString.split('#')[0] ?? urlString
+		const withoutQuery = withoutHash.split('?')[0] ?? withoutHash
+		const segments = withoutQuery.split('/').filter(Boolean)
+		return parseSegments(segments)
+	}
+}
+
+function parseEmbedUrlVariant(urlString: string): {
+	hasProblemSuffix: boolean
+	hasSolutionSuffix: boolean
+} {
+	const parseSegments = (segments: Array<string>) => {
+		const last = segments.at(-1) ?? ''
+		return {
+			hasProblemSuffix: last === 'problem',
+			hasSolutionSuffix: last === 'solution',
+		}
 	}
 
 	try {
@@ -709,6 +737,12 @@ export async function launchReadiness(
 		try {
 			const compiled = await compileMdx(file.fullPath)
 			const embeds = compiled.epicVideoEmbeds ?? []
+			debug(
+				'file=%s kind=%s embeds=%d',
+				file.relativePath,
+				file.kind,
+				embeds.length,
+			)
 
 			if (embeds.length === 0) {
 				issues.push({
@@ -722,6 +756,34 @@ export async function launchReadiness(
 			}
 
 			for (const embed of embeds) {
+				const variant = parseEmbedUrlVariant(embed)
+				debug(
+					'embed file=%s kind=%s url=%s problemSuffix=%s solutionSuffix=%s',
+					file.relativePath,
+					file.kind,
+					embed,
+					variant.hasProblemSuffix,
+					variant.hasSolutionSuffix,
+				)
+
+				if (file.kind === 'step-solution' && !variant.hasSolutionSuffix) {
+					issues.push({
+						level: 'error',
+						code: 'step-solution-video-missing-solution-suffix',
+						message: `Step solution files must use a /solution video URL suffix: ${embed}`,
+						file: file.fullPath,
+					})
+				}
+
+				if (file.kind === 'step-problem' && variant.hasSolutionSuffix) {
+					issues.push({
+						level: 'error',
+						code: 'step-problem-video-uses-solution-suffix',
+						message: `Step problem files must not use a /solution video URL suffix: ${embed}`,
+						file: file.fullPath,
+					})
+				}
+
 				const set = embedOccurrences.get(embed) ?? new Set<string>()
 				set.add(file.fullPath)
 				embedOccurrences.set(embed, set)
@@ -857,6 +919,11 @@ export async function launchReadiness(
 				}
 				localProductLessonSlugs.add(lessonSlug)
 			}
+			debug(
+				'remote-check workshop=%s localProductLessonSlugs=%d',
+				productSlug,
+				localProductLessonSlugs.size,
+			)
 
 			const remote = await fetchRemoteWorkshopLessons({
 				productHost,
@@ -890,6 +957,12 @@ export async function launchReadiness(
 				}
 
 				const remoteLessonSlugs = [...remoteLessonBySlug.keys()]
+				debug(
+					'remote-check workshop=%s remoteLessonSlugs=%d moduleType=%s',
+					productSlug,
+					remoteLessonSlugs.length,
+					remoteModuleType,
+				)
 
 				if (remoteLessonSlugs.length === 0) {
 					issues.push({
@@ -904,6 +977,10 @@ export async function launchReadiness(
 					(slug) => !localProductLessonSlugs.has(slug),
 				)
 				if (missing.length) {
+					debug(
+						'remote-check missing-lesson-slugs=%o',
+						missing.slice().sort(),
+					)
 					const formatted = missing
 						.sort()
 						.map((slug) => {

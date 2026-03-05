@@ -226,7 +226,7 @@ test('maps product lesson order to files and only updates top EpicVideo under ti
 
 	const solutionReadme = await fs.readFile(paths.solutionReadmePath, 'utf8')
 	expect(solutionReadme).toContain(
-		'<EpicVideo url="https://www.epicweb.dev/workshops/test-workshop/first-section/step-problem" />',
+		'<EpicVideo url="https://www.epicweb.dev/workshops/test-workshop/first-section/step-problem/solution" />',
 	)
 
 	const exerciseFinished = await fs.readFile(paths.exerciseFinishedPath, 'utf8')

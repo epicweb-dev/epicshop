@@ -367,6 +367,19 @@ type FileLessonSlotPlan = {
 	lessonSlotIndex: number
 }
 
+function getTargetLessonUrl({
+	baseUrl,
+	fileKind,
+}: {
+	baseUrl: string
+	fileKind: OrderedVideoFile['kind']
+}) {
+	if (fileKind === 'step-solution') {
+		return `${baseUrl.replace(/\/+$/, '')}/solution`
+	}
+	return baseUrl
+}
+
 function buildFileLessonSlotPlans(files: Array<OrderedVideoFile>): {
 	plans: Array<FileLessonSlotPlan>
 	requiredLessonSlots: number
@@ -579,12 +592,16 @@ export async function setVideos(
 	for (const plan of fileLessonSlotPlans) {
 		const lesson = remoteLessons[plan.lessonSlotIndex]
 		if (!lesson) continue
-		const targetUrl = formatProductLessonUrl({
+		const baseLessonUrl = formatProductLessonUrl({
 			productHost,
 			productSlug,
 			moduleType: remoteModuleType,
 			lessonSlug: lesson.slug,
 			sectionSlug: lesson.sectionSlug,
+		})
+		const targetUrl = getTargetLessonUrl({
+			baseUrl: baseLessonUrl,
+			fileKind: plan.file.kind,
 		})
 
 		let currentContent = ''

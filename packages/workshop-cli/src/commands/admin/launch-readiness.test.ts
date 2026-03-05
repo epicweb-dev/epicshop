@@ -83,7 +83,7 @@ async function createWorkshopFixture({
 	)
 	await writeFile(
 		path.join(exRoot, '01.solution', 'README.mdx'),
-		`# Step Solution\n\n<EpicVideo url="https://${productHost}/${productPath}/${productSlug}/step-solution" />\n`,
+		`# Step Solution\n\n<EpicVideo url="https://${productHost}/${productPath}/${productSlug}/step-solution/solution" />\n`,
 	)
 
 	return {
@@ -150,6 +150,38 @@ test('fails when a required MDX file has no EpicVideo embed (and prints helpful 
 	const output = logSpy.mock.calls.map((c) => c.join(' ')).join('\n')
 	expect(output).toContain('No <EpicVideo url="..."> embed found')
 	expect(output).toContain('exercises/01.first-exercise/01.problem/README.mdx')
+})
+
+test('fails when step solution README does not use a /solution EpicVideo url', async () => {
+	await using workshop = await createWorkshopFixture()
+
+	await writeFile(
+		path.join(
+			workshop.root,
+			'exercises',
+			'01.first-exercise',
+			'01.solution',
+			'README.mdx',
+		),
+		`# Step Solution
+
+<EpicVideo url="https://www.epicweb.dev/workshops/test-workshop/step-solution" />
+`,
+	)
+
+	const logSpy = vi.spyOn(console, 'log').mockImplementation(() => {})
+
+	const result = await launchReadiness({
+		workshopRoot: workshop.root,
+		silent: false,
+		skipRemote: true,
+		skipHead: true,
+	})
+
+	expect(result.success).toBe(false)
+	const output = logSpy.mock.calls.map((c) => c.join(' ')).join('\n')
+	expect(output).toContain('must use a /solution video URL suffix')
+	expect(output).toContain('exercises/01.first-exercise/01.solution/README.mdx')
 })
 
 test('remote lesson check fails when product lesson slug not represented locally', async () => {
