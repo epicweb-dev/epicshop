@@ -143,6 +143,9 @@ export function init() {
 						typeof value.value === 'string' &&
 						/Cannot read properties of null \(reading 'insertBefore'\)/.test(
 							value.value,
+						) &&
+						value.stacktrace?.frames?.some((frame) =>
+							frame.filename?.includes('media-chrome'),
 						),
 				) ?? false
 			if (insertBeforeNullError) return null
