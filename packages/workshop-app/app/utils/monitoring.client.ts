@@ -141,7 +141,7 @@ export function init() {
 					if (typeof value.value !== 'string') return false
 					return /insertBefore/i.test(value.value)
 						? true
-						: /Failed to execute 'removeChild' on 'Node'/i.test(value.value)
+						: /removeChild/i.test(value.value)
 				}) ?? false
 			if (domMutationErrors) return null
 
