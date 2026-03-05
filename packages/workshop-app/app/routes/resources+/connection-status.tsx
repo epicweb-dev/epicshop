@@ -1,11 +1,10 @@
 import { type Route } from './+types/connection-status'
 import * as React from 'react'
 import { data, useFetcher } from 'react-router'
-import { ensureUndeployed } from '#app/utils/misc.tsx'
 import { checkConnection } from '@epic-web/workshop-utils/utils.server'
 
 export async function action({ request }: Route.ActionArgs) {
-	ensureUndeployed()
+	if (ENV.EPICSHOP_DEPLOYED) return data({ ok: true })
 	await checkConnection({ request, forceFresh: true })
 	return data({ ok: true })
 }
@@ -32,7 +31,6 @@ export function ConnectionStatusSync() {
 				action: '/resources/connection-status',
 			})
 		}
-		syncFromNavigator()
 
 		window.addEventListener('online', syncFromNavigator)
 		window.addEventListener('offline', syncFromNavigator)
