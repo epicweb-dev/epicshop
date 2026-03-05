@@ -136,6 +136,17 @@ export function init() {
 				}
 			}
 
+			const insertBeforeNullError =
+				event.exception?.values?.some(
+					(value) =>
+						value.type === 'TypeError' &&
+						typeof value.value === 'string' &&
+						/Cannot read properties of null \(reading 'insertBefore'\)/.test(
+							value.value,
+						),
+				) ?? false
+			if (insertBeforeNullError) return null
+
 			// Very common when learners shut down the local server and the browser keeps trying to fetch
 			const failedToFetch =
 				event.exception?.values?.some(
