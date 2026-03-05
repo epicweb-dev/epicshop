@@ -977,10 +977,7 @@ export async function launchReadiness(
 					(slug) => !localProductLessonSlugs.has(slug),
 				)
 				if (missing.length) {
-					debug(
-						'remote-check missing-lesson-slugs=%o',
-						missing.slice().sort(),
-					)
+					debug('remote-check missing-lesson-slugs=%o', missing.slice().sort())
 					const formatted = missing
 						.sort()
 						.map((slug) => {
