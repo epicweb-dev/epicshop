@@ -164,13 +164,16 @@ async function checkDependenciesWithNpmLs(
 	// Use the detected package manager, defaulting to npm
 	// pnpm has compatible ls output format
 	const command = packageManager === 'pnpm' ? 'pnpm' : 'npm'
+	const lsArgs =
+		command === 'npm'
+			? ['ls', '--depth=0', '--json', '--include=dev', ...expectedDependencies]
+			: ['ls', '--depth=0', '--json', ...expectedDependencies]
 
 	try {
-		const result = await execa(
-			command,
-			['ls', '--depth=0', '--json', ...expectedDependencies],
-			{ cwd: rootDir, reject: false },
-		)
+		const result = await execa(command, lsArgs, {
+			cwd: rootDir,
+			reject: false,
+		})
 		const output = parseNpmLsOutput(result.stdout)
 		const failingDependencies = getFailingDependencies(
 			expectedDependencies,

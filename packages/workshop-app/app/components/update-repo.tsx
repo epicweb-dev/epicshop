@@ -168,6 +168,17 @@ export function UpdateToast({
 				},
 			})
 			updateToastId.current = id
+		} else {
+			// Keep UI aligned with latest loader state: if updates are cleared,
+			// immediately dismiss any previously shown update toast.
+			if (updateToastId.current) {
+				toast.dismiss(updateToastId.current)
+				updateToastId.current = null
+			}
+			if (inProgressToastId.current && !updateInProgress.current) {
+				toast.dismiss(inProgressToastId.current)
+				inProgressToastId.current = null
+			}
 		}
 	}, [
 		updatesAvailable,

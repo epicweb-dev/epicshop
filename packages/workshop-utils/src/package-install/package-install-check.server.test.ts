@@ -251,7 +251,7 @@ describe('getRootPackageInstallStatus', () => {
 		expect(status.missingDependencies).toEqual(['react-dom'])
 		expect(execa).toHaveBeenCalledWith(
 			'npm',
-			['ls', '--depth=0', '--json', 'react', 'react-dom'],
+			['ls', '--depth=0', '--json', '--include=dev', 'react', 'react-dom'],
 			expect.objectContaining({ cwd: tempDir, reject: false }),
 		)
 	})
@@ -348,6 +348,29 @@ describe('getRootPackageInstallStatus', () => {
 
 		expect(status.dependenciesNeedInstall).toBe(true)
 		expect(status.missingDependencies).toEqual(['@epic-web/workshop-utils'])
+	})
+
+	test('uses npm include=dev to avoid NODE_ENV production omissions', async () => {
+		await using temp = await createTempDir()
+		const tempDir = temp.dir
+
+		await writePackageJson(tempDir, {
+			name: 'test-package',
+			dependencies: { react: '^18.0.0' },
+			devDependencies: { typescript: '^5.0.0' },
+		})
+		mockNpmLsResult({
+			exitCode: 0,
+			dependencies: { react: {}, typescript: {} },
+		})
+
+		await getRootPackageInstallStatus(path.join(tempDir, 'package.json'))
+
+		expect(execa).toHaveBeenCalledWith(
+			'npm',
+			['ls', '--depth=0', '--json', '--include=dev', 'react', 'typescript'],
+			expect.objectContaining({ cwd: tempDir, reject: false }),
+		)
 	})
 
 	test('handles package.json with no dependencies', async () => {
