@@ -432,7 +432,7 @@ export function DiffImplementation({
 													value={fileValue}
 													className="border-b"
 												>
-													<Accordion.Header className="hover:bg-foreground/10 relative flex w-full items-center gap-3 px-4 py-2">
+													<Accordion.Header className="bg-background/95 hover:bg-foreground/10 supports-[backdrop-filter]:bg-background/80 sticky top-0 z-10 relative flex w-full items-center gap-3 border-b border-border/70 px-4 py-2 backdrop-blur">
 														<Accordion.Trigger className="group flex min-w-0 flex-1 items-center justify-between gap-3 pr-38 text-left">
 															<span className="flex min-w-0 items-center gap-2 font-mono text-sm">
 																<Icon
