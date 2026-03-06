@@ -256,6 +256,31 @@ describe('getRootPackageInstallStatus', () => {
 		)
 	})
 
+	test('ignores non-zero npm ls exit when expected deps are healthy', async () => {
+		await using temp = await createTempDir()
+		const tempDir = temp.dir
+
+		await writePackageJson(tempDir, {
+			name: 'test-package',
+			dependencies: { react: '^18.0.0', 'react-dom': '^18.0.0' },
+		})
+		mockNpmLsResult({
+			exitCode: 1,
+			dependencies: {
+				react: {},
+				'react-dom': {},
+			},
+		})
+
+		const status = await getRootPackageInstallStatus(
+			path.join(tempDir, 'package.json'),
+		)
+
+		expect(status.dependenciesNeedInstall).toBe(false)
+		expect(status.reason).toBe('up-to-date')
+		expect(status.missingDependencies).toEqual([])
+	})
+
 	test('detects missing devDependencies', async () => {
 		await using temp = await createTempDir()
 		const tempDir = temp.dir
@@ -611,30 +636,36 @@ describe('getWorkspaceInstallStatus', () => {
 	test('returns all up-to-date when all roots satisfied', async () => {
 		await using temp = await createTempDir()
 		const tempDir = temp.dir
+		const subDir = path.join(tempDir, 'sub')
 
 		await writePackageJson(tempDir, {
 			name: 'root-package',
 			packageManager: 'yarn@4.0.0',
 			dependencies: { react: '^18.0.0' },
 		})
-		vi.mocked(execa)
-			.mockResolvedValueOnce({
-				exitCode: 0,
-				stdout: JSON.stringify({ dependencies: { react: {} } }),
-				stderr: '',
-			} as never)
-			.mockResolvedValueOnce({
-				exitCode: 0,
-				stdout: JSON.stringify({ dependencies: { typescript: {} } }),
-				stderr: '',
-			} as never)
-
-		const subDir = path.join(tempDir, 'sub')
 		await fs.mkdir(subDir, { recursive: true })
 		await writePackageJson(subDir, {
 			name: 'sub-package',
 			packageManager: 'bun@1.0.0',
 			dependencies: { typescript: '^5.0.0' },
+		})
+		vi.mocked(execa).mockImplementation(async (_command, _args, options) => {
+			const cwd = (options as { cwd?: string }).cwd
+			if (cwd === tempDir) {
+				return {
+					exitCode: 0,
+					stdout: JSON.stringify({ dependencies: { react: {} } }),
+					stderr: '',
+				} as never
+			}
+			if (cwd === subDir) {
+				return {
+					exitCode: 0,
+					stdout: JSON.stringify({ dependencies: { typescript: {} } }),
+					stderr: '',
+				} as never
+			}
+			return { exitCode: 1, stdout: '', stderr: '' } as never
 		})
 
 		const status = await getWorkspaceInstallStatus(tempDir)

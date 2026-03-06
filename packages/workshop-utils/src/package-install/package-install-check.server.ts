@@ -172,16 +172,14 @@ async function checkDependenciesWithNpmLs(
 			{ cwd: rootDir, reject: false },
 		)
 		const output = parseNpmLsOutput(result.stdout)
-		const ok = result.exitCode === 0
-		const failingDependencies = ok
-			? []
-			: getFailingDependencies(expectedDependencies, output)
+		const failingDependencies = getFailingDependencies(
+			expectedDependencies,
+			output,
+		)
+		const ok = failingDependencies.length === 0
 		return {
 			ok,
-			failingDependencies:
-				ok || failingDependencies.length > 0
-					? failingDependencies
-					: expectedDependencies,
+			failingDependencies,
 		}
 	} catch (error) {
 		console.warn(
