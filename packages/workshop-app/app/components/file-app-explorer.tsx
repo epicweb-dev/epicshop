@@ -393,7 +393,7 @@ export function FileAppExplorer({ appName }: { appName: string }) {
 	}
 
 	return (
-		<div className="bg-background flex h-full min-h-0 flex-col">
+		<div className="bg-background flex h-full min-h-0 w-full flex-col">
 			<div className="border-border flex h-10 shrink-0 items-center gap-2 border-b px-2">
 				<Popover open={filePickerOpen} onOpenChange={setFilePickerOpen}>
 					<PopoverTrigger asChild>
