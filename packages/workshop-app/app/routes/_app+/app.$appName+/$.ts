@@ -194,7 +194,10 @@ export async function loader({ request, params }: Route.LoaderArgs) {
 	if (!filePath) {
 		throw new Response('File not found', { status: 404 })
 	}
-	if (filePath.endsWith('.ts') || filePath.endsWith('.tsx')) {
+	if (
+		(filePath.endsWith('.ts') || filePath.endsWith('.tsx')) &&
+		app.dev.type !== 'file'
+	) {
 		// compile ts/tsx files
 		const { outputFiles, errors } = await compileTs(filePath, app.fullPath, {
 			request,
