@@ -253,9 +253,13 @@ function FileContent({
 				</div>
 			)
 		}
+		const wrapperClassName =
+			file.kind === 'text'
+				? 'max-w-none [&_.group]:w-full [&_pre]:w-full'
+				: 'prose dark:prose-invert max-w-none'
 		return (
 			<div className="h-full overflow-auto p-4">
-				<div className="prose dark:prose-invert max-w-none">
+				<div className={wrapperClassName}>
 					<Mdx code={mdxCode} />
 				</div>
 			</div>
