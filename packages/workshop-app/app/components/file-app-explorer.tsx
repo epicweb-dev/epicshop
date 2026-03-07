@@ -1,9 +1,8 @@
 import * as React from 'react'
-import ReactMarkdown from 'react-markdown'
-import { Tree, type NodeRendererProps } from 'react-arborist'
-import remarkGfm from 'remark-gfm'
+import { Mdx } from '#app/utils/mdx.tsx'
 import { LaunchEditor } from '#app/routes/launch-editor.tsx'
 import { cn } from '#app/utils/misc.tsx'
+import { Popover, PopoverContent, PopoverTrigger } from './ui/popover.tsx'
 import { Icon } from './icons.tsx'
 
 type PreviewKind = 'text' | 'markdown' | 'image' | 'video' | 'binary'
@@ -19,13 +18,27 @@ type FileListData = {
 	files: Array<AppFile>
 }
 
-type ExplorerNode = {
-	id: string
+type FilePreviewData = {
+	code: string
+}
+
+type DirectoryEntry = {
 	name: string
 	path: string
 	isDirectory: boolean
-	file?: AppFile
-	children?: Array<ExplorerNode>
+}
+
+type BreadcrumbPart = {
+	label: string
+	path: string
+	parentPath: string
+	isDirectory: boolean
+}
+
+type FileIndexes = {
+	filesByPath: Map<string, AppFile>
+	childrenByDirectory: Map<string, Array<DirectoryEntry>>
+	firstFileByDirectory: Map<string, string>
 }
 
 function toFileUrl(appName: string, filePath: string) {
@@ -35,125 +48,136 @@ function toFileUrl(appName: string, filePath: string) {
 		.join('/')}`
 }
 
-function buildTree(files: Array<AppFile>): Array<ExplorerNode> {
-	const root: Array<ExplorerNode> = []
-	const directoryMap = new Map<string, ExplorerNode>()
+function buildIndexes(files: Array<AppFile>): FileIndexes {
+	const filesByPath = new Map<string, AppFile>()
+	const childrenByDirectory = new Map<string, Array<DirectoryEntry>>()
+	const childKeys = new Map<string, Set<string>>()
+	const firstFileByDirectory = new Map<string, string>()
 
-	for (const file of files) {
+	function addChild(directoryPath: string, entry: DirectoryEntry) {
+		let keys = childKeys.get(directoryPath)
+		if (!keys) {
+			keys = new Set()
+			childKeys.set(directoryPath, keys)
+		}
+		if (keys.has(entry.path)) return
+		keys.add(entry.path)
+
+		let children = childrenByDirectory.get(directoryPath)
+		if (!children) {
+			children = []
+			childrenByDirectory.set(directoryPath, children)
+		}
+		children.push(entry)
+	}
+
+	const sortedFiles = [...files].sort((a, b) => a.path.localeCompare(b.path))
+	for (const file of sortedFiles) {
+		filesByPath.set(file.path, file)
+		firstFileByDirectory.set('', firstFileByDirectory.get('') ?? file.path)
+
 		const parts = file.path.split('/').filter(Boolean)
-		let currentChildren = root
-		let currentPath = ''
 		for (const [index, part] of parts.entries()) {
-			currentPath = currentPath ? `${currentPath}/${part}` : part
-			const isFile = index === parts.length - 1
-			if (isFile) {
-				currentChildren.push({
-					id: `file:${currentPath}`,
-					name: part,
-					path: currentPath,
-					isDirectory: false,
-					file,
-				})
-				continue
+			const nodePath = parts.slice(0, index + 1).join('/')
+			const parentPath = index === 0 ? '' : parts.slice(0, index).join('/')
+			const isDirectory = index < parts.length - 1
+			addChild(parentPath, {
+				name: part,
+				path: nodePath,
+				isDirectory,
+			})
+			if (isDirectory && !firstFileByDirectory.has(nodePath)) {
+				firstFileByDirectory.set(nodePath, file.path)
 			}
-			let directory = directoryMap.get(currentPath)
-			if (!directory) {
-				directory = {
-					id: `dir:${currentPath}`,
-					name: part,
-					path: currentPath,
-					isDirectory: true,
-					children: [],
-				}
-				directoryMap.set(currentPath, directory)
-				currentChildren.push(directory)
-			}
-			currentChildren = directory.children ?? []
-			directory.children = currentChildren
 		}
 	}
 
-	sortNodes(root)
-	return root
-}
-
-function sortNodes(nodes: Array<ExplorerNode>) {
-	nodes.sort((a, b) => {
-		if (a.isDirectory && !b.isDirectory) return -1
-		if (!a.isDirectory && b.isDirectory) return 1
-		return a.name.localeCompare(b.name)
-	})
-	for (const node of nodes) {
-		if (node.children) sortNodes(node.children)
-	}
-}
-
-function useElementHeight<T extends HTMLElement>() {
-	const ref = React.useRef<T | null>(null)
-	const [height, setHeight] = React.useState(0)
-
-	React.useEffect(() => {
-		const element = ref.current
-		if (!element) return
-		const observer = new ResizeObserver((entries) => {
-			const entry = entries[0]
-			if (entry) setHeight(Math.max(0, Math.floor(entry.contentRect.height)))
+	for (const children of childrenByDirectory.values()) {
+		children.sort((a, b) => {
+			if (a.isDirectory && !b.isDirectory) return -1
+			if (!a.isDirectory && b.isDirectory) return 1
+			return a.name.localeCompare(b.name)
 		})
-		observer.observe(element)
-		setHeight(Math.max(0, Math.floor(element.getBoundingClientRect().height)))
-		return () => observer.disconnect()
-	}, [])
+	}
 
-	return { ref, height }
+	return { filesByPath, childrenByDirectory, firstFileByDirectory }
 }
 
-function ExplorerTreeNode({
-	node,
-	style,
-	onSelectFile,
-}: NodeRendererProps<ExplorerNode> & {
-	onSelectFile: (filePath: string) => void
-}) {
-	const data = node.data
-	const isDirectory = data.isDirectory
-	const isSelected = node.isSelected
+function getBreadcrumbParts(pathValue: string | null): Array<BreadcrumbPart> {
+	const breadcrumbs: Array<BreadcrumbPart> = [
+		{ label: 'root', path: '', parentPath: '', isDirectory: true },
+	]
+	if (!pathValue) return breadcrumbs
 
+	const parts = pathValue.split('/').filter(Boolean)
+	for (const [index, part] of parts.entries()) {
+		breadcrumbs.push({
+			label: part,
+			path: parts.slice(0, index + 1).join('/'),
+			parentPath: index === 0 ? '' : parts.slice(0, index).join('/'),
+			isDirectory: index < parts.length - 1,
+		})
+	}
+	return breadcrumbs
+}
+
+function getSelectablePath(
+	entry: DirectoryEntry,
+	firstFileByDirectory: Map<string, string>,
+) {
+	if (!entry.isDirectory) return entry.path
+	return firstFileByDirectory.get(entry.path) ?? null
+}
+
+function SiblingEntryList({
+	entries,
+	selectedPath,
+	firstFileByDirectory,
+	onSelectPath,
+}: {
+	entries: Array<DirectoryEntry>
+	selectedPath: string | null
+	firstFileByDirectory: Map<string, string>
+	onSelectPath: (nextPath: string) => void
+}) {
+	if (entries.length === 0) {
+		return (
+			<p className="text-muted-foreground px-3 py-2 text-xs">No files available.</p>
+		)
+	}
 	return (
-		<button
-			type="button"
-			style={style}
-			className={cn(
-				'hover:bg-muted/60 text-foreground flex w-full cursor-pointer items-center gap-1.5 rounded px-2 py-1.5 text-left text-sm',
-				isSelected ? 'bg-muted' : null,
-			)}
-			onClick={() => {
-				node.select()
-				if (isDirectory) {
-					node.toggle()
-				} else {
-					onSelectFile(data.path)
-				}
-			}}
-		>
-			{isDirectory ? (
-				<Icon
-					name={node.isOpen ? 'ChevronDown' : 'ChevronRight'}
-					className="text-muted-foreground size-3.5 shrink-0"
-					aria-hidden
-				/>
-			) : (
-				<span className="inline-block w-3.5 shrink-0" />
-			)}
-			<Icon
-				name="Files"
-				className={cn(
-					'size-3.5 shrink-0',
-					isDirectory ? 'text-muted-foreground' : 'text-foreground/80',
-				)}
-				aria-hidden
-			/>
-			<span className="truncate">{data.name}</span>
-		</button>
+		<div className="max-h-72 overflow-y-auto">
+			{entries.map((entry) => {
+				const nextPath = getSelectablePath(entry, firstFileByDirectory)
+				const isSelected = !entry.isDirectory && selectedPath === entry.path
+				return (
+					<button
+						key={entry.path}
+						type="button"
+						onClick={() => {
+							if (nextPath) onSelectPath(nextPath)
+						}}
+						className={cn(
+							'hover:bg-muted/70 flex w-full items-center gap-2 rounded px-2 py-1.5 text-left text-sm',
+							isSelected ? 'bg-muted' : null,
+						)}
+					>
+						<Icon
+							name="Files"
+							className={cn(
+								'size-3.5 shrink-0',
+								entry.isDirectory ? 'text-muted-foreground' : 'text-foreground/80',
+							)}
+							aria-hidden
+						/>
+						<span className="truncate">
+							{entry.name}
+							{entry.isDirectory ? '/' : ''}
+						</span>
+					</button>
+				)
+			})}
+		</div>
 	)
 }
 
@@ -164,40 +188,53 @@ function FileContent({
 	appName: string
 	file: AppFile | null
 }) {
-	const [content, setContent] = React.useState<string | null>(null)
+	const [mdxCode, setMdxCode] = React.useState<string | null>(null)
 	const [errorMessage, setErrorMessage] = React.useState<string | null>(null)
-	const isTextLike = file?.kind === 'text' || file?.kind === 'markdown'
+	const [isLoadingCode, setIsLoadingCode] = React.useState(false)
 	const fileUrl = file ? toFileUrl(appName, file.path) : null
+	const shouldCompileMdx = file?.kind === 'text' || file?.kind === 'markdown'
 
 	React.useEffect(() => {
-		if (!file || !fileUrl || !isTextLike) {
-			setContent(null)
+		if (!file || !shouldCompileMdx) {
+			setMdxCode(null)
 			setErrorMessage(null)
+			setIsLoadingCode(false)
 			return
 		}
 		const controller = new AbortController()
-		setContent(null)
+		setMdxCode(null)
 		setErrorMessage(null)
-		fetch(fileUrl, { signal: controller.signal })
+		setIsLoadingCode(true)
+
+		const params = new URLSearchParams({
+			path: file.path,
+			kind: file.kind,
+			...(file.language ? { language: file.language } : {}),
+		})
+		fetch(`/app/${encodeURIComponent(appName)}/file-preview?${params}`, {
+			signal: controller.signal,
+		})
 			.then(async (response) => {
 				if (!response.ok) {
-					throw new Error(`Failed to load file (${response.status})`)
+					throw new Error(`Failed to render file (${response.status})`)
 				}
-				const text = await response.text()
-				setContent(text)
+				const payload = (await response.json()) as FilePreviewData
+				setMdxCode(payload.code)
+				setIsLoadingCode(false)
 			})
 			.catch((error: unknown) => {
 				if (controller.signal.aborted) return
 				setErrorMessage(error instanceof Error ? error.message : String(error))
+				setIsLoadingCode(false)
 			})
 
 		return () => controller.abort()
-	}, [file, fileUrl, isTextLike])
+	}, [appName, file, shouldCompileMdx])
 
 	if (!file) {
 		return (
 			<div className="text-muted-foreground flex h-full items-center justify-center p-6 text-sm">
-				Choose a file from the explorer.
+				Choose a file from the file picker.
 			</div>
 		)
 	}
@@ -205,6 +242,23 @@ function FileContent({
 	if (errorMessage) {
 		return (
 			<div className="text-foreground-destructive p-4 text-sm">{errorMessage}</div>
+		)
+	}
+
+	if (shouldCompileMdx) {
+		if (isLoadingCode || !mdxCode) {
+			return (
+				<div className="text-muted-foreground flex h-full items-center justify-center p-6 text-sm">
+					Rendering file...
+				</div>
+			)
+		}
+		return (
+			<div className="h-full overflow-auto p-4">
+				<div className="prose dark:prose-invert max-w-none">
+					<Mdx code={mdxCode} />
+				</div>
+			</div>
 		)
 	}
 
@@ -232,49 +286,6 @@ function FileContent({
 		)
 	}
 
-	if (file.kind === 'markdown') {
-		if (content === null) {
-			return (
-				<div className="text-muted-foreground flex h-full items-center justify-center p-6 text-sm">
-					Loading markdown...
-				</div>
-			)
-		}
-		return (
-			<div className="h-full overflow-auto p-4">
-				<article className="prose dark:prose-invert max-w-none">
-					<ReactMarkdown remarkPlugins={[remarkGfm]}>{content}</ReactMarkdown>
-				</article>
-			</div>
-		)
-	}
-
-	if (file.kind === 'text') {
-		if (content === null) {
-			return (
-				<div className="text-muted-foreground flex h-full items-center justify-center p-6 text-sm">
-					Loading file...
-				</div>
-			)
-		}
-		const language = file.language ?? 'text'
-		return (
-			<div className="h-full overflow-auto p-4">
-				<div className="mb-2 inline-flex rounded border border-border bg-muted px-2 py-1 font-mono text-xs uppercase">
-					{language}
-				</div>
-				<pre className="bg-muted/40 scrollbar-thin scrollbar-thumb-scrollbar overflow-x-auto rounded border border-border p-4 text-sm">
-					<code
-						className={cn(file.language ? `language-${file.language}` : null)}
-						data-language={language}
-					>
-						{content}
-					</code>
-				</pre>
-			</div>
-		)
-	}
-
 	return (
 		<div className="flex h-full flex-col items-center justify-center gap-3 p-6 text-center">
 			<p className="text-muted-foreground text-sm">
@@ -294,17 +305,14 @@ function FileContent({
 	)
 }
 
-export function FileAppExplorer({
-	appName,
-}: {
-	appName: string
-}) {
+export function FileAppExplorer({ appName }: { appName: string }) {
 	const [files, setFiles] = React.useState<Array<AppFile>>([])
 	const [isLoadingFiles, setIsLoadingFiles] = React.useState(true)
 	const [filesError, setFilesError] = React.useState<string | null>(null)
 	const [selectedPath, setSelectedPath] = React.useState<string | null>(null)
-	const { ref: treeContainerRef, height: treeHeight } =
-		useElementHeight<HTMLDivElement>()
+	const [filePickerOpen, setFilePickerOpen] = React.useState(false)
+	const [fileQuery, setFileQuery] = React.useState('')
+	const breadcrumbScrollRef = React.useRef<HTMLDivElement | null>(null)
 
 	React.useEffect(() => {
 		const controller = new AbortController()
@@ -332,82 +340,168 @@ export function FileAppExplorer({
 		return () => controller.abort()
 	}, [appName])
 
-	const treeData = React.useMemo(() => buildTree(files), [files])
-	const fileMap = React.useMemo(
-		() => new Map(files.map((file) => [file.path, file])),
-		[files],
+	const indexes = React.useMemo(() => buildIndexes(files), [files])
+	const selectedFile = selectedPath
+		? indexes.filesByPath.get(selectedPath) ?? null
+		: null
+	const breadcrumbs = React.useMemo(
+		() => getBreadcrumbParts(selectedPath),
+		[selectedPath],
 	)
+	const filteredFiles = React.useMemo(() => {
+		const normalizedQuery = fileQuery.trim().toLowerCase()
+		if (!normalizedQuery) return files
+		return files.filter((file) => file.path.toLowerCase().includes(normalizedQuery))
+	}, [fileQuery, files])
 
 	React.useEffect(() => {
-		if (selectedPath && fileMap.has(selectedPath)) return
+		if (selectedPath && indexes.filesByPath.has(selectedPath)) return
 		setSelectedPath(files[0]?.path ?? null)
-	}, [fileMap, files, selectedPath])
+	}, [files, indexes.filesByPath, selectedPath])
 
-	const selectedFile = selectedPath ? fileMap.get(selectedPath) ?? null : null
-	const selectedDisplayPath = selectedFile?.path ?? null
+	React.useEffect(() => {
+		const element = breadcrumbScrollRef.current
+		if (!element) return
+		const raf = requestAnimationFrame(() => {
+			element.scrollLeft = element.scrollWidth
+		})
+		return () => cancelAnimationFrame(raf)
+	}, [selectedPath])
+
+	if (isLoadingFiles) {
+		return (
+			<div className="text-muted-foreground flex h-full items-center justify-center text-sm">
+				Loading files...
+			</div>
+		)
+	}
+
+	if (filesError) {
+		return (
+			<div className="text-foreground-destructive flex h-full items-center justify-center px-3 text-sm">
+				{filesError}
+			</div>
+		)
+	}
+
+	if (files.length === 0) {
+		return (
+			<div className="text-muted-foreground flex h-full items-center justify-center text-sm">
+				No files to display.
+			</div>
+		)
+	}
 
 	return (
-		<div className="grid h-full min-h-0 grid-cols-[minmax(220px,320px)_1fr]">
-			<div className="border-border bg-background/60 flex min-h-0 flex-col border-r">
-				<div className="border-border text-muted-foreground flex h-10 shrink-0 items-center border-b px-3 text-xs uppercase">
-					Files
-				</div>
-				<div ref={treeContainerRef} className="min-h-0 flex-1 overflow-hidden p-2">
-					{isLoadingFiles ? (
-						<div className="text-muted-foreground flex h-full items-center justify-center text-sm">
-							Loading files...
-						</div>
-					) : filesError ? (
-						<div className="text-foreground-destructive flex h-full items-center justify-center px-3 text-sm">
-							{filesError}
-						</div>
-					) : files.length === 0 ? (
-						<div className="text-muted-foreground flex h-full items-center justify-center text-sm">
-							No files to display.
-						</div>
-					) : (
-						<Tree<ExplorerNode>
-							data={treeData}
-							width="100%"
-							height={treeHeight || 360}
-							indent={16}
-							openByDefault={false}
-							disableDrag
-							disableDrop
-							selection={selectedPath ? `file:${selectedPath}` : undefined}
-							onActivate={(node) => {
-								if (!node.data.isDirectory) {
-									setSelectedPath(node.data.path)
-								}
-							}}
+		<div className="bg-background flex h-full min-h-0 flex-col">
+			<div className="border-border flex h-10 shrink-0 items-center gap-2 border-b px-2">
+				<Popover open={filePickerOpen} onOpenChange={setFilePickerOpen}>
+					<PopoverTrigger asChild>
+						<button
+							type="button"
+							aria-label="Open file chooser"
+							className="hover:bg-muted text-foreground inline-flex h-8 w-8 items-center justify-center rounded border border-transparent"
 						>
-							{(props) => (
-								<ExplorerTreeNode {...props} onSelectFile={setSelectedPath} />
+							<Icon name="Files" className="size-4" />
+						</button>
+					</PopoverTrigger>
+					<PopoverContent align="start" className="w-[min(420px,80vw)] p-0">
+						<div className="border-border border-b p-2">
+							<input
+								type="text"
+								value={fileQuery}
+								onChange={(event) => setFileQuery(event.currentTarget.value)}
+								placeholder="Filter files..."
+								className="border-border bg-background w-full rounded border px-2 py-1 text-sm outline-none"
+							/>
+						</div>
+						<div className="max-h-80 overflow-y-auto p-1">
+							{filteredFiles.length ? (
+								filteredFiles.map((file) => (
+									<button
+										key={file.path}
+										type="button"
+										onClick={() => {
+											setSelectedPath(file.path)
+											setFilePickerOpen(false)
+										}}
+										className={cn(
+											'hover:bg-muted/70 block w-full rounded px-2 py-1.5 text-left font-mono text-xs',
+											selectedPath === file.path ? 'bg-muted' : null,
+										)}
+									>
+										{file.path}
+									</button>
+								))
+							) : (
+								<p className="text-muted-foreground px-2 py-2 text-xs">
+									No matching files.
+								</p>
 							)}
-						</Tree>
-					)}
+						</div>
+					</PopoverContent>
+				</Popover>
+
+				<div
+					ref={breadcrumbScrollRef}
+					className="scrollbar-thin scrollbar-thumb-scrollbar min-w-0 flex-1 overflow-x-auto"
+				>
+					<div className="flex w-max min-w-full items-center gap-1 pr-2">
+						{breadcrumbs.map((crumb, index) => {
+							const siblings =
+								index === 0
+									? indexes.childrenByDirectory.get('')
+									: indexes.childrenByDirectory.get(crumb.parentPath)
+							const isCurrent =
+								crumb.path === selectedPath ||
+								(index === 0 && selectedPath === null)
+							return (
+								<React.Fragment key={`${crumb.path || 'root'}:${index}`}>
+									<Popover>
+										<PopoverTrigger asChild>
+											<button
+												type="button"
+												className={cn(
+													'hover:bg-muted inline-flex h-7 items-center rounded px-2 font-mono text-xs',
+													isCurrent
+														? 'bg-muted text-foreground'
+														: 'text-muted-foreground',
+												)}
+											>
+												{crumb.label}
+											</button>
+										</PopoverTrigger>
+										<PopoverContent align="start" className="w-72 p-1">
+											<SiblingEntryList
+												entries={siblings ?? []}
+												selectedPath={selectedPath}
+												firstFileByDirectory={indexes.firstFileByDirectory}
+												onSelectPath={setSelectedPath}
+											/>
+										</PopoverContent>
+									</Popover>
+									{index < breadcrumbs.length - 1 ? (
+										<span className="text-muted-foreground text-xs">/</span>
+									) : null}
+								</React.Fragment>
+							)
+						})}
+					</div>
 				</div>
+
+				{selectedFile ? (
+					<LaunchEditor
+						appName={appName}
+						appFile={`${selectedFile.path},1,1`}
+						className="text-muted-foreground hover:text-foreground text-xs"
+					>
+						Open in editor
+					</LaunchEditor>
+				) : null}
 			</div>
-			<div className="bg-background flex min-h-0 flex-col">
-				<div className="border-border flex h-10 shrink-0 items-center justify-between gap-2 border-b px-3">
-					<p className="text-muted-foreground truncate font-mono text-xs">
-						{selectedDisplayPath ?? 'Select a file'}
-					</p>
-					{selectedFile ? (
-						<LaunchEditor
-							appName={appName}
-							appFile={`${selectedFile.path},1,1`}
-							className="text-muted-foreground hover:text-foreground text-xs"
-						>
-							Open in editor
-						</LaunchEditor>
-					) : null}
-				</div>
-				<div className="min-h-0 flex-1">
-					<FileContent appName={appName} file={selectedFile} />
-				</div>
+			<div className="min-h-0 flex-1">
+				<FileContent appName={appName} file={selectedFile} />
 			</div>
 		</div>
 	)
 }
-

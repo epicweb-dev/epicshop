@@ -100,7 +100,6 @@
     "p-queue": "^9.1.0",
     "partysocket": "^1.1.13",
     "react": "^19.2.4",
-    "react-arborist": "^3.4.3",
     "react-dom": "^19.2.4",
     "react-error-boundary": "^6.1.0",
     "react-markdown": "^10.1.0",

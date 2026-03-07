@@ -110,7 +110,7 @@ export function Preview({
 			</div>
 		)
 	} else if (dev.type === 'file') {
-		return <FileAppExplorer appName={name} />
+		return <FileAppExplorer appName={appInfo.appName ?? name} />
 	} else {
 		return (
 			<div className="flex h-full items-center justify-center text-lg">
