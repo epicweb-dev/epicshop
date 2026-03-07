@@ -1,6 +1,9 @@
 import { type Route } from './+types/files'
 import path from 'node:path'
-import { makeTimings, getServerTimeHeader } from '@epic-web/workshop-utils/timing.server'
+import {
+	makeTimings,
+	getServerTimeHeader,
+} from '@epic-web/workshop-utils/timing.server'
 import { globby } from 'globby'
 import mimeTypes from 'mime-types'
 import { data } from 'react-router'
@@ -157,7 +160,8 @@ export async function loader({ request, params }: Route.LoaderArgs) {
 			const normalizedPath = file.replace(/\\/g, '/')
 			if (path.basename(normalizedPath) === 'README.mdx') continue
 			if (filesByPath.has(normalizedPath)) continue
-			const mimeType = mimeTypes.lookup(normalizedPath) || 'application/octet-stream'
+			const mimeType =
+				mimeTypes.lookup(normalizedPath) || 'application/octet-stream'
 			const extension = path.extname(normalizedPath).toLowerCase()
 			filesByPath.set(normalizedPath, {
 				path: normalizedPath,

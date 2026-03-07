@@ -142,7 +142,9 @@ function SiblingEntryList({
 }) {
 	if (entries.length === 0) {
 		return (
-			<p className="text-muted-foreground px-3 py-2 text-xs">No files available.</p>
+			<p className="text-muted-foreground px-3 py-2 text-xs">
+				No files available.
+			</p>
 		)
 	}
 	return (
@@ -166,7 +168,9 @@ function SiblingEntryList({
 							name="Files"
 							className={cn(
 								'size-3.5 shrink-0',
-								entry.isDirectory ? 'text-muted-foreground' : 'text-foreground/80',
+								entry.isDirectory
+									? 'text-muted-foreground'
+									: 'text-foreground/80',
 							)}
 							aria-hidden
 						/>
@@ -241,7 +245,9 @@ function FileContent({
 
 	if (errorMessage) {
 		return (
-			<div className="text-foreground-destructive p-4 text-sm">{errorMessage}</div>
+			<div className="text-foreground-destructive p-4 text-sm">
+				{errorMessage}
+			</div>
 		)
 	}
 
@@ -272,7 +278,7 @@ function FileContent({
 				<img
 					src={fileUrl}
 					alt={file.path}
-					className="max-h-full max-w-full rounded border border-border object-contain"
+					className="border-border max-h-full max-w-full rounded border object-contain"
 				/>
 			</div>
 		)
@@ -284,7 +290,7 @@ function FileContent({
 				<video
 					src={fileUrl}
 					controls
-					className="bg-background max-h-full max-w-full rounded border border-border"
+					className="bg-background border-border max-h-full max-w-full rounded border"
 				/>
 			</div>
 		)
@@ -346,7 +352,7 @@ export function FileAppExplorer({ appName }: { appName: string }) {
 
 	const indexes = React.useMemo(() => buildIndexes(files), [files])
 	const selectedFile = selectedPath
-		? indexes.filesByPath.get(selectedPath) ?? null
+		? (indexes.filesByPath.get(selectedPath) ?? null)
 		: null
 	const breadcrumbs = React.useMemo(
 		() => getBreadcrumbParts(selectedPath),
@@ -355,7 +361,9 @@ export function FileAppExplorer({ appName }: { appName: string }) {
 	const filteredFiles = React.useMemo(() => {
 		const normalizedQuery = fileQuery.trim().toLowerCase()
 		if (!normalizedQuery) return files
-		return files.filter((file) => file.path.toLowerCase().includes(normalizedQuery))
+		return files.filter((file) =>
+			file.path.toLowerCase().includes(normalizedQuery),
+		)
 	}, [fileQuery, files])
 
 	React.useEffect(() => {

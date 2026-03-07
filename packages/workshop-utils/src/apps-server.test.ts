@@ -67,7 +67,10 @@ test('classifies non-index app without package.json as file dev type', async () 
 	await using workshop = await createTempWorkshop()
 	const fileExtraDir = path.join(workshop.root, 'extra', '01.files')
 	await fs.mkdir(fileExtraDir, { recursive: true })
-	await fs.writeFile(path.join(fileExtraDir, 'notes.txt'), 'hello file explorer')
+	await fs.writeFile(
+		path.join(fileExtraDir, 'notes.txt'),
+		'hello file explorer',
+	)
 
 	process.env.EPICSHOP_CONTEXT_CWD = workshop.root
 	;(

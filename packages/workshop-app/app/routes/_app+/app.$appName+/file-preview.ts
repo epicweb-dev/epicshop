@@ -1,7 +1,10 @@
 import { type Route } from './+types/file-preview'
 import path from 'node:path'
 import { compileMarkdownString } from '@epic-web/workshop-utils/compile-mdx.server'
-import { makeTimings, getServerTimeHeader } from '@epic-web/workshop-utils/timing.server'
+import {
+	makeTimings,
+	getServerTimeHeader,
+} from '@epic-web/workshop-utils/timing.server'
 import fsExtra from 'fs-extra'
 import { data } from 'react-router'
 import { z } from 'zod'
@@ -65,9 +68,8 @@ export async function loader({ request, params }: Route.LoaderArgs) {
 	}
 
 	const source = await fsExtra.readFile(filePath, 'utf8')
-	const markdown = kind === 'markdown'
-		? source
-		: makeFencedCodeBlock(source, language)
+	const markdown =
+		kind === 'markdown' ? source : makeFencedCodeBlock(source, language)
 	const code = await compileMarkdownString(markdown)
 
 	return data(
