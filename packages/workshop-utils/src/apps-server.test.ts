@@ -62,3 +62,48 @@ test('returns playground info when base app is missing', async () => {
 	expect(playgroundApp?.appName).toBe('05.02.problem')
 	expect(playgroundApp?.isUpToDate).toBe(false)
 }, 15000)
+
+test('classifies non-index app without package.json as file dev type', async () => {
+	await using workshop = await createTempWorkshop()
+	const fileExtraDir = path.join(workshop.root, 'extra', '01.files')
+	await fs.mkdir(fileExtraDir, { recursive: true })
+	await fs.writeFile(path.join(fileExtraDir, 'notes.txt'), 'hello file explorer')
+
+	process.env.EPICSHOP_CONTEXT_CWD = workshop.root
+	;(
+		globalThis as { __epicshop_apps_initialized__?: boolean }
+	).__epicshop_apps_initialized__ = false
+	vi.resetModules()
+
+	const { getApps, setWorkshopRoot } = await import('./apps.server.ts')
+	setWorkshopRoot(workshop.root)
+
+	const apps = await getApps()
+	const fileApp = apps.find((app) => app.fullPath === fileExtraDir)
+	expect(fileApp).toBeTruthy()
+	expect(fileApp?.dev.type).toBe('file')
+}, 15000)
+
+test('classifies non-package app with index file as browser dev type', async () => {
+	await using workshop = await createTempWorkshop()
+	const browserExtraDir = path.join(workshop.root, 'extra', '02.browser')
+	await fs.mkdir(browserExtraDir, { recursive: true })
+	await fs.writeFile(
+		path.join(browserExtraDir, 'index.js'),
+		'console.log("browser app")',
+	)
+
+	process.env.EPICSHOP_CONTEXT_CWD = workshop.root
+	;(
+		globalThis as { __epicshop_apps_initialized__?: boolean }
+	).__epicshop_apps_initialized__ = false
+	vi.resetModules()
+
+	const { getApps, setWorkshopRoot } = await import('./apps.server.ts')
+	setWorkshopRoot(workshop.root)
+
+	const apps = await getApps()
+	const browserApp = apps.find((app) => app.fullPath === browserExtraDir)
+	expect(browserApp).toBeTruthy()
+	expect(browserApp?.dev.type).toBe('browser')
+}, 15000)

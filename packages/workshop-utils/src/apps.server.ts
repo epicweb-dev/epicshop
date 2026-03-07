@@ -161,6 +161,10 @@ const BaseAppSchema = z.object({
 			type: z.literal('export'),
 			pathname: z.string(),
 		}),
+		z.object({
+			type: z.literal('file'),
+			pathname: z.string(),
+		}),
 		z.object({ type: z.literal('none') }),
 	]),
 	stackBlitzUrl: z.string().nullable(),
@@ -943,7 +947,20 @@ async function getDevInfo({
 	const hasPackageJson = await fsExtra.pathExists(packageJsonPath)
 
 	if (!hasPackageJson) {
-		return { type: 'browser', pathname: getPathname(fullPath) }
+		const hasIndexEntry = Boolean(
+			await firstToExist(
+				path.join(fullPath, 'index.html'),
+				path.join(fullPath, 'index.tsx'),
+				path.join(fullPath, 'index.ts'),
+				path.join(fullPath, 'index.jsx'),
+				path.join(fullPath, 'index.js'),
+				path.join(fullPath, 'index.mjs'),
+				path.join(fullPath, 'index.cjs'),
+			),
+		)
+		return hasIndexEntry
+			? { type: 'browser', pathname: getPathname(fullPath) }
+			: { type: 'file', pathname: getPathname(fullPath) }
 	} else {
 		return { type: 'none' }
 	}

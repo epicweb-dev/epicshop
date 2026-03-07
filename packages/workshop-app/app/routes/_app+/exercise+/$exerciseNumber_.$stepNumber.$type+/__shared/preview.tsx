@@ -1,6 +1,7 @@
 import { type BaseExerciseStepApp } from '@epic-web/workshop-utils/apps.server'
 import { useState } from 'react'
 import { useSearchParams } from 'react-router'
+import { FileAppExplorer } from '#app/components/file-app-explorer.tsx'
 import { Icon } from '#app/components/icons'
 import {
 	InBrowserBrowser,
@@ -108,6 +109,8 @@ export function Preview({
 				/>
 			</div>
 		)
+	} else if (dev.type === 'file') {
+		return <FileAppExplorer appName={name} />
 	} else {
 		return (
 			<div className="flex h-full items-center justify-center text-lg">
