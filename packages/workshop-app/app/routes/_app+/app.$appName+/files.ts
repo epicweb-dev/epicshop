@@ -58,7 +58,6 @@ const textExtensions = new Set([
 	'.scss',
 	'.sh',
 	'.sql',
-	'.svg',
 	'.toml',
 	'.ts',
 	'.tsx',

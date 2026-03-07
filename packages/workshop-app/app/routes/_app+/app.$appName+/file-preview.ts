@@ -23,6 +23,18 @@ function makeFencedCodeBlock(source: string, language?: string) {
 	return `${fence}${info}\n${source}\n${fence}`
 }
 
+function resolveSafePath(root: string, relativePath: string) {
+	const resolvedRoot = path.resolve(root)
+	const resolvedPath = path.resolve(root, relativePath)
+	if (
+		resolvedPath === resolvedRoot ||
+		resolvedPath.startsWith(`${resolvedRoot}${path.sep}`)
+	) {
+		return resolvedPath
+	}
+	return null
+}
+
 export async function loader({ request, params }: Route.LoaderArgs) {
 	ensureUndeployed()
 	const timings = makeTimings('app-file-preview')
@@ -39,10 +51,15 @@ export async function loader({ request, params }: Route.LoaderArgs) {
 	}
 
 	const { path: relativePath, kind, language } = query.data
-	const filePath = await firstExisting(
-		path.join(app.fullPath, relativePath),
-		path.join(fileApp.fullPath, relativePath),
-	)
+	const candidatePaths = [
+		resolveSafePath(app.fullPath, relativePath),
+		resolveSafePath(fileApp.fullPath, relativePath),
+	].filter((value): value is string => Boolean(value))
+	if (candidatePaths.length === 0) {
+		throw new Response('Invalid file path', { status: 400 })
+	}
+
+	const filePath = await firstExisting(...candidatePaths)
 	if (!filePath) {
 		throw new Response('File not found', { status: 404 })
 	}
