@@ -457,6 +457,9 @@ export function FileAppExplorer({ appName }: { appName: string }) {
 					className="scrollbar-thin scrollbar-thumb-scrollbar min-w-0 flex-1 overflow-x-auto"
 				>
 					<div className="flex w-max min-w-full items-center gap-1 pr-2">
+						{breadcrumbs.length > 0 ? (
+							<span className="text-muted-foreground text-xs">/</span>
+						) : null}
 						{breadcrumbs.map((crumb, index) => {
 							const siblings = indexes.childrenByDirectory.get(crumb.parentPath)
 							const isCurrent = crumb.path === selectedPath
