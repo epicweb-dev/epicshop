@@ -104,9 +104,7 @@ function buildIndexes(files: Array<AppFile>): FileIndexes {
 }
 
 function getBreadcrumbParts(pathValue: string | null): Array<BreadcrumbPart> {
-	const breadcrumbs: Array<BreadcrumbPart> = [
-		{ label: 'root', path: '', parentPath: '', isDirectory: true },
-	]
+	const breadcrumbs: Array<BreadcrumbPart> = []
 	if (!pathValue) return breadcrumbs
 
 	const parts = pathValue.split('/').filter(Boolean)
@@ -460,15 +458,10 @@ export function FileAppExplorer({ appName }: { appName: string }) {
 				>
 					<div className="flex w-max min-w-full items-center gap-1 pr-2">
 						{breadcrumbs.map((crumb, index) => {
-							const siblings =
-								index === 0
-									? indexes.childrenByDirectory.get('')
-									: indexes.childrenByDirectory.get(crumb.parentPath)
-							const isCurrent =
-								crumb.path === selectedPath ||
-								(index === 0 && selectedPath === null)
+							const siblings = indexes.childrenByDirectory.get(crumb.parentPath)
+							const isCurrent = crumb.path === selectedPath
 							return (
-								<React.Fragment key={`${crumb.path || 'root'}:${index}`}>
+								<React.Fragment key={`${crumb.path}:${index}`}>
 									<Popover>
 										<PopoverTrigger asChild>
 											<button
