@@ -3,7 +3,7 @@ import path from 'path'
 import { getAppByName } from '@epic-web/workshop-utils/apps.server'
 import { launchEditor } from '@epic-web/workshop-utils/launch-editor.server'
 import fsExtra from 'fs-extra'
-import { useEffect } from 'react'
+import { type MouseEvent, useEffect } from 'react'
 import { Link, useFetcher } from 'react-router'
 import { z, type ZodTypeAny } from 'zod'
 import { showProgressBarField } from '#app/components/progress-bar.tsx'
@@ -38,6 +38,7 @@ const LaunchSchema = z.intersection(
 export async function action({ request }: Route.ActionArgs) {
 	ensureUndeployed()
 	const formData = await request.formData()
+	const skipOpenAfterSync = formData.get('skipOpenAfterSync') === 'true'
 	const appFileValues = formData
 		.getAll('appFile')
 		.filter((value): value is string => typeof value === 'string')
@@ -134,7 +135,8 @@ export async function action({ request }: Route.ActionArgs) {
 	}
 
 	const filesToOpen = await getFiles(form)
-	if ('syncTo' in form && form.syncTo) {
+	const hasSyncTarget = 'syncTo' in form && Boolean(form.syncTo)
+	if (hasSyncTarget && form.syncTo) {
 		const originFiles = await getFiles(form.syncTo)
 		for (let index = 0; index < originFiles.length; index++) {
 			const originFile = originFiles[index]
@@ -148,6 +150,9 @@ export async function action({ request }: Route.ActionArgs) {
 			await fsExtra.ensureDir(path.dirname(destFile.filepath))
 			await fsExtra.promises.copyFile(originFile.filepath, destFile.filepath)
 		}
+	}
+	if (hasSyncTarget && skipOpenAfterSync) {
+		return dataWithPE(request, formData, { status: 'success' } as const)
 	}
 	const results: Array<
 		{ status: 'success' } | { status: 'error'; message: string }
@@ -231,6 +236,15 @@ function LaunchEditorImpl({
 }: LaunchEditorProps) {
 	const fetcher = useLaunchFetcher(onUpdate)
 	const peRedirectInput = usePERedirectInput()
+	const handleSubmitButtonClick = (event: MouseEvent<HTMLButtonElement>) => {
+		if (!syncTo || !event.altKey || !event.metaKey) return
+		event.preventDefault()
+		const form = event.currentTarget.form
+		if (!form) return
+		const formData = new FormData(form)
+		formData.set('skipOpenAfterSync', 'true')
+		void fetcher.submit(formData, { method: 'POST', action: '/launch-editor' })
+	}
 
 	if (!file && !appFile) {
 		console.error('LaunchEditor: requires either "file" or "appFile" prop.')
@@ -270,6 +284,7 @@ function LaunchEditorImpl({
 			) : null}
 			<button
 				type="submit"
+				onClick={handleSubmitButtonClick}
 				className={cn(
 					'launch_button',
 					fetcher.state === 'idle' ? null : 'cursor-progress',
