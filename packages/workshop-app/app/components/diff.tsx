@@ -203,7 +203,10 @@ function DiffFileActions({
 					syncTo={{ appFile: app2Path, appName: app2Name }}
 					className={arrowButtonClassName}
 				>
-					<Icon name="ArrowLeft" title="Copy app 2 file to app 1" />
+					<Icon
+						name="ArrowLeft"
+						title="Copy app 2 file to app 1 (Option+Command to sync without opening)"
+					/>
 				</LaunchEditor>
 				<LaunchEditor
 					appFile={app2Path}
@@ -211,7 +214,10 @@ function DiffFileActions({
 					syncTo={{ appFile: app1Path, appName: app1Name }}
 					className={arrowButtonClassName}
 				>
-					<Icon name="ArrowRight" title="Copy app 1 file to app 2" />
+					<Icon
+						name="ArrowRight"
+						title="Copy app 1 file to app 2 (Option+Command to sync without opening)"
+					/>
 				</LaunchEditor>
 			</div>
 			<LaunchEditor

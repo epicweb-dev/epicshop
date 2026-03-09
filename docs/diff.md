@@ -29,6 +29,15 @@ The `/diff` route renders raw git patch output with `@pierre/diffs` (see
 https://diffs.com) so we can use the same diff rendering primitives in the app
 and keep the UI behavior consistent with the diffs.com component model.
 
+## Sync shortcuts
+
+Hold <kbd>Option</kbd> to reveal the left/right sync arrows in each diffed file
+header.
+
+- Click an arrow to sync and open the destination file.
+- Click while holding <kbd>Option</kbd> + <kbd>Command</kbd> to sync without
+  opening the destination file.
+
 ## Cache
 
 Because the diffs are pretty expensive, we load them asynchronously (streamed to
