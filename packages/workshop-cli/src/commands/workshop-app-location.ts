@@ -34,7 +34,7 @@ export type WorkshopAppResolution = {
 }
 
 type ResolutionDeps = {
-	env?: NodeJS.ProcessEnv
+	env?: Partial<NodeJS.ProcessEnv>
 	cwd?: () => string
 	homedir?: () => string
 	readTextFile?: ReadTextFile
