@@ -1326,9 +1326,19 @@ The CLI automatically detects the environment:
 
 If the CLI can't find the workshop app:
 
-1. Ensure the workshop app is installed: `npm install -g @epic-web/workshop-app`
-2. Set the `EPICSHOP_APP_LOCATION` environment variable
-3. Use the `--app-location` flag to specify the path
+1. If you are inside a workshop repository, run `npm install` from the workshop
+   root first so its local `epicshop` install can resolve
+   `@epic-web/workshop-app`
+2. If the workshop keeps a local `epicshop` directory (for example `./epicshop`
+   or `./.epicshop`), reinstall that local directory if it is missing or
+   incomplete
+3. Set the `EPICSHOP_APP_LOCATION` environment variable or pass `--app-location`
+   if your workshop app lives in a separate checkout
+4. If you are relying on a global install, run
+   `npm install -g @epic-web/workshop-app`
+
+When startup fails, the CLI now lists each lookup it attempted so you can see
+which path or installation method was checked.
 
 ### Port Conflicts
 

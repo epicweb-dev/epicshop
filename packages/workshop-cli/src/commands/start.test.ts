@@ -5,7 +5,11 @@ import net from 'node:net'
 import os from 'node:os'
 import path from 'node:path'
 import { fileURLToPath, pathToFileURL } from 'node:url'
-import { test } from 'vitest'
+import { expect, test } from 'vitest'
+import {
+	buildWorkshopAppNotFoundMessage,
+	resolveWorkshopAppLocation,
+} from './workshop-app-location.ts'
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url))
 const repoRoot = path.resolve(__dirname, '..', '..', '..', '..')
@@ -59,6 +63,65 @@ testIf(
 	20000,
 )
 
+test('start explains when a workshop repo is missing its local epicshop install (aha)', async () => {
+	const workshopRoot = '/tmp/advanced-react-apis'
+	const resolution = await resolveWorkshopAppLocation(
+		{},
+		{
+			cwd: () => path.join(workshopRoot, 'exercises', '01.problem'),
+			env: {},
+			homedir: () => '/home/tester',
+			readTextFile: async (filePath) => {
+				if (filePath === path.join(workshopRoot, 'package.json')) {
+					return JSON.stringify({
+						name: 'advanced-react-apis',
+						epicshop: { title: 'Advanced React APIs' },
+						scripts: {
+							start: 'npx --prefix ./.epicshop epicshop start',
+						},
+					})
+				}
+				throw Object.assign(
+					new Error(`ENOENT: no such file or directory, open '${filePath}'`),
+					{
+						code: 'ENOENT',
+					},
+				)
+			},
+			accessPath: async (filePath) => {
+				if (filePath === path.join(workshopRoot, 'package.json')) return
+				throw Object.assign(
+					new Error(`ENOENT: no such file or directory, access '${filePath}'`),
+					{
+						code: 'ENOENT',
+					},
+				)
+			},
+			resolveImport: () => {
+				throw new Error('not resolved in test')
+			},
+			runCommand: () => '/global/node_modules',
+		},
+	)
+
+	expect(resolution.appDir).toBeNull()
+	expect(resolution.workshopContext).toEqual({
+		workshopRoot,
+		localCliPrefix: './.epicshop',
+		localCliDir: path.join(workshopRoot, '.epicshop'),
+		localCliDirExists: false,
+	})
+
+	const message = buildWorkshopAppNotFoundMessage(resolution)
+
+	expect(message).toContain('This looks like a workshop repository')
+	expect(message).toContain('Run `npm install` in the workshop root')
+	expect(message).toContain('`./.epicshop`')
+	expect(message).toContain('Lookups attempted:')
+	expect(message).toContain('EPICSHOP_APP_LOCATION: not set')
+	expect(message).toContain('--app-location: not provided')
+})
+
 async function createRunnerFixture() {
 	const rootDir = await mkdtemp(path.join(os.tmpdir(), 'epicshop-start-'))
 	const appDir = path.join(rootDir, 'fake-workshop')
@@ -69,7 +132,7 @@ async function createRunnerFixture() {
 		path.join(appDir, 'package.json'),
 		JSON.stringify(
 			{
-				name: 'fake-workshop',
+				name: '@epic-web/workshop-app',
 				version: '0.0.0',
 				type: 'module',
 				epicshop: {

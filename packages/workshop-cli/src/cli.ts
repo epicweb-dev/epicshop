@@ -153,9 +153,6 @@ const cli = yargs(args)
 									`❌ ${result.message || 'Failed to start workshop application'}`,
 								),
 							)
-							if (result.error) {
-								console.error(chalk.red(result.error.message))
-							}
 						}
 						process.exit(1)
 					}
