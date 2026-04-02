@@ -34,6 +34,40 @@ npm run dev
 Make sure that if the path includes spaces, you wrap the path in quotes as shown
 above (note the use of single quotes wrapping the double quotes!).
 
+## Git hooks
+
+This repo installs Git hooks automatically via Husky when you run `npm install`
+because the root `prepare` script runs `husky`.
+
+### Pre-commit
+
+Every commit runs:
+
+- `npm run format:staged` to format only staged files with Prettier via
+  `lint-staged`
+- `npm run lint`
+- `npm run typecheck`
+- `npm run build`
+
+If a staged file is reformatted, lint-staged updates the staged copy before the
+rest of the checks continue.
+
+### Pre-push
+
+Every push runs:
+
+- `npm run test`
+
+### Running the same checks manually
+
+```sh
+npm run precommit
+npm run prepush
+```
+
+If you need to bypass hooks for an emergency local workflow, use Git's
+`--no-verify` flag intentionally and sparingly.
+
 ## CI Workflows
 
 This repository has two main CI workflows that run on pushes to `main`:
