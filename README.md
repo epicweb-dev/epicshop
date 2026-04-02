@@ -69,6 +69,15 @@ Useful scripts:
 
 - `npm run lint` / `npm run format`
 - `npm run test` (unit) / `npm run test:e2e` (playwright)
+- `npm run precommit` to run the same checks as the Git pre-commit hook
+- `npm run prepush` to run the same checks as the Git pre-push hook
+
+Git hooks are installed automatically via `npm install`/`npm run setup` with
+Husky:
+
+- `pre-commit`: formats staged files with Prettier via `lint-staged`, then runs
+  linting, type checking, and builds the workspace
+- `pre-push`: runs the test suite before allowing a push
 
 ## Links
 
