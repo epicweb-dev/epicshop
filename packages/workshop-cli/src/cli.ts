@@ -148,11 +148,12 @@ const cli = yargs(args)
 
 					if (!result.success) {
 						if (!argv.silent) {
-							console.error(
-								chalk.red(
-									`❌ ${result.message || 'Failed to start workshop application'}`,
-								),
-							)
+							const message =
+								result.message || 'Failed to start workshop application'
+							console.error(chalk.red(`❌ ${message}`))
+							if (result.error?.message && result.error.message !== message) {
+								console.error(chalk.red(result.error.message))
+							}
 						}
 						process.exit(1)
 					}
@@ -1801,7 +1802,15 @@ try {
 							.catch(() => {})
 						const { start } = await import('./commands/start.js')
 						const result = await start({})
-						if (!result.success) process.exit(1)
+						if (!result.success) {
+							const message =
+								result.message || 'Failed to start workshop application'
+							console.error(chalk.red(`❌ ${message}`))
+							if (result.error?.message && result.error.message !== message) {
+								console.error(chalk.red(result.error.message))
+							}
+							process.exit(1)
+						}
 					} finally {
 						process.chdir(originalCwd)
 					}
