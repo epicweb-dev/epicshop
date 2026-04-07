@@ -25,6 +25,16 @@ export type StartResult = {
 	error?: Error
 }
 
+type WorkshopAppAttempt = {
+	source: string
+	dir: string
+}
+
+type WorkshopAppResolution = {
+	appDir: string | null
+	attempts: Array<WorkshopAppAttempt>
+}
+
 /**
  * Display help information about environment variables and debug logging
  */
@@ -112,13 +122,22 @@ export function displayHelp() {
 export async function start(options: StartOptions = {}): Promise<StartResult> {
 	try {
 		// Find workshop-app directory using new resolution order
-		const appDir = await findWorkshopAppDir(options.appLocation)
-		if (!appDir) {
-			const errorMessage =
-				'Could not locate workshop-app directory. Please ensure the workshop app is installed or specify its location using:\n  - Environment variable: EPICSHOP_APP_LOCATION\n  - Command line flag: --app-location\n  - Global installation: npm install -g @epic-web/workshop-app'
+		const resolution = await findWorkshopAppDir(options.appLocation)
+		if (!resolution.appDir) {
+			const errorMessage = formatWorkshopAppResolutionErrorMessage(
+				resolution.attempts,
+			)
 
 			if (!options.silent) {
 				console.error(chalk.red('❌ Could not locate workshop-app directory'))
+				console.error(chalk.yellow('Tried these directories:'))
+				if (resolution.attempts.length > 0) {
+					for (const attempt of resolution.attempts) {
+						console.error(chalk.yellow(`  - ${attempt.source}: ${attempt.dir}`))
+					}
+				} else {
+					console.error(chalk.yellow('  - No candidate directories were tried'))
+				}
 				console.error(
 					chalk.yellow(
 						'Please ensure the workshop app is installed or specify its location using:',
@@ -141,6 +160,8 @@ export async function start(options: StartOptions = {}): Promise<StartResult> {
 				error: new Error(errorMessage),
 			}
 		}
+
+		const appDir = resolution.appDir
 
 		const isPublished = await appIsPublished(appDir)
 		const isProd = process.env.NODE_ENV === 'production' || isPublished
@@ -594,6 +615,45 @@ export async function start(options: StartOptions = {}): Promise<StartResult> {
 	}
 }
 
+const workshopAppHelpLines = [
+	'Please ensure the workshop app is installed or specify its location using:',
+	'  - Environment variable: EPICSHOP_APP_LOCATION',
+	'  - Command line flag: --app-location',
+	'  - Global installation: npm install -g @epic-web/workshop-app',
+]
+
+export function formatWorkshopAppResolutionErrorMessage(
+	attempts: Array<WorkshopAppAttempt>,
+): string {
+	const lines = [
+		'Could not locate workshop-app directory.',
+		'Tried these directories:',
+	]
+
+	if (attempts.length > 0) {
+		lines.push(
+			...attempts.map((attempt) => `  - ${attempt.source}: ${attempt.dir}`),
+		)
+	} else {
+		lines.push('  - No candidate directories were tried')
+	}
+
+	lines.push(...workshopAppHelpLines)
+
+	return lines.join('\n')
+}
+
+async function resolveWorkshopAppCandidate(
+	candidate: WorkshopAppAttempt,
+): Promise<string | null> {
+	try {
+		await fs.promises.access(path.join(candidate.dir, 'package.json'))
+		return candidate.dir
+	} catch {
+		return null
+	}
+}
+
 // Helper functions
 
 async function killChild(child: ChildProcess | null): Promise<void> {
@@ -644,44 +704,54 @@ async function killChild(child: ChildProcess | null): Promise<void> {
 
 async function findWorkshopAppDir(
 	appLocation?: string,
-): Promise<string | null> {
+): Promise<WorkshopAppResolution> {
+	const attempts: Array<WorkshopAppAttempt> = []
+
 	// 1. Check process.env.EPICSHOP_APP_LOCATION
 	if (process.env.EPICSHOP_APP_LOCATION) {
-		const envDir = path.resolve(process.env.EPICSHOP_APP_LOCATION)
-		try {
-			await fs.promises.access(path.join(envDir, 'package.json'))
-			return envDir
-		} catch {
-			// Continue to next step
+		const candidate = {
+			source: 'EPICSHOP_APP_LOCATION',
+			dir: path.resolve(process.env.EPICSHOP_APP_LOCATION),
 		}
+		attempts.push(candidate)
+		const envDir = await resolveWorkshopAppCandidate(candidate)
+		if (envDir) return { appDir: envDir, attempts }
 	}
 
 	// 2. Check command line flag --app-location
 	if (appLocation) {
-		const flagDir = path.resolve(appLocation)
-		try {
-			await fs.promises.access(path.join(flagDir, 'package.json'))
-			return flagDir
-		} catch {
-			// Continue to next step
+		const candidate = {
+			source: '--app-location',
+			dir: path.resolve(appLocation),
 		}
+		attempts.push(candidate)
+		const flagDir = await resolveWorkshopAppCandidate(candidate)
+		if (flagDir) return { appDir: flagDir, attempts }
 	}
 
 	// 3. Node's resolution process
 	try {
-		const workshopAppPath = import.meta
-			.resolve('@epic-web/workshop-app/package.json')
-		const packagePath = fileURLToPath(workshopAppPath)
-		return path.dirname(packagePath)
+		const candidate = {
+			source: 'node module resolution',
+			dir: path.dirname(
+				fileURLToPath(
+					import.meta.resolve('@epic-web/workshop-app/package.json'),
+				),
+			),
+		}
+		attempts.push(candidate)
+		const packagePath = await resolveWorkshopAppCandidate(candidate)
+		if (packagePath) return { appDir: packagePath, attempts }
 	} catch {
 		// Continue to next step
 	}
 
 	// 4. Global installation lookup
 	try {
-		const globalDir = await findGlobalWorkshopApp()
-		if (globalDir) {
-			return globalDir
+		const globalResolution = await findGlobalWorkshopApp()
+		attempts.push(...globalResolution.attempts)
+		if (globalResolution.appDir) {
+			return { appDir: globalResolution.appDir, attempts }
 		}
 	} catch {
 		// Continue to next step
@@ -691,18 +761,18 @@ async function findWorkshopAppDir(
 	try {
 		const cliPkgPath = import.meta.resolve('epicshop/package.json')
 		const cliPkgDir = path.dirname(fileURLToPath(cliPkgPath))
-		const relativePath = path.resolve(cliPkgDir, '..', '..', 'workshop-app')
-		try {
-			await fs.promises.access(path.join(relativePath, 'package.json'))
-			return relativePath
-		} catch {
-			// Continue to final return
+		const candidate = {
+			source: 'monorepo fallback',
+			dir: path.resolve(cliPkgDir, '..', '..', 'workshop-app'),
 		}
+		attempts.push(candidate)
+		const relativePath = await resolveWorkshopAppCandidate(candidate)
+		if (relativePath) return { appDir: relativePath, attempts }
 	} catch {
 		// Continue to final return
 	}
 
-	return null
+	return { appDir: null, attempts }
 }
 
 function getGlobalNodeModulesPathFromPrefix(prefix: string): string {
@@ -717,12 +787,20 @@ function getGlobalWorkshopAppCandidatePaths(
 	env: NodeJS.ProcessEnv,
 	homeDir: string,
 	npmRoot?: string,
-): Array<string> {
-	const candidatePaths = new Set<string>()
+): Array<WorkshopAppAttempt> {
+	const candidatePaths = new Map<string, WorkshopAppAttempt>()
 
-	const addCandidateFromPrefix = (prefix?: string) => {
+	const addCandidate = (source: string, dir: string) => {
+		const resolvedDir = path.resolve(dir)
+		if (!candidatePaths.has(resolvedDir)) {
+			candidatePaths.set(resolvedDir, { source, dir: resolvedDir })
+		}
+	}
+
+	const addCandidateFromPrefix = (source: string, prefix?: string) => {
 		if (!prefix) return
-		candidatePaths.add(
+		addCandidate(
+			source,
 			path.join(
 				getGlobalNodeModulesPathFromPrefix(prefix),
 				'@epic-web/workshop-app',
@@ -733,31 +811,39 @@ function getGlobalWorkshopAppCandidatePaths(
 	// When `epicshop` is started through `npx --prefix`, npm rewrites
 	// `npm root -g` to that local prefix. The original global prefix can still
 	// be available via the uppercase env var, so prefer it first.
-	addCandidateFromPrefix(env.NPM_CONFIG_PREFIX)
+	addCandidateFromPrefix('NPM_CONFIG_PREFIX', env.NPM_CONFIG_PREFIX)
 
 	if (npmRoot) {
-		candidatePaths.add(path.join(npmRoot, '@epic-web/workshop-app'))
+		addCandidate('npm root -g', path.join(npmRoot, '@epic-web/workshop-app'))
 	}
 
-	addCandidateFromPrefix(env.npm_config_prefix)
+	addCandidateFromPrefix('npm_config_prefix', env.npm_config_prefix)
 
-	candidatePaths.add(
+	addCandidate(
+		'~/.npm-global',
 		path.join(homeDir, '.npm-global/lib/node_modules/@epic-web/workshop-app'),
 	)
-	candidatePaths.add(
+	addCandidate(
+		'~/.npm-packages',
 		path.join(homeDir, '.npm-packages/lib/node_modules/@epic-web/workshop-app'),
 	)
-	candidatePaths.add('/usr/local/lib/node_modules/@epic-web/workshop-app')
-	candidatePaths.add('/usr/lib/node_modules/@epic-web/workshop-app')
+	addCandidate(
+		'system global (/usr/local)',
+		'/usr/local/lib/node_modules/@epic-web/workshop-app',
+	)
+	addCandidate(
+		'system global (/usr)',
+		'/usr/lib/node_modules/@epic-web/workshop-app',
+	)
 
-	return [...candidatePaths]
+	return [...candidatePaths.values()]
 }
 
 export async function findGlobalWorkshopApp(options?: {
 	env?: NodeJS.ProcessEnv
 	homeDir?: string
 	npmRoot?: string
-}): Promise<string | null> {
+}): Promise<WorkshopAppResolution> {
 	const env = options?.env ?? process.env
 	const homeDir = options?.homeDir ?? os.homedir()
 	let npmRoot = options?.npmRoot
@@ -770,20 +856,16 @@ export async function findGlobalWorkshopApp(options?: {
 		}
 	}
 
-	for (const globalPath of getGlobalWorkshopAppCandidatePaths(
-		env,
-		homeDir,
-		npmRoot,
-	)) {
-		try {
-			await fs.promises.access(path.join(globalPath, 'package.json'))
-			return globalPath
-		} catch {
-			// Continue to next path
+	const attempts = getGlobalWorkshopAppCandidatePaths(env, homeDir, npmRoot)
+
+	for (const globalPath of attempts) {
+		const resolvedPath = await resolveWorkshopAppCandidate(globalPath)
+		if (resolvedPath) {
+			return { appDir: resolvedPath, attempts }
 		}
 	}
 
-	return null
+	return { appDir: null, attempts }
 }
 
 async function appIsPublished(appDir: string): Promise<boolean> {

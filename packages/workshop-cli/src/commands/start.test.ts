@@ -6,7 +6,10 @@ import os from 'node:os'
 import path from 'node:path'
 import { fileURLToPath, pathToFileURL } from 'node:url'
 import { expect, test } from 'vitest'
-import { findGlobalWorkshopApp } from './start.ts'
+import {
+	findGlobalWorkshopApp,
+	formatWorkshopAppResolutionErrorMessage,
+} from './start.ts'
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url))
 const repoRoot = path.resolve(__dirname, '..', '..', '..', '..')
@@ -88,7 +91,33 @@ test('findGlobalWorkshopApp prefers NPM_CONFIG_PREFIX over npm root -g', async (
 		npmRoot: path.join(localPrefix, 'lib', 'node_modules'),
 	})
 
-	expect(result).toBe(globalAppDir)
+	expect(result.appDir).toBe(globalAppDir)
+	expect(result.attempts).toContainEqual({
+		source: 'NPM_CONFIG_PREFIX',
+		dir: globalAppDir,
+	})
+})
+
+test('formatWorkshopAppResolutionErrorMessage lists attempted directories', () => {
+	expect(
+		formatWorkshopAppResolutionErrorMessage([
+			{
+				source: 'EPICSHOP_APP_LOCATION',
+				dir: '/tmp/custom-workshop-app',
+			},
+			{
+				source: 'npm root -g',
+				dir: '/tmp/global/lib/node_modules/@epic-web/workshop-app',
+			},
+		]),
+	).toContain(
+		[
+			'Could not locate workshop-app directory.',
+			'Tried these directories:',
+			'  - EPICSHOP_APP_LOCATION: /tmp/custom-workshop-app',
+			'  - npm root -g: /tmp/global/lib/node_modules/@epic-web/workshop-app',
+		].join('\n'),
+	)
 })
 
 async function createRunnerFixture() {
