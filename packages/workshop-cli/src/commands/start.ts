@@ -705,36 +705,76 @@ async function findWorkshopAppDir(
 	return null
 }
 
-async function findGlobalWorkshopApp(): Promise<string | null> {
-	// Try to find globally installed workshop app
-	try {
-		const npmRoot = execSync('npm root -g', { encoding: 'utf-8' }).trim()
-		const globalAppPath = path.join(npmRoot, '@epic-web/workshop-app')
-		try {
-			await fs.promises.access(path.join(globalAppPath, 'package.json'))
-			return globalAppPath
-		} catch {
-			// Continue to common global locations
-		}
-	} catch {
-		// If npm root -g fails, try common global locations
+function getGlobalNodeModulesPathFromPrefix(prefix: string): string {
+	return path.join(
+		path.resolve(prefix),
+		process.platform === 'win32' ? 'node_modules' : 'lib',
+		'node_modules',
+	)
+}
+
+function getGlobalWorkshopAppCandidatePaths(
+	env: NodeJS.ProcessEnv,
+	homeDir: string,
+	npmRoot?: string,
+): Array<string> {
+	const candidatePaths = new Set<string>()
+
+	const addCandidateFromPrefix = (prefix?: string) => {
+		if (!prefix) return
+		candidatePaths.add(
+			path.join(
+				getGlobalNodeModulesPathFromPrefix(prefix),
+				'@epic-web/workshop-app',
+			),
+		)
 	}
 
-	// Try common global locations
-	const commonGlobalPaths = [
-		path.join(
-			os.homedir(),
-			'.npm-global/lib/node_modules/@epic-web/workshop-app',
-		),
-		path.join(
-			os.homedir(),
-			'.npm-packages/lib/node_modules/@epic-web/workshop-app',
-		),
-		'/usr/local/lib/node_modules/@epic-web/workshop-app',
-		'/usr/lib/node_modules/@epic-web/workshop-app',
-	]
+	// When `epicshop` is started through `npx --prefix`, npm rewrites
+	// `npm root -g` to that local prefix. The original global prefix can still
+	// be available via the uppercase env var, so prefer it first.
+	addCandidateFromPrefix(env.NPM_CONFIG_PREFIX)
 
-	for (const globalPath of commonGlobalPaths) {
+	if (npmRoot) {
+		candidatePaths.add(path.join(npmRoot, '@epic-web/workshop-app'))
+	}
+
+	addCandidateFromPrefix(env.npm_config_prefix)
+
+	candidatePaths.add(
+		path.join(homeDir, '.npm-global/lib/node_modules/@epic-web/workshop-app'),
+	)
+	candidatePaths.add(
+		path.join(homeDir, '.npm-packages/lib/node_modules/@epic-web/workshop-app'),
+	)
+	candidatePaths.add('/usr/local/lib/node_modules/@epic-web/workshop-app')
+	candidatePaths.add('/usr/lib/node_modules/@epic-web/workshop-app')
+
+	return [...candidatePaths]
+}
+
+export async function findGlobalWorkshopApp(options?: {
+	env?: NodeJS.ProcessEnv
+	homeDir?: string
+	npmRoot?: string
+}): Promise<string | null> {
+	const env = options?.env ?? process.env
+	const homeDir = options?.homeDir ?? os.homedir()
+	let npmRoot = options?.npmRoot
+
+	if (!npmRoot) {
+		try {
+			npmRoot = execSync('npm root -g', { encoding: 'utf-8' }).trim()
+		} catch {
+			// If npm root -g fails, continue with env-derived and common locations.
+		}
+	}
+
+	for (const globalPath of getGlobalWorkshopAppCandidatePaths(
+		env,
+		homeDir,
+		npmRoot,
+	)) {
 		try {
 			await fs.promises.access(path.join(globalPath, 'package.json'))
 			return globalPath

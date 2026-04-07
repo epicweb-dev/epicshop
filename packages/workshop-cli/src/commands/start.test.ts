@@ -5,7 +5,8 @@ import net from 'node:net'
 import os from 'node:os'
 import path from 'node:path'
 import { fileURLToPath, pathToFileURL } from 'node:url'
-import { test } from 'vitest'
+import { expect, test } from 'vitest'
+import { findGlobalWorkshopApp } from './start.ts'
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url))
 const repoRoot = path.resolve(__dirname, '..', '..', '..', '..')
@@ -15,18 +16,18 @@ const testIf = process.platform === 'win32' ? test.skip : test
 testIf(
 	'start releases the child server port on shutdown',
 	async () => {
-		const { appDir, runnerPath, cleanup } = await createRunnerFixture()
+		await using fixture = await createRunnerFixture()
 		let child: ChildProcess | null = null
 		try {
 			child = spawn(
 				process.execPath,
-				['--experimental-transform-types', runnerPath],
+				['--experimental-transform-types', fixture.runnerPath],
 				{
 					cwd: repoRoot,
 					env: {
 						...process.env,
-						EPICSHOP_APP_LOCATION: appDir,
-						EPICSHOP_CONTEXT_CWD: appDir,
+						EPICSHOP_APP_LOCATION: fixture.appDir,
+						EPICSHOP_CONTEXT_CWD: fixture.appDir,
 						NODE_ENV: 'development',
 					},
 					stdio: ['ignore', 'pipe', 'pipe'],
@@ -53,15 +54,46 @@ testIf(
 			if (child && !child.killed) {
 				child.kill('SIGKILL')
 			}
-			await cleanup()
 		}
 	},
 	20000,
 )
 
+test('findGlobalWorkshopApp prefers NPM_CONFIG_PREFIX over npm root -g', async () => {
+	await using tempDir = await createTempDir('epicshop-global-app-')
+	const homeDir = path.join(tempDir.path, 'home')
+	const globalPrefix = path.join(tempDir.path, 'global-prefix')
+	const localPrefix = path.join(tempDir.path, 'local-prefix')
+	const globalAppDir = path.join(
+		globalPrefix,
+		'lib',
+		'node_modules',
+		'@epic-web',
+		'workshop-app',
+	)
+
+	await mkdir(globalAppDir, { recursive: true })
+	await writeFile(
+		path.join(globalAppDir, 'package.json'),
+		JSON.stringify({ name: '@epic-web/workshop-app', version: '0.0.0' }),
+	)
+
+	const result = await findGlobalWorkshopApp({
+		env: {
+			...process.env,
+			NPM_CONFIG_PREFIX: globalPrefix,
+			npm_config_prefix: localPrefix,
+		},
+		homeDir,
+		npmRoot: path.join(localPrefix, 'lib', 'node_modules'),
+	})
+
+	expect(result).toBe(globalAppDir)
+})
+
 async function createRunnerFixture() {
-	const rootDir = await mkdtemp(path.join(os.tmpdir(), 'epicshop-start-'))
-	const appDir = path.join(rootDir, 'fake-workshop')
+	const rootDir = await createTempDir('epicshop-start-')
+	const appDir = path.join(rootDir.path, 'fake-workshop')
 	await mkdir(path.join(appDir, 'server'), { recursive: true })
 	await mkdir(path.join(appDir, 'app'), { recursive: true })
 
@@ -106,7 +138,7 @@ async function createRunnerFixture() {
 		].join('\n'),
 	)
 
-	const runnerPath = path.join(rootDir, 'start-runner.ts')
+	const runnerPath = path.join(rootDir.path, 'start-runner.ts')
 	const startModuleUrl = pathToFileURL(
 		path.join(
 			repoRoot,
@@ -135,8 +167,19 @@ async function createRunnerFixture() {
 	return {
 		appDir,
 		runnerPath,
-		cleanup: async () => {
-			await rm(rootDir, { recursive: true, force: true })
+		async [Symbol.asyncDispose]() {
+			await rootDir[Symbol.asyncDispose]()
+		},
+	}
+}
+
+async function createTempDir(prefix: string) {
+	const root = await mkdtemp(path.join(os.tmpdir(), prefix))
+
+	return {
+		path: root,
+		async [Symbol.asyncDispose]() {
+			await rm(root, { recursive: true, force: true })
 		},
 	}
 }
