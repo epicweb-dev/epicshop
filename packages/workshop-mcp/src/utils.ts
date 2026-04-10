@@ -9,7 +9,7 @@ import { z } from 'zod/v3'
 export const workshopDirectoryInputSchema = z
 	.string()
 	.describe(
-		'Absolute path to the workshop root directory. Passing a /playground path is allowed and will be normalized to the workshop root.',
+		'Absolute or relative path to the workshop root directory. Relative paths are resolved from the current working directory. Passing a /playground path is allowed and will be normalized to the workshop root.',
 	)
 
 async function isWorkshopDirectory(workshopDirectory: string) {
@@ -41,7 +41,7 @@ export async function handleWorkshopDirectory(workshopDirectory: string) {
 	if (!workshopDirectory) throw new Error('The workshop directory is required')
 
 	if (!path.isAbsolute(workshopDirectory)) {
-		throw new Error('The workshop directory must be an absolute path')
+		workshopDirectory = path.resolve(process.cwd(), workshopDirectory)
 	}
 
 	if (workshopDirectory.endsWith(`${path.sep}playground`)) {
