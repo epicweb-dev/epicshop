@@ -126,10 +126,26 @@ test('handleWorkshopDirectory rejects blank input (aha)', async () => {
 	)
 })
 
-test('handleWorkshopDirectory rejects relative paths', async () => {
-	await expect(handleWorkshopDirectory('workshop')).rejects.toThrow(
-		'The workshop directory must be an absolute path',
-	)
+test('handleWorkshopDirectory resolves relative paths from cwd (aha)', async () => {
+	await using fixture = await createWorkshopFixture()
+	vi.mocked(console.error).mockImplementation(() => {})
+	const originalCwd = process.cwd()
+	const parentDir = path.dirname(fixture.root)
+	const relativePath = path.relative(parentDir, fixture.root)
+
+	const { init } = await import('@epic-web/workshop-utils/apps.server')
+	const initMock = vi.mocked(init)
+	initMock.mockClear()
+
+	try {
+		process.chdir(parentDir)
+		await expect(handleWorkshopDirectory(relativePath)).resolves.toBe(
+			fixture.root,
+		)
+		expect(initMock).toHaveBeenCalledWith(fixture.root)
+	} finally {
+		process.chdir(originalCwd)
+	}
 })
 
 test('handleWorkshopDirectory normalizes playground to workshop root', async () => {
