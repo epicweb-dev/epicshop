@@ -164,8 +164,12 @@ test('handleWorkshopDirectory normalizes playground to workshop root', async () 
 test('handleWorkshopDirectory rejects when no workshop directory found (aha)', async () => {
 	await using fixture = await createTempDir()
 	vi.mocked(console.error).mockImplementation(() => {})
+	const searchStartDirectory = path.join(fixture.root, 'nested', 'deeper')
+	const filesystemRoot = path.parse(searchStartDirectory).root
 
-	await expect(handleWorkshopDirectory(fixture.root)).rejects.toThrow(
-		/No workshop directory found/,
+	await mkdir(searchStartDirectory, { recursive: true })
+
+	await expect(handleWorkshopDirectory(searchStartDirectory)).rejects.toThrow(
+		`No workshop directory found while searching upward from "${searchStartDirectory}" to filesystem root "${filesystemRoot}"`,
 	)
 })

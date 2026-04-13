@@ -48,10 +48,14 @@ export async function handleWorkshopDirectory(workshopDirectory: string) {
 		workshopDirectory = path.join(workshopDirectory, '..')
 	}
 
+	const searchStartDirectory = workshopDirectory
+
 	while (true) {
 		if (await isWorkshopDirectory(workshopDirectory)) break
 		if (workshopDirectory === path.dirname(workshopDirectory)) {
-			throw new Error(`No workshop directory found in "${workshopDirectory}"`)
+			throw new Error(
+				`No workshop directory found while searching upward from "${searchStartDirectory}" to filesystem root "${workshopDirectory}"`,
+			)
 		}
 		workshopDirectory = path.dirname(workshopDirectory)
 	}
