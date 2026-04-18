@@ -66,6 +66,7 @@ import { getSentryUser } from './utils/sentry-user'
 import { getSeoMetaTags } from './utils/seo'
 import { getToast } from './utils/toast.server'
 import { useIsOnline } from './utils/online'
+import './utils/media-chrome-menu-guard'
 
 export const links: LinksFunction = () => {
 	return [
