@@ -27,6 +27,7 @@ import {
 	MuxPlayer,
 	usePlayerPreferences,
 } from '#app/routes/video-player/index.tsx'
+import { attachMediaChromeRangeGuards } from '#app/utils/media-chrome-patch.ts'
 import { cn } from '#app/utils/misc.tsx'
 import { useIsOnline } from '#app/utils/online.ts'
 import { useRootLoaderData } from '#app/utils/root-loader.ts'
@@ -768,6 +769,9 @@ function EpicVideo({
 			onDelete={handleDelete}
 		/>
 	) : null
+	React.useEffect(() => {
+		attachMediaChromeRangeGuards()
+	}, [])
 	return (
 		<div>
 			<div className="shadow-lg">
