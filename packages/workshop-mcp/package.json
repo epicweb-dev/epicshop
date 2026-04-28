@@ -42,7 +42,7 @@
     "@epic-web/workshop-utils": "file:../workshop-utils",
     "@mcp-ui/server": "^6.0.1",
     "@modelcontextprotocol/sdk": "^1.26.0",
-    "@sentry/node": "^10.38.0",
+    "@sentry/node": "^10.50.0",
     "openid-client": "^6.8.2",
     "zod": "^4.3.6"
   },
