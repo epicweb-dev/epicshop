@@ -114,7 +114,7 @@
     "get-port": "^7.2.0",
     "match-sorter": "^8.3.0",
     "open": "^11.0.0",
-    "openid-client": "^6.8.2",
+    "openid-client": "^6.8.4",
     "ora": "^9.4.0",
     "yargs": "^18.0.0"
   },
