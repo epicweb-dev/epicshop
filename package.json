@@ -39,7 +39,7 @@
     "@nx/js": "22.7.0",
     "@nx/playwright": "22.7.0",
     "@nx/workspace": "22.7.0",
-    "@playwright/test": "^1.58.2",
+    "@playwright/test": "^1.59.1",
     "@types/yargs": "^17.0.35",
     "cross-env": "^10.1.0",
     "dotenv": "^17.4.2",
@@ -50,7 +50,7 @@
     "nx": "22.7.0",
     "oxfmt": "^0.47.0",
     "oxlint": "^1.62.0",
-    "react-router": "^7.13.0",
+    "react-router": "^7.14.2",
     "tsx": "^4.21.0",
     "yargs": "^18.0.0",
     "yoctocolors": "^2.1.2"
@@ -63,13 +63,13 @@
     "husky": "^9.1.7",
     "lint-staged": "^16.4.0",
     "unicorn-magic": "^0.4.0",
-    "vitest": "^4.0.18"
+    "vitest": "^4.1.5"
   },
   "lint-staged": {
     "**/*.{cjs,css,html,js,json,jsx,md,mdx,mjs,ts,tsx,yaml,yml}": "oxfmt -c ./oxfmt.config.ts"
   },
   "overrides": {
     "unicorn-magic": "^0.4.0",
-    "vite": "7.3.1"
+    "vite": "8.0.10"
   }
 }
