@@ -18,7 +18,8 @@
     "test": "vitest run",
     "test:watch": "vitest",
     "test:e2e": "./other/nx-fallback.js test:e2e",
-    "format": "./other/nx-fallback.js format:write",
+    "format": "oxfmt -c ./oxfmt.config.ts",
+    "format:check": "oxfmt -c ./oxfmt.config.ts --check",
     "format:staged": "lint-staged",
     "precommit": "npm run format:staged && npm run lint && npm run typecheck && npm run build",
     "prepush": "npm run test",
@@ -47,9 +48,8 @@
     "globby": "^16.2.0",
     "npm-run-all": "^4.1.5",
     "nx": "22.7.0",
+    "oxfmt": "^0.47.0",
     "oxlint": "^1.62.0",
-    "prettier": "^3.8.3",
-    "prettier-plugin-tailwindcss": "^0.8.0",
     "react-router": "^7.13.0",
     "tsx": "^4.21.0",
     "yargs": "^18.0.0",
@@ -66,7 +66,7 @@
     "vitest": "^4.0.18"
   },
   "lint-staged": {
-    "*": "prettier --ignore-unknown --write"
+    "**/*.{cjs,css,html,js,json,jsx,md,mdx,mjs,ts,tsx,yaml,yml}": "oxfmt -c ./oxfmt.config.ts"
   },
   "overrides": {
     "unicorn-magic": "^0.4.0",

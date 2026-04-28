@@ -75,7 +75,7 @@ Useful scripts:
 Git hooks are installed automatically via `npm install`/`npm run setup` with
 Husky:
 
-- `pre-commit`: formats staged files with Prettier via `lint-staged`, then runs
+- `pre-commit`: formats staged files with Oxfmt via `lint-staged`, then runs
   linting, type checking, and builds the workspace
 - `pre-push`: runs the test suite before allowing a push
 
