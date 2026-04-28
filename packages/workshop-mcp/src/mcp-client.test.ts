@@ -22,6 +22,8 @@ type ToolCallResult = {
 	isError?: boolean
 }
 
+type TestEnvOverrides = Partial<NodeJS.ProcessEnv>
+
 class McpTestClient {
 	#child: ReturnType<typeof spawn>
 	#stdin: NodeJS.WritableStream
@@ -50,7 +52,7 @@ class McpTestClient {
 		this.#child.on('error', (error) => this.failPendingRequests(error))
 	}
 
-	static async start() {
+	static async start(envOverrides: TestEnvOverrides = {}) {
 		const testFilePath = fileURLToPath(import.meta.url)
 		const testDir = path.dirname(testFilePath)
 		const packageRoot = path.resolve(testDir, '..')
@@ -62,13 +64,16 @@ class McpTestClient {
 			throw new Error(`tsx package not found at ${tsxPackage}`)
 		}
 
+		const childEnv: NodeJS.ProcessEnv = {
+			...process.env,
+			...envOverrides,
+			NODE_ENV: 'test',
+		}
+
 		const child = spawn(process.execPath, ['--import', 'tsx', serverEntry], {
 			stdio: ['pipe', 'pipe', 'pipe'],
 			cwd: workspaceRoot,
-			env: {
-				...process.env,
-				NODE_ENV: 'test',
-			},
+			env: childEnv,
 		})
 
 		return new McpTestClient(child)
@@ -190,7 +195,13 @@ type DisposableClient = {
 }
 
 async function createDisposableClient(): Promise<DisposableClient> {
-	const client = await McpTestClient.start()
+	return createDisposableClientWithEnv()
+}
+
+async function createDisposableClientWithEnv(
+	envOverrides: TestEnvOverrides = {},
+): Promise<DisposableClient> {
+	const client = await McpTestClient.start(envOverrides)
 	try {
 		const initResult = await client.initialize()
 		return {
@@ -217,6 +228,23 @@ test(
 	'workshop MCP server initializes with instructions and server info',
 	async () => {
 		await using resources = await createDisposableClient()
+		expect(resources.initResult).toEqual(
+			expect.objectContaining({
+				protocolVersion: expect.any(String),
+				serverInfo: expect.any(Object),
+				instructions: expect.any(String),
+			}),
+		)
+	},
+	testTimeoutMs,
+)
+
+test(
+	'workshop MCP server still initializes when published mode is forced in tests',
+	async () => {
+		await using resources = await createDisposableClientWithEnv({
+			EPICSHOP_IS_PUBLISHED: 'true',
+		})
 		expect(resources.initResult).toEqual(
 			expect.objectContaining({
 				protocolVersion: expect.any(String),

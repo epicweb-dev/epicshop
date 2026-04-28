@@ -11,9 +11,13 @@ import { initPromptTools, initResourceTools, initTools } from './tools.ts'
 
 // Get environment variables
 const env = getEnv()
+const shouldEnableSentry =
+	process.env.NODE_ENV !== 'test' &&
+	env.EPICSHOP_IS_PUBLISHED &&
+	Boolean(env.SENTRY_DSN)
 
 // Initialize Sentry if published and DSN is available
-if (env.EPICSHOP_IS_PUBLISHED && env.SENTRY_DSN) {
+if (shouldEnableSentry) {
 	Sentry.init({
 		dsn: env.SENTRY_DSN,
 		sendDefaultPii: true,
@@ -35,10 +39,9 @@ const server = new McpServer(
 )
 
 // Wrap with Sentry if enabled
-const monitoredServer =
-	env.EPICSHOP_IS_PUBLISHED && env.SENTRY_DSN
-		? Sentry.wrapMcpServerWithSentry(server)
-		: server
+const monitoredServer = shouldEnableSentry
+	? Sentry.wrapMcpServerWithSentry(server)
+	: server
 
 initTools(monitoredServer)
 initResourceTools(monitoredServer)
