@@ -7,6 +7,6 @@
 	},
 	"dependencies": {
 		"execa": "^9.6.1",
-		"globby": "^16.1.0"
+		"globby": "^16.2.0"
 	}
 }

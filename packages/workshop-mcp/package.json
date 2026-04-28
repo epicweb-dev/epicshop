@@ -48,11 +48,11 @@
   },
   "devDependencies": {
     "@modelcontextprotocol/inspector": "^0.20.0",
-    "@types/node": "^25.2.3",
+    "@types/node": "^25.6.0",
     "tsx": "^4.21.0",
     "typescript": "^5.9.3",
     "vitest": "^4.0.18",
-    "zshy": "^0.7.0"
+    "zshy": "^0.7.1"
   },
   "repository": {
     "type": "git",
