@@ -130,12 +130,12 @@ function extractEpicTitle(urlString: string) {
 	titleSegment = titleSegment.replace(/~[^ ]*$/, '')
 
 	const titleWords = titleSegment.split('-')
-	// prettier-ignore
+	// oxfmt-ignore
 	const lowerCaseWords = [
 		'the', 'a', 'an', 'and', 'but', 'or', 'for', 'nor', 'on', 'at', 'to',
 		'from', 'by', 'of', 'in', 'with', 'as', 'npm', 'git', 'ssh', 'cli'
 	]
-	// prettier-ignore
+	// oxfmt-ignore
 	const literalWords = [
 		'OAuth', 'UI', 'UX', 'API', 'CSS', 'HTML', 'JS', 'TS', 'SVG', 'AI', 'CSRF',
 		'CORS', 'HTTP', 'HTTPS', 'URL', 'URI', 'DB', 'SQL', 'JSON', 'YAML', 'YML',

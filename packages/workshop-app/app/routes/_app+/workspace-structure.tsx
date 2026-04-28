@@ -91,7 +91,10 @@ export default function WorkspaceStructure() {
 								<p className="text-muted-foreground text-sm">
 									<strong>Your workspace.</strong> This is where you practice
 									and develop your skills.
-									<strong className="text-primary"> Always work here</strong> to
+									<strong className="text-primary">
+										{' '}
+										Always work here
+									</strong> to
 									complete exercises and experiment with the code.
 								</p>
 							</div>

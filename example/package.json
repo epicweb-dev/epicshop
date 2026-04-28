@@ -43,7 +43,7 @@
     "setup": "node ./epicshop/setup.js",
     "setup:custom": "node ./epicshop/setup-custom.js",
     "lint": "oxlint .",
-    "format": "prettier --write .",
+    "format": "oxfmt",
     "typecheck": "tsc -b",
     "validate:all": "npm-run-all --parallel --print-label --print-name --continue-on-error test:all lint typecheck"
   },
@@ -51,8 +51,8 @@
   "author": "Kent C. Dodds <me@kentcdodds.com> (https://kentcdodds.com/)",
   "license": "MIT",
   "devDependencies": {
-    "@epic-web/config": "^1.24.1",
-    "prettier": "^3.8.3",
+    "@epic-web/config": "^3.1.0",
+    "oxfmt": "^0.47.0",
     "typescript": "^5.9.3"
   },
   "dependencies": {
@@ -65,6 +65,5 @@
   "engines": {
     "node": "20 || 22 || 24",
     "npm": ">=8.16.0"
-  },
-  "prettier": "@epic-web/config/prettier"
+  }
 }

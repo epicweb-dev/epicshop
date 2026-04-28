@@ -43,10 +43,8 @@ jobs:
           git config --global user.email "me+bot@kentcdodds.com"
           git config --global user.name "Kody 🐨"
 
-      - name: 🎨 Run Prettier
-        run:
-          npx prettier --write "**/*.{js,jsx,ts,tsx,md,css}" --ignore-path
-          .prettierignore
+      - name: 🎨 Run formatter
+        run: npm run format
 
       - name: 🔍 Run Oxlint --fix
         run: npm exec -- oxlint . --fix
