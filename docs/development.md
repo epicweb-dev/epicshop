@@ -43,7 +43,7 @@ because the root `prepare` script runs `husky`.
 
 Every commit runs:
 
-- `npm run format:staged` to format only staged files with Prettier via
+- `npm run format:staged` to format only staged files with Oxfmt via
   `lint-staged`
 - `npm run lint`
 - `npm run typecheck`
@@ -80,7 +80,7 @@ This repository has two main CI workflows that run on pushes to `main`:
 
 ### Auto Format Workflow
 
-- Runs Prettier and Oxlint with `--fix` to automatically format code
+- Runs Oxfmt and Oxlint with `--fix` to automatically format code
 - Commits any formatting changes with message "chore: cleanup 🧹"
 - When changes are committed, triggers a new validation workflow run to ensure
   release happens on the formatted code
