@@ -56,8 +56,31 @@ export function dataWithPE<Data>(
 	...args: Parameters<typeof data<Data>>
 ) {
 	ensureProgressiveEnhancement(request, formData, () => ({
-		statusText: JSON.stringify(args[0]),
+		statusText: serializeStatusText(args[0]),
 		...(typeof args[1] === 'number' ? { status: args[1] } : args[1]),
 	}))
 	return data(...args)
+}
+
+function serializeStatusText(value: unknown) {
+	const json = JSON.stringify(value) ?? ''
+	let result = ''
+	for (const char of json) {
+		const codePoint = char.codePointAt(0) ?? 0
+		if (codePoint <= 0xff) {
+			result += char
+			continue
+		}
+		if (codePoint <= 0xffff) {
+			result += `\\u${codePoint.toString(16).padStart(4, '0')}`
+			continue
+		}
+		const offset = codePoint - 0x10000
+		const high = 0xd800 + Math.floor(offset / 0x400)
+		const low = 0xdc00 + (offset % 0x400)
+		result += `\\u${high.toString(16).padStart(4, '0')}\\u${low
+			.toString(16)
+			.padStart(4, '0')}`
+	}
+	return result
 }
