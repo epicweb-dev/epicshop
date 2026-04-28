@@ -139,10 +139,11 @@ test('handleWorkshopDirectory resolves relative paths from cwd (aha)', async () 
 
 	try {
 		process.chdir(parentDir)
+		const expectedWorkshopDirectory = path.resolve(process.cwd(), relativePath)
 		await expect(handleWorkshopDirectory(relativePath)).resolves.toBe(
-			fixture.root,
+			expectedWorkshopDirectory,
 		)
-		expect(initMock).toHaveBeenCalledWith(fixture.root)
+		expect(initMock).toHaveBeenCalledWith(expectedWorkshopDirectory)
 	} finally {
 		process.chdir(originalCwd)
 	}
