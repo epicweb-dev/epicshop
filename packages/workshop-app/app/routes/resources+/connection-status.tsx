@@ -26,7 +26,7 @@ export function ConnectionStatusSync() {
 			if (lastSyncedRef.current === online) return
 			lastSyncedRef.current = online
 
-			latestSubmitRef.current(null, {
+			latestSubmitRef.current(new FormData(), {
 				method: 'post',
 				action: '/resources/connection-status',
 			})
