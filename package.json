@@ -18,7 +18,8 @@
     "test": "vitest run",
     "test:watch": "vitest",
     "test:e2e": "./other/nx-fallback.js test:e2e",
-    "format": "./other/nx-fallback.js format:write",
+    "format": "oxfmt -c ./oxfmt.config.ts",
+    "format:check": "oxfmt -c ./oxfmt.config.ts --check",
     "format:staged": "lint-staged",
     "precommit": "npm run format:staged && npm run lint && npm run typecheck && npm run build",
     "prepush": "npm run test",
@@ -33,11 +34,11 @@
     "packages/*"
   ],
   "dependencies": {
-    "@epic-web/config": "^1.24.1",
-    "@nx/devkit": "22.5.0",
-    "@nx/js": "22.5.0",
-    "@nx/playwright": "22.5.0",
-    "@nx/workspace": "22.5.0",
+    "@epic-web/config": "^3.1.0",
+    "@nx/devkit": "22.7.0",
+    "@nx/js": "22.7.0",
+    "@nx/playwright": "22.7.0",
+    "@nx/workspace": "22.7.0",
     "@playwright/test": "^1.59.1",
     "@types/yargs": "^17.0.35",
     "cross-env": "^10.1.0",
@@ -46,10 +47,9 @@
     "get-stream": "^9.0.1",
     "globby": "^16.2.0",
     "npm-run-all": "^4.1.5",
-    "nx": "22.5.0",
+    "nx": "22.7.0",
+    "oxfmt": "^0.47.0",
     "oxlint": "^1.62.0",
-    "prettier": "^3.8.3",
-    "prettier-plugin-tailwindcss": "^0.8.0",
     "react-router": "^7.14.2",
     "tsx": "^4.21.0",
     "yargs": "^18.0.0",
@@ -66,7 +66,7 @@
     "vitest": "^4.1.5"
   },
   "lint-staged": {
-    "*": "prettier --ignore-unknown --write"
+    "**/*.{cjs,css,html,js,json,jsx,md,mdx,mjs,ts,tsx,yaml,yml}": "oxfmt -c ./oxfmt.config.ts"
   },
   "overrides": {
     "unicorn-magic": "^0.4.0",

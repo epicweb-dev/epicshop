@@ -21,7 +21,7 @@ installed in individual repositories which resemble the structure of the
 - npm
 - node.js
 - oxlint
-- prettier
+- oxfmt
 - typescript
 - vitest
 - vite
@@ -53,9 +53,9 @@ installed in individual repositories which resemble the structure of the
 - Find the CI plan in the .github/workflows folder.
 - Commit your changes, then run the following and commit any changes that are
   made separately:
-  - Run `npm run lint -- --fix` to fix linting errors
-  - Run `npm run format` to fix formatting errors
-  - Run `npm run validate` to run all tests and checks
+- Run `npm run lint -- --fix` to fix linting errors
+- Run `npm run format` to fix formatting errors with Oxfmt
+- Run `npm run validate` to run all tests and checks
 
 ## Docs
 
