@@ -8,8 +8,8 @@ import {
 } from './utils.ts'
 
 vi.mock('@epic-web/workshop-utils/apps.server', () => ({
-	getWorkshopRoot: vi.fn(() => '/mock/workshop'),
-	init: vi.fn(async () => {}),
+	getWorkshopRoot: vi.fn<() => string>(() => '/mock/workshop'),
+	init: vi.fn<() => Promise<void>>(async () => {}),
 }))
 
 async function createWorkshopFixture() {
@@ -52,10 +52,7 @@ test('workshopDirectoryInputSchema should validate valid string', () => {
 	const validInput = '/path/to/workshop'
 	const result = workshopDirectoryInputSchema.safeParse(validInput)
 
-	expect(result.success).toBe(true)
-	if (result.success) {
-		expect(result.data).toBe(validInput)
-	}
+	expect(result).toEqual({ success: true, data: validInput })
 })
 
 test('workshopDirectoryInputSchema should reject non-string input', () => {
@@ -71,20 +68,14 @@ test('workshopDirectoryInputSchema should accept empty string', () => {
 	const emptyString = ''
 	const result = workshopDirectoryInputSchema.safeParse(emptyString)
 
-	expect(result.success).toBe(true)
-	if (result.success) {
-		expect(result.data).toBe(emptyString)
-	}
+	expect(result).toEqual({ success: true, data: emptyString })
 })
 
 test('workshopDirectoryInputSchema should accept string with spaces', () => {
 	const inputWithSpaces = '  /path/with/spaces  '
 	const result = workshopDirectoryInputSchema.safeParse(inputWithSpaces)
 
-	expect(result.success).toBe(true)
-	if (result.success) {
-		expect(result.data).toBe(inputWithSpaces)
-	}
+	expect(result).toEqual({ success: true, data: inputWithSpaces })
 })
 
 test('workshopDirectoryInputSchema should accept absolute paths', () => {
@@ -96,10 +87,7 @@ test('workshopDirectoryInputSchema should accept absolute paths', () => {
 
 	absolutePaths.forEach((path) => {
 		const result = workshopDirectoryInputSchema.safeParse(path)
-		expect(result.success).toBe(true)
-		if (result.success) {
-			expect(result.data).toBe(path)
-		}
+		expect(result).toEqual({ success: true, data: path })
 	})
 })
 
@@ -113,10 +101,7 @@ test('workshopDirectoryInputSchema should accept relative paths', () => {
 
 	relativePaths.forEach((path) => {
 		const result = workshopDirectoryInputSchema.safeParse(path)
-		expect(result.success).toBe(true)
-		if (result.success) {
-			expect(result.data).toBe(path)
-		}
+		expect(result).toEqual({ success: true, data: path })
 	})
 })
 

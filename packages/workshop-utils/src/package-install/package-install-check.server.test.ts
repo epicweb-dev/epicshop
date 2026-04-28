@@ -4,7 +4,7 @@ import path from 'node:path'
 import { describe, expect, test, vi } from 'vitest'
 
 vi.mock('execa', () => ({
-	execa: vi.fn(),
+	execa: vi.fn<(...args: Array<unknown>) => unknown>(),
 }))
 
 const { execa } = await import('execa')

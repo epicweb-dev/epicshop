@@ -339,7 +339,7 @@ async function fetchWorkshopPackageJson(
 		ttl: 1000 * 60 * 60 * 6, // 6 hours
 		swr: 1000 * 60 * 60 * 24 * 30, // 30 days stale-while-revalidate
 		checkValue: PackageJsonSchema.nullable(),
-		async getFreshValue(context) {
+		async getFreshValue(_context) {
 			const rawHeaders = getGitHubHeadersWithAccept(
 				'application/vnd.github.raw',
 			)

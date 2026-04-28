@@ -135,9 +135,7 @@ async function getOgImg(
 		width: WIDTH,
 		height: HEIGHT,
 		debug: url.searchParams.get('debug') === 'true',
-		fonts: await Promise.all([
-			getFont({ font: 'Josefin Sans', request, timings }),
-		]).then((fonts) => fonts.flat()),
+		fonts: await getFont({ font: 'Josefin Sans', request, timings }),
 		loadAdditionalAsset: async (code: string, segment: string) => {
 			if (code === 'emoji') {
 				const svg = await getEmoji(segment, { request, timings })

@@ -197,7 +197,7 @@ async function createRunnerFixture() {
 		appDir,
 		runnerPath,
 		async [Symbol.asyncDispose]() {
-			await rootDir[Symbol.asyncDispose]()
+			await rm(rootDir.path, { recursive: true, force: true })
 		},
 	}
 }

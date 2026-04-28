@@ -7,7 +7,13 @@ import { expect, test, vi } from 'vitest'
 vi.mock('@epic-web/workshop-utils/compile-mdx.server', async () => {
 	const fs = await import('node:fs/promises')
 	return {
-		compileMdx: vi.fn(async (file: string) => {
+		compileMdx: vi.fn<
+			(file: string) => Promise<{
+				code: string
+				title: null
+				epicVideoEmbeds: Array<string>
+			}>
+		>(async (file) => {
 			const content = await fs.readFile(file, 'utf8').catch(() => '')
 			const embeds = Array.from(
 				content.matchAll(/<EpicVideo[^>]*\burl=["']([^"']+)["'][^>]*\/?>/g),
@@ -194,7 +200,7 @@ test('remote lesson check fails when product lesson slug not represented locally
 
 	vi.stubGlobal(
 		'fetch',
-		vi.fn(async () => {
+		vi.fn<typeof fetch>(async () => {
 			return new Response(
 				JSON.stringify({
 					resources: [
@@ -257,7 +263,7 @@ test('warns about extra embeds only for configured workshop (includes offending 
 
 	vi.stubGlobal(
 		'fetch',
-		vi.fn(async () => {
+		vi.fn<typeof fetch>(async () => {
 			return new Response(
 				JSON.stringify({
 					resources: [
@@ -319,7 +325,7 @@ test('fails when an EpicVideo url does not return 200 to HEAD', async () => {
 
 	vi.stubGlobal(
 		'fetch',
-		vi.fn(async (input: any, init?: any) => {
+		vi.fn<typeof fetch>(async (input, init) => {
 			const url = typeof input === 'string' ? input : String(input)
 			if (init?.method === 'HEAD' && url.includes('step-problem')) {
 				return new Response(null, { status: 404, statusText: 'Not Found' })
@@ -349,7 +355,7 @@ test('accepts /tutorials embed paths and reports tutorial urls in remote mismatc
 
 	vi.stubGlobal(
 		'fetch',
-		vi.fn(async () => {
+		vi.fn<typeof fetch>(async () => {
 			return new Response(
 				JSON.stringify({
 					moduleType: 'tutorial',

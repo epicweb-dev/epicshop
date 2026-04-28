@@ -824,9 +824,6 @@ export function makeSingletonFsCache<CacheEntryType>(name: string) {
 				const data = await readJSONWithRetries(filePath)
 				if (data?.entry) return data.entry
 				return null
-
-				// This should never be reached, but just in case
-				return null
 			},
 			async set(key, entry) {
 				try {

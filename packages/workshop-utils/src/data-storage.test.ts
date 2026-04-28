@@ -10,17 +10,17 @@ import {
 // Mock fs and os modules
 vi.mock('node:fs', () => ({
 	promises: {
-		stat: vi.fn(),
-		mkdir: vi.fn(),
-		chmod: vi.fn(),
-		rename: vi.fn(),
-		rmdir: vi.fn(),
-		readdir: vi.fn(),
+		stat: vi.fn<() => unknown>(),
+		mkdir: vi.fn<() => unknown>(),
+		chmod: vi.fn<() => unknown>(),
+		rename: vi.fn<() => unknown>(),
+		rmdir: vi.fn<() => unknown>(),
+		readdir: vi.fn<() => unknown>(),
 	},
 }))
 
 vi.mock('node:os', () => ({
-	homedir: vi.fn(() => '/mock/home'),
+	homedir: vi.fn<() => string>(() => '/mock/home'),
 }))
 
 const mockFs = vi.mocked(fs)

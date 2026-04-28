@@ -77,7 +77,5 @@ test('warm function should handle errors gracefully', async () => {
 	)
 
 	const result = await resultPromise
-	if (!result.success) {
-		expect(result.error).toBeInstanceOf(Error)
-	}
+	expect(result.success || result.error instanceof Error).toBe(true)
 })

@@ -44,9 +44,9 @@ test('cleanup removes caches and deletes data file when empty', async () => {
 		})
 
 		expect(result.success).toBe(true)
-		await expect(stat(cacheDir)).rejects.toThrow()
-		await expect(stat(legacyCacheDir)).rejects.toThrow()
-		await expect(stat(dataPath)).rejects.toThrow()
+		await expect(stat(cacheDir)).rejects.toThrow('ENOENT')
+		await expect(stat(legacyCacheDir)).rejects.toThrow('ENOENT')
+		await expect(stat(dataPath)).rejects.toThrow('ENOENT')
 	} finally {
 		await rm(root, { recursive: true, force: true })
 	}
@@ -79,7 +79,7 @@ test('cleanup removes CLI config file', async () => {
 		})
 
 		expect(result.success).toBe(true)
-		await expect(stat(configPath)).rejects.toThrow()
+		await expect(stat(configPath)).rejects.toThrow('ENOENT')
 	} finally {
 		await rm(root, { recursive: true, force: true })
 	}
@@ -117,7 +117,7 @@ test('cleanup removes workshops but keeps non-workshop entries', async () => {
 		})
 
 		expect(result.success).toBe(true)
-		await expect(stat(workshopDir)).rejects.toThrow()
+		await expect(stat(workshopDir)).rejects.toThrow('ENOENT')
 
 		const remaining = await readdir(reposDir)
 		expect(remaining).toContain('notes')
@@ -161,7 +161,7 @@ test('cleanup removes offline videos directory', async () => {
 		})
 
 		expect(result.success).toBe(true)
-		await expect(stat(offlineVideosDir)).rejects.toThrow()
+		await expect(stat(offlineVideosDir)).rejects.toThrow('ENOENT')
 	} finally {
 		await rm(root, { recursive: true, force: true })
 	}
@@ -236,7 +236,7 @@ test('cleanup defaults to current workshop when run inside one', async () => {
 		})
 
 		expect(result.success).toBe(true)
-		await expect(stat(workshopACache)).rejects.toThrow()
+		await expect(stat(workshopACache)).rejects.toThrow('ENOENT')
 		await expect(stat(workshopBCache)).resolves.toBeDefined()
 	} finally {
 		process.chdir(originalCwd)

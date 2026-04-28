@@ -26,10 +26,7 @@ test('UserSchema should validate a valid user object', () => {
 	}
 
 	const result = UserSchema.safeParse(validUser)
-	expect(result.success).toBe(true)
-	if (result.success) {
-		expect(result.data).toEqual(validUser)
-	}
+	expect(result).toEqual({ success: true, data: validUser })
 })
 
 test('UserSchema should validate minimal user object', () => {
@@ -38,10 +35,7 @@ test('UserSchema should validate minimal user object', () => {
 	}
 
 	const result = UserSchema.safeParse(minimalUser)
-	expect(result.success).toBe(true)
-	if (result.success) {
-		expect(result.data).toEqual(minimalUser)
-	}
+	expect(result).toEqual({ success: true, data: minimalUser })
 })
 
 test('UserSchema should reject user without id', () => {
@@ -65,10 +59,7 @@ test('MessageSchema should validate add-user message', () => {
 	}
 
 	const result = MessageSchema.safeParse(addUserMessage)
-	expect(result.success).toBe(true)
-	if (result.success) {
-		expect(result.data).toEqual(addUserMessage)
-	}
+	expect(result).toEqual({ success: true, data: addUserMessage })
 })
 
 test('MessageSchema should validate remove-user message', () => {
@@ -80,10 +71,7 @@ test('MessageSchema should validate remove-user message', () => {
 	}
 
 	const result = MessageSchema.safeParse(removeUserMessage)
-	expect(result.success).toBe(true)
-	if (result.success) {
-		expect(result.data).toEqual(removeUserMessage)
-	}
+	expect(result).toEqual({ success: true, data: removeUserMessage })
 })
 
 test('MessageSchema should validate presence message', () => {
@@ -98,10 +86,7 @@ test('MessageSchema should validate presence message', () => {
 	}
 
 	const result = MessageSchema.safeParse(presenceMessage)
-	expect(result.success).toBe(true)
-	if (result.success) {
-		expect(result.data).toEqual(presenceMessage)
-	}
+	expect(result).toEqual({ success: true, data: presenceMessage })
 })
 
 test('MessageSchema should reject invalid message type', () => {
@@ -123,10 +108,7 @@ test('PresenceSchema should validate presence object', () => {
 	}
 
 	const result = PresenceSchema.safeParse(presence)
-	expect(result.success).toBe(true)
-	if (result.success) {
-		expect(result.data).toEqual(presence)
-	}
+	expect(result).toEqual({ success: true, data: presence })
 })
 
 test('PresenceSchema should validate empty users array', () => {
@@ -135,10 +117,7 @@ test('PresenceSchema should validate empty users array', () => {
 	}
 
 	const result = PresenceSchema.safeParse(presence)
-	expect(result.success).toBe(true)
-	if (result.success) {
-		expect(result.data).toEqual(presence)
-	}
+	expect(result).toEqual({ success: true, data: presence })
 })
 
 test('User type should be correctly inferred', () => {

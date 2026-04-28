@@ -3,7 +3,7 @@ import { update } from './update.ts'
 
 // Mock the dynamic import of updateLocalRepo
 vi.mock('@epic-web/workshop-utils/git.server', () => ({
-	updateLocalRepo: vi.fn(),
+	updateLocalRepo: vi.fn<() => unknown>(),
 }))
 
 function setEnv(key: string, value: string | undefined) {

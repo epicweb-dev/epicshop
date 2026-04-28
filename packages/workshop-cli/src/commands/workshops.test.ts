@@ -4,22 +4,26 @@ import path from 'node:path'
 import { expect, test, vi } from 'vitest'
 
 vi.mock('execa', () => ({
-	execa: vi.fn(),
+	execa: vi.fn<(...args: Array<unknown>) => unknown>(),
 }))
 
 vi.mock('./setup.js', () => ({
-	setup: vi.fn(async () => ({ success: true })),
+	setup: vi.fn<() => Promise<{ success: boolean }>>(async () => ({
+		success: true,
+	})),
 }))
 
 vi.mock('@epic-web/workshop-utils/workshops.server', () => ({
-	getDefaultReposDir: vi.fn(() => '/tmp/epicshop-workshops'),
-	getReposDirectory: vi.fn(() => '/tmp/epicshop-workshops'),
-	getWorkshop: vi.fn(),
-	isReposDirectoryConfigured: vi.fn(async () => true),
-	listWorkshops: vi.fn(async () => []),
-	setReposDirectory: vi.fn(async () => {}),
-	workshopExists: vi.fn(async () => false),
-	verifyReposDirectory: vi.fn(async () => ({ accessible: true })),
+	getDefaultReposDir: vi.fn<() => string>(() => '/tmp/epicshop-workshops'),
+	getReposDirectory: vi.fn<() => string>(() => '/tmp/epicshop-workshops'),
+	getWorkshop: vi.fn<() => unknown>(),
+	isReposDirectoryConfigured: vi.fn<() => Promise<boolean>>(async () => true),
+	listWorkshops: vi.fn<() => Promise<Array<unknown>>>(async () => []),
+	setReposDirectory: vi.fn<() => Promise<void>>(async () => {}),
+	workshopExists: vi.fn<() => Promise<boolean>>(async () => false),
+	verifyReposDirectory: vi.fn<() => Promise<{ accessible: boolean }>>(
+		async () => ({ accessible: true }),
+	),
 }))
 
 const { execa } = await import('execa')
