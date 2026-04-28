@@ -122,6 +122,11 @@ if (
 
 app.use((_req, _res, next) => requestContext.run({}, next))
 
+app.options('*splat', (_req, res) => {
+	res.set('Allow', 'GET, HEAD, POST, OPTIONS')
+	res.sendStatus(204)
+})
+
 function getNumberOrNull(value: unknown) {
 	if (value == null) return null
 	const number = Number(value)
