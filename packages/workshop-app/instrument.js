@@ -28,6 +28,20 @@ const release =
 	process.env.EPICSHOP_APP_COMMIT_SHA ??
 	process.env.EPICSHOP_APP_VERSION
 
+export function isLearnerApiRequest(event) {
+	const requestUrl = event.request?.url
+	if (!requestUrl) return false
+
+	let pathname
+	try {
+		pathname = new URL(requestUrl, 'http://localhost').pathname
+	} catch {
+		return false
+	}
+
+	return pathname === '/api' || pathname.startsWith('/api/')
+}
+
 // Only initialize Sentry if we successfully imported the required modules
 Sentry?.init({
 	dsn: process.env.SENTRY_DSN,
@@ -62,6 +76,9 @@ Sentry?.init({
 		) {
 			return null
 		}
+		if (isLearnerApiRequest(event)) {
+			return null
+		}
 		const isPlaygroundError = event.exception?.values?.some((value) =>
 			value.stacktrace?.frames?.some((frame) =>
 				frame.filename?.includes(`${path.sep}playground${path.sep}`),
@@ -81,6 +98,9 @@ Sentry?.init({
 			return null
 		}
 		if (event.request?.headers?.['x-healthcheck'] === 'true') {
+			return null
+		}
+		if (isLearnerApiRequest(event)) {
 			return null
 		}
 		return event
