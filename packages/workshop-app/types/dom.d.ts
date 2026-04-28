@@ -1,5 +1,5 @@
 declare global {
-	// prettier-ignore
+	// oxfmt-ignore
 	type EventTargetElement = HTMLElement | Document | (Window & typeof globalThis) | null
 
 	type ToastVariant = 'Error' | 'Notify' | 'Success'
@@ -37,21 +37,21 @@ declare global {
 		(evt: CustomEventMap<EVENT_TYPE>): void
 	}
 
-	// prettier-ignore
+	// oxfmt-ignore
 	interface Document {
 		addEventListener<K extends keyof CustomEventMap>(type: K, listener: CustomEventListener<K>, options?: boolean | AddEventListenerOptions): void
 		removeEventListener<K extends keyof CustomEventMap>(type: K, listener: CustomEventListener<K>, options?: boolean | EventListenerOptions): void
 		dispatchEvent<K extends keyof CustomEventMap | unknown>(evt: CustomEventMap[K]): void
 	}
 
-	// prettier-ignore
+	// oxfmt-ignore
 	interface Element {
 		addEventListener<K extends keyof CustomEventMap>(type: K, listener: CustomEventListener<K>, options?: boolean | AddEventListenerOptions): void
 		removeEventListener<K extends keyof CustomEventMap>(type: K, listener: CustomEventListener<K>, options?: boolean | EventListenerOptions): void
 		dispatchEvent<K extends keyof CustomEventMap | unknown>(evt: CustomEventMap[K]): void
 	}
 
-	// prettier-ignore
+	// oxfmt-ignore
 	interface Window {
 		addEventListener<K extends keyof CustomEventMap>(type: K, listener: CustomEventListener<K>, options?: boolean | AddEventListenerOptions): void
 		removeEventListener<K extends keyof CustomEventMap>(type: K, listener: CustomEventListener<K>, options?: boolean | EventListenerOptions): void
