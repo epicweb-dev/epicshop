@@ -40,14 +40,14 @@
   "dependencies": {
     "@epic-web/invariant": "^1.0.0",
     "@epic-web/workshop-utils": "file:../workshop-utils",
-    "@mcp-ui/server": "^6.0.1",
-    "@modelcontextprotocol/sdk": "^1.26.0",
+    "@mcp-ui/server": "^6.1.0",
+    "@modelcontextprotocol/sdk": "^1.29.0",
     "@sentry/node": "^10.38.0",
-    "openid-client": "^6.8.2",
+    "openid-client": "^6.8.4",
     "zod": "^4.3.6"
   },
   "devDependencies": {
-    "@modelcontextprotocol/inspector": "^0.20.0",
+    "@modelcontextprotocol/inspector": "^0.21.2",
     "@types/node": "^25.6.0",
     "tsx": "^4.21.0",
     "typescript": "^6.0.3",
