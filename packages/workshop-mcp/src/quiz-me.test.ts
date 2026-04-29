@@ -15,16 +15,19 @@ vi.mock('@epic-web/workshop-utils/config.server', () => ({
 
 vi.mock('./resources.ts', () => ({
 	exerciseContextResource: {
-		getResource: vi.fn(async ({ exerciseNumber }: { exerciseNumber: number }) => ({
-			uri: `epicshop://exercise/${exerciseNumber}`,
-			mimeType: 'text/plain',
-			text: `exercise ${exerciseNumber}`,
-		})),
+		getResource: vi.fn(
+			async ({ exerciseNumber }: { exerciseNumber: number }) => ({
+				uri: `epicshop://exercise/${exerciseNumber}`,
+				mimeType: 'text/plain',
+				text: `exercise ${exerciseNumber}`,
+			}),
+		),
 	},
 }))
 
 vi.mock('./utils.ts', async () => {
-	const actual = await vi.importActual<typeof import('./utils.ts')>('./utils.ts')
+	const actual =
+		await vi.importActual<typeof import('./utils.ts')>('./utils.ts')
 	return {
 		...actual,
 		handleWorkshopDirectory: vi.fn(async (workshopDirectory: string) => {
