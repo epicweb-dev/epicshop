@@ -50,8 +50,12 @@ test('quizMe chooses a random exercise when none provided (aha)', async () => {
 		workshopDirectory: '/workshop',
 		exerciseNumber: 3,
 	})
-	expect(result.messages[0].content.type).toBe('text')
-	expect(result.messages[0].content.text).toContain('exercise 3')
+	const firstMessage = result.messages[0]
+	expect(firstMessage?.content.type).toBe('text')
+	if (!firstMessage || firstMessage.content.type !== 'text') {
+		throw new Error('Expected first message to be text')
+	}
+	expect(firstMessage.content.text).toContain('exercise 3')
 })
 
 test('quizMe rejects non-numeric exercise numbers (aha)', async () => {
