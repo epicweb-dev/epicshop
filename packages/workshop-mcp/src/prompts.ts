@@ -1,3 +1,4 @@
+import { invariant } from '@epic-web/invariant'
 import { getExercises } from '@epic-web/workshop-utils/apps.server'
 import { getWorkshopConfig } from '@epic-web/workshop-utils/config.server'
 import { type McpServer } from '@modelcontextprotocol/sdk/server/mcp.js'
@@ -16,6 +17,7 @@ export const quizMeInputSchema: PromptInputSchema = {
 	workshopDirectory: workshopDirectoryInputSchema,
 	exerciseNumber: z
 		.string()
+		.trim()
 		.optional()
 		.describe(
 			'Exercise number to quiz on (e.g., "4"). Omit for a random exercise.',
@@ -31,8 +33,15 @@ export async function quizMe({
 }): Promise<GetPromptResult> {
 	const workshopRoot = await handleWorkshopDirectory(workshopDirectory)
 	const config = getWorkshopConfig()
-	let exerciseNumber = Number(providedExerciseNumber)
-	if (!providedExerciseNumber) {
+	let exerciseNumber: number | undefined
+	if (providedExerciseNumber) {
+		exerciseNumber = Number(providedExerciseNumber)
+		invariant(
+			Number.isFinite(exerciseNumber),
+			`Exercise number must be a number, received "${providedExerciseNumber}".`,
+		)
+	}
+	if (exerciseNumber === undefined) {
 		const exercises = await getExercises()
 		const randomExercise =
 			exercises[Math.floor(Math.random() * exercises.length)]
