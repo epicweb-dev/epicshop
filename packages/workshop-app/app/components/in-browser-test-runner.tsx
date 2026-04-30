@@ -49,6 +49,9 @@ export function InBrowserTestRunner({
 	useEffect(() => {
 		function handleMessage(messageEvent: MessageEvent) {
 			if (messageEvent.source !== iframeRef.current?.contentWindow) return
+			if (typeof messageEvent.data !== 'object' || messageEvent.data === null) {
+				return
+			}
 			if ('request' in messageEvent.data) return
 
 			const result = testRunnerDataSchema.safeParse(messageEvent.data)
