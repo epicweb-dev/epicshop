@@ -53,9 +53,13 @@ function acceptsJson(request: Request) {
 function toRedirectLocation(redirectTo: string, fallback = '/') {
 	const safe = safeRedirect(redirectTo, fallback)
 	try {
-		return encodeURI(safe)
+		return encodeURI(decodeURI(safe))
 	} catch {
-		return fallback
+		try {
+			return encodeURI(safe)
+		} catch {
+			return fallback
+		}
 	}
 }
 
