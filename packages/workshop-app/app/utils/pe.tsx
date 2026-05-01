@@ -30,13 +30,13 @@ export function ensureProgressiveEnhancement(
 ) {
 	const redirectTo = formData.get(PE_REDIRECT_INPUT_NAME)
 	if (typeof redirectTo === 'string') {
-		throw redirect(safeRedirect(redirectTo), responseInit?.())
+		throw redirect(toRedirectLocation(redirectTo), responseInit?.())
 	}
 
 	// if request does not accept application/json, it means JS hasn't hydrated yet
 	if (!acceptsJson(request)) {
 		const redirectToReferrer = request.headers.get('Referer') ?? '/'
-		throw redirect(safeRedirect(redirectToReferrer), responseInit?.())
+		throw redirect(toRedirectLocation(redirectToReferrer), responseInit?.())
 	}
 }
 
@@ -48,6 +48,15 @@ function acceptsJson(request: Request) {
 		accept.includes('application/*') ||
 		accept.includes('*/json')
 	)
+}
+
+function toRedirectLocation(redirectTo: string, fallback = '/') {
+	const safe = safeRedirect(redirectTo, fallback)
+	try {
+		return encodeURI(safe)
+	} catch {
+		return fallback
+	}
 }
 
 export function dataWithPE<Data>(
