@@ -30,13 +30,13 @@ export function ensureProgressiveEnhancement(
 ) {
 	const redirectTo = formData.get(PE_REDIRECT_INPUT_NAME)
 	if (typeof redirectTo === 'string') {
-		throw redirect(safeRedirect(redirectTo), responseInit?.())
+		throw redirect(toRedirectLocation(redirectTo), responseInit?.())
 	}
 
 	// if request does not accept application/json, it means JS hasn't hydrated yet
 	if (!acceptsJson(request)) {
 		const redirectToReferrer = request.headers.get('Referer') ?? '/'
-		throw redirect(safeRedirect(redirectToReferrer), responseInit?.())
+		throw redirect(toRedirectLocation(redirectToReferrer), responseInit?.())
 	}
 }
 
@@ -48,6 +48,38 @@ function acceptsJson(request: Request) {
 		accept.includes('application/*') ||
 		accept.includes('*/json')
 	)
+}
+
+export function toRedirectLocation(redirectTo: string, fallback = '/') {
+	const safe = safeRedirect(redirectTo, fallback)
+	try {
+		return encodeURIWithoutDoubleEncoding(safe)
+	} catch {
+		return fallback
+	}
+}
+
+function encodeURIWithoutDoubleEncoding(value: string) {
+	let result = ''
+	let chunk = ''
+
+	for (let index = 0; index < value.length; index++) {
+		const char = value[index]
+		if (char === '%' && isHex(value[index + 1]) && isHex(value[index + 2])) {
+			result += encodeURI(chunk)
+			chunk = ''
+			result += value.slice(index, index + 3)
+			index += 2
+			continue
+		}
+		chunk += char
+	}
+
+	return result + encodeURI(chunk)
+}
+
+function isHex(value: string | undefined) {
+	return value ? /^[\da-f]$/i.test(value) : false
 }
 
 export function dataWithPE<Data>(
