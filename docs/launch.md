@@ -46,8 +46,29 @@ section in `package.json`:
 The `product.slug` and `product.host` are used to fetch the workshop data from
 the `epicweb.dev` API and are necessary for progress tracking.
 
-To get chat working, you must also add a `discordChannelId` pointing to the
-Discord forum channel for the workshop and `discordTags` pointing to one or more
-tags for the workshop.
-
 Check out the [configuration](./configuration.md) page for more information.
+
+## Discord chat
+
+### `discordChannelId`
+
+The `product.discordChannelId` should point to the ID of the Discord form channel
+associated with the workshop (e.g. "Epic Web", "Epic AI", etc).
+
+<img width="666" height="564" alt="Screenshot 2026-05-07 at 16 39 33" src="https://github.com/user-attachments/assets/0a6fd25a-cbd2-4569-a897-1ab949f34382" />
+
+### `discordTags`
+
+The `product.discordTags` contains an array of tags relevant to the workshop.
+
+<img width="1524" height="668" alt="Screenshot 2026-05-07 at 16 39 45" src="https://github.com/user-attachments/assets/8aa7dac8-47a8-44e1-b9c5-6db9de0bc847" />
+
+For example, `1161046174439063593`, is the "general" Epic Web tag.
+
+If your workshop doesn't have an existing tag to apply to, please create a new one.
+
+1. Right-click on the form channel (e.g. "Epic Web").
+2. Edit channel.
+3. Overview > Tags.
+4. Click the "+" icon.
+5. Provide a short and descriptive tag name and choose an emoji icon.
