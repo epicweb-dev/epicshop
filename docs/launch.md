@@ -57,11 +57,23 @@ associated with the workshop (e.g. "Epic Web", "Epic AI", etc).
 
 <img width="666" height="564" alt="Screenshot 2026-05-07 at 16 39 33" src="https://github.com/user-attachments/assets/0a6fd25a-cbd2-4569-a897-1ab949f34382" />
 
+> ![IMPORTANT]
+> You can extract the channel ID from the URL when you have
+> that channel open in Discord. For example:
+> ```
+> https://discord.com/channels/715220730605731931/1161045224907341972
+>                                                 ^^^ Channel ID
+> ```
+
 ### `discordTags`
 
 The `product.discordTags` contains an array of tags relevant to the workshop.
 
 <img width="1524" height="668" alt="Screenshot 2026-05-07 at 16 39 45" src="https://github.com/user-attachments/assets/8aa7dac8-47a8-44e1-b9c5-6db9de0bc847" />
+
+> ![IMPORTANT]
+> You can extract the tag ID by inspecting the respective IDs with DevTools.
+> Use `1161046174439063593` as the reference for the "general" tag.
 
 For example, `1161046174439063593`, is the "general" Epic Web tag.
 
