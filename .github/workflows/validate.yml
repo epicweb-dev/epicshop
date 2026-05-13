@@ -18,19 +18,19 @@ jobs:
     runs-on: ubuntu-latest
     timeout-minutes: 5
     steps:
-      - name: Checkout repo
+      - name: ⬇️ Checkout repo
         uses: actions/checkout@v5
 
-      - name: Setup node
+      - name: ⎔ Setup node
         uses: actions/setup-node@v6
         with:
           node-version: 24
           cache: 'npm'
 
-      - name: Download deps
+      - name: 📥 Download deps
         run: npm install --prefer-offline --no-audit --no-fund
 
-      - name: Lint
+      - name: 🔬 Lint
         run: npm run lint
 
   build:
@@ -38,19 +38,19 @@ jobs:
     runs-on: ubuntu-latest
     timeout-minutes: 5
     steps:
-      - name: Checkout repo
+      - name: ⬇️ Checkout repo
         uses: actions/checkout@v5
 
-      - name: Setup node
+      - name: ⎔ Setup node
         uses: actions/setup-node@v6
         with:
           node-version: 24
           cache: 'npm'
 
-      - name: Download deps
+      - name: 📥 Download deps
         run: npm install --prefer-offline --no-audit --no-fund
 
-      - name: Build
+      - name: 🏗 Build
         run: npm run build
         env:
           SENTRY_AUTH_TOKEN: ${{ secrets.SENTRY_AUTH_TOKEN }}
@@ -60,10 +60,10 @@ jobs:
           NODE_ENV: production
 
       # run install again so the local .bin files get where they should go.
-      - name: Download deps
+      - name: 📥 Download deps
         run: npm install --prefer-offline --no-audit --no-fund
 
-      - name: Upload All Build Artifacts
+      - name: 📦 Upload All Build Artifacts
         uses: actions/upload-artifact@v4
         with:
           name: all-build-artifacts
@@ -81,25 +81,25 @@ jobs:
     runs-on: ubuntu-latest
     timeout-minutes: 5
     steps:
-      - name: Checkout repo
+      - name: ⬇️ Checkout repo
         uses: actions/checkout@v5
 
-      - name: Setup node
+      - name: ⎔ Setup node
         uses: actions/setup-node@v6
         with:
           node-version: 24
           cache: 'npm'
 
-      - name: Download All Build Artifacts
+      - name: 📥 Download All Build Artifacts
         uses: actions/download-artifact@v4
         with:
           name: all-build-artifacts
           path: packages
 
-      - name: Download deps
+      - name: 📥 Download deps
         run: npm install --prefer-offline --no-audit --no-fund
 
-      - name: Run tests
+      - name: 🧪 Run tests
         run: npm test -- --no-watch
 
   typecheck:
@@ -108,25 +108,25 @@ jobs:
     runs-on: ubuntu-latest
     timeout-minutes: 5
     steps:
-      - name: Checkout repo
+      - name: ⬇️ Checkout repo
         uses: actions/checkout@v5
 
-      - name: Setup node
+      - name: ⎔ Setup node
         uses: actions/setup-node@v6
         with:
           node-version: 24
           cache: 'npm'
 
-      - name: Download All Build Artifacts
+      - name: 📥 Download All Build Artifacts
         uses: actions/download-artifact@v4
         with:
           name: all-build-artifacts
           path: packages
 
-      - name: Download deps
+      - name: 📥 Download deps
         run: npm install --prefer-offline --no-audit --no-fund
 
-      - name: Type check
+      - name: 🔎 Type check
         run: npm run typecheck
 
   playwright:
@@ -134,20 +134,20 @@ jobs:
     runs-on: ubuntu-latest
     timeout-minutes: 10
     steps:
-      - name: Checkout repo
+      - name: ⬇️ Checkout repo
         uses: actions/checkout@v5
 
-      - name: Setup node
+      - name: ⎔ Setup node
         uses: actions/setup-node@v6
         with:
           node-version: 24
           cache: 'npm'
 
       # can't use build artifacts because the .bin stuff isn't working 🤷‍♂️
-      - name: Download deps
+      - name: 📥 Download deps
         run: npm install --prefer-offline --no-audit --no-fund
 
-      - name: Build
+      - name: 🏗 Build
         run: npm run build
         env:
           SENTRY_AUTH_TOKEN: ${{ secrets.SENTRY_AUTH_TOKEN }}
@@ -157,10 +157,10 @@ jobs:
           NODE_ENV: production
 
       # run install again so the local .bin files get where they should go.
-      - name: Download deps
+      - name: 📥 Download deps
         run: npm install --prefer-offline --no-audit --no-fund
 
-      - name: Cache Playwright Browsers
+      - name: 📦 Cache Playwright Browsers
         uses: actions/cache@v4
         id: playwright-cache
         with:
@@ -170,14 +170,14 @@ jobs:
           restore-keys: |
             ${{ runner.os }}-playwright-
 
-      - name: Install Playwright Browsers
+      - name: 📥 Install Playwright Browsers
         if: steps.playwright-cache.outputs.cache-hit != 'true'
         run: npx playwright install --with-deps
 
-      - name: Playwright tests
+      - name: 🎭 Playwright tests
         run: npx playwright test
 
-      - name: Upload report
+      - name: 📊 Upload report
         uses: actions/upload-artifact@v4
         if: always()
         with:
@@ -194,25 +194,25 @@ jobs:
     runs-on: ${{ matrix.os }}
     timeout-minutes: 5
     steps:
-      - name: Checkout repo
+      - name: ⬇️ Checkout repo
         uses: actions/checkout@v5
 
-      - name: Setup node
+      - name: ⎔ Setup node
         uses: actions/setup-node@v6
         with:
           node-version: 24
           cache: 'npm'
 
-      - name: Download All Build Artifacts
+      - name: 📥 Download All Build Artifacts
         uses: actions/download-artifact@v4
         with:
           name: all-build-artifacts
           path: packages
 
-      - name: Download deps
+      - name: 📥 Download deps
         run: npm install --prefer-offline --no-audit --no-fund
 
-      - name: Run setup script
+      - name: ▶️ Run setup script
         run: node ./scripts/setup.mjs
         working-directory: ./example
         continue-on-error: true
@@ -235,19 +235,19 @@ jobs:
       ${{ github.repository == 'epicweb-dev/epicshop' &&
       contains('refs/heads/main', github.ref) && github.event_name == 'push' }}
     steps:
-      - name: Checkout repo
+      - name: ⬇️ Checkout repo
         uses: actions/checkout@93cb6efe18208431cddfb8368fd83d5badbf9bfd # v5
         with:
           fetch-depth: 0
 
-      - name: Setup node
+      - name: ⎔ Setup node
         uses: actions/setup-node@48b55a011bda9f5d6aeb4c2d9c7362e8dae4041e # v6
         with:
           node-version: 24
           registry-url: 'https://registry.npmjs.org'
           package-manager-cache: false
 
-      - name: Download All Build Artifacts
+      - name: 📥 Download All Build Artifacts
         uses: actions/download-artifact@d3f86a106a0bac45b974a628896c90dbdf5c8093 # v4
         with:
           name: all-build-artifacts
@@ -256,5 +256,5 @@ jobs:
       - name: Install release dependencies
         run: npm install --ignore-scripts --prefer-offline --no-audit --no-fund
 
-      - name: Release
+      - name: 🚀 Release
         run: npx tsx other/release.ts --dry-run=false
