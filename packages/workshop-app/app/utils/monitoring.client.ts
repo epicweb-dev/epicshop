@@ -5,6 +5,7 @@ import {
 	useLocation,
 	useNavigationType,
 } from 'react-router'
+import { isProcessingPictureInPictureRequest } from './sentry-filters.ts'
 
 // Dynamic import of Sentry with error handling
 const Sentry = await import('@sentry/react-router').catch((error) => {
@@ -104,6 +105,8 @@ export function init() {
 			"Failed to execute 'requestPictureInPicture' on 'HTMLVideoElement'",
 		],
 		beforeSend(event) {
+			if (isProcessingPictureInPictureRequest(event)) return null
+
 			// Don't send errors to Sentry for bot requests
 			if (typeof navigator !== 'undefined' && navigator.userAgent) {
 				// Basic bot detection for client-side - check for common bot indicators
