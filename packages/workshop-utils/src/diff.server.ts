@@ -97,6 +97,14 @@ const DEFAULT_IGNORE_PATTERNS = [
 	'**/epicshop/**',
 ]
 
+// On Windows, `path.relative` and `path.join` return backslash-separated
+// paths, but `git diff --no-index`, the `ignore` package, and the downstream
+// patch parser (`@pierre/diffs`) all expect POSIX-style forward slashes.
+// Normalizing here is what makes the diff pipeline work cross-platform.
+function toPosixPath(p: string) {
+	return p.split(path.sep).join('/')
+}
+
 async function copyUnignoredFiles(
 	srcDir: string,
 	destDir: string,
@@ -119,7 +127,10 @@ async function copyUnignoredFiles(
 			await fsExtra.copy(srcDir, destDir, {
 				filter: async (file) => {
 					if (file === srcDir) return true
-					return !ig.ignores(path.relative(srcDir, file))
+					// The `ignore` package only understands POSIX-style paths, so
+					// backslash-separated relative paths on Windows would silently
+					// fail to match patterns like `**/build/`.
+					return !ig.ignores(toPosixPath(path.relative(srcDir, file)))
 				},
 			})
 			return true
@@ -129,17 +140,14 @@ async function copyUnignoredFiles(
 
 async function prepareForDiff(app1: App, app2: App) {
 	const id = Math.random().toString(36).slice(2)
-	const app1CopyPath = path.join(
-		diffTmpDir,
-		path.basename(getWorkshopRoot()),
-		app1.name,
-		id,
+	// Paths are forced to POSIX form so that `git diff --no-index` does not
+	// quote them (git quotes any path containing a backslash, which then
+	// trips the patch parser downstream).
+	const app1CopyPath = toPosixPath(
+		path.join(diffTmpDir, path.basename(getWorkshopRoot()), app1.name, id),
 	)
-	const app2CopyPath = path.join(
-		diffTmpDir,
-		path.basename(getWorkshopRoot()),
-		app2.name,
-		id,
+	const app2CopyPath = toPosixPath(
+		path.join(diffTmpDir, path.basename(getWorkshopRoot()), app2.name, id),
 	)
 	// if everything except the `name` property of the `package.json` is the same
 	// the don't bother copying it
@@ -426,8 +434,11 @@ async function getDiffPatchImpl(app1: App, app2: App) {
 	void fsExtra.remove(app2CopyPath).catch(() => {})
 
 	const normalizedOutput = String(diffOutput ?? '')
-	const app1Relative = app1CopyPath.slice(1)
-	const app2Relative = app2CopyPath.slice(1)
+	// Strip a single leading `/` if present so the relative form is portable:
+	// `/tmp/foo` -> `tmp/foo` on POSIX, `C:/Users/foo` stays as-is on Windows.
+	// The original `.slice(1)` would have stripped the drive letter on Windows.
+	const app1Relative = app1CopyPath.replace(/^\//, '')
+	const app2Relative = app2CopyPath.replace(/^\//, '')
 
 	const testFiles = new Set([
 		...getAppTestFiles(app1),
@@ -436,10 +447,14 @@ async function getDiffPatchImpl(app1: App, app2: App) {
 
 	const filteredOutput = filterTestFilesFromPatch(
 		normalizedOutput
-			.replaceAll(`a${app1CopyPath}`, 'a')
-			.replaceAll(`b${app1CopyPath}`, 'b')
-			.replaceAll(`a${app2CopyPath}`, 'a')
-			.replaceAll(`b${app2CopyPath}`, 'b')
+			// Git always emits `a/<path>` / `b/<path>` (with the slash baked in).
+			// Constructing the search string as `a/${relative}` works on both
+			// POSIX (where `relative = tmp/foo` -> pattern `a/tmp/foo`) and Windows
+			// (where `relative = C:/Users/foo` -> pattern `a/C:/Users/foo`).
+			.replaceAll(`a/${app1Relative}`, 'a')
+			.replaceAll(`b/${app1Relative}`, 'b')
+			.replaceAll(`a/${app2Relative}`, 'a')
+			.replaceAll(`b/${app2Relative}`, 'b')
 			.replaceAll(`${app1CopyPath}/`, '')
 			.replaceAll(`${app2CopyPath}/`, '')
 			.replaceAll(`${app1Relative}/`, '')
@@ -473,7 +488,10 @@ export async function getDiffOutputWithRelativePaths(app1: App, app2: App) {
 	void fsExtra.remove(app1CopyPath).catch(() => {})
 	void fsExtra.remove(app2CopyPath).catch(() => {})
 
+	// Strip a single leading `/` if present so the relative form is portable
+	// across POSIX (`/tmp/foo` -> `tmp/foo`) and Windows (`C:/Users/foo` stays
+	// as-is; `.slice(1)` would have stripped the drive letter).
 	return diffOutput
-		.replaceAll(app1CopyPath.slice(1), '.')
-		.replaceAll(app2CopyPath.slice(1), '.')
+		.replaceAll(app1CopyPath.replace(/^\//, ''), '.')
+		.replaceAll(app2CopyPath.replace(/^\//, ''), '.')
 }
