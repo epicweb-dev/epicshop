@@ -971,6 +971,7 @@ export async function getPlaygroundApp({
 	request,
 }: CachifiedOptions = {}): Promise<PlaygroundApp | null> {
 	const playgroundDir = path.join(getWorkshopRoot(), 'playground')
+	const playgroundDirExists = await exists(playgroundDir)
 	const baseAppName = await getPlaygroundAppName()
 	const baseAppFullPath = baseAppName
 		? await resolveExistingAppPath(baseAppName)
@@ -991,13 +992,15 @@ export async function getPlaygroundApp({
 		timings,
 		timingKey: playgroundDir.replace(`${playgroundDir}${path.sep}`, ''),
 		request,
-		forceFresh: await getForceFreshForDir(
-			playgroundCacheEntry,
-			playgroundDir,
-			baseAppFullPath,
-		),
+		forceFresh: playgroundDirExists
+			? await getForceFreshForDir(
+					playgroundCacheEntry,
+					playgroundDir,
+					baseAppFullPath,
+				)
+			: true,
 		getFreshValue: async () => {
-			if (!(await exists(playgroundDir))) return null
+			if (!playgroundDirExists) return null
 			if (!baseAppName) return null
 
 			const dirName = path.basename(playgroundDir)
