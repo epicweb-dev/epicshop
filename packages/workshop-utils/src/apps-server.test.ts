@@ -63,6 +63,32 @@ test('returns playground info when base app is missing', async () => {
 	expect(playgroundApp?.isUpToDate).toBe(false)
 }, 15000)
 
+test('does not return cached playground info after playground directory is removed', async () => {
+	await using workshop = await createTempWorkshop()
+
+	process.env.EPICSHOP_CONTEXT_CWD = workshop.root
+	;(
+		globalThis as { __epicshop_apps_initialized__?: boolean }
+	).__epicshop_apps_initialized__ = false
+	vi.resetModules()
+
+	const { getApps, getPlaygroundApp, setWorkshopRoot } =
+		await import('./apps.server.ts')
+	setWorkshopRoot(workshop.root)
+
+	await expect(getPlaygroundApp()).resolves.not.toBeNull()
+
+	await fs.rm(path.join(workshop.root, 'playground'), {
+		recursive: true,
+		force: true,
+	})
+
+	await expect(getPlaygroundApp()).resolves.toBeNull()
+	await expect(getApps()).resolves.not.toContainEqual(
+		expect.objectContaining({ name: 'playground' }),
+	)
+}, 15000)
+
 test('classifies non-index app without package.json as file dev type', async () => {
 	await using workshop = await createTempWorkshop()
 	const fileExtraDir = path.join(workshop.root, 'extra', '01.files')
