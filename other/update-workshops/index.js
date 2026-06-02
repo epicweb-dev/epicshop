@@ -108,11 +108,15 @@ async function getLatestVersion() {
  * Verify that the epicshop package is available on npm registry
  * This helps avoid 404 errors in workshop CI when npm registry replication is delayed
  */
-async function verifyPackageAvailability(packageName, version, maxRetries = 20) {
+async function verifyPackageAvailability(
+	packageName,
+	version,
+	maxRetries = 20,
+) {
 	const delay = (ms) => new Promise((resolve) => setTimeout(resolve, ms))
 	// For scoped packages like @epic-web/workshop-app, extract just the package name part
-	const tarballName = packageName.includes('/') 
-		? packageName.split('/')[1] 
+	const tarballName = packageName.includes('/')
+		? packageName.split('/')[1]
 		: packageName
 
 	for (let attempt = 1; attempt <= maxRetries; attempt++) {
@@ -133,9 +137,7 @@ async function verifyPackageAvailability(packageName, version, maxRetries = 20) 
 			clearTimeout(timeoutId)
 
 			if (response.ok) {
-				console.log(
-					`✅ ${packageName}@${version} is available on npm registry`,
-				)
+				console.log(`✅ ${packageName}@${version} is available on npm registry`)
 				return true
 			}
 			if (response.status !== 404) {
@@ -159,10 +161,10 @@ async function verifyPackageAvailability(packageName, version, maxRetries = 20) 
 	}
 
 	// Calculate approximate wait time: sum of exponential backoff + fetch timeouts
-	const backoffSum = Array.from({ length: maxRetries - 1 }, (_, i) => 
-		Math.min(2 ** i, 30)
+	const backoffSum = Array.from({ length: maxRetries - 1 }, (_, i) =>
+		Math.min(2 ** i, 30),
 	).reduce((a, b) => a + b, 0)
-	const totalSeconds = backoffSum + (maxRetries * 5)
+	const totalSeconds = backoffSum + maxRetries * 5
 	const totalMinutes = Math.round(totalSeconds / 60)
 
 	console.warn(
@@ -529,8 +531,11 @@ async function main() {
 		// Verify that both epicshop and workshop-app are available on npm
 		// before pushing updates to workshops to avoid 404 errors in workshop CI
 		console.log('\n🔐 Verifying package availability on npm registry...')
-		const epicshopAvailable = await verifyPackageAvailability('epicshop', version)
-		
+		const epicshopAvailable = await verifyPackageAvailability(
+			'epicshop',
+			version,
+		)
+
 		// If epicshop is not available, skip workshop-app check to avoid wasting time
 		let workshopAppAvailable = false
 		if (epicshopAvailable) {
