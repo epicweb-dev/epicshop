@@ -50,7 +50,7 @@
     "nx": "22.7.0",
     "oxfmt": "^0.47.0",
     "oxlint": "^1.62.0",
-    "react-router": "^7.14.2",
+    "react-router": "^7.16.0",
     "tsx": "^4.21.0",
     "yargs": "^18.0.0",
     "yoctocolors": "^2.1.2"
