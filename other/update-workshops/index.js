@@ -110,11 +110,15 @@ async function getLatestVersion() {
  */
 async function verifyPackageAvailability(packageName, version, maxRetries = 30) {
 	const delay = (ms) => new Promise((resolve) => setTimeout(resolve, ms))
+	// For scoped packages like @epic-web/workshop-app, extract just the package name part
+	const tarballName = packageName.includes('/') 
+		? packageName.split('/')[1] 
+		: packageName
 
 	for (let attempt = 1; attempt <= maxRetries; attempt++) {
 		try {
 			const response = await fetch(
-				`https://registry.npmjs.org/${packageName}/-/${packageName}-${version}.tgz`,
+				`https://registry.npmjs.org/${packageName}/-/${tarballName}-${version}.tgz`,
 				{
 					method: 'HEAD',
 					timeout: 5000,
