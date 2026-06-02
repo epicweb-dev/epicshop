@@ -132,7 +132,7 @@ jobs:
   playwright:
     name: 🎭 Playwright
     runs-on: ubuntu-latest
-    timeout-minutes: 10
+    timeout-minutes: 15
     steps:
       - name: ⬇️ Checkout repo
         uses: actions/checkout@v5
@@ -172,7 +172,7 @@ jobs:
 
       - name: 📥 Install Playwright Browsers
         if: steps.playwright-cache.outputs.cache-hit != 'true'
-        run: npx playwright install --with-deps
+        run: npx playwright install --with-deps chromium
 
       - name: 🎭 Playwright tests
         run: npx playwright test
