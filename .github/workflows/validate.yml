@@ -132,7 +132,10 @@ jobs:
   playwright:
     name: 🎭 Playwright
     runs-on: ubuntu-latest
-    timeout-minutes: 20
+    timeout-minutes: 15
+    container:
+      image: mcr.microsoft.com/playwright:v1.59.1-noble
+      options: --user 1001
     steps:
       - name: ⬇️ Checkout repo
         uses: actions/checkout@v5
@@ -145,24 +148,6 @@ jobs:
 
       - name: 📥 Download deps
         run: npm install --prefer-offline --no-audit --no-fund
-
-      - name: 📦 Cache Playwright Browsers
-        uses: actions/cache@v4
-        id: playwright-cache
-        with:
-          path: ~/.cache/ms-playwright
-          key:
-            ${{ runner.os }}-playwright-${{ hashFiles('**/package-lock.json') }}
-          restore-keys: |
-            ${{ runner.os }}-playwright-
-
-      - name: 📥 Install Playwright Browsers
-        if: steps.playwright-cache.outputs.cache-hit != 'true'
-        run: npx playwright install --with-deps --only-shell chromium
-
-      - name: 📥 Install Playwright OS dependencies
-        if: steps.playwright-cache.outputs.cache-hit == 'true'
-        run: npx playwright install-deps chromium
 
       - name: 🏗 Build
         run: npm run build
