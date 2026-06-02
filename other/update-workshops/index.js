@@ -104,6 +104,76 @@ async function getLatestVersion() {
 	}
 }
 
+/**
+ * Verify that the epicshop package is available on npm registry
+ * This helps avoid 404 errors in workshop CI when npm registry replication is delayed
+ */
+async function verifyPackageAvailability(packageName, version, maxRetries = 20) {
+	const delay = (ms) => new Promise((resolve) => setTimeout(resolve, ms))
+	// For scoped packages like @epic-web/workshop-app, extract just the package name part
+	const tarballName = packageName.includes('/') 
+		? packageName.split('/')[1] 
+		: packageName
+
+	for (let attempt = 1; attempt <= maxRetries; attempt++) {
+		try {
+			// Use AbortController for proper timeout handling
+			const controller = new AbortController()
+			const timeoutId = setTimeout(() => controller.abort(), 5000)
+
+			// Use GET instead of HEAD to match what workshop CI does during install
+			// npm registry has had inconsistent HEAD responses for scoped packages
+			const response = await fetch(
+				`https://registry.npmjs.org/${packageName}/-/${tarballName}-${version}.tgz`,
+				{
+					method: 'GET',
+					signal: controller.signal,
+				},
+			)
+			clearTimeout(timeoutId)
+
+			if (response.ok) {
+				console.log(
+					`✅ ${packageName}@${version} is available on npm registry`,
+				)
+				return true
+			}
+			if (response.status !== 404) {
+				console.log(
+					`⚠️  Unexpected status ${response.status} when checking ${packageName}@${version}, retrying...`,
+				)
+			}
+		} catch (error) {
+			console.log(
+				`⚠️  Network error checking ${packageName}@${version}: ${error.message}`,
+			)
+		}
+
+		if (attempt < maxRetries) {
+			const waitSeconds = Math.min(2 ** (attempt - 1), 30)
+			console.log(
+				`⏳ Package not available yet (attempt ${attempt}/${maxRetries}). Waiting ${waitSeconds}s before retry...`,
+			)
+			await delay(waitSeconds * 1000)
+		}
+	}
+
+	// Calculate approximate wait time: sum of exponential backoff + fetch timeouts
+	const backoffSum = Array.from({ length: maxRetries - 1 }, (_, i) => 
+		Math.min(2 ** i, 30)
+	).reduce((a, b) => a + b, 0)
+	const totalSeconds = backoffSum + (maxRetries * 5)
+	const totalMinutes = Math.round(totalSeconds / 60)
+
+	console.warn(
+		`⚠️  ${packageName}@${version} was not available on npm after ${maxRetries} retries (~${totalMinutes} minute${totalMinutes !== 1 ? 's' : ''}).`,
+	)
+	console.warn(
+		'This may cause workshop CI failures. Consider running the update again later.',
+	)
+	return false
+}
+
 async function pullRebaseWithFallback(cwd) {
 	try {
 		await execa('git', ['pull', '--rebase'], { cwd, env: getGitEnv() })
@@ -455,8 +525,35 @@ async function main() {
 		console.log('📦 Getting latest version from npm...')
 		const version = await getLatestVersion()
 		console.log(`🔍 Updating to version ${version}`)
+
+		// Verify that both epicshop and workshop-app are available on npm
+		// before pushing updates to workshops to avoid 404 errors in workshop CI
+		console.log('\n🔐 Verifying package availability on npm registry...')
+		const epicshopAvailable = await verifyPackageAvailability('epicshop', version)
+		
+		// If epicshop is not available, skip workshop-app check to avoid wasting time
+		let workshopAppAvailable = false
+		if (epicshopAvailable) {
+			workshopAppAvailable = await verifyPackageAvailability(
+				'@epic-web/workshop-app',
+				version,
+			)
+		} else {
+			console.log(
+				'⏭️  Skipping @epic-web/workshop-app verification since epicshop is unavailable',
+			)
+		}
+
+		if (!epicshopAvailable || !workshopAppAvailable) {
+			console.error(
+				'\n❌ Required packages not available on npm. Aborting to prevent workshop CI failures.',
+			)
+			console.error('   Please try running this script again in a few minutes.')
+			process.exit(1)
+		}
+
 		console.log(
-			`🚀 Processing ${workshops.length} repos with concurrency ${CONCURRENCY}\n`,
+			`\n🚀 Processing ${workshops.length} repos with concurrency ${CONCURRENCY}\n`,
 		)
 
 		// Process repos in parallel with a simple concurrency pool (no extra deps)
