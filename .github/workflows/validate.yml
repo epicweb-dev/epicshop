@@ -132,7 +132,10 @@ jobs:
   playwright:
     name: 🎭 Playwright
     runs-on: ubuntu-latest
-    timeout-minutes: 10
+    timeout-minutes: 15
+    container:
+      image: mcr.microsoft.com/playwright:v1.59.1-noble
+      options: --user 1001
     steps:
       - name: ⬇️ Checkout repo
         uses: actions/checkout@v5
@@ -143,7 +146,6 @@ jobs:
           node-version: 24
           cache: 'npm'
 
-      # can't use build artifacts because the .bin stuff isn't working 🤷‍♂️
       - name: 📥 Download deps
         run: npm install --prefer-offline --no-audit --no-fund
 
@@ -155,24 +157,6 @@ jobs:
           SENTRY_PROJECT: ${{ secrets.SENTRY_PROJECT }}
           SENTRY_DSN: ${{ secrets.SENTRY_DSN }}
           NODE_ENV: production
-
-      # run install again so the local .bin files get where they should go.
-      - name: 📥 Download deps
-        run: npm install --prefer-offline --no-audit --no-fund
-
-      - name: 📦 Cache Playwright Browsers
-        uses: actions/cache@v4
-        id: playwright-cache
-        with:
-          path: ~/.cache/ms-playwright
-          key:
-            ${{ runner.os }}-playwright-${{ hashFiles('**/package-lock.json') }}
-          restore-keys: |
-            ${{ runner.os }}-playwright-
-
-      - name: 📥 Install Playwright Browsers
-        if: steps.playwright-cache.outputs.cache-hit != 'true'
-        run: npx playwright install --with-deps
 
       - name: 🎭 Playwright tests
         run: npx playwright test
