@@ -250,3 +250,22 @@ installed). Only the most important bits are enforced by oxlint.
 - **Always build before testing**: After making code changes, always run the
   build process before starting the dev server to test changes, especially when
   working with client-side functionality.
+
+## Cursor Cloud specific instructions
+
+- **Node.js 24+**: `package.json` requires Node `>=24`. Cloud VMs may default to
+  Node 22 on `PATH`. Before `npm install` or any script, use Node 24, for
+  example: `export PATH="$HOME/.nvm/versions/node/v24.16.0/bin:$PATH"` (or
+  `nvm use 24` in an interactive shell).
+- **Dev server**: From repo root, run `npm run build` once, then
+  `PORT=5639 npm run dev` (starts the sample workshop in `example/` via
+  `epicshop start`). Default URL: `http://localhost:5639`. Use a tmux session
+  for long-running dev servers.
+- **Playwright E2E**: `npm run test:e2e` expects Playwright browsers under
+  `~/.cache/ms-playwright`. Run `npx playwright install` after install if tests
+  fail with a missing browser error. If browser download hangs on a stale lock,
+  remove `~/.cache/ms-playwright/__dirlock` and retry. System Chrome at
+  `/usr/local/bin/google-chrome` can be used for ad hoc UI checks with
+  Playwright when bundled browsers are incomplete.
+- **Scope**: Root `npm run dev` is enough for workshop UI work; presence, MCP,
+  and auth are optional unless you are testing those features.
