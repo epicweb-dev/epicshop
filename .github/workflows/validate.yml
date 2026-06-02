@@ -132,7 +132,7 @@ jobs:
   playwright:
     name: 🎭 Playwright
     runs-on: ubuntu-latest
-    timeout-minutes: 15
+    timeout-minutes: 20
     steps:
       - name: ⬇️ Checkout repo
         uses: actions/checkout@v5
@@ -143,20 +143,6 @@ jobs:
           node-version: 24
           cache: 'npm'
 
-      # can't use build artifacts because the .bin stuff isn't working 🤷‍♂️
-      - name: 📥 Download deps
-        run: npm install --prefer-offline --no-audit --no-fund
-
-      - name: 🏗 Build
-        run: npm run build
-        env:
-          SENTRY_AUTH_TOKEN: ${{ secrets.SENTRY_AUTH_TOKEN }}
-          SENTRY_ORG: ${{ secrets.SENTRY_ORG }}
-          SENTRY_PROJECT: ${{ secrets.SENTRY_PROJECT }}
-          SENTRY_DSN: ${{ secrets.SENTRY_DSN }}
-          NODE_ENV: production
-
-      # run install again so the local .bin files get where they should go.
       - name: 📥 Download deps
         run: npm install --prefer-offline --no-audit --no-fund
 
@@ -172,7 +158,20 @@ jobs:
 
       - name: 📥 Install Playwright Browsers
         if: steps.playwright-cache.outputs.cache-hit != 'true'
-        run: npx playwright install --with-deps chromium
+        run: npx playwright install --with-deps --only-shell chromium
+
+      - name: 📥 Install Playwright OS dependencies
+        if: steps.playwright-cache.outputs.cache-hit == 'true'
+        run: npx playwright install-deps chromium
+
+      - name: 🏗 Build
+        run: npm run build
+        env:
+          SENTRY_AUTH_TOKEN: ${{ secrets.SENTRY_AUTH_TOKEN }}
+          SENTRY_ORG: ${{ secrets.SENTRY_ORG }}
+          SENTRY_PROJECT: ${{ secrets.SENTRY_PROJECT }}
+          SENTRY_DSN: ${{ secrets.SENTRY_DSN }}
+          NODE_ENV: production
 
       - name: 🎭 Playwright tests
         run: npx playwright test
