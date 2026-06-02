@@ -117,13 +117,19 @@ async function verifyPackageAvailability(packageName, version, maxRetries = 30) 
 
 	for (let attempt = 1; attempt <= maxRetries; attempt++) {
 		try {
+			// Use AbortController for proper timeout handling
+			const controller = new AbortController()
+			const timeoutId = setTimeout(() => controller.abort(), 5000)
+
 			const response = await fetch(
 				`https://registry.npmjs.org/${packageName}/-/${tarballName}-${version}.tgz`,
 				{
 					method: 'HEAD',
-					timeout: 5000,
+					signal: controller.signal,
 				},
 			)
+			clearTimeout(timeoutId)
+
 			if (response.ok) {
 				console.log(
 					`✅ ${packageName}@${version} is available on npm registry`,
@@ -515,10 +521,19 @@ async function main() {
 		// before pushing updates to workshops to avoid 404 errors in workshop CI
 		console.log('\n🔐 Verifying package availability on npm registry...')
 		const epicshopAvailable = await verifyPackageAvailability('epicshop', version)
-		const workshopAppAvailable = await verifyPackageAvailability(
-			'@epic-web/workshop-app',
-			version,
-		)
+		
+		// If epicshop is not available, skip workshop-app check to avoid wasting time
+		let workshopAppAvailable = false
+		if (epicshopAvailable) {
+			workshopAppAvailable = await verifyPackageAvailability(
+				'@epic-web/workshop-app',
+				version,
+			)
+		} else {
+			console.log(
+				'⏭️  Skipping @epic-web/workshop-app verification since epicshop is unavailable',
+			)
+		}
 
 		if (!epicshopAvailable || !workshopAppAvailable) {
 			console.error(
