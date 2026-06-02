@@ -108,7 +108,7 @@ async function getLatestVersion() {
  * Verify that the epicshop package is available on npm registry
  * This helps avoid 404 errors in workshop CI when npm registry replication is delayed
  */
-async function verifyPackageAvailability(packageName, version, maxRetries = 30) {
+async function verifyPackageAvailability(packageName, version, maxRetries = 10) {
 	const delay = (ms) => new Promise((resolve) => setTimeout(resolve, ms))
 	// For scoped packages like @epic-web/workshop-app, extract just the package name part
 	const tarballName = packageName.includes('/') 
@@ -157,7 +157,7 @@ async function verifyPackageAvailability(packageName, version, maxRetries = 30) 
 	}
 
 	console.warn(
-		`⚠️  ${packageName}@${version} was not available on npm after ${maxRetries} retries (${Math.ceil(maxRetries * 30 / 60)}+ minutes).`,
+		`⚠️  ${packageName}@${version} was not available on npm after ${maxRetries} retries (~${Math.ceil(maxRetries * 2.5)} minutes).`,
 	)
 	console.warn(
 		'This may cause workshop CI failures. Consider running the update again later.',
