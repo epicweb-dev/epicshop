@@ -236,6 +236,29 @@ function getArgumentsForLineNumber(
 	return [fileName]
 }
 
+export function parseEditorCommand(
+	editor: string,
+	platform: NodeJS.Platform = process.platform,
+): Array<string | null> {
+	const trimmedEditor = editor.trim()
+	if (!trimmedEditor) return [null]
+
+	if (platform === 'win32') {
+		const windowsPathMatch = trimmedEditor.match(
+			/^((?:[A-Za-z]:|\\\\[^\\/]+[\\/][^\\/]+)[\\/].*?\.(?:exe|cmd|bat|com))(?:\s+(.*))?$/i,
+		)
+		if (windowsPathMatch) {
+			const [, command, args = ''] = windowsPathMatch
+			return [
+				command ?? null,
+				...shellQuote.parse(args).map((arg) => String(arg)),
+			]
+		}
+	}
+
+	return shellQuote.parse(trimmedEditor).map((arg) => String(arg))
+}
+
 function getWindowsProcessPaths(): string[] {
 	const systemRoot = process.env.SystemRoot ?? process.env.WINDIR
 	const wmicPath = systemRoot
@@ -272,7 +295,7 @@ function getWindowsProcessPaths(): string[] {
 function guessEditor(): Array<string | null> {
 	// Explicit config always wins
 	if (process.env.EPICSHOP_EDITOR) {
-		return shellQuote.parse(process.env.EPICSHOP_EDITOR).map((a) => String(a))
+		return parseEditorCommand(process.env.EPICSHOP_EDITOR)
 	}
 
 	// We can find out which editor is currently running by:
