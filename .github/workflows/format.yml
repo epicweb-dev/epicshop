@@ -53,7 +53,7 @@ jobs:
         run: |
           if [ -n "$(git status --porcelain)" ]; then
             git add .
-            git commit -m "chore: cleanup 🧹"
+            HUSKY=0 git commit -m "chore: cleanup 🧹"
             git push
             echo "Changes committed and pushed."
           else
