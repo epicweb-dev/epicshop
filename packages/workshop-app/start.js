@@ -31,7 +31,10 @@ function checkNodeVersion() {
 		console.error(`Current Node.js version: v${currentNodeVersion}`)
 		console.error(`Required Node.js versions: ${requiredVersions}`)
 		console.error(
-			`\nThis project only supports versions of Node.js which match the semver range specified in the package.json file`,
+			`\nThis project only supports Node.js versions which match the semver range specified in the package.json file.`,
+		)
+		console.error(
+			'If you recently upgraded Node.js, update the Epic Workshop app package and reinstall dependencies.',
 		)
 		console.error('Please update to a supported Node.js version and try again.')
 		console.error(
