@@ -520,7 +520,7 @@ export default function AdminLayout({
 						<CardDescription>Available workshop apps</CardDescription>
 					</CardHeader>
 					<CardContent>
-						<ul className="scrollbar-thin scrollbar-thumb-scrollbar flex max-h-48 flex-col gap-2 overflow-y-auto">
+						<ul className="scrollbar-thumb-scrollbar flex max-h-48 scrollbar-thin flex-col gap-2 overflow-y-auto">
 							{data.apps.length > 0 ? (
 								data.apps.map((app) => (
 									<li
@@ -550,7 +550,7 @@ export default function AdminLayout({
 						<CardDescription>Running development processes</CardDescription>
 					</CardHeader>
 					<CardContent>
-						<ul className="scrollbar-thin scrollbar-thumb-scrollbar flex max-h-48 flex-col gap-2 overflow-y-auto">
+						<ul className="scrollbar-thumb-scrollbar flex max-h-48 scrollbar-thin flex-col gap-2 overflow-y-auto">
 							{Object.entries(data.processes).length > 0 ? (
 								Object.entries(data.processes).map(([key, process]) => (
 									<li
@@ -600,7 +600,7 @@ export default function AdminLayout({
 							<CardDescription>Test execution processes</CardDescription>
 						</CardHeader>
 						<CardContent>
-							<ul className="scrollbar-thin scrollbar-thumb-scrollbar flex flex-col gap-2 overflow-y-auto">
+							<ul className="scrollbar-thumb-scrollbar flex scrollbar-thin flex-col gap-2 overflow-y-auto">
 								{Object.entries(data.testProcesses).map(([key, process]) => (
 									<li
 										key={key}
@@ -648,7 +648,7 @@ export default function AdminLayout({
 					</CardHeader>
 					<CardContent>
 						{epicProgress ? (
-							<ul className="scrollbar-thin scrollbar-thumb-scrollbar flex max-h-72 flex-col gap-2 overflow-y-auto">
+							<ul className="scrollbar-thumb-scrollbar flex max-h-72 scrollbar-thin flex-col gap-2 overflow-y-auto">
 								{epicProgress.sort(sortProgress).map((progress) => {
 									const status = progress.epicCompletedAt
 										? 'completed'
@@ -896,7 +896,7 @@ function SidecarProcessItem({
 							</button>
 						</SimpleTooltip>
 					</div>
-					<pre className="scrollbar-thin scrollbar-thumb-scrollbar bg-background max-h-96 overflow-auto rounded border p-2 text-xs">
+					<pre className="scrollbar-thumb-scrollbar bg-background max-h-96 scrollbar-thin overflow-auto rounded border p-2 text-xs">
 						{displayLogs ||
 							(isLoadingLogs ? 'Loading...' : 'No logs available')}
 					</pre>

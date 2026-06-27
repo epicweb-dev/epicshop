@@ -454,7 +454,7 @@ export function FileAppExplorer({ appName }: { appName: string }) {
 
 				<div
 					ref={breadcrumbScrollRef}
-					className="scrollbar-thin scrollbar-thumb-scrollbar min-w-0 flex-1 overflow-x-auto"
+					className="scrollbar-thumb-scrollbar min-w-0 flex-1 scrollbar-thin overflow-x-auto"
 				>
 					<div className="flex w-max min-w-full items-center gap-1 pr-2">
 						{breadcrumbs.length > 0 ? (

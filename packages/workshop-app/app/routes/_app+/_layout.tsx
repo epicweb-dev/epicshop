@@ -874,7 +874,7 @@ function MobileNavigation({
 					/>
 					{isMenuOpened && (
 						<motion.div
-							className="scrollbar-thin scrollbar-thumb-scrollbar flex w-full grow flex-col justify-between overflow-x-auto p-6"
+							className="scrollbar-thumb-scrollbar flex w-full grow scrollbar-thin flex-col justify-between overflow-x-auto p-6"
 							initial={{ opacity: 0 }}
 							animate={{ opacity: 1 }}
 						>
@@ -1535,7 +1535,7 @@ function Navigation({
 					{isMenuOpened && (
 						<motion.div
 							style={{ width: OPENED_MENU_WIDTH }}
-							className="scrollbar-thin scrollbar-thumb-scrollbar flex grow flex-col justify-between overflow-y-auto p-6"
+							className="scrollbar-thumb-scrollbar flex grow scrollbar-thin flex-col justify-between overflow-y-auto p-6"
 							initial={{ opacity: 0 }}
 							animate={{ opacity: 1 }}
 						>

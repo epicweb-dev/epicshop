@@ -123,7 +123,7 @@ export function InBrowserTestRunner({
 										<div className="text-success flex items-baseline gap-2">
 											<span>{index + 1}.</span>
 											<span>{testStepStatusEmojis[testStep.status]}</span>
-											<pre className="scrollbar-thin scrollbar-thumb-scrollbar max-h-48 overflow-y-auto p-4">
+											<pre className="scrollbar-thumb-scrollbar max-h-48 scrollbar-thin overflow-y-auto p-4">
 												{testStep.title}
 											</pre>
 										</div>
@@ -135,7 +135,7 @@ export function InBrowserTestRunner({
 									<span>{sortedTestSteps.length + 1}.</span>
 									<span>{testStepStatusEmojis.fail}</span>
 									<pre
-										className="scrollbar-thin scrollbar-thumb-scrollbar max-h-48 overflow-y-auto p-4"
+										className="scrollbar-thumb-scrollbar max-h-48 scrollbar-thin overflow-y-auto p-4"
 										dangerouslySetInnerHTML={{
 											__html: ansi.toHtml(stripCursorMovements(message.error)),
 										}}

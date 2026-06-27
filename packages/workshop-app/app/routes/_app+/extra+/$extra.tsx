@@ -365,7 +365,7 @@ export default function ExtraRoute() {
 					<article
 						id={data.articleId}
 						key={data.articleId}
-						className="shadow-on-scrollbox scrollbar-thin scrollbar-thumb-scrollbar flex h-full w-full max-w-none flex-1 scroll-pt-6 flex-col justify-between space-y-6 overflow-y-auto p-2 sm:p-10 sm:pt-8"
+						className="shadow-on-scrollbox scrollbar-thumb-scrollbar flex h-full w-full max-w-none flex-1 scroll-pt-6 scrollbar-thin flex-col justify-between space-y-6 overflow-y-auto p-2 sm:p-10 sm:pt-8"
 					>
 						{data.extra.instructionsCode ? (
 							<EpicVideoInfoProvider

@@ -130,7 +130,7 @@ export default function ExerciseFinished({
 						</div>
 					</h1>
 					<article
-						className="shadow-on-scrollbox scrollbar-thin scrollbar-thumb-scrollbar h-full w-full max-w-none flex-1 scroll-pt-6 space-y-6 overflow-y-auto p-2 sm:p-10 sm:pt-8"
+						className="shadow-on-scrollbox scrollbar-thumb-scrollbar h-full w-full max-w-none flex-1 scroll-pt-6 scrollbar-thin space-y-6 overflow-y-auto p-2 sm:p-10 sm:pt-8"
 						id={data.articleId}
 					>
 						{data.finishedCode ? (

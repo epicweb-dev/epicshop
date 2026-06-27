@@ -326,7 +326,7 @@ export default function ExercisePartRoute({
 					style={{ ['--split-pct' as any]: `${splitPercent}%` }}
 					ref={leftPaneRef}
 				>
-					<h1 className="scrollbar-thin scrollbar-thumb-scrollbar @container h-14 max-w-full overflow-x-auto overflow-y-hidden border-b pr-5 pl-10 text-sm leading-tight font-medium">
+					<h1 className="scrollbar-thumb-scrollbar @container h-14 max-w-full scrollbar-thin overflow-x-auto overflow-y-hidden border-b pr-5 pl-10 text-sm leading-tight font-medium">
 						<div className="flex h-14 items-center justify-between gap-x-2 py-2 whitespace-nowrap">
 							<div className="flex items-center justify-start gap-x-2 uppercase">
 								<Link
@@ -370,7 +370,7 @@ export default function ExercisePartRoute({
 					<article
 						id={data.articleId}
 						key={data.articleId}
-						className="shadow-on-scrollbox scrollbar-thin scrollbar-thumb-scrollbar flex w-full max-w-none scroll-pt-6 flex-col justify-between space-y-6 p-2 sm:p-10 sm:pt-8 lg:h-full lg:flex-1 lg:overflow-y-auto"
+						className="shadow-on-scrollbox scrollbar-thumb-scrollbar flex w-full max-w-none scroll-pt-6 scrollbar-thin flex-col justify-between space-y-6 p-2 sm:p-10 sm:pt-8 lg:h-full lg:flex-1 lg:overflow-y-auto"
 					>
 						{data.exerciseStepApp.instructionsCode ? (
 							<StepMdx inBrowserBrowserRef={inBrowserBrowserRef} />

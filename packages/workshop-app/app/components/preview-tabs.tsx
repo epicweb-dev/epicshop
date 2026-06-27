@@ -30,7 +30,7 @@ export function getPreviewSearchParams(
 
 export function PreviewTabsList({ tabs }: { tabs: PreviewTab[] }) {
 	return (
-		<Tabs.List className="scrollbar-thin scrollbar-thumb-scrollbar h-14 min-h-14 overflow-x-auto border-b whitespace-nowrap">
+		<Tabs.List className="scrollbar-thumb-scrollbar h-14 min-h-14 scrollbar-thin overflow-x-auto border-b whitespace-nowrap">
 			{tabs.map((tab) => (
 				<Tabs.Trigger key={tab.id} value={tab.id} hidden={tab.hidden} asChild>
 					<Link

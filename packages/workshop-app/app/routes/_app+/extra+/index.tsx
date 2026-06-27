@@ -136,7 +136,7 @@ export default function ExtrasIndex() {
 		<main className="relative flex h-full w-full max-w-5xl flex-col justify-between border-r md:w-3/4 xl:w-2/3">
 			<article
 				id={data.articleId}
-				className="shadow-on-scrollbox scrollbar-thin scrollbar-thumb-scrollbar flex w-full flex-1 flex-col gap-12 overflow-y-scroll px-3 py-4 pt-6 md:px-10 md:py-12 md:pt-16"
+				className="shadow-on-scrollbox scrollbar-thumb-scrollbar flex w-full flex-1 scrollbar-thin flex-col gap-12 overflow-y-scroll px-3 py-4 pt-6 md:px-10 md:py-12 md:pt-16"
 			>
 				<div>
 					<h1 className="text-[clamp(3rem,6vw,7.5rem)] leading-none font-extrabold">

@@ -397,7 +397,7 @@ export function DiffImplementation({
 								</div>
 								<Form
 									onChange={(e) => submit(e.currentTarget)}
-									className="scrollbar-thin scrollbar-thumb-scrollbar flex h-full flex-1 items-center overflow-x-auto"
+									className="scrollbar-thumb-scrollbar flex h-full flex-1 scrollbar-thin items-center overflow-x-auto"
 									key={`${diff.app1}${diff.app2}`}
 								>
 									{hiddenInputs}
@@ -416,7 +416,7 @@ export function DiffImplementation({
 									/>
 								</Form>
 							</div>
-							<div className="scrollbar-thin scrollbar-thumb-scrollbar grow overflow-y-scroll">
+							<div className="scrollbar-thumb-scrollbar grow scrollbar-thin overflow-y-scroll">
 								{hasPatchParseError ? (
 									<p className="bg-foreground text-background m-5 inline-flex items-center justify-center px-1 py-0.5 font-mono text-sm uppercase">
 										There was a problem rendering the diff

@@ -88,7 +88,7 @@ export function Preview({
 		)
 	} else if (dev.type === 'browser' || dev.type === 'export') {
 		return (
-			<div className="scrollbar-thin scrollbar-thumb-scrollbar relative h-full grow overflow-y-auto">
+			<div className="scrollbar-thumb-scrollbar relative h-full grow scrollbar-thin overflow-y-auto">
 				<a
 					href={dev.pathname}
 					target="_blank"

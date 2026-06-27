@@ -224,7 +224,7 @@ function Document({
 					}}
 				/>
 			</head>
-			<body className="bg-background text-foreground scrollbar-thin scrollbar-thumb-scrollbar h-screen-safe">
+			<body className="bg-background text-foreground scrollbar-thumb-scrollbar h-screen-safe scrollbar-thin">
 				{children}
 				<ScrollRestoration />
 				<Scripts />

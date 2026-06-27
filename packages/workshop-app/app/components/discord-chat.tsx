@@ -40,7 +40,7 @@ export function DiscordChat({
 			<div className="text-center">
 				<DiscordCTA />
 			</div>
-			<div className="bg-accent scrollbar-thin scrollbar-thumb-scrollbar flex-1 overflow-y-scroll pb-4">
+			<div className="bg-accent scrollbar-thumb-scrollbar flex-1 scrollbar-thin overflow-y-scroll pb-4">
 				<DiscordPosts discordPostsPromise={discordPostsPromise} />
 			</div>
 		</div>
