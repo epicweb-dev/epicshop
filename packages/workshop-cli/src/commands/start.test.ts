@@ -15,6 +15,9 @@ const __dirname = path.dirname(fileURLToPath(import.meta.url))
 const repoRoot = path.resolve(__dirname, '..', '..', '..', '..')
 
 const testIf = process.platform === 'win32' ? test.skip : test
+const nodeMajorVersion = Number(process.versions.node.split('.')[0])
+const typeScriptRunnerArgs =
+	nodeMajorVersion >= 26 ? [] : ['--experimental-transform-types']
 
 testIf(
 	'start releases the child server port on shutdown',
@@ -24,7 +27,7 @@ testIf(
 		try {
 			child = spawn(
 				process.execPath,
-				['--experimental-transform-types', fixture.runnerPath],
+				[...typeScriptRunnerArgs, fixture.runnerPath],
 				{
 					cwd: repoRoot,
 					env: {
