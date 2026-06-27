@@ -36,7 +36,7 @@ jobs:
           cache: 'npm'
 
       - name: 📥 Download deps
-        run: npm install --prefer-offline --no-audit --no-fund
+        run: npm ci --ignore-scripts --prefer-offline --no-audit --no-fund
 
       - name: 🔧 Configure git
         run: |
@@ -54,7 +54,7 @@ jobs:
           if [ -n "$(git status --porcelain)" ]; then
             git add .
             HUSKY=0 git commit -m "chore: cleanup 🧹"
-            git push
+            HUSKY=0 git push
             echo "Changes committed and pushed."
           else
             echo "No changes to commit."
