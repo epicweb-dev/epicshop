@@ -14,6 +14,7 @@ const GITHUB_TOKEN =
 	process.env.WORKSHOP_UPDATE_TOKEN ?? process.env.GITHUB_TOKEN
 const USING_WORKSHOP_UPDATE_TOKEN = Boolean(process.env.WORKSHOP_UPDATE_TOKEN)
 const CONCURRENCY = 5
+const ADDITIONAL_WORKSHOP_REPOS = ['ai-powered-apps', 'workshop-template']
 
 if (!GITHUB_TOKEN) {
 	console.error(
@@ -85,6 +86,39 @@ async function fetchAvailableWorkshops() {
 	}
 
 	return allItems
+}
+
+async function fetchAdditionalWorkshops(workshops) {
+	const seen = new Set(workshops.map((workshop) => workshop.name))
+	const additionalWorkshops = []
+
+	for (const repoName of ADDITIONAL_WORKSHOP_REPOS) {
+		if (seen.has(repoName)) continue
+
+		const response = await fetch(
+			`https://api.github.com/repos/${GITHUB_ORG}/${repoName}`,
+			{
+				headers: {
+					Accept: 'application/vnd.github.v3+json',
+					Authorization: `Bearer ${GITHUB_TOKEN}`,
+					'User-Agent': 'epicshop-update-action',
+				},
+			},
+		)
+
+		if (!response.ok) {
+			throw new Error(
+				`Failed to fetch additional workshop ${repoName}: ${response.status}`,
+			)
+		}
+
+		const repo = await response.json()
+		if (!repo.archived) {
+			additionalWorkshops.push(repo)
+		}
+	}
+
+	return additionalWorkshops
 }
 
 /**
@@ -512,6 +546,7 @@ async function main() {
 		)
 		console.log('🔍 Fetching workshop repositories from GitHub...')
 		const workshops = await fetchAvailableWorkshops()
+		workshops.push(...(await fetchAdditionalWorkshops(workshops)))
 
 		if (workshops.length === 0) {
 			console.log('⚠️  No workshops found')
