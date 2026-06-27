@@ -15,9 +15,6 @@ const __dirname = path.dirname(fileURLToPath(import.meta.url))
 const repoRoot = path.resolve(__dirname, '..', '..', '..', '..')
 
 const testIf = process.platform === 'win32' ? test.skip : test
-const nodeMajorVersion = Number(process.versions.node.split('.')[0])
-const typeScriptRunnerArgs =
-	nodeMajorVersion >= 26 ? [] : ['--experimental-transform-types']
 
 testIf(
 	'start releases the child server port on shutdown',
@@ -25,20 +22,16 @@ testIf(
 		await using fixture = await createRunnerFixture()
 		let child: ChildProcess | null = null
 		try {
-			child = spawn(
-				process.execPath,
-				[...typeScriptRunnerArgs, fixture.runnerPath],
-				{
-					cwd: repoRoot,
-					env: {
-						...process.env,
-						EPICSHOP_APP_LOCATION: fixture.appDir,
-						EPICSHOP_CONTEXT_CWD: fixture.appDir,
-						NODE_ENV: 'development',
-					},
-					stdio: ['ignore', 'pipe', 'pipe'],
+			child = spawn(process.execPath, [fixture.runnerPath], {
+				cwd: repoRoot,
+				env: {
+					...process.env,
+					EPICSHOP_APP_LOCATION: fixture.appDir,
+					EPICSHOP_CONTEXT_CWD: fixture.appDir,
+					NODE_ENV: 'development',
 				},
-			)
+				stdio: ['ignore', 'pipe', 'pipe'],
+			})
 
 			if (!child) {
 				throw new Error('Failed to start runner process.')
