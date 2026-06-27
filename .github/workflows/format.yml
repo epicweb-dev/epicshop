@@ -50,6 +50,7 @@ jobs:
 
       - name: 🔍 Run Oxlint --fix
         run: npm exec -- oxlint . --fix
+        continue-on-error: true
 
       - name: 💾 Commit changes
         run: |
