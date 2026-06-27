@@ -2,6 +2,7 @@ import fs from 'fs/promises'
 import path from 'path'
 import { fileURLToPath } from 'url'
 import { execa } from 'execa'
+import semver from 'semver'
 
 const __filename = fileURLToPath(import.meta.url)
 const __dirname = path.dirname(__filename)
@@ -14,6 +15,7 @@ const GITHUB_TOKEN =
 	process.env.WORKSHOP_UPDATE_TOKEN ?? process.env.GITHUB_TOKEN
 const USING_WORKSHOP_UPDATE_TOKEN = Boolean(process.env.WORKSHOP_UPDATE_TOKEN)
 const CONCURRENCY = 5
+const TARGET_NODE_VERSION = '26.0.0'
 const ADDITIONAL_WORKSHOP_REPOS = ['ai-powered-apps', 'workshop-template']
 
 if (!GITHUB_TOKEN) {
@@ -136,6 +138,42 @@ async function getLatestVersion() {
 		console.error('❌ Failed to get latest version:', error.message)
 		throw error
 	}
+}
+
+async function getPublishedWorkshopAppNodeRange(version) {
+	try {
+		const { stdout } = await execa('npm', [
+			'show',
+			`@epic-web/workshop-app@${version}`,
+			'engines.node',
+		])
+		return stdout.trim()
+	} catch (error) {
+		console.error(
+			`❌ Failed to get @epic-web/workshop-app@${version} node engine:`,
+			error.message,
+		)
+		throw error
+	}
+}
+
+async function verifyWorkshopAppSupportsTargetNode(version) {
+	const nodeRange = await getPublishedWorkshopAppNodeRange(version)
+	if (!nodeRange) {
+		throw new Error(
+			`@epic-web/workshop-app@${version} does not publish an engines.node range`,
+		)
+	}
+
+	if (!semver.satisfies(TARGET_NODE_VERSION, nodeRange)) {
+		throw new Error(
+			`@epic-web/workshop-app@${version} supports Node ${nodeRange}, not Node ${TARGET_NODE_VERSION}. Aborting before updating workshops.`,
+		)
+	}
+
+	console.log(
+		`✅ @epic-web/workshop-app@${version} supports Node ${TARGET_NODE_VERSION} (${nodeRange})`,
+	)
 }
 
 /**
@@ -562,6 +600,7 @@ async function main() {
 		console.log('📦 Getting latest version from npm...')
 		const version = await getLatestVersion()
 		console.log(`🔍 Updating to version ${version}`)
+		await verifyWorkshopAppSupportsTargetNode(version)
 
 		// Verify that both epicshop and workshop-app are available on npm
 		// before pushing updates to workshops to avoid 404 errors in workshop CI
