@@ -16,7 +16,7 @@ const GITHUB_TOKEN =
 const USING_WORKSHOP_UPDATE_TOKEN = Boolean(process.env.WORKSHOP_UPDATE_TOKEN)
 const CONCURRENCY = 5
 const TARGET_NODE_VERSION = '26.0.0'
-const ADDITIONAL_WORKSHOP_REPOS = ['workshop-template']
+const ADDITIONAL_WORKSHOP_REPOS = ['ai-powered-apps', 'workshop-template']
 
 if (!GITHUB_TOKEN) {
 	console.error(
