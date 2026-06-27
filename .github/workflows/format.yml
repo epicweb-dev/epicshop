@@ -36,7 +36,7 @@ jobs:
           cache: 'npm'
 
       - name: 📥 Download deps
-        run: npm ci --prefer-offline --no-audit --no-fund
+        run: npm ci --ignore-scripts --prefer-offline --no-audit --no-fund
 
       - name: 🔧 Configure git
         run: |
