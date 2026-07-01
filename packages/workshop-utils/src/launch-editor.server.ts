@@ -259,6 +259,22 @@ export function parseEditorCommand(
 	return shellQuote.parse(trimmedEditor).map((arg) => String(arg))
 }
 
+function quoteWindowsCmdArg(arg: string): string {
+	return `"${arg.replaceAll('"', '\\"')}"`
+}
+
+export function getWindowsEditorCommandArgs(
+	editor: string,
+	args: Array<string>,
+): Array<string> {
+	return [
+		'/D',
+		'/S',
+		'/C',
+		[quoteWindowsCmdArg(editor), ...args.map(quoteWindowsCmdArg)].join(' '),
+	]
+}
+
 function getWindowsProcessPaths(): string[] {
 	const systemRoot = process.env.SystemRoot ?? process.env.WINDIR
 	const wmicPath = systemRoot
@@ -604,7 +620,7 @@ export async function launchEditor(
 			// launch .exe files.
 			_childProcess = child_process.spawn(
 				'cmd.exe',
-				['/C', editor].concat(args).filter(Boolean),
+				getWindowsEditorCommandArgs(editor, args),
 				{ stdio: ['inherit', 'inherit', 'pipe'] },
 			)
 		} else {
