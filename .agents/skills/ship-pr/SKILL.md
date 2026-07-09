@@ -33,11 +33,16 @@ without `gh`, and `request` / `graphql` (`kody:@kentcdodds/github/request`,
 
 ## Done → Discord
 
+Post the summary to channel `1491568683737157683`:
+
 ```javascript
-import sendMeAMessage from 'kody:@kentcdodds/discord/send-me-a-message'
+import postMessage from 'kody:@kentcdodds/discord/post-message'
 
 export default async function main() {
 	const content = ` ... `
-	return sendMeAMessage({ content })
+	return postMessage({
+		channelId: '1491568683737157683',
+		content,
+	})
 }
 ```
