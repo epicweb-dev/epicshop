@@ -22,10 +22,11 @@ description: >
 By default, continue to Discord message with summary and include PR link
 
 If explicitly requested, merge PR as Kody with
-`kody:@kentcdodds/github/pr/merge` using `{ prUrl, mergeMethod: 'squash' }` (or
-`{ owner, repo, prNumber, ... }`; optional `commitTitle`), watch CI deploy, when
-finished, continue to the discord message and include a summary with link to PR,
-deployed URL link, or failing job link.
+`kody:@kentcdodds/github/pr/merge` using
+`{ prUrl, mergeMethod: 'squash' }` (or `{ owner, repo, prNumber, ... }`;
+optional `commitTitle`), watch CI deploy, when finished, continue to the discord
+message and include a summary with link to PR, deployed URL link, or failing job
+link.
 
 Other useful exports on the same package: `pr/get-checks` for check-run status
 without `gh`, and `request` / `graphql` (`kody:@kentcdodds/github/request`,
@@ -34,7 +35,7 @@ without `gh`, and `request` / `graphql` (`kody:@kentcdodds/github/request`,
 ## Done → Discord
 
 ```javascript
-import sendMeAMessage from 'kody:@kentcdodds/discord-gateway/send-me-a-message'
+import sendMeAMessage from 'kody:@kentcdodds/discord/send-me-a-message'
 
 export default async function main() {
 	const content = ` ... `
