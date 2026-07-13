@@ -506,10 +506,29 @@ async function updateWorkshopRepo(repo, version) {
 			}
 		}
 
+		// Some workshop repos gitignore files we'd otherwise stage (e.g.
+		// epicshop/package-lock.json) and `git add` fails on ignored files.
+		const stageableFiles = []
+		for (const file of filesToStage) {
+			// check-ignore exits 0 when the file is ignored and 1 when it's not
+			const { exitCode } = await execa('git', ['check-ignore', '-q', file], {
+				cwd: tempDir,
+				env: getGitEnv(),
+				reject: false,
+			})
+			if (exitCode === 0) {
+				console.log(`🙈 ${repoName} - skipping gitignored file: ${file}`)
+			} else {
+				stageableFiles.push(file)
+			}
+		}
+
 		// Stage changes
-		console.log(`📝 ${repoName} - staging changes: ${filesToStage.join(', ')}`)
-		if (filesToStage.length > 0) {
-			await execa('git', ['add', ...filesToStage], {
+		console.log(
+			`📝 ${repoName} - staging changes: ${stageableFiles.join(', ')}`,
+		)
+		if (stageableFiles.length > 0) {
+			await execa('git', ['add', ...stageableFiles], {
 				cwd: tempDir,
 				env: getGitEnv(),
 			})
