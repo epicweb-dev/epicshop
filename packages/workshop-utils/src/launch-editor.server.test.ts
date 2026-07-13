@@ -85,9 +85,9 @@ test.skipIf(process.platform === 'win32')(
 		if (result.status !== 'error') throw new Error('expected an error result')
 		expect(result.message).toContain(`"${process.execPath}"`)
 		expect(result.message).toContain('exited with error code 1')
-		expect(result.message).toContain('editor exploded')
-		expect(result.message).toContain('EPICSHOP_EDITOR')
-		expect(result.message).toContain('/guide#file-links-troubleshooting')
+		expect(result.details).toContain('editor exploded')
+		expect(result.details).toContain('EPICSHOP_EDITOR')
+		expect(result.details).toContain('/guide#file-links-troubleshooting')
 	},
 )
 
@@ -102,8 +102,8 @@ test.skipIf(process.platform === 'win32')(
 		expect(result.message).toContain(
 			'The editor command "definitely-not-a-real-editor-command" was not found',
 		)
-		expect(result.message).toContain('EPICSHOP_EDITOR')
-		expect(result.message).toContain('/guide#file-links-troubleshooting')
+		expect(result.details).toContain('EPICSHOP_EDITOR')
+		expect(result.details).toContain('/guide#file-links-troubleshooting')
 	},
 )
 

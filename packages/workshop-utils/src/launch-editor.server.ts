@@ -483,7 +483,7 @@ export function getDefaultEditorCommand(): string | null {
 let _childProcess: ReturnType<typeof child_process.spawn> | null = null
 export type Result =
 	| { status: 'success' }
-	| { status: 'error'; message: string }
+	| { status: 'error'; message: string; details?: string }
 
 export const EDITOR_CONFIG_HELP = `To tell the workshop app which editor to use, create a ".env" file in the workshop root directory (the folder you run "npm start" in) with a line like this:
 
@@ -519,7 +519,8 @@ export async function launchEditor(
 	if (!editor) {
 		return {
 			status: 'error',
-			message: `Could not determine which editor to open the file in.\n\n${EDITOR_CONFIG_HELP}`,
+			message: 'Could not determine which editor to open the file in.',
+			details: EDITOR_CONFIG_HELP,
 		}
 	}
 
@@ -660,11 +661,9 @@ export async function launchEditor(
 				const editorOutput = editorStderr.trim()
 				return res({
 					status: 'error',
-					message: [
-						`Could not open ${readableName} in the editor.`,
-						`The editor command "${editor}" exited with error code ${errorCode}.`,
+					message: `Could not open ${readableName} in the editor.\n\nThe editor command "${editor}" exited with error code ${errorCode}. This usually means the editor command is misconfigured or not installed.`,
+					details: [
 						editorOutput ? `Editor output:\n${editorOutput}` : null,
-						`This usually means the editor command is misconfigured or not installed.`,
 						EDITOR_CONFIG_HELP,
 					]
 						.filter(Boolean)
@@ -690,12 +689,14 @@ export async function launchEditor(
 			if (error.code === 'ENOENT') {
 				return res({
 					status: 'error',
-					message: `The editor command "${editor}" was not found. Make sure your editor is installed and its command is available on your PATH.\n\n${EDITOR_CONFIG_HELP}`,
+					message: `The editor command "${editor}" was not found. Make sure your editor is installed and its command is available on your PATH.`,
+					details: EDITOR_CONFIG_HELP,
 				})
 			}
 			return res({
 				status: 'error',
-				message: `Failed to launch the editor command "${editor}": ${error.message}\n\n${EDITOR_CONFIG_HELP}`,
+				message: `Failed to launch the editor command "${editor}": ${error.message}`,
+				details: EDITOR_CONFIG_HELP,
 			})
 		})
 	})
