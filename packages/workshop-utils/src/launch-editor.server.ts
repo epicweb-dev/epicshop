@@ -484,6 +484,16 @@ let _childProcess: ReturnType<typeof child_process.spawn> | null = null
 export type Result =
 	| { status: 'success' }
 	| { status: 'error'; message: string }
+
+export const EDITOR_CONFIG_HELP = `To tell the workshop app which editor to use, create a ".env" file in the workshop root directory (the folder you run "npm start" in) with a line like this:
+
+EPICSHOP_EDITOR=code
+
+Replace "code" with the command for your editor (for example "cursor" for Cursor). If the command isn't on your PATH, use the full path to it and wrap it in quotes if it contains spaces, for example on Windows:
+
+EPICSHOP_EDITOR='"C:\\Program Files\\Microsoft VS Code\\bin\\code.cmd"'
+
+Then restart the workshop app. For more help, see the "File Links" troubleshooting section in the app guide (click "?" at the bottom of the page or go to /guide#file-links-troubleshooting).`
 export async function launchEditor(
 	pathList: string[] | string,
 	lineNumber: number = 1,
@@ -507,7 +517,10 @@ export async function launchEditor(
 	let args = editorInfo.slice(1).filter(Boolean)
 
 	if (!editor) {
-		return { status: 'error', message: 'No editor found' }
+		return {
+			status: 'error',
+			message: `Could not determine which editor to open the file in.\n\n${EDITOR_CONFIG_HELP}`,
+		}
 	}
 
 	if (editor.toLowerCase() === 'none') {
@@ -628,11 +641,14 @@ export async function launchEditor(
 				stdio: ['inherit', 'inherit', 'pipe'],
 			})
 		}
+		let editorStderr = ''
 		_childProcess.stderr?.on('data', (data: string | Uint8Array) => {
 			const message = String(data)
 			// Filter out the specific error message for environment variable issues
 			if (!message.includes('Node.js environment variables are disabled')) {
 				process.stderr.write(data) // Only write non-filtered messages to stderr
+				// keep the tail of the output for the error message shown to the user
+				editorStderr = `${editorStderr}${message}`.slice(-1000)
 			}
 		})
 		_childProcess.on('exit', async (errorCode) => {
@@ -641,9 +657,18 @@ export async function launchEditor(
 			if (errorCode) {
 				const readableName =
 					fileList.length === 1 ? readablePath(fileList[0]) : 'some files'
+				const editorOutput = editorStderr.trim()
 				return res({
 					status: 'error',
-					message: `Could not open ${readableName} in the editor.\n\nThe editor process exited with an error code (${errorCode}).`,
+					message: [
+						`Could not open ${readableName} in the editor.`,
+						`The editor command "${editor}" exited with error code ${errorCode}.`,
+						editorOutput ? `Editor output:\n${editorOutput}` : null,
+						`This usually means the editor command is misconfigured or not installed.`,
+						EDITOR_CONFIG_HELP,
+					]
+						.filter(Boolean)
+						.join('\n\n'),
 				})
 			} else if (errorsList.length) {
 				// show error message even when the editor was opened successfully,
@@ -662,7 +687,16 @@ export async function launchEditor(
 						'Unable to launch editor. This commonly happens when running in a containerized or server environment without terminal access.',
 				})
 			}
-			return res({ status: 'error', message: error.message })
+			if (error.code === 'ENOENT') {
+				return res({
+					status: 'error',
+					message: `The editor command "${editor}" was not found. Make sure your editor is installed and its command is available on your PATH.\n\n${EDITOR_CONFIG_HELP}`,
+				})
+			}
+			return res({
+				status: 'error',
+				message: `Failed to launch the editor command "${editor}": ${error.message}\n\n${EDITOR_CONFIG_HELP}`,
+			})
 		})
 	})
 }
