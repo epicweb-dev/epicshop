@@ -155,7 +155,8 @@ export async function action({ request }: Route.ActionArgs) {
 		return dataWithPE(request, formData, { status: 'success' } as const)
 	}
 	const results: Array<
-		{ status: 'success' } | { status: 'error'; message: string }
+		| { status: 'success' }
+		| { status: 'error'; message: string; details?: string }
 	> = []
 	for (const file of filesToOpen) {
 		results.push(await launchEditor(file.filepath, file.line, file.column))
@@ -164,17 +165,16 @@ export async function action({ request }: Route.ActionArgs) {
 	if (results.every((r) => r.status === 'success')) {
 		return dataWithPE(request, formData, { status: 'success' } as const)
 	} else {
-		const messages = results
+		const errors = results.filter((r) => r.status === 'error')
+		const messages = errors
 			.map((r, index, array) =>
-				r.status === 'error'
-					? array.length > 1
-						? `${index}. ${r.message}`
-						: r.message
-					: null,
+				array.length > 1 ? `${index}. ${r.message}` : r.message,
 			)
-			.filter(Boolean)
 			.join('\n')
-		console.error('Launch editor error:', messages)
+		const details = Array.from(
+			new Set(errors.map((r) => r.details).filter(Boolean)),
+		).join('\n\n')
+		console.error('Launch editor error:', messages, details)
 		return dataWithPE(
 			request,
 			formData,
@@ -184,6 +184,7 @@ export async function action({ request }: Route.ActionArgs) {
 					type: 'error',
 					title: 'Launch Editor Error',
 					description: messages,
+					details: details || undefined,
 				}),
 			},
 		)

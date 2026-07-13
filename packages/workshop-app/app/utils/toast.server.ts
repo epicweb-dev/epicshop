@@ -9,6 +9,8 @@ const TypeSchema = z.enum(['message', 'success', 'error'])
 const ToastSchema = z
 	.object({
 		description: z.string(),
+		// additional information rendered in an expandable "More details" section
+		details: z.string().optional(),
 		id: z.string().default(() => cuid()),
 		title: z.string().optional(),
 		type: TypeSchema.default('message'),
@@ -17,12 +19,14 @@ const ToastSchema = z
 		...toast,
 		title: toast.title ? sanitizeCookieValue(toast.title) : undefined,
 		description: sanitizeCookieValue(toast.description),
+		details: toast.details ? sanitizeCookieValue(toast.details) : undefined,
 	}))
 
 export type Toast = z.infer<typeof ToastSchema>
-export type OptionalToast = Omit<Toast, 'id' | 'type'> & {
+export type OptionalToast = Omit<Toast, 'id' | 'type' | 'details'> & {
 	id?: string
 	type?: z.infer<typeof TypeSchema>
+	details?: string
 }
 
 export const toastSessionStorage = createCookieSessionStorage({

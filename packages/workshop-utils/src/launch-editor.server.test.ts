@@ -1,8 +1,36 @@
+import fs from 'node:fs'
+import os from 'node:os'
+import path from 'node:path'
 import { expect, test } from 'vitest'
 import {
 	getWindowsEditorCommandArgs,
+	launchEditor,
 	parseEditorCommand,
 } from './launch-editor.server.ts'
+
+function withEditorEnv(editor: string) {
+	const original = process.env.EPICSHOP_EDITOR
+	process.env.EPICSHOP_EDITOR = editor
+	return {
+		[Symbol.dispose]() {
+			if (original === undefined) {
+				delete process.env.EPICSHOP_EDITOR
+			} else {
+				process.env.EPICSHOP_EDITOR = original
+			}
+		},
+	}
+}
+
+function createTempDir() {
+	const dir = fs.mkdtempSync(path.join(os.tmpdir(), 'epicshop-launch-editor-'))
+	return {
+		dir,
+		[Symbol.dispose]() {
+			fs.rmSync(dir, { recursive: true, force: true })
+		},
+	}
+}
 
 test('preserves unquoted Windows editor paths', () => {
 	const editor = String.raw`C:\Users\James\AppData\Local\Programs\cursor\Cursor.exe`
@@ -37,6 +65,47 @@ test('quotes Windows editor command arguments with spaces (aha)', () => {
 		String.raw`"code" "C:\Users\Campbell L Mitchell\Campbell - Ensign College\epicshop-tutorial"`,
 	])
 })
+
+// These launch real child processes, which follows a different code path on
+// Windows (via cmd.exe). CI runs unit tests on Linux.
+test.skipIf(process.platform === 'win32')(
+	'includes the editor command, exit code, editor output, and config help when the editor fails (aha)',
+	async () => {
+		using temp = createTempDir()
+		const failingEditor = path.join(temp.dir, 'failing-editor.cjs')
+		fs.writeFileSync(
+			failingEditor,
+			"console.error('editor exploded')\nprocess.exit(1)\n",
+		)
+		using _env = withEditorEnv(`${process.execPath} ${failingEditor}`)
+
+		const resultPromise = launchEditor(path.join(temp.dir, 'index.js'))
+		await expect(resultPromise).resolves.toMatchObject({ status: 'error' })
+		const result = await resultPromise
+		if (result.status !== 'error') throw new Error('expected an error result')
+		expect(result.message).toContain(`"${process.execPath}"`)
+		expect(result.message).toContain('exited with error code 1')
+		expect(result.details).toContain('editor exploded')
+		expect(result.details).toContain('EPICSHOP_EDITOR')
+		expect(result.details).toContain('/guide#file-links-troubleshooting')
+	},
+)
+
+test.skipIf(process.platform === 'win32')(
+	'explains missing editor commands and how to configure EPICSHOP_EDITOR (aha)',
+	async () => {
+		using temp = createTempDir()
+		using _env = withEditorEnv('definitely-not-a-real-editor-command')
+
+		const result = await launchEditor(path.join(temp.dir, 'index.js'))
+		if (result.status !== 'error') throw new Error('expected an error result')
+		expect(result.message).toContain(
+			'The editor command "definitely-not-a-real-editor-command" was not found',
+		)
+		expect(result.details).toContain('EPICSHOP_EDITOR')
+		expect(result.details).toContain('/guide#file-links-troubleshooting')
+	},
+)
 
 test('quotes Windows editor paths with spaces and preserves editor args', () => {
 	const editor = String.raw`C:\Program Files\Microsoft VS Code\bin\code.cmd`

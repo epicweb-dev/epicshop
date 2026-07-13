@@ -1804,7 +1804,7 @@ export async function openWorkshop(
 		if (result.status === 'error') {
 			return {
 				success: false,
-				message: result.message,
+				message: [result.message, result.details].filter(Boolean).join('\n\n'),
 			}
 		}
 
