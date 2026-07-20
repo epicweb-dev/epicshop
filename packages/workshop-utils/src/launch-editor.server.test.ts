@@ -3,6 +3,7 @@ import os from 'node:os'
 import path from 'node:path'
 import { expect, test } from 'vitest'
 import {
+	getWindowsEditorCommand,
 	getWindowsEditorCommandArgs,
 	launchEditor,
 	parseEditorCommand,
@@ -62,7 +63,7 @@ test('quotes Windows editor command arguments with spaces (aha)', () => {
 		'/D',
 		'/S',
 		'/C',
-		String.raw`"code" "C:\Users\Campbell L Mitchell\Campbell - Ensign College\epicshop-tutorial"`,
+		String.raw`""code" "C:\Users\Campbell L Mitchell\Campbell - Ensign College\epicshop-tutorial""`,
 	])
 })
 
@@ -117,6 +118,22 @@ test('quotes Windows editor paths with spaces and preserves editor args', () => 
 		'/D',
 		'/S',
 		'/C',
-		String.raw`"C:\Program Files\Microsoft VS Code\bin\code.cmd" "--reuse-window" "C:\Users\Campbell L Mitchell\epicshop-tutorial"`,
+		String.raw`""C:\Program Files\Microsoft VS Code\bin\code.cmd" "--reuse-window" "C:\Users\Campbell L Mitchell\epicshop-tutorial""`,
 	])
+})
+
+test('passes the wrapped command to cmd without Node rewriting its quotes (aha)', () => {
+	const editor = String.raw`C:\Users\Ada\AppData\Local\Programs\Microsoft VS Code\Code.exe`
+	const fileName = String.raw`C:\Users\Ada\Epic Workshop\index.ts`
+
+	expect(getWindowsEditorCommand(editor, ['-g', `${fileName}:1:1`])).toEqual({
+		file: 'cmd.exe',
+		args: [
+			'/D',
+			'/S',
+			'/C',
+			String.raw`""C:\Users\Ada\AppData\Local\Programs\Microsoft VS Code\Code.exe" "-g" "C:\Users\Ada\Epic Workshop\index.ts:1:1""`,
+		],
+		options: { windowsVerbatimArguments: true },
+	})
 })
