@@ -267,12 +267,22 @@ export function getWindowsEditorCommandArgs(
 	editor: string,
 	args: Array<string>,
 ): Array<string> {
-	return [
-		'/D',
-		'/S',
-		'/C',
-		[quoteWindowsCmdArg(editor), ...args.map(quoteWindowsCmdArg)].join(' '),
-	]
+	const command = [
+		quoteWindowsCmdArg(editor),
+		...args.map(quoteWindowsCmdArg),
+	].join(' ')
+	// /S strips the first and last quotes, so add an outer pair around the
+	// individually quoted command and arguments.
+	return ['/D', '/S', '/C', `"${command}"`]
+}
+
+export function getWindowsEditorCommand(editor: string, args: Array<string>) {
+	return {
+		file: 'cmd.exe',
+		args: getWindowsEditorCommandArgs(editor, args),
+		// cmd.exe parses quotes itself and does not understand libuv's \" escapes.
+		options: { windowsVerbatimArguments: true },
+	}
 }
 
 function getWindowsProcessPaths(): string[] {
@@ -632,10 +642,14 @@ export async function launchEditor(
 		if (process.platform === 'win32') {
 			// On Windows, launch the editor in a shell because spawn can only
 			// launch .exe files.
+			const windowsCommand = getWindowsEditorCommand(editor, args)
 			_childProcess = child_process.spawn(
-				'cmd.exe',
-				getWindowsEditorCommandArgs(editor, args),
-				{ stdio: ['inherit', 'inherit', 'pipe'] },
+				windowsCommand.file,
+				windowsCommand.args,
+				{
+					stdio: ['inherit', 'inherit', 'pipe'],
+					...windowsCommand.options,
+				},
 			)
 		} else {
 			_childProcess = child_process.spawn(editor, args, {
