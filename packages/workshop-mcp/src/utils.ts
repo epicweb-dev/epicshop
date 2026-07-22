@@ -5,6 +5,7 @@ import {
 	init as initApps,
 } from '@epic-web/workshop-utils/apps.server'
 import { z } from 'zod/v3'
+import { ExpectedMcpError } from './sentry-filters.ts'
 
 export const workshopDirectoryInputSchema = z
 	.string()
@@ -38,7 +39,9 @@ async function isWorkshopDirectory(workshopDirectory: string) {
 export async function handleWorkshopDirectory(workshopDirectory: string) {
 	workshopDirectory = workshopDirectory.trim()
 
-	if (!workshopDirectory) throw new Error('The workshop directory is required')
+	if (!workshopDirectory) {
+		throw new ExpectedMcpError('The workshop directory is required')
+	}
 
 	if (!path.isAbsolute(workshopDirectory)) {
 		workshopDirectory = path.resolve(process.cwd(), workshopDirectory)
@@ -53,7 +56,7 @@ export async function handleWorkshopDirectory(workshopDirectory: string) {
 	while (true) {
 		if (await isWorkshopDirectory(workshopDirectory)) break
 		if (workshopDirectory === path.dirname(workshopDirectory)) {
-			throw new Error(
+			throw new ExpectedMcpError(
 				`No workshop directory found while searching upward from "${searchStartDirectory}" to filesystem root "${workshopDirectory}"`,
 			)
 		}

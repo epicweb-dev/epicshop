@@ -2,6 +2,7 @@ import { mkdtemp, mkdir, rm, writeFile } from 'node:fs/promises'
 import os from 'node:os'
 import path from 'node:path'
 import { test, expect, vi } from 'vitest'
+import { ExpectedMcpError } from './sentry-filters.ts'
 import {
 	handleWorkshopDirectory,
 	workshopDirectoryInputSchema,
@@ -109,6 +110,9 @@ test('handleWorkshopDirectory rejects blank input (aha)', async () => {
 	await expect(handleWorkshopDirectory('   ')).rejects.toThrow(
 		'The workshop directory is required',
 	)
+	await expect(handleWorkshopDirectory('   ')).rejects.toBeInstanceOf(
+		ExpectedMcpError,
+	)
 })
 
 test('handleWorkshopDirectory resolves relative paths from cwd (aha)', async () => {
@@ -158,4 +162,7 @@ test('handleWorkshopDirectory rejects when no workshop directory found (aha)', a
 	await expect(handleWorkshopDirectory(searchStartDirectory)).rejects.toThrow(
 		`No workshop directory found while searching upward from "${searchStartDirectory}" to filesystem root "${filesystemRoot}"`,
 	)
+	await expect(
+		handleWorkshopDirectory(searchStartDirectory),
+	).rejects.toBeInstanceOf(ExpectedMcpError)
 })
