@@ -6,6 +6,7 @@ import { StdioServerTransport } from '@modelcontextprotocol/sdk/server/stdio.js'
 import * as Sentry from '@sentry/node'
 import { initPrompts } from './prompts.ts'
 import { initResources } from './resources.ts'
+import { isExpectedMcpSentryNoise } from './sentry-filters.ts'
 import { serverInstructions } from './server-metadata.ts'
 import { initPromptTools, initResourceTools, initTools } from './tools.ts'
 
@@ -23,6 +24,11 @@ if (shouldEnableSentry) {
 		sendDefaultPii: true,
 		environment: env.EPICSHOP_IS_PUBLISHED ? 'production' : 'development',
 		tracesSampleRate: 1.0,
+		beforeSend(event, hint) {
+			// Expected agent/user mistakes (wrong cwd, missing workshop root, etc.)
+			if (isExpectedMcpSentryNoise(event, hint)) return null
+			return event
+		},
 	})
 }
 
