@@ -1,5 +1,6 @@
 import { getEnv } from '@epic-web/workshop-utils/init-env'
 import * as Sentry from '@sentry/node'
+import { isExpectedCliSentryNoise } from './sentry-cli-filters.js'
 
 type CliCommandContext = {
 	command?: string
@@ -136,6 +137,10 @@ export function initCliSentry(args: string[]): CliSentry {
 		sendDefaultPii: false,
 		environment: env.EPICSHOP_IS_PUBLISHED ? 'production' : 'development',
 		tracesSampleRate: 1,
+		beforeSend(event) {
+			if (isExpectedCliSentryNoise(event)) return null
+			return event
+		},
 	})
 
 	Sentry.setTags({
