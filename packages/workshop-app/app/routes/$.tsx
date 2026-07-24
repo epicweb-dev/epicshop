@@ -12,8 +12,11 @@ import { Icon } from '#app/components/icons.tsx'
 
 export async function loader({ params }: Route.LoaderArgs) {
 	const splat = params['*']
-	const segments = splat?.split('/') ?? []
-	if (segments.length > 0 && !isNaN(Number(segments[0]))) {
+	// Only a bare run of digits counts as an exercise number. `Number('')` is 0,
+	// so the old isNaN check let `//anything` through and built a Location
+	// header out of it.
+	const [firstSegment] = splat?.split('/') ?? []
+	if (firstSegment && /^\d+$/.test(firstSegment)) {
 		const newPath = `/exercise/${splat}`
 		return new Response(null, {
 			status: 302,
