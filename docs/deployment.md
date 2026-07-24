@@ -30,6 +30,14 @@ If a mass update still leaves apps unhealthy, re-run each workshop's `deploy`
 workflow sequentially (or with low concurrency) via `workflow_dispatch` rather
 than pushing another thundering herd.
 
+### 6.90.17 boot failure note
+
+`@epic-web/workshop-app@6.90.17` imported `sentry-server-filters.js` from
+`instrument.js` without publishing that file. Fly apps with `SENTRY_DSN` set
+crashed on boot. Deployed `epicshop start` also failed to propagate the child
+exit code (exited 0), so Fly's `on-failure` restart policy did not recover the
+machine. Fixed in a later patch release; do not leave workshops on `6.90.17`.
+
 ## Presence App Deployment
 
 The workshop-presence app is deployed to PartyKit/Cloudflare using a GitHub
