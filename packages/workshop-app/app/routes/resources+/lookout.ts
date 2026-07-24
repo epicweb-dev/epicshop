@@ -13,12 +13,22 @@ export function loader() {
 	})
 }
 
+function parseEnvelopeHeader(piece: string) {
+	try {
+		return JSON.parse(piece) as { dsn: string }
+	} catch {
+		// A SyntaxError here would escape as a reported 500, but a body that
+		// isn't a Sentry envelope is the caller's mistake.
+		throw new Response('Invalid sentry envelope', { status: 400 })
+	}
+}
+
 export async function action({ request }: Route.ActionArgs) {
 	const envelope = await request.text()
 	const piece = envelope.split('\n')[0]
 	invariantResponse(piece, 'no piece in envelope')
 
-	const header = JSON.parse(piece ?? '{}') as any
+	const header = parseEnvelopeHeader(piece)
 	const dsn = new URL(header.dsn)
 	const projectId = dsn.pathname?.replace('/', '')
 
