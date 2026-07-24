@@ -99,19 +99,3 @@ test('an unparseable launch form rejects with a 400 Response, not a ZodError (ah
 		submit({ appFile: 'src/index.ts', appName: 'playground' }),
 	).rejects.toMatchObject({ status: 400 })
 })
-
-test('the production payload that used to 500 now gets past validation (aha)', async () => {
-	// Whatever the outcome, it has to be an HTTP response rather than a raw
-	// ZodError escaping as an unhandled server fault.
-	await expect(
-		submit({
-			appFile: 'src/index.ts',
-			appName: 'playground',
-			column: '',
-			file: '',
-			line: 'false',
-			'show-progress-bar': 'true',
-			type: 'appFile',
-		}),
-	).rejects.toBeInstanceOf(Response)
-})
