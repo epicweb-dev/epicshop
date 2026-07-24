@@ -21,10 +21,9 @@ export async function loader(args: Route.LoaderArgs) {
 		{ status: 405 },
 	)
 	try {
-		const result = await loaderFn(args)
-		return result
+		return await loaderFn(args)
 	} catch (error) {
-		api.cleanupError(error)
+		throw api.toLearnerErrorResponse(error)
 	}
 }
 
@@ -40,10 +39,9 @@ export async function action(args: Route.ActionArgs) {
 		{ status: 405 },
 	)
 	try {
-		const result = await actionFn(args)
-		return result
+		return await actionFn(args)
 	} catch (error) {
-		api.cleanupError(error)
+		throw api.toLearnerErrorResponse(error)
 	}
 }
 
@@ -102,7 +100,9 @@ async function getApiModule({ request, params }: Route.LoaderArgs) {
 	}
 	const apiCode = outputFiles[0].text
 	const dataUrl = `data:text/javascript;base64,${Buffer.from(apiCode).toString('base64')}`
-	const mod = await import(/* @vite-ignore */ dataUrl).catch(cleanupError)
+	const mod = await import(/* @vite-ignore */ dataUrl).catch((error) => {
+		throw toLearnerErrorResponse(error)
+	})
 	const apiModule = ApiModuleSchema.safeParse(mod)
 	if (!apiModule.success) {
 		throw new Response(
@@ -112,13 +112,26 @@ async function getApiModule({ request, params }: Route.LoaderArgs) {
 	}
 	return {
 		mod: apiModule.data,
-		cleanupError,
+		toLearnerErrorResponse,
 	}
 
-	function cleanupError(error: unknown) {
+	// Anything thrown here comes from the learner's own api.server file, not
+	// from epicshop. React Router hands a thrown Response straight back to the
+	// client without running the server `handleError` hook, so turning the
+	// failure into a Response keeps the learner's bug out of our error
+	// reporting while still showing it to them.
+	function toLearnerErrorResponse(error: unknown) {
+		if (error instanceof Response) return error
 		if (apiFile && error instanceof Error && error.stack) {
 			error.stack = error.stack.replace(dataUrl, apiFile)
 		}
-		throw error
+		console.error(`Error in ${apiFile}:`, error)
+		return new Response(
+			error instanceof Error ? error.message : String(error),
+			{
+				status: 500,
+				headers: { 'Content-Type': 'text/plain' },
+			},
+		)
 	}
 }
