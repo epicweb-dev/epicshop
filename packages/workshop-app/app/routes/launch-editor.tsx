@@ -26,14 +26,36 @@ function getFileDescriptorSchema<AppFile extends ZodTypeAny>(appFile: AppFile) {
 	])
 }
 
-const LaunchSchema = z.intersection(
+// The cursor hints arrive as form values, so anything that isn't a run of
+// digits means "no hint" rather than a bad request. `z.coerce.number()` turned
+// an empty value into line 0 and a stray `"false"` into a request-failing NaN.
+const cursorHint = z.preprocess(
+	(value) =>
+		typeof value === 'string' && /^\d+$/.test(value)
+			? Number(value)
+			: undefined,
+	z.number().optional(),
+)
+
+export const LaunchSchema = z.intersection(
 	z.object({
-		line: z.coerce.number().optional(),
-		column: z.coerce.number().optional(),
+		line: cursorHint,
+		column: cursorHint,
 		syncTo: getFileDescriptorSchema(z.string()).optional(),
 	}),
 	getFileDescriptorSchema(z.array(z.string())),
 )
+
+function formatIssues(error: z.ZodError) {
+	// Zod nests each branch's issues under a single `invalid_union` issue, so
+	// flatten one level to say something more useful than "Invalid input".
+	return error.issues
+		.flatMap((issue) =>
+			issue.code === 'invalid_union' ? issue.errors.flat() : [issue],
+		)
+		.map((issue) => `${issue.path.join('.') || '(root)'}: ${issue.message}`)
+		.join('; ')
+}
 
 export async function action({ request }: Route.ActionArgs) {
 	ensureUndeployed()
@@ -80,7 +102,9 @@ export async function action({ request }: Route.ActionArgs) {
 	}
 	const parsedForm = LaunchSchema.safeParse(rawData)
 	if (!parsedForm.success) {
-		throw parsedForm.error
+		// Throwing the ZodError itself makes React Router treat bad client input
+		// as an unhandled server fault: a 500 plus an error report.
+		throw new Response(formatIssues(parsedForm.error), { status: 400 })
 	}
 	const form = parsedForm.data
 
@@ -266,9 +290,13 @@ function LaunchEditorImpl({
 			<input
 				type="hidden"
 				name="line"
-				value={typeof line === 'number' ? line : undefined}
+				value={typeof line === 'number' ? line : ''}
 			/>
-			<input type="hidden" name="column" value={column} />
+			<input
+				type="hidden"
+				name="column"
+				value={typeof column === 'number' ? column : ''}
+			/>
 			<input type="hidden" name="type" value={type} />
 			<input type="hidden" name="file" value={file} />
 			<input type="hidden" name="appName" value={appName} />
