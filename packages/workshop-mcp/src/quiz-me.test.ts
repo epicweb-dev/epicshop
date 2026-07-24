@@ -1,6 +1,7 @@
 import { expect, test, vi } from 'vitest'
 import { quizMe } from './prompts.ts'
 import { exerciseContextResource } from './resources.ts'
+import { ExpectedMcpError } from './sentry-filters.ts'
 
 vi.mock('@epic-web/workshop-utils/apps.server', () => ({
 	getExercises: vi.fn(async () => [{ exerciseNumber: 3 }]),
@@ -70,4 +71,17 @@ test('quizMe rejects non-numeric exercise numbers (aha)', async () => {
 	await expect(resultPromise).rejects.toThrow(
 		'Exercise number must be a number',
 	)
+	await expect(resultPromise).rejects.toBeInstanceOf(ExpectedMcpError)
+})
+
+test('quizMe rejects unexpanded shell variables for exerciseNumber (aha)', async () => {
+	const resultPromise = quizMe({
+		workshopDirectory: '/workshop',
+		exerciseNumber: '$2',
+	})
+
+	await expect(resultPromise).rejects.toThrow(
+		/unexpanded shell variable.*"\$2"/i,
+	)
+	await expect(resultPromise).rejects.toBeInstanceOf(ExpectedMcpError)
 })

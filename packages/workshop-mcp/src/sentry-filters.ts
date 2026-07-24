@@ -9,6 +9,10 @@ export class ExpectedMcpError extends Error {
 const expectedMcpErrorMessagePatterns = [
 	/^No workshop directory found while searching upward from /,
 	/^The workshop directory is required$/,
+	// Historical message from before relative workshop paths were allowed.
+	/^The workshop directory must be an absolute path$/,
+	/^Received what looks like an unexpanded shell variable /,
+	/^Exercise number must be a number/,
 ]
 
 type SentryExceptionValue = {
