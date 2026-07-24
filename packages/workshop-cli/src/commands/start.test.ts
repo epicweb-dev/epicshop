@@ -17,6 +17,50 @@ const repoRoot = path.resolve(__dirname, '..', '..', '..', '..')
 const testIf = process.platform === 'win32' ? test.skip : test
 
 testIf(
+	'deployed start propagates child exit code when parent has no HTTP server (aha)',
+	async () => {
+		await using fixture = await createDeployedCrashFixture()
+		const child = spawn(process.execPath, [fixture.runnerPath], {
+			cwd: repoRoot,
+			env: {
+				...process.env,
+				EPICSHOP_APP_LOCATION: fixture.appDir,
+				EPICSHOP_CONTEXT_CWD: fixture.workshopDir,
+				EPICSHOP_DEPLOYED: 'true',
+				EPICSHOP_IS_PUBLISHED: 'true',
+				NODE_ENV: 'production',
+				// Ensure published Sentry preload is not engaged for this crash test.
+				SENTRY_DSN: '',
+			},
+			stdio: ['ignore', 'pipe', 'pipe'],
+		})
+		const stderr = captureStderr(child)
+		let stdout = ''
+		child.stdout?.on('data', (data: Buffer) => {
+			stdout += data.toString('utf8')
+		})
+
+		const [code] = (await Promise.race([
+			once(child, 'exit'),
+			new Promise((_, reject) => {
+				setTimeout(
+					() =>
+						reject(
+							new Error(
+								`Timed out waiting for deployed start to exit after child crash\nstdout:\n${stdout}\nstderr:\n${stderr()}`,
+							),
+						),
+					10000,
+				)
+			}),
+		])) as [number | null]
+
+		expect(code, `stdout:\n${stdout}\nstderr:\n${stderr()}`).toBe(42)
+	},
+	15000,
+)
+
+testIf(
 	'start releases the child server port on shutdown',
 	async () => {
 		await using fixture = await createRunnerFixture()
@@ -115,6 +159,87 @@ test('formatWorkshopAppResolutionErrorMessage lists attempted directories', () =
 		].join('\n'),
 	)
 })
+
+async function createDeployedCrashFixture() {
+	const rootDir = await createTempDir('epicshop-deployed-crash-')
+	const appDir = path.join(rootDir.path, 'fake-workshop-app')
+	await mkdir(appDir, { recursive: true })
+
+	// No local `app/` directory => treated as a published install, so start.js is used.
+	await writeFile(
+		path.join(appDir, 'package.json'),
+		JSON.stringify(
+			{
+				name: '@epic-web/workshop-app',
+				version: '6.90.17',
+				type: 'module',
+			},
+			null,
+			2,
+		),
+	)
+	await writeFile(
+		path.join(appDir, 'start.js'),
+		[
+			"console.error('simulated deployed child crash')",
+			'process.exit(42)',
+			'',
+		].join('\n'),
+	)
+
+	const workshopDir = path.join(rootDir.path, 'workshop')
+	await mkdir(workshopDir, { recursive: true })
+	await writeFile(
+		path.join(workshopDir, 'package.json'),
+		JSON.stringify(
+			{
+				name: 'fake-workshop',
+				version: '0.0.0',
+				type: 'module',
+				epicshop: {
+					githubRepo: 'https://github.com/example/fake-workshop',
+				},
+			},
+			null,
+			2,
+		),
+	)
+
+	const runnerPath = path.join(rootDir.path, 'start-runner.ts')
+	const startModuleUrl = pathToFileURL(
+		path.join(
+			repoRoot,
+			'packages',
+			'workshop-cli',
+			'src',
+			'commands',
+			'start.ts',
+		),
+	).href
+
+	await writeFile(
+		runnerPath,
+		[
+			`import { start } from ${JSON.stringify(startModuleUrl)}`,
+			'',
+			'start({ appLocation: process.env.EPICSHOP_APP_LOCATION })',
+			'  .catch((error) => {',
+			'    console.error(error)',
+			'    process.exit(1)',
+			'  })',
+			'',
+		].join('\n'),
+	)
+
+	return {
+		appDir,
+		workshopDir,
+		runnerPath,
+		async [Symbol.asyncDispose]() {
+			await rm(rootDir.path, { recursive: true, force: true })
+		},
+	}
+}
 
 async function createRunnerFixture() {
 	const rootDir = await createTempDir('epicshop-start-')

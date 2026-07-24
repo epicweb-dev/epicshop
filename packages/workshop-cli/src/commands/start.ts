@@ -464,7 +464,15 @@ export async function start(options: StartOptions = {}): Promise<StartResult> {
 				if (restarting) {
 					restarting = false
 				} else {
-					await new Promise((resolve) => server?.close(resolve))
+					// In deployed mode there is no parent HTTP server. Optional chaining
+					// would leave this promise pending forever, the event loop would
+					// drain, and Node would exit 0 — so Fly's on-failure restart policy
+					// would never bring the app back after a child crash.
+					if (server) {
+						await new Promise<void>((resolve) => {
+							server!.close(() => resolve())
+						})
+					}
 					process.exit(code ?? 0)
 				}
 			})

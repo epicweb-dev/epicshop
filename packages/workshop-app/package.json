@@ -10,6 +10,8 @@
     "dist",
     "start.js",
     "instrument.js",
+    "sentry-server-filters.js",
+    "sentry-server-filters.d.ts",
     "patches"
   ],
   "type": "module",
