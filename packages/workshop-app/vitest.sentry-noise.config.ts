@@ -7,4 +7,7 @@ export default defineConfig({
 		setupFiles: ['../../tests/vitest-setup.ts'],
 		mockReset: true,
 	},
+	resolve: {
+		extensions: ['.js', '.ts', '.tsx'],
+	},
 })

@@ -49,6 +49,14 @@ test('matches exercise number validation messages', () => {
 	).toBe(true)
 })
 
+test('matches Electron-host JSON-RPC stdio corruption (aha)', () => {
+	expect(
+		isExpectedMcpErrorMessage(
+			`Unexpected token 'E', " ELECTRON_R"... is not valid JSON`,
+		),
+	).toBe(true)
+})
+
 test('does not match unrelated errors', () => {
 	expect(isExpectedMcpErrorMessage('Cannot find package zod')).toBe(false)
 })

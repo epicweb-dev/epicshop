@@ -1,8 +1,17 @@
 import { expect, test } from 'vitest'
 import {
+	isAbortErrorNoise,
+	isBrowserExtensionNoise,
+	isBrowserNetworkNoise,
+	isClientSentryNoise,
+	isCrossOriginSecurityNoise,
+	isDomMutationNoise,
+	isPlaygroundClientNoise,
 	isProcessingPictureInPictureRequest,
+	isSessionStorageAccessDenied,
 	processingPictureInPictureRequestMessage,
 } from '../app/utils/sentry-filters.ts'
+import { isServerEnvironmentNoise } from '../sentry-server-filters.js'
 
 test('matches the Picture-in-Picture processing DOMException exactly', () => {
 	expect(
@@ -44,6 +53,247 @@ test('does not match the same message on a different exception type', () => {
 						value: processingPictureInPictureRequestMessage,
 					},
 				],
+			},
+		}),
+	).toBe(false)
+})
+
+test('drops AbortError navigation/fetch aborts (aha)', () => {
+	expect(
+		isAbortErrorNoise({
+			exception: {
+				values: [
+					{ type: 'AbortError', value: 'signal is aborted without reason' },
+				],
+			},
+		}),
+	).toBe(true)
+	expect(
+		isAbortErrorNoise({
+			exception: {
+				values: [{ type: 'AbortError', value: 'BodyStreamBuffer was aborted' }],
+			},
+		}),
+	).toBe(true)
+	expect(
+		isAbortErrorNoise({
+			exception: {
+				values: [{ type: 'Error', value: 'Fetch is aborted' }],
+			},
+		}),
+	).toBe(true)
+})
+
+test('drops browser network flap messages even when deployed (aha)', () => {
+	expect(
+		isBrowserNetworkNoise({
+			exception: {
+				values: [
+					{
+						type: 'TypeError',
+						value: 'Failed to fetch (fundamentals.epicreact.dev)',
+					},
+				],
+			},
+		}),
+	).toBe(true)
+	expect(
+		isBrowserNetworkNoise({
+			exception: {
+				values: [
+					{
+						type: 'TypeError',
+						value: 'NetworkError when attempting to fetch resource.',
+					},
+				],
+			},
+		}),
+	).toBe(true)
+	expect(
+		isBrowserNetworkNoise({
+			exception: {
+				values: [{ type: 'TypeError', value: 'Load failed' }],
+			},
+		}),
+	).toBe(true)
+})
+
+test('drops sessionStorage SecurityError access denials', () => {
+	expect(
+		isSessionStorageAccessDenied({
+			exception: {
+				values: [
+					{
+						type: 'SecurityError',
+						value:
+							"Failed to read the 'sessionStorage' property from 'Window': Access is denied for this document.",
+					},
+				],
+			},
+		}),
+	).toBe(true)
+})
+
+test('drops cross-origin / permission-denied browser sandbox noise', () => {
+	expect(
+		isCrossOriginSecurityNoise({
+			exception: {
+				values: [
+					{
+						type: 'SecurityError',
+						value:
+							'Permission denied to access property "Element" on cross-origin object',
+					},
+				],
+			},
+		}),
+	).toBe(true)
+	expect(
+		isCrossOriginSecurityNoise({
+			exception: {
+				values: [
+					{
+						type: 'Error',
+						value: 'Permission denied to access property "apply"',
+					},
+				],
+			},
+		}),
+	).toBe(true)
+})
+
+test('drops browser extension hooks and content-script timeouts (aha)', () => {
+	expect(
+		isBrowserExtensionNoise({
+			exception: {
+				values: [
+					{
+						type: 'Error',
+						value:
+							'Request timeout for contentScriptVisibilityChanged (contentScriptVisibilityChanged 0e0962)',
+					},
+				],
+			},
+		}),
+	).toBe(true)
+	expect(
+		isBrowserExtensionNoise({
+			exception: {
+				values: [
+					{
+						type: 'TypeError',
+						value:
+							"Cannot destructure property 'inBrowserBrowserRef' from null or undefined value",
+					},
+				],
+			},
+		}),
+	).toBe(true)
+	expect(
+		isBrowserExtensionNoise({
+			exception: {
+				values: [
+					{
+						type: 'TypeError',
+						value: "Cannot read properties of null (reading 'tagName')",
+						stacktrace: {
+							frames: [{ filename: '<anonymous>', function: 'addEL_hook' }],
+						},
+					},
+				],
+			},
+		}),
+	).toBe(true)
+})
+
+test('drops DOM mutation races and playground client frames', () => {
+	expect(
+		isDomMutationNoise({
+			exception: {
+				values: [
+					{
+						type: 'NotFoundError',
+						value:
+							"Failed to execute 'removeChild' on 'Node': The node to be removed is not a child of this node.",
+					},
+				],
+			},
+		}),
+	).toBe(true)
+	expect(
+		isPlaygroundClientNoise({
+			exception: {
+				values: [
+					{
+						type: 'Error',
+						value:
+							'Could not determine window of node. Node was [object HTMLButtonElement]',
+						stacktrace: {
+							frames: [
+								{
+									filename: '/app/playground/error-boundary.test.ts',
+									function: 'getWindow',
+								},
+							],
+						},
+					},
+				],
+			},
+		}),
+	).toBe(true)
+})
+
+test('isClientSentryNoise aggregates the client predicates', () => {
+	expect(
+		isClientSentryNoise({
+			exception: {
+				values: [{ type: 'AbortError', value: 'The operation was aborted.' }],
+			},
+		}),
+	).toBe(true)
+	expect(
+		isClientSentryNoise({
+			exception: {
+				values: [{ type: 'TypeError', value: 'Maximum update depth exceeded' }],
+			},
+		}),
+	).toBe(false)
+})
+
+test('drops learner-machine server environment noise (aha)', () => {
+	expect(
+		isServerEnvironmentNoise({
+			exception: {
+				values: [
+					{ type: 'Error', value: 'ETIMEDOUT: connection timed out, read' },
+				],
+			},
+		}),
+	).toBe(true)
+	expect(
+		isServerEnvironmentNoise({
+			exception: {
+				values: [{ type: 'Error', value: 'spawn EBADF' }],
+			},
+		}),
+	).toBe(true)
+	expect(
+		isServerEnvironmentNoise({
+			exception: {
+				values: [
+					{
+						type: 'TimeoutError',
+						value:
+							'Task timed out after 60000ms (queue has 1 running, 0 waiting)',
+					},
+				],
+			},
+		}),
+	).toBe(true)
+	expect(
+		isServerEnvironmentNoise({
+			exception: {
+				values: [{ type: 'Error', value: 'Unexpected Server Error' }],
 			},
 		}),
 	).toBe(false)
