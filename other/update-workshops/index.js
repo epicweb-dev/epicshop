@@ -14,9 +14,49 @@ const GITHUB_ORG = 'epicweb-dev'
 const GITHUB_TOKEN =
 	process.env.WORKSHOP_UPDATE_TOKEN ?? process.env.GITHUB_TOKEN
 const USING_WORKSHOP_UPDATE_TOKEN = Boolean(process.env.WORKSHOP_UPDATE_TOKEN)
+// Keep clone/install work parallel, but serialize git pushes so workshop deploy
+// workflows do not stampede Fly leases / machines API health checks.
 const CONCURRENCY = 5
+const PUSH_STAGGER_MS = Number(process.env.PUSH_STAGGER_MS || 90_000)
 const TARGET_NODE_VERSION = '26.0.0'
 const ADDITIONAL_WORKSHOP_REPOS = ['ai-powered-apps', 'workshop-template']
+const CANONICAL_DEPLOY_WORKFLOW = path.join(
+	__dirname,
+	'canonical',
+	'deploy.yml',
+)
+const DEPLOY_WORKFLOW_PATH = '.github/workflows/validate.yml'
+const FLY_CONFIG_PATH = 'epicshop/fly.yaml'
+
+let lastPushAt = 0
+let pushChain = Promise.resolve()
+
+function delay(ms) {
+	return new Promise((resolve) => setTimeout(resolve, ms))
+}
+
+async function withPushStagger(fn) {
+	const run = pushChain.then(async () => {
+		const waitMs = Math.max(0, PUSH_STAGGER_MS - (Date.now() - lastPushAt))
+		if (waitMs > 0) {
+			console.log(
+				`⏳ Staggering push by ${Math.round(waitMs / 1000)}s to avoid Fly deploy stampedes`,
+			)
+			await delay(waitMs)
+		}
+		try {
+			return await fn()
+		} finally {
+			lastPushAt = Date.now()
+		}
+	})
+	// Keep the chain alive even if one push fails.
+	pushChain = run.then(
+		() => {},
+		() => {},
+	)
+	return run
+}
 
 if (!GITHUB_TOKEN) {
 	console.error(
@@ -185,7 +225,6 @@ async function verifyPackageAvailability(
 	version,
 	maxRetries = 20,
 ) {
-	const delay = (ms) => new Promise((resolve) => setTimeout(resolve, ms))
 	// For scoped packages like @epic-web/workshop-app, extract just the package name part
 	const tarballName = packageName.includes('/')
 		? packageName.split('/')[1]
@@ -263,6 +302,97 @@ async function pullRebaseWithFallback(cwd) {
 }
 
 /**
+ * Keep workshop deploy workflows aligned with the retrying canonical template.
+ */
+async function syncDeployWorkflow(workshopDir) {
+	const targetPath = path.join(workshopDir, DEPLOY_WORKFLOW_PATH)
+	const canonical = await fs.readFile(CANONICAL_DEPLOY_WORKFLOW, 'utf8')
+	let current = null
+	try {
+		current = await fs.readFile(targetPath, 'utf8')
+	} catch (error) {
+		if (error?.code !== 'ENOENT') throw error
+	}
+
+	if (current === canonical) {
+		return { changed: false, path: DEPLOY_WORKFLOW_PATH }
+	}
+
+	await fs.mkdir(path.dirname(targetPath), { recursive: true })
+	await fs.writeFile(targetPath, canonical, 'utf8')
+	return { changed: true, path: DEPLOY_WORKFLOW_PATH }
+}
+
+/**
+ * Lengthen Fly health-check grace periods so cold boots are not raced.
+ * App names differ per workshop, so patch in place instead of overwriting.
+ */
+async function patchFlyHealthGracePeriods(workshopDir) {
+	const flyPath = path.join(workshopDir, FLY_CONFIG_PATH)
+	let contents
+	try {
+		contents = await fs.readFile(flyPath, 'utf8')
+	} catch (error) {
+		if (error?.code === 'ENOENT') {
+			return { changed: false, path: FLY_CONFIG_PATH, missing: true }
+		}
+		throw error
+	}
+
+	let section = null
+	let httpChecks = 0
+	let tcpChecks = 0
+	const next = contents
+		.split('\n')
+		.map((line) => {
+			const trimmed = line.trim()
+			if (trimmed === 'http_checks:') {
+				section = 'http'
+				return line
+			}
+			if (trimmed === 'tcp_checks:') {
+				section = 'tcp'
+				return line
+			}
+			// Leave the current checks block when indentation returns to the
+			// services list / top-level keys.
+			if (
+				section &&
+				trimmed &&
+				!line.startsWith(' ') &&
+				!line.startsWith('\t')
+			) {
+				section = null
+			} else if (
+				section &&
+				/^[A-Za-z_][\w-]*:\s*$/.test(trimmed) &&
+				!trimmed.endsWith('checks:')
+			) {
+				const indent = line.match(/^\s*/)?.[0].length ?? 0
+				if (indent <= 4) section = null
+			}
+
+			if (section && /^\s*grace_period:\s*\S+\s*$/.test(line)) {
+				if (section === 'http') {
+					httpChecks += 1
+					return line.replace(/grace_period:\s*\S+/, 'grace_period: 60s')
+				}
+				tcpChecks += 1
+				return line.replace(/grace_period:\s*\S+/, 'grace_period: 30s')
+			}
+			return line
+		})
+		.join('\n')
+
+	if (next === contents) {
+		return { changed: false, path: FLY_CONFIG_PATH, httpChecks, tcpChecks }
+	}
+
+	await fs.writeFile(flyPath, next, 'utf8')
+	return { changed: true, path: FLY_CONFIG_PATH, httpChecks, tcpChecks }
+}
+
+/**
  * Update package.json files - only root and epicshop/package.json
  */
 async function updatePackageJsonFiles(workshopDir, version) {
@@ -331,10 +461,18 @@ async function updateWorkshopRepo(repo, version) {
 		)
 
 		// Configure sparse checkout in non-cone mode to allow file-level patterns
-		// This lets us checkout only specific files (like package.json) from workspace dirs
+		// This lets us checkout only specific files (like package.json) from workspace dirs.
+		// Include deploy workflow + fly config so mass updates can harden them too.
 		await execa(
 			'git',
-			['sparse-checkout', 'set', '--no-cone', '/*', 'epicshop/'],
+			[
+				'sparse-checkout',
+				'set',
+				'--no-cone',
+				'/*',
+				'epicshop/',
+				'.github/workflows/',
+			],
 			{ cwd: tempDir, env: getGitEnv() },
 		)
 
@@ -352,7 +490,21 @@ async function updateWorkshopRepo(repo, version) {
 			version,
 		)
 
-		if (!changed) {
+		console.log(
+			`🛠️  ${repoName} - syncing deploy workflow and Fly health grace`,
+		)
+		const workflowSync = await syncDeployWorkflow(tempDir)
+		const flyPatch = await patchFlyHealthGracePeriods(tempDir)
+		if (workflowSync.changed) {
+			console.log(`🛠️  ${repoName} - updated ${workflowSync.path}`)
+		}
+		if (flyPatch.changed) {
+			console.log(
+				`🛠️  ${repoName} - updated ${flyPatch.path} health grace periods`,
+			)
+		}
+
+		if (!changed && !workflowSync.changed && !flyPatch.changed) {
 			console.log(`🟢 ${repoName} - already up to date`)
 			return { repo: repoName, status: 'up-to-date' }
 		}
@@ -457,7 +609,7 @@ async function updateWorkshopRepo(repo, version) {
 			}
 		}
 
-		// Only stage the 4 files we're tracking
+		// Stage package files, deploy workflow, and fly config when present.
 		const filesToStage = []
 		for (const pkg of pkgs) {
 			const pkgPath = path.join(tempDir, pkg)
@@ -505,6 +657,8 @@ async function updateWorkshopRepo(repo, version) {
 				// File doesn't exist, skip
 			}
 		}
+		if (workflowSync.changed) filesToStage.push(DEPLOY_WORKFLOW_PATH)
+		if (flyPatch.changed) filesToStage.push(FLY_CONFIG_PATH)
 
 		// Some workshop repos gitignore files we'd otherwise stage (e.g.
 		// epicshop/package-lock.json) and `git add` fails on ignored files.
@@ -545,27 +699,34 @@ async function updateWorkshopRepo(repo, version) {
 			return { repo: repoName, status: 'no-changes' }
 		}
 
+		const commitMessage = changed
+			? 'chore: update epicshop'
+			: 'chore: harden fly deploy workflow'
+
 		// Commit changes
 		console.log(`💾 ${repoName} - committing changes`)
-		await execa('git', ['commit', '-m', 'chore: update epicshop'], {
+		await execa('git', ['commit', '-m', commitMessage], {
 			cwd: tempDir,
 			env: getGitEnv(),
 		})
 
-		// Push changes (retry once with a pull/rebase if needed)
-		console.log(`⬆️  ${repoName} - pushing changes`)
-		try {
-			await execa('git', ['push'], {
-				cwd: tempDir,
-				env: getGitEnv(),
-			})
-		} catch {
-			await pullRebaseWithFallback(tempDir)
-			await execa('git', ['push'], {
-				cwd: tempDir,
-				env: getGitEnv(),
-			})
-		}
+		// Push changes (retry once with a pull/rebase if needed), staggered so
+		// the resulting deploy workflows do not all hit Fly at once.
+		await withPushStagger(async () => {
+			console.log(`⬆️  ${repoName} - pushing changes`)
+			try {
+				await execa('git', ['push'], {
+					cwd: tempDir,
+					env: getGitEnv(),
+				})
+			} catch {
+				await pullRebaseWithFallback(tempDir)
+				await execa('git', ['push'], {
+					cwd: tempDir,
+					env: getGitEnv(),
+				})
+			}
+		})
 
 		console.log(`✅ ${repoName} - updated successfully`)
 		return { repo: repoName, status: 'updated' }
@@ -651,7 +812,7 @@ async function main() {
 		}
 
 		console.log(
-			`\n🚀 Processing ${workshops.length} repos with concurrency ${CONCURRENCY}\n`,
+			`\n🚀 Processing ${workshops.length} repos with concurrency ${CONCURRENCY} (push stagger ${Math.round(PUSH_STAGGER_MS / 1000)}s)\n`,
 		)
 
 		// Process repos in parallel with a simple concurrency pool (no extra deps)

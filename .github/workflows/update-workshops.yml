@@ -10,7 +10,8 @@ jobs:
   update-workshops:
     name: 🔄 Update Workshop Repos
     runs-on: ubuntu-latest
-    timeout-minutes: 30
+    # Staggered pushes avoid Fly deploy stampedes; 34 workshops * ~90s needs headroom.
+    timeout-minutes: 120
     permissions:
       contents: write
       actions: read
