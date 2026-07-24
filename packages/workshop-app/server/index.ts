@@ -30,7 +30,10 @@ import morgan from 'morgan'
 import { type ServerBuild } from 'react-router'
 import sourceMapSupport from 'source-map-support'
 import { type WebSocket, WebSocketServer } from 'ws'
-import { rejectMalformedRequests } from './malformed-request.ts'
+import {
+	decodeRequestTarget,
+	rejectMalformedRequests,
+} from './malformed-request.ts'
 
 // if we exit early with an error, log the error...
 closeWithGrace(({ err, manual }) => {
@@ -114,7 +117,7 @@ if (
 	ENV.EPICSHOP_DEPLOYED ||
 	debuglog('epic:req').enabled
 ) {
-	morgan.token('url', (req) => decodeURIComponent(req.url ?? ''))
+	morgan.token('url', (req) => decodeRequestTarget(req.url ?? ''))
 	const ignore = [/^\/__manifest/]
 	app.use(
 		morgan('tiny', {

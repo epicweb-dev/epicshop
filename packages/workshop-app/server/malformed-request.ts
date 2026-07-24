@@ -38,6 +38,16 @@ export function getMalformedRequestReason(
 	return null
 }
 
+// morgan logs from an on-finished listener, so letting decodeURIComponent
+// throw there is an uncaught exception that takes the whole process down.
+export function decodeRequestTarget(requestTarget: string) {
+	try {
+		return decodeURIComponent(requestTarget)
+	} catch {
+		return requestTarget
+	}
+}
+
 export function rejectMalformedRequests(
 	req: Request,
 	res: Response,

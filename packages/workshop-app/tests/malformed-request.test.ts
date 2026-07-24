@@ -1,6 +1,7 @@
 import { type Request, type Response } from 'express'
 import { expect, test, vi } from 'vitest'
 import {
+	decodeRequestTarget,
 	getMalformedRequestReason,
 	rejectMalformedRequests,
 } from '../server/malformed-request.ts'
@@ -89,4 +90,12 @@ test('the middleware answers a malformed target with a 400 and stops the chain',
 
 test('the middleware passes a routable target straight through untouched', () => {
 	expect(callMiddleware('/exercise/01/01/problem')).toEqual({ nextCalls: 1 })
+})
+
+test('an undecodable target logs as-is because throwing here killed the process (aha)', () => {
+	expect(decodeRequestTarget('/%zz')).toBe('/%zz')
+})
+
+test('a decodable target is still decoded for the log', () => {
+	expect(decodeRequestTarget('/exercise/a%20b')).toBe('/exercise/a b')
 })
