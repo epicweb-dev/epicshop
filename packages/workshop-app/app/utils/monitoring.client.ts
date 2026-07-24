@@ -5,7 +5,7 @@ import {
 	useLocation,
 	useNavigationType,
 } from 'react-router'
-import { isProcessingPictureInPictureRequest } from './sentry-filters.ts'
+import { isClientSentryNoise } from './sentry-filters.ts'
 
 // Dynamic import of Sentry with error handling
 const Sentry = await import('@sentry/react-router').catch((error) => {
@@ -76,6 +76,35 @@ function getTracingIntegration(
 	)
 }
 
+function isClientBotUserAgent(userAgent: string) {
+	const normalized = userAgent.toLowerCase()
+	const botKeywords = [
+		'bot',
+		'crawl',
+		'spider',
+		'scrape',
+		'fetch',
+		'monitor',
+		'test',
+		'headless',
+		'phantom',
+		'puppeteer',
+		'selenium',
+		'webdriver',
+		'lighthouse',
+		'pagespeed',
+		'facebookexternalhit',
+		'twitterbot',
+		'googlebot',
+		'bingbot',
+		'slackbot',
+		'whatsapp',
+		'linkedinbot',
+		'applebot',
+	]
+	return botKeywords.some((keyword) => normalized.includes(keyword))
+}
+
 export function init() {
 	if (!ENV.EPICSHOP_IS_PUBLISHED) return
 	if (!Sentry) return
@@ -103,86 +132,30 @@ export function init() {
 		tracePropagationTargets,
 		ignoreErrors: [
 			"Failed to execute 'requestPictureInPicture' on 'HTMLVideoElement'",
+			/^AbortError/,
+			/signal is aborted without reason/i,
+			/BodyStreamBuffer was aborted/i,
+			/Fetch is aborted/i,
+			/The operation was aborted/i,
+			/Failed to fetch/i,
+			/NetworkError when attempting to fetch resource/i,
+			/^Load failed/i,
 		],
 		beforeSend(event) {
-			if (isProcessingPictureInPictureRequest(event)) return null
+			if (isClientSentryNoise(event)) return null
 
 			// Don't send errors to Sentry for bot requests
 			if (typeof navigator !== 'undefined' && navigator.userAgent) {
-				// Basic bot detection for client-side - check for common bot indicators
-				const userAgent = navigator.userAgent.toLowerCase()
-				const botKeywords = [
-					'bot',
-					'crawl',
-					'spider',
-					'scrape',
-					'fetch',
-					'monitor',
-					'test',
-					'headless',
-					'phantom',
-					'puppeteer',
-					'selenium',
-					'webdriver',
-					'lighthouse',
-					'pagespeed',
-					'facebookexternalhit',
-					'twitterbot',
-					'googlebot',
-					'bingbot',
-					'slackbot',
-					'whatsapp',
-					'linkedinbot',
-				]
-				if (botKeywords.some((keyword) => userAgent.includes(keyword))) {
+				if (isClientBotUserAgent(navigator.userAgent)) {
 					return null
 				}
 			}
 
-			const domMutationErrors =
-				event.exception?.values?.some((value) => {
-					if (typeof value.value !== 'string') return false
-					return /insertBefore/i.test(value.value)
-						? true
-						: /removeChild/i.test(value.value)
-				}) ?? false
-			if (domMutationErrors) return null
-
-			// Very common when learners shut down the local server and the browser keeps trying to fetch
-			const failedToFetch =
-				event.exception?.values?.some(
-					(v) =>
-						typeof v.value === 'string' && /Failed to fetch/i.test(v.value),
-				) ?? false
-
-			if (failedToFetch && !ENV.EPICSHOP_DEPLOYED) return null
-
-			// Filter out browser extension related errors
-			const extensionError = event.exception?.values?.some((value) =>
-				value.stacktrace?.frames?.some(
-					(frame) =>
-						frame.filename?.includes('chrome-extension:') ||
-						frame.filename?.includes('moz-extension:'),
-				),
-			)
-			if (extensionError) return null
-
-			// Filter out errors containing browser extension globals
-			const extensionGlobalKeywords = ['__firefox__', 'ethereum']
-			const extensionGlobalError = event.exception?.values?.some(
-				(value) =>
-					typeof value.value === 'string' &&
-					extensionGlobalKeywords.some((keyword) =>
-						value.value?.includes(keyword),
-					),
-			)
-			if (extensionGlobalError) return null
-			if (event.request?.url) {
-				const url = new URL(event.request.url)
-				if (
-					url.protocol === 'chrome-extension:' ||
-					url.protocol === 'moz-extension:'
-				) {
+			return event
+		},
+		beforeSendTransaction(event) {
+			if (typeof navigator !== 'undefined' && navigator.userAgent) {
+				if (isClientBotUserAgent(navigator.userAgent)) {
 					return null
 				}
 			}

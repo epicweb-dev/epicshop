@@ -1,10 +1,11 @@
-import { invariant } from '@epic-web/invariant'
 import { getExercises } from '@epic-web/workshop-utils/apps.server'
 import { getWorkshopConfig } from '@epic-web/workshop-utils/config.server'
 import { type McpServer } from '@modelcontextprotocol/sdk/server/mcp.js'
 import { type GetPromptResult } from '@modelcontextprotocol/sdk/types.js'
 import { z } from 'zod/v3'
+import { assertNoUnexpandedShellVariable } from './mcp-arg-validation.ts'
 import { exerciseContextResource } from './resources.ts'
+import { ExpectedMcpError } from './sentry-filters.ts'
 import { formatPromptDescription, promptDocs } from './server-metadata.ts'
 import {
 	handleWorkshopDirectory,
@@ -35,11 +36,13 @@ export async function quizMe({
 	const config = getWorkshopConfig()
 	let exerciseNumber: number | undefined
 	if (providedExerciseNumber) {
+		assertNoUnexpandedShellVariable('exerciseNumber', providedExerciseNumber)
 		exerciseNumber = Number(providedExerciseNumber)
-		invariant(
-			Number.isFinite(exerciseNumber),
-			`Exercise number must be a number, received "${providedExerciseNumber}".`,
-		)
+		if (!Number.isFinite(exerciseNumber)) {
+			throw new ExpectedMcpError(
+				`Exercise number must be a number, received "${providedExerciseNumber}".`,
+			)
+		}
 	}
 	if (exerciseNumber === undefined) {
 		const exercises = await getExercises()

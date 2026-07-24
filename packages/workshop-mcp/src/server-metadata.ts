@@ -49,7 +49,7 @@ Quick start
 
 Default behavior
 - Use \`list_saved_playgrounds\` and \`set_saved_playground\` to restore saved copies when persistence is enabled.
-- \`workshopDirectory\` is required and must be an absolute path to the workshop root.
+- \`workshopDirectory\` is required (absolute path preferred; relative paths resolve from the process cwd). Do not pass unexpanded shell placeholders like \`$1\`.
 - Passing a \`/playground\` path is normalized to the workshop root.
 - The user's work-in-progress lives in the \`playground\` directory.
 - \`get_exercise_context\` defaults to the current playground exercise when \`exerciseNumber\` is omitted.

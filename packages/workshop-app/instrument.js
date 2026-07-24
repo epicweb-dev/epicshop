@@ -1,5 +1,6 @@
 import path from 'node:path'
 import { isbot } from 'isbot'
+import { isServerEnvironmentNoise } from './sentry-server-filters.js'
 
 // Dynamic import of Sentry modules with error handling
 const Sentry = await import('@sentry/react-router').catch((error) => {
@@ -77,6 +78,9 @@ Sentry?.init({
 			return null
 		}
 		if (isLearnerApiRequest(event)) {
+			return null
+		}
+		if (isServerEnvironmentNoise(event)) {
 			return null
 		}
 		const isPlaygroundError = event.exception?.values?.some((value) =>

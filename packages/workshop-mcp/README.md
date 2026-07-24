@@ -36,6 +36,9 @@ Add a server entry (shape varies slightly by client):
 - The server communicates over **stdio**.
 - If you’re using this inside a workshop repo, run your editor/assistant with
   the workshop as the working directory so the server can find the right files.
+- Do not put unexpanded shell placeholders (like `$1` / `$2`) in MCP `args` or
+  tool arguments. Clients that leave those literal will fail validation with a
+  configuration guidance error.
 
 ## Documentation
 
