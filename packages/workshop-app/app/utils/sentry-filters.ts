@@ -62,6 +62,9 @@ export function isAbortErrorNoise(event: SentryEventWithException) {
  */
 export function isBrowserNetworkNoise(event: SentryEventWithException) {
 	return getExceptionValues(event).some((value) => {
+		// Firefox often reports this network abort with an empty message.
+		if (value.type === 'NS_ERROR_NOT_AVAILABLE') return true
+
 		const text = exceptionValueText(value)
 		if (!text) return false
 		return (
@@ -70,8 +73,7 @@ export function isBrowserNetworkNoise(event: SentryEventWithException) {
 			/^Load failed/i.test(text) ||
 			/^network error$/i.test(text) ||
 			/^fetch failed$/i.test(text) ||
-			/^terminated$/i.test(text) ||
-			value.type === 'NS_ERROR_NOT_AVAILABLE'
+			/^terminated$/i.test(text)
 		)
 	})
 }

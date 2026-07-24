@@ -116,6 +116,13 @@ test('drops browser network flap messages even when deployed (aha)', () => {
 			},
 		}),
 	).toBe(true)
+	expect(
+		isBrowserNetworkNoise({
+			exception: {
+				values: [{ type: 'NS_ERROR_NOT_AVAILABLE', value: '' }],
+			},
+		}),
+	).toBe(true)
 })
 
 test('drops sessionStorage SecurityError access denials', () => {
