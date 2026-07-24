@@ -20,6 +20,7 @@ import {
 	type LoaderFunctionArgs,
 	type ActionFunctionArgs,
 } from 'react-router'
+import { isClientErrorResponse } from './utils/route-errors'
 import { getSentryUser } from './utils/sentry-user'
 
 export const streamTimeout = 60000
@@ -32,6 +33,8 @@ export async function handleError(
 	if (request.signal.aborted) return
 	// Don't send errors to Sentry for bot requests
 	if (isbot(request.headers.get('user-agent'))) return
+	// Don't send React Router's own client 4xx responses to Sentry
+	if (isClientErrorResponse(error)) return
 	if (ENV.EPICSHOP_IS_PUBLISHED) {
 		const Sentry = await sentryPromise
 		if (Sentry) {

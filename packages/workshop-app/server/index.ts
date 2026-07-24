@@ -30,6 +30,10 @@ import morgan from 'morgan'
 import { type ServerBuild } from 'react-router'
 import sourceMapSupport from 'source-map-support'
 import { type WebSocket, WebSocketServer } from 'ws'
+import {
+	decodeRequestTarget,
+	rejectMalformedRequests,
+} from './malformed-request.ts'
 
 // if we exit early with an error, log the error...
 closeWithGrace(({ err, manual }) => {
@@ -87,6 +91,8 @@ app.use(compression())
 // http://expressjs.com/en/advanced/best-practice-security.html#at-a-minimum-disable-x-powered-by-header
 app.disable('x-powered-by')
 
+app.use(rejectMalformedRequests)
+
 // the workshop's public assets override the app's public assets
 app.use(
 	express.static(path.join(getWorkshopRoot(), 'public'), {
@@ -111,7 +117,7 @@ if (
 	ENV.EPICSHOP_DEPLOYED ||
 	debuglog('epic:req').enabled
 ) {
-	morgan.token('url', (req) => decodeURIComponent(req.url ?? ''))
+	morgan.token('url', (req) => decodeRequestTarget(req.url ?? ''))
 	const ignore = [/^\/__manifest/]
 	app.use(
 		morgan('tiny', {
