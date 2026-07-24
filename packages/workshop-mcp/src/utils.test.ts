@@ -115,6 +115,15 @@ test('handleWorkshopDirectory rejects blank input (aha)', async () => {
 	)
 })
 
+test('handleWorkshopDirectory rejects unexpanded shell variables (aha)', async () => {
+	await expect(
+		handleWorkshopDirectory('/home/sekou/Dev/ia-vocal-note-app/$1'),
+	).rejects.toThrow(/unexpanded shell variable.*"\$1"/i)
+	await expect(
+		handleWorkshopDirectory('/home/sekou/Dev/ia-vocal-note-app/$1'),
+	).rejects.toBeInstanceOf(ExpectedMcpError)
+})
+
 test('handleWorkshopDirectory resolves relative paths from cwd (aha)', async () => {
 	await using fixture = await createWorkshopFixture()
 	vi.mocked(console.error).mockImplementation(() => {})

@@ -5,6 +5,7 @@ import {
 	init as initApps,
 } from '@epic-web/workshop-utils/apps.server'
 import { z } from 'zod/v3'
+import { assertNoUnexpandedShellVariable } from './mcp-arg-validation.ts'
 import { ExpectedMcpError } from './sentry-filters.ts'
 
 export const workshopDirectoryInputSchema = z
@@ -42,6 +43,8 @@ export async function handleWorkshopDirectory(workshopDirectory: string) {
 	if (!workshopDirectory) {
 		throw new ExpectedMcpError('The workshop directory is required')
 	}
+
+	assertNoUnexpandedShellVariable('workshopDirectory', workshopDirectory)
 
 	if (!path.isAbsolute(workshopDirectory)) {
 		workshopDirectory = path.resolve(process.cwd(), workshopDirectory)
