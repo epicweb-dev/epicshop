@@ -7,6 +7,37 @@ This will also reference the `package.json` value for `epicshop.githubRoot` as
 the root for all links to files so `<InlineFile />` and `<LaunchEditor />` will
 open the files on GitHub instead of on your local machine.
 
+## Mass workshop updates and Fly deploys
+
+The `Update Workshops` workflow pushes version bumps across many `epicweb-dev/*`
+workshop repos. Each push triggers that workshop's `deploy` workflow, which runs
+`flyctl deploy`.
+
+To avoid Fly machine-lease contention and health-check API timeouts during that
+fan-out:
+
+- `other/update-workshops` staggers git pushes (default 90s) while still doing
+  clone/install work concurrently
+- It syncs a canonical deploy workflow
+  (`other/update-workshops/canonical/deploy.yml`) into each workshop's
+  `.github/workflows/validate.yml`, including deploy retries and a post-deploy
+  HTTP health probe (so a stopped scale-to-zero machine is not treated as
+  success)
+- It lengthens `epicshop/fly.yaml` HTTP/TCP health-check grace periods when
+  present
+
+If a mass update still leaves apps unhealthy, re-run each workshop's `deploy`
+workflow sequentially (or with low concurrency) via `workflow_dispatch` rather
+than pushing another thundering herd.
+
+### 6.90.17 boot failure note
+
+`@epic-web/workshop-app@6.90.17` imported `sentry-server-filters.js` from
+`instrument.js` without publishing that file. Fly apps with `SENTRY_DSN` set
+crashed on boot. Deployed `epicshop start` also failed to propagate the child
+exit code (exited 0), so Fly's `on-failure` restart policy did not recover the
+machine. Fixed in a later patch release; do not leave workshops on `6.90.17`.
+
 ## Presence App Deployment
 
 The workshop-presence app is deployed to PartyKit/Cloudflare using a GitHub
