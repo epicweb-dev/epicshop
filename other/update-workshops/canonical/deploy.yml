@@ -69,10 +69,12 @@ jobs:
     # Retries + Fly health waits need headroom beyond a single deploy attempt.
     timeout-minutes: 30
     runs-on: ubuntu-latest
-    # only deploy main branch on pushes on non-forks
+    # Deploy main on push or manual dispatch (non-forks). Dispatch is needed for
+    # sequenced recovery / re-deploys without inventing empty commits.
     if:
-      ${{ github.ref == 'refs/heads/main' && github.event_name == 'push' &&
-      github.repository_owner == 'epicweb-dev' }}
+      ${{ github.ref == 'refs/heads/main' && github.repository_owner ==
+      'epicweb-dev' && (github.event_name == 'push' || github.event_name ==
+      'workflow_dispatch') }}
 
     steps:
       - name: ⬇️ Checkout repo
@@ -95,7 +97,18 @@ jobs:
           max_attempts=4
           delay_seconds=45
           attempt=1
-          app_name="$(awk -F"'" '/^app:/{print $2; exit}' fly.yaml)"
+          # Support both `app: my-app` and `app: 'my-app'` / `app: "my-app"`.
+          app_name="$(
+            awk '
+              /^app:[[:space:]]*/ {
+                value = $0
+                sub(/^app:[[:space:]]*/, "", value)
+                gsub(/^['\''"]|['\''"]$/, "", value)
+                print value
+                exit
+              }
+            ' fly.yaml
+          )"
           if [ -z "$app_name" ]; then
             echo "Could not parse app name from fly.yaml" >&2
             exit 1
