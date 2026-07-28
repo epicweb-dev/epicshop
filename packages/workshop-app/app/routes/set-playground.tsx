@@ -578,7 +578,7 @@ export function PlaygroundChooser({
 						fetcher.data?.status === 'error' ? 'cursor-not-allowed' : null,
 					)}
 				>
-					<span className="scrollbar-thumb-scrollbar w-80 flex-1 scrollbar-thin truncate">
+					<span className="scrollbar-thumb-scrollbar scrollbar-thin w-80 flex-1 truncate">
 						<Select.Value
 							placeholder="Select current app"
 							className="inline-block w-40 truncate"
