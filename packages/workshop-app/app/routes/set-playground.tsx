@@ -47,6 +47,16 @@ const SetPlaygroundSchema = z.object({
 		.transform((v) => v === 'true'),
 })
 
+// This route only accepts POST (fetcher/form actions). Without a loader,
+// React Router turns a GET into a reported internal "did not provide a
+// loader" error instead of a 405 — bots crawl /set-playground often.
+export function loader() {
+	return new Response('Method Not Allowed', {
+		status: 405,
+		headers: { Allow: 'POST' },
+	})
+}
+
 export async function action({ request }: Route.ActionArgs) {
 	ensureUndeployed()
 	const formData = await request.formData()
@@ -568,7 +578,7 @@ export function PlaygroundChooser({
 						fetcher.data?.status === 'error' ? 'cursor-not-allowed' : null,
 					)}
 				>
-					<span className="scrollbar-thumb-scrollbar w-80 flex-1 scrollbar-thin truncate">
+					<span className="scrollbar-thumb-scrollbar scrollbar-thin w-80 flex-1 truncate">
 						<Select.Value
 							placeholder="Select current app"
 							className="inline-block w-40 truncate"
