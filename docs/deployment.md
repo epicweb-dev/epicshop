@@ -25,6 +25,26 @@ fan-out:
   success)
 - It lengthens `epicshop/fly.yaml` HTTP/TCP health-check grace periods when
   present
+- Package/fly updates are committed and pushed separately from workflow file
+  changes, so a missing `workflow` PAT scope cannot block version bumps
+
+### `WORKSHOP_UPDATE_TOKEN` requirements
+
+`Update Workshops` authenticates to other `epicweb-dev/*` repos with the
+`WORKSHOP_UPDATE_TOKEN` secret (falling back to `GITHUB_TOKEN`).
+
+For classic personal access tokens, grant at least:
+
+- `repo` — clone/push workshop repositories
+- `workflow` — create or update `.github/workflows/*` (needed to sync the
+  canonical deploy workflow)
+
+Fine-grained PATs need repository access to the workshop repos plus **Workflows:
+Read and write**.
+
+Without `workflow` access, the updater still pushes `package.json` /
+`package-lock.json` / `epicshop/fly.yaml` changes, and skips (or soft-fails)
+workflow file sync with a clear log message.
 
 If a mass update still leaves apps unhealthy, re-run each workshop's `deploy`
 workflow sequentially (or with low concurrency) via `workflow_dispatch` rather

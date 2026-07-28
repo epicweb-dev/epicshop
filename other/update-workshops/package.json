@@ -3,7 +3,8 @@
   "private": true,
   "type": "module",
   "scripts": {
-    "start": "node index.js"
+    "start": "node index.js",
+    "test": "node helpers.test.js"
   },
   "dependencies": {
     "execa": "^9.6.1",

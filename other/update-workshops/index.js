@@ -3,6 +3,14 @@ import path from 'path'
 import { fileURLToPath } from 'url'
 import { execa } from 'execa'
 import semver from 'semver'
+import {
+	DEPLOY_WORKFLOW_PATH,
+	canUpdateWorkflowFiles,
+	isWorkflowScopeError,
+	parseOAuthScopes,
+	partitionFilesByWorkflow,
+	workflowScopeHint,
+} from './helpers.js'
 
 const __filename = fileURLToPath(import.meta.url)
 const __dirname = path.dirname(__filename)
@@ -25,7 +33,6 @@ const CANONICAL_DEPLOY_WORKFLOW = path.join(
 	'canonical',
 	'deploy.yml',
 )
-const DEPLOY_WORKFLOW_PATH = '.github/workflows/validate.yml'
 const FLY_CONFIG_PATH = 'epicshop/fly.yaml'
 
 let lastPushAt = 0
@@ -79,6 +86,30 @@ function getAuthenticatedRepoUrl(repoName) {
 	// If you do https://<token>@github.com/... git treats <token> as the username
 	// and prompts for a password (which fails in Actions).
 	return `https://x-access-token:${GITHUB_TOKEN}@github.com/${GITHUB_ORG}/${repoName}.git`
+}
+
+/**
+ * Classic PATs expose scopes on `X-OAuth-Scopes`. Fine-grained PATs usually do
+ * not, so we treat an absent/empty list as "unknown" and attempt workflow sync.
+ */
+async function getTokenWorkflowAccess() {
+	try {
+		const response = await fetch('https://api.github.com/user', {
+			headers: {
+				Accept: 'application/vnd.github.v3+json',
+				Authorization: `Bearer ${GITHUB_TOKEN}`,
+				'User-Agent': 'epicshop-update-action',
+			},
+		})
+		const scopes = parseOAuthScopes(response.headers.get('x-oauth-scopes'))
+		const canUpdateWorkflows = canUpdateWorkflowFiles(scopes)
+		return { scopes, canUpdateWorkflows }
+	} catch (error) {
+		console.warn(
+			`⚠️  Could not inspect token scopes (${error.message}); will attempt workflow sync`,
+		)
+		return { scopes: null, canUpdateWorkflows: true }
+	}
 }
 
 /**
@@ -301,6 +332,77 @@ async function pullRebaseWithFallback(cwd) {
 	}
 }
 
+async function getStageableFiles(cwd, filesToStage, repoName) {
+	const stageableFiles = []
+	for (const file of filesToStage) {
+		// check-ignore exits 0 when the file is ignored and 1 when it's not
+		const { exitCode } = await execa('git', ['check-ignore', '-q', file], {
+			cwd,
+			env: getGitEnv(),
+			reject: false,
+		})
+		if (exitCode === 0) {
+			console.log(`🙈 ${repoName} - skipping gitignored file: ${file}`)
+		} else {
+			stageableFiles.push(file)
+		}
+	}
+	return stageableFiles
+}
+
+async function pushWithRebaseRetry(cwd, repoName) {
+	await withPushStagger(async () => {
+		console.log(`⬆️  ${repoName} - pushing changes`)
+		try {
+			await execa('git', ['push'], {
+				cwd,
+				env: getGitEnv(),
+			})
+		} catch (error) {
+			// Workflow-scope rejections will not be fixed by rebase.
+			if (isWorkflowScopeError(error)) throw error
+			await pullRebaseWithFallback(cwd)
+			await execa('git', ['push'], {
+				cwd,
+				env: getGitEnv(),
+			})
+		}
+	})
+}
+
+/**
+ * Stage, commit, and push a specific set of files. Returns whether a push
+ * happened. Callers should keep workflow files in a separate commit so a missing
+ * `workflow` PAT scope cannot block package/fly updates.
+ */
+async function stageCommitAndPush({ cwd, repoName, files, commitMessage }) {
+	if (files.length === 0) return { pushed: false }
+
+	console.log(`📝 ${repoName} - staging changes: ${files.join(', ')}`)
+	await execa('git', ['add', ...files], {
+		cwd,
+		env: getGitEnv(),
+	})
+
+	const { stdout: diffOutput } = await execa(
+		'git',
+		['diff', '--cached', '--name-only'],
+		{ cwd },
+	)
+	if (!diffOutput.trim()) {
+		return { pushed: false }
+	}
+
+	console.log(`💾 ${repoName} - committing changes`)
+	await execa('git', ['commit', '-m', commitMessage], {
+		cwd,
+		env: getGitEnv(),
+	})
+
+	await pushWithRebaseRetry(cwd, repoName)
+	return { pushed: true }
+}
+
 /**
  * Keep workshop deploy workflows aligned with the retrying canonical template.
  */
@@ -430,7 +532,11 @@ async function updatePackageJsonFiles(workshopDir, version) {
 /**
  * Update a single workshop repository
  */
-async function updateWorkshopRepo(repo, version) {
+async function updateWorkshopRepo(
+	repo,
+	version,
+	{ syncWorkflows = true } = {},
+) {
 	const repoName = repo.name
 	const repoUrl = getAuthenticatedRepoUrl(repoName)
 	const tempDir = path.join(__dirname, 'temp-workshops', repoName)
@@ -493,11 +599,18 @@ async function updateWorkshopRepo(repo, version) {
 		console.log(
 			`🛠️  ${repoName} - syncing deploy workflow and Fly health grace`,
 		)
-		const workflowSync = await syncDeployWorkflow(tempDir)
-		const flyPatch = await patchFlyHealthGracePeriods(tempDir)
-		if (workflowSync.changed) {
-			console.log(`🛠️  ${repoName} - updated ${workflowSync.path}`)
+		let workflowSync = { changed: false, path: DEPLOY_WORKFLOW_PATH }
+		if (syncWorkflows) {
+			workflowSync = await syncDeployWorkflow(tempDir)
+			if (workflowSync.changed) {
+				console.log(`🛠️  ${repoName} - updated ${workflowSync.path}`)
+			}
+		} else {
+			console.log(
+				`⏭️  ${repoName} - skipping ${DEPLOY_WORKFLOW_PATH} sync (token lacks workflow scope)`,
+			)
 		}
+		const flyPatch = await patchFlyHealthGracePeriods(tempDir)
 		if (flyPatch.changed) {
 			console.log(
 				`🛠️  ${repoName} - updated ${flyPatch.path} health grace periods`,
@@ -662,71 +775,74 @@ async function updateWorkshopRepo(repo, version) {
 
 		// Some workshop repos gitignore files we'd otherwise stage (e.g.
 		// epicshop/package-lock.json) and `git add` fails on ignored files.
-		const stageableFiles = []
-		for (const file of filesToStage) {
-			// check-ignore exits 0 when the file is ignored and 1 when it's not
-			const { exitCode } = await execa('git', ['check-ignore', '-q', file], {
-				cwd: tempDir,
-				env: getGitEnv(),
-				reject: false,
-			})
-			if (exitCode === 0) {
-				console.log(`🙈 ${repoName} - skipping gitignored file: ${file}`)
-			} else {
-				stageableFiles.push(file)
+		const stageableFiles = await getStageableFiles(
+			tempDir,
+			filesToStage,
+			repoName,
+		)
+		const { nonWorkflowFiles, workflowFiles } =
+			partitionFilesByWorkflow(stageableFiles)
+
+		let pushedAnything = false
+		let workflowWarning = null
+
+		// Push package/fly updates first so a missing `workflow` PAT scope cannot
+		// block the primary version bump.
+		const nonWorkflowCommitMessage = changed
+			? 'chore: update epicshop'
+			: 'chore: harden fly health checks'
+		const nonWorkflowPush = await stageCommitAndPush({
+			cwd: tempDir,
+			repoName,
+			files: nonWorkflowFiles,
+			commitMessage: nonWorkflowCommitMessage,
+		})
+		pushedAnything = pushedAnything || nonWorkflowPush.pushed
+
+		if (workflowFiles.length > 0) {
+			try {
+				const workflowPush = await stageCommitAndPush({
+					cwd: tempDir,
+					repoName,
+					files: workflowFiles,
+					commitMessage: 'chore: harden fly deploy workflow',
+				})
+				pushedAnything = pushedAnything || workflowPush.pushed
+			} catch (error) {
+				if (!isWorkflowScopeError(error)) throw error
+				workflowWarning = workflowScopeHint()
+				console.error(
+					`⚠️  ${repoName} - could not push ${DEPLOY_WORKFLOW_PATH}: token lacks workflow scope`,
+				)
+				console.error(`   ${workflowWarning}`)
 			}
 		}
 
-		// Stage changes
-		console.log(
-			`📝 ${repoName} - staging changes: ${stageableFiles.join(', ')}`,
-		)
-		if (stageableFiles.length > 0) {
-			await execa('git', ['add', ...stageableFiles], {
-				cwd: tempDir,
-				env: getGitEnv(),
-			})
-		}
-
-		// Check if there are actually staged changes
-		const { stdout: diffOutput } = await execa(
-			'git',
-			['diff', '--cached', '--name-only'],
-			{ cwd: tempDir },
-		)
-		if (!diffOutput.trim()) {
+		if (!pushedAnything) {
+			if (workflowWarning) {
+				console.log(
+					`⚠️  ${repoName} - package/fly already current; workflow sync blocked by token scopes`,
+				)
+				return {
+					repo: repoName,
+					status: 'workflow-sync-failed',
+					warning: workflowWarning,
+				}
+			}
 			console.log(`🟢 ${repoName} - no changes to commit`)
 			return { repo: repoName, status: 'no-changes' }
 		}
 
-		const commitMessage = changed
-			? 'chore: update epicshop'
-			: 'chore: harden fly deploy workflow'
-
-		// Commit changes
-		console.log(`💾 ${repoName} - committing changes`)
-		await execa('git', ['commit', '-m', commitMessage], {
-			cwd: tempDir,
-			env: getGitEnv(),
-		})
-
-		// Push changes (retry once with a pull/rebase if needed), staggered so
-		// the resulting deploy workflows do not all hit Fly at once.
-		await withPushStagger(async () => {
-			console.log(`⬆️  ${repoName} - pushing changes`)
-			try {
-				await execa('git', ['push'], {
-					cwd: tempDir,
-					env: getGitEnv(),
-				})
-			} catch {
-				await pullRebaseWithFallback(tempDir)
-				await execa('git', ['push'], {
-					cwd: tempDir,
-					env: getGitEnv(),
-				})
+		if (workflowWarning) {
+			console.log(
+				`✅ ${repoName} - updated package/fly changes; workflow sync skipped`,
+			)
+			return {
+				repo: repoName,
+				status: 'updated',
+				warning: workflowWarning,
 			}
-		})
+		}
 
 		console.log(`✅ ${repoName} - updated successfully`)
 		return { repo: repoName, status: 'updated' }
@@ -736,13 +852,18 @@ async function updateWorkshopRepo(repo, version) {
 			console.error(error.all)
 		}
 		const message = String(error?.message ?? error)
-		const authHint =
+		let authHint = ''
+		if (isWorkflowScopeError(error)) {
+			authHint = ` (${workflowScopeHint()})`
+		} else if (
 			message.includes('Authentication failed') ||
 			message.includes('could not read Password') ||
 			message.includes('terminal prompts disabled') ||
 			message.includes('403')
-				? ' (auth issue: ensure WORKSHOP_UPDATE_TOKEN is a PAT with write access to these repos)'
-				: ''
+		) {
+			authHint =
+				' (auth issue: ensure WORKSHOP_UPDATE_TOKEN is a PAT with write access to these repos)'
+		}
 		return {
 			repo: repoName,
 			status: 'failed',
@@ -762,6 +883,27 @@ async function main() {
 		console.log(
 			`🔐 Auth: using ${USING_WORKSHOP_UPDATE_TOKEN ? 'WORKSHOP_UPDATE_TOKEN' : 'GITHUB_TOKEN'}`,
 		)
+		const tokenAccess = await getTokenWorkflowAccess()
+		const syncWorkflows = tokenAccess.canUpdateWorkflows
+		if (tokenAccess.scopes) {
+			console.log(
+				`🔐 Token scopes: ${tokenAccess.scopes.join(', ') || '(none)'}`,
+			)
+		} else {
+			console.log(
+				'🔐 Token scopes: unknown (fine-grained PAT or header unavailable)',
+			)
+		}
+		if (!syncWorkflows) {
+			console.warn(
+				`⚠️  Token cannot update GitHub Actions workflow files. Skipping ${DEPLOY_WORKFLOW_PATH} sync.`,
+			)
+			console.warn(`   ${workflowScopeHint()}`)
+			console.warn(
+				'   Package.json and fly.yaml updates will still proceed in a separate commit.',
+			)
+		}
+
 		console.log('🔍 Fetching workshop repositories from GitHub...')
 		const workshops = await fetchAvailableWorkshops()
 		workshops.push(...(await fetchAdditionalWorkshops(workshops)))
@@ -822,7 +964,7 @@ async function main() {
 			while (queue.length) {
 				const repo = queue.shift()
 				if (!repo) break
-				results.push(await updateWorkshopRepo(repo, version))
+				results.push(await updateWorkshopRepo(repo, version, { syncWorkflows }))
 			}
 		})
 		await Promise.all(workers)
@@ -835,12 +977,19 @@ async function main() {
 				r.status === 'up-to-date' ||
 				r.status === 'no-changes',
 		)
+		const workflowSyncFailed = results.filter(
+			(r) => r.status === 'workflow-sync-failed',
+		)
 		const failed = results.filter((r) => r.status === 'failed')
+		const warnings = results.filter((r) => r.warning)
 
 		console.log('\n' + '='.repeat(50))
 		console.log('📊 Summary:')
 		console.log(`  ✅ Updated: ${updated.length}`)
 		console.log(`  🟢 Skipped (up to date): ${skipped.length}`)
+		if (workflowSyncFailed.length > 0) {
+			console.log(`  ⚠️  Workflow sync blocked: ${workflowSyncFailed.length}`)
+		}
 		console.log(`  ❌ Failed: ${failed.length}`)
 
 		if (failed.length > 0) {
@@ -850,9 +999,25 @@ async function main() {
 			})
 		}
 
+		if (warnings.length > 0 || !syncWorkflows) {
+			console.log('\n⚠️  Deploy workflow sync note:')
+			if (!syncWorkflows) {
+				console.log(
+					`  - Skipped ${DEPLOY_WORKFLOW_PATH} sync because the token lacks workflow access`,
+				)
+			}
+			if (warnings.length > 0) {
+				console.log(
+					`  - ${warnings.length} repo(s) could not push workflow file changes`,
+				)
+			}
+			console.log(`  - ${workflowScopeHint()}`)
+		}
+
 		console.log('\n✅ All workshops processed')
 
-		// Exit with error if any failed
+		// Hard failures still fail the job. Missing workflow scope is surfaced in
+		// logs above but must not block package/fly updates from succeeding.
 		if (failed.length > 0) {
 			process.exit(1)
 		}
