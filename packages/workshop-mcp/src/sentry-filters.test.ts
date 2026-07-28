@@ -138,7 +138,8 @@ test('keeps unrelated JsonRpcError events', () => {
 test('drops MCP stdio deserialize ZodError transport noise (aha)', () => {
 	expect(
 		isExpectedMcpSentryNoise({
-			culprit: 'deserializeMessage(@modelcontextprotocol.sdk.dist.esm.shared:stdio)',
+			culprit:
+				'deserializeMessage(@modelcontextprotocol.sdk.dist.esm.shared:stdio)',
 			exception: {
 				values: [
 					{
@@ -188,7 +189,8 @@ test('keeps unrelated ZodErrors outside MCP transport deserialize', () => {
 				values: [
 					{
 						type: 'ZodError',
-						value: '[\n  {\n    "code": "invalid_type",\n    "path": ["name"]\n  }\n]',
+						value:
+							'[\n  {\n    "code": "invalid_type",\n    "path": ["name"]\n  }\n]',
 						mechanism: {
 							type: 'generic',
 							data: { error_type: 'tool' },
