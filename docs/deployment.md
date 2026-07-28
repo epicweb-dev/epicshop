@@ -26,7 +26,12 @@ fan-out:
 - It lengthens `epicshop/fly.yaml` HTTP/TCP health-check grace periods when
   present
 - Package/fly updates are committed and pushed separately from workflow file
-  changes, so a missing `workflow` PAT scope cannot block version bumps
+  changes when the token lacks `workflow` scope, so version bumps are not
+  blocked; with `workflow` scope they share one commit to avoid double deploys
+- Workshop deploy CI uses `SKIP_PLAYGROUND=true` during setup so typecheck/lint
+  validate the workshop itself rather than a problem playground app, runs
+  solution tests via `epicshop/test.js ..s` when present, and still requires a
+  successful Fly deploy plus HTTP healthcheck on main
 
 ### `WORKSHOP_UPDATE_TOKEN` requirements
 
