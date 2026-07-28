@@ -10,6 +10,7 @@ import {
 	isProcessingPictureInPictureRequest,
 	isReactExtensionRenderLoopNoise,
 	isSessionStorageAccessDenied,
+	isStaleRouteResultNoise,
 	isUnexpectedServerErrorNoise,
 	processingPictureInPictureRequestMessage,
 } from '../app/utils/sentry-filters.ts'
@@ -81,6 +82,58 @@ test('drops AbortError navigation/fetch aborts (aha)', () => {
 		isAbortErrorNoise({
 			exception: {
 				values: [{ type: 'Error', value: 'Fetch is aborted' }],
+			},
+		}),
+	).toBe(true)
+})
+
+test('drops stale single-fetch routeId misses after restart/deploy (aha)', () => {
+	expect(
+		isStaleRouteResultNoise({
+			exception: {
+				values: [
+					{
+						type: 'Error',
+						value: 'No result found for routeId "routes/$"',
+					},
+				],
+			},
+		}),
+	).toBe(true)
+	expect(
+		isStaleRouteResultNoise({
+			exception: {
+				values: [
+					{
+						type: 'Error',
+						value:
+							'No result found for routeId "routes/_app+/exercise+/$exerciseNumber"',
+					},
+				],
+			},
+		}),
+	).toBe(true)
+	expect(
+		isStaleRouteResultNoise({
+			exception: {
+				values: [
+					{
+						type: 'Error',
+						value: 'Invalid response found for routeId "routes/_app+/index"',
+					},
+				],
+			},
+		}),
+	).toBe(false)
+	expect(
+		isClientSentryNoise({
+			exception: {
+				values: [
+					{
+						type: 'Error',
+						value: 'No result found for routeId "routes/_app+/index"',
+					},
+				],
 			},
 		}),
 	).toBe(true)

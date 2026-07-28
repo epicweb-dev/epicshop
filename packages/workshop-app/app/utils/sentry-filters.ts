@@ -69,6 +69,18 @@ export function isAbortErrorNoise(event: SentryEventWithException) {
 }
 
 /**
+ * React Router single-fetch throws when the client asks for a routeId that
+ * isn't in the server payload — typically a tab left open across a local
+ * restart or a deployed workshop update (client/server route-manifest skew).
+ * Not an actionable product defect; a hard refresh recovers.
+ */
+export function isStaleRouteResultNoise(event: SentryEventWithException) {
+	return getExceptionValues(event).some((value) =>
+		/No result found for routeId /i.test(exceptionValueText(value)),
+	)
+}
+
+/**
  * Browser/network blips while the local (or hosted) workshop server flaps,
  * the tab sleeps, or the learner's connection drops mid-fetch.
  */
@@ -253,6 +265,7 @@ export function isClientSentryNoise(event: SentryEventWithException) {
 	return (
 		isProcessingPictureInPictureRequest(event) ||
 		isAbortErrorNoise(event) ||
+		isStaleRouteResultNoise(event) ||
 		isBrowserNetworkNoise(event) ||
 		isSessionStorageAccessDenied(event) ||
 		isCrossOriginSecurityNoise(event) ||
