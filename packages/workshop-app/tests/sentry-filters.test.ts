@@ -267,7 +267,8 @@ test('drops React render-loop fatals cascaded from addEL_hook extensions (aha)',
 				{
 					category: 'console',
 					level: 'error',
-					message: "TypeError: Cannot read properties of null (reading 'tagName')",
+					message:
+						"TypeError: Cannot read properties of null (reading 'tagName')",
 					data: {
 						arguments: [
 							{
