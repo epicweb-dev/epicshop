@@ -5,7 +5,18 @@ type SentryExceptionValue = {
 		frames?: Array<{
 			filename?: string
 			function?: string
+			module?: string
+			inApp?: boolean
 		}>
+	}
+}
+
+type SentryBreadcrumb = {
+	category?: string
+	message?: string
+	level?: string
+	data?: {
+		arguments?: Array<unknown>
 	}
 }
 
@@ -16,6 +27,7 @@ type SentryEventWithException = {
 	request?: {
 		url?: string
 	}
+	breadcrumbs?: Array<SentryBreadcrumb> | { values?: Array<SentryBreadcrumb> }
 }
 
 export const processingPictureInPictureRequestMessage =
@@ -167,6 +179,63 @@ export function isPlaygroundClientNoise(event: SentryEventWithException) {
 	)
 }
 
+function getBreadcrumbs(event: SentryEventWithException) {
+	const crumbs = event.breadcrumbs
+	if (!crumbs) return []
+	return Array.isArray(crumbs) ? crumbs : (crumbs.values ?? [])
+}
+
+function breadcrumbTextBlob(event: SentryEventWithException) {
+	const parts: Array<string> = []
+	for (const crumb of getBreadcrumbs(event)) {
+		if (typeof crumb.message === 'string') parts.push(crumb.message)
+		for (const arg of crumb.data?.arguments ?? []) {
+			if (typeof arg === 'string') {
+				parts.push(arg)
+				continue
+			}
+			if (arg && typeof arg === 'object') {
+				const record = arg as { message?: unknown; stack?: unknown }
+				if (typeof record.message === 'string') parts.push(record.message)
+				if (typeof record.stack === 'string') parts.push(record.stack)
+			}
+		}
+	}
+	return parts.join('\n')
+}
+
+function isReactRenderLoopFatal(event: SentryEventWithException) {
+	return getExceptionValues(event).some((value) => {
+		const text = exceptionValueText(value)
+		return (
+			/Maximum update depth exceeded/i.test(text) ||
+			/^Should not already be working\.?$/i.test(text) ||
+			/Minified React error #185/i.test(text)
+		)
+	})
+}
+
+/**
+ * Browser extensions that wrap addEventListener (`addEL_hook`) throw
+ * `Cannot read properties of null (reading 'tagName')` while React mounts
+ * effects. React Router catches the throw during render/effect recovery, which
+ * then fatals as "Maximum update depth exceeded" / "Should not already be
+ * working" with only react-dom frames — so the underlying extension filter
+ * never matches. Drop these cascade fatals when breadcrumbs show the hook.
+ */
+export function isReactExtensionRenderLoopNoise(
+	event: SentryEventWithException,
+) {
+	if (!isReactRenderLoopFatal(event)) return false
+
+	const crumbText = breadcrumbTextBlob(event)
+	if (/addEL_hook/i.test(crumbText)) return true
+	return (
+		/reading ['"]tagName['"]/i.test(crumbText) &&
+		/React Router caught/i.test(crumbText)
+	)
+}
+
 export function isClientSentryNoise(event: SentryEventWithException) {
 	return (
 		isProcessingPictureInPictureRequest(event) ||
@@ -176,6 +245,7 @@ export function isClientSentryNoise(event: SentryEventWithException) {
 		isCrossOriginSecurityNoise(event) ||
 		isBrowserExtensionNoise(event) ||
 		isDomMutationNoise(event) ||
-		isPlaygroundClientNoise(event)
+		isPlaygroundClientNoise(event) ||
+		isReactExtensionRenderLoopNoise(event)
 	)
 }
