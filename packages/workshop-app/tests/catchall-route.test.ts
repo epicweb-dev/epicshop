@@ -28,6 +28,16 @@ test('redirects a zero-padded exercise path including the step type', async () =
 	expect(response.headers.get('Location')).toBe('/exercise/01/02/problem')
 })
 
+test('percent-encodes non-ASCII Location values so Response headers stay ByteString-safe (aha: EPICSHOP-HA)', async () => {
+	const unicodeMark = '\uFF70' // HALFWIDTH KATAKANA-HIRAGANA PROLONGED SOUND MARK
+	const response = await callLoader(`1/${unicodeMark}oast.me`)
+
+	expect(response.status).toBe(302)
+	expect(response.headers.get('Location')).toBe(
+		`/exercise/1/${encodeURIComponent(unicodeMark)}oast.me`,
+	)
+})
+
 test('404s a non-numeric first segment', async () => {
 	await expect(callLoader('foo/bar')).rejects.toMatchObject({ status: 404 })
 })

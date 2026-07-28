@@ -18,10 +18,13 @@ export async function loader({ params }: Route.LoaderArgs) {
 	const [firstSegment] = splat?.split('/') ?? []
 	if (firstSegment && /^\d+$/.test(firstSegment)) {
 		const newPath = `/exercise/${splat}`
+		// Response headers are ByteStrings (code points ≤ 255). React Router
+		// gives decoded splat params, so a probe like `/1/%EF%BD%B0oast.me`
+		// would put U+FF70 into Location and throw TypeError (EPICSHOP-HA).
 		return new Response(null, {
 			status: 302,
 			headers: {
-				Location: newPath,
+				Location: encodeURI(newPath),
 			},
 		})
 	}
