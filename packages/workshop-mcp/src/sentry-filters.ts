@@ -21,9 +21,23 @@ const expectedMcpErrorMessagePatterns = [
 type SentryExceptionValue = {
 	type?: string
 	value?: string
+	mechanism?: {
+		type?: string
+		data?: {
+			error_type?: string
+		}
+	}
+	stacktrace?: {
+		frames?: Array<{
+			function?: string
+			module?: string
+			filename?: string
+		}>
+	}
 }
 
 type SentryEventWithException = {
+	culprit?: string
 	exception?: {
 		values?: Array<SentryExceptionValue>
 	}
@@ -33,6 +47,35 @@ export function isExpectedMcpErrorMessage(message: string) {
 	return expectedMcpErrorMessagePatterns.some((pattern) =>
 		pattern.test(message),
 	)
+}
+
+/**
+ * MCP hosts sometimes send malformed JSON-RPC frames on stdio. The SDK's
+ * deserializeMessage validates with Zod and throws ZodError (transport noise),
+ * which Sentry's MCP integration captures as mechanism auto.ai.mcp_server.
+ */
+function isMcpTransportDeserializeZodError(
+	event: SentryEventWithException,
+	value: SentryExceptionValue,
+) {
+	if (value.type !== 'ZodError') return false
+
+	if (
+		value.mechanism?.type === 'auto.ai.mcp_server' &&
+		value.mechanism.data?.error_type === 'transport'
+	) {
+		return true
+	}
+
+	if (event.culprit?.includes('deserializeMessage')) return true
+
+	return (value.stacktrace?.frames ?? []).some((frame) => {
+		if (frame.function !== 'deserializeMessage') return false
+		const location = `${frame.module ?? ''} ${frame.filename ?? ''}`
+		return (
+			location.includes('@modelcontextprotocol') || location.includes('stdio')
+		)
+	})
 }
 
 export function isExpectedMcpSentryNoise(
@@ -54,6 +97,7 @@ export function isExpectedMcpSentryNoise(
 	return (
 		event.exception?.values?.some((value) => {
 			if (value.type === 'ExpectedMcpError') return true
+			if (isMcpTransportDeserializeZodError(event, value)) return true
 			if (
 				typeof value.value === 'string' &&
 				isExpectedMcpErrorMessage(value.value)

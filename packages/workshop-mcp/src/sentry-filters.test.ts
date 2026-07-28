@@ -134,3 +134,79 @@ test('keeps unrelated JsonRpcError events', () => {
 		}),
 	).toBe(false)
 })
+
+test('drops MCP stdio deserialize ZodError transport noise (aha)', () => {
+	expect(
+		isExpectedMcpSentryNoise({
+			culprit:
+				'deserializeMessage(@modelcontextprotocol.sdk.dist.esm.shared:stdio)',
+			exception: {
+				values: [
+					{
+						type: 'ZodError',
+						value:
+							'[\n  {\n    "code": "invalid_union",\n    "path": ["id"],\n    "message": "Invalid input"\n  }\n]',
+						mechanism: {
+							type: 'auto.ai.mcp_server',
+							data: { error_type: 'transport' },
+						},
+					},
+				],
+			},
+		}),
+	).toBe(true)
+})
+
+test('drops ZodError when stack is deserializeMessage from MCP SDK stdio', () => {
+	expect(
+		isExpectedMcpSentryNoise({
+			exception: {
+				values: [
+					{
+						type: 'ZodError',
+						value: '[\n  {\n    "code": "invalid_type"\n  }\n]',
+						stacktrace: {
+							frames: [
+								{
+									function: 'deserializeMessage',
+									module: '@modelcontextprotocol.sdk.dist.esm.shared:stdio',
+									filename:
+										'/Users/example/.npm/_npx/x/node_modules/@modelcontextprotocol/sdk/dist/esm/shared/stdio.js',
+								},
+							],
+						},
+					},
+				],
+			},
+		}),
+	).toBe(true)
+})
+
+test('keeps unrelated ZodErrors outside MCP transport deserialize', () => {
+	expect(
+		isExpectedMcpSentryNoise({
+			exception: {
+				values: [
+					{
+						type: 'ZodError',
+						value:
+							'[\n  {\n    "code": "invalid_type",\n    "path": ["name"]\n  }\n]',
+						mechanism: {
+							type: 'generic',
+							data: { error_type: 'tool' },
+						},
+						stacktrace: {
+							frames: [
+								{
+									function: 'parseToolArgs',
+									module: 'workshop-mcp/tools',
+									filename: '/tmp/workshop-mcp/src/tools.ts',
+								},
+							],
+						},
+					},
+				],
+			},
+		}),
+	).toBe(false)
+})
