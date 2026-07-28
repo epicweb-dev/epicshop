@@ -2,6 +2,7 @@ import { type Request, type Response } from 'express'
 import { expect, test, vi } from 'vitest'
 import {
 	alignLoopbackOriginHeaders,
+	getHostPort,
 	getOriginHost,
 	isLoopbackHost,
 	shouldAlignLoopbackOriginHeaders,
@@ -26,6 +27,12 @@ test('parses Origin hosts and rejects invalid values', () => {
 	expect(getOriginHost('not-a-url')).toBeNull()
 })
 
+test('extracts ports for same-port loopback comparisons', () => {
+	expect(getHostPort('localhost:5639')).toBe('5639')
+	expect(getHostPort('127.0.0.1:5639')).toBe('5639')
+	expect(getHostPort('localhost:3000')).toBe('3000')
+})
+
 test('aligns when Codespaces rewrites Origin to localhost but X-Forwarded-Host stays public (aha)', () => {
 	expect(
 		shouldAlignLoopbackOriginHeaders({
@@ -37,7 +44,7 @@ test('aligns when Codespaces rewrites Origin to localhost but X-Forwarded-Host s
 	).toBe(true)
 })
 
-test('aligns localhost vs 127.0.0.1 Host mismatches on undeployed workshops', () => {
+test('aligns localhost vs 127.0.0.1 Host mismatches on the same port', () => {
 	expect(
 		shouldAlignLoopbackOriginHeaders({
 			deployed: false,
@@ -46,6 +53,25 @@ test('aligns localhost vs 127.0.0.1 Host mismatches on undeployed workshops', ()
 			forwardedHostHeader: undefined,
 		}),
 	).toBe(true)
+})
+
+test('does not align different loopback ports (cross-port CSRF bypass aha)', () => {
+	expect(
+		shouldAlignLoopbackOriginHeaders({
+			deployed: false,
+			originHost: 'localhost:3000',
+			hostHeader: 'localhost:5639',
+			forwardedHostHeader: undefined,
+		}),
+	).toBe(false)
+	expect(
+		shouldAlignLoopbackOriginHeaders({
+			deployed: false,
+			originHost: 'localhost:3000',
+			hostHeader: 'localhost:5639',
+			forwardedHostHeader: 'literate-lamp-975vggxqvvhp4jx-5639.app.github.dev',
+		}),
+	).toBe(false)
 })
 
 test('does not align deployed workshops (keep strict CSRF proxy behavior)', () => {
@@ -96,6 +122,27 @@ test('middleware rewrites Host and drops X-Forwarded-Host for Codespaces loopbac
 
 	expect(req.headers.host).toBe('localhost:5639')
 	expect(req.headers['x-forwarded-host']).toBeUndefined()
+	expect(next).toHaveBeenCalledOnce()
+	vi.unstubAllGlobals()
+})
+
+test('middleware leaves cross-port loopback requests untouched', () => {
+	vi.stubGlobal('ENV', { EPICSHOP_DEPLOYED: false })
+	const req = {
+		headers: {
+			origin: 'http://localhost:3000',
+			host: 'localhost:5639',
+			'x-forwarded-host': 'literate-lamp-975vggxqvvhp4jx-5639.app.github.dev',
+		},
+	} as unknown as Request
+	const next = vi.fn()
+
+	alignLoopbackOriginHeaders(req, {} as Response, next)
+
+	expect(req.headers.host).toBe('localhost:5639')
+	expect(req.headers['x-forwarded-host']).toBe(
+		'literate-lamp-975vggxqvvhp4jx-5639.app.github.dev',
+	)
 	expect(next).toHaveBeenCalledOnce()
 	vi.unstubAllGlobals()
 })

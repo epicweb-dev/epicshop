@@ -8,12 +8,12 @@ import { type NextFunction, type Request, type Response } from 'express'
  * the client surfaces React Router's opaque "Unexpected Server Error".
  *
  * The same mismatch happens when a learner opens the app as `127.0.0.1` while
- * `Host` is `localhost` (or the reverse).
+ * `Host` is `localhost` (or the reverse) on the *same* port.
  *
- * For undeployed local workshops only, when `Origin` is a loopback host, align
- * `Host` / `X-Forwarded-Host` to that Origin so CSRF compares equal hosts.
- * Deployed workshops keep strict proxy header behavior. Cross-site scanner
- * Origins (not loopback) are unchanged and still rejected.
+ * For undeployed local workshops only, align headers in those two cases.
+ * Different loopback ports are left alone so a page on another local port
+ * cannot satisfy CSRF by getting `Host` rewritten. Deployed workshops keep
+ * strict proxy header behavior. Cross-site scanner Origins are unchanged.
  */
 export function isLoopbackHost(host: string) {
 	try {
@@ -41,6 +41,14 @@ export function getOriginHost(originHeader: string | undefined) {
 	}
 }
 
+export function getHostPort(host: string) {
+	try {
+		return new URL(`http://${host}`).port
+	} catch {
+		return null
+	}
+}
+
 export function shouldAlignLoopbackOriginHeaders({
 	deployed,
 	originHost,
@@ -53,11 +61,31 @@ export function shouldAlignLoopbackOriginHeaders({
 	forwardedHostHeader: string | undefined
 }) {
 	if (deployed || !originHost || !isLoopbackHost(originHost)) return false
-	const forwardedHost = forwardedHostHeader?.split(',')[0]?.trim()
-	return (
-		(Boolean(forwardedHost) && forwardedHost !== originHost) ||
-		(Boolean(hostHeader) && hostHeader !== originHost)
-	)
+
+	const forwardedHost = forwardedHostHeader?.split(',')[0]?.trim() || undefined
+
+	// Classic Codespaces: Host already matches the loopback Origin; only
+	// X-Forwarded-Host is the disagreeing public hostname.
+	if (
+		forwardedHost &&
+		forwardedHost !== originHost &&
+		hostHeader === originHost
+	) {
+		return true
+	}
+
+	// localhost vs 127.0.0.1 (same port only — different ports stay rejected)
+	if (
+		hostHeader &&
+		hostHeader !== originHost &&
+		isLoopbackHost(hostHeader) &&
+		getHostPort(originHost) !== null &&
+		getHostPort(originHost) === getHostPort(hostHeader)
+	) {
+		return true
+	}
+
+	return false
 }
 
 export function alignLoopbackOriginHeaders(
