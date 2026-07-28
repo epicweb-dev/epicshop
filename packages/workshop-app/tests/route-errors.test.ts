@@ -67,6 +67,45 @@ test('treats React Router CSRF Error("Bad Request") as a client error (aha)', ()
 	expect(isClientErrorResponse(new Error('Bad Request'))).toBe(true)
 })
 
+test('treats React Router document-request CSRF abort Errors as client errors (aha)', () => {
+	// handleDocumentRequest passes the descriptive throwIfPotentialCSRFAttack
+	// Error into handleError before returning HTTP 400 (EPICSHOP-HB).
+	expect(
+		isClientErrorResponse(
+			new Error('`origin` header is not a valid URL. Aborting the action.'),
+		),
+	).toBe(true)
+	expect(
+		isClientErrorResponse(
+			new Error(
+				'host header does not match `origin` header from a forwarded action request. Aborting the action.',
+			),
+		),
+	).toBe(true)
+	expect(
+		isClientErrorResponse(
+			new Error(
+				'x-forwarded-host header does not match `origin` header from a forwarded action request. Aborting the action.',
+			),
+		),
+	).toBe(true)
+	expect(
+		isClientErrorResponse(
+			new Error(
+				'`x-forwarded-host` or `host` headers are not provided. One of these is needed to compare the `origin` header from a forwarded action request. Aborting the action.',
+			),
+		),
+	).toBe(true)
+})
+
+test('does not treat unrelated Aborting-the-action text as a client CSRF error', () => {
+	expect(
+		isClientErrorResponse(
+			new Error('Something went wrong. Aborting the action.'),
+		),
+	).toBe(false)
+})
+
 test('does not treat null or undefined as a client error response', () => {
 	expect(isClientErrorResponse(null)).toBe(false)
 	expect(isClientErrorResponse(undefined)).toBe(false)
