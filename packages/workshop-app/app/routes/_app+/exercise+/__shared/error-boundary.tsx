@@ -33,18 +33,24 @@ export function Exercise404ErrorBoundary({
 	error: ErrorResponse
 	params: Record<string, string | undefined>
 }) {
-	console.log(error)
 	const validationResult = error404Schema.safeParse(error.data)
 	const label = [params.exerciseNumber, params.stepNumber, params.type]
 		.filter(Boolean)
 		.join('.')
 
 	if (!validationResult.success) {
-		console.error(
-			'Invalid 404 error response data',
-			validationResult.error,
-			error,
-		)
+		// Plain string 404 bodies (e.g. requireExerciseApp, scanners hitting
+		// /exercise/wp-includes/...) are expected. Only warn when an object
+		// payload fails our schema — that means our own 404 shape drifted.
+		// Log primitives only: console.error(ZodError | ErrorResponse) has
+		// thrown inside Node util.inspect under Sentry's console wrapper
+		// (EPICSHOP-H8: Cannot read properties of undefined (reading 'value')).
+		if (error.data !== null && typeof error.data === 'object') {
+			console.error(
+				'Invalid 404 error response data',
+				validationResult.error.message,
+			)
+		}
 		return <p className="text-2xl font-bold">"{label}" not found</p>
 	}
 	const { data } = validationResult
