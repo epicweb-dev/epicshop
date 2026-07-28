@@ -30,6 +30,7 @@ import morgan from 'morgan'
 import { type ServerBuild } from 'react-router'
 import sourceMapSupport from 'source-map-support'
 import { type WebSocket, WebSocketServer } from 'ws'
+import { alignLoopbackOriginHeaders } from './align-loopback-origin.ts'
 import {
 	decodeRequestTarget,
 	rejectMalformedRequests,
@@ -92,6 +93,7 @@ app.use(compression())
 app.disable('x-powered-by')
 
 app.use(rejectMalformedRequests)
+app.use(alignLoopbackOriginHeaders)
 
 // the workshop's public assets override the app's public assets
 app.use(
