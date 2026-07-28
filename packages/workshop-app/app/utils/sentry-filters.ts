@@ -236,6 +236,19 @@ export function isReactExtensionRenderLoopNoise(
 	)
 }
 
+/**
+ * React Router sanitizes production single-fetch errors to this opaque message
+ * with no stack. The actionable server exception (when any) is reported via
+ * handleError; the client mirror is never actionable on its own.
+ */
+export function isUnexpectedServerErrorNoise(event: SentryEventWithException) {
+	return getExceptionValues(event).some(
+		(value) =>
+			value.type === 'Error' &&
+			exceptionValueText(value) === 'Unexpected Server Error',
+	)
+}
+
 export function isClientSentryNoise(event: SentryEventWithException) {
 	return (
 		isProcessingPictureInPictureRequest(event) ||
@@ -246,6 +259,7 @@ export function isClientSentryNoise(event: SentryEventWithException) {
 		isBrowserExtensionNoise(event) ||
 		isDomMutationNoise(event) ||
 		isPlaygroundClientNoise(event) ||
-		isReactExtensionRenderLoopNoise(event)
+		isReactExtensionRenderLoopNoise(event) ||
+		isUnexpectedServerErrorNoise(event)
 	)
 }

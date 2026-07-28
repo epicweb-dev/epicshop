@@ -10,6 +10,7 @@ import {
 	isProcessingPictureInPictureRequest,
 	isReactExtensionRenderLoopNoise,
 	isSessionStorageAccessDenied,
+	isUnexpectedServerErrorNoise,
 	processingPictureInPictureRequestMessage,
 } from '../app/utils/sentry-filters.ts'
 import { isServerEnvironmentNoise } from '../sentry-server-filters.js'
@@ -313,11 +314,44 @@ test('drops React render-loop fatals cascaded from addEL_hook extensions (aha)',
 	).toBe(false)
 })
 
+test('drops React Router opaque Unexpected Server Error client mirrors (aha)', () => {
+	expect(
+		isUnexpectedServerErrorNoise({
+			exception: {
+				values: [{ type: 'Error', value: 'Unexpected Server Error' }],
+			},
+		}),
+	).toBe(true)
+	expect(
+		isUnexpectedServerErrorNoise({
+			exception: {
+				values: [
+					{ type: 'Error', value: 'Unexpected Server Error with detail' },
+				],
+			},
+		}),
+	).toBe(false)
+	expect(
+		isUnexpectedServerErrorNoise({
+			exception: {
+				values: [{ type: 'TypeError', value: 'Unexpected Server Error' }],
+			},
+		}),
+	).toBe(false)
+})
+
 test('isClientSentryNoise aggregates the client predicates', () => {
 	expect(
 		isClientSentryNoise({
 			exception: {
 				values: [{ type: 'AbortError', value: 'The operation was aborted.' }],
+			},
+		}),
+	).toBe(true)
+	expect(
+		isClientSentryNoise({
+			exception: {
+				values: [{ type: 'Error', value: 'Unexpected Server Error' }],
 			},
 		}),
 	).toBe(true)
