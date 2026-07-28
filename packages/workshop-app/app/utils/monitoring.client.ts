@@ -140,6 +140,7 @@ export function init() {
 			/Failed to fetch/i,
 			/NetworkError when attempting to fetch resource/i,
 			/^Load failed/i,
+			/No result found for routeId /i,
 		],
 		beforeSend(event) {
 			if (isClientSentryNoise(event)) return null
