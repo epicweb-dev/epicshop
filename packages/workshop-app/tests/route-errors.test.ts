@@ -57,8 +57,14 @@ test('does not treat a 500 route error response as a client error (server faults
 	expect(isClientErrorResponse(error)).toBe(false)
 })
 
-test('does not treat a plain Error as a client error response', () => {
+test('does not treat an unrelated plain Error as a client error response', () => {
 	expect(isClientErrorResponse(new Error('boom'))).toBe(false)
+})
+
+test('treats React Router CSRF Error("Bad Request") as a client error (aha)', () => {
+	// singleFetchAction catches the descriptive origin-mismatch error and
+	// reports this bare message through handleError while returning HTTP 400.
+	expect(isClientErrorResponse(new Error('Bad Request'))).toBe(true)
 })
 
 test('does not treat null or undefined as a client error response', () => {
