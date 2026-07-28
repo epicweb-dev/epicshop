@@ -8,6 +8,7 @@ import {
 	isDomMutationNoise,
 	isPlaygroundClientNoise,
 	isProcessingPictureInPictureRequest,
+	isReactExtensionRenderLoopNoise,
 	isSessionStorageAccessDenied,
 	processingPictureInPictureRequestMessage,
 } from '../app/utils/sentry-filters.ts'
@@ -250,6 +251,68 @@ test('drops DOM mutation races and playground client frames', () => {
 	).toBe(true)
 })
 
+test('drops React render-loop fatals cascaded from addEL_hook extensions (aha)', () => {
+	expect(
+		isReactExtensionRenderLoopNoise({
+			exception: {
+				values: [
+					{
+						type: 'Error',
+						value:
+							'Maximum update depth exceeded. This can happen when a component repeatedly calls setState inside componentWillUpdate or componentDidUpdate. React limits the number of nested updates to prevent infinite loops.',
+					},
+				],
+			},
+			breadcrumbs: [
+				{
+					category: 'console',
+					level: 'error',
+					message:
+						"TypeError: Cannot read properties of null (reading 'tagName')",
+					data: {
+						arguments: [
+							{
+								message: "Cannot read properties of null (reading 'tagName')",
+								stack:
+									"TypeError: Cannot read properties of null (reading 'tagName')\n    at addEL_hook (<anonymous>:675:29)\n    at top.addEventListener (<anonymous>:695:9)",
+							},
+						],
+					},
+				},
+				{
+					category: 'console',
+					level: 'error',
+					message:
+						"React Router caught the following error during render TypeError: Cannot read properties of null (reading 'tagName')",
+				},
+			],
+		}),
+	).toBe(true)
+	expect(
+		isReactExtensionRenderLoopNoise({
+			exception: {
+				values: [{ type: 'Error', value: 'Should not already be working.' }],
+			},
+			breadcrumbs: {
+				values: [
+					{
+						message:
+							"React Router caught the following error during render TypeError: Cannot read properties of null (reading 'tagName')",
+					},
+				],
+			},
+		}),
+	).toBe(true)
+	// Real product render loops without extension breadcrumbs must still alert.
+	expect(
+		isReactExtensionRenderLoopNoise({
+			exception: {
+				values: [{ type: 'Error', value: 'Maximum update depth exceeded' }],
+			},
+		}),
+	).toBe(false)
+})
+
 test('isClientSentryNoise aggregates the client predicates', () => {
 	expect(
 		isClientSentryNoise({
@@ -265,6 +328,18 @@ test('isClientSentryNoise aggregates the client predicates', () => {
 			},
 		}),
 	).toBe(false)
+	expect(
+		isClientSentryNoise({
+			exception: {
+				values: [{ type: 'Error', value: 'Should not already be working.' }],
+			},
+			breadcrumbs: [
+				{
+					message: 'at addEL_hook (<anonymous>:675:29)',
+				},
+			],
+		}),
+	).toBe(true)
 })
 
 test('drops learner-machine server environment noise (aha)', () => {
