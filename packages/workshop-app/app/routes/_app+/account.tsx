@@ -5,6 +5,7 @@ import {
 	requireAuthInfo,
 	setPreferences,
 } from '@epic-web/workshop-utils/db.server'
+import { getUserInfo } from '@epic-web/workshop-utils/epic-api.server'
 import { type SEOHandle } from '@nasa-gcn/remix-seo'
 import { redirect, Form, Link } from 'react-router'
 import { Button } from '#app/components/button.tsx'
@@ -16,7 +17,6 @@ import {
 import { SimpleTooltip } from '#app/components/ui/tooltip.tsx'
 import {
 	useOptionalDiscordMember,
-	useUser,
 	useUserHasAccess,
 } from '#app/components/user.tsx'
 import { useWorkshopConfig } from '#app/components/workshop-config.tsx'
@@ -30,7 +30,14 @@ export const handle: SEOHandle = {
 export async function loader({ request }: Route.LoaderArgs) {
 	ensureUndeployed()
 	await requireAuthInfo({ request })
-	return {}
+	// Auth tokens can exist while userinfo is unavailable (offline / API /
+	// expired token). Account UI needs userinfo, and root may not revalidate
+	// after a /login → /account redirect, so load it here instead of useUser().
+	const user = await getUserInfo({ request })
+	if (!user) {
+		throw redirect('/login')
+	}
+	return { user }
 }
 
 export async function action({ request }: Route.ActionArgs) {
@@ -65,8 +72,8 @@ function useConnectDiscordURL() {
 	return `https://${host}/discord`
 }
 
-export default function Account() {
-	const user = useUser()
+export default function Account({ loaderData }: Route.ComponentProps) {
+	const { user } = loaderData
 	const config = useWorkshopConfig()
 	const discordMember = useOptionalDiscordMember()
 	const connectDiscordURL = useConnectDiscordURL()

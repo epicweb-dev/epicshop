@@ -1,4 +1,4 @@
-import { getAuthInfo } from '@epic-web/workshop-utils/db.server'
+import { getUserInfo } from '@epic-web/workshop-utils/epic-api.server'
 import { type SEOHandle } from '@nasa-gcn/remix-seo'
 import { useEffect, useState } from 'react'
 import {
@@ -24,8 +24,10 @@ export const handle: SEOHandle = {
 
 export async function loader() {
 	ensureUndeployed()
-	const isAuthenticated = Boolean(await getAuthInfo())
-	if (isAuthenticated) throw redirect('/account')
+	// Require userinfo, not just local auth tokens. Tokens-without-userinfo used
+	// to redirect to /account, where useUser() threw (EPICSHOP-FX).
+	const user = await getUserInfo()
+	if (user) throw redirect('/account')
 	return {}
 }
 
