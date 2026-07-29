@@ -106,7 +106,14 @@ jobs:
         run: |
           set -euo pipefail
           shopt -s globstar nullglob
-          schemas=(./exercises/**/*.solution.*/prisma/schema.prisma)
+          schemas=()
+          for schema in ./exercises/**/prisma/schema.prisma; do
+            app_dir="${schema%/prisma/schema.prisma}"
+            app_name="${app_dir##*/}"
+            if [[ "$app_name" =~ ^[0-9]+\.solution(\..+)?$ ]]; then
+              schemas+=("$schema")
+            fi
+          done
           if [ "${#schemas[@]}" -eq 0 ]; then
             echo "No solution-app Prisma schemas found; skipping Prisma client generation."
             exit 0
