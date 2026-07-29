@@ -30,8 +30,8 @@ fan-out:
   blocked; with `workflow` scope they share one commit to avoid double deploys
 - Workshop deploy CI uses `SKIP_PLAYGROUND=true` during setup so typecheck/lint
   validate the workshop itself rather than a problem playground app, gives large
-  lint runs an 8 GB Node heap, installs Chromium and generates a Prisma client
-  when a schema is present before running solution tests via
+  lint runs an 8 GB Node heap, installs Chromium and generates Prisma clients
+  for solution apps that have schemas before running solution tests via
   `epicshop/test.js ..s`, and still requires a successful Fly deploy plus HTTP
   healthcheck on main
 

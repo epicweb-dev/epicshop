@@ -89,16 +89,25 @@ jobs:
         run: npm ci
 
       - name: 🎭 Install Playwright browser
+        if: ${{ hashFiles('epicshop/test.js') != '' }}
         run: npx playwright install --with-deps chromium
 
-      - name: ◭ Generate Prisma client
+      - name: ◭ Generate Prisma clients
+        if: ${{ hashFiles('epicshop/test.js') != '' }}
         run: |
           set -euo pipefail
-          if [ -f ./prisma/schema.prisma ]; then
-            npx prisma generate
-          else
-            echo "No prisma/schema.prisma in this workshop; skipping Prisma client generation."
+          shopt -s globstar nullglob
+          schemas=(./exercises/**/*.solution.*/prisma/schema.prisma)
+          if [ "${#schemas[@]}" -eq 0 ]; then
+            echo "No solution-app Prisma schemas found; skipping Prisma client generation."
+            exit 0
           fi
+          for schema in "${schemas[@]}"; do
+            app_dir="${schema%/prisma/schema.prisma}"
+            echo "::group::prisma generate in ${app_dir}"
+            (cd "$app_dir" && npx prisma generate)
+            echo "::endgroup::"
+          done
 
       # Workshops ship epicshop/test.js (not .ts). `..s` runs solution apps only.
       - name: 🧪 Run solution tests
