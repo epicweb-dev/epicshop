@@ -1,4 +1,7 @@
 import assert from 'node:assert/strict'
+import fs from 'node:fs'
+import path from 'node:path'
+import { fileURLToPath } from 'node:url'
 import {
 	canUpdateWorkflowFiles,
 	isWorkflowScopeError,
@@ -6,6 +9,8 @@ import {
 	partitionFilesByWorkflow,
 	workflowScopeHint,
 } from './helpers.js'
+
+const currentDirectory = path.dirname(fileURLToPath(import.meta.url))
 
 assert.equal(parseOAuthScopes(null), null)
 assert.equal(parseOAuthScopes(undefined), null)
@@ -49,5 +54,24 @@ assert.deepEqual(
 
 assert.match(workflowScopeHint(), /workflow/)
 assert.match(workflowScopeHint(), /WORKSHOP_UPDATE_TOKEN/)
+
+const canonicalDeployWorkflow = fs.readFileSync(
+	path.join(currentDirectory, 'canonical', 'deploy.yml'),
+	'utf8',
+)
+const generateCommand = 'npm run generate --if-present'
+const typecheckCommand = 'npm run typecheck --if-present'
+
+// Generate app artifacts before checking project references (aha).
+assert.ok(canonicalDeployWorkflow.includes(generateCommand))
+assert.ok(canonicalDeployWorkflow.includes(typecheckCommand))
+assert.ok(
+	canonicalDeployWorkflow.indexOf(generateCommand) <
+		canonicalDeployWorkflow.indexOf(typecheckCommand),
+)
+assert.doesNotMatch(
+	canonicalDeployWorkflow,
+	/run: npm run typecheck(?:\r?\n|$)/,
+)
 
 console.log('helpers.test.js: all assertions passed')
