@@ -786,35 +786,69 @@ async function updateWorkshopRepo(
 		let pushedAnything = false
 		let workflowWarning = null
 
-		// Push package/fly updates first so a missing `workflow` PAT scope cannot
-		// block the primary version bump.
 		const nonWorkflowCommitMessage = changed
 			? 'chore: update epicshop'
 			: 'chore: harden fly health checks'
-		const nonWorkflowPush = await stageCommitAndPush({
-			cwd: tempDir,
-			repoName,
-			files: nonWorkflowFiles,
-			commitMessage: nonWorkflowCommitMessage,
-		})
-		pushedAnything = pushedAnything || nonWorkflowPush.pushed
+		const combinedCommitMessage = changed
+			? 'chore: update epicshop'
+			: 'chore: harden fly deploy workflow'
 
-		if (workflowFiles.length > 0) {
+		// When the token can update workflow files, prefer one commit/push so each
+		// workshop only triggers a single deploy. Otherwise keep package/fly
+		// updates unblocked by pushing them separately from workflow files.
+		let useSplitPush = !syncWorkflows
+		if (syncWorkflows) {
 			try {
-				const workflowPush = await stageCommitAndPush({
+				const combinedPush = await stageCommitAndPush({
 					cwd: tempDir,
 					repoName,
-					files: workflowFiles,
-					commitMessage: 'chore: harden fly deploy workflow',
+					files: [...nonWorkflowFiles, ...workflowFiles],
+					commitMessage: combinedCommitMessage,
 				})
-				pushedAnything = pushedAnything || workflowPush.pushed
+				pushedAnything = combinedPush.pushed
 			} catch (error) {
-				if (!isWorkflowScopeError(error)) throw error
-				workflowWarning = workflowScopeHint()
-				console.error(
-					`⚠️  ${repoName} - could not push ${DEPLOY_WORKFLOW_PATH}: token lacks workflow scope`,
+				if (!isWorkflowScopeError(error) || nonWorkflowFiles.length === 0) {
+					throw error
+				}
+				// Combined commit was rejected; undo the commit but keep the file
+				// edits so we can push package/fly changes without the workflow file.
+				console.warn(
+					`⚠️  ${repoName} - combined push rejected for workflow scope; retrying package/fly only`,
 				)
-				console.error(`   ${workflowWarning}`)
+				await execa('git', ['reset', '--mixed', 'HEAD~1'], {
+					cwd: tempDir,
+					env: getGitEnv(),
+				})
+				useSplitPush = true
+			}
+		}
+
+		if (useSplitPush) {
+			const nonWorkflowPush = await stageCommitAndPush({
+				cwd: tempDir,
+				repoName,
+				files: nonWorkflowFiles,
+				commitMessage: nonWorkflowCommitMessage,
+			})
+			pushedAnything = pushedAnything || nonWorkflowPush.pushed
+
+			if (workflowFiles.length > 0) {
+				try {
+					const workflowPush = await stageCommitAndPush({
+						cwd: tempDir,
+						repoName,
+						files: workflowFiles,
+						commitMessage: 'chore: harden fly deploy workflow',
+					})
+					pushedAnything = pushedAnything || workflowPush.pushed
+				} catch (error) {
+					if (!isWorkflowScopeError(error)) throw error
+					workflowWarning = workflowScopeHint()
+					console.error(
+						`⚠️  ${repoName} - could not push ${DEPLOY_WORKFLOW_PATH}: token lacks workflow scope`,
+					)
+					console.error(`   ${workflowWarning}`)
+				}
 			}
 		}
 
