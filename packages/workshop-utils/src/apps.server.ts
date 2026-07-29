@@ -287,6 +287,11 @@ export function isExtraApp(app: any): app is ExtraApp {
 	return isApp(app) && app.type === 'extra'
 }
 
+/**
+ * @deprecated Example apps were renamed to extra apps. Use {@link isExtraApp}.
+ */
+export const isExampleApp = isExtraApp
+
 export function isExerciseStepApp(app: any): app is ExerciseStepApp {
 	return isProblemApp(app) || isSolutionApp(app)
 }
