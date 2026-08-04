@@ -1,50 +1,39 @@
 import fs from 'fs/promises'
 import path from 'path'
 import dotenv from 'dotenv'
-import semver from 'semver'
+import { checkNodeVersion, loadSemver } from './node-version-check.js'
 
 const packageJson = JSON.parse(
 	await fs.readFile(path.resolve(process.cwd(), 'package.json'), 'utf-8'),
 )
 
-// Check Node.js version against the engines requirement
-function checkNodeVersion() {
-	if (
+const semver = await loadSemver()
+const nodeVersionCheck = checkNodeVersion({
+	semver,
+	currentNodeVersion: process.version.slice(1), // Remove 'v' prefix
+	requiredVersions: packageJson.engines?.node,
+	skip:
 		process.env.EPICSHOP_SKIP_NODE_VERSION_CHECK === 'true' ||
-		process.env.EPICSHOP_SKIP_NODE_VERSION_CHECK === '1'
-	) {
-		return
-	}
+		process.env.EPICSHOP_SKIP_NODE_VERSION_CHECK === '1',
+})
 
-	const currentNodeVersion = process.version.slice(1) // Remove 'v' prefix
+if (!nodeVersionCheck.ok) {
 	const requiredVersions = packageJson.engines?.node
-
-	if (!requiredVersions) {
-		return // No engines specified, skip check
-	}
-
-	// Use semver to check if current version satisfies the requirement
-	const isSupported = semver.satisfies(currentNodeVersion, requiredVersions)
-
-	if (!isSupported) {
-		console.error('\n❌ Node.js version compatibility error')
-		console.error(`Current Node.js version: v${currentNodeVersion}`)
-		console.error(`Required Node.js versions: ${requiredVersions}`)
-		console.error(
-			`\nThis project only supports Node.js versions which match the semver range specified in the package.json file.`,
-		)
-		console.error(
-			'If you recently upgraded Node.js, update the Epic Workshop app package and reinstall dependencies.',
-		)
-		console.error('Please update to a supported Node.js version and try again.')
-		console.error(
-			'\nYou can download the latest LTS version from: https://nodejs.org/',
-		)
-		process.exit(1)
-	}
+	console.error('\n❌ Node.js version compatibility error')
+	console.error(`Current Node.js version: ${process.version}`)
+	console.error(`Required Node.js versions: ${requiredVersions}`)
+	console.error(
+		`\nThis project only supports Node.js versions which match the semver range specified in the package.json file.`,
+	)
+	console.error(
+		'If you recently upgraded Node.js, update the Epic Workshop app package and reinstall dependencies.',
+	)
+	console.error('Please update to a supported Node.js version and try again.')
+	console.error(
+		'\nYou can download the latest LTS version from: https://nodejs.org/',
+	)
+	process.exit(1)
 }
-
-checkNodeVersion()
 
 process.env.EPICSHOP_APP_VERSION ??= packageJson.version
 process.env.EPICSHOP_IS_PUBLISHED ??= packageJson.version.includes('0.0.0')

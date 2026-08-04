@@ -9,6 +9,8 @@
     "build",
     "dist",
     "start.js",
+    "node-version-check.js",
+    "node-version-check.d.ts",
     "instrument.js",
     "sentry-server-filters.js",
     "sentry-server-filters.d.ts",
