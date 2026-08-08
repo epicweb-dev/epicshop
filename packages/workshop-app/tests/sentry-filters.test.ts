@@ -12,6 +12,7 @@ import {
 	isSessionStorageAccessDenied,
 	isStaleRouteResultNoise,
 	isUnexpectedServerErrorNoise,
+	pictureInPictureRequiresUserActivationMessage,
 	processingPictureInPictureRequestMessage,
 } from '../app/utils/sentry-filters.ts'
 import { isServerEnvironmentNoise } from '../sentry-server-filters.js'
@@ -24,6 +25,33 @@ test('matches the Picture-in-Picture processing DOMException exactly', () => {
 					{
 						type: 'NotAllowedError',
 						value: processingPictureInPictureRequestMessage,
+					},
+				],
+			},
+		}),
+	).toBe(true)
+})
+
+test('matches Firefox Picture-in-Picture user-activation NotAllowedError (aha)', () => {
+	expect(
+		isProcessingPictureInPictureRequest({
+			exception: {
+				values: [
+					{
+						type: 'NotAllowedError',
+						value: pictureInPictureRequiresUserActivationMessage,
+					},
+				],
+			},
+		}),
+	).toBe(true)
+	expect(
+		isClientSentryNoise({
+			exception: {
+				values: [
+					{
+						type: 'NotAllowedError',
+						value: pictureInPictureRequiresUserActivationMessage,
 					},
 				],
 			},
@@ -54,6 +82,18 @@ test('does not match the same message on a different exception type', () => {
 					{
 						type: 'SecurityError',
 						value: processingPictureInPictureRequestMessage,
+					},
+				],
+			},
+		}),
+	).toBe(false)
+	expect(
+		isProcessingPictureInPictureRequest({
+			exception: {
+				values: [
+					{
+						type: 'Error',
+						value: pictureInPictureRequiresUserActivationMessage,
 					},
 				],
 			},

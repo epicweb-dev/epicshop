@@ -447,7 +447,9 @@ function handleKeyDown(e: KeyboardEvent) {
 				muxPlayer.media &&
 				'requestPictureInPicture' in muxPlayer.media
 			) {
-				void (muxPlayer.media as HTMLVideoElement).requestPictureInPicture()
+				void (muxPlayer.media as HTMLVideoElement)
+					.requestPictureInPicture()
+					.catch(() => {})
 			}
 		}
 		// arrow up/down to adjust volume
@@ -588,7 +590,9 @@ function handleKeyDown(e: KeyboardEvent) {
 		if (document.pictureInPictureElement) {
 			void document.exitPictureInPicture().catch(() => {})
 		} else if ('requestPictureInPicture' in mediaElement) {
-			void (mediaElement as HTMLVideoElement).requestPictureInPicture()
+			void (mediaElement as HTMLVideoElement)
+				.requestPictureInPicture()
+				.catch(() => {})
 		}
 	}
 	// arrow up/down to adjust volume

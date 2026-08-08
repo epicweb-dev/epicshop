@@ -33,6 +33,15 @@ type SentryEventWithException = {
 export const processingPictureInPictureRequestMessage =
 	'The video element is processing a Picture-in-Picture request.'
 
+/** Firefox (and some Chromium builds) when PiP is requested without transient activation. */
+export const pictureInPictureRequiresUserActivationMessage =
+	'Picture-in-Picture requires user activation'
+
+const pictureInPictureNotAllowedMessages = [
+	processingPictureInPictureRequestMessage,
+	pictureInPictureRequiresUserActivationMessage,
+] as const
+
 function getExceptionValues(event: SentryEventWithException) {
 	return event.exception?.values ?? []
 }
@@ -41,13 +50,20 @@ function exceptionValueText(value: SentryExceptionValue) {
 	return typeof value.value === 'string' ? value.value : ''
 }
 
+/**
+ * media-chrome / Mux Player PiP requests can reject with NotAllowedError when
+ * the browser drops transient user activation or another PiP request is in
+ * flight. Expected browser policy — not an actionable product defect.
+ */
 export function isProcessingPictureInPictureRequest(
 	event: SentryEventWithException,
 ) {
 	return getExceptionValues(event).some(
 		(value) =>
 			value.type === 'NotAllowedError' &&
-			value.value === processingPictureInPictureRequestMessage,
+			pictureInPictureNotAllowedMessages.some(
+				(message) => value.value === message,
+			),
 	)
 }
 
