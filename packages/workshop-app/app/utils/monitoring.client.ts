@@ -132,6 +132,7 @@ export function init() {
 		tracePropagationTargets,
 		ignoreErrors: [
 			"Failed to execute 'requestPictureInPicture' on 'HTMLVideoElement'",
+			'Picture-in-Picture requires user activation',
 			/^AbortError/,
 			/signal is aborted without reason/i,
 			/BodyStreamBuffer was aborted/i,
