@@ -9,6 +9,7 @@ import {
 	isPlaygroundClientNoise,
 	isProcessingPictureInPictureRequest,
 	isReactExtensionRenderLoopNoise,
+	isSentryReplayIframeNoise,
 	isSessionStorageAccessDenied,
 	isStaleRouteResultNoise,
 	isUnexpectedServerErrorNoise,
@@ -428,6 +429,95 @@ test('drops React Router opaque Unexpected Server Error client mirrors (aha)', (
 		isUnexpectedServerErrorNoise({
 			exception: {
 				values: [{ type: 'TypeError', value: 'Unexpected Server Error' }],
+			},
+		}),
+	).toBe(false)
+})
+
+test('drops Sentry Replay iframe/attachShadow prototype TypeErrors (aha)', () => {
+	const replayIframeEvent = {
+		exception: {
+			values: [
+				{
+					type: 'TypeError',
+					value: "Cannot read properties of undefined (reading 'prototype')",
+					stacktrace: {
+						frames: [
+							{
+								filename:
+									'../../../../../node_modules/@sentry/browser/build/npm/esm/prod/helpers.js',
+								function: 'r',
+								inApp: false,
+							},
+							{
+								filename:
+									'../../../../../node_modules/@sentry-internal/replay/build/npm/esm/index.js',
+								function: 'HTMLIFrameElement.<anonymous>',
+								module: '@sentry-internal/replay/build/npm/esm/index',
+								inApp: false,
+							},
+							{
+								filename:
+									'../../../../../node_modules/@sentry-internal/replay/build/npm/esm/index.js',
+								function: 's.onIframeLoad',
+								module: '@sentry-internal/replay/build/npm/esm/index',
+								inApp: false,
+							},
+							{
+								filename:
+									'../../../../../node_modules/@sentry-internal/replay/build/npm/esm/index.js',
+								function: 'TT.observeAttachShadow',
+								module: '@sentry-internal/replay/build/npm/esm/index',
+								inApp: false,
+							},
+							{
+								filename:
+									'../../../../../node_modules/@sentry-internal/replay/build/npm/esm/index.js',
+								function: 'TT.patchAttachShadow',
+								module: '@sentry-internal/replay/build/npm/esm/index',
+								inApp: false,
+							},
+						],
+					},
+				},
+			],
+		},
+	}
+
+	expect(isSentryReplayIframeNoise(replayIframeEvent)).toBe(true)
+	expect(isClientSentryNoise(replayIframeEvent)).toBe(true)
+
+	// Same message without Replay iframe/shadow frames must still alert.
+	expect(
+		isSentryReplayIframeNoise({
+			exception: {
+				values: [
+					{
+						type: 'TypeError',
+						value: "Cannot read properties of undefined (reading 'prototype')",
+						stacktrace: {
+							frames: [
+								{
+									filename: '/app/utils/something.ts',
+									function: 'extendThing',
+									inApp: true,
+								},
+							],
+						},
+					},
+				],
+			},
+		}),
+	).toBe(false)
+	expect(
+		isSentryReplayIframeNoise({
+			exception: {
+				values: [
+					{
+						type: 'TypeError',
+						value: "Cannot read properties of undefined (reading 'prototype')",
+					},
+				],
 			},
 		}),
 	).toBe(false)

@@ -277,6 +277,43 @@ export function isUnexpectedServerErrorNoise(event: SentryEventWithException) {
 	)
 }
 
+function frameLooksLikeSentryReplay(frame: {
+	filename?: string
+	module?: string
+}) {
+	const filename = frame.filename ?? ''
+	const module = frame.module ?? ''
+	return (
+		filename.includes('@sentry-internal/replay') ||
+		module.includes('@sentry-internal/replay')
+	)
+}
+
+/**
+ * Sentry Session Replay patches iframe load / attachShadow and can throw
+ * TypeError "Cannot read properties of undefined (reading 'prototype')" when
+ * exercise preview iframes load. Entire stack is SDK frames — not product.
+ */
+export function isSentryReplayIframeNoise(event: SentryEventWithException) {
+	return getExceptionValues(event).some((value) => {
+		if (value.type !== 'TypeError') return false
+		const text = exceptionValueText(value)
+		if (!/reading ['"]prototype['"]/i.test(text)) return false
+
+		const frames = value.stacktrace?.frames ?? []
+		if (!frames.length) return false
+
+		return frames.some((frame) => {
+			if (!frameLooksLikeSentryReplay(frame)) return false
+			const fn = frame.function ?? ''
+			return (
+				/onIframeLoad|observeAttachShadow|patchAttachShadow/i.test(fn) ||
+				/HTMLIFrameElement/i.test(fn)
+			)
+		})
+	})
+}
+
 export function isClientSentryNoise(event: SentryEventWithException) {
 	return (
 		isProcessingPictureInPictureRequest(event) ||
@@ -289,6 +326,7 @@ export function isClientSentryNoise(event: SentryEventWithException) {
 		isDomMutationNoise(event) ||
 		isPlaygroundClientNoise(event) ||
 		isReactExtensionRenderLoopNoise(event) ||
-		isUnexpectedServerErrorNoise(event)
+		isUnexpectedServerErrorNoise(event) ||
+		isSentryReplayIframeNoise(event)
 	)
 }
