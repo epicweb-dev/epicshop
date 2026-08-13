@@ -46,8 +46,8 @@ export type AuthLogoutOptions = {
 
 const TokenSetSchema = z.object({
 	access_token: z.string(),
-	token_type: z.string(),
-	scope: z.string(),
+	token_type: z.string().default('Bearer'),
+	scope: z.string().default(''),
 })
 
 const AuthInfoSchema = z.object({

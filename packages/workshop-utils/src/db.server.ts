@@ -11,10 +11,13 @@ import { saveJSON, loadJSON, migrateLegacyData } from './data-storage.server.ts'
 // Attempt migration from legacy ~/.epicshop
 await migrateLegacyData().catch(() => {})
 
-const TokenSetSchema = z.object({
+// OAuth token responses often omit token_type/scope; require only access_token.
+// Defaults match CLI auth persistence so incomplete local auth data is readable
+// instead of being treated as a corrupted database (EPICSHOP-HG).
+export const TokenSetSchema = z.object({
 	access_token: z.string(),
-	token_type: z.string(),
-	scope: z.string(),
+	token_type: z.string().default('Bearer'),
+	scope: z.string().default(''),
 })
 const defaultSubtitlePreferences = {
 	id: null,
@@ -362,7 +365,16 @@ export async function setAuthInfo({
 	productHost?: string
 }) {
 	const data = await readDb()
-	const authInfo = AuthInfoSchema.parse({ id, tokenSet, email, name })
+	const authInfo = AuthInfoSchema.parse({
+		id,
+		tokenSet: {
+			access_token: tokenSet.access_token,
+			token_type: tokenSet.token_type ?? 'Bearer',
+			scope: tokenSet.scope ?? '',
+		},
+		email,
+		name,
+	})
 	const host = productHost ?? tryGetWorkshopProductHost()
 	if (host) {
 		await saveJSON({
