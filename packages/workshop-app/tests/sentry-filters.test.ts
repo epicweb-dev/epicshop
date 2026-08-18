@@ -16,7 +16,12 @@ import {
 	pictureInPictureRequiresUserActivationMessage,
 	processingPictureInPictureRequestMessage,
 } from '../app/utils/sentry-filters.ts'
-import { isServerEnvironmentNoise } from '../sentry-server-filters.js'
+import {
+	isServerEnvironmentNoise,
+	isEsbuildCompileFailureNoise,
+	isPlaygroundServerNoise,
+	isServerSentryNoise,
+} from '../sentry-server-filters.js'
 
 test('matches the Picture-in-Picture processing DOMException exactly', () => {
 	expect(
@@ -596,4 +601,82 @@ test('drops learner-machine server environment noise (aha)', () => {
 			},
 		}),
 	).toBe(false)
+})
+
+test('drops esbuild learner compile failures with only esbuild frames (EPICSHOP-HH aha)', () => {
+	const epicshopHh = {
+		exception: {
+			values: [
+				{
+					type: 'Error',
+					value:
+						'Build failed with 3 errors:\n../../../../playground/index.tsx:1:25: ERROR: Could not resolve "react"\n../../../../playground/index.tsx:2:26: ERROR: Could not resolve "react-dom/client"\n../../../../playground/index.tsx:5:8: ERROR: Could not resolve "react/jsx-runtime"',
+					stacktrace: {
+						frames: [
+							{
+								filename:
+									'/Users/learner/workshop/epicshop/node_modules/esbuild/lib/main.js',
+								function: 'failureErrorWithLog',
+							},
+						],
+					},
+				},
+			],
+		},
+	}
+	expect(isEsbuildCompileFailureNoise(epicshopHh)).toBe(true)
+	expect(isPlaygroundServerNoise(epicshopHh)).toBe(true)
+	expect(isServerSentryNoise(epicshopHh)).toBe(true)
+	expect(isServerEnvironmentNoise(epicshopHh)).toBe(false)
+})
+
+test('does not drop unrelated Build failed product errors', () => {
+	expect(
+		isEsbuildCompileFailureNoise({
+			exception: {
+				values: [{ type: 'Error', value: 'Build failed' }],
+			},
+		}),
+	).toBe(false)
+	expect(
+		isPlaygroundServerNoise({
+			exception: {
+				values: [
+					{
+						type: 'Error',
+						value: 'Something broke while saving preferences',
+						stacktrace: {
+							frames: [
+								{
+									filename: '/app/routes/settings.tsx',
+								},
+							],
+						},
+					},
+				],
+			},
+		}),
+	).toBe(false)
+})
+
+test('drops playground server noise from learner stack frames', () => {
+	expect(
+		isPlaygroundServerNoise({
+			exception: {
+				values: [
+					{
+						type: 'TypeError',
+						value: 'x is not a function',
+						stacktrace: {
+							frames: [
+								{
+									filename: '/Users/learner/workshop/playground/index.tsx',
+								},
+							],
+						},
+					},
+				],
+			},
+		}),
+	).toBe(true)
 })

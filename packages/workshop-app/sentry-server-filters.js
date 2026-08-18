@@ -4,10 +4,63 @@
  */
 
 /**
+ * @param {{ exception?: { values?: Array<{ type?: string, value?: string, stacktrace?: { frames?: Array<{ filename?: string }> } }> } }} event
+ */
+function getExceptionValues(event) {
+	return event.exception?.values ?? []
+}
+
+/**
+ * esbuild's failureErrorWithLog message when compiling learner app TS/TSX.
+ * Always learner code or local dependency setup — never an epicshop product bug.
+ *
  * @param {{ exception?: { values?: Array<{ type?: string, value?: string }> } }} event
  */
+export function isEsbuildCompileFailureNoise(event) {
+	return getExceptionValues(event).some((value) => {
+		const text = typeof value.value === 'string' ? value.value : ''
+		return /^Build failed with \d+ errors?:/i.test(text)
+	})
+}
+
+/**
+ * Learner playground / exercise sandbox failures. Stack frames are often only
+ * esbuild internals; the playground path then appears only in the message.
+ *
+ * @param {{ exception?: { values?: Array<{ type?: string, value?: string, stacktrace?: { frames?: Array<{ filename?: string }> } }> } }} event
+ */
+export function isPlaygroundServerNoise(event) {
+	return getExceptionValues(event).some((value) => {
+		const frames = value.stacktrace?.frames ?? []
+		if (
+			frames.some((frame) => {
+				const filename = frame.filename ?? ''
+				return (
+					filename.includes('/playground/') ||
+					filename.includes('\\playground\\')
+				)
+			})
+		) {
+			return true
+		}
+
+		const text = typeof value.value === 'string' ? value.value : ''
+		if (!text) return false
+
+		// esbuild messages like: ../../../../playground/index.tsx:1:25: ERROR: ...
+		return (
+			/(?:^|[/\\])playground[/\\]/i.test(text) &&
+			(/Build failed with \d+ errors?:/i.test(text) ||
+				/ERROR: Could not resolve/i.test(text))
+		)
+	})
+}
+
+/**
+ * @param {{ exception?: { values?: Array<{ type?: string, value?: string, stacktrace?: { frames?: Array<{ filename?: string }> } }> } }} event
+ */
 export function isServerEnvironmentNoise(event) {
-	const values = event.exception?.values ?? []
+	const values = getExceptionValues(event)
 	return values.some((value) => {
 		const type = value.type ?? ''
 		const text = typeof value.value === 'string' ? value.value : ''
@@ -28,4 +81,15 @@ export function isServerEnvironmentNoise(event) {
 			/^ENOENT: no such file or directory/i.test(text)
 		)
 	})
+}
+
+/**
+ * @param {{ exception?: { values?: Array<{ type?: string, value?: string, stacktrace?: { frames?: Array<{ filename?: string }> } }> } }} event
+ */
+export function isServerSentryNoise(event) {
+	return (
+		isServerEnvironmentNoise(event) ||
+		isEsbuildCompileFailureNoise(event) ||
+		isPlaygroundServerNoise(event)
+	)
 }
