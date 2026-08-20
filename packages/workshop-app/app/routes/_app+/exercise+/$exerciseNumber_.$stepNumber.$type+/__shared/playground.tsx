@@ -46,9 +46,7 @@ export function Playground({
 									void copyToClipboard(playgroundAppInfo.fullPath).then(
 										(result) => {
 											if (result.status === 'copied') {
-												showToast.success(
-													'Copied playground path to clipboard',
-												)
+												showToast.success('Copied playground path to clipboard')
 											} else if (result.status === 'unavailable') {
 												showToast.error(clipboardUnavailableMessage)
 											}
