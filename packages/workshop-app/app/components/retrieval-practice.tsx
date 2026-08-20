@@ -20,6 +20,10 @@ export function RetrievalPractice({
 	}, [copied])
 
 	const handleCopy = async () => {
+		if (!navigator.clipboard) {
+			console.error('Clipboard API not available in this context')
+			return
+		}
 		try {
 			await navigator.clipboard.writeText(prompt)
 			setCopied(true)

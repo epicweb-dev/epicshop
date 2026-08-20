@@ -39,8 +39,19 @@ export function Playground({
 							<span
 								className="inline-flex cursor-pointer items-center gap-1.5 underline"
 								onClick={() => {
-									void navigator.clipboard.writeText(playgroundAppInfo.fullPath)
-									showToast.success('Copied playground path to clipboard')
+									if (navigator.clipboard) {
+										void navigator.clipboard
+											.writeText(playgroundAppInfo.fullPath)
+											.then(() => {
+												showToast.success(
+													'Copied playground path to clipboard',
+												)
+											})
+									} else {
+										showToast.error(
+											'Copying is only available in secure contexts (HTTPS or localhost).',
+										)
+									}
 								}}
 							>
 								the playground directory
