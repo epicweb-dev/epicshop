@@ -1,5 +1,10 @@
 import * as React from 'react'
+import { toast } from 'sonner'
 import { Icon } from '#app/components/icons.tsx'
+import {
+	clipboardUnavailableMessage,
+	copyToClipboard,
+} from '#app/utils/copy-to-clipboard.ts'
 
 export function RetrievalPractice({
 	exerciseNumber,
@@ -20,15 +25,14 @@ export function RetrievalPractice({
 	}, [copied])
 
 	const handleCopy = async () => {
-		if (!navigator.clipboard) {
-			console.error('Clipboard API not available in this context')
-			return
-		}
-		try {
-			await navigator.clipboard.writeText(prompt)
+		const result = await copyToClipboard(prompt)
+		if (result.status === 'copied') {
 			setCopied(true)
-		} catch (error) {
-			console.error('Failed to copy to clipboard:', error)
+		} else if (result.status === 'unavailable') {
+			toast.error(clipboardUnavailableMessage)
+		} else {
+			console.error('Failed to copy to clipboard:', result.error)
+			toast.error('Failed to copy to clipboard')
 		}
 	}
 

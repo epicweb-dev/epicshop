@@ -27,6 +27,7 @@ import {
 	getExerciseStepPath,
 	useDoubleCheck,
 } from '#app/utils/misc.tsx'
+import { copyToClipboard } from '#app/utils/copy-to-clipboard.ts'
 import { getRootMatchLoaderData } from '#app/utils/root-loader.ts'
 import { type Route } from './+types/index.tsx'
 import {
@@ -808,15 +809,12 @@ function SidecarProcessItem({
 
 	const handleCopyLogs = () => {
 		if (!displayLogs) return
-		navigator.clipboard
-			.writeText(displayLogs)
-			.then(() => {
+		void copyToClipboard(displayLogs).then((result) => {
+			if (result.status === 'copied') {
 				setCopyStatus('copied')
 				setTimeout(() => setCopyStatus('idle'), 2000)
-			})
-			.catch(() => {
-				// silently fail
-			})
+			}
+		})
 	}
 
 	const handleToggleLogs = (open: boolean) => {

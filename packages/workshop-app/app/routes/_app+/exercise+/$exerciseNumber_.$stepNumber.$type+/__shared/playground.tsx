@@ -3,6 +3,10 @@ import { Icon } from '#app/components/icons.tsx'
 import { type InBrowserBrowserRef } from '#app/components/in-browser-browser'
 import { SimpleTooltip } from '#app/components/ui/tooltip'
 import { SetAppToPlayground } from '#app/routes/set-playground'
+import {
+	clipboardUnavailableMessage,
+	copyToClipboard,
+} from '#app/utils/copy-to-clipboard.ts'
 import { PlaygroundWindow } from './playground-window'
 import { Preview } from './preview'
 
@@ -39,19 +43,17 @@ export function Playground({
 							<span
 								className="inline-flex cursor-pointer items-center gap-1.5 underline"
 								onClick={() => {
-									if (navigator.clipboard) {
-										void navigator.clipboard
-											.writeText(playgroundAppInfo.fullPath)
-											.then(() => {
+									void copyToClipboard(playgroundAppInfo.fullPath).then(
+										(result) => {
+											if (result.status === 'copied') {
 												showToast.success(
 													'Copied playground path to clipboard',
 												)
-											})
-									} else {
-										showToast.error(
-											'Copying is only available in secure contexts (HTTPS or localhost).',
-										)
-									}
+											} else if (result.status === 'unavailable') {
+												showToast.error(clipboardUnavailableMessage)
+											}
+										},
+									)
 								}}
 							>
 								the playground directory
