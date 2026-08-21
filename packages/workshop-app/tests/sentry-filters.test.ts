@@ -18,6 +18,7 @@ import {
 } from '../app/utils/sentry-filters.ts'
 import {
 	isServerEnvironmentNoise,
+	isCorruptedCacheFileNoise,
 	isEsbuildCompileFailureNoise,
 	isPlaygroundServerNoise,
 	isServerSentryNoise,
@@ -679,4 +680,59 @@ test('drops playground server noise from learner stack frames', () => {
 			},
 		}),
 	).toBe(true)
+})
+
+test('drops handled corrupted epicshop Cache JSON SyntaxErrors (EPICSHOP-HK aha)', () => {
+	const epicshopHk = {
+		tags: { error_type: 'corrupted_cache_file' },
+		exception: {
+			values: [
+				{
+					type: 'SyntaxError',
+					value:
+						'C:\\Users\\ankit\\AppData\\Local\\epicshop\\Cache\\67952d5900442ecda2c3142860f13b26\\EpicApiCache\\015b7b336203003c3edc0026304476bf: Unexpected token \'\u0000\', "\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000"... is not valid JSON',
+				},
+			],
+		},
+	}
+	expect(isCorruptedCacheFileNoise(epicshopHk)).toBe(true)
+	expect(isServerSentryNoise(epicshopHk)).toBe(true)
+	expect(
+		isCorruptedCacheFileNoise({
+			exception: {
+				values: [
+					{
+						type: 'SyntaxError',
+						value:
+							"/Users/learner/Library/Caches/epicshop/abc/EpicApiCache/def: Unexpected token '<', \"<html>\"... is not valid JSON",
+					},
+				],
+			},
+		}),
+	).toBe(true)
+	expect(
+		isCorruptedCacheFileNoise({
+			exception: {
+				values: [
+					{
+						type: 'SyntaxError',
+						value:
+							'/home/learner/.cache/epicshop/abc/DiscordCache/def: Unexpected token \'<\', "<html>"... is not valid JSON',
+					},
+				],
+			},
+		}),
+	).toBe(true)
+	expect(
+		isCorruptedCacheFileNoise({
+			exception: {
+				values: [
+					{
+						type: 'SyntaxError',
+						value: 'Unexpected token } in JSON at position 12',
+					},
+				],
+			},
+		}),
+	).toBe(false)
 })

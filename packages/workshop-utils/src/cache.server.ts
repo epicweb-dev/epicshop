@@ -39,12 +39,6 @@ type CompiledCodeResult = {
 }
 type OgCacheValue = string | Uint8Array
 
-// Throttle repeated Sentry reports for corrupted cache files to reduce noise
-const corruptedReportThrottle = remember(
-	'epic:cache:corruption-throttle',
-	() => new LRUCache<string, number>({ max: 2000, ttl: 60_000 }),
-)
-
 const ensuredWorkshopCacheMetadata = remember(
 	'epic:cache:ensured-workshop-cache-metadata',
 	() => new Set<string>(),
@@ -487,28 +481,9 @@ async function readJSONWithRetries(filePath: string): Promise<any | null> {
 					continue
 				}
 
-				// Final attempt failed: optionally report and delete file
-				if (getEnv().SENTRY_DSN && getEnv().EPICSHOP_IS_PUBLISHED) {
-					const throttleKey = `readJSON:${md5(filePath)}`
-					if (!corruptedReportThrottle.has(throttleKey)) {
-						corruptedReportThrottle.set(throttleKey, Date.now())
-						try {
-							const Sentry = await import('@sentry/react-router')
-							Sentry.withScope((scope) => {
-								scope.setLevel('warning')
-								scope.setTag('error_type', 'corrupted_cache_file')
-								scope.setExtra('filePath', filePath)
-								scope.setExtra('errorMessage', (error as Error).message)
-								scope.setExtra('retryAttempts', attempt)
-								Sentry.captureException(error)
-							})
-						} catch (sentryError) {
-							console.error('Failed to log to Sentry:', sentryError)
-						}
-					}
-				}
-
-				// Always delete corrupted files so subsequent reads can refetch
+				// Final attempt failed: delete so subsequent reads can refetch.
+				// Do not report to Sentry — learner disk/AV corruption is handled
+				// locally and was generating recurring triage noise (EPICSHOP-HK).
 				try {
 					await fsExtra.remove(filePath)
 					console.warn(
