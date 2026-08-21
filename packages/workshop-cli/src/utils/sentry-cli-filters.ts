@@ -7,6 +7,7 @@ type SentryEventWithException = {
 	exception?: {
 		values?: Array<SentryExceptionValue>
 	}
+	tags?: Record<string, unknown>
 }
 
 function getExceptionValues(event: SentryEventWithException) {
@@ -18,10 +19,29 @@ function exceptionValueText(value: SentryExceptionValue) {
 }
 
 /**
+ * Handled FS-cache JSON corruption on learner machines (null-byte / truncated
+ * files under epicshop Cache). readJSONWithRetries deletes and continues;
+ * reporting these only produced triage noise (EPICSHOP-HK and siblings).
+ */
+export function isCorruptedCacheFileNoise(event: SentryEventWithException) {
+	if (event.tags?.error_type === 'corrupted_cache_file') return true
+
+	return getExceptionValues(event).some((value) => {
+		const type = value.type ?? ''
+		const text = exceptionValueText(value)
+		if (type !== 'SyntaxError' && !/SyntaxError/i.test(text)) return false
+		if (!/is not valid JSON/i.test(text)) return false
+		return /[/\\]epicshop[/\\]Cache[/\\]/i.test(text)
+	})
+}
+
+/**
  * Expected CLI UX: user ran an interactive command without a TTY / in CI, or
  * cancelled an inquirer prompt with Ctrl-C. Not a product defect.
  */
 export function isExpectedCliSentryNoise(event: SentryEventWithException) {
+	if (isCorruptedCacheFileNoise(event)) return true
+
 	return getExceptionValues(event).some((value) => {
 		const type = value.type ?? ''
 		const text = exceptionValueText(value)

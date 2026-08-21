@@ -4,10 +4,29 @@
  */
 
 /**
- * @param {{ exception?: { values?: Array<{ type?: string, value?: string, stacktrace?: { frames?: Array<{ filename?: string }> } }> } }} event
+ * @param {{ exception?: { values?: Array<{ type?: string, value?: string, stacktrace?: { frames?: Array<{ filename?: string }> } }> }, tags?: Record<string, string | number | boolean | null | undefined> }} event
  */
 function getExceptionValues(event) {
 	return event.exception?.values ?? []
+}
+
+/**
+ * Handled FS-cache JSON corruption on learner machines (null-byte / truncated
+ * files under epicshop Cache). readJSONWithRetries deletes and continues;
+ * reporting these only produced triage noise (EPICSHOP-HK and siblings).
+ *
+ * @param {{ exception?: { values?: Array<{ type?: string, value?: string }> }, tags?: Record<string, string | number | boolean | null | undefined> }} event
+ */
+export function isCorruptedCacheFileNoise(event) {
+	if (event.tags?.error_type === 'corrupted_cache_file') return true
+
+	return getExceptionValues(event).some((value) => {
+		const type = value.type ?? ''
+		const text = typeof value.value === 'string' ? value.value : ''
+		if (type !== 'SyntaxError' && !/SyntaxError/i.test(text)) return false
+		if (!/is not valid JSON/i.test(text)) return false
+		return /[/\\]epicshop[/\\]Cache[/\\]/i.test(text)
+	})
 }
 
 /**
@@ -90,6 +109,7 @@ export function isServerSentryNoise(event) {
 	return (
 		isServerEnvironmentNoise(event) ||
 		isEsbuildCompileFailureNoise(event) ||
-		isPlaygroundServerNoise(event)
+		isPlaygroundServerNoise(event) ||
+		isCorruptedCacheFileNoise(event)
 	)
 }
