@@ -704,7 +704,7 @@ test('drops handled corrupted epicshop Cache JSON SyntaxErrors (EPICSHOP-HK aha)
 					{
 						type: 'SyntaxError',
 						value:
-							"/Users/learner/Library/Caches/epicshop/abc/EpicApiCache/def: Unexpected token '<', \"<html>\"... is not valid JSON",
+							'/Users/learner/Library/Caches/epicshop/abc/EpicApiCache/def: Unexpected token \'<\', "<html>"... is not valid JSON',
 					},
 				],
 			},
