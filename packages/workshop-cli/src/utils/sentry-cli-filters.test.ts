@@ -69,7 +69,7 @@ test('drops handled corrupted epicshop Cache JSON SyntaxErrors (EPICSHOP-HK aha)
 					{
 						type: 'SyntaxError',
 						value:
-							"C:\\Users\\ankit\\AppData\\Local\\epicshop\\Cache\\67952d5900442ecda2c3142860f13b26\\EpicApiCache\\015b7b336203003c3edc0026304476bf: Unexpected token '\u0000', \"\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\"... is not valid JSON",
+							'C:\\Users\\ankit\\AppData\\Local\\epicshop\\Cache\\67952d5900442ecda2c3142860f13b26\\EpicApiCache\\015b7b336203003c3edc0026304476bf: Unexpected token \'\u0000\', "\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000"... is not valid JSON',
 					},
 				],
 			},
