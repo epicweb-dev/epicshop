@@ -20,8 +20,13 @@ function exceptionValueText(value: SentryExceptionValue) {
 
 /**
  * Handled FS-cache JSON corruption on learner machines (null-byte / truncated
- * files under epicshop Cache). readJSONWithRetries deletes and continues;
- * reporting these only produced triage noise (EPICSHOP-HK and siblings).
+ * files under the platform epicshop cache dir). readJSONWithRetries deletes and
+ * continues; reporting these only produced triage noise (EPICSHOP-HK and siblings).
+ *
+ * Cache roots (see resolveCacheDir):
+ * - Windows: …/epicshop/Cache/…
+ * - macOS: …/Library/Caches/epicshop/…
+ * - Linux: …/.cache/epicshop/…
  */
 export function isCorruptedCacheFileNoise(event: SentryEventWithException) {
 	if (event.tags?.error_type === 'corrupted_cache_file') return true
@@ -31,7 +36,11 @@ export function isCorruptedCacheFileNoise(event: SentryEventWithException) {
 		const text = exceptionValueText(value)
 		if (type !== 'SyntaxError' && !/SyntaxError/i.test(text)) return false
 		if (!/is not valid JSON/i.test(text)) return false
-		return /[/\\]epicshop[/\\]Cache[/\\]/i.test(text)
+		return (
+			/[/\\]epicshop[/\\]Cache[/\\]/i.test(text) ||
+			/[/\\]Library[/\\]Caches[/\\]epicshop[/\\]/i.test(text) ||
+			/[/\\]\.cache[/\\]epicshop[/\\]/i.test(text)
+		)
 	})
 }
 

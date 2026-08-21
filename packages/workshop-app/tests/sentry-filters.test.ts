@@ -704,7 +704,20 @@ test('drops handled corrupted epicshop Cache JSON SyntaxErrors (EPICSHOP-HK aha)
 					{
 						type: 'SyntaxError',
 						value:
-							'/home/learner/.cache/epicshop/Cache/abc/DiscordCache/def: Unexpected token \'<\', "<html>"... is not valid JSON',
+							"/Users/learner/Library/Caches/epicshop/abc/EpicApiCache/def: Unexpected token '<', \"<html>\"... is not valid JSON",
+					},
+				],
+			},
+		}),
+	).toBe(true)
+	expect(
+		isCorruptedCacheFileNoise({
+			exception: {
+				values: [
+					{
+						type: 'SyntaxError',
+						value:
+							'/home/learner/.cache/epicshop/abc/DiscordCache/def: Unexpected token \'<\', "<html>"... is not valid JSON',
 					},
 				],
 			},

@@ -12,10 +12,15 @@ function getExceptionValues(event) {
 
 /**
  * Handled FS-cache JSON corruption on learner machines (null-byte / truncated
- * files under epicshop Cache). readJSONWithRetries deletes and continues;
- * reporting these only produced triage noise (EPICSHOP-HK and siblings).
+ * files under the platform epicshop cache dir). readJSONWithRetries deletes and
+ * continues; reporting these only produced triage noise (EPICSHOP-HK and siblings).
  *
- * @param {{ exception?: { values?: Array<{ type?: string, value?: string }> }, tags?: Record<string, string | number | boolean | null | undefined> }} event
+ * Cache roots (see resolveCacheDir):
+ * - Windows: …/epicshop/Cache/…
+ * - macOS: …/Library/Caches/epicshop/…
+ * - Linux: …/.cache/epicshop/…
+ *
+ * @param {{ exception?: { values?: Array<{ type?: string, value?: string }> }, tags?: Record<string, unknown> }} event
  */
 export function isCorruptedCacheFileNoise(event) {
 	if (event.tags?.error_type === 'corrupted_cache_file') return true
@@ -25,7 +30,11 @@ export function isCorruptedCacheFileNoise(event) {
 		const text = typeof value.value === 'string' ? value.value : ''
 		if (type !== 'SyntaxError' && !/SyntaxError/i.test(text)) return false
 		if (!/is not valid JSON/i.test(text)) return false
-		return /[/\\]epicshop[/\\]Cache[/\\]/i.test(text)
+		return (
+			/[/\\]epicshop[/\\]Cache[/\\]/i.test(text) ||
+			/[/\\]Library[/\\]Caches[/\\]epicshop[/\\]/i.test(text) ||
+			/[/\\]\.cache[/\\]epicshop[/\\]/i.test(text)
+		)
 	})
 }
 
