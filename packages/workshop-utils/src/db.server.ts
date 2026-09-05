@@ -76,6 +76,8 @@ const OfflineVideoPreferencesSchema = z
 
 const PresencePreferencesSchema = z
 	.object({
+		// Saved `{ presence: {} }` predates this field; default instead of
+		// treating the local DB as corrupted (EPICSHOP-HY).
 		optOut: z.boolean().default(false),
 	})
 	.optional()
@@ -106,7 +108,7 @@ export type PendingProgressMutationScope = {
 	userId: string
 }
 
-const DataSchema = z.object({
+export const DataSchema = z.object({
 	preferences: z
 		.object({
 			player: PlayerPreferencesSchema,
