@@ -76,7 +76,7 @@ const OfflineVideoPreferencesSchema = z
 
 const PresencePreferencesSchema = z
 	.object({
-		optOut: z.boolean(),
+		optOut: z.boolean().default(false),
 	})
 	.optional()
 	.default(defaultPresencePreferences)
@@ -412,10 +412,14 @@ export async function setPreferences(
 				...data?.preferences?.offlineVideo,
 				...preferences?.offlineVideo,
 			},
-			presence: {
-				...data?.preferences?.presence,
-				...preferences?.presence,
-			},
+			...(data?.preferences?.presence || preferences?.presence
+				? {
+						presence: {
+							...data?.preferences?.presence,
+							...preferences?.presence,
+						},
+					}
+				: {}),
 			exerciseWarning: {
 				...data?.preferences?.exerciseWarning,
 				...preferences?.exerciseWarning,
