@@ -142,6 +142,7 @@ export function init() {
 			/NetworkError when attempting to fetch resource/i,
 			/^Load failed/i,
 			/No result found for routeId /i,
+			/document\.forms\.namedItem is not a function/i,
 		],
 		beforeSend(event) {
 			if (isClientSentryNoise(event)) return null

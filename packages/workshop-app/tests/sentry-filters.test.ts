@@ -4,6 +4,7 @@ import {
 	isBrowserExtensionNoise,
 	isBrowserNetworkNoise,
 	isClientSentryNoise,
+	isConformNamedItemNoise,
 	isCrossOriginSecurityNoise,
 	isDomMutationNoise,
 	isPlaygroundClientNoise,
@@ -522,6 +523,145 @@ test('drops Sentry Replay iframe/attachShadow prototype TypeErrors (aha)', () =>
 					{
 						type: 'TypeError',
 						value: "Cannot read properties of undefined (reading 'prototype')",
+					},
+				],
+			},
+		}),
+	).toBe(false)
+})
+
+test('drops Conform document.forms.namedItem TypeErrors from incomplete DOMs (EPICSHOP-J0 aha)', () => {
+	const epicshopJ0 = {
+		exception: {
+			values: [
+				{
+					type: 'TypeError',
+					value: 'document.forms.namedItem is not a function',
+					stacktrace: {
+						frames: [
+							{
+								filename:
+									'../../../../../node_modules/react-dom/cjs/react-dom-client.production.js',
+								function: 'Dl',
+								module: 'react-dom/cjs/react-dom-client.production',
+								inApp: false,
+							},
+							{
+								filename:
+									'../../../../../node_modules/@conform-to/react/dist/hooks.mjs',
+								function: '<anonymous>',
+								module: '@conform-to/react/dist/hooks',
+								inApp: false,
+							},
+							{
+								filename:
+									'../../../../../node_modules/@conform-to/dom/dist/form.mjs',
+								function: 'o',
+								module: '@conform-to/dom/dist/form',
+								inApp: false,
+							},
+						],
+					},
+				},
+			],
+		},
+		breadcrumbs: [
+			{
+				category: 'console',
+				level: 'error',
+				message:
+					'React Router caught the following error during render TypeError: document.forms.namedItem is not a function',
+			},
+		],
+	}
+
+	expect(isConformNamedItemNoise(epicshopJ0)).toBe(true)
+	expect(isClientSentryNoise(epicshopJ0)).toBe(true)
+
+	// Same message with only Conform + react-dom frames (no @conform-to/dom) still matches.
+	expect(
+		isConformNamedItemNoise({
+			exception: {
+				values: [
+					{
+						type: 'TypeError',
+						value: 'document.forms.namedItem is not a function',
+						stacktrace: {
+							frames: [
+								{
+									filename:
+										'../../../../../node_modules/react-dom/cjs/react-dom-client.production.js',
+									function: 'Ol',
+									module: 'react-dom/cjs/react-dom-client.production',
+								},
+								{
+									filename:
+										'../../../../../node_modules/@conform-to/react/dist/hooks.mjs',
+									function: '<anonymous>',
+									module: '@conform-to/react/dist/hooks',
+								},
+							],
+						},
+					},
+				],
+			},
+		}),
+	).toBe(true)
+
+	// Same message without Conform frames must still alert (possible product bug).
+	expect(
+		isConformNamedItemNoise({
+			exception: {
+				values: [
+					{
+						type: 'TypeError',
+						value: 'document.forms.namedItem is not a function',
+						stacktrace: {
+							frames: [
+								{
+									filename: '/app/utils/something.ts',
+									function: 'lookupForm',
+									inApp: true,
+								},
+							],
+						},
+					},
+				],
+			},
+		}),
+	).toBe(false)
+
+	// Do not broaden to other Conform TypeErrors.
+	expect(
+		isConformNamedItemNoise({
+			exception: {
+				values: [
+					{
+						type: 'TypeError',
+						value: 'Cannot read properties of null (reading "value")',
+						stacktrace: {
+							frames: [
+								{
+									filename:
+										'../../../../../node_modules/@conform-to/dom/dist/form.mjs',
+									function: 'getFormElement',
+									module: '@conform-to/dom/dist/form',
+								},
+							],
+						},
+					},
+				],
+			},
+		}),
+	).toBe(false)
+
+	expect(
+		isConformNamedItemNoise({
+			exception: {
+				values: [
+					{
+						type: 'TypeError',
+						value: 'document.forms.namedItem is not a function',
 					},
 				],
 			},

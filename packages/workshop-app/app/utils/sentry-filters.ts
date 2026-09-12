@@ -289,6 +289,29 @@ function frameLooksLikeSentryReplay(frame: {
 	)
 }
 
+function frameFilenameOrModule(frame: { filename?: string; module?: string }) {
+	return `${frame.filename ?? ''}\n${frame.module ?? ''}`
+}
+
+function frameLooksLikeConform(frame: { filename?: string; module?: string }) {
+	return frameFilenameOrModule(frame).includes('@conform-to/')
+}
+
+function frameLooksLikeConformDom(frame: {
+	filename?: string
+	module?: string
+}) {
+	return frameFilenameOrModule(frame).includes('@conform-to/dom')
+}
+
+function frameLooksLikeConformOrReactDom(frame: {
+	filename?: string
+	module?: string
+}) {
+	const blob = frameFilenameOrModule(frame)
+	return blob.includes('@conform-to/') || blob.includes('react-dom')
+}
+
 /**
  * Sentry Session Replay patches iframe load / attachShadow and can throw
  * TypeError "Cannot read properties of undefined (reading 'prototype')" when
@@ -314,6 +337,34 @@ export function isSentryReplayIframeNoise(event: SentryEventWithException) {
 	})
 }
 
+/**
+ * Conform's getFormElement calls `document.forms.namedItem` during render
+ * (ThemeSwitch is the only useForm in this app). Real HTMLCollection always
+ * has namedItem; this TypeError is the classic incomplete-DOM symptom
+ * (happy-dom historically, bots / extensions / non-browser JS that replace
+ * document.forms). Stacks are only @conform-to/* + react-dom — not product.
+ * EPICSHOP-J0.
+ */
+export function isConformNamedItemNoise(event: SentryEventWithException) {
+	return getExceptionValues(event).some((value) => {
+		if (value.type !== 'TypeError') return false
+		const text = exceptionValueText(value)
+		if (!/document\.forms\.namedItem is not a function/i.test(text)) {
+			return false
+		}
+
+		const frames = value.stacktrace?.frames ?? []
+		if (!frames.length) return false
+
+		if (frames.some((frame) => frameLooksLikeConformDom(frame))) return true
+
+		return (
+			frames.some((frame) => frameLooksLikeConform(frame)) &&
+			frames.every((frame) => frameLooksLikeConformOrReactDom(frame))
+		)
+	})
+}
+
 export function isClientSentryNoise(event: SentryEventWithException) {
 	return (
 		isProcessingPictureInPictureRequest(event) ||
@@ -327,6 +378,7 @@ export function isClientSentryNoise(event: SentryEventWithException) {
 		isPlaygroundClientNoise(event) ||
 		isReactExtensionRenderLoopNoise(event) ||
 		isUnexpectedServerErrorNoise(event) ||
-		isSentryReplayIframeNoise(event)
+		isSentryReplayIframeNoise(event) ||
+		isConformNamedItemNoise(event)
 	)
 }
