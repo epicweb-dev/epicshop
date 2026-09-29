@@ -122,6 +122,84 @@ test('workshops add checks out a repo ref when provided (aha)', async () => {
 	}
 })
 
+test('workshops add checks out repoRef from options (branch flag) (aha)', async () => {
+	vi.mocked(execa).mockClear()
+	vi.mocked(execa).mockResolvedValue({} as never)
+
+	const baseDir = await fs.mkdtemp(path.join(os.tmpdir(), 'epicshop user '))
+	const directory = path.join(baseDir, 'workshops dir')
+
+	try {
+		const repoName = 'react-component-testing-with-vitest'
+		const repoRef = 'some-branch'
+		const result = await add({
+			repoName,
+			repoRef,
+			directory,
+			silent: true,
+		})
+
+		expect(result.success).toBe(true)
+
+		const repoUrl = `https://github.com/epicweb-dev/${repoName}.git`
+		const reposDir = path.resolve(directory)
+		const workshopPath = path.join(reposDir, repoName)
+
+		expect(execa).toHaveBeenNthCalledWith(
+			1,
+			'git',
+			['clone', repoUrl, workshopPath],
+			expect.objectContaining({ cwd: reposDir }),
+		)
+		expect(execa).toHaveBeenNthCalledWith(
+			2,
+			'git',
+			['checkout', repoRef],
+			expect.objectContaining({ cwd: workshopPath }),
+		)
+	} finally {
+		await fs.rm(baseDir, { recursive: true, force: true })
+	}
+})
+
+test('workshops add prefers #ref over options.repoRef when both are set (aha)', async () => {
+	vi.mocked(execa).mockClear()
+	vi.mocked(execa).mockResolvedValue({} as never)
+
+	const baseDir = await fs.mkdtemp(path.join(os.tmpdir(), 'epicshop user '))
+	const directory = path.join(baseDir, 'workshops dir')
+
+	try {
+		const repoName = 'react-fundamentals'
+		const hashRef = 'v1.2.0'
+		const branchFlagRef = 'feature-branch'
+		const result = await add({
+			repoName: `${repoName}#${hashRef}`,
+			repoRef: branchFlagRef,
+			directory,
+			silent: true,
+		})
+
+		expect(result.success).toBe(true)
+
+		const workshopPath = path.join(path.resolve(directory), repoName)
+
+		expect(execa).toHaveBeenNthCalledWith(
+			2,
+			'git',
+			['checkout', hashRef],
+			expect.objectContaining({ cwd: workshopPath }),
+		)
+		expect(execa).not.toHaveBeenCalledWith(
+			'git',
+			['checkout', branchFlagRef],
+			expect.anything(),
+		)
+	} finally {
+		await fs.rm(baseDir, { recursive: true, force: true })
+	}
+})
+
 test('workshops start treats Ctrl+C (signal termination) as success', async () => {
 	const workshopDir = await fs.mkdtemp(
 		path.join(os.tmpdir(), 'epicshop workshop '),

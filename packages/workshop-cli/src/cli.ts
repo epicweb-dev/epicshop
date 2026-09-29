@@ -214,7 +214,7 @@ const cli = yargs(args)
 			return yargs
 				.positional('repo-name', {
 					describe:
-						'Repository name from epicweb-dev org (optional, shows list if omitted). Use <repo>#<tag|branch|commit> to pin a ref.',
+						'Repository name from epicweb-dev org (optional, shows list if omitted). Use <repo>#<tag|branch|commit> or --branch/-b to pin a ref.',
 					type: 'string',
 				})
 				.positional('destination', {
@@ -227,6 +227,12 @@ const cli = yargs(args)
 					type: 'string',
 					description:
 						'Directory to clone into (defaults to configured repos directory)',
+				})
+				.option('branch', {
+					alias: 'b',
+					type: 'string',
+					description:
+						'Git tag, branch, or commit to check out after cloning (same as <repo>#<ref>)',
 				})
 				.option('silent', {
 					alias: 's',
@@ -251,18 +257,24 @@ const cli = yargs(args)
 					'$0 add react-fundamentals#v1.2.0',
 					'Clone a workshop at a specific tag, branch, or commit',
 				)
+				.example(
+					'$0 add react-component-testing-with-vitest --branch some-branch',
+					'Clone a workshop and check out a specific branch',
+				)
 		},
 		async (
 			argv: ArgumentsCamelCase<{
 				repoName?: string
 				destination?: string
 				directory?: string
+				branch?: string
 				silent?: boolean
 			}>,
 		) => {
 			const { add } = await import('./commands/workshops.js')
 			const result = await add({
 				repoName: argv.repoName,
+				repoRef: argv.branch,
 				destination: argv.destination,
 				directory: argv.directory,
 				silent: argv.silent,

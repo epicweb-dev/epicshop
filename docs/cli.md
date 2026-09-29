@@ -161,6 +161,8 @@ epicshop add <repo-name[#ref]> [destination] [options]
 
 - `--directory, -d <path>` - Directory to clone into (defaults to configured
   repos directory)
+- `--branch, -b <ref>` - Git tag, branch, or commit to check out after cloning
+  (same as `repo-name#ref`; if both are provided, `#ref` wins)
 - `--silent, -s` - Run without output logs (default: false)
 
 #### Examples
@@ -172,6 +174,9 @@ epicshop add full-stack-foundations
 # Clone and set up a specific ref
 epicshop add full-stack-foundations#v1.2.0
 
+# Clone and check out a branch with --branch / -b
+epicshop add react-component-testing-with-vitest --branch some-branch
+
 # Clone to a specific destination directory (bypasses configured repos directory)
 epicshop add react-fundamentals ~/Desktop/react-fundamentals
 
@@ -182,7 +187,8 @@ epicshop add web-forms --directory ~/my-workshops
 #### What it does
 
 1. Clones the repository from `https://github.com/epicweb-dev/<repo-name>`
-2. If a `#ref` is provided, checks out that tag, branch, or commit
+2. If a `#ref` or `--branch`/`-b` is provided, checks out that tag, branch, or
+   commit
 3. Automatically runs `epicshop setup` in the cloned directory to install
    dependencies. The package manager used for installation is automatically
    detected based on how you invoked epicshop (e.g., `pnpm dlx epicshop add`
@@ -1361,6 +1367,7 @@ epicshop add full-stack-foundations
 
 # Or add a specific ref
 epicshop add full-stack-foundations#v1.2.0
+epicshop add react-component-testing-with-vitest --branch some-branch
 
 # Start the workshop
 epicshop start

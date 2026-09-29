@@ -777,6 +777,7 @@ export async function add(options: AddOptions): Promise<WorkshopsResult> {
 					'Provide the repo name: npx epicshop add <repo-name>',
 					'Example: npx epicshop add react-fundamentals',
 					'Pin to a tag/branch/commit: npx epicshop add react-fundamentals#v1.2.0',
+					'Or use a flag: npx epicshop add react-fundamentals --branch some-branch',
 				],
 			})
 

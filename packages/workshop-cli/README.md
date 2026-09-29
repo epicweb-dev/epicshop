@@ -42,7 +42,8 @@ epicshop start <workshop>
 ### Helpful commands
 
 - `epicshop add <repo-name[#ref]> [destination]`: clone a workshop from the
-  `epicweb-dev` GitHub org (use `#` to pin a tag, branch, or commit)
+  `epicweb-dev` GitHub org (use `#` or `--branch`/`-b` to pin a tag, branch, or
+  commit)
 - `epicshop list`: list your workshops
 - `epicshop open`: open a workshop in your editor
 - `epicshop update`: pull the latest workshop changes
