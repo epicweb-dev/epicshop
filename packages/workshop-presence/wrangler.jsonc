@@ -3,7 +3,6 @@
 	"name": "epic-web-presence",
 	"main": "src/server.ts",
 	"compatibility_date": "2025-06-01",
-	"compatibility_flags": ["nodejs_compat"],
 	"workers_dev": true,
 	"assets": {
 		"directory": "./public",
