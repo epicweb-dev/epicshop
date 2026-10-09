@@ -68,9 +68,10 @@ machine. Fixed in a later patch release; do not leave workshops on `6.90.17`.
 ## Presence App Deployment
 
 The workshop-presence service runs on Cloudflare Workers with Durable Objects
-(PartyServer). The public host is `presence.epicweb.dev` (single source of truth
-in `packages/workshop-presence/src/presence.ts`). Deployment is manual-only via
-the **Deploy Presence App** GitHub Actions workflow (`workflow_dispatch`).
+(PartyServer). The public host is `epic-web-presence.kentcdodds.workers.dev`
+(single source of truth in `packages/workshop-presence/src/presence.ts`).
+Deployment is manual-only via the **Deploy Presence App** GitHub Actions
+workflow (`workflow_dispatch`).
 
 PartyKit's free hosted platform (`*.partykit.dev`) shuts down on **23 October
 2026**. This service no longer uses PartyKit or `*.partykit.dev`.
@@ -81,10 +82,9 @@ PartyKit's free hosted platform (`*.partykit.dev`) shuts down on **23 October
 2. Add repository secrets:
    - `CLOUDFLARE_API_TOKEN` — the API token
    - `CLOUDFLARE_ACCOUNT_ID` — your Cloudflare account ID
-3. Ensure `presence.epicweb.dev` is a custom domain on the Worker (or a CNAME to
-   the Worker's `*.workers.dev` hostname). The zone for `epicweb.dev` must be
-   manageable from the same Cloudflare account when using Wrangler's
-   `custom_domain` route.
+3. The Worker is served from its `workers.dev` hostname
+   (`epic-web-presence.kentcdodds.workers.dev`, from `workers_dev: true` in
+   `wrangler.jsonc`). No custom domain or zone permissions are needed.
 4. Navigate to Actions → Deploy Presence App → Run workflow
 
 The workflow fails clearly if either secret is missing.

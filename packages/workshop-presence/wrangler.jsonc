@@ -21,10 +21,4 @@
 			"new_sqlite_classes": ["Presence"],
 		},
 	],
-	"routes": [
-		{
-			"pattern": "presence.epicweb.dev",
-			"custom_domain": true,
-		},
-	],
 }

@@ -4,7 +4,7 @@ import { z } from 'zod'
  * Single source of truth for the hosted presence service.
  * Served on Cloudflare Workers + Durable Objects (PartyServer).
  */
-export const presenceHost = 'presence.epicweb.dev'
+export const presenceHost = 'epic-web-presence.kentcdodds.workers.dev'
 export const presenceRoom = 'epic-web-presence'
 export const presenceBaseUrl = `https://${presenceHost}/parties/main/${presenceRoom}`
 

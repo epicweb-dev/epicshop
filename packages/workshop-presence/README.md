@@ -8,7 +8,7 @@ This package contains:
 - A server helper (`presence.server`) that fetches and enriches presence data
   for rendering in the workshop app
 - A **PartyServer** Cloudflare Worker (`src/server.ts`) that powers the hosted
-  presence service at `presence.epicweb.dev`
+  presence service at `epic-web-presence.kentcdodds.workers.dev`
 
 ## Install
 
