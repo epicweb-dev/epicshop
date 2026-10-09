@@ -6,7 +6,8 @@
 		"outDir": "./dist",
 		"resolveJsonModule": true,
 		"esModuleInterop": true,
-		"rewriteRelativeImportExtensions": true
+		"rewriteRelativeImportExtensions": true,
+		"types": ["@cloudflare/workers-types", "vitest/importMeta"]
 	},
 	"exclude": ["dist"]
 }

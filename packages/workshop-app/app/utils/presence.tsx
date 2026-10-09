@@ -1,7 +1,7 @@
 import {
 	MessageSchema,
-	partykitBaseUrl,
-	partykitRoom,
+	presenceHost,
+	presenceRoom,
 	type Message,
 	type User,
 } from '@epic-web/workshop-presence/presence'
@@ -143,7 +143,13 @@ function usePresenceSocket(user?: User | null) {
 	const loggedInProductHosts = useLoggedInProductHosts()
 
 	const handleMessage = useFirstCallDelayedCallback((evt: MessageEvent) => {
-		const messageResult = MessageSchema.safeParse(JSON.parse(String(evt.data)))
+		let parsed: unknown
+		try {
+			parsed = JSON.parse(String(evt.data))
+		} catch {
+			return
+		}
+		const messageResult = MessageSchema.safeParse(parsed)
 		if (!messageResult.success) return
 		if (messageResult.data.type === 'presence') {
 			setUsers(messageResult.data.payload.users)
@@ -151,8 +157,15 @@ function usePresenceSocket(user?: User | null) {
 	}, 2000)
 
 	const socket = usePartySocket({
-		host: new URL(partykitBaseUrl).host,
-		room: partykitRoom,
+		host: presenceHost,
+		room: presenceRoom,
+		// Presence is optional — cap retries so a dead host doesn't hang or spam.
+		maxRetries: 5,
+		connectionTimeout: 4000,
+		debug: false,
+		onError() {
+			// Intentionally silent: workshop UI must keep working without presence.
+		},
 		onMessage: handleMessage,
 	})
 
@@ -198,7 +211,13 @@ function usePresenceSocket(user?: User | null) {
 
 	const messageJson = message ? JSON.stringify(message) : null
 	useEffect(() => {
-		if (messageJson) socket.send(messageJson)
+		if (!messageJson) return
+		try {
+			// PartySocket queues while connecting; failures are ignored (presence is optional).
+			socket.send(messageJson)
+		} catch {
+			// ignore
+		}
 	}, [messageJson, socket])
 
 	const scoredUsers = scoreUsers(

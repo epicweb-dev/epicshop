@@ -1,0 +1,30 @@
+{
+	"$schema": "node_modules/wrangler/config-schema.json",
+	"name": "epic-web-presence",
+	"main": "src/server.ts",
+	"compatibility_date": "2025-06-01",
+	"workers_dev": true,
+	"assets": {
+		"directory": "./public",
+	},
+	"durable_objects": {
+		"bindings": [
+			{
+				"name": "Main",
+				"class_name": "Presence",
+			},
+		],
+	},
+	"migrations": [
+		{
+			"tag": "v1",
+			"new_sqlite_classes": ["Presence"],
+		},
+	],
+	"routes": [
+		{
+			"pattern": "presence.epicweb.dev",
+			"custom_domain": true,
+		},
+	],
+}

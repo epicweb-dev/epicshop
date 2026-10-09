@@ -1,4 +1,10 @@
-import type * as Party from 'partykit/server'
+import {
+	routePartykitRequest,
+	Server,
+	type Connection,
+	type ConnectionContext,
+	type WSMessage,
+} from 'partyserver'
 import { z } from 'zod'
 import {
 	getProductHostEmoji,
@@ -6,6 +12,10 @@ import {
 	UserSchema,
 	type RepoStatus,
 } from './presence.ts'
+
+type Env = {
+	Main: DurableObjectNamespace<Presence>
+}
 
 // Cache for latest npm version
 let latestNpmVersionCache: { version: string | null; fetchedAt: number } = {
@@ -80,15 +90,9 @@ const MessageSchema = z
 	)
 type Message = z.infer<typeof MessageSchema>
 
-export default (class Server implements Party.Server {
-	options: Party.ServerOptions = {
+export class Presence extends Server<Env> {
+	static options = {
 		hibernate: true,
-	}
-
-	readonly party: Party.Room
-
-	constructor(party: Party.Room) {
-		this.party = party
 	}
 
 	onClose() {
@@ -99,7 +103,7 @@ export default (class Server implements Party.Server {
 		this.updateUsers()
 	}
 
-	onConnect(connection: Party.Connection, ctx: Party.ConnectionContext) {
+	onConnect(connection: Connection, ctx: ConnectionContext) {
 		const url = new URL(ctx.request.url)
 		const wantsFull =
 			url.searchParams.get('full') === '1' ||
@@ -120,7 +124,7 @@ export default (class Server implements Party.Server {
 			this.getPresenceMessage(liteUsers),
 		)
 
-		for (const connection of this.party.getConnections()) {
+		for (const connection of this.getConnections()) {
 			const state = getConnectionState(connection)
 			const subscription: PresenceSubscription = state?.subscription ?? 'lite'
 			connection.send(
@@ -139,7 +143,7 @@ export default (class Server implements Party.Server {
 	getUsers() {
 		const users = new Map<string, z.infer<typeof UserSchema>>()
 
-		for (const connection of this.party.getConnections()) {
+		for (const connection of this.getConnections()) {
 			const state = getConnectionState(connection)
 			if (state?.user) {
 				const existingUser = users.get(state.user.id)
@@ -224,8 +228,15 @@ export default (class Server implements Party.Server {
 		return sortUsers(userList)
 	}
 
-	onMessage(message: string, sender: Party.Connection) {
-		const result = MessageSchema.safeParse(JSON.parse(message))
+	onMessage(sender: Connection, message: WSMessage) {
+		if (typeof message !== 'string') return
+		let parsed: unknown
+		try {
+			parsed = JSON.parse(message)
+		} catch {
+			return
+		}
+		const result = MessageSchema.safeParse(parsed)
 		if (!result.success) return
 
 		if (result.data.type === 'add-user') {
@@ -245,7 +256,7 @@ export default (class Server implements Party.Server {
 		}
 	}
 
-	async onRequest(req: Party.Request): Promise<Response> {
+	async onRequest(req: Request): Promise<Response> {
 		const url = new URL(req.url)
 		if (url.pathname.endsWith('/presence')) {
 			const wantsFull =
@@ -683,17 +694,26 @@ export default (class Server implements Party.Server {
 		}
 		return new Response('not found', { status: 404 })
 	}
-} satisfies Party.Worker)
+}
+
+export default {
+	async fetch(request: Request, env: Env): Promise<Response> {
+		return (
+			(await routePartykitRequest(request, env)) ||
+			new Response('Not Found', { status: 404 })
+		)
+	},
+} satisfies ExportedHandler<Env>
 
 function shallowMergeConnectionState(
-	connection: Party.Connection,
+	connection: Connection,
 	state: ConnectionState,
 ) {
 	setConnectionState(connection, (prev) => ({ ...prev, ...state }))
 }
 
 function setConnectionState(
-	connection: Party.Connection,
+	connection: Connection,
 	state:
 		| ConnectionState
 		| ((prev: ConnectionState | null) => ConnectionState | null),
@@ -711,7 +731,7 @@ function setConnectionState(
 	})
 }
 
-function getConnectionState(connection: Party.Connection) {
+function getConnectionState(connection: Connection) {
 	const result = ConnectionStateSchema.safeParse(connection.state)
 	if (result.success) {
 		return result.data

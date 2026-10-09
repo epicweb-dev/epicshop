@@ -1,8 +1,17 @@
 import { z } from 'zod'
 
-export const partykitRoom = 'epic-web-presence'
-// export const partykitBaseUrl = `http://127.0.0.1:1999/parties/main/${partykitRoom}`
-export const partykitBaseUrl = `https://epic-web-presence.kentcdodds.partykit.dev/parties/main/${partykitRoom}`
+/**
+ * Single source of truth for the hosted presence service.
+ * Served on Cloudflare Workers + Durable Objects (PartyServer).
+ */
+export const presenceHost = 'presence.epicweb.dev'
+export const presenceRoom = 'epic-web-presence'
+export const presenceBaseUrl = `https://${presenceHost}/parties/main/${presenceRoom}`
+
+/** @deprecated Prefer {@link presenceRoom} */
+export const partykitRoom = presenceRoom
+/** @deprecated Prefer {@link presenceBaseUrl} */
+export const partykitBaseUrl = presenceBaseUrl
 
 export const RepoStatusSchema = z.object({
 	updatesAvailable: z.boolean().nullable().optional(),
