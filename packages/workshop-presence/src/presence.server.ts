@@ -18,7 +18,7 @@ import { type Timings } from '@epic-web/workshop-utils/timing.server'
 import { getUserId } from '@epic-web/workshop-utils/user.server'
 import {
 	PresenceSchema,
-	partykitBaseUrl,
+	presenceBaseUrl,
 	type Location,
 	type RepoStatus,
 	type User,
@@ -42,7 +42,7 @@ export async function getPresentUsers({
 		async getFreshValue(context) {
 			try {
 				const response = await Promise.race([
-					fetch(`${partykitBaseUrl}/presence`),
+					fetch(`${presenceBaseUrl}/presence`),
 					new Promise<Response>((resolve) =>
 						setTimeout(() => {
 							resolve(new Response('Timeout', { status: 500 }))
@@ -50,17 +50,17 @@ export async function getPresentUsers({
 					),
 				] as const)
 				if (response.statusText === 'Timeout') {
-					throw new Error(`Timeout fetching partykit presence`)
+					throw new Error('Timeout fetching presence')
 				}
 				if (!response.ok) {
 					throw new Error(
-						`Unexpected response from partykit: ${response.status} ${response.statusText}`,
+						`Unexpected response from presence: ${response.status} ${response.statusText}`,
 					)
 				}
 				const presence = PresenceSchema.parse(await response.json())
 				return presence
 			} catch {
-				// console.error(err)
+				// Presence is best-effort; degrade to an empty list on any failure.
 				context.metadata.ttl = 300
 				return { users: [] }
 			}

@@ -10,17 +10,19 @@
     "test:watch": "vitest",
     "typecheck": "tsc --noEmit",
     "build": "zshy",
-    "dev": "partykit dev",
-    "deploy": "partykit deploy"
+    "dev": "wrangler dev",
+    "deploy": "wrangler deploy"
   },
   "dependencies": {
     "@epic-web/workshop-utils": "file:../workshop-utils",
+    "partyserver": "^0.5.10",
     "zod": "^4.3.6"
   },
   "devDependencies": {
-    "partykit": "0.0.115",
+    "@cloudflare/workers-types": "^5.20261009.1",
     "typescript": "^6.0.3",
     "vitest": "^4.1.5",
+    "wrangler": "^4.149.0",
     "zshy": "^0.7.1"
   },
   "files": [

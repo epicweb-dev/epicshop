@@ -67,24 +67,45 @@ machine. Fixed in a later patch release; do not leave workshops on `6.90.17`.
 
 ## Presence App Deployment
 
-The workshop-presence app is deployed to PartyKit/Cloudflare using a GitHub
-Actions workflow. The deployment is manual-only and can be triggered from the
-Actions tab in GitHub.
+The workshop-presence service runs on Cloudflare Workers with Durable Objects
+(PartyServer). The public host is `presence.epicweb.dev` (single source of truth
+in `packages/workshop-presence/src/presence.ts`). Deployment is manual-only via
+the **Deploy Presence App** GitHub Actions workflow (`workflow_dispatch`).
+
+PartyKit's free hosted platform (`*.partykit.dev`) shuts down on **23 October
+2026**. This service no longer uses PartyKit or `*.partykit.dev`.
 
 ### Setup
 
-1. Create a PartyKit account and generate an API token
-2. Add the token as a GitHub secret named `PARTYKIT_TOKEN` in the repository
-   settings
-3. Navigate to Actions > Deploy Presence App > Run workflow
+1. Create a Cloudflare API token with the **Edit Cloudflare Workers** template
+2. Add repository secrets:
+   - `CLOUDFLARE_API_TOKEN` — the API token
+   - `CLOUDFLARE_ACCOUNT_ID` — your Cloudflare account ID
+3. Ensure `presence.epicweb.dev` is a custom domain on the Worker (or a CNAME to
+   the Worker's `*.workers.dev` hostname). The zone for `epicweb.dev` must be
+   manageable from the same Cloudflare account when using Wrangler's
+   `custom_domain` route.
+4. Navigate to Actions → Deploy Presence App → Run workflow
+
+The workflow fails clearly if either secret is missing.
 
 ### Manual Deployment
 
-To manually deploy the presence app from your local machine:
+```bash
+cd packages/workshop-presence
+CLOUDFLARE_API_TOKEN=... CLOUDFLARE_ACCOUNT_ID=... npm run deploy
+```
+
+Local development:
 
 ```bash
 cd packages/workshop-presence
-npm run deploy
+npm run dev   # wrangler dev (default http://127.0.0.1:8787)
 ```
 
-You'll need to have the `PARTYKIT_TOKEN` environment variable set locally.
+### Older workshop clients
+
+Installed epicshop versions that still hardcode `*.kentcdodds.partykit.dev` will
+lose presence after the PartyKit shutdown date until learners update. Current
+clients treat presence as best-effort (empty face pile / no crash) when the host
+is unreachable. There is no compatibility shim on partykit.dev.
