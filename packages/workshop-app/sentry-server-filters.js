@@ -112,6 +112,24 @@ export function isServerEnvironmentNoise(event) {
 }
 
 /**
+ * Undici Request.formData() TypeError when a client POSTs a non-form
+ * Content-Type (EPICSHOP-J3). Route actions should guard with
+ * requireFormContentType; this drops any residual Sentry events.
+ *
+ * @param {{ exception?: { values?: Array<{ type?: string, value?: string }> } }} event
+ */
+export function isUndiciFormDataContentTypeNoise(event) {
+	return getExceptionValues(event).some((value) => {
+		const type = value.type ?? ''
+		const text = typeof value.value === 'string' ? value.value : ''
+		if (type && type !== 'TypeError' && type !== 'Error') return false
+		return /Content-Type was not one of "multipart\/form-data" or "application\/x-www-form-urlencoded"/.test(
+			text,
+		)
+	})
+}
+
+/**
  * @param {{ exception?: { values?: Array<{ type?: string, value?: string, stacktrace?: { frames?: Array<{ filename?: string }> } }> } }} event
  */
 export function isServerSentryNoise(event) {
@@ -119,6 +137,7 @@ export function isServerSentryNoise(event) {
 		isServerEnvironmentNoise(event) ||
 		isEsbuildCompileFailureNoise(event) ||
 		isPlaygroundServerNoise(event) ||
-		isCorruptedCacheFileNoise(event)
+		isCorruptedCacheFileNoise(event) ||
+		isUndiciFormDataContentTypeNoise(event)
 	)
 }
