@@ -1,4 +1,5 @@
 import { isRouteErrorResponse } from 'react-router'
+import { isUndiciFormDataContentTypeError } from './form-request.ts'
 
 // React Router reports its own internal 4xx ErrorResponses (unroutable URL,
 // missing loader/action for the method) through the server handleError hook
@@ -10,6 +11,11 @@ import { isRouteErrorResponse } from 'react-router'
 // handleError while already answering with HTTP 400. Document POSTs pass the
 // descriptive Error into handleError before returning 400. Neither is a
 // server fault (Codespaces proxy mismatch or a cross-site probe).
+//
+// Undici Request.formData() TypeError for non-form Content-Type is the same
+// class of client noise when an action calls formData() without a guard
+// (EPICSHOP-J3). Prefer route-level requireFormContentType; this still
+// filters uncaught throws from other routes.
 function isReactRouterCsrfClientError(error: Error) {
 	const { message } = error
 	if (message === 'Bad Request') return true
@@ -34,6 +40,9 @@ export function isClientErrorResponse(error: unknown) {
 		error.status >= 400 &&
 		error.status < 500
 	) {
+		return true
+	}
+	if (isUndiciFormDataContentTypeError(error)) {
 		return true
 	}
 	return error instanceof Error && isReactRouterCsrfClientError(error)

@@ -7,6 +7,7 @@ import { Icon } from '#app/components/icons.tsx'
 import { SimpleTooltip } from '#app/components/ui/tooltip.tsx'
 import { useHints } from '#app/utils/client-hints.tsx'
 import { ErrorList } from '#app/utils/forms.tsx'
+import { requireFormContentType } from '#app/utils/form-request.ts'
 import { dataWithPE, usePERedirectInput } from '#app/utils/pe.tsx'
 import { useRequestInfo } from '#app/utils/root-loader.ts'
 import { type Route } from './+types/index.tsx'
@@ -31,6 +32,9 @@ export async function loader({ request }: Route.LoaderArgs) {
 }
 
 export async function action({ request }: Route.ActionArgs) {
+	// Malformed POSTs (e.g. Content-Type: application/json) make undici throw a
+	// TypeError from request.formData(); return a client 400 instead (EPICSHOP-J3).
+	requireFormContentType(request)
 	const formData = await request.formData()
 	const submission = parseWithZodUnsafe(formData, {
 		schema: ThemeFormSchemaForConform,

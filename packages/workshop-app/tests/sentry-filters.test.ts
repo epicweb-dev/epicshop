@@ -22,6 +22,7 @@ import {
 	isCorruptedCacheFileNoise,
 	isEsbuildCompileFailureNoise,
 	isPlaygroundServerNoise,
+	isUndiciFormDataContentTypeNoise,
 	isServerSentryNoise,
 } from '../sentry-server-filters.js'
 
@@ -703,6 +704,34 @@ test('isClientSentryNoise aggregates the client predicates', () => {
 			],
 		}),
 	).toBe(true)
+})
+
+test('drops undici formData Content-Type TypeError as server noise (EPICSHOP-J3 aha)', () => {
+	const epicshopJ3 = {
+		exception: {
+			values: [
+				{
+					type: 'TypeError',
+					value:
+						'Content-Type was not one of "multipart/form-data" or "application/x-www-form-urlencoded".',
+				},
+			],
+		},
+	}
+	expect(isUndiciFormDataContentTypeNoise(epicshopJ3)).toBe(true)
+	expect(isServerSentryNoise(epicshopJ3)).toBe(true)
+	expect(
+		isUndiciFormDataContentTypeNoise({
+			exception: {
+				values: [
+					{
+						type: 'TypeError',
+						value: 'Cannot read properties of null (reading "theme")',
+					},
+				],
+			},
+		}),
+	).toBe(false)
 })
 
 test('drops learner-machine server environment noise (aha)', () => {
