@@ -15,7 +15,7 @@ env:
 jobs:
   lint:
     name: ⬣ Oxlint
-    runs-on: ubuntu-latest
+    runs-on: warp-ubuntu-latest-x64-4x
     timeout-minutes: 5
     steps:
       - name: ⬇️ Checkout repo
@@ -35,7 +35,7 @@ jobs:
 
   build:
     name: 🏗 Build
-    runs-on: ubuntu-latest
+    runs-on: warp-ubuntu-latest-x64-4x
     timeout-minutes: 5
     steps:
       - name: ⬇️ Checkout repo
@@ -78,7 +78,7 @@ jobs:
   test:
     name: 🧪 Tests
     needs: [build]
-    runs-on: ubuntu-latest
+    runs-on: warp-ubuntu-latest-x64-4x
     timeout-minutes: 5
     steps:
       - name: ⬇️ Checkout repo
@@ -105,7 +105,7 @@ jobs:
   typecheck:
     name: ʦ TypeScript
     needs: [build]
-    runs-on: ubuntu-latest
+    runs-on: warp-ubuntu-latest-x64-4x
     timeout-minutes: 5
     steps:
       - name: ⬇️ Checkout repo
@@ -131,7 +131,7 @@ jobs:
 
   playwright:
     name: 🎭 Playwright
-    runs-on: ubuntu-latest
+    runs-on: warp-ubuntu-latest-x64-4x
     timeout-minutes: 15
     container:
       image: mcr.microsoft.com/playwright:v1.59.1-noble
@@ -204,7 +204,7 @@ jobs:
   release:
     name: 🚀 Release
     needs: [lint, test, typecheck, build, playwright]
-    runs-on: ubuntu-latest
+    runs-on: warp-ubuntu-latest-x64-4x
     timeout-minutes: 5
     permissions:
       contents: write # to be able to publish a GitHub release
