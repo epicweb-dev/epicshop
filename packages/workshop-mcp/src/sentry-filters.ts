@@ -51,14 +51,15 @@ export function isExpectedMcpErrorMessage(message: string) {
 
 /**
  * MCP hosts sometimes send malformed JSON-RPC frames on stdio. The SDK's
- * deserializeMessage validates with Zod and throws ZodError (transport noise),
- * which Sentry's MCP integration captures as mechanism auto.ai.mcp_server.
+ * deserializeMessage runs JSON.parse then Zod parse; both SyntaxError (invalid
+ * JSON) and ZodError (valid JSON, invalid shape) are transport noise that
+ * Sentry's MCP integration captures as mechanism auto.ai.mcp_server.
  */
-function isMcpTransportDeserializeZodError(
+function isMcpTransportDeserializeError(
 	event: SentryEventWithException,
 	value: SentryExceptionValue,
 ) {
-	if (value.type !== 'ZodError') return false
+	if (value.type !== 'ZodError' && value.type !== 'SyntaxError') return false
 
 	if (
 		value.mechanism?.type === 'auto.ai.mcp_server' &&
@@ -97,7 +98,7 @@ export function isExpectedMcpSentryNoise(
 	return (
 		event.exception?.values?.some((value) => {
 			if (value.type === 'ExpectedMcpError') return true
-			if (isMcpTransportDeserializeZodError(event, value)) return true
+			if (isMcpTransportDeserializeError(event, value)) return true
 			if (
 				typeof value.value === 'string' &&
 				isExpectedMcpErrorMessage(value.value)

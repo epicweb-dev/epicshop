@@ -210,3 +210,75 @@ test('keeps unrelated ZodErrors outside MCP transport deserialize', () => {
 		}),
 	).toBe(false)
 })
+
+test('drops MCP stdio deserialize SyntaxError transport noise (aha)', () => {
+	expect(
+		isExpectedMcpSentryNoise({
+			culprit: 'JSON.parse(<anonymous>)',
+			exception: {
+				values: [
+					{
+						type: 'SyntaxError',
+						value: `Unexpected token 'k', "kill %1 2>/dev/null" is not valid JSON`,
+						mechanism: {
+							type: 'auto.ai.mcp_server',
+							data: { error_type: 'transport' },
+						},
+					},
+				],
+			},
+		}),
+	).toBe(true)
+})
+
+test('drops SyntaxError when stack is deserializeMessage from MCP SDK stdio', () => {
+	expect(
+		isExpectedMcpSentryNoise({
+			exception: {
+				values: [
+					{
+						type: 'SyntaxError',
+						value: `Unexpected token 'k', "kill %1 2>/dev/null" is not valid JSON`,
+						stacktrace: {
+							frames: [
+								{
+									function: 'deserializeMessage',
+									module: '@modelcontextprotocol.sdk.dist.esm.shared:stdio',
+									filename:
+										'/tmp/node_modules/@modelcontextprotocol/sdk/dist/esm/shared/stdio.js',
+								},
+							],
+						},
+					},
+				],
+			},
+		}),
+	).toBe(true)
+})
+
+test('keeps unrelated SyntaxErrors outside MCP transport deserialize', () => {
+	expect(
+		isExpectedMcpSentryNoise({
+			exception: {
+				values: [
+					{
+						type: 'SyntaxError',
+						value: `Unexpected token 'k', "kill %1 2>/dev/null" is not valid JSON`,
+						mechanism: {
+							type: 'generic',
+						},
+						stacktrace: {
+							frames: [
+								{
+									function: 'parseToolPayload',
+									module: 'workshop-mcp/tools',
+									filename: '/tmp/workshop-mcp/src/tools.ts',
+								},
+							],
+						},
+					},
+				],
+			},
+		}),
+	).toBe(false)
+})
