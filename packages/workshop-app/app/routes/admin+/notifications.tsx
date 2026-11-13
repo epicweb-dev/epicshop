@@ -5,6 +5,15 @@ import { useEffect, useRef } from 'react'
 import { data, useFetcher } from 'react-router'
 import { toast } from 'sonner'
 
+// This route only accepts POST, but without a loader React Router turns a GET
+// into a reported internal server error instead of a 405.
+export function loader() {
+	return new Response('Method Not Allowed', {
+		status: 405,
+		headers: { Allow: 'POST' },
+	})
+}
+
 export async function action({ request }: Route.ActionArgs) {
 	const formData = await request.formData()
 	const intent = formData.get('intent')
